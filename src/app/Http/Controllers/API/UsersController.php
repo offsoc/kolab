@@ -68,6 +68,20 @@ class UsersController extends Controller
         return $this->respondWithToken($this->guard()->refresh());
     }
 
+    public function register(Request $request)
+    {
+        $user = \App\User::create(
+            [
+                'email' => $request->email,
+                'password' => $request->password,
+            ]
+        );
+
+        $token = auth()->login($user);
+
+        return $this->respondWithToken($token);
+    }
+
     /**
      * Get the token array structure.
      *

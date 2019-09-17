@@ -19,9 +19,10 @@ Route::group(
         'prefix' => 'auth'
     ],
     function ($router) {
+        Route::get('info', 'API\UsersController@info');
         Route::post('login', 'API\UsersController@login');
         Route::post('logout', 'API\UsersController@logout');
         Route::post('refresh', 'API\UsersController@refresh');
-        Route::post('info', 'API\UsersController@info');
+        Route::post('register', 'API\UsersController@register');
     }
 );
