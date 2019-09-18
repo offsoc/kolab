@@ -9,6 +9,30 @@ use App\Http\Controllers\Controller;
 class UsersController extends Controller
 {
     /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['error' => 'unauthorized'], 401);
+        }
+
+        $result = [$user];
+
+        $user->entitlements()->each(
+            function ($entitlement) {
+                $result[] = User::find($entitlement->user_id);
+            }
+        );
+
+        return response()->json($result);
+    }
+
+    /**
      * Create a new AuthController instance.
      *
      * @return void
@@ -96,6 +120,42 @@ class UsersController extends Controller
             'token_type' => 'bearer',
             'expires_in' => $this->guard()->factory()->getTTL() * 60
         ]);
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param int $id
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return abort(403);
+        }
+
+        $result = false;
+
+        $user->entitlements()->each(
+            function ($entitlement) {
+                if ($entitlement->user_id == $id) {
+                    $result = true;
+                }
+            }
+        );
+
+        if ($user->id == $id) {
+            $result = true;
+        }
+
+        if (!$result) {
+            return abort(404);
+        }
+
+        return \App\User::find($id);
     }
 
     /**

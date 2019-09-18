@@ -16,7 +16,7 @@ class UserSeeder extends Seeder
             [
                 'name' => "John Doe",
                 'email' => 'jdoe@example.org',
-                'password_ldap' => 'simple123',
+                'password' => 'simple123',
                 'email_verified_at' => now()
             ]
         );

@@ -19,7 +19,7 @@ class UserObserver
     {
         $user->{$user->getKeyName()} = \App\Utils::uuidInt();
 
-        \App\Jobs\ProcessUserCreate::dispatch($user);
+        // can't dispatch job here because it'll fail serialization
     }
 
     /**
@@ -44,6 +44,8 @@ class UserObserver
         );
 
         $user->wallets()->create();
+
+        \App\Jobs\ProcessUserCreate::dispatch($user);
     }
 
     /**

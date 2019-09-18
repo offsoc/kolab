@@ -39,7 +39,9 @@ class User extends Authenticatable implements JWTSubject
     ];
 
     protected $nullable = [
-        'name'
+        'name',
+        'password',
+        'password_ldap'
     ];
 
     /**

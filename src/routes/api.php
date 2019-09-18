@@ -26,3 +26,16 @@ Route::group(
         Route::post('register', 'API\UsersController@register');
     }
 );
+
+Route::group(
+    [
+        'middleware' => 'auth:api',
+        'prefix' => 'v4'
+    ],
+    function () {
+        Route::apiResource('entitlements', API\EntitlementsController::class);
+        Route::apiResource('users', API\UsersController::class);
+        Route::apiResource('wallets', API\WalletsController::class);
+    }
+);
+
