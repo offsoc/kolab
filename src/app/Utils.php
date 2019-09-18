@@ -1,6 +1,6 @@
 <?php
 
-namespace Kolab;
+namespace App;
 
 use Ramsey\Uuid\Uuid;
 

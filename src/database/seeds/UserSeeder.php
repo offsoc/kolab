@@ -16,9 +16,13 @@ class UserSeeder extends Seeder
             [
                 'name' => "John Doe",
                 'email' => 'jdoe@example.org',
-                'password' => 'simple123',
+                'password_ldap' => 'simple123',
                 'email_verified_at' => now()
             ]
         );
+
+        // 10'000 users result in a table size of 11M
+        //factory(User::class, 100)->create();
+        factory(User::class, 3)->create();
     }
 }
