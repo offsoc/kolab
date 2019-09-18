@@ -38,4 +38,3 @@ Route::group(
         Route::apiResource('wallets', API\WalletsController::class);
     }
 );
-
