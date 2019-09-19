@@ -10,6 +10,9 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 
 use App\Traits\UserSettingsTrait;
 
+/**
+ * The eloquent definition of a User.
+ */
 class User extends Authenticatable implements JWTSubject
 {
     use Notifiable;

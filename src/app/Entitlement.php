@@ -1,19 +1,34 @@
 <?php
-
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
 /**
-    The eloquent definition of an entitlement.
-
-    Owned by a {@link \App\User}, billed to a {@link \App\Wallet}.
+ * The eloquent definition of an Entitlement.
+ *
+ * Owned by a {@link \App\User}, billed to a {@link \App\Wallet}.
  */
 class Entitlement extends Model
 {
+    /**
+     * This table does not use auto-increment.
+     *
+     * @var boolean
+     */
     public $incrementing = false;
+
+    /**
+     * The key type is actually a string.
+     *
+     * @var string
+     */
     protected $keyType = 'string';
 
+    /**
+     * The fillable columns for this Entitlement
+     *
+     * @var array
+     */
     protected $fillable = [
         'sku_id',
         'owner_id',
@@ -23,51 +38,9 @@ class Entitlement extends Model
     ];
 
     /**
-        Provide a custom ID (uuid) property.
-
-        @return void
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(
-            function ($entitlement) {
-                $entitlement->{$entitlement->getKeyName()} = \App\Utils::uuidStr();
-
-                // Make sure the owner is at least a controller on the wallet
-                $owner = \App\User::find($entitlement->owner_id);
-                $wallet = \App\Wallet::find($entitlement->wallet_id);
-
-                if (!$owner) {
-                    return false;
-                }
-
-                if (!$wallet) {
-                    return false;
-                }
-
-                if (!$wallet->owner() == $owner) {
-                    if (!$wallet->controllers->contains($owner)) {
-                        return false;
-                    }
-                }
-
-                $sku = \App\Sku::find($entitlement->sku_id);
-
-                if (!$sku) {
-                    return false;
-                }
-
-                $wallet->debit($sku->cost);
-            }
-        );
-    }
-
-    /**
-        The SKU concerned.
-
-        @return Sku
+     * The SKU concerned.
+     *
+     * @return Sku
      */
     public function sku()
     {
@@ -75,9 +48,9 @@ class Entitlement extends Model
     }
 
     /**
-        The owner of this entitlement.
-
-        @return User
+     * The owner of this entitlement.
+     *
+     * @return User
      */
     public function owner()
     {
@@ -85,9 +58,9 @@ class Entitlement extends Model
     }
 
     /**
-        The target user for this entitlement
-
-        @return User
+     * The target user for this entitlement
+     *
+     * @return User
      */
     public function user()
     {
@@ -95,9 +68,9 @@ class Entitlement extends Model
     }
 
     /**
-        The wallet this entitlement is being billed to
-
-        @return Wallet
+     * The wallet this entitlement is being billed to
+     *
+     * @return Wallet
      */
     public function wallet()
     {
