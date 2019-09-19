@@ -4,12 +4,28 @@ namespace App\Http\Controllers\API;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
 
 class UsersController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Create a new API\UsersController instance.
+     *
+     * Ensures that the correct authentication middleware is applied except for /login and
+     * /register.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+    }
+
+    /**
+     * Display a listing of the resources.
+     *
+     * The user themself, and other user entitlements.
      *
      * @return \Illuminate\Http\Response
      */
@@ -33,19 +49,19 @@ class UsersController extends Controller
     }
 
     /**
-     * Create a new AuthController instance.
+     * Get the authenticated User
      *
-     * @return void
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function __construct()
+    public function info()
     {
-        $this->middleware('auth:api', ['except' => ['login']]);
+        return response()->json($this->guard()->user());
     }
 
     /**
      * Get a JWT token via given credentials.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request The API request.
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -58,16 +74,6 @@ class UsersController extends Controller
         }
 
         return response()->json(['error' => 'Unauthorized'], 401);
-    }
-
-    /**
-     * Get the authenticated User
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function info()
-    {
-        return response()->json($this->guard()->user());
     }
 
     /**
@@ -94,6 +100,18 @@ class UsersController extends Controller
 
     public function register(Request $request)
     {
+        $v = Validator::make(
+            $request->all(),
+            [
+                'email' => 'required|email|unique:users',
+                'password'  => 'required|min:3|confirmed',
+            ]
+        );
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
         $user = \App\User::create(
             [
                 'email' => $request->email,
@@ -109,23 +127,25 @@ class UsersController extends Controller
     /**
      * Get the token array structure.
      *
-     * @param  string $token
+     * @param string $token Respond with this token.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     protected function respondWithToken($token)
     {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => $this->guard()->factory()->getTTL() * 60
-        ]);
+        return response()->json(
+            [
+                'access_token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => $this->guard()->factory()->getTTL() * 60
+            ]
+        );
     }
 
     /**
      * Display the specified resource.
      *
-     * @param int $id
+     * @param int $id The account to show information for.
      *
      * @return \Illuminate\Http\Response
      */

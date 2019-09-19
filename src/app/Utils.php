@@ -4,12 +4,15 @@ namespace App;
 
 use Ramsey\Uuid\Uuid;
 
+/**
+ * Small utility functions for App.
+ */
 class Utils
 {
     /**
-        Returns an integer derived from a UUID.
-
-        @return integer
+     * Returns a UUID in the form of an integer.
+     *
+     * @return integer
      */
     public static function uuidInt()
     {
@@ -22,9 +25,9 @@ class Utils
     }
 
     /**
-        Returns a UUID in the form of a string.
-
-        @return string
+     * Returns a UUID in the form of a string.
+     *
+     * @return string
      */
     public static function uuidStr()
     {

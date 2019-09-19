@@ -17,7 +17,7 @@ class CreateUserSettingsTable extends Migration
             'user_settings',
             function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->bigInteger('user_id')->unsigned();
+                $table->bigInteger('user_id');
 
                 $table->foreign('user_id')
                     ->references('id')

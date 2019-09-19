@@ -5,7 +5,7 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 
 /**
-    The eloquent definition of a Stock Keeping Unit (SKU).
+ * The eloquent definition of a Stock Keeping Unit (SKU).
  */
 class Sku extends Model
 {
@@ -17,22 +17,6 @@ class Sku extends Model
     ];
 
     protected $fillable = ['title', 'description', 'cost'];
-
-    /**
-        Provide a custom ID (uuid) property.
-
-        @return void
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(
-            function ($sku) {
-                $sku->{$sku->getKeyName()} = \App\Utils::uuidStr();
-            }
-        );
-    }
 
     /**
         List the entitlements that consume this SKU.

@@ -10,6 +10,34 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UserWalletTest extends TestCase
 {
+    private $_users = [
+        'UserWallet1@UserWallet.com',
+        'UserWallet2@UserWallet.com',
+        'UserWallet3@UserWallet.com',
+        'UserWallet4@UserWallet.com',
+        'UserWallet5@UserWallet.com'
+    ];
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        foreach ($this->_users as $user) {
+            $_user = User::firstOrCreate(['email' => $user]);
+            $_user->delete();
+        }
+    }
+
+    public function tearDown(): void
+    {
+        foreach ($this->_users as $user) {
+            $_user = User::firstOrCreate(['email' => $user]);
+            $_user->delete();
+        }
+
+        parent::tearDown();
+    }
+
     /**
         Verify a wallet is created, when a user is created.
 
@@ -90,6 +118,8 @@ class UserWalletTest extends TestCase
                 'email' => 'UserWallet4@UserWallet.com'
             ]
         );
+
+        $this->assertTrue($user->wallets()->count() == 1);
 
         $user->wallets()->each(
             function ($wallet) {

@@ -7,7 +7,7 @@ use App\User;
 class UserObserver
 {
     /**
-     * Handle the user "creating" event.
+     * Handle the "creating" event.
      *
      * Ensure that the user is created with a random, large integer.
      *
@@ -23,7 +23,11 @@ class UserObserver
     }
 
     /**
-     * Handle the user "created" event.
+     * Handle the "created" event.
+     *
+     * Ensures the user has at least one wallet.
+     *
+     * Should ensure some basic settings are available as well.
      *
      * @param \App\User $user The user created.
      *
@@ -49,60 +53,40 @@ class UserObserver
     }
 
     /**
-     * Handle the user "updated" event.
+     * Handle the "deleting" event.
      *
-     * @param  \App\User  $user
+     * @param User $user The user that is being deleted.
+     *
      * @return void
      */
-    public function updated(User $user)
-    {
-        //
-    }
-
-    /**
-     * Handle the user "deleted" event.
-     *
-     * @param  \App\User  $user
-     * @return void
-     */
-    public function deleted(User $user)
-    {
-    }
-
     public function deleting(User $user)
     {
         \App\Jobs\ProcessUserDelete::dispatch($user);
     }
 
     /**
-     * Handle the user "restored" event.
+     * Handle the "retrieving" event.
      *
-     * @param  \App\User  $user
+     * @param User $user The user that is being retrieved.
+     *
+     * @todo This is useful for audit.
+     *
      * @return void
      */
-    public function restored(User $user)
-    {
-        //
-    }
-
     public function retrieving(User $user)
     {
         \App\Jobs\ProcessUserRead::dispatch($user);
     }
 
+    /**
+     * Handle the "updating" event.
+     *
+     * @param User $user The user that is being updated.
+     *
+     * @return void
+     */
     public function updating(User $user)
     {
         \App\Jobs\ProcessUserUpdate::dispatch($user);
-    }
-
-    /**
-     * Handle the user "force deleted" event.
-     *
-     * @param  \App\User  $user
-     * @return void
-     */
-    public function forceDeleted(User $user)
-    {
-        //
     }
 }

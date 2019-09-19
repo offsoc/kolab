@@ -7,56 +7,95 @@ use Illuminate\Support\Facades\Cache;
 
 trait UserSettingsTrait
 {
-
-    // get setting value
-    public function getSetting($name)
+    /**
+     * Obtain the value for a setting.
+     *
+     * Example Usage:
+     *
+     * ```php
+     * $user = User::firstOrCreate(['email' => 'some@other.erg']);
+     * $locale = $user->getSetting('locale');
+     * ```
+     *
+     * @param string $key Lookup key
+     *
+     * @return string
+     */
+    public function getSetting($key)
     {
-        $settings = $this->getCache();
-        $value = array_get($settings, $name);
+        $settings = $this->_getCache();
+        $value = array_get($settings, $key);
 
-        return ($value !== '') ? $value : NULL;
+        return ($value !== '') ? $value : null;
     }
 
-    // create-update setting
-    public function setSetting($name, $value)
+    /**
+     * Create or update a setting.
+     *
+     * Example Usage:
+     *
+     * ```php
+     * $user = User::firstOrCreate(['email' => 'some@other.erg']);
+     * $user->setSetting('locale', 'en');
+     * ```
+     *
+     * @param string $key   Setting name
+     * @param string $value The new value for the setting.
+     *
+     * @return void
+     */
+    public function setSetting($key, $value)
     {
-        $this->storeSetting($name, $value);
-        $this->setCache();
+        $this->_storeSetting($key, $value);
+        $this->_setCache();
     }
 
-    // create-update multiple settings at once
+    /**
+     * Create or update multiple settings in one fell swoop.
+     *
+     * Example Usage:
+     *
+     * ```php
+     * $user = User::firstOrCreate(['email' => 'some@other.erg']);
+     * $user->setSettings(['locale', 'en', 'country' => 'GB']);
+     * ```
+     *
+     * @param array $data An associative array of key value pairs.
+     *
+     * @return void
+     */
     public function setSettings($data = [])
     {
-        foreach($data as $name => $value) {
-            $this->storeSetting($name, $value);
+        foreach ($data as $key => $value) {
+            $this->_storeSetting($key, $value);
         }
 
-        $this->setCache();
+        $this->_setCache();
     }
 
-    private function storeSetting($name, $value)
+    private function _storeSetting($key, $value)
     {
-        $record = UserSetting::where(['user_id' => $this->id, 'key' => $name])->first();
+        $record = UserSetting::where(['user_id' => $this->id, 'key' => $key])->first();
 
-        if($record) {
+        if ($record) {
             $record->value = $value;
             $record->save();
         } else {
-            $data = new UserSetting(['key' => $name, 'value' => $value]);
+            $data = new UserSetting(['key' => $key, 'value' => $value]);
             $this->settings()->save($data);
         }
     }
 
-    private function getCache()
+    private function _getCache()
     {
         if (Cache::has('user_settings_' . $this->id)) {
             return Cache::get('user_settings_' . $this->id);
         }
 
-        return $this->setCache();
+        return $this->_setCache();
     }
 
-    private function setCache()
+    private function _setCache()
     {
         if (Cache::has('user_settings_' . $this->id)) {
             Cache::forget('user_settings_' . $this->id);
@@ -66,7 +105,6 @@ trait UserSettingsTrait
 
         Cache::forever('user_settings_' . $this->id, $settings);
 
-        return $this->getCache();
+        return $this->_getCache();
     }
-
 }

@@ -30,11 +30,12 @@ class UsersApiControllerTest extends TestCase
     {
         $data = [
             'email' => 'UsersApiControllerTest1@UsersApiControllerTest.com',
-            'password' => 'simple123'
+            'password' => 'simple123',
+            'password_confirmation' => 'simple123'
         ];
 
-        $response = $this->post('/api/v4/users/register', $data);
-        $response->assertStatus(201);
+        $response = $this->post('/api/auth/register', $data);
+        $response->assertStatus(200);
     }
 
     public function testListUsers()
