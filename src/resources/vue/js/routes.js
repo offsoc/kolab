@@ -4,8 +4,10 @@ import VueRouter from 'vue-router'
 Vue.use(VueRouter)
 
 import DashboardComponent from '../components/DashboardComponent'
+import Error404Component from '../components/404Component'
 import LoginComponent from '../components/LoginComponent'
 import LogoutComponent from '../components/LogoutComponent'
+import RegisterComponent from '../components/RegisterComponent'
 
 import store from './store'
 
@@ -29,6 +31,15 @@ const routes = [
         path: '/logout',
         name: 'logout',
         component: LogoutComponent
+    },
+    {
+        path: '/register',
+        name: 'register',
+        component: RegisterComponent
+    },
+    {
+        path: '*',
+        component: Error404Component
     }
 ]
 
@@ -48,7 +59,7 @@ router.beforeEach((to, from, next) => {
     }
 
     // if logged in redirect to dashboard
-    if(to.path === '/login' && store.state.isLoggedIn) {
+    if (to.path === '/login' && store.state.isLoggedIn) {
         next({ name: 'dashboard' })
         return
     }

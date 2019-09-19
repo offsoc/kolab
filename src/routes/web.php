@@ -11,7 +11,13 @@
 |
 */
 
-
-Route::get('/{any?}', function () {
+$action = function () {
     return view('root');
-})->where('any', '^(login|register)$');
+};
+
+Route::get('/', $action);
+
+// Deep-links
+Route::get('login', $action);
+Route::get('register', $action);
+//Route::get('invoice/{invoice}', $action);
