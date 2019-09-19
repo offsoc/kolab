@@ -22,6 +22,8 @@ class UserAccountTest extends TestCase
             ]
         );
 
+        $this->assertTrue($userA->wallets()->count() == 1);
+
         $userA->wallets()->each(
             function ($wallet) {
                 $userB = User::firstOrCreate(

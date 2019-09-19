@@ -23,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);
+        \App\Sku::observe(\App\Observers\SkuObserver::class);
         \App\User::observe(\App\Observers\UserObserver::class);
+        \App\Wallet::observe(\App\Observers\WalletObserver::class);
     }
 }

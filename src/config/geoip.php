@@ -124,7 +124,7 @@ return [
     |
     */
 
-    'cache_tags' => ['torann-geoip-location'],
+    'cache_tags' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -148,18 +148,18 @@ return [
 
     'default_location' => [
         'ip' => '127.0.0.0',
-        'iso_code' => 'US',
-        'country' => 'United States',
-        'city' => 'New Haven',
-        'state' => 'CT',
-        'state_name' => 'Connecticut',
-        'postal_code' => '06510',
-        'lat' => 41.31,
-        'lon' => -72.92,
-        'timezone' => 'America/New_York',
-        'continent' => 'NA',
+        'iso_code' => 'CH',
+        'country' => 'Switzerland',
+        'city' => 'Zurich',
+        'state' => 'ZH',
+        'state_name' => 'Zurich',
+        'postal_code' => '8703',
+        'lat' => 47.30,
+        'lon' => 8.59,
+        'timezone' => 'Europe/Zurich',
+        'continent' => 'EU',
         'default' => true,
-        'currency' => 'USD',
+        'currency' => 'CHF',
     ],
 
 ];
