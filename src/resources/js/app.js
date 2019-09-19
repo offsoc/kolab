@@ -10,7 +10,7 @@ window.Vue = require('vue');
 
 import router from '../vue/js/routes.js';
 
-import AppComponent from '../vue/components/AppComponent'
+import AppComponent from '../vue/components/App'
 
 const app = new Vue({
     components: { AppComponent },

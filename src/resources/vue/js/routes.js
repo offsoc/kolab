@@ -3,11 +3,11 @@ import VueRouter from 'vue-router'
 
 Vue.use(VueRouter)
 
-import DashboardComponent from '../components/DashboardComponent'
-import Error404Component from '../components/404Component'
-import LoginComponent from '../components/LoginComponent'
-import LogoutComponent from '../components/LogoutComponent'
-import RegisterComponent from '../components/RegisterComponent'
+import DashboardComponent from '../components/Dashboard'
+import Error404Component from '../components/404'
+import LoginComponent from '../components/Login'
+import LogoutComponent from '../components/Logout'
+import RegisterComponent from '../components/Register'
 
 import store from './store'
 
