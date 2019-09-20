@@ -1,6 +1,17 @@
 ## Quickstart Instructions
 
+Really quick?
+
 ```
+$ bin/quickstart.sh
+```
+
+More detailed:
+
+```
+$ bin/regen-certs
+$ docker-compose down
+$ docker-compose up -d
 $ cd src/
 $ composer install
 $ npm install

@@ -1,0 +1,9 @@
+[Unit]
+Description=Kolab Setup Service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/kolab-init.sh
+
+[Install]
+WantedBy=multi-user.target
