@@ -23,7 +23,10 @@ Route::group(
         Route::post('login', 'API\UsersController@login');
         Route::post('logout', 'API\UsersController@logout');
         Route::post('refresh', 'API\UsersController@refresh');
-        Route::post('register', 'API\UsersController@register');
+
+        Route::post('register/init', 'API\SignupController@init');
+        Route::post('register/verify', 'API\SignupController@verify');
+        Route::post('register', 'API\SignupController@register');
     }
 );
 

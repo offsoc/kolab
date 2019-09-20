@@ -33,7 +33,7 @@ const routes = [
         component: LogoutComponent
     },
     {
-        path: '/register',
+        path: '/register/:code?',
         name: 'register',
         component: RegisterComponent
     },

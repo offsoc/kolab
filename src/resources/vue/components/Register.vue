@@ -9,11 +9,11 @@
                 <form v-on:submit.prevent="submitStep1">
                     <div class="form-group">
                         <label for="register_name" class="sr-only">Your Name</label>
-                        <input type="text" class="form-control" id="register_name" placeholder="Your Name" required>
+                        <input type="text" class="form-control" id="register_name" placeholder="Your Name" required autofocus v-model="name">
                     </div>
                     <div class="form-group">
                         <label for="register_email" class="sr-only">Existing Email or Phone Number</label>
-                        <input type="text" class="form-control" id="register_email" placeholder="Existing Email or Phone Number" required>
+                        <input type="text" class="form-control" id="register_email" placeholder="Existing Email or Phone Number" required v-model="email">
                     </div>
                     <button class="btn btn-primary" type="submit">Continue</button>
                 </form>
@@ -30,7 +30,7 @@
                 <form v-on:submit.prevent="submitStep2">
                     <div class="form-group">
                         <label for="register_code" class="sr-only">Confirmation Code</label>
-                        <input type="text" class="form-control" id="register_code" placeholder="Confirmation Code" required>
+                        <input type="text" class="form-control" id="register_code" placeholder="Confirmation Code" required v-model="code">
                     </div>
                     <button class="btn btn-secondary" type="button" v-on:click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Continue</button>
@@ -48,20 +48,20 @@
                     <div class="form-group">
                         <label for="register_login" class="sr-only"></label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="register_login" required>
+                            <input type="text" class="form-control" id="register_login" required v-model="login">
                             <span class="input-group-text border-left-0 border-right-0 rounded-0">@</span>
-                            <select class="custom-select" id="register_domain">
+                            <select class="custom-select" id="register_domain" v-model="domain">
                                 <option value="kolabnow.com">kolabnow.com</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="register_password" class="sr-only">Password</label>
-                        <input type="password" class="form-control" id="register_password" placeholder="Password" required>
+                        <input type="password" class="form-control" id="register_password" placeholder="Password" required v-model="password">
                     </div>
                     <div class="form-group">
                         <label for="register_confirm" class="sr-only">Confirm Password</label>
-                        <input type="password" class="form-control" id="register_confirm" placeholder="Confirm Password" required>
+                        <input type="password" class="form-control" id="register_confirm" placeholder="Confirm Password" required v-model="password_confirmation">
                     </div>
                     <button class="btn btn-secondary" type="button" v-on:click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Submit</button>
@@ -74,20 +74,67 @@
 
 <script>
     export default {
+        data() {
+            return {
+                email: '',
+                name: '',
+                code: '',
+                login: '',
+                domain: '',
+                password: '',
+                password_confirmation: ''
+            }
+        },
+        created() {
+            // Verification code provided, jump to Step 2
+            if (this.$route.params.code) {
+                this.code = this.$route.params.code
+                this.submitStep2()
+            }
+        },
         methods: {
+            // Submits data to the API, validates and gets verification code
             submitStep1() {
-                // TODO: submit data to the API, validate and get verification code
-                $('#step1').addClass('d-none')
-                $('#step2').removeClass('d-none').find('input').first().focus()
+                axios.post('/api/auth/register/init', {
+                    email: this.email,
+                    name: this.name
+                }).then(response => {
+                    $('#step1').addClass('d-none')
+                    $('#step2').removeClass('d-none').find('input').first().focus()
+                }).catch(error => {
+                    // TODO
+                });
             },
+            // Submits the code to the API for verification
             submitStep2() {
-                // TODO: submit the code to API for verification
-                $('#step2').addClass('d-none')
-                $('#step3').removeClass('d-none').find('input').first().focus()
+                axios.post('/api/auth/register/verify', {
+                    code: this.code
+                }).then(response => {
+                    $('#step1,#step2').addClass('d-none')
+                    $('#step3').removeClass('d-none').find('input').first().focus()
+                    // FIXME: Reset domain selector, vue does set it to an empty value
+                    $('#register_domain > option').first().prop('selected', true);
+                }).catch(error => {
+                    // TODO
+                });
             },
+            // Submits the data to the API to create the user account
             submitStep3() {
-                // TODO: submit the data to API to create the user account
+                axios.post('/api/auth/register', {
+                    code: this.code,
+                    email: this.email,
+                    login: this.login,
+                    domain: this.domain,
+                    password: this.password,
+                    password_confirmation: this.password_confirmation
+                }).then(response => {
+                    $('#step2').addClass('d-none')
+                    $('#step3').removeClass('d-none').find('input').first().focus()
+                }).catch(error => {
+                    // TODO
+                });
             },
+            // Moves the user a step back in registration form
             stepBack(e) {
                 var card = $(e.target).closest('.card')
 

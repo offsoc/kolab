@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Controllers\Controller;
 
 class UsersController extends Controller
 {
@@ -19,7 +19,7 @@ class UsersController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+        $this->middleware('auth:api', ['except' => ['login']]);
     }
 
     /**
@@ -96,32 +96,6 @@ class UsersController extends Controller
     public function refresh()
     {
         return $this->respondWithToken($this->guard()->refresh());
-    }
-
-    public function register(Request $request)
-    {
-        $v = Validator::make(
-            $request->all(),
-            [
-                'email' => 'required|email|unique:users',
-                'password'  => 'required|min:3|confirmed',
-            ]
-        );
-
-        if ($v->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
-        }
-
-        $user = \App\User::create(
-            [
-                'email' => $request->email,
-                'password' => $request->password,
-            ]
-        );
-
-        $token = auth()->login($user);
-
-        return $this->respondWithToken($token);
     }
 
     /**

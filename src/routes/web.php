@@ -19,5 +19,5 @@ Route::get('/', $action);
 
 // Deep-links
 Route::get('login', $action);
-Route::get('register', $action);
+Route::get('register/{code?}', $action);
 //Route::get('invoice/{invoice}', $action);
