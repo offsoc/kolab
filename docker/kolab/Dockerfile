@@ -1,10 +1,6 @@
 FROM kolab/centos7:latest
 
-RUN rpm --import https://ssl.kolabsys.com/maipo.asc && \
-    yum -y install https://ssl.kolabsys.com/kolab-16-for-el7.rpm && \
-    sed -i -r -e '/^ssl/d' /etc/yum.repos.d/*.repo && \
-    yum -y install --setopt 'tsflags=' kolab rsyslog && \
-    yum -y update cyrus-imapd && \
+RUN yum -y install rsyslog && \
     yum clean all
 
 RUN systemctl disable \
