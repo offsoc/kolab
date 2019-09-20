@@ -24,9 +24,9 @@ Route::group(
         Route::post('logout', 'API\UsersController@logout');
         Route::post('refresh', 'API\UsersController@refresh');
 
-        Route::post('register/init', 'API\SignupController@init');
-        Route::post('register/verify', 'API\SignupController@verify');
-        Route::post('register', 'API\SignupController@register');
+        Route::post('signup/init', 'API\SignupController@init');
+        Route::post('signup/verify', 'API\SignupController@verify');
+        Route::post('signup', 'API\SignupController@signup');
     }
 );
 

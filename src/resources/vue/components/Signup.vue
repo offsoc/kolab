@@ -8,12 +8,12 @@
                 </p>
                 <form v-on:submit.prevent="submitStep1">
                     <div class="form-group">
-                        <label for="register_name" class="sr-only">Your Name</label>
-                        <input type="text" class="form-control" id="register_name" placeholder="Your Name" required autofocus v-model="name">
+                        <label for="signup_name" class="sr-only">Your Name</label>
+                        <input type="text" class="form-control" id="signup_name" placeholder="Your Name" required autofocus v-model="name">
                     </div>
                     <div class="form-group">
-                        <label for="register_email" class="sr-only">Existing Email or Phone Number</label>
-                        <input type="text" class="form-control" id="register_email" placeholder="Existing Email or Phone Number" required v-model="email">
+                        <label for="signup_email" class="sr-only">Existing Email or Phone Number</label>
+                        <input type="text" class="form-control" id="signup_email" placeholder="Existing Email or Phone Number" required v-model="email">
                     </div>
                     <button class="btn btn-primary" type="submit">Continue</button>
                 </form>
@@ -29,8 +29,8 @@
                 </p>
                 <form v-on:submit.prevent="submitStep2">
                     <div class="form-group">
-                        <label for="register_code" class="sr-only">Confirmation Code</label>
-                        <input type="text" class="form-control" id="register_code" placeholder="Confirmation Code" required v-model="code">
+                        <label for="signup_code" class="sr-only">Confirmation Code</label>
+                        <input type="text" class="form-control" id="signup_code" placeholder="Confirmation Code" required v-model="code">
                     </div>
                     <button class="btn btn-secondary" type="button" v-on:click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Continue</button>
@@ -46,22 +46,22 @@
                 </p>
                 <form v-on:submit.prevent="submitStep3">
                     <div class="form-group">
-                        <label for="register_login" class="sr-only"></label>
+                        <label for="signup_login" class="sr-only"></label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="register_login" required v-model="login">
+                            <input type="text" class="form-control" id="signup_login" required v-model="login">
                             <span class="input-group-text border-left-0 border-right-0 rounded-0">@</span>
-                            <select class="custom-select" id="register_domain" v-model="domain">
+                            <select class="custom-select" id="signup_domain" v-model="domain">
                                 <option value="kolabnow.com">kolabnow.com</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="register_password" class="sr-only">Password</label>
-                        <input type="password" class="form-control" id="register_password" placeholder="Password" required v-model="password">
+                        <label for="signup_password" class="sr-only">Password</label>
+                        <input type="password" class="form-control" id="signup_password" placeholder="Password" required v-model="password">
                     </div>
                     <div class="form-group">
-                        <label for="register_confirm" class="sr-only">Confirm Password</label>
-                        <input type="password" class="form-control" id="register_confirm" placeholder="Confirm Password" required v-model="password_confirmation">
+                        <label for="signup_confirm" class="sr-only">Confirm Password</label>
+                        <input type="password" class="form-control" id="signup_confirm" placeholder="Confirm Password" required v-model="password_confirmation">
                     </div>
                     <button class="btn btn-secondary" type="button" v-on:click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Submit</button>
@@ -95,7 +95,7 @@
         methods: {
             // Submits data to the API, validates and gets verification code
             submitStep1() {
-                axios.post('/api/auth/register/init', {
+                axios.post('/api/auth/signup/init', {
                     email: this.email,
                     name: this.name
                 }).then(response => {
@@ -107,20 +107,20 @@
             },
             // Submits the code to the API for verification
             submitStep2() {
-                axios.post('/api/auth/register/verify', {
+                axios.post('/api/auth/signup/verify', {
                     code: this.code
                 }).then(response => {
                     $('#step1,#step2').addClass('d-none')
                     $('#step3').removeClass('d-none').find('input').first().focus()
                     // FIXME: Reset domain selector, vue does set it to an empty value
-                    $('#register_domain > option').first().prop('selected', true);
+                    $('#signup_domain > option').first().prop('selected', true);
                 }).catch(error => {
                     // TODO
                 });
             },
             // Submits the data to the API to create the user account
             submitStep3() {
-                axios.post('/api/auth/register', {
+                axios.post('/api/auth/signup', {
                     code: this.code,
                     email: this.email,
                     login: this.login,

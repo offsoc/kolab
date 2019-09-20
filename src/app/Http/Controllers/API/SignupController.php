@@ -50,7 +50,7 @@ class SignupController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
-    public function register(Request $request)
+    public function signup(Request $request)
     {
         $v = Validator::make(
             $request->all(),

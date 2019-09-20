@@ -7,7 +7,7 @@ import DashboardComponent from '../components/Dashboard'
 import Error404Component from '../components/404'
 import LoginComponent from '../components/Login'
 import LogoutComponent from '../components/Logout'
-import RegisterComponent from '../components/Register'
+import SignupComponent from '../components/Signup'
 
 import store from './store'
 
@@ -33,9 +33,9 @@ const routes = [
         component: LogoutComponent
     },
     {
-        path: '/register/:code?',
-        name: 'register',
-        component: RegisterComponent
+        path: '/signup/:code?',
+        name: 'signup',
+        component: SignupComponent
     },
     {
         path: '*',
