@@ -8,8 +8,8 @@
     echo "objectclass: domainrelatedobject"
     echo "objectclass: inetdomain"
     echo "inetdomainstatus: active"
-    echo "associateddomain: mykolab.com"
-    echo "associateddomain: mykolab.ch"
+    echo "associateddomain: ${hosted_domain}"
+    echo "inetdomainbasedn: ${hosted_domain_rootdn}"
     echo ""
 
     echo "dn: cn=$(echo ${hosted_domain_rootdn} | sed -e 's/=/\\3D/g' -e 's/,/\\2D/g'),cn=mapping tree,cn=config"

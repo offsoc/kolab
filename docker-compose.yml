@@ -4,6 +4,8 @@ services:
     build:
       context: ./docker/kolab/
     container_name: kolab
+    extra_hosts:
+      - "kolab.mgmt.com:127.0.0.1"
     hostname: kolab.mgmt.com
     network_mode: host
     tmpfs:
@@ -20,3 +22,7 @@ services:
       - ./docker/certs/kolab.mgmt.com.cert:/etc/pki/tls/certs/kolab.mgmt.com.cert
       - ./docker/certs/kolab.mgmt.com.key:/etc/pki/tls/certs/kolab.mgmt.com.key
       - ./docker/kolab/utils:/root/utils:ro
+  redis:
+    container_name: redis
+    image: redis
+    network_mode: host

@@ -9,7 +9,7 @@ RUN systemctl disable \
         sshd.service && \
     systemctl enable rsyslog
 
-RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config
+RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
 RUN systemctl enable kolab-init.service

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "54af6bdce75d216b94a04ae8744970c2",
+    "content-hash": "bb9f117ab0344a5ca0c8bed45e7b90c8",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -854,14 +854,8 @@
             "version": "v1.1.1",
             "source": {
                 "type": "git",
-                "url": "https://gitlab.com/roundcube/net_ldap3.git",
+                "url": "https://git.kolab.org/diffusion/PNL/php-net_ldap3.git",
                 "reference": "4a380eeb67eb433976d47fd47f44745fb0978c50"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/roundcube%2Fnet_ldap3/repository/archive.zip?sha=4a380eeb67eb433976d47fd47f44745fb0978c50",
-                "reference": "4a380eeb67eb433976d47fd47f44745fb0978c50",
-                "shasum": ""
             },
             "require": {
                 "pear/net_ldap2": ">=2.0.12",
@@ -873,32 +867,31 @@
                     "lib/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-3.0+"
             ],
             "authors": [
                 {
                     "name": "Jeroen van Meeuwen",
-                    "role": "Lead",
-                    "email": "vanmeeuwen@kolabsys.com"
+                    "email": "vanmeeuwen@kolabsys.com",
+                    "role": "Lead"
                 },
                 {
                     "name": "Aleksander Machniak",
-                    "role": "Developer",
-                    "email": "machniak@kolabsys.com"
+                    "email": "machniak@kolabsys.com",
+                    "role": "Developer"
                 },
                 {
                     "name": "Thomas Bruederli",
-                    "role": "Developer",
-                    "email": "roundcube@gmail.com"
+                    "email": "roundcube@gmail.com",
+                    "role": "Developer"
                 }
             ],
             "description": "A successor of the PEAR:Net_LDAP2 module providing advanced functionality for accessing LDAP directories",
             "homepage": "http://git.kolab.org/pear/Net_LDAP3/",
             "keywords": [
-                "PEAR",
                 "ldap",
+                "pear",
                 "vlv"
             ],
             "time": "2019-08-23T08:44:34+00:00"

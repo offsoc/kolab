@@ -9,21 +9,22 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
 use App\Backends\LDAP;
+use App\Domain;
 
-class ProcessUserCreate implements ShouldQueue
+class ProcessDomainCreate implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $user;
+    protected $domain;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(\App\User $user)
+    public function __construct(Domain $domain)
     {
-        $this->user = $user;
+        $this->domain = $domain;
     }
 
     /**
@@ -33,6 +34,6 @@ class ProcessUserCreate implements ShouldQueue
      */
     public function handle()
     {
-        LDAP::createUser($this->user);
+        LDAP::createDomain($this->domain);
     }
 }

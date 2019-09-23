@@ -1,8 +1,12 @@
 #!/bin/bash
 
+cp /etc/hosts /etc/hosts.orig
+tac /etc/hosts.orig > /etc/hosts
+
 if [ ! -d "/etc/dirsrv/slapd-kolab/" ]; then
     setup-kolab \
         --default \
+        --fqdn=kolab.mgmt.com \
         --timezone=Europe/Zurich \
         --mysqlserver=new \
         --directory-manager-pwd=Welcome2KolabSystems 2>&1 | tee /root/setup-kolab.log
@@ -17,6 +21,5 @@ pushd /root/utils/
 ./06-create-hosted-domain.sh
 ./07-remove-cn-kolab-cn-config.sh
 ./08-remove-hosted-service-access-from-mgmt-domain.sh
-./09-add-self-reg-hosted-domain.sh
-./10-adjust-kolab-conf.sh
+./09-adjust-kolab-conf.sh
 popd
