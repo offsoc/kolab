@@ -19,6 +19,8 @@ class ProcessUserUpdate implements ShouldQueue
     /**
      * Create a new job instance.
      *
+     * @param \App\User $user The user for which to process the update.
+     *
      * @return void
      */
     public function __construct(\App\User $user)

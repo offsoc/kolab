@@ -15,5 +15,6 @@ class DomainSeeder extends Seeder
         Domain::create(['namespace' => 'example.com']);
         Domain::create(['namespace' => 'example.net']);
         Domain::create(['namespace' => 'example.org']);
+        Domain::create(['namespace' => 'kolabsystems.com']);
     }
 }

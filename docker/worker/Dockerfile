@@ -18,10 +18,12 @@ RUN yum -y install kolab-16-extras-fasttrack && \
 RUN yum -y update && \
     yum clean all
 
+RUN useradd worker
+
 COPY kolab-worker.service /etc/systemd/system/kolab-worker.service
 RUN systemctl enable kolab-worker.service
 
-COPY kolab-worker.sh /usr/local/sbin/
-RUN chmod 750 /usr/local/sbin/kolab-worker.sh
+COPY kolab-worker.sh /usr/local/bin/
+RUN chmod 755 /usr/local/bin/kolab-worker.sh
 
 CMD ["/lib/systemd/systemd"]

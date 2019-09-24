@@ -9,7 +9,8 @@ class DomainObserver
     /**
      * Handle the domain "created" event.
      *
-     * @param  \App\Domain  $domain
+     * @param \App\Domain $domain The domain.
+     *
      * @return void
      */
     public function created(Domain $domain)
@@ -20,7 +21,8 @@ class DomainObserver
     /**
      * Handle the domain "updated" event.
      *
-     * @param  \App\Domain  $domain
+     * @param \App\Domain $domain The domain.
+     *
      * @return void
      */
     public function updated(Domain $domain)
@@ -31,7 +33,8 @@ class DomainObserver
     /**
      * Handle the domain "deleted" event.
      *
-     * @param  \App\Domain  $domain
+     * @param \App\Domain $domain The domain.
+     *
      * @return void
      */
     public function deleted(Domain $domain)
@@ -42,7 +45,8 @@ class DomainObserver
     /**
      * Handle the domain "restored" event.
      *
-     * @param  \App\Domain  $domain
+     * @param \App\Domain $domain The domain.
+     *
      * @return void
      */
     public function restored(Domain $domain)
@@ -53,7 +57,8 @@ class DomainObserver
     /**
      * Handle the domain "force deleted" event.
      *
-     * @param  \App\Domain  $domain
+     * @param \App\Domain $domain The domain.
+     *
      * @return void
      */
     public function forceDeleted(Domain $domain)
