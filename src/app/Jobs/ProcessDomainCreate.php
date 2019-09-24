@@ -17,6 +17,8 @@ class ProcessDomainCreate implements ShouldQueue
 
     protected $domain;
 
+    public $tries = 5;
+
     /**
      * Create a new job instance.
      *

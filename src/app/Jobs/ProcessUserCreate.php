@@ -19,6 +19,8 @@ class ProcessUserCreate implements ShouldQueue
 
     protected $user;
 
+    public $tries = 5;
+
     /**
      * Create a new job instance.
      *
