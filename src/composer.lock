@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bb9f117ab0344a5ca0c8bed45e7b90c8",
+    "content-hash": "7c5c8c4b891f42b09cd5ad4116fe1d87",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -851,11 +851,11 @@
         },
         {
             "name": "kolab/net_ldap3",
-            "version": "v1.1.1",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://git.kolab.org/diffusion/PNL/php-net_ldap3.git",
-                "reference": "4a380eeb67eb433976d47fd47f44745fb0978c50"
+                "reference": "5201bb61595c3ade331d912fe8cfbfaa03093b29"
             },
             "require": {
                 "pear/net_ldap2": ">=2.0.12",
@@ -894,7 +894,7 @@
                 "pear",
                 "vlv"
             ],
-            "time": "2019-08-23T08:44:34+00:00"
+            "time": "2019-09-23T12:49:04+00:00"
         },
         {
             "name": "laravel/framework",
@@ -5983,7 +5983,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "kolab/net_ldap3": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
