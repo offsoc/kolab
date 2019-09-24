@@ -6,6 +6,11 @@ services:
     container_name: kolab
     extra_hosts:
       - "kolab.mgmt.com:127.0.0.1"
+    healthcheck:
+      interval: 10s
+      test: test -f /tmp/kolab-init.done
+      timeout: 5s
+      retries: 12
     hostname: kolab.mgmt.com
     network_mode: host
     tmpfs:
@@ -26,3 +31,20 @@ services:
     container_name: redis
     image: redis
     network_mode: host
+  worker:
+    build:
+      context: ./docker/worker/
+    container_name: worker
+    depends_on:
+      kolab:
+        condition: service_healthy
+    hostname: worker
+    network_mode: host
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - ./src:/home/worker/src.orig:ro
