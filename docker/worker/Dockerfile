@@ -12,8 +12,8 @@ RUN systemctl disable \
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
 
 RUN yum -y install kolab-16-extras-fasttrack && \
-    yum clean all && \
-    sed -i -r -e '/^ssl/d' /etc/yum.repos.d/*.repo
+    sed -i -r -e '/^ssl/d' /etc/yum.repos.d/*.repo && \
+    yum clean all
 
 RUN yum -y update && \
     yum clean all
