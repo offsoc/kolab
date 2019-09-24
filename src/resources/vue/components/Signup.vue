@@ -30,7 +30,7 @@
                 <form v-on:submit.prevent="submitStep2">
                     <div class="form-group">
                         <label for="signup_code" class="sr-only">Confirmation Code</label>
-                        <input type="text" class="form-control" id="signup_code" placeholder="Confirmation Code" required v-model="code">
+                        <input type="text" class="form-control" id="signup_code" placeholder="Confirmation Code" required v-model="short_code">
                     </div>
                     <button class="btn btn-secondary" type="button" v-on:click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Continue</button>
@@ -79,6 +79,7 @@
                 email: '',
                 name: '',
                 code: '',
+                short_code: '',
                 login: '',
                 domain: '',
                 password: '',
@@ -87,8 +88,9 @@
         },
         created() {
             // Verification code provided, jump to Step 2
-            if (this.$route.params.code) {
-                this.code = this.$route.params.code
+            if (this.$route.params.code && /^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(this.$route.params.code)) {
+                this.short_code = RegExp.$1
+                this.code = RegExp.$2
                 this.submitStep2()
             }
         },
@@ -101,27 +103,37 @@
                 }).then(response => {
                     $('#step1').addClass('d-none')
                     $('#step2').removeClass('d-none').find('input').first().focus()
+                    this.code = response.data.code
                 }).catch(error => {
                     // TODO
-                });
+                })
             },
             // Submits the code to the API for verification
             submitStep2() {
                 axios.post('/api/auth/signup/verify', {
-                    code: this.code
+                    email: this.email,
+                    name: this.name,
+                    code: this.code,
+                    short_code: this.short_code
                 }).then(response => {
                     $('#step1,#step2').addClass('d-none')
                     $('#step3').removeClass('d-none').find('input').first().focus()
+
                     // FIXME: Reset domain selector, vue does set it to an empty value
-                    $('#signup_domain > option').first().prop('selected', true);
+                    $('#signup_domain > option').first().prop('selected', true)
+
+                    // Reset user name/email, we don't have them if user used a verification link
+                    this.name = response.data.name
+                    this.email = response.data.email
                 }).catch(error => {
                     // TODO
-                });
+                })
             },
             // Submits the data to the API to create the user account
             submitStep3() {
                 axios.post('/api/auth/signup', {
                     code: this.code,
+                    short_code: this.short_code,
                     email: this.email,
                     login: this.login,
                     domain: this.domain,
@@ -132,7 +144,7 @@
                     $('#step3').removeClass('d-none').find('input').first().focus()
                 }).catch(error => {
                     // TODO
-                });
+                })
             },
             // Moves the user a step back in registration form
             stepBack(e) {

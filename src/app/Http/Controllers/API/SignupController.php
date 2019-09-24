@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\SignupCode;
+use App\User;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class SignupController extends Controller
 {
@@ -21,11 +25,31 @@ class SignupController extends Controller
      */
     public function init(Request $request)
     {
-        // TODO: validate user name and email/phone
-        // TODO: generate the verification code
+        // Validate user name and email
+        // TODO: Extended validation and support for phone number
+        $v = Validator::make(
+            $request->all(),
+            [
+                'email' => 'required|email',
+                'name' => 'required',
+            ]
+        );
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        // Generate the verification code
+        $code = SignupCode::create([
+                'data' => [
+                    'email' => $request->email,
+                    'name' => $request->name,
+                ]
+        ]);
+
         // TODO: send email/sms message
 
-        return response()->json(['status' => 'success']);
+        return response()->json(['status' => 'success', 'code' => $code->code]);
     }
 
     /**
@@ -37,10 +61,36 @@ class SignupController extends Controller
      */
     public function verify(Request $request)
     {
-        // TODO: validate the code
-        // TODO: return user name and email/phone from the codes database on success
+        // Validate the request args
+        $v = Validator::make(
+            $request->all(),
+            [
+                'code' => 'required',
+                'short_code' => 'required',
+            ]
+        );
 
-        return response()->json(['status' => 'success']);
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        // Validate the code
+        $code = SignupCode::find($request->code);
+
+        if (empty($code)
+            || $code->isExpired()
+            || Str::upper($request->short_code) !== Str::upper($code->short_code)
+        ) {
+            $errors = ['short_code' => "The code is invalid or expired."];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        // Return user name and email/phone from the codes database on success
+        return response()->json([
+            'status' => 'success',
+            'email' => $code->data['email'],
+            'name' => $code->data['name'],
+        ]);
     }
 
     /**
@@ -52,11 +102,13 @@ class SignupController extends Controller
      */
     public function signup(Request $request)
     {
+        // Validate input
         $v = Validator::make(
             $request->all(),
             [
-                'email' => 'required|email|unique:users',
-                'password'  => 'required|min:3|confirmed',
+                'domain' => 'required|min:3',
+                'login' => 'required|min:2',
+                'password' => 'required|min:3|confirmed',
             ]
         );
 
@@ -64,14 +116,32 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        $user = \App\User::create(
+        $login = $request->login . '@' . $request->domain;
+
+        // TODO: check if specified domain is ours
+        // TODO: validate login
+
+        // Validate verification codes (again)
+        $v = $this->verify($request);
+        if ($v->status() !== 200) {
+            return $v;
+        }
+
+        // TODO: check if user with specified login already exists
+
+        $user = User::create(
             [
-                'email' => $request->email,
+                // TODO: Save the external email (or phone) ?
+                'name' => $request->name,
+                'login' => $login,
                 'password' => $request->password,
             ]
         );
 
         $token = auth()->login($user);
+
+        // Remove the verification code
+        SignupCode::destroy($request->code);
 
         return $this->respondWithToken($token);
     }
