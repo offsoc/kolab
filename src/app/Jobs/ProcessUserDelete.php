@@ -22,6 +22,8 @@ class ProcessUserDelete implements ShouldQueue
     /**
      * Create a new job instance.
      *
+     * @param \App\User $user The user to delete.
+     *
      * @return void
      */
     public function __construct(\App\User $user)

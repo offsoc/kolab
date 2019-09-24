@@ -24,6 +24,8 @@ class ProcessUserCreate implements ShouldQueue
     /**
      * Create a new job instance.
      *
+     * @param \App\User $user The user to create.
+     *
      * @return void
      */
     public function __construct(\App\User $user)

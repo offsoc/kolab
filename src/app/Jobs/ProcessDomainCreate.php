@@ -22,6 +22,8 @@ class ProcessDomainCreate implements ShouldQueue
     /**
      * Create a new job instance.
      *
+     * @param Domain $domain The domain to create.
+     *
      * @return void
      */
     public function __construct(Domain $domain)
