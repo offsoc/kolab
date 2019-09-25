@@ -3,6 +3,9 @@ namespace App\Backends;
 
 use Illuminate\Support\Facades\Config;
 
+use App\Domain;
+use App\User;
+
 // phpcs:ignore
 class LDAP
 {
@@ -12,7 +15,7 @@ class LDAP
     /**
      * Create a domain in LDAP.
      *
-     * @param \App\Domain $domain The domain to create.
+     * @param Domain $domain The domain to create.
      *
      * @return void
      */
@@ -173,7 +176,7 @@ class LDAP
      *
      * 3) The Directory Manager account.
      *
-     * @param \App\User $user The user account to create.
+     * @param User $user The user account to create.
      *
      * @return void
      */
