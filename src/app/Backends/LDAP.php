@@ -4,6 +4,9 @@ namespace App\Backend;
 
 use Illuminate\Support\Facades\Config;
 
+use App\Domain;
+use App\User;
+
 class LDAP
 {
     // Get settings with Config::get('ldap.$mode.$key');
@@ -12,7 +15,7 @@ class LDAP
     /**
      * Create a domain in LDAP.
      *
-     * @param \App\Domain $domain The domain to create.
+     * @param Domain $domain The domain to create.
      *
      * @return void
      */
@@ -173,7 +176,7 @@ class LDAP
      *
      * 3) The Directory Manager account.
      *
-     * @param \App\User $user The user account to create.
+     * @param User $user The user account to create.
      *
      * @return void
      */
