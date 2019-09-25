@@ -1,6 +1,7 @@
 FROM kolab/centos7:latest
 
 RUN yum -y install rsyslog && \
+    yum --enablerepo=kolab-16-updates-testing -y update pykolab && \
     yum clean all
 
 RUN systemctl disable \

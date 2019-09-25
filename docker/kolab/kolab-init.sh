@@ -8,8 +8,18 @@ if [ ! -d "/etc/dirsrv/slapd-kolab/" ]; then
         --default \
         --fqdn=kolab.mgmt.com \
         --timezone=Europe/Zurich \
-        --mysqlserver=new \
+        --mysqlserver=existing \
+        --mysqlrootpw=Welcome2KolabSystems \
         --directory-manager-pwd=Welcome2KolabSystems 2>&1 | tee /root/setup-kolab.log
+
+    mysql -h 127.0.0.1 -u root --password=Welcome2KolabSystems \
+        -e "GRANT ALL PRIVILEGES ON kolabdev.* TO 'kolabdev'@'127.0.0.1' IDENTIFIED BY 'kolab';"
+
+    mysql -h 127.0.0.1 -u root --password=Welcome2KolabSystems \
+        -e "FLUSH PRIVILEGES;"
+
+    mysql -h 127.0.0.1 -u root --password=Welcome2KolabSystems \
+        -e "CREATE DATABASE kolabdev;"
 
     pushd /root/utils/
     ./01-reset-kolab-service-password.sh
