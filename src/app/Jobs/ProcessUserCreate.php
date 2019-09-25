@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
 use App\Backends\LDAP;
+use App\User;
 
 class ProcessUserCreate implements ShouldQueue
 {
@@ -24,11 +25,11 @@ class ProcessUserCreate implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param \App\User $user The user to create.
+     * @param User $user The user to create.
      *
      * @return void
      */
-    public function __construct(\App\User $user)
+    public function __construct(User $user)
     {
         $this->user = $user;
     }
