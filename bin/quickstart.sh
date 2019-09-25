@@ -61,3 +61,4 @@ rm -rf database/database.sqlite
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
 ./artisan serve
 popd
+
