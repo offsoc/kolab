@@ -13,7 +13,7 @@ services:
       interval: 10s
       test: test -f /tmp/kolab-init.done
       timeout: 5s
-      retries: 12
+      retries: 30
     hostname: kolab.mgmt.com
     network_mode: host
     tmpfs:
@@ -38,7 +38,7 @@ services:
       interval: 10s
       test: test -e /var/run/mysqld/mysqld.sock
       timeout: 5s
-      retries: 12
+      retries: 30
     image: mariadb
     network_mode: host
   redis:
