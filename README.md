@@ -10,6 +10,7 @@ More detailed:
 
 ```
 $ bin/regen-certs
+$ docker pull kolab/centos7:latest
 $ docker-compose down
 $ docker-compose up -d
 $ cd src/
