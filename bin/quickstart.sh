@@ -6,6 +6,8 @@ base_dir=$(dirname $(dirname $0))
 
 bin/regen-certs
 
+docker pull kolab/centos7:latest
+
 docker-compose down
 docker-compose build
 docker-compose up -d
