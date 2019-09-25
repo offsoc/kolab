@@ -51,6 +51,16 @@ EOF
         /etc/roundcubemail/config.inc.php \
         /etc/roundcubemail/calendar.inc.php
 
+    echo "ldap_domain_base_dn: ou=Domains,dc=mgmt,dc=com" >> /etc/imapd.conf
+
+    sed -i -r \
+        -e "s/(\s+)base => '.*',$/\1base => 'dc=hosted,dc=com',/g" \
+        -e "s/^base_dn = .*$/base_dn = dc=hosted,dc=com/g" \
+        -e "s/^search_base = .*$/search_base = dc=hosted,dc=com/g" \
+        /etc/amavisd/amavisd.conf \
+        /etc/kolab-freebusy/config.ini \
+        /etc/postfix/ldap/*.cf
+
     pushd /root/utils/
     ./01-reset-kolab-service-password.sh
     ./02-reset-cyrus-admin-password.sh
