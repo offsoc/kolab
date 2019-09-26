@@ -23,8 +23,7 @@ $factory->define(
             'name' => $faker->name,
             'email' => $faker->unique()->safeEmail,
             'email_verified_at' => now(),
-            'password' => Str::random(64),
-            'remember_token' => Str::random(10),
+            'password' => Str::random(64)
         ];
     }
 );
