@@ -57,9 +57,13 @@ EOF
         -e "s/(\s+)base => '.*',$/\1base => 'dc=hosted,dc=com',/g" \
         -e "s/^base_dn = .*$/base_dn = dc=hosted,dc=com/g" \
         -e "s/^search_base = .*$/search_base = dc=hosted,dc=com/g" \
+        -e "s/(\s+)'base_dn'(\s+)=> '.*',/\1'base_dn'\2=> 'dc=hosted,dc=com',/g" \
+        -e "s/(\s+)'search_base_dn'(\s+)=> '.*',/\1'search_base_dn'\2=> 'dc=hosted,dc=com',/g" \
         /etc/amavisd/amavisd.conf \
         /etc/kolab-freebusy/config.ini \
-        /etc/postfix/ldap/*.cf
+        /etc/postfix/ldap/*.cf \
+        /etc/roundcubemail/config.inc.php
+        /etc/roundcubemail/kolab_auth.inc.php
 
     pushd /root/utils/
     ./01-reset-kolab-service-password.sh
