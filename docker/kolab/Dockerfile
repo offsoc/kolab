@@ -6,7 +6,7 @@ RUN yum -y install rsyslog && \
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
 
-RUN rm -rf /etc/systemd/system/multi-target.wants/{avahi-daemon,sshd}.* && \
+RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && \
     ln -s /etc/systemd/system/kolab-init.service \
         /etc/systemd/system/multi-user.target.wants/kolab-init.service
 
