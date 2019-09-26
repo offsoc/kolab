@@ -12,7 +12,7 @@ RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/de
 
 RUN yum -y install kolab-16-extras-fasttrack && \
     sed -i -r -e '/^ssl/d' /etc/yum.repos.d/*.repo && \
-    yum -y update php\* && \
+    yum -y update php\* pcre2\* && \
     yum clean all
 
 RUN useradd worker
