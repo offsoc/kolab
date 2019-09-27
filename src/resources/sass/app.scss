@@ -5,3 +5,9 @@
 
 // Bootstrap
 @import '~bootstrap/scss/bootstrap';
+
+
+// Fixes Toastr incompatibility with Bootstrap
+.toast-container > .toast {
+    opacity: 1;
+}

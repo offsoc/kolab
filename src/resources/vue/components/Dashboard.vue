@@ -35,8 +35,6 @@
             })
             .then(response => {
                 this.data = response.data.data
-            }).catch(error => {
-
             })
         }
     }

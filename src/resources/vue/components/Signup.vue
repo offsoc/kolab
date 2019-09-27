@@ -6,7 +6,7 @@
                 <p class="card-text">
                     Sign up to start your free month.
                 </p>
-                <form v-on:submit.prevent="submitStep1">
+                <form v-on:submit.prevent="submitStep1" data-validation-prefix="signup_">
                     <div class="form-group">
                         <label for="signup_name" class="sr-only">Your Name</label>
                         <input type="text" class="form-control" id="signup_name" placeholder="Your Name" required autofocus v-model="name">
@@ -27,7 +27,7 @@
                     We sent out a confirmation code to PHONE/EMAIL.
                     Enter the code we sent you, or click the link in the message.
                 </p>
-                <form v-on:submit.prevent="submitStep2">
+                <form v-on:submit.prevent="submitStep2" data-validation-prefix="signup_">
                     <div class="form-group">
                         <label for="signup_code" class="sr-only">Confirmation Code</label>
                         <input type="text" class="form-control" id="signup_code" placeholder="Confirmation Code" required v-model="short_code">
@@ -44,13 +44,13 @@
                 <p class="card-text">
                     Create your Kolab identity (you can choose additional addresses later).
                 </p>
-                <form v-on:submit.prevent="submitStep3">
+                <form v-on:submit.prevent="submitStep3" data-validation-prefix="signup_">
                     <div class="form-group">
                         <label for="signup_login" class="sr-only"></label>
                         <div class="input-group">
                             <input type="text" class="form-control" id="signup_login" required v-model="login">
                             <span class="input-group-text border-left-0 border-right-0 rounded-0">@</span>
-                            <select class="custom-select" id="signup_domain" v-model="domain">
+                            <select class="custom-select rounded-right" id="signup_domain" v-model="domain">
                                 <option value="kolabnow.com">kolabnow.com</option>
                             </select>
                         </div>
@@ -97,6 +97,8 @@
         methods: {
             // Submits data to the API, validates and gets verification code
             submitStep1() {
+                this.$root.$emit('clearFormValidation', $('#step1 form'))
+
                 axios.post('/api/auth/signup/init', {
                     email: this.email,
                     name: this.name
@@ -104,12 +106,12 @@
                     $('#step1').addClass('d-none')
                     $('#step2').removeClass('d-none').find('input').first().focus()
                     this.code = response.data.code
-                }).catch(error => {
-                    // TODO
                 })
             },
             // Submits the code to the API for verification
             submitStep2() {
+                this.$root.$emit('clearFormValidation', $('#step2 form'))
+
                 axios.post('/api/auth/signup/verify', {
                     email: this.email,
                     name: this.name,
@@ -125,12 +127,12 @@
                     // Reset user name/email, we don't have them if user used a verification link
                     this.name = response.data.name
                     this.email = response.data.email
-                }).catch(error => {
-                    // TODO
                 })
             },
             // Submits the data to the API to create the user account
             submitStep3() {
+                this.$root.$emit('clearFormValidation', $('#step3 form'))
+
                 axios.post('/api/auth/signup', {
                     code: this.code,
                     short_code: this.short_code,
@@ -142,8 +144,6 @@
                 }).then(response => {
                     $('#step2').addClass('d-none')
                     $('#step3').removeClass('d-none').find('input').first().focus()
-                }).catch(error => {
-                    // TODO
                 })
             },
             // Moves the user a step back in registration form
