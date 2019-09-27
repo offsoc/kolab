@@ -1,8 +1,8 @@
-var staticCacheName = "kolab-v" + new Date().getTime();
+var staticCacheName = "kolab-v1";
 var filesToCache = [
     '/offline',
-    '/css/app.css',
-    '/js/app.js',
+//    '/css/app.css',
+//    '/js/app.js',
     '/images/icons/icon-72x72.png',
     '/images/icons/icon-96x96.png',
     '/images/icons/icon-128x128.png',
