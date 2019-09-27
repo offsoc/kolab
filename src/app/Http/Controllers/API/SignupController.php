@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 
 class SignupController extends Controller
 {
+    protected $code;
+
     /**
      * Starts signup process.
      *
@@ -85,6 +87,10 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
+        // For signup last-step mode remember the code object, so we can delete it
+        // with single SQL query (->delete()) instead of two (::destroy())
+        $this->code = $code;
+
         // Return user name and email/phone from the codes database on success
         return response()->json([
             'status' => 'success',
@@ -143,7 +149,7 @@ class SignupController extends Controller
         );
 
         // Remove the verification code
-        SignupCode::destroy($request->code);
+        $this->code->delete();
 
         $token = auth()->login($user);
 
