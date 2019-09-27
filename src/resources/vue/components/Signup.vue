@@ -48,10 +48,11 @@
                     <div class="form-group">
                         <label for="signup_login" class="sr-only"></label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="signup_login" required v-model="login">
+                            <input type="text" class="form-control" id="signup_login" required>
                             <span class="input-group-text border-left-0 border-right-0 rounded-0">@</span>
-                            <select class="custom-select rounded-right" id="signup_domain" v-model="domain">
+                            <select class="custom-select rounded-right" id="signup_domain">
                                 <option value="kolabnow.com">kolabnow.com</option>
+                                <option value="kolabnow.com">mykolab.com</option>
                             </select>
                         </div>
                     </div>
@@ -73,6 +74,8 @@
 </template>
 
 <script>
+    import store from '../js/store'
+
     export default {
         data() {
             return {
@@ -80,8 +83,6 @@
                 name: '',
                 code: '',
                 short_code: '',
-                login: '',
-                domain: '',
                 password: '',
                 password_confirmation: ''
             }
@@ -121,7 +122,6 @@
                     $('#step1,#step2').addClass('d-none')
                     $('#step3').removeClass('d-none').find('input').first().focus()
 
-                    // FIXME: Reset domain selector, vue does set it to an empty value
                     $('#signup_domain > option').first().prop('selected', true)
 
                     // Reset user name/email, we don't have them if user used a verification link
@@ -137,13 +137,21 @@
                     code: this.code,
                     short_code: this.short_code,
                     email: this.email,
-                    login: this.login,
-                    domain: this.domain,
+                    // FIXME: For some reason if I use v-model for login and domain fields
+                    //        whenever user enters something in login input the domain field
+                    //        is reset to an empty value. We'll use jQuery for now
+                    login: $('#signup_login').val(),
+                    domain: $('#signup_domain').val(),
                     password: this.password,
                     password_confirmation: this.password_confirmation
                 }).then(response => {
                     $('#step2').addClass('d-none')
                     $('#step3').removeClass('d-none').find('input').first().focus()
+
+                    // login user, store the token and redirect to dashboard
+                    store.commit('loginUser')
+                    localStorage.setItem('token', response.data.access_token)
+                    this.$router.push({name: 'dashboard'})
                 })
             },
             // Moves the user a step back in registration form

@@ -12,8 +12,7 @@ class UsersController extends Controller
     /**
      * Create a new API\UsersController instance.
      *
-     * Ensures that the correct authentication middleware is applied except for /login and
-     * /register.
+     * Ensures that the correct authentication middleware is applied except for /login
      *
      * @return void
      */

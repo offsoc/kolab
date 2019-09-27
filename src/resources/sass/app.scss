@@ -7,6 +7,10 @@
 @import '~bootstrap/scss/bootstrap';
 
 
+#app {
+    margin-top: 3em;
+}
+
 // Fixes Toastr incompatibility with Bootstrap
 .toast-container > .toast {
     opacity: 1;

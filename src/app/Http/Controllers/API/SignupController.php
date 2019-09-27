@@ -127,13 +127,17 @@ class SignupController extends Controller
             return $v;
         }
 
+        $code_data  = $v->getData();
+        $user_name  = $code_data->name;
+        $user_email = $code_data->email;
+
         // TODO: check if user with specified login already exists
 
         $user = User::create(
             [
                 // TODO: Save the external email (or phone) ?
-                'name' => $request->name,
-                'login' => $login,
+                'name' => $user_name,
+                'email' => $login,
                 'password' => $request->password,
             ]
         );
@@ -158,7 +162,7 @@ class SignupController extends Controller
         return response()->json([
                 'access_token' => $token,
                 'token_type' => 'bearer',
-                'expires_in' => $this->guard()->factory()->getTTL() * 60,
+                'expires_in' => Auth::guard()->factory()->getTTL() * 60,
         ]);
     }
 }
