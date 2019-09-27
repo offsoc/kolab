@@ -142,10 +142,10 @@ class SignupController extends Controller
             ]
         );
 
-        $token = auth()->login($user);
-
         // Remove the verification code
         SignupCode::destroy($request->code);
+
+        $token = auth()->login($user);
 
         return $this->respondWithToken($token);
     }
