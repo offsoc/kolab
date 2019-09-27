@@ -40,12 +40,12 @@ Vue.use(VueToastr, {
 })
 
 // Add a response interceptor for general/validation error handler
-window.axios.interceptors.response.use(response => {
+window.axios.interceptors.response.use(
+    response => {
         // Do nothing
         return response
-    }, error => {
-        console.log(error.response)
-
+    },
+    error => {
         var error_msg
 
         if (error.response && error.response.status == 422) {
@@ -78,4 +78,5 @@ window.axios.interceptors.response.use(response => {
 
         // Pass the error as-is
         return Promise.reject(error)
-    });
+    }
+)
