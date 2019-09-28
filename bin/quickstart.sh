@@ -21,6 +21,7 @@ cp .env.example .env
 ./artisan key:generate
 ./artisan jwt:secret -f
 ./artisan clear-compiled
+./artisan cache:clear
 npm run dev
 popd
 
@@ -28,7 +29,7 @@ docker-compose up -d worker
 
 pushd ${base_dir}/src/
 rm -rf database/database.sqlite
-./artisan migrate:refresh --seed
+php -dmemory_limit=512M ./artisan migrate:refresh --seed
 ./artisan serve
 popd
 
