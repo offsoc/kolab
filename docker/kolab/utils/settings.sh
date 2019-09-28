@@ -15,6 +15,7 @@ export cyrus_admin_pw="Welcome2KolabSystems"
 export hosted_kolab_service_pw="Welcome2KolabSystems"
 
 export hosted_domain="hosted.com"
+export hosted_domain_db="hosted_com"
 export hosted_domain_rootdn="dc=hosted,dc=com"
 
 export domain_base_dn="ou=Domains,dc=mgmt,dc=com"

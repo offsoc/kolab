@@ -14,9 +14,10 @@ oldpw=$(grep ^service_bind_pw /etc/kolab/kolab.conf | awk '{print $3}')
 
 sed -i -r \
     -e "s/${oldpw}/${ldap_bindpw}/g" \
-    $(grep -rn ${oldpw} /etc/ | awk -F':' '{print $1}' | sort -u)
+    $(grep -rn -- ${oldpw} /etc/ | awk -F':' '{print $1}' | sort -u)
 
 systemctl restart \
+    cyrus-imapd \
     kolabd \
     kolab-saslauthd \
     postfix
