@@ -58,7 +58,8 @@ window.axios.interceptors.response.use(
 
                     if (input.length) {
                         input.addClass('is-invalid')
-                            .parent().append($('<div class="invalid-feedback">').text(msg.join('<br>')))
+                            .parent().append($('<div class="invalid-feedback">')
+                                .text($.type(msg) === 'string' ? msg : msg.join('<br>')))
 
                         return false
                     }

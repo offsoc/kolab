@@ -11,9 +11,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
+/**
+ * Signup process API
+ */
 class SignupController extends Controller
 {
+    /** @var SignupCode A verification code object */
     protected $code;
+
 
     /**
      * Starts signup process.
@@ -27,18 +32,22 @@ class SignupController extends Controller
      */
     public function init(Request $request)
     {
-        // Validate user name and email
-        // TODO: Extended validation and support for phone number
+        // Check required fields
         $v = Validator::make(
             $request->all(),
             [
-                'email' => 'required|email',
+                'email' => 'required',
                 'name' => 'required',
             ]
         );
 
         if ($v->fails()) {
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        // Validate user email (or phone)
+        if ($error = $this->validatePhoneOrEmail($request->email, $is_phone)) {
+            return response()->json(['status' => 'error', 'errors' => ['email' => $error]], 422);
         }
 
         // Generate the verification code
@@ -49,7 +58,8 @@ class SignupController extends Controller
                 ]
         ]);
 
-        // TODO: send email/sms message
+        // Send email/sms message
+        $this->{$is_phone ? 'sendSMS' : 'sendEmail'}($code);
 
         return response()->json(['status' => 'success', 'code' => $code->code]);
     }
@@ -76,7 +86,7 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        // Validate the code
+        // Validate the verification code
         $code = SignupCode::find($request->code);
 
         if (empty($code)
@@ -124,8 +134,10 @@ class SignupController extends Controller
 
         $login = $request->login . '@' . $request->domain;
 
-        // TODO: check if specified domain is ours
-        // TODO: validate login
+        // Validate login (email)
+        if ($error = $this->validateEmail($login, true)) {
+            return response()->json(['status' => 'error', 'errors' => ['login' => $error]], 422);
+        }
 
         // Validate verification codes (again)
         $v = $this->verify($request);
@@ -137,11 +149,12 @@ class SignupController extends Controller
         $user_name  = $code_data->name;
         $user_email = $code_data->email;
 
-        // TODO: check if user with specified login already exists
+        // We allow only ASCII, so we can safely lower-case the email address
+        $login = Str::lower($login);
 
         $user = User::create(
             [
-                // TODO: Save the external email (or phone) ?
+                // TODO: Save the external email (or phone)
                 'name' => $user_name,
                 'email' => $login,
                 'password' => $request->password,
@@ -153,22 +166,95 @@ class SignupController extends Controller
 
         $token = auth()->login($user);
 
-        return $this->respondWithToken($token);
-    }
-
-    /**
-     * Get the token array structure.
-     *
-     * @param string $token Respond with this token.
-     *
-     * @return \Illuminate\Http\JsonResponse JSON response
-     */
-    protected function respondWithToken($token)
-    {
         return response()->json([
                 'access_token' => $token,
                 'token_type' => 'bearer',
                 'expires_in' => Auth::guard()->factory()->getTTL() * 60,
         ]);
+    }
+
+    /**
+     * Checks if the input string is a valid email address or a phone number
+     *
+     * @param string $email     Email address or phone number
+     * @param bool   &$is_phone Will be set to True if the string is valid phone number
+     *
+     * @return string Error message on validation error
+     */
+    protected function validatePhoneOrEmail($input, &$is_phone = false)
+    {
+        $is_phone = false;
+
+        if (strpos($input, '@')) {
+            return $this->validateEmail($input);
+        }
+
+        $input = str_replace(array('-', ' '), '', $input);
+
+        if (!preg_match('/^\+?[0-9]{9,12}$/', $input)) {
+            return __('validation.noemailorphone');
+        }
+
+        $is_phone = true;
+    }
+
+    /**
+     * Email address validation
+     *
+     * @param string $email  Email address
+     * @param bool   $signup Enables additional checks for signup mode
+     *
+     * @return string Error message on validation error
+     */
+    protected function validateEmail($email, $signup = false)
+    {
+        $v = Validator::make(['email' => $email], ['email' => 'required|email']);
+
+        if ($v->fails()) {
+            return __('validation.emailinvalid');
+        }
+
+        // Extended checks for an address that is supposed to become a login to Kolab
+        if ($signup) {
+            list($local, $domain) = explode('@', $email);
+
+            // Local part validation
+            if (!preg_match('/^[A-Za-z0-9_.-]+$/', $local)) {
+                return __('validation.emailinvalid');
+            }
+
+            // Check if the local part is not one of exceptions
+            $exceptions = '/^(admin|administrator|sales|root)$/i';
+            if (preg_match($exceptions, $local)) {
+                return __('validation.emailexists');
+            }
+
+            // Check if user with specified login already exists
+            if (User::where('email', $email)->first()) {
+                return __('validation.emailexists');
+            }
+
+            // TODO: check if specified domain is ours
+        }
+    }
+
+    /**
+     * Sends SMS message for signup verification.
+     *
+     * @param App\SignupCode $code Verification code object
+     */
+    protected function sendSMS(SignupCode $code)
+    {
+        // TODO
+    }
+
+    /**
+     * Sends Email message for signup verification.
+     *
+     * @param App\SignupCode $code Verification code object
+     */
+    protected function sendEmail(SignupCode $code)
+    {
+        // TODO
     }
 }
