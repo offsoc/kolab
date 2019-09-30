@@ -6,6 +6,8 @@
 // Bootstrap
 @import '~bootstrap/scss/bootstrap';
 
+// Toastr
+@import '~@deveodk/vue-toastr/dist/@deveodk/vue-toastr.css';
 
 #app {
     margin-top: 3em;
