@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SignupVerificationEmail;
+use App\Jobs\SignupVerificationSMS;
 use App\SignupCode;
 use App\User;
 
@@ -59,7 +61,12 @@ class SignupController extends Controller
         ]);
 
         // Send email/sms message
-        $this->{$is_phone ? 'sendSMS' : 'sendEmail'}($code);
+        if ($is_phone) {
+            SignupVerificationSMS::dispatch($code);
+        }
+        else {
+            SignupVerificationEmail::dispatch($code);
+        }
 
         return response()->json(['status' => 'success', 'code' => $code->code]);
     }
@@ -236,25 +243,5 @@ class SignupController extends Controller
 
             // TODO: check if specified domain is ours
         }
-    }
-
-    /**
-     * Sends SMS message for signup verification.
-     *
-     * @param App\SignupCode $code Verification code object
-     */
-    protected function sendSMS(SignupCode $code)
-    {
-        // TODO
-    }
-
-    /**
-     * Sends Email message for signup verification.
-     *
-     * @param App\SignupCode $code Verification code object
-     */
-    protected function sendEmail(SignupCode $code)
-    {
-        // TODO
     }
 }
