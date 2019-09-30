@@ -2,13 +2,15 @@
 
 namespace App\Jobs;
 
+use App\Mail\SignupVerification;
 use App\SignupCode;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 
 class SignupVerificationEmail implements ShouldQueue
 {
@@ -51,6 +53,6 @@ class SignupVerificationEmail implements ShouldQueue
      */
     public function handle()
     {
-        // TODO
+        Mail::to($this->code->data['email'])->send(new SignupVerification($this->code));
     }
 }
