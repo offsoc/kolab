@@ -42,12 +42,13 @@ POSTFIX_REFUSAL %{QUEUEID:local_queueid}: host %{RELAY} refused to talk to me: %
 POSTFIX_RELAY %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=(?:%{RELAY}|local|none),(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \((?:.* SESSIONID=<%{CYRUS_IMAP_SESSIONID:session_id}>\))?(?:.* (forwarded|queued) as %{QUEUEID:remote_queueid}\))?(?:%{DATA:reason}\))?
 POSTFIX_TIMEOUT %{QUEUEID:local_queueid}: conversation with %{RELAY} timed out while %{GREEDYDATA:reason}
 POSTFIX_TLS_HANDSHAKE %{QUEUEID:local_queueid}: Cannot start TLS: handshake failure
+POSTFIX_TLS_PROBLEM %{MESSAGELEVEL}: TLS library problem: %{GREEDYDATA}
+POSTFIX_SSL_ERROR SSL_(?:accept|connect) error (?:from %{CLIENT_SRC}|to %{CLIENT_DEST}): %{DATA}
 
 # Use DATA:to, because people mistype address delimiters, and programmers sometimes... well.
 POSTFIX_ACTIONS %{QUEUEID:local_queueid}: %{POSTFIX_ACTION}: %{DATA:command} from %{CLIENT}: %{GREEDYDATA:reason}; (from=<(?:%{EMAIL_ADDRESS:from})?> (to=<%{DATA:to}> )?)?proto=%{DATA:proto} helo=<%{DATA:smtp_helo}>
 POSTFIX_AUTH_CLIENT (?:(%{QUEUEID:local_queueid}: client=%{CLIENT}(, sasl_method=%{DATA}, sasl_username=%{EMAIL_ADDRESS:client_auth})?)|warning: %{CLIENT}: SASL PLAIN authentication failed: authentication failure)
 POSTFIX_CONNECTS (lost connection after %{DATA}|(?:dis)?connect) from %{CLIENT}
-POSTFIX_SSL_ERROR SSL_(?:accept|connect) error (?:from %{CLIENT_SRC}|to %{CLIENT_DEST}): %{DATA}
 POSTFIX_TIMEOUTS timeout after %{DATA:command} from %{CLIENT}
 
 POSTFIX_CLEANUP %{QUEUEID:local_queueid}: (?:(?:resent-)?message-id=(<%{DATA:message_id}>)?|%{POSTFIX_ACTION}: %{DATA:header_replace} from %{CLIENT}; from=<(%{EMAIL_ADDRESS:from})?> to=<%{EMAIL_ADDRESS:to}> proto=%{DATA} helo=<%{DATA:smtp_helo}>: %{GREEDYDATA:header_replacement})
@@ -70,7 +71,7 @@ POSTFIX_PICKUP_MESSAGES (?:%{POSTFIX_PICKUP})
 POSTFIX_QMGR_MESSAGES (?:%{POSTFIX_QMGR}|%{POSTFIX_RELAY}|%{POSTFIX_WARNING})
 POSTFIX_SCACHE_MESSAGES (?:%{POSTFIX_STATS})
 POSTFIX_SCRIPT_MESSAGES (?:starting|stopping|waiting for) the Postfix mail system(%{DATA})?
-POSTFIX_SMTP_MESSAGES (?:%{POSTFIX_4XX}|%{POSTFIX_5XX}|%{POSTFIX_CERTINVALID}|%{POSTFIX_CONNECT_FROM}|%{POSTFIX_CONNECT_TO}|%{POSTFIX_HOST_STARTTLS}|%{POSTFIX_LOST_CONNECTION}|%{POSTFIX_PIX}|%{POSTFIX_REFUSAL}|%{POSTFIX_RELAY}|%{POSTFIX_TIMEOUT}|%{POSTFIX_TLS_HANDSHAKE}|%{POSTFIX_SSL_ERROR})
+POSTFIX_SMTP_MESSAGES (?:%{POSTFIX_4XX}|%{POSTFIX_5XX}|%{POSTFIX_CERTINVALID}|%{POSTFIX_CONNECT_FROM}|%{POSTFIX_CONNECT_TO}|%{POSTFIX_HOST_STARTTLS}|%{POSTFIX_LOST_CONNECTION}|%{POSTFIX_PIX}|%{POSTFIX_REFUSAL}|%{POSTFIX_RELAY}|%{POSTFIX_TIMEOUT}|%{POSTFIX_TLS_HANDSHAKE}|%{POSTFIX_TLS_PROBLEM}|%{POSTFIX_SSL_ERROR})
 POSTFIX_SMTPD_MESSAGES (?:%{POSTFIX_4XXd}|%{POSTFIX_ACTIONS}|%{POSTFIX_AUTH_CLIENT}|%{POSTFIX_CONNECTS}|%{POSTFIX_SSL_ERROR}|%{POSTFIX_TIMEOUTS}|%{POSTFIX_TOO_MANY_ERRORS}|%{POSTFIX_WARNING}|%{POSTFIX_IMPROPER_COMMAND_PIPELINING})
 POSTFIX_SPAWN_MESSAGES (?:fatal|warning): %{GREEDYDATA:reason}
 POSTFIX_TRIVIAL_REWRITE_MESSAGES (?:%{POSTFIX_WARNING})
