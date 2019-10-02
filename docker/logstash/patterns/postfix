@@ -29,7 +29,7 @@ INVALID_CERT_REASONS (?:certificate has expired|self-signed certificate|untruste
 POSTFIX_4XX (%{POSTFIX_4XX1}|%{POSTFIX_4XX2})
 POSTFIX_4XX1 %{QUEUEID:local_queueid}: host %{RELAY} said: %{GREEDYDATA:reason}
 POSTFIX_4XX2 %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=%{RELAY},(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \(host (?:%{HOSTNAME})?\[(?:%{IP}|%{PATH})?\](?::%{POSINT})? said: %{TEMPERROR:responsecode} %{DATA:smtp_response} \(in reply to %{DATA:command} command\)\)
-POSTFIX_4XXd NOQUEUE: reject: %{DATA:command} from %{CLIENT}: (?:4[0-9]{2}:error_code}) \d\.\d\.\d <%{EMAIL_ADDRESS:from}>: %{DATA:reason}; from=<%{EMAIL_ADDRESS}> to=%{EMAIL_ADDRESS:to}> proto=%{WORD} helo=<%{DATA:helo}>
+POSTFIX_4XXd NOQUEUE: reject: %{GREEDYDATA:command} from %{CLIENT}: %{POSINT:error_code} %{DSN} (?:<%{DATA}>: )?%{DATA:reason}; from=<%{DATA:from}> to=%{DATA:to}> proto=%{WORD} helo=<%{DATA:smtp_helo}>
 POSTFIX_5XX %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=%{RELAY},(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \(host %{RELAY} said: %{PERMERROR:responsecode} %{DATA:smtp_response} \(in reply to %{DATA:command} command\)\)
 POSTFIX_CERTINVALID certificate verification failed for %{RELAY}: %{INVALID_CERT_REASONS}
 POSTFIX_CONNECT_FROM connect from %{CLIENT}
@@ -44,13 +44,13 @@ POSTFIX_TIMEOUT %{QUEUEID:local_queueid}: conversation with %{RELAY} timed out w
 POSTFIX_TLS_HANDSHAKE %{QUEUEID:local_queueid}: Cannot start TLS: handshake failure
 
 # Use DATA:to, because people mistype address delimiters, and programmers sometimes... well.
-POSTFIX_ACTIONS %{QUEUEID:local_queueid}: %{POSTFIX_ACTION}: %{DATA:command} from %{CLIENT}: %{GREEDYDATA:reason}; (from=<(?:%{EMAIL_ADDRESS:from})?> (to=<%{DATA:to}> )?)?proto=%{DATA:proto} helo=<%{DATA}>
+POSTFIX_ACTIONS %{QUEUEID:local_queueid}: %{POSTFIX_ACTION}: %{DATA:command} from %{CLIENT}: %{GREEDYDATA:reason}; (from=<(?:%{EMAIL_ADDRESS:from})?> (to=<%{DATA:to}> )?)?proto=%{DATA:proto} helo=<%{DATA:smtp_helo}>
 POSTFIX_AUTH_CLIENT (?:(%{QUEUEID:local_queueid}: client=%{CLIENT}(, sasl_method=%{DATA}, sasl_username=%{EMAIL_ADDRESS:client_auth})?)|warning: %{CLIENT}: SASL PLAIN authentication failed: authentication failure)
 POSTFIX_CONNECTS (lost connection after %{DATA}|(?:dis)?connect) from %{CLIENT}
 POSTFIX_SSL_ACCEPT_ERROR SSL_(?:accept|connect) error (?:from %{CLIENT_SRC}|to %{CLIENT_DEST}): %{DATA}
 POSTFIX_TIMEOUTS timeout after %{DATA:command} from %{CLIENT}
 
-POSTFIX_CLEANUP %{QUEUEID:local_queueid}: (?:(?:resent-)?message-id=(<%{DATA:message_id}>)?|%{POSTFIX_ACTION}: %{DATA:header_replace} from %{CLIENT}; from=<(%{EMAIL_ADDRESS:from})?> to=<%{EMAIL_ADDRESS:to}> proto=%{DATA} helo=<%{DATA}>: %{GREEDYDATA:header_replacement})
+POSTFIX_CLEANUP %{QUEUEID:local_queueid}: (?:(?:resent-)?message-id=(<%{DATA:message_id}>)?|%{POSTFIX_ACTION}: %{DATA:header_replace} from %{CLIENT}; from=<(%{EMAIL_ADDRESS:from})?> to=<%{EMAIL_ADDRESS:to}> proto=%{DATA} helo=<%{DATA:smtp_helo}>: %{GREEDYDATA:header_replacement})
 POSTFIX_DSN_NDN %{QUEUEID:local_queueid}: sender (delivery status|non\-delivery) notification: %{QUEUEID:remote_queueid}
 POSTFIX_PICKUP %{QUEUEID:local_queueid}: uid=\d+ from=<%{DATA:from}>
 POSTFIX_QMGR %{QUEUEID:local_queueid}: (?:removed|from=<(?:%{EMAIL_ADDRESS:from})?>(?:, size=%{POSINT:size}, nrcpt=%{POSINT:nrcpt} \(%{GREEDYDATA:queuestatus}\))?)
