@@ -9,15 +9,14 @@
         <title>{{ config('app.name') }} -- @yield('title')</title>
 
         @laravelPWA
-
     </head>
     <body>
         <div class="outer-container">
             @yield('content')
         </div>
 
+        <script>window.config = {!! json_encode(app('config')->getMany(['app.name', 'app.url'])) !!}</script>
         <script src="{{ asset('js/app.js') }}" defer></script>
         <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-
     </body>
 </html>

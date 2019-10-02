@@ -1,8 +1,6 @@
 <template>
     <div class="text-center form-wrapper">
-
         <form class="form-signin" v-on:submit.prevent="submitLogin">
-            <img class="mb-4" src="/images/logo.svg" alt="" width="72" height="72">
             <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
 
             <label for="inputEmail" class="sr-only">Email address</label>
@@ -13,7 +11,6 @@
 
             <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
         </form>
-
     </div>
 </template>
 

@@ -11,13 +11,9 @@
 |
 */
 
-$action = function () {
+// We can handle every URL with the default action because
+// we have client-side router (including 404 error handler).
+// This way we don't have to define any "deep link" routes here.
+Route::fallback(function () {
     return view('root');
-};
-
-Route::get('/', $action);
-
-// Deep-links
-Route::get('login', $action);
-Route::get('signup/{code?}', $action);
-//Route::get('invoice/{invoice}', $action);
+});

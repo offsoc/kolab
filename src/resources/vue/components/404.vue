@@ -1,35 +1,27 @@
 <template>
-    <div class="flex-center position-ref full-height">
+    <div class="flex-center">
         <div class="code">404</div>
-        <div class="message" style="padding: 10px;">Not Found</div>
+        <div class="message">Not Found</div>
     </div>
 </template>
 
 <style scoped>
-    .full-height {
-        height: 100vh;
-    }
-
     .flex-center {
         align-items: center;
         display: flex;
         justify-content: center;
-    }
-
-    .position-ref {
-        position: relative;
+        height: 100vh;
         color: #636b6f;
     }
 
     .code {
         border-right: 2px solid;
         font-size: 26px;
-        padding: 0 15px 0 15px;
-        text-align: center;
+        padding: 0 15px;
     }
 
     .message {
         font-size: 18px;
-        text-align: center;
+        padding: 0 15px;
     }
 </style>

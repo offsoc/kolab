@@ -4,8 +4,8 @@
 
 <script>
     import store from '../js/store'
-    export default {
 
+    export default {
         created() {
             if (localStorage.token) {
                 axios.get('/api/auth/info', {

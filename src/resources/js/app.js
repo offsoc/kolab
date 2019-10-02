@@ -9,12 +9,16 @@ require('./bootstrap')
 window.Vue = require('vue')
 
 import AppComponent from '../vue/components/App'
+import MenuComponent from '../vue/components/Menu'
 import router from '../vue/js/routes.js'
 import VueToastr from '@deveodk/vue-toastr'
 
 const app = new Vue({
     el: '#app',
-    components: { AppComponent },
+    components: {
+        'app-component': AppComponent,
+        'menu-component': MenuComponent
+    },
     router,
     methods: {
         clearFormValidation: form => {

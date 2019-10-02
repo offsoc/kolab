@@ -9,11 +9,13 @@
 // Toastr
 @import '~@deveodk/vue-toastr/dist/@deveodk/vue-toastr.css';
 
-#app {
-    margin-top: 3em;
-}
-
 // Fixes Toastr incompatibility with Bootstrap
 .toast-container > .toast {
     opacity: 1;
+}
+
+@import 'menu';
+
+nav + .container {
+    margin-top: 120px;
 }
