@@ -1,0 +1,77 @@
+# Postfix stuff based on https://gist.github.com/jbrownsc/4694374:
+
+PERMERROR 5[0-9]{2}
+MESSAGELEVEL reject|warning|error|fatal|panic
+POSTFIX_ACTION discard|dunno|filter|hold|ignore|info|prepend|redirect|replace|reject|warn
+
+# Postfix
+# Queue IDs are hexadecimal, or magic NOQUEUE
+QUEUEID (?:[A-F0-9]+|NOQUEUE)
+
+RELAY (?:%{RELAY_IP}|%{RELAY_SOCKET})
+RELAY_IP (?:%{HOSTNAME:relay_host})?\[(?:%{IP:relay_ip})?\](?::%{POSINT})?
+RELAY_SOCKET (?:%{HOSTNAME:relay_host})?\[(?:%{PATH:relay_socket})?\]
+
+POSREAL [0-9]+(.[0-9]+)?
+DELAYS (%{POSREAL}[/]*)+
+DSN %{NONNEGINT}.%{NONNEGINT}.%{NONNEGINT}
+STATUS sent|deferred|bounced|expired
+
+# Permanent errors
+PERMERROR 5[0-9]{2}
+# Temporary problems
+TEMPERROR 4[0-9]{2}
+
+POSTFIX_ACTION discard|dunno|filter|hold|ignore|info|prepend|redirect|replace|reject|warn
+INVALID_CERT_REASONS (?:certificate has expired|self-signed certificate|untrusted issuer %{DATA:cert_issuer})
+
+# These occur on outgoing connections, as in postfix/smtp, but also postfix/lmtp
+POSTFIX_4XX (%{POSTFIX_4XX1}|%{POSTFIX_4XX2})
+POSTFIX_4XX1 %{QUEUEID:local_queueid}: host %{RELAY} said: %{GREEDYDATA:reason}
+POSTFIX_4XX2 %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=%{RELAY},(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \(host (?:%{HOSTNAME})?\[(?:%{IP}|%{PATH})?\](?::%{POSINT})? said: %{TEMPERROR:responsecode} %{DATA:smtp_response} \(in reply to %{DATA:command} command\)\)
+POSTFIX_4XXd NOQUEUE: reject: %{DATA:command} from %{CLIENT}: (?:4[0-9]{2}:error_code}) \d\.\d\.\d <%{EMAIL_ADDRESS:from}>: %{DATA:reason}; from=<%{EMAIL_ADDRESS}> to=%{EMAIL_ADDRESS:to}> proto=%{WORD} helo=<%{DATA:helo}>
+POSTFIX_5XX %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=%{RELAY},(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \(host %{RELAY} said: %{PERMERROR:responsecode} %{DATA:smtp_response} \(in reply to %{DATA:command} command\)\)
+POSTFIX_CERTINVALID certificate verification failed for %{RELAY}: %{INVALID_CERT_REASONS}
+POSTFIX_CONNECT_FROM connect from %{CLIENT}
+POSTFIX_CONNECT_TO connect to %{RELAY}: %{GREEDYDATA:reason}
+POSTFIX_HOST_STARTTLS Host offered STARTTLS: \[%{IP_OR_HOST}\]
+POSTFIX_LOST_CONNECTION %{QUEUEID:local_queueid}: lost connection with %{RELAY} while %{GREEDYDATA:reason}
+# Postfix informational message about CISCO PIX SMTP relay "fixup" protocol
+POSTFIX_PIX %{QUEUEID:local_queueid}: enabling PIX workarounds: disable_esmtp delay_dotcrlf for %{RELAY}
+POSTFIX_REFUSAL %{QUEUEID:local_queueid}: host %{RELAY} refused to talk to me: %{GREEDYDATA:reason}
+POSTFIX_RELAY %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=(?:%{RELAY}|local|none),(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \((?:.* SESSIONID=<%{CYRUS_IMAP_SESSIONID:session_id}>\))?(?:.* (forwarded|queued) as %{QUEUEID:remote_queueid}\))?(?:%{DATA:reason}\))?
+POSTFIX_TIMEOUT %{QUEUEID:local_queueid}: conversation with %{RELAY} timed out while %{GREEDYDATA:reason}
+POSTFIX_TLS_HANDSHAKE %{QUEUEID:local_queueid}: Cannot start TLS: handshake failure
+
+# Use DATA:to, because people mistype address delimiters, and programmers sometimes... well.
+POSTFIX_ACTIONS %{QUEUEID:local_queueid}: %{POSTFIX_ACTION}: %{DATA:command} from %{CLIENT}: %{GREEDYDATA:reason}; (from=<(?:%{EMAIL_ADDRESS:from})?> (to=<%{DATA:to}> )?)?proto=%{DATA:proto} helo=<%{DATA}>
+POSTFIX_AUTH_CLIENT (?:(%{QUEUEID:local_queueid}: client=%{CLIENT}(, sasl_method=%{DATA}, sasl_username=%{EMAIL_ADDRESS:client_auth})?)|warning: %{CLIENT}: SASL PLAIN authentication failed: authentication failure)
+POSTFIX_CONNECTS (lost connection after %{DATA}|(?:dis)?connect) from %{CLIENT}
+POSTFIX_SSL_ACCEPT_ERROR SSL_(?:accept|connect) error (?:from %{CLIENT_SRC}|to %{CLIENT_DEST}): %{DATA}
+POSTFIX_TIMEOUTS timeout after %{DATA:command} from %{CLIENT}
+
+POSTFIX_CLEANUP %{QUEUEID:local_queueid}: (?:(?:resent-)?message-id=(<%{DATA:message_id}>)?|%{POSTFIX_ACTION}: %{DATA:header_replace} from %{CLIENT}; from=<(%{EMAIL_ADDRESS:from})?> to=<%{EMAIL_ADDRESS:to}> proto=%{DATA} helo=<%{DATA}>: %{GREEDYDATA:header_replacement})
+POSTFIX_DSN_NDN %{QUEUEID:local_queueid}: sender (delivery status|non\-delivery) notification: %{QUEUEID:remote_queueid}
+POSTFIX_PICKUP %{QUEUEID:local_queueid}: uid=\d+ from=<%{DATA:from}>
+POSTFIX_QMGR %{QUEUEID:local_queueid}: (?:removed|from=<(?:%{EMAIL_ADDRESS:from})?>(?:, size=%{POSINT:size}, nrcpt=%{POSINT:nrcpt} \(%{GREEDYDATA:queuestatus}\))?)
+POSTFIX_TOO_MANY_ERRORS too many errors after %{DATA:command} from %{CLIENT}
+POSTFIX_IMPROPER_COMMAND_PIPELINING improper command pipelining after %{DATA:command} from %{CLIENT}%{DATA}
+POSTFIX_STATS statistics: %{GREEDYDATA}
+POSTFIX_WARNING warning: %{GREEDYDATA}
+
+POSTFIX_ANVIL_MESSAGES (?:%{POSTFIX_STATS})
+POSTFIX_BOUNCE_MESSAGES (?:%{POSTFIX_DSN_NDN})
+POSTFIX_CLEANUP_MESSAGES (?:%{POSTFIX_CLEANUP})
+POSTFIX_ERROR_MESSAGES (?:%{POSTFIX_RELAY})
+POSTFIX_LMTP_MESSAGES (?:%{POSTFIX_RELAY})
+POSTFIX_LOCAL_MESSAGES (?:%{POSTFIX_RELAY}|%{POSTFIX_WARNING})
+POSTFIX_MASTER_MESSAGES (?:%{POSTFIX_WARNING}|terminating on signal \d+|daemon started -- version %{DATA}, configuration %{PATH})
+POSTFIX_PICKUP_MESSAGES (?:%{POSTFIX_PICKUP})
+POSTFIX_QMGR_MESSAGES (?:%{POSTFIX_QMGR}|%{POSTFIX_RELAY}|%{POSTFIX_WARNING})
+POSTFIX_SCACHE_MESSAGES (?:%{POSTFIX_STATS})
+POSTFIX_SCRIPT_MESSAGES (?:starting|stopping|waiting for) the Postfix mail system(%{DATA})?
+POSTFIX_SMTP_MESSAGES (?:%{POSTFIX_4XX}|%{POSTFIX_5XX}|%{POSTFIX_CERTINVALID}|%{POSTFIX_CONNECT_FROM}|%{POSTFIX_CONNECT_TO}|%{POSTFIX_HOST_STARTTLS}|%{POSTFIX_LOST_CONNECTION}|%{POSTFIX_PIX}|%{POSTFIX_REFUSAL}|%{POSTFIX_RELAY}|%{POSTFIX_TIMEOUT}|%{POSTFIX_TLS_HANDSHAKE})
+POSTFIX_SMTPD_MESSAGES (?:%{POSTFIX_4XXd}|%{POSTFIX_ACTIONS}|%{POSTFIX_AUTH_CLIENT}|%{POSTFIX_CONNECTS}|%{POSTFIX_SSL_ACCEPT_ERROR}|%{POSTFIX_TIMEOUTS}|%{POSTFIX_TOO_MANY_ERRORS}|%{POSTFIX_WARNING}|%{POSTFIX_IMPROPER_COMMAND_PIPELINING})
+POSTFIX_SPAWN_MESSAGES (?:fatal|warning): %{GREEDYDATA:reason}
+POSTFIX_TRIVIAL_REWRITE_MESSAGES (?:%{POSTFIX_WARNING})
+

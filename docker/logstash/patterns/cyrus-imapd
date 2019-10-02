@@ -1,0 +1,85 @@
+CYRUS_IMAP_SESSIONID (?:%{IP_OR_HOST}|%{DATA})-\d+-\d+-\d+(-\d+)?
+BADLOGIN_REASONS \[?(SASL\(-13\): )?(authentication failure: checkpass failed|user not found: could not find password|authentication failure: Password verification failed|authentication failure)\]?
+
+CYRUS_DUMMY_FAIL fail me
+
+CYRUS_IMAPD_AUDIT_ACTIONS (?:append|discard|duplicate|modseq|proxy|redirect|traffic)
+CYRUS_IMAPD_SIEVE_ACTIONS (discarded|redirected|rejected)
+
+CYRUS_IMAPD_AUDITLOG auditlog: %{CYRUS_IMAPD_AUDIT_ACTIONS} (?:%{EMAIL_ADDRESS:client_auth} )?(?:sessionid=<%{CYRUS_IMAP_SESSIONID:session_id}> )?(?:action=<%{CYRUS_IMAPD_AUDIT_ACTIONS}> )?(?:bytes_in=<%{BASE10NUM:bytes_in}> bytes_out=<%{BASE10NUM:bytes_out}>)?(?:message-id=<%{DATA:message_id}>(?:-%{EMAIL_ADDRESS:client_auth} user=<%{DATA}> date=<%{DATA}>)?(?:mailbox=<%{DATA:mailbox}> uniqueid=<%{DATA:uniqueid}>(?: highestmodseq=<%{BASE10NUM:modseq}>|uid=<%{BASE10NUM}> guid=<%{DATA}> cid=<%{DATA}>)?)?)?
+CYRUS_IMAPD_CHECKING_DATABASES (?:checkpointing cyrus databases|(?:done )?(?:checkpointing|recovering) cyrus databases)
+CYRUS_IMAPD_CLIENTID client id: (?:(?:"name" "%{DATA:client_name}" "version" "%{DATA:client_version}") )?%{GREEDYDATA:client_extra}
+
+CYRUS_IMAPD_DELPRUNE Removed \d+ deleted mailboxes
+CYRUS_IMAPD_DUPELIM dupelim: eliminated duplicate message to %{DATA:mailbox} id <%{DATA:message_id}>(?:-%{EMAIL_ADDRESS:client_auth})? date %{DATESTAMP_RFC2822} (\(%{DATA}\) )?\((?:delivery|redirect)\)
+CYRUS_IMAPD_DUPPRUNE duplicate_prune: %{GREEDYDATA}
+CYRUS_IMAPD_EVENT EVENT, , , ,  %{GREEDYDATA:event_json}
+CYRUS_IMAPD_EXPUNGE Expunged \d+ (out of \d+ )?messages from (?:%{DATA:mailbox}|\d+ mailboxes)
+CYRUS_IMAPD_INDEX_UPGRADE Index upgrade: %{DATA:mailbox} \(\d+ -> \d+\)
+CYRUS_IMAPD_LMTPUNIX_DELIVERY Delivered:\s+(<)?%{DATA:message_id(>)? to mailbox: %{GREEDYDATA:mailbox}
+CYRUS_IMAPD_LMTPUNIX_LONGLOCK (mailbox|skiplist): longlock %{DATA} for [0-9]+\.[0-9]+ seconds
+CYRUS_IMAPD_LMTPUNIX_SIEVE (?:%{CYRUS_IMAPD_SIEVE_ACTION}|%{CYRUS_IMAPD_SIEVE_RUNTIME_ERROR})
+# Note that sometimes a reverse DNS record is simply a '.', because it is virtually unrestricted.
+CYRUS_IMAPD_LOGIN (?:bad)?login: (?:%{CLIENT}|\.) (?:%{WORD:mech} )?(?:(\(<)?%{EMAIL_ADDRESS:client_auth}(>\))? )?(?:%{WORD:mech}(\+TLS)? )?(?:(User logged in( SESSIONID=<%{CYRUS_IMAP_SESSIONID:session_id}>)?)|(%{BADLOGIN_REASONS:reason})?)
+CYRUS_IMAPD_MAILBOX_DELETE Deleted mailbox %{DATA:mailbox}
+CYRUS_IMAPD_MAILBOX_OPEN open: user %{EMAIL_ADDRESS:client_auth} opened %{DATA:mailbox}
+CYRUS_IMAPD_MAILBOX_EVENT (indexing|Deleted|Repacking) mailbox %{DATA:mailbox}(\.\.\. )?
+CYRUS_IMAPD_MAILBOX_RENAME Rename: %{DATA:mailbox} -> %{DATA:mailbox}
+CYRUS_IMAPD_MASTER_STATUS (?:service %{WORD} pid \d+ in %{WORD} state: terminated abnormally|(?:process type:SERVICE name:%{NOTSPACE} path:%{PATH} age:%{POSREAL}s pid:%{POSINT} )?(?:exiting|exited)(?:, status %{BASE10NUM})?)
+CYRUS_IMAPD_NETWORK_ERROR (Fatal error: Lost connection to selected backend|(?:Connection (?:timed out|reset by peer)|Error decompressing data|idle for too long|Invalid argument|No route to host), closing connection)
+CYRUS_IMAPD_NONOTIFY unable to sendto\(\) notify socket: No such file or directory
+CYRUS_IMAPD_POP_COUNTS counts: retr=<\d+> top=<\d+> dele=<\d+>
+CYRUS_IMAPD_POP_FAILED pop3(s)? failed: %{CLIENT}
+CYRUS_IMAPD_PROXY proxy %{EMAIL_ADDRESS:client_auth} session-id=<%{CYRUS_IMAP_SESSIONID:session_id}> remote=<%{CYRUS_IMAP_SESSIONID:session_id}>
+CYRUS_IMAPD_SAME_MSG %{DATA:mailbox}: same message appears twice %{INT} %{INT}
+CYRUS_IMAPD_SESSION_STATS (?:IMAP|LMTP) session stats : I/O read : %{BASE10NUM:bytes_read} bytes : I/O write : %{BASE10NUM:bytes_write} bytes
+CYRUS_IMAPD_SETRLIMIT (?:setrlimit: Unable to set file descriptors limit to -1: Operation not permitted|retrying with \d+ \(current max\))
+CYRUS_IMAPD_SETSOCKETOPT unable to setsocketopt\(IP_TOS\)(?: service %{DATA})?: Operation not supported
+CYRUS_IMAPD_SHUTDOWN (All children have exited, closing down|attempting clean shutdown on signal|graceful shutdown)
+CYRUS_IMAPD_SIEVE_ACTION sieve %{CYRUS_IMAPD_SIEVE_ACTIONS}: <%{DATA:message_id}>(?: to: %{EMAIL_ADDRESS:to})?
+CYRUS_IMAPD_SIEVE_DISCONNECT Lost connection to client -- exiting
+CYRUS_IMAPD_SIEVE_RUNTIME_ERROR sieve runtime error for %{EMAIL_ADDRESS:client_auth} id <%{DATA:message_id}>: Fileinto: Mailbox does not exist
+CYRUS_IMAPD_SKIPLIST skiplist: (checkpointed %{PATH:db_path} \(%{INT:db_records} records, %{INT:db_bytes} bytes\) in %{POSREAL:db_seconds} sec(ond(s)?)?|clean shutdown file missing, updating recovery stamp)
+CYRUS_IMAPD_UNUSED_CACHE Removed unused cache file %{PATH}
+CYRUS_IMAPD_USAGE USAGE %{EMAIL_ADDRESS:client_auth} user: %{POSREAL} sys: %{POSREAL}
+
+CYRUS_IMAPD_MAILBOX_EVENTS (%{CYRUS_IMAPD_MAILBOX_DELETE}|%{CYRUS_IMAPD_MAILBOX_OPEN}|%{CYRUS_IMAPD_MAILBOX_EVENT}|%{CYRUS_IMAPD_MAILBOX_RENAME})
+CYRUS_IMAPD_ERRORS (?:%{CYRUS_IMAPD_IOERRORS}|%{CYRUS_IMAPD_NETWORK_ERROR}|%{CYRUS_IMAPD_NONOTIFY})
+CYRUS_IMAPD_MASTER_ERRORS (?:%{CYRUS_IMAPD_NONOTIFY}|%{CYRUS_IMAPD_SETRLIMIT}|%{CYRUS_IMAPD_SETSOCKETOPT}|%{CYRUS_IMAPD_SHUTDOWN})
+
+CYRUS_CERT_EXPIRED cert has expired
+CYRUS_CHECKPOINT checkpointing cyrus databases
+# <22>May 24 13:30:08 kolab11 cyrus-imapd/imap[19410]: client id: "name" "Roundcube" "version" "1.0.0" "php" "5.3.27" "os" "Linux" "command" "/?_task=mail&_refresh=1&_mbox=INBOX&_action=list&_remote=1&_unlock=loading1400931009534&_=1400924844797"
+CYRUS_CONNECT accepted connection
+CYRUS_IMAPD_DHPARAMS ^inittls: Loading (hard-coded DH parameters|DH parameters from file)$
+CYRUS_EXEC (?:about to exec %{DATA}|executed)
+CYRUS_EXIT process %{BASE10NUM:pid} exited, status %{BASE10NUM:pid_exit}
+CYRUS_EXPIRE unable to open mailbox %{DATA:mailbox}
+CYRUS_IDLED error sending to idled: %{BASE10NUM}
+CYRUS_IOERROR_INDEX IOERROR: (?:opening index %{DATA:mailbox}: %{DATA:reason}|%{GREEDYDATA:reason})
+CYRUS_IOERROR_MESSAGE IOERROR: reading message: %{DATA:reason}
+CYRUS_QRESYNC inefficient qresync \(%{POSINT} > %{POSINT}\) %{DATA:mailbox}
+CYRUS_SQUATTER (?:(done )?indexing mailboxes|error opening %{DATA:mailbox}: %{DATA:reason}|timezone shift for squatter - altering schedule by %{BASE10NUM} seconds|SQUAT returned \d+ messages)
+CYRUS_IMAPD_IOERRORS (%{CYRUS_IOERROR_INDEX}|%{CYRUS_IOERROR_MESSAGE})
+
+CYRUS_SSLACCEPT SSL_accept\(\) %{WORD} -> %{WORD}
+CYRUS_STARTTLS starttls: %{DATA:tls_version} with cipher %{DATA:tls_cipher} \(\d+/\d+ bits new\) no authentication
+CYRUS_TLSERROR (?:Fatal error: (?:Lost connection to input stream|tls_start_servertls\(\) failed)|verify error:num=(?:18:self signed certificate|10:certificate has expired))
+CYRUS_TLSNEG (?:(\[pop3d\] )?(imaps TLS|STARTTLS)) (negotiation )?failed: %{CLIENT}
+CYRUS_TLSPRUNE tls_prune: purged \d+ out of \d+ entries
+CYRUS_IMAPD_SSLTLS (%{CYRUS_SSLACCEPT}|%{CYRUS_STARTTLS}|%{CYRUS_TLSERROR}|%{CYRUS_TLSNEG}|%{CYRUS_TLSPRUNE})
+
+CYRUS_IMAPD_CTL_CYRUSDB_MESSAGES (?:%{CYRUS_IMAPD_CHECKING_DATABASES}|%{CYRUS_IMAPD_SKIPLIST})
+CYRUS_IMAPD_CYR_EXPIRE_MESSAGES  (?:%{CYRUS_IMAPD_DELPRUNE}|%{CYRUS_IMAPD_DUPPRUNE})
+CYRUS_IMAPD_IMAP_MESSAGES (?:%{CYRUS_IMAPD_AUDITLOG}|%{CYRUS_IMAPD_CLIENTID}|%{CYRUS_IMAPD_DHPARAMS}|%{CYRUS_IMAPD_EXPUNGE}|%{CYRUS_IMAPD_ERRORS}|%{CYRUS_IMAPD_INDEX_UPGRADE}|%{CYRUS_IMAPD_LOGIN}|%{CYRUS_IMAPD_MAILBOX_EVENTS}|%{CYRUS_IMAPD_PROXY}|%{CYRUS_IMAPD_SAME_MSG}|%{CYRUS_IMAPD_SESSION_STATS}|%{CYRUS_IMAPD_SHUTDOWN}|%{CYRUS_IMAPD_SKIPLIST}|%{CYRUS_IMAPD_SSLTLS}|%{CYRUS_IMAPD_UNUSED_CACHE}|%{CYRUS_IMAPD_USAGE})
+CYRUS_IMAPD_IMAPS_MESSAGES (?:%{CYRUS_IMAPD_IMAP_MESSAGES})
+CYRUS_IMAPD_LMTPD_MESSAGES (?:%{CYRUS_DUMMY_FAIL})
+CYRUS_IMAPD_LMTPUNIX_MESSAGES (?:%{CYRUS_IMAPD_AUDITLOG}|%{CYRUS_IMAPD_DUPELIM}|%{CYRUS_IMAPD_LMTPUNIX_DELIVERY}|%{CYRUS_IMAPD_LMTPUNIX_LONGLOCK}|%{CYRUS_IMAPD_LMTPUNIX_SIEVE}|%{CYRUS_IMAPD_MAILBOX_EVENTS}|%{CYRUS_IMAPD_SESSION_STATS}|%{CYRUS_IMAPD_SKIPLIST}|%{CYRUS_IMAPD_USAGE})
+CYRUS_IMAPD_MASTER_MESSAGES (?:%{CYRUS_IMAPD_MASTER_ERRORS}|%{CYRUS_IMAPD_MASTER_STATUS})
+CYRUS_IMAPD_MUPDATE_MESSAGES (?:%{CYRUS_DUMMY_FAIL})
+CYRUS_IMAPD_NOTIFYD_MESSAGES (?:%{CYRUS_IMAPD_EVENT})
+CYRUS_IMAPD_POP3_MESSAGES (?:%{CYRUS_IMAPD_AUDITLOG}|%{CYRUS_IMAPD_DHPARAMS}|%{CYRUS_IMAPD_EXPUNGE}|%{CYRUS_IMAPD_LOGIN}|%{CYRUS_IMAPD_POP_COUNTS}|%{CYRUS_IMAPD_POP_FAILED}|%{CYRUS_IMAPD_SSLTLS})
+CYRUS_IMAPD_POP3S_MESSAGES (?:%{CYRUS_IMAPD_POP3_MESSAGES})
+CYRUS_IMAPD_SIEVE_MESSAGES (?:%{CYRUS_IMAPD_LOGIN}|%{CYRUS_IMAPD_SHUTDOWN}|%{CYRUS_IMAPD_SIEVE_DISCONNECT}|%{CYRUS_IMAPD_SSLTLS})
+CYRUS_IMAPD_SQUATTER_MESSAGES (?:%{CYRUS_IMAPD_MAILBOX_EVENT}|%{CYRUS_SQUATTER})
+CYRUS_IMAPD_TLS_PRUNE_MESSAGES (?:%{CYRUS_TLSPRUNE})

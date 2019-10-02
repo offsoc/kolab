@@ -1,0 +1,6 @@
+PROG (?:[\w._/%-]+)
+
+
+SYSLOG_PROG %{PROG:syslog_program}(?:\[%{POSINT:syslog_pid}\])?
+SYSLOG_BASE %{TIMESTAMP_ISO8601:syslog_timestamp} %{IP_OR_HOST:syslog_hostname} %{SYSLOG_PROG}: %{GREEDYDATA:syslog_message}
+
