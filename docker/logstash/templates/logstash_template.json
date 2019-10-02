@@ -1,39 +1,20 @@
 {
     "mappings": {
-        "dynamic_templates": [
-            {
-                "message_field": {
-                    "mapping": {
-                        "norms": false,
-                        "type": "text"
-                    },
-                    "match_mapping_type": "string",
-                    "path_match": "message"
-                }
-            },
-            {
-                "string_fields": {
-                    "mapping": {
-                        "fields": {
-                            "keyword": {
-                                "ignore_above": 256,
-                                "type": "keyword"
-                            }
-                        },
-                        "norms": false,
-                        "type": "text"
-                    },
-                    "match": "*",
-                    "match_mapping_type": "string"
-                }
-            }
-        ],
         "properties": {
             "@timestamp": {
                 "type": "date"
             },
             "@version": {
                 "type": "keyword"
+            },
+            "client_auth": {
+                "type": "keyword"
+            },
+            "client_host": {
+                "type": "keyword"
+            },
+            "conn_use": {
+                "type": "integer"
             },
             "db_bytes": {
                 "type": "integer"
@@ -47,9 +28,42 @@
             "db_seconds": {
                 "type": "half_float"
             },
+            "delay": {
+                "type": "float"
+            },
+            "delays": {
+                "type": "keyword"
+            },
+            "dest_ip": {
+                "type": "ip"
+            },
+            "domain": {
+                "type": "keyword"
+            },
+            "dsn": {
+                "type": "text"
+            },
+            "from": {
+                "type": "text"
+            },
             "geoip_dest": {
                 "dynamic": true,
                 "properties": {
+                    "city_name": {
+                        "type": "text"
+                    },
+                    "country_code2": {
+                        "type": "text"
+                    },
+                    "country_code3": {
+                        "type": "text"
+                    },
+                    "continent_code": {
+                        "type": "text"
+                    },
+                    "dma_code": {
+                        "type": "integer"
+                    },
                     "ip": {
                         "type": "ip"
                     },
@@ -61,12 +75,39 @@
                     },
                     "longitude": {
                         "type": "half_float"
+                    },
+                    "postal_code": {
+                        "type": "text"
+                    },
+                    "region_code": {
+                        "type": "text"
+                    },
+                    "region_name": {
+                        "type": "text"
+                    },
+                    "timezone": {
+                        "type": "text"
                     }
                 }
             },
             "geoip_src": {
                 "dynamic": true,
                 "properties": {
+                    "city_name": {
+                        "type": "text"
+                    },
+                    "country_code2": {
+                        "type": "text"
+                    },
+                    "country_code3": {
+                        "type": "text"
+                    },
+                    "continent_code": {
+                        "type": "text"
+                    },
+                    "dma_code": {
+                        "type": "integer"
+                    },
                     "ip": {
                         "type": "ip"
                     },
@@ -78,6 +119,18 @@
                     },
                     "longitude": {
                         "type": "half_float"
+                    },
+                    "postal_code": {
+                        "type": "text"
+                    },
+                    "region_code": {
+                        "type": "text"
+                    },
+                    "region_name": {
+                        "type": "text"
+                    },
+                    "timezone": {
+                        "type": "text"
                     }
                 }
             },
@@ -87,11 +140,23 @@
             "location_src": {
                 "type": "geo_point"
             },
+            "orig_message": {
+                "type": "text"
+            },
+            "smtp_helo": {
+                "type": "keyword"
+            },
+            "src_ip": {
+                "type": "ip"
+            },
             "syslog_pid": {
                 "type": "integer"
             },
             "syslog_program": {
                 "type": "keyword"
+            },
+            "to": {
+                "type": "text"
             }
         }
     },
