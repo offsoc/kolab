@@ -32,13 +32,13 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
     public function validateCredentials(Authenticatable $user, array $credentials)
     {
         if ($user->email == $credentials['email']) {
-            error_log("Have user email matching submitted email");
             if (!empty($user->password)) {
-                error_log("Have password attribute: {$user->password}");
                 if (Hash::check($credentials['password'], $user->password)) {
                     // TODO: update last login time
                     // TODO: Update password_ldap if necessary, examine whether writing to
                     // user->password is sufficient?
+                    $user->password = $credentials['password'];
+                    $user->save();
                     return true;
                 } else {
                     // TODO: Log login failure
@@ -53,6 +53,8 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
                     // TODO: update last login time
                     // TODO: Update password if necessary, examine whether writing to
                     // user->password is sufficient?
+                    $user->password = $credentials['password'];
+                    $user->save();
                     return true;
                 } else {
                     // TODO: Log login failure

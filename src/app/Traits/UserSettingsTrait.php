@@ -101,7 +101,13 @@ trait UserSettingsTrait
             Cache::forget('user_settings_' . $this->id);
         }
 
-        $settings = $this->settings()->get();
+        $_settings = json_decode($this->settings()->get());
+
+        $settings = [];
+
+        foreach ($_settings as $_setting) {
+            $settings[$_setting->key] = $_setting->value;
+        }
 
         Cache::forever('user_settings_' . $this->id, $settings);
 
