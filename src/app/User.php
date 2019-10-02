@@ -188,7 +188,8 @@ class User extends Authenticatable implements JWTSubject
     public function setPasswordAttribute($password)
     {
         if (!empty($password)) {
-            $this->attributes['password'] = bcrypt($password, [ "rounds" => 12 ]);
+            //$this->attributes['password'] = bcrypt($password, [ "rounds" => 12 ]);
+            $this->attributes['password'] = $password;
             $this->attributes['password_ldap'] = '{SSHA512}' . base64_encode(
                 pack('H*', hash('sha512', $password))
             );
@@ -198,7 +199,8 @@ class User extends Authenticatable implements JWTSubject
     public function setPasswordLdapAttribute($password)
     {
         if (!empty($password)) {
-            $this->attributes['password'] = bcrypt($password, [ "rounds" => 12 ]);
+            //$this->attributes['password'] = bcrypt($password, [ "rounds" => 12 ]);
+            $this->attributes['password'] = $password;
             $this->attributes['password_ldap'] = '{SSHA512}' . base64_encode(
                 pack('H*', hash('sha512', $password))
             );

@@ -8,6 +8,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
+use App\Backends\LDAP;
+
 class ProcessUserUpdate implements ShouldQueue
 {
     use Dispatchable;
@@ -38,6 +40,6 @@ class ProcessUserUpdate implements ShouldQueue
      */
     public function handle()
     {
-        //
+        LDAP::updateUser($this->user);
     }
 }

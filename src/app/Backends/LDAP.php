@@ -195,9 +195,35 @@ class LDAP
             "Welcome2KolabSystems"
         );
 
+        $firstName = $user->getSetting('first_name');
+        $lastName = $user->getSetting('last_name');
+
+        $cn = "unknown";
+        $displayname = "";
+
+        if ($firstName) {
+            if ($lastName) {
+                $cn = "{$firstName} {$lastName}";
+                $displayname = "{$lastName}, {$firstName}";
+            } else {
+                $lastName = "unknown";
+                $cn = "{$firstName}";
+                $displayname = "{$firstName}";
+            }
+        } else {
+            $firstName = "";
+            if ($lastName) {
+                $cn = "{$lastName}";
+                $displayname = "{$lastName}";
+            } else {
+                $lastName = "unknown";
+            }
+        }
+
         $entry = [
-            'cn' => $user->getSetting('last_name') ? $user->getSetting('last_name') : $user->id,
-            'givenname' => $user->getSetting('first_name') ? $user->getSetting('first_name') : '',
+            'cn' => $cn,
+            'displayname' => $displayname,
+            'givenname' => $firstName,
             'objectclass' => [
                 'top',
                 'inetorgperson',
@@ -206,7 +232,7 @@ class LDAP
                 'person'
             ],
             'mail' => $user->email,
-            'sn' => $user->getSetting('last_name') ? $user->getSetting('last_name') : $user->id,
+            'sn' => $lastName,
             'uid' => $user->email,
             'userpassword' => $user->password_ldap,
         ];
@@ -250,7 +276,68 @@ class LDAP
      */
     public static function updateUser($user)
     {
-        // TODO: update user password in LDAP
+        $config = self::_getConfig('admin');
+
+        $ldap = new \Net_LDAP3($config);
+
+        $ldap->connect();
+
+        $ldap->bind(
+            //config('ldap.admin.bind_dn'),
+            "cn=Directory Manager",
+            //config('ldap.admin.bind_pw')
+            "Welcome2KolabSystems"
+        );
+
+        list($_local, $_domain) = explode('@', $user->email, 2);
+
+        $domain = $ldap->find_domain($_domain);
+
+        if (!$domain) {
+            return false;
+        }
+
+        $base_dn = $ldap->domain_root_dn($_domain);
+        $dn = "uid={$user->email},ou=People,{$base_dn}";
+
+        $old_entry = $ldap->get_entry($dn);
+
+        $new_entry = $old_entry;
+
+        $firstName = $user->getSetting('first_name');
+        $lastName = $user->getSetting('last_name');
+
+        $cn = "unknown";
+        $displayname = "";
+
+        if ($firstName) {
+            if ($lastName) {
+                $cn = "{$firstName} {$lastName}";
+                $displayname = "{$lastName}, {$firstName}";
+            } else {
+                $lastName = "unknown";
+                $cn = "{$firstName}";
+                $displayname = "{$firstName}";
+            }
+        } else {
+            $firstName = "";
+            if ($lastName) {
+                $cn = "{$lastName}";
+                $displayname = "{$lastName}";
+            } else {
+                $lastName = "unknown";
+            }
+        }
+
+        $new_entry['cn'] = $cn;
+        $new_entry['displayname'] = $displayname;
+        $new_entry['givenname'] = $firstName;
+        $new_entry['sn'] = $lastName;
+        $new_entry['userpassword'] = $user->password_ldap;
+
+        $ldap->modify_entry($dn, $old_entry, $new_entry);
+
+        $ldap->close();
     }
 
     private static function _getConfig($privilege)

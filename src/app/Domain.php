@@ -134,36 +134,29 @@ class Domain extends Model
         return $this->status & self::STATUS_SUSPENDED;
     }
 
-    /*
     public function setStatusAttribute($status)
     {
-        $_status = $this->status;
+        $_status = 0;
 
         switch ($status) {
             case "new":
-                $_status += self::STATUS_NEW;
+                $_status &= self::STATUS_NEW;
                 break;
             case "active":
-                $_status += self::STATUS_ACTIVE;
-                $_status -= self::STATUS_NEW;
+                $_status &= self::STATUS_ACTIVE;
                 break;
             case "confirmed":
-                $_status += self::STATUS_CONFIRMED;
-                $_status -= self::STATUS_NEW;
+                $_status &= self::STATUS_CONFIRMED;
                 break;
             case "suspended":
-                $_status += self::STATUS_SUSPENDED;
+                $_status &= self::STATUS_SUSPENDED;
                 break;
             case "deleted":
-                $_status += self::STATUS_DELETED;
+                $_status &= self::STATUS_DELETED;
                 break;
             default:
-                $_status = $status;
-                //throw new \Exception("Invalid domain status: {$status}");
+                throw new \Exception("Invalid domain status: {$status}");
                 break;
         }
-
-        $this->status = $_status;
     }
-    */
 }
