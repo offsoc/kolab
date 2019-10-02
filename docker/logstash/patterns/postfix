@@ -30,7 +30,7 @@ POSTFIX_4XX (%{POSTFIX_4XX1}|%{POSTFIX_4XX2})
 POSTFIX_4XX1 %{QUEUEID:local_queueid}: host %{RELAY} said: %{GREEDYDATA:reason}
 POSTFIX_4XX2 %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=%{RELAY},(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \(host (?:%{HOSTNAME})?\[(?:%{IP}|%{PATH})?\](?::%{POSINT})? said: %{TEMPERROR:responsecode} %{DATA:smtp_response} \(in reply to %{DATA:command} command\)\)
 POSTFIX_4XXd NOQUEUE: reject: %{GREEDYDATA:command} from %{CLIENT}: %{POSINT:error_code} %{DSN} (?:<%{DATA}>: )?%{DATA:reason}; from=<%{DATA:from}> to=%{DATA:to}> proto=%{WORD} helo=<%{DATA:smtp_helo}>
-POSTFIX_5XX %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=%{CLIENT_DEST},(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \(host %{RELAY} said: %{PERMERROR:responsecode} %{DATA:smtp_response} \(in reply to %{DATA:command} command\)\)
+POSTFIX_5XX %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=(?:%{CLIENT_DEST}|%{RELAY_SOCKET}),(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \(host %{RELAY} said: %{PERMERROR:responsecode} %{DATA:smtp_response} \(in reply to %{DATA:command} command\)\)
 POSTFIX_CERTINVALID certificate verification failed for %{RELAY}: %{INVALID_CERT_REASONS}
 POSTFIX_CONNECT_FROM connect from %{CLIENT}
 POSTFIX_CONNECT_TO connect to %{RELAY}: %{GREEDYDATA:reason}
