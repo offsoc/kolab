@@ -16,18 +16,6 @@
             "conn_use": {
                 "type": "integer"
             },
-            "db_bytes": {
-                "type": "integer"
-            },
-            "db_path": {
-                "type": "keyword"
-            },
-            "db_records": {
-                "type": "integer"
-            },
-            "db_seconds": {
-                "type": "half_float"
-            },
             "delay": {
                 "type": "float"
             },
