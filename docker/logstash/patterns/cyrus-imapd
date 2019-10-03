@@ -14,7 +14,7 @@ CYRUS_IMAPD_DELPRUNE Removed \d+ deleted mailboxes
 CYRUS_IMAPD_DUPELIM dupelim: eliminated duplicate message to %{DATA:mailbox} id <%{DATA:message_id}>(?:-%{EMAIL_ADDRESS:client_auth})? date %{DATESTAMP_RFC2822} (\(%{DATA}\) )?\((?:delivery|redirect)\)
 CYRUS_IMAPD_DUPPRUNE duplicate_prune: %{GREEDYDATA}
 CYRUS_IMAPD_EVENT EVENT, , , ,  %{GREEDYDATA:event_json}
-CYRUS_IMAPD_EXPUNGE Expunged \d+ (out of \d+ )?messages from (?:%{DATA:mailbox}|\d+ mailboxes)
+CYRUS_IMAPD_EXPUNGE (Expired \d+ and )?(E|e)xpunged \d+ (out of \d+ )?messages from (?:%{DATA:mailbox}|\d+ mailboxes)
 CYRUS_IMAPD_INDEX_UPGRADE Index upgrade: %{DATA:mailbox} \(\d+ -> \d+\)
 CYRUS_IMAPD_LMTPUNIX_DELIVERY Delivered:\s+(<)?%{DATA:message_id(>)? to mailbox: %{GREEDYDATA:mailbox}
 CYRUS_IMAPD_LONGLOCK (mailbox|skiplist): longlock %{DATA} for [0-9]+\.[0-9]+ seconds
@@ -39,7 +39,7 @@ CYRUS_IMAPD_SHUTDOWN (All children have exited, closing down|attempting clean sh
 CYRUS_IMAPD_SIEVE_ACTION sieve %{CYRUS_IMAPD_SIEVE_ACTIONS}: <%{DATA:message_id}>(?: to: %{EMAIL_ADDRESS:to})?
 CYRUS_IMAPD_SIEVE_DISCONNECT Lost connection to client -- exiting
 CYRUS_IMAPD_SIEVE_RUNTIME_ERROR sieve runtime error for %{EMAIL_ADDRESS:client_auth} id <%{DATA:message_id}>: Fileinto: Mailbox does not exist
-CYRUS_IMAPD_SKIPLIST (?:(skiplist|twoskip)): (checkpointed %{PATH} \(%{INT} records, %{INT} bytes( => %{INT} bytes)?\) in %{POSREAL} sec(ond(s)?)?|clean shutdown file missing, updating recovery stamp)
+CYRUS_IMAPD_SKIPLIST (?:(skiplist|twoskip)): (checkpointed %{PATH} \(%{INT} records, (%{INT} => )?%{INT} bytes\) in %{POSREAL} sec(ond(s)?)?|clean shutdown file missing, updating recovery stamp)
 CYRUS_IMAPD_UNUSED_CACHE Removed unused cache file %{PATH}
 CYRUS_IMAPD_USAGE USAGE %{EMAIL_ADDRESS:client_auth} user: %{POSREAL} sys: %{POSREAL}
 
