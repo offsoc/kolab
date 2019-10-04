@@ -2,6 +2,35 @@
 
 set -e
 
+function die() {
+    echo "$1"
+    exit 1
+}
+
+rpm -qv composer >/dev/null 2>&1 || \
+    test ! -z "$(which composer 2>/dev/null)" || \
+    die "Is composer installed?"
+
+rpm -qv docker-compose >/dev/null 2>&1 || \
+    test ! -z "$(which docker-compose 2>/dev/null)" || \
+    die "Is docker-compose installed?"
+
+rpm -qv npm >/dev/null 2>&1 || \
+    test ! -z "$(which npm 2>/dev/null)" || \
+    die "Is npm installed?"
+
+rpm -qv php >/dev/null 2>&1 || \
+    test ! -z "$(which php 2>/dev/null)" || \
+    die "Is php installed?"
+
+rpm -qv php-ldap >/dev/null 2>&1 || \
+    test ! -z "$(php --ini | grep ldap)" || \
+    die "Is php-ldap installed?"
+
+rpm -qv php-mysqlnd >/dev/null 2>&1 || \
+    test ! -z "$(php --ini | grep mysql)" || \
+    die "Is php-mysqlnd installed?"
+
 base_dir=$(dirname $(dirname $0))
 
 bin/regen-certs
