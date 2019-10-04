@@ -1,5 +1,7 @@
 #!/bin/bash
 
+docker-compose stop logstash
+
 for index in $(curl localhost:9200/_cat/indices 2>/dev/null | awk '{print $3}' | grep ^logstash)
 do
     curl -X DELETE localhost:9200/${index} >/dev/null 2>&1
