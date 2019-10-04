@@ -1,5 +1,20 @@
 version: '2.1'
 services:
+  elasticsearch:
+    container_name: elasticsearch
+    environment:
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - discovery.type=single-node
+    hostname: elasticsearch
+    image: elasticsearch:7.3.2
+    network_mode: host
+  kibana:
+    container_name: kibana
+    extra_hosts:
+      - "elasticsearch:127.0.0.1"
+    hostname: kibana
+    image: kibana:7.3.2
+    network_mode: host
   kolab:
     build:
       context: ./docker/kolab/
