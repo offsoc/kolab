@@ -43,7 +43,7 @@ services:
     image: mariadb
     network_mode: host
   redis:
-    container_name: redis
+    container_name: redis-kolab
     image: redis
     network_mode: host
   worker:
