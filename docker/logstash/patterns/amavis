@@ -1,0 +1,6 @@
+AMAVIS_DIRECTIONALITY ((BouncedInbound|BouncedInternal|DiscardedInbound|NoBounceInternal|RejectedInternal|RelayedInbound|RelayedInternal|RelayedTaggedInbound|Quarantined)(,)?)+
+AMAVIS_STATUS (Passed|Blocked) (CLEAN|MTA-BLOCKED|SPAM|SPAMMY|UNCHECKED(-ENCRYPTED)?|BAD-HEADER-\d|BANNED \(%{DATA:reason}\)|INFECTED \(%{DATA:reason}\))
+
+AMAVIS_CHANNEL \(\d+-\d+(-\d+)?\) %{AMAVIS_STATUS:amavis_status} \{%{AMAVIS_DIRECTIONALITY}\}, (?:(ORIGINATING )?LOCAL )?(%{CLIENT_SRC} )?(\[%{IP}\] )?<%{DATA:from}> -> ((<%{DATA:to}>,)+?)? ((Queue-ID|quarantine): %{QUEUEID:local_queueid}, )?(Message-ID: <%{DATA:message_id}>, )?(mail_id: %{DATA}, )?(Hits: %{DATA}, )?(size: %{DATA}, )?(queued_as: %{QUEUEID:remote_queueid}, )?%{DATA}
+AMAVIS_MESSAGES (?:%{AMAVIS_CHANNEL})
+
