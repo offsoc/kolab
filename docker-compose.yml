@@ -48,6 +48,26 @@ services:
       - ./docker/certs/kolab.mgmt.com.key:/etc/pki/tls/certs/kolab.mgmt.com.key
       - ./docker/kolab/utils:/root/utils:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  logstash:
+    container_name: logstash-kolab
+    environment:
+      - config.reload.automatic=true
+      #- pipeline.workers=1
+      #- pipeline.batch.size=1
+      - xpack.monitoring.enabled=true
+    extra_hosts:
+      - "elasticsearch:127.0.0.1"
+      - "redis:127.0.0.1"
+    hostname: logstash
+    image: logstash:7.3.2
+    network_mode: host
+    volumes:
+      - ./docker/logstash/_grokparsefailures/:/usr/share/logstash/_grokparsefailures/
+      - ./docker/logstash/patterns/:/usr/share/logstash/patterns/:ro
+      - ./docker/logstash/pipeline/:/usr/share/logstash/pipeline/:ro
+      - ./docker/logstash/templates/:/usr/share/logstash/templates/:ro
+      #- ./docker/logstash/data/:/data/logs/:ro
+      - /data/logs/:/data/logs/:ro
   mariadb:
     container_name: mariadb
     environment:
