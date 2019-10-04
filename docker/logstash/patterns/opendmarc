@@ -1,0 +1,4 @@
+OPENDMARC_RESULT (?:%{QUEUEID:local_queueid}: )%{IP_OR_HOST:domain} %{DATA:dmarc_result}
+OPENDMARC_SPF_RESULT (?:%{QUEUEID:local_queueid}: )SPF\(mailfrom\): %{EMAIL_ADDRESS:from} %{DATA:dmarc_result}
+
+OPENDMARC_MESSAGES (?:(%{OPENDMARC_RESULT}|%{OPENDMARC_SPF_RESULT}))
