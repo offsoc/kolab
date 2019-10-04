@@ -31,10 +31,10 @@ class UserSeeder extends Seeder
         );
 
         // 10'000 users result in a table size of 11M
-        foreach (range(1, 1000) as $number) {
-            factory(User::class, 1000)->create();
-        }
-        //factory(User::class, 100)->create();
+        //foreach (range(1, 1000) as $number) {
+        //    factory(User::class, 1000)->create();
+        //}
+        factory(User::class, 100)->create();
         //factory(User::class, 3)->create();
 
         $uids = [
