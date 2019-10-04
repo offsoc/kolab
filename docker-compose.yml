@@ -8,6 +8,8 @@ services:
     hostname: elasticsearch
     image: elasticsearch:7.3.2
     network_mode: host
+    volumes:
+      - /data/elasticsearch/kolab/elasticsearch/:/usr/share/elasticsearch/data/
   kibana:
     container_name: kibana
     extra_hosts:
