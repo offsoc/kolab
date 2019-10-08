@@ -3,11 +3,12 @@
 namespace Tests\Feature;
 
 use App\User;
+
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class UserAccountTest extends TestCase
+class UserTest extends TestCase
 {
     /**
         Verify a wallet assigned a controller is among the accounts of the assignee.
