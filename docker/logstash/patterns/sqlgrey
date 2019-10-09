@@ -1,0 +1,20 @@
+# Example sequence:
+# grey: new: w.x.y(w.x.y.z), local@sender-domain.com -> local@recipient-domain.com
+# grey: early reconnect: x.y.z(w.x.y.z), local@sender-domain.com- -> local@recipient-domain.com
+# grey: reconnect ok: w.x.y(w.x.y.z), local@sender-domain.com -> local@recipient-domain.com (00:05:59)
+# grey: from awl: w.x.y, local@sender-domain.com added
+# grey: from awl match: updating w.x.y(w.x.y.z), local@sender-domain.com(local@sender-domain.com)
+# grey: domain awl match: updating w.x.y(w.x.y.z), sender-domain.com
+# whitelist: local@sender-domain.com, w.x.y.z(sending.mta.domain.com) -> local@recipient-domain.com
+# perf: spent 0s cleaning: from_awl (0) domain_awl (6) connect (13)
+# spam: w.x.y: local@sender-domain.com -> local@recipient-domain.com at YYYY-mm-dd HH:MM:SS
+SQLGREY_AWL_ADDED grey: (domain|from) awl: %{IPV4_3OCT}, (?:(%{HOSTNAME}|%{EMAIL_ADDRESS:from}|%{DATA:from})) added
+SQLGREY_AWL_MATCH grey: (?:(domain|from)) awl match: updating %{IPV4_3OCT}\(%{IPV4:src_ip}\), (?:(%{EMAIL_ADDRESS_DOMAIN:domain}|%{DATA:from}\(%{DATA}\)))
+SQLGREY_NEW grey: new: %{IPV4_3OCT}\(%{IPV4:src_ip}\), %{DATA:from} -> %{EMAIL_ADDRESS:to}
+SQLGREY_PERF perf: %{GREEDYDATA}
+SQLGREY_RECONNECT_EARLY grey: early reconnect: %{IPV4_3OCT}\(%{IPV4:src_ip}\), (?:%{EMAIL_ADDRESS:from}|%{DATA}) -> %{EMAIL_ADDRESS:to}
+SQLGREY_RECONNECT_OK grey: reconnect ok: %{IPV4_3OCT}\(%{IPV4:src_ip}\), %{DATA:from} -> %{EMAIL_ADDRESS:to} \(%{HOUR}:%{MINUTE}:%{SECOND}\)
+SQLGREY_SPAM spam: %{IPV4_3OCT}: %{DATA} -> %{EMAIL_ADDRESS:to} at %{TIMESTAMP_ISO8601}
+SQLGREY_WHITELIST whitelist: %{DATA:from}, %{IPV4:src_ip}\(%{HOSTNAME:client_host}\) -> %{EMAIL_ADDRESS:to}
+
+SQLGREY_MESSAGES (?:(%{SQLGREY_AWL_ADDED}|%{SQLGREY_AWL_MATCH}|%{SQLGREY_NEW}|%{SQLGREY_PERF}|%{SQLGREY_RECONNECT_EARLY}|%{SQLGREY_RECONNECT_OK}|%{SQLGREY_SPAM}|%{SQLGREY_WHITELIST}))

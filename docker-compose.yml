@@ -66,7 +66,7 @@ services:
       - ./docker/logstash/patterns/:/usr/share/logstash/patterns/:ro
       - ./docker/logstash/pipeline/:/usr/share/logstash/pipeline/:ro
       - ./docker/logstash/templates/:/usr/share/logstash/templates/:ro
-      #- ./docker/logstash/data/:/data/logs/:ro
+      - ./docker/logstash/data/:/usr/share/logstash/mydata/:ro
       - /data/logs/:/data/logs/:ro
   mariadb:
     container_name: mariadb

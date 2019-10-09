@@ -20,7 +20,8 @@ CYRUS_IMAPD_LMTPUNIX_DELIVERY Delivered:\s+(<)?%{DATA:message_id(>)? to mailbox:
 CYRUS_IMAPD_LONGLOCK (mailbox|skiplist): longlock %{DATA} for [0-9]+\.[0-9]+ seconds
 CYRUS_IMAPD_LMTPUNIX_SIEVE (?:%{CYRUS_IMAPD_SIEVE_ACTION}|%{CYRUS_IMAPD_SIEVE_RUNTIME_ERROR})
 # Note that sometimes a reverse DNS record is simply a '.', because it is virtually unrestricted.
-CYRUS_IMAPD_LOGIN (?:bad)?login: (?:%{CLIENT}|\.) (?:%{WORD:mech} )?(?:(\(<)?%{EMAIL_ADDRESS:client_auth}(>\))? )?(?:%{WORD:mech}(\+TLS)? )?(?:(User logged in( SESSIONID=<%{CYRUS_IMAP_SESSIONID:session_id}>)?)|(%{BADLOGIN_REASONS:reason})?)
+#CYRUS_IMAPD_LOGIN (?:bad)?login: (?:%{CLIENT}|\.) (?:%{WORD:mech} )?(?:(\(<)?%{EMAIL_ADDRESS:client_auth}(>\))? )?(?:%{WORD:mech}(\+TLS)? )?(?:(User logged in( SESSIONID=<%{CYRUS_IMAP_SESSIONID:session_id}>)?)|(%{BADLOGIN_REASONS:reason})?)
+CYRUS_IMAPD_LOGIN (?:bad)?login: (?:%{CLIENT}|\.) (?:(\(<)?%{EMAIL_ADDRESS:client_auth}(>\)|unknown)? )?(?:(%{WORD:mech}\+)(TLS)? )?(?:(User logged in( SESSIONID=<%{CYRUS_IMAP_SESSIONID:session_id}>)?)|(%{BADLOGIN_REASONS:reason})?)
 CYRUS_IMAPD_MAILBOX_DELETE Deleted mailbox %{DATA:mailbox}
 CYRUS_IMAPD_MAILBOX_OPEN open: user %{EMAIL_ADDRESS:client_auth} opened %{DATA:mailbox}
 CYRUS_IMAPD_MAILBOX_EVENT (indexing|Deleted|Repacking) mailbox %{DATA:mailbox}(?:(\.\.\. | version \d+))?

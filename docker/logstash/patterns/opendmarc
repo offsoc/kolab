@@ -1,4 +1,6 @@
+OPENDMARC_IGNORE ignoring connection from \[%{IP}\]
+OPENDMARC_IMPLICIT implicit authentication service: %{IP_OR_HOST}
 OPENDMARC_RESULT (?:%{QUEUEID:local_queueid}: )%{IP_OR_HOST:domain} %{DATA:dmarc_result}
 OPENDMARC_SPF_RESULT (?:%{QUEUEID:local_queueid}: )SPF\(mailfrom\): %{EMAIL_ADDRESS:from} %{DATA:dmarc_result}
 
-OPENDMARC_MESSAGES (?:(%{OPENDMARC_RESULT}|%{OPENDMARC_SPF_RESULT}))
+OPENDMARC_MESSAGES (?:(%{OPENDMARC_IGNORE}|%{OPENDMARC_IMPLICIT}|%{OPENDMARC_RESULT}|%{OPENDMARC_SPF_RESULT}))

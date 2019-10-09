@@ -39,7 +39,7 @@ POSTFIX_LOST_CONNECTION %{QUEUEID:local_queueid}: lost connection with %{RELAY} 
 # Postfix informational message about CISCO PIX SMTP relay "fixup" protocol
 POSTFIX_PIX %{QUEUEID:local_queueid}: enabling PIX workarounds: disable_esmtp delay_dotcrlf for %{RELAY}
 POSTFIX_REFUSAL %{QUEUEID:local_queueid}: host %{RELAY} refused to talk to me: %{GREEDYDATA:reason}
-POSTFIX_RELAY %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=(?:%{RELAY}|local|none),(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \((?:.* SESSIONID=<%{CYRUS_IMAP_SESSIONID:session_id}>\))?(?:.* (forwarded|queued) as %{QUEUEID:remote_queueid}\))?(?:%{DATA:reason}\))?
+POSTFIX_RELAY %{QUEUEID:local_queueid}: to=<%{EMAIL_ADDRESS:to}>,(?:\sorig_to=<%{EMAIL_ADDRESS:orig_to}>,)? relay=(?:%{RELAY}|local|none),(?:\sconn_use=%{POSINT:conn_use},)? delay=%{POSREAL:delay}, delays=%{DELAYS:delays}, dsn=%{DSN:dsn}, status=%{STATUS:result} \((?:.* SESSIONID=<%{CYRUS_IMAP_SESSIONID:session_id}>\))?(?:.* (forwarded|queued) as %{QUEUEID:remote_queueid}\))?(?:connect to %{CLIENT_DEST}: %{DATA:reason})?(?:%{DATA:reason}\))?
 POSTFIX_TIMEOUT %{QUEUEID:local_queueid}: conversation with %{RELAY} timed out while %{GREEDYDATA:reason}
 POSTFIX_TLS_HANDSHAKE %{QUEUEID:local_queueid}: Cannot start TLS: handshake failure
 POSTFIX_TLS_PROBLEM %{MESSAGELEVEL}: TLS library problem: %{GREEDYDATA}

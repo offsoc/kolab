@@ -75,7 +75,7 @@ class UserLoginsCommand extends Command
                     $item['_source']['@timestamp'],
                     $item['_source']['src_ip'],
                     $item['_source']['geo_src']['country_name'],
-                    $item['_source']['geo_src']['city_name']
+                    array_key_exists('city_name', $item['_source']['geo_src']) ? $item['_source']['geo_src']['city_name'] : ""
                 )
             );
         }
