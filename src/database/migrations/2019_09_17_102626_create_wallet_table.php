@@ -19,7 +19,7 @@ class CreateWalletTable extends Migration
                 $table->string('id', 36);
                 $table->string('description', 128)->nullable();
                 $table->string('currency', 4);
-                $table->decimal('balance', 8, 2);
+                $table->integer('balance');
                 $table->bigInteger('user_id');
             }
         );

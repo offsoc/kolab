@@ -17,8 +17,13 @@ class UserObserver
      */
     public function creating(User $user)
     {
-        $user->{$user->getKeyName()} = \App\Utils::uuidInt();
-
+        while (true) {
+            $allegedly_unique = \App\Utils::uuidInt();
+            if (!User::find($allegedly_unique)) {
+                $user->{$user->getKeyName()} = $allegedly_unique;
+                break;
+            }
+        }
         // can't dispatch job here because it'll fail serialization
     }
 

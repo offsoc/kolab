@@ -23,7 +23,7 @@ trait UserSettingsTrait
      */
     public function getSetting($key)
     {
-        $settings = $this->_getCache();
+        $settings = $this->getCache();
         $value = array_get($settings, $key);
 
         return ($value !== '') ? $value : null;
@@ -46,8 +46,8 @@ trait UserSettingsTrait
      */
     public function setSetting($key, $value)
     {
-        $this->_storeSetting($key, $value);
-        $this->_setCache();
+        $this->storeSetting($key, $value);
+        $this->setCache();
     }
 
     /**
@@ -67,13 +67,13 @@ trait UserSettingsTrait
     public function setSettings($data = [])
     {
         foreach ($data as $key => $value) {
-            $this->_storeSetting($key, $value);
+            $this->storeSetting($key, $value);
         }
 
-        $this->_setCache();
+        $this->setCache();
     }
 
-    private function _storeSetting($key, $value)
+    private function storeSetting($key, $value)
     {
         $record = UserSetting::where(['user_id' => $this->id, 'key' => $key])->first();
 
@@ -86,16 +86,16 @@ trait UserSettingsTrait
         }
     }
 
-    private function _getCache()
+    private function getCache()
     {
         if (Cache::has('user_settings_' . $this->id)) {
             return Cache::get('user_settings_' . $this->id);
         }
 
-        return $this->_setCache();
+        return $this->setCache();
     }
 
-    private function _setCache()
+    private function setCache()
     {
         if (Cache::has('user_settings_' . $this->id)) {
             Cache::forget('user_settings_' . $this->id);
@@ -105,6 +105,6 @@ trait UserSettingsTrait
 
         Cache::forever('user_settings_' . $this->id, $settings);
 
-        return $this->_getCache();
+        return $this->getCache();
     }
 }

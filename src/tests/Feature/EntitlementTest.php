@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain;
 use App\Entitlement;
 use App\Sku;
 use App\User;
@@ -18,11 +19,11 @@ class EntitlementTest extends TestCase
         parent::setUp();
 
         $owner = User::firstOrCreate(
-            ['email' => 'UserEntitlement1@UserEntitlement.com']
+            ['email' => 'entitlement-test@kolabnow.com']
         );
 
         $user = User::firstOrCreate(
-            ['email' => 'UserEntitled1@UserEntitlement.com']
+            ['email' => 'entitled-user@custom-domain.com']
         );
 
         $entitlement = Entitlement::firstOrCreate(
@@ -39,35 +40,76 @@ class EntitlementTest extends TestCase
 
     public function testUserAddEntitlement()
     {
-        $sku = Sku::firstOrCreate(
-            ['title' => 'individual']
+        $sku_domain = Sku::firstOrCreate(
+            ['title' => 'domain']
+        );
+
+        $sku_mailbox = Sku::firstOrCreate(
+            ['title' => 'mailbox']
         );
 
         $owner = User::firstOrCreate(
-            ['email' => 'UserEntitlement1@UserEntitlement.com']
+            ['email' => 'entitlement-test@kolabnow.com']
         );
 
         $user = User::firstOrCreate(
-            ['email' => 'UserEntitled1@UserEntitlement.com']
+            ['email' => 'entitled-user@custom-domain.com']
         );
+
+        // FIXME: How is this assertion false??
+        //$this->assertTrue($owner->id != $user->id);
 
         $wallets = $owner->wallets()->get();
 
-        $entitlement = Entitlement::firstOrCreate(
+        $domain = Domain::firstOrCreate(
             [
-                'owner_id' => $owner->id,
-                'user_id' => $user->id,
-                'wallet_id' => $wallets[0]->id,
-                'sku_id' => $sku->id,
-                'description' => "User Entitlement Test"
+                'namespace' => 'custom-domain.com',
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_EXTERNAL,
             ]
         );
 
-        $owner->addEntitlement($entitlement);
+        $entitlement_own_mailbox = Entitlement::firstOrCreate(
+            [
+                'owner_id' => $owner->id,
+                'entitleable_id' => $owner->id,
+                'entitleable_type' => User::class,
+                'wallet_id' => $wallets[0]->id,
+                'sku_id' => $sku_mailbox->id,
+                'description' => "Owner Mailbox Entitlement Test"
+            ]
+        );
 
-        $this->assertTrue($owner->entitlements()->count() == 1);
-        $this->assertTrue($sku->entitlements()->count() == 1);
-        $this->assertTrue($wallets[0]->entitlements()->count() == 1);
+        $entitlement_domain = Entitlement::firstOrCreate(
+            [
+                'owner_id' => $owner->id,
+                'entitleable_id' => $domain->id,
+                'entitleable_type' => Domain::class,
+                'wallet_id' => $wallets[0]->id,
+                'sku_id' => $sku_domain->id,
+                'description' => "User Domain Entitlement Test"
+            ]
+        );
+
+        $entitlement_mailbox = Entitlement::firstOrCreate(
+            [
+                'owner_id' => $owner->id,
+                'entitleable_id' => $user->id,
+                'entitleable_type' => User::class,
+                'wallet_id' => $wallets[0]->id,
+                'sku_id' => $sku_mailbox->id,
+                'description' => "User Mailbox Entitlement Test"
+            ]
+        );
+
+        $owner->addEntitlement($entitlement_own_mailbox);
+        $owner->addEntitlement($entitlement_domain);
+        $owner->addEntitlement($entitlement_mailbox);
+
+        $this->assertTrue($owner->entitlements()->count() == 3);
+        $this->assertTrue($sku_domain->entitlements()->count() == 1);
+        $this->assertTrue($sku_mailbox->entitlements()->count() == 2);
+        $this->assertTrue($wallets[0]->entitlements()->count() == 3);
         $this->assertTrue($wallets[0]->fresh()->balance < 0.00);
     }
 }

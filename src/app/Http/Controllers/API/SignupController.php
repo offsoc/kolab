@@ -63,8 +63,7 @@ class SignupController extends Controller
         // Send email/sms message
         if ($is_phone) {
             SignupVerificationSMS::dispatch($code);
-        }
-        else {
+        } else {
             SignupVerificationEmail::dispatch($code);
         }
 

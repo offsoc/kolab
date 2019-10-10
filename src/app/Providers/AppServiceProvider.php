@@ -25,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        \App\Domain::observe(\App\Observers\DomainObserver::class);
         \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
         \App\Sku::observe(\App\Observers\SkuObserver::class);
@@ -32,10 +33,8 @@ class AppServiceProvider extends ServiceProvider
         \App\Wallet::observe(\App\Observers\WalletObserver::class);
 
         // Log SQL queries in debug mode
-        if (env('APP_DEBUG')) {
-            DB::listen(function($query) {
+            DB::listen(function ($query) {
                 \Log::debug(sprintf('[SQL] %s [%s]', $query->sql, implode(', ', $query->bindings)));
             });
-        }
     }
 }

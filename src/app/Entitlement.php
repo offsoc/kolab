@@ -32,10 +32,16 @@ class Entitlement extends Model
     protected $fillable = [
         'sku_id',
         'owner_id',
-        'user_id',
         'wallet_id',
+        'entitleable_id',
+        'entitleable_type',
         'description'
     ];
+
+    public function entitleable()
+    {
+        return $this->morphTo();
+    }
 
     /**
      * The SKU concerned.
@@ -54,7 +60,7 @@ class Entitlement extends Model
      */
     public function owner()
     {
-        return $this->belongsTo('App\User', 'owner_id');
+        return $this->belongsTo('App\User', 'owner_id', 'id');
     }
 
     /**
@@ -64,7 +70,7 @@ class Entitlement extends Model
      */
     public function user()
     {
-        return $this->belongsTo('App\User');
+        return $this->belongsTo('App\User', 'user_id', 'id');
     }
 
     /**

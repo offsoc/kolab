@@ -18,7 +18,13 @@ class WalletObserver
      */
     public function creating(Wallet $wallet)
     {
-        $wallet->{$wallet->getKeyName()} = \App\Utils::uuidStr();
+        while (true) {
+            $allegedly_unique = \App\Utils::uuidStr();
+            if (!Wallet::find($allegedly_unique)) {
+                $wallet->{$wallet->getKeyName()} = $allegedly_unique;
+                break;
+            }
+        }
     }
 
     /**

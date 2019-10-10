@@ -47,7 +47,6 @@ class SignupTest extends TestCase
 
     public function testRegisterUser()
     {
-/*
         $data = [
             'email' => 'UsersApiControllerTest1@UsersApiControllerTest.com',
             'password' => 'simple123',
@@ -56,12 +55,10 @@ class SignupTest extends TestCase
 
         $response = $this->post('/api/auth/register', $data);
         $response->assertStatus(200);
-*/
     }
 
     public function testListUsers()
     {
-/*
         $user = User::firstOrCreate(
             [
                 'email' => 'UsersApiControllerTest1@UsersApiControllerTest.com'
@@ -73,6 +70,5 @@ class SignupTest extends TestCase
         $response->assertJsonCount(1);
 
         $response->assertStatus(200);
-*/
     }
 }

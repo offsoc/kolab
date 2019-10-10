@@ -72,13 +72,56 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * List the domains to which this user is entitled.
+     *
+     * @return Domain[]
+     */
+    public function domains()
+    {
+        $domains = Domain::whereRaw(
+            sprintf(
+                '(type & %s) AND (status & %s)',
+                Domain::TYPE_PUBLIC,
+                Domain::STATUS_ACTIVE
+            )
+        )->get();
+
+        $this->entitlements()->each(
+            function ($entitlement) {
+                if ($entitlement->entitleable instanceof Domain) {
+                    $domains[] = $entitlement->entitleable;
+                }
+            }
+        );
+
+        $this->accounts()->each(
+            function ($wallet) {
+                $wallet->entitlements()->each(
+                    function ($entitlement) {
+                        if ($entitlement->entitleable instanceof Domain) {
+                            $domains[] = $enitlement->entitleable;
+                        }
+                    }
+                );
+            }
+        );
+
+        return $domains;
+    }
+
+    public function entitlement()
+    {
+        return $this->morphOne('App\Entitlement', 'entitleable');
+    }
+
+    /**
      * Entitlements for this user.
      *
      * @return Entitlement[]
      */
     public function entitlements()
     {
-        return $this->hasMany('App\Entitlement');
+        return $this->hasMany('App\Entitlement', 'owner_id', 'id');
     }
 
     public function addEntitlement($entitlement)

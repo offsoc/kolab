@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
+// phpcs:ignore
 class CreateSkuEntitlements extends Migration
 {
     /**
@@ -16,9 +17,10 @@ class CreateSkuEntitlements extends Migration
         Schema::create(
             'entitlements',
             function (Blueprint $table) {
-                $table->string('id', 36);
+                $table->string('id', 36)->primary();
                 $table->bigInteger('owner_id');
-                $table->bigInteger('user_id');
+                $table->bigInteger('entitleable_id');
+                $table->bigInteger('entitleable_type');
                 $table->string('wallet_id', 36);
                 $table->string('sku_id', 36);
                 $table->string('description');
@@ -29,26 +31,15 @@ class CreateSkuEntitlements extends Migration
         Schema::create(
             'skus',
             function (Blueprint $table) {
-                $table->string('id', 36);
+                $table->string('id', 36)->primary();
                 $table->string('title', 64);
                 $table->text('description');
-                $table->decimal('cost', 8, 2);
+                $table->integer('cost');
+                $table->smallinteger('units_free')->default('0');
+                $table->string('period', strlen('monthly'))->default('monthly');
+                $table->string('handler_class')->nullable();
+                $table->boolean('active')->default(false);
                 $table->timestamps();
-            }
-        );
-
-        Schema::table(
-            'entitlements',
-            function (Blueprint $table) {
-                $table->primary('id');
-                $table->unique(['owner_id', 'user_id']);
-            }
-        );
-
-        Schema::table(
-            'skus',
-            function (Blueprint $table) {
-                $table->primary('id');
             }
         );
 
