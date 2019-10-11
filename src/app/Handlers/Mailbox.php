@@ -11,6 +11,7 @@ class Mailbox
     public static function preReq(Entitlement $entitlement, User $user)
     {
         if (!Sku::find($entitlement->sku_id)->active) {
+            \Log::info("Sku not active");
             return false;
         }
 
@@ -23,6 +24,8 @@ class Mailbox
                 return true;
             }
         }
+
+        \Log::info("Domain not for user");
 
         return false;
     }

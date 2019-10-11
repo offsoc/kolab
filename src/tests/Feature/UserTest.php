@@ -45,4 +45,22 @@ class UserTest extends TestCase
 
         $this->assertTrue($userB->accounts()->get()[0]->id === $userA->wallets()->get()[0]->id);
     }
+
+    public function testUserDomains()
+    {
+        $user = User::firstOrCreate(
+            [
+                'email' => 'john@kolab.org'
+            ]
+        );
+
+        $domains = [];
+
+        foreach ($user->domains() as $domain) {
+            $domains[] = $domain->namespace;
+        }
+
+        $this->assertTrue(in_array('kolabnow.com', $domains));
+        $this->assertTrue(in_array('kolab.org', $domains));
+    }
 }

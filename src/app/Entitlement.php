@@ -38,6 +38,11 @@ class Entitlement extends Model
         'description'
     ];
 
+    /**
+     * Principally entitleable objects such as 'Domain' or 'Mailbox'.
+     *
+     * @return mixed
+     */
     public function entitleable()
     {
         return $this->morphTo();

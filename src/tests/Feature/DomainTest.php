@@ -66,7 +66,7 @@ class DomainTest extends TestCase
                 [
                     'namespace' => $namespace,
                     'status' => $status,
-                    'type' => 1
+                    'type' => Domain::TYPE_EXTERNAL
                 ]
             );
 

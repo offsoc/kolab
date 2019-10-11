@@ -23,7 +23,7 @@ class CreateSkuEntitlements extends Migration
                 $table->bigInteger('entitleable_type');
                 $table->string('wallet_id', 36);
                 $table->string('sku_id', 36);
-                $table->string('description');
+                $table->string('description')->nullable();
                 $table->timestamps();
             }
         );
@@ -33,7 +33,7 @@ class CreateSkuEntitlements extends Migration
             function (Blueprint $table) {
                 $table->string('id', 36)->primary();
                 $table->string('title', 64);
-                $table->text('description');
+                $table->text('description')->nullable();
                 $table->integer('cost');
                 $table->smallinteger('units_free')->default('0');
                 $table->string('period', strlen('monthly'))->default('monthly');

@@ -86,25 +86,23 @@ class User extends Authenticatable implements JWTSubject
             )
         )->get();
 
-        $this->entitlements()->each(
-            function ($entitlement) {
+        foreach ($this->entitlements()->get() as $entitlement) {
+            if ($entitlement->entitleable instanceof Domain) {
+                $domain = Domain::find($entitlement->entitleable_id);
+                \Log::info("Found domain {$domain->namespace}");
+                $domains[] = $domain;
+            }
+        }
+
+        foreach ($this->accounts()->get() as $wallet) {
+            foreach ($wallet->entitlements()->get() as $entitlement) {
                 if ($entitlement->entitleable instanceof Domain) {
-                    $domains[] = $entitlement->entitleable;
+                    $domain = Domain::find($entitlement->entitleable_id);
+                    \Log::info("Found domain {$domain->namespace}");
+                    $domains[] = $domain;
                 }
             }
-        );
-
-        $this->accounts()->each(
-            function ($wallet) {
-                $wallet->entitlements()->each(
-                    function ($entitlement) {
-                        if ($entitlement->entitleable instanceof Domain) {
-                            $domains[] = $enitlement->entitleable;
-                        }
-                    }
-                );
-            }
-        );
+        }
 
         return $domains;
     }

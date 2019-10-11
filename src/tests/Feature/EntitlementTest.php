@@ -107,8 +107,8 @@ class EntitlementTest extends TestCase
         $owner->addEntitlement($entitlement_mailbox);
 
         $this->assertTrue($owner->entitlements()->count() == 3);
-        $this->assertTrue($sku_domain->entitlements()->count() == 1);
-        $this->assertTrue($sku_mailbox->entitlements()->count() == 2);
+        $this->assertTrue($sku_domain->entitlements()->count() == 2);
+        $this->assertTrue($sku_mailbox->entitlements()->count() == 3);
         $this->assertTrue($wallets[0]->entitlements()->count() == 3);
         $this->assertTrue($wallets[0]->fresh()->balance < 0.00);
     }

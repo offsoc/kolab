@@ -3,6 +3,7 @@
 use App\Domain;
 use Illuminate\Database\Seeder;
 
+// phpcs:ignore
 class DomainSeeder extends Seeder
 {
     /**

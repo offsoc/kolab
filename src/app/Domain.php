@@ -33,9 +33,9 @@ class Domain extends Model
         'type'
     ];
 
-    protected $guarded = [
-        "status"
-    ];
+    //protected $guarded = [
+    //    "status"
+    //];
 
     public function entitlement()
     {
@@ -119,22 +119,25 @@ class Domain extends Model
 
         switch ($status) {
             case "new":
-                $_status &= self::STATUS_NEW;
+                $_status += self::STATUS_NEW;
                 break;
             case "active":
-                $_status &= self::STATUS_ACTIVE;
+                $_status += self::STATUS_ACTIVE;
+                $_status -= self::STATUS_NEW;
                 break;
             case "confirmed":
-                $_status &= self::STATUS_CONFIRMED;
+                $_status += self::STATUS_CONFIRMED;
+                $_status -= self::STATUS_NEW;
                 break;
             case "suspended":
-                $_status &= self::STATUS_SUSPENDED;
+                $_status += self::STATUS_SUSPENDED;
                 break;
             case "deleted":
-                $_status &= self::STATUS_DELETED;
+                $_status += self::STATUS_DELETED;
                 break;
             default:
-                throw new \Exception("Invalid domain status: {$status}");
+                $_status = $status;
+                //throw new \Exception("Invalid domain status: {$status}");
                 break;
         }
 
