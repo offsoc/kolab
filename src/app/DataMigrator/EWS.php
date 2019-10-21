@@ -243,6 +243,13 @@ class EWS
         // Fetch the item
         $item = $this->api->getItem($itemId, $options);
 
+        // TODO: Groups are not exported in vCard format, they use eml
+        //       What's more the output does not include members, so
+        //       we'll have to ask for 'Members' attribute and create a vCard
+        if ($item instanceof API\Type\DistributionListType) {
+            return;
+        }
+
         $location = $this->location . '/' . $folder['fullname'];
 
         if (!file_exists($location)) {
