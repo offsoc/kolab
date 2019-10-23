@@ -3,9 +3,7 @@
 namespace App\DataMigrator;
 
 use garethp\ews\API;
-use garethp\ews\API\ExchangeAutodiscover;
 use garethp\ews\API\Type;
-use garethp\ews\API\Type\IndexedPageViewType;
 
 /**
  * Data migration factory
@@ -27,8 +25,7 @@ class EWS
         self::TYPE_CONTACT => 'vcf',
         self::TYPE_MAIL    => 'eml',
         self::TYPE_NOTE    => 'note',
-        // TODO: Surprise, surprise, tasks aren't exported in iCal format, we'll have to convert them
-        self::TYPE_TASK    => 'eml',
+        self::TYPE_TASK    => 'ics',
     ];
 
     /** @var array Supported folder types */
@@ -74,7 +71,7 @@ class EWS
     /**
      * Execute migration for the specified user
      */
-    public function migrate($user, $password)
+    public function migrate(string $user, string $password): void
     {
         // Autodiscover and authenticate the user
         $this->authenticate($user, $password);
@@ -102,13 +99,13 @@ class EWS
     /**
      * Autodiscover the server and authenticate the user
      */
-    protected function authenticate($user, $password)
+    protected function authenticate(string $user, string $password): void
     {
         // You should never run the Autodiscover more than once.
         // It can make between 1 and 5 calls before giving up, or before finding your server,
         // depending on how many different attempts it needs to make.
 
-        $api = ExchangeAutodiscover::getAPI($user, $password);
+        $api = API\ExchangeAutodiscover::getAPI($user, $password);
 
         $server = $api->getClient()->getServer();
         $version = $api->getClient()->getVersion();
@@ -174,11 +171,11 @@ class EWS
     /**
      * Synchronize specified folder
      */
-    protected function syncItems($folder)
+    protected function syncItems(array $folder): void
     {
         $request = [
             // Exchange's maximum is 1000, use it
-            'IndexedPageViewType' => new IndexedPageViewType(1000, 0),
+            'IndexedPageViewType' => new Type\IndexedPageViewType(1000, 0),
             'ParentFolderIds' => $folder['id']->toArray(true),
             'Traversal' => 'Shallow',
             'ItemShape' => [
@@ -188,6 +185,7 @@ class EWS
 
         // Request additional fields, e.g. UID for calendar items.
         // Just so we can print it before fetching the item.
+        // Note: Only calendar items have UIDs in Exchange
         if ($folder['class'] == self::TYPE_EVENT) {
             $request['ItemShape']['AdditionalProperties'] = [
                 'FieldURI' => array('FieldURI' => API\FieldURIManager::getFieldUriByName('UID', 'calendar')),
@@ -216,37 +214,28 @@ class EWS
     /**
      * Synchronize specified object
      */
-    protected function syncItem($item, $folder)
+    protected function syncItem(Type $item, array $folder): void
     {
         $itemId = $item->getItemId();
 
         if ($folder['class'] == self::TYPE_EVENT) {
-            $id = $item->getUID();
+            $uid = $item->getUID();
         } else {
-            // TODO: We should we generate an UID for objects that do not have it
-            //       and inject it into the output file
-            $id = $itemId->getId();
+            // We should generate an UID for objects that do not have it
+            // and inject it into the output file
+            // FIXME: Should we use e.g. md5($itemId->getId()) instead?
+            $uid = \App\Utils::uuidStr();
         }
 
-        $id = preg_replace('/[^a-zA-Z0-9_:@-]/', '', $id);
+        $uid = preg_replace('/[^a-zA-Z0-9_:@-]/', '', $uid);
 
-        $this->debug("* Saving item {$id}...");
-
-        // Request IncludeMimeContent as it's not included by default
-        $options = [
-            'ItemShape' => [
-                'BaseShape' => 'Default',
-                'IncludeMimeContent' => true,
-            ]
-        ];
+        $this->debug("* Saving item {$uid}...");
 
         // Fetch the item
-        $item = $this->api->getItem($itemId, $options);
+        $item = $this->api->getItem($itemId, $this->getItemRequest($folder));
 
-        // TODO: Groups are not exported in vCard format, they use eml
-        //       What's more the output does not include members, so
-        //       we'll have to ask for 'Members' attribute and create a vCard
-        if ($item instanceof API\Type\DistributionListType) {
+        // Apply type-specific format converters
+        if ($this->processItem($item, $uid) === false) {
             return;
         }
 
@@ -256,14 +245,146 @@ class EWS
             mkdir($location, 0740, true);
         }
 
-        $location .= '/' . $id . '.' . $this->extensions[$folder['class']];
-        $content = base64_decode((string) $item->getMimeContent());
+        $location .= '/' . $uid . '.' . $this->extensions[$folder['class']];
 
-        // TODO: calendar event attachments are exported as:
+        file_put_contents($location, (string) $item->getMimeContent());
+    }
+
+    /**
+     * Get GetItem request parameters
+     */
+    protected function getItemRequest(array $folder): array
+    {
+        $request = [
+            'ItemShape' => [
+                // Reqest default set of properties
+                'BaseShape' => 'Default',
+                // Additional properties, e.g. LastModifiedTime
+                'AdditionalProperties' => [
+                    'FieldURI' => array('FieldURI' => API\FieldURIManager::getFieldUriByName('LastModifiedTime', 'item')),
+                ]
+            ]
+        ];
+
+        // Request IncludeMimeContent as it's not included by default
+        // Note: Only for these object type that return useful MIME content
+        if ($folder['class'] != self::TYPE_TASK) {
+            $request['ItemShape']['IncludeMimeContent'] = true;
+        }
+
+        return $request;
+    }
+
+    /**
+     * Post-process GetItem() result
+     */
+    protected function processItem(&$item, string $uid): bool
+    {
+        // Decode MIME content
+        if (!($item instanceof Type\TaskType) && !($item instanceof Type\DistributionListType)) {
+            // TODO: Maybe find less-hacky way
+            $content = $item->getMimeContent();
+            $content->_ = base64_decode((string) $content);
+        }
+
+        // Get object's class name (remove namespace and unwanted parts)
+        $item_class = preg_replace('/(Type|Item|.*\\\)/', '', get_class($item));
+
+        // Execute type-specific item processor
+        switch ($item_class) {
+            case 'DistributionList':
+            case 'Contact':
+            case 'Calendar':
+            case 'Task':
+            // case 'Message':
+            // case 'Note':
+                return $this->{'process' . $item_class . 'Item'}($item, $uid);
+
+            default:
+                $this->debug("Unsupported object type: {$item_class}. Skiped.");
+                return false;
+        }
+    }
+
+    /**
+     * Convert distribution list object to vCard
+     */
+    protected function processDistributionListItem(&$item, string $uid): bool
+    {
+        // Groups (Distribution Lists) are not exported in vCard format, they use eml
+
+        $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nPRODID:Kolab EWS DataMigrator\r\n";
+        $vcard .= "UID:{$uid}\r\n";
+        $vcard .= "KIND:group\r\n";
+        $vcard .= "FN:" . $item->getDisplayName() . "\r\n";
+        $vcard .= "REV;VALUE=DATE-TIME:" . $item->getLastModifiedTime() . "\r\n";
+
+        // Process list members
+        // Note: The fact that getMembers() returns stdClass is probably a bug in php-ews
+        foreach ($item->getMembers()->Member as $member) {
+            $mailbox = $member->getMailbox();
+            $mailto = $mailbox->getEmailAddress();
+            $name = $mailbox->getName();
+
+            // FIXME: Investigate if mailto: members are handled properly by Kolab
+            //        or we need to use MEMBER:urn:uuid:9bd97510-9dbb-4810-a144-6180962df5e0 syntax
+            //        But do not forget lists can have members that are not contacts
+
+            if ($mailto) {
+                if ($name && $name != $mailto) {
+                    $mailto = urlencode(sprintf('"%s" <%s>', addcslashes($name, '"'), $mailto));
+                }
+
+                $vcard .= "MEMBER:mailto:{$mailto}\r\n";
+            }
+        }
+
+        $vcard .= "END:VCARD";
+
+        // TODO: Maybe find less-hacky way
+        $item->getMimeContent()->_ = $vcard;
+
+        return true;
+    }
+
+    /**
+     * Process contact object
+     */
+    protected function processContactItem(&$item, string $uid): bool
+    {
+        $vcard = (string) $item->getMimeContent();
+
+        // Inject UID to the vCard
+        $vcard = str_replace("BEGIN:VCARD", "BEGIN:VCARD\r\nUID:{$uid}", $vcard);
+
+        // TODO: Maybe find less-hacky way
+        $item->getMimeContent()->_ = $vcard;
+
+        return true;
+    }
+
+    /**
+     * Process event object
+     */
+    protected function processCalendarItem(&$item, string $uid): bool
+    {
+        // TODO: Inject attachment bodies into the iCal
+        //       Calendar event attachments are exported as:
         //       ATTACH:CID:81490FBA13A3DC2BF071B894C96B44BA51BEAAED@eurprd05.prod.outlook.com
         //       I.e. we have to handle them separately
 
-        file_put_contents($location, $content);
+
+        return true;
+    }
+
+    /**
+     * Process task object
+     */
+    protected function processTaskItem(&$item, string $uid): bool
+    {
+        // TODO: convert to iCalendar
+
+        return false;
     }
 
     /**
