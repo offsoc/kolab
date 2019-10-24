@@ -188,7 +188,7 @@ class EWS
         // Note: Only calendar items have UIDs in Exchange
         if ($folder['class'] == self::TYPE_EVENT) {
             $request['ItemShape']['AdditionalProperties'] = [
-                'FieldURI' => array('FieldURI' => API\FieldURIManager::getFieldUriByName('UID', 'calendar')),
+                'FieldURI' => ['FieldURI' => API\FieldURIManager::getFieldUriByName('UID', 'calendar')],
             ];
         }
 
@@ -261,7 +261,7 @@ class EWS
                 'BaseShape' => 'Default',
                 // Additional properties, e.g. LastModifiedTime
                 'AdditionalProperties' => [
-                    'FieldURI' => array('FieldURI' => API\FieldURIManager::getFieldUriByName('LastModifiedTime', 'item')),
+                    'FieldURI' => ['FieldURI' => API\FieldURIManager::getFieldUriByName('LastModifiedTime', 'item')],
                 ]
             ]
         ];
@@ -357,6 +357,9 @@ class EWS
         // Inject UID to the vCard
         $vcard = str_replace("BEGIN:VCARD", "BEGIN:VCARD\r\nUID:{$uid}", $vcard);
 
+        // Note: Looks like PHOTO property is exported properly, so we
+        //       don't have to handle attachments as we do for calendar items
+
         // TODO: Maybe find less-hacky way
         $item->getMimeContent()->_ = $vcard;
 
@@ -368,11 +371,39 @@ class EWS
      */
     protected function processCalendarItem(&$item, string $uid): bool
     {
-        // TODO: Inject attachment bodies into the iCal
-        //       Calendar event attachments are exported as:
-        //       ATTACH:CID:81490FBA13A3DC2BF071B894C96B44BA51BEAAED@eurprd05.prod.outlook.com
-        //       I.e. we have to handle them separately
+        // Inject attachment bodies into the iCalendar content
+        // Calendar event attachments are exported as:
+        // ATTACH:CID:81490FBA13A3DC2BF071B894C96B44BA51BEAAED@eurprd05.prod.outlook.com
+        if ($item->getHasAttachments()) {
+            $ical = (string) $item->getMimeContent();
 
+            // FIXME: I've tried hard and no matter what ContentId property is always empty
+            //        This means we can't match the CID from iCalendar with the attachment.
+            //        That's why we'll just remove all ATTACH:CID:... occurrences
+            //        and inject attachments to the main event
+            $ical = preg_replace('/\r\nATTACH:CID:[^\r]+\r\n(\r\n [^\r\n]*)?/', '', $ical);
+
+            foreach ((array) $item->getAttachments()->getFileAttachment() as $attachment) {
+                $_attachment = $this->getAttachment($attachment);
+
+                // FIXME: This is imo inconsistence on php-ews side that MimeContent
+                //        is base64 encoded, but Content isn't
+                // TODO: We should not do it in memory to not exceed the memory limit
+                $body = base64_encode($_attachment->getContent());
+                $body = rtrim(chunk_split($body, 74, "\r\n "), ' ');
+
+                $ctype = $_attachment->getContentType();
+
+                // Inject the attachment at the end of the first VEVENT block
+                // TODO: We should not do it in memory to not exceed the memory limit
+                $append = "ATTACH;VALUE=BINARY;ENCODING=BASE64;FMTTYPE={$ctype}:\r\n {$body}";
+                $pos = strpos($ical, "\r\nEND:VEVENT");
+                $ical = substr_replace($ical, $append, $pos + 2, 0);
+            }
+
+            // TODO: Maybe find less-hacky way
+            $item->getMimeContent()->_ = $ical;
+        }
 
         return true;
     }
@@ -385,6 +416,23 @@ class EWS
         // TODO: convert to iCalendar
 
         return false;
+    }
+
+    /**
+     * Fetch attachment object from Exchange
+     */
+    protected function getAttachment(Type\FileAttachmentType $attachment)
+    {
+        $request = [
+            'AttachmentIds' => [
+                $attachment->getAttachmentId()->toXmlObject()
+            ],
+            'AttachmentShape' => [
+                'IncludeMimeContent' => true,
+            ]
+        ];
+
+        return $this->api->getClient()->GetAttachment($request);
     }
 
     /**
