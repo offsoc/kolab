@@ -24,7 +24,7 @@ class EWS
         self::TYPE_EVENT   => 'ics',
         self::TYPE_CONTACT => 'vcf',
         self::TYPE_MAIL    => 'eml',
-        self::TYPE_NOTE    => 'note',
+        self::TYPE_NOTE    => 'eml',
         self::TYPE_TASK    => 'ics',
     ];
 
@@ -32,9 +32,13 @@ class EWS
     protected $folder_classes = [
         self::TYPE_EVENT,
         self::TYPE_CONTACT,
+        // self::TYPE_TASK,
+        // TODO: mail and sticky notes are exported as eml files.
+        //       We could use imapsync to synchronize mail, but for notes
+        //       the only option will be to convert them to Kolab format here
+        //       and upload to Kolab via IMAP, I guess
         // self::TYPE_MAIL,
         // self::TYPE_NOTE,
-        // self::TYPE_TASK,
     ];
 
     /** @var array Interal folders to skip */
@@ -262,6 +266,7 @@ class EWS
                 // Additional properties, e.g. LastModifiedTime
                 'AdditionalProperties' => [
                     'FieldURI' => ['FieldURI' => API\FieldURIManager::getFieldUriByName('LastModifiedTime', 'item')],
+                    'FieldURI' => ['FieldURI' => API\FieldURIManager::getFieldUriByName('ItemClass', 'item')],
                 ]
             ]
         ];
@@ -288,16 +293,19 @@ class EWS
         }
 
         // Get object's class name (remove namespace and unwanted parts)
-        $item_class = preg_replace('/(Type|Item|.*\\\)/', '', get_class($item));
+        $item_class = $item->getItemClass();
 
         // Execute type-specific item processor
         switch ($item_class) {
-            case 'DistributionList':
-            case 'Contact':
-            case 'Calendar':
-            case 'Task':
-            // case 'Message':
-            // case 'Note':
+            case 'IPM.DistList':
+            case 'IPM.Contact':
+            case 'IPM.Appointment':
+            case 'IPM.Task':
+            // case 'IPM.Note': // email
+            // case 'IPM.StickyNote':
+            // Note: iTip messages in mail folders may have different class assigned
+            // https://docs.microsoft.com/en-us/office/vba/outlook/Concepts/Forms/item-types-and-message-classes
+                $item_class = str_replace('IPM.', '', $item_class);
                 return $this->{'process' . $item_class . 'Item'}($item, $uid);
 
             default:
@@ -309,7 +317,7 @@ class EWS
     /**
      * Convert distribution list object to vCard
      */
-    protected function processDistributionListItem(&$item, string $uid): bool
+    protected function processDistListItem(&$item, string $uid): bool
     {
         // Groups (Distribution Lists) are not exported in vCard format, they use eml
 
@@ -369,7 +377,7 @@ class EWS
     /**
      * Process event object
      */
-    protected function processCalendarItem(&$item, string $uid): bool
+    protected function processAppointmentItem(&$item, string $uid): bool
     {
         // Inject attachment bodies into the iCalendar content
         // Calendar event attachments are exported as:
