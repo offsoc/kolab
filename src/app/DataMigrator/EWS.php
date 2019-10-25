@@ -6,39 +6,24 @@ use garethp\ews\API;
 use garethp\ews\API\Type;
 
 /**
- * Data migration factory
+ * Data migration from Exchange (EWS)
  */
 class EWS
 {
-    const TYPE_EVENT   = 'IPF.Appointment';
-    const TYPE_CONTACT = 'IPF.Contact';
-    const TYPE_MAIL    = 'IPF.Note';
-    const TYPE_NOTE    = 'IPF.StickyNote';
-    const TYPE_TASK    = 'IPF.Task';
-
     /** @var garethp\ews\API EWS API object */
-    protected $api;
-
-    /** @var array File extensions by type */
-    protected $extensions = [
-        self::TYPE_EVENT   => 'ics',
-        self::TYPE_CONTACT => 'vcf',
-        self::TYPE_MAIL    => 'eml',
-        self::TYPE_NOTE    => 'eml',
-        self::TYPE_TASK    => 'ics',
-    ];
+    public $api;
 
     /** @var array Supported folder types */
     protected $folder_classes = [
-        self::TYPE_EVENT,
-        self::TYPE_CONTACT,
-        self::TYPE_TASK,
+        EWS\Appointment::FOLDER_TYPE,
+        EWS\Contact::FOLDER_TYPE,
+        EWS\Task::FOLDER_TYPE,
         // TODO: mail and sticky notes are exported as eml files.
         //       We could use imapsync to synchronize mail, but for notes
         //       the only option will be to convert them to Kolab format here
         //       and upload to Kolab via IMAP, I guess
-        // self::TYPE_MAIL,
-        // self::TYPE_NOTE,
+        // EWS\Note::FOLDER_TYPE,
+        // EWS\StickyNote::FOLDER_TYPE,
     ];
 
     /** @var array Interal folders to skip */
@@ -94,7 +79,9 @@ class EWS
         foreach ($folders as $folder) {
             $this->debug("Syncing folder {$folder['fullname']}...");
 
-            $this->syncItems($folder);
+            if ($folder['total'] > 0) {
+                $this->syncItems($folder);
+            }
         }
 
         $this->debug("Done.");
@@ -166,6 +153,7 @@ class EWS
                 'class' => $class,
                 'name' => $name,
                 'fullname' => $fullname,
+                'location' => $this->location . '/' . $fullname,
             ];
         }
 
@@ -183,22 +171,19 @@ class EWS
             'ParentFolderIds' => $folder['id']->toArray(true),
             'Traversal' => 'Shallow',
             'ItemShape' => [
-                'BaseShape' => 'IdOnly'
+                'BaseShape' => 'IdOnly',
+                'AdditionalProperties' => [
+                    'FieldURI' => ['FieldURI' => API\FieldURIManager::getFieldUriByName('ItemClass', 'item')],
+                ],
             ],
         ];
-
-        // Request additional fields, e.g. UID for calendar items.
-        // Just so we can print it before fetching the item.
-        // Note: Only calendar items have UIDs in Exchange
-        if ($folder['class'] == self::TYPE_EVENT) {
-            $request['ItemShape']['AdditionalProperties'] = [
-                'FieldURI' => ['FieldURI' => API\FieldURIManager::getFieldUriByName('UID', 'calendar')],
-            ];
-        }
 
         // Note: It is not possible to get mimeContent with FindItem request
         //       That's why we first get the list of object identifiers and
         //       then call GetItem on each separately.
+
+        // TODO: It might be feasible to get all properties for object types
+        //       for which we don't use MimeContent, for better performance.
 
         $response = $this->api->getClient()->FindItem($request);
 
@@ -220,311 +205,21 @@ class EWS
      */
     protected function syncItem(Type $item, array $folder): void
     {
-        $itemId = $item->getItemId();
-
-        if ($folder['class'] == self::TYPE_EVENT) {
-            $uid = $item->getUID();
-        } else {
-            // We should generate an UID for objects that do not have it
-            // and inject it into the output file
-            // FIXME: Should we use e.g. md5($itemId->getId()) instead?
-            $uid = \App\Utils::uuidStr();
-        }
-
-        $uid = preg_replace('/[^a-zA-Z0-9_:@-]/', '', $uid);
-
-        $this->debug("* Saving item {$uid}...");
-
-        // Fetch the item
-        $item = $this->api->getItem($itemId, $this->getItemRequest($folder));
-
-        // Apply type-specific format converters
-        if ($this->processItem($item, $uid) === false) {
+        if ($driver = EWS\Item::factory($this, $item, $folder)) {
+            $driver->syncItem($item);
             return;
         }
 
-        $location = $this->location . '/' . $folder['fullname'];
-
-        if (!file_exists($location)) {
-            mkdir($location, 0740, true);
-        }
-
-        $location .= '/' . $uid . '.' . $this->extensions[$folder['class']];
-
-        file_put_contents($location, (string) $item->getMimeContent());
-    }
-
-    /**
-     * Get GetItem request parameters
-     */
-    protected function getItemRequest(array $folder): array
-    {
-        $request = [
-            'ItemShape' => [
-                // Reqest default set of properties
-                'BaseShape' => 'Default',
-                // Additional properties, e.g. LastModifiedTime
-                'AdditionalProperties' => [
-                    'FieldURI' => ['FieldURI' => API\FieldURIManager::getFieldUriByName('LastModifiedTime', 'item')],
-                    'FieldURI' => ['FieldURI' => API\FieldURIManager::getFieldUriByName('ItemClass', 'item')],
-                ]
-            ]
-        ];
-
-        // Request IncludeMimeContent as it's not included by default
-        // Note: Only for these object type that return useful MIME content
-        if ($folder['class'] != self::TYPE_TASK) {
-            $request['ItemShape']['IncludeMimeContent'] = true;
-        }
-
-        // For tasks we need all properties
-        if ($folder['class'] == self::TYPE_TASK) {
-            $request['ItemShape']['BaseShape'] = 'AllProperties';
-        }
-
-        return $request;
-    }
-
-    /**
-     * Post-process GetItem() result
-     */
-    protected function processItem(&$item, string $uid): bool
-    {
-        // Decode MIME content
-        if (!($item instanceof Type\TaskType) && !($item instanceof Type\DistributionListType)) {
-            // TODO: Maybe find less-hacky way
-            $content = $item->getMimeContent();
-            $content->_ = base64_decode((string) $content);
-        }
-
-        // Get object's class name (remove namespace and unwanted parts)
-        $item_class = $item->getItemClass();
-
-        // Execute type-specific item processor
-        switch ($item_class) {
-            case 'IPM.DistList':
-            case 'IPM.Contact':
-            case 'IPM.Appointment':
-            case 'IPM.Task':
-            // case 'IPM.Note': // email
-            // case 'IPM.StickyNote':
-            // Note: iTip messages in mail folders may have different class assigned
-            // https://docs.microsoft.com/en-us/office/vba/outlook/Concepts/Forms/item-types-and-message-classes
-                $item_class = str_replace('IPM.', '', $item_class);
-                return $this->{'process' . $item_class . 'Item'}($item, $uid);
-
-            default:
-                $this->debug("Unsupported object type: {$item_class}. Skiped.");
-                return false;
-        }
-    }
-
-    /**
-     * Convert distribution list object to vCard
-     */
-    protected function processDistListItem(&$item, string $uid): bool
-    {
-        // Groups (Distribution Lists) are not exported in vCard format, they use eml
-
-        $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nPRODID:Kolab EWS DataMigrator\r\n";
-        $vcard .= "UID:{$uid}\r\n";
-        $vcard .= "KIND:group\r\n";
-        $vcard .= "FN:" . $item->getDisplayName() . "\r\n";
-        $vcard .= "REV;VALUE=DATE-TIME:" . $item->getLastModifiedTime() . "\r\n";
-
-        // Process list members
-        // Note: The fact that getMembers() returns stdClass is probably a bug in php-ews
-        foreach ($item->getMembers()->Member as $member) {
-            $mailbox = $member->getMailbox();
-            $mailto = $mailbox->getEmailAddress();
-            $name = $mailbox->getName();
-
-            // FIXME: Investigate if mailto: members are handled properly by Kolab
-            //        or we need to use MEMBER:urn:uuid:9bd97510-9dbb-4810-a144-6180962df5e0 syntax
-            //        But do not forget lists can have members that are not contacts
-
-            if ($mailto) {
-                if ($name && $name != $mailto) {
-                    $mailto = urlencode(sprintf('"%s" <%s>', addcslashes($name, '"'), $mailto));
-                }
-
-                $vcard .= "MEMBER:mailto:{$mailto}\r\n";
-            }
-        }
-
-        $vcard .= "END:VCARD";
-
-        // TODO: Maybe find less-hacky way
-        $item->getMimeContent()->_ = $vcard;
-
-        return true;
-    }
-
-    /**
-     * Process contact object
-     */
-    protected function processContactItem(&$item, string $uid): bool
-    {
-        $vcard = (string) $item->getMimeContent();
-
-        // Inject UID to the vCard
-        $vcard = str_replace("BEGIN:VCARD", "BEGIN:VCARD\r\nUID:{$uid}", $vcard);
-
-        // Note: Looks like PHOTO property is exported properly, so we
-        //       don't have to handle attachments as we do for calendar items
-
-        // TODO: Maybe find less-hacky way
-        $item->getMimeContent()->_ = $vcard;
-
-        return true;
-    }
-
-    /**
-     * Process event object
-     */
-    protected function processAppointmentItem(&$item, string $uid): bool
-    {
-        // Inject attachment bodies into the iCalendar content
-        // Calendar event attachments are exported as:
-        // ATTACH:CID:81490FBA13A3DC2BF071B894C96B44BA51BEAAED@eurprd05.prod.outlook.com
-        if ($item->getHasAttachments()) {
-            $ical = (string) $item->getMimeContent();
-
-            // FIXME: I've tried hard and no matter what ContentId property is always empty
-            //        This means we can't match the CID from iCalendar with the attachment.
-            //        That's why we'll just remove all ATTACH:CID:... occurrences
-            //        and inject attachments to the main event
-            $ical = preg_replace('/\r\nATTACH:CID:[^\r]+\r\n(\r\n [^\r\n]*)?/', '', $ical);
-
-            foreach ((array) $item->getAttachments()->getFileAttachment() as $attachment) {
-                $_attachment = $this->getAttachment($attachment);
-
-                // FIXME: This is imo inconsistence on php-ews side that MimeContent
-                //        is base64 encoded, but Content isn't
-                // TODO: We should not do it in memory to not exceed the memory limit
-                $body = base64_encode($_attachment->getContent());
-                $body = rtrim(chunk_split($body, 74, "\r\n "), ' ');
-
-                $ctype = $_attachment->getContentType();
-
-                // Inject the attachment at the end of the first VEVENT block
-                // TODO: We should not do it in memory to not exceed the memory limit
-                $append = "ATTACH;VALUE=BINARY;ENCODING=BASE64;FMTTYPE={$ctype}:\r\n {$body}";
-                $pos = strpos($ical, "\r\nEND:VEVENT");
-                $ical = substr_replace($ical, $append, $pos + 2, 0);
-            }
-
-            // TODO: Maybe find less-hacky way
-            $item->getMimeContent()->_ = $ical;
-        }
-
-        return true;
-    }
-
-    /**
-     * Process task object
-     */
-    protected function processTaskItem(&$item, string $uid): bool
-    {
-        // Tasks are exported as Email messages in useless format
-        // (does not contain all relevant properties)
-        // We'll build the iCalendar using properties directly
-        // TODO: This probably should be done with sabre-vobject
-
-        $data = [
-            "UID" => $uid,
-            "DTSTAMP;VALUE=DATE-TIME" => $item->getLastModifiedTime(),
-            "CREATED;VALUE=DATE-TIME" => $item->getDateTimeCreated(),
-            "SEQUENCE" => '0', // TODO
-            "SUMMARY" => $item->getSubject(),
-            "DESCRIPTION" => (string) $item->getBody(),
-            "PERCENT-COMPLETE" => intval($item->getPercentComplete()),
-            "STATUS" => strtoupper($item->getStatus()),
-        ];
-
-        if ($dueDate = $item->getDueDate()) {
-            $data["DUE:VALUE=DATE-TIME"] = $dueDate;
-        }
-
-        if ($startDate = $item->getStartDate()) {
-            $data["DTSTART:VALUE=DATE-TIME"] = $startDate;
-        }
-
-        if (($categories = $item->getCategories()) && $categories->String) {
-            $data["CATEGORIES"] = $categories->String;
-        }
-
-        if ($sensitivity = $item->getSensitivity()) {
-            $sensitivity_map = [
-                'CONFIDENTIAL' => 'CONFIDENTIAL',
-                'NORMAL' => 'PUBLIC',
-                'PERSONAL' => 'PUBLIC',
-                'PRIVATE' => 'PRIVATE',
-            ];
-
-            $data['CLASS'] = $sensitivity_map[strtoupper($sensitivity)] ?: 'PUBLIC';
-        }
-
-        // TODO: VTIMEZONE, VALARM, ORGANIZER, ATTENDEE, RRULE,
-        // TODO: PRIORITY (Importance) - not used by Kolab
-        // ReminderDueBy, ReminderIsSet, IsRecurring, Owner, Recurrence
-
-        $ical = "BEGIN:VCALENDAR\r\nMETHOD:PUBLISH\r\nVERSION:2.0\r\nPRODID:Kolab EWS DataMigrator\r\nBEGIN:VTODO\r\n";
-
-        foreach ($data as $key => $value) {
-            // TODO: value wrapping/escaping
-            $ical .= "{$key}:{$value}\r\n";
-        }
-
-        // Attachments
-        if ($item->getHasAttachments()) {
-            foreach ((array) $item->getAttachments()->getFileAttachment() as $attachment) {
-                $_attachment = $this->getAttachment($attachment);
-
-                // FIXME: This is imo inconsistence on php-ews side that MimeContent
-                //        is base64 encoded, but Content isn't
-                // TODO: We should not do it in memory to not exceed the memory limit
-                $body = base64_encode($_attachment->getContent());
-                $body = rtrim(chunk_split($body, 74, "\r\n "), ' ');
-
-                $ctype = $_attachment->getContentType();
-
-                // Inject the attachment at the end of the VTODO block
-                // TODO: We should not do it in memory to not exceed the memory limit
-                $ical .= "ATTACH;VALUE=BINARY;ENCODING=BASE64;FMTTYPE={$ctype}:\r\n {$body}\r\n";
-            }
-        }
-
-        $ical .= "END:VEVENT\r\n";
-        $ical .= "END:VCALENDAR";
-
-        // TODO: Maybe find less-hacky way
-        $item->setMimeContent((new Type\MimeContentType)->set('_', $ical));
-
-        return true;
-    }
-
-    /**
-     * Fetch attachment object from Exchange
-     */
-    protected function getAttachment(Type\FileAttachmentType $attachment)
-    {
-        $request = [
-            'AttachmentIds' => [
-                $attachment->getAttachmentId()->toXmlObject()
-            ],
-            'AttachmentShape' => [
-                'IncludeMimeContent' => true,
-            ]
-        ];
-
-        return $this->api->getClient()->GetAttachment($request);
+        // TODO IPM.Note (email) and IPM.StickyNote
+        // Note: iTip messages in mail folders may have different class assigned
+        // https://docs.microsoft.com/en-us/office/vba/outlook/Concepts/Forms/item-types-and-message-classes
+        $this->debug("Unsupported object type: {$item->getItemClass()}. Skiped.");
     }
 
     /**
      * Print progress/debug information
      */
-    protected function debug($line)
+    public function debug($line)
     {
         // TODO: When not in console mode we should
         // not write to stdout, but to log
