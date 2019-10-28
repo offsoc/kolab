@@ -173,7 +173,7 @@ class EWS
             'ItemShape' => [
                 'BaseShape' => 'IdOnly',
                 'AdditionalProperties' => [
-                    'FieldURI' => ['FieldURI' => API\FieldURIManager::getFieldUriByName('ItemClass', 'item')],
+                    'FieldURI' => ['FieldURI' => 'item:ItemClass'],
                 ],
             ],
         ];
