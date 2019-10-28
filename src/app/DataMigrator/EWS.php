@@ -166,8 +166,8 @@ class EWS
     protected function syncItems(array $folder): void
     {
         $request = [
-            // Exchange's maximum is 1000, use it
-            'IndexedPageViewType' => new Type\IndexedPageViewType(1000, 0),
+            // Exchange's maximum is 1000
+            'IndexedPageItemView' => ['MaxEntriesReturned' => 100, 'Offset' => 0, 'BasePoint' => 'Beginning'],
             'ParentFolderIds' => $folder['id']->toArray(true),
             'Traversal' => 'Shallow',
             'ItemShape' => [
@@ -178,6 +178,8 @@ class EWS
             ],
         ];
 
+        $request = Type::buildFromArray($request);
+
         // Note: It is not possible to get mimeContent with FindItem request
         //       That's why we first get the list of object identifiers and
         //       then call GetItem on each separately.
@@ -185,13 +187,14 @@ class EWS
         // TODO: It might be feasible to get all properties for object types
         //       for which we don't use MimeContent, for better performance.
 
+        // Request first page
         $response = $this->api->getClient()->FindItem($request);
 
         foreach ($response as $item) {
             $this->syncItem($item, $folder);
         }
 
-        // FIXME: For some reason paging does not work, the initial request contains all items
+        // Request other pages until we got all
         while (!$response->isIncludesLastItemInRange()) {
             $response = $this->api->getNextPage($response);
             foreach ($response as $item) {
