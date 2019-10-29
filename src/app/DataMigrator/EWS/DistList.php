@@ -16,7 +16,7 @@ class DistList extends Item
     /**
      * Convert distribution list object to vCard
      */
-    protected function processItem(Type &$item): bool
+    protected function processItem(Type $item): bool
     {
         // Groups (Distribution Lists) are not exported in vCard format, they use eml
 

@@ -29,7 +29,7 @@ class Task extends Item
     /**
      * Process task object
      */
-    protected function processItem(Type &$item): bool
+    protected function processItem(Type $item): bool
     {
         // Tasks are exported as Email messages in useless format
         // (does not contain all relevant properties)

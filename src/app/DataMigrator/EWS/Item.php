@@ -78,7 +78,7 @@ abstract class Item
     /**
      * Item conversion code
      */
-    abstract protected function processItem(Type &$item): bool;
+    abstract protected function processItem(Type $item): bool;
 
     /**
      * Get GetItem request parameters

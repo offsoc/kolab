@@ -35,7 +35,7 @@ class Appointment extends Item
     /**
      * Process event object
      */
-    protected function processItem(Type &$item): bool
+    protected function processItem(Type $item): bool
     {
         // Decode MIME content
         // TODO: Maybe find less-hacky way
