@@ -56,17 +56,54 @@ class EWS
     /** @var string Output location */
     protected $location;
 
+    /** @var Account Source account */
+    protected $source;
+
+    /** @var Account Destination account */
+    protected $destination;
+
+
+
+    /**
+     * Print progress/debug information
+     */
+    public function debug($line)
+    {
+        // TODO: When not in console mode we should
+        // not write to stdout, but to log
+        $output = new \Symfony\Component\Console\Output\ConsoleOutput;
+        $output->writeln($line);
+    }
+
+    /**
+     * Return destination account
+     */
+    public function getDestination()
+    {
+        return $this->destination;
+    }
+
+    /**
+     * Return source account
+     */
+    public function getSource()
+    {
+        return $this->source;
+    }
 
     /**
      * Execute migration for the specified user
      */
-    public function migrate(string $user, string $password): void
+    public function migrate(Account $source, Account $destination): void
     {
+        $this->source = $source;
+        $this->destination = $destination;
+
         // Autodiscover and authenticate the user
-        $this->authenticate($user, $password);
+        $this->authenticate($source->username, $source->password);
 
         // We'll store output in storage/<username> tree
-        $this->location = storage_path('export/') . $user;
+        $this->location = storage_path('export/') . $source->email;
 
         if (!file_exists($this->location)) {
             mkdir($this->location, 0740, true);
@@ -217,16 +254,5 @@ class EWS
         // Note: iTip messages in mail folders may have different class assigned
         // https://docs.microsoft.com/en-us/office/vba/outlook/Concepts/Forms/item-types-and-message-classes
         $this->debug("Unsupported object type: {$item->getItemClass()}. Skiped.");
-    }
-
-    /**
-     * Print progress/debug information
-     */
-    public function debug($line)
-    {
-        // TODO: When not in console mode we should
-        // not write to stdout, but to log
-        $output = new \Symfony\Component\Console\Output\ConsoleOutput;
-        $output->writeln($line);
     }
 }

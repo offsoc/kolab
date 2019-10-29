@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\DataMigrator\Account;
+
 /**
  * Data migration factory
  */
@@ -10,7 +12,7 @@ class DataMigrator
     /**
      * Execute migration for the specified user
      */
-    public static function migrate($user, $password)
+    public static function migrate(Account $source, Account $destination)
     {
         // For now we support only EWS, but we can have
         // IMAP migrator or other, so this will be a factory
@@ -18,6 +20,6 @@ class DataMigrator
 
         $driver = new DataMigrator\EWS;
 
-        $driver->migrate($user, $password);
+        $driver->migrate($source, $destination);
     }
 }

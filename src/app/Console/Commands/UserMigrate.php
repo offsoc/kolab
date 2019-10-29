@@ -13,7 +13,9 @@ class UserMigrate extends Command
      *
      * @var string
      */
-    protected $signature = 'user:migrate {user : E-mail address} {password : Password}';
+    protected $signature = 'user:migrate
+                                {src : Source account}
+                                {dst : Destination account}';
 
     /**
      * The console command description.
@@ -39,9 +41,9 @@ class UserMigrate extends Command
      */
     public function handle()
     {
-        $user = $this->argument('user');
-        $pass = $this->argument('password');
+        $src = new DataMigrator\Account($this->argument('src'));
+        $dst = new DataMigrator\Account($this->argument('dst'));
 
-        DataMigrator::migrate($user, $pass);
+        DataMigrator::migrate($src, $dst);
     }
 }
