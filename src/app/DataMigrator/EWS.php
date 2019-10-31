@@ -53,6 +53,13 @@ class EWS
         'Orion Notes',
     ];
 
+    /** @var array Map of EWS folder types to Kolab types */
+    protected $type_map = [
+        EWS\Appointment::FOLDER_TYPE => DAVClient::TYPE_EVENT,
+        EWS\Contact::FOLDER_TYPE => DAVClient::TYPE_CONTACT,
+        EWS\Task::FOLDER_TYPE => DAVClient::TYPE_TASK,
+    ];
+
     /** @var string Output location */
     protected $location;
 
@@ -62,6 +69,8 @@ class EWS
     /** @var Account Destination account */
     protected $destination;
 
+    /** @var DAVClient Data importer */
+    protected $importer;
 
 
     /**
@@ -118,6 +127,26 @@ class EWS
 
             if ($folder['total'] > 0) {
                 $this->syncItems($folder);
+            }
+        }
+
+        $this->debug("Done.");
+        $this->debug("Importing to Kolab account...");
+
+        $this->importer = new DAVClient($destination);
+
+        foreach ($folders as $folder) {
+            $this->debug("Syncing folder {$folder['fullname']}...");
+
+            $this->importer->createFolder($folder['fullname'], $folder['type']);
+
+            if ($folder['total'] > 0) {
+                $files = array_diff(scandir($folder['location']), ['.', '..']);
+                foreach ($files as $file) {
+                    $this->debug("* Pushing item {$file}...");
+                    $this->importer->createObjectFromFile($folder['location'] . '/' . $file, $folder['fullname']);
+                    // TODO: remove the file?
+                }
             }
         }
 
@@ -188,6 +217,7 @@ class EWS
                 'id' => $folder->getFolderId(),
                 'total' => $folder->getTotalCount(),
                 'class' => $class,
+                'type' => array_key_exists($class, $this->type_map) ? $this->type_map[$class] : null,
                 'name' => $name,
                 'fullname' => $fullname,
                 'location' => $this->location . '/' . $fullname,

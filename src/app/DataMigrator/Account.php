@@ -37,15 +37,15 @@ class Account
         }
 
         if (isset($url['user'])) {
-            $this->username = $url['user'];
+            $this->username = urldecode($url['user']);
         }
 
         if (isset($url['pass'])) {
-            $this->password = $url['pass'];
+            $this->password = urldecode($url['pass']);
         }
 
         if (isset($url['host'])) {
-            $this->location = $input;
+            $this->uri = $input;
         }
 
         if (strpos($this->username, '@')) {

@@ -17,6 +17,7 @@
         "kolab/net_ldap3": "^1.1",
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",
+        "sabre/dav": "^4.0",
         "silviolleite/laravelpwa": "^1.0",
         "swooletw/laravel-swoole": "^2.6",
         "torann/currency": "^1.0",
