@@ -42,6 +42,8 @@ class Appointment extends Item
         $content = $item->getMimeContent();
         $ical = base64_decode((string) $content);
 
+        // TODO: replace source email with destination email address in ORGANIZER/ATTENDEE
+
         // Inject attachment bodies into the iCalendar content
         // Calendar event attachments are exported as:
         // ATTACH:CID:81490FBA13A3DC2BF071B894C96B44BA51BEAAED@eurprd05.prod.outlook.com

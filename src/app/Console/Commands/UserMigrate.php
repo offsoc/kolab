@@ -15,7 +15,8 @@ class UserMigrate extends Command
      */
     protected $signature = 'user:migrate
                                 {src : Source account}
-                                {dst : Destination account}';
+                                {dst? : Destination account}
+                                {--import : Import previously fetched data}';
 
     /**
      * The console command description.
@@ -41,9 +42,13 @@ class UserMigrate extends Command
      */
     public function handle()
     {
+        if ($this->option('import') && empty($this->argument('dst'))) {
+            throw new \Exception("For import both src and dst arguments are required");
+        }
+
         $src = new DataMigrator\Account($this->argument('src'));
         $dst = new DataMigrator\Account($this->argument('dst'));
 
-        DataMigrator::migrate($src, $dst);
+        DataMigrator::migrate($src, $dst, $this->options());
     }
 }

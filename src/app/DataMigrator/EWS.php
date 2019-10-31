@@ -103,13 +103,10 @@ class EWS
     /**
      * Execute migration for the specified user
      */
-    public function migrate(Account $source, Account $destination): void
+    public function migrate(Account $source, Account $destination, array $options = []): void
     {
         $this->source = $source;
         $this->destination = $destination;
-
-        // Autodiscover and authenticate the user
-        $this->authenticate($source->username, $source->password);
 
         // We'll store output in storage/<username> tree
         $this->location = storage_path('export/') . $source->email;
@@ -118,39 +115,50 @@ class EWS
             mkdir($this->location, 0740, true);
         }
 
+        // Autodiscover and authenticate the user
+        $this->authenticate($source->username, $source->password);
+
         $this->debug("Logged in. Fetching folders hierarchy...");
 
         $folders = $this->getFolders();
 
-        foreach ($folders as $folder) {
-            $this->debug("Syncing folder {$folder['fullname']}...");
+        if (empty($options['import'])) {
+            foreach ($folders as $folder) {
+                $this->debug("Syncing folder {$folder['fullname']}...");
 
-            if ($folder['total'] > 0) {
-                $this->syncItems($folder);
-            }
-        }
-
-        $this->debug("Done.");
-        $this->debug("Importing to Kolab account...");
-
-        $this->importer = new DAVClient($destination);
-
-        foreach ($folders as $folder) {
-            $this->debug("Syncing folder {$folder['fullname']}...");
-
-            $this->importer->createFolder($folder['fullname'], $folder['type']);
-
-            if ($folder['total'] > 0) {
-                $files = array_diff(scandir($folder['location']), ['.', '..']);
-                foreach ($files as $file) {
-                    $this->debug("* Pushing item {$file}...");
-                    $this->importer->createObjectFromFile($folder['location'] . '/' . $file, $folder['fullname']);
-                    // TODO: remove the file?
+                if ($folder['total'] > 0) {
+                    $this->syncItems($folder);
                 }
             }
+
+            $this->debug("Done.");
         }
 
-        $this->debug("Done.");
+        if (isset($destination->uri)) {
+            $this->debug("Importing to Kolab account...");
+
+            $this->importer = new DAVClient($destination);
+
+            // TODO: If we were to stay with this storage solution and need still
+            //       the import mode, it should not require connecting again to
+            //       Exchange. Now we do this for simplicity.
+            foreach ($folders as $folder) {
+                $this->debug("Syncing folder {$folder['fullname']}...");
+
+                $this->importer->createFolder($folder['fullname'], $folder['type']);
+
+                if ($folder['total'] > 0) {
+                    $files = array_diff(scandir($folder['location']), ['.', '..']);
+                    foreach ($files as $file) {
+                        $this->debug("* Pushing item {$file}...");
+                        $this->importer->createObjectFromFile($folder['location'] . '/' . $file, $folder['fullname']);
+                        // TODO: remove the file/folder?
+                    }
+                }
+            }
+
+           $this->debug("Done.");
+        }
     }
 
     /**
