@@ -26,13 +26,8 @@ class Account
     /**
      * Object constructor
      */
-    public function __construct($input)
+    public function __construct(string $input)
     {
-        // Empty values are allowed to indicate no destination argument
-        if ($input === null || !is_string($input)) {
-            return;
-        }
-
         // Input can be a valid URL or "<username>:<password>"
         $url = parse_url($input);
 

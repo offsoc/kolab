@@ -122,7 +122,7 @@ class EWS
 
         $folders = $this->getFolders();
 
-        if (empty($options['import'])) {
+        if (empty($options['import-only'])) {
             foreach ($folders as $folder) {
                 $this->debug("Syncing folder {$folder['fullname']}...");
 
@@ -134,7 +134,7 @@ class EWS
             $this->debug("Done.");
         }
 
-        if (isset($destination->uri)) {
+        if (empty($options['export-only'])) {
             $this->debug("Importing to Kolab account...");
 
             $this->importer = new DAVClient($destination);
