@@ -116,7 +116,7 @@ class EWS
         }
 
         // Autodiscover and authenticate the user
-        $this->authenticate($source->username, $source->password);
+        $this->authenticate($source->username, $source->password, $source->loginas);
 
         $this->debug("Logged in. Fetching folders hierarchy...");
 
@@ -157,14 +157,14 @@ class EWS
                 }
             }
 
-           $this->debug("Done.");
+            $this->debug("Done.");
         }
     }
 
     /**
      * Autodiscover the server and authenticate the user
      */
-    protected function authenticate(string $user, string $password): void
+    protected function authenticate(string $user, string $password, string $loginas = null): void
     {
         // You should never run the Autodiscover more than once.
         // It can make between 1 and 5 calls before giving up, or before finding your server,
@@ -174,12 +174,15 @@ class EWS
 
         $server = $api->getClient()->getServer();
         $version = $api->getClient()->getVersion();
+        $options = ['version' => $version];
+
+        if ($loginas) {
+            $options['impersonation'] = $loginas;
+        }
 
         $this->debug("Connected to $server ($version). Authenticating...");
 
-        $this->api = API::withUsernameAndPassword($server, $user, $password, [
-                'version' => $version
-        ]);
+        $this->api = API::withUsernameAndPassword($server, $user, $password, $options);
     }
 
     /**
