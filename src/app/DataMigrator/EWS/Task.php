@@ -85,22 +85,29 @@ class Task extends Item
             foreach ((array) $item->getAttachments()->getFileAttachment() as $attachment) {
                 $_attachment = $this->getAttachment($attachment);
 
+                $ctype = $_attachment->getContentType();
+                $body = $_attachment->getContent();
+
+                // It looks like Exchange may have an issue with plain text files.
+                // We'll skip empty files
+                if (!strlen($body)) {
+                    continue;
+                }
+
                 // FIXME: This is imo inconsistence on php-ews side that MimeContent
                 //        is base64 encoded, but Content isn't
                 // TODO: We should not do it in memory to not exceed the memory limit
-                $body = base64_encode($_attachment->getContent());
+                $body = base64_encode($body);
                 $body = rtrim(chunk_split($body, 74, "\r\n "), ' ');
-
-                $ctype = $_attachment->getContentType();
 
                 // Inject the attachment at the end of the VTODO block
                 // TODO: We should not do it in memory to not exceed the memory limit
-                $ical .= "ATTACH;VALUE=BINARY;ENCODING=BASE64;FMTTYPE={$ctype}:\r\n {$body}\r\n";
+                $ical .= "ATTACH;VALUE=BINARY;ENCODING=BASE64;FMTTYPE={$ctype}:\r\n {$body}";
             }
         }
 
         $ical .= "END:VEVENT\r\n";
-        $ical .= "END:VCALENDAR";
+        $ical .= "END:VCALENDAR\r\n";
 
         // TODO: Maybe find less-hacky way
         $item->setMimeContent((new Type\MimeContentType)->set('_', $ical));

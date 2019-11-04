@@ -53,7 +53,7 @@ class DistList extends Item
             }
         }
 
-        $vcard .= "END:VCARD";
+        $vcard .= "END:VCARD\r\n";
 
         // TODO: Maybe find less-hacky way
         $item->setMimeContent((new Type\MimeContentType)->set('_', $vcard));
