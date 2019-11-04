@@ -27,8 +27,7 @@ class Account
      * Object constructor
      *
      * Input can be a valid URI or "<username>:<password>".
-     * For proxy authentication use: "<loginas>^<username>:<password>"
-     * or "https://service-admin@password:hostname.domain.tld?loginas=user"
+     * For proxy authentication use: "<proxy-user>**<username>" as username.
      *
      * @param string $input Account specification
      */
@@ -40,15 +39,14 @@ class Account
         if ($url === false || !array_key_exists('user', $url)) {
             list($user, $password) = explode(':', $input, 2);
             $url = ['user' => $user, 'pass' => $password];
-
-            if (strpos($user, '^')) {
-                list($loginas, $url['user']) = explode('^', $user, 2);
-                $url['query'] = 'loginas=' . urlencode($loginas);
-            }
         }
 
         if (isset($url['user'])) {
             $this->username = urldecode($url['user']);
+
+            if (strpos($this->username, '**')) {
+                list($this->username, $this->loginas) = explode('**', $this->username, 2);
+            }
         }
 
         if (isset($url['pass'])) {
@@ -57,13 +55,6 @@ class Account
 
         if (isset($url['host'])) {
             $this->uri = preg_replace('/\?.*$/', '', $input);
-        }
-
-        if (isset($url['query'])) {
-            parse_str($url['query'], $params);
-            if (isset($params['loginas'])) {
-                $this->loginas = urldecode($params['loginas']);
-            }
         }
 
         if (strpos($this->loginas, '@')) {
