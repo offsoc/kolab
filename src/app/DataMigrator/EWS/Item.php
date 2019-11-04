@@ -131,4 +131,15 @@ abstract class Item
 
         return $this->uid;
     }
+
+    /**
+     * VCard/iCal property formatting
+     */
+    protected function formatProp($name, $value, array $params = []): string
+    {
+        $cal = new \Sabre\VObject\Component\VCalendar();
+        $prop = new \Sabre\VObject\Property\Text($cal, $name, $value);
+
+        return $prop->serialize();
+    }
 }

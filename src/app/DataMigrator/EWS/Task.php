@@ -37,26 +37,26 @@ class Task extends Item
         // TODO: This probably should be done with sabre-vobject
 
         $data = [
-            "UID" => $this->getUID($item),
-            "DTSTAMP;VALUE=DATE-TIME" => $item->getLastModifiedTime(),
-            "CREATED;VALUE=DATE-TIME" => $item->getDateTimeCreated(),
-            "SEQUENCE" => '0', // TODO
-            "SUMMARY" => $item->getSubject(),
-            "DESCRIPTION" => (string) $item->getBody(),
-            "PERCENT-COMPLETE" => intval($item->getPercentComplete()),
-            "STATUS" => strtoupper($item->getStatus()),
+            "UID" => [$this->getUID($item)],
+            "DTSTAMP" => [$item->getLastModifiedTime(), ['VALUE' => 'DATE-TIME']],
+            "CREATED" => [$item->getDateTimeCreated(), ['VALUE' => 'DATE-TIME']],
+            "SEQUENCE" => ['0'], // TODO
+            "SUMMARY" => [$item->getSubject()],
+            "DESCRIPTION" => [(string) $item->getBody()],
+            "PERCENT-COMPLETE" => [intval($item->getPercentComplete())],
+            "STATUS" => [strtoupper($item->getStatus())],
         ];
 
         if ($dueDate = $item->getDueDate()) {
-            $data["DUE:VALUE=DATE-TIME"] = $dueDate;
+            $data["DUE"] = [$dueDate, ['VALUE' => 'DATE-TIME']];
         }
 
         if ($startDate = $item->getStartDate()) {
-            $data["DTSTART:VALUE=DATE-TIME"] = $startDate;
+            $data["DTSTART"] = [$startDate, ['VALUE' => 'DATE-TIME']];
         }
 
         if (($categories = $item->getCategories()) && $categories->String) {
-            $data["CATEGORIES"] = $categories->String;
+            $data["CATEGORIES"] = [$categories->String];
         }
 
         if ($sensitivity = $item->getSensitivity()) {
@@ -67,7 +67,7 @@ class Task extends Item
                 'PRIVATE' => 'PRIVATE',
             ];
 
-            $data['CLASS'] = $sensitivity_map[strtoupper($sensitivity)] ?: 'PUBLIC';
+            $data['CLASS'] = [$sensitivity_map[strtoupper($sensitivity)] ?: 'PUBLIC'];
         }
 
         // TODO: VTIMEZONE, VALARM, ORGANIZER, ATTENDEE, RRULE,
@@ -76,9 +76,8 @@ class Task extends Item
 
         $ical = "BEGIN:VCALENDAR\r\nMETHOD:PUBLISH\r\nVERSION:2.0\r\nPRODID:Kolab EWS DataMigrator\r\nBEGIN:VTODO\r\n";
 
-        foreach ($data as $key => $value) {
-            // TODO: value wrapping/escaping
-            $ical .= "{$key}:{$value}\r\n";
+        foreach ($data as $key => $prop) {
+            $ical .= $this->formatProp($key, $prop[0], isset($prop[1]) ? $prop[1] : []);
         }
 
         // Attachments

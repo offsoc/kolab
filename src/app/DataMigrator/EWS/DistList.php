@@ -21,17 +21,16 @@ class DistList extends Item
         // Groups (Distribution Lists) are not exported in vCard format, they use eml
 
         $data = [
-            "UID" => $this->getUID($item),
-            "KIND" => "group",
-            "FN" => $item->getDisplayName(),
-            "REV;VALUE=DATE-TIME" => $item->getLastModifiedTime(),
+            "UID" => [$this->getUID($item)],
+            "KIND" => ["group"],
+            "FN" => [$item->getDisplayName()],
+            "REV" => [$item->getLastModifiedTime(), ['VALUE' => 'DATE-TIME']],
         ];
 
         $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nPRODID:Kolab EWS DataMigrator\r\n";
 
-        foreach ($data as $key => $value) {
-            // TODO: value wrapping/escaping
-            $vcard .= "{$key}:{$value}\r\n";
+        foreach ($data as $key => $prop) {
+            $vcard .= $this->formatProp($key, $prop[0], isset($prop[1]) ? $prop[1] : []);
         }
 
         // Process list members
@@ -50,7 +49,7 @@ class DistList extends Item
                     $mailto = urlencode(sprintf('"%s" <%s>', addcslashes($name, '"'), $mailto));
                 }
 
-                $vcard .= "MEMBER:mailto:{$mailto}\r\n";
+                $vcard .= $this->formatProp('MEMBER', "mailto:{$mailto}");
             }
         }
 
