@@ -69,6 +69,9 @@ class EWS
     /** @var Account Destination account */
     protected $destination;
 
+    /** @var array Migration options */
+    protected $options = [];
+
     /** @var DAVClient Data importer */
     protected $importer;
 
@@ -107,6 +110,7 @@ class EWS
     {
         $this->source = $source;
         $this->destination = $destination;
+        $this->options = $options;
 
         // We'll store output in storage/<username> tree
         $this->location = storage_path('export/') . $source->email;
@@ -190,6 +194,9 @@ class EWS
      */
     protected function getFolders(): array
     {
+        // Folder types we're ineterested in
+        $folder_classes = $this->folderClasses();
+
         // Get full folders hierarchy
         $options = [
             'Traversal' => 'Deep',
@@ -203,7 +210,7 @@ class EWS
             $class = $folder->getFolderClass();
 
             // Skip folder types we do not support
-            if (!in_array($class, $this->folder_classes)) {
+            if (!in_array($class, $folder_classes)) {
                 continue;
             }
 
@@ -295,5 +302,44 @@ class EWS
         // Note: iTip messages in mail folders may have different class assigned
         // https://docs.microsoft.com/en-us/office/vba/outlook/Concepts/Forms/item-types-and-message-classes
         $this->debug("Unsupported object type: {$item->getItemClass()}. Skiped.");
+    }
+
+    /**
+     * Return list of folder classes for current migrate operation
+     */
+    protected function folderClasses(): array
+    {
+        if (!empty($this->options['type'])) {
+            $types = preg_split('/\s*,\s*/', strtolower($this->options['type']));
+            $result = [];
+
+            foreach ($types as $type) {
+                switch ($type) {
+                    case 'event':
+                        $result[] = EWS\Appointment::FOLDER_TYPE;
+                        break;
+                    case 'contact':
+                        $result[] = EWS\Contact::FOLDER_TYPE;
+                        break;
+                    case 'task':
+                        $result[] = EWS\Task::FOLDER_TYPE;
+                        break;
+/*
+                    case 'note':
+                        $result[] = EWS\StickyNote::FOLDER_TYPE;
+                        break;
+                    case 'mail':
+                        $result[] = EWS\Note::FOLDER_TYPE;
+                        break;
+*/
+                    default:
+                        throw new \Exception("Unsupported type: {$type}");
+                }
+            }
+
+            return $result;
+        }
+
+        return $this->folder_classes;
     }
 }

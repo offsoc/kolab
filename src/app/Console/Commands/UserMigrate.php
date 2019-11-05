@@ -16,6 +16,7 @@ class UserMigrate extends Command
     protected $signature = 'user:migrate
                                 {src : Source account}
                                 {dst : Destination account}
+                                {--type= : Object type(s)}
                                 {--export-only : Only export data}
                                 {--import-only : Only import previously exported data}';
 
