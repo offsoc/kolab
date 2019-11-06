@@ -138,8 +138,15 @@ abstract class Item
     protected function formatProp($name, $value, array $params = []): string
     {
         $cal = new \Sabre\VObject\Component\VCalendar();
-        $prop = new \Sabre\VObject\Property\Text($cal, $name, $value);
+        $prop = new \Sabre\VObject\Property\Text($cal, $name, $value, $params);
 
-        return $prop->serialize();
+        $value = $prop->serialize();
+
+        // Revert escaping for some props
+        if ($name == 'RRULE') {
+            $value = str_replace("\\", '', $value);
+        }
+
+        return $value;
     }
 }
