@@ -149,6 +149,11 @@ class EWS
             foreach ($folders as $folder) {
                 $this->debug("Syncing folder {$folder['fullname']}...");
 
+                if (empty($folder['type'])) {
+                    // skip unsupported object type (e.g. mail) for now
+                    continue;
+                }
+
                 $this->importer->createFolder($folder['fullname'], $folder['type']);
 
                 if ($folder['total'] > 0) {
@@ -318,9 +323,11 @@ class EWS
                     case 'event':
                         $result[] = EWS\Appointment::FOLDER_TYPE;
                         break;
+
                     case 'contact':
                         $result[] = EWS\Contact::FOLDER_TYPE;
                         break;
+
                     case 'task':
                         $result[] = EWS\Task::FOLDER_TYPE;
                         break;
@@ -328,10 +335,11 @@ class EWS
                     case 'note':
                         $result[] = EWS\StickyNote::FOLDER_TYPE;
                         break;
+*/
                     case 'mail':
                         $result[] = EWS\Note::FOLDER_TYPE;
                         break;
-*/
+
                     default:
                         throw new \Exception("Unsupported type: {$type}");
                 }
