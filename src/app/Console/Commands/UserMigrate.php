@@ -17,8 +17,9 @@ class UserMigrate extends Command
                                 {src : Source account}
                                 {dst : Destination account}
                                 {--type= : Object type(s)}
-                                {--export-only : Only export data}
-                                {--import-only : Only import previously exported data}';
+                                {--force : Force existing queue removal}';
+//                                {--export-only : Only export data}
+//                                {--import-only : Only import previously exported data}';
 
     /**
      * The console command description.

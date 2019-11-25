@@ -2,6 +2,10 @@
 
 namespace App\DataMigrator;
 
+use App\DataMigratorQueue;
+use App\Jobs\DataMigratorEWSFolder;
+use App\Jobs\DataMigratorEWSItem;
+
 use garethp\ews\API;
 use garethp\ews\API\Type;
 
@@ -75,6 +79,12 @@ class EWS
     /** @var DAVClient Data importer */
     protected $importer;
 
+    /** @var \App\DataMigratorQueue Migrator jobs queue */
+    protected $queue;
+
+    /** @var array EWS server setup (after autodiscovery) */
+    protected $ews = [];
+
 
     /**
      * Print progress/debug information
@@ -108,6 +118,31 @@ class EWS
      */
     public function migrate(Account $source, Account $destination, array $options = []): void
     {
+        // Create a unique identifier for the migration request
+        $queue_id = md5(strval($source).strval($destination).$options['type']);
+
+        // If queue exists, we'll display the progress only
+        if ($queue = DataMigratorQueue::find($queue_id)) {
+            // If queue contains no jobs, assume invalid
+            // TODO: An better API to manage (reset) queues
+            if (!$queue->jobs_started || !empty($options['force'])) {
+                $queue->delete();
+            } else {
+                while (true) {
+                    printf("Progress [%d of %d]\n", $queue->jobs_finished, $queue->jobs_started);
+
+                    if ($queue->jobs_started == $queue->jobs_finished) {
+                        break;
+                    }
+
+                    sleep(1);
+                    $queue->refresh();
+                }
+
+                return;
+            }
+        }
+
         $this->source = $source;
         $this->destination = $destination;
         $this->options = $options;
@@ -122,52 +157,33 @@ class EWS
         // Autodiscover and authenticate the user
         $this->authenticate($source->username, $source->password, $source->loginas);
 
-        $this->debug("Logged in. Fetching folders hierarchy...");
+        // Also check user credentials for Kolab destination
+        $this->importer = new DAVClient($destination);
+        $this->importer->authenticate();
+
+        $this->debug("Source/destination user credentials verified.");
+        $this->debug("Fetching folders hierarchy...");
+
+        // Create a queue
+        $this->createQueue($queue_id);
 
         $folders = $this->getFolders();
+        $count = 0;
 
-        if (empty($options['import-only'])) {
-            foreach ($folders as $folder) {
-                $this->debug("Syncing folder {$folder['fullname']}...");
+        foreach ($folders as $folder) {
+            // Only supported folder types
+            if ($folder['type']) {
+                $this->debug("Processing folder {$folder['fullname']}...");
 
-                if ($folder['total'] > 0) {
-                    $this->syncItems($folder);
-                }
+                // Dispatch the job (for async execution)
+                DataMigratorEWSFolder::dispatch($folder);
+                $count++;
             }
-
-            $this->debug("Done.");
         }
 
-        if (empty($options['export-only'])) {
-            $this->debug("Importing to Kolab account...");
+        $this->queue->bumpJobsStarted($count);
 
-            $this->importer = new DAVClient($destination);
-
-            // TODO: If we were to stay with this storage solution and need still
-            //       the import mode, it should not require connecting again to
-            //       Exchange. Now we do this for simplicity.
-            foreach ($folders as $folder) {
-                $this->debug("Syncing folder {$folder['fullname']}...");
-
-                if (empty($folder['type'])) {
-                    // skip unsupported object type (e.g. mail) for now
-                    continue;
-                }
-
-                $this->importer->createFolder($folder['fullname'], $folder['type']);
-
-                if ($folder['total'] > 0) {
-                    $files = array_diff(scandir($folder['location']), ['.', '..']);
-                    foreach ($files as $file) {
-                        $this->debug("* Pushing item {$file}...");
-                        $this->importer->createObjectFromFile($folder['location'] . '/' . $file, $folder['fullname']);
-                        // TODO: remove the file/folder?
-                    }
-                }
-            }
-
-            $this->debug("Done.");
-        }
+        $this->debug("Done. {$count} jobs created in queue: {$queue_id}.");
     }
 
     /**
@@ -178,6 +194,8 @@ class EWS
         // You should never run the Autodiscover more than once.
         // It can make between 1 and 5 calls before giving up, or before finding your server,
         // depending on how many different attempts it needs to make.
+
+        // TODO: After 2020-10-13 EWS at Office365 will require OAuth
 
         $api = API\ExchangeAutodiscover::getAPI($user, $password);
 
@@ -190,6 +208,11 @@ class EWS
         }
 
         $this->debug("Connected to $server ($version). Authenticating...");
+
+        $this->ews = [
+            'options' => $options,
+            'server' => $server,
+        ];
 
         $this->api = API::withUsernameAndPassword($server, $user, $password, $options);
     }
@@ -244,6 +267,7 @@ class EWS
                 'name' => $name,
                 'fullname' => $fullname,
                 'location' => $this->location . '/' . $fullname,
+                'queue_id' => $this->queue->id,
             ];
         }
 
@@ -251,10 +275,24 @@ class EWS
     }
 
     /**
-     * Synchronize specified folder
+     * Processing of a folder synchronization
      */
-    protected function syncItems(array $folder): void
+    public function processFolder(array $folder): void
     {
+        // Job processing - initialize environment
+        if (!empty($folder['queue_id'])) {
+            $this->initEnv($folder['queue_id']);
+        }
+
+        // Create the folder on destination server
+        $this->importer->createFolder($folder['fullname'], $folder['type']);
+
+        // The folder is empty, we can stop here
+        if (empty($folder['total'])) {
+            $this->queue->bumpJobsFinished();
+            return;
+        }
+
         $request = [
             // Exchange's maximum is 1000
             'IndexedPageItemView' => ['MaxEntriesReturned' => 100, 'Offset' => 0, 'BasePoint' => 'Beginning'],
@@ -279,34 +317,71 @@ class EWS
 
         // Request first page
         $response = $this->api->getClient()->FindItem($request);
+        $count = 0;
 
         foreach ($response as $item) {
-            $this->syncItem($item, $folder);
+            $count += (int) $this->syncItem($item, $folder);
         }
+
+        $this->queue->bumpJobsStarted($count);
 
         // Request other pages until we got all
         while (!$response->isIncludesLastItemInRange()) {
             $response = $this->api->getNextPage($response);
+            $count = 0;
+
             foreach ($response as $item) {
-                $this->syncItem($item, $folder);
+                $count += (int) $this->syncItem($item, $folder);
+            }
+
+            $this->queue->bumpJobsStarted($count);
+        }
+
+        $this->queue->bumpJobsFinished();
+    }
+
+    /**
+     * Processing of item synchronization
+     */
+    public function processItem(array $item): void
+    {
+        // Job processing - initialize environment
+        if (!empty($item['queue_id'])) {
+            $this->initEnv($item['queue_id']);
+        }
+
+        if ($driver = EWS\Item::factory($this, $item['item'], $item)) {
+            if ($file = $driver->syncItem($item['item'])) {
+                $this->importer->createObjectFromFile($file, $item['fullname']);
+                // TODO: remove the file
             }
         }
+
+        $this->queue->bumpJobsFinished();
     }
 
     /**
      * Synchronize specified object
      */
-    protected function syncItem(Type $item, array $folder): void
+    protected function syncItem(Type $item, array $folder): bool
     {
         if ($driver = EWS\Item::factory($this, $item, $folder)) {
-            $driver->syncItem($item);
-            return;
+            // TODO: This object could probably be streamlined down to save some space
+            //       All we need is item ID and class.
+            $folder['item'] = $item;
+
+            // Dispatch the job (for async execution)
+            DataMigratorEWSItem::dispatch($folder);
+
+            return true;
         }
 
         // TODO IPM.Note (email) and IPM.StickyNote
         // Note: iTip messages in mail folders may have different class assigned
         // https://docs.microsoft.com/en-us/office/vba/outlook/Concepts/Forms/item-types-and-message-classes
         $this->debug("Unsupported object type: {$item->getItemClass()}. Skiped.");
+
+        return false;
     }
 
     /**
@@ -349,5 +424,46 @@ class EWS
         }
 
         return $this->folder_classes;
+    }
+
+    /**
+     * Create a queue for the request
+     *
+     * @param string $queue_id Unique queue identifier
+     */
+    protected function createQueue(string $queue_id): void
+    {
+        $this->queue = new DataMigratorQueue;
+        $this->queue->id = $queue_id;
+
+        // TODO: data should be encrypted
+        $this->queue->data = [
+            'source' => (string) $this->source,
+            'destination' => (string) $this->destination,
+            'options' => $this->options,
+            'ews' => $this->ews,
+        ];
+
+        $this->queue->save();
+    }
+
+    /**
+     * Initialize environment for job execution
+     *
+     * @param string $queue_id Queue identifier
+     */
+    protected function initEnv(string $queue_id): void
+    {
+        $this->queue = DataMigratorQueue::findOrFail($queue_id);
+        $this->source = new Account($this->queue->data['source']);
+        $this->destination = new Account($this->queue->data['destination']);
+        $this->options = $this->queue->data['options'];
+        $this->importer = new DAVClient($this->destination);
+        $this->api = API::withUsernameAndPassword(
+            $this->queue->data['ews']['server'],
+            $this->source->username,
+            $this->source->password,
+            $this->queue->data['ews']['options']
+        );
     }
 }

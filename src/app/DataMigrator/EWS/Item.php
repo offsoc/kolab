@@ -48,7 +48,7 @@ abstract class Item
     /**
      * Synchronize specified object
      */
-    public function syncItem(Type $item): void
+    public function syncItem(Type $item)
     {
         // Fetch the item
         $item = $this->engine->api->getItem($item->getItemId(), $this->getItemRequest());
@@ -73,6 +73,8 @@ abstract class Item
         $location .= '/' . $uid . '.' . $this::FILE_EXT;
 
         file_put_contents($location, (string) $item->getMimeContent());
+
+        return $location;
     }
 
     /**

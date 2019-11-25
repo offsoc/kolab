@@ -39,6 +39,20 @@ class DAVClient
     }
 
     /**
+     * Check user credentials.
+     *
+     * @throws Exception
+     */
+    public function authenticate()
+    {
+        $result = $this->client->options();
+
+        if (empty($result)) {
+            throw new Exception("Invalid DAV credentials or server.");
+        }
+    }
+
+    /**
      * Create an object.
      *
      * @param string $filename File location

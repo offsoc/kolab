@@ -22,6 +22,9 @@ class Account
     /** @var string Username for proxy auth */
     public $loginas;
 
+    /** @var string Full account definition */
+    protected $input;
+
 
     /**
      * Object constructor
@@ -62,5 +65,18 @@ class Account
         } elseif (strpos($this->username, '@')) {
             $this->email = $this->username;
         }
+
+        $this->input = $input;
+    }
+
+    /**
+     * Returns string representation of the object.
+     * You can use the result as an input to the object constructor.
+     *
+     * @return string Account string representation
+     */
+    public function __toString(): string
+    {
+        return $this->input;
     }
 }
