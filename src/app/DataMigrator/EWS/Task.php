@@ -119,7 +119,7 @@ class Task extends Item
         }
 
         $ical .= $this->getVAlarm($item);
-        $ical .= "END:VEVENT\r\n";
+        $ical .= "END:VTODO\r\n";
         $ical .= "END:VCALENDAR\r\n";
 
         // TODO: Maybe find less-hacky way

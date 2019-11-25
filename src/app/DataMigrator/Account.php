@@ -36,7 +36,7 @@ class Account
         $url = parse_url($input);
 
         // Not valid URI, try the other form of input
-        if ($url === false || !array_key_exists('user', $url)) {
+        if ($url === false || !array_key_exists('scheme', $url)) {
             list($user, $password) = explode(':', $input, 2);
             $url = ['user' => $user, 'pass' => $password];
         }

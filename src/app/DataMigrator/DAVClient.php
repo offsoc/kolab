@@ -29,7 +29,7 @@ class DAVClient
         $username = $account->username . ($account->loginas ? "**{$account->loginas}" : '');
 
         $this->settings = [
-            'baseUri'  => $account->uri,
+            'baseUri'  => rtrim($account->uri, '/') . '/',
             'userName' => $username,
             'password' => $account->password,
             'authType' => Client::AUTH_BASIC,
