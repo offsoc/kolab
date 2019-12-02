@@ -47,11 +47,11 @@ class DataMigratorEWSItem implements ShouldQueue
     /**
      * The job failed to process.
      *
-     * @param Exception $exception
+     * @param \Exception $exception
      *
      * @return void
      */
-    public function failed(Exception $exception)
+    public function failed(\Exception $exception)
     {
         // TODO: Count failed jobs in the queue
         // I'm not sure how to do this after the final failure (after X tries)

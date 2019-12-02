@@ -76,8 +76,8 @@ class DAVClient
 
         fclose($data);
 
-        if ($response['statusCode'] != 201) {
-            throw new \Exception("Storage error. " . $response['body']);
+        if ($response['statusCode'] != 201 && $response['statusCode'] != 204) {
+            throw new \Exception("Storage error. [" . $response['statusCode'] . "] " . $response['body']);
         }
     }
 
