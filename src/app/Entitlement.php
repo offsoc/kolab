@@ -69,16 +69,6 @@ class Entitlement extends Model
     }
 
     /**
-     * The target user for this entitlement
-     *
-     * @return User
-     */
-    public function user()
-    {
-        return $this->belongsTo('App\User', 'user_id', 'id');
-    }
-
-    /**
      * The wallet this entitlement is being billed to
      *
      * @return Wallet
