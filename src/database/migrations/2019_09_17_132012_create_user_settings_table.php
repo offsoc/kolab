@@ -18,16 +18,14 @@ class CreateUserSettingsTable extends Migration
             function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('user_id');
-
-                $table->foreign('user_id')
-                    ->references('id')
-                    ->on('users')
-                    ->onDelete('cascade')
-                    ->onUpdate('cascade');
-
                 $table->string('key');
                 $table->string('value');
                 $table->timestamps();
+
+                $table->foreign('user_id')->references('id')->on('users')
+                    ->onDelete('cascade')->onUpdate('cascade');
+
+                $table->unique(['user_id', 'key']);
             }
         );
     }

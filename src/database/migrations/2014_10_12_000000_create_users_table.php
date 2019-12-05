@@ -24,6 +24,8 @@ class CreateUsersTable extends Migration
                 $table->string('password_ldap')->nullable();
                 $table->rememberToken();
                 $table->timestamps();
+
+                $table->primary('id');
             }
         );
     }

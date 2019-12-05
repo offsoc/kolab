@@ -15,20 +15,6 @@ class CreateSkuEntitlements extends Migration
     public function up()
     {
         Schema::create(
-            'entitlements',
-            function (Blueprint $table) {
-                $table->string('id', 36)->primary();
-                $table->bigInteger('owner_id');
-                $table->bigInteger('entitleable_id');
-                $table->bigInteger('entitleable_type');
-                $table->string('wallet_id', 36);
-                $table->string('sku_id', 36);
-                $table->string('description')->nullable();
-                $table->timestamps();
-            }
-        );
-
-        Schema::create(
             'skus',
             function (Blueprint $table) {
                 $table->string('id', 36)->primary();
@@ -43,20 +29,21 @@ class CreateSkuEntitlements extends Migration
             }
         );
 
-        Schema::table(
+        Schema::create(
             'entitlements',
             function (Blueprint $table) {
-                $table->foreign('sku_id')
-                    ->references('id')->on('skus')
-                    ->onDelete('cascade');
+                $table->string('id', 36)->primary();
+                $table->bigInteger('owner_id');
+                $table->bigInteger('entitleable_id');
+                $table->bigInteger('entitleable_type');
+                $table->string('wallet_id', 36);
+                $table->string('sku_id', 36);
+                $table->string('description')->nullable();
+                $table->timestamps();
 
-                $table->foreign('owner_id')
-                    ->references('id')->on('users')
-                    ->onDelete('cascade');
-
-                $table->foreign('wallet_id')
-                    ->references('id')->on('wallets')
-                    ->onDelete('cascade');
+                $table->foreign('sku_id')->references('id')->on('skus')->onDelete('cascade');
+                $table->foreign('owner_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('wallet_id')->references('id')->on('wallets')->onDelete('cascade');
             }
         );
     }

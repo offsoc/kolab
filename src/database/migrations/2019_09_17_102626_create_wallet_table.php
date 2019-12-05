@@ -21,20 +21,10 @@ class CreateWalletTable extends Migration
                 $table->string('currency', 4);
                 $table->integer('balance');
                 $table->bigInteger('user_id');
-            }
-        );
 
-        Schema::table(
-            'wallets',
-            function (Blueprint $table) {
                 $table->primary('id');
                 $table->index('user_id');
-            }
-        );
 
-        Schema::table(
-            'wallets',
-            function (Blueprint $table) {
                 $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             }
         );
