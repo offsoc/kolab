@@ -56,8 +56,7 @@ class EntitlementTest extends TestCase
             ['email' => 'entitled-user@custom-domain.com']
         );
 
-        // FIXME: How is this assertion false??
-        //$this->assertTrue($owner->id != $user->id);
+        $this->assertTrue($owner->id != $user->id);
 
         $wallets = $owner->wallets()->get();
 
