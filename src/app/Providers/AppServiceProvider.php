@@ -33,8 +33,10 @@ class AppServiceProvider extends ServiceProvider
         \App\Wallet::observe(\App\Observers\WalletObserver::class);
 
         // Log SQL queries in debug mode
+        if (env('APP_DEBUG')) {
             DB::listen(function ($query) {
                 \Log::debug(sprintf('[SQL] %s [%s]', $query->sql, implode(', ', $query->bindings)));
             });
+        }
     }
 }
