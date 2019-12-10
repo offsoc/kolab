@@ -2,8 +2,6 @@
 
 namespace Tests\Browser;
 
-use App\User;
-
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 
@@ -39,7 +37,7 @@ class LogonTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home)
-                ->submitLogon('jdoe@example.org', 'wrong');
+                ->submitLogon('john@kolab.org', 'wrong');
 
             // Checks if we're still on the logon page
             // FIXME: This assertion might be prone to timing issues
@@ -57,7 +55,7 @@ class LogonTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home)
-                ->submitLogon('jdoe@example.org', 'simple123', true);
+                ->submitLogon('john@kolab.org', 'simple123', true);
 
             // Checks if we're really on Dashboard page
             $browser->on(new Dashboard);
