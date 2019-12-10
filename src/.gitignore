@@ -5,6 +5,7 @@ public/hot
 public/js/app.js
 public/storage/
 storage/*.key
+storage/export/
 vendor
 .env
 .env.backup

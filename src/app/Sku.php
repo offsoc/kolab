@@ -31,4 +31,12 @@ class Sku extends Model
     {
         return $this->hasMany('App\Entitlement');
     }
+
+    public function packages()
+    {
+        return $this->belongsToMany(
+            'App\Package',
+            'package_skus'
+        )->using('App\PackageSku')->withPivot(['qty']);
+    }
 }

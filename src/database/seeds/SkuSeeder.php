@@ -72,8 +72,8 @@ class SkuSeeder extends Seeder
             [
                 'title' => 'storage',
                 'description' => 'Some wiggle room',
-                'cost' => 199,
-                'units_free' => 1,
+                'cost' => 25,
+                'units_free' => 2,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Storage',
                 'active' => true,

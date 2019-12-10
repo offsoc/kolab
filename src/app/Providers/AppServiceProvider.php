@@ -27,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
     {
         \App\Domain::observe(\App\Observers\DomainObserver::class);
         \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);
+        \App\Package::observe(\App\Observers\PackageObserver::class);
+        \App\Plan::observe(\App\Observers\PlanObserver::class);
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
         \App\Sku::observe(\App\Observers\SkuObserver::class);
         \App\User::observe(\App\Observers\UserObserver::class);
