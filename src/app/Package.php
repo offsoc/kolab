@@ -31,8 +31,19 @@ class Package extends Model
     protected $fillable = [
         'title',
         'description',
-        'discount'
+        'discount_rate'
     ];
+
+    public function cost()
+    {
+        $costs = 0;
+
+        foreach ($this->skus as $sku) {
+            $costs += ($sku->pivot->qty - $sku->units_free) * $sku->cost;
+        }
+
+        return $costs;
+    }
 
     public function skus()
     {

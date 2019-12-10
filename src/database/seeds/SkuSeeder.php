@@ -16,8 +16,8 @@ class SkuSeeder extends Seeder
             [
                 'title' => 'mailbox',
                 'description' => 'Just a mailbox',
-                'cost' => 152,
-                'units_free' => 1,
+                'cost' => 444,
+                'units_free' => 0,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Mailbox',
                 'active' => true,
@@ -28,7 +28,7 @@ class SkuSeeder extends Seeder
             [
                 'title' => 'domain',
                 'description' => 'Somewhere to place a mailbox',
-                'cost' => 134,
+                'cost' => 100,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Domain',
                 'active' => true,
@@ -39,7 +39,7 @@ class SkuSeeder extends Seeder
             [
                 'title' => 'domain-registration',
                 'description' => 'Register a domain with us',
-                'cost' => 135,
+                'cost' => 101,
                 'period' => 'yearly',
                 'handler_class' => 'App\Handlers\DomainRegistration',
                 'active' => false,
@@ -50,7 +50,8 @@ class SkuSeeder extends Seeder
             [
                 'title' => 'domain-hosting',
                 'description' => 'Host a domain that is externally registered',
-                'cost' => 136,
+                'cost' => 100,
+                'units_free' => 1,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\DomainHosting',
                 'active' => false,
@@ -61,7 +62,7 @@ class SkuSeeder extends Seeder
             [
                 'title' => 'domain-relay',
                 'description' => 'A domain you host at home, for which we relay email',
-                'cost' => 137,
+                'cost' => 103,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\DomainRelay',
                 'active' => false,
@@ -84,8 +85,8 @@ class SkuSeeder extends Seeder
             [
                 'title' => 'groupware',
                 'description' => 'groupware functions',
-                'cost' => 203,
-                'units_free' => 1,
+                'cost' => 555,
+                'units_free' => 0,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Groupware',
                 'active' => true,

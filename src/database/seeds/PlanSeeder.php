@@ -25,6 +25,7 @@ class PlanSeeder extends Seeder
 
         $packages = [
             Package::firstOrCreate(['title' => 'kolab']),
+            Package::firstOrCreate(['title' => 'domain-hosting'])
         ];
 
         $plan->packages()->saveMany($packages);
@@ -51,6 +52,7 @@ class PlanSeeder extends Seeder
 
         $packages = [
             Package::firstOrCreate(['title' => 'kolab']),
+            Package::firstOrCreate(['title' => 'domain-hosting'])
         ];
 
         $plan->packages()->saveMany($packages);
@@ -78,6 +80,7 @@ class PlanSeeder extends Seeder
         $packages = [
             Package::firstOrCreate(['title' => 'kolab']),
             Package::firstOrCreate(['title' => 'lite']),
+            Package::firstOrCreate(['title' => 'domain-hosting'])
         ];
 
         $plan->packages()->saveMany($packages);

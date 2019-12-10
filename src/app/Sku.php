@@ -12,6 +12,10 @@ class Sku extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    protected $casts = [
+        'units_free' => 'integer'
+    ];
+
     protected $fillable = [
         'title',
         'description',

@@ -19,7 +19,7 @@ class CreatePackagesTable extends Migration
                 $table->string('id', 36);
                 $table->string('title', 36);
                 $table->string('description', 128);
-                $table->integer('discount')->default(0)->nullable();
+                $table->integer('discount_rate')->default(0)->nullable();
 
                 $table->primary('id');
             }

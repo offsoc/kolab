@@ -37,6 +37,17 @@ class Plan extends Model
         'discount_rate' => 'integer'
     ];
 
+    public function cost()
+    {
+        $costs = 0;
+
+        foreach ($this->packages as $package) {
+            $costs += $package->pivot->cost();
+        }
+
+        return $costs;
+    }
+
     public function packages()
     {
         return $this->belongsToMany(

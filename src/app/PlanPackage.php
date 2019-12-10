@@ -23,4 +23,17 @@ class PlanPackage extends Pivot
         'discount_qty' => 'integer',
         'discount_rate' => 'integer'
     ];
+
+    public function cost()
+    {
+        $costs = 0;
+
+        if ($this->qty_min > 0) {
+            foreach ($this->package->skus() as $sku) {
+                $costs += $sku->cost;
+            }
+        }
+
+        return $costs;
+    }
 }
