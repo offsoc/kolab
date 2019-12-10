@@ -77,4 +77,24 @@ class SignupCode extends Model
     {
         return $this->expires_at ? Carbon::now()->gte($this->expires_at) : false;
     }
+
+    /**
+     * Generate a short code (for human).
+     *
+     * @return string
+     */
+    public static function generateShortCode(): string
+    {
+        $code_length = env('SIGNUP_CODE_LENGTH', self::SHORTCODE_LENGTH);
+        $code_chars  = env('SIGNUP_CODE_CHARS', self::SHORTCODE_CHARS);
+        $random      = [];
+
+        for ($i = 1; $i <= $code_length; $i++) {
+            $random[] = $code_chars[rand(0, strlen($code_chars) - 1)];
+        }
+
+        shuffle($random);
+
+        return implode('', $random);
+    }
 }
