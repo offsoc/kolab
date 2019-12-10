@@ -16,12 +16,12 @@ class Utils
      *
      * @return array[]
      */
-    public static function powerSet($input)
+    public static function powerSet(array $input): array
     {
         $output = [];
 
         for ($x = 0; $x < count($input); $x++) {
-            self::combine($input, $x + 1, 0, array(), 0, $output);
+            self::combine($input, $x + 1, 0, [], 0, $output);
         }
 
         return $output;
@@ -32,7 +32,7 @@ class Utils
      *
      * @return integer
      */
-    public static function uuidInt()
+    public static function uuidInt(): int
     {
         $hex = Uuid::uuid4();
         $bin = pack('h*', str_replace('-', '', $hex));
@@ -47,12 +47,12 @@ class Utils
      *
      * @return string
      */
-    public static function uuidStr()
+    public static function uuidStr(): string
     {
         return (string) Uuid::uuid4();
     }
 
-    private static function combine($input, $r, $index, $data, $i, &$output)
+    private static function combine($input, $r, $index, $data, $i, &$output): void
     {
         $n = count($input);
 
