@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Http\Controllers\API\SignupController;
 use App\SignupCode;
 use App\User;
 
@@ -23,8 +24,6 @@ class SignupTest extends TestCase
                 'email' => 'SignupControllerTest1@SignupControllerTest.com'
             ]
         );
-
-        $user->delete();
     }
 
     /**
@@ -193,5 +192,55 @@ class SignupTest extends TestCase
     public function testSignup()
     {
         // TODO
+    }
+
+    /**
+     * List of email address validation cases for testValidateEmail()
+     */
+    public function dataValidateEmail()
+    {
+        $domain = 'example.org';
+
+        return [
+            // general cases (invalid)
+            ['', false, 'validation.emailinvalid'],
+            ['example.org', false, 'validation.emailinvalid'],
+            ['@example.org', false, 'validation.emailinvalid'],
+            ['test@localhost', false, 'validation.emailinvalid'],
+            // general cases (valid)
+            ['test@domain.tld', false, null],
+            ['&@example.org', false, null],
+            // kolab identity cases
+            ['admin@' . $domain, true, 'validation.emailexists'],
+            ['administrator@' . $domain, true, 'validation.emailexists'],
+            ['sales@' . $domain, true, 'validation.emailexists'],
+            ['root@' . $domain, true, 'validation.emailexists'],
+            ['&@' . $domain, true, 'validation.emailinvalid'],
+            // existing account
+            ['SignupControllerTest1@SignupControllerTest.com', true, 'validation.emailexists'],
+            // valid for signup
+            ['test.test@' . $domain, true, null],
+            ['test_test@' . $domain, true, null],
+            ['test-test@' . $domain, true, null],
+        ];
+    }
+
+    /**
+     * Signup email validation.
+     *
+     * Note: Technicly these are mostly unit tests, but let's keep it here for now.
+     * FIXME: Shall we do a http request for each case?
+     *
+     * @dataProvider dataValidateEmail
+     */
+    public function testValidateEmail($email, $signup, $expected_result)
+    {
+        $method = new \ReflectionMethod('App\Http\Controllers\API\SignupController', 'validateEmail');
+        $method->setAccessible(true);
+
+        $is_phone = false;
+        $result = $method->invoke(new SignupController, $email, $signup);
+
+        $this->assertSame($expected_result, $result);
     }
 }

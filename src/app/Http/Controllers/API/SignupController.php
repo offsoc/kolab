@@ -49,7 +49,7 @@ class SignupController extends Controller
 
         // Validate user email (or phone)
         if ($error = $this->validatePhoneOrEmail($request->email, $is_phone)) {
-            return response()->json(['status' => 'error', 'errors' => ['email' => $error]], 422);
+            return response()->json(['status' => 'error', 'errors' => ['email' => __($error)]], 422);
         }
 
         // Generate the verification code
@@ -185,12 +185,16 @@ class SignupController extends Controller
      * @param string $email     Email address or phone number
      * @param bool   &$is_phone Will be set to True if the string is valid phone number
      *
-     * @return string Error message on validation error
+     * @return string Error message label on validation error
      */
     protected function validatePhoneOrEmail($input, &$is_phone = false)
     {
         $is_phone = false;
 
+        return $this->validateEmail($input);
+
+        // TODO: Phone number support
+/*
         if (strpos($input, '@')) {
             return $this->validateEmail($input);
         }
@@ -198,10 +202,11 @@ class SignupController extends Controller
         $input = str_replace(array('-', ' '), '', $input);
 
         if (!preg_match('/^\+?[0-9]{9,12}$/', $input)) {
-            return __('validation.noemailorphone');
+            return 'validation.noemailorphone';
         }
 
         $is_phone = true;
+*/
     }
 
     /**
@@ -210,37 +215,43 @@ class SignupController extends Controller
      * @param string $email  Email address
      * @param bool   $signup Enables additional checks for signup mode
      *
-     * @return string Error message on validation error
+     * @return string Error message label on validation error
      */
     protected function validateEmail($email, $signup = false)
     {
         $v = Validator::make(['email' => $email], ['email' => 'required|email']);
 
         if ($v->fails()) {
-            return __('validation.emailinvalid');
+            return 'validation.emailinvalid';
+        }
+
+        list($local, $domain) = explode('@', $email);
+
+        // don't allow @localhost and other no-fqdn
+        if (strpos($domain, '.') === false) {
+            return 'validation.emailinvalid';
         }
 
         // Extended checks for an address that is supposed to become a login to Kolab
         if ($signup) {
-            list($local, $domain) = explode('@', $email);
-
             // Local part validation
             if (!preg_match('/^[A-Za-z0-9_.-]+$/', $local)) {
-                return __('validation.emailinvalid');
+                return 'validation.emailinvalid';
             }
+
+            // TODO: check if specified domain is allowed for signup
 
             // Check if the local part is not one of exceptions
             $exceptions = '/^(admin|administrator|sales|root)$/i';
             if (preg_match($exceptions, $local)) {
-                return __('validation.emailexists');
+                return 'validation.emailexists';
             }
 
             // Check if user with specified login already exists
+            // TODO: Aliases
             if (User::where('email', $email)->first()) {
-                return __('validation.emailexists');
+                return 'validation.emailexists';
             }
-
-            // TODO: check if specified domain is ours
         }
     }
 }

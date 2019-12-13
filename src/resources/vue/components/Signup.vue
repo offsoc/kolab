@@ -12,8 +12,8 @@
                         <input type="text" class="form-control" id="signup_name" placeholder="Your Name" required autofocus v-model="name">
                     </div>
                     <div class="form-group">
-                        <label for="signup_email" class="sr-only">Existing Email or Phone Number</label>
-                        <input type="text" class="form-control" id="signup_email" placeholder="Existing Email or Phone Number" required v-model="email">
+                        <label for="signup_email" class="sr-only">Existing Email Address</label>
+                        <input type="text" class="form-control" id="signup_email" placeholder="Existing Email Address" required v-model="email">
                     </div>
                     <button class="btn btn-primary" type="submit">Continue</button>
                 </form>
@@ -24,7 +24,7 @@
             <div class="card-body">
                 <h4 class="card-title">Step 2/3</h4>
                 <p class="card-text">
-                    We sent out a confirmation code to PHONE/EMAIL.
+                    We sent out a confirmation code to your email address.
                     Enter the code we sent you, or click the link in the message.
                 </p>
                 <form v-on:submit.prevent="submitStep2" data-validation-prefix="signup_">
