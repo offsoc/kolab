@@ -18,7 +18,7 @@ class SignupCodeObserver
      */
     public function creating(SignupCode $code): void
     {
-        $code_length = env('SIGNUP_CODE_LENGTH', SignupCode::CODE_LENGTH);
+        $code_length = SignupCode::CODE_LENGTH;
         $exp_hours   = env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS);
 
         if (empty($code->code)) {

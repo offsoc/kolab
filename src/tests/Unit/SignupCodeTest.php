@@ -18,7 +18,7 @@ class SignupCodeTest extends TestCase
         $code = SignupCode::generateShortCode();
 
         $this->assertTrue(is_string($code));
-        $this->assertTrue(strlen($code) === SignupCode::SHORTCODE_LENGTH);
-        $this->assertTrue(strspn($code, SignupCode::SHORTCODE_CHARS) === strlen($code));
+        $this->assertTrue(strlen($code) === env('SIGNUP_CODE_LENGTH', SignupCode::SHORTCODE_LENGTH));
+        $this->assertTrue(strspn($code, env('SIGNUP_CODE_CHARS', SignupCode::SHORTCODE_CHARS)) === strlen($code));
     }
 }
