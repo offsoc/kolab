@@ -49,12 +49,20 @@ return [
     | This URL is used by the console to properly generate URLs when using
     | the Artisan command line tool. You should set this to the root of
     | your application so that it is used when running Artisan tasks.
-    |
     */
 
     'url' => env('APP_URL', 'http://localhost'),
 
     'asset_url' => env('ASSET_URL', null),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Domain
+    |--------------------------------------------------------------------------
+    |
+    | System domain used for user signup (kolab identity)
+    */
+    'domain' => env('APP_DOMAIN', 'domain.tld'),
 
     /*
     |--------------------------------------------------------------------------
@@ -227,5 +235,4 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
     ],
-
 ];

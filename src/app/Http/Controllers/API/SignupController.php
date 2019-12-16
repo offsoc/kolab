@@ -109,9 +109,9 @@ class SignupController extends Controller
 
         // Return user name and email/phone from the codes database on success
         return response()->json([
-            'status' => 'success',
-            'email' => $code->data['email'],
-            'name' => $code->data['name'],
+                'status' => 'success',
+                'email' => $code->data['email'],
+                'name' => $code->data['name'],
         ]);
     }
 
@@ -128,9 +128,8 @@ class SignupController extends Controller
         $v = Validator::make(
             $request->all(),
             [
-                'domain' => 'required|min:3',
                 'login' => 'required|min:2',
-                'password' => 'required|min:3|confirmed',
+                'password' => 'required|min:4|confirmed',
             ]
         );
 
@@ -138,7 +137,7 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        $login = $request->login . '@' . $request->domain;
+        $login = $request->login . '@' . \config('app.domain');
 
         // Validate login (email)
         if ($error = $this->validateEmail($login, true)) {
@@ -173,6 +172,7 @@ class SignupController extends Controller
         $token = auth()->login($user);
 
         return response()->json([
+                'status' => 'success',
                 'access_token' => $token,
                 'token_type' => 'bearer',
                 'expires_in' => Auth::guard()->factory()->getTTL() * 60,
@@ -239,7 +239,10 @@ class SignupController extends Controller
                 return 'validation.emailinvalid';
             }
 
-            // TODO: check if specified domain is allowed for signup
+            // Check if specified domain is allowed for signup
+            if ($domain != \config('app.domain')) {
+                return 'validation.emailinvalid';
+            }
 
             // Check if the local part is not one of exceptions
             $exceptions = '/^(admin|administrator|sales|root)$/i';

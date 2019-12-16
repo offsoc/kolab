@@ -48,12 +48,8 @@
                     <div class="form-group">
                         <label for="signup_login" class="sr-only"></label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="signup_login" required>
-                            <span class="input-group-text border-left-0 border-right-0 rounded-0">@</span>
-                            <select class="custom-select rounded-right" id="signup_domain">
-                                <option value="kolabnow.com">kolabnow.com</option>
-                                <option value="kolabnow.com">mykolab.com</option>
-                            </select>
+                            <input type="text" class="form-control" id="signup_login" required v-model="login">
+                            <span class="input-group-text border-left-0 border-right-0 rounded-0">@{{ domain }}</span>
                         </div>
                     </div>
                     <div class="form-group">
@@ -83,8 +79,10 @@
                 name: '',
                 code: '',
                 short_code: '',
+                login: '',
                 password: '',
-                password_confirmation: ''
+                password_confirmation: '',
+                domain: window.config['app.domain']
             }
         },
         created() {
@@ -122,8 +120,6 @@
                     $('#step1,#step2').addClass('d-none')
                     $('#step3').removeClass('d-none').find('input').first().focus()
 
-                    $('#signup_domain > option').first().prop('selected', true)
-
                     // Reset user name/email, we don't have them if user used a verification link
                     this.name = response.data.name
                     this.email = response.data.email
@@ -137,11 +133,7 @@
                     code: this.code,
                     short_code: this.short_code,
                     email: this.email,
-                    // FIXME: For some reason if I use v-model for login and domain fields
-                    //        whenever user enters something in login input the domain field
-                    //        is reset to an empty value. We'll use jQuery for now
-                    login: $('#signup_login').val(),
-                    domain: $('#signup_domain').val(),
+                    login: this.login,
                     password: this.password,
                     password_confirmation: this.password_confirmation
                 }).then(response => {

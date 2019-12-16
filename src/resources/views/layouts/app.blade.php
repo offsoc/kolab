@@ -15,7 +15,7 @@
             @yield('content')
         </div>
 
-        <script>window.config = {!! json_encode(app('config')->getMany(['app.name', 'app.url'])) !!}</script>
+        <script>window.config = {!! json_encode(app('config')->getMany(['app.name', 'app.url', 'app.domain'])) !!}</script>
         <script src="{{ asset('js/app.js') }}" defer></script>
         <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     </body>
