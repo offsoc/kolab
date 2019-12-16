@@ -135,6 +135,20 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Return single user setting value
+     *
+     * @param string $key Setting key name
+     *
+     * @return string Setting value
+     */
+    public function getSetting(string $key, $default = null)
+    {
+        $setting = $this->settings->where('key', $key)->first();
+
+        return $setting ? $setting->value : $default;
+    }
+
+    /**
      * Wallets this user owns.
      *
      * @return Wallet[]

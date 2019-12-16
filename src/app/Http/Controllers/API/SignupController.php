@@ -150,6 +150,7 @@ class SignupController extends Controller
             return $v;
         }
 
+        // Get user name/email from the verification code database
         $code_data  = $v->getData();
         $user_name  = $code_data->name;
         $user_email = $code_data->email;
@@ -159,12 +160,14 @@ class SignupController extends Controller
 
         $user = User::create(
             [
-                // TODO: Save the external email (or phone)
                 'name' => $user_name,
                 'email' => $login,
                 'password' => $request->password,
             ]
         );
+
+        // Save the external email in user settings
+        $user->setSettings(['external_email' => $user_email]);
 
         // Remove the verification code
         $this->code->delete();

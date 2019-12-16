@@ -325,9 +325,11 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($user);
         $this->assertSame($identity, $user->email);
         $this->assertSame($result['name'], $user->name);
-//        $this->assertSame($result['email'], $user->settings->external_email);
 
-        // TODO: Check if the access token works?
+        // Check external email in user settings
+        $this->assertSame($result['email'], $user->getSetting('external_email', 'not set'));
+
+        // TODO: Check if the access token works
     }
 
     /**
