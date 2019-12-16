@@ -380,7 +380,7 @@ class SignupTest extends TestCase
         $method->setAccessible(true);
 
         $is_phone = false;
-        $result = $method->invoke(new SignupController, $email, $signup);
+        $result = $method->invoke(new SignupController(), $email, $signup);
 
         $this->assertSame($expected_result, $result);
     }

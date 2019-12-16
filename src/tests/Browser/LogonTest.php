@@ -24,7 +24,7 @@ class LogonTest extends DuskTestCase
 
             // Checks if we're really on the login page
             $browser->waitForLocation('/login')
-                ->on(new Home);
+                ->on(new Home());
         });
     }
 
@@ -36,13 +36,13 @@ class LogonTest extends DuskTestCase
     public function testLogonWrongCredentials()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit(new Home)
+            $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'wrong');
 
             // Checks if we're still on the logon page
             // FIXME: This assertion might be prone to timing issues
             // I guess we should wait until some error message appears
-            $browser->on(new Home);
+            $browser->on(new Home());
         });
     }
 
@@ -54,11 +54,11 @@ class LogonTest extends DuskTestCase
     public function testLogonSuccessful()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit(new Home)
+            $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true);
 
             // Checks if we're really on Dashboard page
-            $browser->on(new Dashboard);
+            $browser->on(new Dashboard());
         });
     }
 }

@@ -20,7 +20,7 @@ class SignupTest extends DuskTestCase
     public function testSignupStep1()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit(new Signup);
+            $browser->visit(new Signup());
 
             $browser->assertVisible('@step1');
 

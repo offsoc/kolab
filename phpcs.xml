@@ -8,4 +8,5 @@
 	<rule ref="PSR12"/>
 
     <file>src/app/</file>
+    <file>src/tests/</file>
 </ruleset>
