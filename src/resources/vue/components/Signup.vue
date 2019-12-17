@@ -29,11 +29,12 @@
                 </p>
                 <form v-on:submit.prevent="submitStep2" data-validation-prefix="signup_">
                     <div class="form-group">
-                        <label for="signup_code" class="sr-only">Confirmation Code</label>
-                        <input type="text" class="form-control" id="signup_code" placeholder="Confirmation Code" required v-model="short_code">
+                        <label for="signup_short_code" class="sr-only">Confirmation Code</label>
+                        <input type="text" class="form-control" id="signup_short_code" placeholder="Confirmation Code" required v-model="short_code">
                     </div>
                     <button class="btn btn-secondary" type="button" v-on:click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Continue</button>
+                    <input type="hidden" id="signup_code" v-model="code" />
                 </form>
             </div>
         </div>
@@ -49,7 +50,9 @@
                         <label for="signup_login" class="sr-only"></label>
                         <div class="input-group">
                             <input type="text" class="form-control" id="signup_login" required v-model="login">
-                            <span class="input-group-text border-left-0 border-right-0 rounded-0">@{{ domain }}</span>
+                            <span class="input-group-append">
+                                <span class="input-group-text">@{{ domain }}</span>
+                            </span>
                         </div>
                     </div>
                     <div class="form-group">
@@ -92,6 +95,10 @@
                 this.code = RegExp.$2
                 this.submitStep2()
             }
+        },
+        mounted() {
+            // Focus the first input (autofocus does not work when using the menu/router)
+            $('#signup_name:visible').focus();
         },
         methods: {
             // Submits data to the API, validates and gets verification code
