@@ -36,8 +36,9 @@ class SignupVerification extends Mailable
     public function build()
     {
         $this->view('emails.signup_code')
-            ->subject(__('mail.signupcode-subject', ['site' => config('app.name')]))
+            ->subject(__('mail.signupcode-subject', ['site' => \config('app.name')]))
             ->with([
+                    'site' => \config('app.name'),
                     'username' => $this->code->data['name'],
                     'code' => $this->code->code,
                     'short_code' => $this->code->short_code,
