@@ -229,7 +229,7 @@ class SignupTest extends DuskTestCase
                 // tests again after failure)
                 User::where('email', 'SignupTestDusk@' . \config('app.domain'))->delete();
 
-                // FIXME: FOr some reason I can just use ->value() here
+                // FIXME: For some reason I can't just use ->value() here
                 $step->clear('#signup_login');
                 $step->type('#signup_login', 'SignupTestDusk');
 
@@ -248,7 +248,7 @@ class SignupTest extends DuskTestCase
 
             // Submit valid data
             $browser->with('@step3', function ($step) {
-                // FIXME: FOr some reason I can just use ->value() here
+                // FIXME: For some reason I can't just use ->value() here
                 $step->clear('#signup_confirm');
                 $step->type('#signup_confirm', '12345678');
 

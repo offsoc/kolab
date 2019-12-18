@@ -25,9 +25,8 @@ class Dashboard extends Page
      */
     public function assert(Browser $browser)
     {
-        $browser
-            ->assertPathIs('/dashboard')
-            ->assertSee('Dashboard');
+        $browser->assertPathIs('/dashboard');
+        $browser->assertSee('Dashboard');
     }
 
     /**

@@ -25,6 +25,7 @@ class Home extends Page
      */
     public function assert(Browser $browser)
     {
+        $browser->assertPathIs('/login');
         $browser->assertVisible('form.form-signin');
     }
 
