@@ -45,9 +45,9 @@ class Domain extends Model
     /**
      * Returns whether this domain is active.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isActive()
+    public function isActive(): bool
     {
         return $this->status & self::STATUS_ACTIVE;
     }
@@ -55,9 +55,9 @@ class Domain extends Model
     /**
      * Returns whether this domain is confirmed the ownership of.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isConfirmed()
+    public function isConfirmed(): bool
     {
         return $this->status & self::STATUS_CONFIRMED;
     }
@@ -65,9 +65,9 @@ class Domain extends Model
     /**
      * Returns whether this domain is deleted.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isDeleted()
+    public function isDeleted(): bool
     {
         return $this->status & self::STATUS_DELETED;
     }
@@ -75,9 +75,9 @@ class Domain extends Model
     /**
      * Returns whether this domain is registered with us.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isExternal()
+    public function isExternal(): bool
     {
         return $this->type & self::TYPE_EXTERNAL;
     }
@@ -85,9 +85,9 @@ class Domain extends Model
     /**
      * Returns whether this domain is hosted with us.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isHosted()
+    public function isHosted(): bool
     {
         return $this->type & self::TYPE_HOSTED;
     }
@@ -95,19 +95,29 @@ class Domain extends Model
     /**
      * Returns whether this domain is new.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isNew()
+    public function isNew(): bool
     {
         return $this->status & self::STATUS_NEW;
     }
 
     /**
+     * Returns whether this domain is public.
+     *
+     * @return bool
+     */
+    public function isPublic(): bool
+    {
+        return $this->type & self::TYPE_PUBLIC;
+    }
+
+    /**
      * Returns whether this domain is suspended.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isSuspended()
+    public function isSuspended(): bool
     {
         return $this->status & self::STATUS_SUSPENDED;
     }
