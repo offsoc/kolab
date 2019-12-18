@@ -6,6 +6,7 @@ use App\Http\Controllers\API\SignupController;
 use App\SignupCode;
 use App\User;
 
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class SignupTest extends TestCase
@@ -99,6 +100,11 @@ class SignupTest extends TestCase
      */
     public function testSignupInitValidInput()
     {
+        Queue::fake();
+
+        // Assert that no jobs were pushed...
+        Queue::assertNothingPushed();
+
         $data = [
             'email' => 'testuser@external.com',
             'name' => 'Signup User',
@@ -114,7 +120,21 @@ class SignupTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertNotEmpty($json['code']);
 
-        // TODO: Test verification email job/event
+        // Assert the email sending job was pushed once
+        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
+
+        // Assert the job has proper data assigned
+        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
+            // Access protected property
+            $reflection = new \ReflectionClass($job);
+            $code = $reflection->getProperty('code');
+            $code->setAccessible(true);
+            $code = $code->getValue($job);
+
+            return $code->code === $json['code']
+                && $code->data['email'] === $data['email']
+                && $code->data['name'] === $data['name'];
+        });
 
         return [
             'code' => $json['code'],
