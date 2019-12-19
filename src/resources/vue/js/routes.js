@@ -38,6 +38,7 @@ const routes = [
         component: SignupComponent
     },
     {
+        name: '404',
         path: '*',
         component: Error404Component
     }

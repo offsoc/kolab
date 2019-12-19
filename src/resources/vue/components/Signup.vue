@@ -89,16 +89,23 @@
             }
         },
         created() {
-            // Verification code provided, jump to Step 2
-            if (this.$route.params.code && /^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(this.$route.params.code)) {
-                this.short_code = RegExp.$1
-                this.code = RegExp.$2
-                this.submitStep2()
+            // Verification code provided, auto-submit Step 2
+            if (this.$route.params.code) {
+                if (/^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(this.$route.params.code)) {
+                    this.short_code = RegExp.$1
+                    this.code = RegExp.$2
+                    this.submitStep2(true)
+                }
+                else {
+                    // TODO: Find a way to display error page without changing the URL
+                    //       Maybe https://github.com/raniesantos/vue-error-page
+                    this.$router.push({name: '404'})
+                }
             }
         },
         mounted() {
             // Focus the first input (autofocus does not work when using the menu/router)
-            $('#signup_name:visible').focus();
+            this.displayForm(1, true)
         },
         methods: {
             // Submits data to the API, validates and gets verification code
@@ -109,27 +116,32 @@
                     email: this.email,
                     name: this.name
                 }).then(response => {
-                    $('#step1').addClass('d-none')
-                    $('#step2').removeClass('d-none').find('input').first().focus()
+                    this.displayForm(2, true)
                     this.code = response.data.code
                 })
             },
             // Submits the code to the API for verification
-            submitStep2() {
+            submitStep2(bylink) {
+                if (bylink === true) {
+                    this.displayForm(2, false)
+                }
+
                 this.$root.$emit('clearFormValidation', $('#step2 form'))
 
                 axios.post('/api/auth/signup/verify', {
-                    email: this.email,
-                    name: this.name,
                     code: this.code,
                     short_code: this.short_code
                 }).then(response => {
-                    $('#step1,#step2').addClass('d-none')
-                    $('#step3').removeClass('d-none').find('input').first().focus()
-
+                    this.displayForm(3, true)
                     // Reset user name/email, we don't have them if user used a verification link
                     this.name = response.data.name
                     this.email = response.data.email
+                }).catch(error => {
+                    if (bylink === true) {
+                        // FIXME: display step 1, user can do anythink about it anyway
+                        //        Maybe we should display 404 error page?
+                        this.displayForm(1, true)
+                    }
                 })
             },
             // Submits the data to the API to create the user account
@@ -139,14 +151,10 @@
                 axios.post('/api/auth/signup', {
                     code: this.code,
                     short_code: this.short_code,
-                    email: this.email,
                     login: this.login,
                     password: this.password,
                     password_confirmation: this.password_confirmation
                 }).then(response => {
-                    $('#step2').addClass('d-none')
-                    $('#step3').removeClass('d-none').find('input').first().focus()
-
                     // auto-login and goto dashboard
                     store.commit('loginUser')
                     localStorage.setItem('token', response.data.access_token)
@@ -157,8 +165,19 @@
             stepBack(e) {
                 var card = $(e.target).closest('.card')
 
-                card.prev().removeClass('d-none')
+                card.prev().removeClass('d-none').find('input').first().focus()
                 card.addClass('d-none').find('form')[0].reset()
+            },
+            displayForm(step, focus) {
+                [1, 2, 3].filter(value => value != step).forEach(value => {
+                    $('#step' + value).addClass('d-none')
+                })
+
+                $('#step' + step).removeClass('d-none')
+
+                if (focus) {
+                    $('#step' + step).find('input').first().focus()
+                }
             }
         }
     }

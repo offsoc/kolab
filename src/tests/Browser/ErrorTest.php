@@ -22,7 +22,9 @@ class ErrorTest extends DuskTestCase
             $browser->assertVisible('#app > #primary-menu');
             $this->assertSame('404', $browser->text('#error-page .code'));
             $this->assertSame('Not Found', $browser->text('#error-page .message'));
+        });
 
+        $this->browse(function (Browser $browser) {
             $browser->visit('/login/unknown');
 
             $browser->waitFor('#app > #error-page');

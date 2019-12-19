@@ -21,9 +21,66 @@ class SignupTest extends DuskTestCase
      */
     public function tearDown(): void
     {
-        User::where('email', 'SignupTestDusk@' . \config('app.domain'))->delete();
+        User::where('email', 'signuptestdusk@' . \config('app.domain'))->delete();
 
         parent::tearDown();
+    }
+
+    /**
+     * Test signup code verification with a link
+     *
+     * @return void
+     */
+    public function testSignupCodeByLink()
+    {
+        // Test invalid code (invalid format)
+        $this->browse(function (Browser $browser) {
+            // Register Signup page element selectors we'll be using
+            $browser->onWithoutAssert(new Signup());
+
+            // TODO: Test what happens if user is logged in
+
+            $browser->visit('/signup/invalid-code');
+
+            // TODO: According to https://github.com/vuejs/vue-router/issues/977
+            // it is not yet easily possible to display error page component (route)
+            // without changing the URL
+            // TODO: Instead of css selector we should probably define page/component
+            // and use it instead
+            $browser->waitFor('#error-page');
+        });
+
+        // Test invalid code (valid format)
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/signup/XXXXX-code');
+
+            // FIXME: User will not be able to continue anyway, so we should
+            //        either display 1st step or 404 error page
+            $browser->waitFor('@step1');
+            $browser->waitFor('.toast-error');
+            $browser->click('.toast-error'); // remove the toast
+        });
+
+        // Test valid code
+        $this->browse(function (Browser $browser) {
+            $code = SignupCode::create([
+                    'data' => [
+                        'email' => 'User@example.org',
+                        'name' => 'User Name',
+                    ]
+            ]);
+
+            $browser->visit('/signup/' . $code->short_code . '-' . $code->code);
+
+            $browser->waitFor('@step3');
+            $browser->assertMissing('@step1');
+            $browser->assertMissing('@step2');
+
+            // FIXME: Find a nice way to read javascript data without using hidden inputs
+            $this->assertSame($code->code, $browser->value('@step2 #signup_code'));
+
+            // TODO: Test if the signup process can be completed
+        });
     }
 
     /**
@@ -107,6 +164,7 @@ class SignupTest extends DuskTestCase
             // Test Back button functionality
             $browser->click('@step2 [type=button]');
             $browser->waitFor('@step1');
+            $browser->assertFocused('@step1 #signup_name');
             $browser->assertMissing('@step2');
 
             // Submit valid Step 1 data (again)
@@ -155,8 +213,6 @@ class SignupTest extends DuskTestCase
             $browser->waitFor('@step3');
             $browser->assertMissing('@step2');
         });
-
-        // TODO: Test code verification with an external link
     }
 
     /**
@@ -184,6 +240,7 @@ class SignupTest extends DuskTestCase
             // Test Back button
             $browser->click('@step3 [type=button]');
             $browser->waitFor('@step2');
+            $browser->assertFocused('@step2 #signup_short_code');
             $browser->assertMissing('@step3');
 
             // TODO: Test form reset when going back
@@ -225,10 +282,6 @@ class SignupTest extends DuskTestCase
 
             // Submit invalid data (valid login, invalid password)
             $browser->with('@step3', function ($step) use ($browser) {
-                // Make sure the user does not exist (it may happen when executing
-                // tests again after failure)
-                User::where('email', 'SignupTestDusk@' . \config('app.domain'))->delete();
-
                 // FIXME: For some reason I can't just use ->value() here
                 $step->clear('#signup_login');
                 $step->type('#signup_login', 'SignupTestDusk');

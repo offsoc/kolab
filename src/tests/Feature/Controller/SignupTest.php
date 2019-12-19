@@ -30,7 +30,7 @@ class SignupTest extends TestCase
      */
     public function tearDown(): void
     {
-        User::where('email', 'SignupLogin@' . \config('app.domain'))
+        User::where('email', 'signuplogin@' . \config('app.domain'))
             ->orWhere('email', 'SignupControllerTest1@' . \config('app.domain'))
             ->delete();
 
@@ -312,10 +312,6 @@ class SignupTest extends TestCase
     public function testSignupValidInput(array $result)
     {
         $identity = \strtolower('SignupLogin@') . \config('app.domain');
-
-        // Make sure the user does not exist (it may happen when executing
-        // tests again after failure)
-        User::where('email', $identity)->delete();
 
         $code = SignupCode::find($result['code']);
         $data = [
