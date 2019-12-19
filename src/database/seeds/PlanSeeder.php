@@ -14,6 +14,7 @@ class PlanSeeder extends Seeder
      */
     public function run()
     {
+        /*
         $plan = Plan::create(
             [
                 'title' => 'family',
@@ -106,5 +107,37 @@ class PlanSeeder extends Seeder
             ],
             false
         );
+        */
+
+        $plan = Plan::create(
+            [
+                'title' => 'individual',
+                'description' => "No friends",
+                'discount_qty' => 0,
+                'discount_rate' => 0
+            ]
+        );
+
+        $packages = [
+            Package::firstOrCreate(['title' => 'kolab'])
+        ];
+
+        $plan->packages()->saveMany($packages);
+
+        $plan = Plan::create(
+            [
+                'title' => 'group',
+                'description' => "Some or many friends",
+                'discount_qty' => 0,
+                'discount_rate' => 0
+            ]
+        );
+
+        $packages = [
+            Package::firstOrCreate(['title' => 'kolab']),
+            Package::firstOrCreate(['title' => 'domain-hosting']),
+        ];
+
+        $plan->packages()->saveMany($packages);
     }
 }

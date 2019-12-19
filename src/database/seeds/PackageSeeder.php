@@ -34,7 +34,7 @@ class PackageSeeder extends Seeder
         // be the number of SKU free units.
         $package->skus()->updateExistingPivot(
             Sku::firstOrCreate(['title' => 'storage']),
-            array('qty' => 2),
+            ['qty' => 2],
             false
         );
 
@@ -62,7 +62,7 @@ class PackageSeeder extends Seeder
         $package = Package::create(
             [
                 'title' => 'domain-hosting',
-                'description' => 'Use your own domain.',
+                'description' => 'Use your own, existing domain.',
                 'discount_rate' => 0
             ]
         );

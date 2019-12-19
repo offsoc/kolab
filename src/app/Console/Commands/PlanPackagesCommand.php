@@ -69,8 +69,10 @@ class PlanPackagesCommand extends Command
                     $this->info(sprintf("    SKU: %s (%d)", $sku->title, $sku->pivot->qty));
                 }
 
-                if ($qtyMin <= $discountQty) {
+                if ($qtyMin < $discountQty) {
                     $plan_costs += $qtyMin * $package->cost();
+                } elseif ($qtyMin == $discountQty) {
+                    $plan_costs += $package->cost();
                 } else {
                     // base rate
                     $plan_costs += $discountQty * $package->cost();
