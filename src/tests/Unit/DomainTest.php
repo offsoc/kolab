@@ -3,7 +3,6 @@
 namespace Tests\Unit;
 
 use App\Domain;
-
 use Tests\TestCase;
 
 class DomainTest extends TestCase

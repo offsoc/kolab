@@ -7,6 +7,7 @@ import DashboardComponent from '../components/Dashboard'
 import Error404Component from '../components/404'
 import LoginComponent from '../components/Login'
 import LogoutComponent from '../components/Logout'
+import PasswordResetComponent from '../components/PasswordReset'
 import SignupComponent from '../components/Signup'
 
 import store from './store'
@@ -31,6 +32,11 @@ const routes = [
         path: '/logout',
         name: 'logout',
         component: LogoutComponent
+    },
+    {
+        path: '/password-reset/:code?',
+        name: 'password-reset',
+        component: PasswordResetComponent
     },
     {
         path: '/signup/:code?',

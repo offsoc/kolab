@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\User;
-
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -62,5 +61,10 @@ class UserTest extends TestCase
 
         $this->assertTrue(in_array('kolabnow.com', $domains));
         $this->assertTrue(in_array('kolab.org', $domains));
+    }
+
+    public function testFindByEmail()
+    {
+        $this->markTestIncomplete('TODO');
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Backend;
 
 class LDAP

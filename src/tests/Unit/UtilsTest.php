@@ -3,7 +3,6 @@
 namespace Tests\Unit;
 
 use App\Utils;
-
 use Tests\TestCase;
 
 class UtilsTest extends TestCase

@@ -5,7 +5,6 @@ namespace Tests\Feature\Jobs;
 use App\Jobs\SignupVerificationEmail;
 use App\Mail\SignupVerification;
 use App\SignupCode;
-
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 

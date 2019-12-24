@@ -11,12 +11,12 @@ use Illuminate\Database\Eloquent\Model;
 class SignupCode extends Model
 {
     // Note: Removed '0', 'O', '1', 'I' as problematic with some fonts
-    const SHORTCODE_CHARS   = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-    const SHORTCODE_LENGTH  = 5;
-    const CODE_LENGTH       = 32;
+    public const SHORTCODE_CHARS   = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    public const SHORTCODE_LENGTH  = 5;
+    public const CODE_LENGTH       = 32;
 
     // Code expires after so many hours
-    const CODE_EXP_HOURS    = 24;
+    public const CODE_EXP_HOURS    = 24;
 
 
     /**

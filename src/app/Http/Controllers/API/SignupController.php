@@ -7,7 +7,6 @@ use App\Jobs\SignupVerificationEmail;
 use App\Jobs\SignupVerificationSMS;
 use App\SignupCode;
 use App\User;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -95,7 +94,8 @@ class SignupController extends Controller
         // Validate the verification code
         $code = SignupCode::find($request->code);
 
-        if (empty($code)
+        if (
+            empty($code)
             || $code->isExpired()
             || Str::upper($request->short_code) !== Str::upper($code->short_code)
         ) {
@@ -172,14 +172,7 @@ class SignupController extends Controller
         // Remove the verification code
         $this->code->delete();
 
-        $token = auth()->login($user);
-
-        return response()->json([
-                'status' => 'success',
-                'access_token' => $token,
-                'token_type' => 'bearer',
-                'expires_in' => Auth::guard()->factory()->getTTL() * 60,
-        ]);
+        return UsersController::logonResponse($user);
     }
 
     /**

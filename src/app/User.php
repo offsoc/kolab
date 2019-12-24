@@ -7,7 +7,6 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Iatstuti\Database\Support\NullableFields;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-
 use App\Traits\UserSettingsTrait;
 
 /**
@@ -129,23 +128,40 @@ class User extends Authenticatable implements JWTSubject
         }
     }
 
+    /**
+     * Helper to find user by email address, whether it is
+     * main email address, alias or external email
+     *
+     * @param string $email Email address
+     *
+     * @return \App\User User model object
+     */
+    public static function findByEmail(string $email)
+    {
+        if (strpos($email, '@') === false) {
+            return;
+        }
+
+        $user = self::where('email', $email);
+
+        return $user->count() === 1 ? $user->first() : null;
+
+        // TODO: Aliases, External email
+    }
+
     public function settings()
     {
         return $this->hasMany('App\UserSetting', 'user_id');
     }
 
     /**
-     * Return single user setting value
+     * Verification codes for this user.
      *
-     * @param string $key Setting key name
-     *
-     * @return string Setting value
+     * @return VerificationCode[]
      */
-    public function getSetting(string $key, $default = null)
+    public function verificationcodes()
     {
-        $setting = $this->settings->where('key', $key)->first();
-
-        return $setting ? $setting->value : $default;
+        return $this->hasMany('App\VerificationCode', 'user_id', 'id');
     }
 
     /**

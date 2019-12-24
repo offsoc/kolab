@@ -3,16 +3,15 @@
 namespace Tests\Feature\Controller;
 
 use App\User;
-
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class UsersTest extends TestCase
 {
     /**
-        {@inheritDoc}
-
-        @return void
+     * {@inheritDoc}
+     *
+     * @return void
      */
     public function setUp(): void
     {
@@ -28,9 +27,9 @@ class UsersTest extends TestCase
     }
 
     /**
-        {@inheritDoc}
-
-        @return void
+     * {@inheritDoc}
+     *
+     * @return void
      */
     public function tearDown(): void
     {

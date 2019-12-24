@@ -7,22 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 class Domain extends Model
 {
     // we've simply never heard of this domain
-    const STATUS_NEW        = 1 << 0;
+    public const STATUS_NEW        = 1 << 0;
     // it's been activated -- mutually exclusive with new?
-    const STATUS_ACTIVE     = 1 << 1;
+    public const STATUS_ACTIVE     = 1 << 1;
     // ownership of the domain has been confirmed -- mutually exclusive with new?
-    const STATUS_CONFIRMED  = 1 << 2;
+    public const STATUS_CONFIRMED  = 1 << 2;
     // domain has been suspended.
-    const STATUS_SUSPENDED  = 1 << 3;
+    public const STATUS_SUSPENDED  = 1 << 3;
     // domain has been deleted -- can not be active any more.
-    const STATUS_DELETED    = 1 << 4;
+    public const STATUS_DELETED    = 1 << 4;
 
     // open for public registration
-    const TYPE_PUBLIC       = 1 << 0;
+    public const TYPE_PUBLIC       = 1 << 0;
     // zone hosted with us
-    const TYPE_HOSTED       = 1 << 1;
+    public const TYPE_HOSTED       = 1 << 1;
     // zone registered externally
-    const TYPE_EXTERNAL     = 1 << 2;
+    public const TYPE_EXTERNAL     = 1 << 2;
 
     public $incrementing = false;
     protected $keyType = 'bigint';

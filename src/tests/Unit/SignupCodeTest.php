@@ -3,7 +3,6 @@
 namespace Tests\Unit;
 
 use App\SignupCode;
-
 use Tests\TestCase;
 
 class SignupCodeTest extends TestCase

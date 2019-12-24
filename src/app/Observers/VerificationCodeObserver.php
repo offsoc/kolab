@@ -2,32 +2,33 @@
 
 namespace App\Observers;
 
+use App\VerificationCode;
 use App\SignupCode;
 use Carbon\Carbon;
 
-class SignupCodeObserver
+class VerificationCodeObserver
 {
     /**
      * Handle the "creating" event.
      *
      * Ensure that the code entry is created with a random code/short_code.
      *
-     * @param \App\SignupCode $code The code being created.
+     * @param \App\VerificationCode $code The code being created.
      *
      * @return void
      */
-    public function creating(SignupCode $code): void
+    public function creating(VerificationCode $code): void
     {
-        $code_length = SignupCode::CODE_LENGTH;
-        $exp_hours   = env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS);
+        $code_length = VerificationCode::CODE_LENGTH;
+        $exp_hours   = env('VERIFICATION_CODE_EXPIRY', VerificationCode::CODE_EXP_HOURS);
 
         if (empty($code->code)) {
-            $code->short_code = SignupCode::generateShortCode();
+            $code->short_code = VerificationCode::generateShortCode();
 
             // FIXME: Replace this with something race-condition free
             while (true) {
                 $code->code = str_random($code_length);
-                if (!SignupCode::find($code->code)) {
+                if (!VerificationCode::find($code->code)) {
                     break;
                 }
             }

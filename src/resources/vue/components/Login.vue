@@ -10,6 +10,8 @@
             <input type="password" id="inputPassword" class="form-control" placeholder="Password" required v-model="password">
 
             <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+
+            <br><br><router-link :to="{ name: 'password-reset' }">Forgot password?</router-link>
         </form>
     </div>
 </template>

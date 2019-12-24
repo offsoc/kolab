@@ -4,10 +4,8 @@ namespace Tests\Browser;
 
 use App\SignupCode;
 use App\User;
-
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Signup;
-
 use Tests\DuskTestCase;
 use Laravel\Dusk\Browser;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -133,10 +131,9 @@ class SignupTest extends DuskTestCase
 
                 $step->assertMissing('#signup_email.is-invalid');
                 $step->assertMissing('#signup_email + .invalid-feedback');
-
-                $step->waitUntilMissing('#signup_code[value=""]');
             });
 
+            $browser->waitUntilMissing('@step2 #signup_code[value=""]');
             $browser->waitFor('@step2');
             $browser->assertMissing('@step1');
         });
@@ -226,7 +223,7 @@ class SignupTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->assertVisible('@step3');
 
-            // Here we expect one text input, Back and Continue buttons
+            // Here we expect 3 text inputs, Back and Continue buttons
             $browser->with('@step3', function ($step) {
                 $step->assertVisible('#signup_login');
                 $step->assertVisible('#signup_password');
@@ -282,8 +279,6 @@ class SignupTest extends DuskTestCase
 
             // Submit invalid data (valid login, invalid password)
             $browser->with('@step3', function ($step) use ($browser) {
-                // FIXME: For some reason I can't just use ->value() here
-                $step->clear('#signup_login');
                 $step->type('#signup_login', 'SignupTestDusk');
 
                 $step->click('[type=submit]');
@@ -301,8 +296,6 @@ class SignupTest extends DuskTestCase
 
             // Submit valid data
             $browser->with('@step3', function ($step) {
-                // FIXME: For some reason I can't just use ->value() here
-                $step->clear('#signup_confirm');
                 $step->type('#signup_confirm', '12345678');
 
                 $step->click('[type=submit]');
