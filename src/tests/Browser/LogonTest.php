@@ -2,6 +2,7 @@
 
 namespace Tests\Browser;
 
+use Tests\Browser\Components\Menu;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\DuskTestCase;
@@ -10,6 +11,21 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class LogonTest extends DuskTestCase
 {
+
+    /**
+     * Test menu on logon page
+     *
+     * @return void
+     */
+    public function testLogonMenu()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new Home());
+            $browser->within(new Menu(), function ($browser) {
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+            });
+        });
+    }
 
     /**
      * Test redirect to /login if user is unauthenticated
@@ -58,6 +74,10 @@ class LogonTest extends DuskTestCase
 
             // Checks if we're really on Dashboard page
             $browser->on(new Dashboard());
+
+            $browser->within(new Menu(), function ($browser) {
+                $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
+            });
         });
     }
 }

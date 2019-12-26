@@ -4,6 +4,7 @@ namespace Tests\Browser;
 
 use App\SignupCode;
 use App\User;
+use Tests\Browser\Components\Menu;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Signup;
 use Tests\DuskTestCase;
@@ -92,6 +93,11 @@ class SignupTest extends DuskTestCase
             $browser->visit(new Signup());
 
             $browser->assertVisible('@step1');
+
+            $browser->within(new Menu(), function ($browser) {
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
+                $browser->assertActiveItem('signup');
+            });
 
             // Here we expect two text inputs and Continue
             $browser->with('@step1', function ($step) {

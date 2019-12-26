@@ -8,31 +8,31 @@
             <div id="navbar" class="collapse navbar-collapse justify-content-end">
                 <ul class="navbar-nav">
                     <li class="nav-item" v-if="!logged_in">
-                        <router-link class="nav-link" active-class="active" :to="{name: 'signup'}">Signup</router-link>
+                        <router-link class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
                     </li>
                     <li class="nav-item" v-if="!logged_in">
-                        <a class="nav-link" href="https://kolabnow.com">Explore</a>
+                        <a class="nav-link link-explore" href="https://kolabnow.com">Explore</a>
                     </li>
                     <li class="nav-item" v-if="!logged_in">
-                        <a class="nav-link" href="https://blogs.kolabnow.com">Blog</a>
+                        <a class="nav-link link-blog" href="https://blogs.kolabnow.com">Blog</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://kolabnow.com/support">Support</a>
+                        <a class="nav-link link-support" href="https://kolabnow.com/support">Support</a>
                     </li>
                     <li class="nav-item" v-if="logged_in">
-                        <a class="nav-link" href="https://kolabnow.com/contact">Contact</a>
+                        <a class="nav-link link-contact" href="https://kolabnow.com/contact">Contact</a>
                     </li>
                     <li class="nav-item" v-if="logged_in">
-                        <a class="nav-link menulogin" href="https://kolabnow.com/apps" target="_blank">Webmail</a>
+                        <a class="nav-link menulogin link-webmail" href="https://kolabnow.com/apps" target="_blank">Webmail</a>
                     </li>
                     <li class="nav-item" v-if="logged_in">
-                        <router-link class="nav-link menulogin" active-class="active" :to="{name: 'logout'}">Logout</router-link>
+                        <router-link class="nav-link menulogin link-logout" active-class="active" :to="{name: 'logout'}">Logout</router-link>
                     </li>
                     <li class="nav-item" v-if="!logged_in && route == 'login'">
-                        <a class="nav-link menulogin" href="https://kolabnow.com/apps" target="_blank">Webmail</a>
+                        <a class="nav-link menulogin link-webmail" href="https://kolabnow.com/apps" target="_blank">Webmail</a>
                     </li>
                     <li class="nav-item" v-if="!logged_in && (!route || route == 'signup')">
-                        <router-link class="nav-link menulogin" active-class="active" :to="{name: 'login'}">Login</router-link>
+                        <router-link class="nav-link menulogin link-login" active-class="active" :to="{name: 'login'}">Login</router-link>
                     </li>
                 </ul>
             </div>
