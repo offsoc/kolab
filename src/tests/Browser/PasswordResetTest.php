@@ -5,6 +5,7 @@ namespace Tests\Browser;
 use App\User;
 use App\VerificationCode;
 use Tests\Browser\Pages\Dashboard;
+use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\PasswordReset;
 use Tests\DuskTestCase;
 use Laravel\Dusk\Browser;
@@ -35,6 +36,24 @@ class PasswordResetTest extends DuskTestCase
         User::where('email', 'passwordresettestdusk@' . \config('app.domain'))->delete();
 
         parent::tearDown();
+    }
+
+    /**
+     * Test the link from logon to password-reset page
+     *
+     * @return void
+     */
+    public function testPasswordResetLinkOnLogon()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new Home());
+
+            $browser->assertSeeLink('Forgot password?');
+            $browser->clickLink('Forgot password?');
+
+            $browser->on(new PasswordReset());
+            $browser->assertVisible('@step1');
+        });
     }
 
     /**
