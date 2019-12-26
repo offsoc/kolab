@@ -80,4 +80,34 @@ class LogonTest extends DuskTestCase
             });
         });
     }
+
+    /**
+     * Logout test
+     *
+     * @depends testLogonSuccessful
+     * @return void
+     */
+    public function testLogout()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->on(new Dashboard());
+
+            // FIXME: Here we're testing click on Logout button
+            //        We should also test if accessing /Logout url has the same effect
+            $browser->within(new Menu(), function ($browser) {
+                $browser->click('.link-logout');
+            });
+
+            // We expect the logoon page
+            $browser->waitForLocation('/login')
+                ->on(new Home());
+
+            // with default menu
+            $browser->within(new Menu(), function ($browser) {
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+            });
+
+            // TODO: Test if the session is really destroyed
+        });
+    }
 }
