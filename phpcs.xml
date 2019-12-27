@@ -2,7 +2,7 @@
 <ruleset name="Kolab">
     <description>Custom ruleset for Kolab</description>
 
-    <arg name="extensions" value="php,inc,phtml,js,css"/>
+    <arg name="extensions" value="php,inc,phtml"/>
 
     <rule ref="PSR1"/>
     <rule ref="PSR12"/>
