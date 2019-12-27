@@ -66,16 +66,16 @@ const app = new Vue({
         'menu-component': MenuComponent
     },
     router,
+    mounted() {
+        this.$root.$on('clearFormValidation', (form) => {
+            this.clearFormValidation(form)
+        })
+    },
     methods: {
         clearFormValidation: form => {
             $(form).find('.is-invalid').removeClass('is-invalid')
             $(form).find('.invalid-feedback').remove()
         }
-    },
-    mounted() {
-        this.$root.$on('clearFormValidation', (form) => {
-            this.clearFormValidation(form)
-        })
     }
 })
 

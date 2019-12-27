@@ -1,7 +1,3 @@
-<template>
-
-</template>
-
 <script>
     import store from '../js/store'
     export default {

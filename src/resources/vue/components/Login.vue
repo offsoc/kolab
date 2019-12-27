@@ -1,6 +1,6 @@
 <template>
     <div class="text-center form-wrapper">
-        <form class="form-signin" v-on:submit.prevent="submitLogin">
+        <form class="form-signin" @submit.prevent="submitLogin">
             <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
 
             <label for="inputEmail" class="sr-only">Email address</label>
@@ -52,12 +52,14 @@
         display: flex;
         align-items: center;
     }
+
     .form-signin {
         width: 100%;
         max-width: 330px;
         padding: 15px;
         margin: 0 auto;
     }
+
     .form-signin .form-control {
         position: relative;
         box-sizing: border-box;
@@ -65,14 +67,17 @@
         padding: 10px;
         font-size: 16px;
     }
+
     .form-signin .form-control:focus {
         z-index: 2;
     }
+
     .form-signin input[type="email"] {
         margin-bottom: -1px;
         border-bottom-right-radius: 0;
         border-bottom-left-radius: 0;
     }
+
     .form-signin input[type="password"] {
         margin-bottom: 10px;
         border-top-left-radius: 0;

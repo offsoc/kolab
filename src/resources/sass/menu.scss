@@ -1,5 +1,5 @@
 #primary-menu {
-    background-color: #F6F5F3;
+    background-color: #f6f5f3;
     padding: 0;
     line-height: 85px;
 
@@ -23,9 +23,8 @@
             outline: 0;
         }
 
-        &:hover,
         &:hover {
-            color: #F1A539;
+            color: #f1a539;
             text-decoration: underline;
         }
 
@@ -39,7 +38,7 @@
     #primary-menu {
         a.menulogin {
             text-transform: uppercase;
-            border: 2px solid #F1A539;
+            border: 2px solid #f1a539;
             border-radius: 21px;
             line-height: 21px;
             letter-spacing: 1px;
@@ -49,7 +48,7 @@
             &:focus,
             &:hover {
                 text-decoration: none;
-                background-color: #F1A539;
+                background-color: #f1a539;
                 color: #fff;
                 font-weight: normal;
             }
@@ -60,7 +59,7 @@
 @include media-breakpoint-down(md) {
     #primary-menu {
         .navbar-nav {
-            padding-bottom: 1em
+            padding-bottom: 1em;
         }
 
         .nav-link {

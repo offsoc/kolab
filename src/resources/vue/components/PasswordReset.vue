@@ -6,7 +6,7 @@
                 <p class="card-text">
                     Enter your email address to reset your password. You may need to check your spam folder or unblock noreply@kolabnow.com.
                 </p>
-                <form v-on:submit.prevent="submitStep1" data-validation-prefix="reset_">
+                <form @submit.prevent="submitStep1" data-validation-prefix="reset_">
                     <div class="form-group">
                         <label for="reset_email" class="sr-only">Email Address</label>
                         <input type="text" class="form-control" id="reset_email" placeholder="Email Address" required v-model="email">
@@ -23,12 +23,12 @@
                     We sent out a confirmation code to your external email address.
                     Enter the code we sent you, or click the link in the message.
                 </p>
-                <form v-on:submit.prevent="submitStep2" data-validation-prefix="reset_">
+                <form @submit.prevent="submitStep2" data-validation-prefix="reset_">
                     <div class="form-group">
                         <label for="reset_short_code" class="sr-only">Confirmation Code</label>
                         <input type="text" class="form-control" id="reset_short_code" placeholder="Confirmation Code" required v-model="short_code">
                     </div>
-                    <button class="btn btn-secondary" type="button" v-on:click="stepBack">Back</button>
+                    <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Continue</button>
                     <input type="hidden" id="reset_code" v-model="code" />
                 </form>
@@ -40,7 +40,7 @@
                 <h4 class="card-title">Password Reset - Step 3/3</h4>
                 <p class="card-text">
                 </p>
-                <form v-on:submit.prevent="submitStep3" data-validation-prefix="reset_">
+                <form @submit.prevent="submitStep3" data-validation-prefix="reset_">
                     <div class="form-group">
                         <label for="reset_password" class="sr-only">Password</label>
                         <input type="password" class="form-control" id="reset_password" placeholder="Password" required v-model="password">
@@ -49,7 +49,7 @@
                         <label for="reset_confirm" class="sr-only">Confirm Password</label>
                         <input type="password" class="form-control" id="reset_confirm" placeholder="Confirm Password" required v-model="password_confirmation">
                     </div>
-                    <button class="btn btn-secondary" type="button" v-on:click="stepBack">Back</button>
+                    <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Submit</button>
                 </form>
             </div>

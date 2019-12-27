@@ -6,7 +6,7 @@
                 <p class="card-text">
                     Sign up to start your free month.
                 </p>
-                <form v-on:submit.prevent="submitStep1" data-validation-prefix="signup_">
+                <form @submit.prevent="submitStep1" data-validation-prefix="signup_">
                     <div class="form-group">
                         <label for="signup_name" class="sr-only">Your Name</label>
                         <input type="text" class="form-control" id="signup_name" placeholder="Your Name" required autofocus v-model="name">
@@ -27,12 +27,12 @@
                     We sent out a confirmation code to your email address.
                     Enter the code we sent you, or click the link in the message.
                 </p>
-                <form v-on:submit.prevent="submitStep2" data-validation-prefix="signup_">
+                <form @submit.prevent="submitStep2" data-validation-prefix="signup_">
                     <div class="form-group">
                         <label for="signup_short_code" class="sr-only">Confirmation Code</label>
                         <input type="text" class="form-control" id="signup_short_code" placeholder="Confirmation Code" required v-model="short_code">
                     </div>
-                    <button class="btn btn-secondary" type="button" v-on:click="stepBack">Back</button>
+                    <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Continue</button>
                     <input type="hidden" id="signup_code" v-model="code" />
                 </form>
@@ -45,7 +45,7 @@
                 <p class="card-text">
                     Create your Kolab identity (you can choose additional addresses later).
                 </p>
-                <form v-on:submit.prevent="submitStep3" data-validation-prefix="signup_">
+                <form @submit.prevent="submitStep3" data-validation-prefix="signup_">
                     <div class="form-group">
                         <label for="signup_login" class="sr-only"></label>
                         <div class="input-group">
@@ -63,7 +63,7 @@
                         <label for="signup_confirm" class="sr-only">Confirm Password</label>
                         <input type="password" class="form-control" id="signup_confirm" placeholder="Confirm Password" required v-model="password_confirmation">
                     </div>
-                    <button class="btn btn-secondary" type="button" v-on:click="stepBack">Back</button>
+                    <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Submit</button>
                 </form>
             </div>
