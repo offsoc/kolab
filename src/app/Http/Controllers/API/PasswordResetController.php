@@ -7,7 +7,6 @@ use App\Jobs\PasswordResetEmail;
 use App\User;
 use App\VerificationCode;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -90,7 +89,7 @@ class PasswordResetController extends Controller
             empty($code)
             || $code->isExpired()
             || $code->mode !== 'password-reset'
-            || $code->short_code !== $request->short_code
+            || Str::upper($request->short_code) !== Str::upper($code->short_code)
         ) {
             $errors = ['short_code' => "The code is invalid or expired."];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
