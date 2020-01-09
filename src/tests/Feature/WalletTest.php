@@ -23,16 +23,14 @@ class WalletTest extends TestCase
         parent::setUp();
 
         foreach ($this->users as $user) {
-            $_user = User::firstOrCreate(['email' => $user]);
-            $_user->delete();
+            User::where('email', $user)->delete();
         }
     }
 
     public function tearDown(): void
     {
         foreach ($this->users as $user) {
-            $_user = User::firstOrCreate(['email' => $user]);
-            $_user->delete();
+            User::where('email', $user)->delete();
         }
     }
 

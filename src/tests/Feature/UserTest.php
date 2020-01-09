@@ -53,6 +53,9 @@ class UserTest extends TestCase
         $result = User::findByEmail('john');
         $this->assertNull($result);
 
+        $result = User::findByEmail('non-existing@email.com');
+        $this->assertNull($result);
+
         $result = User::findByEmail('john@kolab.org');
         $this->assertInstanceOf(User::class, $result);
         $this->assertSame($user->id, $result->id);
