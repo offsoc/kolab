@@ -22,15 +22,13 @@ class DomainTest extends TestCase
 
         foreach ($domains as $namespace_elements) {
             $namespace = implode('-', $namespace_elements) . '.com';
-
-            $domain = Domain::where('namespace', $namespace)->first();
-            if ($domain) {
-                $domain->delete();
-            }
+            Domain::where('namespace', $namespace)->delete();
         }
+
+        Domain::where('namespace', 'public-active.com')->delete();
     }
 
-    public function testDomainStatus()
+    public function testDomainStatus(): void
     {
         $statuses = [ "new", "active", "confirmed", "suspended", "deleted" ];
 
@@ -71,5 +69,33 @@ class DomainTest extends TestCase
 
             $this->assertTrue($domain->status > 1);
         }
+    }
+
+    /**
+     * Tests getPublicDomains() method
+     */
+    public function testGetPublicDomains(): void
+    {
+        $public_domains = Domain::getPublicDomains();
+
+        $this->assertNotContains('public-active.com', $public_domains);
+
+        Domain::create([
+                'namespace' => 'public-active.com',
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_PUBLIC,
+        ]);
+
+        // Public but non-active domain should not be returned
+        $public_domains = Domain::getPublicDomains();
+        $this->assertNotContains('public-active.com', $public_domains);
+
+        $domain = Domain::where('namespace', 'public-active.com')->first();
+        $domain->status = Domain::STATUS_ACTIVE;
+        $domain->save();
+
+        // Public and active domain should be returned
+        $public_domains = Domain::getPublicDomains();
+        $this->assertContains('public-active.com', $public_domains);
     }
 }

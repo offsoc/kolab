@@ -41,8 +41,6 @@ class PasswordResetEmailTest extends TestCase
     public function tearDown(): void
     {
         $this->code->user->delete();
-
-        parent::tearDown();
     }
 
     /**

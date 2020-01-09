@@ -8,12 +8,23 @@ use App\User;
 
 class Mailbox
 {
+    public static function entitleableClass()
+    {
+        return \App\User::class;
+    }
+
     public static function preReq(Entitlement $entitlement, User $user)
     {
         if (!Sku::find($entitlement->sku_id)->active) {
-            \Log::info("Sku not active");
+            \Log::error("Sku not active");
             return false;
         }
+/*
+        FIXME: This code prevents from creating initial mailbox SKU
+               on signup of group account, because User::domains()
+               does not return the new domain.
+               Either we make sure to create domain entitlement before mailbox
+               entitlement or make the method here aware of that case or?
 
         list($local, $domain) = explode('@', $user->email);
 
@@ -26,7 +37,7 @@ class Mailbox
         }
 
         \Log::info("Domain not for user");
-
-        return false;
+*/
+        return true;
     }
 }

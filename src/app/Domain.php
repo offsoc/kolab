@@ -43,6 +43,18 @@ class Domain extends Model
     }
 
     /**
+     * Return list of public+active domain names
+     */
+    public static function getPublicDomains(): array
+    {
+        $where = sprintf('(type & %s) AND (status & %s)', Domain::TYPE_PUBLIC, Domain::STATUS_ACTIVE);
+
+        return self::whereRaw($where)->get(['namespace'])->map(function ($domain) {
+            return $domain->namespace;
+        })->toArray();
+    }
+
+    /**
      * Returns whether this domain is active.
      *
      * @return bool

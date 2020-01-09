@@ -117,8 +117,11 @@ return [
     'url' => 'The :attribute format is invalid.',
     'uuid' => 'The :attribute must be a valid UUID.',
 
-    'emailexists' => 'The specified email address already exists',
     'emailinvalid' => 'The specified email address is invalid',
+    'domaininvalid' => 'The specified domain is invalid',
+    'logininvalid' => 'The specified login contains forbidden characters',
+    'loginexists' => 'The specified login is not available for signup',
+    'domainexists' => 'The specified domain is not available for signup',
     'noemailorphone' => 'The specified text is neither a valid email address nor a phone number',
     'usernotexists' => 'Unable to find user',
     'noextemail' => 'This user has no external email address',

@@ -21,8 +21,6 @@ class SignupTest extends DuskTestCase
     public function tearDown(): void
     {
         User::where('email', 'signuptestdusk@' . \config('app.domain'))->delete();
-
-        parent::tearDown();
     }
 
     /**
@@ -66,6 +64,7 @@ class SignupTest extends DuskTestCase
                     'data' => [
                         'email' => 'User@example.org',
                         'name' => 'User Name',
+                        'plan' => 'individual',
                     ]
             ]);
 
@@ -234,10 +233,16 @@ class SignupTest extends DuskTestCase
                 $step->assertVisible('#signup_login');
                 $step->assertVisible('#signup_password');
                 $step->assertVisible('#signup_confirm');
+                $step->assertVisible('select#signup_domain');
                 $step->assertVisible('[type=button]');
                 $step->assertVisible('[type=submit]');
                 $step->assertFocused('#signup_login');
-                $step->assertSeeIn('#signup_login + span', '@' . \config('app.domain'));
+                $step->assertValue('select#signup_domain', \config('app.domain'));
+                $step->assertValue('#signup_login', '');
+                $step->assertValue('#signup_password', '');
+                $step->assertValue('#signup_confirm', '');
+
+                // TODO: Test domain selector
             });
 
             // Test Back button
@@ -275,7 +280,7 @@ class SignupTest extends DuskTestCase
                 $browser->waitFor('.toast-error');
 
                 $step->assertVisible('#signup_login.is-invalid');
-                $step->assertVisible('#signup_login + span + .invalid-feedback');
+                $step->assertVisible('#signup_domain + .invalid-feedback');
                 $step->assertVisible('#signup_password.is-invalid');
                 $step->assertVisible('#signup_password + .invalid-feedback');
                 $step->assertFocused('#signup_login');
@@ -294,7 +299,7 @@ class SignupTest extends DuskTestCase
                 $step->assertVisible('#signup_password.is-invalid');
                 $step->assertVisible('#signup_password + .invalid-feedback');
                 $step->assertMissing('#signup_login.is-invalid');
-                $step->assertMissing('#signup_login + span + .invalid-feedback');
+                $step->assertMissing('#signup_domain + .invalid-feedback');
                 $step->assertFocused('#signup_password');
 
                 $browser->click('.toast-error'); // remove the toast

@@ -49,10 +49,12 @@
                     <div class="form-group">
                         <label for="signup_login" class="sr-only"></label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="signup_login" required v-model="login">
+                            <input type="text" class="form-control" id="signup_login" required v-model="login" placeholder="Login">
                             <span class="input-group-append">
-                                <span class="input-group-text">@{{ domain }}</span>
+                                <span class="input-group-text">@</span>
                             </span>
+                            <input v-if="is_domain" type="text" class="form-control rounded-right" id="signup_domain" required v-model="domain" placeholder="Domain">
+                            <select v-if="!is_domain" class="custom-select rounded-right" id="signup_domain" required v-model="domain"></select>
                         </div>
                     </div>
                     <div class="form-group">
@@ -84,18 +86,23 @@
                 login: '',
                 password: '',
                 password_confirmation: '',
-                domain: window.config['app.domain']
+                domain: '',
+                plan: null,
+                is_domain: false
             }
         },
         created() {
-            // Verification code provided, auto-submit Step 2
-            if (this.$route.params.code) {
-                if (/^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(this.$route.params.code)) {
+            let param = this.$route.params.param;
+            if (param) {
+                if (/^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(param)) {
+                    // Verification code provided, auto-submit Step 2
                     this.short_code = RegExp.$1
                     this.code = RegExp.$2
                     this.submitStep2(true)
-                }
-                else {
+                } else if (/^([a-zA-Z_]+)$/.test(param)) {
+                    // Plan title provided, save it and display Step 1
+                    this.plan = param
+                } else {
                     // TODO: Find a way to display error page without changing the URL
                     //       Maybe https://github.com/raniesantos/vue-error-page
                     this.$router.push({name: '404'})
@@ -113,7 +120,8 @@
 
                 axios.post('/api/auth/signup/init', {
                     email: this.email,
-                    name: this.name
+                    name: this.name,
+                    plan: this.plan
                 }).then(response => {
                     this.displayForm(2, true)
                     this.code = response.data.code
@@ -132,9 +140,21 @@
                     short_code: this.short_code
                 }).then(response => {
                     this.displayForm(3, true)
-                    // Reset user name/email, we don't have them if user used a verification link
+                    // Reset user name/email/plan, we don't have them if user used a verification link
                     this.name = response.data.name
                     this.email = response.data.email
+                    this.is_domain = response.data.is_domain
+
+                    // Fill the domain selector with available domains
+                    if (!this.is_domain) {
+                        let options = []
+                        $('select#signup_domain').html('')
+                        $.each(response.data.domains, (i, v) => {
+                            options.push($('<option>').text(v).attr('value', v))
+                        })
+                        $('select#signup_domain').append(options)
+                        this.domain = window.config['app.domain']
+                    }
                 }).catch(error => {
                     if (bylink === true) {
                         // FIXME: display step 1, user can do nothing about it anyway
@@ -151,6 +171,7 @@
                     code: this.code,
                     short_code: this.short_code,
                     login: this.login,
+                    domain: this.domain,
                     password: this.password,
                     password_confirmation: this.password_confirmation
                 }).then(response => {

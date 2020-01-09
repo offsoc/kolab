@@ -37,8 +37,6 @@ class SignupVerificationEmailTest extends TestCase
     public function tearDown(): void
     {
         $this->code->delete();
-
-        parent::tearDown();
     }
 
     /**

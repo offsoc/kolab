@@ -34,8 +34,6 @@ class PasswordResetTest extends DuskTestCase
     public function tearDown(): void
     {
         User::where('email', 'passwordresettestdusk@' . \config('app.domain'))->delete();
-
-        parent::tearDown();
     }
 
     /**

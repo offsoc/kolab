@@ -142,11 +142,11 @@ class User extends Authenticatable implements JWTSubject
             return;
         }
 
-        $user = self::where('email', $email);
-
-        return $user->count() === 1 ? $user->first() : null;
+        $user = self::where('email', $email)->first();
 
         // TODO: Aliases, External email
+
+        return $user;
     }
 
     public function settings()

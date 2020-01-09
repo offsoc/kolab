@@ -3,6 +3,7 @@
 namespace Tests\Feature\Controller;
 
 use App\Http\Controllers\API\SignupController;
+use App\Domain;
 use App\SignupCode;
 use App\User;
 use Illuminate\Support\Facades\Queue;
@@ -10,6 +11,8 @@ use Tests\TestCase;
 
 class SignupTest extends TestCase
 {
+    private static $domain;
+
     /**
      * {@inheritDoc}
      *
@@ -19,7 +22,11 @@ class SignupTest extends TestCase
     {
         parent::setUp();
 
-        $user = User::firstOrCreate(['email' => 'SignupControllerTest1@' . \config('app.domain')]);
+        // TODO: Some tests depend on existence of individual and group plans,
+        //       we should probably create plans here to not depend on that
+        $domain = self::getPublicDomain();
+
+        $user = User::firstOrCreate(['email' => "SignupControllerTest1@$domain"]);
     }
 
     /**
@@ -29,11 +36,38 @@ class SignupTest extends TestCase
      */
     public function tearDown(): void
     {
-        User::where('email', 'signuplogin@' . \config('app.domain'))
-            ->orWhere('email', 'SignupControllerTest1@' . \config('app.domain'))
+        $domain = self::getPublicDomain();
+
+        User::where('email', "signuplogin@$domain")
+            ->orWhere('email', "SignupControllerTest1@$domain")
+            ->orWhere('email', 'admin@external.com')
             ->delete();
 
-        parent::tearDown();
+        Domain::where('namespace', 'signup-domain.com')
+            ->orWhere('namespace', 'external.com')
+            ->delete();
+    }
+
+    /**
+     * Return a public domain for signup tests
+     */
+    public function getPublicDomain(): string
+    {
+        if (!self::$domain) {
+            $this->refreshApplication();
+            self::$domain = Domain::getPublicDomains()[0];
+
+            if (empty(self::$domain)) {
+                self::$domain = 'signup-domain.com';
+                Domain::create([
+                        'namespace' => self::$domain,
+                        'status' => Domain::STATUS_Active,
+                        'type' => Domain::TYPE_PUBLIC,
+                ]);
+            }
+        }
+
+        return self::$domain;
     }
 
     /**
@@ -59,8 +93,6 @@ class SignupTest extends TestCase
         // Data with missing name
         $data = [
             'email' => 'UsersApiControllerTest1@UsersApiControllerTest.com',
-            'password' => 'simple123',
-            'password_confirmation' => 'simple123'
         ];
 
         $response = $this->post('/api/auth/signup/init', $data);
@@ -76,8 +108,6 @@ class SignupTest extends TestCase
         $data = [
             'email' => '@example.org',
             'name' => 'Signup User',
-            'password' => 'simple123',
-            'password_confirmation' => 'simple123'
         ];
 
         $response = $this->post('/api/auth/signup/init', $data);
@@ -107,8 +137,7 @@ class SignupTest extends TestCase
         $data = [
             'email' => 'testuser@external.com',
             'name' => 'Signup User',
-            'password' => 'simple123',
-            'password_confirmation' => 'simple123'
+            'plan' => 'individual',
         ];
 
         $response = $this->post('/api/auth/signup/init', $data);
@@ -131,6 +160,7 @@ class SignupTest extends TestCase
             $code = $code->getValue($job);
 
             return $code->code === $json['code']
+                && $code->data['plan'] === $data['plan']
                 && $code->data['email'] === $data['email']
                 && $code->data['name'] === $data['name'];
         });
@@ -139,6 +169,7 @@ class SignupTest extends TestCase
             'code' => $json['code'],
             'email' => $data['email'],
             'name' => $data['name'],
+            'plan' => $data['plan'],
         ];
     }
 
@@ -211,10 +242,12 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(3, $json);
+        $this->assertCount(5, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame($result['email'], $json['email']);
         $this->assertSame($result['name'], $json['name']);
+        $this->assertSame(false, $json['is_domain']);
+        $this->assertTrue(is_array($json['domains']) && !empty($json['domains']));
 
         return $result;
     }
@@ -235,11 +268,14 @@ class SignupTest extends TestCase
 
         $response->assertStatus(422);
         $this->assertSame('error', $json['status']);
-        $this->assertCount(2, $json['errors']);
+        $this->assertCount(3, $json['errors']);
         $this->assertArrayHasKey('login', $json['errors']);
         $this->assertArrayHasKey('password', $json['errors']);
+        $this->assertArrayHasKey('domain', $json['errors']);
 
-        // Passwords do not match
+        $domain = $this->getPublicDomain();
+
+        // Passwords do not match and missing domain
         $data = [
             'login' => 'test',
             'password' => 'test',
@@ -251,12 +287,16 @@ class SignupTest extends TestCase
 
         $response->assertStatus(422);
         $this->assertSame('error', $json['status']);
-        $this->assertCount(1, $json['errors']);
+        $this->assertCount(2, $json['errors']);
         $this->assertArrayHasKey('password', $json['errors']);
+        $this->assertArrayHasKey('domain', $json['errors']);
+
+        $domain = $this->getPublicDomain();
 
         // Login too short
         $data = [
             'login' => '1',
+            'domain' => $domain,
             'password' => 'test',
             'password_confirmation' => 'test',
         ];
@@ -269,9 +309,10 @@ class SignupTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertArrayHasKey('login', $json['errors']);
 
-        // Login invalid
+        // Missing codes
         $data = [
-            'login' => 'żżżżż',
+            'login' => 'login-valid',
+            'domain' => $domain,
             'password' => 'test',
             'password_confirmation' => 'test',
         ];
@@ -281,12 +322,14 @@ class SignupTest extends TestCase
 
         $response->assertStatus(422);
         $this->assertSame('error', $json['status']);
-        $this->assertCount(1, $json['errors']);
-        $this->assertArrayHasKey('login', $json['errors']);
+        $this->assertCount(2, $json['errors']);
+        $this->assertArrayHasKey('code', $json['errors']);
+        $this->assertArrayHasKey('short_code', $json['errors']);
 
         // Data with invalid short_code
         $data = [
             'login' => 'TestLogin',
+            'domain' => $domain,
             'password' => 'test',
             'password_confirmation' => 'test',
             'code' => $result['code'],
@@ -300,6 +343,25 @@ class SignupTest extends TestCase
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
         $this->assertArrayHasKey('short_code', $json['errors']);
+
+        // Valid code, invalid login
+        $code = SignupCode::find($result['code']);
+        $data = [
+            'login' => 'żżżżżż',
+            'domain' => $domain,
+            'password' => 'test',
+            'password_confirmation' => 'test',
+            'code' => $result['code'],
+            'short_code' => $code->short_code,
+        ];
+
+        $response = $this->post('/api/auth/signup', $data);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertArrayHasKey('login', $json['errors']);
     }
 
     /**
@@ -310,11 +372,13 @@ class SignupTest extends TestCase
      */
     public function testSignupValidInput(array $result)
     {
-        $identity = \strtolower('SignupLogin@') . \config('app.domain');
+        $domain = $this->getPublicDomain();
+        $identity = \strtolower('SignupLogin@') . $domain;
 
         $code = SignupCode::find($result['code']);
         $data = [
             'login' => 'SignupLogin',
+            'domain' => $domain,
             'password' => 'test',
             'password_confirmation' => 'test',
             'code' => $code->code,
@@ -344,8 +408,111 @@ class SignupTest extends TestCase
         // Check external email in user settings
         $this->assertSame($result['email'], $user->getSetting('external_email'));
 
+        // TODO: Check SKUs/Plan
+
         // TODO: Check if the access token works
     }
+
+    /**
+     * Test signup for a group (custom domain) account
+     *
+     * @return void
+     */
+    public function testSignupGroupAccount()
+    {
+        Queue::fake();
+
+        // Initial signup request
+        $user_data = $data = [
+            'email' => 'testuser@external.com',
+            'name' => 'Signup User',
+            'plan' => 'group',
+        ];
+
+        $response = $this->post('/api/auth/signup/init', $data);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertCount(2, $json);
+        $this->assertSame('success', $json['status']);
+        $this->assertNotEmpty($json['code']);
+
+        // Assert the email sending job was pushed once
+        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
+
+        // Assert the job has proper data assigned
+        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
+            // Access protected property
+            $reflection = new \ReflectionClass($job);
+            $code = $reflection->getProperty('code');
+            $code->setAccessible(true);
+            $code = $code->getValue($job);
+
+            return $code->code === $json['code']
+                && $code->data['plan'] === $data['plan']
+                && $code->data['email'] === $data['email']
+                && $code->data['name'] === $data['name'];
+        });
+
+        // Verify the code
+        $code = SignupCode::find($json['code']);
+        $data = [
+            'code' => $code->code,
+            'short_code' => $code->short_code,
+        ];
+
+        $response = $this->post('/api/auth/signup/verify', $data);
+        $result = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertCount(5, $result);
+        $this->assertSame('success', $result['status']);
+        $this->assertSame($user_data['email'], $result['email']);
+        $this->assertSame($user_data['name'], $result['name']);
+        $this->assertSame(true, $result['is_domain']);
+        $this->assertSame([], $result['domains']);
+
+        // Final signup request
+        $login = 'admin';
+        $domain = 'external.com';
+        $data = [
+            'login' => $login,
+            'domain' => $domain,
+            'password' => 'test',
+            'password_confirmation' => 'test',
+            'code' => $code->code,
+            'short_code' => $code->short_code,
+        ];
+
+        $response = $this->post('/api/auth/signup', $data);
+        $result = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertCount(4, $result);
+        $this->assertSame('success', $result['status']);
+        $this->assertSame('bearer', $result['token_type']);
+        $this->assertTrue(!empty($result['expires_in']) && is_int($result['expires_in']) && $result['expires_in'] > 0);
+        $this->assertNotEmpty($result['access_token']);
+
+        // Check if the code has been removed
+        $this->assertNull(SignupCode::find($code->id));
+
+        // Check if the user has been created
+        $user = User::where('email', $login . '@' . $domain)->first();
+
+        $this->assertNotEmpty($user);
+        $this->assertSame($user_data['name'], $user->name);
+
+        // Check domain record
+
+        // Check external email in user settings
+        $this->assertSame($user_data['email'], $user->getSetting('external_email'));
+
+        // TODO: Check SKUs/Plan
+
+        // TODO: Check if the access token works
+    }
+
 
     /**
      * List of email address validation cases for testValidateEmail()
@@ -354,50 +521,83 @@ class SignupTest extends TestCase
      */
     public function dataValidateEmail()
     {
-        // To access config from dataProvider method we have to refreshApplication() first
-        $this->refreshApplication();
-        $domain = \config('app.domain');
-
         return [
-            // general cases (invalid)
-            ['', false, 'validation.emailinvalid'],
-            ['example.org', false, 'validation.emailinvalid'],
-            ['@example.org', false, 'validation.emailinvalid'],
-            ['test@localhost', false, 'validation.emailinvalid'],
-            // general cases (valid)
-            ['test@domain.tld', false, null],
-            ['&@example.org', false, null],
-            // kolab identity cases
-            ['admin@' . $domain, true, 'validation.emailexists'],
-            ['administrator@' . $domain, true, 'validation.emailexists'],
-            ['sales@' . $domain, true, 'validation.emailexists'],
-            ['root@' . $domain, true, 'validation.emailexists'],
-            ['&@' . $domain, true, 'validation.emailinvalid'],
-            ['testnonsystemdomain@invalid.tld', true, 'validation.emailinvalid'],
-            // existing account
-            ['SignupControllerTest1@' . $domain, true, 'validation.emailexists'],
-            // valid for signup
-            ['test.test@' . $domain, true, null],
-            ['test_test@' . $domain, true, null],
-            ['test-test@' . $domain, true, null],
+            // invalid
+            ['', 'validation.emailinvalid'],
+            ['example.org', 'validation.emailinvalid'],
+            ['@example.org', 'validation.emailinvalid'],
+            ['test@localhost', 'validation.emailinvalid'],
+            // valid
+            ['test@domain.tld', null],
+            ['&@example.org', null],
         ];
     }
 
     /**
      * Signup email validation.
      *
-     * Note: Technicly these are mostly unit tests, but let's keep it here for now.
+     * Note: Technicly these are unit tests, but let's keep it here for now.
      * FIXME: Shall we do a http request for each case?
      *
      * @dataProvider dataValidateEmail
      */
-    public function testValidateEmail($email, $signup, $expected_result)
+    public function testValidateEmail($email, $expected_result)
     {
         $method = new \ReflectionMethod('App\Http\Controllers\API\SignupController', 'validateEmail');
         $method->setAccessible(true);
 
-        $is_phone = false;
-        $result = $method->invoke(new SignupController(), $email, $signup);
+        $result = $method->invoke(new SignupController(), $email);
+
+        $this->assertSame($expected_result, $result);
+    }
+
+    /**
+     * List of login/domain validation cases for testValidateLogin()
+     *
+     * @return array Arguments for testValidateLogin()
+     */
+    public function dataValidateLogin()
+    {
+        $domain = $this->getPublicDomain();
+
+        return [
+            // Individual account
+            ['', $domain, false, ['login' => 'validation.logininvalid']],
+            ['test123456', 'localhost', false, ['domain' => 'validation.domaininvalid']],
+            ['test123456', 'unknown-domain.org', false, ['domain' => 'validation.domaininvalid']],
+            ['test.test', $domain, false, null],
+            ['test_test', $domain, false, null],
+            ['test-test', $domain, false, null],
+            ['admin', $domain, false, ['login' => 'validation.loginexists']],
+            ['administrator', $domain, false, ['login' => 'validation.loginexists']],
+            ['sales', $domain, false, ['login' => 'validation.loginexists']],
+            ['root', $domain, false, ['login' => 'validation.loginexists']],
+            // existing user
+            ['SignupControllerTest1', $domain, false, ['login' => 'validation.loginexists']],
+
+            // Domain account
+            ['admin', 'kolabsys.com', true, null],
+            ['testnonsystemdomain', 'invalid', true, ['domain' => 'validation.domaininvalid']],
+            ['testnonsystemdomain', '.com', true, ['domain' => 'validation.domaininvalid']],
+            // existing user
+            ['SignupControllerTest1', $domain, true, ['domain' => 'validation.domainexists']],
+        ];
+    }
+
+    /**
+     * Signup login/domain validation.
+     *
+     * Note: Technicly these include unit tests, but let's keep it here for now.
+     * FIXME: Shall we do a http request for each case?
+     *
+     * @dataProvider dataValidateLogin
+     */
+    public function testValidateLogin($login, $domain, $external, $expected_result)
+    {
+        $method = new \ReflectionMethod('App\Http\Controllers\API\SignupController', 'validateLogin');
+        $method->setAccessible(true);
+
+        $result = $method->invoke(new SignupController(), $login, $domain, $external);
 
         $this->assertSame($expected_result, $result);
     }

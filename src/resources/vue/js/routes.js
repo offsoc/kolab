@@ -39,7 +39,7 @@ const routes = [
         component: PasswordResetComponent
     },
     {
-        path: '/signup/:code?',
+        path: '/signup/:param?',
         name: 'signup',
         component: SignupComponent
     },

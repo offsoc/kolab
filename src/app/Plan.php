@@ -62,4 +62,20 @@ class Plan extends Model
             ]
         );
     }
+
+    /**
+     * Checks if the plan has domain SKU assigned
+     */
+    public function hasDomain(): bool
+    {
+        foreach ($this->packages as $package) {
+            foreach ($package->skus as $sku) {
+                if ($sku->handler_class::entitleableClass() == \App\Domain::class) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

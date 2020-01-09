@@ -40,8 +40,6 @@ class UsersTest extends TestCase
         );
 
         $user->delete();
-
-        parent::tearDown();
     }
 
     public function testListUsers()

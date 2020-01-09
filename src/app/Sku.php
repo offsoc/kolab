@@ -43,4 +43,43 @@ class Sku extends Model
             'package_skus'
         )->using('App\PackageSku')->withPivot(['qty']);
     }
+
+    /**
+     * Register (default) SKU entitlement for specified user.
+     * This method should be used e.g. on user creation when we have
+     * a set of SKUs and want to create entitlements for them (using
+     * default values).
+     */
+    public function registerEntitlement(\App\User $user, array $params = [])
+    {
+        $wallet = $user->wallets()->get()[0];
+
+        $entitlement = new \App\Entitlement();
+        $entitlement->owner_id = $user->id;
+        $entitlement->wallet_id = $wallet->id;
+        $entitlement->sku_id = $this->id;
+
+        $entitlement->entitleable_type = $this->handler_class::entitleableClass();
+
+        if ($user instanceof $entitlement->entitleable_type) {
+            $entitlement->entitleable_id = $user->id;
+        } else {
+            foreach ($params as $param) {
+                if ($param instanceof $entitlement->entitleable_type) {
+                    $entitlement->entitleable_id = $param->id;
+                    break;
+                }
+            }
+        }
+
+        if (empty($entitlement->entitleable_id)) {
+            if (method_exists($this->handler_class, 'createDefaultEntitleable')) {
+                $entitlement->entitleable_id = $this->handler_class::createDefaultEntitleable($user);
+            } else {
+                // error
+            }
+        }
+
+        $entitlement->save();
+    }
 }

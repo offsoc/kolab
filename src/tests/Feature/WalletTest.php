@@ -34,16 +34,12 @@ class WalletTest extends TestCase
             $_user = User::firstOrCreate(['email' => $user]);
             $_user->delete();
         }
-
-        parent::tearDown();
     }
 
     /**
-        Verify a wallet is created, when a user is created.
-
-        @return void
+     * Verify a wallet is created, when a user is created.
      */
-    public function testCreateUserCreatesWallet()
+    public function testCreateUserCreatesWallet(): void
     {
         $user = User::firstOrCreate(
             [
@@ -55,11 +51,9 @@ class WalletTest extends TestCase
     }
 
     /**
-        Verify a user can haz more wallets.
-
-        @return void
+     * Verify a user can haz more wallets.
      */
-    public function testAddWallet()
+    public function testAddWallet(): void
     {
         $user = User::firstOrCreate(
             [
@@ -81,11 +75,9 @@ class WalletTest extends TestCase
     }
 
     /**
-        Verify we can not delete a user wallet that holds balance.
-
-        @return void
+     * Verify we can not delete a user wallet that holds balance.
      */
-    public function testDeleteWalletWithCredit()
+    public function testDeleteWalletWithCredit(): void
     {
         $user = User::firstOrCreate(
             [
@@ -107,11 +99,9 @@ class WalletTest extends TestCase
     }
 
     /**
-        Verify we can not delete a wallet that is the last wallet.
-
-        @return void
+     * Verify we can not delete a wallet that is the last wallet.
      */
-    public function testDeleteLastWallet()
+    public function testDeleteLastWallet(): void
     {
         $user = User::firstOrCreate(
             [
@@ -129,11 +119,9 @@ class WalletTest extends TestCase
     }
 
     /**
-        Verify we can remove a wallet that is an additional wallet.
-
-        @return void
+     * Verify we can remove a wallet that is an additional wallet.
      */
-    public function testDeleteAddtWallet()
+    public function testDeleteAddtWallet(): void
     {
         $user = User::firstOrCreate(
             [
@@ -156,11 +144,9 @@ class WalletTest extends TestCase
 
 
     /**
-        Verify a wallet can be assigned a controller.
-
-        @return void
+     * Verify a wallet can be assigned a controller.
      */
-    public function testAddWalletController()
+    public function testAddWalletController(): void
     {
         $userA = User::firstOrCreate(
             [
@@ -195,11 +181,9 @@ class WalletTest extends TestCase
     }
 
     /**
-        Verify controllers can also be removed from wallets.
-
-        @return void
+     * Verify controllers can also be removed from wallets.
      */
-    public function testRemoveWalletController()
+    public function testRemoveWalletController(): void
     {
         $userA = User::firstOrCreate(
             [

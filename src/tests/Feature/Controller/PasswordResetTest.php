@@ -30,8 +30,6 @@ class PasswordResetTest extends TestCase
     {
         User::where('email', 'passwordresettest@' . \config('app.domain'))
             ->delete();
-
-        parent::tearDown();
     }
 
     /**

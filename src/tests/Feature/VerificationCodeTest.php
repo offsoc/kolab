@@ -12,10 +12,8 @@ class VerificationCodeTest extends TestCase
 {
     /**
      * Test VerificationCode creation
-     *
-     * @return void
      */
-    public function testVerificationCodeCreate()
+    public function testVerificationCodeCreate(): void
     {
         $user = User::firstOrCreate(['email' => 'UserAccountA@UserAccount.com']);
         $data = [

@@ -5,9 +5,12 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Jobs\SignupVerificationEmail;
 use App\Jobs\SignupVerificationSMS;
+use App\Domain;
+use App\Plan;
 use App\SignupCode;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -16,8 +19,11 @@ use Illuminate\Support\Str;
  */
 class SignupController extends Controller
 {
-    /** @var SignupCode A verification code object */
+    /** @var \App\SignupCode A verification code object */
     protected $code;
+
+    /** @var \App\Plan Signup plan object */
+    protected $plan;
 
 
     /**
@@ -37,7 +43,8 @@ class SignupController extends Controller
             $request->all(),
             [
                 'email' => 'required',
-                'name' => 'required',
+                'name' => 'required|max:512',
+                'plan' => 'nullable|alpha_num|max:128',
             ]
         );
 
@@ -55,6 +62,7 @@ class SignupController extends Controller
                 'data' => [
                     'email' => $request->email,
                     'name' => $request->name,
+                    'plan' => $request->plan,
                 ]
         ]);
 
@@ -106,11 +114,16 @@ class SignupController extends Controller
         // with single SQL query (->delete()) instead of two (::destroy())
         $this->code = $code;
 
-        // Return user name and email/phone from the codes database on success
+        $has_domain = $this->getPlan()->hasDomain();
+
+        // Return user name and email/phone from the codes database,
+        // domains list for selection and "plan type" flag
         return response()->json([
                 'status' => 'success',
                 'email' => $code->data['email'],
                 'name' => $code->data['name'],
+                'is_domain' => $has_domain,
+                'domains' => $has_domain ? [] : Domain::getPublicDomains(),
         ]);
     }
 
@@ -129,6 +142,7 @@ class SignupController extends Controller
             [
                 'login' => 'required|min:2',
                 'password' => 'required|min:4|confirmed',
+                'domain' => 'required',
             ]
         );
 
@@ -136,17 +150,23 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        $login = $request->login . '@' . \config('app.domain');
-
-        // Validate login (email)
-        if ($error = $this->validateEmail($login, true)) {
-            return response()->json(['status' => 'error', 'errors' => ['login' => $error]], 422);
-        }
-
         // Validate verification codes (again)
         $v = $this->verify($request);
         if ($v->status() !== 200) {
             return $v;
+        }
+
+        // Get the plan
+        $plan = $this->getPlan();
+        $is_domain = $plan->hasDomain();
+
+        $login  = $request->login;
+        $domain = $request->domain;
+
+        // Validate login
+        if ($errors = $this->validateLogin($login, $domain, $is_domain)) {
+            $errors = $this->resolveErrors($errors);
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
         // Get user name/email from the verification code database
@@ -156,20 +176,44 @@ class SignupController extends Controller
 
         // We allow only ASCII, so we can safely lower-case the email address
         $login = Str::lower($login);
+        $domain = Str::lower($domain);
 
-        $user = User::create(
-            [
+        DB::beginTransaction();
+
+        // Create user record
+        $user = User::create([
                 'name' => $user_name,
-                'email' => $login,
+                'email' => $login . '@' . $domain,
                 'password' => $request->password,
-            ]
-        );
+        ]);
 
-        // Save the external email in user settings
-        $user->setSettings(['external_email' => $user_email]);
+        // Create domain record
+        // FIXME: Should we do this in UserObserver::created()?
+        if ($is_domain) {
+            $domain = Domain::create([
+                    'namespace' => $domain,
+                    'status' => Domain::STATUS_NEW,
+                    'type' => Domain::TYPE_EXTERNAL,
+            ]);
+        }
+
+        // Create SKUs (after domain)
+        foreach ($plan->packages as $package) {
+            foreach ($package->skus as $sku) {
+                $sku->registerEntitlement($user, is_object($domain) ? [$domain] : []);
+            }
+        }
+
+        // Save the external email and plan in user settings
+        $user->setSettings([
+            'external_email' => $user_email,
+            'plan' => $plan->id,
+        ]);
 
         // Remove the verification code
         $this->code->delete();
+
+        DB::commit();
 
         return UsersController::logonResponse($user);
     }
@@ -207,12 +251,11 @@ class SignupController extends Controller
     /**
      * Email address validation
      *
-     * @param string $email  Email address
-     * @param bool   $signup Enables additional checks for signup mode
+     * @param string $email Email address
      *
      * @return string Error message label on validation error
      */
-    protected function validateEmail($email, $signup = false)
+    protected function validateEmail($email)
     {
         $v = Validator::make(['email' => $email], ['email' => 'required|email']);
 
@@ -226,30 +269,101 @@ class SignupController extends Controller
         if (strpos($domain, '.') === false) {
             return 'validation.emailinvalid';
         }
+    }
 
-        // Extended checks for an address that is supposed to become a login to Kolab
-        if ($signup) {
-            // Local part validation
-            if (!preg_match('/^[A-Za-z0-9_.-]+$/', $local)) {
-                return 'validation.emailinvalid';
+    /**
+     * Login (kolab identity) validation
+     *
+     * @param string $email    Login (local part of an email address)
+     * @param string $domain   Domain name
+     * @param bool   $external Enables additional checks for domain part
+     *
+     * @return array Error messages on validation error
+     */
+    protected function validateLogin($login, $domain, $external = false)
+    {
+        // don't allow @localhost and other no-fqdn
+        if (empty($domain) || strpos($domain, '.') === false || stripos($domain, 'www.') === 0) {
+            return ['domain' => 'validation.domaininvalid'];
+        }
+
+        // Local part validation
+        if (!preg_match('/^[A-Za-z0-9_.-]+$/', $login)) {
+            return ['login' => 'validation.logininvalid'];
+        }
+
+        $domain = Str::lower($domain);
+
+        if (!$external) {
+            // Check if the local part is not one of exceptions
+            $exceptions = '/^(admin|administrator|sales|root)$/i';
+            if (preg_match($exceptions, $login)) {
+                return ['login' => 'validation.loginexists'];
             }
 
             // Check if specified domain is allowed for signup
-            if ($domain != \config('app.domain')) {
-                return 'validation.emailinvalid';
+            if (!in_array($domain, Domain::getPublicDomains())) {
+                return ['domain' => 'validation.domaininvalid'];
+            }
+        } else {
+            // Use email validator to validate the domain part
+            $v = Validator::make(['email' => 'user@' . $domain], ['email' => 'required|email']);
+            if ($v->fails()) {
+                return ['domain' => 'validation.domaininvalid'];
             }
 
-            // Check if the local part is not one of exceptions
-            $exceptions = '/^(admin|administrator|sales|root)$/i';
-            if (preg_match($exceptions, $local)) {
-                return 'validation.emailexists';
-            }
+            // TODO: DNS registration check - maybe after signup?
 
-            // Check if user with specified login already exists
-            // TODO: Aliases
-            if (User::where('email', $email)->first()) {
-                return 'validation.emailexists';
+            // Check if domain is already registered with us
+            if (Domain::where('namespace', $domain)->first()) {
+                return ['domain' => 'validation.domainexists'];
             }
         }
+
+        // Check if user with specified login already exists
+        // TODO: Aliases
+        $email = $login . '@' . $domain;
+        if (User::findByEmail($email)) {
+            return ['login' => 'validation.loginexists'];
+        }
+    }
+
+    /**
+     * Returns plan for the signup process
+     *
+     * @returns \App\Plan Plan object selected for current signup process
+     */
+    protected function getPlan()
+    {
+        if (!$this->plan) {
+            // Get the plan if specified and exists...
+            if ($this->code && $this->code->data['plan']) {
+                $plan = Plan::where('title', $this->code->data['plan'])->first();
+            }
+
+            // ...otherwise use the default plan
+            if (empty($plan)) {
+                // TODO: Get default plan title from config
+                $plan = Plan::where('title', 'individual')->first();
+            }
+
+            $this->plan = $plan;
+        }
+
+        return $this->plan;
+    }
+
+    /**
+     * Convert error labels to actual (localized) text
+     */
+    protected function resolveErrors(array $errors): array
+    {
+        $result = [];
+
+        foreach ($errors as $idx => $label) {
+            $result[$idx] = __($label);
+        }
+
+        return $result;
     }
 }
