@@ -137,10 +137,10 @@ class User extends Authenticatable implements JWTSubject
      *
      * @return \App\User User model object
      */
-    public static function findByEmail(string $email)
+    public static function findByEmail(string $email): ?User
     {
         if (strpos($email, '@') === false) {
-            return;
+            return null;
         }
 
         $user = self::where('email', $email)->first();
