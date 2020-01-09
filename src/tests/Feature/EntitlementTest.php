@@ -7,8 +7,6 @@ use App\Entitlement;
 use App\Sku;
 use App\User;
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class EntitlementTest extends TestCase
 {
@@ -17,43 +15,20 @@ class EntitlementTest extends TestCase
     {
         parent::setUp();
 
-        $owner = User::firstOrCreate(
-            ['email' => 'entitlement-test@kolabnow.com']
-        );
-
-        $user = User::firstOrCreate(
-            ['email' => 'entitled-user@custom-domain.com']
-        );
-
-        $entitlement = Entitlement::firstOrCreate(
-            [
-                'owner_id' => $owner->id,
-                'user_id' => $user->id
-            ]
-        );
-
-        $entitlement->delete();
-        $user->delete();
-        $owner->delete();
+        User::where('email', 'entitlement-test@kolabnow.com')
+            ->orWhere('email', 'entitled-user@custom-domain.com')
+            ->delete();
     }
 
-    public function testUserAddEntitlement()
+    /**
+     * Tests for User::AddEntitlement()
+     */
+    public function testUserAddEntitlement(): void
     {
-        $sku_domain = Sku::firstOrCreate(
-            ['title' => 'domain']
-        );
-
-        $sku_mailbox = Sku::firstOrCreate(
-            ['title' => 'mailbox']
-        );
-
-        $owner = User::firstOrCreate(
-            ['email' => 'entitlement-test@kolabnow.com']
-        );
-
-        $user = User::firstOrCreate(
-            ['email' => 'entitled-user@custom-domain.com']
-        );
+        $sku_domain = Sku::firstOrCreate(['title' => 'domain']);
+        $sku_mailbox = Sku::firstOrCreate(['title' => 'mailbox']);
+        $owner = User::firstOrCreate(['email' => 'entitlement-test@kolabnow.com']);
+        $user = User::firstOrCreate(['email' => 'entitled-user@custom-domain.com']);
 
         $this->assertTrue($owner->id != $user->id);
 
@@ -67,7 +42,7 @@ class EntitlementTest extends TestCase
             ]
         );
 
-        $entitlement_own_mailbox = Entitlement::firstOrCreate(
+        $entitlement_own_mailbox = new Entitlement(
             [
                 'owner_id' => $owner->id,
                 'entitleable_id' => $owner->id,
@@ -78,7 +53,7 @@ class EntitlementTest extends TestCase
             ]
         );
 
-        $entitlement_domain = Entitlement::firstOrCreate(
+        $entitlement_domain = new Entitlement(
             [
                 'owner_id' => $owner->id,
                 'entitleable_id' => $domain->id,
@@ -89,7 +64,7 @@ class EntitlementTest extends TestCase
             ]
         );
 
-        $entitlement_mailbox = Entitlement::firstOrCreate(
+        $entitlement_mailbox = new Entitlement(
             [
                 'owner_id' => $owner->id,
                 'entitleable_id' => $user->id,
@@ -105,9 +80,11 @@ class EntitlementTest extends TestCase
         $owner->addEntitlement($entitlement_mailbox);
 
         $this->assertTrue($owner->entitlements()->count() == 3);
-        $this->assertTrue($sku_domain->entitlements()->count() == 2);
-        $this->assertTrue($sku_mailbox->entitlements()->count() == 3);
+        $this->assertTrue($sku_domain->entitlements()->where('owner_id', $owner->id)->count() == 1);
+        $this->assertTrue($sku_mailbox->entitlements()->where('owner_id', $owner->id)->count() == 2);
         $this->assertTrue($wallets[0]->entitlements()->count() == 3);
         $this->assertTrue($wallets[0]->fresh()->balance < 0.00);
+
+        // TODO: Test case of adding entitlement that already exists
     }
 }

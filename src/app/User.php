@@ -123,6 +123,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function addEntitlement($entitlement)
     {
+        // FIXME: This contains() check looks fishy
         if (!$this->entitlements()->get()->contains($entitlement)) {
             return $this->entitlements()->save($entitlement);
         }
