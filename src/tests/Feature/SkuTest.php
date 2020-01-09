@@ -35,7 +35,10 @@ class SkuTest extends TestCase
         Domain::where('namespace', 'custom-domain.com')->delete();
     }
 
-    public function testRegisterEntitlement()
+    /**
+     * Tests for Sku::registerEntitlements()
+     */
+    public function testRegisterEntitlement(): void
     {
         // TODO: This test depends on seeded SKUs, but probably should not
 
@@ -50,11 +53,16 @@ class SkuTest extends TestCase
 
         $entitlements = $sku->entitlements()->where('owner_id', $user->id)->get();
         $wallet->refresh();
-        $balance = -$sku->cost;
 
-        $this->assertCount(1, $entitlements);
-        $this->assertSame($user->id, $entitlements[0]->entitleable_id);
-        $this->assertSame(Handlers\Mailbox::entitleableClass(), $entitlements[0]->entitleable_type);
+        if ($sku->active) {
+            $balance = -$sku->cost;
+            $this->assertCount(1, $entitlements);
+            $this->assertSame($user->id, $entitlements[0]->entitleable_id);
+            $this->assertSame(Handlers\Mailbox::entitleableClass(), $entitlements[0]->entitleable_type);
+        } else {
+            $this->assertCount(0, $entitlements);
+        }
+
         $this->assertEquals($balance, $wallet->balance);
 
         // \App\Handlers\Domain SKU
@@ -63,25 +71,34 @@ class SkuTest extends TestCase
 
         $entitlements = $sku->entitlements()->where('owner_id', $user->id)->get();
         $wallet->refresh();
-        $balance -= $sku->cost;
 
-        $this->assertCount(1, $entitlements);
-        $this->assertSame($domain->id, $entitlements[0]->entitleable_id);
-        $this->assertSame(Handlers\Domain::entitleableClass(), $entitlements[0]->entitleable_type);
+        if ($sku->active) {
+            $balance -= $sku->cost;
+            $this->assertCount(1, $entitlements);
+            $this->assertSame($domain->id, $entitlements[0]->entitleable_id);
+            $this->assertSame(Handlers\Domain::entitleableClass(), $entitlements[0]->entitleable_type);
+        } else {
+            $this->assertCount(0, $entitlements);
+        }
+
         $this->assertEquals($balance, $wallet->balance);
 
         // \App\Handlers\DomainRegistration SKU
-/*
         $sku = Sku::where('title', 'domain-registration')->first();
         $sku->registerEntitlement($user, [$domain]);
 
         $entitlements = $sku->entitlements()->where('owner_id', $user->id)->get();
         $wallet->refresh();
-        $balance -= $sku->cost;
 
-        $this->assertCount(1, $entitlements);
-        $this->assertSame($domain->id, $entitlements[0]->entitleable_id);
-        $this->assertSame(Handlers\DomainRegistration::entitleableClass(), $entitlements[0]->entitleable_type);
+        if ($sku->active) {
+            $balance -= $sku->cost;
+            $this->assertCount(1, $entitlements);
+            $this->assertSame($domain->id, $entitlements[0]->entitleable_id);
+            $this->assertSame(Handlers\DomainRegistration::entitleableClass(), $entitlements[0]->entitleable_type);
+        } else {
+            $this->assertCount(0, $entitlements);
+        }
+
         $this->assertEquals($balance, $wallet->balance);
 
         // \App\Handlers\DomainHosting SKU
@@ -90,24 +107,34 @@ class SkuTest extends TestCase
 
         $entitlements = $sku->entitlements()->where('owner_id', $user->id)->get();
         $wallet->refresh();
-        $balance -= $sku->cost;
 
-        $this->assertCount(1, $entitlements);
-        $this->assertSame($domain->id, $entitlements[0]->entitleable_id);
-        $this->assertSame(Handlers\DomainHosting::entitleableClass(), $entitlements[0]->entitleable_type);
+        if ($sku->active) {
+            $balance -= $sku->cost;
+            $this->assertCount(1, $entitlements);
+            $this->assertSame($domain->id, $entitlements[0]->entitleable_id);
+            $this->assertSame(Handlers\DomainHosting::entitleableClass(), $entitlements[0]->entitleable_type);
+        } else {
+            $this->assertCount(0, $entitlements);
+        }
+
         $this->assertEquals($balance, $wallet->balance);
-*/
+
         // \App\Handlers\Groupware SKU
         $sku = Sku::where('title', 'groupware')->first();
         $sku->registerEntitlement($user, [$domain]);
 
         $entitlements = $sku->entitlements()->where('owner_id', $user->id)->get();
         $wallet->refresh();
-        $balance -= $sku->cost;
 
-        $this->assertCount(1, $entitlements);
-        $this->assertSame($user->id, $entitlements[0]->entitleable_id);
-        $this->assertSame(Handlers\Mailbox::entitleableClass(), $entitlements[0]->entitleable_type);
+        if ($sku->active) {
+            $balance -= $sku->cost;
+            $this->assertCount(1, $entitlements);
+            $this->assertSame($user->id, $entitlements[0]->entitleable_id);
+            $this->assertSame(Handlers\Mailbox::entitleableClass(), $entitlements[0]->entitleable_type);
+        } else {
+            $this->assertCount(0, $entitlements);
+        }
+
         $this->assertEquals($balance, $wallet->balance);
 
         // \App\Handlers\Storage SKU
@@ -116,18 +143,23 @@ class SkuTest extends TestCase
 
         $entitlements = $sku->entitlements()->where('owner_id', $user->id)->get();
         $wallet->refresh();
-        $balance -= $sku->cost;
 
-        // For Storage entitlement we expect additional Quota record
-        $quota = Quota::where('user_id', $user->id)->first();
-        $this->assertTrue(!empty($quota));
-        // TODO: This should be a constant and/or config option, and probably
-        //       quota should not be in bytes
-        $this->assertSame(2147483648, $quota->value);
+        if ($sku->active) {
+            $balance -= $sku->cost;
+            // For Storage entitlement we expect additional Quota record
+            $quota = Quota::where('user_id', $user->id)->first();
+            $this->assertTrue(!empty($quota));
+            // TODO: This should be a constant and/or config option, and probably
+            //       quota should not be in bytes
+            $this->assertSame(2147483648, $quota->value);
 
-        $this->assertCount(1, $entitlements);
-        $this->assertSame($quota->id, $entitlements[0]->entitleable_id);
-        $this->assertSame(Handlers\Storage::entitleableClass(), $entitlements[0]->entitleable_type);
+            $this->assertCount(1, $entitlements);
+            $this->assertSame($quota->id, $entitlements[0]->entitleable_id);
+            $this->assertSame(Handlers\Storage::entitleableClass(), $entitlements[0]->entitleable_type);
+        } else {
+            $this->assertCount(0, $entitlements);
+        }
+
         $this->assertEquals($balance, $wallet->balance);
     }
 }
