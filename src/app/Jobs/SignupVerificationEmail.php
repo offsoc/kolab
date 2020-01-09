@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Mail\SignupVerification;
 use App\SignupCode;
-
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,7 +13,10 @@ use Illuminate\Queue\InteractsWithQueue;
 
 class SignupVerificationEmail implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /** @var int The number of times the job may be attempted. */
     public $tries = 2;

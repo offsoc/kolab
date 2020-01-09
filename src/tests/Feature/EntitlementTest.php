@@ -6,7 +6,6 @@ use App\Domain;
 use App\Entitlement;
 use App\Sku;
 use App\User;
-
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;

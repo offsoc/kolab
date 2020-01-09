@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\SignupCode;
-
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -12,7 +11,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 
 class SignupVerificationSMS implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /** @var int The number of times the job may be attempted. */
     public $tries = 2;

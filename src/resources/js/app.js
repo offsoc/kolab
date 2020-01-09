@@ -13,32 +13,10 @@ import MenuComponent from '../vue/components/Menu'
 import router from '../vue/js/routes.js'
 import VueToastr from '@deveodk/vue-toastr'
 
-const app = new Vue({
-    el: '#app',
-    components: {
-        'app-component': AppComponent,
-        'menu-component': MenuComponent
-    },
-    router,
-    methods: {
-        clearFormValidation: form => {
-            $(form).find('.is-invalid').removeClass('is-invalid')
-            $(form).find('.invalid-feedback').remove()
-        }
-    },
-    mounted() {
-        this.$root.$on('clearFormValidation', (form) => {
-            this.clearFormValidation(form)
-        })
-    }
-})
-
-Vue.use(VueToastr, {
-    defaultPosition: 'toast-bottom-right',
-    defaultTimeout: 50000
-})
-
 // Add a response interceptor for general/validation error handler
+// This have to be before Vue and Router setup. Otherwise we would
+// not be able to handle axios responses initiated from inside
+// components created/mounted handlers (e.g. signup code verification link)
 window.axios.interceptors.response.use(
     response => {
         // Do nothing
@@ -80,3 +58,28 @@ window.axios.interceptors.response.use(
         return Promise.reject(error)
     }
 )
+
+const app = new Vue({
+    el: '#app',
+    components: {
+        'app-component': AppComponent,
+        'menu-component': MenuComponent
+    },
+    router,
+    mounted() {
+        this.$root.$on('clearFormValidation', (form) => {
+            this.clearFormValidation(form)
+        })
+    },
+    methods: {
+        clearFormValidation: form => {
+            $(form).find('.is-invalid').removeClass('is-invalid')
+            $(form).find('.invalid-feedback').remove()
+        }
+    }
+})
+
+Vue.use(VueToastr, {
+    defaultPosition: 'toast-bottom-right',
+    defaultTimeout: 50000
+})

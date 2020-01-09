@@ -7,22 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 class Domain extends Model
 {
     // we've simply never heard of this domain
-    const STATUS_NEW        = 1 << 0;
+    public const STATUS_NEW        = 1 << 0;
     // it's been activated -- mutually exclusive with new?
-    const STATUS_ACTIVE     = 1 << 1;
+    public const STATUS_ACTIVE     = 1 << 1;
     // ownership of the domain has been confirmed -- mutually exclusive with new?
-    const STATUS_CONFIRMED  = 1 << 2;
+    public const STATUS_CONFIRMED  = 1 << 2;
     // domain has been suspended.
-    const STATUS_SUSPENDED  = 1 << 3;
+    public const STATUS_SUSPENDED  = 1 << 3;
     // domain has been deleted -- can not be active any more.
-    const STATUS_DELETED    = 1 << 4;
+    public const STATUS_DELETED    = 1 << 4;
 
     // open for public registration
-    const TYPE_PUBLIC       = 1 << 0;
+    public const TYPE_PUBLIC       = 1 << 0;
     // zone hosted with us
-    const TYPE_HOSTED       = 1 << 1;
+    public const TYPE_HOSTED       = 1 << 1;
     // zone registered externally
-    const TYPE_EXTERNAL     = 1 << 2;
+    public const TYPE_EXTERNAL     = 1 << 2;
 
     public $incrementing = false;
     protected $keyType = 'bigint';
@@ -45,9 +45,9 @@ class Domain extends Model
     /**
      * Returns whether this domain is active.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isActive()
+    public function isActive(): bool
     {
         return $this->status & self::STATUS_ACTIVE;
     }
@@ -55,9 +55,9 @@ class Domain extends Model
     /**
      * Returns whether this domain is confirmed the ownership of.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isConfirmed()
+    public function isConfirmed(): bool
     {
         return $this->status & self::STATUS_CONFIRMED;
     }
@@ -65,9 +65,9 @@ class Domain extends Model
     /**
      * Returns whether this domain is deleted.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isDeleted()
+    public function isDeleted(): bool
     {
         return $this->status & self::STATUS_DELETED;
     }
@@ -75,9 +75,9 @@ class Domain extends Model
     /**
      * Returns whether this domain is registered with us.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isExternal()
+    public function isExternal(): bool
     {
         return $this->type & self::TYPE_EXTERNAL;
     }
@@ -85,9 +85,9 @@ class Domain extends Model
     /**
      * Returns whether this domain is hosted with us.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isHosted()
+    public function isHosted(): bool
     {
         return $this->type & self::TYPE_HOSTED;
     }
@@ -95,19 +95,29 @@ class Domain extends Model
     /**
      * Returns whether this domain is new.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isNew()
+    public function isNew(): bool
     {
         return $this->status & self::STATUS_NEW;
     }
 
     /**
+     * Returns whether this domain is public.
+     *
+     * @return bool
+     */
+    public function isPublic(): bool
+    {
+        return $this->type & self::TYPE_PUBLIC;
+    }
+
+    /**
      * Returns whether this domain is suspended.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isSuspended()
+    public function isSuspended(): bool
     {
         return $this->status & self::STATUS_SUSPENDED;
     }

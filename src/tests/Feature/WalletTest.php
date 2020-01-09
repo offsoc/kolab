@@ -4,14 +4,13 @@ namespace Tests\Feature;
 
 use App\User;
 use App\Wallet;
-
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class WalletTest extends TestCase
 {
-    private $_users = [
+    private $users = [
         'UserWallet1@UserWallet.com',
         'UserWallet2@UserWallet.com',
         'UserWallet3@UserWallet.com',
@@ -23,7 +22,7 @@ class WalletTest extends TestCase
     {
         parent::setUp();
 
-        foreach ($this->_users as $user) {
+        foreach ($this->users as $user) {
             $_user = User::firstOrCreate(['email' => $user]);
             $_user->delete();
         }
@@ -31,7 +30,7 @@ class WalletTest extends TestCase
 
     public function tearDown(): void
     {
-        foreach ($this->_users as $user) {
+        foreach ($this->users as $user) {
             $_user = User::firstOrCreate(['email' => $user]);
             $_user->delete();
         }

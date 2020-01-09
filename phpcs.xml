@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
 <ruleset name="Kolab">
-	<description>Custom ruleset for Kolab</description>
+    <description>Custom ruleset for Kolab</description>
 
-    <arg name="extensions" value="php,inc,phtml,js,css"/>
+    <arg name="extensions" value="php,inc,phtml"/>
 
     <rule ref="PSR1"/>
-	<rule ref="PSR12"/>
+    <rule ref="PSR12"/>
 
     <file>src/app/</file>
+    <file>src/tests/</file>
 </ruleset>

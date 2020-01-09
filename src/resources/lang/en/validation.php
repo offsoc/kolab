@@ -120,6 +120,8 @@ return [
     'emailexists' => 'The specified email address already exists',
     'emailinvalid' => 'The specified email address is invalid',
     'noemailorphone' => 'The specified text is neither a valid email address nor a phone number',
+    'usernotexists' => 'Unable to find user',
+    'noextemail' => 'This user has no external email address',
 
     /*
     |--------------------------------------------------------------------------

@@ -32,10 +32,11 @@ class AppServiceProvider extends ServiceProvider
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
         \App\Sku::observe(\App\Observers\SkuObserver::class);
         \App\User::observe(\App\Observers\UserObserver::class);
+        \App\VerificationCode::observe(\App\Observers\VerificationCodeObserver::class);
         \App\Wallet::observe(\App\Observers\WalletObserver::class);
 
         // Log SQL queries in debug mode
-        if (env('APP_DEBUG')) {
+        if (\config('app.debug')) {
             DB::listen(function ($query) {
                 \Log::debug(sprintf('[SQL] %s [%s]', $query->sql, implode(', ', $query->bindings)));
             });

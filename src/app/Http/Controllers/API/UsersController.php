@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -19,6 +20,24 @@ class UsersController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api', ['except' => ['login']]);
+    }
+
+    /**
+     * Helper method for other controllers with user auto-logon
+     * functionality
+     *
+     * @param \App\User $user User model object
+     */
+    public static function logonResponse(User $user)
+    {
+        $token = auth()->login($user);
+
+        return response()->json([
+                'status' => 'success',
+                'access_token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => Auth::guard()->factory()->getTTL() * 60,
+        ]);
     }
 
     /**

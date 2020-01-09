@@ -12,13 +12,13 @@ class SignupCodeObserver
      *
      * Ensure that the code entry is created with a random code/short_code.
      *
-     * @param \App\User $user The user being created.
+     * @param \App\SignupCode $code The code being created.
      *
      * @return void
      */
     public function creating(SignupCode $code): void
     {
-        $code_length = env('SIGNUP_CODE_LENGTH', SignupCode::CODE_LENGTH);
+        $code_length = SignupCode::CODE_LENGTH;
         $exp_hours   = env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS);
 
         if (empty($code->code)) {
