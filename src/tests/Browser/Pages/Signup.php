@@ -26,8 +26,11 @@ class Signup extends Page
      */
     public function assert(Browser $browser)
     {
-        $browser->assertPathIs('/signup');
-        $browser->assertPresent('@step1');
+        $browser->assertPathIs('/signup')
+            ->assertPresent('@step0')
+            ->assertPresent('@step1')
+            ->assertPresent('@step2')
+            ->assertPresent('@step3');
     }
 
     /**
@@ -39,6 +42,7 @@ class Signup extends Page
     {
         return [
             '@app' => '#app',
+            '@step0' => '#step0',
             '@step1' => '#step1',
             '@step2' => '#step2',
             '@step3' => '#step3',

@@ -2,6 +2,7 @@
 
 namespace Tests\Browser;
 
+use App\Domain;
 use App\SignupCode;
 use App\User;
 use Tests\Browser\Components\Menu;
@@ -15,20 +16,21 @@ class SignupTest extends DuskTestCase
 {
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
-    public function tearDown(): void
+    public function setUp(): void
     {
-        User::where('email', 'signuptestdusk@' . \config('app.domain'))->delete();
+        parent::setUp();
+
+        Domain::where('namespace', 'user-domain-signup.com')->delete();
+        User::where('email', 'signuptestdusk@' . \config('app.domain'))
+            ->orWhere('email', 'admin@user-domain-signup.com')
+            ->delete();
     }
 
     /**
      * Test signup code verification with a link
-     *
-     * @return void
      */
-    public function testSignupCodeByLink()
+    public function testSignupCodeByLink(): void
     {
         // Test invalid code (invalid format)
         $this->browse(function (Browser $browser) {
@@ -82,14 +84,68 @@ class SignupTest extends DuskTestCase
     }
 
     /**
-     * Test 1st step of the signup process
-     *
-     * @return void
+     * Test signup "welcome" page
      */
-    public function testSignupStep1()
+    public function testSignupStep0(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Signup());
+
+            $browser->assertVisible('@step0')
+                ->assertMissing('@step1')
+                ->assertMissing('@step2')
+                ->assertMissing('@step3');
+
+            $browser->within(new Menu(), function ($browser) {
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
+                $browser->assertActiveItem('signup');
+            });
+
+            $browser->waitFor('@step0 .plan-selector > .plan-box');
+
+            // Assert first plan box and press the button
+            $browser->with('@step0 .plan-selector > .plan-individual', function ($step) {
+                $step->assertVisible('button')
+                    ->assertSeeIn('button', 'individual')
+                    ->assertVisible('.plan-description')
+                    ->click('button');
+            });
+
+            $browser->waitForLocation('/signup/individual')
+                ->assertVisible('@step1')
+                ->assertMissing('@step0')
+                ->assertMissing('@step2')
+                ->assertMissing('@step3')
+                ->assertFocused('@step1 #signup_name');
+
+            // Click Back button
+            $browser->click('@step1 [type=button]')
+                ->waitForLocation('/signup')
+                    ->assertVisible('@step0')
+                    ->assertMissing('@step1')
+                    ->assertMissing('@step2')
+                    ->assertMissing('@step3');
+
+            // Choose the group account plan
+            $browser->click('@step0 .plan-selector > .plan-group button')
+                ->waitForLocation('/signup/group')
+                ->assertVisible('@step1')
+                ->assertMissing('@step0')
+                ->assertMissing('@step2')
+                ->assertMissing('@step3')
+                ->assertFocused('@step1 #signup_name');
+
+            // TODO: Test if 'plan' variable is set properly in vue component
+        });
+    }
+
+    /**
+     * Test 1st step of the signup process
+     */
+    public function testSignupStep1(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/signup/individual')->onWithoutAssert(new Signup());
 
             $browser->assertVisible('@step1');
 
@@ -98,12 +154,13 @@ class SignupTest extends DuskTestCase
                 $browser->assertActiveItem('signup');
             });
 
-            // Here we expect two text inputs and Continue
+            // Here we expect two text inputs and Back and Continue buttons
             $browser->with('@step1', function ($step) {
-                $step->assertVisible('#signup_name');
-                $step->assertFocused('#signup_name');
-                $step->assertVisible('#signup_email');
-                $step->assertVisible('[type=submit]');
+                $step->assertVisible('#signup_name')
+                    ->assertFocused('#signup_name')
+                    ->assertVisible('#signup_email')
+                    ->assertVisible('[type=button]')
+                    ->assertVisible('[type=submit]');
             });
 
             // Submit empty form
@@ -148,26 +205,28 @@ class SignupTest extends DuskTestCase
      * Test 2nd Step of the signup process
      *
      * @depends testSignupStep1
-     * @return void
      */
-    public function testSignupStep2()
+    public function testSignupStep2(): void
     {
         $this->browse(function (Browser $browser) {
-            $browser->assertVisible('@step2');
+            $browser->assertVisible('@step2')
+                ->assertMissing('@step0')
+                ->assertMissing('@step1')
+                ->assertMissing('@step3');
 
             // Here we expect one text input, Back and Continue buttons
             $browser->with('@step2', function ($step) {
-                $step->assertVisible('#signup_short_code');
-                $step->assertFocused('#signup_short_code');
-                $step->assertVisible('[type=button]');
-                $step->assertVisible('[type=submit]');
+                $step->assertVisible('#signup_short_code')
+                    ->assertFocused('#signup_short_code')
+                    ->assertVisible('[type=button]')
+                    ->assertVisible('[type=submit]');
             });
 
             // Test Back button functionality
-            $browser->click('@step2 [type=button]');
-            $browser->waitFor('@step1');
-            $browser->assertFocused('@step1 #signup_name');
-            $browser->assertMissing('@step2');
+            $browser->click('@step2 [type=button]')
+                ->waitFor('@step1')
+                ->assertFocused('@step1 #signup_name')
+                ->assertMissing('@step2');
 
             // Submit valid Step 1 data (again)
             $browser->with('@step1', function ($step) {
@@ -221,9 +280,8 @@ class SignupTest extends DuskTestCase
      * Test 3rd Step of the signup process
      *
      * @depends testSignupStep2
-     * @return void
      */
-    public function testSignupStep3()
+    public function testSignupStep3(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->assertVisible('@step3');
@@ -319,6 +377,118 @@ class SignupTest extends DuskTestCase
             $dashboard->assert($browser);
 
             // FIXME: Is it enough to be sure user is logged in?
+
+            // Logout the user
+            // TODO: Test what happens if you goto /signup with active session
+            $browser->click('a.link-logout');
+        });
+    }
+
+    /**
+     * Test signup for a group account
+     */
+    public function testSignupGroup(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new Signup());
+
+            // Choose the group account plan
+            $browser->click('@step0 .plan-selector > .plan-group button')
+                ->waitForLocation('/signup/group');
+
+            $browser->assertVisible('@step1');
+
+            // Submit valid data
+            // We expect error state on email input to be removed, and Step 2 form visible
+            $browser->with('@step1', function ($step) {
+                $step->type('#signup_name', 'Test User')
+                    ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
+                    ->click('[type=submit]');
+            });
+
+            $browser->waitFor('@step2');
+
+            // Submit valid code
+            $browser->with('@step2', function ($step) {
+                // Get the code and short_code from database
+                // FIXME: Find a nice way to read javascript data without using hidden inputs
+                $code = $step->value('#signup_code');
+                $code = SignupCode::find($code);
+
+                $step->type('#signup_short_code', $code->short_code)
+                    ->click('[type=submit]');
+            });
+
+            $browser->waitFor('@step3');
+
+            // Here we expect 4 text inputs, Back and Continue buttons
+            $browser->with('@step3', function ($step) {
+                $step->assertVisible('#signup_login')
+                    ->assertVisible('#signup_password')
+                    ->assertVisible('#signup_confirm')
+                    ->assertVisible('input#signup_domain')
+                    ->assertVisible('[type=button]')
+                    ->assertVisible('[type=submit]')
+                    ->assertFocused('#signup_login')
+                    ->assertValue('input#signup_domain', '')
+                    ->assertValue('#signup_login', '')
+                    ->assertValue('#signup_password', '')
+                    ->assertValue('#signup_confirm', '');
+            });
+
+            // Submit invalid login and password data
+            $browser->with('@step3', function ($step) use ($browser) {
+                $step->assertFocused('#signup_login')
+                    ->type('#signup_login', '*')
+                    ->type('#signup_domain', 'test.com')
+                    ->type('#signup_password', '12345678')
+                    ->type('#signup_confirm', '123456789')
+                    ->click('[type=submit]');
+
+                $browser->waitFor('.toast-error');
+
+                $step->assertVisible('#signup_login.is-invalid')
+                    ->assertVisible('#signup_domain + .invalid-feedback')
+                    ->assertVisible('#signup_password.is-invalid')
+                    ->assertVisible('#signup_password + .invalid-feedback')
+                    ->assertFocused('#signup_login');
+
+                $browser->click('.toast-error'); // remove the toast
+            });
+
+            // Submit invalid domain
+            $browser->with('@step3', function ($step) use ($browser) {
+                $step->type('#signup_login', 'admin')
+                    ->type('#signup_domain', 'aaa')
+                    ->type('#signup_password', '12345678')
+                    ->type('#signup_confirm', '12345678')
+                    ->click('[type=submit]');
+
+                $browser->waitFor('.toast-error');
+
+                $step->assertMissing('#signup_login.is-invalid')
+                    ->assertVisible('#signup_domain.is-invalid + .invalid-feedback')
+                    ->assertMissing('#signup_password.is-invalid')
+                    ->assertMissing('#signup_password + .invalid-feedback')
+                    ->assertFocused('#signup_domain');
+
+                $browser->click('.toast-error'); // remove the toast
+            });
+
+            // Submit invalid domain
+            $browser->with('@step3', function ($step) use ($browser) {
+                $step->type('#signup_domain', 'user-domain-signup.com')
+                    ->click('[type=submit]');
+            });
+
+            $browser->waitUntilMissing('@step3');
+
+            // At this point we should be auto-logged-in to dashboard
+            $dashboard = new Dashboard();
+            $dashboard->assert($browser);
+
+            // FIXME: Is it enough to be sure user is logged in?
+            $browser->click('a.link-logout');
         });
     }
 }

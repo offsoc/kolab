@@ -71,6 +71,24 @@ class SignupTest extends TestCase
     }
 
     /**
+     * Test fetching plans for signup
+     *
+     * @return void
+     */
+    public function testSignupPlans()
+    {
+        // Note: this uses plans that already have been seeded into the DB
+
+        $response = $this->get('/api/auth/signup/plans');
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertSame('success', $json['status']);
+        $this->assertCount(2, $json['plans']);
+    }
+
+    /**
      * Test signup initialization with invalid input
      *
      * @return void

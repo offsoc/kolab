@@ -1,6 +1,16 @@
 <template>
     <div class="container">
-        <div class="card" id="step1">
+        <div id="step0">
+            <div class="plan-selector d-flex justify-content-around align-items-stretch mb-3"></div>
+            <h3>FAQs</h3>
+            <ul>
+                <li><a href="https://kolabnow.com/tos">What are your terms of service?</a></li>
+                <li><a href="https://kb.kolabnow.com/faq/can-i-upgrade-an-individual-account-to-a-group-account">Can I upgrade an individual account to a group account?</a></li>
+                <li><a href="https://kb.kolabnow.com/faq/how-much-storage-comes-with-my-account">How much storage comes with my account?</a></li>
+            </ul>
+        </div>
+
+        <div class="card d-none" id="step1">
             <div class="card-body">
                 <h4 class="card-title">Sign Up - Step 1/3</h4>
                 <p class="card-text">
@@ -15,6 +25,7 @@
                         <label for="signup_email" class="sr-only">Existing Email Address</label>
                         <input type="text" class="form-control" id="signup_email" placeholder="Existing Email Address" required v-model="email">
                     </div>
+                    <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit">Continue</button>
                 </form>
             </div>
@@ -88,10 +99,11 @@
                 password_confirmation: '',
                 domain: '',
                 plan: null,
-                is_domain: false
+                is_domain: false,
+                plans: null
             }
         },
-        created() {
+        mounted() {
             let param = this.$route.params.param;
             if (param) {
                 if (/^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(param)) {
@@ -102,18 +114,45 @@
                 } else if (/^([a-zA-Z_]+)$/.test(param)) {
                     // Plan title provided, save it and display Step 1
                     this.plan = param
+                    this.displayForm(1, true)
                 } else {
                     // TODO: Find a way to display error page without changing the URL
                     //       Maybe https://github.com/raniesantos/vue-error-page
                     this.$router.push({name: '404'})
                 }
+            } else {
+                this.displayForm(0)
             }
         },
-        mounted() {
-            // Focus the first input (autofocus does not work when using the menu/router)
-            this.displayForm(1, true)
-        },
         methods: {
+            // Composes plan selection page
+            step0() {
+                if (!this.plans) {
+                    axios.get('/api/auth/signup/plans', {}).then(response => {
+                        let boxes = []
+
+                        this.plans = response.data.plans
+
+                        this.plans.forEach(plan => {
+                            boxes.push($(
+                                `<div class="p-3 m-1 text-center bg-light flex-fill plan-box plan-${plan.title}">
+                                    <button class="btn btn-primary" data-title="${plan.title}">${plan.title}</button>
+                                    <div class="plan-description text-left mt-3">${plan.description}</div>
+                                </div>`
+                            ))
+                        })
+
+                        $('#step0').find('.plan-selector')
+                            .append(boxes)
+                            .find('button').on('click', event => {
+                                let plan = $(event.target).data('title')
+                                this.$router.push({path: '/signup/' + plan})
+                                this.plan = plan
+                                this.displayForm(1, true)
+                            })
+                    })
+                }
+            },
             // Submits data to the API, validates and gets verification code
             submitStep1() {
                 this.$root.$emit('clearFormValidation', $('#step1 form'))
@@ -187,11 +226,20 @@
 
                 card.prev().removeClass('d-none').find('input').first().focus()
                 card.addClass('d-none').find('form')[0].reset()
+
+                if (card.attr('id') == 'step1') {
+                    this.step0()
+                    this.$router.replace({path: '/signup'})
+                }
             },
             displayForm(step, focus) {
-                [1, 2, 3].filter(value => value != step).forEach(value => {
+                [0, 1, 2, 3].filter(value => value != step).forEach(value => {
                     $('#step' + value).addClass('d-none')
                 })
+
+                if (!step) {
+                    return this.step0()
+                }
 
                 $('#step' + step).removeClass('d-none')
 

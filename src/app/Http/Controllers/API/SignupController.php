@@ -27,6 +27,28 @@ class SignupController extends Controller
 
 
     /**
+     * Returns plans definitions for signup.
+     *
+     * @param Illuminate\Http\Request HTTP request
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response
+     */
+    public function plans(Request $request)
+    {
+        $plans = [];
+
+        Plan::all()->map(function ($plan) use (&$plans) {
+            // TODO: Localization
+            $plans[] = [
+                'title' => $plan->title,
+                'description' => $plan->description,
+            ];
+        });
+
+        return response()->json(['status' => 'success', 'plans' => $plans]);
+    }
+
+    /**
      * Starts signup process.
      *
      * Verifies user name and email/phone, sends verification email/sms message.
