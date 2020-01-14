@@ -136,7 +136,7 @@
                         this.plans.forEach(plan => {
                             boxes.push($(
                                 `<div class="p-3 m-1 text-center bg-light flex-fill plan-box plan-${plan.title}">
-                                    <button class="btn btn-primary" data-title="${plan.title}">${plan.title}</button>
+                                    <button class="btn btn-primary" data-title="${plan.title}">${plan.button}</button>
                                     <div class="plan-description text-left mt-3">${plan.description}</div>
                                 </div>`
                             ))

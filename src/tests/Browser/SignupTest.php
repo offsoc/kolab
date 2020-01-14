@@ -106,7 +106,7 @@ class SignupTest extends DuskTestCase
             // Assert first plan box and press the button
             $browser->with('@step0 .plan-selector > .plan-individual', function ($step) {
                 $step->assertVisible('button')
-                    ->assertSeeIn('button', 'individual')
+                    ->assertSeeIn('button', 'Individual Account')
                     ->assertVisible('.plan-description')
                     ->click('button');
             });

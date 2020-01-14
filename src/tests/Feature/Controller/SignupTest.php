@@ -86,6 +86,10 @@ class SignupTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertCount(2, $json['plans']);
+        $this->assertArrayHasKey('title', $json['plans'][0]);
+        $this->assertArrayHasKey('name', $json['plans'][0]);
+        $this->assertArrayHasKey('description', $json['plans'][0]);
+        $this->assertArrayHasKey('button', $json['plans'][0]);
     }
 
     /**

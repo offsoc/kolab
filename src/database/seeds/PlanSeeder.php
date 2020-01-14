@@ -124,6 +124,7 @@ EOD;
         $plan = Plan::create(
             [
                 'title' => 'individual',
+                'name' => 'Individual Account',
                 'description' => $description,
                 'discount_qty' => 0,
                 'discount_rate' => 0
@@ -150,6 +151,7 @@ EOD;
         $plan = Plan::create(
             [
                 'title' => 'group',
+                'name' => 'Group Account',
                 'description' => $description,
                 'discount_qty' => 0,
                 'discount_rate' => 0

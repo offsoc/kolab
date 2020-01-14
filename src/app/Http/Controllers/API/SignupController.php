@@ -38,9 +38,10 @@ class SignupController extends Controller
         $plans = [];
 
         Plan::all()->map(function ($plan) use (&$plans) {
-            // TODO: Localization
             $plans[] = [
                 'title' => $plan->title,
+                'name' => $plan->name,
+                'button' => __('app.planbutton', ['plan' => $plan->name]),
                 'description' => $plan->description,
             ];
         });

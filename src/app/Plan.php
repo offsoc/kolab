@@ -14,12 +14,15 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Plan extends Model
 {
+    use \Spatie\Translatable\HasTranslations;
+
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
         'title',
+        'name',
         'description',
         // a start and end datetime for this promotion
         'promo_from',
@@ -36,6 +39,13 @@ class Plan extends Model
         'discount_qty' => 'integer',
         'discount_rate' => 'integer'
     ];
+
+    /** @var array Translatable properties */
+    public $translatable = [
+        'name',
+        'description',
+    ];
+
 
     public function cost()
     {
