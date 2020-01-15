@@ -1,23 +1,24 @@
 FROM kolab/centos7:latest
 
 RUN yum -y install rsyslog && \
+    yum --enablerepo=kolab-16-updates-testing -y update pykolab && \
     yum clean all
 
-RUN systemctl disable \
-        avahi-daemon.service \
-        avahi-daemon.socket \
-        sshd.service && \
-    systemctl enable rsyslog
-
-RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config
-
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
-COPY kolab-init.sh /usr/local/sbin/
-RUN chmod 750 /usr/local/sbin/kolab-init.sh
+COPY kolab-vlv.service /etc/systemd/system/kolab-vlv.service
 
 RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && \
     ln -s /etc/systemd/system/kolab-init.service \
-        /etc/systemd/system/multi-user.target.wants/kolab-init.service
+        /etc/systemd/system/multi-user.target.wants/kolab-init.service && \
+    ln -s /etc/systemd/system/kolab-vlv.service \
+        /etc/systemd/system/multi-user.target.wants/kolab-vlv.service
+
+RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
+
+COPY kolab-init.sh /usr/local/sbin/
+RUN chmod 750 /usr/local/sbin/kolab-init.sh
+COPY kolab-vlv.sh /usr/local/sbin/
+RUN chmod 750 /usr/local/sbin/kolab-vlv.sh
 
 CMD ["/lib/systemd/systemd"]
 

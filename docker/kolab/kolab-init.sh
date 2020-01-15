@@ -1,22 +1,30 @@
 #!/bin/bash
 
-if [ ! -d "/etc/dirsrv/slapd-kolab/" ]; then
-    setup-kolab \
-        --default \
-        --timezone=Europe/Zurich \
-        --mysqlserver=new \
-        --directory-manager-pwd=Welcome2KolabSystems 2>&1 | tee /root/setup-kolab.log
+if [ -d "/etc/dirsrv/slapd-kolab/" ]; then
+    exit 0
 fi
 
 pushd /root/utils/
-./01-reset-kolab-service-password.sh
-./02-reset-cyrus-admin-password.sh
-./03-create-hosted-kolab-service.sh
-./04-create-ou-domains.sh
-./05-create-management-domain.sh
-./06-create-hosted-domain.sh
-./07-remove-cn-kolab-cn-config.sh
-./08-remove-hosted-service-access-from-mgmt-domain.sh
-./09-add-self-reg-hosted-domain.sh
-./10-adjust-kolab-conf.sh
-popd
+
+./01-reverse-etc-hosts.sh
+./02-write-my.cnf.sh
+./03-setup-kolab.sh
+./04-reset-mysql-kolab-password.sh
+./05-replace-localhost.sh
+./06-mysql-for-kolabdev.sh
+./07-adjust-base-dns.sh
+./08-disable-amavisd.sh
+./09-enable-debugging.sh
+./10-reset-kolab-service-password.sh
+./11-reset-cyrus-admin-password.sh
+./12-create-hosted-kolab-service.sh
+./13-create-ou-domains.sh
+./14-create-management-domain.sh
+./15-create-hosted-domain.sh
+./16-remove-cn-kolab-cn-config.sh
+./17-remove-hosted-service-access-from-mgmt-domain.sh
+./18-adjust-kolab-conf.sh
+./19-turn-on-vlv-in-roundcube.sh
+./20-add-alias-attribute-index.sh
+
+touch /tmp/kolab-init.done

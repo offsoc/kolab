@@ -1,0 +1,11 @@
+[Unit]
+Description=Kolab Worker Service
+
+[Service]
+Type=simple
+User=worker
+Group=worker
+ExecStart=/usr/local/bin/kolab-worker.sh
+
+[Install]
+WantedBy=multi-user.target
