@@ -4,6 +4,16 @@ services:
     build:
       context: ./docker/kolab/
     container_name: kolab
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    extra_hosts:
+      - "kolab.mgmt.com:127.0.0.1"
+    healthcheck:
+      interval: 10s
+      test: test -f /tmp/kolab-init.done
+      timeout: 5s
+      retries: 30
     hostname: kolab.mgmt.com
     network_mode: host
     tmpfs:
@@ -20,3 +30,37 @@ services:
       - ./docker/certs/kolab.mgmt.com.cert:/etc/pki/tls/certs/kolab.mgmt.com.cert
       - ./docker/certs/kolab.mgmt.com.key:/etc/pki/tls/certs/kolab.mgmt.com.key
       - ./docker/kolab/utils:/root/utils:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  mariadb:
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: Welcome2KolabSystems
+    healthcheck:
+      interval: 10s
+      test: test -e /var/run/mysqld/mysqld.sock
+      timeout: 5s
+      retries: 30
+    image: mariadb
+    network_mode: host
+  redis:
+    container_name: redis-kolab
+    image: redis
+    network_mode: host
+  worker:
+    build:
+      context: ./docker/worker/
+    container_name: worker
+    depends_on:
+      kolab:
+        condition: service_healthy
+    hostname: worker
+    network_mode: host
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - ./src:/home/worker/src.orig:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
