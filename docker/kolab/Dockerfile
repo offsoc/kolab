@@ -12,10 +12,12 @@ RUN systemctl disable \
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
-RUN systemctl enable kolab-init.service
-
 COPY kolab-init.sh /usr/local/sbin/
 RUN chmod 750 /usr/local/sbin/kolab-init.sh
+
+RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && \
+    ln -s /etc/systemd/system/kolab-init.service \
+        /etc/systemd/system/multi-user.target.wants/kolab-init.service
 
 CMD ["/lib/systemd/systemd"]
 
