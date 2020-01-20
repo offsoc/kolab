@@ -3,7 +3,6 @@
 namespace App\Backend;
 
 use Illuminate\Support\Facades\Config;
-
 use App\Domain;
 use App\User;
 
@@ -21,7 +20,7 @@ class LDAP
      */
     public static function createDomain($domain)
     {
-        $config = self::_getConfig('admin');
+        $config = self::getConfig('admin');
 
         $ldap = new \Net_LDAP3($config);
 
@@ -182,7 +181,7 @@ class LDAP
      */
     public static function createUser($user)
     {
-        $config = self::_getConfig('admin');
+        $config = self::getConfig('admin');
 
         $ldap = new \Net_LDAP3($config);
 
@@ -276,7 +275,7 @@ class LDAP
      */
     public static function updateUser($user)
     {
-        $config = self::_getConfig('admin');
+        $config = self::getConfig('admin');
 
         $ldap = new \Net_LDAP3($config);
 
@@ -340,7 +339,7 @@ class LDAP
         $ldap->close();
     }
 
-    private static function _getConfig($privilege)
+    private static function getConfig($privilege)
     {
         $config = [
             'domain_base_dn' => config('ldap.domain_base_dn'),

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Auth;
 
 use App\User;
@@ -44,7 +45,7 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
                     // TODO: Log login failure
                     return false;
                 }
-            } else if (!empty($user->password_ldap)) {
+            } elseif (!empty($user->password_ldap)) {
                 $hash = '{SSHA512}' . base64_encode(
                     pack('H*', hash('sha512', $credentials['password']))
                 );

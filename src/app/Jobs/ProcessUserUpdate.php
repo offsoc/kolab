@@ -2,13 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Backends\LDAP;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-
-use App\Backends\LDAP;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 
 class ProcessUserUpdate implements ShouldQueue
 {
