@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Backend;
+namespace App\Backends;
 
 use App\Domain;
 use App\User;
