@@ -16,6 +16,10 @@ RUN yum -y install kolab-16-extras-fasttrack && \
     yum clean all
 
 RUN useradd worker
+<<<<<<< HEAD
+=======
+
+>>>>>>> 19e8a716fefb7954fcfb100294ff35061b5acddd
 COPY kolab-worker.sh /usr/local/bin/
 RUN chmod 755 /usr/local/bin/kolab-worker.sh
 

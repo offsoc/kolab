@@ -2,9 +2,9 @@
 
 namespace App\Backend;
 
-use Illuminate\Support\Facades\Config;
 use App\Domain;
 use App\User;
+use Illuminate\Support\Facades\Config;
 
 class LDAP
 {
