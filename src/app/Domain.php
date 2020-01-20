@@ -153,7 +153,7 @@ class Domain extends Model
 
         foreach ($allowed_values as $value) {
             if ($status & $value) {
-                $new_status &= $value;
+                $new_status |= $value;
                 $status ^= $value;
             }
         }

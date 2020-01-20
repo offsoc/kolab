@@ -55,13 +55,14 @@ class SignupTest extends TestCase
     {
         if (!self::$domain) {
             $this->refreshApplication();
-            self::$domain = Domain::getPublicDomains()[0];
+            $public_domains = Domain::getPublicDomains();
+            self::$domain = reset($public_domains);
 
             if (empty(self::$domain)) {
                 self::$domain = 'signup-domain.com';
                 Domain::create([
                         'namespace' => self::$domain,
-                        'status' => Domain::STATUS_Active,
+                        'status' => Domain::STATUS_ACTIVE,
                         'type' => Domain::TYPE_PUBLIC,
                 ]);
             }

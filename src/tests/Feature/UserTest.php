@@ -39,8 +39,8 @@ class UserTest extends TestCase
             $domains[] = $domain->namespace;
         }
 
-        $this->assertTrue(in_array('kolabnow.com', $domains));
-        $this->assertTrue(in_array('kolab.org', $domains));
+        $this->assertContains('kolabnow.com', $domains);
+        $this->assertContains('kolab.org', $domains);
     }
 
     /**

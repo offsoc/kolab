@@ -36,7 +36,9 @@ class EntitlementTest extends TestCase
 
         $domain = Domain::firstOrCreate(
             [
-                'namespace' => 'custom-domain.com',
+                'namespace' => 'custom-domain.com'
+            ],
+            [
                 'status' => Domain::STATUS_NEW,
                 'type' => Domain::TYPE_EXTERNAL,
             ]
