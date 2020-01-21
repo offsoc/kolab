@@ -4,38 +4,23 @@ namespace App\Backends;
 
 use App\Domain;
 use App\User;
-use Illuminate\Support\Facades\Config;
 
 class LDAP
 {
-    // Get settings with Config::get('ldap.$mode.$key');
-    // or the less unambiguous config('ldap.$mode.$key')l
-
     /**
      * Create a domain in LDAP.
      *
-     * @param Domain $domain The domain to create.
+     * @param \App\Domain $domain The domain to create.
      *
      * @return void
      */
-    public static function createDomain($domain)
+    public static function createDomain(Domain $domain)
     {
         $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
 
-        $ldap = new \Net_LDAP3($config);
-
-        $ldap->connect();
-
-        $ldap->bind(
-            //config('ldap.admin.bind_dn'),
-            "cn=Directory Manager",
-            //config('ldap.admin.bind_pw')
-            "Welcome2KolabSystems"
-        );
-
-        //$hosted_root_dn = config('ldap.hosted.root_dn');
-        $hosted_root_dn = "dc=hosted,dc=com";
-        $mgmt_root_dn = "dc=mgmt,dc=com";
+        $hosted_root_dn = \config('ldap.hosted.root_dn');
+        $mgmt_root_dn = \config('ldap.admin.root_dn');
 
         $domain_base_dn = "ou={$domain->namespace},{$hosted_root_dn}";
 
@@ -76,12 +61,12 @@ class LDAP
 
         // create ou, roles, ous
         $entry = [
-            'description'   => $domain->namespace,
+            'description' => $domain->namespace,
             'objectclass' => [
                 'top',
                 'organizationalunit'
             ],
-            'ou'            => $domain->namespace,
+            'ou' => $domain->namespace,
         ];
 
         $entry['aci'] = array(
@@ -175,66 +160,14 @@ class LDAP
      *
      * 3) The Directory Manager account.
      *
-     * @param User $user The user account to create.
+     * @param \App\User $user The user account to create.
      *
      * @return void
      */
-    public static function createUser($user)
+    public static function createUser(User $user)
     {
         $config = self::getConfig('admin');
-
-        $ldap = new \Net_LDAP3($config);
-
-        $ldap->connect();
-
-        $ldap->bind(
-            //config('ldap.admin.bind_dn'),
-            "cn=Directory Manager",
-            //config('ldap.admin.bind_pw')
-            "Welcome2KolabSystems"
-        );
-
-        $firstName = $user->getSetting('first_name');
-        $lastName = $user->getSetting('last_name');
-
-        $cn = "unknown";
-        $displayname = "";
-
-        if ($firstName) {
-            if ($lastName) {
-                $cn = "{$firstName} {$lastName}";
-                $displayname = "{$lastName}, {$firstName}";
-            } else {
-                $lastName = "unknown";
-                $cn = "{$firstName}";
-                $displayname = "{$firstName}";
-            }
-        } else {
-            $firstName = "";
-            if ($lastName) {
-                $cn = "{$lastName}";
-                $displayname = "{$lastName}";
-            } else {
-                $lastName = "unknown";
-            }
-        }
-
-        $entry = [
-            'cn' => $cn,
-            'displayname' => $displayname,
-            'givenname' => $firstName,
-            'objectclass' => [
-                'top',
-                'inetorgperson',
-                'kolabinetorgperson',
-                'mailrecipient',
-                'person'
-            ],
-            'mail' => $user->email,
-            'sn' => $lastName,
-            'uid' => $user->email,
-            'userpassword' => $user->password_ldap,
-        ];
+        $ldap = self::initLDAP($config);
 
         list($_local, $_domain) = explode('@', $user->email, 2);
 
@@ -243,6 +176,20 @@ class LDAP
         if (!$domain) {
             return false;
         }
+
+        $entry = [
+            'objectclass' => [
+                'top',
+                'inetorgperson',
+                'kolabinetorgperson',
+                'mailrecipient',
+                'person'
+            ],
+            'mail' => $user->email,
+            'uid' => $user->email,
+        ];
+
+        self::setUserAttributes($user, $entry);
 
         $base_dn = $ldap->domain_root_dn($_domain);
         $dn = "uid={$user->email},ou=People,{$base_dn}";
@@ -273,20 +220,10 @@ class LDAP
      *
      * @return void
      */
-    public static function updateUser($user)
+    public static function updateUser(User $user)
     {
         $config = self::getConfig('admin');
-
-        $ldap = new \Net_LDAP3($config);
-
-        $ldap->connect();
-
-        $ldap->bind(
-            //config('ldap.admin.bind_dn'),
-            "cn=Directory Manager",
-            //config('ldap.admin.bind_pw')
-            "Welcome2KolabSystems"
-        );
+        $ldap = self::initLDAP($config);
 
         list($_local, $_domain) = explode('@', $user->email, 2);
 
@@ -300,9 +237,36 @@ class LDAP
         $dn = "uid={$user->email},ou=People,{$base_dn}";
 
         $old_entry = $ldap->get_entry($dn);
-
         $new_entry = $old_entry;
 
+        self::setUserAttributes($user, $new_entry);
+
+        $ldap->modify_entry($dn, $old_entry, $new_entry);
+
+        $ldap->close();
+    }
+
+    /**
+     * Initialize connection to LDAP
+     */
+    private static function initLDAP(array $config, string $privilege = 'admin')
+    {
+        $ldap = new \Net_LDAP3($config);
+
+        $ldap->connect();
+
+        $ldap->bind(\config("ldap.{$privilege}.bind_dn"), \config("ldap.{$privilege}.bind_pw"));
+
+        // TODO: error handling
+
+        return $ldap;
+    }
+
+    /**
+     * Set common user attributes
+     */
+    private static function setUserAttributes(User $user, array &$entry)
+    {
         $firstName = $user->getSetting('first_name');
         $lastName = $user->getSetting('last_name');
 
@@ -328,28 +292,78 @@ class LDAP
             }
         }
 
-        $new_entry['cn'] = $cn;
-        $new_entry['displayname'] = $displayname;
-        $new_entry['givenname'] = $firstName;
-        $new_entry['sn'] = $lastName;
-        $new_entry['userpassword'] = $user->password_ldap;
-
-        $ldap->modify_entry($dn, $old_entry, $new_entry);
-
-        $ldap->close();
+        $entry['cn'] = $cn;
+        $entry['displayname'] = $displayname;
+        $entry['givenname'] = $firstName;
+        $entry['sn'] = $lastName;
+        $entry['userpassword'] = $user->password_ldap;
     }
 
-    private static function getConfig($privilege)
+    /**
+     * Get LDAP configuration for specified access level
+     */
+    private static function getConfig(string $privilege)
     {
         $config = [
-            'domain_base_dn' => config('ldap.domain_base_dn'),
-            'domain_filter' => config('ldap.domain_filter'),
-            'domain_name_attribute' => config('ldap.domain_name_attribute'),
-            'hosts' => config('ldap.hosts'),
+            'domain_base_dn' => \config('ldap.domain_base_dn'),
+            'domain_filter' => \config('ldap.domain_filter'),
+            'domain_name_attribute' => \config('ldap.domain_name_attribute'),
+            'hosts' => \config('ldap.hosts'),
             'sort' => false,
-            'vlv' => false
+            'vlv' => false,
+            'log_hook' => 'App\Backends\LDAP::logHook',
         ];
 
         return $config;
+    }
+
+    /**
+     * Logging callback
+     */
+    public static function logHook($level, $msg): void
+    {
+        if (
+            ($level == LOG_INFO || $level == LOG_DEBUG || $level == LOG_NOTICE)
+            && !\config('app.debug')
+        ) {
+            return;
+        }
+
+        switch ($level) {
+            case LOG_CRIT:
+                $function = 'critical';
+                break;
+            case LOG_EMERG:
+                $function = 'emergency';
+                break;
+            case LOG_ERR:
+                $function = 'error';
+                break;
+            case LOG_ALERT:
+                $function = 'alert';
+                break;
+            case LOG_WARNING:
+                $function = 'warning';
+                break;
+            case LOG_INFO:
+                $function = 'info';
+                break;
+            case LOG_DEBUG:
+                $function = 'debug';
+                break;
+            case LOG_NOTICE:
+                $function = 'notice';
+                break;
+            default:
+                $function = 'info';
+        }
+
+        if (is_array($msg)) {
+            $msg = implode("\n", $msg);
+        }
+
+        $msg = '[LDAP] ' . $msg;
+
+        \Log::{$function}($msg);
     }
 }
