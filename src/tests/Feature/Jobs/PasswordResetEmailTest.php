@@ -22,13 +22,11 @@ class PasswordResetEmailTest extends TestCase
     {
         parent::setUp();
 
-        $user = User::firstOrCreate([
-                'email' => 'PasswordReset@UserAccount.com'
-        ]);
         $this->code = new VerificationCode([
                 'mode' => 'password-reset',
         ]);
 
+        $user = $this->getTestUser('PasswordReset@UserAccount.com');
         $user->verificationcodes()->save($this->code);
         $user->setSettings(['external_email' => 'etx@email.com']);
     }

@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\User;
 use Iatstuti\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
 
@@ -46,28 +47,28 @@ class Wallet extends Model
     /**
      * Add a controller to this wallet.
      *
-     * @param User $user The user to add as a controller to this wallet.
+     * @param \App\User $user The user to add as a controller to this wallet.
      *
      * @return void
      */
-    public function addController($user)
+    public function addController(User $user)
     {
         if (!$this->controllers()->get()->contains($user)) {
-            return $this->controllers()->save($user);
+            $this->controllers()->save($user);
         }
     }
 
     /**
      * Remove a controller from this wallet.
      *
-     * @param User $user The user to remove as a controller from this wallet.
+     * @param \App\User $user The user to remove as a controller from this wallet.
      *
      * @return void
      */
-    public function removeController($user)
+    public function removeController(User $user)
     {
         if ($this->controllers()->get()->contains($user)) {
-            return $this->controllers()->detach($user);
+            $this->controllers()->detach($user);
         }
     }
 
@@ -106,7 +107,7 @@ class Wallet extends Model
     /**
      * Controllers of this wallet.
      *
-     * @return User[]
+     * @return \App\User[]
      */
     public function controllers()
     {

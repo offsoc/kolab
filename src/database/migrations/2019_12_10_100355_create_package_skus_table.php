@@ -19,7 +19,6 @@ class CreatePackageSkusTable extends Migration
                 $table->bigIncrements('id');
                 $table->string('package_id', 36);
                 $table->string('sku_id', 36);
-
                 $table->integer('qty')->default(1);
 
                 $table->foreign('package_id')->references('id')->on('packages')

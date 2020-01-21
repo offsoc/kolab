@@ -15,7 +15,7 @@ class VerificationCodeTest extends TestCase
      */
     public function testVerificationCodeCreate(): void
     {
-        $user = User::firstOrCreate(['email' => 'UserAccountA@UserAccount.com']);
+        $user = $this->getTestUser('UserAccountA@UserAccount.com');
         $data = [
             'user_id' => $user->id,
             'mode' => 'password-reset',

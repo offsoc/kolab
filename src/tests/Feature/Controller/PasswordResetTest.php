@@ -11,20 +11,16 @@ class PasswordResetTest extends TestCase
 {
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function setUp(): void
     {
         parent::setUp();
 
-        $user = User::firstOrCreate(['email' => 'passwordresettest@' . \config('app.domain')]);
+        $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
     }
 
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function tearDown(): void
     {
@@ -34,10 +30,8 @@ class PasswordResetTest extends TestCase
 
     /**
      * Test password-reset/init with invalid input
-     *
-     * @return void
      */
-    public function testPasswordResetInitInvalidInput()
+    public function testPasswordResetInitInvalidInput(): void
     {
         // Empty input data
         $data = [];
@@ -127,11 +121,7 @@ class PasswordResetTest extends TestCase
 
         // Assert the job has proper data assigned
         Queue::assertPushed(\App\Jobs\PasswordResetEmail::class, function ($job) use ($user, &$code, $json) {
-            // Access protected property
-            $reflection = new \ReflectionClass($job);
-            $code = $reflection->getProperty('code');
-            $code->setAccessible(true);
-            $code = $code->getValue($job);
+            $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->user->id === $user->id && $code->code == $json['code'];
         });
@@ -299,6 +289,9 @@ class PasswordResetTest extends TestCase
         $code = new VerificationCode(['mode' => 'password-reset']);
         $user->verificationcodes()->save($code);
 
+        Queue::fake();
+        Queue::assertNothingPushed();
+
         $data = [
             'password' => 'test',
             'password_confirmation' => 'test',
@@ -315,6 +308,15 @@ class PasswordResetTest extends TestCase
         $this->assertSame('bearer', $json['token_type']);
         $this->assertTrue(!empty($json['expires_in']) && is_int($json['expires_in']) && $json['expires_in'] > 0);
         $this->assertNotEmpty($json['access_token']);
+
+        Queue::assertPushed(\App\Jobs\ProcessUserUpdate::class, 1);
+        Queue::assertPushed(\App\Jobs\ProcessUserUpdate::class, function ($job) use ($user) {
+            $job_user = TestCase::getObjectProperty($job, 'user');
+
+            return $job_user->id === $user->id
+                && $job_user->email === $user->email
+                && $job_user->password_ldap != $user->password_ldap;
+        });
 
         // Check if the code has been removed
         $this->assertNull(VerificationCode::find($code->code));

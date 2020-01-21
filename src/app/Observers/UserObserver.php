@@ -66,7 +66,7 @@ class UserObserver
      */
     public function deleting(User $user)
     {
-        \App\Jobs\ProcessUserDelete::dispatch($user);
+    // TODO   \App\Jobs\ProcessUserDelete::dispatch($user);
     }
 
     /**
@@ -80,7 +80,7 @@ class UserObserver
      */
     public function retrieving(User $user)
     {
-        \App\Jobs\ProcessUserRead::dispatch($user);
+    // TODO   \App\Jobs\ProcessUserRead::dispatch($user);
     }
 
     /**
