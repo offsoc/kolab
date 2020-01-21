@@ -19,6 +19,9 @@ class ProcessUserRead implements ShouldQueue
 
     public $tries = 5;
 
+    /** @var bool Delete the job if its models no longer exist. */
+    public $deleteWhenMissingModels = true;
+
     /**
      * Create a new job instance.
      *
