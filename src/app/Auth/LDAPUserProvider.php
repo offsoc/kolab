@@ -13,7 +13,6 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
 {
     public function retrieveById($identifier)
     {
-        error_log("retrieve by id {$identifier}");
         return parent::retrieveById($identifier);
     }
 
@@ -32,18 +31,12 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
 
     public function validateCredentials(Authenticatable $user, array $credentials)
     {
+        $authenticated = false;
+
         if ($user->email == $credentials['email']) {
             if (!empty($user->password)) {
                 if (Hash::check($credentials['password'], $user->password)) {
-                    // TODO: update last login time
-                    // TODO: Update password_ldap if necessary, examine whether writing to
-                    // user->password is sufficient?
-                    $user->password = $credentials['password'];
-                    $user->save();
-                    return true;
-                } else {
-                    // TODO: Log login failure
-                    return false;
+                    $authenticated = true;
                 }
             } elseif (!empty($user->password_ldap)) {
                 $hash = '{SSHA512}' . base64_encode(
@@ -51,22 +44,22 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
                 );
 
                 if ($hash == $user->password_ldap) {
-                    // TODO: update last login time
-                    // TODO: Update password if necessary, examine whether writing to
-                    // user->password is sufficient?
-                    $user->password = $credentials['password'];
-                    $user->save();
-                    return true;
-                } else {
-                    // TODO: Log login failure
-                    return false;
+                    $authenticated = true;
                 }
-            } else {
-                // TODO: Log login failure for missing password. Try actual LDAP?
-                return false;
             }
         }
 
-        return false;
+        // TODO: update last login time
+        // TODO: Update password if necessary, examine whether writing to
+        // user->password is sufficient?
+        if ($authenticated) {
+            $user->password = $credentials['password'];
+            $user->save();
+        } else {
+            // TODO: Try actual LDAP?
+            \Log::info("Authentication failed for {$user->email}");
+        }
+
+        return $authenticated;
     }
 }
