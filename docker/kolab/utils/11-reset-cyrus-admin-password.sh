@@ -16,5 +16,5 @@ sed -i -r \
     -e "s/${oldpw}/${ldap_bindpw}/g" \
     /etc/kolab/kolab.conf
 
-systemctl restart kolabd wallaced
+systemctl restart kolabd wallace
 

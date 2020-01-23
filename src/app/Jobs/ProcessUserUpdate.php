@@ -2,11 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Backends\LDAP;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 
 class ProcessUserUpdate implements ShouldQueue
 {
@@ -17,8 +18,15 @@ class ProcessUserUpdate implements ShouldQueue
 
     protected $user;
 
+    public $tries = 5;
+
+    /** @var bool Delete the job if its models no longer exist. */
+    public $deleteWhenMissingModels = true;
+
     /**
      * Create a new job instance.
+     *
+     * @param \App\User $user The user for which to process the update.
      *
      * @return void
      */
@@ -34,6 +42,6 @@ class ProcessUserUpdate implements ShouldQueue
      */
     public function handle()
     {
-        //
+        LDAP::updateUser($this->user);
     }
 }

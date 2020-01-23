@@ -24,6 +24,8 @@ class PasswordResetEmail implements ShouldQueue
     /** @var \App\VerificationCode Verification code object */
     protected $code;
 
+    /** @var bool Delete the job if its models no longer exist. */
+    public $deleteWhenMissingModels = true;
 
     /**
      * Create a new job instance.

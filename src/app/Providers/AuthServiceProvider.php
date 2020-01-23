@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Auth\LDAPUserProvider;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -25,6 +27,11 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        Auth::provider(
+            'ldap',
+            function ($app, array $config) {
+                return new LDAPUserProvider($app['hash'], $config['model']);
+            }
+        );
     }
 }

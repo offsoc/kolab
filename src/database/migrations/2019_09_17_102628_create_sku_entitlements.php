@@ -35,7 +35,7 @@ class CreateSkuEntitlements extends Migration
                 $table->string('id', 36)->primary();
                 $table->bigInteger('owner_id');
                 $table->bigInteger('entitleable_id');
-                $table->bigInteger('entitleable_type');
+                $table->string('entitleable_type');
                 $table->string('wallet_id', 36);
                 $table->string('sku_id', 36);
                 $table->string('description')->nullable();

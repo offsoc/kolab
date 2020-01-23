@@ -15,8 +15,6 @@ class SignupTest extends TestCase
 
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function setUp(): void
     {
@@ -25,14 +23,11 @@ class SignupTest extends TestCase
         // TODO: Some tests depend on existence of individual and group plans,
         //       we should probably create plans here to not depend on that
         $domain = self::getPublicDomain();
-
-        $user = User::firstOrCreate(['email' => "SignupControllerTest1@$domain"]);
+        $user = $this->getTestUser("SignupControllerTest1@$domain");
     }
 
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function tearDown(): void
     {
@@ -55,13 +50,14 @@ class SignupTest extends TestCase
     {
         if (!self::$domain) {
             $this->refreshApplication();
-            self::$domain = Domain::getPublicDomains()[0];
+            $public_domains = Domain::getPublicDomains();
+            self::$domain = reset($public_domains);
 
             if (empty(self::$domain)) {
                 self::$domain = 'signup-domain.com';
                 Domain::create([
                         'namespace' => self::$domain,
-                        'status' => Domain::STATUS_Active,
+                        'status' => Domain::STATUS_ACTIVE,
                         'type' => Domain::TYPE_PUBLIC,
                 ]);
             }
@@ -175,11 +171,7 @@ class SignupTest extends TestCase
 
         // Assert the job has proper data assigned
         Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
-            // Access protected property
-            $reflection = new \ReflectionClass($job);
-            $code = $reflection->getProperty('code');
-            $code->setAccessible(true);
-            $code = $code->getValue($job);
+            $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
                 && $code->data['plan'] === $data['plan']
@@ -394,9 +386,10 @@ class SignupTest extends TestCase
      */
     public function testSignupValidInput(array $result)
     {
+        Queue::fake();
+
         $domain = $this->getPublicDomain();
         $identity = \strtolower('SignupLogin@') . $domain;
-
         $code = SignupCode::find($result['code']);
         $data = [
             'login' => 'SignupLogin',
@@ -416,6 +409,13 @@ class SignupTest extends TestCase
         $this->assertSame('bearer', $json['token_type']);
         $this->assertTrue(!empty($json['expires_in']) && is_int($json['expires_in']) && $json['expires_in'] > 0);
         $this->assertNotEmpty($json['access_token']);
+
+        Queue::assertPushed(\App\Jobs\ProcessUserCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\ProcessUserCreate::class, function ($job) use ($data) {
+            $job_user = TestCase::getObjectProperty($job, 'user');
+
+            return $job_user->email === \strtolower($data['login'] . '@' . $data['domain']);
+        });
 
         // Check if the code has been removed
         $this->assertNull(SignupCode::where($result['code'])->first());
@@ -464,11 +464,7 @@ class SignupTest extends TestCase
 
         // Assert the job has proper data assigned
         Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
-            // Access protected property
-            $reflection = new \ReflectionClass($job);
-            $code = $reflection->getProperty('code');
-            $code->setAccessible(true);
-            $code = $code->getValue($job);
+            $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
                 && $code->data['plan'] === $data['plan']
@@ -516,6 +512,20 @@ class SignupTest extends TestCase
         $this->assertTrue(!empty($result['expires_in']) && is_int($result['expires_in']) && $result['expires_in'] > 0);
         $this->assertNotEmpty($result['access_token']);
 
+        Queue::assertPushed(\App\Jobs\ProcessDomainCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\ProcessDomainCreate::class, function ($job) use ($domain) {
+            $job_domain = TestCase::getObjectProperty($job, 'domain');
+
+            return $job_domain->namespace === $domain;
+        });
+
+        Queue::assertPushed(\App\Jobs\ProcessUserCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\ProcessUserCreate::class, function ($job) use ($data) {
+            $job_user = TestCase::getObjectProperty($job, 'user');
+
+            return $job_user->email === $data['login'] . '@' . $data['domain'];
+        });
+
         // Check if the code has been removed
         $this->assertNull(SignupCode::find($code->id));
 
@@ -534,7 +544,6 @@ class SignupTest extends TestCase
 
         // TODO: Check if the access token works
     }
-
 
     /**
      * List of email address validation cases for testValidateEmail()

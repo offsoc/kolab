@@ -27,20 +27,19 @@ class EntitlementTest extends TestCase
     {
         $sku_domain = Sku::firstOrCreate(['title' => 'domain']);
         $sku_mailbox = Sku::firstOrCreate(['title' => 'mailbox']);
-        $owner = User::firstOrCreate(['email' => 'entitlement-test@kolabnow.com']);
-        $user = User::firstOrCreate(['email' => 'entitled-user@custom-domain.com']);
-
-        $this->assertTrue($owner->id != $user->id);
-
-        $wallets = $owner->wallets()->get();
-
-        $domain = Domain::firstOrCreate(
+        $owner = $this->getTestUser('entitlement-test@kolabnow.com');
+        $user = $this->getTestUser('entitled-user@custom-domain.com');
+        $domain = $this->getTestDomain(
+            'custom-domain.com',
             [
-                'namespace' => 'custom-domain.com',
                 'status' => Domain::STATUS_NEW,
                 'type' => Domain::TYPE_EXTERNAL,
             ]
         );
+
+        $this->assertTrue($owner->id != $user->id);
+
+        $wallets = $owner->wallets()->get();
 
         $entitlement_own_mailbox = new Entitlement(
             [

@@ -25,6 +25,18 @@ class DomainObserver
     }
 
     /**
+     * Handle the domain "created" event.
+     *
+     * @param \App\Domain $domain The domain.
+     *
+     * @return void
+     */
+    public function created(Domain $domain)
+    {
+        \App\Jobs\ProcessDomainCreate::dispatch($domain);
+    }
+
+    /**
      * Handle the domain "updated" event.
      *
      * @param \App\Domain $domain The domain.

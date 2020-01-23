@@ -21,6 +21,9 @@ class SignupVerificationEmail implements ShouldQueue
     /** @var int The number of times the job may be attempted. */
     public $tries = 2;
 
+    /** @var bool Delete the job if its models no longer exist. */
+    public $deleteWhenMissingModels = true;
+
     /** @var SignupCode Signup verification code object */
     protected $code;
 

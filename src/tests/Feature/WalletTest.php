@@ -15,7 +15,11 @@ class WalletTest extends TestCase
         'UserWallet2@UserWallet.com',
         'UserWallet3@UserWallet.com',
         'UserWallet4@UserWallet.com',
-        'UserWallet5@UserWallet.com'
+        'UserWallet5@UserWallet.com',
+        'WalletControllerA@WalletController.com',
+        'WalletControllerB@WalletController.com',
+        'WalletController2A@WalletController.com',
+        'WalletController2B@WalletController.com',
     ];
 
     public function setUp(): void
@@ -39,11 +43,7 @@ class WalletTest extends TestCase
      */
     public function testCreateUserCreatesWallet(): void
     {
-        $user = User::firstOrCreate(
-            [
-                'email' => 'UserWallet1@UserWallet.com'
-            ]
-        );
+        $user = $this->getTestUser('UserWallet1@UserWallet.com');
 
         $this->assertTrue($user->wallets()->count() == 1);
     }
@@ -53,11 +53,7 @@ class WalletTest extends TestCase
      */
     public function testAddWallet(): void
     {
-        $user = User::firstOrCreate(
-            [
-                'email' => 'UserWallet2@UserWallet.com'
-            ]
-        );
+        $user = $this->getTestUser('UserWallet2@UserWallet.com');
 
         $user->wallets()->save(
             new Wallet(['currency' => 'USD'])
@@ -77,11 +73,7 @@ class WalletTest extends TestCase
      */
     public function testDeleteWalletWithCredit(): void
     {
-        $user = User::firstOrCreate(
-            [
-                'email' => 'UserWallet3@UserWallet.com'
-            ]
-        );
+        $user = $this->getTestUser('UserWallet3@UserWallet.com');
 
         $user->wallets()->each(
             function ($wallet) {
@@ -101,11 +93,7 @@ class WalletTest extends TestCase
      */
     public function testDeleteLastWallet(): void
     {
-        $user = User::firstOrCreate(
-            [
-                'email' => 'UserWallet4@UserWallet.com'
-            ]
-        );
+        $user = $this->getTestUser('UserWallet4@UserWallet.com');
 
         $this->assertTrue($user->wallets()->count() == 1);
 
@@ -121,11 +109,7 @@ class WalletTest extends TestCase
      */
     public function testDeleteAddtWallet(): void
     {
-        $user = User::firstOrCreate(
-            [
-                'email' => 'UserWallet5@UserWallet.com'
-            ]
-        );
+        $user = $this->getTestUser('UserWallet5@UserWallet.com');
 
         $user->wallets()->save(
             new Wallet(['currency' => 'USD'])
@@ -140,34 +124,18 @@ class WalletTest extends TestCase
         );
     }
 
-
     /**
      * Verify a wallet can be assigned a controller.
      */
     public function testAddWalletController(): void
     {
-        $userA = User::firstOrCreate(
-            [
-                'email' => 'WalletControllerA@WalletController.com'
-            ]
-        );
+        $userA = $this->getTestUser('WalletControllerA@WalletController.com');
+        $userB = $this->getTestUser('WalletControllerB@WalletController.com');
 
         $userA->wallets()->each(
-            function ($wallet) {
-                $userB = User::firstOrCreate(
-                    [
-                        'email' => 'WalletControllerB@WalletController.com'
-                    ]
-                );
-
+            function ($wallet) use ($userB) {
                 $wallet->addController($userB);
             }
-        );
-
-        $userB = User::firstOrCreate(
-            [
-                'email' => 'WalletControllerB@WalletController.com'
-            ]
         );
 
         $this->assertTrue($userB->accounts()->count() == 1);
@@ -183,38 +151,19 @@ class WalletTest extends TestCase
      */
     public function testRemoveWalletController(): void
     {
-        $userA = User::firstOrCreate(
-            [
-                'email' => 'WalletController2A@WalletController.com'
-            ]
-        );
+        $userA = $this->getTestUser('WalletController2A@WalletController.com');
+        $userB = $this->getTestUser('WalletController2B@WalletController.com');
 
         $userA->wallets()->each(
-            function ($wallet) {
-                $userB = User::firstOrCreate(
-                    [
-                        'email' => 'WalletController2B@WalletController.com'
-                    ]
-                );
-
+            function ($wallet) use ($userB) {
                 $wallet->addController($userB);
             }
         );
 
-        $userB = User::firstOrCreate(
-            [
-                'email' => 'WalletController2B@WalletController.com'
-            ]
-        );
+        $userB->refresh();
 
         $userB->accounts()->each(
-            function ($wallet) {
-                $userB = User::firstOrCreate(
-                    [
-                        'email' => 'WalletController2B@WalletController.com'
-                    ]
-                );
-
+            function ($wallet) use ($userB) {
                 $wallet->removeController($userB);
             }
         );

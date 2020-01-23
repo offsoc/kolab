@@ -58,8 +58,13 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // 10'000 users result in a table size of 11M
-        //factory(User::class, 100)->create();
-        factory(User::class, 3)->create();
+        $user->setSettings(
+            [
+                "first_name" => "John",
+                "last_name" => "Doe",
+                "currency" => "USD",
+                "country" => "US"
+            ]
+        );
     }
 }
