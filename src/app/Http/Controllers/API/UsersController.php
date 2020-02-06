@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Domain;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -73,7 +74,12 @@ class UsersController extends Controller
      */
     public function info()
     {
-        return response()->json($this->guard()->user());
+        $user = $this->guard()->user();
+        $response = $user->toArray();
+
+        $response['statusInfo'] = self::statusInfo($user);
+
+        return response()->json($response);
     }
 
     /**
@@ -168,6 +174,65 @@ class UsersController extends Controller
         }
 
         return \App\User::find($id);
+    }
+
+    /**
+     * User status (extended) information
+     *
+     * @param \App\User $user User object
+     *
+     * @return array Status information
+     */
+    public static function statusInfo(User $user): array
+    {
+        $status = 'new';
+        $process = [];
+        $steps = [
+            'user-new' => true,
+            'user-ldap-ready' => 'isLdapReady',
+            'user-imap-ready' => 'isImapReady',
+        ];
+
+        if ($user->isDeleted()) {
+            $status = 'deleted';
+        } elseif ($user->isSuspended()) {
+            $status = 'suspended';
+        } elseif ($user->isActive()) {
+            $status = 'active';
+        }
+
+        list ($local, $domain) = explode('@', $user->email);
+        $domain = Domain::where('namespace', $domain)->first();
+
+        // If that is not a public domain, add domain specific steps
+        if (!$domain->isPublic()) {
+            $steps['domain-new'] = true;
+            $steps['domain-ldap-ready'] = 'isLdapReady';
+            $steps['domain-verified'] = 'isVerified';
+            $steps['domain-confirmed'] = 'isConfirmed';
+        }
+
+        // Create a process check list
+        foreach ($steps as $step_name => $func) {
+            $object = strpos($step_name, 'user-') === 0 ? $user : $domain;
+
+            $step = [
+                'label' => $step_name,
+                'title' => __("app.process-{$step_name}"),
+                'state' => is_bool($func) ? $func : $object->{$func}(),
+            ];
+
+            if ($step_name == 'domain-confirmed' && !$step['state']) {
+                $step['link'] = "/domain/{$domain->id}";
+            }
+
+            $process[] = $step;
+        }
+
+        return [
+            'process' => $process,
+            'status' => $status,
+        ];
     }
 
     /**

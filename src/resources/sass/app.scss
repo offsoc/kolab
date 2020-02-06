@@ -38,3 +38,22 @@ nav + .container {
         padding: 0 15px;
     }
 }
+
+.app-loader {
+    background-color: $body-bg;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .spinner-border {
+        width: 120px;
+        height: 120px;
+        border-width: 15px;
+        color: #b2aa99;
+    }
+}

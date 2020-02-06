@@ -41,8 +41,6 @@
 </template>
 
 <script>
-    import store from '../js/store'
-
     export default {
         data() {
             return {
@@ -51,7 +49,7 @@
             }
         },
         computed: {
-            logged_in() { return store.state.isLoggedIn },
+            logged_in() { return this.$store.state.isLoggedIn },
             route() { return this.$route.name }
         }
     }

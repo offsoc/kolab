@@ -2,15 +2,14 @@
 
 namespace App\Jobs;
 
-use App\Backends\LDAP;
 use App\Domain;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
-class ProcessDomainCreate implements ShouldQueue
+class ProcessDomainVerify implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -43,11 +42,10 @@ class ProcessDomainCreate implements ShouldQueue
      */
     public function handle()
     {
-        if (!$this->domain->isLdapReady()) {
-            LDAP::createDomain($this->domain);
+        $this->domain->verify();
 
-            $this->domain->status |= Domain::STATUS_LDAP_READY;
-            $this->domain->save();
-        }
+        // TODO: What should happen if the domain is not registered yet?
+        //       Should we start a new job with some specified delay?
+        //       Or we just give the user a button to start verification again?
     }
 }

@@ -24,6 +24,9 @@ class UserObserver
                 break;
             }
         }
+
+        $user->status |= User::STATUS_NEW;
+
         // can't dispatch job here because it'll fail serialization
     }
 
@@ -54,7 +57,12 @@ class UserObserver
 
         $user->wallets()->create();
 
-        \App\Jobs\ProcessUserCreate::dispatch($user);
+        // Create user record in LDAP, then check if the account is created in IMAP
+        $chain = [
+            new \App\Jobs\ProcessUserVerify($user),
+        ];
+
+        \App\Jobs\ProcessUserCreate::withChain($chain)->dispatch($user);
     }
 
     /**

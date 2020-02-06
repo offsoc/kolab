@@ -85,8 +85,6 @@
 </template>
 
 <script>
-    import store from '../js/store'
-
     export default {
         data() {
             return {
@@ -215,9 +213,7 @@
                     password_confirmation: this.password_confirmation
                 }).then(response => {
                     // auto-login and goto dashboard
-                    store.commit('loginUser')
-                    localStorage.setItem('token', response.data.access_token)
-                    this.$router.push({name: 'dashboard'})
+                    this.$root.loginUser(response.data.access_token)
                 })
             },
             // Moves the user a step back in registration form

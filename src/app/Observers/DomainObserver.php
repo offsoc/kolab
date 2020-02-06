@@ -22,6 +22,8 @@ class DomainObserver
                 break;
             }
         }
+
+        $domain->status |= Domain::STATUS_NEW;
     }
 
     /**
@@ -33,7 +35,12 @@ class DomainObserver
      */
     public function created(Domain $domain)
     {
-        \App\Jobs\ProcessDomainCreate::dispatch($domain);
+        // Create domain record in LDAP, then check if it exists in DNS
+        $chain = [
+            new \App\Jobs\ProcessDomainVerify($domain),
+        ];
+
+        \App\Jobs\ProcessDomainCreate::withChain($chain)->dispatch($domain);
     }
 
     /**

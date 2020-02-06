@@ -1,27 +1,40 @@
 <template>
-    <router-view></router-view>
+    <router-view v-if="!isLoading"></router-view>
 </template>
 
 <script>
-    import store from '../js/store'
-
     export default {
-        created() {
-            if (localStorage.token) {
-                axios.get('/api/auth/info', {
-                    headers: {
-                        Authorization: 'Bearer ' + localStorage.getItem('token')
-                    }
-                }).then(response => {
-                    store.commit('loginUser')
-                }).catch(error => {
-                    if (error.response.status === 401 || error.response.status === 403) {
-                        store.commit('logoutUser')
-                        localStorage.setItem('token', '')
-                        this.$router.push({name: 'login'})
-                    }
-                });
+        data() {
+            return {
+                isLoading: true
             }
-        }
+        },
+        mounted() {
+            const token = localStorage.getItem('token')
+
+            if (token) {
+                this.$root.startLoading()
+                axios.defaults.headers.common.Authorization = 'Bearer ' + token
+
+                axios.get('/api/auth/info')
+                    .then(response => {
+                        this.$store.state.authInfo = response.data
+                        this.isLoading = false
+                        this.$root.stopLoading()
+                        this.$root.loginUser(token)
+                    })
+                    .catch(error => {
+                        this.isLoading = false
+                        this.$root.stopLoading()
+
+                        if (error.response.status === 401 || error.response.status === 403) {
+                            this.$root.logoutUser()
+                        }
+                    })
+            } else {
+                this.$root.stopLoading()
+                this.isLoading = false
+            }
+        },
     }
 </script>

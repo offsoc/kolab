@@ -44,6 +44,11 @@ class ProcessUserCreate implements ShouldQueue
      */
     public function handle()
     {
-        LDAP::createUser($this->user);
+        if (!$this->user->isLdapReady()) {
+            LDAP::createUser($this->user);
+
+            $this->user->status |= User::STATUS_LDAP_READY;
+            $this->user->save();
+        }
     }
 }

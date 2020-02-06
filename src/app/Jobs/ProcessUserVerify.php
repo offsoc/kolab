@@ -2,38 +2,39 @@
 
 namespace App\Jobs;
 
-use App\Backends\LDAP;
-use App\Domain;
+use App\Backends\IMAP;
+use App\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
-class ProcessDomainCreate implements ShouldQueue
+class ProcessUserVerify implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
 
-    protected $domain;
+    protected $user;
 
     public $tries = 5;
 
     /** @var bool Delete the job if its models no longer exist. */
     public $deleteWhenMissingModels = true;
 
+
     /**
      * Create a new job instance.
      *
-     * @param Domain $domain The domain to create.
+     * @param User $user The user to create.
      *
      * @return void
      */
-    public function __construct(Domain $domain)
+    public function __construct(User $user)
     {
-        $this->domain = $domain;
+        $this->user = $user;
     }
 
     /**
@@ -43,11 +44,12 @@ class ProcessDomainCreate implements ShouldQueue
      */
     public function handle()
     {
-        if (!$this->domain->isLdapReady()) {
-            LDAP::createDomain($this->domain);
-
-            $this->domain->status |= Domain::STATUS_LDAP_READY;
-            $this->domain->save();
+        if (!$this->user->isImapReady()) {
+            if (IMAP::verifyAccount($this->user->email)) {
+                $this->user->status |= User::STATUS_IMAP_READY;
+                $this->user->status |= User::STATUS_ACTIVE;
+                $this->user->save();
+            }
         }
     }
 }
