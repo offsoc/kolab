@@ -74,7 +74,7 @@ class UsersTest extends TestCase
         $this->markTestIncomplete();
     }
 
-    public function testShow(): void
+    public function testStatusInfo(): void
     {
         $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
         $domain = $this->getTestDomain('userscontroller.com', [
@@ -112,14 +112,14 @@ class UsersTest extends TestCase
 
         $user->status |= User::STATUS_ACTIVE;
         $user->save();
-        $domain->status |= Domain::STATUS_VERIFIED;
+//        $domain->status |= Domain::STATUS_VERIFIED;
         $domain->type = Domain::TYPE_EXTERNAL;
         $domain->save();
 
         $result = UsersController::statusInfo($user);
 
         $this->assertSame('active', $result['status']);
-        $this->assertCount(7, $result['process']);
+        $this->assertCount(6, $result['process']);
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
         $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
@@ -130,10 +130,10 @@ class UsersTest extends TestCase
         $this->assertSame(true, $result['process'][3]['state']);
         $this->assertSame('domain-ldap-ready', $result['process'][4]['label']);
         $this->assertSame(false, $result['process'][4]['state']);
-        $this->assertSame('domain-verified', $result['process'][5]['label']);
-        $this->assertSame(true, $result['process'][5]['state']);
-        $this->assertSame('domain-confirmed', $result['process'][6]['label']);
-        $this->assertSame(false, $result['process'][6]['state']);
+//        $this->assertSame('domain-verified', $result['process'][5]['label']);
+//        $this->assertSame(true, $result['process'][5]['state']);
+        $this->assertSame('domain-confirmed', $result['process'][5]['label']);
+        $this->assertSame(false, $result['process'][5]['state']);
 
         $user->status |= User::STATUS_DELETED;
         $user->save();

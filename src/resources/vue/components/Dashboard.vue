@@ -4,7 +4,7 @@
             <div class="card-body">
                 <div class="card-title">Dashboard</div>
                 <div class="card-text">
-                    <p>{{ data }}</p>
+                    <pre>{{ data }}</pre>
                 </div>
             </div>
         </div>

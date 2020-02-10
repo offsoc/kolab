@@ -21,7 +21,7 @@
                         this.$store.state.authInfo = response.data
                         this.isLoading = false
                         this.$root.stopLoading()
-                        this.$root.loginUser(token)
+                        this.$root.loginUser(token, false)
                     })
                     .catch(error => {
                         this.isLoading = false

@@ -4,6 +4,7 @@ import VueRouter from 'vue-router'
 Vue.use(VueRouter)
 
 import DashboardComponent from '../components/Dashboard'
+import DomainComponent from '../components/Domain'
 import Error404Component from '../components/404'
 import LoginComponent from '../components/Login'
 import LogoutComponent from '../components/Logout'
@@ -21,6 +22,12 @@ const routes = [
         path: '/dashboard',
         name: 'dashboard',
         component: DashboardComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/domain/:domain',
+        name: 'domain',
+        component: DomainComponent,
         meta: { requiresAuth: true }
     },
     {
@@ -56,17 +63,14 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to, from, next) => {
-
     // check if the route requires authentication and user is not logged in
     if (to.matched.some(route => route.meta.requiresAuth) && !store.state.isLoggedIn) {
+        // remember the original request, to use after login
+        store.state.afterLogin = to;
+
         // redirect to login page
         next({ name: 'login' })
-        return
-    }
 
-    // if logged in redirect to dashboard
-    if (to.path === '/login' && store.state.isLoggedIn) {
-        next({ name: 'dashboard' })
         return
     }
 

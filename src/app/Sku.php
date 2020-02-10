@@ -52,6 +52,11 @@ class Sku extends Model
      */
     public function registerEntitlement(\App\User $user, array $params = [])
     {
+        if (!$this->active) {
+            \Log::debug("Skipped registration of an entitlement for non-active SKU ($this->title)");
+            return;
+        }
+
         $wallet = $user->wallets()->get()[0];
 
         $entitlement = new \App\Entitlement();
@@ -76,7 +81,7 @@ class Sku extends Model
             if (method_exists($this->handler_class, 'createDefaultEntitleable')) {
                 $entitlement->entitleable_id = $this->handler_class::createDefaultEntitleable($user);
             } else {
-                // error
+                throw new Exception("Failed to create an entitlement for SKU ($this->title). Missing entitleable_id.");
             }
         }
 

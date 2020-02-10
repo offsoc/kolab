@@ -19,7 +19,7 @@ class DomainTest extends TestCase
             Domain::STATUS_SUSPENDED,
             Domain::STATUS_DELETED,
             Domain::STATUS_LDAP_READY,
-            Domain::STATUS_VERIFIED,
+//            Domain::STATUS_VERIFIED,
         ];
 
         $domains = \App\Utils::powerSet($statuses);
@@ -39,7 +39,7 @@ class DomainTest extends TestCase
             $this->assertTrue($domain->isSuspended() === in_array(Domain::STATUS_SUSPENDED, $domain_statuses));
             $this->assertTrue($domain->isDeleted() === in_array(Domain::STATUS_DELETED, $domain_statuses));
             $this->assertTrue($domain->isLdapReady() === in_array(Domain::STATUS_LDAP_READY, $domain_statuses));
-            $this->assertTrue($domain->isVerified() === in_array(Domain::STATUS_VERIFIED, $domain_statuses));
+//            $this->assertTrue($domain->isVerified() === in_array(Domain::STATUS_VERIFIED, $domain_statuses));
         }
     }
 
@@ -96,14 +96,22 @@ class DomainTest extends TestCase
             'status' => Domain::STATUS_NEW,
         ]);
 
-        $hash1 = $domain->hash(true);
+        $hash_code = $domain->hash();
 
-        $this->assertRegExp('/^[a-f0-9]{32}$/', $hash1);
+        $this->assertRegExp('/^[a-f0-9]{32}$/', $hash_code);
 
-        $hash2 = $domain->hash();
+        $hash_text = $domain->hash(Domain::HASH_TEXT);
 
-        $this->assertRegExp('/^kolab-verify=[a-f0-9]{32}$/', $hash2);
+        $this->assertRegExp('/^kolab-verify=[a-f0-9]{32}$/', $hash_text);
 
-        $this->assertSame($hash1, str_replace('kolab-verify=', '', $hash2));
+        $this->assertSame($hash_code, str_replace('kolab-verify=', '', $hash_text));
+
+        $hash_cname = $domain->hash(Domain::HASH_CNAME);
+
+        $this->assertSame('kolab-verify', $hash_cname);
+
+        $hash_code2 = $domain->hash(Domain::HASH_CODE);
+
+        $this->assertSame($hash_code, $hash_code2);
     }
 }

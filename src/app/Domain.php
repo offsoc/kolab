@@ -17,7 +17,7 @@ class Domain extends Model
     // ownership of the domain has been confirmed
     public const STATUS_CONFIRMED  = 1 << 4;
     // domain has been verified that it exists in DNS
-    public const STATUS_VERIFIED   = 1 << 5;
+//    public const STATUS_VERIFIED   = 1 << 5;
     // domain has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 6;
 
@@ -27,6 +27,10 @@ class Domain extends Model
     public const TYPE_HOSTED       = 1 << 1;
     // zone registered externally
     public const TYPE_EXTERNAL     = 1 << 2;
+
+    public const HASH_CODE = 1;
+    public const HASH_TEXT = 2;
+    public const HASH_CNAME = 3;
 
     public $incrementing = false;
     protected $keyType = 'bigint';
@@ -150,11 +154,12 @@ class Domain extends Model
      *
      * @return bool
      */
+/*
     public function isVerified(): bool
     {
         return $this->status & self::STATUS_VERIFIED;
     }
-
+*/
     /**
      * Domain status mutator
      *
@@ -171,7 +176,7 @@ class Domain extends Model
             self::STATUS_SUSPENDED,
             self::STATUS_DELETED,
             self::STATUS_LDAP_READY,
-            self::STATUS_VERIFIED,
+//            self::STATUS_VERIFIED,
         ];
 
         foreach ($allowed_values as $value) {
@@ -201,14 +206,14 @@ class Domain extends Model
             return true;
         }
 
-        $hash = $this->hash();
+        $hash = $this->hash(self::HASH_TEXT);
         $confirmed = false;
 
         // Get DNS records and find a matching TXT entry
         $records = \dns_get_record($this->namespace, DNS_TXT);
 
         if ($records === false) {
-            throw new \Exception("Failed to get DNS record for $domain");
+            throw new \Exception("Failed to get DNS record for {$this->namespace}");
         }
 
         foreach ($records as $record) {
@@ -223,7 +228,7 @@ class Domain extends Model
         // so we need to define left and right side of the CNAME record
         // i.e.: kolab-verify IN CNAME <hash>.domain.tld.
         if (!$confirmed) {
-            $cname = $this->hash(true) . '.' . $this->namespace;
+            $cname = $this->hash(self::HASH_CODE) . '.' . $this->namespace;
             $records = \dns_get_record('kolab-verify.' . $this->namespace, DNS_CNAME);
 
             if ($records === false) {
@@ -249,15 +254,21 @@ class Domain extends Model
     /**
      * Generate a verification hash for this domain
      *
-     * @param bool $short Return short version (with kolab-verify= prefix)
+     * @param int $mod One of: HASH_CNAME, HASH_CODE (Default), HASH_TEXT
      *
      * @return string Verification hash
      */
-    public function hash($short = false): string
+    public function hash($mod = null): string
     {
-        $hash = \md5('hkccp-verify-' . $this->namespace . $this->id);
+        $cname = 'kolab-verify';
 
-        return $short ? $hash : "kolab-verify=$hash";
+        if ($mod === self::HASH_CNAME) {
+            return $cname;
+        }
+
+        $hash = \md5('hkccp-verify-' . $this->namespace);
+
+        return $mod === self::HASH_TEXT ? "$cname=$hash" : $hash;
     }
 
     /**
@@ -266,6 +277,7 @@ class Domain extends Model
      * @return bool True if registered, False otherwise
      * @throws \Exception Throws exception on DNS or DB errors
      */
+/*
     public function verify(): bool
     {
         if ($this->isVerified()) {
@@ -287,4 +299,5 @@ class Domain extends Model
 
         return false;
     }
+*/
 }

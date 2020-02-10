@@ -32,7 +32,5 @@ class ErrorTest extends DuskTestCase
             $this->assertSame('404', $browser->text('#error-page .code'));
             $this->assertSame('Not Found', $browser->text('#error-page .message'));
         });
-
-        // TODO: Test the same as above, but with use of Vue router
     }
 }

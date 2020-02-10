@@ -54,7 +54,7 @@ class SkuSeeder extends Seeder
                 'units_free' => 1,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\DomainHosting',
-                'active' => false,
+                'active' => true,
             ]
         );
 

@@ -85,11 +85,16 @@ const app = new Vue({
             $(form).find('.invalid-feedback').remove()
         },
         // Set user state to "logged in"
-        loginUser(token) {
+        loginUser(token, dashboard) {
             store.commit('loginUser')
             localStorage.setItem('token', token)
             axios.defaults.headers.common.Authorization = 'Bearer ' + token
-            router.push({ name: 'dashboard' })
+
+            if (dashboard !== false) {
+                router.push(store.state.afterLogin || { name: 'dashboard' })
+            }
+
+            store.state.afterLogin = null
         },
         // Set user state to "not logged in"
         logoutUser() {

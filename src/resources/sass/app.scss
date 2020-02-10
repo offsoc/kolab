@@ -20,6 +20,10 @@ nav + .container {
     margin-top: 120px;
 }
 
+#app {
+    margin-bottom: 2rem;
+}
+
 #error-page {
     align-items: center;
     display: flex;
@@ -56,4 +60,10 @@ nav + .container {
         border-width: 15px;
         color: #b2aa99;
     }
+}
+
+pre {
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: $menu-bg-color;
 }

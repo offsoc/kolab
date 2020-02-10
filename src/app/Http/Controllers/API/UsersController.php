@@ -208,7 +208,7 @@ class UsersController extends Controller
         if (!$domain->isPublic()) {
             $steps['domain-new'] = true;
             $steps['domain-ldap-ready'] = 'isLdapReady';
-            $steps['domain-verified'] = 'isVerified';
+//            $steps['domain-verified'] = 'isVerified';
             $steps['domain-confirmed'] = 'isConfirmed';
         }
 
@@ -219,7 +219,7 @@ class UsersController extends Controller
             $step = [
                 'label' => $step_name,
                 'title' => __("app.process-{$step_name}"),
-                'state' => is_bool($func) ? $func : $object->{$func}(),
+                'state' => false,//is_bool($func) ? $func : $object->{$func}(),
             ];
 
             if ($step_name == 'domain-confirmed' && !$step['state']) {

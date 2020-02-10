@@ -17,8 +17,17 @@ class DomainTest extends TestCase
     {
         parent::setUp();
 
-        Domain::where('namespace', 'public-active.com')
-            ->orWhere('namespace', 'gmail.com')->delete();
+        $domains = [
+            'public-active.com',
+            'gmail.com',
+            'ci-success-cname.kolab.org',
+            'ci-success-txt.kolab.org',
+            'ci-failure-cname.kolab.org',
+            'ci-failure-txt.kolab.org',
+            'ci-failure-none.kolab.org',
+        ];
+
+        Domain::whereIn('namespace', $domains)->delete();
     }
 
     /**
@@ -43,11 +52,11 @@ class DomainTest extends TestCase
             return $job_domain->id === $domain->id
                 && $job_domain->namespace === $domain->namespace;
         });
-
+/*
         Queue::assertPushedWithChain(\App\Jobs\ProcessDomainCreate::class, [
             \App\Jobs\ProcessDomainVerify::class,
         ]);
-
+*/
 /*
         FIXME: Looks like we can't really do detailed assertions on chained jobs
                Another thing to consider is if we maybe should run these jobs
@@ -95,24 +104,64 @@ class DomainTest extends TestCase
     }
 
     /**
-     * Test domain confirmation
+     * Test domain (ownership) confirmation
      *
      * @group dns
      */
     public function testConfirm(): void
     {
-        // TODO
-        $this->markTestIncomplete();
-    }
+        /*
+            DNS records for positive and negative tests - kolab.org:
 
-    /**
-     * Test domain verification
-     *
-     * @group dns
-     */
-    public function testVerify(): void
-    {
-        // TODO
-        $this->markTestIncomplete();
+            ci-success-cname                A       212.103.80.148
+            ci-success-cname                MX      10  mx01.kolabnow.com.
+            ci-success-cname                TXT     "v=spf1 mx -all"
+            kolab-verify.ci-success-cname   CNAME   2b719cfa4e1033b1e1e132977ed4fe3e.ci-success-cname
+
+            ci-failure-cname                A       212.103.80.148
+            ci-failure-cname                MX      10  mx01.kolabnow.com.
+            kolab-verify.ci-failure-cname   CNAME   2b719cfa4e1033b1e1e132977ed4fe3e.ci-failure-cname
+
+            ci-success-txt                  A       212.103.80.148
+            ci-success-txt                  MX      10  mx01.kolabnow.com.
+            ci-success-txt                  TXT     "v=spf1 mx -all"
+            ci-success-txt                  TXT     "kolab-verify=de5d04ababb52d52e2519a2f16d11422"
+
+            ci-failure-txt                  A       212.103.80.148
+            ci-failure-txt                  MX      10  mx01.kolabnow.com.
+            kolab-verify.ci-failure-txt     TXT     "kolab-verify=de5d04ababb52d52e2519a2f16d11422"
+
+            ci-failure-none                 A       212.103.80.148
+            ci-failure-none                 MX      10  mx01.kolabnow.com.
+        */
+
+        Queue::fake();
+
+        $domain_props = ['status' => Domain::STATUS_NEW, 'type' => Domain::TYPE_EXTERNAL];
+
+        $domain = $this->getTestDomain('ci-failure-none.kolab.org', $domain_props);
+
+        $this->assertTrue($domain->confirm() === false);
+        $this->assertTrue(!$domain->isConfirmed());
+
+        $domain = $this->getTestDomain('ci-failure-txt.kolab.org', $domain_props);
+
+        $this->assertTrue($domain->confirm() === false);
+        $this->assertTrue(!$domain->isConfirmed());
+
+        $domain = $this->getTestDomain('ci-failure-cname.kolab.org', $domain_props);
+
+        $this->assertTrue($domain->confirm() === false);
+        $this->assertTrue(!$domain->isConfirmed());
+
+        $domain = $this->getTestDomain('ci-success-txt.kolab.org', $domain_props);
+
+        $this->assertTrue($domain->confirm());
+        $this->assertTrue($domain->isConfirmed());
+
+        $domain = $this->getTestDomain('ci-success-cname.kolab.org', $domain_props);
+
+        $this->assertTrue($domain->confirm());
+        $this->assertTrue($domain->isConfirmed());
     }
 }

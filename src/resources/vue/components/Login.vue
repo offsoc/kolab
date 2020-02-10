@@ -22,12 +22,12 @@
             return {
                 email: '',
                 password: '',
-                loginError: false,
+                loginError: false
             }
         },
         methods: {
             submitLogin() {
-                this.loginError = false;
+                this.loginError = false
                 axios.post('/api/auth/login', {
                     email: this.email,
                     password: this.password

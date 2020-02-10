@@ -41,6 +41,9 @@ Route::group(
         'prefix' => 'v4'
     ],
     function () {
+        Route::apiResource('domains', API\DomainsController::class);
+        Route::get('domains/{id}/confirm', 'API\DomainsController@confirm');
+
         Route::apiResource('entitlements', API\EntitlementsController::class);
         Route::apiResource('users', API\UsersController::class);
         Route::apiResource('wallets', API\WalletsController::class);
