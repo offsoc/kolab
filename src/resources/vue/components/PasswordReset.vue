@@ -88,7 +88,7 @@
         methods: {
             // Submits data to the API, validates and gets verification code
             submitStep1() {
-                this.$root.$emit('clearFormValidation', $('#step1 form'))
+                this.$root.clearFormValidation($('#step1 form'))
 
                 axios.post('/api/auth/password-reset/init', {
                     email: this.email
@@ -103,7 +103,7 @@
                     this.displayForm(2, false)
                 }
 
-                this.$root.$emit('clearFormValidation', $('#step2 form'))
+                this.$root.clearFormValidation($('#step2 form'))
 
                 axios.post('/api/auth/password-reset/verify', {
                     code: this.code,
@@ -120,7 +120,7 @@
             },
             // Submits the data to the API to reset the password
             submitStep3() {
-                this.$root.$emit('clearFormValidation', $('#step3 form'))
+                this.$root.clearFormValidation($('#step3 form'))
 
                 axios.post('/api/auth/password-reset', {
                     code: this.code,

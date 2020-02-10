@@ -73,11 +73,6 @@ const app = new Vue({
             isLoading: true
         }
     },
-    mounted() {
-        this.$root.$on('clearFormValidation', (form) => {
-            this.clearFormValidation(form)
-        })
-    },
     methods: {
         // Clear (bootstrap) form validation state
         clearFormValidation(form) {
