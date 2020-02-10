@@ -25,19 +25,24 @@ nav + .container {
 }
 
 #error-page {
+    position: absolute;
+    top: 0;
+    height: 100%;
     align-items: center;
     display: flex;
     justify-content: center;
-    height: 100vh;
     color: #636b6f;
 
     .code {
+        flex: 1;
+        text-align: right;
         border-right: 2px solid;
         font-size: 26px;
         padding: 0 15px;
     }
 
     .message {
+        flex: 1;
         font-size: 18px;
         padding: 0 15px;
     }
