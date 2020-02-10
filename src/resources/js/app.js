@@ -113,6 +113,27 @@ const app = new Vue({
         stopLoading() {
             $('#app > .app-loader').fadeOut()
             this.isLoading = false
+        },
+        errorPage(code, msg) {
+            // Until https://github.com/vuejs/vue-router/issues/977 is implemented
+            // we can't really use router to display error page as it has two side
+            // effects: it changes the URL and adds the error page to browser history.
+            // For now we'll be replacing current view with error page "manually".
+            const map = {
+                400: "Bad request",
+                401: "Unauthorized",
+                403: "Access denied",
+                404: "Not found",
+                405: "Method not allowed",
+                500: "Internal server error"
+            }
+
+            if (!msg) msg = map[code] || "Unknown Error"
+
+            const error_page = `<div id="error-page"><div class="code">${code}</div><div class="message">${msg}</div></div>`
+
+            $('#app').children(':not(nav)').remove()
+            $('#app').append(error_page)
         }
     }
 })

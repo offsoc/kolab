@@ -77,9 +77,7 @@
                     this.submitStep2(true)
                 }
                 else {
-                    // TODO: Find a way to display error page without changing the URL
-                    //       Maybe https://github.com/raniesantos/vue-error-page
-                    this.$router.push({name: '404'})
+                    this.$root.errorPage(404)
                 }
             }
         },

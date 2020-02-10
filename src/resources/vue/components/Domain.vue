@@ -62,16 +62,10 @@
                         }
                     })
                     .catch(error => {
-                        // TODO: In place like this we should handle any errors
-                        //       with an error page.
-                        if (error.response && error.response.status == 404) {
-                            this.$router.replace({name: '404'})
-                        }
+                        this.$root.errorPage(error.response.status, error.response.statusText)
                     })
             } else {
-                // TODO: Find a way to display error page without changing the URL
-                //       Maybe https://github.com/raniesantos/vue-error-page
-                this.$router.push({name: '404'})
+                this.$root.errorPage(404)
             }
         },
         methods: {
