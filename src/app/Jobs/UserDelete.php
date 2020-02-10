@@ -8,7 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-class ProcessUserRead implements ShouldQueue
+class UserDelete implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -25,7 +25,7 @@ class ProcessUserRead implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param \App\User $user The user to read.
+     * @param \App\User $user The user to delete.
      *
      * @return void
      */

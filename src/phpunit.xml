@@ -15,7 +15,7 @@
 
         <testsuite name="Feature">
             <directory suffix="Test.php">tests/Feature</directory>
-            <exclude>tests/Feature/Jobs/ProcessDomainVerifyTest.php</exclude>
+            <exclude>tests/Feature/Jobs/DomainVerifyTest.php</exclude>
         </testsuite>
     </testsuites>
     <filter>

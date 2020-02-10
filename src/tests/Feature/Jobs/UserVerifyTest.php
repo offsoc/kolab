@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Jobs;
 
-use App\Jobs\ProcessUserVerify;
+use App\Jobs\UserVerify;
 use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -34,7 +34,7 @@ class UserVerifyTest extends TestCase
             ->with($user->email)
             ->andReturn(false);
 
-        $job = new ProcessUserVerify($user);
+        $job = new UserVerify($user);
         $job->handle();
 
         $this->assertTrue($user->fresh()->isImapReady() === false);

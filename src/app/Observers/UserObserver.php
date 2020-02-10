@@ -59,10 +59,10 @@ class UserObserver
 
         // Create user record in LDAP, then check if the account is created in IMAP
         $chain = [
-            new \App\Jobs\ProcessUserVerify($user),
+            new \App\Jobs\UserVerify($user),
         ];
 
-        \App\Jobs\ProcessUserCreate::withChain($chain)->dispatch($user);
+        \App\Jobs\UserCreate::withChain($chain)->dispatch($user);
     }
 
     /**
@@ -74,7 +74,7 @@ class UserObserver
      */
     public function deleting(User $user)
     {
-    // TODO   \App\Jobs\ProcessUserDelete::dispatch($user);
+    // TODO   \App\Jobs\UserDelete::dispatch($user);
     }
 
     /**
@@ -88,7 +88,7 @@ class UserObserver
      */
     public function retrieving(User $user)
     {
-    // TODO   \App\Jobs\ProcessUserRead::dispatch($user);
+    // TODO   \App\Jobs\UserRead::dispatch($user);
     }
 
     /**
@@ -100,6 +100,6 @@ class UserObserver
      */
     public function updating(User $user)
     {
-        \App\Jobs\ProcessUserUpdate::dispatch($user);
+        \App\Jobs\UserUpdate::dispatch($user);
     }
 }

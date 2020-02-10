@@ -25,7 +25,7 @@ class UserSettingObserver
      */
     public function updated(UserSetting $userSetting)
     {
-        \App\Jobs\ProcessUserUpdate::dispatch($userSetting->user);
+        \App\Jobs\UserUpdate::dispatch($userSetting->user);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Jobs;
 
-use App\Jobs\ProcessUserCreate;
+use App\Jobs\UserCreate;
 use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -34,7 +34,7 @@ class UserCreateTest extends TestCase
             ->with($user)
             ->andReturn(null);
 
-        $job = new ProcessUserCreate($user);
+        $job = new UserCreate($user);
         $job->handle();
 
         $this->assertTrue($user->fresh()->isLdapReady());

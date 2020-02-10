@@ -28,16 +28,16 @@ class UserTest extends TestCase
                 'email' => 'user-create-test@' . \config('app.domain')
         ]);
 
-        Queue::assertPushed(\App\Jobs\ProcessUserCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\ProcessUserCreate::class, function ($job) use ($user) {
+        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->id === $user->id
                 && $job_user->email === $user->email;
         });
 
-        Queue::assertPushedWithChain(\App\Jobs\ProcessUserCreate::class, [
-            \App\Jobs\ProcessUserVerify::class,
+        Queue::assertPushedWithChain(\App\Jobs\UserCreate::class, [
+            \App\Jobs\UserVerify::class,
         ]);
 /*
         FIXME: Looks like we can't really do detailed assertions on chained jobs
@@ -45,8 +45,8 @@ class UserTest extends TestCase
                independently (not chained) and make sure there's no race-condition
                in status update
 
-        Queue::assertPushed(\App\Jobs\ProcessUserVerify::class, 1);
-        Queue::assertPushed(\App\Jobs\ProcessUserVerify::class, function ($job) use ($user) {
+        Queue::assertPushed(\App\Jobs\UserVerify::class, 1);
+        Queue::assertPushed(\App\Jobs\UserVerify::class, function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->id === $user->id

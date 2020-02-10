@@ -2,14 +2,13 @@
 
 namespace App\Jobs;
 
-use App\Backends\LDAP;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 
-class ProcessUserUpdate implements ShouldQueue
+class UserRead implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -26,7 +25,7 @@ class ProcessUserUpdate implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param \App\User $user The user for which to process the update.
+     * @param \App\User $user The user to read.
      *
      * @return void
      */
@@ -42,6 +41,6 @@ class ProcessUserUpdate implements ShouldQueue
      */
     public function handle()
     {
-        LDAP::updateUser($this->user);
+        //
     }
 }

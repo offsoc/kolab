@@ -45,16 +45,16 @@ class DomainTest extends TestCase
                 'type' => Domain::TYPE_EXTERNAL,
         ]);
 
-        Queue::assertPushed(\App\Jobs\ProcessDomainCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\ProcessDomainCreate::class, function ($job) use ($domain) {
+        Queue::assertPushed(\App\Jobs\DomainCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\DomainCreate::class, function ($job) use ($domain) {
             $job_domain = TestCase::getObjectProperty($job, 'domain');
 
             return $job_domain->id === $domain->id
                 && $job_domain->namespace === $domain->namespace;
         });
 /*
-        Queue::assertPushedWithChain(\App\Jobs\ProcessDomainCreate::class, [
-            \App\Jobs\ProcessDomainVerify::class,
+        Queue::assertPushedWithChain(\App\Jobs\DomainCreate::class, [
+            \App\Jobs\DomainVerify::class,
         ]);
 */
 /*
@@ -63,8 +63,8 @@ class DomainTest extends TestCase
                independently (not chained) and make sure there's no race-condition
                in status update
 
-        Queue::assertPushed(\App\Jobs\ProcessDomainVerify::class, 1);
-        Queue::assertPushed(\App\Jobs\ProcessDomainVerify::class, function ($job) use ($domain) {
+        Queue::assertPushed(\App\Jobs\DomainVerify::class, 1);
+        Queue::assertPushed(\App\Jobs\DomainVerify::class, function ($job) use ($domain) {
             $job_domain = TestCase::getObjectProperty($job, 'domain');
 
             return $job_domain->id === $domain->id

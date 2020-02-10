@@ -38,12 +38,12 @@ class DomainObserver
         // Create domain record in LDAP, then check if it exists in DNS
 /*
         $chain = [
-            new \App\Jobs\ProcessDomainVerify($domain),
+            new \App\Jobs\DomainVerify($domain),
         ];
 
-        \App\Jobs\ProcessDomainCreate::withChain($chain)->dispatch($domain);
+        \App\Jobs\DomainCreate::withChain($chain)->dispatch($domain);
 */
-        \App\Jobs\ProcessDomainCreate::dispatch($domain);
+        \App\Jobs\DomainCreate::dispatch($domain);
     }
 
     /**

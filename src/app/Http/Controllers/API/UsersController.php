@@ -219,7 +219,7 @@ class UsersController extends Controller
             $step = [
                 'label' => $step_name,
                 'title' => __("app.process-{$step_name}"),
-                'state' => false,//is_bool($func) ? $func : $object->{$func}(),
+                'state' => is_bool($func) ? $func : $object->{$func}(),
             ];
 
             if ($step_name == 'domain-confirmed' && !$step['state']) {

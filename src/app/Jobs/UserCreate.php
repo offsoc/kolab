@@ -10,7 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class ProcessUserCreate implements ShouldQueue
+class UserCreate implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;

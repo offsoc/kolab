@@ -410,8 +410,8 @@ class SignupTest extends TestCase
         $this->assertTrue(!empty($json['expires_in']) && is_int($json['expires_in']) && $json['expires_in'] > 0);
         $this->assertNotEmpty($json['access_token']);
 
-        Queue::assertPushed(\App\Jobs\ProcessUserCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\ProcessUserCreate::class, function ($job) use ($data) {
+        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->email === \strtolower($data['login'] . '@' . $data['domain']);
@@ -512,15 +512,15 @@ class SignupTest extends TestCase
         $this->assertTrue(!empty($result['expires_in']) && is_int($result['expires_in']) && $result['expires_in'] > 0);
         $this->assertNotEmpty($result['access_token']);
 
-        Queue::assertPushed(\App\Jobs\ProcessDomainCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\ProcessDomainCreate::class, function ($job) use ($domain) {
+        Queue::assertPushed(\App\Jobs\DomainCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\DomainCreate::class, function ($job) use ($domain) {
             $job_domain = TestCase::getObjectProperty($job, 'domain');
 
             return $job_domain->namespace === $domain;
         });
 
-        Queue::assertPushed(\App\Jobs\ProcessUserCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\ProcessUserCreate::class, function ($job) use ($data) {
+        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->email === $data['login'] . '@' . $data['domain'];

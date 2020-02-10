@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Jobs;
 
-use App\Jobs\ProcessDomainCreate;
+use App\Jobs\DomainCreate;
 use App\Domain;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -40,7 +40,7 @@ class DomainCreateTest extends TestCase
             ->with($domain)
             ->andReturn(null);
 
-        $job = new ProcessDomainCreate($domain);
+        $job = new DomainCreate($domain);
         $job->handle();
 
         $this->assertTrue($domain->fresh()->isLdapReady());

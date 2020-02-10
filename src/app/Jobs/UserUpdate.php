@@ -3,21 +3,20 @@
 namespace App\Jobs;
 
 use App\Backends\LDAP;
-use App\Domain;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 
-class ProcessDomainCreate implements ShouldQueue
+class UserUpdate implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
 
-    protected $domain;
+    protected $user;
 
     public $tries = 5;
 
@@ -27,13 +26,13 @@ class ProcessDomainCreate implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param Domain $domain The domain to create.
+     * @param \App\User $user The user for which to process the update.
      *
      * @return void
      */
-    public function __construct(Domain $domain)
+    public function __construct(\App\User $user)
     {
-        $this->domain = $domain;
+        $this->user = $user;
     }
 
     /**
@@ -43,11 +42,6 @@ class ProcessDomainCreate implements ShouldQueue
      */
     public function handle()
     {
-        if (!$this->domain->isLdapReady()) {
-            LDAP::createDomain($this->domain);
-
-            $this->domain->status |= Domain::STATUS_LDAP_READY;
-            $this->domain->save();
-        }
+        LDAP::updateUser($this->user);
     }
 }

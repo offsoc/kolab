@@ -309,8 +309,8 @@ class PasswordResetTest extends TestCase
         $this->assertTrue(!empty($json['expires_in']) && is_int($json['expires_in']) && $json['expires_in'] > 0);
         $this->assertNotEmpty($json['access_token']);
 
-        Queue::assertPushed(\App\Jobs\ProcessUserUpdate::class, 1);
-        Queue::assertPushed(\App\Jobs\ProcessUserUpdate::class, function ($job) use ($user) {
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 1);
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->id === $user->id
