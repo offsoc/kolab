@@ -5,6 +5,7 @@ namespace Tests\Browser;
 use App\Domain;
 use App\User;
 use Tests\Browser\Components\Error;
+use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Domain as DomainPage;
 use Tests\Browser\Pages\Home;
 use Tests\DuskTestCase;
@@ -74,7 +75,12 @@ class DomainTest extends DuskTestCase
                 ->whenAvailable('@config', function (Browser $browser) use ($domain) {
                     $browser->assertSeeIn('pre', $domain->namespace);
                 })
-                ->assertMissing('@verify');
+                ->assertMissing('@verify')
+                ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
+                    $browser->assertToastTitle('')
+                        ->assertToastMessage('Domain verified successfully')
+                        ->closeToast();
+                });
 
             // Check that confirmed domain page contains only the config box
             $browser->visit('/domain/' . $domain->id)

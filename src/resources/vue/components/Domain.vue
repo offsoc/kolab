@@ -74,6 +74,7 @@
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.is_confirmed = true
+                            this.$toastr('success', response.data.message)
                         }
                     })
             }

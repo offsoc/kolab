@@ -64,6 +64,7 @@ class DomainsTest extends TestCase
         $json = $response->json();
 
         $this->assertEquals('success', $json['status']);
+        $this->assertEquals('Domain verified successfully', $json['message']);
     }
 
     /**

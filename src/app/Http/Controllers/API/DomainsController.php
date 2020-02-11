@@ -49,7 +49,10 @@ class DomainsController extends Controller
             return response()->json(['status' => 'error']);
         }
 
-        return response()->json(['status' => 'success']);
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.domain-verify-success'),
+        ]);
     }
 
     /**
