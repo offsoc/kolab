@@ -48,6 +48,10 @@
                 app_url: window.config['app.url'],
             }
         },
+        mounted() {
+            // On mobile close the menu when the menu item is clicked
+            $('#navbar').on('click', function() { $(this).removeClass('show') })
+        },
         computed: {
             logged_in() { return this.$store.state.isLoggedIn },
             route() { return this.$route.name }

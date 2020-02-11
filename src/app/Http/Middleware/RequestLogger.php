@@ -18,7 +18,8 @@ class RequestLogger
             $method = $request->getMethod();
 
             \Log::debug("C: $method $url -> " . var_export($request->bearerToken(), true));
-            \Log::debug("S: " . var_export($response->getContent(), true));
+            // On error response this is so noisy that makes the log unusable
+            // \Log::debug("S: " . var_export($response->getContent(), true));
         }
     }
 }

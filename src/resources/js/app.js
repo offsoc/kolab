@@ -135,5 +135,5 @@ const app = new Vue({
 
 Vue.use(VueToastr, {
     defaultPosition: 'toast-bottom-right',
-    defaultTimeout: 50000
+    defaultTimeout: 5000
 })

@@ -3,6 +3,7 @@
 namespace Tests\Browser;
 
 use Tests\Browser\Components\Menu;
+use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\DuskTestCase;
@@ -14,10 +15,8 @@ class LogonTest extends DuskTestCase
 
     /**
      * Test menu on logon page
-     *
-     * @return void
      */
-    public function testLogonMenu()
+    public function testLogonMenu(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home());
@@ -29,10 +28,8 @@ class LogonTest extends DuskTestCase
 
     /**
      * Test redirect to /login if user is unauthenticated
-     *
-     * @return void
      */
-    public function testLogonRedirect()
+    public function testLogonRedirect(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/dashboard');
@@ -45,10 +42,8 @@ class LogonTest extends DuskTestCase
 
     /**
      * Logon with wrong password/user test
-     *
-     * @return void
      */
-    public function testLogonWrongCredentials()
+    public function testLogonWrongCredentials(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
@@ -63,10 +58,8 @@ class LogonTest extends DuskTestCase
 
     /**
      * Successful logon test
-     *
-     * @return void
      */
-    public function testLogonSuccessful()
+    public function testLogonSuccessful(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
@@ -85,20 +78,18 @@ class LogonTest extends DuskTestCase
      * Logout test
      *
      * @depends testLogonSuccessful
-     * @return void
      */
-    public function testLogout()
+    public function testLogout(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->on(new Dashboard());
 
-            // FIXME: Here we're testing click on Logout button
-            //        We should also test if accessing /Logout url has the same effect
+            // Click the Logout button
             $browser->within(new Menu(), function ($browser) {
                 $browser->click('.link-logout');
             });
 
-            // We expect the logoon page
+            // We expect the logon page
             $browser->waitForLocation('/login')
                 ->on(new Home());
 
@@ -107,7 +98,43 @@ class LogonTest extends DuskTestCase
                 $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
             });
 
-            // TODO: Test if the session is really destroyed
+            // Success toast message
+            $browser->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
+                $browser->assertToastTitle('')
+                    ->assertToastMessage('Successfully logged out')
+                    ->closeToast();
+            });
+        });
+    }
+
+    /**
+     * Logout by URL test
+     */
+    public function testLogoutByURL(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new Home())
+                ->submitLogon('john@kolab.org', 'simple123', true);
+
+            // Checks if we're really on Dashboard page
+            $browser->on(new Dashboard());
+
+            // Use /logout url, and expect the logon page
+            $browser->visit('/logout')
+                ->waitForLocation('/login')
+                ->on(new Home());
+
+            // with default menu
+            $browser->within(new Menu(), function ($browser) {
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+            });
+
+            // Success toast message
+            $browser->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
+                $browser->assertToastTitle('')
+                    ->assertToastMessage('Successfully logged out')
+                    ->closeToast();
+            });
         });
     }
 }

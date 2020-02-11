@@ -56,16 +56,45 @@ class UsersTest extends TestCase
         $response->assertStatus(404);
     }
 
-    public function testLogin(): void
+    public function testLogin(): string
     {
-        // TODO
-        $this->markTestIncomplete();
+        $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
+        $response = $this->post("api/auth/login", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertTrue(!empty($json['access_token']));
+        $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
+        $this->assertEquals('bearer', $json['token_type']);
+
+        return $json['access_token'];
     }
 
-    public function testLogout(): void
+    /**
+     * Test /api/auth/logout
+     *
+     * @depends testLogin
+     */
+    public function testLogout($token): void
     {
-        // TODO
-        $this->markTestIncomplete();
+        // Request with no token, testing that it requires auth
+        // TODO: This throws some errors and returns unexpected code 500
+        // $response = $this->post("api/auth/logout");
+        // $response->assertStatus(401);
+
+        // Request with valid token
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->post("api/auth/logout");
+
+        $json = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertEquals('success', $json['status']);
+        $this->assertEquals('Successfully logged out', $json['message']);
+
+        // Check if it really destroyed the token?
+        // TODO: This throws some errors and returns unexpected code 500
+        // $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->get("api/auth/info");
+        // $response->assertStatus(401);
     }
 
     public function testRefresh(): void
