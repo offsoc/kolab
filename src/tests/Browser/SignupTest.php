@@ -6,6 +6,7 @@ use App\Domain;
 use App\SignupCode;
 use App\User;
 use Tests\Browser\Components\Menu;
+use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Signup;
 use Tests\DuskTestCase;
@@ -55,9 +56,12 @@ class SignupTest extends DuskTestCase
 
             // FIXME: User will not be able to continue anyway, so we should
             //        either display 1st step or 404 error page
-            $browser->waitFor('@step1');
-            $browser->waitFor('.toast-error');
-            $browser->click('.toast-error'); // remove the toast
+            $browser->waitFor('@step1')
+                ->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
+                    $browser->assertToastTitle('Error')
+                        ->assertToastMessage('Form validation error')
+                        ->closeToast();
+                });
         });
 
         // Test valid code
@@ -174,14 +178,17 @@ class SignupTest extends DuskTestCase
             // Submit invalid email
             // We expect email input to have is-invalid class added, with .invalid-feedback element
             $browser->with('@step1', function ($step) use ($browser) {
-                $step->type('#signup_name', 'Test User');
-                $step->type('#signup_email', '@test');
-                $step->click('[type=submit]');
+                $step->type('#signup_name', 'Test User')
+                    ->type('#signup_email', '@test')
+                    ->click('[type=submit]')
+                    ->waitFor('#signup_email.is-invalid')
+                    ->assertVisible('#signup_email + .invalid-feedback');
 
-                $step->waitFor('#signup_email.is-invalid');
-                $step->waitFor('#signup_email + .invalid-feedback');
-                $browser->waitFor('.toast-error');
-                $browser->click('.toast-error'); // remove the toast
+                $browser->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
+                    $browser->assertToastTitle('Error')
+                        ->assertToastMessage('Form validation error')
+                        ->closeToast();
+                });
             });
 
             // Submit valid data
@@ -244,13 +251,15 @@ class SignupTest extends DuskTestCase
                 $step->type('#signup_short_code', 'XXXXX');
                 $step->click('[type=submit]');
 
-                $browser->waitFor('.toast-error');
+                $step->waitFor('#signup_short_code.is-invalid')
+                    ->assertVisible('#signup_short_code + .invalid-feedback')
+                    ->assertFocused('#signup_short_code');
 
-                $step->assertVisible('#signup_short_code.is-invalid');
-                $step->assertVisible('#signup_short_code + .invalid-feedback');
-                $step->assertFocused('#signup_short_code');
-
-                $browser->click('.toast-error'); // remove the toast
+                $browser->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
+                    $browser->assertToastTitle('Error')
+                        ->assertToastMessage('Form validation error')
+                        ->closeToast();
+                });
             });
 
             // Submit valid code
@@ -327,40 +336,39 @@ class SignupTest extends DuskTestCase
 
             // Submit invalid data
             $browser->with('@step3', function ($step) use ($browser) {
-                $step->assertFocused('#signup_login');
+                $step->assertFocused('#signup_login')
+                    ->type('#signup_login', '*')
+                    ->type('#signup_password', '12345678')
+                    ->type('#signup_confirm', '123456789')
+                    ->click('[type=submit]')
+                    ->waitFor('#signup_login.is-invalid')
+                    ->assertVisible('#signup_domain + .invalid-feedback')
+                    ->assertVisible('#signup_password.is-invalid')
+                    ->assertVisible('#signup_password + .invalid-feedback')
+                    ->assertFocused('#signup_login');
 
-                $step->type('#signup_login', '*');
-                $step->type('#signup_password', '12345678');
-                $step->type('#signup_confirm', '123456789');
-
-                $step->click('[type=submit]');
-
-                $browser->waitFor('.toast-error');
-
-                $step->assertVisible('#signup_login.is-invalid');
-                $step->assertVisible('#signup_domain + .invalid-feedback');
-                $step->assertVisible('#signup_password.is-invalid');
-                $step->assertVisible('#signup_password + .invalid-feedback');
-                $step->assertFocused('#signup_login');
-
-                $browser->click('.toast-error'); // remove the toast
+                $browser->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
+                    $browser->assertToastTitle('Error')
+                        ->assertToastMessage('Form validation error')
+                        ->closeToast();
+                });
             });
 
             // Submit invalid data (valid login, invalid password)
             $browser->with('@step3', function ($step) use ($browser) {
-                $step->type('#signup_login', 'SignupTestDusk');
+                $step->type('#signup_login', 'SignupTestDusk')
+                    ->click('[type=submit]')
+                    ->waitFor('#signup_password.is-invalid')
+                    ->assertVisible('#signup_password + .invalid-feedback')
+                    ->assertMissing('#signup_login.is-invalid')
+                    ->assertMissing('#signup_domain + .invalid-feedback')
+                    ->assertFocused('#signup_password');
 
-                $step->click('[type=submit]');
-
-                $browser->waitFor('.toast-error');
-
-                $step->assertVisible('#signup_password.is-invalid');
-                $step->assertVisible('#signup_password + .invalid-feedback');
-                $step->assertMissing('#signup_login.is-invalid');
-                $step->assertMissing('#signup_domain + .invalid-feedback');
-                $step->assertFocused('#signup_password');
-
-                $browser->click('.toast-error'); // remove the toast
+                $browser->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
+                    $browser->assertToastTitle('Error')
+                        ->assertToastMessage('Form validation error')
+                        ->closeToast();
+                });
             });
 
             // Submit valid data
@@ -443,17 +451,18 @@ class SignupTest extends DuskTestCase
                     ->type('#signup_domain', 'test.com')
                     ->type('#signup_password', '12345678')
                     ->type('#signup_confirm', '123456789')
-                    ->click('[type=submit]');
-
-                $browser->waitFor('.toast-error');
-
-                $step->assertVisible('#signup_login.is-invalid')
+                    ->click('[type=submit]')
+                    ->waitFor('#signup_login.is-invalid')
                     ->assertVisible('#signup_domain + .invalid-feedback')
                     ->assertVisible('#signup_password.is-invalid')
                     ->assertVisible('#signup_password + .invalid-feedback')
                     ->assertFocused('#signup_login');
 
-                $browser->click('.toast-error'); // remove the toast
+                $browser->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
+                    $browser->assertToastTitle('Error')
+                        ->assertToastMessage('Form validation error')
+                        ->closeToast();
+                });
             });
 
             // Submit invalid domain
@@ -462,17 +471,18 @@ class SignupTest extends DuskTestCase
                     ->type('#signup_domain', 'aaa')
                     ->type('#signup_password', '12345678')
                     ->type('#signup_confirm', '12345678')
-                    ->click('[type=submit]');
-
-                $browser->waitFor('.toast-error');
-
-                $step->assertMissing('#signup_login.is-invalid')
+                    ->click('[type=submit]')
+                    ->waitUntilMissing('#signup_login.is-invalid')
                     ->assertVisible('#signup_domain.is-invalid + .invalid-feedback')
                     ->assertMissing('#signup_password.is-invalid')
                     ->assertMissing('#signup_password + .invalid-feedback')
                     ->assertFocused('#signup_domain');
 
-                $browser->click('.toast-error'); // remove the toast
+                $browser->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
+                    $browser->assertToastTitle('Error')
+                        ->assertToastMessage('Form validation error')
+                        ->closeToast();
+                });
             });
 
             // Submit invalid domain
@@ -481,11 +491,10 @@ class SignupTest extends DuskTestCase
                     ->click('[type=submit]');
             });
 
-            $browser->waitUntilMissing('@step3');
-
             // At this point we should be auto-logged-in to dashboard
-            $dashboard = new Dashboard();
-            $dashboard->assert($browser);
+            $browser->waitUntilMissing('@step3')
+                ->waitUntilMissing('.app-loader')
+                ->on(new Dashboard());
 
             // FIXME: Is it enough to be sure user is logged in?
             $browser->click('a.link-logout');
