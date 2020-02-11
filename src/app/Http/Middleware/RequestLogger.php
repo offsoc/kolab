@@ -13,12 +13,12 @@ class RequestLogger
 
     public function terminate($request, $response)
     {
-        if (env('ENVIRONMENT', 'production') != 'production') {
+        if (\config('env') != 'production') {
             $url = $request->fullUrl();
             $method = $request->getMethod();
 
-            error_log("C: $method $url -> " . var_export($request->bearerToken(), true));
-            error_log("S: " . var_export($response->getContent(), true));
+            \Log::debug("C: $method $url -> " . var_export($request->bearerToken(), true));
+            \Log::debug("S: " . var_export($response->getContent(), true));
         }
     }
 }
