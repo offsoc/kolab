@@ -18,10 +18,10 @@
 
                 axios.get('/api/auth/info')
                     .then(response => {
-                        this.$store.state.authInfo = response.data
                         this.isLoading = false
                         this.$root.stopLoading()
                         this.$root.loginUser(token, false)
+                        this.$store.state.authInfo = response.data
                     })
                     .catch(error => {
                         this.isLoading = false

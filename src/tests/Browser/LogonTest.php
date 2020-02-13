@@ -71,6 +71,8 @@ class LogonTest extends DuskTestCase
             $browser->within(new Menu(), function ($browser) {
                 $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
             });
+
+            $browser->assertVue('data.email', 'john@kolab.org', '@dashboard-component');
         });
     }
 

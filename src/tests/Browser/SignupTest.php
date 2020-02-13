@@ -378,16 +378,13 @@ class SignupTest extends DuskTestCase
                 $step->click('[type=submit]');
             });
 
-            $browser->waitUntilMissing('@step3');
-
             // At this point we should be auto-logged-in to dashboard
-            $dashboard = new Dashboard();
-            $dashboard->assert($browser);
-
-            // FIXME: Is it enough to be sure user is logged in?
+            $browser->waitUntilMissing('@step3')
+                ->waitUntilMissing('.app-loader')
+                ->on(new Dashboard())
+                ->assertVue('data.email', 'signuptestdusk@' . \config('app.domain'), '@dashboard-component');
 
             // Logout the user
-            // TODO: Test what happens if you goto /signup with active session
             $browser->click('a.link-logout');
         });
     }
@@ -494,9 +491,9 @@ class SignupTest extends DuskTestCase
             // At this point we should be auto-logged-in to dashboard
             $browser->waitUntilMissing('@step3')
                 ->waitUntilMissing('.app-loader')
-                ->on(new Dashboard());
+                ->on(new Dashboard())
+                ->assertVue('data.email', 'admin@user-domain-signup.com', '@dashboard-component');
 
-            // FIXME: Is it enough to be sure user is logged in?
             $browser->click('a.link-logout');
         });
     }

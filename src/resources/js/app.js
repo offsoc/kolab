@@ -81,6 +81,7 @@ const app = new Vue({
         },
         // Set user state to "logged in"
         loginUser(token, dashboard) {
+            store.commit('logoutUser') // destroy old state data
             store.commit('loginUser')
             localStorage.setItem('token', token)
             axios.defaults.headers.common.Authorization = 'Bearer ' + token

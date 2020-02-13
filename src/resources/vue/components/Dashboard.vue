@@ -1,13 +1,5 @@
 <template>
-    <div class="container">
-        <div v-if="!$root.isLoading" id="dashboard-box" class="card">
-            <div class="card-body">
-                <div class="card-title">Dashboard</div>
-                <div class="card-text">
-                    <pre>{{ data }}</pre>
-                </div>
-            </div>
-        </div>
+    <div class="container" dusk="dashboard-component">
         <div v-if="!$root.isLoading" id="status-box" class="card">
             <div class="card-body">
                 <div class="card-title">Status</div>
@@ -22,6 +14,14 @@
                 </div>
             </div>
         </div>
+        <div v-if="!$root.isLoading" id="dashboard-box" class="card">
+            <div class="card-body">
+                <div class="card-title">Dashboard</div>
+                <div class="card-text">
+                    <pre>{{ data }}</pre>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -29,7 +29,7 @@
     export default {
         data() {
             return {
-                data: [],
+                data: {},
                 statusProcess: []
             }
         },
