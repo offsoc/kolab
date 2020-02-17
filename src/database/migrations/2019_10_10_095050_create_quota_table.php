@@ -16,7 +16,7 @@ class CreateQuotaTable extends Migration
         Schema::create('quotas', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('user_id');
-            $table->integer('value')->default(2147483648);
+            $table->unsignedInteger('value')->default(2147483648);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
