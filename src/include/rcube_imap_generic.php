@@ -1514,6 +1514,8 @@ class rcube_imap_generic
             $args[] = '(' . implode(' ', $select_opts) . ')';
         }
 
+        $lstatus = false;
+
         $args[] = $this->escape($ref);
         $args[] = $this->escape($mailbox);
 
