@@ -78,23 +78,25 @@ class UsersTest extends TestCase
     public function testLogout($token): void
     {
         // Request with no token, testing that it requires auth
-        // TODO: This throws some errors and returns unexpected code 500
-        // $response = $this->post("api/auth/logout");
-        // $response->assertStatus(401);
+        $response = $this->post("api/auth/logout");
+        $response->assertStatus(401);
+
+        // Test the same using JSON mode
+        $response = $this->json('POST', "api/auth/logout", []);
+        $response->assertStatus(401);
 
         // Request with valid token
         $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->post("api/auth/logout");
+        $response->assertStatus(200);
 
         $json = $response->json();
 
-        $response->assertStatus(200);
         $this->assertEquals('success', $json['status']);
         $this->assertEquals('Successfully logged out', $json['message']);
 
         // Check if it really destroyed the token?
-        // TODO: This throws some errors and returns unexpected code 500
-        // $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->get("api/auth/info");
-        // $response->assertStatus(401);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->get("api/auth/info");
+        $response->assertStatus(401);
     }
 
     public function testRefresh(): void

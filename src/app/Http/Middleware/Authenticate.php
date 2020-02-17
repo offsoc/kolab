@@ -15,8 +15,12 @@ class Authenticate extends Middleware
      */
     protected function redirectTo($request)
     {
-        if (! $request->expectsJson()) {
-            return route('login');
-        }
+        // We might want to redirect the user to the login route,
+        // however, I think we should not, as we're using API routes only.
+        // Unauthenticated state response is handled in app/Exceptions/Handler.php
+
+        // if (! $request->expectsJson()) {
+        //     return route('login');
+        // }
     }
 }
