@@ -49,9 +49,14 @@ class LogonTest extends DuskTestCase
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'wrong');
 
+            // Error message
+            $browser->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
+                $browser->assertToastTitle('Error')
+                    ->assertToastMessage('Invalid username or password.')
+                    ->closeToast();
+            });
+
             // Checks if we're still on the logon page
-            // FIXME: This assertion might be prone to timing issues
-            // I guess we should wait until some error message appears
             $browser->on(new Home());
         });
     }

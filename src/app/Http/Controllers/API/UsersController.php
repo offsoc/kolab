@@ -91,13 +91,26 @@ class UsersController extends Controller
      */
     public function login(Request $request)
     {
+        $v = Validator::make(
+            $request->all(),
+            [
+                'email' => 'required|min:2',
+                'password' => 'required|min:4',
+            ]
+        );
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+
         $credentials = $request->only('email', 'password');
 
         if ($token = $this->guard()->attempt($credentials)) {
             return $this->respondWithToken($token);
         }
 
-        return response()->json(['error' => 'Unauthorized'], 401);
+        return response()->json(['status' => 'error', 'message' => __('auth.failed')], 401);
     }
 
     /**

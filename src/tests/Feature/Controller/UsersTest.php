@@ -58,6 +58,27 @@ class UsersTest extends TestCase
 
     public function testLogin(): string
     {
+        // Request with no data
+        $response = $this->post("api/auth/login", []);
+        $response->assertStatus(422);
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json['errors']);
+        $this->assertArrayHasKey('email', $json['errors']);
+        $this->assertArrayHasKey('password', $json['errors']);
+
+        // Request with invalid password
+        $post = ['email' => 'john@kolab.org', 'password' => 'wrong'];
+        $response = $this->post("api/auth/login", $post);
+        $response->assertStatus(401);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('Invalid username or password.', $json['message']);
+
+        // Valid user+password
         $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
         $response = $this->post("api/auth/login", $post);
         $json = $response->json();
