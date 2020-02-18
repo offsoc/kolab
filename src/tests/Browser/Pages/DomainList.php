@@ -5,7 +5,7 @@ namespace Tests\Browser\Pages;
 use Laravel\Dusk\Browser;
 use Laravel\Dusk\Page;
 
-class Domain extends Page
+class DomainList extends Page
 {
     /**
      * Get the URL for the page.
@@ -14,7 +14,7 @@ class Domain extends Page
      */
     public function url(): string
     {
-        return '';
+        return '/domains';
     }
 
     /**
@@ -26,8 +26,9 @@ class Domain extends Page
      */
     public function assert(Browser $browser)
     {
-        $browser->waitUntilMissing('@app .app-loader')
-            ->assertPresent('@config,@verify');
+        $browser->assertPathIs($this->url())
+            ->waitUntilMissing('@app .app-loader')
+            ->assertSeeIn('@list .card-title', 'Domains List');
     }
 
     /**
@@ -39,8 +40,8 @@ class Domain extends Page
     {
         return [
             '@app' => '#app',
-            '@config' => '#domain-config',
-            '@verify' => '#domain-verify',
+            '@list' => '#domain-list',
+            '@table' => '#domain-list table',
         ];
     }
 }

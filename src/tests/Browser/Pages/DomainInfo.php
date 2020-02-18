@@ -5,29 +5,29 @@ namespace Tests\Browser\Pages;
 use Laravel\Dusk\Browser;
 use Laravel\Dusk\Page;
 
-class Dashboard extends Page
+class DomainInfo extends Page
 {
     /**
      * Get the URL for the page.
      *
      * @return string
      */
-    public function url()
+    public function url(): string
     {
-        return '/dashboard';
+        return '';
     }
 
     /**
      * Assert that the browser is on the page.
      *
-     * @param  \Laravel\Dusk\Browser  $browser
+     * @param \Laravel\Dusk\Browser $browser
+     *
      * @return void
      */
     public function assert(Browser $browser)
     {
-        $browser->assertPathIs('/dashboard')
-            ->waitUntilMissing('@app .app-loader')
-            ->assertSee('Dashboard');
+        $browser->waitUntilMissing('@app .app-loader')
+            ->assertPresent('@config,@verify');
     }
 
     /**
@@ -35,11 +35,12 @@ class Dashboard extends Page
      *
      * @return array
      */
-    public function elements()
+    public function elements(): array
     {
         return [
             '@app' => '#app',
-            '@links' => '#dashboard-nav',
+            '@config' => '#domain-config',
+            '@verify' => '#domain-verify',
         ];
     }
 }

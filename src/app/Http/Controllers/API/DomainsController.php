@@ -10,13 +10,22 @@ use Illuminate\Support\Facades\Auth;
 class DomainsController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Return a list of domains owned by the current user
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        //
+        $user = Auth::guard()->user();
+        $list = [];
+
+        foreach ($user->domains() as $domain) {
+            if (!$domain->isPublic()) {
+                $list[] = $domain->toArray();
+            }
+        }
+
+        return response()->json($list);
     }
 
     /**

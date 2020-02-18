@@ -4,7 +4,8 @@ import VueRouter from 'vue-router'
 Vue.use(VueRouter)
 
 import DashboardComponent from '../components/Dashboard'
-import DomainComponent from '../components/Domain'
+import DomainInfoComponent from '../components/Domain/Info'
+import DomainListComponent from '../components/Domain/List'
 import Error404Component from '../components/404'
 import LoginComponent from '../components/Login'
 import LogoutComponent from '../components/Logout'
@@ -27,7 +28,13 @@ const routes = [
     {
         path: '/domain/:domain',
         name: 'domain',
-        component: DomainComponent,
+        component: DomainInfoComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/domains',
+        name: 'domains',
+        component: DomainListComponent,
         meta: { requiresAuth: true }
     },
     {

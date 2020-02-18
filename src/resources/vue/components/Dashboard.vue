@@ -14,6 +14,9 @@
                 </div>
             </div>
         </div>
+        <p id="dashboard-nav">
+            <router-link class="link-domains" :to="{ name: 'domains' }">Domains</router-link>
+        </p>
         <div v-if="!$root.isLoading" id="dashboard-box" class="card">
             <div class="card-body">
                 <div class="card-title">Dashboard</div>

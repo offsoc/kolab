@@ -68,6 +68,32 @@ class DomainsTest extends TestCase
     }
 
     /**
+     * Test fetching domains list
+     */
+    public function testIndex(): void
+    {
+        // User with no domains
+        $user = $this->getTestUser('test1@domainscontroller.com');
+        $response = $this->actingAs($user)->get("api/v4/domains");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame([], $json);
+
+        // User with custom domain(s)
+        $user = $this->getTestUser('john@kolab.org');
+
+        $response = $this->actingAs($user)->get("api/v4/domains");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSame('kolab.org', $json[0]['namespace']);
+    }
+
+    /**
      * Test fetching domain info
      */
     public function testShow(): void
