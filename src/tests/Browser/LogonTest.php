@@ -78,6 +78,19 @@ class LogonTest extends DuskTestCase
             });
 
             $browser->assertVue('data.email', 'john@kolab.org', '@dashboard-component');
+
+            // TODO: Verify dashboard content
+
+            // Goto /domains and assert that the link on logo element
+            // leads to the dashboard
+            $browser->visit('/domains')
+                ->waitForText('Domains List')
+                ->click('a.navbar-brand')
+                ->on(new Dashboard());
+
+            // Test that visiting '/' with logged in user does not open logon form
+            // but "redirects" to the dashboard
+            $browser->visit('/')->on(new Dashboard());
         });
     }
 

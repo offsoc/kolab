@@ -17,7 +17,7 @@ import store from './store'
 const routes = [
     {
         path: '/',
-        redirect: { name: 'login' }
+        redirect: { name: 'dashboard' }
     },
     {
         path: '/dashboard',

@@ -14,7 +14,7 @@ class Home extends Page
      */
     public function url()
     {
-        return '/';
+        return '/login';
     }
 
     /**
@@ -25,8 +25,8 @@ class Home extends Page
      */
     public function assert(Browser $browser)
     {
-        $browser->assertPathIs('/login');
-        $browser->assertVisible('form.form-signin');
+        $browser->assertPathIs($this->url())
+            ->assertVisible('form.form-signin');
     }
 
     /**
