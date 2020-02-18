@@ -28,7 +28,7 @@ class DomainList extends Page
     {
         $browser->assertPathIs($this->url())
             ->waitUntilMissing('@app .app-loader')
-            ->assertSeeIn('@list .card-title', 'Domains List');
+            ->assertSeeIn('@list .card-title', 'Domains');
     }
 
     /**

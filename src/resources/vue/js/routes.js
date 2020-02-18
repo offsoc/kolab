@@ -11,6 +11,8 @@ import LoginComponent from '../components/Login'
 import LogoutComponent from '../components/Logout'
 import PasswordResetComponent from '../components/PasswordReset'
 import SignupComponent from '../components/Signup'
+import UserInfoComponent from '../components/User/Info'
+import UserListComponent from '../components/User/List'
 
 import store from './store'
 
@@ -56,6 +58,18 @@ const routes = [
         path: '/signup/:param?',
         name: 'signup',
         component: SignupComponent
+    },
+    {
+        path: '/user/:user',
+        name: 'user',
+        component: UserInfoComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/users',
+        name: 'users',
+        component: UserListComponent,
+        meta: { requiresAuth: true }
     },
     {
         name: '404',

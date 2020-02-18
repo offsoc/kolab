@@ -1,19 +1,19 @@
 <template>
     <div class="container">
-        <div class="card" id="domain-list">
+        <div class="card" id="user-list">
             <div class="card-body">
-                <div class="card-title">Domains</div>
+                <div class="card-title">User Accounts</div>
                 <div class="card-text">
                     <table class="table table-hover">
                         <thead class="thead-light">
                             <tr>
-                                <th scope="col">Name</th>
+                                <th scope="col">Primary Email</th>
                                 <th scope="col"></th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="domain in domains">
-                                <td><router-link :to="{ path: 'domain/' + domain.id }">{{ domain.namespace }}</router-link></td>
+                            <tr v-for="user in users">
+                                <td><router-link :to="{ path: 'user/' + user.id }">{{ user.email }}</router-link></td>
                                 <td></td>
                             </tr>
                         </tbody>
@@ -28,13 +28,13 @@
     export default {
         data() {
             return {
-                domains: []
+                users: []
             }
         },
         created() {
-            axios.get('/api/v4/domains')
+            axios.get('/api/v4/users')
                 .then(response => {
-                    this.domains = response.data
+                    this.users = response.data
                 })
                 .catch(error => {
                     this.$root.errorPage(error.response.status, error.response.statusText)
