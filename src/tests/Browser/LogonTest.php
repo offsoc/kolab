@@ -84,7 +84,7 @@ class LogonTest extends DuskTestCase
             // Goto /domains and assert that the link on logo element
             // leads to the dashboard
             $browser->visit('/domains')
-                ->waitForText('Domains List')
+                ->waitForText('Domains')
                 ->click('a.navbar-brand')
                 ->on(new Dashboard());
 

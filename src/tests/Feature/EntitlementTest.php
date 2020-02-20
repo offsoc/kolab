@@ -119,10 +119,10 @@ class EntitlementTest extends TestCase
         $this->assertSame($wallet->id, $e_wallet->id);
 
         $e_owner = $entitlement->owner;
-        $this->assertSame($user->id, $e_owner->id);
+        $this->assertEquals($user->id, $e_owner->id);
 
         $e_entitleable = $entitlement->entitleable;
-        $this->assertSame($user->id, $e_entitleable->id);
+        $this->assertEquals($user->id, $e_entitleable->id);
         $this->assertTrue($e_entitleable instanceof \App\User);
     }
 }

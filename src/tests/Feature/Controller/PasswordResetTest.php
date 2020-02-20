@@ -124,7 +124,7 @@ class PasswordResetTest extends TestCase
         Queue::assertPushed(\App\Jobs\PasswordResetEmail::class, function ($job) use ($user, &$code, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
-            return $code->user->id === $user->id && $code->code == $json['code'];
+            return $code->user->id == $user->id && $code->code == $json['code'];
         });
 
         return [
@@ -314,8 +314,8 @@ class PasswordResetTest extends TestCase
         Queue::assertPushed(\App\Jobs\UserUpdate::class, function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
-            return $job_user->id === $user->id
-                && $job_user->email === $user->email
+            return $job_user->id == $user->id
+                && $job_user->email == $user->email
                 && $job_user->password_ldap != $user->password_ldap;
         });
 

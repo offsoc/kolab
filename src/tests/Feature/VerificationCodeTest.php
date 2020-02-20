@@ -46,7 +46,7 @@ class VerificationCodeTest extends TestCase
         $this->assertTrue(strlen($code->code) === VerificationCode::CODE_LENGTH);
         $this->assertTrue(strlen($code->short_code) === $code_length);
         $this->assertSame($data['mode'], $code->mode);
-        $this->assertSame($user->id, $code->user->id);
+        $this->assertEquals($user->id, $code->user->id);
         $this->assertInstanceOf(\DateTime::class, $code->expires_at);
         $this->assertSame($code_exp_hrs, $code->expires_at->diff($now)->h + 1);
 
