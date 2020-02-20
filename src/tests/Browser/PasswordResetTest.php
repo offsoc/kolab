@@ -15,8 +15,6 @@ class PasswordResetTest extends DuskTestCase
 {
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function setUp(): void
     {
@@ -27,8 +25,6 @@ class PasswordResetTest extends DuskTestCase
 
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function tearDown(): void
     {
@@ -39,10 +35,8 @@ class PasswordResetTest extends DuskTestCase
 
     /**
      * Test the link from logon to password-reset page
-     *
-     * @return void
      */
-    public function testPasswordResetLinkOnLogon()
+    public function testPasswordResetLinkOnLogon(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home());
@@ -57,10 +51,8 @@ class PasswordResetTest extends DuskTestCase
 
     /**
      * Test 1st step of password-reset
-     *
-     * @return void
      */
-    public function testPasswordResetStep1()
+    public function testPasswordResetStep1(): void
     {
         $user = $this->getTestUser('passwordresettestdusk@' . \config('app.domain'));
         $user->setSetting('external_email', 'external@domain.tld');
@@ -114,10 +106,12 @@ class PasswordResetTest extends DuskTestCase
      * Test 2nd Step of the password reset process
      *
      * @depends testPasswordResetStep1
-     * @return void
      */
-    public function testPasswordResetStep2()
+    public function testPasswordResetStep2(): void
     {
+        $user = $this->getTestUser('passwordresettestdusk@' . \config('app.domain'));
+        $user->setSetting('external_email', 'external@domain.tld');
+
         $this->browse(function (Browser $browser) {
             $browser->assertVisible('@step2');
 
@@ -186,10 +180,12 @@ class PasswordResetTest extends DuskTestCase
      * Test 3rd Step of the password reset process
      *
      * @depends testPasswordResetStep2
-     * @return void
      */
-    public function testPasswordResetStep3()
+    public function testPasswordResetStep3(): void
     {
+        $user = $this->getTestUser('passwordresettestdusk@' . \config('app.domain'));
+        $user->setSetting('external_email', 'external@domain.tld');
+
         $this->browse(function (Browser $browser) {
             $browser->assertVisible('@step3');
 
