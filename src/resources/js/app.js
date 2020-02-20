@@ -130,6 +130,15 @@ const app = new Vue({
 
             $('#app').children(':not(nav)').remove()
             $('#app').append(error_page)
+        },
+        errorHandler(error) {
+            this.stopLoading()
+
+            if (error.response.status === 401) {
+                this.logoutUser()
+            } else {
+                this.errorPage(error.response.status, error.response.statusText)
+            }
         }
     }
 })

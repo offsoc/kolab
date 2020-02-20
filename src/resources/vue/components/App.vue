@@ -24,12 +24,10 @@
                         this.$store.state.authInfo = response.data
                     })
                     .catch(error => {
+                        // Release lock on the router-view, otherwise links (e.g. Logout) will not work
+                        // FIXME: This causes dashboard to call /api/auth/info again
                         this.isLoading = false
-                        this.$root.stopLoading()
-
-                        if (error.response.status === 401 || error.response.status === 403) {
-                            this.$root.logoutUser()
-                        }
+                        this.$root.errorHandler(error)
                     })
             } else {
                 this.$root.stopLoading()

@@ -36,9 +36,7 @@
                 .then(response => {
                     this.users = response.data
                 })
-                .catch(error => {
-                    this.$root.errorPage(error.response.status, error.response.statusText)
-                })
+                .catch(this.$root.errorHandler)
         }
     }
 </script>

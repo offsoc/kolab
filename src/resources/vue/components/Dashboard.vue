@@ -52,10 +52,7 @@
                         this.parseStatusInfo(response.data.statusInfo)
                         this.$root.stopLoading()
                     })
-                    .catch(error => {
-                        // TODO: what should happen on error here?
-                        this.$root.stopLoading()
-                    })
+                    .catch(this.$root.errorHandler)
             }
         },
         methods: {

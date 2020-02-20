@@ -59,9 +59,7 @@
                             $('#domain-verify button').focus()
                         }
                     })
-                    .catch(error => {
-                        this.$root.errorPage(error.response.status, error.response.statusText)
-                    })
+                    .catch(this.$root.errorHandler)
             } else {
                 this.$root.errorPage(404)
             }
