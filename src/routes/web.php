@@ -15,5 +15,5 @@
 // we have client-side router (including 404 error handler).
 // This way we don't have to define any "deep link" routes here.
 Route::fallback(function () {
-    return view('root');
+    return view('root')->with('env', \App\Utils::uiEnv());
 });

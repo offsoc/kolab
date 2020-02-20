@@ -16,7 +16,7 @@
             @yield('content')
         </div>
 
-        <script>window.config = {!! json_encode(app('config')->getMany(['app.name', 'app.url', 'app.domain'])) !!}</script>
+        <script>window.config = {!! json_encode($env) !!}</script>
         <script src="{{ asset('js/app.js') }}" defer></script>
     </body>
 </html>

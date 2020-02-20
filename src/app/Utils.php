@@ -75,4 +75,23 @@ class Utils
         // is passed, but index is not changed)
         self::combine($input, $r, $index, $data, $i + 1, $output);
     }
+
+    /**
+     * Create a configuration/environment data to be passed to
+     * the UI
+     *
+     * @todo For a lack of better place this is put here for now
+     *
+     * @return array Configuration data
+     */
+    public static function uiEnv(): array
+    {
+        $opts = ['app.name', 'app.url', 'app.domain'];
+        $env = \app('config')->getMany($opts);
+
+        $countries = include resource_path('countries.php');
+        $env['countries'] = $countries ?: [];
+
+        return $env;
+    }
 }
