@@ -10,16 +10,13 @@ use Illuminate\Database\Eloquent\Model;
  * The eloquent definition of a wallet -- a container with a chunk of change.
  *
  * A wallet is owned by an {@link \App\User}.
+ *
+ * @property integer $balance
  */
 class Wallet extends Model
 {
     use NullableFields;
 
-    /**
-        Our table name for the shall be 'wallet'.
-
-        @var string
-     */
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -53,7 +50,7 @@ class Wallet extends Model
      */
     public function addController(User $user)
     {
-        if (!$this->controllers()->get()->contains($user)) {
+        if (!$this->controllers->contains($user)) {
             $this->controllers()->save($user);
         }
     }
@@ -67,7 +64,7 @@ class Wallet extends Model
      */
     public function removeController(User $user)
     {
-        if ($this->controllers()->get()->contains($user)) {
+        if ($this->controllers->contains($user)) {
             $this->controllers()->detach($user);
         }
     }
@@ -107,7 +104,7 @@ class Wallet extends Model
     /**
      * Controllers of this wallet.
      *
-     * @return \App\User[]
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function controllers()
     {
@@ -122,7 +119,7 @@ class Wallet extends Model
     /**
      * Entitlements billed to this wallet.
      *
-     * @return Entitlement[]
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function entitlements()
     {
@@ -132,7 +129,7 @@ class Wallet extends Model
     /**
      * The owner of the wallet -- the wallet is in his/her back pocket.
      *
-     * @return User
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function owner()
     {

@@ -13,6 +13,7 @@ class CreateQuotaTable extends Migration
      */
     public function up()
     {
+        /*
         Schema::create('quotas', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('user_id');
@@ -21,6 +22,7 @@ class CreateQuotaTable extends Migration
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
+        */
     }
 
     /**

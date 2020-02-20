@@ -12,7 +12,7 @@ class DomainsController extends Controller
     /**
      * Return a list of domains owned by the current user
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
@@ -31,7 +31,7 @@ class DomainsController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function create()
     {
@@ -43,7 +43,7 @@ class DomainsController extends Controller
      *
      * @param int $id Domain identifier
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse|void
      */
     public function confirm($id)
     {
@@ -69,7 +69,7 @@ class DomainsController extends Controller
      *
      * @param int $id
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
@@ -105,7 +105,7 @@ class DomainsController extends Controller
      *
      * @param int $id Domain identifier
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse|void
      */
     public function show($id)
     {
@@ -209,7 +209,7 @@ class DomainsController extends Controller
     /**
      * Check if the current user has access to the domain
      *
-     * @param \App\Domain Domain
+     * @param \App\Domain $domain The domain
      *
      * @return bool True if current user has access, False otherwise
      */

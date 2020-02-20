@@ -3,21 +3,21 @@
 namespace App\Jobs;
 
 use App\Backends\LDAP;
-use App\User;
+use App\Domain;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 
-class UserDelete implements ShouldQueue
+class DomainDelete implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
 
-    protected $user;
+    protected $domain;
 
     public $tries = 5;
 
@@ -27,13 +27,13 @@ class UserDelete implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param int $user_id The ID of the user to delete.
+     * @param Domain $domain The domain to delete.
      *
      * @return void
      */
-    public function __construct(int $user_id)
+    public function __construct(Domain $domain)
     {
-        $this->user = User::withTrashed()->find($user_id);
+        $this->domain = $domain;
     }
 
     /**
@@ -43,6 +43,6 @@ class UserDelete implements ShouldQueue
      */
     public function handle()
     {
-        LDAP::deleteUser($this->user);
+        LDAP::deleteDomain($this->domain);
     }
 }

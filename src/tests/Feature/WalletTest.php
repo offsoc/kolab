@@ -27,15 +27,17 @@ class WalletTest extends TestCase
         parent::setUp();
 
         foreach ($this->users as $user) {
-            User::where('email', $user)->delete();
+            $this->deleteTestUser($user);
         }
     }
 
     public function tearDown(): void
     {
         foreach ($this->users as $user) {
-            User::where('email', $user)->delete();
+            $this->deleteTestUser($user);
         }
+
+        parent::tearDown();
     }
 
     /**
@@ -138,7 +140,10 @@ class WalletTest extends TestCase
             }
         );
 
-        $this->assertTrue($userB->accounts()->count() == 1);
+        $this->assertTrue(
+            $userB->accounts()->count() == 1,
+            "number of accounts (1 expected): {$userB->accounts()->count()}"
+        );
 
         $aWallet = $userA->wallets()->get();
         $bAccount = $userB->accounts()->get();

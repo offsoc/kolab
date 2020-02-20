@@ -4,6 +4,9 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
+/**
+ * Link SKUs to Packages.
+ */
 class PackageSku extends Pivot
 {
     protected $fillable = [

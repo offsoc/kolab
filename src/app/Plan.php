@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * The eloquent definition of a Plan.
@@ -11,10 +12,12 @@ use Illuminate\Database\Eloquent\Model;
  *
  * A "Family Plan" as such may exist of "2 or more Kolab packages",
  * and apply a discount for the third and further Kolab packages.
+ *
+ * @property \App\Package[] $packages
  */
 class Plan extends Model
 {
-    use \Spatie\Translatable\HasTranslations;
+    use HasTranslations;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -58,6 +61,15 @@ class Plan extends Model
         return $costs;
     }
 
+    /**
+     * The relationship to packages.
+     *
+     * The plan contains one or more packages. Each package may have its minimum number (for
+     * billing) or its maximum (to allow topping out "enterprise" customers on a "small business"
+     * plan).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
     public function packages()
     {
         return $this->belongsToMany(
@@ -65,6 +77,7 @@ class Plan extends Model
             'plan_packages'
         )->using('App\PlanPackage')->withPivot(
             [
+                'qty',
                 'qty_min',
                 'qty_max',
                 'discount_qty',
@@ -74,15 +87,15 @@ class Plan extends Model
     }
 
     /**
-     * Checks if the plan has domain SKU assigned
+     * Checks if the plan has any type of domain SKU assigned.
+     *
+     * @return bool
      */
     public function hasDomain(): bool
     {
         foreach ($this->packages as $package) {
-            foreach ($package->skus as $sku) {
-                if ($sku->handler_class::entitleableClass() == \App\Domain::class) {
-                    return true;
-                }
+            if ($package->isDomain()) {
+                return true;
             }
         }
 

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * The eloquent definition of a SignupCode.
+ *
+ * @property datetime $expires_at
  */
 class SignupCode extends Model
 {

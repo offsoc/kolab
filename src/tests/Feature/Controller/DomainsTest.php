@@ -20,8 +20,16 @@ class DomainsTest extends TestCase
     {
         parent::setUp();
 
-        User::where('email', 'test1@domainscontroller.com')->delete();
-        Domain::where('namespace', 'domainscontroller.com')->delete();
+        $this->deleteTestUser('test1@domainscontroller.com');
+        $this->deleteTestDomain('domainscontroller.com');
+    }
+
+    public function tearDown(): void
+    {
+        $this->deleteTestUser('test1@domainscontroller.com');
+        $this->deleteTestDomain('domainscontroller.com');
+
+        parent::tearDown();
     }
 
     /**

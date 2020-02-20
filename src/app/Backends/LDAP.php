@@ -162,7 +162,7 @@ class LDAP
      *
      * @param \App\User $user The user account to create.
      *
-     * @return void
+     * @return bool|void
      */
     public static function createUser(User $user)
     {
@@ -213,12 +213,56 @@ class LDAP
         //
     }
 
+    public static function deleteDomain($domain)
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $hosted_root_dn = \config('ldap.hosted.root_dn');
+        $mgmt_root_dn = \config('ldap.admin.root_dn');
+
+        $domain_base_dn = "ou={$domain->namespace},{$hosted_root_dn}";
+
+        if ($ldap->get_entry($domain_base_dn)) {
+            $ldap->delete_entry_recursive($domain_base_dn);
+        }
+
+        if ($ldap_domain = $ldap->find_domain($domain->namespace)) {
+            if ($ldap->get_entry($ldap_domain['dn'])) {
+                $ldap->delete_entry($ldap_domain['dn']);
+            }
+        }
+    }
+
+    public static function deleteUser($user)
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        list($_local, $_domain) = explode('@', $user->email, 2);
+
+        $domain = $ldap->find_domain($_domain);
+
+        if (!$domain) {
+            return false;
+        }
+
+        $base_dn = $ldap->domain_root_dn($_domain);
+        $dn = "uid={$user->email},ou=People,{$base_dn}";
+
+        if (!$ldap->get_entry($dn)) {
+            return false;
+        }
+
+        $ldap->delete_entry($dn);
+    }
+
     /**
      * Update a user in LDAP.
      *
      * @param \App\User $user The user account to update.
      *
-     * @return void
+     * @return bool|void
      */
     public static function updateUser(User $user)
     {

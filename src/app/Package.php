@@ -45,6 +45,17 @@ class Package extends Model
         return $costs;
     }
 
+    public function isDomain()
+    {
+        foreach ($this->skus as $sku) {
+            if ($sku->hander_class::entitleableClass() == \App\Domain::class) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function skus()
     {
         return $this->belongsToMany(

@@ -16,7 +16,14 @@ class UserCreateTest extends TestCase
     {
         parent::setUp();
 
-        User::where('email', 'new-job-user@' . \config('app.domain'))->delete();
+        $this->deleteTestUser('new-job-user@' . \config('app.domain'));
+    }
+
+    public function tearDown(): void
+    {
+        $this->deleteTestUser('new-job-user@' . \config('app.domain'));
+
+        parent::tearDown();
     }
 
     /**
@@ -28,11 +35,13 @@ class UserCreateTest extends TestCase
 
         $this->assertFalse($user->isLdapReady());
 
+        /*
         $mock = \Mockery::mock('alias:App\Backends\LDAP');
         $mock->shouldReceive('createUser')
             ->once()
             ->with($user)
             ->andReturn(null);
+        */
 
         $job = new UserCreate($user);
         $job->handle();

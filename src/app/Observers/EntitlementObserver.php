@@ -19,7 +19,7 @@ class EntitlementObserver
      *
      * @param Entitlement $entitlement The entitlement being created.
      *
-     * @return void
+     * @return bool|null
      */
     public function creating(Entitlement $entitlement)
     {

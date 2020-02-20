@@ -25,6 +25,8 @@ class PlanTest extends TestCase
     public function tearDown(): void
     {
         Plan::where('title', 'test-plan')->delete();
+
+        parent::tearDown();
     }
 
     /**
@@ -77,5 +79,31 @@ class PlanTest extends TestCase
         $plan = Plan::where('title', 'group')->first();
 
         $this->assertTrue($plan->hasDomain() === true);
+    }
+
+    /**
+     * Test for a plan's cost.
+     */
+    public function testCost(): void
+    {
+        $plan = Plan::where('title', 'individual')->first();
+
+        $package_costs = 0;
+
+        foreach ($plan->packages as $package) {
+            $package_costs += $package->cost();
+        }
+
+        $this->assertTrue(
+            $package_costs == 999,
+            "The total costs of all packages for this plan is not 9.99"
+        );
+
+        $this->assertTrue(
+            $plan->cost() == 999,
+            "The total costs for this plan is not 9.99"
+        );
+
+        $this->assertTrue($plan->cost() == $package_costs);
     }
 }

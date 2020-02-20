@@ -65,6 +65,11 @@ class UserObserver
         \App\Jobs\UserCreate::withChain($chain)->dispatch($user);
     }
 
+    public function deleted(User $user)
+    {
+        //
+    }
+
     /**
      * Handle the "deleting" event.
      *
@@ -74,7 +79,16 @@ class UserObserver
      */
     public function deleting(User $user)
     {
-    // TODO   \App\Jobs\UserDelete::dispatch($user);
+        // Entitlements do not have referential integrity on the entitled object, so this is our
+        // way of doing an onDelete('cascade') without the foreign key.
+        $entitlements = \App\Entitlement::where('entitleable_id', $user->id)
+            ->where('entitleable_type', \App\User::class)->get();
+
+        foreach ($entitlements as $entitlement) {
+            $entitlement->delete();
+        }
+
+        \App\Jobs\UserDelete::dispatch($user->id);
     }
 
     /**
@@ -88,7 +102,7 @@ class UserObserver
      */
     public function retrieving(User $user)
     {
-    // TODO   \App\Jobs\UserRead::dispatch($user);
+        // TODO   \App\Jobs\UserRead::dispatch($user);
     }
 
     /**

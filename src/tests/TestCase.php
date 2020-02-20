@@ -11,6 +11,35 @@ abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
 
+    protected function deleteTestDomain($name)
+    {
+        Queue::fake();
+        $domain = Domain::withTrashed()->where('namespace', $name)->first();
+        if (!$domain) {
+            return;
+        }
+
+        $job = new \App\Jobs\DomainDelete($domain);
+        $job->handle();
+
+        $domain->forceDelete();
+    }
+
+    protected function deleteTestUser($email)
+    {
+        Queue::fake();
+        $user = User::withTrashed()->where('email', $email)->first();
+
+        if (!$user) {
+            return;
+        }
+
+        $job = new \App\Jobs\UserDelete($user->id);
+        $job->handle();
+
+        $user->forceDelete();
+    }
+
     /**
      * Get Domain object by namespace, create it if needed.
      * Skip LDAP jobs.

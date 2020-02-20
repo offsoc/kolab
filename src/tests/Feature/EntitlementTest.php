@@ -15,9 +15,16 @@ class EntitlementTest extends TestCase
     {
         parent::setUp();
 
-        User::where('email', 'entitlement-test@kolabnow.com')
-            ->orWhere('email', 'entitled-user@custom-domain.com')
-            ->delete();
+        $this->deleteTestUser('entitlement-test@kolabnow.com');
+        $this->deleteTestUser('entitled-user@custom-domain.com');
+    }
+
+    public function tearDown(): void
+    {
+        $this->deleteTestUser('entitlement-test@kolabnow.com');
+        $this->deleteTestUser('entitled-user@custom-domain.com');
+
+        parent::tearDown();
     }
 
     /**
@@ -37,16 +44,14 @@ class EntitlementTest extends TestCase
             ]
         );
 
-        $this->assertTrue($owner->id != $user->id);
-
-        $wallets = $owner->wallets()->get();
+        $wallet = $owner->wallets()->first();
 
         $entitlement_own_mailbox = new Entitlement(
             [
                 'owner_id' => $owner->id,
                 'entitleable_id' => $owner->id,
                 'entitleable_type' => User::class,
-                'wallet_id' => $wallets[0]->id,
+                'wallet_id' => $wallet->id,
                 'sku_id' => $sku_mailbox->id,
                 'description' => "Owner Mailbox Entitlement Test"
             ]
@@ -57,7 +62,7 @@ class EntitlementTest extends TestCase
                 'owner_id' => $owner->id,
                 'entitleable_id' => $domain->id,
                 'entitleable_type' => Domain::class,
-                'wallet_id' => $wallets[0]->id,
+                'wallet_id' => $wallet->id,
                 'sku_id' => $sku_domain->id,
                 'description' => "User Domain Entitlement Test"
             ]
@@ -68,7 +73,7 @@ class EntitlementTest extends TestCase
                 'owner_id' => $owner->id,
                 'entitleable_id' => $user->id,
                 'entitleable_type' => User::class,
-                'wallet_id' => $wallets[0]->id,
+                'wallet_id' => $wallet->id,
                 'sku_id' => $sku_mailbox->id,
                 'description' => "User Mailbox Entitlement Test"
             ]
@@ -81,9 +86,43 @@ class EntitlementTest extends TestCase
         $this->assertTrue($owner->entitlements()->count() == 3);
         $this->assertTrue($sku_domain->entitlements()->where('owner_id', $owner->id)->count() == 1);
         $this->assertTrue($sku_mailbox->entitlements()->where('owner_id', $owner->id)->count() == 2);
-        $this->assertTrue($wallets[0]->entitlements()->count() == 3);
-        $this->assertTrue($wallets[0]->fresh()->balance < 0.00);
+        $this->assertTrue($wallet->entitlements()->count() == 3);
+        $this->assertTrue($wallet->fresh()->balance < 0.00);
+    }
 
-        // TODO: Test case of adding entitlement that already exists
+    public function testAddExistingEntitlement(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testEntitlementFunctions(): void
+    {
+        $user = $this->getTestUser('entitlement-test@kolabnow.com');
+
+        $package = \App\Package::where('title', 'kolab')->first();
+
+        $user->assignPackage($package);
+
+        $wallet = $user->wallets()->first();
+        $this->assertNotNull($wallet);
+
+        $sku = \App\Sku::where('title', 'mailbox')->first();
+        $this->assertNotNull($sku);
+
+        $entitlement = Entitlement::where('owner_id', $user->id)->where('sku_id', $sku->id)->first();
+        $this->assertNotNull($entitlement);
+
+        $e_sku = $entitlement->sku;
+        $this->assertSame($sku->id, $e_sku->id);
+
+        $e_wallet = $entitlement->wallet;
+        $this->assertSame($wallet->id, $e_wallet->id);
+
+        $e_owner = $entitlement->owner;
+        $this->assertSame($user->id, $e_owner->id);
+
+        $e_entitleable = $entitlement->entitleable;
+        $this->assertSame($user->id, $e_entitleable->id);
+        $this->assertTrue($e_entitleable instanceof \App\User);
     }
 }

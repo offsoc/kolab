@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Domain;
+use App\Sku;
 use App\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -44,19 +44,19 @@ class UserEntitlementsCommand extends Command
 
         $this->info("Found user: {$user->id}");
 
-        $entitlements = $user->entitlements()->get();
+        $skus_counted = [];
 
-        foreach ($entitlements as $entitlement) {
-            //yes: dd($entitlement);
-            $_entitleable = $entitlement->entitleable;
-
-            if ($_entitleable instanceof Domain) {
-                $this->info(sprintf("Domain: %s", $_entitleable->namespace));
+        foreach ($user->entitlements as $entitlement) {
+            if (!array_key_exists($entitlement->sku_id, $skus_counted)) {
+                $skus_counted[$entitlement->sku_id] = 1;
+            } else {
+                $skus_counted[$entitlement->sku_id] += 1;
             }
+        }
 
-            if ($_entitleable instanceof User) {
-                $this->info(sprintf("User: %s", $_entitleable->email));
-            }
+        foreach ($skus_counted as $id => $qty) {
+            $sku = Sku::find($id);
+            $this->info("SKU: {$sku->title} ({$qty})");
         }
     }
 }

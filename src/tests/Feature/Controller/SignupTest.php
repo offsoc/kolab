@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 class SignupTest extends TestCase
 {
-    private static $domain;
+    private $domain;
 
     /**
      * {@inheritDoc}
@@ -22,8 +22,14 @@ class SignupTest extends TestCase
 
         // TODO: Some tests depend on existence of individual and group plans,
         //       we should probably create plans here to not depend on that
-        $domain = self::getPublicDomain();
-        $user = $this->getTestUser("SignupControllerTest1@$domain");
+        $this->domain = $this->getPublicDomain();
+
+        $this->deleteTestUser("SignupControllerTest1@$this->domain");
+        $this->deleteTestUser("signuplogin@$this->domain");
+        $this->deleteTestUser("admin@external.com");
+
+        $this->deleteTestDomain('external.com');
+        $this->deleteTestDomain('signup-domain.com');
     }
 
     /**
@@ -31,39 +37,37 @@ class SignupTest extends TestCase
      */
     public function tearDown(): void
     {
-        $domain = self::getPublicDomain();
+        $this->deleteTestUser("SignupControllerTest1@$this->domain");
+        $this->deleteTestUser("signuplogin@$this->domain");
+        $this->deleteTestUser("admin@external.com");
 
-        User::where('email', "signuplogin@$domain")
-            ->orWhere('email', "SignupControllerTest1@$domain")
-            ->orWhere('email', 'admin@external.com')
-            ->delete();
+        $this->deleteTestDomain('external.com');
+        $this->deleteTestDomain('signup-domain.com');
 
-        Domain::where('namespace', 'signup-domain.com')
-            ->orWhere('namespace', 'external.com')
-            ->delete();
+        parent::tearDown();
     }
 
     /**
      * Return a public domain for signup tests
      */
-    public function getPublicDomain(): string
+    private function getPublicDomain(): string
     {
-        if (!self::$domain) {
+        if (!$this->domain) {
             $this->refreshApplication();
             $public_domains = Domain::getPublicDomains();
-            self::$domain = reset($public_domains);
+            $this->domain = reset($public_domains);
 
-            if (empty(self::$domain)) {
-                self::$domain = 'signup-domain.com';
+            if (empty($this->domain)) {
+                $this->domain = 'signup-domain.com';
                 Domain::create([
-                        'namespace' => self::$domain,
+                        'namespace' => $this->domain,
                         'status' => Domain::STATUS_ACTIVE,
                         'type' => Domain::TYPE_PUBLIC,
                 ]);
             }
         }
 
-        return self::$domain;
+        return $this->domain;
     }
 
     /**
@@ -418,7 +422,7 @@ class SignupTest extends TestCase
         });
 
         // Check if the code has been removed
-        $this->assertNull(SignupCode::where($result['code'])->first());
+        $this->assertNull(SignupCode::where('code', $result['code'])->first());
 
         // Check if the user has been created
         $user = User::where('email', $identity)->first();
@@ -451,7 +455,7 @@ class SignupTest extends TestCase
             'plan' => 'group',
         ];
 
-        $response = $this->post('/api/auth/signup/init', $data);
+        $response = $this->withoutMiddleware()->post('/api/auth/signup/init', $data);
         $json = $response->json();
 
         $response->assertStatus(200);
@@ -603,15 +607,17 @@ class SignupTest extends TestCase
             ['administrator', $domain, false, ['login' => 'validation.loginexists']],
             ['sales', $domain, false, ['login' => 'validation.loginexists']],
             ['root', $domain, false, ['login' => 'validation.loginexists']],
+
             // existing user
-            ['SignupControllerTest1', $domain, false, ['login' => 'validation.loginexists']],
+            ['jack', 'kolab.org', true, ['domain' => 'validation.domainexists']],
 
             // Domain account
             ['admin', 'kolabsys.com', true, null],
             ['testnonsystemdomain', 'invalid', true, ['domain' => 'validation.domaininvalid']],
             ['testnonsystemdomain', '.com', true, ['domain' => 'validation.domaininvalid']],
+
             // existing user
-            ['SignupControllerTest1', $domain, true, ['domain' => 'validation.domainexists']],
+            ['john', 'kolab.org', true, ['domain' => 'validation.domainexists']],
         ];
     }
 
@@ -630,6 +636,6 @@ class SignupTest extends TestCase
 
         $result = $method->invoke(new SignupController(), $login, $domain, $external);
 
-        $this->assertSame($expected_result, $result);
+        $this->assertSame($expected_result, $result, var_export(func_get_args(), true));
     }
 }

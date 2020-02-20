@@ -22,8 +22,7 @@ class PasswordResetTest extends DuskTestCase
     {
         parent::setUp();
 
-        $user = User::firstOrCreate(['email' => 'passwordresettestdusk@' . \config('app.domain')]);
-        $user->setSetting('external_email', 'external@domain.tld');
+        $this->deleteTestUser('passwordresettestdusk@' . \config('app.domain'));
     }
 
     /**
@@ -33,7 +32,9 @@ class PasswordResetTest extends DuskTestCase
      */
     public function tearDown(): void
     {
-        User::where('email', 'passwordresettestdusk@' . \config('app.domain'))->delete();
+        $this->deleteTestUser('passwordresettestdusk@' . \config('app.domain'));
+
+        parent::tearDown();
     }
 
     /**
@@ -61,6 +62,9 @@ class PasswordResetTest extends DuskTestCase
      */
     public function testPasswordResetStep1()
     {
+        $user = $this->getTestUser('passwordresettestdusk@' . \config('app.domain'));
+        $user->setSetting('external_email', 'external@domain.tld');
+
         $this->browse(function (Browser $browser) {
             $browser->visit(new PasswordReset());
 

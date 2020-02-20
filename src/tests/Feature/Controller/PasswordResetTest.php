@@ -16,7 +16,7 @@ class PasswordResetTest extends TestCase
     {
         parent::setUp();
 
-        $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
+        $this->deleteTestUser('passwordresettest@' . \config('app.domain'));
     }
 
     /**
@@ -24,8 +24,9 @@ class PasswordResetTest extends TestCase
      */
     public function tearDown(): void
     {
-        User::where('email', 'passwordresettest@' . \config('app.domain'))
-            ->delete();
+        $this->deleteTestUser('passwordresettest@' . \config('app.domain'));
+
+        parent::tearDown();
     }
 
     /**
@@ -101,7 +102,7 @@ class PasswordResetTest extends TestCase
         Queue::assertNothingPushed();
 
         // Add required external email address to user settings
-        $user = User::where('email', 'passwordresettest@' . \config('app.domain'))->first();
+        $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
         $user->setSetting('external_email', 'ext@email.com');
 
         $data = [
@@ -150,7 +151,7 @@ class PasswordResetTest extends TestCase
         $this->assertArrayHasKey('short_code', $json['errors']);
 
         // Add verification code and required external email address to user settings
-        $user = User::where('email', 'passwordresettest@' . \config('app.domain'))->first();
+        $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
         $code = new VerificationCode(['mode' => 'password-reset']);
         $user->verificationcodes()->save($code);
 
@@ -192,7 +193,7 @@ class PasswordResetTest extends TestCase
     public function testPasswordResetVerifyValidInput()
     {
         // Add verification code and required external email address to user settings
-        $user = User::where('email', 'passwordresettest@' . \config('app.domain'))->first();
+        $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
         $code = new VerificationCode(['mode' => 'password-reset']);
         $user->verificationcodes()->save($code);
 
@@ -228,7 +229,7 @@ class PasswordResetTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertArrayHasKey('password', $json['errors']);
 
-        $user = User::where('email', 'passwordresettest@' . \config('app.domain'))->first();
+        $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
         $code = new VerificationCode(['mode' => 'password-reset']);
         $user->verificationcodes()->save($code);
 
@@ -285,7 +286,7 @@ class PasswordResetTest extends TestCase
      */
     public function testPasswordResetValidInput()
     {
-        $user = User::where('email', 'passwordresettest@' . \config('app.domain'))->first();
+        $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
         $code = new VerificationCode(['mode' => 'password-reset']);
         $user->verificationcodes()->save($code);
 

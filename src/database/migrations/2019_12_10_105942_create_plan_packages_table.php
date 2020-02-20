@@ -20,6 +20,7 @@ class CreatePlanPackagesTable extends Migration
                 $table->string('plan_id', 36);
                 $table->string('package_id', 36);
 
+                $table->integer('qty')->default(1);
                 $table->integer('qty_min')->default(0);
                 $table->integer('qty_max')->default(0);
 

@@ -40,8 +40,6 @@ class UserDomains extends Command
      */
     public function handle()
     {
-        DB::enableQueryLog();
-
         $user = User::where('email', $this->argument('userid'))->first();
 
         $this->info("Found user: {$user->id}");
@@ -49,7 +47,5 @@ class UserDomains extends Command
         foreach ($user->domains() as $domain) {
             $this->info("Domain: {$domain->namespace}");
         }
-
-        dd(DB::getQueryLog());
     }
 }

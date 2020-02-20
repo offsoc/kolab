@@ -29,10 +29,21 @@ class SignupCodeTest extends TestCase
 
         $this->assertFalse($code->isExpired());
         $this->assertTrue(strlen($code->code) === SignupCode::CODE_LENGTH);
-        $this->assertTrue(strlen($code->short_code) === env('VERIFICATION_CODE_LENGTH', SignupCode::SHORTCODE_LENGTH));
+
+        $this->assertTrue(
+            strlen($code->short_code) === env(
+                'VERIFICATION_CODE_LENGTH',
+                SignupCode::SHORTCODE_LENGTH
+            )
+        );
+
         $this->assertSame($data['data'], $code->data);
         $this->assertInstanceOf(\DateTime::class, $code->expires_at);
-        $this->assertSame(env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS), $code->expires_at->diff($now)->h + 1);
+
+        $this->assertSame(
+            env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS),
+            $code->expires_at->diff($now)->h + 1
+        );
 
         $inst = SignupCode::find($code->code);
 

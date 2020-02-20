@@ -159,8 +159,8 @@ EOD;
         );
 
         $packages = [
-            Package::firstOrCreate(['title' => 'kolab']),
             Package::firstOrCreate(['title' => 'domain-hosting']),
+            Package::firstOrCreate(['title' => 'kolab']),
         ];
 
         $plan->packages()->saveMany($packages);

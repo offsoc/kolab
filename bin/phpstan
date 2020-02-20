@@ -1,0 +1,11 @@
+#!/bin/bash
+
+cwd=$(dirname $0)
+
+pushd ${cwd}/../src/
+
+php -dmemory_limit=256M \
+    vendor/bin/phpstan \
+    analyse
+
+popd

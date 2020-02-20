@@ -49,7 +49,7 @@ class Utils
      */
     public static function uuidStr(): string
     {
-        return (string) Uuid::uuid4();
+        return Uuid::uuid4()->toString();
     }
 
     private static function combine($input, $r, $index, $data, $i, &$output): void

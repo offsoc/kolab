@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cwd=$(dirname $0)
+
+pushd ${cwd}/../src/
+
+php -dzend_extension=xdebug.so \
+    vendor/bin/phpunit \
+    --exclude-group imap \
+    --stop-on-defect \
+    --stop-on-error \
+    --stop-on-failure \
+    --testsuite Browser,Unit,Feature
+
+popd

@@ -29,7 +29,7 @@ class SignupController extends Controller
     /**
      * Returns plans definitions for signup.
      *
-     * @param Illuminate\Http\Request HTTP request
+     * @param \Illuminate\Http\Request $request HTTP request
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
@@ -55,7 +55,7 @@ class SignupController extends Controller
      * Verifies user name and email/phone, sends verification email/sms message.
      * Returns the verification code.
      *
-     * @param Illuminate\Http\Request HTTP request
+     * @param \Illuminate\Http\Request $request HTTP request
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
@@ -102,7 +102,7 @@ class SignupController extends Controller
     /**
      * Validation of the verification code.
      *
-     * @param Illuminate\Http\Request HTTP request
+     * @param \Illuminate\Http\Request $request HTTP request
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
@@ -153,7 +153,7 @@ class SignupController extends Controller
     /**
      * Finishes the signup process by creating the user account.
      *
-     * @param Illuminate\Http\Request HTTP request
+     * @param \Illuminate\Http\Request $request HTTP request
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
@@ -220,18 +220,10 @@ class SignupController extends Controller
             ]);
         }
 
-        // Create SKUs (after domain)
-        foreach ($plan->packages as $package) {
-            foreach ($package->skus as $sku) {
-                $sku->registerEntitlement($user, is_object($domain) ? [$domain] : []);
-            }
-        }
+        $user->assignPlan($plan, $domain);
 
         // Save the external email and plan in user settings
-        $user->setSettings([
-            'external_email' => $user_email,
-            'plan' => $plan->id,
-        ]);
+        $user->setSetting('external_email', $user_email);
 
         // Remove the verification code
         $this->code->delete();
@@ -244,8 +236,8 @@ class SignupController extends Controller
     /**
      * Checks if the input string is a valid email address or a phone number
      *
-     * @param string $email     Email address or phone number
-     * @param bool   &$is_phone Will be set to True if the string is valid phone number
+     * @param string $input     Email address or phone number
+     * @param bool   $is_phone  Will have been set to True if the string is valid phone number
      *
      * @return string Error message label on validation error
      */
@@ -297,7 +289,7 @@ class SignupController extends Controller
     /**
      * Login (kolab identity) validation
      *
-     * @param string $email    Login (local part of an email address)
+     * @param string $login    Login (local part of an email address)
      * @param string $domain   Domain name
      * @param bool   $external Enables additional checks for domain part
      *

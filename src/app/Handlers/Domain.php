@@ -4,7 +4,7 @@ namespace App\Handlers;
 
 use App\Sku;
 
-class Domain
+class Domain extends \App\Handlers\Base
 {
     public static function entitleableClass()
     {
@@ -13,7 +13,7 @@ class Domain
 
     public static function preReq($entitlement, $domain)
     {
-        if (!Sku::find($entitlement->sku_id)->active) {
+        if (!$entitlement->sku->active) {
             \Log::error("Sku not active");
             return false;
         }

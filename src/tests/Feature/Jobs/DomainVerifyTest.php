@@ -16,9 +16,16 @@ class DomainVerifyTest extends TestCase
     {
         parent::setUp();
 
-        Domain::where('namespace', 'gmail.com')
-            ->orWhere('namespace', 'some-non-existing-domain.fff')
-            ->delete();
+        $this->deleteTestDomain('gmail.com');
+        $this->deleteTestDomain('some-non-existing-domain.fff');
+    }
+
+    public function tearDown(): void
+    {
+        $this->deleteTestDomain('gmail.com');
+        $this->deleteTestDomain('some-non-existing-domain.fff');
+
+        parent::tearDown();
     }
 
     /**

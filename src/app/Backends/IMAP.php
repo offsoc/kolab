@@ -89,8 +89,8 @@ class IMAP
                 'socket_options' => [
                     'ssl' => [
                         'verify_peer' => \config('imap.verify_peer'),
-                        'verify_peer_name' => \config('imap.verify_name'),
-                        'cafile' => \config('imap.cafile'),
+                        'verify_peer_name' => \config('imap.verify_peer'),
+                        'verify_host' => \config('imap.verify_host')
                     ],
                 ],
             ],

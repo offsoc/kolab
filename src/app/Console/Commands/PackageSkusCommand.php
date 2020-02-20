@@ -39,12 +39,12 @@ class PackageSkusCommand extends Command
      */
     public function handle()
     {
-        $packages = Package::get();
+        $packages = Package::all();
 
         foreach ($packages as $package) {
             $this->info(sprintf("Package: %s", $package->title));
 
-            foreach ($package->skus()->get() as $sku) {
+            foreach ($package->skus as $sku) {
                 $this->info(sprintf("  SKU: %s (%d)", $sku->title, $sku->pivot->qty));
             }
         }

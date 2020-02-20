@@ -33,7 +33,7 @@ class VerificationCode extends SignupCode
     /**
      * The user to which this setting belongs.
      *
-     * @return \App\User
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function user()
     {

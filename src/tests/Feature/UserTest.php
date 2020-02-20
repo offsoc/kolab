@@ -12,7 +12,20 @@ class UserTest extends TestCase
     {
         parent::setUp();
 
-        User::where('email', 'user-create-test@' . \config('app.domain'))->delete();
+        $this->deleteTestUser('user-create-test@' . \config('app.domain'));
+        $this->deleteTestUser('UserAccountA@UserAccount.com');
+        $this->deleteTestUser('UserAccountB@UserAccount.com');
+        $this->deleteTestUser('userdeletejob@kolabnow.com');
+    }
+
+    public function tearDown(): void
+    {
+        $this->deleteTestUser('user-create-test@' . \config('app.domain'));
+        $this->deleteTestUser('UserAccountA@UserAccount.com');
+        $this->deleteTestUser('UserAccountB@UserAccount.com');
+        $this->deleteTestUser('userdeletejob@kolabnow.com');
+
+        parent::tearDown();
     }
 
     /**
@@ -85,6 +98,47 @@ class UserTest extends TestCase
 
         $this->assertContains('kolabnow.com', $domains);
         $this->assertContains('kolab.org', $domains);
+    }
+
+    public function testUserQuota(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+        $storage_sku = \App\Sku::where('title', 'storage')->first();
+
+        $count = 0;
+
+        foreach ($user->entitlements()->get() as $entitlement) {
+            if ($entitlement->sku_id == $storage_sku->id) {
+                $count += 1;
+            }
+        }
+
+        $this->assertTrue($count == 2);
+    }
+
+    /**
+     * Test user deletion
+     */
+    public function testUserDelete(): void
+    {
+        $user = $this->getTestUser('userdeletejob@kolabnow.com');
+
+        $package = \App\Package::where('title', 'kolab')->first();
+
+        $user->assignPackage($package);
+
+        $id = $user->id;
+
+        $user->delete();
+
+        $job = new \App\Jobs\UserDelete($id);
+        $job->handle();
+
+        $user->forceDelete();
+
+        $entitlements = \App\Entitlement::where('owner_id', 'id')->get();
+
+        $this->assertCount(0, $entitlements);
     }
 
     /**

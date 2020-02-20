@@ -46,7 +46,7 @@ class UsersController extends Controller
      *
      * The user themself, and other user entitlements.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
@@ -157,11 +157,11 @@ class UsersController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display information on the user account specified by $id.
      *
      * @param int $id The account to show information for.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse|void
      */
     public function show($id)
     {
@@ -171,25 +171,13 @@ class UsersController extends Controller
             return abort(403);
         }
 
-        $result = false;
-
-        $user->entitlements()->each(
-            function ($entitlement) {
-                if ($entitlement->user_id == $id) {
-                    $result = true;
-                }
-            }
-        );
-
-        if ($user->id == $id) {
-            $result = true;
-        }
-
-        if (!$result) {
+        // TODO: check whether or not the user is allowed
+        // for now, only allow self.
+        if ($user->id != $id) {
             return abort(404);
         }
 
-        return \App\User::find($id);
+        return response()->json($user);
     }
 
     /**

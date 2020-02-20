@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Model;
  * The eloquent definition of an Entitlement.
  *
  * Owned by a {@link \App\User}, billed to a {@link \App\Wallet}.
+ *
+ * @property \App\User $owner                   The owner of this entitlement (subject).
+ * @property \App\Sku $sku                      The SKU to which this entitlement applies.
+ * @property \App\Wallet $wallet                The wallet to which this entitlement is charged.
+ * @property \App\Domain|\App\User $entitleable The entitled object (receiver of the entitlement).
  */
 class Entitlement extends Model
 {
@@ -40,7 +45,7 @@ class Entitlement extends Model
     ];
 
     /**
-     * Principally entitleable objects such as 'Domain' or 'Mailbox'.
+     * Principally entitleable objects such as 'Domain' or 'User'.
      *
      * @return mixed
      */
@@ -52,7 +57,7 @@ class Entitlement extends Model
     /**
      * The SKU concerned.
      *
-     * @return Sku
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function sku()
     {
@@ -62,7 +67,7 @@ class Entitlement extends Model
     /**
      * The owner of this entitlement.
      *
-     * @return User
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function owner()
     {
@@ -72,7 +77,7 @@ class Entitlement extends Model
     /**
      * The wallet this entitlement is being billed to
      *
-     * @return Wallet
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function wallet()
     {

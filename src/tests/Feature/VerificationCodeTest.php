@@ -10,6 +10,20 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class VerificationCodeTest extends TestCase
 {
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $this->deleteTestUser('UserAccountA@UserAccount.com');
+    }
+
+    public function tearDown(): void
+    {
+        $this->deleteTestUser('UserAccountA@UserAccount.com');
+
+        parent::tearDown();
+    }
+
     /**
      * Test VerificationCode creation
      */

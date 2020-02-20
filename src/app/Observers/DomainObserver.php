@@ -36,14 +36,12 @@ class DomainObserver
     public function created(Domain $domain)
     {
         // Create domain record in LDAP, then check if it exists in DNS
-/*
-        $chain = [
-            new \App\Jobs\DomainVerify($domain),
-        ];
-
-        \App\Jobs\DomainCreate::withChain($chain)->dispatch($domain);
-*/
         \App\Jobs\DomainCreate::dispatch($domain);
+    }
+
+    public function deleting(Domain $domain)
+    {
+        //
     }
 
     /**
@@ -67,7 +65,7 @@ class DomainObserver
      */
     public function deleted(Domain $domain)
     {
-        //
+        \App\Jobs\DomainDelete::dispatch($domain);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace Tests\Feature\Jobs;
 use App\Jobs\DomainCreate;
 use App\Domain;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DomainCreateTest extends TestCase
@@ -16,7 +17,14 @@ class DomainCreateTest extends TestCase
     {
         parent::setUp();
 
-        Domain::where('namespace', 'domain-create-test.com')->delete();
+        $this->deleteTestDomain('domain-create-test.com');
+    }
+
+    public function tearDown(): void
+    {
+        $this->deleteTestDomain('domain-create-test.com');
+
+        parent::tearDown();
     }
 
     /**
@@ -24,6 +32,8 @@ class DomainCreateTest extends TestCase
      */
     public function testHandle(): void
     {
+        Queue::fake();
+
         $domain = $this->getTestDomain(
             'domain-create-test.com',
             [
@@ -33,12 +43,6 @@ class DomainCreateTest extends TestCase
         );
 
         $this->assertFalse($domain->isLdapReady());
-
-        $mock = \Mockery::mock('alias:App\Backends\LDAP');
-        $mock->shouldReceive('createDomain')
-            ->once()
-            ->with($domain)
-            ->andReturn(null);
 
         $job = new DomainCreate($domain);
         $job->handle();

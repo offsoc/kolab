@@ -16,7 +16,14 @@ class UserVerifyTest extends TestCase
     {
         parent::setUp();
 
-        User::where('email', 'new-job-user@' . \config('app.domain'))->delete();
+        $this->deleteTestUser('new-job-user@' . \config('app.domain'));
+    }
+
+    public function tearDown(): void
+    {
+        $this->deleteTestUser('new-job-user@' . \config('app.domain'));
+
+        parent::tearDown();
     }
 
     /**
@@ -28,24 +35,9 @@ class UserVerifyTest extends TestCase
 
         $this->assertFalse($user->isImapReady());
 
-        $mock = \Mockery::mock('alias:App\Backends\IMAP');
-        $mock->shouldReceive('verifyAccount')
-            ->once()
-            ->with($user->email)
-            ->andReturn(false);
-
         $job = new UserVerify($user);
         $job->handle();
 
         $this->assertTrue($user->fresh()->isImapReady() === false);
-
-        $mock->shouldReceive('verifyAccount')
-            ->once()
-            ->with($user->email)
-            ->andReturn(true);
-
-        $job->handle();
-
-        $this->assertTrue($user->fresh()->isImapReady());
     }
 }

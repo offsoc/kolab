@@ -22,13 +22,7 @@ class PasswordResetEmailTest extends TestCase
     {
         parent::setUp();
 
-        $this->code = new VerificationCode([
-                'mode' => 'password-reset',
-        ]);
-
-        $user = $this->getTestUser('PasswordReset@UserAccount.com');
-        $user->verificationcodes()->save($this->code);
-        $user->setSettings(['external_email' => 'etx@email.com']);
+        $this->deleteTestUser('PasswordReset@UserAccount.com');
     }
 
     /**
@@ -38,7 +32,9 @@ class PasswordResetEmailTest extends TestCase
      */
     public function tearDown(): void
     {
-        $this->code->user->delete();
+        $this->deleteTestUser('PasswordReset@UserAccount.com');
+
+        parent::tearDown();
     }
 
     /**
@@ -48,20 +44,28 @@ class PasswordResetEmailTest extends TestCase
      */
     public function testPasswordResetEmailHandle()
     {
+        $code = new VerificationCode([
+                'mode' => 'password-reset',
+        ]);
+
+        $user = $this->getTestUser('PasswordReset@UserAccount.com');
+        $user->verificationcodes()->save($code);
+        $user->setSettings(['external_email' => 'etx@email.com']);
+
         Mail::fake();
 
         // Assert that no jobs were pushed...
         Mail::assertNothingSent();
 
-        $job = new PasswordResetEmail($this->code);
+        $job = new PasswordResetEmail($code);
         $job->handle();
 
         // Assert the email sending job was pushed once
         Mail::assertSent(PasswordReset::class, 1);
 
         // Assert the mail was sent to the code's email
-        Mail::assertSent(PasswordReset::class, function ($mail) {
-            return $mail->hasTo($this->code->user->getSetting('external_email'));
+        Mail::assertSent(PasswordReset::class, function ($mail) use ($code) {
+            return $mail->hasTo($code->user->getSetting('external_email'));
         });
     }
 }

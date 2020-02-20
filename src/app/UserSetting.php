@@ -21,10 +21,14 @@ class UserSetting extends Model
     /**
      * The user to which this setting belongs.
      *
-     * @return \App\User
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function user()
     {
-        return $this->belongsTo('\App\User', 'user_id' /* local */, 'id' /* remote */);
+        return $this->belongsTo(
+            '\App\User',
+            'user_id', /* local */
+            'id' /* remote */
+        );
     }
 }

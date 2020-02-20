@@ -35,5 +35,21 @@ class DomainSeeder extends Seeder
                 ]
             );
         }
+
+        $domains = [
+            'example.com',
+            'example.net',
+            'example.org'
+        ];
+
+        foreach ($domains as $domain) {
+            Domain::create(
+                [
+                    'namespace' => $domain,
+                    'status' => Domain::STATUS_CONFIRMED + Domain::STATUS_ACTIVE,
+                    'type' => Domain::TYPE_EXTERNAL
+                ]
+            );
+        }
     }
 }

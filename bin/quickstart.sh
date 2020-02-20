@@ -43,10 +43,10 @@ docker-compose build
 docker-compose up -d kolab mariadb redis
 
 pushd ${base_dir}/src/
+cp .env.example .env
 composer install
 npm install
 find bootstrap/cache/ -type f ! -name ".gitignore" -delete
-cp .env.example .env
 ./artisan key:generate
 ./artisan jwt:secret -f
 ./artisan clear-compiled

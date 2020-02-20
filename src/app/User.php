@@ -4,6 +4,7 @@ namespace App;
 
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Iatstuti\Database\Support\NullableFields;
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -11,12 +12,16 @@ use App\Traits\UserSettingsTrait;
 
 /**
  * The eloquent definition of a User.
+ *
+ * @property integer $id
+ * @property integer $status
  */
 class User extends Authenticatable implements JWTSubject
 {
     use Notifiable;
     use NullableFields;
     use UserSettingsTrait;
+    use SoftDeletes;
 
     // a new user, default on creation
     public const STATUS_NEW        = 1 << 0;
@@ -78,16 +83,62 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Any wallets on which this user is a controller.
      *
-     * @return Wallet[]
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function accounts()
     {
         return $this->belongsToMany(
             'App\Wallet',       // The foreign object definition
             'user_accounts',    // The table name
-            'user_id',        // The local foreign key
-            'wallet_id'       // The remote foreign key
+            'user_id',          // The local foreign key
+            'wallet_id'         // The remote foreign key
         );
+    }
+
+    /**
+     * Assign a package to a user. The user should not have any existing entitlements.
+     *
+     * @param \App\Package   $package The package to assign.
+     * @param \App\User|null $user    Assign the package to another user.
+     *
+     * @return \App\User
+     */
+    public function assignPackage($package, $user = null)
+    {
+        if (!$user) {
+            $user = $this;
+        }
+
+        $wallet_id = $this->wallets()->get()[0]->id;
+
+        foreach ($package->skus as $sku) {
+            for ($i = $sku->pivot->qty; $i > 0; $i--) {
+                \App\Entitlement::create(
+                    [
+                        'owner_id' => $this->id,
+                        'wallet_id' => $wallet_id,
+                        'sku_id' => $sku->id,
+                        'entitleable_id' => $user->id,
+                        'entitleable_type' => User::class
+                    ]
+                );
+            }
+        }
+
+        return $user;
+    }
+
+    public function assignPlan($plan, $domain = null)
+    {
+        $this->setSetting('plan_id', $plan->id);
+
+        foreach ($plan->packages as $package) {
+            if ($package->isDomain()) {
+                $domain->assignPackage($package, $this);
+            } else {
+                $this->assignPackage($package);
+            }
+        }
     }
 
     /**
@@ -97,7 +148,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function domains()
     {
-        $domains = Domain::whereRaw(
+        $dbdomains = Domain::whereRaw(
             sprintf(
                 '(type & %s) AND (status & %s)',
                 Domain::TYPE_PUBLIC,
@@ -105,19 +156,27 @@ class User extends Authenticatable implements JWTSubject
             )
         )->get();
 
-        foreach ($this->entitlements()->get() as $entitlement) {
+        $domains = [];
+
+        foreach ($dbdomains as $dbdomain) {
+            $domains[] = $dbdomain;
+        }
+
+        $entitlements = Entitlement::where('owner_id', $this->id)->get();
+
+        foreach ($entitlements as $entitlement) {
             if ($entitlement->entitleable instanceof Domain) {
-                $domain = Domain::find($entitlement->entitleable_id);
-                \Log::info("Found domain {$domain->namespace}");
+                $domain = $entitlement->entitleable;
+                \Log::info("Found domain for {$this->email}: {$domain->namespace} (owned)");
                 $domains[] = $domain;
             }
         }
 
-        foreach ($this->accounts()->get() as $wallet) {
-            foreach ($wallet->entitlements()->get() as $entitlement) {
+        foreach ($this->accounts as $wallet) {
+            foreach ($wallet->entitlements as $entitlement) {
                 if ($entitlement->entitleable instanceof Domain) {
-                    $domain = Domain::find($entitlement->entitleable_id);
-                    \Log::info("Found domain {$domain->namespace}");
+                    $domain = $entitlement->entitleable;
+                    \Log::info("Found domain {$this->email}: {$domain->namespace} (charged)");
                     $domains[] = $domain;
                 }
             }
@@ -134,17 +193,19 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Entitlements for this user.
      *
-     * @return Entitlement[]
+     * Note that these are entitlements that apply to the user account, and not entitlements that
+     * this user owns.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function entitlements()
     {
-        return $this->hasMany('App\Entitlement', 'owner_id', 'id');
+        return $this->hasMany('App\Entitlement', 'entitleable_id', 'id');
     }
 
     public function addEntitlement($entitlement)
     {
-        // FIXME: This contains() check looks fishy
-        if (!$this->entitlements()->get()->contains($entitlement)) {
+        if (!$this->entitlements->contains($entitlement)) {
             return $this->entitlements()->save($entitlement);
         }
     }
@@ -187,7 +248,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isActive(): bool
     {
-        return $this->status & self::STATUS_ACTIVE;
+        return ($this->status & self::STATUS_ACTIVE) == true;
     }
 
     /**
@@ -197,7 +258,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isDeleted(): bool
     {
-        return $this->status & self::STATUS_DELETED;
+        return ($this->status & self::STATUS_DELETED) == true;
     }
 
     /**
@@ -208,7 +269,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isImapReady(): bool
     {
-        return $this->status & self::STATUS_IMAP_READY;
+        return ($this->status & self::STATUS_IMAP_READY) == true;
     }
 
     /**
@@ -218,7 +279,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isLdapReady(): bool
     {
-        return $this->status & self::STATUS_LDAP_READY;
+        return ($this->status & self::STATUS_LDAP_READY) == true;
     }
 
     /**
@@ -228,7 +289,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isNew(): bool
     {
-        return $this->status & self::STATUS_NEW;
+        return ($this->status & self::STATUS_NEW) == true;
     }
 
     /**
@@ -238,13 +299,13 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isSuspended(): bool
     {
-        return $this->status & self::STATUS_SUSPENDED;
+        return ($this->status & self::STATUS_SUSPENDED) == true;
     }
 
     /**
      * Any (additional) properties of this user.
      *
-     * @return \App\UserSetting[]
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function settings()
     {
@@ -254,7 +315,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Verification codes for this user.
      *
-     * @return VerificationCode[]
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function verificationcodes()
     {
@@ -264,13 +325,20 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Wallets this user owns.
      *
-     * @return Wallet[]
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function wallets()
     {
         return $this->hasMany('App\Wallet');
     }
 
+    /**
+     * User password mutator
+     *
+     * @param string $password The password in plain text.
+     *
+     * @return void
+     */
     public function setPasswordAttribute($password)
     {
         if (!empty($password)) {
@@ -281,6 +349,13 @@ class User extends Authenticatable implements JWTSubject
         }
     }
 
+    /**
+     * User LDAP password mutator
+     *
+     * @param string $password The password in plain text.
+     *
+     * @return void
+     */
     public function setPasswordLdapAttribute($password)
     {
         if (!empty($password)) {

@@ -13,21 +13,32 @@ use Tests\TestCase;
 
 class DomainTest extends TestCase
 {
+    private $domains = [
+        'public-active.com',
+        'gmail.com',
+        'ci-success-cname.kolab.org',
+        'ci-success-txt.kolab.org',
+        'ci-failure-cname.kolab.org',
+        'ci-failure-txt.kolab.org',
+        'ci-failure-none.kolab.org',
+    ];
+
     public function setUp(): void
     {
         parent::setUp();
 
-        $domains = [
-            'public-active.com',
-            'gmail.com',
-            'ci-success-cname.kolab.org',
-            'ci-success-txt.kolab.org',
-            'ci-failure-cname.kolab.org',
-            'ci-failure-txt.kolab.org',
-            'ci-failure-none.kolab.org',
-        ];
+        foreach ($this->domains as $domain) {
+            $this->deleteTestDomain($domain);
+        }
+    }
 
-        Domain::whereIn('namespace', $domains)->delete();
+    public function tearDown(): void
+    {
+        foreach ($this->domains as $domain) {
+            $this->deleteTestDomain($domain);
+        }
+
+        parent::tearDown();
     }
 
     /**
@@ -46,31 +57,19 @@ class DomainTest extends TestCase
         ]);
 
         Queue::assertPushed(\App\Jobs\DomainCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\DomainCreate::class, function ($job) use ($domain) {
-            $job_domain = TestCase::getObjectProperty($job, 'domain');
 
-            return $job_domain->id === $domain->id
-                && $job_domain->namespace === $domain->namespace;
-        });
-/*
-        Queue::assertPushedWithChain(\App\Jobs\DomainCreate::class, [
-            \App\Jobs\DomainVerify::class,
-        ]);
-*/
-/*
-        FIXME: Looks like we can't really do detailed assertions on chained jobs
-               Another thing to consider is if we maybe should run these jobs
-               independently (not chained) and make sure there's no race-condition
-               in status update
+        Queue::assertPushed(
+            \App\Jobs\DomainCreate::class,
+            function ($job) use ($domain) {
+                $job_domain = TestCase::getObjectProperty($job, 'domain');
 
-        Queue::assertPushed(\App\Jobs\DomainVerify::class, 1);
-        Queue::assertPushed(\App\Jobs\DomainVerify::class, function ($job) use ($domain) {
-            $job_domain = TestCase::getObjectProperty($job, 'domain');
+                return $job_domain->id === $domain->id &&
+                    $job_domain->namespace === $domain->namespace;
+            }
+        );
 
-            return $job_domain->id === $domain->id
-                && $job_domain->namespace === $domain->namespace;
-        });
-*/
+        $job = new \App\Jobs\DomainCreate($domain);
+        $job->handle();
     }
 
     /**
@@ -142,17 +141,17 @@ class DomainTest extends TestCase
         $domain = $this->getTestDomain('ci-failure-none.kolab.org', $domain_props);
 
         $this->assertTrue($domain->confirm() === false);
-        $this->assertTrue(!$domain->isConfirmed());
+        $this->assertFalse($domain->isConfirmed());
 
         $domain = $this->getTestDomain('ci-failure-txt.kolab.org', $domain_props);
 
         $this->assertTrue($domain->confirm() === false);
-        $this->assertTrue(!$domain->isConfirmed());
+        $this->assertFalse($domain->isConfirmed());
 
         $domain = $this->getTestDomain('ci-failure-cname.kolab.org', $domain_props);
 
         $this->assertTrue($domain->confirm() === false);
-        $this->assertTrue(!$domain->isConfirmed());
+        $this->assertFalse($domain->isConfirmed());
 
         $domain = $this->getTestDomain('ci-success-txt.kolab.org', $domain_props);
 

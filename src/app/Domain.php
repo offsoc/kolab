@@ -3,9 +3,17 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * The eloquent definition of a Domain.
+ *
+ * @property string $namespace
+ */
 class Domain extends Model
 {
+    use SoftDeletes;
+
     // we've simply never heard of this domain
     public const STATUS_NEW        = 1 << 0;
     // it's been activated
@@ -17,7 +25,7 @@ class Domain extends Model
     // ownership of the domain has been confirmed
     public const STATUS_CONFIRMED  = 1 << 4;
     // domain has been verified that it exists in DNS
-//    public const STATUS_VERIFIED   = 1 << 5;
+    public const STATUS_VERIFIED   = 1 << 5;
     // domain has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 6;
 
@@ -33,6 +41,7 @@ class Domain extends Model
     public const HASH_CNAME = 3;
 
     public $incrementing = false;
+
     protected $keyType = 'bigint';
 
     protected $fillable = [
@@ -40,6 +49,35 @@ class Domain extends Model
         'status',
         'type'
     ];
+
+    /**
+     * Assign a package to a domain. The domain should not belong to any existing entitlements.
+     *
+     * @param \App\Package   $package The package to assign.
+     *
+     * @return \App\Domain
+     */
+    public function assignPackage($package, $user)
+    {
+        $wallet_id = $user->wallets()->get()[0]->id;
+
+        foreach ($package->skus as $sku) {
+            for ($i = $sku->pivot->qty; $i > 0; $i--) {
+                \App\Entitlement::create(
+                    [
+                        'owner_id' => $user->id,
+                        'wallet_id' => $wallet_id,
+                        'sku_id' => $sku->id,
+                        'entitleable_id' => $this->id,
+                        'entitleable_type' => Domain::class
+                    ]
+                );
+            }
+        }
+
+        return $this;
+    }
+
 
     public function entitlement()
     {
@@ -65,7 +103,7 @@ class Domain extends Model
      */
     public function isActive(): bool
     {
-        return $this->status & self::STATUS_ACTIVE;
+        return ($this->status & self::STATUS_ACTIVE) == true;
     }
 
     /**
@@ -75,7 +113,7 @@ class Domain extends Model
      */
     public function isConfirmed(): bool
     {
-        return $this->status & self::STATUS_CONFIRMED;
+        return ($this->status & self::STATUS_CONFIRMED) == true;
     }
 
     /**
@@ -85,7 +123,7 @@ class Domain extends Model
      */
     public function isDeleted(): bool
     {
-        return $this->status & self::STATUS_DELETED;
+        return ($this->status & self::STATUS_DELETED) == true;
     }
 
     /**
@@ -95,7 +133,7 @@ class Domain extends Model
      */
     public function isExternal(): bool
     {
-        return $this->type & self::TYPE_EXTERNAL;
+        return ($this->type & self::TYPE_EXTERNAL) == true;
     }
 
     /**
@@ -105,7 +143,7 @@ class Domain extends Model
      */
     public function isHosted(): bool
     {
-        return $this->type & self::TYPE_HOSTED;
+        return ($this->type & self::TYPE_HOSTED) == true;
     }
 
     /**
@@ -115,7 +153,7 @@ class Domain extends Model
      */
     public function isNew(): bool
     {
-        return $this->status & self::STATUS_NEW;
+        return ($this->status & self::STATUS_NEW) == true;
     }
 
     /**
@@ -125,7 +163,7 @@ class Domain extends Model
      */
     public function isPublic(): bool
     {
-        return $this->type & self::TYPE_PUBLIC;
+        return ($this->type & self::TYPE_PUBLIC) == true;
     }
 
     /**
@@ -135,7 +173,7 @@ class Domain extends Model
      */
     public function isLdapReady(): bool
     {
-        return $this->status & self::STATUS_LDAP_READY;
+        return ($this->status & self::STATUS_LDAP_READY) == true;
     }
 
     /**
@@ -145,7 +183,7 @@ class Domain extends Model
      */
     public function isSuspended(): bool
     {
-        return $this->status & self::STATUS_SUSPENDED;
+        return ($this->status & self::STATUS_SUSPENDED) == true;
     }
 
     /**
@@ -154,12 +192,11 @@ class Domain extends Model
      *
      * @return bool
      */
-/*
     public function isVerified(): bool
     {
-        return $this->status & self::STATUS_VERIFIED;
+        return ($this->status & self::STATUS_VERIFIED) == true;
     }
-*/
+
     /**
      * Domain status mutator
      *
@@ -176,7 +213,7 @@ class Domain extends Model
             self::STATUS_SUSPENDED,
             self::STATUS_DELETED,
             self::STATUS_LDAP_READY,
-//            self::STATUS_VERIFIED,
+            self::STATUS_VERIFIED,
         ];
 
         foreach ($allowed_values as $value) {
@@ -232,7 +269,7 @@ class Domain extends Model
             $records = \dns_get_record('kolab-verify.' . $this->namespace, DNS_CNAME);
 
             if ($records === false) {
-                throw new \Exception("Failed to get DNS record for $domain");
+                throw new \Exception("Failed to get DNS record for {$this->namespace}");
             }
 
             foreach ($records as $records) {
@@ -277,14 +314,13 @@ class Domain extends Model
      * @return bool True if registered, False otherwise
      * @throws \Exception Throws exception on DNS or DB errors
      */
-/*
     public function verify(): bool
     {
         if ($this->isVerified()) {
             return true;
         }
 
-        $record = \dns_get_record($this->namespace, DNS_SOA);
+        $record = \dns_get_record($this->namespace, DNS_ANY);
 
         if ($record === false) {
             throw new \Exception("Failed to get DNS record for {$this->namespace}");
@@ -299,5 +335,4 @@ class Domain extends Model
 
         return false;
     }
-*/
 }

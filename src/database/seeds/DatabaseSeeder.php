@@ -15,9 +15,9 @@ class DatabaseSeeder extends Seeder
             [
                 DomainSeeder::class,
                 SkuSeeder::class,
-                UserSeeder::class,
                 PackageSeeder::class,
-                PlanSeeder::class
+                PlanSeeder::class,
+                UserSeeder::class
             ]
         );
     }

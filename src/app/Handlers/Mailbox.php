@@ -6,16 +6,16 @@ use App\Entitlement;
 use App\Sku;
 use App\User;
 
-class Mailbox
+class Mailbox extends \App\Handlers\Base
 {
     public static function entitleableClass()
     {
         return \App\User::class;
     }
 
-    public static function preReq(Entitlement $entitlement, User $user)
+    public static function preReq($entitlement, $user)
     {
-        if (!Sku::find($entitlement->sku_id)->active) {
+        if (!$entitlement->sku->active) {
             \Log::error("Sku not active");
             return false;
         }

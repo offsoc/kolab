@@ -22,10 +22,18 @@ class SignupTest extends DuskTestCase
     {
         parent::setUp();
 
-        Domain::where('namespace', 'user-domain-signup.com')->delete();
-        User::where('email', 'signuptestdusk@' . \config('app.domain'))
-            ->orWhere('email', 'admin@user-domain-signup.com')
-            ->delete();
+        $this->deleteTestUser('signuptestdusk@' . \config('app.domain'));
+        $this->deleteTestUser('admin@user-domain-signup.com');
+        $this->deleteTestDomain('user-domain-signup.com');
+    }
+
+    public function tearDown(): void
+    {
+        $this->deleteTestUser('signuptestdusk@' . \config('app.domain'));
+        $this->deleteTestUser('admin@user-domain-signup.com');
+        $this->deleteTestDomain('user-domain-signup.com');
+
+        parent::tearDown();
     }
 
     /**

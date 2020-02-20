@@ -4,7 +4,7 @@ namespace App\Handlers;
 
 use App\Sku;
 
-class Groupware
+class Groupware extends \App\Handlers\Base
 {
     public static function entitleableClass()
     {
@@ -13,7 +13,7 @@ class Groupware
 
     public static function preReq($entitlement, $user)
     {
-        if (!Sku::find($entitlement->sku_id)->active) {
+        if (!$entitlement->sku->active) {
             \Log::error("Sku not active");
             return false;
         }

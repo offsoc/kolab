@@ -11,8 +11,10 @@
     <files>
         <directory>src/app/</directory>
         <directory>src/database/</directory>
+        <ignore>src/database/factories/</ignore>
         <ignore>src/database/migrations/</ignore>
         <ignore>src/database/seeds/</ignore>
+        <ignore>src/resources/</ignore>
         <directory>src/resources/</directory>
     </files>
 </phpdoc>

@@ -19,7 +19,7 @@ class PasswordReset extends Mailable
     /**
      * Create a new message instance.
      *
-     * @param \App\VerificationCode A verification code object
+     * @param \App\VerificationCode $code A verification code object
      *
      * @return void
      */

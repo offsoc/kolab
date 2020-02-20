@@ -24,7 +24,7 @@ class PasswordResetController extends Controller
      *
      * Verifies user email, sends verification email message.
      *
-     * @param Illuminate\Http\Request HTTP request
+     * @param \Illuminate\Http\Request $request HTTP request
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
@@ -63,7 +63,7 @@ class PasswordResetController extends Controller
     /**
      * Validation of the verification code.
      *
-     * @param Illuminate\Http\Request HTTP request
+     * @param \Illuminate\Http\Request $request HTTP request
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
@@ -106,7 +106,7 @@ class PasswordResetController extends Controller
     /**
      * Password change
      *
-     * @param Illuminate\Http\Request HTTP request
+     * @param \Illuminate\Http\Request $request HTTP request
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */

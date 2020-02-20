@@ -39,14 +39,14 @@ class PlanPackagesCommand extends Command
      */
     public function handle()
     {
-        $plans = Plan::get();
+        $plans = Plan::all();
 
         foreach ($plans as $plan) {
             $this->info(sprintf("Plan: %s", $plan->title));
 
             $plan_costs = 0;
 
-            foreach ($plan->packages()->get() as $package) {
+            foreach ($plan->packages as $package) {
                 $qtyMin = $package->pivot->qty_min;
                 $qtyMax = $package->pivot->qty_max;
 
@@ -65,7 +65,7 @@ class PlanPackagesCommand extends Command
                     )
                 );
 
-                foreach ($package->skus()->get() as $sku) {
+                foreach ($package->skus as $sku) {
                     $this->info(sprintf("    SKU: %s (%d)", $sku->title, $sku->pivot->qty));
                 }
 
