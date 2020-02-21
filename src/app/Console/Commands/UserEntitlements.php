@@ -5,9 +5,8 @@ namespace App\Console\Commands;
 use App\Sku;
 use App\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
-class UserEntitlementsCommand extends Command
+class UserEntitlements extends Command
 {
     /**
      * The name and signature of the console command.

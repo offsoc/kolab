@@ -4,9 +4,8 @@ namespace App\Console\Commands;
 
 use App\Package;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
-class PackageSkusCommand extends Command
+class PackageSkus extends Command
 {
     /**
      * The name and signature of the console command.
