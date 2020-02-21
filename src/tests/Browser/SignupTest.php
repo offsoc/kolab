@@ -406,23 +406,19 @@ class SignupTest extends DuskTestCase
             $browser->visit(new Signup());
 
             // Choose the group account plan
-            $browser->click('@step0 .plan-group button')
-                ->waitForLocation('/signup/group');
-
-            $browser->assertVisible('@step1');
+            $browser->waitFor('@step0 .plan-group button')
+                ->click('@step0 .plan-group button');
 
             // Submit valid data
             // We expect error state on email input to be removed, and Step 2 form visible
-            $browser->with('@step1', function ($step) {
+            $browser->whenAvailable('@step1', function ($step) {
                 $step->type('#signup_name', 'Test User')
                     ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
                     ->click('[type=submit]');
             });
 
-            $browser->waitFor('@step2');
-
             // Submit valid code
-            $browser->with('@step2', function ($step) {
+            $browser->whenAvailable('@step2', function ($step) {
                 // Get the code and short_code from database
                 // FIXME: Find a nice way to read javascript data without using hidden inputs
                 $code = $step->value('#signup_code');
@@ -432,10 +428,8 @@ class SignupTest extends DuskTestCase
                     ->click('[type=submit]');
             });
 
-            $browser->waitFor('@step3');
-
             // Here we expect 4 text inputs, Back and Continue buttons
-            $browser->with('@step3', function ($step) {
+            $browser->whenAvailable('@step3', function ($step) {
                 $step->assertVisible('#signup_login')
                     ->assertVisible('#signup_password')
                     ->assertVisible('#signup_confirm')
