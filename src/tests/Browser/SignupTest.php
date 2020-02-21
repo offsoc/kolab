@@ -406,7 +406,7 @@ class SignupTest extends DuskTestCase
             $browser->visit(new Signup());
 
             // Choose the group account plan
-            $browser->click('@step0 .plan-selector > .plan-group button')
+            $browser->click('@step0 .plan-group button')
                 ->waitForLocation('/signup/group');
 
             $browser->assertVisible('@step1');
