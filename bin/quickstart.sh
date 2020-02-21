@@ -51,6 +51,11 @@ find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan jwt:secret -f
 ./artisan clear-compiled
 ./artisan cache:clear
+
+if [ ! -f 'resources/countries.php' ]; then
+    ./artisan data:countries
+fi
+
 npm run dev
 popd
 
