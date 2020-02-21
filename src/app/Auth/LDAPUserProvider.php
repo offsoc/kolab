@@ -38,7 +38,9 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
     {
         $entries = User::where('email', '=', $credentials['email']);
 
-        if ($entries->count() == 1) {
+        $count = $entries->count();
+
+        if ($count == 1) {
             $user = $entries->select(['id', 'email', 'password', 'password_ldap'])->first();
 
             if (!$this->validateCredentials($user, $credentials)) {
@@ -46,12 +48,12 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
             }
 
             return $user;
+        }
+
+        if ($count > 1) {
+            \Log::warning("Multiple entries for {$credentials['email']}");
         } else {
-            if ($entries->count() > 1) {
-                \Log::warning("Multiple entries for {$credentials['email']}");
-            } else {
-                \Log::warning("No entries for {$credentials['email']}");
-            }
+            \Log::warning("No entries for {$credentials['email']}");
         }
 
         return null;
@@ -60,12 +62,12 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
     /**
      * Validate the credentials for a user.
      *
-     * @param Authenticatable $user The user.
-     * @param array $credentials    The credentials.
+     * @param Authenticatable $user        The user.
+     * @param array           $credentials The credentials.
      *
      * @return bool
      */
-    public function validateCredentials(Authenticatable $user, array $credentials)
+    public function validateCredentials(Authenticatable $user, array $credentials): bool
     {
         $authenticated = false;
 
@@ -93,15 +95,9 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
         if ($authenticated) {
             \Log::info("Successful authentication for {$user->email}");
 
-            if (empty($user->password)) {
+            if (empty($user->password) || empty($user->password_ldap)) {
                 $user->password = $credentials['password'];
                 $user->save();
-            }
-
-            if (empty($user->password_ldap)) {
-                $user->password_ldap = '{SSHA512}' . base64_encode(
-                    pack('H*', hash('sha512', $credentials['password']))
-                );
             }
         } else {
             // TODO: Try actual LDAP?
