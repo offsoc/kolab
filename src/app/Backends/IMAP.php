@@ -19,7 +19,7 @@ class IMAP
         $config = self::getConfig();
         $imap = self::initIMAP($config, $username);
 
-        $folders = $imap->listSubscribed('', '*');
+        $folders = $imap->listMailboxes('', '*');
 
         if (!is_array($folders)) {
             throw new \Exception("Failed to get IMAP folders");
@@ -27,7 +27,7 @@ class IMAP
 
         $imap->closeConnection();
 
-        return count($folders) > 1;
+        return count($folders) > 0;
     }
 
     /**
