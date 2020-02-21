@@ -29,11 +29,11 @@ class DomainCreateTest extends TestCase
 
     /**
      * Test job handle
+     *
+     * @group ldap
      */
     public function testHandle(): void
     {
-        Queue::fake();
-
         $domain = $this->getTestDomain(
             'domain-create-test.com',
             [

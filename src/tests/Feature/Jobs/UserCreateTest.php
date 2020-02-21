@@ -28,20 +28,14 @@ class UserCreateTest extends TestCase
 
     /**
      * Test job handle
+     *
+     * @group ldap
      */
     public function testHandle(): void
     {
         $user = $this->getTestUser('new-job-user@' . \config('app.domain'));
 
         $this->assertFalse($user->isLdapReady());
-
-        /*
-        $mock = \Mockery::mock('alias:App\Backends\LDAP');
-        $mock->shouldReceive('createUser')
-            ->once()
-            ->with($user)
-            ->andReturn(null);
-        */
 
         $job = new UserCreate($user);
         $job->handle();
