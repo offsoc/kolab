@@ -63,10 +63,29 @@ class EntitlementObserver
             return false;
         }
 
-        // TODO: Handle the first free unit here?
+        // debit the wallet with the costs of the sku
+        \App\Changelog::create(
+            [
+                'wallet_id' => $entitlement->wallet_id,
+                'sku_id' => $entitlement->sku_id,
+                'action' => 'creating',
+                'cost' => $sku->cost()
+            ]
+        );
+    }
 
-        // TODO: Execute the Sku handler class or function?
+    public function deleting(Entitlement $entitlement)
+    {
+        // credit the wallet with any remainder of time available on the entitlement deleted
+        $sku = \App\Sku::find($entitlement->sku_id);
 
-        $wallet->debit($sku->cost);
+        \App\Changelog::where(
+            [
+                'wallet_id' => $entitlement->wallet_id,
+                'sku_id' => $entitlement->sku_id,
+                'action' => 'deleting',
+                'cost' => $sku->cost()
+            ]
+        );
     }
 }
