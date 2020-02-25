@@ -21,4 +21,5 @@ return [
     'process-domain-confirmed' => 'Custom domain ownership verified',
 
     'domain-verify-success' => 'Domain verified successfully',
+    'user-update-success' => 'User data updated successfully',
 ];

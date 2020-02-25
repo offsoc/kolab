@@ -77,7 +77,7 @@ class Toast extends BaseComponent
     }
 
     /**
-     * lose the toast with a click
+     * Close the toast with a click
      */
     public function closeToast(Browser $browser)
     {

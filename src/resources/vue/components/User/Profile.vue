@@ -1,0 +1,101 @@
+<template>
+    <div class="container">
+        <div class="card" id="user-profile">
+            <div class="card-body">
+                <div class="card-title">Your profile</div>
+                <div class="card-text">
+                    <form @submit.prevent="submit">
+                        <div class="form-group row">
+                            <label for="first_name" class="col-sm-4 col-form-label">First name</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="first_name" v-model="profile.first_name">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="last_name" class="col-sm-4 col-form-label">Last name</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="last_name" v-model="profile.last_name">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="phone" class="col-sm-4 col-form-label">Phone</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="phone" v-model="profile.phone">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="external_email" class="col-sm-4 col-form-label">External email</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="external_email" v-model="profile.external_email">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="billing_address" class="col-sm-4 col-form-label">Address</label>
+                            <div class="col-sm-8">
+                                <textarea class="form-control" id="billing_address" v-model="profile.billing_address"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="country" class="col-sm-4 col-form-label">Country</label>
+                            <div class="col-sm-8">
+                                <select class="form-control custom-select" id="country" v-model="profile.country">
+                                    <option value="">-</option>
+                                    <option v-for="(item, code) in countries" :value="code">{{ item[1] }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="password" class="col-sm-4 col-form-label">Password</label>
+                            <div class="col-sm-8">
+                                <input type="password" class="form-control" id="password" v-model="profile.password">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="password_confirmaton" class="col-sm-4 col-form-label">Confirm password</label>
+                            <div class="col-sm-8">
+                                <input type="password" class="form-control" id="password_confirmation" v-model="profile.password_confirmation">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    export default {
+        data() {
+            return {
+                profile: {},
+                countries: window.config.countries
+            }
+        },
+        created() {
+            this.profile = this.$store.state.authInfo.settings
+        },
+        mounted() {
+            $('#first_name').focus()
+        },
+        methods: {
+            submit() {
+                if (this.profile.country) {
+                    this.profile.currency = this.countries[this.profile.country][0]
+                }
+
+                this.$root.clearFormValidation($('#user-profile form'))
+
+                axios.put('/api/v4/users/' + this.$store.state.authInfo.id, this.profile)
+                    .then(response => {
+                        delete this.profile.password
+                        delete this.profile.password_confirm
+
+                        if (response.data.status == 'success') {
+                            this.$toastr('success', response.data.message)
+                        }
+                    })
+            }
+        }
+    }
+</script>

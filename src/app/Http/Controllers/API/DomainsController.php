@@ -51,7 +51,7 @@ class DomainsController extends Controller
 
         // Only owner (or admin) has access to the domain
         if (!self::hasAccess($domain)) {
-            return abort(403);
+            return $this->errorResponse(403);
         }
 
         if (!$domain->confirm()) {
@@ -113,7 +113,7 @@ class DomainsController extends Controller
 
         // Only owner (or admin) has access to the domain
         if (!self::hasAccess($domain)) {
-            return abort(403);
+            return $this->errorResponse(403);
         }
 
         $response = $domain->toArray();

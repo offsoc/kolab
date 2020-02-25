@@ -248,7 +248,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isActive(): bool
     {
-        return ($this->status & self::STATUS_ACTIVE) == true;
+        return ($this->status & self::STATUS_ACTIVE) > 0;
     }
 
     /**
@@ -258,7 +258,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isDeleted(): bool
     {
-        return ($this->status & self::STATUS_DELETED) == true;
+        return ($this->status & self::STATUS_DELETED) > 0;
     }
 
     /**
@@ -269,7 +269,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isImapReady(): bool
     {
-        return ($this->status & self::STATUS_IMAP_READY) == true;
+        return ($this->status & self::STATUS_IMAP_READY) > 0;
     }
 
     /**
@@ -279,7 +279,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isLdapReady(): bool
     {
-        return ($this->status & self::STATUS_LDAP_READY) == true;
+        return ($this->status & self::STATUS_LDAP_READY) > 0;
     }
 
     /**
@@ -289,7 +289,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isNew(): bool
     {
-        return ($this->status & self::STATUS_NEW) == true;
+        return ($this->status & self::STATUS_NEW) > 0;
     }
 
     /**
@@ -299,7 +299,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isSuspended(): bool
     {
-        return ($this->status & self::STATUS_SUSPENDED) == true;
+        return ($this->status & self::STATUS_SUSPENDED) > 0;
     }
 
     /**

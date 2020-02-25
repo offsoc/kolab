@@ -39,8 +39,8 @@ trait UserSettingsTrait
      * $user->setSetting('locale', 'en');
      * ```
      *
-     * @param string $key   Setting name
-     * @param string $value The new value for the setting.
+     * @param string      $key   Setting name
+     * @param string|null $value The new value for the setting.
      *
      * @return void
      */
@@ -73,16 +73,15 @@ trait UserSettingsTrait
         $this->setCache();
     }
 
-    private function storeSetting(string $key, $value)
+    private function storeSetting(string $key, $value): void
     {
-        $record = UserSetting::where(['user_id' => $this->id, 'key' => $key])->first();
-
-        if ($record) {
-            $record->value = $value;
-            $record->save();
+        if ($value === null || $value === '') {
+            UserSetting::where(['user_id' => $this->id, 'key' => $key])->delete();
         } else {
-            $data = new UserSetting(['key' => $key, 'value' => $value]);
-            $this->settings()->save($data);
+            UserSetting::updateOrCreate(
+                ['user_id' => $this->id, 'key' => $key],
+                ['value' => $value]
+            );
         }
     }
 
@@ -103,7 +102,9 @@ trait UserSettingsTrait
 
         $cached = [];
         foreach ($this->settings()->get() as $entry) {
-            $cached[$entry->key] = $entry->value;
+            if ($entry->value !== null && $entry->value !== '') {
+                $cached[$entry->key] = $entry->value;
+            }
         }
 
         Cache::forever('user_settings_' . $this->id, $cached);

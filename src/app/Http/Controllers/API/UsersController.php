@@ -77,6 +77,15 @@ class UsersController extends Controller
         $user = $this->guard()->user();
         $response = $user->toArray();
 
+        // Settings
+        // TODO: It might be reasonable to limit the list of settings here to these
+        // that are safe and are used in the UI
+        $response['settings'] = [];
+        foreach ($user->settings as $item) {
+            $response['settings'][$item->key] = $item->value;
+        }
+
+        // Status info
         $response['statusInfo'] = self::statusInfo($user);
 
         return response()->json($response);
@@ -165,16 +174,14 @@ class UsersController extends Controller
      */
     public function show($id)
     {
-        $user = Auth::user();
-
-        if (!$user) {
-            return abort(403);
+        if (!$this->hasAccess($id)) {
+            return $this->errorResponse(403);
         }
 
-        // TODO: check whether or not the user is allowed
-        // for now, only allow self.
-        if ($user->id != $id) {
-            return abort(404);
+        $user = User::find($id);
+
+        if (empty($user)) {
+            return  $this->errorResponse(404);
         }
 
         return response()->json($user);
@@ -212,7 +219,7 @@ class UsersController extends Controller
         if (!$domain->isPublic()) {
             $steps['domain-new'] = true;
             $steps['domain-ldap-ready'] = 'isLdapReady';
-//            $steps['domain-verified'] = 'isVerified';
+            $steps['domain-verified'] = 'isVerified';
             $steps['domain-confirmed'] = 'isConfirmed';
         }
 
@@ -240,6 +247,79 @@ class UsersController extends Controller
     }
 
     /**
+     * Create a new user record.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function store(Request $request)
+    {
+        // TODO
+    }
+
+    /**
+     * Update user data.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @params string                  $id      User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function update(Request $request, $id)
+    {
+        if (!$this->hasAccess($id)) {
+            return $this->errorResponse(403);
+        }
+
+        $user = User::find($id);
+
+        if (empty($user)) {
+            return $this->errorResponse(404);
+        }
+
+        $rules = [
+            'external_email' => 'nullable|email',
+            'phone' => 'string|nullable|max:64|regex:/^[0-9+() -]+$/',
+            'first_name' => 'string|nullable|max:512',
+            'last_name' => 'string|nullable|max:512',
+            'billing_address' => 'string|nullable|max:1024',
+            'country' => 'string|nullable|alpha|size:2',
+            'currency' => 'string|nullable|alpha|size:3',
+        ];
+
+        if (!empty($request->password) || !empty($request->password_confirmation)) {
+            $rules['password'] = 'required|min:4|max:2048|confirmed';
+        }
+
+        // Validate input
+        $v = Validator::make($request->all(), $rules);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        // Update user settings
+        $settings = $request->only(array_keys($rules));
+        unset($settings['password']);
+
+        if (!empty($settings)) {
+            $user->setSettings($settings);
+        }
+
+        // Update user password
+        if (!empty($rules['password'])) {
+            $user->password = $request->password;
+            $user->save();
+        }
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.user-update-success'),
+        ]);
+    }
+
+    /**
      * Get the guard to be used during authentication.
      *
      * @return \Illuminate\Contracts\Auth\Guard
@@ -247,5 +327,22 @@ class UsersController extends Controller
     public function guard()
     {
         return Auth::guard();
+    }
+
+    /**
+     * Check if the current user has access to the specified user
+     *
+     * @param int $user_id User identifier
+     *
+     * @return bool True if current user has access, False otherwise
+     */
+    protected function hasAccess($user_id): bool
+    {
+        $current_user = $this->guard()->user();
+
+        // TODO: Admins, other users
+        // FIXME: This probably should be some kind of middleware/guard
+
+        return $current_user->id == $user_id;
     }
 }

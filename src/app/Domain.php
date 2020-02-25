@@ -103,7 +103,7 @@ class Domain extends Model
      */
     public function isActive(): bool
     {
-        return ($this->status & self::STATUS_ACTIVE) == true;
+        return ($this->status & self::STATUS_ACTIVE) > 0;
     }
 
     /**
@@ -113,7 +113,7 @@ class Domain extends Model
      */
     public function isConfirmed(): bool
     {
-        return ($this->status & self::STATUS_CONFIRMED) == true;
+        return ($this->status & self::STATUS_CONFIRMED) > 0;
     }
 
     /**
@@ -123,7 +123,7 @@ class Domain extends Model
      */
     public function isDeleted(): bool
     {
-        return ($this->status & self::STATUS_DELETED) == true;
+        return ($this->status & self::STATUS_DELETED) > 0;
     }
 
     /**
@@ -133,7 +133,7 @@ class Domain extends Model
      */
     public function isExternal(): bool
     {
-        return ($this->type & self::TYPE_EXTERNAL) == true;
+        return ($this->type & self::TYPE_EXTERNAL) > 0;
     }
 
     /**
@@ -143,7 +143,7 @@ class Domain extends Model
      */
     public function isHosted(): bool
     {
-        return ($this->type & self::TYPE_HOSTED) == true;
+        return ($this->type & self::TYPE_HOSTED) > 0;
     }
 
     /**
@@ -153,7 +153,7 @@ class Domain extends Model
      */
     public function isNew(): bool
     {
-        return ($this->status & self::STATUS_NEW) == true;
+        return ($this->status & self::STATUS_NEW) > 0;
     }
 
     /**
@@ -163,7 +163,7 @@ class Domain extends Model
      */
     public function isPublic(): bool
     {
-        return ($this->type & self::TYPE_PUBLIC) == true;
+        return ($this->type & self::TYPE_PUBLIC) > 0;
     }
 
     /**
@@ -173,7 +173,7 @@ class Domain extends Model
      */
     public function isLdapReady(): bool
     {
-        return ($this->status & self::STATUS_LDAP_READY) == true;
+        return ($this->status & self::STATUS_LDAP_READY) > 0;
     }
 
     /**
@@ -183,7 +183,7 @@ class Domain extends Model
      */
     public function isSuspended(): bool
     {
-        return ($this->status & self::STATUS_SUSPENDED) == true;
+        return ($this->status & self::STATUS_SUSPENDED) > 0;
     }
 
     /**
@@ -194,7 +194,7 @@ class Domain extends Model
      */
     public function isVerified(): bool
     {
-        return ($this->status & self::STATUS_VERIFIED) == true;
+        return ($this->status & self::STATUS_VERIFIED) > 0;
     }
 
     /**

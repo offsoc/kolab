@@ -13,6 +13,7 @@ import PasswordResetComponent from '../components/PasswordReset'
 import SignupComponent from '../components/Signup'
 import UserInfoComponent from '../components/User/Info'
 import UserListComponent from '../components/User/List'
+import UserProfileComponent from '../components/User/Profile'
 
 import store from './store'
 
@@ -53,6 +54,12 @@ const routes = [
         path: '/password-reset/:code?',
         name: 'password-reset',
         component: PasswordResetComponent
+    },
+    {
+        path: '/profile',
+        name: 'profile',
+        component: UserProfileComponent,
+        meta: { requiresAuth: true }
     },
     {
         path: '/signup/:param?',

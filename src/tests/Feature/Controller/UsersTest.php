@@ -5,6 +5,7 @@ namespace Tests\Feature\Controller;
 use App\Http\Controllers\API\UsersController;
 use App\Domain;
 use App\User;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -22,6 +23,9 @@ class UsersTest extends TestCase
         $this->deleteTestDomain('userscontroller.com');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
@@ -32,7 +36,7 @@ class UsersTest extends TestCase
     }
 
     /**
-     * Test fetching current user info
+     * Test fetching current user info (/api/auth/info)
      */
     public function testInfo(): void
     {
@@ -43,29 +47,27 @@ class UsersTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get("api/auth/info");
+        $response->assertStatus(200);
+
         $json = $response->json();
 
-        $response->assertStatus(200);
         $this->assertEquals($user->id, $json['id']);
         $this->assertEquals($user->email, $json['email']);
         $this->assertEquals(User::STATUS_NEW, $json['status']);
         $this->assertTrue(is_array($json['statusInfo']));
+        $this->assertEquals($user->getSetting('country'), $json['settings']['country']);
+        $this->assertEquals($user->getSetting('currency'), $json['settings']['currency']);
     }
 
     public function testIndex(): void
     {
-        $userA = $this->getTestUser('UserEntitlement2A@UserEntitlement.com');
-
-        $response = $this->actingAs($userA, 'api')->get("/api/v4/users/{$userA->id}");
-
-        $response->assertStatus(200);
-        $response->assertJson(['id' => $userA->id]);
-
-        $user = factory(User::class)->create();
-        $response = $this->actingAs($user)->get("/api/v4/users/{$userA->id}");
-        $response->assertStatus(404);
+        // TODO
+        $this->markTestIncomplete();
     }
 
+    /**
+     * Test /api/auth/login
+     */
     public function testLogin(): string
     {
         // Request with no data
@@ -174,14 +176,14 @@ class UsersTest extends TestCase
 
         $user->status |= User::STATUS_ACTIVE;
         $user->save();
-//        $domain->status |= Domain::STATUS_VERIFIED;
+        $domain->status |= Domain::STATUS_VERIFIED;
         $domain->type = Domain::TYPE_EXTERNAL;
         $domain->save();
 
         $result = UsersController::statusInfo($user);
 
         $this->assertSame('active', $result['status']);
-        $this->assertCount(6, $result['process']);
+        $this->assertCount(7, $result['process']);
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
         $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
@@ -192,10 +194,10 @@ class UsersTest extends TestCase
         $this->assertSame(true, $result['process'][3]['state']);
         $this->assertSame('domain-ldap-ready', $result['process'][4]['label']);
         $this->assertSame(false, $result['process'][4]['state']);
-//        $this->assertSame('domain-verified', $result['process'][5]['label']);
-//        $this->assertSame(true, $result['process'][5]['state']);
-        $this->assertSame('domain-confirmed', $result['process'][5]['label']);
-        $this->assertSame(false, $result['process'][5]['state']);
+        $this->assertSame('domain-verified', $result['process'][5]['label']);
+        $this->assertSame(true, $result['process'][5]['state']);
+        $this->assertSame('domain-confirmed', $result['process'][6]['label']);
+        $this->assertSame(false, $result['process'][6]['state']);
 
         $user->status |= User::STATUS_DELETED;
         $user->save();
@@ -203,5 +205,124 @@ class UsersTest extends TestCase
         $result = UsersController::statusInfo($user);
 
         $this->assertSame('deleted', $result['status']);
+    }
+
+    /**
+     * Test fetching user data/profile (GET /api/v4/users/<user-id>)
+     */
+    public function testShow(): void
+    {
+        $userA = $this->getTestUser('UserEntitlement2A@UserEntitlement.com');
+
+        // Test getting profile of self
+        $response = $this->actingAs($userA, 'api')->get("/api/v4/users/{$userA->id}");
+
+        $response->assertStatus(200);
+        $response->assertJson(['id' => $userA->id]);
+
+        // Test unauthorized access to a profile of other user
+        $user = $this->getTestUser('jack@kolab.org');
+        $response = $this->actingAs($user)->get("/api/v4/users/{$userA->id}");
+        $response->assertStatus(403);
+
+        // TODO: Test authorized access to a profile of other user
+        $this->markTestIncomplete();
+    }
+
+    /**
+     * Test user creation (POST /api/v4/users)
+     */
+    public function testStore(): void
+    {
+        // TODO
+        $this->markTestIncomplete();
+    }
+
+    /**
+     * Test user update (PUT /api/v4/users/<user-id>)
+     */
+    public function testUpdate(): void
+    {
+        $userA = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $userB = $this->getTestUser('jack@kolab.org');
+
+        // Test unauthorized update of other user profile
+        $response = $this->actingAs($userB)->get("/api/v4/users/{$userA->id}", []);
+        $response->assertStatus(403);
+
+        // Test updating of self
+        $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User data updated successfully", $json['message']);
+        $this->assertCount(2, $json);
+
+        // Test some invalid data
+        $post = ['password' => '12345678', 'currency' => 'invalid'];
+        $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json);
+        $this->assertSame('The password confirmation does not match.', $json['errors']['password'][0]);
+        $this->assertSame('The currency must be 3 characters.', $json['errors']['currency'][0]);
+
+        // Test full profile update including password
+        $post = [
+            'password' => 'simple',
+            'password_confirmation' => 'simple',
+            'first_name' => 'John2',
+            'last_name' => 'Doe2',
+            'phone' => '+123 123 123',
+            'external_email' => 'external@gmail.com',
+            'billing_address' => 'billing',
+            'country' => 'CH',
+            'currency' => 'CHF',
+        ];
+
+        $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User data updated successfully", $json['message']);
+        $this->assertCount(2, $json);
+        $this->assertTrue($userA->password != $userA->fresh()->password);
+        unset($post['password'], $post['password_confirmation']);
+        foreach ($post as $key => $value) {
+            $this->assertSame($value, $userA->getSetting($key));
+        }
+
+        // Test unsetting values
+        $post = [
+            'first_name' => '',
+            'last_name' => '',
+            'phone' => '',
+            'external_email' => '',
+            'billing_address' => '',
+            'country' => '',
+            'currency' => '',
+        ];
+
+        $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User data updated successfully", $json['message']);
+        $this->assertCount(2, $json);
+        foreach ($post as $key => $value) {
+            $this->assertNull($userA->getSetting($key));
+        }
+
+        // TODO: Test authorized update of other user
+        $this->markTestIncomplete();
     }
 }

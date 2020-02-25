@@ -15,6 +15,7 @@
             </div>
         </div>
         <p id="dashboard-nav">
+            <router-link class="link-profile" :to="{ name: 'profile' }">Your profile</router-link>
             <router-link class="link-domains" :to="{ name: 'domains' }">Domains</router-link>
             <router-link class="link-users" :to="{ name: 'users' }">User accounts</router-link>
         </p>
