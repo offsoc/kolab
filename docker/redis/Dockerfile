@@ -1,0 +1,26 @@
+FROM fedora:30
+
+ENV SYSTEMD_PAGER=''
+
+RUN dnf -y install \
+    --setopt 'tsflags=nodocs' \
+    bind-utils \
+    cronie \
+    iproute \
+    iptables \
+    net-tools \
+    procps-ng \
+    redis \
+    suricata \
+    vim-enhanced \
+    wget \
+    which && \
+    dnf clean all
+
+COPY redis.conf /etc/redis.conf
+
+RUN systemctl enable redis
+
+WORKDIR /root/
+
+CMD ["/lib/systemd/systemd"]
