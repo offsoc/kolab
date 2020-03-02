@@ -4,10 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Domain;
+use App\Rules\UserEmailDomain;
+use App\Rules\UserEmailLocal;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class UsersController extends Controller
 {
@@ -75,18 +79,7 @@ class UsersController extends Controller
     public function info()
     {
         $user = $this->guard()->user();
-        $response = $user->toArray();
-
-        // Settings
-        // TODO: It might be reasonable to limit the list of settings here to these
-        // that are safe and are used in the UI
-        $response['settings'] = [];
-        foreach ($user->settings as $item) {
-            $response['settings'][$item->key] = $item->value;
-        }
-
-        // Status info
-        $response['statusInfo'] = self::statusInfo($user);
+        $response = $this->userResponse($user);
 
         return response()->json($response);
     }
@@ -111,7 +104,6 @@ class UsersController extends Controller
         if ($v->fails()) {
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
-
 
         $credentials = $request->only('email', 'password');
 
@@ -181,10 +173,12 @@ class UsersController extends Controller
         $user = User::find($id);
 
         if (empty($user)) {
-            return  $this->errorResponse(404);
+            return $this->errorResponse(404);
         }
 
-        return response()->json($user);
+        $response = $this->userResponse($user);
+
+        return response()->json($response);
     }
 
     /**
@@ -216,7 +210,7 @@ class UsersController extends Controller
         $domain = Domain::where('namespace', $domain)->first();
 
         // If that is not a public domain, add domain specific steps
-        if (!$domain->isPublic()) {
+        if ($domain && !$domain->isPublic()) {
             $steps['domain-new'] = true;
             $steps['domain-ldap-ready'] = 'isLdapReady';
             $steps['domain-verified'] = 'isVerified';
@@ -255,7 +249,45 @@ class UsersController extends Controller
      */
     public function store(Request $request)
     {
-        // TODO
+        if ($this->guard()->user()->controller()->id !== $this->guard()->user()->id) {
+            return $this->errorResponse(403);
+        }
+
+        if ($error_response = $this->validateUserRequest($request, null, $settings)) {
+            return $error_response;
+        }
+
+        $user_name = !empty($settings['first_name']) ? $settings['first_name'] : '';
+        if (!empty($settings['last_name'])) {
+            $user_name .= ' ' . $settings['last_name'];
+        }
+
+        DB::beginTransaction();
+
+        // Create user record
+        $user = User::create([
+                'name' => $user_name,
+                'email' => $request->email,
+                'password' => $request->password,
+        ]);
+
+        if (!empty($settings)) {
+            $user->setSettings($settings);
+        }
+
+        // TODO: Assign package
+
+        // Add aliases
+        if (!empty($request->aliases)) {
+            $user->setAliases($request->aliases);
+        }
+
+        DB::commit();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.user-create-success'),
+        ]);
     }
 
     /**
@@ -278,40 +310,28 @@ class UsersController extends Controller
             return $this->errorResponse(404);
         }
 
-        $rules = [
-            'external_email' => 'nullable|email',
-            'phone' => 'string|nullable|max:64|regex:/^[0-9+() -]+$/',
-            'first_name' => 'string|nullable|max:512',
-            'last_name' => 'string|nullable|max:512',
-            'billing_address' => 'string|nullable|max:1024',
-            'country' => 'string|nullable|alpha|size:2',
-            'currency' => 'string|nullable|alpha|size:3',
-        ];
-
-        if (!empty($request->password) || !empty($request->password_confirmation)) {
-            $rules['password'] = 'required|min:4|max:2048|confirmed';
+        if ($error_response = $this->validateUserRequest($request, $user, $settings)) {
+            return $error_response;
         }
 
-        // Validate input
-        $v = Validator::make($request->all(), $rules);
-
-        if ($v->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
-        }
-
-        // Update user settings
-        $settings = $request->only(array_keys($rules));
-        unset($settings['password']);
+        DB::beginTransaction();
 
         if (!empty($settings)) {
             $user->setSettings($settings);
         }
 
         // Update user password
-        if (!empty($rules['password'])) {
+        if (!empty($request->password)) {
             $user->password = $request->password;
             $user->save();
         }
+
+        // Update aliases
+        if (isset($request->aliases)) {
+            $user->setAliases($request->aliases);
+        }
+
+        DB::commit();
 
         return response()->json([
                 'status' => 'success',
@@ -344,5 +364,182 @@ class UsersController extends Controller
         // FIXME: This probably should be some kind of middleware/guard
 
         return $current_user->id == $user_id;
+    }
+
+    /**
+     * Create a response data array for specified user.
+     *
+     * @param \App\User $user User object
+     *
+     * @return array Response data
+     */
+    protected function userResponse(User $user): array
+    {
+        $response = $user->toArray();
+
+        // Settings
+        // TODO: It might be reasonable to limit the list of settings here to these
+        // that are safe and are used in the UI
+        $response['settings'] = [];
+        foreach ($user->settings as $item) {
+            $response['settings'][$item->key] = $item->value;
+        }
+
+        // Aliases
+        $response['aliases'] = [];
+        foreach ($user->aliases as $item) {
+            $response['aliases'][] = $item->alias;
+        }
+
+        // Status info
+        $response['statusInfo'] = self::statusInfo($user);
+
+        return $response;
+    }
+
+    /**
+     * Validate user input
+     *
+     * @param \Illuminate\Http\Request $request  The API request.
+     * @param \App\User|null           $user     User identifier
+     * @param array                    $settings User settings (from the request)
+     *
+     * @return \Illuminate\Http\JsonResponse The response on error
+     */
+    protected function validateUserRequest(Request $request, $user, &$settings = [])
+    {
+        $rules = [
+            'external_email' => 'nullable|email',
+            'phone' => 'string|nullable|max:64|regex:/^[0-9+() -]+$/',
+            'first_name' => 'string|nullable|max:512',
+            'last_name' => 'string|nullable|max:512',
+            'billing_address' => 'string|nullable|max:1024',
+            'country' => 'string|nullable|alpha|size:2',
+            'currency' => 'string|nullable|alpha|size:3',
+            'aliases' => 'array|nullable',
+        ];
+
+        if (empty($user) || !empty($request->password) || !empty($request->password_confirmation)) {
+            $rules['password'] = 'required|min:4|max:2048|confirmed';
+        }
+
+        $errors = [];
+
+        // Validate input
+        $v = Validator::make($request->all(), $rules);
+
+        if ($v->fails()) {
+            $errors = $v->errors()->toArray();
+        }
+
+        $controller = $user ? $user->controller() : $this->guard()->user();
+
+        // For new user validate email address
+        if (empty($user)) {
+            $email = $request->email;
+
+            if (empty($email)) {
+                $errors['email'] = \trans('validation.required', ['attribute' => 'email']);
+            } elseif ($error = self::validateEmail($email, $controller, false)) {
+                $errors['email'] = $error;
+            }
+        }
+
+        // Validate aliases input
+        if (isset($request->aliases)) {
+            $aliases = [];
+            $existing_aliases = $user ? $user->aliases()->get()->pluck('alias')->toArray() : [];
+
+            foreach ($request->aliases as $idx => $alias) {
+                if (is_string($alias) && !empty($alias)) {
+                    // Alias cannot be the same as the email address (new user)
+                    if (!empty($email) && Str::lower($alias) == Str::lower($email)) {
+                        continue;
+                    }
+
+                    // validate new aliases
+                    if (
+                        !in_array($alias, $existing_aliases)
+                        && ($error = self::validateEmail($alias, $controller, true))
+                    ) {
+                        if (!isset($errors['aliases'])) {
+                            $errors['aliases'] = [];
+                        }
+                        $errors['aliases'][$idx] = $error;
+                        continue;
+                    }
+
+                    $aliases[] = $alias;
+                }
+            }
+
+            $request->aliases = $aliases;
+        }
+
+        if (!empty($errors)) {
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        // Update user settings
+        $settings = $request->only(array_keys($rules));
+        unset($settings['password'], $settings['aliases'], $settings['email']);
+    }
+
+    /**
+     * Email address (login or alias) validation
+     *
+     * @param string    $email    Email address
+     * @param \App\User $user     The account owner
+     * @param bool      $is_alias The email is an alias
+     *
+     * @return string Error message on validation error
+     */
+    protected static function validateEmail(string $email, User $user, bool $is_alias = false): ?string
+    {
+        $attribute = $is_alias ? 'alias' : 'email';
+
+        if (strpos($email, '@') === false) {
+            return \trans('validation.entryinvalid', ['attribute' => $attribute]);
+        }
+
+        list($login, $domain) = explode('@', $email);
+
+        // Check if domain exists
+        $domain = Domain::where('namespace', Str::lower($domain))->first();
+
+        if (empty($domain)) {
+            return \trans('validation.domaininvalid');
+        }
+
+        // Validate login part alone
+        $v = Validator::make(
+            [$attribute => $login],
+            [$attribute => ['required', new UserEmailLocal(!$domain->isPublic())]]
+        );
+
+        if ($v->fails()) {
+            return $v->errors()->toArray()[$attribute][0];
+        }
+
+        // Check if it is one of domains available to the user
+        // TODO: We should have a helper that returns "flat" array with domain names
+        //       I guess we could use pluck() somehow
+        $domains = array_map(
+            function ($domain) {
+                return $domain->namespace;
+            },
+            $user->domains()
+        );
+
+        if (!in_array($domain->namespace, $domains)) {
+            return \trans('validation.entryexists', ['attribute' => 'domain']);
+        }
+
+        // Check if user with specified address already exists
+        if (User::findByEmail($email)) {
+            return \trans('validation.entryexists', ['attribute' => $attribute]);
+        }
+
+        return null;
     }
 }

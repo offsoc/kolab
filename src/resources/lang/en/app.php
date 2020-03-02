@@ -22,4 +22,5 @@ return [
 
     'domain-verify-success' => 'Domain verified successfully',
     'user-update-success' => 'User data updated successfully',
+    'user-create-success' => 'User created successfully',
 ];

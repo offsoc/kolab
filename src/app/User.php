@@ -2,24 +2,30 @@
 
 namespace App;
 
+use App\UserAlias;
+use App\Traits\UserAliasesTrait;
+use App\Traits\UserSettingsTrait;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Iatstuti\Database\Support\NullableFields;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-use App\Traits\UserSettingsTrait;
 
 /**
  * The eloquent definition of a User.
  *
- * @property integer $id
- * @property integer $status
+ * @property string $email
+ * @property int    $id
+ * @property string $name
+ * @property string $password
+ * @property int    $status
  */
 class User extends Authenticatable implements JWTSubject
 {
     use Notifiable;
     use NullableFields;
+    use UserAliasesTrait;
     use UserSettingsTrait;
     use SoftDeletes;
 
@@ -96,6 +102,16 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Email aliases of this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function aliases()
+    {
+        return $this->hasMany('App\UserAlias', 'user_id');
+    }
+
+    /**
      * Assign a package to a user. The user should not have any existing entitlements.
      *
      * @param \App\Package   $package The package to assign.
@@ -126,6 +142,26 @@ class User extends Authenticatable implements JWTSubject
         }
 
         return $user;
+    }
+
+    /**
+     * Returns user controlling the current user (or self when it's the account owner)
+     *
+     * @return \App\User A user object
+     */
+    public function controller(): User
+    {
+        // FIXME: This is most likely not the best way to do this
+        $entitlement = \App\Entitlement::where([
+                'entitleable_id' => $this->id,
+                'entitleable_type' => User::class
+        ])->first();
+
+        if ($entitlement && $entitlement->owner_id != $this->id) {
+            return $entitlement->owner;
+        }
+
+        return $this;
     }
 
     public function assignPlan($plan, $domain = null)
@@ -216,7 +252,7 @@ class User extends Authenticatable implements JWTSubject
      *
      * @param string $email Email address
      *
-     * @return \App\User User model object
+     * @return \App\User User model object if found
      */
     public static function findByEmail(string $email): ?User
     {
@@ -224,11 +260,23 @@ class User extends Authenticatable implements JWTSubject
             return null;
         }
 
+        $email = \strtolower($email);
+
         $user = self::where('email', $email)->first();
 
-        // TODO: Aliases, External email
+        if ($user) {
+            return $user;
+        }
 
-        return $user;
+        $alias = UserAlias::where('alias', $email)->first();
+
+        if ($alias) {
+            return $alias->user;
+        }
+
+        // TODO: External email
+
+        return null;
     }
 
     public function getJWTIdentifier()

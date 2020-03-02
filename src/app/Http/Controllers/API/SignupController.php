@@ -7,6 +7,9 @@ use App\Jobs\SignupVerificationEmail;
 use App\Jobs\SignupVerificationSMS;
 use App\Domain;
 use App\Plan;
+use App\Rules\ExternalEmail;
+use App\Rules\UserEmailDomain;
+use App\Rules\UserEmailLocal;
 use App\SignupCode;
 use App\User;
 use Illuminate\Http\Request;
@@ -77,7 +80,7 @@ class SignupController extends Controller
 
         // Validate user email (or phone)
         if ($error = $this->validatePhoneOrEmail($request->email, $is_phone)) {
-            return response()->json(['status' => 'error', 'errors' => ['email' => __($error)]], 422);
+            return response()->json(['status' => 'error', 'errors' => ['email' => $error]], 422);
         }
 
         // Generate the verification code
@@ -187,8 +190,7 @@ class SignupController extends Controller
         $domain = $request->domain;
 
         // Validate login
-        if ($errors = $this->validateLogin($login, $domain, $is_domain)) {
-            $errors = $this->resolveErrors($errors);
+        if ($errors = self::validateLogin($login, $domain, $is_domain)) {
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
@@ -234,116 +236,6 @@ class SignupController extends Controller
     }
 
     /**
-     * Checks if the input string is a valid email address or a phone number
-     *
-     * @param string $input     Email address or phone number
-     * @param bool   $is_phone  Will have been set to True if the string is valid phone number
-     *
-     * @return string Error message label on validation error
-     */
-    protected function validatePhoneOrEmail($input, &$is_phone = false)
-    {
-        $is_phone = false;
-
-        return $this->validateEmail($input);
-
-        // TODO: Phone number support
-/*
-        if (strpos($input, '@')) {
-            return $this->validateEmail($input);
-        }
-
-        $input = str_replace(array('-', ' '), '', $input);
-
-        if (!preg_match('/^\+?[0-9]{9,12}$/', $input)) {
-            return 'validation.noemailorphone';
-        }
-
-        $is_phone = true;
-*/
-    }
-
-    /**
-     * Email address validation
-     *
-     * @param string $email Email address
-     *
-     * @return string Error message label on validation error
-     */
-    protected function validateEmail($email)
-    {
-        $v = Validator::make(['email' => $email], ['email' => 'required|email']);
-
-        if ($v->fails()) {
-            return 'validation.emailinvalid';
-        }
-
-        list($local, $domain) = explode('@', $email);
-
-        // don't allow @localhost and other no-fqdn
-        if (strpos($domain, '.') === false) {
-            return 'validation.emailinvalid';
-        }
-    }
-
-    /**
-     * Login (kolab identity) validation
-     *
-     * @param string $login    Login (local part of an email address)
-     * @param string $domain   Domain name
-     * @param bool   $external Enables additional checks for domain part
-     *
-     * @return array Error messages on validation error
-     */
-    protected function validateLogin($login, $domain, $external = false)
-    {
-        // don't allow @localhost and other no-fqdn
-        if (empty($domain) || strpos($domain, '.') === false || stripos($domain, 'www.') === 0) {
-            return ['domain' => 'validation.domaininvalid'];
-        }
-
-        // Local part validation
-        if (!preg_match('/^[A-Za-z0-9_.-]+$/', $login)) {
-            return ['login' => 'validation.logininvalid'];
-        }
-
-        $domain = Str::lower($domain);
-
-        if (!$external) {
-            // Check if the local part is not one of exceptions
-            $exceptions = '/^(admin|administrator|sales|root)$/i';
-            if (preg_match($exceptions, $login)) {
-                return ['login' => 'validation.loginexists'];
-            }
-
-            // Check if specified domain is allowed for signup
-            if (!in_array($domain, Domain::getPublicDomains())) {
-                return ['domain' => 'validation.domaininvalid'];
-            }
-        } else {
-            // Use email validator to validate the domain part
-            $v = Validator::make(['email' => 'user@' . $domain], ['email' => 'required|email']);
-            if ($v->fails()) {
-                return ['domain' => 'validation.domaininvalid'];
-            }
-
-            // TODO: DNS registration check - maybe after signup?
-
-            // Check if domain is already registered with us
-            if (Domain::where('namespace', $domain)->first()) {
-                return ['domain' => 'validation.domainexists'];
-            }
-        }
-
-        // Check if user with specified login already exists
-        // TODO: Aliases
-        $email = $login . '@' . $domain;
-        if (User::findByEmail($email)) {
-            return ['login' => 'validation.loginexists'];
-        }
-    }
-
-    /**
      * Returns plan for the signup process
      *
      * @returns \App\Plan Plan object selected for current signup process
@@ -369,16 +261,87 @@ class SignupController extends Controller
     }
 
     /**
-     * Convert error labels to actual (localized) text
+     * Checks if the input string is a valid email address or a phone number
+     *
+     * @param string $input    Email address or phone number
+     * @param bool   $is_phone Will have been set to True if the string is valid phone number
+     *
+     * @return string Error message on validation error
      */
-    protected function resolveErrors(array $errors): array
+    protected static function validatePhoneOrEmail($input, &$is_phone = false): ?string
     {
-        $result = [];
+        $is_phone = false;
 
-        foreach ($errors as $idx => $label) {
-            $result[$idx] = __($label);
+        $v = Validator::make(
+            ['email' => $input],
+            ['email' => ['required', 'string', new ExternalEmail()]]
+        );
+
+        if ($v->fails()) {
+            return $v->errors()->toArray()['email'][0];
         }
 
-        return $result;
+        // TODO: Phone number support
+/*
+        $input = str_replace(array('-', ' '), '', $input);
+
+        if (!preg_match('/^\+?[0-9]{9,12}$/', $input)) {
+            return \trans('validation.noemailorphone');
+        }
+
+        $is_phone = true;
+*/
+        return null;
+    }
+
+    /**
+     * Login (kolab identity) validation
+     *
+     * @param string $login    Login (local part of an email address)
+     * @param string $domain   Domain name
+     * @param bool   $external Enables additional checks for domain part
+     *
+     * @return array Error messages on validation error
+     */
+    protected static function validateLogin($login, $domain, $external = false): ?array
+    {
+        // Validate login part alone
+        $v = Validator::make(
+            ['login' => $login],
+            ['login' => ['required', 'string', new UserEmailLocal($external)]]
+        );
+
+        if ($v->fails()) {
+            return ['login' => $v->errors()->toArray()['login'][0]];
+        }
+
+        $domains = $external ? null : Domain::getPublicDomains();
+
+        // Validate the domain
+        $v = Validator::make(
+            ['domain' => $domain],
+            ['domain' => ['required', 'string', new UserEmailDomain($domains)]]
+        );
+
+        if ($v->fails()) {
+            return ['domain' => $v->errors()->toArray()['domain'][0]];
+        }
+
+        $domain = Str::lower($domain);
+
+        // Check if domain is already registered with us
+        if ($external) {
+            if (Domain::where('namespace', $domain)->first()) {
+                return ['domain' => \trans('validation.domainexists')];
+            }
+        }
+
+        // Check if user with specified login already exists
+        $email = $login . '@' . $domain;
+        if (User::findByEmail($email)) {
+            return ['login' => \trans('validation.loginexists')];
+        }
+
+        return null;
     }
 }

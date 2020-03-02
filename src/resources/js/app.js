@@ -35,17 +35,46 @@ window.axios.interceptors.response.use(
                     const input = $('#' + input_name)
 
                     if (input.length) {
-                        input.addClass('is-invalid')
-                        input.parent().find('.invalid-feedback').remove()
-                        input.parent().append($('<div class="invalid-feedback">')
-                            .text($.type(msg) === 'string' ? msg : msg.join(' ')))
+                        // Create an error message\
+                        // API responses can use a string, array or object
+                        let msg_text = ''
+                        if ($.type(msg) !== 'string') {
+                            $.each(msg, (index, str) => {
+                                msg_text += str + ' '
+                            })
+                        }
+                        else {
+                            msg_text = msg
+                        }
+
+                        let feedback = $('<div class="invalid-feedback">').text(msg_text)
+
+                        if (input.is('.listinput')) {
+                            // List input widget
+                            let list = input.next('.listinput-widget')
+
+                            list.children(':not(:first-child)').each((index, element) => {
+                                if (msg[index]) {
+                                    $(element).find('input').addClass('is-invalid')
+                                }
+                            })
+
+                            list.addClass('is-invalid').next('.invalid-feedback').remove()
+                            list.after(feedback)
+                        }
+                        else {
+                            // Standard form element
+                            input.addClass('is-invalid')
+                            input.parent().find('.invalid-feedback').remove()
+                            input.parent().append(feedback)
+                        }
 
                         return false
                     }
                 });
             })
 
-            $('form .is-invalid').first().focus()
+            $('form .is-invalid:not(.listinput-widget)').first().focus()
         }
         else if (error.response && error.response.data) {
             error_msg = error.response.data.message

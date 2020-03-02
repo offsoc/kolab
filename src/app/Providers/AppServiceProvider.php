@@ -32,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
         \App\Sku::observe(\App\Observers\SkuObserver::class);
         \App\User::observe(\App\Observers\UserObserver::class);
+        \App\UserAlias::observe(\App\Observers\UserAliasObserver::class);
         \App\UserSetting::observe(\App\Observers\UserSettingObserver::class);
         \App\VerificationCode::observe(\App\Observers\VerificationCodeObserver::class);
         \App\Wallet::observe(\App\Observers\WalletObserver::class);

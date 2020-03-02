@@ -78,3 +78,27 @@ pre {
     font-size: 1.2rem;
     font-weight: bold;
 }
+
+.listinput {
+    display: none;
+}
+
+.listinput-widget {
+    & > div {
+        &:not(:last-child) {
+            margin-bottom: -1px;
+
+            input, a.btn {
+                border-bottom-right-radius: 0;
+                border-bottom-left-radius: 0;
+            }
+        }
+
+        &:not(:first-child) {
+            input, a.btn {
+                border-top-right-radius: 0;
+                border-top-left-radius: 0;
+            }
+        }
+    }
+}

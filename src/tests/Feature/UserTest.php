@@ -29,6 +29,22 @@ class UserTest extends TestCase
     }
 
     /**
+     * Tests for User::assignPackage()
+     */
+    public function testAssignPackage(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    /**
+     * Tests for User::assignPlan()
+     */
+    public function testAssignPlan(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    /**
      * Verify user creation process
      */
     public function testUserCreateJob(): void
@@ -87,7 +103,24 @@ class UserTest extends TestCase
         $this->assertTrue($userB->accounts()->get()[0]->id === $userA->wallets()->get()[0]->id);
     }
 
-    public function testUserDomains(): void
+    /**
+     * Tests for User::controller()
+     */
+    public function testController(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+
+        $this->assertSame($john->id, $john->controller()->id);
+
+        $jack = $this->getTestUser('jack@kolab.org');
+
+        $this->assertSame($john->id, $jack->controller()->id);
+    }
+
+    /**
+     * Tests for User::domains()
+     */
+    public function testDomains(): void
     {
         $user = $this->getTestUser('john@kolab.org');
         $domains = [];
@@ -96,8 +129,20 @@ class UserTest extends TestCase
             $domains[] = $domain->namespace;
         }
 
-        $this->assertContains('kolabnow.com', $domains);
+        $this->assertContains(\config('app.domain'), $domains);
         $this->assertContains('kolab.org', $domains);
+
+        // Jack is not the wallet controller, so for him the list should not
+        // include John's domains, kolab.org specifically
+        $user = $this->getTestUser('jack@kolab.org');
+        $domains = [];
+
+        foreach ($user->domains() as $domain) {
+            $domains[] = $domain->namespace;
+        }
+
+        $this->assertContains(\config('app.domain'), $domains);
+        $this->assertNotContains('kolab.org', $domains);
     }
 
     public function testUserQuota(): void
@@ -158,7 +203,61 @@ class UserTest extends TestCase
         $this->assertInstanceOf(User::class, $result);
         $this->assertSame($user->id, $result->id);
 
-        // TODO: Make sure searching is case-insensitive
-        // TODO: Alias, eternal email
+        // Use an alias
+        $result = User::findByEmail('john.doe@kolab.org');
+        $this->assertInstanceOf(User::class, $result);
+        $this->assertSame($user->id, $result->id);
+
+        // TODO: searching by external email (setting)
+        $this->markTestIncomplete();
+    }
+
+    /**
+     * Tests for UserAliasesTrait::setAliases()
+     */
+    public function testSetAliases(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('UserAccountA@UserAccount.com');
+
+        $this->assertCount(0, $user->aliases->all());
+
+        // Add an alias
+        $user->setAliases(['UserAlias1@UserAccount.com']);
+
+        $aliases = $user->aliases()->get();
+        $this->assertCount(1, $aliases);
+        $this->assertSame('useralias1@useraccount.com', $aliases[0]['alias']);
+
+        // Add another alias
+        $user->setAliases(['UserAlias1@UserAccount.com', 'UserAlias2@UserAccount.com']);
+
+        $aliases = $user->aliases()->orderBy('alias')->get();
+        $this->assertCount(2, $aliases);
+        $this->assertSame('useralias1@useraccount.com', $aliases[0]->alias);
+        $this->assertSame('useralias2@useraccount.com', $aliases[1]->alias);
+
+        // Remove an alias
+        $user->setAliases(['UserAlias1@UserAccount.com']);
+
+        $aliases = $user->aliases()->get();
+        $this->assertCount(1, $aliases);
+        $this->assertSame('useralias1@useraccount.com', $aliases[0]['alias']);
+
+        // Remove all aliases
+        $user->setAliases([]);
+
+        $this->assertCount(0, $user->aliases()->get());
+
+        // TODO: Test that the changes are propagated to ldap
+    }
+
+    /**
+     * Tests for UserSettingsTrait::setSettings()
+     */
+    public function testSetSettings(): void
+    {
+        $this->markTestIncomplete();
     }
 }

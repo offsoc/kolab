@@ -14,6 +14,7 @@ class Toast extends BaseComponent
     public const TYPE_INFO = 'info';
 
     protected $type;
+    protected $element;
 
 
     public function __construct($type)
@@ -41,6 +42,7 @@ class Toast extends BaseComponent
     public function assert(Browser $browser)
     {
         $browser->waitFor($this->selector());
+        $this->element = $browser->element($this->selector());
     }
 
     /**
@@ -81,6 +83,6 @@ class Toast extends BaseComponent
      */
     public function closeToast(Browser $browser)
     {
-        $browser->click();
+        $this->element->click();
     }
 }

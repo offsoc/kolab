@@ -550,92 +550,52 @@ class SignupTest extends TestCase
     }
 
     /**
-     * List of email address validation cases for testValidateEmail()
-     *
-     * @return array Arguments for testValidateEmail()
-     */
-    public function dataValidateEmail()
-    {
-        return [
-            // invalid
-            ['', 'validation.emailinvalid'],
-            ['example.org', 'validation.emailinvalid'],
-            ['@example.org', 'validation.emailinvalid'],
-            ['test@localhost', 'validation.emailinvalid'],
-            // valid
-            ['test@domain.tld', null],
-            ['&@example.org', null],
-        ];
-    }
-
-    /**
-     * Signup email validation.
-     *
-     * Note: Technicly these are unit tests, but let's keep it here for now.
-     * FIXME: Shall we do a http request for each case?
-     *
-     * @dataProvider dataValidateEmail
-     */
-    public function testValidateEmail($email, $expected_result)
-    {
-        $method = new \ReflectionMethod('App\Http\Controllers\API\SignupController', 'validateEmail');
-        $method->setAccessible(true);
-
-        $result = $method->invoke(new SignupController(), $email);
-
-        $this->assertSame($expected_result, $result);
-    }
-
-    /**
      * List of login/domain validation cases for testValidateLogin()
      *
      * @return array Arguments for testValidateLogin()
      */
-    public function dataValidateLogin()
+    public function dataValidateLogin(): array
     {
         $domain = $this->getPublicDomain();
 
         return [
             // Individual account
-            ['', $domain, false, ['login' => 'validation.logininvalid']],
-            ['test123456', 'localhost', false, ['domain' => 'validation.domaininvalid']],
-            ['test123456', 'unknown-domain.org', false, ['domain' => 'validation.domaininvalid']],
+            ['', $domain, false, ['login' => 'The login field is required.']],
+            ['test123456', 'localhost', false, ['domain' => 'The specified domain is invalid.']],
+            ['test123456', 'unknown-domain.org', false, ['domain' => 'The specified domain is invalid.']],
             ['test.test', $domain, false, null],
             ['test_test', $domain, false, null],
             ['test-test', $domain, false, null],
-            ['admin', $domain, false, ['login' => 'validation.loginexists']],
-            ['administrator', $domain, false, ['login' => 'validation.loginexists']],
-            ['sales', $domain, false, ['login' => 'validation.loginexists']],
-            ['root', $domain, false, ['login' => 'validation.loginexists']],
+            ['admin', $domain, false, ['login' => 'The specified login is not available.']],
+            ['administrator', $domain, false, ['login' => 'The specified login is not available.']],
+            ['sales', $domain, false, ['login' => 'The specified login is not available.']],
+            ['root', $domain, false, ['login' => 'The specified login is not available.']],
 
-            // existing user
-            ['jack', 'kolab.org', true, ['domain' => 'validation.domainexists']],
+            // TODO existing (public domain) user
+            // ['signuplogin', $domain, false, ['login' => 'The specified login is not available.']],
 
             // Domain account
             ['admin', 'kolabsys.com', true, null],
-            ['testnonsystemdomain', 'invalid', true, ['domain' => 'validation.domaininvalid']],
-            ['testnonsystemdomain', '.com', true, ['domain' => 'validation.domaininvalid']],
+            ['testnonsystemdomain', 'invalid', true, ['domain' => 'The specified domain is invalid.']],
+            ['testnonsystemdomain', '.com', true, ['domain' => 'The specified domain is invalid.']],
 
-            // existing user
-            ['john', 'kolab.org', true, ['domain' => 'validation.domainexists']],
+            // existing custom domain
+            ['jack', 'kolab.org', true, ['domain' => 'The specified domain is not available.']],
         ];
     }
 
     /**
      * Signup login/domain validation.
      *
-     * Note: Technicly these include unit tests, but let's keep it here for now.
+     * Note: Technically these include unit tests, but let's keep it here for now.
      * FIXME: Shall we do a http request for each case?
      *
      * @dataProvider dataValidateLogin
      */
-    public function testValidateLogin($login, $domain, $external, $expected_result)
+    public function testValidateLogin($login, $domain, $external, $expected_result): void
     {
-        $method = new \ReflectionMethod('App\Http\Controllers\API\SignupController', 'validateLogin');
-        $method->setAccessible(true);
+        $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain, $external]);
 
-        $result = $method->invoke(new SignupController(), $login, $domain, $external);
-
-        $this->assertSame($expected_result, $result, var_export(func_get_args(), true));
+        $this->assertSame($expected_result, $result);
     }
 }

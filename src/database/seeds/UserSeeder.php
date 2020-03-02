@@ -45,6 +45,8 @@ class UserSeeder extends Seeder
             ]
         );
 
+        $john->setAliases(['john.doe@kolab.org']);
+
         $user_wallets = $john->wallets()->get();
 
         $package_domain = \App\Package::where('title', 'domain-hosting')->first();
@@ -70,6 +72,8 @@ class UserSeeder extends Seeder
                 'country' => 'US'
             ]
         );
+
+        $jack->setAliases(['jack.daniels@kolab.org']);
 
         $john->assignPackage($package_kolab, $jack);
 

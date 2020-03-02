@@ -4,6 +4,7 @@
             <div class="card-body">
                 <div class="card-title">User Accounts</div>
                 <div class="card-text">
+                    <router-link class="btn btn-primary create-user" :to="{ path: 'user/new' }" tag="button">Create user</router-link>
                     <table class="table table-hover">
                         <thead class="thead-light">
                             <tr>

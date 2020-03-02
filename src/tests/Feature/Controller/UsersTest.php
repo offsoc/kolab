@@ -20,6 +20,7 @@ class UsersTest extends TestCase
 
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('UserEntitlement2A@UserEntitlement.com');
+        $this->deleteTestUser('john2.doe2@kolab.org');
         $this->deleteTestDomain('userscontroller.com');
     }
 
@@ -30,6 +31,7 @@ class UsersTest extends TestCase
     {
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('UserEntitlement2A@UserEntitlement.com');
+        $this->deleteTestUser('john2.doe2@kolab.org');
         $this->deleteTestDomain('userscontroller.com');
 
         parent::tearDown();
@@ -55,8 +57,10 @@ class UsersTest extends TestCase
         $this->assertEquals($user->email, $json['email']);
         $this->assertEquals(User::STATUS_NEW, $json['status']);
         $this->assertTrue(is_array($json['statusInfo']));
-        $this->assertEquals($user->getSetting('country'), $json['settings']['country']);
-        $this->assertEquals($user->getSetting('currency'), $json['settings']['currency']);
+        $this->assertTrue(is_array($json['settings']));
+        $this->assertTrue(is_array($json['aliases']));
+
+        // Note: Details of the content are tested in testUserResponse()
     }
 
     public function testIndex(): void
@@ -208,6 +212,29 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test user data response used in show and info actions
+     */
+    public function testUserResponse(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+
+        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
+
+        $this->assertEquals($user->id, $result['id']);
+        $this->assertEquals($user->email, $result['email']);
+        $this->assertEquals($user->status, $result['status']);
+        $this->assertTrue(is_array($result['statusInfo']));
+
+        $this->assertTrue(is_array($result['aliases']));
+        $this->assertCount(1, $result['aliases']);
+        $this->assertSame('john.doe@kolab.org', $result['aliases'][0]);
+
+        $this->assertTrue(is_array($result['settings']));
+        $this->assertSame('US', $result['settings']['country']);
+        $this->assertSame('USD', $result['settings']['currency']);
+    }
+
+    /**
      * Test fetching user data/profile (GET /api/v4/users/<user-id>)
      */
     public function testShow(): void
@@ -217,8 +244,14 @@ class UsersTest extends TestCase
         // Test getting profile of self
         $response = $this->actingAs($userA, 'api')->get("/api/v4/users/{$userA->id}");
 
+        $json = $response->json();
+
         $response->assertStatus(200);
-        $response->assertJson(['id' => $userA->id]);
+        $this->assertEquals($userA->id, $json['id']);
+        $this->assertEquals($userA->email, $json['email']);
+        $this->assertTrue(is_array($json['statusInfo']));
+        $this->assertTrue(is_array($json['settings']));
+        $this->assertTrue(is_array($json['aliases']));
 
         // Test unauthorized access to a profile of other user
         $user = $this->getTestUser('jack@kolab.org');
@@ -234,8 +267,90 @@ class UsersTest extends TestCase
      */
     public function testStore(): void
     {
-        // TODO
-        $this->markTestIncomplete();
+        $jack = $this->getTestUser('jack@kolab.org');
+        $john = $this->getTestUser('john@kolab.org');
+
+        // Test empty request
+        $response = $this->actingAs($john)->post("/api/v4/users", []);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("The email field is required.", $json['errors']['email']);
+        $this->assertSame("The password field is required.", $json['errors']['password'][0]);
+        $this->assertCount(2, $json);
+
+        // Test access by user not being a wallet controller
+        $post = ['first_name' => 'Test'];
+        $response = $this->actingAs($jack)->post("/api/v4/users", $post);
+        $json = $response->json();
+
+        $response->assertStatus(403);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Access denied", $json['message']);
+        $this->assertCount(2, $json);
+
+        // Test some invalid data
+        $post = ['password' => '12345678', 'email' => 'invalid'];
+        $response = $this->actingAs($john)->post("/api/v4/users", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json);
+        $this->assertSame('The password confirmation does not match.', $json['errors']['password'][0]);
+        $this->assertSame('The specified email is invalid.', $json['errors']['email']);
+
+        // Test existing user email
+        $post = [
+            'password' => 'simple',
+            'password_confirmation' => 'simple',
+            'first_name' => 'John2',
+            'last_name' => 'Doe2',
+            'email' => 'jack.daniels@kolab.org',
+        ];
+
+        $response = $this->actingAs($john)->post("/api/v4/users", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json);
+        $this->assertSame('The specified email is not available.', $json['errors']['email']);
+
+        // Test full user data
+        $post = [
+            'password' => 'simple',
+            'password_confirmation' => 'simple',
+            'first_name' => 'John2',
+            'last_name' => 'Doe2',
+            'email' => 'john2.doe2@kolab.org',
+            'aliases' => ['useralias1@kolab.org', 'useralias2@kolab.org']
+        ];
+
+        $response = $this->actingAs($john)->post("/api/v4/users", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User created successfully", $json['message']);
+        $this->assertCount(2, $json);
+
+        $user = User::where('email', 'john2.doe2@kolab.org')->first();
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame('John2', $user->getSetting('first_name'));
+        $this->assertSame('Doe2', $user->getSetting('last_name'));
+        $aliases = $user->aliases()->orderBy('alias')->get();
+        $this->assertCount(2, $aliases);
+        $this->assertSame('useralias1@kolab.org', $aliases[0]->alias);
+        $this->assertSame('useralias2@kolab.org', $aliases[1]->alias);
+
+        // TODO: Test assigning a package to new user
     }
 
     /**
@@ -244,13 +359,17 @@ class UsersTest extends TestCase
     public function testUpdate(): void
     {
         $userA = $this->getTestUser('UsersControllerTest1@userscontroller.com');
-        $userB = $this->getTestUser('jack@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $domain = $this->getTestDomain(
+            'userscontroller.com',
+            ['status' => Domain::STATUS_NEW, 'type' => Domain::TYPE_EXTERNAL]
+        );
 
         // Test unauthorized update of other user profile
-        $response = $this->actingAs($userB)->get("/api/v4/users/{$userA->id}", []);
+        $response = $this->actingAs($jack)->get("/api/v4/users/{$userA->id}", []);
         $response->assertStatus(403);
 
-        // Test updating of self
+        // Test updating of self (empty request)
         $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", []);
         $response->assertStatus(200);
 
@@ -283,6 +402,7 @@ class UsersTest extends TestCase
             'billing_address' => 'billing',
             'country' => 'CH',
             'currency' => 'CHF',
+            'aliases' => ['useralias1@' . \config('app.domain'), 'useralias2@' . \config('app.domain')]
         ];
 
         $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
@@ -294,10 +414,14 @@ class UsersTest extends TestCase
         $this->assertSame("User data updated successfully", $json['message']);
         $this->assertCount(2, $json);
         $this->assertTrue($userA->password != $userA->fresh()->password);
-        unset($post['password'], $post['password_confirmation']);
+        unset($post['password'], $post['password_confirmation'], $post['aliases']);
         foreach ($post as $key => $value) {
             $this->assertSame($value, $userA->getSetting($key));
         }
+        $aliases = $userA->aliases()->orderBy('alias')->get();
+        $this->assertCount(2, $aliases);
+        $this->assertSame('useralias1@' . \config('app.domain'), $aliases[0]->alias);
+        $this->assertSame('useralias2@' . \config('app.domain'), $aliases[1]->alias);
 
         // Test unsetting values
         $post = [
@@ -308,6 +432,7 @@ class UsersTest extends TestCase
             'billing_address' => '',
             'country' => '',
             'currency' => '',
+            'aliases' => ['useralias2@' . \config('app.domain')]
         ];
 
         $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
@@ -318,11 +443,95 @@ class UsersTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame("User data updated successfully", $json['message']);
         $this->assertCount(2, $json);
+        unset($post['aliases']);
         foreach ($post as $key => $value) {
             $this->assertNull($userA->getSetting($key));
         }
+        $aliases = $userA->aliases()->get();
+        $this->assertCount(1, $aliases);
+        $this->assertSame('useralias2@' . \config('app.domain'), $aliases[0]->alias);
 
+        // Test error on setting an alias to other user's domain
+        // and missing password confirmation
+        $post = [
+            'password' => 'simple123',
+            'aliases' => ['useralias2@' . \config('app.domain'), 'useralias1@kolab.org']
+        ];
+
+        $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json['errors']);
+        $this->assertCount(1, $json['errors']['aliases']);
+        $this->assertSame("The specified domain is not available.", $json['errors']['aliases'][1]);
+        $this->assertSame("The password confirmation does not match.", $json['errors']['password'][0]);
+
+        // TODO: Test error on aliases with invalid/non-existing/other-user's domain
         // TODO: Test authorized update of other user
         $this->markTestIncomplete();
+    }
+
+    /**
+     * List of alias validation cases for testValidateEmail()
+     *
+     * @return array Arguments for testValidateEmail()
+     */
+    public function dataValidateEmail(): array
+    {
+        $this->refreshApplication();
+        $public_domains = Domain::getPublicDomains();
+        $domain = reset($public_domains);
+
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+
+        return [
+            // Invalid format
+            ["$domain", $john, true, 'The specified alias is invalid.'],
+            [".@$domain", $john, true, 'The specified alias is invalid.'],
+            ["test123456@localhost", $john, true, 'The specified domain is invalid.'],
+            ["test123456@unknown-domain.org", $john, true, 'The specified domain is invalid.'],
+
+            ["$domain", $john, false, 'The specified email is invalid.'],
+            [".@$domain", $john, false, 'The specified email is invalid.'],
+
+            // forbidden local part on public domains
+            ["admin@$domain", $john, true, 'The specified alias is not available.'],
+            ["administrator@$domain", $john, true, 'The specified alias is not available.'],
+
+            // forbidden (other user's domain)
+            ["testtest@kolab.org", $user, true, 'The specified domain is not available.'],
+
+            // existing alias of other user
+            ["jack.daniels@kolab.org", $john, true, 'The specified alias is not available.'],
+
+            // existing user
+            ["jack@kolab.org", $john, true, 'The specified alias is not available.'],
+
+            // valid (user domain)
+            ["admin@kolab.org", $john, true, null],
+
+            // valid (public domain)
+            ["test.test@$domain", $john, true, null],
+        ];
+    }
+
+    /**
+     * User email/alias validation.
+     *
+     * Note: Technically these include unit tests, but let's keep it here for now.
+     * FIXME: Shall we do a http request for each case?
+     *
+     * @dataProvider dataValidateEmail
+     */
+    public function testValidateEmail($alias, $user, $is_alias, $expected_result): void
+    {
+        $result = $this->invokeMethod(new UsersController(), 'validateEmail', [$alias, $user, $is_alias]);
+
+        $this->assertSame($expected_result, $result);
     }
 }
