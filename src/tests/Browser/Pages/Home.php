@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Pages;
 
-use Laravel\Dusk\Browser;
 use Laravel\Dusk\Page;
 
 class Home extends Page
@@ -20,10 +19,11 @@ class Home extends Page
     /**
      * Assert that the browser is on the page.
      *
-     * @param  \Laravel\Dusk\Browser  $browser
+     * @param \Laravel\Dusk\Browser $browser The browser object
+     *
      * @return void
      */
-    public function assert(Browser $browser)
+    public function assert($browser)
     {
         $browser->assertPathIs($this->url())
             ->assertVisible('form.form-signin');
@@ -44,14 +44,14 @@ class Home extends Page
     /**
      * Submit logon form.
      *
-     * @param Browser $browser
-     * @param string  $username
-     * @param string  $password
-     * @param bool    $wait_for_dashboard
+     * @param \Laravel\Dusk\Browser $browser  The browser object
+     * @param string                $username User name
+     * @param string                $password User password
+     * @param bool                  $wait_for_dashboard
      *
      * @return void
      */
-    public function submitLogon(Browser $browser, $username, $password, $wait_for_dashboard = false)
+    public function submitLogon($browser, $username, $password, $wait_for_dashboard = false)
     {
         $browser
             ->type('#inputEmail', $username)

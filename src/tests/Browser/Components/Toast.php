@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Components;
 
-use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
 use PHPUnit\Framework\Assert as PHPUnit;
 
@@ -35,11 +34,11 @@ class Toast extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param Browser $browser
+     * @param \Laravel\Dusk\Browser $browser The browser object
      *
      * @return void
      */
-    public function assert(Browser $browser)
+    public function assert($browser)
     {
         $browser->waitFor($this->selector());
         $this->element = $browser->element($this->selector());
@@ -61,7 +60,7 @@ class Toast extends BaseComponent
     /**
      * Assert title of the toast element
      */
-    public function assertToastTitle(Browser $browser, string $title)
+    public function assertToastTitle($browser, string $title)
     {
         if (empty($title)) {
             $browser->assertMissing('@title');
@@ -73,7 +72,7 @@ class Toast extends BaseComponent
     /**
      * Assert message of the toast element
      */
-    public function assertToastMessage(Browser $browser, string $message)
+    public function assertToastMessage($browser, string $message)
     {
         $browser->assertSeeIn('@message', $message);
     }
@@ -81,7 +80,7 @@ class Toast extends BaseComponent
     /**
      * Close the toast with a click
      */
-    public function closeToast(Browser $browser)
+    public function closeToast($browser)
     {
         $this->element->click();
     }

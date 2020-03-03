@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Components;
 
-use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
 use PHPUnit\Framework\Assert as PHPUnit;
 
@@ -21,11 +20,11 @@ class Menu extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param Browser $browser
+     * @param \Laravel\Dusk\Browser $browser
      *
      * @return void
      */
-    public function assert(Browser $browser)
+    public function assert($browser)
     {
         $browser->assertVisible($this->selector());
         $browser->assertVisible('@brand');
@@ -34,12 +33,12 @@ class Menu extends BaseComponent
     /**
      * Assert that menu contains only specified menu items.
      *
-     * @param Browser $browser
-     * @param array   $items   List of menu items
+     * @param \Laravel\Dusk\Browser $browser
+     * @param array                 $items   List of menu items
      *
      * @return void
      */
-    public function assertMenuItems(Browser $browser, array $items)
+    public function assertMenuItems($browser, array $items)
     {
         // TODO: On mobile the links will not be visible
 
@@ -54,12 +53,12 @@ class Menu extends BaseComponent
     /**
      * Assert that specified menu item is active
      *
-     * @param Browser $browser
-     * @param string  $item    Menu item name
+     * @param \Laravel\Dusk\Browser $browser
+     * @param string                $item    Menu item name
      *
      * @return void
      */
-    public function assertActiveItem(Browser $browser, string $item)
+    public function assertActiveItem($browser, string $item)
     {
         // TODO: On mobile the links will not be visible
 

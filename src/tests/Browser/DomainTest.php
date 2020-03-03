@@ -4,6 +4,7 @@ namespace Tests\Browser;
 
 use App\Domain;
 use App\User;
+use Tests\Browser;
 use Tests\Browser\Components\Error;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
@@ -11,7 +12,6 @@ use Tests\Browser\Pages\DomainInfo;
 use Tests\Browser\Pages\DomainList;
 use Tests\Browser\Pages\Home;
 use Tests\DuskTestCase;
-use Laravel\Dusk\Browser;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class DomainTest extends DuskTestCase
@@ -23,7 +23,7 @@ class DomainTest extends DuskTestCase
     public function testDomainInfoUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(function ($browser) {
             $browser->visit('/domain/123')->on(new Home());
         });
     }
@@ -33,7 +33,7 @@ class DomainTest extends DuskTestCase
      */
     public function testDomainInfo404(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(function ($browser) {
             // FIXME: I couldn't make loginAs() method working
 
             // Note: Here we're also testing that unauthenticated request
@@ -44,7 +44,7 @@ class DomainTest extends DuskTestCase
                 // TODO: the check below could look simpler, but we can't
                 //       just remove the callback argument. We'll create
                 //       Browser wrapper in future, then we could create expectError() method
-                ->with(new Error('404'), function (Browser $browser) {
+                ->with(new Error('404'), function ($browser) {
                 });
         });
     }
@@ -56,7 +56,7 @@ class DomainTest extends DuskTestCase
      */
     public function testDomainInfo(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(function ($browser) {
             // Unconfirmed domain
             $domain = Domain::where('namespace', 'kolab.org')->first();
             $domain->status ^= Domain::STATUS_CONFIRMED;
@@ -64,7 +64,7 @@ class DomainTest extends DuskTestCase
 
             $browser->visit('/domain/' . $domain->id)
                 ->on(new DomainInfo())
-                ->whenAvailable('@verify', function (Browser $browser) use ($domain) {
+                ->whenAvailable('@verify', function ($browser) use ($domain) {
                     // Make sure the domain is confirmed now
                     // TODO: Test verification process failure
                     $domain->status |= Domain::STATUS_CONFIRMED;
@@ -74,11 +74,11 @@ class DomainTest extends DuskTestCase
                         ->assertSeeIn('pre', $domain->hash())
                         ->click('button');
                 })
-                ->whenAvailable('@config', function (Browser $browser) use ($domain) {
+                ->whenAvailable('@config', function ($browser) use ($domain) {
                     $browser->assertSeeIn('pre', $domain->namespace);
                 })
                 ->assertMissing('@verify')
-                ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
+                ->with(new Toast(Toast::TYPE_SUCCESS), function ($browser) {
                     $browser->assertToastTitle('')
                         ->assertToastMessage('Domain verified successfully')
                         ->closeToast();
@@ -98,7 +98,7 @@ class DomainTest extends DuskTestCase
     public function testDomainListUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(function ($browser) {
             $browser->visit('/logout')
                 ->visit('/domains')
                 ->on(new Home());
@@ -112,7 +112,7 @@ class DomainTest extends DuskTestCase
      */
     public function testDomainList(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(function ($browser) {
             // Login the user
             $browser->visit('/login')
                 ->on(new Home())
@@ -127,7 +127,7 @@ class DomainTest extends DuskTestCase
                 ->click('@table tbody tr:first-child td:first-child a')
                 // On Domain Info page verify that's the clicked domain
                 ->on(new DomainInfo())
-                ->whenAvailable('@config', function (Browser $browser) {
+                ->whenAvailable('@config', function ($browser) {
                     $browser->assertSeeIn('pre', 'kolab.org');
                 });
         });

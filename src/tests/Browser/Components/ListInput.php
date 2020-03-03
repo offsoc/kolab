@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Components;
 
-use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
 use PHPUnit\Framework\Assert as PHPUnit;
 
@@ -29,11 +28,11 @@ class ListInput extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param Browser $browser
+     * @param \Laravel\Dusk\Browser $browser
      *
      * @return void
      */
-    public function assert(Browser $browser)
+    public function assert($browser)
     {
 //        $list = explode("\n", $browser->value($this->selector));
 
@@ -60,7 +59,7 @@ class ListInput extends BaseComponent
     /**
      * Assert list input content
      */
-    public function assertListInputValue(Browser $browser, array $list)
+    public function assertListInputValue($browser, array $list)
     {
         if (empty($list)) {
             $browser->assertMissing('.input-group:not(:first-child)');
@@ -76,7 +75,7 @@ class ListInput extends BaseComponent
     /**
      * Add list entry
      */
-    public function addListEntry(Browser $browser, string $value)
+    public function addListEntry($browser, string $value)
     {
         $browser->type('@input', $value)
             ->click('@add-btn')
@@ -86,7 +85,7 @@ class ListInput extends BaseComponent
     /**
      * Remove list entry
      */
-    public function removeListEntry(Browser $browser, int $num)
+    public function removeListEntry($browser, int $num)
     {
         $selector = '.input-group:nth-child(' . ($num + 1) . ') a.btn';
         $browser->click($selector)->assertMissing($selector);
@@ -95,7 +94,7 @@ class ListInput extends BaseComponent
     /**
      * Assert an error message on the widget
      */
-    public function assertFormError(Browser $browser, int $num, string $msg, bool $focused = false)
+    public function assertFormError($browser, int $num, string $msg, bool $focused = false)
     {
         $selector = '.input-group:nth-child(' . ($num + 1) . ') input.is-invalid';
 

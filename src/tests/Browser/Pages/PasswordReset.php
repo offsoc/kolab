@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Pages;
 
-use Laravel\Dusk\Browser;
 use Laravel\Dusk\Page;
 
 class PasswordReset extends Page
@@ -20,11 +19,11 @@ class PasswordReset extends Page
     /**
      * Assert that the browser is on the page.
      *
-     * @param \Laravel\Dusk\Browser $browser
+     * @param \Laravel\Dusk\Browser $browser The browser object
      *
      * @return void
      */
-    public function assert(Browser $browser)
+    public function assert($browser)
     {
         $browser->assertPathIs('/password-reset');
         $browser->assertPresent('@step1');

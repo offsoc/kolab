@@ -4,6 +4,7 @@ namespace Tests\Browser;
 
 use App\User;
 use App\UserAlias;
+use Tests\Browser;
 use Tests\Browser\Components\ListInput;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
@@ -11,7 +12,6 @@ use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\UserInfo;
 use Tests\Browser\Pages\UserList;
 use Tests\DuskTestCase;
-use Laravel\Dusk\Browser;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class UsersTest extends DuskTestCase

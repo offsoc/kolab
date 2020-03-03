@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Components;
 
-use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
 use PHPUnit\Framework\Assert as PHPUnit;
 
@@ -33,11 +32,11 @@ class Error extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param Browser $browser
+     * @param \Laravel\Dusk\Browser $browser
      *
      * @return void
      */
-    public function assert(Browser $browser)
+    public function assert($browser)
     {
         $browser->waitFor($this->selector())
             ->assertSeeIn('@code', $this->code)

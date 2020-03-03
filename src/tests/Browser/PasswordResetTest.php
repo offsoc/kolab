@@ -4,11 +4,11 @@ namespace Tests\Browser;
 
 use App\User;
 use App\VerificationCode;
+use Tests\Browser;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\PasswordReset;
 use Tests\DuskTestCase;
-use Laravel\Dusk\Browser;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class PasswordResetTest extends DuskTestCase

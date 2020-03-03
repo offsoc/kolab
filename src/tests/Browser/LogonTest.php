@@ -2,12 +2,12 @@
 
 namespace Tests\Browser;
 
+use Tests\Browser;
 use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\DuskTestCase;
-use Laravel\Dusk\Browser;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class LogonTest extends DuskTestCase
