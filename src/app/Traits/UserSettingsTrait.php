@@ -19,14 +19,19 @@ trait UserSettingsTrait
      *
      * @param string $key Lookup key
      *
-     * @return string
+     * @return string|null
      */
     public function getSetting(string $key)
     {
         $settings = $this->getCache();
-        $value = array_get($settings, $key);
 
-        return ($value !== '') ? $value : null;
+        if (!array_key_exists($key, $settings)) {
+            return null;
+        }
+
+        $value = $settings[$key];
+
+        return empty($value) ? null : $value;
     }
 
     /**

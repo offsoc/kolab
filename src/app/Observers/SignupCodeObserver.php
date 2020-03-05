@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\SignupCode;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class SignupCodeObserver
 {
@@ -26,7 +27,7 @@ class SignupCodeObserver
 
             // FIXME: Replace this with something race-condition free
             while (true) {
-                $code->code = str_random($code_length);
+                $code->code = Str::random($code_length);
                 if (!SignupCode::find($code->code)) {
                     break;
                 }
