@@ -14,12 +14,21 @@
                 </div>
             </div>
         </div>
-        <p id="dashboard-nav">
-            <router-link class="link-profile" :to="{ name: 'profile' }">Your profile</router-link>
-            <router-link class="link-domains" :to="{ name: 'domains' }">Domains</router-link>
-            <router-link class="link-users" :to="{ name: 'users' }">User accounts</router-link>
-        </p>
-        <div v-if="!$root.isLoading" id="dashboard-box" class="card">
+        <div id="dashboard-nav">
+            <router-link class="card link-profile" :to="{ name: 'profile' }">
+                <svg-icon icon="user-cog"></svg-icon><span class="name">Your profile</span>
+            </router-link>
+            <router-link class="card link-domains" :to="{ name: 'domains' }">
+                <svg-icon icon="globe"></svg-icon><span class="name">Domains</span>
+            </router-link>
+            <router-link class="card link-users" :to="{ name: 'users' }">
+                <svg-icon icon="users"></svg-icon><span class="name">User accounts</span>
+            </router-link>
+            <router-link class="card link-wallet disabled" :to="{ name: 'users' }">
+                <svg-icon icon="wallet"></svg-icon><span class="name">Wallet</span>
+            </router-link>
+        </div>
+        <div v-if="false && !$root.isLoading" id="dashboard-box" class="card">
             <div class="card-body">
                 <div class="card-title">Dashboard</div>
                 <div class="card-text">

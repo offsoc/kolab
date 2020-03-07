@@ -56,7 +56,7 @@
                                 <input type="password" class="form-control" id="password_confirmation" v-model="profile.password_confirmation">
                             </div>
                         </div>
-                        <button class="btn btn-primary" type="submit">Submit</button>
+                        <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
                     </form>
                 </div>
             </div>

@@ -12,7 +12,15 @@ import AppComponent from '../vue/components/App'
 import MenuComponent from '../vue/components/Menu'
 import router from '../vue/js/routes.js'
 import store from '../vue/js/store'
+import FontAwesomeIcon from './fontawesome.js'
 import VueToastr from '@deveodk/vue-toastr'
+
+Vue.component('svg-icon', FontAwesomeIcon)
+
+Vue.use(VueToastr, {
+    defaultPosition: 'toast-bottom-right',
+    defaultTimeout: 5000
+})
 
 // Add a response interceptor for general/validation error handler
 // This have to be before Vue and Router setup. Otherwise we would
@@ -171,9 +179,4 @@ const app = new Vue({
             }
         }
     }
-})
-
-Vue.use(VueToastr, {
-    defaultPosition: 'toast-bottom-right',
-    defaultTimeout: 5000
 })

@@ -15,7 +15,7 @@
                     <p>Here's a sample zone file for your domain:
                     <pre>{{ domain.dns.join("\n") }}</pre>
                     </p>
-                    <button class="btn btn-primary" type="button" @click="confirm">Verify</button>
+                    <button class="btn btn-primary" type="button" @click="confirm"><svg-icon icon="sync-alt"></svg-icon> Verify</button>
                 </div>
             </div>
         </div>

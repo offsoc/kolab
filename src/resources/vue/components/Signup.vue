@@ -26,7 +26,7 @@
                         <input type="text" class="form-control" id="signup_email" placeholder="Existing Email Address" required v-model="email">
                     </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
-                    <button class="btn btn-primary" type="submit">Continue</button>
+                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Continue</button>
                 </form>
             </div>
         </div>
@@ -44,7 +44,7 @@
                         <input type="text" class="form-control" id="signup_short_code" placeholder="Confirmation Code" required v-model="short_code">
                     </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
-                    <button class="btn btn-primary" type="submit">Continue</button>
+                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Continue</button>
                     <input type="hidden" id="signup_code" v-model="code" />
                 </form>
             </div>
@@ -77,7 +77,7 @@
                         <input type="password" class="form-control" id="signup_confirm" placeholder="Confirm Password" required v-model="password_confirmation">
                     </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
-                    <button class="btn btn-primary" type="submit">Submit</button>
+                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
                 </form>
             </div>
         </div>
