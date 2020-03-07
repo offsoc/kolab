@@ -2,8 +2,6 @@
 
 namespace App\Handlers;
 
-use App\Sku;
-
 class Domain extends \App\Handlers\Base
 {
     public static function entitleableClass()

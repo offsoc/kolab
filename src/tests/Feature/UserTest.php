@@ -50,22 +50,22 @@ class UserTest extends TestCase
     public function testUserCreateJob(): void
     {
         // Fake the queue, assert that no jobs were pushed...
-        Queue::fake();
-        Queue::assertNothingPushed();
+        $queue = Queue::fake();
+        $queue->assertNothingPushed();
 
         $user = User::create([
                 'email' => 'user-create-test@' . \config('app.domain')
         ]);
 
-        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($user) {
+        $queue->assertPushed(\App\Jobs\UserCreate::class, 1);
+        $queue->assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->id === $user->id
                 && $job_user->email === $user->email;
         });
 
-        Queue::assertPushedWithChain(\App\Jobs\UserCreate::class, [
+        $queue->assertPushedWithChain(\App\Jobs\UserCreate::class, [
             \App\Jobs\UserVerify::class,
         ]);
 /*
@@ -74,8 +74,8 @@ class UserTest extends TestCase
                independently (not chained) and make sure there's no race-condition
                in status update
 
-        Queue::assertPushed(\App\Jobs\UserVerify::class, 1);
-        Queue::assertPushed(\App\Jobs\UserVerify::class, function ($job) use ($user) {
+        $queue->assertPushed(\App\Jobs\UserVerify::class, 1);
+        $queue->assertPushed(\App\Jobs\UserVerify::class, function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->id === $user->id

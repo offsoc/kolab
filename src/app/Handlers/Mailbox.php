@@ -2,10 +2,6 @@
 
 namespace App\Handlers;
 
-use App\Entitlement;
-use App\Sku;
-use App\User;
-
 class Mailbox extends \App\Handlers\Base
 {
     public static function entitleableClass()

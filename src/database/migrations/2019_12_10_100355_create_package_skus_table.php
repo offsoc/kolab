@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
+// phpcs:ignore
 class CreatePackageSkusTable extends Migration
 {
     /**
@@ -20,6 +21,8 @@ class CreatePackageSkusTable extends Migration
                 $table->string('package_id', 36);
                 $table->string('sku_id', 36);
                 $table->integer('qty')->default(1);
+
+                $table->integer('cost')->default(0)->nullable();
 
                 $table->foreign('package_id')->references('id')->on('packages')
                     ->onDelete('cascade')->onUpdate('cascade');

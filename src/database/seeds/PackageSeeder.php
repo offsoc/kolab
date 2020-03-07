@@ -14,6 +14,10 @@ class PackageSeeder extends Seeder
      */
     public function run()
     {
+        $skuGroupware = Sku::firstOrCreate(['title' => 'groupware']);
+        $skuMailbox = Sku::firstOrCreate(['title' => 'mailbox']);
+        $skuStorage = Sku::firstOrCreate(['title' => 'storage']);
+
         $package = Package::create(
             [
                 'title' => 'kolab',
@@ -23,9 +27,9 @@ class PackageSeeder extends Seeder
         );
 
         $skus = [
-            Sku::firstOrCreate(['title' => 'mailbox']),
-            Sku::firstOrCreate(['title' => 'storage']),
-            Sku::firstOrCreate(['title' => 'groupware'])
+            $skuMailbox,
+            $skuGroupware,
+            $skuStorage
         ];
 
         $package->skus()->saveMany($skus);
@@ -33,7 +37,7 @@ class PackageSeeder extends Seeder
         // This package contains 2 units of the storage SKU, which just so happens to also
         // be the number of SKU free units.
         $package->skus()->updateExistingPivot(
-            Sku::firstOrCreate(['title' => 'storage']),
+            $skuStorage,
             ['qty' => 2],
             false
         );
@@ -47,8 +51,8 @@ class PackageSeeder extends Seeder
         );
 
         $skus = [
-            Sku::firstOrCreate(['title' => 'mailbox']),
-            Sku::firstOrCreate(['title' => 'storage'])
+            $skuMailbox,
+            $skuStorage
         ];
 
         $package->skus()->saveMany($skus);

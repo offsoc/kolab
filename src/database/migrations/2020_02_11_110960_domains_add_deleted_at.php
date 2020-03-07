@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddDeletedAt extends Migration
+// phpcs:ignore
+class DomainsAddDeletedAt extends Migration
 {
     /**
      * Run the migrations.
@@ -15,13 +16,6 @@ class AddDeletedAt extends Migration
     {
         Schema::table(
             'domains',
-            function (Blueprint $table) {
-                $table->softDeletes();
-            }
-        );
-
-        Schema::table(
-            'users',
             function (Blueprint $table) {
                 $table->softDeletes();
             }
@@ -37,12 +31,6 @@ class AddDeletedAt extends Migration
     {
         Schema::table(
             'domains',
-            function (Blueprint $table) {
-                $table->dropColumn(['deleted_at']);
-            }
-        );
-        Schema::table(
-            'users',
             function (Blueprint $table) {
                 $table->dropColumn(['deleted_at']);
             }

@@ -48,6 +48,7 @@ class VerificationCodeTest extends TestCase
         $this->assertSame($data['mode'], $code->mode);
         $this->assertEquals($user->id, $code->user->id);
         $this->assertInstanceOf(\DateTime::class, $code->expires_at);
+
         $this->assertSame($code_exp_hrs, $code->expires_at->diff($now)->h + 1);
 
         $inst = VerificationCode::find($code->code);

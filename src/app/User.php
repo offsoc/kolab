@@ -134,6 +134,7 @@ class User extends Authenticatable implements JWTSubject
                         'owner_id' => $this->id,
                         'wallet_id' => $wallet_id,
                         'sku_id' => $sku->id,
+                        'cost' => $sku->pivot->cost(),
                         'entitleable_id' => $user->id,
                         'entitleable_type' => User::class
                     ]

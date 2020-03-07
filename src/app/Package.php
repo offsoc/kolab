@@ -34,12 +34,26 @@ class Package extends Model
         'discount_rate'
     ];
 
+    /**
+     * The costs of this package at its pre-defined, existing configuration.
+     *
+     * @return int The costs in cents.
+     */
     public function cost()
     {
         $costs = 0;
 
         foreach ($this->skus as $sku) {
-            $costs += ($sku->pivot->qty - $sku->units_free) * $sku->cost;
+            $units = $sku->pivot->qty - $sku->units_free;
+
+            if ($units < 0) {
+                \Log::debug("Package {$this->id} is misconfigured for more free units than qty.");
+                $units = 0;
+            }
+
+            $ppu = $sku->cost * ((100 - $this->discount_rate) / 100);
+
+            $costs += $units * $ppu;
         }
 
         return $costs;

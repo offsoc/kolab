@@ -11,10 +11,21 @@ abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
 
+    protected function backdateEntitlements($entitlements, $targetDate)
+    {
+        foreach ($entitlements as $entitlement) {
+            $entitlement->created_at = $targetDate;
+            $entitlement->updated_at = $targetDate;
+            $entitlement->save();
+        }
+    }
+
     protected function deleteTestDomain($name)
     {
         Queue::fake();
+
         $domain = Domain::withTrashed()->where('namespace', $name)->first();
+
         if (!$domain) {
             return;
         }
@@ -28,6 +39,7 @@ abstract class TestCase extends BaseTestCase
     protected function deleteTestUser($email)
     {
         Queue::fake();
+
         $user = User::withTrashed()->where('email', $email)->first();
 
         if (!$user) {
@@ -59,7 +71,17 @@ abstract class TestCase extends BaseTestCase
     {
         // Disable jobs (i.e. skip LDAP oprations)
         Queue::fake();
-        return User::firstOrCreate(['email' => $email], $attrib);
+        $user = User::withTrashed()->where('email', $email)->first();
+
+        if (!$user) {
+            return User::firstOrCreate(['email' => $email], $attrib);
+        }
+
+        if ($user->deleted_at) {
+            $user->restore();
+        }
+
+        return $user;
     }
 
     /**

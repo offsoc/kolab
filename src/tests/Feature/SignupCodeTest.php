@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\SignupCode;
+use Carbon\Carbon;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,7 +24,7 @@ class SignupCodeTest extends TestCase
             ]
         ];
 
-        $now = new \DateTime('now');
+        $now = Carbon::now();
 
         $code = SignupCode::create($data);
 
@@ -38,11 +39,11 @@ class SignupCodeTest extends TestCase
         );
 
         $this->assertSame($data['data'], $code->data);
-        $this->assertInstanceOf(\DateTime::class, $code->expires_at);
+        $this->assertInstanceOf(Carbon::class, $code->expires_at);
 
         $this->assertSame(
             env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS),
-            $code->expires_at->diff($now)->h + 1
+            $code->expires_at->diffInHours($now) + 1
         );
 
         $inst = SignupCode::find($code->code);

@@ -21,6 +21,7 @@ class Sku extends Model
         'description',
         'cost',
         'units_free',
+        // persist for annual domain registration
         'period',
         'handler_class',
         'active'
@@ -41,6 +42,6 @@ class Sku extends Model
         return $this->belongsToMany(
             'App\Package',
             'package_skus'
-        )->using('App\PackageSku')->withPivot(['qty']);
+        )->using('App\PackageSku')->withPivot(['cost', 'qty']);
     }
 }

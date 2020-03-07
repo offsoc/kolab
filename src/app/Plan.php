@@ -49,7 +49,11 @@ class Plan extends Model
         'description',
     ];
 
-
+    /**
+     * The list price for this package at the minimum configuration.
+     *
+     * @return int The costs in cents.
+     */
     public function cost()
     {
         $costs = 0;

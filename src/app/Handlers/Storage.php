@@ -6,7 +6,7 @@ class Storage extends \App\Handlers\Base
 {
     public static function entitleableClass()
     {
-        return null;
+        return \App\User::class;
     }
 
     public static function preReq($entitlement, $object)

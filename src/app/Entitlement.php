@@ -2,7 +2,9 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * The eloquent definition of an Entitlement.
@@ -16,6 +18,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Entitlement extends Model
 {
+    use SoftDeletes;
+
     /**
      * This table does not use auto-increment.
      *
@@ -41,6 +45,7 @@ class Entitlement extends Model
         'wallet_id',
         'entitleable_id',
         'entitleable_type',
+        'cost',
         'description'
     ];
 

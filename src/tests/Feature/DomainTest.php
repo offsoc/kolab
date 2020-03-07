@@ -47,8 +47,8 @@ class DomainTest extends TestCase
     public function testCreateJobs(): void
     {
         // Fake the queue, assert that no jobs were pushed...
-        Queue::fake();
-        Queue::assertNothingPushed();
+        $queue = Queue::fake();
+        $queue->assertNothingPushed();
 
         $domain = Domain::create([
                 'namespace' => 'gmail.com',
@@ -56,9 +56,9 @@ class DomainTest extends TestCase
                 'type' => Domain::TYPE_EXTERNAL,
         ]);
 
-        Queue::assertPushed(\App\Jobs\DomainCreate::class, 1);
+        $queue->assertPushed(\App\Jobs\DomainCreate::class, 1);
 
-        Queue::assertPushed(
+        $queue->assertPushed(
             \App\Jobs\DomainCreate::class,
             function ($job) use ($domain) {
                 $job_domain = TestCase::getObjectProperty($job, 'domain');
@@ -81,7 +81,7 @@ class DomainTest extends TestCase
 
         $this->assertNotContains('public-active.com', $public_domains);
 
-        Queue::fake();
+        $queue = Queue::fake();
 
         $domain = Domain::create([
                 'namespace' => 'public-active.com',
@@ -134,7 +134,7 @@ class DomainTest extends TestCase
             ci-failure-none                 MX      10  mx01.kolabnow.com.
         */
 
-        Queue::fake();
+        $queue = Queue::fake();
 
         $domain_props = ['status' => Domain::STATUS_NEW, 'type' => Domain::TYPE_EXTERNAL];
 

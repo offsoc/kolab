@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Domain;
 use App\Entitlement;
+use App\Package;
 use App\Sku;
 use App\User;
+use Carbon\Carbon;
 use Tests\TestCase;
 
 class EntitlementTest extends TestCase
@@ -32,10 +34,15 @@ class EntitlementTest extends TestCase
      */
     public function testUserAddEntitlement(): void
     {
-        $sku_domain = Sku::firstOrCreate(['title' => 'domain']);
-        $sku_mailbox = Sku::firstOrCreate(['title' => 'mailbox']);
+        $package_domain = Package::where('title', 'domain-hosting')->first();
+        $package_kolab = Package::where('title', 'kolab')->first();
+
+        $sku_domain = Sku::where('title', 'domain-hosting')->first();
+        $sku_mailbox = Sku::where('title', 'mailbox')->first();
+
         $owner = $this->getTestUser('entitlement-test@kolabnow.com');
         $user = $this->getTestUser('entitled-user@custom-domain.com');
+
         $domain = $this->getTestDomain(
             'custom-domain.com',
             [
@@ -44,50 +51,23 @@ class EntitlementTest extends TestCase
             ]
         );
 
-        $wallet = $owner->wallets()->first();
+        $domain->assignPackage($package_domain, $owner);
 
-        $entitlement_own_mailbox = new Entitlement(
-            [
-                'owner_id' => $owner->id,
-                'entitleable_id' => $owner->id,
-                'entitleable_type' => User::class,
-                'wallet_id' => $wallet->id,
-                'sku_id' => $sku_mailbox->id,
-                'description' => "Owner Mailbox Entitlement Test"
-            ]
-        );
+        $owner->assignPackage($package_kolab);
+        $owner->assignPackage($package_kolab, $user);
 
-        $entitlement_domain = new Entitlement(
-            [
-                'owner_id' => $owner->id,
-                'entitleable_id' => $domain->id,
-                'entitleable_type' => Domain::class,
-                'wallet_id' => $wallet->id,
-                'sku_id' => $sku_domain->id,
-                'description' => "User Domain Entitlement Test"
-            ]
-        );
+        $wallet = $owner->wallets->first();
 
-        $entitlement_mailbox = new Entitlement(
-            [
-                'owner_id' => $owner->id,
-                'entitleable_id' => $user->id,
-                'entitleable_type' => User::class,
-                'wallet_id' => $wallet->id,
-                'sku_id' => $sku_mailbox->id,
-                'description' => "User Mailbox Entitlement Test"
-            ]
-        );
+        $this->assertCount(4, $owner->entitlements()->get());
+        $this->assertCount(1, $sku_domain->entitlements()->where('owner_id', $owner->id)->get());
+        $this->assertCount(2, $sku_mailbox->entitlements()->where('owner_id', $owner->id)->get());
+        $this->assertCount(9, $wallet->entitlements);
 
-        $owner->addEntitlement($entitlement_own_mailbox);
-        $owner->addEntitlement($entitlement_domain);
-        $owner->addEntitlement($entitlement_mailbox);
+        $this->backdateEntitlements($owner->entitlements, Carbon::now()->subMonths(1));
 
-        $this->assertTrue($owner->entitlements()->count() == 3);
-        $this->assertTrue($sku_domain->entitlements()->where('owner_id', $owner->id)->count() == 1);
-        $this->assertTrue($sku_mailbox->entitlements()->where('owner_id', $owner->id)->count() == 2);
-        $this->assertTrue($wallet->entitlements()->count() == 3);
-        $this->assertTrue($wallet->fresh()->balance < 0.00);
+        $wallet->chargeEntitlements();
+
+        $this->assertTrue($wallet->fresh()->balance < 0);
     }
 
     public function testAddExistingEntitlement(): void

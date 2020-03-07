@@ -47,7 +47,7 @@ class WalletTest extends TestCase
     {
         $user = $this->getTestUser('UserWallet1@UserWallet.com');
 
-        $this->assertTrue($user->wallets()->count() == 1);
+        $this->assertCount(1, $user->wallets);
     }
 
     /**
@@ -61,11 +61,11 @@ class WalletTest extends TestCase
             new Wallet(['currency' => 'USD'])
         );
 
-        $this->assertTrue($user->wallets()->count() >= 2);
+        $this->assertCount(2, $user->wallets);
 
         $user->wallets()->each(
             function ($wallet) {
-                $this->assertTrue($wallet->balance === 0.00);
+                $this->assertEquals(0, $wallet->balance);
             }
         );
     }
@@ -79,7 +79,7 @@ class WalletTest extends TestCase
 
         $user->wallets()->each(
             function ($wallet) {
-                $wallet->credit(1.00)->save();
+                $wallet->credit(100)->save();
             }
         );
 
@@ -97,7 +97,7 @@ class WalletTest extends TestCase
     {
         $user = $this->getTestUser('UserWallet4@UserWallet.com');
 
-        $this->assertTrue($user->wallets()->count() == 1);
+        $this->assertCount(1, $user->wallets);
 
         $user->wallets()->each(
             function ($wallet) {
@@ -140,15 +140,12 @@ class WalletTest extends TestCase
             }
         );
 
-        $this->assertTrue(
-            $userB->accounts()->count() == 1,
-            "number of accounts (1 expected): {$userB->accounts()->count()}"
-        );
+        $this->assertCount(1, $userB->accounts);
 
-        $aWallet = $userA->wallets()->get();
-        $bAccount = $userB->accounts()->get();
+        $aWallet = $userA->wallets()->first();
+        $bAccount = $userB->accounts()->first();
 
-        $this->assertTrue($bAccount[0]->id === $aWallet[0]->id);
+        $this->assertTrue($bAccount->id === $aWallet->id);
     }
 
     /**
@@ -173,6 +170,6 @@ class WalletTest extends TestCase
             }
         );
 
-        $this->assertTrue($userB->accounts()->count() == 0);
+        $this->assertCount(0, $userB->accounts);
     }
 }

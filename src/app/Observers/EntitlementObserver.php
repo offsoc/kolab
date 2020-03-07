@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Entitlement;
+use Carbon\Carbon;
 
 /**
  * This is an observer for the Entitlement model definition.
@@ -62,11 +63,5 @@ class EntitlementObserver
         if (!$result) {
             return false;
         }
-
-        // TODO: Handle the first free unit here?
-
-        // TODO: Execute the Sku handler class or function?
-
-        $wallet->debit($sku->cost);
     }
 }

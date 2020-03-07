@@ -3,6 +3,7 @@
 namespace App;
 
 use App\User;
+use Carbon\Carbon;
 use Iatstuti\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
 
@@ -53,6 +54,54 @@ class Wallet extends Model
         if (!$this->controllers->contains($user)) {
             $this->controllers()->save($user);
         }
+    }
+
+    public function chargeEntitlements($apply = true)
+    {
+        $charges = 0;
+
+        foreach ($this->entitlements()->get()->fresh() as $entitlement) {
+            // This entitlement has been created less than or equal to 14 days ago (this is at
+            // maximum the fourteenth 24-hour period).
+            if ($entitlement->created_at > Carbon::now()->subDays(14)) {
+                continue;
+            }
+
+            // This entitlement was created, or billed last, less than a month ago.
+            if ($entitlement->updated_at > Carbon::now()->subMonths(1)) {
+                continue;
+            }
+
+            // created more than a month ago -- was it billed?
+            if ($entitlement->updated_at <= Carbon::now()->subMonths(1)) {
+                $diff = $entitlement->updated_at->diffInMonths(Carbon::now());
+
+                $charges += $entitlement->cost * $diff;
+
+                // if we're in dry-run, you know...
+                if (!$apply) {
+                    continue;
+                }
+
+                $entitlement->updated_at = $entitlement->updated_at->copy()->addMonths($diff);
+                $entitlement->save();
+
+                $this->debit($entitlement->cost * $diff);
+            }
+        }
+
+        return $charges;
+    }
+
+
+    /**
+     * Calculate the expected charges to this wallet.
+     *
+     * @return int
+     */
+    public function expectedCharges()
+    {
+        return $this->chargeEntitlements(false);
     }
 
     /**

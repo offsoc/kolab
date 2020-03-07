@@ -1,10 +1,11 @@
 <?php
 
-use Illuminate\Database\Seeder;
 use App\Domain;
 use App\Entitlement;
 use App\User;
 use App\Sku;
+use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 // phpcs:ignore
 class UserSeeder extends Seeder
@@ -19,7 +20,10 @@ class UserSeeder extends Seeder
         $domain = Domain::create(
             [
                 'namespace' => 'kolab.org',
-                'status' => Domain::STATUS_NEW + Domain::STATUS_ACTIVE + Domain::STATUS_CONFIRMED + Domain::STATUS_VERIFIED,
+                'status' => Domain::STATUS_NEW
+                    + Domain::STATUS_ACTIVE
+                    + Domain::STATUS_CONFIRMED
+                    + Domain::STATUS_VERIFIED,
                 'type' => Domain::TYPE_EXTERNAL
             ]
         );
@@ -47,7 +51,7 @@ class UserSeeder extends Seeder
 
         $john->setAliases(['john.doe@kolab.org']);
 
-        $user_wallets = $john->wallets()->get();
+        $wallet = $john->wallets->first();
 
         $package_domain = \App\Package::where('title', 'domain-hosting')->first();
         $package_kolab = \App\Package::where('title', 'kolab')->first();
@@ -76,6 +80,12 @@ class UserSeeder extends Seeder
         $jack->setAliases(['jack.daniels@kolab.org']);
 
         $john->assignPackage($package_kolab, $jack);
+
+        foreach ($john->entitlements as $entitlement) {
+            $entitlement->created_at = Carbon::now()->subMonths(1);
+            $entitlement->updated_at = Carbon::now()->subMonths(1);
+            $entitlement->save();
+        }
 
         factory(User::class, 10)->create();
     }

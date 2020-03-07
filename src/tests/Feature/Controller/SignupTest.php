@@ -151,10 +151,10 @@ class SignupTest extends TestCase
      */
     public function testSignupInitValidInput()
     {
-        Queue::fake();
+        $queue = Queue::fake();
 
         // Assert that no jobs were pushed...
-        Queue::assertNothingPushed();
+        $queue->assertNothingPushed();
 
         $data = [
             'email' => 'testuser@external.com',
@@ -171,10 +171,10 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($json['code']);
 
         // Assert the email sending job was pushed once
-        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
+        $queue->assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
 
         // Assert the job has proper data assigned
-        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
+        $queue->assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
@@ -390,7 +390,7 @@ class SignupTest extends TestCase
      */
     public function testSignupValidInput(array $result)
     {
-        Queue::fake();
+        $queue = Queue::fake();
 
         $domain = $this->getPublicDomain();
         $identity = \strtolower('SignupLogin@') . $domain;
@@ -414,8 +414,8 @@ class SignupTest extends TestCase
         $this->assertTrue(!empty($json['expires_in']) && is_int($json['expires_in']) && $json['expires_in'] > 0);
         $this->assertNotEmpty($json['access_token']);
 
-        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
+        $queue->assertPushed(\App\Jobs\UserCreate::class, 1);
+        $queue->assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->email === \strtolower($data['login'] . '@' . $data['domain']);
@@ -446,7 +446,7 @@ class SignupTest extends TestCase
      */
     public function testSignupGroupAccount()
     {
-        Queue::fake();
+        $queue = Queue::fake();
 
         // Initial signup request
         $user_data = $data = [
@@ -464,10 +464,10 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($json['code']);
 
         // Assert the email sending job was pushed once
-        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
+        $queue->assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
 
         // Assert the job has proper data assigned
-        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
+        $queue->assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
@@ -516,15 +516,15 @@ class SignupTest extends TestCase
         $this->assertTrue(!empty($result['expires_in']) && is_int($result['expires_in']) && $result['expires_in'] > 0);
         $this->assertNotEmpty($result['access_token']);
 
-        Queue::assertPushed(\App\Jobs\DomainCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\DomainCreate::class, function ($job) use ($domain) {
+        $queue->assertPushed(\App\Jobs\DomainCreate::class, 1);
+        $queue->assertPushed(\App\Jobs\DomainCreate::class, function ($job) use ($domain) {
             $job_domain = TestCase::getObjectProperty($job, 'domain');
 
             return $job_domain->namespace === $domain;
         });
 
-        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
+        $queue->assertPushed(\App\Jobs\UserCreate::class, 1);
+        $queue->assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->email === $data['login'] . '@' . $data['domain'];
