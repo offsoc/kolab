@@ -1,6 +1,9 @@
 includes:
     - ./vendor/nunomaduro/larastan/extension.neon
 parameters:
+    inferPrivatePropertyTypeFromConstructor: true
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Contracts\\Auth\\Guard::factory#'
     level: 3
     paths:
         - app/
