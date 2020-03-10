@@ -8,11 +8,11 @@ require('./bootstrap')
 
 window.Vue = require('vue')
 
-import AppComponent from '../vue/components/App'
-import MenuComponent from '../vue/components/Menu'
-import router from '../vue/js/routes.js'
-import store from '../vue/js/store'
-import FontAwesomeIcon from './fontawesome.js'
+import AppComponent from '../vue/App'
+import MenuComponent from '../vue/Menu'
+import router from './routes'
+import store from './store'
+import FontAwesomeIcon from './fontawesome'
 import VueToastr from '@deveodk/vue-toastr'
 
 Vue.component('svg-icon', FontAwesomeIcon)
