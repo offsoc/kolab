@@ -117,6 +117,23 @@ const app = new Vue({
             $(form).find('.is-invalid').removeClass('is-invalid')
             $(form).find('.invalid-feedback').remove()
         },
+        isController(wallet_id) {
+            if (wallet_id && store.state.authInfo) {
+                let i
+                for (i = 0; i < store.state.authInfo.wallets.length; i++) {
+                    if (wallet_id == store.state.authInfo.wallets[i].id) {
+                        return true
+                    }
+                }
+                for (i = 0; i < store.state.authInfo.accounts.length; i++) {
+                    if (wallet_id == store.state.authInfo.accounts[i].id) {
+                        return true
+                    }
+                }
+            }
+
+            return false
+        },
         // Set user state to "logged in"
         loginUser(token, dashboard) {
             store.commit('logoutUser') // destroy old state data

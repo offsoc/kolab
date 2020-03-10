@@ -19,12 +19,14 @@ class EntitlementTest extends TestCase
 
         $this->deleteTestUser('entitlement-test@kolabnow.com');
         $this->deleteTestUser('entitled-user@custom-domain.com');
+        $this->deleteTestDomain('custom-domain.com');
     }
 
     public function tearDown(): void
     {
         $this->deleteTestUser('entitlement-test@kolabnow.com');
         $this->deleteTestUser('entitled-user@custom-domain.com');
+        $this->deleteTestDomain('custom-domain.com');
 
         parent::tearDown();
     }

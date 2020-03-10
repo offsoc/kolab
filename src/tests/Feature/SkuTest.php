@@ -48,7 +48,7 @@ class SkuTest extends TestCase
 
     public function testSkuEntitlements(): void
     {
-        $this->assertCount(2, Sku::where('title', 'mailbox')->first()->entitlements);
+        $this->assertCount(3, Sku::where('title', 'mailbox')->first()->entitlements);
     }
 
     public function testSkuPackages(): void

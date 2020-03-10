@@ -31,6 +31,7 @@ class UserProfileTest extends DuskTestCase
         parent::setUp();
 
         User::where('email', 'john@kolab.org')->first()->setSettings($this->profile);
+        $this->deleteTestUser('profile-delete@kolabnow.com');
     }
 
     /**
@@ -39,6 +40,7 @@ class UserProfileTest extends DuskTestCase
     public function tearDown(): void
     {
         User::where('email', 'john@kolab.org')->first()->setSettings($this->profile);
+        $this->deleteTestUser('profile-delete@kolabnow.com');
 
         parent::tearDown();
     }
@@ -66,6 +68,7 @@ class UserProfileTest extends DuskTestCase
                 ->assertSeeIn('@links .link-profile', 'Your profile')
                 ->click('@links .link-profile')
                 ->on(new UserProfile())
+                ->assertSeeIn('#user-profile .button-delete', 'Delete account')
                 ->whenAvailable('@form', function (Browser $browser) {
                     // Assert form content
                     $browser->assertFocused('div.row:nth-child(1) input')
@@ -103,7 +106,6 @@ class UserProfileTest extends DuskTestCase
                         ->closeToast();
                 });
 
-
             // Test error handling
             $browser->with('@form', function (Browser $browser) {
                 $browser->type('#phone', 'aaaaaa')
@@ -124,4 +126,74 @@ class UserProfileTest extends DuskTestCase
             });
         });
     }
+
+    /**
+     * Test profile of non-controller user
+     */
+    public function testProfileNonController(): void
+    {
+        // Test acting as non-controller
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/logout')
+                ->visit(new Home())
+                ->submitLogon('jack@kolab.org', 'simple123', true)
+                ->on(new Dashboard())
+                ->assertSeeIn('@links .link-profile', 'Your profile')
+                ->click('@links .link-profile')
+                ->on(new UserProfile())
+                ->assertMissing('#user-profile .button-delete')
+                ->whenAvailable('@form', function (Browser $browser) {
+                    // TODO: decide on what fields the non-controller user should be able
+                    //       to see/change
+                });
+
+            // Test that /profile/delete page is not accessible
+            $browser->visit('/profile/delete')
+                ->assertErrorPage(403);
+        });
+    }
+
+    /**
+     * Test profile delete page
+     */
+    public function testProfileDelete(): void
+    {
+        $user = $this->getTestUser('profile-delete@kolabnow.com', ['password' => 'simple123']);
+
+        $this->browse(function (Browser $browser) use ($user) {
+            $browser->visit('/logout')
+                ->on(new Home())
+                ->submitLogon('profile-delete@kolabnow.com', 'simple123', true)
+                ->on(new Dashboard())
+                ->clearToasts()
+                ->assertSeeIn('@links .link-profile', 'Your profile')
+                ->click('@links .link-profile')
+                ->on(new UserProfile())
+                ->click('#user-profile .button-delete')
+                ->waitForLocation('/profile/delete')
+                ->assertSeeIn('#user-delete .card-title', 'Delete this account?')
+                ->assertSeeIn('#user-delete .button-cancel', 'Cancel')
+                ->assertSeeIn('#user-delete .card-text', 'This operation is irreversible')
+                ->assertFocused('#user-delete .button-cancel')
+                ->click('#user-delete .button-cancel')
+                ->waitForLocation('/profile')
+                ->on(new UserProfile());
+
+            // Test deleting the user
+            $browser->click('#user-profile .button-delete')
+                ->waitForLocation('/profile/delete')
+                ->click('#user-delete .button-delete')
+                ->waitForLocation('/login')
+                ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
+                    $browser->assertToastTitle('')
+                        ->assertToastMessage('User deleted successfully.')
+                        ->closeToast();
+                });
+
+            $this->assertTrue($user->fresh()->trashed());
+        });
+    }
+
+    // TODO: Test that Ned (John's "delegatee") can delete himself
+    // TODO: Test that Ned (John's "delegatee") can/can't delete John ?
 }

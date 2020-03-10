@@ -5,7 +5,6 @@ namespace Tests\Browser;
 use App\Domain;
 use App\User;
 use Tests\Browser;
-use Tests\Browser\Components\Error;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\DomainInfo;
@@ -41,11 +40,7 @@ class DomainTest extends DuskTestCase
             $browser->visit('/domain/123')
                 ->on(new Home())
                 ->submitLogon('john@kolab.org', 'simple123')
-                // TODO: the check below could look simpler, but we can't
-                //       just remove the callback argument. We'll create
-                //       Browser wrapper in future, then we could create expectError() method
-                ->with(new Error('404'), function ($browser) {
-                });
+                ->assertErrorPage(404);
         });
     }
 
@@ -131,5 +126,7 @@ class DomainTest extends DuskTestCase
                     $browser->assertSeeIn('pre', 'kolab.org');
                 });
         });
+
+        // TODO: Test domains list acting as Ned (John's "delegatee")
     }
 }

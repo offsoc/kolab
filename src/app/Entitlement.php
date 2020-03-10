@@ -49,6 +49,10 @@ class Entitlement extends Model
         'description'
     ];
 
+    protected $casts = [
+        'cost' => 'integer',
+    ];
+
     /**
      * Principally entitleable objects such as 'Domain' or 'User'.
      *
@@ -87,5 +91,13 @@ class Entitlement extends Model
     public function wallet()
     {
         return $this->belongsTo('App\Wallet');
+    }
+
+    /**
+     * Cost mutator. Make sure cost is integer.
+     */
+    public function setCostAttribute($cost): void
+    {
+        $this->attributes['cost'] = round($cost);
     }
 }

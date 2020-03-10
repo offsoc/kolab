@@ -10,7 +10,12 @@ class Error extends BaseComponent
     protected $code;
     protected $message;
     protected $messages_map = [
-        404 => 'Not Found'
+        400 => "Bad request",
+        401 => "Unauthorized",
+        403 => "Access denied",
+        404 => "Not Found",
+        405 => "Method not allowed",
+        500 => "Internal server error",
     ];
 
     public function __construct($code)

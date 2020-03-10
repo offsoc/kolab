@@ -38,15 +38,13 @@ class DomainsTest extends TestCase
     public function testConfirm(): void
     {
         $sku_domain = Sku::where('title', 'domain')->first();
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
         $user = $this->getTestUser('test1@domainscontroller.com');
         $domain = $this->getTestDomain('domainscontroller.com', [
                 'status' => Domain::STATUS_NEW,
                 'type' => Domain::TYPE_EXTERNAL,
         ]);
-
-        // No entitlement (user has no access to this domain), expect 403
-        $response = $this->actingAs($user)->get("api/v4/domains/{$domain->id}/confirm");
-        $response->assertStatus(403);
 
         Entitlement::create([
                 'owner_id' => $user->id,
@@ -72,7 +70,16 @@ class DomainsTest extends TestCase
         $json = $response->json();
 
         $this->assertEquals('success', $json['status']);
-        $this->assertEquals('Domain verified successfully', $json['message']);
+        $this->assertEquals('Domain verified successfully.', $json['message']);
+
+        // Not authorized access
+        $response = $this->actingAs($john)->get("api/v4/domains/{$domain->id}/confirm");
+        $response->assertStatus(403);
+
+        // Authorized access by additional account controller
+        $domain = $this->getTestDomain('kolab.org');
+        $response = $this->actingAs($ned)->get("api/v4/domains/{$domain->id}/confirm");
+        $response->assertStatus(200);
     }
 
     /**
@@ -90,9 +97,18 @@ class DomainsTest extends TestCase
         $this->assertSame([], $json);
 
         // User with custom domain(s)
-        $user = $this->getTestUser('john@kolab.org');
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
 
-        $response = $this->actingAs($user)->get("api/v4/domains");
+        $response = $this->actingAs($john)->get("api/v4/domains");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSame('kolab.org', $json[0]['namespace']);
+
+        $response = $this->actingAs($ned)->get("api/v4/domains");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -112,10 +128,6 @@ class DomainsTest extends TestCase
                 'status' => Domain::STATUS_NEW,
                 'type' => Domain::TYPE_EXTERNAL,
         ]);
-
-        // No entitlement (user has no access to this domain), expect 403
-        $response = $this->actingAs($user)->get("api/v4/domains/{$domain->id}");
-        $response->assertStatus(403);
 
         Entitlement::create([
                 'owner_id' => $user->id,
@@ -143,5 +155,23 @@ class DomainsTest extends TestCase
         $this->assertCount(8, $json['dns']);
         $this->assertTrue(strpos(implode("\n", $json['dns']), $domain->namespace) !== false);
         $this->assertTrue(strpos(implode("\n", $json['dns']), $domain->hash()) !== false);
+
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+
+        // Not authorized - Other account domain
+        $response = $this->actingAs($john)->get("api/v4/domains/{$domain->id}");
+        $response->assertStatus(403);
+
+        $domain = $this->getTestDomain('kolab.org');
+
+        // Ned is an additional controller on kolab.org's wallet
+        $response = $this->actingAs($ned)->get("api/v4/domains/{$domain->id}");
+        $response->assertStatus(200);
+
+        // Jack has no entitlement/control over kolab.org
+        $response = $this->actingAs($jack)->get("api/v4/domains/{$domain->id}");
+        $response->assertStatus(403);
     }
 }

@@ -50,7 +50,7 @@ class DomainsController extends Controller
         $domain = Domain::findOrFail($id);
 
         // Only owner (or admin) has access to the domain
-        if (!self::hasAccess($domain)) {
+        if (!Auth::guard()->user()->canRead($domain)) {
             return $this->errorResponse(403);
         }
 
@@ -112,7 +112,7 @@ class DomainsController extends Controller
         $domain = Domain::findOrFail($id);
 
         // Only owner (or admin) has access to the domain
-        if (!self::hasAccess($domain)) {
+        if (!Auth::guard()->user()->canRead($domain)) {
             return $this->errorResponse(403);
         }
 
@@ -204,22 +204,5 @@ class DomainsController extends Controller
             "{$hash_cname}.{$domain->namespace}. IN CNAME {$hash}.{$domain->namespace}.",
             "@   3600    TXT \"{$hash_txt}\"",
         ];
-    }
-
-    /**
-     * Check if the current user has access to the domain
-     *
-     * @param \App\Domain $domain The domain
-     *
-     * @return bool True if current user has access, False otherwise
-     */
-    protected static function hasAccess(Domain $domain): bool
-    {
-        $user = Auth::guard()->user();
-        $entitlement = $domain->entitlement()->first();
-
-        // TODO: Admins
-
-        return $entitlement && $entitlement->owner_id == $user->id;
     }
 }

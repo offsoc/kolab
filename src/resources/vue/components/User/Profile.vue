@@ -56,7 +56,9 @@
                                 <input type="password" class="form-control" id="password_confirmation" v-model="profile.password_confirmation">
                             </div>
                         </div>
-                        <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
+                        <button class="btn btn-primary button-submit" type="submit"><svg-icon icon="check"></svg-icon>Submit</button>
+                        <router-link v-if="$root.isController(wallet_id)" class="btn btn-danger button-delete"
+                            to="/profile/delete" tag="button">Delete account</router-link>
                     </form>
                 </div>
             </div>
@@ -69,10 +71,12 @@
         data() {
             return {
                 profile: {},
+                wallet_id: null,
                 countries: window.config.countries
             }
         },
         created() {
+            this.wallet_id = this.$store.state.authInfo.wallet.id
             this.profile = this.$store.state.authInfo.settings
         },
         mounted() {

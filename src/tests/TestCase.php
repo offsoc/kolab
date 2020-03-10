@@ -30,7 +30,7 @@ abstract class TestCase extends BaseTestCase
             return;
         }
 
-        $job = new \App\Jobs\DomainDelete($domain);
+        $job = new \App\Jobs\DomainDelete($domain->id);
         $job->handle();
 
         $domain->forceDelete();

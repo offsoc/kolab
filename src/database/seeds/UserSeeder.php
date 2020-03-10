@@ -6,6 +6,7 @@ use App\User;
 use App\Sku;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use App\Wallet;
 
 // phpcs:ignore
 class UserSeeder extends Seeder
@@ -86,6 +87,29 @@ class UserSeeder extends Seeder
             $entitlement->updated_at = Carbon::now()->subMonths(1);
             $entitlement->save();
         }
+
+        $ned = User::create(
+            [
+                'name' => 'Edward Flanders',
+                'email' => 'ned@kolab.org',
+                'password' => 'simple123',
+                'email_verified_at' => now()
+            ]
+        );
+
+        $ned->setSettings(
+            [
+                'first_name' => 'Edward',
+                'last_name' => 'Flanders',
+                'currency' => 'USD',
+                'country' => 'US'
+            ]
+        );
+
+        $john->assignPackage($package_kolab, $ned);
+
+        // Ned is a controller on Jack's wallet
+        $john->wallets()->first()->addController($ned);
 
         factory(User::class, 10)->create();
     }

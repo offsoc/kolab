@@ -163,4 +163,32 @@ class DomainTest extends TestCase
         $this->assertTrue($domain->confirm());
         $this->assertTrue($domain->isConfirmed());
     }
+
+    /**
+     * Test domain deletion
+     */
+    public function testDelete(): void
+    {
+        Queue::fake();
+
+        $domain = $this->getTestDomain('gmail.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_PUBLIC,
+        ]);
+
+        $domain->delete();
+
+        $this->assertTrue($domain->fresh()->trashed());
+        $this->assertFalse($domain->fresh()->isDeleted());
+
+        // Delete the domain for real
+        $job = new \App\Jobs\DomainDelete($domain->id);
+        $job->handle();
+
+        $this->assertTrue(Domain::withTrashed()->where('id', $domain->id)->first()->isDeleted());
+
+        $domain->forceDelete();
+
+        $this->assertCount(0, Domain::withTrashed()->where('id', $domain->id)->get());
+    }
 }

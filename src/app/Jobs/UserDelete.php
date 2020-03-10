@@ -43,6 +43,11 @@ class UserDelete implements ShouldQueue
      */
     public function handle()
     {
-        LDAP::deleteUser($this->user);
+        if (!$this->user->isDeleted()) {
+            LDAP::deleteUser($this->user);
+
+            $this->user->status |= User::STATUS_DELETED;
+            $this->user->save();
+        }
     }
 }

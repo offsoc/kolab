@@ -4,7 +4,7 @@ namespace Tests;
 
 use Facebook\WebDriver\WebDriverKeys;
 use PHPUnit\Framework\Assert;
-use Tests\Browser\Components;
+use Tests\Browser\Components\Error;
 
 /**
  * Laravel Dusk Browser extensions
@@ -33,6 +33,18 @@ class Browser extends \Laravel\Dusk\Browser
     }
 
     /**
+     * Assert specified error page is displayed.
+     */
+    public function assertErrorPage(int $error_code)
+    {
+        $this->with(new Error($error_code), function ($browser) {
+            // empty, assertions will be made by the Error component itself
+        });
+
+        return $this;
+    }
+
+    /**
      * Assert that the given element has specified class assigned.
      */
     public function assertHasClass($selector, $class_name)
@@ -41,6 +53,16 @@ class Browser extends \Laravel\Dusk\Browser
         $classes = explode(' ', (string) $element->getAttribute('class'));
 
         Assert::assertContains($class_name, $classes);
+
+        return $this;
+    }
+
+    /**
+     * Remove all toast messages
+     */
+    public function clearToasts()
+    {
+        $this->script("jQuery('.toast-container > *').remove()");
 
         return $this;
     }

@@ -2,9 +2,11 @@
 
 namespace App;
 
+use App\Entitlement;
 use App\UserAlias;
 use App\Traits\UserAliasesTrait;
 use App\Traits\UserSettingsTrait;
+use App\Wallet;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -89,6 +91,8 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Any wallets on which this user is a controller.
      *
+     * This does not include wallets owned by the user.
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function accounts()
@@ -145,26 +149,6 @@ class User extends Authenticatable implements JWTSubject
         return $user;
     }
 
-    /**
-     * Returns user controlling the current user (or self when it's the account owner)
-     *
-     * @return \App\User A user object
-     */
-    public function controller(): User
-    {
-        // FIXME: This is most likely not the best way to do this
-        $entitlement = \App\Entitlement::where([
-                'entitleable_id' => $this->id,
-                'entitleable_type' => User::class
-        ])->first();
-
-        if ($entitlement && $entitlement->owner_id != $this->id) {
-            return $entitlement->owner;
-        }
-
-        return $this;
-    }
-
     public function assignPlan($plan, $domain = null)
     {
         $this->setSetting('plan_id', $plan->id);
@@ -176,6 +160,69 @@ class User extends Authenticatable implements JWTSubject
                 $this->assignPackage($package);
             }
         }
+    }
+
+    /**
+     * Check if current user can delete another object.
+     *
+     * @param \App\User|\App\Domain $object A user|domain object
+     *
+     * @return bool True if he can, False otherwise
+     */
+    public function canDelete($object): bool
+    {
+        if (!method_exists($object, 'wallet')) {
+            return false;
+        }
+
+        $wallet = $object->wallet();
+
+        // TODO: For now controller can delete/update the account owner,
+        //       this may change in future, controllers are not 0-regression feature
+
+        return $this->wallets->contains($wallet) || $this->accounts->contains($wallet);
+    }
+
+    /**
+     * Check if current user can read data of another object.
+     *
+     * @param \App\User|\App\Domain $object A user|domain object
+     *
+     * @return bool True if he can, False otherwise
+     */
+    public function canRead($object): bool
+    {
+        if (!method_exists($object, 'wallet')) {
+            return false;
+        }
+
+        if ($object instanceof User && $this->id == $object->id) {
+            return true;
+        }
+
+        $wallet = $object->wallet();
+
+        return $this->wallets->contains($wallet) || $this->accounts->contains($wallet);
+    }
+
+    /**
+     * Check if current user can update data of another object.
+     *
+     * @param \App\User|\App\Domain $object A user|domain object
+     *
+     * @return bool True if he can, False otherwise
+     */
+    public function canUpdate($object): bool
+    {
+        if (!method_exists($object, 'wallet')) {
+            return false;
+        }
+
+        if ($object instanceof User && $this->id == $object->id) {
+            return true;
+        }
+
+        return $this->canDelete($object);
     }
 
     /**
@@ -362,6 +409,27 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Return users controlled by the current user.
+     *
+     * Users assigned to wallets the current user controls or owns.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     */
+    public function users()
+    {
+        $wallets = array_merge(
+            $this->wallets()->pluck('id')->all(),
+            $this->accounts()->pluck('wallet_id')->all()
+        );
+
+        return $this->select(['users.*', 'entitlements.wallet_id'])
+            ->distinct()
+            ->leftJoin('entitlements', 'entitlements.entitleable_id', '=', 'users.id')
+            ->whereIn('entitlements.wallet_id', $wallets)
+            ->where('entitlements.entitleable_type', 'App\User');
+    }
+
+    /**
      * Verification codes for this user.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -369,6 +437,20 @@ class User extends Authenticatable implements JWTSubject
     public function verificationcodes()
     {
         return $this->hasMany('App\VerificationCode', 'user_id', 'id');
+    }
+
+    /**
+     * Returns the wallet by which the user is controlled
+     *
+     * @return \App\Wallet A wallet object
+     */
+    public function wallet(): Wallet
+    {
+        $entitlement = $this->entitlement()->first();
+
+        // TODO: No entitlement should not happen, but in tests we have
+        //       such cases, so we fallback to the user's wallet in this case
+        return $entitlement ? $entitlement->wallet : $this->wallets()->first();
     }
 
     /**

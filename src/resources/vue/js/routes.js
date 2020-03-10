@@ -14,6 +14,7 @@ import SignupComponent from '../components/Signup'
 import UserInfoComponent from '../components/User/Info'
 import UserListComponent from '../components/User/List'
 import UserProfileComponent from '../components/User/Profile'
+import UserProfileDeleteComponent from '../components/User/ProfileDelete'
 
 import store from './store'
 
@@ -59,6 +60,12 @@ const routes = [
         path: '/profile',
         name: 'profile',
         component: UserProfileComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/profile/delete',
+        name: 'profile-delete',
+        component: UserProfileDeleteComponent,
         meta: { requiresAuth: true }
     },
     {

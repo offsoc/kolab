@@ -2,7 +2,10 @@
 
 namespace App\Observers;
 
+use App\Entitlement;
+use App\Domain;
 use App\User;
+use Illuminate\Support\Facades\DB;
 
 class UserObserver
 {
@@ -79,14 +82,56 @@ class UserObserver
      */
     public function deleting(User $user)
     {
+        // TODO: Especially in tests we're doing delete() on a already deleted user.
+        //       Should we escape here - for performance reasons?
+        // TODO: I think all of this should use database transactions
+
         // Entitlements do not have referential integrity on the entitled object, so this is our
         // way of doing an onDelete('cascade') without the foreign key.
-        $entitlements = \App\Entitlement::where('entitleable_id', $user->id)
-            ->where('entitleable_type', \App\User::class)->get();
+        Entitlement::where('entitleable_id', $user->id)
+            ->where('entitleable_type', User::class)
+            ->delete();
 
-        foreach ($entitlements as $entitlement) {
-            $entitlement->delete();
+        // Remove owned users/domains
+        $wallets = $user->wallets()->pluck('id')->all();
+        $assignments = Entitlement::whereIn('wallet_id', $wallets)->get();
+        $users = [];
+        $domains = [];
+        $entitlements = [];
+
+        foreach ($assignments as $entitlement) {
+            if ($entitlement->entitleable_type == Domain::class) {
+                $domains[] = $entitlement->entitleable_id;
+            } elseif ($entitlement->entitleable_type == User::class && $entitlement->entitleable_id != $user->id) {
+                $users[] = $entitlement->entitleable_id;
+            } else {
+                $entitlements[] = $entitlement->id;
+            }
         }
+
+        $users = array_unique($users);
+        $domains = array_unique($domains);
+
+        // Note: Domains/users need to be deleted one by one to make sure
+        //       events are fired and observers can do the proper cleanup.
+        //       Entitlements have no delete event handlers as for now.
+        if (!empty($users)) {
+            foreach (User::whereIn('id', $users)->get() as $_user) {
+                $_user->delete();
+            }
+        }
+
+        if (!empty($domains)) {
+            foreach (Domain::whereIn('id', $domains)->get() as $_domain) {
+                $_domain->delete();
+            }
+        }
+
+        if (!empty($entitlements)) {
+            Entitlement::whereIn('id', $entitlements)->delete();
+        }
+
+        // FIXME: What do we do with user wallets?
 
         \App\Jobs\UserDelete::dispatch($user->id);
     }

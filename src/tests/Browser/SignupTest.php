@@ -485,7 +485,7 @@ class SignupTest extends DuskTestCase
             });
 
             // Submit invalid domain
-            $browser->with('@step3', function ($step) use ($browser) {
+            $browser->with('@step3', function ($step) {
                 $step->type('#signup_domain', 'user-domain-signup.com')
                     ->click('[type=submit]');
             });

@@ -108,7 +108,7 @@
 
                         // on new user redirect to users list
                         if (this.user_id === 'new') {
-                            this.$route.push({ name: 'users' })
+                            this.$router.push({ name: 'users' })
                         }
                     })
             }

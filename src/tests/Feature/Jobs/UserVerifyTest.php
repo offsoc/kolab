@@ -45,9 +45,18 @@ class UserVerifyTest extends TestCase
         $this->assertFalse($user->isImapReady());
         $this->assertTrue($user->isLdapReady());
 
-        $job = new UserVerify($user);
-        $job->handle();
+        for ($i = 0; $i < 10; $i++) {
+            $job = new UserVerify($user);
+            $job->handle();
 
-        $this->assertTrue($user->fresh()->isImapReady());
+            if ($user->fresh()->isImapReady()) {
+                $this->assertTrue(true);
+                return;
+            }
+
+            sleep(1);
+        }
+
+        $this->assertTrue(false, "Unable to verify the IMAP account is set up in time");
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Domain;
+use Illuminate\Support\Facades\DB;
 
 class DomainObserver
 {
@@ -39,9 +40,32 @@ class DomainObserver
         \App\Jobs\DomainCreate::dispatch($domain);
     }
 
+    /**
+     * Handle the domain "deleting" event.
+     *
+     * @param \App\Domain $domain The domain.
+     *
+     * @return void
+     */
     public function deleting(Domain $domain)
     {
-        //
+        // Entitlements do not have referential integrity on the entitled object, so this is our
+        // way of doing an onDelete('cascade') without the foreign key.
+        \App\Entitlement::where('entitleable_id', $domain->id)
+            ->where('entitleable_type', Domain::class)
+            ->delete();
+    }
+
+    /**
+     * Handle the domain "deleted" event.
+     *
+     * @param \App\Domain $domain The domain.
+     *
+     * @return void
+     */
+    public function deleted(Domain $domain)
+    {
+        \App\Jobs\DomainDelete::dispatch($domain->id);
     }
 
     /**
@@ -56,17 +80,6 @@ class DomainObserver
         //
     }
 
-    /**
-     * Handle the domain "deleted" event.
-     *
-     * @param \App\Domain $domain The domain.
-     *
-     * @return void
-     */
-    public function deleted(Domain $domain)
-    {
-        \App\Jobs\DomainDelete::dispatch($domain);
-    }
 
     /**
      * Handle the domain "restored" event.

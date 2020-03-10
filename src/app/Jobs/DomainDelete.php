@@ -27,13 +27,13 @@ class DomainDelete implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param Domain $domain The domain to delete.
+     * @param int $domain_id The ID of the domain to delete.
      *
      * @return void
      */
-    public function __construct(Domain $domain)
+    public function __construct(int $domain_id)
     {
-        $this->domain = $domain;
+        $this->domain = Domain::withTrashed()->find($domain_id);
     }
 
     /**
@@ -43,6 +43,11 @@ class DomainDelete implements ShouldQueue
      */
     public function handle()
     {
-        LDAP::deleteDomain($this->domain);
+        if (!$this->domain->isDeleted()) {
+            LDAP::deleteDomain($this->domain);
+
+            $this->domain->status |= Domain::STATUS_DELETED;
+            $this->domain->save();
+        }
     }
 }

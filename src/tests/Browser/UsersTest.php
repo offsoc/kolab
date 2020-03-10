@@ -5,6 +5,7 @@ namespace Tests\Browser;
 use App\User;
 use App\UserAlias;
 use Tests\Browser;
+use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\ListInput;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
@@ -28,8 +29,7 @@ class UsersTest extends DuskTestCase
     {
         parent::setUp();
 
-        // TODO: Use TestCase::deleteTestUser()
-        User::withTrashed()->where('email', 'john.rambo@kolab.org')->forceDelete();
+        $this->deleteTestUser('julia.roberts@kolab.org');
 
         $john = User::where('email', 'john@kolab.org')->first();
         $john->setSettings($this->profile);
@@ -42,8 +42,7 @@ class UsersTest extends DuskTestCase
      */
     public function tearDown(): void
     {
-        // TODO: Use TestCase::deleteTestUser()
-        User::withTrashed()->where('email', 'john.rambo@kolab.org')->forceDelete();
+        $this->deleteTestUser('julia.roberts@kolab.org');
 
         $john = User::where('email', 'john@kolab.org')->first();
         $john->setSettings($this->profile);
@@ -75,8 +74,6 @@ class UsersTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/users')->on(new Home());
         });
-
-        // TODO: Test that jack@kolab.org can't access this page
     }
 
     /**
@@ -92,9 +89,14 @@ class UsersTest extends DuskTestCase
                 ->assertSeeIn('@links .link-users', 'User accounts')
                 ->click('@links .link-users')
                 ->on(new UserList())
-                ->whenAvailable('@table', function ($browser) {
-                    $this->assertCount(1, $browser->elements('tbody tr'));
-                    $browser->assertSeeIn('tbody tr td a', 'john@kolab.org');
+                ->whenAvailable('@table', function (Browser $browser) {
+                    $browser->assertElementsCount('tbody tr', 3)
+                        ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(2) a', 'john@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(3) a', 'ned@kolab.org')
+                        ->assertVisible('tbody tr:nth-child(1) button.button-delete')
+                        ->assertVisible('tbody tr:nth-child(2) button.button-delete')
+                        ->assertVisible('tbody tr:nth-child(3) button.button-delete');
                 });
         });
     }
@@ -108,7 +110,7 @@ class UsersTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->on(new UserList())
-                ->click('@table tr:first-child a')
+                ->click('@table tr:nth-child(2) a')
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'User account')
                 ->with('@form', function (Browser $browser) {
@@ -120,7 +122,7 @@ class UsersTest extends DuskTestCase
                         ->assertValue('div.row:nth-child(2) input[type=text]', $this->profile['last_name'])
                         ->assertSeeIn('div.row:nth-child(3) label', 'Email')
                         ->assertValue('div.row:nth-child(3) input[type=text]', 'john@kolab.org')
-//TODO                        ->assertDisabled('div.row:nth-child(3) input')
+                        ->assertDisabled('div.row:nth-child(3) input[type=text]')
                         ->assertSeeIn('div.row:nth-child(4) label', 'Email aliases')
                         ->assertVisible('div.row:nth-child(4) .listinput-widget')
                         ->with(new ListInput('#aliases'), function (Browser $browser) {
@@ -226,7 +228,7 @@ class UsersTest extends DuskTestCase
                         ->assertValue('div.row:nth-child(2) input[type=text]', '')
                         ->assertSeeIn('div.row:nth-child(3) label', 'Email')
                         ->assertValue('div.row:nth-child(3) input[type=text]', '')
-                        ->assertEnabled('div.row:nth-child(3) input')
+                        ->assertEnabled('div.row:nth-child(3) input[type=text]')
                         ->assertSeeIn('div.row:nth-child(4) label', 'Email aliases')
                         ->assertVisible('div.row:nth-child(4) .listinput-widget')
                         ->with(new ListInput('#aliases'), function (Browser $browser) {
@@ -263,7 +265,7 @@ class UsersTest extends DuskTestCase
 
             // Test form error handling (aliases)
             $browser->with('@form', function (Browser $browser) {
-                $browser->type('#email', 'john.rambo@kolab.org')
+                $browser->type('#email', 'julia.roberts@kolab.org')
                     ->type('#password_confirmation', 'simple123')
                     ->with(new ListInput('#aliases'), function (Browser $browser) {
                         $browser->addListEntry('invalid address');
@@ -285,7 +287,7 @@ class UsersTest extends DuskTestCase
             $browser->with('@form', function (Browser $browser) {
                 $browser->with(new ListInput('#aliases'), function (Browser $browser) {
                     $browser->removeListEntry(1)
-                        ->addListEntry('john.rambo2@kolab.org');
+                        ->addListEntry('julia.roberts2@kolab.org');
                 })
                     ->click('button[type=submit]');
             })
@@ -293,13 +295,105 @@ class UsersTest extends DuskTestCase
                 $browser->assertToastTitle('')
                     ->assertToastMessage('User created successfully')
                     ->closeToast();
-            });
+            })
+            // check redirection to users list
+            ->waitForLocation('/users')
+            ->on(new UserList())
+                ->whenAvailable('@table', function (Browser $browser) {
+// TODO: This will not work until we handle entitlements on user creation
+//                    $browser->assertElementsCount('tbody tr', 3)
+//                        ->assertSeeIn('tbody tr:nth-child(3) a', 'julia.roberts@kolab.org');
+                });
 
-            // TODO: assert redirect to users list
-
-            $john = User::where('email', 'john.rambo@kolab.org')->first();
-            $alias = UserAlias::where('user_id', $john->id)->where('alias', 'john.rambo2@kolab.org')->first();
+            $julia = User::where('email', 'julia.roberts@kolab.org')->first();
+            $alias = UserAlias::where('user_id', $julia->id)->where('alias', 'julia.roberts2@kolab.org')->first();
             $this->assertTrue(!empty($alias));
         });
+    }
+
+    /**
+     * Test user delete
+     *
+     * @depends testNewUser
+     */
+    public function testDeleteUser(): void
+    {
+        // First create a new user
+        $john = $this->getTestUser('john@kolab.org');
+        $julia = $this->getTestUser('julia.roberts@kolab.org');
+        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $john->assignPackage($package_kolab, $julia);
+
+        // Test deleting non-controller user
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new UserList())
+                ->whenAvailable('@table', function (Browser $browser) {
+                    $browser->assertElementsCount('tbody tr', 4)
+                        ->assertSeeIn('tbody tr:nth-child(3) a', 'julia.roberts@kolab.org')
+                        ->click('tbody tr:nth-child(3) button.button-delete');
+                })
+                ->with(new Dialog('#delete-warning'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Delete julia.roberts@kolab.org')
+                        ->assertFocused('@button-cancel')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Delete')
+                        ->click('@button-cancel');
+                })
+                ->whenAvailable('@table', function (Browser $browser) {
+                    $browser->click('tbody tr:nth-child(3) button.button-delete');
+                })
+                ->with(new Dialog('#delete-warning'), function (Browser $browser) {
+                    $browser->click('@button-action');
+                })
+                ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
+                    $browser->assertToastTitle('')
+                        ->assertToastMessage('User deleted successfully')
+                        ->closeToast();
+                })
+                ->with('@table', function (Browser $browser) {
+                    $browser->assertElementsCount('tbody tr', 3)
+                        ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(2) a', 'john@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(3) a', 'ned@kolab.org');
+                });
+
+            $julia = User::where('email', 'julia.roberts@kolab.org')->first();
+            $this->assertTrue(empty($julia));
+
+            // Test clicking Delete on the controller record redirects to /profile/delete
+            $browser
+                ->with('@table', function (Browser $browser) {
+                    $browser->click('tbody tr:nth-child(2) button.button-delete');
+                })
+                ->waitForLocation('/profile/delete');
+        });
+
+        // Test that non-controller user cannot see/delete himself on the users list
+        // Note: Access to /profile/delete page is tested in UserProfileTest.php
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/logout')
+                ->on(new Home())
+                ->submitLogon('jack@kolab.org', 'simple123', true)
+                ->visit(new UserList())
+                ->whenAvailable('@table', function (Browser $browser) {
+                    $browser->assertElementsCount('tbody tr', 0);
+                });
+        });
+
+        // Test that controller user (Ned) can see/delete all the users ???
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/logout')
+                ->on(new Home())
+                ->submitLogon('ned@kolab.org', 'simple123', true)
+                ->visit(new UserList())
+                ->whenAvailable('@table', function (Browser $browser) {
+                    $browser->assertElementsCount('tbody tr', 3)
+                        ->assertElementsCount('tbody button.button-delete', 3);
+                });
+
+                // TODO: Test the delete action in details
+        });
+
+        // TODO: Test what happens with the logged in user session after he's been deleted by another user
     }
 }

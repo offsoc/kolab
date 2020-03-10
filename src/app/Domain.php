@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -335,5 +336,15 @@ class Domain extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Returns the wallet by which the domain is controlled
+     *
+     * @return \App\Wallet A wallet object
+     */
+    public function wallet(): Wallet
+    {
+        return $this->entitlement()->first()->wallet;
     }
 }

@@ -46,27 +46,45 @@ class UsersController extends Controller
     }
 
     /**
-     * Display a listing of the resources.
+     * Delete a user.
      *
-     * The user themself, and other user entitlements.
+     * @param int $id User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function destroy($id)
+    {
+        $user = User::find($id);
+
+        if (empty($user)) {
+            return $this->errorResponse(404);
+        }
+
+        // User can't remove himself until he's the controller
+        if (!$this->guard()->user()->canDelete($user)) {
+            return $this->errorResponse(403);
+        }
+
+        $user->delete();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.user-delete-success'),
+        ]);
+    }
+
+    /**
+     * Listing of users.
+     *
+     * The user-entitlements billed to the current user wallet(s)
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
-        $user = Auth::user();
+        $user = $this->guard()->user();
 
-        if (!$user) {
-            return response()->json(['error' => 'unauthorized'], 401);
-        }
-
-        $result = [$user];
-
-        $user->entitlements()->each(
-            function ($entitlement) {
-                $result[] = User::find($entitlement->user_id);
-            }
-        );
+        $result = $user->users()->orderBy('email')->get();
 
         return response()->json($result);
     }
@@ -166,14 +184,14 @@ class UsersController extends Controller
      */
     public function show($id)
     {
-        if (!$this->hasAccess($id)) {
-            return $this->errorResponse(403);
-        }
-
         $user = User::find($id);
 
         if (empty($user)) {
             return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canRead($user)) {
+            return $this->errorResponse(403);
         }
 
         $response = $this->userResponse($user);
@@ -249,7 +267,9 @@ class UsersController extends Controller
      */
     public function store(Request $request)
     {
-        if ($this->guard()->user()->controller()->id !== $this->guard()->user()->id) {
+        $current_user = $this->guard()->user();
+
+        if ($current_user->wallet()->owner->id != $current_user->id) {
             return $this->errorResponse(403);
         }
 
@@ -300,14 +320,15 @@ class UsersController extends Controller
      */
     public function update(Request $request, $id)
     {
-        if (!$this->hasAccess($id)) {
-            return $this->errorResponse(403);
-        }
-
         $user = User::find($id);
 
         if (empty($user)) {
             return $this->errorResponse(404);
+        }
+
+        // TODO: Decide what attributes a user can change on his own profile
+        if (!$this->guard()->user()->canUpdate($user)) {
+            return $this->errorResponse(403);
         }
 
         if ($error_response = $this->validateUserRequest($request, $user, $settings)) {
@@ -350,23 +371,6 @@ class UsersController extends Controller
     }
 
     /**
-     * Check if the current user has access to the specified user
-     *
-     * @param int $user_id User identifier
-     *
-     * @return bool True if current user has access, False otherwise
-     */
-    protected function hasAccess($user_id): bool
-    {
-        $current_user = $this->guard()->user();
-
-        // TODO: Admins, other users
-        // FIXME: This probably should be some kind of middleware/guard
-
-        return $current_user->id == $user_id;
-    }
-
-    /**
      * Create a response data array for specified user.
      *
      * @param \App\User $user User object
@@ -393,6 +397,11 @@ class UsersController extends Controller
 
         // Status info
         $response['statusInfo'] = self::statusInfo($user);
+
+        // Information about wallets and accounts for access checks
+        $response['wallets'] = $user->wallets->toArray();
+        $response['accounts'] = $user->accounts->toArray();
+        $response['wallet'] = $user->wallet()->toArray();
 
         return $response;
     }
@@ -432,7 +441,7 @@ class UsersController extends Controller
             $errors = $v->errors()->toArray();
         }
 
-        $controller = $user ? $user->controller() : $this->guard()->user();
+        $controller = $user ? $user->wallet()->owner : $this->guard()->user();
 
         // For new user validate email address
         if (empty($user)) {

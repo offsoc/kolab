@@ -266,8 +266,7 @@ class PasswordResetTest extends DuskTestCase
             $browser->waitUntilMissing('@step3');
 
             // At this point we should be auto-logged-in to dashboard
-            $dashboard = new Dashboard();
-            $dashboard->assert($browser);
+            $browser->on(new Dashboard());
 
             // FIXME: Is it enough to be sure user is logged in?
         });

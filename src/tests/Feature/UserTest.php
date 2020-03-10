@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -13,17 +14,21 @@ class UserTest extends TestCase
         parent::setUp();
 
         $this->deleteTestUser('user-create-test@' . \config('app.domain'));
+        $this->deleteTestUser('userdeletejob@kolabnow.com');
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
-        $this->deleteTestUser('userdeletejob@kolabnow.com');
+        $this->deleteTestUser('UserAccountC@UserAccount.com');
+        $this->deleteTestDomain('UserAccount.com');
     }
 
     public function tearDown(): void
     {
         $this->deleteTestUser('user-create-test@' . \config('app.domain'));
+        $this->deleteTestUser('userdeletejob@kolabnow.com');
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
-        $this->deleteTestUser('userdeletejob@kolabnow.com');
+        $this->deleteTestUser('UserAccountC@UserAccount.com');
+        $this->deleteTestDomain('UserAccount.com');
 
         parent::tearDown();
     }
@@ -103,18 +108,24 @@ class UserTest extends TestCase
         $this->assertTrue($userB->accounts()->get()[0]->id === $userA->wallets()->get()[0]->id);
     }
 
-    /**
-     * Tests for User::controller()
-     */
-    public function testController(): void
+    public function testAccounts(): void
     {
-        $john = $this->getTestUser('john@kolab.org');
+        $this->markTestIncomplete();
+    }
 
-        $this->assertSame($john->id, $john->controller()->id);
+    public function testCanDelete(): void
+    {
+        $this->markTestIncomplete();
+    }
 
-        $jack = $this->getTestUser('jack@kolab.org');
+    public function testCanRead(): void
+    {
+        $this->markTestIncomplete();
+    }
 
-        $this->assertSame($john->id, $jack->controller()->id);
+    public function testCanUpdate(): void
+    {
+        $this->markTestIncomplete();
     }
 
     /**
@@ -147,6 +158,10 @@ class UserTest extends TestCase
 
     public function testUserQuota(): void
     {
+        // TODO: This test does not test much, probably could be removed
+        //       or moved to somewhere else, or extended with
+        //       other entitlements() related cases.
+
         $user = $this->getTestUser('john@kolab.org');
         $storage_sku = \App\Sku::where('title', 'storage')->first();
 
@@ -164,26 +179,79 @@ class UserTest extends TestCase
     /**
      * Test user deletion
      */
-    public function testUserDelete(): void
+    public function testDelete(): void
     {
+        Queue::fake();
+
         $user = $this->getTestUser('userdeletejob@kolabnow.com');
-
         $package = \App\Package::where('title', 'kolab')->first();
-
         $user->assignPackage($package);
 
         $id = $user->id;
 
+        $entitlements = \App\Entitlement::where('owner_id', $id)->get();
+        $this->assertCount(4, $entitlements);
+
         $user->delete();
 
+        $entitlements = \App\Entitlement::where('owner_id', $id)->get();
+        $this->assertCount(0, $entitlements);
+        $this->assertTrue($user->fresh()->trashed());
+        $this->assertFalse($user->fresh()->isDeleted());
+
+        // Delete the user for real
         $job = new \App\Jobs\UserDelete($id);
         $job->handle();
 
+        $this->assertTrue(User::withTrashed()->where('id', $id)->first()->isDeleted());
+
         $user->forceDelete();
 
-        $entitlements = \App\Entitlement::where('owner_id', 'id')->get();
+        $this->assertCount(0, User::withTrashed()->where('id', $id)->get());
 
-        $this->assertCount(0, $entitlements);
+        // Test an account with users
+        $userA = $this->getTestUser('UserAccountA@UserAccount.com');
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+        $userC = $this->getTestUser('UserAccountC@UserAccount.com');
+        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+        $domain = $this->getTestDomain('UserAccount.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_HOSTED,
+        ]);
+        $userA->assignPackage($package_kolab);
+        $domain->assignPackage($package_domain, $userA);
+        $userA->assignPackage($package_kolab, $userB);
+        $userA->assignPackage($package_kolab, $userC);
+
+        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
+        $entitlementsC = \App\Entitlement::where('entitleable_id', $userC->id);
+        $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domain->id);
+        $this->assertSame(4, $entitlementsA->count());
+        $this->assertSame(4, $entitlementsB->count());
+        $this->assertSame(4, $entitlementsC->count());
+        $this->assertSame(1, $entitlementsDomain->count());
+
+        // Delete non-controller user
+        $userC->delete();
+
+        $this->assertTrue($userC->fresh()->trashed());
+        $this->assertFalse($userC->fresh()->isDeleted());
+        $this->assertSame(0, $entitlementsC->count());
+
+        // Delete the controller (and expect "sub"-users to be deleted too)
+        $userA->delete();
+
+        $this->assertSame(0, $entitlementsA->count());
+        $this->assertSame(0, $entitlementsB->count());
+        $this->assertSame(0, $entitlementsDomain->count());
+        $this->assertTrue($userA->fresh()->trashed());
+        $this->assertTrue($userB->fresh()->trashed());
+        $this->assertTrue($domain->fresh()->trashed());
+        $this->assertFalse($userA->isDeleted());
+        $this->assertFalse($userB->isDeleted());
+        $this->assertFalse($domain->isDeleted());
     }
 
     /**
@@ -257,6 +325,40 @@ class UserTest extends TestCase
      * Tests for UserSettingsTrait::setSettings()
      */
     public function testSetSettings(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    /**
+     * Tests for User::users()
+     */
+    public function testUsers(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $wallet = $john->wallets()->first();
+
+        $users = $john->users()->orderBy('email')->get();
+
+        $this->assertCount(3, $users);
+        $this->assertEquals($jack->id, $users[0]->id);
+        $this->assertEquals($john->id, $users[1]->id);
+        $this->assertEquals($ned->id, $users[2]->id);
+        $this->assertSame($wallet->id, $users[0]->wallet_id);
+        $this->assertSame($wallet->id, $users[1]->wallet_id);
+        $this->assertSame($wallet->id, $users[2]->wallet_id);
+
+        $users = $jack->users()->orderBy('email')->get();
+
+        $this->assertCount(0, $users);
+
+        $users = $ned->users()->orderBy('email')->get();
+
+        $this->assertCount(3, $users);
+    }
+
+    public function testWallets(): void
     {
         $this->markTestIncomplete();
     }
