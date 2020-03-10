@@ -8,10 +8,10 @@ use Tests\Browser;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\PasswordReset;
-use Tests\DuskTestCase;
+use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
-class PasswordResetTest extends DuskTestCase
+class PasswordResetTest extends TestCaseDusk
 {
     /**
      * {@inheritDoc}

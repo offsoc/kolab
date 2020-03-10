@@ -10,10 +10,10 @@ use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\DomainInfo;
 use Tests\Browser\Pages\DomainList;
 use Tests\Browser\Pages\Home;
-use Tests\DuskTestCase;
+use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
-class DomainTest extends DuskTestCase
+class DomainTest extends TestCaseDusk
 {
 
     /**

@@ -10,10 +10,10 @@ use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Signup;
-use Tests\DuskTestCase;
+use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
-class SignupTest extends DuskTestCase
+class SignupTest extends TestCaseDusk
 {
     /**
      * {@inheritDoc}

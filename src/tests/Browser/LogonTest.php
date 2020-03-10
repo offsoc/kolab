@@ -7,10 +7,10 @@ use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
-use Tests\DuskTestCase;
+use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
-class LogonTest extends DuskTestCase
+class LogonTest extends TestCaseDusk
 {
 
     /**

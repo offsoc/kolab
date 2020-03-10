@@ -3,9 +3,9 @@
 namespace Tests\Browser;
 
 use Tests\Browser;
-use Tests\DuskTestCase;
+use Tests\TestCaseDusk;
 
-class ErrorTest extends DuskTestCase
+class ErrorTest extends TestCaseDusk
 {
 
     /**

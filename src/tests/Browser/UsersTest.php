@@ -12,10 +12,10 @@ use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\UserInfo;
 use Tests\Browser\Pages\UserList;
-use Tests\DuskTestCase;
+use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
-class UsersTest extends DuskTestCase
+class UsersTest extends TestCaseDusk
 {
     private $profile = [
         'first_name' => 'John',

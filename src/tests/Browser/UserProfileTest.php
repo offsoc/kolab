@@ -8,10 +8,10 @@ use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\UserProfile;
-use Tests\DuskTestCase;
+use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
-class UserProfileTest extends DuskTestCase
+class UserProfileTest extends TestCaseDusk
 {
     private $profile = [
         'first_name' => 'John',
