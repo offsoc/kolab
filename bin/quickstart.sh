@@ -52,6 +52,11 @@ find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan clear-compiled
 ./artisan cache:clear
 
+if [ ! -z "$(rpm -qv chromium 2>/dev/null)" ]; then
+    chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
+    ./artisan dusk:chrome-driver ${chver}
+fi
+
 if [ ! -f 'resources/countries.php' ]; then
     ./artisan data:countries
 fi
