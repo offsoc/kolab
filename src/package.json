@@ -8,7 +8,7 @@
     "hot": "cross-env NODE_ENV=development node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline --hot --config=node_modules/laravel-mix/setup/webpack.config.js",
     "prod": "npm run production",
     "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
-    "lint": "eslint --ext .js,.vue resources && stylelint \"resources/sass/*.scss\" \"resources/vue/components/*.vue\""
+    "lint": "eslint --ext .js,.vue resources && stylelint \"resources/sass/*.scss\" \"resources/vue/*.vue\""
   },
   "devDependencies": {
     "@deveodk/vue-toastr": "^1.1.0",
