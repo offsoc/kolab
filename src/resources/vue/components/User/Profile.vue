@@ -40,7 +40,7 @@
                             <div class="col-sm-8">
                                 <select class="form-control custom-select" id="country" v-model="profile.country">
                                     <option value="">-</option>
-                                    <option v-for="(item, code) in countries" :value="code">{{ item[1] }}</option>
+                                    <option v-for="(item, code) in countries" :value="code" :key="code">{{ item[1] }}</option>
                                 </select>
                             </div>
                         </div>
@@ -57,8 +57,11 @@
                             </div>
                         </div>
                         <button class="btn btn-primary button-submit" type="submit"><svg-icon icon="check"></svg-icon>Submit</button>
-                        <router-link v-if="$root.isController(wallet_id)" class="btn btn-danger button-delete"
-                            to="/profile/delete" tag="button">Delete account</router-link>
+                        <router-link
+                            v-if="$root.isController(wallet_id)"
+                            class="btn btn-danger button-delete"
+                            to="/profile/delete" tag="button"
+                        >Delete account</router-link>
                     </form>
                 </div>
             </div>

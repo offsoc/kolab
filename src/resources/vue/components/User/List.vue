@@ -15,13 +15,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="user in users" :id="'user' + user.id">
+                            <tr v-for="user in users" :id="'user' + user.id" :key="user.id">
                                 <td>
                                     <router-link :to="{ path: 'user/' + user.id }">{{ user.email }}</router-link>
                                 </td>
                                 <td>
-                                    <button v-if="$root.isController(user.wallet_id)" class="btn btn-danger button-delete"
-                                        @click="deleteUser(user.id)">Delete</button>
+                                    <button v-if="$root.isController(user.wallet_id)" class="btn btn-danger button-delete" @click="deleteUser(user.id)">Delete</button>
                                 </td>
                             </tr>
                         </tbody>
@@ -41,8 +40,8 @@
                     </div>
                     <div class="modal-body">
                         <p>Do you really want to delete this user permanently?
-                        This will delete all account data and withdraw the permission to access the email account.
-                        Please note that this action cannot be undone.</p>
+                            This will delete all account data and withdraw the permission to access the email account.
+                            Please note that this action cannot be undone.</p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>

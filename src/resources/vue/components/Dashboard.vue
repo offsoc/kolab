@@ -4,8 +4,8 @@
             <div class="card-body">
                 <div class="card-title">Status</div>
                 <div class="card-text">
-                    <ul style="list-style: none; padding: 0">
-                        <li v-for="item in statusProcess">
+                    <ul style="list-style: none; padding: 0;">
+                        <li v-for="item in statusProcess" :key="item.label">
                             <span v-if="item.state">&check;</span><span v-else>&cir;</span>
                             <router-link v-if="item.link" :to="{ path: item.link }">{{ item.title }}</router-link>
                             <span v-if="!item.link">{{ item.title }}</span>

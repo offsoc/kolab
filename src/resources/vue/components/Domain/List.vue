@@ -12,7 +12,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="domain in domains">
+                            <tr v-for="domain in domains" :key="domain.id">
                                 <td><router-link :to="{ path: 'domain/' + domain.id }">{{ domain.namespace }}</router-link></td>
                                 <td></td>
                             </tr>
