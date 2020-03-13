@@ -125,14 +125,16 @@ table.form-list {
             padding-right: 0;
         }
     }
+}
 
-    .buttons,
-    .price,
-    .selection {
+table {
+    td.buttons,
+    td.price,
+    td.selection {
         width: 1%;
     }
 
-    .price {
+    td.price {
         text-align: right;
     }
 }

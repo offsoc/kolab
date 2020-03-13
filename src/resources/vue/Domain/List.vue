@@ -4,7 +4,7 @@
             <div class="card-body">
                 <div class="card-title">Domains</div>
                 <div class="card-text">
-                    <table class="table table-hover">
+                    <table class="table table-sm table-hover">
                         <thead class="thead-light">
                             <tr>
                                 <th scope="col">Name</th>
@@ -14,7 +14,7 @@
                         <tbody>
                             <tr v-for="domain in domains" :key="domain.id">
                                 <td><router-link :to="{ path: 'domain/' + domain.id }">{{ domain.namespace }}</router-link></td>
-                                <td></td>
+                                <td class="buttons"></td>
                             </tr>
                         </tbody>
                     </table>

@@ -1,7 +1,9 @@
 <template>
     <nav id="primary-menu" class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container">
-            <a :href="app_url" class="navbar-brand" :title="app_name"><img src="/images/logo_header.png" :alt="app_name"></a>
+            <router-link class="navbar-brand" :to="{ name: 'dashboard' }">
+                <img src="/images/logo_header.png" :alt="app_name">
+            </router-link>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>

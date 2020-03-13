@@ -28,14 +28,6 @@
                 <svg-icon icon="wallet"></svg-icon><span class="name">Wallet</span>
             </router-link>
         </div>
-        <div v-if="false && !$root.isLoading" id="dashboard-box" class="card">
-            <div class="card-body">
-                <div class="card-title">Dashboard</div>
-                <div class="card-text">
-                    <pre>{{ data }}</pre>
-                </div>
-            </div>
-        </div>
     </div>
 </template>
 
@@ -43,21 +35,21 @@
     export default {
         data() {
             return {
-                data: {},
-                statusProcess: []
+                statusProcess: [],
+                request: null
             }
         },
         mounted() {
             const authInfo = this.$store.state.isLoggedIn ? this.$store.state.authInfo : null
 
+            clearTimeout(window.infoRequest)
+
             if (authInfo) {
-                this.data = authInfo
                 this.parseStatusInfo(authInfo.statusInfo)
             } else {
                 this.$root.startLoading()
                 axios.get('/api/auth/info')
                     .then(response => {
-                        this.data = response.data
                         this.$store.state.authInfo = response.data
                         this.parseStatusInfo(response.data.statusInfo)
                         this.$root.stopLoading()
@@ -74,7 +66,7 @@
                 // FIXME: This probably should have some limit, or the interval
                 //        should grow (well, until it could be done with websocket notifications)
                 if (info.status != 'active') {
-                    setTimeout(() => {
+                    window.infoRequest = setTimeout(() => {
                         // Stop updates after user logged out
                         if (!this.$store.state.isLoggedIn) {
                             return;

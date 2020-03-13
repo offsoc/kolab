@@ -31,6 +31,17 @@ class Dashboard extends Page
     }
 
     /**
+     * Assert logged-in user
+     *
+     * @param \Laravel\Dusk\Browser $browser The browser object
+     * @param string                $user    User email
+     */
+    public function assertUser($browser, $user)
+    {
+        $browser->assertVue('$store.state.authInfo.email', $user, '@dashboard-component');
+    }
+
+    /**
      * Get the element shortcuts for the page.
      *
      * @return array

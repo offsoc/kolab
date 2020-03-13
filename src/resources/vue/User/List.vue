@@ -4,10 +4,12 @@
             <div class="card-body">
                 <div class="card-title">User Accounts</div>
                 <div class="card-text">
-                    <router-link class="btn btn-primary create-user" :to="{ path: 'user/new' }" tag="button">
-                        <svg-icon icon="user"></svg-icon> Create user
-                    </router-link>
-                    <table class="table table-hover">
+                    <p>
+                        <router-link class="btn btn-primary create-user" :to="{ path: 'user/new' }" tag="button">
+                            <svg-icon icon="user"></svg-icon> Create user
+                        </router-link>
+                    </p>
+                    <table class="table table-sm table-hover">
                         <thead class="thead-light">
                             <tr>
                                 <th scope="col">Primary Email</th>
@@ -19,8 +21,14 @@
                                 <td>
                                     <router-link :to="{ path: 'user/' + user.id }">{{ user.email }}</router-link>
                                 </td>
-                                <td>
-                                    <button v-if="$root.isController(user.wallet_id)" class="btn btn-danger button-delete" @click="deleteUser(user.id)">Delete</button>
+                                <td class="buttons">
+                                    <button v-if="$root.isController(user.wallet_id)"
+                                            title="Delete"
+                                            class="btn btn-link text-danger button-delete p-0"
+                                            @click="deleteUser(user.id)"
+                                    >
+                                        <svg-icon icon="trash-alt"></svg-icon><span class="sr-only">Delete</span>
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>

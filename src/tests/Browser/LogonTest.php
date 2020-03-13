@@ -71,13 +71,11 @@ class LogonTest extends TestCaseDusk
                 ->submitLogon('john@kolab.org', 'simple123', true);
 
             // Checks if we're really on Dashboard page
-            $browser->on(new Dashboard());
-
-            $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
-            });
-
-            $browser->assertVue('data.email', 'john@kolab.org', '@dashboard-component');
+            $browser->on(new Dashboard())
+                ->within(new Menu(), function ($browser) {
+                    $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
+                })
+                ->assertUser('john@kolab.org');
 
             // TODO: Verify dashboard content
 

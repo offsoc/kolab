@@ -390,7 +390,7 @@ class SignupTest extends TestCaseDusk
             $browser->waitUntilMissing('@step3')
                 ->waitUntilMissing('.app-loader')
                 ->on(new Dashboard())
-                ->assertVue('data.email', 'signuptestdusk@' . \config('app.domain'), '@dashboard-component');
+                ->assertUser('signuptestdusk@' . \config('app.domain'));
 
             // Logout the user
             $browser->click('a.link-logout');
@@ -494,7 +494,7 @@ class SignupTest extends TestCaseDusk
             $browser->waitUntilMissing('@step3')
                 ->waitUntilMissing('.app-loader')
                 ->on(new Dashboard())
-                ->assertVue('data.email', 'admin@user-domain-signup.com', '@dashboard-component');
+                ->assertUser('admin@user-domain-signup.com');
 
             $browser->click('a.link-logout');
         });
