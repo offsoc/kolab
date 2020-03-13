@@ -4,6 +4,8 @@ namespace Tests\Feature\Controller;
 
 use App\Domain;
 use App\Http\Controllers\API\UsersController;
+use App\Package;
+use App\Sku;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -405,7 +407,7 @@ class UsersTest extends TestCase
         $userA = $this->getTestUser('UserEntitlement2A@UserEntitlement.com');
 
         // Test getting profile of self
-        $response = $this->actingAs($userA, 'api')->get("/api/v4/users/{$userA->id}");
+        $response = $this->actingAs($userA)->get("/api/v4/users/{$userA->id}");
 
         $json = $response->json();
 
@@ -415,6 +417,7 @@ class UsersTest extends TestCase
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue(is_array($json['aliases']));
+        $this->assertSame([], $json['skus']);
 
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
@@ -436,6 +439,17 @@ class UsersTest extends TestCase
         $response->assertStatus(200);
         $response = $this->actingAs($john)->get("/api/v4/users/{$ned->id}");
         $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $storage_sku = Sku::where('title', 'storage')->first();
+        $groupware_sku = Sku::where('title', 'groupware')->first();
+        $mailbox_sku = Sku::where('title', 'mailbox')->first();
+
+        $this->assertCount(3, $json['skus']);
+        $this->assertSame(2, $json['skus'][$storage_sku->id]['count']);
+        $this->assertSame(1, $json['skus'][$groupware_sku->id]['count']);
+        $this->assertSame(1, $json['skus'][$mailbox_sku->id]['count']);
     }
 
     /**
@@ -498,16 +512,41 @@ class UsersTest extends TestCase
         $this->assertCount(2, $json);
         $this->assertSame('The specified email is not available.', $json['errors']['email']);
 
-        // Test full user data
+        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+
         $post = [
             'password' => 'simple',
             'password_confirmation' => 'simple',
             'first_name' => 'John2',
             'last_name' => 'Doe2',
             'email' => 'john2.doe2@kolab.org',
-            'aliases' => ['useralias1@kolab.org', 'useralias2@kolab.org']
+            'aliases' => ['useralias1@kolab.org', 'useralias2@kolab.org'],
         ];
 
+        // Missing package
+        $response = $this->actingAs($john)->post("/api/v4/users", $post);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Package is required.", $json['errors']['package']);
+        $this->assertCount(2, $json);
+
+        // Invalid package
+        $post['package'] = $package_domain->id;
+        $response = $this->actingAs($john)->post("/api/v4/users", $post);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Invalid package selected.", $json['errors']['package']);
+        $this->assertCount(2, $json);
+
+        // Test full and valid data
+        $post['package'] = $package_kolab->id;
         $response = $this->actingAs($john)->post("/api/v4/users", $post);
         $json = $response->json();
 
@@ -525,9 +564,11 @@ class UsersTest extends TestCase
         $this->assertCount(2, $aliases);
         $this->assertSame('useralias1@kolab.org', $aliases[0]->alias);
         $this->assertSame('useralias2@kolab.org', $aliases[1]->alias);
-
-        // TODO: Test assigning a package to new user
-        // TODO: Test the wallet to which the new user should be assigned to
+        // Assert the new user entitlements
+        $this->assertUserEntitlements($user, ['groupware', 'mailbox', 'storage', 'storage']);
+        // Assert the wallet to which the new user should be assigned to
+        $wallet = $user->wallet();
+        $this->assertSame($john->wallets()->first()->id, $wallet->id);
 
         // Test acting as account controller (not owner)
         /*
@@ -672,6 +713,62 @@ class UsersTest extends TestCase
         $response->assertStatus(200);
 
         // TODO: Test error on aliases with invalid/non-existing/other-user's domain
+
+        // Create entitlements and additional user for following tests
+        $owner = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $user = $this->getTestUser('UsersControllerTest2@userscontroller.com');
+        $package_domain = Package::where('title', 'domain-hosting')->first();
+        $package_kolab = Package::where('title', 'kolab')->first();
+        $package_lite = Package::where('title', 'lite')->first();
+        $sku_mailbox = Sku::where('title', 'mailbox')->first();
+        $sku_storage = Sku::where('title', 'storage')->first();
+        $sku_groupware = Sku::where('title', 'groupware')->first();
+
+        $domain = $this->getTestDomain(
+            'userscontroller.com',
+            [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_EXTERNAL,
+            ]
+        );
+
+        $domain->assignPackage($package_domain, $owner);
+        $owner->assignPackage($package_kolab);
+        $owner->assignPackage($package_lite, $user);
+
+        // Non-controller cannot update his own entitlements
+        $post = ['skus' => []];
+        $response = $this->actingAs($user)->put("/api/v4/users/{$user->id}", $post);
+        $response->assertStatus(422);
+
+        // Test updating entitlements
+        $post = [
+            'skus' => [
+                $sku_mailbox->id => 1,
+                $sku_storage->id => 3,
+                $sku_groupware->id => 1,
+            ],
+        ];
+
+        $response = $this->actingAs($owner)->put("/api/v4/users/{$user->id}", $post);
+        $response->assertStatus(200);
+
+        $storage_cost = $user->entitlements()
+            ->where('sku_id', $sku_storage->id)
+            ->orderBy('cost')
+            ->pluck('cost')->all();
+
+        $this->assertUserEntitlements($user, ['groupware', 'mailbox', 'storage', 'storage', 'storage']);
+        $this->assertSame([0, 0, 25], $storage_cost);
+    }
+
+    /**
+     * Test UsersController::updateEntitlements()
+     */
+    public function testUpdateEntitlements(): void
+    {
+        // TODO: Test more cases of entitlements update
+        $this->markTestIncomplete();
     }
 
     /**

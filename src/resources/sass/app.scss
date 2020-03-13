@@ -105,6 +105,38 @@ pre {
     }
 }
 
+.range-input {
+    display: flex;
+
+    label {
+        margin-right: 0.5em;
+    }
+}
+
+table.form-list {
+    td {
+        border: 0;
+
+        &:first-child {
+            padding-left: 0;
+        }
+
+        &:last-child {
+            padding-right: 0;
+        }
+    }
+
+    .buttons,
+    .price,
+    .selection {
+        width: 1%;
+    }
+
+    .price {
+        text-align: right;
+    }
+}
+
 #dashboard-nav {
     display: flex;
     flex-wrap: wrap;

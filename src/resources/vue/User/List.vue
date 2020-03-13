@@ -45,7 +45,9 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger modal-action" @click="deleteUser()">Delete</button>
+                        <button type="button" class="btn btn-danger modal-action" @click="deleteUser()">
+                            <svg-icon icon="trash-alt"></svg-icon> Delete
+                        </button>
                     </div>
                 </div>
             </div>

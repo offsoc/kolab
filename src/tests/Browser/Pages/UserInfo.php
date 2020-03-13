@@ -38,6 +38,8 @@ class UserInfo extends Page
         return [
             '@app' => '#app',
             '@form' => '#user-info form',
+            '@packages' => '#user-packages',
+            '@skus' => '#user-skus',
         ];
     }
 }

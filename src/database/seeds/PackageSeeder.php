@@ -21,6 +21,7 @@ class PackageSeeder extends Seeder
         $package = Package::create(
             [
                 'title' => 'kolab',
+                'name' => 'Groupware Account',
                 'description' => 'A fully functional groupware account.',
                 'discount_rate' => 0
             ]
@@ -45,6 +46,7 @@ class PackageSeeder extends Seeder
         $package = Package::create(
             [
                 'title' => 'lite',
+                'name' => 'Lite Account',
                 'description' => 'Just mail and no more.',
                 'discount_rate' => 0
             ]
@@ -66,6 +68,7 @@ class PackageSeeder extends Seeder
         $package = Package::create(
             [
                 'title' => 'domain-hosting',
+                'name' => 'Domain Hosting',
                 'description' => 'Use your own, existing domain.',
                 'discount_rate' => 0
             ]

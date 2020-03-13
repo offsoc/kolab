@@ -123,6 +123,8 @@ return [
     'loginexists' => 'The specified login is not available.',
     'domainexists' => 'The specified domain is not available.',
     'noemailorphone' => 'The specified text is neither a valid email address nor a phone number.',
+    'packageinvalid' => 'Invalid package selected.',
+    'packagerequired' => 'Package is required.',
     'usernotexists' => 'Unable to find user.',
     'noextemail' => 'This user has no external email address.',
     'entryinvalid' => 'The specified :attribute is invalid.',

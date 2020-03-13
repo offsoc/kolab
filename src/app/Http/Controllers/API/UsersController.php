@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Domain;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
+use App\Sku;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -180,7 +181,7 @@ class UsersController extends Controller
      *
      * @param int $id The account to show information for.
      *
-     * @return \Illuminate\Http\JsonResponse|void
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
@@ -195,6 +196,17 @@ class UsersController extends Controller
         }
 
         $response = $this->userResponse($user);
+
+        // Simplified Entitlement/SKU information,
+        // TODO: I agree this format may need to be extended in future
+        $response['skus'] = [];
+        foreach ($user->entitlements as $ent) {
+            $sku = $ent->sku;
+            $response['skus'][$sku->id] = [
+//                'cost' => $ent->cost,
+                'count' => isset($response['skus'][$sku->id]) ? $response['skus'][$sku->id]['count'] + 1 : 1,
+            ];
+        }
 
         return response()->json($response);
     }
@@ -268,13 +280,24 @@ class UsersController extends Controller
     public function store(Request $request)
     {
         $current_user = $this->guard()->user();
+        $owner = $current_user->wallet()->owner;
 
-        if ($current_user->wallet()->owner->id != $current_user->id) {
+        if ($owner->id != $current_user->id) {
             return $this->errorResponse(403);
         }
 
         if ($error_response = $this->validateUserRequest($request, null, $settings)) {
             return $error_response;
+        }
+
+        if (empty($request->package) || !($package = \App\Package::find($request->package))) {
+            $errors = ['package' => \trans('validation.packagerequired')];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        if ($package->isDomain()) {
+            $errors = ['package' => \trans('validation.packageinvalid')];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
         $user_name = !empty($settings['first_name']) ? $settings['first_name'] : '';
@@ -291,13 +314,12 @@ class UsersController extends Controller
                 'password' => $request->password,
         ]);
 
+        $owner->assignPackage($package, $user);
+
         if (!empty($settings)) {
             $user->setSettings($settings);
         }
 
-        // TODO: Assign package
-
-        // Add aliases
         if (!empty($request->aliases)) {
             $user->setAliases($request->aliases);
         }
@@ -326,8 +348,10 @@ class UsersController extends Controller
             return $this->errorResponse(404);
         }
 
+        $current_user = $this->guard()->user();
+
         // TODO: Decide what attributes a user can change on his own profile
-        if (!$this->guard()->user()->canUpdate($user)) {
+        if (!$current_user->canUpdate($user)) {
             return $this->errorResponse(403);
         }
 
@@ -335,22 +359,31 @@ class UsersController extends Controller
             return $error_response;
         }
 
+        // Entitlements, only controller can do that
+        if ($request->skus !== null && !$current_user->canDelete($user)) {
+            return $this->errorResponse(422, "You have no permission to change entitlements");
+        }
+
         DB::beginTransaction();
+
+        $this->updateEntitlements($user, $request->skus);
 
         if (!empty($settings)) {
             $user->setSettings($settings);
         }
 
-        // Update user password
         if (!empty($request->password)) {
             $user->password = $request->password;
             $user->save();
         }
 
-        // Update aliases
         if (isset($request->aliases)) {
             $user->setAliases($request->aliases);
         }
+
+        // TODO: Make sure that UserUpdate job is created in case of entitlements update
+        //       and no password change. So, for example quota change is applied to LDAP
+        // TODO: Review use of $user->save() in the above context
 
         DB::commit();
 
@@ -368,6 +401,55 @@ class UsersController extends Controller
     public function guard()
     {
         return Auth::guard();
+    }
+
+    /**
+     * Update user entitlements.
+     *
+     * @param \App\User  $user The user
+     * @param array|null $skus Set of SKUs for the user
+     */
+    protected function updateEntitlements(User $user, $skus)
+    {
+        if (!is_array($skus)) {
+            return;
+        }
+
+        // Existing SKUs
+        // FIXME: Is there really no query builder method to get result indexed
+        //        by some column or primary key?
+        $all_skus = Sku::all()->mapWithKeys(function ($sku) {
+            return [$sku->id => $sku];
+        });
+
+        // Existing user entitlements
+        // Note: We sort them by cost, so e.g. for storage we get these free first
+        $entitlements = $user->entitlements()->orderBy('cost')->get();
+
+        // Go through existing entitlements and remove those no longer needed
+        foreach ($entitlements as $ent) {
+            $sku_id = $ent->sku_id;
+
+            if (array_key_exists($sku_id, $skus)) {
+                // An existing entitlement exists on the requested list
+                $skus[$sku_id] -= 1;
+
+                if ($skus[$sku_id] < 0) {
+                    $ent->delete();
+                }
+            } elseif ($all_skus[$sku_id]->handler_class != \App\Handlers\Mailbox::class) {
+                // An existing entitlement does not exists on the requested list
+                // Never delete 'mailbox' SKU
+                $ent->delete();
+            }
+        }
+
+        // Add missing entitlements
+        foreach ($skus as $sku_id => $count) {
+            if ($count > 0 && $all_skus->has($sku_id)) {
+                $user->assignSku($all_skus[$sku_id], $count);
+            }
+        }
     }
 
     /**

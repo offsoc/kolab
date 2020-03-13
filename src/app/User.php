@@ -129,7 +129,7 @@ class User extends Authenticatable implements JWTSubject
             $user = $this;
         }
 
-        $wallet_id = $this->wallets()->get()[0]->id;
+        $wallet_id = $this->wallets()->first()->id;
 
         foreach ($package->skus as $sku) {
             for ($i = $sku->pivot->qty; $i > 0; $i--) {
@@ -149,7 +149,15 @@ class User extends Authenticatable implements JWTSubject
         return $user;
     }
 
-    public function assignPlan($plan, $domain = null)
+    /**
+     * Assign a package plan to a user.
+     *
+     * @param \App\Plan   $plan   The plan to assign
+     * @param \App\Domain $domain Optional domain object
+     *
+     * @return \App\User Self
+     */
+    public function assignPlan($plan, $domain = null): User
     {
         $this->setSetting('plan_id', $plan->id);
 
@@ -160,6 +168,47 @@ class User extends Authenticatable implements JWTSubject
                 $this->assignPackage($package);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * Assign a Sku to a user.
+     *
+     * @param \App\Sku $sku   The sku to assign.
+     * @param int      $count Count of entitlements to add
+     *
+     * @return \App\User Self
+     * @throws \Exception
+     */
+    public function assignSku($sku, int $count = 1): User
+    {
+        // TODO: I guess wallet could be parametrized in future
+        $wallet = $this->wallet();
+        $owner = $wallet->owner;
+        $exists = $this->entitlements()->where('sku_id', $sku->id)->count();
+
+        // TODO: Sanity check, this probably should be in preReq() on handlers
+        //       or in EntitlementObserver
+        if ($sku->handler_class::entitleableClass() != User::class) {
+            throw new \Exception("Cannot assign non-user SKU ({$sku->title}) to a user");
+        }
+
+        while ($count > 0) {
+            \App\Entitlement::create([
+                'owner_id' => $owner->id,
+                'wallet_id' => $wallet->id,
+                'sku_id' => $sku->id,
+                'cost' => $sku->units_free >= $exists ? $sku->cost : 0,
+                'entitleable_id' => $this->id,
+                'entitleable_type' => User::class
+            ]);
+
+            $exists++;
+            $count--;
+        }
+
+        return $this;
     }
 
     /**

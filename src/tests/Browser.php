@@ -33,6 +33,18 @@ class Browser extends \Laravel\Dusk\Browser
     }
 
     /**
+     * Assert Tip element content
+     */
+    public function assertTip($selector, $content)
+    {
+        return $this->click($selector)
+            ->withinBody(function ($browser) use ($content) {
+                $browser->assertSeeIn('div.tooltip .tooltip-inner', $content);
+            })
+            ->click($selector);
+    }
+
+    /**
      * Assert specified error page is displayed.
      */
     public function assertErrorPage(int $error_code)

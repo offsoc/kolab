@@ -47,8 +47,8 @@ class DomainTest extends TestCase
     public function testCreateJobs(): void
     {
         // Fake the queue, assert that no jobs were pushed...
-        $queue = Queue::fake();
-        $queue->assertNothingPushed();
+        Queue::fake();
+        Queue::assertNothingPushed();
 
         $domain = Domain::create([
                 'namespace' => 'gmail.com',
@@ -56,9 +56,9 @@ class DomainTest extends TestCase
                 'type' => Domain::TYPE_EXTERNAL,
         ]);
 
-        $queue->assertPushed(\App\Jobs\DomainCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\DomainCreate::class, 1);
 
-        $queue->assertPushed(
+        Queue::assertPushed(
             \App\Jobs\DomainCreate::class,
             function ($job) use ($domain) {
                 $job_domain = TestCase::getObjectProperty($job, 'domain');

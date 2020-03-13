@@ -151,10 +151,10 @@ class SignupTest extends TestCase
      */
     public function testSignupInitValidInput()
     {
-        $queue = Queue::fake();
+        Queue::fake();
 
         // Assert that no jobs were pushed...
-        $queue->assertNothingPushed();
+        Queue::assertNothingPushed();
 
         $data = [
             'email' => 'testuser@external.com',
@@ -171,10 +171,10 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($json['code']);
 
         // Assert the email sending job was pushed once
-        $queue->assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
+        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
 
         // Assert the job has proper data assigned
-        $queue->assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
+        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
@@ -414,8 +414,8 @@ class SignupTest extends TestCase
         $this->assertTrue(!empty($json['expires_in']) && is_int($json['expires_in']) && $json['expires_in'] > 0);
         $this->assertNotEmpty($json['access_token']);
 
-        $queue->assertPushed(\App\Jobs\UserCreate::class, 1);
-        $queue->assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
+        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->email === \strtolower($data['login'] . '@' . $data['domain']);
@@ -446,7 +446,7 @@ class SignupTest extends TestCase
      */
     public function testSignupGroupAccount()
     {
-        $queue = Queue::fake();
+        Queue::fake();
 
         // Initial signup request
         $user_data = $data = [
@@ -464,10 +464,10 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($json['code']);
 
         // Assert the email sending job was pushed once
-        $queue->assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
+        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
 
         // Assert the job has proper data assigned
-        $queue->assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
+        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
@@ -516,15 +516,15 @@ class SignupTest extends TestCase
         $this->assertTrue(!empty($result['expires_in']) && is_int($result['expires_in']) && $result['expires_in'] > 0);
         $this->assertNotEmpty($result['access_token']);
 
-        $queue->assertPushed(\App\Jobs\DomainCreate::class, 1);
-        $queue->assertPushed(\App\Jobs\DomainCreate::class, function ($job) use ($domain) {
+        Queue::assertPushed(\App\Jobs\DomainCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\DomainCreate::class, function ($job) use ($domain) {
             $job_domain = TestCase::getObjectProperty($job, 'domain');
 
             return $job_domain->namespace === $domain;
         });
 
-        $queue->assertPushed(\App\Jobs\UserCreate::class, 1);
-        $queue->assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
+        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
             $job_user = TestCase::getObjectProperty($job, 'user');
 
             return $job_user->email === $data['login'] . '@' . $data['domain'];

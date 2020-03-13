@@ -18,7 +18,8 @@ class CreatePackagesTable extends Migration
             function (Blueprint $table) {
                 $table->string('id', 36);
                 $table->string('title', 36);
-                $table->string('description', 128);
+                $table->json('name');
+                $table->json('description');
                 $table->integer('discount_rate')->default(0)->nullable();
 
                 $table->primary('id');

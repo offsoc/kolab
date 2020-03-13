@@ -42,6 +42,83 @@
                                 <input type="password" class="form-control" id="password_confirmation" v-model="user.password_confirmation" :required="user_id === 'new'">
                             </div>
                         </div>
+                        <div v-if="user_id === 'new'" id="user-packages" class="form-group row">
+                            <label class="col-sm-4 col-form-label">Package</label>
+                            <div class="col-sm-8">
+                                <table class="table form-list">
+                                    <thead class="thead-light sr-only">
+                                        <tr>
+                                            <th scope="col"></th>
+                                            <th scope="col">Package</th>
+                                            <th scope="col">Price</th>
+                                            <th scope="col"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="pkg in packages" :id="'p' + pkg.id" :key="pkg.id">
+                                            <td class="selection">
+                                                <input type="checkbox" :value="pkg.id" @click="selectPackage" :checked="pkg.id == package_id">
+                                            </td>
+                                            <td class="name">
+                                                {{ pkg.name }}
+                                            </td>
+                                            <td class="price text-nowrap">
+                                                {{ $root.price(pkg.cost) + '/month' }}
+                                            </td>
+                                            <td class="buttons">
+                                                <button v-if="pkg.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="pkg.description">
+                                                    <svg-icon icon="info-circle"></svg-icon>
+                                                    <span class="sr-only">More information</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div v-if="user_id !== 'new'" id="user-skus" class="form-group row">
+                            <label class="col-sm-4 col-form-label">Subscriptions</label>
+                            <div class="col-sm-8">
+                                <table class="table form-list">
+                                    <thead class="thead-light sr-only">
+                                        <tr>
+                                            <th scope="col"></th>
+                                            <th scope="col">Subscription</th>
+                                            <th scope="col">Price</th>
+                                            <th scope="col"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="sku in skus" :id="'s' + sku.id" :key="sku.id">
+                                            <td class="selection">
+                                                <input type="checkbox" :value="sku.id" :disabled="sku.readonly" :checked="sku.enabled">
+                                            </td>
+                                            <td class="name">
+                                                <span class="name">{{ sku.name }}</span>
+                                                <div v-if="sku.range" class="range-input">
+                                                    <label class="text-nowrap">{{ sku.range.min }} {{ sku.range.unit }}</label>
+                                                    <input
+                                                        type="range" class="custom-range" @input="rangeUpdate"
+                                                        :value="sku.value || sku.range.min"
+                                                        :min="sku.range.min"
+                                                        :max="sku.range.max"
+                                                    >
+                                                </div>
+                                            </td>
+                                            <td class="price text-nowrap">
+                                                {{ $root.price(sku.cost) + '/month' }}
+                                            </td>
+                                            <td class="buttons">
+                                                <button v-if="sku.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="sku.description">
+                                                    <svg-icon icon="info-circle"></svg-icon>
+                                                    <span class="sr-only">More information</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                         <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
                     </form>
                 </div>
@@ -55,7 +132,10 @@
         data() {
             return {
                 user_id: null,
-                user: {}
+                user: {},
+                packages: [],
+                package_id: null,
+                skus: []
             }
         },
         created() {
@@ -63,6 +143,12 @@
 
             if (this.user_id === 'new') {
                 // do nothing (for now)
+                axios.get('/api/v4/packages')
+                    .then(response => {
+                        this.packages = response.data.filter(pkg => !pkg.isDomain)
+                        this.package_id = this.packages[0].id
+                    })
+                    .catch(this.$root.errorHandler)
             }
             else {
                 axios.get('/api/v4/users/' + this.user_id)
@@ -72,6 +158,29 @@
                         this.user.last_name = response.data.settings.last_name
                         $('#aliases').val(response.data.aliases.join("\n"))
                         listinput('#aliases')
+
+                        axios.get('/api/v4/skus')
+                            .then(response => {
+                                // "merge" SKUs with user entitlement-SKUs
+                                this.skus = response.data
+                                    .filter(sku => sku.type == 'user')
+                                    .map(sku => {
+                                        if (sku.id in this.user.skus) {
+                                            sku.enabled = true
+                                            sku.value = this.user.skus[sku.id].count
+                                        } else if (!sku.readonly) {
+                                            sku.enabled = false
+                                        }
+
+                                        return sku
+                                    })
+
+                                // Update all range inputs (and price)
+                                this.$nextTick(() => {
+                                    $('#user-skus input[type=range]').each((idx, elem) => { this.rangeUpdate(elem) })
+                                })
+                            })
+                            .catch(this.$root.errorHandler)
                     })
                     .catch(this.$root.errorHandler)
             }
@@ -95,13 +204,21 @@
                 if (this.user_id !== 'new') {
                     method = 'put'
                     location += '/' + this.user_id
+
+                    let skus = {}
+                    $('#user-skus input[type=checkbox]:checked').each((idx, input) => {
+                        let id = $(input).val()
+                        let range = $(input).parents('tr').first().find('input[type=range]').val()
+
+                        skus[id] = range || 1
+                    })
+                    this.user.skus = skus
+                } else {
+                    this.user.package = this.package_id
                 }
 
                 axios[method](location, this.user)
                     .then(response => {
-                        delete this.user.password
-                        delete this.user.password_confirm
-
                         if (response.data.status == 'success') {
                             this.$toastr('success', response.data.message)
                         }
@@ -111,6 +228,30 @@
                             this.$router.push({ name: 'users' })
                         }
                     })
+            },
+            selectPackage(e) {
+                // Make sure there always is only one package selected
+                $('#user-packages input').prop('checked', false)
+                this.package_id = $(e.target).prop('checked', false).val()
+            },
+            rangeUpdate(e) {
+                let input = $(e.target || e)
+                let value = input.val()
+                let record = input.parents('tr').first()
+                let sku_id = record.find('input[type=checkbox]').val()
+                let sku, i
+
+                for (i = 0; i < this.skus.length; i++) {
+                    if (this.skus[i].id == sku_id) {
+                        sku = this.skus[i];
+                    }
+                }
+
+                // Update the label
+                input.prev().text(value + ' ' + sku.range.unit)
+
+                // Update the price
+                record.find('.price').text(this.$root.price(sku.cost * (value - sku.units_free)) + '/month')
             }
         }
     }

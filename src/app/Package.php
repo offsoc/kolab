@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * The eloquent definition of a Package.
@@ -23,15 +24,24 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Package extends Model
 {
+    use HasTranslations;
+
     public $incrementing = false;
     protected $keyType = 'string';
 
     public $timestamps = false;
 
     protected $fillable = [
-        'title',
         'description',
-        'discount_rate'
+        'discount_rate',
+        'name',
+        'title',
+    ];
+
+    /** @var array Translatable properties */
+    public $translatable = [
+        'name',
+        'description',
     ];
 
     /**

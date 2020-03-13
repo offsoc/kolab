@@ -2,11 +2,14 @@
 
 namespace Tests\Browser;
 
+use App\Entitlement;
+use App\Sku;
 use App\User;
 use App\UserAlias;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\ListInput;
+use Tests\Browser\Components\QuotaInput;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
@@ -35,6 +38,14 @@ class UsersTest extends TestCaseDusk
         $john->setSettings($this->profile);
         UserAlias::where('user_id', $john->id)
             ->where('alias', 'john.test@kolab.org')->delete();
+
+        Sku::where('title', 'test')->delete();
+        $storage = Sku::where('title', 'storage')->first();
+        Entitlement::where([
+                ['sku_id', $storage->id],
+                ['entitleable_id', $john->id],
+                ['cost', 25]
+            ])->delete();
     }
 
     /**
@@ -48,6 +59,14 @@ class UsersTest extends TestCaseDusk
         $john->setSettings($this->profile);
         UserAlias::where('user_id', $john->id)
             ->where('alias', 'john.test@kolab.org')->delete();
+
+        Sku::where('title', 'test')->delete();
+        $storage = Sku::where('title', 'storage')->first();
+        Entitlement::where([
+                ['sku_id', $storage->id],
+                ['entitleable_id', $john->id],
+                ['cost', 25]
+            ])->delete();
 
         parent::tearDown();
     }
@@ -108,6 +127,17 @@ class UsersTest extends TestCaseDusk
      */
     public function testInfo(): void
     {
+        Sku::create([
+                'title' => 'test',
+                'name' => 'Test SKU',
+                'description' => 'The SKU for testing',
+                'cost' => 666,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Groupware',
+                'active' => true,
+        ]);
+
         $this->browse(function (Browser $browser) {
             $browser->on(new UserList())
                 ->click('@table tr:nth-child(2) a')
@@ -203,6 +233,64 @@ class UsersTest extends TestCaseDusk
             $john = User::where('email', 'john@kolab.org')->first();
             $alias = UserAlias::where('user_id', $john->id)->where('alias', 'john.test@kolab.org')->first();
             $this->assertTrue(!empty($alias));
+
+            // Test subscriptions
+            $browser->with('@form', function (Browser $browser) {
+                $browser->assertSeeIn('div.row:nth-child(7) label', 'Subscriptions')
+                    ->assertVisible('@skus.row:nth-child(7)')
+                    ->with('@skus', function ($browser) {
+                        $browser->assertElementsCount('tbody tr', 4)
+                            // groupware SKU
+                            ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Groupware Features')
+                            ->assertSeeIn('tbody tr:nth-child(1) td.price', 'CHF 5.55/month')
+                            ->assertChecked('tbody tr:nth-child(1) td.selection input')
+                            ->assertEnabled('tbody tr:nth-child(1) td.selection input')
+                            ->assertTip(
+                                'tbody tr:nth-child(1) td.buttons button',
+                                'Groupware functions like Calendar, Tasks, Notes, etc.'
+                            )
+                            // Mailbox SKU
+                            ->assertSeeIn('tbody tr:nth-child(2) td.name', 'User Mailbox')
+                            ->assertSeeIn('tbody tr:nth-child(2) td.price', 'CHF 4.44/month')
+                            ->assertChecked('tbody tr:nth-child(2) td.selection input')
+                            ->assertDisabled('tbody tr:nth-child(2) td.selection input')
+                            ->assertTip(
+                                'tbody tr:nth-child(2) td.buttons button',
+                                'Just a mailbox'
+                            )
+                            // Storage SKU
+                            ->assertSeeIn('tbody tr:nth-child(3) td.name', 'Storage Quota')
+                            ->assertSeeIn('tr:nth-child(3) td.price', 'CHF 0.00/month')
+                            ->assertChecked('tbody tr:nth-child(3) td.selection input')
+                            ->assertDisabled('tbody tr:nth-child(3) td.selection input')
+                            ->assertTip(
+                                'tbody tr:nth-child(3) td.buttons button',
+                                'Some wiggle room'
+                            )
+                            ->with(new QuotaInput('tbody tr:nth-child(3) .range-input'), function ($browser) {
+                                $browser->assertQuotaValue(2)->setQuotaValue(3);
+                            })
+                            ->assertSeeIn('tr:nth-child(3) td.price', 'CHF 0.25/month')
+                            // Test SKU
+                            ->assertSeeIn('tbody tr:nth-child(4) td.name', 'Test SKU')
+                            ->assertSeeIn('tbody tr:nth-child(4) td.price', 'CHF 6.66/month')
+                            ->assertNotChecked('tbody tr:nth-child(4) td.selection input')
+                            ->assertEnabled('tbody tr:nth-child(4) td.selection input')
+                            ->assertTip(
+                                'tbody tr:nth-child(4) td.buttons button',
+                                'The SKU for testing'
+                            )
+                            ->click('tbody tr:nth-child(4) td.selection input');
+                    })
+                    ->click('button[type=submit]');
+            })
+            ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
+                $browser->assertToastTitle('')
+                    ->assertToastMessage('User data updated successfully')
+                    ->closeToast();
+            });
+
+            $this->assertUserEntitlements($john, ['groupware', 'mailbox', 'storage', 'storage', 'storage', 'test']);
         });
     }
 
@@ -239,6 +327,17 @@ class UsersTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(5) input[type=password]', '')
                         ->assertSeeIn('div.row:nth-child(6) label', 'Confirm password')
                         ->assertValue('div.row:nth-child(6) input[type=password]', '')
+                        ->assertSeeIn('div.row:nth-child(7) label', 'Package')
+                        // assert packages list widget, select "Lite Account"
+                        ->with('@packages', function ($browser) {
+                            $browser->assertElementsCount('tbody tr', 2)
+                                ->assertSeeIn('tbody tr:nth-child(1)', 'Groupware Account')
+                                ->assertSeeIn('tbody tr:nth-child(2)', 'Lite Account')
+                                ->assertChecked('tbody tr:nth-child(1) input')
+                                ->click('tbody tr:nth-child(2) input')
+                                ->assertNotChecked('tbody tr:nth-child(1) input')
+                                ->assertChecked('tbody tr:nth-child(2) input');
+                        })
                         ->assertSeeIn('button[type=submit]', 'Submit');
 
                     // Test browser-side required fields and error handling
@@ -300,14 +399,14 @@ class UsersTest extends TestCaseDusk
             ->waitForLocation('/users')
             ->on(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
-// TODO: This will not work until we handle entitlements on user creation
-//                    $browser->assertElementsCount('tbody tr', 3)
-//                        ->assertSeeIn('tbody tr:nth-child(3) a', 'julia.roberts@kolab.org');
+                    $browser->assertElementsCount('tbody tr', 4)
+                        ->assertSeeIn('tbody tr:nth-child(3) a', 'julia.roberts@kolab.org');
                 });
 
             $julia = User::where('email', 'julia.roberts@kolab.org')->first();
             $alias = UserAlias::where('user_id', $julia->id)->where('alias', 'julia.roberts2@kolab.org')->first();
             $this->assertTrue(!empty($alias));
+            $this->assertUserEntitlements($julia, ['mailbox', 'storage', 'storage']);
         });
     }
 

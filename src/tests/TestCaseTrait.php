@@ -6,9 +6,24 @@ use App\Domain;
 use App\User;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Assert;
 
 trait TestCaseTrait
 {
+    protected function assertUserEntitlements($user, $expected)
+    {
+        // Assert the user entitlements
+        $skus = $user->entitlements()->get()
+            ->map(function ($ent) {
+                return $ent->sku->title;
+            })
+            ->toArray();
+
+        sort($skus);
+
+        Assert::assertSame($expected, $skus);
+    }
+
     /**
      * Creates the application.
      *
@@ -108,7 +123,7 @@ trait TestCaseTrait
      *
      * @return mixed Method return.
      */
-    public function invokeMethod($object, $methodName, array $parameters = array())
+    protected function invokeMethod($object, $methodName, array $parameters = array())
     {
         $reflection = new \ReflectionClass(get_class($object));
         $method = $reflection->getMethod($methodName);

@@ -212,6 +212,7 @@ class BillingTest extends TestCase
         $package = \App\Package::create(
             [
                 'title' => 'kolab-kube',
+                'name' => 'Kolab for Kuba Fans',
                 'description' => 'Kolab for Kube fans',
                 'discount_rate' => 50
             ]

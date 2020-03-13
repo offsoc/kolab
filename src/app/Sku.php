@@ -3,12 +3,15 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * The eloquent definition of a Stock Keeping Unit (SKU).
  */
 class Sku extends Model
 {
+    use HasTranslations;
+
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -17,14 +20,21 @@ class Sku extends Model
     ];
 
     protected $fillable = [
-        'title',
-        'description',
+        'active',
         'cost',
-        'units_free',
+        'description',
+        'handler_class',
+        'name',
         // persist for annual domain registration
         'period',
-        'handler_class',
-        'active'
+        'title',
+        'units_free',
+    ];
+
+    /** @var array Translatable properties */
+    public $translatable = [
+        'name',
+        'description',
     ];
 
     /**

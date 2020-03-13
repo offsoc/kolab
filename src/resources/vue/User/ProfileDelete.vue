@@ -15,7 +15,9 @@
                     <p>Also feel free to contact Kolab Now Support at support@kolabnow.com with any questions
                         or concerns that you may have in this context.</p>
                     <button class="btn btn-secondary button-cancel" @click="$router.go(-1)">Cancel</button>
-                    <button class="btn btn-danger button-delete" @click="deleteProfile">Delete account</button>
+                    <button class="btn btn-danger button-delete" @click="deleteProfile">
+                        <svg-icon icon="trash-alt"></svg-icon> Delete account
+                    </button>
                 </div>
             </div>
         </div>

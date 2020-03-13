@@ -1,6 +1,8 @@
 includes:
     - ./vendor/nunomaduro/larastan/extension.neon
 parameters:
+    excludes_analyse:
+        - tests/Browser
     inferPrivatePropertyTypeFromConstructor: true
     ignoreErrors:
         - '#Call to an undefined method Illuminate\\Contracts\\Auth\\Guard::factory#'

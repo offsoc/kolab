@@ -6,8 +6,6 @@
 
 require('./bootstrap')
 
-window.Vue = require('vue')
-
 import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Menu'
 import router from './routes'
@@ -15,11 +13,37 @@ import store from './store'
 import FontAwesomeIcon from './fontawesome'
 import VueToastr from '@deveodk/vue-toastr'
 
+window.Vue = require('vue')
+
 Vue.component('svg-icon', FontAwesomeIcon)
 
 Vue.use(VueToastr, {
     defaultPosition: 'toast-bottom-right',
     defaultTimeout: 5000
+})
+
+const vTooltip = (el, binding) => {
+    const t = []
+
+    if (binding.modifiers.focus) t.push('focus')
+    if (binding.modifiers.hover) t.push('hover')
+    if (binding.modifiers.click) t.push('click')
+    if (!t.length) t.push('hover')
+
+    $(el).tooltip({
+        title: binding.value,
+        placement: binding.arg || 'top',
+        trigger: t.join(' '),
+        html: !!binding.modifiers.html,
+    });
+}
+
+Vue.directive('tooltip', {
+    bind: vTooltip,
+    update: vTooltip,
+    unbind (el) {
+        $(el).tooltip('dispose')
+    }
 })
 
 // Add a response interceptor for general/validation error handler
@@ -194,6 +218,9 @@ const app = new Vue({
             } else {
                 this.errorPage(error.response.status, error.response.statusText)
             }
+        },
+        price(price) {
+            return (price/100).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })
         }
     }
 })

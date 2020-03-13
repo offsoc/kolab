@@ -56,12 +56,12 @@
                                 <input type="password" class="form-control" id="password_confirmation" v-model="profile.password_confirmation">
                             </div>
                         </div>
-                        <button class="btn btn-primary button-submit" type="submit"><svg-icon icon="check"></svg-icon>Submit</button>
+                        <button class="btn btn-primary button-submit" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
                         <router-link
                             v-if="$root.isController(wallet_id)"
                             class="btn btn-danger button-delete"
                             to="/profile/delete" tag="button"
-                        >Delete account</router-link>
+                        ><svg-icon icon="trash-alt"></svg-icon> Delete account</router-link>
                     </form>
                 </div>
             </div>

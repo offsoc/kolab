@@ -45,6 +45,8 @@ Route::group(
         Route::get('domains/{id}/confirm', 'API\DomainsController@confirm');
 
         Route::apiResource('entitlements', API\EntitlementsController::class);
+        Route::apiResource('packages', API\PackagesController::class);
+        Route::apiResource('skus', API\SkusController::class);
         Route::apiResource('users', API\UsersController::class);
         Route::apiResource('wallets', API\WalletsController::class);
     }
