@@ -311,6 +311,36 @@ class Domain extends Model
     }
 
     /**
+     * Suspend this domain.
+     *
+     * @return void
+     */
+    public function suspend(): void
+    {
+        if ($this->isSuspended()) {
+            return;
+        }
+
+        $this->status |= Domain::STATUS_SUSPENDED;
+        $this->save();
+    }
+
+    /**
+     * Unsuspend this domain.
+     *
+     * @return void
+     */
+    public function unsuspend(): void
+    {
+        if (!$this->isSuspended()) {
+            return;
+        }
+
+        $this->status ^= Domain::STATUS_SUSPENDED;
+        $this->save();
+    }
+
+    /**
      * Verify if a domain exists in DNS
      *
      * @return bool True if registered, False otherwise
