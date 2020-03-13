@@ -54,19 +54,19 @@ class Domain extends Model
     /**
      * Assign a package to a domain. The domain should not belong to any existing entitlements.
      *
-     * @param \App\Package   $package The package to assign.
+     * @param \App\Package $package The package to assign.
+     * @param \App\User    $user    The wallet owner.
      *
-     * @return \App\Domain
+     * @return \App\Domain Self
      */
     public function assignPackage($package, $user)
     {
-        $wallet_id = $user->wallets()->get()[0]->id;
+        $wallet_id = $user->wallets()->first()->id;
 
         foreach ($package->skus as $sku) {
             for ($i = $sku->pivot->qty; $i > 0; $i--) {
                 \App\Entitlement::create(
                     [
-                        'owner_id' => $user->id,
                         'wallet_id' => $wallet_id,
                         'sku_id' => $sku->id,
                         'cost' => $sku->pivot->cost(),

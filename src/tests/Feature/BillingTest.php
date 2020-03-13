@@ -117,7 +117,6 @@ class BillingTest extends TestCase
 
         $entitlement = \App\Entitlement::create(
             [
-                'owner_id' => $this->user->id,
                 'wallet_id' => $this->wallet_id,
                 'sku_id' => $sku->id,
                 'cost' => $sku->cost,
@@ -148,7 +147,6 @@ class BillingTest extends TestCase
 
         $entitlement = \App\Entitlement::create(
             [
-                'owner_id' => $this->user->id,
                 'wallet_id' => $this->wallet_id,
                 'sku_id' => $sku->id,
                 'cost' => $sku->cost,
@@ -193,7 +191,6 @@ class BillingTest extends TestCase
 
         $entitlement = \App\Entitlement::create(
             [
-                'owner_id' => $this->user->id,
                 'entitleable_id' => $this->user->id,
                 'entitleable_type' => \App\User::class,
                 'cost' => $sku->cost,

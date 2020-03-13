@@ -61,8 +61,8 @@ class EntitlementTest extends TestCase
         $wallet = $owner->wallets->first();
 
         $this->assertCount(4, $owner->entitlements()->get());
-        $this->assertCount(1, $sku_domain->entitlements()->where('owner_id', $owner->id)->get());
-        $this->assertCount(2, $sku_mailbox->entitlements()->where('owner_id', $owner->id)->get());
+        $this->assertCount(1, $sku_domain->entitlements()->where('wallet_id', $wallet->id)->get());
+        $this->assertCount(2, $sku_mailbox->entitlements()->where('wallet_id', $wallet->id)->get());
         $this->assertCount(9, $wallet->entitlements);
 
         $this->backdateEntitlements($owner->entitlements, Carbon::now()->subMonths(1));
@@ -91,7 +91,7 @@ class EntitlementTest extends TestCase
         $sku = \App\Sku::where('title', 'mailbox')->first();
         $this->assertNotNull($sku);
 
-        $entitlement = Entitlement::where('owner_id', $user->id)->where('sku_id', $sku->id)->first();
+        $entitlement = Entitlement::where('wallet_id', $wallet->id)->where('sku_id', $sku->id)->first();
         $this->assertNotNull($entitlement);
 
         $e_sku = $entitlement->sku;
@@ -99,9 +99,6 @@ class EntitlementTest extends TestCase
 
         $e_wallet = $entitlement->wallet;
         $this->assertSame($wallet->id, $e_wallet->id);
-
-        $e_owner = $entitlement->owner;
-        $this->assertEquals($user->id, $e_owner->id);
 
         $e_entitleable = $entitlement->entitleable;
         $this->assertEquals($user->id, $e_entitleable->id);

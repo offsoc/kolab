@@ -34,7 +34,6 @@ class CreateSkuEntitlements extends Migration
             'entitlements',
             function (Blueprint $table) {
                 $table->string('id', 36)->primary();
-                $table->bigInteger('owner_id');
                 $table->bigInteger('entitleable_id');
                 $table->string('entitleable_type');
                 $table->integer('cost')->default(0)->nullable();
@@ -44,7 +43,6 @@ class CreateSkuEntitlements extends Migration
                 $table->timestamps();
 
                 $table->foreign('sku_id')->references('id')->on('skus')->onDelete('cascade');
-                $table->foreign('owner_id')->references('id')->on('users')->onDelete('cascade');
                 $table->foreign('wallet_id')->references('id')->on('wallets')->onDelete('cascade');
             }
         );

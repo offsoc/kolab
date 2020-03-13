@@ -47,7 +47,6 @@ class DomainsTest extends TestCase
         ]);
 
         Entitlement::create([
-                'owner_id' => $user->id,
                 'wallet_id' => $user->wallets()->first()->id,
                 'sku_id' => $sku_domain->id,
                 'entitleable_id' => $domain->id,
@@ -130,7 +129,6 @@ class DomainsTest extends TestCase
         ]);
 
         Entitlement::create([
-                'owner_id' => $user->id,
                 'wallet_id' => $user->wallets()->first()->id,
                 'sku_id' => $sku_domain->id,
                 'entitleable_id' => $domain->id,

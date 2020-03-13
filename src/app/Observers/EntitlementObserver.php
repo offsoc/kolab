@@ -35,21 +35,10 @@ class EntitlementObserver
         // can't dispatch job here because it'll fail serialization
 
         // Make sure the owner is at least a controller on the wallet
-        $owner = \App\User::find($entitlement->owner_id);
         $wallet = \App\Wallet::find($entitlement->wallet_id);
 
-        if (!$owner) {
+        if (!$wallet || !$wallet->owner) {
             return false;
-        }
-
-        if (!$wallet) {
-            return false;
-        }
-
-        if (!$wallet->owner() == $owner) {
-            if (!$wallet->controllers->contains($owner)) {
-                return false;
-            }
         }
 
         $sku = \App\Sku::find($entitlement->sku_id);
@@ -58,7 +47,7 @@ class EntitlementObserver
             return false;
         }
 
-        $result = $sku->handler_class::preReq($entitlement, $owner);
+        $result = $sku->handler_class::preReq($entitlement, $wallet->owner);
 
         if (!$result) {
             return false;

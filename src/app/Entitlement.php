@@ -41,7 +41,6 @@ class Entitlement extends Model
      */
     protected $fillable = [
         'sku_id',
-        'owner_id',
         'wallet_id',
         'entitleable_id',
         'entitleable_type',
@@ -71,16 +70,6 @@ class Entitlement extends Model
     public function sku()
     {
         return $this->belongsTo('App\Sku');
-    }
-
-    /**
-     * The owner of this entitlement.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function owner()
-    {
-        return $this->belongsTo('App\User', 'owner_id', 'id');
     }
 
     /**

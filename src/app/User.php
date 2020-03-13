@@ -135,7 +135,6 @@ class User extends Authenticatable implements JWTSubject
             for ($i = $sku->pivot->qty; $i > 0; $i--) {
                 \App\Entitlement::create(
                     [
-                        'owner_id' => $this->id,
                         'wallet_id' => $wallet_id,
                         'sku_id' => $sku->id,
                         'cost' => $sku->pivot->cost(),
@@ -185,7 +184,6 @@ class User extends Authenticatable implements JWTSubject
     {
         // TODO: I guess wallet could be parametrized in future
         $wallet = $this->wallet();
-        $owner = $wallet->owner;
         $exists = $this->entitlements()->where('sku_id', $sku->id)->count();
 
         // TODO: Sanity check, this probably should be in preReq() on handlers
@@ -196,7 +194,6 @@ class User extends Authenticatable implements JWTSubject
 
         while ($count > 0) {
             \App\Entitlement::create([
-                'owner_id' => $owner->id,
                 'wallet_id' => $wallet->id,
                 'sku_id' => $sku->id,
                 'cost' => $sku->units_free >= $exists ? $sku->cost : 0,
@@ -295,10 +292,9 @@ class User extends Authenticatable implements JWTSubject
             $domains[] = $dbdomain;
         }
 
-        $entitlements = Entitlement::where('owner_id', $this->id)->get();
-
-        foreach ($entitlements as $entitlement) {
-            if ($entitlement->entitleable instanceof Domain) {
+        foreach ($this->wallets as $wallet) {
+            $entitlements = $wallet->entitlements()->where('entitleable_type', Domain::class)->get();
+            foreach ($entitlements as $entitlement) {
                 $domain = $entitlement->entitleable;
                 \Log::info("Found domain for {$this->email}: {$domain->namespace} (owned)");
                 $domains[] = $domain;
@@ -306,12 +302,11 @@ class User extends Authenticatable implements JWTSubject
         }
 
         foreach ($this->accounts as $wallet) {
-            foreach ($wallet->entitlements as $entitlement) {
-                if ($entitlement->entitleable instanceof Domain) {
-                    $domain = $entitlement->entitleable;
-                    \Log::info("Found domain {$this->email}: {$domain->namespace} (charged)");
-                    $domains[] = $domain;
-                }
+            $entitlements = $wallet->entitlements()->where('entitleable_type', Domain::class)->get();
+            foreach ($entitlements as $entitlement) {
+                $domain = $entitlement->entitleable;
+                \Log::info("Found domain {$this->email}: {$domain->namespace} (charged)");
+                $domains[] = $domain;
             }
         }
 

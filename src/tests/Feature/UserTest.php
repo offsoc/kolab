@@ -197,13 +197,11 @@ class UserTest extends TestCase
 
         $id = $user->id;
 
-        $entitlements = \App\Entitlement::where('owner_id', $id)->get();
-        $this->assertCount(4, $entitlements);
+        $this->assertCount(4, $user->entitlements()->get());
 
         $user->delete();
 
-        $entitlements = \App\Entitlement::where('owner_id', $id)->get();
-        $this->assertCount(0, $entitlements);
+        $this->assertCount(0, $user->entitlements()->get());
         $this->assertTrue($user->fresh()->trashed());
         $this->assertFalse($user->fresh()->isDeleted());
 
