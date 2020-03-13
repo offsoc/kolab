@@ -77,9 +77,8 @@ class DomainObserver
      */
     public function updated(Domain $domain)
     {
-        //
+        \App\Jobs\DomainUpdate::dispatch($domain->id);
     }
-
 
     /**
      * Handle the domain "restored" event.

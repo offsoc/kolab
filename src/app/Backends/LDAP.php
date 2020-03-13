@@ -19,33 +19,33 @@ class LDAP
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
 
-        $hosted_root_dn = \config('ldap.hosted.root_dn');
-        $mgmt_root_dn = \config('ldap.admin.root_dn');
+        $hostedRootDN = \config('ldap.hosted.root_dn');
+        $mgmtRootDN = \config('ldap.admin.root_dn');
 
-        $domain_base_dn = "ou={$domain->namespace},{$hosted_root_dn}";
+        $domainBaseDN = "ou={$domain->namespace},{$hostedRootDN}";
 
         $aci = [
             '(targetattr = "*")'
             . '(version 3.0; acl "Deny Unauthorized"; deny (all)'
-            . '(userdn != "ldap:///uid=kolab-service,ou=Special Users,' . $mgmt_root_dn
-            . ' || ldap:///ou=People,' . $domain_base_dn . '??sub?(objectclass=inetorgperson)") '
-            . 'AND NOT roledn = "ldap:///cn=kolab-admin,' . $mgmt_root_dn . '";)',
+            . '(userdn != "ldap:///uid=kolab-service,ou=Special Users,' . $mgmtRootDN
+            . ' || ldap:///ou=People,' . $domainBaseDN . '??sub?(objectclass=inetorgperson)") '
+            . 'AND NOT roledn = "ldap:///cn=kolab-admin,' . $mgmtRootDN . '";)',
 
             '(targetattr != "userPassword")'
             . '(version 3.0;acl "Search Access";allow (read,compare,search)'
-            . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmt_root_dn
-            . ' || ldap:///ou=People,' . $domain_base_dn . '??sub?(objectclass=inetorgperson)");)',
+            . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmtRootDN
+            . ' || ldap:///ou=People,' . $domainBaseDN . '??sub?(objectclass=inetorgperson)");)',
 
             '(targetattr = "*")'
             . '(version 3.0;acl "Kolab Administrators";allow (all)'
-            . '(roledn = "ldap:///cn=kolab-admin,' . $domain_base_dn
-            . ' || ldap:///cn=kolab-admin,' . $mgmt_root_dn . '");)'
+            . '(roledn = "ldap:///cn=kolab-admin,' . $domainBaseDN
+            . ' || ldap:///cn=kolab-admin,' . $mgmtRootDN . '");)'
         ];
 
         $entry = [
             'aci' => $aci,
             'associateddomain' => $domain->namespace,
-            'inetdomainbasedn' => $domain_base_dn,
+            'inetdomainbasedn' => $domainBaseDN,
             'objectclass' => [
                 'top',
                 'domainrelatedobject',
@@ -72,42 +72,42 @@ class LDAP
         $entry['aci'] = array(
             '(targetattr = "*")'
             . '(version 3.0;acl "Deny Unauthorized"; deny (all)'
-            . '(userdn != "ldap:///uid=kolab-service,ou=Special Users,' . $mgmt_root_dn
-            . ' || ldap:///ou=People,' . $domain_base_dn . '??sub?(objectclass=inetorgperson)") '
-            . 'AND NOT roledn = "ldap:///cn=kolab-admin,' . $mgmt_root_dn . '";)',
+            . '(userdn != "ldap:///uid=kolab-service,ou=Special Users,' . $mgmtRootDN
+            . ' || ldap:///ou=People,' . $domainBaseDN . '??sub?(objectclass=inetorgperson)") '
+            . 'AND NOT roledn = "ldap:///cn=kolab-admin,' . $mgmtRootDN . '";)',
 
             '(targetattr != "userPassword")'
             . '(version 3.0;acl "Search Access";allow (read,compare,search,write)'
-            . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmt_root_dn
-            . ' || ldap:///ou=People,' . $domain_base_dn . '??sub?(objectclass=inetorgperson)");)',
+            . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmtRootDN
+            . ' || ldap:///ou=People,' . $domainBaseDN . '??sub?(objectclass=inetorgperson)");)',
 
             '(targetattr = "*")'
             . '(version 3.0;acl "Kolab Administrators";allow (all)'
-            . '(roledn = "ldap:///cn=kolab-admin,' . $domain_base_dn
-            . ' || ldap:///cn=kolab-admin,' . $mgmt_root_dn . '");)',
+            . '(roledn = "ldap:///cn=kolab-admin,' . $domainBaseDN
+            . ' || ldap:///cn=kolab-admin,' . $mgmtRootDN . '");)',
 
-            '(target = "ldap:///ou=*,' . $domain_base_dn . '")'
+            '(target = "ldap:///ou=*,' . $domainBaseDN . '")'
             . '(targetattr="objectclass || aci || ou")'
             . '(version 3.0;acl "Allow Domain sub-OU Registration"; allow (add)'
-            . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmt_root_dn . '");)',
+            . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmtRootDN . '");)',
 
-            '(target = "ldap:///uid=*,ou=People,' . $domain_base_dn . '")(targetattr="*")'
+            '(target = "ldap:///uid=*,ou=People,' . $domainBaseDN . '")(targetattr="*")'
             . '(version 3.0;acl "Allow Domain First User Registration"; allow (add)'
-            . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmt_root_dn . '");)',
+            . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmtRootDN . '");)',
 
-            '(target = "ldap:///cn=*,' . $domain_base_dn . '")(targetattr="objectclass || cn")'
+            '(target = "ldap:///cn=*,' . $domainBaseDN . '")(targetattr="objectclass || cn")'
             . '(version 3.0;acl "Allow Domain Role Registration"; allow (add)'
-            . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmt_root_dn . '");)',
+            . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmtRootDN . '");)',
         );
 
-        if (!$ldap->get_entry($domain_base_dn)) {
-            $ldap->add_entry($domain_base_dn, $entry);
+        if (!$ldap->get_entry($domainBaseDN)) {
+            $ldap->add_entry($domainBaseDN, $entry);
         }
 
         foreach (['Groups', 'People', 'Resources', 'Shared Folders'] as $item) {
-            if (!$ldap->get_entry("ou={$item},{$domain_base_dn}")) {
+            if (!$ldap->get_entry("ou={$item},{$domainBaseDN}")) {
                 $ldap->add_entry(
-                    "ou={$item},{$domain_base_dn}",
+                    "ou={$item},{$domainBaseDN}",
                     [
                         'ou' => $item,
                         'description' => $item,
@@ -121,9 +121,9 @@ class LDAP
         }
 
         foreach (['kolab-admin', 'imap-user', 'activesync-user', 'billing-user'] as $item) {
-            if (!$ldap->get_entry("cn={$item},{$domain_base_dn}")) {
+            if (!$ldap->get_entry("cn={$item},{$domainBaseDN}")) {
                 $ldap->add_entry(
-                    "cn={$item},{$domain_base_dn}",
+                    "cn={$item},{$domainBaseDN}",
                     [
                         'cn' => $item,
                         'description' => "{$item} role",
@@ -210,7 +210,19 @@ class LDAP
      */
     public static function updateDomain($domain)
     {
-        //
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $ldapDomain = $ldap->find_domain($domain->namespace);
+
+        $oldEntry = $ldap->get_entry($ldapDomain['dn']);
+        $newEntry = $oldEntry;
+
+        self::setDomainAttributes($domain, $newEntry);
+
+        $ldap->modify_entry($ldapDomain['dn'], $oldEntry, $newEntry);
+
+        $ldap->close();
     }
 
     public static function deleteDomain($domain)
@@ -218,13 +230,13 @@ class LDAP
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
 
-        $hosted_root_dn = \config('ldap.hosted.root_dn');
-        $mgmt_root_dn = \config('ldap.admin.root_dn');
+        $hostedRootDN = \config('ldap.hosted.root_dn');
+        $mgmtRootDN = \config('ldap.admin.root_dn');
 
-        $domain_base_dn = "ou={$domain->namespace},{$hosted_root_dn}";
+        $domainBaseDN = "ou={$domain->namespace},{$hostedRootDN}";
 
-        if ($ldap->get_entry($domain_base_dn)) {
-            $ldap->delete_entry_recursive($domain_base_dn);
+        if ($ldap->get_entry($domainBaseDN)) {
+            $ldap->delete_entry_recursive($domainBaseDN);
         }
 
         if ($ldap_domain = $ldap->find_domain($domain->namespace)) {
@@ -232,6 +244,8 @@ class LDAP
                 $ldap->delete_entry($ldap_domain['dn']);
             }
         }
+
+        $ldap->close();
     }
 
     public static function deleteUser($user)
@@ -244,6 +258,7 @@ class LDAP
         $domain = $ldap->find_domain($_domain);
 
         if (!$domain) {
+            $ldap->close();
             return false;
         }
 
@@ -251,10 +266,13 @@ class LDAP
         $dn = "uid={$user->email},ou=People,{$base_dn}";
 
         if (!$ldap->get_entry($dn)) {
+            $ldap->close();
             return false;
         }
 
         $ldap->delete_entry($dn);
+
+        $ldap->close();
     }
 
     /**
@@ -274,18 +292,19 @@ class LDAP
         $domain = $ldap->find_domain($_domain);
 
         if (!$domain) {
+            $ldap->close();
             return false;
         }
 
         $base_dn = $ldap->domain_root_dn($_domain);
         $dn = "uid={$user->email},ou=People,{$base_dn}";
 
-        $old_entry = $ldap->get_entry($dn);
-        $new_entry = $old_entry;
+        $oldEntry = $ldap->get_entry($dn);
+        $newEntry = $old_entry;
 
-        self::setUserAttributes($user, $new_entry);
+        self::setUserAttributes($user, $newEntry);
 
-        $ldap->modify_entry($dn, $old_entry, $new_entry);
+        $ldap->modify_entry($dn, $oldEntry, $newEntry);
 
         $ldap->close();
     }
@@ -304,6 +323,14 @@ class LDAP
         // TODO: error handling
 
         return $ldap;
+    }
+
+    /**
+     * Set domain attributes
+     */
+    private static function setDomainAttributes(Domain $domain, array &$entry)
+    {
+        $entry['inetdomainstatus'] = $domain->status;
     }
 
     /**
@@ -367,7 +394,11 @@ class LDAP
     public static function logHook($level, $msg): void
     {
         if (
-            ($level == LOG_INFO || $level == LOG_DEBUG || $level == LOG_NOTICE)
+            (
+                $level == LOG_INFO
+                || $level == LOG_DEBUG
+                || $level == LOG_NOTICE
+            )
             && !\config('app.debug')
         ) {
             return;
