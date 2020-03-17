@@ -220,7 +220,7 @@ const app = new Vue({
             }
         },
         price(price) {
-            return (price/100).toLocaleString('de-CH', { style: 'currency', currency: 'CHF' })
+            return (price/100).toLocaleString('de-DE', { style: 'currency', currency: 'CHF' })
         }
     }
 })

@@ -24,7 +24,7 @@ class Wallet extends Model
     public $timestamps = false;
 
     protected $attributes = [
-        'balance' => 0.00,
+        'balance' => 0,
         'currency' => 'CHF'
     ];
 
@@ -37,7 +37,7 @@ class Wallet extends Model
     ];
 
     protected $casts = [
-        'balance' => 'float',
+        'balance' => 'integer',
     ];
 
     protected $guarded = ['balance'];

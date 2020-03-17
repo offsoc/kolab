@@ -15,6 +15,7 @@ import UserInfoComponent from '../vue/User/Info'
 import UserListComponent from '../vue/User/List'
 import UserProfileComponent from '../vue/User/Profile'
 import UserProfileDeleteComponent from '../vue/User/ProfileDelete'
+import WalletComponent from '../vue/Wallet'
 
 import store from './store'
 
@@ -83,6 +84,12 @@ const routes = [
         path: '/users',
         name: 'users',
         component: UserListComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/wallet',
+        name: 'wallet',
+        component: WalletComponent,
         meta: { requiresAuth: true }
     },
     {

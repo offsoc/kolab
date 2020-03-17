@@ -242,7 +242,7 @@ class UsersTest extends TestCaseDusk
                         $browser->assertElementsCount('tbody tr', 4)
                             // groupware SKU
                             ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Groupware Features')
-                            ->assertSeeIn('tbody tr:nth-child(1) td.price', 'CHF 5.55/month')
+                            ->assertSeeIn('tbody tr:nth-child(1) td.price', '5,55 CHF/month')
                             ->assertChecked('tbody tr:nth-child(1) td.selection input')
                             ->assertEnabled('tbody tr:nth-child(1) td.selection input')
                             ->assertTip(
@@ -251,7 +251,7 @@ class UsersTest extends TestCaseDusk
                             )
                             // Mailbox SKU
                             ->assertSeeIn('tbody tr:nth-child(2) td.name', 'User Mailbox')
-                            ->assertSeeIn('tbody tr:nth-child(2) td.price', 'CHF 4.44/month')
+                            ->assertSeeIn('tbody tr:nth-child(2) td.price', '4,44 CHF/month')
                             ->assertChecked('tbody tr:nth-child(2) td.selection input')
                             ->assertDisabled('tbody tr:nth-child(2) td.selection input')
                             ->assertTip(
@@ -260,7 +260,7 @@ class UsersTest extends TestCaseDusk
                             )
                             // Storage SKU
                             ->assertSeeIn('tbody tr:nth-child(3) td.name', 'Storage Quota')
-                            ->assertSeeIn('tr:nth-child(3) td.price', 'CHF 0.00/month')
+                            ->assertSeeIn('tr:nth-child(3) td.price', '0,00 CHF/month')
                             ->assertChecked('tbody tr:nth-child(3) td.selection input')
                             ->assertDisabled('tbody tr:nth-child(3) td.selection input')
                             ->assertTip(
@@ -270,10 +270,10 @@ class UsersTest extends TestCaseDusk
                             ->with(new QuotaInput('tbody tr:nth-child(3) .range-input'), function ($browser) {
                                 $browser->assertQuotaValue(2)->setQuotaValue(3);
                             })
-                            ->assertSeeIn('tr:nth-child(3) td.price', 'CHF 0.25/month')
+                            ->assertSeeIn('tr:nth-child(3) td.price', '0,25 CHF/month')
                             // Test SKU
                             ->assertSeeIn('tbody tr:nth-child(4) td.name', 'Test SKU')
-                            ->assertSeeIn('tbody tr:nth-child(4) td.price', 'CHF 6.66/month')
+                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '6,66 CHF/month')
                             ->assertNotChecked('tbody tr:nth-child(4) td.selection input')
                             ->assertEnabled('tbody tr:nth-child(4) td.selection input')
                             ->assertTip(

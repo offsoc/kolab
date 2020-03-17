@@ -157,6 +157,12 @@ table {
             pointer-events: none;
             opacity: 0.6;
         }
+
+        .badge {
+            position: absolute;
+            top: .5rem;
+            right: .5rem;
+        }
     }
 
     svg {

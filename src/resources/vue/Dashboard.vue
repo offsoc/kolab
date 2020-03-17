@@ -24,8 +24,9 @@
             <router-link class="card link-users" :to="{ name: 'users' }">
                 <svg-icon icon="users"></svg-icon><span class="name">User accounts</span>
             </router-link>
-            <router-link class="card link-wallet disabled" :to="{ name: 'users' }">
+            <router-link class="card link-wallet" :to="{ name: 'wallet' }">
                 <svg-icon icon="wallet"></svg-icon><span class="name">Wallet</span>
+                <span v-if="balance < 0" class="badge badge-danger">{{ $root.price(balance) }}</span>
             </router-link>
         </div>
     </div>
@@ -36,7 +37,8 @@
         data() {
             return {
                 statusProcess: [],
-                request: null
+                request: null,
+                balance: 0
             }
         },
         mounted() {
@@ -46,12 +48,14 @@
 
             if (authInfo) {
                 this.parseStatusInfo(authInfo.statusInfo)
+                this.getBalance(authInfo)
             } else {
                 this.$root.startLoading()
                 axios.get('/api/auth/info')
                     .then(response => {
                         this.$store.state.authInfo = response.data
                         this.parseStatusInfo(response.data.statusInfo)
+                        this.getBalance(response.data)
                         this.$root.stopLoading()
                     })
                     .catch(this.$root.errorHandler)
@@ -82,6 +86,13 @@
                             })
                     }, 10000);
                 }
+            },
+            getBalance(authInfo) {
+                this.balance = 0;
+                // TODO: currencies, multi-wallets, accounts
+                authInfo.wallets.forEach(wallet => {
+                    this.balance += wallet.balance
+                })
             }
         }
     }
