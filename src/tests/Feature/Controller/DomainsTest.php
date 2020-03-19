@@ -70,6 +70,7 @@ class DomainsTest extends TestCase
 
         $this->assertEquals('success', $json['status']);
         $this->assertEquals('Domain verified successfully.', $json['message']);
+        $this->assertTrue(is_array($json['statusInfo']));
 
         // Not authorized access
         $response = $this->actingAs($john)->get("api/v4/domains/{$domain->id}/confirm");
@@ -103,9 +104,15 @@ class DomainsTest extends TestCase
         $response->assertStatus(200);
 
         $json = $response->json();
-
         $this->assertCount(1, $json);
         $this->assertSame('kolab.org', $json[0]['namespace']);
+        // Values below are tested by Unit tests
+        $this->assertArrayHasKey('isConfirmed', $json[0]);
+        $this->assertArrayHasKey('isDeleted', $json[0]);
+        $this->assertArrayHasKey('isVerified', $json[0]);
+        $this->assertArrayHasKey('isSuspended', $json[0]);
+        $this->assertArrayHasKey('isActive', $json[0]);
+        $this->assertArrayHasKey('isLdapReady', $json[0]);
 
         $response = $this->actingAs($ned)->get("api/v4/domains");
         $response->assertStatus(200);
@@ -144,7 +151,6 @@ class DomainsTest extends TestCase
         $this->assertEquals($domain->namespace, $json['namespace']);
         $this->assertEquals($domain->status, $json['status']);
         $this->assertEquals($domain->type, $json['type']);
-        $this->assertTrue($json['confirmed'] === false);
         $this->assertSame($domain->hash(Domain::HASH_TEXT), $json['hash_text']);
         $this->assertSame($domain->hash(Domain::HASH_CNAME), $json['hash_cname']);
         $this->assertSame($domain->hash(Domain::HASH_CODE), $json['hash_code']);
@@ -153,6 +159,14 @@ class DomainsTest extends TestCase
         $this->assertCount(8, $json['dns']);
         $this->assertTrue(strpos(implode("\n", $json['dns']), $domain->namespace) !== false);
         $this->assertTrue(strpos(implode("\n", $json['dns']), $domain->hash()) !== false);
+        $this->assertTrue(is_array($json['statusInfo']));
+        // Values below are tested by Unit tests
+        $this->assertArrayHasKey('isConfirmed', $json);
+        $this->assertArrayHasKey('isDeleted', $json);
+        $this->assertArrayHasKey('isVerified', $json);
+        $this->assertArrayHasKey('isSuspended', $json);
+        $this->assertArrayHasKey('isActive', $json);
+        $this->assertArrayHasKey('isLdapReady', $json);
 
         $john = $this->getTestUser('john@kolab.org');
         $ned = $this->getTestUser('ned@kolab.org');

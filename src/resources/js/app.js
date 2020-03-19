@@ -213,7 +213,9 @@ const app = new Vue({
         errorHandler(error) {
             this.stopLoading()
 
-            if (error.response.status === 401) {
+            if (!error.response) {
+                // TODO: probably network connection error
+            } else if (error.response.status === 401) {
                 this.logoutUser()
             } else {
                 this.errorPage(error.response.status, error.response.statusText)
@@ -221,6 +223,66 @@ const app = new Vue({
         },
         price(price) {
             return (price/100).toLocaleString('de-DE', { style: 'currency', currency: 'CHF' })
+        },
+        domainStatusClass(domain) {
+            if (domain.isDeleted) {
+                return 'text-muted'
+            }
+
+            if (domain.isSuspended) {
+                return 'text-warning'
+            }
+
+            if (!domain.isVerified || !domain.isLdapReady || !domain.isConfirmed) {
+                return 'text-danger'
+            }
+
+            return 'text-success'
+        },
+        domainStatusText(domain) {
+            if (domain.isDeleted) {
+                return 'Deleted'
+            }
+
+            if (domain.isSuspended) {
+                return 'Suspended'
+            }
+
+            if (!domain.isVerified || !domain.isLdapReady || !domain.isConfirmed) {
+                return 'Not Ready'
+            }
+
+            return 'Active'
+        },
+        userStatusClass(user) {
+            if (user.isDeleted) {
+                return 'text-muted'
+            }
+
+            if (user.isSuspended) {
+                return 'text-warning'
+            }
+
+            if (!user.isImapReady || !user.isLdapReady) {
+                return 'text-danger'
+            }
+
+            return 'text-success'
+        },
+        userStatusText(user) {
+            if (user.isDeleted) {
+                return 'Deleted'
+            }
+
+            if (user.isSuspended) {
+                return 'Suspended'
+            }
+
+            if (!user.isImapReady || !user.isLdapReady) {
+                return 'Not Ready'
+            }
+
+            return 'Active'
         }
     }
 })

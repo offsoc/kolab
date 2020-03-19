@@ -139,6 +139,21 @@ table {
     }
 }
 
+ul.status-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    svg {
+        width: 1.25rem !important;
+        height: 1.25rem;
+    }
+
+    span {
+        vertical-align: top;
+    }
+}
+
 #dashboard-nav {
     display: flex;
     flex-wrap: wrap;

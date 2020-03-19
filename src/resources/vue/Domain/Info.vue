@@ -1,6 +1,24 @@
 <template>
     <div class="container">
-        <div v-if="domain && !is_confirmed" class="card" id="domain-verify">
+        <div v-if="!isReady" id="domain-status-box" class="card">
+            <div class="card-body">
+                <div class="card-title">Domain status: <span class="text-danger">Not ready</span></div>
+                <div class="card-text">
+                    <p>The process to create the domain have not been completed yet.
+                        Some features may be disabled or readonly.</p>
+                    <ul class="status-list">
+                        <li v-for="item in statusProcess" :key="item.label">
+                            <svg-icon :icon="['far', item.state ? 'check-square' : 'square']"
+                                      :class="item.state ? 'text-success' : 'text-muted'"
+                            ></svg-icon>
+                            <router-link v-if="item.link" :to="{ path: item.link }">{{ item.title }}</router-link>
+                            <span v-if="!item.link">{{ item.title }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div v-if="domain && !domain.isConfirmed" class="card" id="domain-verify">
             <div class="card-body">
                 <div class="card-title">Domain verification</div>
                 <div class="card-text">
@@ -17,7 +35,7 @@
                 </div>
             </div>
         </div>
-        <div v-if="domain && is_confirmed" class="card" id="domain-config">
+        <div v-if="domain && domain.isConfirmed" class="card" id="domain-config">
             <div class="card-body">
                 <div class="card-title">Domain configuration</div>
                 <div class="card-text">
@@ -40,35 +58,61 @@
             return {
                 domain_id: null,
                 domain: null,
-                is_confirmed: false,
-                app_name: window.config['app.name']
+                app_name: window.config['app.name'],
+                isReady: true,
+                statusProcess: []
             }
         },
         created() {
             if (this.domain_id = this.$route.params.domain) {
                 axios.get('/api/v4/domains/' + this.domain_id)
                     .then(response => {
-                        this.is_confirmed = response.data.confirmed
                         this.domain = response.data
-                        if (!this.is_confirmed) {
+                        if (!this.domain.isConfirmed) {
                             $('#domain-verify button').focus()
                         }
+                        this.parseStatusInfo(response.data.statusInfo)
                     })
                     .catch(this.$root.errorHandler)
             } else {
                 this.$root.errorPage(404)
             }
         },
+        destroyed() {
+            clearTimeout(window.domainRequest)
+        },
         methods: {
             confirm() {
                 axios.get('/api/v4/domains/' + this.domain_id + '/confirm')
                     .then(response => {
                         if (response.data.status == 'success') {
-                            this.is_confirmed = true
+                            this.domain.isConfirmed = true
+                            this.parseStatusInfo(response.data.statusInfo)
                             this.$toastr('success', response.data.message)
                         }
                     })
-            }
+            },
+            // Displays domain status information
+            parseStatusInfo(info) {
+                this.statusProcess = info.process
+                this.isReady = info.isReady
+
+                // Update status process info every 10 seconds
+                // FIXME: This probably should have some limit, or the interval
+                //        should grow (well, until it could be done with websocket notifications)
+                if (!info.isReady) {
+                    window.domainRequest = setTimeout(() => {
+                        axios.get('/api/v4/domains/' + this.domain_id)
+                            .then(response => {
+                                this.domain = response.data
+                                this.parseStatusInfo(this.domain.statusInfo)
+                            })
+                            .catch(error => {
+                                this.parseStatusInfo(info)
+                            })
+                    }, 10000);
+                }
+            },
         }
     }
 </script>

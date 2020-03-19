@@ -19,6 +19,7 @@
                         <tbody>
                             <tr v-for="user in users" :id="'user' + user.id" :key="user.id">
                                 <td>
+                                    <svg-icon icon="user" :class="$root.userStatusClass(user)" :title="$root.userStatusText(user)"></svg-icon>
                                     <router-link :to="{ path: 'user/' + user.id }">{{ user.email }}</router-link>
                                 </td>
                                 <td class="buttons">

@@ -13,7 +13,10 @@
                         </thead>
                         <tbody>
                             <tr v-for="domain in domains" :key="domain.id">
-                                <td><router-link :to="{ path: 'domain/' + domain.id }">{{ domain.namespace }}</router-link></td>
+                                <td>
+                                    <svg-icon icon="globe" :class="$root.domainStatusClass(domain)" :title="$root.domainStatusText(domain)"></svg-icon>
+                                    <router-link :to="{ path: 'domain/' + domain.id }">{{ domain.namespace }}</router-link>
+                                </td>
                                 <td class="buttons"></td>
                             </tr>
                         </tbody>

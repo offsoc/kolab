@@ -86,18 +86,17 @@ class DomainTest extends TestCase
         $domain = Domain::create([
                 'namespace' => 'public-active.com',
                 'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
+                'type' => Domain::TYPE_EXTERNAL,
         ]);
 
-        // Public but non-active domain should not be returned
+        // External domains should not be returned
         $public_domains = Domain::getPublicDomains();
         $this->assertNotContains('public-active.com', $public_domains);
 
         $domain = Domain::where('namespace', 'public-active.com')->first();
-        $domain->status = Domain::STATUS_ACTIVE;
+        $domain->type = Domain::TYPE_PUBLIC;
         $domain->save();
 
-        // Public and active domain should be returned
         $public_domains = Domain::getPublicDomains();
         $this->assertContains('public-active.com', $public_domains);
     }

@@ -59,6 +59,7 @@ class DomainTest extends TestCaseDusk
 
             $browser->visit('/domain/' . $domain->id)
                 ->on(new DomainInfo())
+                // TODO: Test domain status box
                 ->whenAvailable('@verify', function ($browser) use ($domain) {
                     // Make sure the domain is confirmed now
                     // TODO: Test verification process failure
@@ -118,6 +119,7 @@ class DomainTest extends TestCaseDusk
                 ->click('@links a.link-domains')
                 // On Domains List page click the domain entry
                 ->on(new DomainList())
+                // TODO: Assert domain status icon
                 ->assertSeeIn('@table tbody tr:first-child td:first-child', 'kolab.org')
                 ->click('@table tbody tr:first-child td:first-child a')
                 // On Domain Info page verify that's the clicked domain
