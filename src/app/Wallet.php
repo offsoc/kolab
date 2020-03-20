@@ -93,7 +93,6 @@ class Wallet extends Model
         return $charges;
     }
 
-
     /**
      * Calculate the expected charges to this wallet.
      *
@@ -121,11 +120,11 @@ class Wallet extends Model
     /**
      * Add an amount of pecunia to this wallet's balance.
      *
-     * @param float $amount The amount of pecunia to add.
+     * @param int $amount The amount of pecunia to add (in cents).
      *
-     * @return Wallet
+     * @return Wallet Self
      */
-    public function credit(float $amount)
+    public function credit(int $amount): Wallet
     {
         $this->balance += $amount;
 
@@ -137,11 +136,11 @@ class Wallet extends Model
     /**
      * Deduct an amount of pecunia from this wallet's balance.
      *
-     * @param float $amount The amount of pecunia to deduct.
+     * @param int $amount The amount of pecunia to deduct (in cents).
      *
-     * @return Wallet
+     * @return Wallet Self
      */
-    public function debit(float $amount)
+    public function debit(int $amount): Wallet
     {
         $this->balance -= $amount;
 
@@ -183,5 +182,15 @@ class Wallet extends Model
     public function owner()
     {
         return $this->belongsTo('App\User', 'user_id', 'id');
+    }
+
+    /**
+     * Payments on this wallet.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function payments()
+    {
+        return $this->hasMany('App\Payment');
     }
 }

@@ -13,7 +13,7 @@ class Error extends BaseComponent
         400 => "Bad request",
         401 => "Unauthorized",
         403 => "Access denied",
-        404 => "Not Found",
+        404 => "Not found",
         405 => "Method not allowed",
         500 => "Internal server error",
     ];
@@ -44,8 +44,10 @@ class Error extends BaseComponent
     public function assert($browser)
     {
         $browser->waitFor($this->selector())
-            ->assertSeeIn('@code', $this->code)
-            ->assertSeeIn('@message', $this->message);
+            ->assertSeeIn('@code', $this->code);
+
+        $message = $browser->text('@message');
+        PHPUnit::assertSame(strtolower($message), strtolower($this->message));
     }
 
     /**

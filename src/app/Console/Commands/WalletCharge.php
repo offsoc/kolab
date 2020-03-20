@@ -52,6 +52,11 @@ class WalletCharge extends Command
                 );
 
                 $wallet->chargeEntitlements();
+
+                if ($wallet->balance < 0) {
+                    // Disabled for now
+                    // \App\Jobs\WalletPayment::dispatch($wallet);
+                }
             }
         }
     }

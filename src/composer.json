@@ -22,6 +22,7 @@
         "kolab/net_ldap3": "dev-master",
         "laravel/framework": "6.*",
         "laravel/tinker": "^1.0",
+        "mollie/laravel-mollie": "^2.9",
         "morrislaptop/laravel-queue-clear": "^1.2",
         "silviolleite/laravelpwa": "^1.0",
         "spatie/laravel-translatable": "^4.2",

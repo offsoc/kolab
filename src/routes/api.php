@@ -49,5 +49,9 @@ Route::group(
         Route::apiResource('skus', API\SkusController::class);
         Route::apiResource('users', API\UsersController::class);
         Route::apiResource('wallets', API\WalletsController::class);
+
+        Route::post('payments', 'API\PaymentsController@store');
     }
 );
+
+Route::post('webhooks/payment/mollie', 'API\PaymentsController@webhook');

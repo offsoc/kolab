@@ -60,5 +60,11 @@ class WalletObserver
         if ($wallet->entitlements()->count() > 0) {
             return false;
         }
+/*
+        // can't remove a wallet that has payments attached.
+        if ($wallet->payments()->count() > 0) {
+            return false;
+        }
+*/
     }
 }

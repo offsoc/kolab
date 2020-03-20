@@ -4,7 +4,7 @@ namespace Tests\Browser\Pages;
 
 use Laravel\Dusk\Page;
 
-class Wallet extends Page
+class PaymentMollie extends Page
 {
     /**
      * Get the URL for the page.
@@ -13,7 +13,7 @@ class Wallet extends Page
      */
     public function url(): string
     {
-        return '/wallet';
+        return '';
     }
 
     /**
@@ -25,9 +25,7 @@ class Wallet extends Page
      */
     public function assert($browser)
     {
-        $browser->assertPathIs($this->url())
-            ->waitUntilMissing('@app .app-loader')
-            ->assertSeeIn('#wallet .card-title', 'Account balance');
+        $browser->waitFor('#container');
     }
 
     /**
@@ -38,8 +36,11 @@ class Wallet extends Page
     public function elements(): array
     {
         return [
-            '@app' => '#app',
-            '@main' => '#wallet'
+            '@form' => '#container',
+            '@title' => '#container .header__info',
+            '@amount' => '#container .header__amount',
+            '@methods' => '#payment-method-list',
+            '@status-table' => 'table.table--select-status',
         ];
     }
 }

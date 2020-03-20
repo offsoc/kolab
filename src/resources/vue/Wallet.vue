@@ -7,6 +7,7 @@
                     <p>Current account balance is
                         <span :class="balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(balance) }}</strong></span>
                     </p>
+                    <button type="button" class="btn btn-primary" @click="payment()">Add 10 bucks to my wallet</button>
                 </div>
             </div>
         </div>
@@ -28,6 +29,14 @@
             })
         },
         methods: {
+            payment() {
+                axios.post('/api/v4/payments', {amount: 1000})
+                    .then(response => {
+                        if (response.data.redirectUrl) {
+                            location.href = response.data.redirectUrl
+                        }
+                    })
+            }
         }
     }
 </script>
