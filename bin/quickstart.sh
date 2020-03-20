@@ -44,6 +44,7 @@ docker-compose up -d kolab mariadb redis
 
 pushd ${base_dir}/src/
 cp .env.example .env
+rm -rf vendor/ composer.lock
 composer install
 npm install
 find bootstrap/cache/ -type f ! -name ".gitignore" -delete
