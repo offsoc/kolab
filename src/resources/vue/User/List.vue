@@ -2,13 +2,13 @@
     <div class="container">
         <div class="card" id="user-list">
             <div class="card-body">
-                <div class="card-title">User Accounts</div>
+                <div class="card-title">
+                    User Accounts
+                    <router-link class="btn btn-success float-right create-user" :to="{ path: 'user/new' }" tag="button">
+                        <svg-icon icon="user"></svg-icon> Create user
+                    </router-link>
+                </div>
                 <div class="card-text">
-                    <p>
-                        <router-link class="btn btn-primary create-user" :to="{ path: 'user/new' }" tag="button">
-                            <svg-icon icon="user"></svg-icon> Create user
-                        </router-link>
-                    </p>
                     <table class="table table-sm table-hover">
                         <thead class="thead-light">
                             <tr>
