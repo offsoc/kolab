@@ -44,6 +44,13 @@ docker-compose up -d kolab mariadb redis
 
 pushd ${base_dir}/src/
 cp .env.example .env
+
+if [ -f ".env.local" ]; then
+    # Ensure there's a line ending
+    echo "" >> .env
+    cat .env.local >> .env
+fi
+
 rm -rf vendor/ composer.lock
 composer install
 npm install
