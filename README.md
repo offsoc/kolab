@@ -17,6 +17,8 @@ $ cd src/
 $ composer install
 $ npm install
 $ cp .env.example .env
+$ echo "" >> .env
+$ cat .env.local >> .env
 $ ./artisan key:generate
 $ ./artisan jwt:secret -f
 $ artisan clear-compiled
@@ -26,3 +28,5 @@ $ touch database/database.sqlite
 $ ./artisan migrate:refresh --seed
 $ ./artisan serve
 ```
+
+NOTE: Set `APP_PUBLIC_URL` and `MOLLIE_KEY` and other such private settings in `.env.local`
