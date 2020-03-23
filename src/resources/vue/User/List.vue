@@ -4,7 +4,7 @@
             <div class="card-body">
                 <div class="card-title">
                     User Accounts
-                    <router-link class="btn btn-success float-right create-user" :to="{ path: 'user/new' }" tag="button">
+                    <router-link class="btn btn-primary float-right create-user" :to="{ path: 'user/new' }" tag="button">
                         <svg-icon icon="user"></svg-icon> Create user
                     </router-link>
                 </div>

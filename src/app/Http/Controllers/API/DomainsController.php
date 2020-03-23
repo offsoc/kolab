@@ -57,6 +57,7 @@ class DomainsController extends Controller
         }
 
         if (!$domain->confirm()) {
+            // TODO: This should include an error message to display to the user
             return response()->json(['status' => 'error']);
         }
 

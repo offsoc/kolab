@@ -77,7 +77,8 @@ class LogonTest extends TestCaseDusk
                 })
                 ->assertUser('john@kolab.org');
 
-            // TODO: Verify dashboard content
+            // Assert no "Account status" for this account
+            $browser->assertMissing('@status');
 
             // Goto /domains and assert that the link on logo element
             // leads to the dashboard

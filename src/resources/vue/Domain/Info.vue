@@ -11,8 +11,7 @@
                             <svg-icon :icon="['far', item.state ? 'check-square' : 'square']"
                                       :class="item.state ? 'text-success' : 'text-muted'"
                             ></svg-icon>
-                            <router-link v-if="item.link" :to="{ path: item.link }">{{ item.title }}</router-link>
-                            <span v-if="!item.link">{{ item.title }}</span>
+                            <span>{{ item.title }}</span>
                         </li>
                     </ul>
                 </div>
