@@ -13,7 +13,7 @@ class RequestLogger
 
     public function terminate($request, $response)
     {
-        if (\config('env') != 'production') {
+        if (\app('env') != 'production') {
             $url = $request->fullUrl();
             $method = $request->getMethod();
 
