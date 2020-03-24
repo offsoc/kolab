@@ -91,11 +91,9 @@ class Domain extends Model
      */
     public static function getPublicDomains(): array
     {
-        $where = sprintf('(type & %s) AND (status & %s)', Domain::TYPE_PUBLIC, Domain::STATUS_ACTIVE);
+        $where = sprintf('(type & %s)', Domain::TYPE_PUBLIC);
 
-        return self::whereRaw($where)->get(['namespace'])->map(function ($domain) {
-            return $domain->namespace;
-        })->toArray();
+        return self::whereRaw($where)->get(['namespace'])->pluck('namespace')->toArray();
     }
 
     /**

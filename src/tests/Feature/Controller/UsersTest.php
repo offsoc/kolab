@@ -61,7 +61,7 @@ class UsersTest extends TestCase
 
         $this->assertEquals($user->id, $json['id']);
         $this->assertEquals($user->email, $json['email']);
-        $this->assertEquals(User::STATUS_NEW, $json['status']);
+        $this->assertEquals(User::STATUS_NEW | User::STATUS_ACTIVE, $json['status']);
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue(is_array($json['aliases']));
@@ -202,6 +202,12 @@ class UsersTest extends TestCase
         $this->assertSame($jack->email, $json[0]['email']);
         $this->assertSame($john->email, $json[1]['email']);
         $this->assertSame($ned->email, $json[2]['email']);
+        // Values below are tested by Unit tests
+        $this->assertArrayHasKey('isDeleted', $json[0]);
+        $this->assertArrayHasKey('isSuspended', $json[0]);
+        $this->assertArrayHasKey('isActive', $json[0]);
+        $this->assertArrayHasKey('isLdapReady', $json[0]);
+        $this->assertArrayHasKey('isImapReady', $json[0]);
 
         $response = $this->actingAs($ned)->get("/api/v4/users");
         $response->assertStatus(200);
@@ -300,7 +306,7 @@ class UsersTest extends TestCase
 
         $result = UsersController::statusInfo($user);
 
-        $this->assertSame('new', $result['status']);
+        $this->assertFalse($result['isReady']);
         $this->assertCount(3, $result['process']);
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
@@ -314,7 +320,7 @@ class UsersTest extends TestCase
 
         $result = UsersController::statusInfo($user);
 
-        $this->assertSame('new', $result['status']);
+        $this->assertTrue($result['isReady']);
         $this->assertCount(3, $result['process']);
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
@@ -323,15 +329,13 @@ class UsersTest extends TestCase
         $this->assertSame('user-imap-ready', $result['process'][2]['label']);
         $this->assertSame(true, $result['process'][2]['state']);
 
-        $user->status |= User::STATUS_ACTIVE;
-        $user->save();
         $domain->status |= Domain::STATUS_VERIFIED;
         $domain->type = Domain::TYPE_EXTERNAL;
         $domain->save();
 
         $result = UsersController::statusInfo($user);
 
-        $this->assertSame('active', $result['status']);
+        $this->assertFalse($result['isReady']);
         $this->assertCount(7, $result['process']);
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
@@ -347,13 +351,6 @@ class UsersTest extends TestCase
         $this->assertSame(true, $result['process'][5]['state']);
         $this->assertSame('domain-confirmed', $result['process'][6]['label']);
         $this->assertSame(false, $result['process'][6]['state']);
-
-        $user->status |= User::STATUS_DELETED;
-        $user->save();
-
-        $result = UsersController::statusInfo($user);
-
-        $this->assertSame('deleted', $result['status']);
     }
 
     /**
@@ -418,6 +415,12 @@ class UsersTest extends TestCase
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue(is_array($json['aliases']));
         $this->assertSame([], $json['skus']);
+        // Values below are tested by Unit tests
+        $this->assertArrayHasKey('isDeleted', $json);
+        $this->assertArrayHasKey('isSuspended', $json);
+        $this->assertArrayHasKey('isActive', $json);
+        $this->assertArrayHasKey('isLdapReady', $json);
+        $this->assertArrayHasKey('isImapReady', $json);
 
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');

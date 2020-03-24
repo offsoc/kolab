@@ -4,7 +4,7 @@
             <div class="card-body">
                 <div class="card-title">
                     User Accounts
-                    <router-link class="btn btn-success float-right create-user" :to="{ path: 'user/new' }" tag="button">
+                    <router-link class="btn btn-primary float-right create-user" :to="{ path: 'user/new' }" tag="button">
                         <svg-icon icon="user"></svg-icon> Create user
                     </router-link>
                 </div>
@@ -19,6 +19,7 @@
                         <tbody>
                             <tr v-for="user in users" :id="'user' + user.id" :key="user.id">
                                 <td>
+                                    <svg-icon icon="user" :class="$root.userStatusClass(user)" :title="$root.userStatusText(user)"></svg-icon>
                                     <router-link :to="{ path: 'user/' + user.id }">{{ user.email }}</router-link>
                                 </td>
                                 <td class="buttons">

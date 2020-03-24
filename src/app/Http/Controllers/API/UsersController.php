@@ -85,7 +85,11 @@ class UsersController extends Controller
     {
         $user = $this->guard()->user();
 
-        $result = $user->users()->orderBy('email')->get();
+        $result = $user->users()->orderBy('email')->get()->map(function ($user) {
+            $data = $user->toArray();
+            $data = array_merge($data, self::userStatuses($user));
+            return $data;
+        });
 
         return response()->json($result);
     }
@@ -220,53 +224,42 @@ class UsersController extends Controller
      */
     public static function statusInfo(User $user): array
     {
-        $status = 'new';
         $process = [];
         $steps = [
             'user-new' => true,
-            'user-ldap-ready' => 'isLdapReady',
-            'user-imap-ready' => 'isImapReady',
+            'user-ldap-ready' => $user->isLdapReady(),
+            'user-imap-ready' => $user->isImapReady(),
         ];
 
-        if ($user->isDeleted()) {
-            $status = 'deleted';
-        } elseif ($user->isSuspended()) {
-            $status = 'suspended';
-        } elseif ($user->isActive()) {
-            $status = 'active';
+        // Create a process check list
+        foreach ($steps as $step_name => $state) {
+            $step = [
+                'label' => $step_name,
+                'title' => \trans("app.process-{$step_name}"),
+                'state' => $state,
+            ];
+
+            $process[] = $step;
         }
+
 
         list ($local, $domain) = explode('@', $user->email);
         $domain = Domain::where('namespace', $domain)->first();
 
         // If that is not a public domain, add domain specific steps
         if ($domain && !$domain->isPublic()) {
-            $steps['domain-new'] = true;
-            $steps['domain-ldap-ready'] = 'isLdapReady';
-            $steps['domain-verified'] = 'isVerified';
-            $steps['domain-confirmed'] = 'isConfirmed';
+            $domain_status = DomainsController::statusInfo($domain);
+            $process = array_merge($process, $domain_status['process']);
         }
 
-        // Create a process check list
-        foreach ($steps as $step_name => $func) {
-            $object = strpos($step_name, 'user-') === 0 ? $user : $domain;
-
-            $step = [
-                'label' => $step_name,
-                'title' => __("app.process-{$step_name}"),
-                'state' => is_bool($func) ? $func : $object->{$func}(),
-            ];
-
-            if ($step_name == 'domain-confirmed' && !$step['state']) {
-                $step['link'] = "/domain/{$domain->id}";
-            }
-
-            $process[] = $step;
-        }
+        $all = count($process);
+        $checked = count(array_filter($process, function ($v) {
+                return $v['state'];
+        }));
 
         return [
             'process' => $process,
-            'status' => $status,
+            'isReady' => $all === $checked,
         ];
     }
 
@@ -480,12 +473,32 @@ class UsersController extends Controller
         // Status info
         $response['statusInfo'] = self::statusInfo($user);
 
+        $response = array_merge($response, self::userStatuses($user));
+
         // Information about wallets and accounts for access checks
         $response['wallets'] = $user->wallets->toArray();
         $response['accounts'] = $user->accounts->toArray();
         $response['wallet'] = $user->wallet()->toArray();
 
         return $response;
+    }
+
+    /**
+     * Prepare user statuses for the UI
+     *
+     * @param \App\User $user User object
+     *
+     * @return array Statuses array
+     */
+    protected static function userStatuses(User $user): array
+    {
+        return [
+            'isImapReady' => $user->isImapReady(),
+            'isLdapReady' => $user->isLdapReady(),
+            'isSuspended' => $user->isSuspended(),
+            'isActive' => $user->isActive(),
+            'isDeleted' => $user->isDeleted() || $user->trashed(),
+        ];
     }
 
     /**

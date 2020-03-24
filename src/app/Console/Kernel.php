@@ -38,6 +38,10 @@ class Kernel extends ConsoleKernel
     {
         $this->load(__DIR__ . '/Commands');
 
+        if (\app('env') != 'production') {
+            $this->load(__DIR__ . '/Development');
+        }
+
         include base_path('routes/console.php');
     }
 }

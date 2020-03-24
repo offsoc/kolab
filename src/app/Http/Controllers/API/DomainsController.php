@@ -21,7 +21,9 @@ class DomainsController extends Controller
 
         foreach ($user->domains() as $domain) {
             if (!$domain->isPublic()) {
-                $list[] = $domain->toArray();
+                $data = $domain->toArray();
+                $data = array_merge($data, self::domainStatuses($domain));
+                $list[] = $data;
             }
         }
 
@@ -55,11 +57,13 @@ class DomainsController extends Controller
         }
 
         if (!$domain->confirm()) {
+            // TODO: This should include an error message to display to the user
             return response()->json(['status' => 'error']);
         }
 
         return response()->json([
                 'status' => 'success',
+                'statusInfo' => self::statusInfo($domain),
                 'message' => __('app.domain-verify-success'),
         ]);
     }
@@ -127,7 +131,10 @@ class DomainsController extends Controller
         $response['dns'] = self::getDNSConfig($domain);
         $response['config'] = self::getMXConfig($domain->namespace);
 
-        $response['confirmed'] = $domain->isConfirmed();
+        // Status info
+        $response['statusInfo'] = self::statusInfo($domain);
+
+        $response = array_merge($response, self::domainStatuses($domain));
 
         return response()->json($response);
     }
@@ -203,6 +210,71 @@ class DomainsController extends Controller
             ";",
             "{$hash_cname}.{$domain->namespace}. IN CNAME {$hash}.{$domain->namespace}.",
             "@   3600    TXT \"{$hash_txt}\"",
+        ];
+    }
+
+    /**
+     * Prepare domain statuses for the UI
+     *
+     * @param \App\Domain $domain Domain object
+     *
+     * @return array Statuses array
+     */
+    protected static function domainStatuses(Domain $domain): array
+    {
+        return [
+            'isLdapReady' => $domain->isLdapReady(),
+            'isConfirmed' => $domain->isConfirmed(),
+            'isVerified' => $domain->isVerified(),
+            'isSuspended' => $domain->isSuspended(),
+            'isActive' => $domain->isActive(),
+            'isDeleted' => $domain->isDeleted() || $domain->trashed(),
+        ];
+    }
+
+    /**
+     * Domain status (extended) information.
+     *
+     * @param \App\Domain $domain Domain object
+     *
+     * @return array Status information
+     */
+    public static function statusInfo(Domain $domain): array
+    {
+        $process = [];
+
+        // If that is not a public domain, add domain specific steps
+        $steps = [
+            'domain-new' => true,
+            'domain-ldap-ready' => $domain->isLdapReady(),
+            'domain-verified' => $domain->isVerified(),
+            'domain-confirmed' => $domain->isConfirmed(),
+        ];
+
+        $count = count($steps);
+
+        // Create a process check list
+        foreach ($steps as $step_name => $state) {
+            $step = [
+                'label' => $step_name,
+                'title' => \trans("app.process-{$step_name}"),
+                'state' => $state,
+            ];
+
+            if ($step_name == 'domain-confirmed' && !$state) {
+                $step['link'] = "/domain/{$domain->id}";
+            }
+
+            $process[] = $step;
+
+            if ($state) {
+                $count--;
+            }
+        }
+
+        return [
+            'process' => $process,
+            'isReady' => $count === 0,
         ];
     }
 }

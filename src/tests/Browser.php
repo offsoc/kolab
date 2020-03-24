@@ -27,7 +27,7 @@ class Browser extends \Laravel\Dusk\Browser
             }
         }
 
-        Assert::assertEquals($expected_count, $count);
+        Assert::assertEquals($expected_count, $count, "Count of [$selector] elements is not $count");
 
         return $this;
     }
@@ -64,7 +64,20 @@ class Browser extends \Laravel\Dusk\Browser
         $element = $this->resolver->findOrFail($selector);
         $classes = explode(' ', (string) $element->getAttribute('class'));
 
-        Assert::assertContains($class_name, $classes);
+        Assert::assertContains($class_name, $classes, "[$selector] has no class '{$class_name}'");
+
+        return $this;
+    }
+
+    /**
+     * Assert that the given element contains specified text,
+     * no matter it's displayed or not.
+     */
+    public function assertText($selector, $text)
+    {
+        $element = $this->resolver->findOrFail($selector);
+
+        Assert::assertTrue(strpos($element->getText(), $text) !== false, "No expected text in [$selector]");
 
         return $this;
     }

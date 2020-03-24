@@ -1,8 +1,12 @@
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-//import { } from '@fortawesome/free-regular-svg-icons'
 //import { } from '@fortawesome/free-brands-svg-icons'
+import {
+    faCheckSquare,
+    faSquare,
+} from '@fortawesome/free-regular-svg-icons'
+
 import {
     faCheck,
     faGlobe,
@@ -17,6 +21,8 @@ import {
 
 // Register only these icons we need
 library.add(
+    faCheckSquare,
+    faSquare,
     faCheck,
     faGlobe,
     faInfoCircle,

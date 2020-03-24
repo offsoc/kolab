@@ -6,6 +6,12 @@
                 <div class="card-title" v-if="user_id === 'new'">New user account</div>
                 <div class="card-text">
                     <form @submit.prevent="submit">
+                        <div v-if="user_id !== 'new'" class="form-group row">
+                            <label for="first_name" class="col-sm-4 col-form-label">Status</label>
+                            <div class="col-sm-8">
+                                <span :class="$root.userStatusClass(user) + ' form-control-plaintext'" id="status">{{ $root.userStatusText(user) }}</span>
+                            </div>
+                        </div>
                         <div class="form-group row">
                             <label for="first_name" class="col-sm-4 col-form-label">First name</label>
                             <div class="col-sm-8">

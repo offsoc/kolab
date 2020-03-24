@@ -51,6 +51,7 @@ class Dashboard extends Page
         return [
             '@app' => '#app',
             '@links' => '#dashboard-nav',
+            '@status' => '#status-box',
         ];
     }
 }

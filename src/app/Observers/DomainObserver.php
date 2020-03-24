@@ -24,7 +24,7 @@ class DomainObserver
             }
         }
 
-        $domain->status |= Domain::STATUS_NEW;
+        $domain->status |= Domain::STATUS_NEW | Domain::STATUS_ACTIVE;
     }
 
     /**
