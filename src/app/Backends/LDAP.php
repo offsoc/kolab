@@ -300,7 +300,7 @@ class LDAP
         $dn = "uid={$user->email},ou=People,{$base_dn}";
 
         $oldEntry = $ldap->get_entry($dn);
-        $newEntry = $old_entry;
+        $newEntry = $oldEntry;
 
         self::setUserAttributes($user, $newEntry);
 
