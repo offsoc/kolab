@@ -4,7 +4,7 @@
             <div class="card-body">
                 <div class="card-title">Account status: <span class="text-danger">Not ready</span></div>
                 <div class="card-text">
-                    <p>The process to create your account have not been completed yet.
+                    <p>The process to create your account has not been completed yet.
                         Some features may be disabled or readonly.</p>
                     <ul class="status-list">
                         <li v-for="item in statusProcess" :key="item.label">

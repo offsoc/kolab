@@ -52,10 +52,11 @@ class DomainStatus extends Command
         ];
 
         // I'd prefer "-state" and "+state" syntax, but it's not possible
+        $delete = false;
         if ($update = $this->option('del')) {
             $delete = true;
         } elseif ($update = $this->option('add')) {
-            $delete = false;
+            // do nothing
         }
 
         if (!empty($update)) {
