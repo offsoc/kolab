@@ -30,7 +30,7 @@ else
     exit 1
 fi
 
-for name in kolab.mgmt.com kolab.hosted.com; do
+for name in kolab.mgmt.com kolab.hosted.com imap.hosted.com; do
     openssl genrsa -out ${base_dir}/${name}.key 4096
 
     openssl req \

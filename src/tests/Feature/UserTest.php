@@ -13,8 +13,8 @@ class UserTest extends TestCase
     {
         parent::setUp();
 
-        $this->deleteTestUser('user-create-test@' . \config('app.domain'));
-        $this->deleteTestUser('userdeletejob@kolabnow.com');
+        $this->deleteTestUser('test@' . \config('app.domain'));
+        $this->deleteTestUser('userdeletejob@' . \config('app.domain'));
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
         $this->deleteTestUser('UserAccountC@UserAccount.com');
@@ -23,8 +23,8 @@ class UserTest extends TestCase
 
     public function tearDown(): void
     {
-        $this->deleteTestUser('user-create-test@' . \config('app.domain'));
-        $this->deleteTestUser('userdeletejob@kolabnow.com');
+        $this->deleteTestUser('test@' . \config('app.domain'));
+        $this->deleteTestUser('userdeletejob@' . \config('app.domain'));
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
         $this->deleteTestUser('UserAccountC@UserAccount.com');
@@ -39,6 +39,12 @@ class UserTest extends TestCase
     public function testAssignPackage(): void
     {
         $this->markTestIncomplete();
+
+        $package = \App\Package::where('title', 'kolab')->first();
+
+        $user = $this->getTestUser('test@' . \config('app.domain'));
+
+        $user->assignPackage($package);
     }
 
     /**
@@ -67,7 +73,7 @@ class UserTest extends TestCase
         Queue::assertNothingPushed();
 
         $user = User::create([
-                'email' => 'user-create-test@' . \config('app.domain')
+                'email' => 'test@' . \config('app.domain')
         ]);
 
         Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
@@ -191,7 +197,7 @@ class UserTest extends TestCase
     {
         Queue::fake();
 
-        $user = $this->getTestUser('userdeletejob@kolabnow.com');
+        $user = $this->getTestUser('userdeletejob@' . \config('app.domain'));
         $package = \App\Package::where('title', 'kolab')->first();
         $user->assignPackage($package);
 

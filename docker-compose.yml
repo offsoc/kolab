@@ -43,6 +43,23 @@ services:
       retries: 30
     image: mariadb
     network_mode: host
+  nginx:
+    build:
+      context: ./docker/nginx/
+    container_name: kolab-nginx
+    hostname: nginx.hosted.com
+    image: kolab-nginx
+    network_mode: host
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - ./docker/certs/imap.hosted.com.cert:/etc/pki/tls/certs/imap.hosted.com.cert
+      - ./docker/certs/imap.hosted.com.key:/etc/pki/tls/private/imap.hosted.com.key
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
   redis:
     build:
       context: ./docker/redis/

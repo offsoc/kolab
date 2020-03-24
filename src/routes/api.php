@@ -54,4 +54,5 @@ Route::group(
     }
 );
 
+Route::get('webhooks/nginx', 'API\NGINXController@authenticate');
 Route::post('webhooks/payment/mollie', 'API\PaymentsController@webhook');

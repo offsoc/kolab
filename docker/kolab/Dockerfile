@@ -22,4 +22,4 @@ RUN chmod 750 /usr/local/sbin/kolab-vlv.sh
 
 CMD ["/lib/systemd/systemd"]
 
-EXPOSE 21/tcp 22/tcp 25/tcp 53/tcp 53/udp 80/tcp 110/tcp 143/tcp 389/tcp 443/tcp 465/tcp 587/tcp 993/tcp 995/tcp 5353/udp 8880/tcp 8443/tcp 8447/tcp
+EXPOSE 21/tcp 22/tcp 25/tcp 53/tcp 53/udp 80/tcp 110/tcp 143/tcp 389/tcp 443/tcp 465/tcp 587/tcp 993/tcp 995/tcp 5353/udp 8880/tcp 8443/tcp 8447/tcp 9143/tcp 9993/tcp 10143/tcp

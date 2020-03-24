@@ -72,7 +72,7 @@ fi
 npm run dev
 popd
 
-docker-compose up -d worker
+docker-compose up -d worker nginx
 
 pushd ${base_dir}/src/
 rm -rf database/database.sqlite
