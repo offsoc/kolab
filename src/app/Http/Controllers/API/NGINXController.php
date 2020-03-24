@@ -37,14 +37,58 @@ class NGINXController extends Controller
          */
         \Log::debug($request->headers);
 
-        $response = response("")->withHeaders(
-            [
-                "Auth-Status" => 'OK',
-                "Auth-Server" => '127.0.0.1',
-                "Auth-Port" => '10143',
-                "Auth-Pass" => $request->headers->get('Auth-Pass')
-            ]
-        );
+        /**
+         * ports:
+         *
+         * 143 nginx
+         * 465 nginx
+         * 587 nginx
+         * 993 nginx
+         *
+         *  9143 guam starttls
+         *  9993 guam ssl
+         * 10143 cyrus-imapd allows plaintext
+         * 10465 postfix ssl
+         * 10587 postfix starttls
+         * 11143 cyrus-imapd starttls
+         * 11993 cyrus-imapd ssl
+         */
+        switch ($request->headers->get("Auth-Protocol")) {
+            case "imap":
+                // without guam
+                $response = response("")->withHeaders(
+                    [
+                        "Auth-Status" => 'OK',
+                        "Auth-Server" => '127.0.0.1',
+                        "Auth-Port" => '12143',
+                        "Auth-Pass" => $request->headers->get('Auth-Pass')
+                    ]
+                );
+
+                // with guam
+                $response = response("")->withHeaders(
+                    [
+                        "Auth-Status" => 'OK',
+                        "Auth-Server" => '127.0.0.1',
+                        "Auth-Port" => '9143',
+                        "Auth-Pass" => $request->headers->get('Auth-Pass')
+                    ]
+                );
+
+                break;
+
+            case "smtp":
+                $response = response("")->withHeaders(
+                    [
+                        "Auth-Status" => "OK",
+                        "Auth-Server" => '127.0.0.1',
+                        "Auth-Port" => '10465',
+                        "Auth-Pass" => $request->headers->get('Auth-Pass')
+                    ]
+                );
+
+                break;
+        }
 
         \Log::debug($response->headers);
 
