@@ -453,6 +453,36 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Suspend this domain.
+     *
+     * @return void
+     */
+    public function suspend(): void
+    {
+        if ($this->isSuspended()) {
+            return;
+        }
+
+        $this->status |= User::STATUS_SUSPENDED;
+        $this->save();
+    }
+
+    /**
+     * Unsuspend this domain.
+     *
+     * @return void
+     */
+    public function unsuspend(): void
+    {
+        if (!$this->isSuspended()) {
+            return;
+        }
+
+        $this->status ^= User::STATUS_SUSPENDED;
+        $this->save();
+    }
+
+    /**
      * Return users controlled by the current user.
      *
      * Users assigned to wallets the current user controls or owns.
