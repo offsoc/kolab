@@ -41,21 +41,6 @@ class NGINXController extends Controller
          */
         \Log::debug($request->headers);
 
-        // TODO: Apply some sort of limit for Auth-Login-Attempt -- docs say it is the number of
-        // attempts over the same connection.
-
-        switch ($request->headers->get('Auth-Protocol')) {
-            case "imap":
-                return $this->authenticateIMAP($request);
-            case "smtp":
-                return $this->authenticateSMTP($request);
-            default:
-                return $this->byebye($request);
-        }
-    }
-
-    private function authenticateIMAP(Request $request)
-    {
         $login = $request->headers->get('Auth-User', null);
 
         if (empty($login)) {
@@ -68,6 +53,9 @@ class NGINXController extends Controller
         if (!$user) {
             return $this->byebye($request, __LINE__);
         }
+
+        // TODO: validate the user's domain is A-OK (active, confirmed, not suspended, ldapready)
+        // TODO: validate the user is A-OK (active, not suspended, ldapready, imapready)
 
         // validate password, otherwise bye bye
         $password = $request->headers->get('Auth-Pass', null);
@@ -118,6 +106,21 @@ class NGINXController extends Controller
             }
         }
 
+        // TODO: Apply some sort of limit for Auth-Login-Attempt -- docs say it is the number of
+        // attempts over the same connection.
+
+        switch ($request->headers->get('Auth-Protocol')) {
+            case "imap":
+                return $this->authenticateIMAP($request);
+            case "smtp":
+                return $this->authenticateSMTP($request);
+            default:
+                return $this->byebye($request);
+        }
+    }
+
+    private function authenticateIMAP(Request $request)
+    {
         $prefGuam = $user->getSetting('guam_plz', false);
 
         if ($prefGuam) {
@@ -142,68 +145,6 @@ class NGINXController extends Controller
 
     private function authenticateSMTP(Request $request)
     {
-        $login = $request->headers->get('Auth-User', null);
-
-        if (empty($login)) {
-            return $this->byebye($request, __LINE__);
-        }
-
-        // validate user exists, otherwise bye bye
-        $user = \App\User::where('email', $login)->first();
-
-        if (!$user) {
-            return $this->byebye($request, __LINE__);
-        }
-
-        // validate password, otherwise bye bye
-        $password = $request->headers->get('Auth-Pass', null);
-
-        if (empty($password)) {
-            return $this->byebye($request, __LINE__);
-        }
-
-        $result = Hash::check($password, $user->password);
-
-        if (!$result) {
-            // TODO: Log, notify user.
-            return $this->byebye($request, __LINE__);
-        }
-
-        // validate country of origin against restrictions, otherwise bye bye
-        $clientIP = $request->headers->get('Client-Ip', null);
-
-        $countryCodes = json_decode($user->getSetting('limit_geo', "[]"));
-
-        \Log::debug("Countries for {$user->email}: " . var_export($countryCodes, true));
-
-        // TODO: Consider "new geographical area notification".
-
-        if (!empty($countryCodes)) {
-            // fake the country is NL, and the limitation is CH
-            if ($clientIP == '127.0.0.1' && $login == "piet@kolab.org") {
-                $country = "NL";
-            } else {
-                // TODO: GeoIP reliance
-                $country = "CH";
-            }
-
-            if (!in_array($country, $countryCodes)) {
-                // TODO: Log, notify user.
-                return $this->byebye($request, __LINE__);
-            }
-        }
-
-        // determine 2fa preference
-        $pref2fa = $user->getSetting('2fa_plz', false);
-
-        if ($pref2fa) {
-            $result = $this->waitFor2fa($request);
-
-            if (!$result) {
-                return $this->byebye($request, __LINE__);
-            }
-        }
-
         $response = response("")->withHeaders(
             [
                 "Auth-Status" => "OK",
