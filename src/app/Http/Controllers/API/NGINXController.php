@@ -14,6 +14,8 @@ class NGINXController extends Controller
     /**
      * Authentication request.
      *
+     * @todo: Separate IMAP(+STARTTLS) from IMAPS, same for SMTP/submission.
+     *
      * @param \Illuminate\Http\Request $request The API request.
      *
      * @return \Illuminate\Http\Response The response
@@ -77,6 +79,7 @@ class NGINXController extends Controller
         $result = Hash::check($password, $user->password);
 
         if (!$result) {
+            // TODO: Log, notify user.
             return $this->byebye($request, __LINE__);
         }
 
@@ -86,6 +89,8 @@ class NGINXController extends Controller
         $countryCodes = json_decode($user->getSetting('limit_geo', "[]"));
 
         \Log::debug("Countries for {$user->email}: " . var_export($countryCodes, true));
+
+        // TODO: Consider "new geographical area notification".
 
         if (!empty($countryCodes)) {
             // fake the country is NL, and the limitation is CH
@@ -97,6 +102,7 @@ class NGINXController extends Controller
             }
 
             if (!in_array($country, $countryCodes)) {
+                // TODO: Log, notify user.
                 return $this->byebye($request, __LINE__);
             }
         }
@@ -132,65 +138,82 @@ class NGINXController extends Controller
         \Log::debug("Response with headers:\n{$response->headers}");
 
         return $response;
+    }
 
-        // limit the rate at which new second factor authentication is required;
-        // - change of client ip address justifies another OTP,
-        // - a $x hour interval justifies another OTP
+    private function authenticateSMTP(Request $request)
+    {
+        $login = $request->headers->get('Auth-User', null);
 
-        /**
-         * ports:
-         *
-         * 143 nginx
-         * 465 nginx
-         * 587 nginx
-         * 993 nginx
-         *
-         *  9143 guam starttls (thus also plain)
-         *  9993 guam ssl
-         * 10143 cyrus-imapd allows plaintext
-         * 10465 postfix ssl
-         * 10587 postfix starttls
-         * 11143 cyrus-imapd starttls required
-         * 11993 cyrus-imapd ssl
-         */
-        switch ($request->headers->get("Auth-Protocol")) {
-            case "imap":
-                // without guam
-                $response = response("")->withHeaders(
-                    [
-                        "Auth-Status" => 'OK',
-                        "Auth-Server" => '127.0.0.1',
-                        "Auth-Port" => '12143',
-                        "Auth-Pass" => $request->headers->get('Auth-Pass')
-                    ]
-                );
-
-                // with guam
-                $response = response("")->withHeaders(
-                    [
-                        "Auth-Status" => 'OK',
-                        "Auth-Server" => '127.0.0.1',
-                        "Auth-Port" => '9143',
-                        "Auth-Pass" => $request->headers->get('Auth-Pass')
-                    ]
-                );
-
-                break;
-
-            case "smtp":
-                $response = response("")->withHeaders(
-                    [
-                        "Auth-Status" => "OK",
-                        "Auth-Server" => '127.0.0.1',
-                        "Auth-Port" => '10465',
-                        "Auth-Pass" => $request->headers->get('Auth-Pass')
-                    ]
-                );
-
-                break;
+        if (empty($login)) {
+            return $this->byebye($request, __LINE__);
         }
 
-        \Log::debug($response->headers);
+        // validate user exists, otherwise bye bye
+        $user = \App\User::where('email', $login)->first();
+
+        if (!$user) {
+            return $this->byebye($request, __LINE__);
+        }
+
+        // validate password, otherwise bye bye
+        $password = $request->headers->get('Auth-Pass', null);
+
+        if (empty($password)) {
+            return $this->byebye($request, __LINE__);
+        }
+
+        $result = Hash::check($password, $user->password);
+
+        if (!$result) {
+            // TODO: Log, notify user.
+            return $this->byebye($request, __LINE__);
+        }
+
+        // validate country of origin against restrictions, otherwise bye bye
+        $clientIP = $request->headers->get('Client-Ip', null);
+
+        $countryCodes = json_decode($user->getSetting('limit_geo', "[]"));
+
+        \Log::debug("Countries for {$user->email}: " . var_export($countryCodes, true));
+
+        // TODO: Consider "new geographical area notification".
+
+        if (!empty($countryCodes)) {
+            // fake the country is NL, and the limitation is CH
+            if ($clientIP == '127.0.0.1' && $login == "piet@kolab.org") {
+                $country = "NL";
+            } else {
+                // TODO: GeoIP reliance
+                $country = "CH";
+            }
+
+            if (!in_array($country, $countryCodes)) {
+                // TODO: Log, notify user.
+                return $this->byebye($request, __LINE__);
+            }
+        }
+
+        // determine 2fa preference
+        $pref2fa = $user->getSetting('2fa_plz', false);
+
+        if ($pref2fa) {
+            $result = $this->waitFor2fa($request);
+
+            if (!$result) {
+                return $this->byebye($request, __LINE__);
+            }
+        }
+
+        $response = response("")->withHeaders(
+            [
+                "Auth-Status" => "OK",
+                "Auth-Server" => "127.0.0.1",
+                "Auth-Port" => 10465,
+                "Auth-Pass" => $password
+            ]
+        );
+
+        \Log::debug("Response with headers:\n{$response->headers}");
 
         return $response;
     }
@@ -212,6 +235,9 @@ class NGINXController extends Controller
 
     private function waitFor2fa(Request $request)
     {
+        // TODO: Don't require a confirmation for every single hit.
+        //
+        // This likely means storing (a hash of) the client IP, a timeout, and a user ID.
         $code = \App\SignupCode::create(
             [
                 'data' => [
