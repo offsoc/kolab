@@ -54,11 +54,11 @@ class UserSeeder extends Seeder
 
         $wallet = $john->wallets->first();
 
-        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $packageDomain = \App\Package::where('title', 'domain-hosting')->first();
+        $packageKolab = \App\Package::where('title', 'kolab')->first();
 
-        $domain->assignPackage($package_domain, $john);
-        $john->assignPackage($package_kolab);
+        $domain->assignPackage($packageDomain, $john);
+        $john->assignPackage($packageKolab);
 
         $jack = User::create(
             [
@@ -80,7 +80,7 @@ class UserSeeder extends Seeder
 
         $jack->setAliases(['jack.daniels@kolab.org']);
 
-        $john->assignPackage($package_kolab, $jack);
+        $john->assignPackage($packageKolab, $jack);
 
         foreach ($john->entitlements as $entitlement) {
             $entitlement->created_at = Carbon::now()->subMonths(1);
@@ -106,10 +106,42 @@ class UserSeeder extends Seeder
             ]
         );
 
-        $john->assignPackage($package_kolab, $ned);
+        $john->assignPackage($packageKolab, $ned);
 
         // Ned is a controller on Jack's wallet
         $john->wallets()->first()->addController($ned);
+
+        $juan = User::create(
+            [
+                'name' => 'Juan Despacido',
+                'email' => 'juan@kolab.org',
+                'password' => 'simple123',
+                'email_verified_at' => now()
+            ]
+        );
+
+        $juan->setSettings(
+            [
+                'limit_geo' => json_encode(["CH"]),
+                'guam_plz' => true,
+                '2fa_plz' => true
+            ]
+        );
+
+        $john->assignPackage($packageKolab, $juan);
+
+        $piet = User::create(
+            [
+                'name' => 'Piet Klaassen',
+                'email' => 'piet@kolab.org',
+                'password' => 'simple123',
+                'email_verified_at' => now()
+            ]
+        );
+
+        $piet->setSetting('limit_geo', json_encode(["NL"]));
+
+        $john->assignPackage($packageKolab, $piet);
 
         factory(User::class, 10)->create();
     }
