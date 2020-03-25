@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -37,6 +38,12 @@ class NGINXController extends Controller
          */
         \Log::debug($request->headers);
 
+        // validate user exists, otherwise bye bye
+        // validate password, otherwise bye bye
+        // validate country of origin against restrictions, otherwise bye bye
+        // determine 2fa preference
+        // determine guam preference (for $request->headers->get('Auth-Protocol') == 'imap'
+
         /**
          * ports:
          *
@@ -45,12 +52,12 @@ class NGINXController extends Controller
          * 587 nginx
          * 993 nginx
          *
-         *  9143 guam starttls
+         *  9143 guam starttls (thus also plain)
          *  9993 guam ssl
          * 10143 cyrus-imapd allows plaintext
          * 10465 postfix ssl
          * 10587 postfix starttls
-         * 11143 cyrus-imapd starttls
+         * 11143 cyrus-imapd starttls required
          * 11993 cyrus-imapd ssl
          */
         switch ($request->headers->get("Auth-Protocol")) {
@@ -89,6 +96,31 @@ class NGINXController extends Controller
 
                 break;
         }
+
+        $code = \App\SignupCode::create(
+            [
+                'data' => [
+                    'email' => $request->headers->get('Auth-User')
+                ],
+                'expires_at' => Carbon::now()->addMinutes(2)
+            ]
+        );
+
+        \Log::debug("visit http://127.0.0.1:8000/api/confirm/{$code->short_code}");
+
+        $found = true;
+        $maxTries = 300;
+
+        do {
+            $confirmCode = \App\SignupCode::find($code->code);
+            if (!$confirmCode) {
+                $found = false;
+                break;
+            }
+
+            sleep(1);
+            $maxTries--;
+        } while ($found && $maxTries > 0);
 
         \Log::debug($response->headers);
 
