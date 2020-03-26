@@ -56,9 +56,10 @@ window.axios.interceptors.response.use(
         return response
     },
     error => {
-        var error_msg
+        let error_msg
+        let status = error.response ? error.response.status : 200
 
-        if (error.response && error.response.status == 422) {
+        if (error.response && status == 422) {
             error_msg = "Form validation error"
 
             $.each(error.response.data.errors || {}, (idx, msg) => {
@@ -115,7 +116,10 @@ window.axios.interceptors.response.use(
             error_msg = error.request ? error.request.statusText : error.message
         }
 
-        app.$toastr('error', error_msg || "Server Error", 'Error')
+        // Ignore error on login request returning 2FA "request"
+        if (status != 401 || !error.response || !error.response.data || !error.response.data['second-factor']) {
+            app.$toastr('error', error_msg || "Server Error", 'Error')
+        }
 
         // Pass the error as-is
         return Promise.reject(error)

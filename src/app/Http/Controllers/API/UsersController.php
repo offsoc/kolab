@@ -131,6 +131,18 @@ class UsersController extends Controller
         $credentials = $request->only('email', 'password');
 
         if ($token = $this->guard()->attempt($credentials)) {
+            // So right now we're doing this after the successful login,
+            // which mean we require username/password also on 2-stage request
+
+            $sf = new \App\Auth\SecondFactor();
+
+            // If 2FA is not specified, we respond with 2FA methods
+            // so UI displays additional input(s) and submits the form back
+            // If is's specified we'll verify it, maybe we'll need to do this in a separate route
+            if ($response = $sf->login($request)) {
+                return response()->json($response, 401);
+            }
+
             return $this->respondWithToken($token);
         }
 
