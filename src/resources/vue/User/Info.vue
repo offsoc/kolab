@@ -97,7 +97,12 @@
                                     <tbody>
                                         <tr v-for="sku in skus" :id="'s' + sku.id" :key="sku.id">
                                             <td class="selection">
-                                                <input type="checkbox" :value="sku.id" :disabled="sku.readonly" :checked="sku.enabled">
+                                                <input type="checkbox" @input="onInputSku"
+                                                       :value="sku.id"
+                                                       :disabled="sku.readonly"
+                                                       :checked="sku.enabled"
+                                                       :dusk="'sku-input-' + sku.title"
+                                                >
                                             </td>
                                             <td class="name">
                                                 <span class="name">{{ sku.name }}</span>
@@ -235,6 +240,65 @@
                         }
                     })
             },
+            onInputSku(e) {
+                let input = e.target
+                let sku = this.findSku(input.value)
+                let required = []
+
+                // We use 'readonly', not 'disabled', because we might want to handle
+                // input events. For example to display an error when someone clicks
+                // the locked input
+                if (input.readOnly) {
+                    input.checked = !input.checked
+                    // TODO: Display an alert explaining why it's locked
+                    return
+                }
+
+                // TODO: Following code might not work if we change definition of forbidden/required
+                //       or we just need more sophisticated SKU dependency rules
+
+                if (input.checked) {
+                    // Check if a required SKU is selected, alert the user if not
+                    (sku.required || []).forEach(title => {
+                        this.skus.forEach(item => {
+                            let checkbox
+                            if (item.handler == title && (checkbox = $('#s' + item.id).find('input[type=checkbox]')[0])) {
+                                if (!checkbox.checked) {
+                                    required.push(item.name)
+                                }
+                            }
+                        })
+                    })
+
+                    if (required.length) {
+                        input.checked = false
+                        return alert(sku.name + ' requires ' + required.join(', ') + '.')
+                    }
+                } else {
+                    // Uncheck all dependent SKUs, e.g. when unchecking Groupware we also uncheck Activesync
+                    // TODO: Should we display an alert instead?
+                    this.skus.forEach(item => {
+                        if (item.required && item.required.indexOf(sku.handler) > -1) {
+                            $('#s' + item.id).find('input[type=checkbox]').prop('checked', false)
+                        }
+                    })
+                }
+
+                // Uncheck+lock/unlock conflicting SKUs
+                (sku.forbidden || []).forEach(title => {
+                    this.skus.forEach(item => {
+                        let checkbox
+                        if (item.handler == title && (checkbox = $('#s' + item.id).find('input[type=checkbox]')[0])) {
+                            if (input.checked) {
+                                checkbox.checked = false
+                                checkbox.readOnly = true
+                            } else {
+                                checkbox.readOnly = false
+                            }
+                        }
+                    })
+                })
+            },
             selectPackage(e) {
                 // Make sure there always is only one package selected
                 $('#user-packages input').prop('checked', false)
@@ -245,19 +309,20 @@
                 let value = input.val()
                 let record = input.parents('tr').first()
                 let sku_id = record.find('input[type=checkbox]').val()
-                let sku, i
-
-                for (i = 0; i < this.skus.length; i++) {
-                    if (this.skus[i].id == sku_id) {
-                        sku = this.skus[i];
-                    }
-                }
+                let sku = this.findSku(sku_id)
 
                 // Update the label
                 input.prev().text(value + ' ' + sku.range.unit)
 
                 // Update the price
                 record.find('.price').text(this.$root.price(sku.cost * (value - sku.units_free)) + '/month')
+            },
+            findSku(id) {
+                for (let i = 0; i < this.skus.length; i++) {
+                    if (this.skus[i].id == id) {
+                        return this.skus[i];
+                    }
+                }
             }
         }
     }

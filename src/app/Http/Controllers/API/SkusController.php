@@ -53,7 +53,7 @@ class SkusController extends Controller
     public function index()
     {
         $response = [];
-        $skus = Sku::select()->orderBy('title')->get();
+        $skus = Sku::select()->get();
 
         // Note: we do not limit the result to active SKUs only.
         //       It's because we might need users assigned to old SKUs,
@@ -64,6 +64,10 @@ class SkusController extends Controller
                 $response[] = $data;
             }
         }
+
+        usort($response, function ($a, $b) {
+            return ($b['prio'] <=> $a['prio']);
+        });
 
         return response()->json($response);
     }
@@ -137,6 +141,7 @@ class SkusController extends Controller
         $data['handler'] = $handler;
         $data['readonly'] = false;
         $data['enabled'] = false;
+        $data['prio'] = $sku->handler_class::priority();
 
         // Use localized value, toArray() does not get them right
         $data['name'] = $sku->name;
@@ -145,6 +150,14 @@ class SkusController extends Controller
         unset($data['handler_class']);
 
         switch ($handler) {
+            case 'activesync':
+                $data['required'] = ['groupware'];
+                break;
+
+            case 'auth2f':
+                $data['forbidden'] = ['activesync'];
+                break;
+
             case 'storage':
                 // Quota range input
                 $data['readonly'] = true; // only the checkbox will be disabled, not range

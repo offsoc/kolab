@@ -39,13 +39,7 @@ class UsersTest extends TestCaseDusk
         UserAlias::where('user_id', $john->id)
             ->where('alias', 'john.test@kolab.org')->delete();
 
-        Sku::where('title', 'test')->delete();
-        $storage = Sku::where('title', 'storage')->first();
-        Entitlement::where([
-                ['sku_id', $storage->id],
-                ['entitleable_id', $john->id],
-                ['cost', 25]
-            ])->delete();
+        Entitlement::where('entitleable_id', $john->id)->whereIn('cost', [25, 100])->delete();
     }
 
     /**
@@ -60,13 +54,7 @@ class UsersTest extends TestCaseDusk
         UserAlias::where('user_id', $john->id)
             ->where('alias', 'john.test@kolab.org')->delete();
 
-        Sku::where('title', 'test')->delete();
-        $storage = Sku::where('title', 'storage')->first();
-        Entitlement::where([
-                ['sku_id', $storage->id],
-                ['entitleable_id', $john->id],
-                ['cost', 25]
-            ])->delete();
+        Entitlement::where('entitleable_id', $john->id)->whereIn('cost', [25, 100])->delete();
 
         parent::tearDown();
     }
@@ -127,17 +115,6 @@ class UsersTest extends TestCaseDusk
      */
     public function testInfo(): void
     {
-        Sku::create([
-                'title' => 'test',
-                'name' => 'Test SKU',
-                'description' => 'The SKU for testing',
-                'cost' => 666,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Groupware',
-                'active' => true,
-        ]);
-
         $this->browse(function (Browser $browser) {
             $browser->on(new UserList())
                 ->click('@table tr:nth-child(2) a')
@@ -241,48 +218,57 @@ class UsersTest extends TestCaseDusk
                 $browser->assertSeeIn('div.row:nth-child(8) label', 'Subscriptions')
                     ->assertVisible('@skus.row:nth-child(8)')
                     ->with('@skus', function ($browser) {
-                        $browser->assertElementsCount('tbody tr', 4)
-                            // groupware SKU
-                            ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Groupware Features')
-                            ->assertSeeIn('tbody tr:nth-child(1) td.price', '5,55 CHF/month')
+                        $browser->assertElementsCount('tbody tr', 5)
+                            // Mailbox SKU
+                            ->assertSeeIn('tbody tr:nth-child(1) td.name', 'User Mailbox')
+                            ->assertSeeIn('tbody tr:nth-child(1) td.price', '4,44 CHF/month')
                             ->assertChecked('tbody tr:nth-child(1) td.selection input')
-                            ->assertEnabled('tbody tr:nth-child(1) td.selection input')
+                            ->assertDisabled('tbody tr:nth-child(1) td.selection input')
                             ->assertTip(
                                 'tbody tr:nth-child(1) td.buttons button',
-                                'Groupware functions like Calendar, Tasks, Notes, etc.'
+                                'Just a mailbox'
                             )
-                            // Mailbox SKU
-                            ->assertSeeIn('tbody tr:nth-child(2) td.name', 'User Mailbox')
-                            ->assertSeeIn('tbody tr:nth-child(2) td.price', '4,44 CHF/month')
+                            // Storage SKU
+                            ->assertSeeIn('tbody tr:nth-child(2) td.name', 'Storage Quota')
+                            ->assertSeeIn('tr:nth-child(2) td.price', '0,00 CHF/month')
                             ->assertChecked('tbody tr:nth-child(2) td.selection input')
                             ->assertDisabled('tbody tr:nth-child(2) td.selection input')
                             ->assertTip(
                                 'tbody tr:nth-child(2) td.buttons button',
-                                'Just a mailbox'
-                            )
-                            // Storage SKU
-                            ->assertSeeIn('tbody tr:nth-child(3) td.name', 'Storage Quota')
-                            ->assertSeeIn('tr:nth-child(3) td.price', '0,00 CHF/month')
-                            ->assertChecked('tbody tr:nth-child(3) td.selection input')
-                            ->assertDisabled('tbody tr:nth-child(3) td.selection input')
-                            ->assertTip(
-                                'tbody tr:nth-child(3) td.buttons button',
                                 'Some wiggle room'
                             )
-                            ->with(new QuotaInput('tbody tr:nth-child(3) .range-input'), function ($browser) {
+                            ->with(new QuotaInput('tbody tr:nth-child(2) .range-input'), function ($browser) {
                                 $browser->assertQuotaValue(2)->setQuotaValue(3);
                             })
-                            ->assertSeeIn('tr:nth-child(3) td.price', '0,25 CHF/month')
-                            // Test SKU
-                            ->assertSeeIn('tbody tr:nth-child(4) td.name', 'Test SKU')
-                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '6,66 CHF/month')
+                            ->assertSeeIn('tr:nth-child(2) td.price', '0,25 CHF/month')
+                            // groupware SKU
+                            ->assertSeeIn('tbody tr:nth-child(3) td.name', 'Groupware Features')
+                            ->assertSeeIn('tbody tr:nth-child(3) td.price', '5,55 CHF/month')
+                            ->assertChecked('tbody tr:nth-child(3) td.selection input')
+                            ->assertEnabled('tbody tr:nth-child(3) td.selection input')
+                            ->assertTip(
+                                'tbody tr:nth-child(3) td.buttons button',
+                                'Groupware functions like Calendar, Tasks, Notes, etc.'
+                            )
+                            // 2FA SKU
+                            ->assertSeeIn('tbody tr:nth-child(4) td.name', '2-Factor Authentication')
+                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '0,00 CHF/month')
                             ->assertNotChecked('tbody tr:nth-child(4) td.selection input')
                             ->assertEnabled('tbody tr:nth-child(4) td.selection input')
                             ->assertTip(
                                 'tbody tr:nth-child(4) td.buttons button',
-                                'The SKU for testing'
+                                'Two factor authentication for webmail and administration panel'
                             )
-                            ->click('tbody tr:nth-child(4) td.selection input');
+                            // ActiveSync SKU
+                            ->assertSeeIn('tbody tr:nth-child(5) td.name', 'Activesync')
+                            ->assertSeeIn('tbody tr:nth-child(5) td.price', '1,00 CHF/month')
+                            ->assertNotChecked('tbody tr:nth-child(5) td.selection input')
+                            ->assertEnabled('tbody tr:nth-child(5) td.selection input')
+                            ->assertTip(
+                                'tbody tr:nth-child(5) td.buttons button',
+                                'Mobile synchronization'
+                            )
+                            ->click('tbody tr:nth-child(5) td.selection input');
                     })
                     ->click('button[type=submit]');
             })
@@ -292,7 +278,34 @@ class UsersTest extends TestCaseDusk
                     ->closeToast();
             });
 
-            $this->assertUserEntitlements($john, ['groupware', 'mailbox', 'storage', 'storage', 'storage', 'test']);
+            $expected = ['activesync', 'groupware', 'mailbox', 'storage', 'storage', 'storage'];
+            $this->assertUserEntitlements($john, $expected);
+
+            // Test subscriptions interaction
+            $browser->with('@form', function (Browser $browser) {
+                $browser->with('@skus', function ($browser) {
+                    // Uncheck 'groupware', expect activesync unchecked
+                    $browser->click('@sku-input-groupware')
+                        ->assertNotChecked('@sku-input-groupware')
+                        ->assertNotChecked('@sku-input-activesync')
+                        ->assertEnabled('@sku-input-activesync')
+                        ->assertNotReadonly('@sku-input-activesync')
+                        // Check 'activesync', expect an alert
+                        ->click('@sku-input-activesync')
+                        ->assertDialogOpened('Activesync requires Groupware Features.')
+                        ->acceptDialog()
+                        ->assertNotChecked('@sku-input-activesync')
+                        // Check '2FA', expect 'activesync' unchecked and readonly
+                        ->click('@sku-input-2fa')
+                        ->assertChecked('@sku-input-2fa')
+                        ->assertNotChecked('@sku-input-activesync')
+                        ->assertReadonly('@sku-input-activesync')
+                        // Uncheck '2FA'
+                        ->click('@sku-input-2fa')
+                        ->assertNotChecked('@sku-input-2fa')
+                        ->assertNotReadonly('@sku-input-activesync');
+                });
+            });
         });
     }
 

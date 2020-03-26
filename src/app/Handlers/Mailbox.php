@@ -36,4 +36,15 @@ class Mailbox extends \App\Handlers\Base
 */
         return true;
     }
+
+    /**
+     * The priority that specifies the order of SKUs in UI.
+     * Higher number means higher on the list.
+     *
+     * @return int
+     */
+    public static function priority(): int
+    {
+        return 100;
+    }
 }

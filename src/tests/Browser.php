@@ -70,6 +70,32 @@ class Browser extends \Laravel\Dusk\Browser
     }
 
     /**
+     * Assert that the given element is readonly
+     */
+    public function assertReadonly($selector)
+    {
+        $element = $this->resolver->findOrFail($selector);
+        $value = $element->getAttribute('readonly');
+
+        Assert::assertTrue($value == 'true', "Element [$selector] is not readonly");
+
+        return $this;
+    }
+
+    /**
+     * Assert that the given element is not readonly
+     */
+    public function assertNotReadonly($selector)
+    {
+        $element = $this->resolver->findOrFail($selector);
+        $value = $element->getAttribute('readonly');
+
+        Assert::assertTrue($value != 'true', "Element [$selector] is not readonly");
+
+        return $this;
+    }
+
+    /**
      * Assert that the given element contains specified text,
      * no matter it's displayed or not.
      */

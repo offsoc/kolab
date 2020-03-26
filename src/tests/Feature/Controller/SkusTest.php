@@ -18,25 +18,26 @@ class SkusTest extends TestCase
         $response->assertStatus(401);
 
         $user = $this->getTestUser('john@kolab.org');
-        $domain_sku = Sku::where('title', 'domain')->first();
+        $sku = Sku::where('title', 'mailbox')->first();
 
         $response = $this->actingAs($user)->get("api/v4/skus");
         $response->assertStatus(200);
 
         $json = $response->json();
 
-        $this->assertCount(7, $json);
+        $this->assertCount(9, $json);
 
-        $this->assertSame($domain_sku->id, $json[0]['id']);
-        $this->assertSame($domain_sku->title, $json[0]['title']);
-        $this->assertSame($domain_sku->name, $json[0]['name']);
-        $this->assertSame($domain_sku->description, $json[0]['description']);
-        $this->assertSame($domain_sku->cost, $json[0]['cost']);
-        $this->assertSame($domain_sku->units_free, $json[0]['units_free']);
-        $this->assertSame($domain_sku->period, $json[0]['period']);
-        $this->assertSame($domain_sku->active, $json[0]['active']);
-        $this->assertSame('domain', $json[0]['type']);
-        $this->assertSame('domain', $json[0]['handler']);
+        $this->assertSame(100, $json[0]['prio']);
+        $this->assertSame($sku->id, $json[0]['id']);
+        $this->assertSame($sku->title, $json[0]['title']);
+        $this->assertSame($sku->name, $json[0]['name']);
+        $this->assertSame($sku->description, $json[0]['description']);
+        $this->assertSame($sku->cost, $json[0]['cost']);
+        $this->assertSame($sku->units_free, $json[0]['units_free']);
+        $this->assertSame($sku->period, $json[0]['period']);
+        $this->assertSame($sku->active, $json[0]['active']);
+        $this->assertSame('user', $json[0]['type']);
+        $this->assertSame('mailbox', $json[0]['handler']);
     }
 
     /**

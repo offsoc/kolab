@@ -123,5 +123,31 @@ class SkuSeeder extends Seeder
                 'active' => false,
             ]
         );
+
+        Sku::create(
+            [
+                'title' => '2fa',
+                'name' => '2-Factor Authentication',
+                'description' => 'Two factor authentication for webmail and administration panel',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Auth2F',
+                'active' => true,
+            ]
+        );
+
+        Sku::create(
+            [
+                'title' => 'activesync',
+                'name' => 'Activesync',
+                'description' => 'Mobile synchronization',
+                'cost' => 100,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Activesync',
+                'active' => true,
+            ]
+        );
     }
 }
