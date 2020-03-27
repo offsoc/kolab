@@ -198,6 +198,15 @@ abstract class Base
     }
 
     /**
+     * Get current code (for testing)
+     */
+    public function get_code()
+    {
+        // to be overriden by a driver
+        return '';
+    }
+
+    /**
      * Getter for read-only access to driver properties
      */
     public function get($key, $force = false)
