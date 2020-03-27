@@ -17,6 +17,4 @@ return [
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
     'logoutsuccess' => 'Successfully logged out.',
 
-    'login.totp' => 'Mobile app (TOTP)',
-    'login.yubikey' => 'Yubikey',
 ];
