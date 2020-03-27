@@ -116,10 +116,7 @@ window.axios.interceptors.response.use(
             error_msg = error.request ? error.request.statusText : error.message
         }
 
-        // Ignore error on login request returning 2FA "request"
-        if (status != 401 || !error.response || !error.response.data || !error.response.data['second-factor']) {
-            app.$toastr('error', error_msg || "Server Error", 'Error')
-        }
+        app.$toastr('error', error_msg || "Server Error", 'Error')
 
         // Pass the error as-is
         return Promise.reject(error)

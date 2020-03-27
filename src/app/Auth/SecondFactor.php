@@ -4,31 +4,42 @@ namespace App\Auth;
 
 use App\Sku;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Kolab2FA\Storage\Base;
 
 /**
  * A class to maintain 2-factor authentication
  */
-class SecondFactor
+class SecondFactor extends Base
 {
     protected $user;
-    protected $storage;
-    protected $drivers = array();
+    protected $cache = [];
+    protected $config = [
+        'keymap' => [],
+    ];
 
 
     /**
      * Class constructor
+     *
+     * @param \App\User $user User object
      */
-    public function __construct()
+    public function __construct($user)
     {
+        $this->user = $user;
+
+        parent::__construct();
     }
 
     /**
-     * Handle login action
+     * Validate 2-factor authentication code
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse|null
      */
-    public function login($request): ?array
+    public function requestHandler($request)
     {
-        $this->user = Auth::guard()->user();
-
         // get list of configured authentication factors
         $factors = $this->factors();
 
@@ -37,91 +48,26 @@ class SecondFactor
             return null;
         }
 
-        // flag session for 2nd factor verification
-        $_SESSION['2fa_time']     = time();
-        $_SESSION['2fa_nonce']    = bin2hex(openssl_random_pseudo_bytes(32));
-        $_SESSION['2fa_factors']  = $factors;
-        $_SESSION['2fa_username'] = $this->username;
-        $_SESSION['2fa_account']  = $user;
-        $_SESSION['2fa_apitoken'] = API\Client::get_user_instance()->get_session_token();
-
-        // define login form
-        $nonce = $_SESSION['2fa_nonce'];
-
-        $methods = array_unique(
-            array_map(function ($factor) {
-                    list($method, $id) = explode(':', $factor);
-                    return $method;
-                },
-            $factors
-            )
-        );
-
-        $required = count($methods) == 1;
-
-        foreach ($methods as $i => $method) {
-            $methods[$i] = array(
-                'name'     => "${nonce}-${method}",
-                'label'    => \trans("login.$method"),
-                'required' => $required,
-            );
+        if (empty($request->secondfactor) || !is_string($request->secondfactor)) {
+            $errors = ['secondfactor' => \trans('validation.2fareq')];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
-        return [
-            'second-factor' => $methods
-        ];
-    }
-
-    /**
-     * Validate 2-factor authentication code
-     */
-    public function verify($post)
-    {
-        if (empty($this->username)
-            || empty($_SESSION['2fa_username'])
-            || $_SESSION['2fa_username'] != $post['username']
-        ) {
-            return;
-        }
-
-        $time     = $_SESSION['2fa_time'];
-        $nonce    = $_SESSION['2fa_nonce'];
-        $factors  = (array) $_SESSION['2fa_factors'];
-        $expired  = $time < time() - \config('2fa.timeout', 120);
-        $verified = false;
-
-        if (!empty($factors) && !empty($nonce) && !$expired) {
-            // try to verify each configured factor
-            foreach ($factors as $factor) {
-                list($method) = explode(':', $factor, 2);
-
-                // verify the submitted code
-                $code = strip_tags($_POST["${nonce}-${method}"]);
-                if ($code && ($verified = $this->verify_factor_auth($factor, $code))) {
-                    // accept first successful method
-                    break;
+        // try to verify each configured factor
+        foreach ($factors as $factor) {
+            // verify the submitted code
+            if (strpos($factor, 'dummy:') === 0) {
+                // This is for automated tests
+                if ($request->secondfactor === 'dummy') {
+                    return null;
                 }
+            } elseif ($this->verify($factor, $request->secondfactor)) {
+                return null;
             }
         }
 
-/*
-        if (!$verified) {
-            \Log::info("2-FACTOR failure for {$this->user->name}");
-            $this->output->add_message(T('login.invalid2facode'), 'warning');
-            $this->login($_SESSION['2fa_account']);
-            return;
-        }
-
-        // setup user session
-        $user = $_SESSION['2fa_account'];
-        // API\Client::get_user_instance()->set_session_token($_SESSION['2fa_apitoken']);
-
-        // clean up
-        unset($_SESSION['2fa_time'], $_SESSION['2fa_nonce'], $_SESSION['2fa_factors'],
-            $_SESSION['2fa_username'], $_SESSION['2fa_account'], $_SESSION['2fa_apitoken']);
-
-        return $user;
-*/
+        $errors = ['secondfactor' => \trans('validation.2fainvalid')];
+        return response()->json(['status' => 'error', 'errors' => $errors], 422);
     }
 
     /**
@@ -131,11 +77,13 @@ class SecondFactor
      */
     public function removeFactors(): bool
     {
-        if ($this->user && ($storage = $this->get_storage($this->user->email))) {
-            return $storage->remove_all_factors();
-        }
+        $this->cache = [];
 
-        return false;
+        $prefs = [];
+        $prefs[$this->key2property('blob')]    = null;
+        $prefs[$this->key2property('factors')] = null;
+
+        return $this->savePrefs($prefs);
     }
 
     /**
@@ -143,16 +91,20 @@ class SecondFactor
      */
     protected function factors(): ?array
     {
+        // First check if the user has the 2FA SKU
         $sku_2fa = Sku::where('title', '2fa')->first();
+
+        if (!$sku_2fa) {
+            return null;
+        }
+
         $has_2fa = $this->user->entitlements()->where('sku_id', $sku_2fa->id)->first();
 
         if ($has_2fa) {
-            if ($storage = $this->get_storage($this->user->email)) {
-                $factors = (array) $storage->enumerate();
-                $factors = array_unique($factors);
+            $factors = (array) $this->enumerate();
+            $factors = array_unique($factors);
 
-                return $factors;
-            }
+            return $factors;
         }
 
         return null;
@@ -164,20 +116,12 @@ class SecondFactor
      * @param string $factor Factor identifier (<method>:<id>)
      * @param string $code   Authentication code
      *
-     * @return boolean
+     * @return bool
      */
-    protected function verify_factor_auth($factor, $code)
+    protected function verify($factor, $code)
     {
-        if (strlen($code) && ($driver = $this->get_driver($factor))) {
-            $driver->username = $this->user->email;
-
-            try {
-                // verify the submitted code
-                return $driver->verify($code, $_SESSION['2fa_time']);
-            }
-            catch (\Exception $e) {
-                \Log::error("2-FACTOR failure for {$this->user->email}: " . $e->getMessage());
-            }
+        if ($driver = $this->getDriver($factor)) {
+            return $driver->verify($code, time());
         }
 
         return false;
@@ -188,56 +132,180 @@ class SecondFactor
      *
      * @param string $factor Factor identifier (<method>:<id>)
      *
-     * @return Kolab2FA\Driver\Base
+     * @return \Kolab2FA\Driver\Base
      */
-    protected function get_driver($factor)
+    protected function getDriver($factor)
     {
         list($method) = explode(':', $factor, 2);
 
-        if ($this->drivers[$factor]) {
-            return $this->drivers[$factor];
-        }
+        $config = \config('2fa.' . $method, []);
 
-        $config = \config('2fa.' . $method, array());
+        $driver = \Kolab2FA\Driver\Base::factory($factor, $config);
 
-        // use product name as "issuer"
-        if (empty($config['issuer'])) {
-            $config['issuer'] = \config('app.name');
-        }
+        // configure driver
+        $driver->storage  = $this;
+        $driver->username = $this->user->email;
 
-        try {
-            $driver = \Kolab2FA\Driver\Base::factory($factor, $config);
-
-            // configure driver
-            $driver->storage  = $this->get_storage();
-            $driver->username = $this->user->email;
-
-            return $driver;
-        }
-        catch (\Exception $e) {
-            \Log::error("2-FACTOR driver failure for {$this->user->email}: " . $e->getMessage());
-        }
+        return $driver;
     }
 
     /**
-     * Getter for a storage instance singleton
+     * Helper for seeding a Roundcube account with 2FA setup
+     * for testing.
+     *
+     * @param string $email Email address
      */
-    protected function get_storage($for = null)
+    public static function seed($email)
     {
-        if (!isset($this->storage) || (!empty($for) && $this->storage->username !== $for)) {
-            $config = \config('2fa', array());
+        $config = [
+            'kolab_2fa_blob' => [
+                'totp:8132a46b1f741f88de25f47e' => [
+                    'label' => 'Mobile app (TOTP)',
+                    'created' => 1584573552,
+                    'secret' => 'UAF477LDHZNWVLNA',
+                    'active' => true,
+                ],
+                'dummy:dummy' => [
+                    'active' => true,
+                ],
+            ],
+            'kolab_2fa_factors' => [
+                'totp:8132a46b1f741f88de25f47e',
+                'dummy:dummy',
+            ]
+        ];
 
-            try {
-                $this->storage = new SecondFactorStorage($config);
-                $this->storage->set_username($for);
-//TODO                $this->storage->set_logger(new \Kolab2FA\Log\RcubeLogger());
-            }
-            catch (\Exception $e) {
-                $this->storage = null;
-                \Log::error("2-FACTOR storage failure for {$for}: " . $e->getMessage());
-            }
+        self::dbh()->table('users')->updateOrInsert(
+            ['username' => $email, 'mail_host' => '127.0.0.1'],
+            ['preferences' => serialize($config)]
+        );
+    }
+
+    //******************************************************
+    //      Methods required by Kolab2FA Storage Base
+    //******************************************************
+
+    /**
+     * Initialize the storage driver with the given config options
+     */
+    public function init(array $config)
+    {
+        $this->config = array_merge($this->config, $config);
+    }
+
+    /**
+     * List methods activated for this user
+     */
+    public function enumerate()
+    {
+        if ($factors = $this->getFactors()) {
+            return array_keys(array_filter($factors, function ($prop) {
+                return !empty($prop['active']);
+            }));
         }
 
-        return $this->storage;
+        return [];
+    }
+
+    /**
+     * Read data for the given key
+     */
+    public function read($key)
+    {
+        \Log::debug(__METHOD__ . ' ' . $key);
+
+        if (!isset($this->cache[$key])) {
+            $factors = $this->getFactors();
+            $this->cache[$key] = $factors[$key];
+        }
+
+        return $this->cache[$key];
+    }
+
+    /**
+     * Save data for the given key
+     */
+    public function write($key, $value)
+    {
+        \Log::debug(__METHOD__ . ' ' . @json_encode($value));
+
+        // TODO: Not implemented
+        return false;
+    }
+
+    /**
+     * Remove the data stored for the given key
+     */
+    public function remove($key)
+    {
+        return $this->write($key, null);
+    }
+
+    /**
+     *
+     */
+    protected function getFactors()
+    {
+        $prefs = $this->getPrefs();
+
+        return (array) $prefs[$this->key2property('blob')];
+    }
+
+    /**
+     *
+     */
+    protected function key2property($key)
+    {
+        // map key to configured property name
+        if (is_array($this->config['keymap']) && isset($this->config['keymap'][$key])) {
+            return $this->config['keymap'][$key];
+        }
+
+        // default
+        return 'kolab_2fa_' . $key;
+    }
+
+    /**
+     * Gets user preferences from Roundcube users table
+     */
+    protected function getPrefs()
+    {
+        $user = $this->dbh()->table('users')
+            ->select('preferences')
+            ->where('username', strtolower($this->user->email))
+            ->first();
+
+        return $user ? (array) unserialize($user->preferences) : null;
+    }
+
+    /**
+     * Saves user preferences in Roundcube users table.
+     * This will merge into old preferences
+     */
+    protected function savePrefs($prefs)
+    {
+        $old_prefs = $this->getPrefs();
+
+        if (!is_array($old_prefs)) {
+            return false;
+        }
+
+        $prefs = array_merge($old_prefs, $prefs);
+
+        $this->dbh()->table('users')
+            ->where('username', strtolower($this->user->email))
+            ->update(['preferences' => serialize($prefs)]);
+
+        return true;
+    }
+
+    /**
+     * Init connection to the Roundcube database
+     */
+    protected static function dbh()
+    {
+        \Config::set('database.connections.2fa', ['url' => \config('2fa.dsn')]);
+
+        return DB::connection('2fa');
     }
 }

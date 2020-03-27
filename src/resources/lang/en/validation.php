@@ -117,6 +117,9 @@ return [
     'url' => 'The :attribute format is invalid.',
     'uuid' => 'The :attribute must be a valid UUID.',
 
+
+    '2fareq' => 'Second factor code is required.',
+    '2fainvalid' => 'Second factor code is invalid.',
     'emailinvalid' => 'The specified email address is invalid.',
     'domaininvalid' => 'The specified domain is invalid.',
     'logininvalid' => 'The specified login is invalid.',

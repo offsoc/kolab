@@ -28,6 +28,7 @@ abstract class Base
     public $method;
     public $id;
     public $storage;
+    public $username;
 
     protected $config          = array();
     protected $props           = array();
@@ -104,7 +105,7 @@ abstract class Base
             $this->config = array_merge($this->config, $config);
         }
 
-        if ($config['storage']) {
+        if (!empty($config['storage'])) {
             $this->storage = \Kolab2FA\Storage\Base::factory($config['storage'], $config['storage_config']);
         }
     }
@@ -126,7 +127,7 @@ abstract class Base
         $data = array();
 
         foreach ($this->user_settings as $key => $p) {
-            if ($p['private']) {
+            if (!empty($p['private'])) {
                 continue;
             }
 

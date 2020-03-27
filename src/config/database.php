@@ -90,11 +90,6 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
         ],
-
-        '2fa' => [
-            // 'driver' => 'mysql',
-            'url' => env('DB_2FA'),
-        ],
     ],
 
     /*

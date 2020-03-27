@@ -11,6 +11,7 @@ import {
     faCheck,
     faGlobe,
     faInfoCircle,
+    faSignInAlt,
     faSyncAlt,
     faTrashAlt,
     faUser,
@@ -22,10 +23,11 @@ import {
 // Register only these icons we need
 library.add(
     faCheckSquare,
-    faSquare,
     faCheck,
     faGlobe,
     faInfoCircle,
+    faSignInAlt,
+    faSquare,
     faSyncAlt,
     faTrashAlt,
     faUser,

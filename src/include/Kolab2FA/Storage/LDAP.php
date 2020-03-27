@@ -29,6 +29,7 @@ use \Kolab2FA\Log\Logger;
 class LDAP extends Base
 {
     public $userdn;
+    public $ready;
 
     private $cache = array();
     private $ldapcache = array();

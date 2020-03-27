@@ -41,7 +41,6 @@ abstract class Base
             'ldap' => '\\Kolab2FA\\Storage\\LDAP',
             'roundcube' => '\\Kolab2FA\\Storage\\RcubeUser',
             'rcubeuser' => '\\Kolab2FA\\Storage\\RcubeUser',
-            'hkccp' => '\\Kolab2FA\\Storage\\HKCCP',
         );
 
         $cls = $classmap[strtolower($backend)];
@@ -80,10 +79,10 @@ abstract class Base
     {
         $this->logger = $logger;
 
-        if ($this->config['debug']) {
+        if (!empty($this->config['debug'])) {
             $this->logger->set_level(LOG_DEBUG);
         }
-        else if ($this->config['loglevel']) {
+        else if (isset($this->config['loglevel'])) {
             $this->logger->set_level($this->config['loglevel']);
         }
     }

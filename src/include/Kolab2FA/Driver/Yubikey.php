@@ -32,7 +32,7 @@ class Yubikey extends Base
     /**
      *
      */
-    public function init(array $config)
+    public function init($config)
     {
         parent::init($config);
 
