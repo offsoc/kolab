@@ -53,4 +53,21 @@ class EntitlementObserver
             return false;
         }
     }
+
+    /**
+     * Handle the entitlement "deleted" event.
+     *
+     * @param \App\Entitlement $entitlement The entitlement.
+     *
+     * @return void
+     */
+    public function deleted(Entitlement $entitlement)
+    {
+        // Remove all configured 2FA methods from Roundcube database
+        if ($entitlement->sku->title == '2fa') {
+            // FIXME: Should that be an async job?
+            $sf = new \App\Auth\SecondFactor($entitlement->entitleable);
+            $sf->removeFactors();
+        }
+    }
 }

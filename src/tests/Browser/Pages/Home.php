@@ -38,6 +38,9 @@ class Home extends Page
     {
         return [
             '@app' => '#app',
+            '@email-input' => '#inputEmail',
+            '@password-input' => '#inputPassword',
+            '@second-factor-input' => '#secondfactor',
         ];
     }
 
@@ -54,8 +57,8 @@ class Home extends Page
     public function submitLogon($browser, $username, $password, $wait_for_dashboard = false)
     {
         $browser
-            ->type('#inputEmail', $username)
-            ->type('#inputPassword', $password)
+            ->type('@email-input', $username)
+            ->type('@password-input', $password)
             ->press('form button');
 
         if ($wait_for_dashboard) {

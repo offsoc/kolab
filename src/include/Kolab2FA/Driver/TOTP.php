@@ -98,6 +98,23 @@ class TOTP extends Base
     }
 
     /**
+     * Get current code (for testing)
+     */
+    public function get_code()
+    {
+        // get my secret from the user storage
+        $secret = $this->get('secret');
+
+        if (!strlen($secret)) {
+            return;
+        }
+
+        $this->backend->setLabel($this->username)->setSecret($secret);
+
+        return $this->backend->at(time());
+    }
+
+    /**
      *
      */
     public function get_provisioning_uri()

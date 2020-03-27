@@ -3,6 +3,7 @@
 namespace App\Auth;
 
 use App\Sku;
+use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Kolab2FA\Storage\Base;
@@ -89,25 +90,23 @@ class SecondFactor extends Base
     /**
      * Returns a list of 2nd factor methods configured for the user
      */
-    protected function factors(): ?array
+    public function factors(): array
     {
         // First check if the user has the 2FA SKU
         $sku_2fa = Sku::where('title', '2fa')->first();
 
-        if (!$sku_2fa) {
-            return null;
+        if ($sku_2fa) {
+            $has_2fa = $this->user->entitlements()->where('sku_id', $sku_2fa->id)->first();
+
+            if ($has_2fa) {
+                $factors = (array) $this->enumerate();
+                $factors = array_unique($factors);
+
+                return $factors;
+            }
         }
 
-        $has_2fa = $this->user->entitlements()->where('sku_id', $sku_2fa->id)->first();
-
-        if ($has_2fa) {
-            $factors = (array) $this->enumerate();
-            $factors = array_unique($factors);
-
-            return $factors;
-        }
-
-        return null;
+        return [];
     }
 
     /**
@@ -116,9 +115,9 @@ class SecondFactor extends Base
      * @param string $factor Factor identifier (<method>:<id>)
      * @param string $code   Authentication code
      *
-     * @return bool
+     * @return bool True on successful validation
      */
-    protected function verify($factor, $code)
+    protected function verify($factor, $code): bool
     {
         if ($driver = $this->getDriver($factor)) {
             return $driver->verify($code, time());
@@ -134,7 +133,7 @@ class SecondFactor extends Base
      *
      * @return \Kolab2FA\Driver\Base
      */
-    protected function getDriver($factor)
+    protected function getDriver(string $factor)
     {
         list($method) = explode(':', $factor, 2);
 
@@ -155,7 +154,7 @@ class SecondFactor extends Base
      *
      * @param string $email Email address
      */
-    public static function seed($email)
+    public static function seed(string $email): void
     {
         $config = [
             'kolab_2fa_blob' => [
@@ -180,6 +179,22 @@ class SecondFactor extends Base
             ['preferences' => serialize($config)]
         );
     }
+
+    /**
+     * Helper for generating current TOTP code for a test user
+     *
+     * @param string $email Email address
+     *
+     * @return string Generated code
+     */
+    public static function code(string $email): string
+    {
+        $sf = new self(User::where('email', $email)->first());
+        $driver = $sf->getDriver('totp:8132a46b1f741f88de25f47e');
+
+        return (string) $driver->get_code();
+    }
+
 
     //******************************************************
     //      Methods required by Kolab2FA Storage Base
@@ -244,11 +259,12 @@ class SecondFactor extends Base
     /**
      *
      */
-    protected function getFactors()
+    protected function getFactors(): array
     {
         $prefs = $this->getPrefs();
+        $key = $this->key2property('blob');
 
-        return (array) $prefs[$this->key2property('blob')];
+        return isset($prefs[$key]) ? (array) $prefs[$key] : [];
     }
 
     /**
@@ -302,9 +318,17 @@ class SecondFactor extends Base
     /**
      * Init connection to the Roundcube database
      */
-    protected static function dbh()
+    public static function dbh()
     {
-        \Config::set('database.connections.2fa', ['url' => \config('2fa.dsn')]);
+        $dsn = \config('2fa.dsn');
+
+        if (empty($dsn)) {
+            \Log::warning("2-FACTOR database not configured");
+
+            return DB::connection(\config('database.default'));
+        }
+
+        \Config::set('database.connections.2fa', ['url' => $dsn]);
 
         return DB::connection('2fa');
     }

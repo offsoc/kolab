@@ -5,6 +5,7 @@ namespace Tests;
 use Facebook\WebDriver\WebDriverKeys;
 use PHPUnit\Framework\Assert;
 use Tests\Browser\Components\Error;
+use Tests\Browser\Components\Toast;
 
 /**
  * Laravel Dusk Browser extensions
@@ -42,6 +43,20 @@ class Browser extends \Laravel\Dusk\Browser
                 $browser->assertSeeIn('div.tooltip .tooltip-inner', $content);
             })
             ->click($selector);
+    }
+
+    /**
+     * Assert Toast element content (and close it)
+     */
+    public function assertToast($type, $title, $message)
+    {
+        return $this->withinBody(function ($browser) use ($type, $title, $message) {
+            $browser->with(new Toast($type), function (Browser $browser) use ($title, $message) {
+                $browser->assertToastTitle($title)
+                    ->assertToastMessage($message)
+                        ->closeToast();
+            });
+        });
     }
 
     /**

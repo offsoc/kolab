@@ -255,6 +255,8 @@ class UsersTest extends TestCase
         $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
         $this->assertEquals('bearer', $json['token_type']);
 
+        // TODO: We have browser tests for 2FA but we should probably also test it here
+
         return $json['access_token'];
     }
 
@@ -448,11 +450,13 @@ class UsersTest extends TestCase
         $storage_sku = Sku::where('title', 'storage')->first();
         $groupware_sku = Sku::where('title', 'groupware')->first();
         $mailbox_sku = Sku::where('title', 'mailbox')->first();
+        $secondfactor_sku = Sku::where('title', '2fa')->first();
 
-        $this->assertCount(3, $json['skus']);
+        $this->assertCount(4, $json['skus']);
         $this->assertSame(2, $json['skus'][$storage_sku->id]['count']);
         $this->assertSame(1, $json['skus'][$groupware_sku->id]['count']);
         $this->assertSame(1, $json['skus'][$mailbox_sku->id]['count']);
+        $this->assertSame(1, $json['skus'][$secondfactor_sku->id]['count']);
     }
 
     /**
