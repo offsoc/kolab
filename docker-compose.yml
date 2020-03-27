@@ -1,12 +1,11 @@
-version: '2.1'
+version: '3'
 services:
   kolab:
     build:
       context: ./docker/kolab/
     container_name: kolab
     depends_on:
-      mariadb:
-        condition: service_healthy
+      - mariadb
     extra_hosts:
       - "kolab.mgmt.com:127.0.0.1"
     healthcheck:
@@ -57,8 +56,7 @@ services:
       context: ./docker/worker/
     container_name: kolab-worker
     depends_on:
-      kolab:
-        condition: service_healthy
+      - kolab
     hostname: worker
     image: kolab-worker
     network_mode: host
