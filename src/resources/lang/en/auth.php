@@ -16,4 +16,5 @@ return [
     'failed' => 'Invalid username or password.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
     'logoutsuccess' => 'Successfully logged out.',
+
 ];

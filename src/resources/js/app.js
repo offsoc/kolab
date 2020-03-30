@@ -56,9 +56,10 @@ window.axios.interceptors.response.use(
         return response
     },
     error => {
-        var error_msg
+        let error_msg
+        let status = error.response ? error.response.status : 200
 
-        if (error.response && error.response.status == 422) {
+        if (error.response && status == 422) {
             error_msg = "Form validation error"
 
             $.each(error.response.data.errors || {}, (idx, msg) => {

@@ -38,6 +38,9 @@ class Home extends Page
     {
         return [
             '@app' => '#app',
+            '@email-input' => '#inputEmail',
+            '@password-input' => '#inputPassword',
+            '@second-factor-input' => '#secondfactor',
         ];
     }
 
@@ -53,10 +56,15 @@ class Home extends Page
      */
     public function submitLogon($browser, $username, $password, $wait_for_dashboard = false)
     {
-        $browser
-            ->type('#inputEmail', $username)
-            ->type('#inputPassword', $password)
-            ->press('form button');
+        $browser->type('@email-input', $username)
+            ->type('@password-input', $password);
+
+        if ($username == 'ned@kolab.org') {
+            $code = \App\Auth\SecondFactor::code('ned@kolab.org');
+            $browser->type('@second-factor-input', $code);
+        }
+
+        $browser->press('form button');
 
         if ($wait_for_dashboard) {
             $browser->waitForLocation('/dashboard');

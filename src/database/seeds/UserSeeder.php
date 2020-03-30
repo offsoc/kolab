@@ -1,5 +1,6 @@
 <?php
 
+use App\Auth\SecondFactor;
 use App\Domain;
 use App\Entitlement;
 use App\User;
@@ -110,6 +111,11 @@ class UserSeeder extends Seeder
 
         // Ned is a controller on Jack's wallet
         $john->wallets()->first()->addController($ned);
+
+        // Ned is also our 2FA test user
+        $sku2fa = Sku::firstOrCreate(['title' => '2fa']);
+        $ned->assignSku($sku2fa);
+        SecondFactor::seed('ned@kolab.org');
 
         factory(User::class, 10)->create();
     }

@@ -156,4 +156,47 @@ class LogonTest extends TestCaseDusk
             });
         });
     }
+
+    /**
+     * Test 2-Factor Authentication
+     *
+     * @depends testLogoutByURL
+     */
+    public function test2FA(): void
+    {
+        $this->browse(function (Browser $browser) {
+            // Test missing 2fa code
+            $browser->on(new Home())
+                ->type('@email-input', 'ned@kolab.org')
+                ->type('@password-input', 'simple123')
+                ->press('form button')
+                ->waitFor('@second-factor-input.is-invalid + .invalid-feedback')
+                ->assertSeeIn(
+                    '@second-factor-input.is-invalid + .invalid-feedback',
+                    'Second factor code is required.'
+                )
+                ->assertFocused('@second-factor-input')
+                ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+
+            // Test invalid code
+            $browser->type('@second-factor-input', '123456')
+                ->press('form button')
+                ->waitUntilMissing('@second-factor-input.is-invalid')
+                ->waitFor('@second-factor-input.is-invalid + .invalid-feedback')
+                ->assertSeeIn(
+                    '@second-factor-input.is-invalid + .invalid-feedback',
+                    'Second factor code is invalid.'
+                )
+                ->assertFocused('@second-factor-input')
+                ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+
+            $code = \App\Auth\SecondFactor::code('ned@kolab.org');
+
+            // Test valid (TOTP) code
+            $browser->type('@second-factor-input', $code)
+                ->press('form button')
+                ->waitUntilMissing('@second-factor-input.is-invalid')
+                ->waitForLocation('/dashboard')->on(new Dashboard());
+        });
+    }
 }

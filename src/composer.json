@@ -26,6 +26,7 @@
         "morrislaptop/laravel-queue-clear": "^1.2",
         "silviolleite/laravelpwa": "^1.0",
         "spatie/laravel-translatable": "^4.2",
+        "spomky-labs/otphp": "~4.0.0",
         "swooletw/laravel-swoole": "^2.6",
         "torann/currency": "^1.0",
         "torann/geoip": "^1.0",

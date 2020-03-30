@@ -131,6 +131,12 @@ class UsersController extends Controller
         $credentials = $request->only('email', 'password');
 
         if ($token = $this->guard()->attempt($credentials)) {
+            $sf = new \App\Auth\SecondFactor($this->guard()->user());
+
+            if ($response = $sf->requestHandler($request)) {
+                return $response;
+            }
+
             return $this->respondWithToken($token);
         }
 

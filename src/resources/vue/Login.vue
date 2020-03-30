@@ -1,20 +1,53 @@
 <template>
-    <div class="text-center form-wrapper">
-        <form class="form-signin" @submit.prevent="submitLogin">
-            <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
-
-            <label for="inputEmail" class="sr-only">Email address</label>
-            <input type="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus v-model="email">
-
-            <label for="inputPassword" class="sr-only">Password</label>
-            <input type="password" id="inputPassword" class="form-control" placeholder="Password" required v-model="password">
-
-            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-
-            <br><br><router-link :to="{ name: 'password-reset' }">Forgot password?</router-link>
-        </form>
+    <div class="container d-flex flex-column align-items-center">
+        <div class="card col-sm-8 col-lg-6">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-3">Please sign in</h1>
+                <div class="card-text">
+                    <form class="form-signin" @submit.prevent="submitLogin">
+                        <div class="form-group">
+                            <label for="inputEmail" class="sr-only">Email address</label>
+                            <div class="input-group">
+                                <span class="input-group-prepend">
+                                    <span class="input-group-text"><svg-icon icon="user"></svg-icon></span>
+                                </span>
+                                <input type="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus v-model="email">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputPassword" class="sr-only">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-prepend">
+                                    <span class="input-group-text"><svg-icon icon="lock"></svg-icon></span>
+                                </span>
+                                <input type="password" id="inputPassword" class="form-control" placeholder="Password" required v-model="password">
+                            </div>
+                        </div>
+                        <div class="form-group pt-3">
+                            <label for="secondfactor" class="sr-only">2FA</label>
+                            <div class="input-group">
+                                <span class="input-group-prepend">
+                                    <span class="input-group-text"><svg-icon icon="key"></svg-icon></span>
+                                </span>
+                                <input type="text" id="secondfactor" class="form-control rounded-right" placeholder="Second factor code" v-model="secondFactor">
+                            </div>
+                            <small class="form-text text-muted">Second factor code is optional for users with no 2-Factor Authentication setup.</small>
+                        </div>
+                        <div class="text-center">
+                            <button class="btn btn-primary" type="submit">
+                                <svg-icon icon="sign-in-alt"></svg-icon> Sign in
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="mt-1">
+            <router-link :to="{ name: 'password-reset' }">Forgot password?</router-link>
+        </div>
     </div>
 </template>
+
 
 <script>
     export default {
@@ -22,15 +55,19 @@
             return {
                 email: '',
                 password: '',
+                secondFactor: '',
                 loginError: false
             }
         },
         methods: {
             submitLogin() {
                 this.loginError = false
+                this.$root.clearFormValidation($('form.form-signin'))
+
                 axios.post('/api/auth/login', {
                     email: this.email,
-                    password: this.password
+                    password: this.password,
+                    secondfactor: this.secondFactor
                 }).then(response => {
                     // login user and redirect to dashboard
                     this.$root.loginUser(response.data.access_token)
@@ -41,45 +78,3 @@
         }
     }
 </script>
-
-<style scoped>
-    .form-wrapper {
-        position: absolute;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-    }
-
-    .form-signin {
-        width: 100%;
-        max-width: 330px;
-        padding: 15px;
-        margin: 0 auto;
-    }
-
-    .form-signin .form-control {
-        position: relative;
-        box-sizing: border-box;
-        height: auto;
-        padding: 10px;
-        font-size: 16px;
-    }
-
-    .form-signin .form-control:focus {
-        z-index: 2;
-    }
-
-    .form-signin input[type="email"] {
-        margin-bottom: -1px;
-        border-bottom-right-radius: 0;
-        border-bottom-left-radius: 0;
-    }
-
-    .form-signin input[type="password"] {
-        margin-bottom: 10px;
-        border-top-left-radius: 0;
-        border-top-right-radius: 0;
-    }
-</style>
