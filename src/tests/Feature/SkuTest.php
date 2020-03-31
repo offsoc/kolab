@@ -39,7 +39,7 @@ class SkuTest extends TestCase
 
         $user = $user->assignPackage($package);
 
-        $this->backdateEntitlements($user->fresh()->entitlements, Carbon::now()->subMonths(1));
+        $this->backdateEntitlements($user->fresh()->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
         $wallet->chargeEntitlements();
 

@@ -71,7 +71,7 @@ class BillingTest extends TestCase
     {
         $this->backdateEntitlements(
             $this->wallet->entitlements,
-            Carbon::now()->subMonths(1)->addDays(1)
+            Carbon::now()->subMonthsWithoutOverflow(1)->addDays(1)
         );
 
         $this->assertEquals(0, $this->wallet->expectedCharges());
@@ -82,7 +82,7 @@ class BillingTest extends TestCase
      */
     public function testFullTrial(): void
     {
-        $this->backdateEntitlements($this->wallet->entitlements, Carbon::now()->subMonths(1));
+        $this->backdateEntitlements($this->wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
         $this->assertEquals(999, $this->wallet->expectedCharges());
     }
@@ -94,7 +94,7 @@ class BillingTest extends TestCase
     {
         $this->backdateEntitlements(
             $this->wallet->entitlements,
-            Carbon::now()->subMonths(1)->subDays(1)
+            Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
         );
 
         $this->assertEquals(999, $this->wallet->expectedCharges());
@@ -108,7 +108,7 @@ class BillingTest extends TestCase
     {
         $this->backdateEntitlements(
             $this->wallet->entitlements,
-            Carbon::now()->subMonths(1)->subDays(1)
+            Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
         );
 
         $this->assertEquals(999, $this->wallet->expectedCharges());
@@ -127,7 +127,7 @@ class BillingTest extends TestCase
 
         $this->backdateEntitlements(
             [$entitlement],
-            Carbon::now()->subMonths(1)->subDays(1)
+            Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
         );
 
         $this->assertEquals(1024, $this->wallet->expectedCharges());
@@ -139,7 +139,7 @@ class BillingTest extends TestCase
      */
     public function testAddtStorageLate(): void
     {
-        $this->backdateEntitlements($this->wallet->entitlements, Carbon::now()->subMonths(1));
+        $this->backdateEntitlements($this->wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
         $this->assertEquals(999, $this->wallet->expectedCharges());
 
@@ -163,7 +163,7 @@ class BillingTest extends TestCase
     public function testFifthWeek(): void
     {
         $targetDateA = Carbon::now()->subWeeks(5);
-        $targetDateB = $targetDateA->copy()->addMonths(1);
+        $targetDateB = $targetDateA->copy()->addMonthsWithoutOverflow(1);
 
         $this->backdateEntitlements($this->wallet->entitlements, $targetDateA);
 
@@ -181,7 +181,7 @@ class BillingTest extends TestCase
 
     public function testSecondMonth(): void
     {
-        $this->backdateEntitlements($this->wallet->entitlements, Carbon::now()->subMonths(2));
+        $this->backdateEntitlements($this->wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(2));
 
         $this->assertCount(4, $this->wallet->entitlements);
 
@@ -199,7 +199,7 @@ class BillingTest extends TestCase
             ]
         );
 
-        $this->backdateEntitlements([$entitlement], Carbon::now()->subMonths(1));
+        $this->backdateEntitlements([$entitlement], Carbon::now()->subMonthsWithoutOverflow(1));
 
         $this->assertEquals(2023, $this->wallet->expectedCharges());
     }
@@ -237,7 +237,7 @@ class BillingTest extends TestCase
 
         $wallet_id = $wallet->id;
 
-        $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonths(1));
+        $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
         $this->assertEquals(500, $wallet->expectedCharges());
     }

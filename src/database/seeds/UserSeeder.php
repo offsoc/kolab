@@ -84,8 +84,8 @@ class UserSeeder extends Seeder
         $john->assignPackage($package_kolab, $jack);
 
         foreach ($john->entitlements as $entitlement) {
-            $entitlement->created_at = Carbon::now()->subMonths(1);
-            $entitlement->updated_at = Carbon::now()->subMonths(1);
+            $entitlement->created_at = Carbon::now()->subMonthsWithoutOverflow(1);
+            $entitlement->updated_at = Carbon::now()->subMonthsWithoutOverflow(1);
             $entitlement->save();
         }
 

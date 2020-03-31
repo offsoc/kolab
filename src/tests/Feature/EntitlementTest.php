@@ -66,7 +66,7 @@ class EntitlementTest extends TestCase
         $this->assertCount(2, $sku_mailbox->entitlements()->where('wallet_id', $wallet->id)->get());
         $this->assertCount(9, $wallet->entitlements);
 
-        $this->backdateEntitlements($owner->entitlements, Carbon::now()->subMonths(1));
+        $this->backdateEntitlements($owner->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
         $wallet->chargeEntitlements();
 

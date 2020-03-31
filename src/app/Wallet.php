@@ -68,12 +68,12 @@ class Wallet extends Model
             }
 
             // This entitlement was created, or billed last, less than a month ago.
-            if ($entitlement->updated_at > Carbon::now()->subMonths(1)) {
+            if ($entitlement->updated_at > Carbon::now()->subMonthsWithoutOverflow(1)) {
                 continue;
             }
 
             // created more than a month ago -- was it billed?
-            if ($entitlement->updated_at <= Carbon::now()->subMonths(1)) {
+            if ($entitlement->updated_at <= Carbon::now()->subMonthsWithoutOverflow(1)) {
                 $diff = $entitlement->updated_at->diffInMonths(Carbon::now());
 
                 $charges += $entitlement->cost * $diff;
@@ -83,7 +83,7 @@ class Wallet extends Model
                     continue;
                 }
 
-                $entitlement->updated_at = $entitlement->updated_at->copy()->addMonths($diff);
+                $entitlement->updated_at = $entitlement->updated_at->copy()->addMonthsWithoutOverflow($diff);
                 $entitlement->save();
 
                 $this->debit($entitlement->cost * $diff);
