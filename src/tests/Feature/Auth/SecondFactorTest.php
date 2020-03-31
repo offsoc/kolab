@@ -46,9 +46,9 @@ class SecondFactorTest extends TestCase
         $sf = new SecondFactor($user);
         $factors = $sf->factors();
 
-        $this->assertCount(2, $factors);
+        $this->assertCount(1, $factors);
         $this->assertSame('totp:8132a46b1f741f88de25f47e', $factors[0]);
-        $this->assertSame('dummy:dummy', $factors[1]);
+        // $this->assertSame('dummy:dummy', $factors[1]);
 
         // Delete the entitlement, expect all configured 2FA methods in Roundcube removed
         $entitlement->delete();
