@@ -26,5 +26,6 @@ pushd /root/utils/
 ./18-adjust-kolab-conf.sh
 ./19-turn-on-vlv-in-roundcube.sh
 ./20-add-alias-attribute-index.sh
+./21-adjust-postfix-config.sh
 
 touch /tmp/kolab-init.done

@@ -54,6 +54,12 @@ class EntitlementObserver
         }
     }
 
+    public function created(Entitlement $entitlement)
+    {
+        $entitlement->entitleable->updated_at = Carbon::now();
+        $entitlement->entitleable->save();
+    }
+
     /**
      * Handle the entitlement "deleted" event.
      *
@@ -69,5 +75,8 @@ class EntitlementObserver
             $sf = new \App\Auth\SecondFactor($entitlement->entitleable);
             $sf->removeFactors();
         }
+
+        $entitlement->entitleable->updated_at = Carbon::now();
+        $entitlement->entitleable->save();
     }
 }

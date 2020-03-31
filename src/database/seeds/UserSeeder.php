@@ -57,6 +57,7 @@ class UserSeeder extends Seeder
 
         $package_domain = \App\Package::where('title', 'domain-hosting')->first();
         $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $package_lite = \App\Package::where('title', 'lite')->first();
 
         $domain->assignPackage($package_domain, $john);
         $john->assignPackage($package_kolab);
@@ -109,6 +110,8 @@ class UserSeeder extends Seeder
 
         $john->assignPackage($package_kolab, $ned);
 
+        $ned->assignSku(\App\Sku::where('title', 'activesync')->first(), 1);
+
         // Ned is a controller on Jack's wallet
         $john->wallets()->first()->addController($ned);
 
@@ -116,6 +119,17 @@ class UserSeeder extends Seeder
         $sku2fa = Sku::firstOrCreate(['title' => '2fa']);
         $ned->assignSku($sku2fa);
         SecondFactor::seed('ned@kolab.org');
+
+        $joe = User::create(
+            [
+                'name' => 'Joe Sixpack',
+                'email' => 'joe@kolab.org',
+                'password' => 'simple123',
+                'email_verified_at' => now()
+            ]
+        );
+
+        $john->assignPackage($package_lite, $joe);
 
         factory(User::class, 10)->create();
     }

@@ -53,6 +53,18 @@
 ) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
 
 (
+    for role in "2fa-user" "activesync-user" "imap-user"; do
+        echo "cn=${role},${hosted_domain_rootdn}"
+        echo "cn: ${role}"
+        echo "description: ${role} role"
+        echo "objectclass: top"
+        echo "objectclass: ldapsubentry"
+        echo "objectclass: nsmanagedroledefinition"
+        echo "objectclass: nsroledefinition"
+        echo "objectclass: nssimpleroledefinition"
+        echo ""
+    done
+
     echo "dn: ou=Groups,${hosted_domain_rootdn}"
     echo "ou: Groups"
     echo "objectClass: top"
