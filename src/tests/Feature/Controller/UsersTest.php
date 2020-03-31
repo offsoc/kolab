@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Discount;
 use App\Domain;
 use App\Http\Controllers\API\UsersController;
 use App\Package;
 use App\Sku;
 use App\User;
+use App\Wallet;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -26,6 +28,11 @@ class UsersTest extends TestCase
         $this->deleteTestUser('UserEntitlement2A@UserEntitlement.com');
         $this->deleteTestUser('john2.doe2@kolab.org');
         $this->deleteTestDomain('userscontroller.com');
+
+        $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
+        $wallet->discount()->dissociate();
+        $wallet->save();
     }
 
     /**
@@ -39,6 +46,11 @@ class UsersTest extends TestCase
         $this->deleteTestUser('UserEntitlement2A@UserEntitlement.com');
         $this->deleteTestUser('john2.doe2@kolab.org');
         $this->deleteTestDomain('userscontroller.com');
+
+        $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
+        $wallet->discount()->dissociate();
+        $wallet->save();
 
         parent::tearDown();
     }
@@ -183,6 +195,7 @@ class UsersTest extends TestCase
         $response->assertStatus(401);
 
         $jack = $this->getTestUser('jack@kolab.org');
+        $joe = $this->getTestUser('joe@kolab.org');
         $john = $this->getTestUser('john@kolab.org');
         $ned = $this->getTestUser('ned@kolab.org');
 
@@ -198,10 +211,11 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(3, $json);
+        $this->assertCount(4, $json);
         $this->assertSame($jack->email, $json[0]['email']);
-        $this->assertSame($john->email, $json[1]['email']);
-        $this->assertSame($ned->email, $json[2]['email']);
+        $this->assertSame($joe->email, $json[1]['email']);
+        $this->assertSame($john->email, $json[2]['email']);
+        $this->assertSame($ned->email, $json[3]['email']);
         // Values below are tested by Unit tests
         $this->assertArrayHasKey('isDeleted', $json[0]);
         $this->assertArrayHasKey('isSuspended', $json[0]);
@@ -214,10 +228,11 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(3, $json);
+        $this->assertCount(4, $json);
         $this->assertSame($jack->email, $json[0]['email']);
-        $this->assertSame($john->email, $json[1]['email']);
-        $this->assertSame($ned->email, $json[2]['email']);
+        $this->assertSame($joe->email, $json[1]['email']);
+        $this->assertSame($john->email, $json[2]['email']);
+        $this->assertSame($ned->email, $json[3]['email']);
     }
 
     /**
@@ -382,6 +397,7 @@ class UsersTest extends TestCase
         $this->assertCount(0, $result['accounts']);
         $this->assertCount(1, $result['wallets']);
         $this->assertSame($wallet->id, $result['wallet']['id']);
+        $this->assertArrayNotHasKey('discount', $result['wallet']);
 
         $ned = $this->getTestUser('ned@kolab.org');
         $ned_wallet = $ned->wallets()->first();
@@ -396,6 +412,22 @@ class UsersTest extends TestCase
         $this->assertSame($wallet->id, $result['wallet']['id']);
         $this->assertSame($wallet->id, $result['accounts'][0]['id']);
         $this->assertSame($ned_wallet->id, $result['wallets'][0]['id']);
+
+        // Test discount in a response
+        $discount = Discount::where('code', 'TEST')->first();
+        $wallet->discount()->associate($discount);
+        $wallet->save();
+        $user->refresh();
+
+        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
+
+        $this->assertEquals($user->id, $result['id']);
+        $this->assertSame($discount->id, $result['wallet']['discount_id']);
+        $this->assertSame($discount->discount, $result['wallet']['discount']);
+        $this->assertSame($discount->description, $result['wallet']['discount_description']);
+        $this->assertSame($discount->id, $result['wallets'][0]['discount_id']);
+        $this->assertSame($discount->discount, $result['wallets'][0]['discount']);
+        $this->assertSame($discount->description, $result['wallets'][0]['discount_description']);
     }
 
     /**
@@ -452,7 +484,7 @@ class UsersTest extends TestCase
         $mailbox_sku = Sku::where('title', 'mailbox')->first();
         $secondfactor_sku = Sku::where('title', '2fa')->first();
 
-        $this->assertCount(4, $json['skus']);
+        $this->assertCount(5, $json['skus']);
         $this->assertSame(2, $json['skus'][$storage_sku->id]['count']);
         $this->assertSame(1, $json['skus'][$groupware_sku->id]['count']);
         $this->assertSame(1, $json['skus'][$mailbox_sku->id]['count']);

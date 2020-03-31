@@ -204,7 +204,7 @@ class BillingTest extends TestCase
         $this->assertEquals(2023, $this->wallet->expectedCharges());
     }
 
-    public function testWithDiscount(): void
+    public function testWithDiscountRate(): void
     {
         $package = \App\Package::create(
             [
@@ -240,5 +240,20 @@ class BillingTest extends TestCase
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
         $this->assertEquals(500, $wallet->expectedCharges());
+    }
+
+    /**
+     * Test cost calculation with a wallet discount
+     */
+    public function testWithWalletDiscount(): void
+    {
+        $discount = \App\Discount::where('code', 'TEST')->first();
+
+        $wallet = $this->user->wallets()->first();
+        $wallet->discount()->associate($discount);
+
+        $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
+
+        $this->assertEquals(898, $wallet->expectedCharges());
     }
 }

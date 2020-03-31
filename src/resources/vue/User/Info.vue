@@ -69,7 +69,7 @@
                                                 {{ pkg.name }}
                                             </td>
                                             <td class="price text-nowrap">
-                                                {{ $root.price(pkg.cost) + '/month' }}
+                                                {{ price(pkg.cost) }}
                                             </td>
                                             <td class="buttons">
                                                 <button v-if="pkg.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="pkg.description">
@@ -80,6 +80,10 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                                <small v-if="discount > 0" class="hint">
+                                    <hr class="m-0">
+                                    &sup1; applied discount: {{ discount }}% - {{ discount_description }}
+                                </small>
                             </div>
                         </div>
                         <div v-if="user_id !== 'new'" id="user-skus" class="form-group row">
@@ -117,7 +121,7 @@
                                                 </div>
                                             </td>
                                             <td class="price text-nowrap">
-                                                {{ $root.price(sku.cost) + '/month' }}
+                                                {{ price(sku.cost) }}
                                             </td>
                                             <td class="buttons">
                                                 <button v-if="sku.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="sku.description">
@@ -128,6 +132,10 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                                <small v-if="discount > 0" class="hint">
+                                    <hr class="m-0">
+                                    &sup1; applied discount: {{ discount }}% - {{ discount_description }}
+                                </small>
                             </div>
                         </div>
                         <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
@@ -142,6 +150,8 @@
     export default {
         data() {
             return {
+                discount: 0,
+                discount_description: '',
                 user_id: null,
                 user: {},
                 packages: [],
@@ -151,6 +161,17 @@
         },
         created() {
             this.user_id = this.$route.params.user
+
+            let wallet = this.$store.state.authInfo.accounts[0]
+
+            if (!wallet) {
+                wallet = this.$store.state.authInfo.wallets[0]
+            }
+
+            if (wallet && wallet.discount) {
+                this.discount = wallet.discount
+                this.discount_description = wallet.discount_description
+            }
 
             if (this.user_id === 'new') {
                 // do nothing (for now)
@@ -167,6 +188,8 @@
                         this.user = response.data
                         this.user.first_name = response.data.settings.first_name
                         this.user.last_name = response.data.settings.last_name
+                        this.discount = this.user.wallet.discount
+                        this.discount_description = this.user.wallet.discount_description
                         $('#aliases').val(response.data.aliases.join("\n"))
                         listinput('#aliases')
 
@@ -310,12 +333,13 @@
                 let record = input.parents('tr').first()
                 let sku_id = record.find('input[type=checkbox]').val()
                 let sku = this.findSku(sku_id)
+                let cost = sku.cost
 
                 // Update the label
                 input.prev().text(value + ' ' + sku.range.unit)
 
                 // Update the price
-                record.find('.price').text(this.$root.price(sku.cost * (value - sku.units_free)) + '/month')
+                record.find('.price').text(this.price(cost, value - sku.units_free))
             },
             findSku(id) {
                 for (let i = 0; i < this.skus.length; i++) {
@@ -323,6 +347,16 @@
                         return this.skus[i];
                     }
                 }
+            },
+            price(cost, units = 1) {
+                let index = ''
+
+                if (this.discount) {
+                    cost = Math.floor(cost * ((100 - this.discount) / 100))
+                    index = '\u00B9'
+                }
+
+                return this.$root.price(cost * units) + '/month' + index
             }
         }
     }

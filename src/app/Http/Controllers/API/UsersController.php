@@ -481,10 +481,22 @@ class UsersController extends Controller
 
         $response = array_merge($response, self::userStatuses($user));
 
+        // Add discount info to wallet object output
+        $map_func = function ($wallet) {
+            $result = $wallet->toArray();
+
+            if ($wallet->discount) {
+                $result['discount'] = $wallet->discount->discount;
+                $result['discount_description'] = $wallet->discount->description;
+            }
+
+            return $result;
+        };
+
         // Information about wallets and accounts for access checks
-        $response['wallets'] = $user->wallets->toArray();
-        $response['accounts'] = $user->accounts->toArray();
-        $response['wallet'] = $user->wallet()->toArray();
+        $response['wallets'] = $user->wallets->map($map_func)->toArray();
+        $response['accounts'] = $user->accounts->map($map_func)->toArray();
+        $response['wallet'] = $map_func($user->wallet());
 
         return $response;
     }

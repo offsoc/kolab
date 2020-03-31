@@ -340,20 +340,23 @@ class UserTest extends TestCase
      */
     public function testUsers(): void
     {
-        $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
+        $joe = $this->getTestUser('joe@kolab.org');
+        $john = $this->getTestUser('john@kolab.org');
         $ned = $this->getTestUser('ned@kolab.org');
         $wallet = $john->wallets()->first();
 
         $users = $john->users()->orderBy('email')->get();
 
-        $this->assertCount(3, $users);
+        $this->assertCount(4, $users);
         $this->assertEquals($jack->id, $users[0]->id);
-        $this->assertEquals($john->id, $users[1]->id);
-        $this->assertEquals($ned->id, $users[2]->id);
+        $this->assertEquals($joe->id, $users[1]->id);
+        $this->assertEquals($john->id, $users[2]->id);
+        $this->assertEquals($ned->id, $users[3]->id);
         $this->assertSame($wallet->id, $users[0]->wallet_id);
         $this->assertSame($wallet->id, $users[1]->wallet_id);
         $this->assertSame($wallet->id, $users[2]->wallet_id);
+        $this->assertSame($wallet->id, $users[3]->wallet_id);
 
         $users = $jack->users()->orderBy('email')->get();
 
@@ -361,7 +364,7 @@ class UserTest extends TestCase
 
         $users = $ned->users()->orderBy('email')->get();
 
-        $this->assertCount(3, $users);
+        $this->assertCount(4, $users);
     }
 
     public function testWallets(): void

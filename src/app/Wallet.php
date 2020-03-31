@@ -33,7 +33,7 @@ class Wallet extends Model
     ];
 
     protected $nullable = [
-        'description'
+        'description',
     ];
 
     protected $casts = [
@@ -59,6 +59,8 @@ class Wallet extends Model
     public function chargeEntitlements($apply = true)
     {
         $charges = 0;
+        $discount = $this->discount ? $this->discount->discount : 0;
+        $discount = (100 - $discount) / 100;
 
         foreach ($this->entitlements()->get()->fresh() as $entitlement) {
             // This entitlement has been created less than or equal to 14 days ago (this is at
@@ -76,7 +78,9 @@ class Wallet extends Model
             if ($entitlement->updated_at <= Carbon::now()->subMonthsWithoutOverflow(1)) {
                 $diff = $entitlement->updated_at->diffInMonths(Carbon::now());
 
-                $charges += $entitlement->cost * $diff;
+                $cost = (int) ($entitlement->cost * $discount * $diff);
+
+                $charges += $cost;
 
                 // if we're in dry-run, you know...
                 if (!$apply) {
@@ -86,11 +90,23 @@ class Wallet extends Model
                 $entitlement->updated_at = $entitlement->updated_at->copy()->addMonthsWithoutOverflow($diff);
                 $entitlement->save();
 
-                $this->debit($entitlement->cost * $diff);
+                // TODO: This would be better done out of the loop (debit() will call save()),
+                //       but then, maybe we should use a db transaction
+                $this->debit($cost);
             }
         }
 
         return $charges;
+    }
+
+    /**
+     * The discount assigned to the wallet.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function discount()
+    {
+        return $this->belongsTo('App\Discount', 'discount_id', 'id');
     }
 
     /**

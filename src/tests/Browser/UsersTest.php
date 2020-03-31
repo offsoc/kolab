@@ -2,6 +2,7 @@
 
 namespace Tests\Browser;
 
+use App\Discount;
 use App\Entitlement;
 use App\Sku;
 use App\User;
@@ -40,6 +41,10 @@ class UsersTest extends TestCaseDusk
             ->where('alias', 'john.test@kolab.org')->delete();
 
         Entitlement::where('entitleable_id', $john->id)->whereIn('cost', [25, 100])->delete();
+
+        $wallet = $john->wallets()->first();
+        $wallet->discount()->dissociate();
+        $wallet->save();
     }
 
     /**
@@ -55,6 +60,10 @@ class UsersTest extends TestCaseDusk
             ->where('alias', 'john.test@kolab.org')->delete();
 
         Entitlement::where('entitleable_id', $john->id)->whereIn('cost', [25, 100])->delete();
+
+        $wallet = $john->wallets()->first();
+        $wallet->discount()->dissociate();
+        $wallet->save();
 
         parent::tearDown();
     }
@@ -97,7 +106,7 @@ class UsersTest extends TestCaseDusk
                 ->click('@links .link-users')
                 ->on(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 3)
+                    $browser->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
                         ->assertSeeIn('tbody tr:nth-child(2) a', 'john@kolab.org')
                         ->assertSeeIn('tbody tr:nth-child(3) a', 'ned@kolab.org')
@@ -270,6 +279,7 @@ class UsersTest extends TestCaseDusk
                             )
                             ->click('tbody tr:nth-child(5) td.selection input');
                     })
+                    ->assertMissing('@skus table + .hint')
                     ->click('button[type=submit]');
             })
             ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
@@ -348,11 +358,14 @@ class UsersTest extends TestCaseDusk
                             $browser->assertElementsCount('tbody tr', 2)
                                 ->assertSeeIn('tbody tr:nth-child(1)', 'Groupware Account')
                                 ->assertSeeIn('tbody tr:nth-child(2)', 'Lite Account')
+                                ->assertSeeIn('tbody tr:nth-child(1) .price', '9,99 CHF/month')
+                                ->assertSeeIn('tbody tr:nth-child(2) .price', '4,44 CHF/month')
                                 ->assertChecked('tbody tr:nth-child(1) input')
                                 ->click('tbody tr:nth-child(2) input')
                                 ->assertNotChecked('tbody tr:nth-child(1) input')
                                 ->assertChecked('tbody tr:nth-child(2) input');
                         })
+                        ->assertMissing('@packages table + .hint')
                         ->assertSeeIn('button[type=submit]', 'Submit');
 
                     // Test browser-side required fields and error handling
@@ -509,5 +522,64 @@ class UsersTest extends TestCaseDusk
         });
 
         // TODO: Test what happens with the logged in user session after he's been deleted by another user
+    }
+
+    /**
+     * Test discounted sku/package prices in the UI
+     */
+    public function testDiscountedPrices(): void
+    {
+        // Add 10% discount
+        $discount = Discount::where('code', 'TEST')->first();
+        $john = User::where('email', 'john@kolab.org')->first();
+        $wallet = $john->wallet();
+        $wallet->discount()->associate($discount);
+        $wallet->save();
+
+        // SKUs on user edit page
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/logout')
+                ->on(new Home())
+                ->submitLogon('john@kolab.org', 'simple123', true)
+                ->visit(new UserList())
+                ->click('@table tr:nth-child(2) a')
+                ->on(new UserInfo())
+                ->with('@form', function (Browser $browser) {
+                    $browser->whenAvailable('@skus', function (Browser $browser) {
+                        $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
+                        $browser->assertElementsCount('tbody tr', 5)
+                            // Mailbox SKU
+                            ->assertSeeIn('tbody tr:nth-child(1) td.price', '3,99 CHF/month¹')
+                            // Storage SKU
+                            ->assertSeeIn('tr:nth-child(2) td.price', '0,00 CHF/month¹')
+                            ->with($quota_input, function (Browser $browser) {
+                                $browser->setQuotaValue(100);
+                            })
+                            ->assertSeeIn('tr:nth-child(2) td.price', '21,56 CHF/month¹')
+                            // groupware SKU
+                            ->assertSeeIn('tbody tr:nth-child(3) td.price', '4,99 CHF/month¹')
+                            // 2FA SKU
+                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '0,00 CHF/month¹')
+                            // ActiveSync SKU
+                            ->assertSeeIn('tbody tr:nth-child(5) td.price', '0,90 CHF/month¹');
+                    })
+                    ->assertSeeIn('@skus table + .hint', '¹ applied discount: 10% - Test voucher');
+                });
+        });
+
+        // Packages on new user page
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new UserList())
+                ->click('button.create-user')
+                ->on(new UserInfo())
+                ->with('@form', function (Browser $browser) {
+                    $browser->whenAvailable('@packages', function (Browser $browser) {
+                        $browser->assertElementsCount('tbody tr', 2)
+                            ->assertSeeIn('tbody tr:nth-child(1) .price', '8,99 CHF/month¹') // Groupware
+                            ->assertSeeIn('tbody tr:nth-child(2) .price', '3,99 CHF/month¹'); // Lite
+                    })
+                    ->assertSeeIn('@packages table + .hint', '¹ applied discount: 10% - Test voucher');
+                });
+        });
     }
 }
