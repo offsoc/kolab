@@ -82,18 +82,16 @@ window.axios.interceptors.response.use(
 
                         let feedback = $('<div class="invalid-feedback">').text(msg_text)
 
-                        if (input.is('.listinput')) {
+                        if (input.is('.list-input')) {
                             // List input widget
-                            let list = input.next('.listinput-widget')
-
-                            list.children(':not(:first-child)').each((index, element) => {
+                            input.children(':not(:first-child)').each((index, element) => {
                                 if (msg[index]) {
                                     $(element).find('input').addClass('is-invalid')
                                 }
                             })
 
-                            list.addClass('is-invalid').next('.invalid-feedback').remove()
-                            list.after(feedback)
+                            input.addClass('is-invalid').next('.invalid-feedback').remove()
+                            input.after(feedback)
                         }
                         else {
                             // Standard form element

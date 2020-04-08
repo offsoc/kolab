@@ -22,7 +22,7 @@ class ListInput extends BaseComponent
      */
     public function selector()
     {
-        return $this->selector . ' + .listinput-widget';
+        return $this->selector;
     }
 
     /**
@@ -34,13 +34,9 @@ class ListInput extends BaseComponent
      */
     public function assert($browser)
     {
-//        $list = explode("\n", $browser->value($this->selector));
-
-        $browser->waitFor($this->selector())
-            ->assertMissing($this->selector)
+        $browser->assertVisible($this->selector())
             ->assertVisible('@input')
             ->assertVisible('@add-btn');
-//            ->assertListInputValue($list);
     }
 
     /**

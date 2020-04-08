@@ -31,9 +31,9 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="aliases" class="col-sm-4 col-form-label">Email aliases</label>
+                            <label for="aliases-input" class="col-sm-4 col-form-label">Email aliases</label>
                             <div class="col-sm-8">
-                                <textarea class="form-control listinput" id="aliases"></textarea>
+                                <list-input id="aliases" v-bind:list="user.aliases"></list-input>
                             </div>
                         </div>
                         <div class="form-group row">
@@ -147,7 +147,12 @@
 </template>
 
 <script>
+    import ListInput from '../Widgets/ListInput'
+
     export default {
+        components: {
+            ListInput,
+        },
         data() {
             return {
                 discount: 0,
@@ -190,8 +195,6 @@
                         this.user.last_name = response.data.settings.last_name
                         this.discount = this.user.wallet.discount
                         this.discount_description = this.user.wallet.discount_description
-                        $('#aliases').val(response.data.aliases.join("\n"))
-                        listinput('#aliases')
 
                         axios.get('/api/v4/skus')
                             .then(response => {
@@ -220,17 +223,11 @@
             }
         },
         mounted() {
-            if (this.user_id === 'new') {
-                listinput('#aliases')
-            }
-
             $('#first_name').focus()
         },
         methods: {
             submit() {
                 this.$root.clearFormValidation($('#user-info form'))
-
-                this.user.aliases = $('#aliases').val().split("\n")
 
                 let method = 'post'
                 let location = '/api/v4/users'
@@ -360,76 +357,4 @@
             }
         }
     }
-
-    // List widget
-    // TODO: move it to a separate component file when needed
-    function listinput(elem)
-    {
-        elem = $(elem).addClass('listinput');
-
-        let widget = $('<div class="listinput-widget">')
-        let main_row = $('<div class="input-group">')
-        let wrap = $('<div class="input-group-append">')
-        let input = $('<input type="text" class="form-control main-input">')
-        let add_btn = $('<a href="#" class="btn btn-outline-secondary">').text('Add')
-
-        let update = () => {
-            let value = []
-
-            widget.find('input:not(.main-input)').each((index, input) => {
-                if (input.value) {
-                    value.push(input.value)
-                }
-            })
-
-            elem.val(value.join("\n"))
-        }
-
-        let add_func = (value) => {
-            let row = $('<div class="input-group">')
-            let rinput = $('<input type="text" class="form-control">').val(value)
-            let rwrap = $('<div class="input-group-append">')
-            let del_btn = $('<a href="#" class="btn btn-outline-secondary">')
-                .text('Remove')
-                .on('click', e => {
-                    row.remove()
-                    input.focus()
-                    update()
-                })
-
-            widget.append(row.append(rinput).append(rwrap.append(del_btn)))
-        }
-
-        // Create the widget and add to DOM
-        widget.append(main_row.append(input).append(wrap.append(add_btn)))
-            .insertAfter(elem)
-
-        // Add rows for every line in the original textarea
-        let value = $.trim(elem.val())
-        if (value.length) {
-            value.split("\n").forEach(add_func)
-        }
-
-        // Click handler on the Add button
-        add_btn.on('click', e => {
-            let value = input.val()
-
-            if (!value) {
-                return;
-            }
-
-            input.val('').focus();
-            add_func(value)
-            update()
-        })
-
-        // Enter key handler on main input
-        input.on('keydown', function(e) {
-            if (e.which == 13 && this.value) {
-                add_btn.click()
-                return false
-            }
-        })
-    }
-
 </script>

@@ -79,11 +79,7 @@ pre {
     font-weight: bold;
 }
 
-.listinput {
-    display: none;
-}
-
-.listinput-widget {
+.list-input {
     & > div {
         &:not(:last-child) {
             margin-bottom: -1px;
@@ -102,6 +98,10 @@ pre {
                 border-top-left-radius: 0;
             }
         }
+    }
+
+    input.is-invalid {
+        z-index: 2;
     }
 }
 

@@ -142,7 +142,7 @@ class UsersTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(4) input[type=text]', 'john@kolab.org')
                         ->assertDisabled('div.row:nth-child(4) input[type=text]')
                         ->assertSeeIn('div.row:nth-child(5) label', 'Email aliases')
-                        ->assertVisible('div.row:nth-child(5) .listinput-widget')
+                        ->assertVisible('div.row:nth-child(5) .list-input')
                         ->with(new ListInput('#aliases'), function (Browser $browser) {
                             $browser->assertListInputValue(['john.doe@kolab.org'])
                                 ->assertValue('@input', '');
@@ -343,7 +343,7 @@ class UsersTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(3) input[type=text]', '')
                         ->assertEnabled('div.row:nth-child(3) input[type=text]')
                         ->assertSeeIn('div.row:nth-child(4) label', 'Email aliases')
-                        ->assertVisible('div.row:nth-child(4) .listinput-widget')
+                        ->assertVisible('div.row:nth-child(4) .list-input')
                         ->with(new ListInput('#aliases'), function (Browser $browser) {
                             $browser->assertListInputValue([])
                                 ->assertValue('@input', '');
