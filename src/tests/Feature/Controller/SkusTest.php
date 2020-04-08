@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\SkusController;
+use App\Http\Controllers\API\V4\SkusController;
 use App\Sku;
 use Tests\TestCase;
 

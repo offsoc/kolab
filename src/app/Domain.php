@@ -350,13 +350,22 @@ class Domain extends Model
             return true;
         }
 
-        $record = \dns_get_record($this->namespace, DNS_ANY);
+        $records = \dns_get_record($this->namespace, DNS_ANY);
 
-        if ($record === false) {
+        if ($records === false) {
             throw new \Exception("Failed to get DNS record for {$this->namespace}");
         }
 
-        if (!empty($record)) {
+        // It may happen that result contains other domains depending on the host
+        // DNS setup
+        $hosts = array_map(
+            function ($record) {
+                return $record['host'];
+            },
+            $records
+        );
+
+        if (in_array($this->namespace, $hosts)) {
             $this->status |= Domain::STATUS_VERIFIED;
             $this->save();
 

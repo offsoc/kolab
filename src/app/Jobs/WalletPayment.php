@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Wallet;
-use App\Http\Controllers\API\PaymentsController;
+use App\Http\Controllers\API\V4\PaymentsController;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

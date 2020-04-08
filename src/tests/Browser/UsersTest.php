@@ -108,11 +108,13 @@ class UsersTest extends TestCaseDusk
                 ->whenAvailable('@table', function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
-                        ->assertSeeIn('tbody tr:nth-child(2) a', 'john@kolab.org')
-                        ->assertSeeIn('tbody tr:nth-child(3) a', 'ned@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(2) a', 'joe@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(3) a', 'john@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(4) a', 'ned@kolab.org')
                         ->assertVisible('tbody tr:nth-child(1) button.button-delete')
                         ->assertVisible('tbody tr:nth-child(2) button.button-delete')
-                        ->assertVisible('tbody tr:nth-child(3) button.button-delete');
+                        ->assertVisible('tbody tr:nth-child(3) button.button-delete')
+                        ->assertVisible('tbody tr:nth-child(4) button.button-delete');
                 });
         });
     }
@@ -126,7 +128,7 @@ class UsersTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->on(new UserList())
-                ->click('@table tr:nth-child(2) a')
+                ->click('@table tr:nth-child(3) a')
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'User account')
                 ->with('@form', function (Browser $browser) {
@@ -427,8 +429,8 @@ class UsersTest extends TestCaseDusk
             ->waitForLocation('/users')
             ->on(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 4)
-                        ->assertSeeIn('tbody tr:nth-child(3) a', 'julia.roberts@kolab.org');
+                    $browser->assertElementsCount('tbody tr', 5)
+                        ->assertSeeIn('tbody tr:nth-child(4) a', 'julia.roberts@kolab.org');
                 });
 
             $julia = User::where('email', 'julia.roberts@kolab.org')->first();
@@ -455,9 +457,9 @@ class UsersTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 4)
-                        ->assertSeeIn('tbody tr:nth-child(3) a', 'julia.roberts@kolab.org')
-                        ->click('tbody tr:nth-child(3) button.button-delete');
+                    $browser->assertElementsCount('tbody tr', 5)
+                        ->assertSeeIn('tbody tr:nth-child(4) a', 'julia.roberts@kolab.org')
+                        ->click('tbody tr:nth-child(4) button.button-delete');
                 })
                 ->with(new Dialog('#delete-warning'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Delete julia.roberts@kolab.org')
@@ -467,7 +469,7 @@ class UsersTest extends TestCaseDusk
                         ->click('@button-cancel');
                 })
                 ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->click('tbody tr:nth-child(3) button.button-delete');
+                    $browser->click('tbody tr:nth-child(4) button.button-delete');
                 })
                 ->with(new Dialog('#delete-warning'), function (Browser $browser) {
                     $browser->click('@button-action');
@@ -478,10 +480,11 @@ class UsersTest extends TestCaseDusk
                         ->closeToast();
                 })
                 ->with('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 3)
+                    $browser->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
-                        ->assertSeeIn('tbody tr:nth-child(2) a', 'john@kolab.org')
-                        ->assertSeeIn('tbody tr:nth-child(3) a', 'ned@kolab.org');
+                        ->assertSeeIn('tbody tr:nth-child(2) a', 'joe@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(3) a', 'john@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(4) a', 'ned@kolab.org');
                 });
 
             $julia = User::where('email', 'julia.roberts@kolab.org')->first();
@@ -490,7 +493,7 @@ class UsersTest extends TestCaseDusk
             // Test clicking Delete on the controller record redirects to /profile/delete
             $browser
                 ->with('@table', function (Browser $browser) {
-                    $browser->click('tbody tr:nth-child(2) button.button-delete');
+                    $browser->click('tbody tr:nth-child(3) button.button-delete');
                 })
                 ->waitForLocation('/profile/delete');
         });
@@ -514,8 +517,8 @@ class UsersTest extends TestCaseDusk
                 ->submitLogon('ned@kolab.org', 'simple123', true)
                 ->visit(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 3)
-                        ->assertElementsCount('tbody button.button-delete', 3);
+                    $browser->assertElementsCount('tbody tr', 4)
+                        ->assertElementsCount('tbody button.button-delete', 4);
                 });
 
                 // TODO: Test the delete action in details

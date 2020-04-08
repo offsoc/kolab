@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\API\V4;
 
 use App\Domain;
 use App\Http\Controllers\Controller;

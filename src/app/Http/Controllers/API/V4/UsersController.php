@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
 use App\Domain;
@@ -16,36 +16,6 @@ use Illuminate\Support\Str;
 
 class UsersController extends Controller
 {
-    /**
-     * Create a new API\UsersController instance.
-     *
-     * Ensures that the correct authentication middleware is applied except for /login
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('auth:api', ['except' => ['login']]);
-    }
-
-    /**
-     * Helper method for other controllers with user auto-logon
-     * functionality
-     *
-     * @param \App\User $user User model object
-     */
-    public static function logonResponse(User $user)
-    {
-        $token = auth()->login($user);
-
-        return response()->json([
-                'status' => 'success',
-                'access_token' => $token,
-                'token_type' => 'bearer',
-                'expires_in' => Auth::guard()->factory()->getTTL() * 60,
-        ]);
-    }
-
     /**
      * Delete a user.
      *
@@ -83,6 +53,7 @@ class UsersController extends Controller
      */
     public function index()
     {
+        \Log::debug("Regular API");
         $user = $this->guard()->user();
 
         $result = $user->users()->orderBy('email')->get()->map(function ($user) {
@@ -92,98 +63,6 @@ class UsersController extends Controller
         });
 
         return response()->json($result);
-    }
-
-    /**
-     * Get the authenticated User
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function info()
-    {
-        $user = $this->guard()->user();
-        $response = $this->userResponse($user);
-
-        return response()->json($response);
-    }
-
-    /**
-     * Get a JWT token via given credentials.
-     *
-     * @param \Illuminate\Http\Request $request The API request.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function login(Request $request)
-    {
-        $v = Validator::make(
-            $request->all(),
-            [
-                'email' => 'required|min:2',
-                'password' => 'required|min:4',
-            ]
-        );
-
-        if ($v->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
-        }
-
-        $credentials = $request->only('email', 'password');
-
-        if ($token = $this->guard()->attempt($credentials)) {
-            $sf = new \App\Auth\SecondFactor($this->guard()->user());
-
-            if ($response = $sf->requestHandler($request)) {
-                return $response;
-            }
-
-            return $this->respondWithToken($token);
-        }
-
-        return response()->json(['status' => 'error', 'message' => __('auth.failed')], 401);
-    }
-
-    /**
-     * Log the user out (Invalidate the token)
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function logout()
-    {
-        $this->guard()->logout();
-
-        return response()->json([
-                'status' => 'success',
-                'message' => __('auth.logoutsuccess')
-        ]);
-    }
-
-    /**
-     * Refresh a token.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function refresh()
-    {
-        return $this->respondWithToken($this->guard()->refresh());
-    }
-
-    /**
-     * Get the token array structure.
-     *
-     * @param string $token Respond with this token.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function respondWithToken($token)
-    {
-        return response()->json(
-            [
-                'access_token' => $token,
-                'token_type' => 'bearer',
-                'expires_in' => $this->guard()->factory()->getTTL() * 60
-            ]
-        );
     }
 
     /**
@@ -458,7 +337,7 @@ class UsersController extends Controller
      *
      * @return array Response data
      */
-    protected function userResponse(User $user): array
+    public static function userResponse(User $user): array
     {
         $response = $user->toArray();
 
@@ -562,7 +441,7 @@ class UsersController extends Controller
 
             if (empty($email)) {
                 $errors['email'] = \trans('validation.required', ['attribute' => 'email']);
-            } elseif ($error = self::validateEmail($email, $controller, false)) {
+            } elseif ($error = \App\Utils::validateEmail($email, $controller, false)) {
                 $errors['email'] = $error;
             }
         }
@@ -582,7 +461,7 @@ class UsersController extends Controller
                     // validate new aliases
                     if (
                         !in_array($alias, $existing_aliases)
-                        && ($error = self::validateEmail($alias, $controller, true))
+                        && ($error = \App\Utils::validateEmail($alias, $controller, true))
                     ) {
                         if (!isset($errors['aliases'])) {
                             $errors['aliases'] = [];
@@ -605,63 +484,5 @@ class UsersController extends Controller
         // Update user settings
         $settings = $request->only(array_keys($rules));
         unset($settings['password'], $settings['aliases'], $settings['email']);
-    }
-
-    /**
-     * Email address (login or alias) validation
-     *
-     * @param string    $email    Email address
-     * @param \App\User $user     The account owner
-     * @param bool      $is_alias The email is an alias
-     *
-     * @return string Error message on validation error
-     */
-    protected static function validateEmail(string $email, User $user, bool $is_alias = false): ?string
-    {
-        $attribute = $is_alias ? 'alias' : 'email';
-
-        if (strpos($email, '@') === false) {
-            return \trans('validation.entryinvalid', ['attribute' => $attribute]);
-        }
-
-        list($login, $domain) = explode('@', $email);
-
-        // Check if domain exists
-        $domain = Domain::where('namespace', Str::lower($domain))->first();
-
-        if (empty($domain)) {
-            return \trans('validation.domaininvalid');
-        }
-
-        // Validate login part alone
-        $v = Validator::make(
-            [$attribute => $login],
-            [$attribute => ['required', new UserEmailLocal(!$domain->isPublic())]]
-        );
-
-        if ($v->fails()) {
-            return $v->errors()->toArray()[$attribute][0];
-        }
-
-        // Check if it is one of domains available to the user
-        // TODO: We should have a helper that returns "flat" array with domain names
-        //       I guess we could use pluck() somehow
-        $domains = array_map(
-            function ($domain) {
-                return $domain->namespace;
-            },
-            $user->domains()
-        );
-
-        if (!in_array($domain->namespace, $domains)) {
-            return \trans('validation.entryexists', ['attribute' => 'domain']);
-        }
-
-        // Check if user with specified address already exists
-        if (User::findByEmail($email)) {
-            return \trans('validation.entryexists', ['attribute' => $attribute]);
-        }
-
-        return null;
     }
 }

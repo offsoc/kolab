@@ -19,11 +19,26 @@ Route::group(
         'prefix' => 'auth'
     ],
     function ($router) {
-        Route::get('info', 'API\UsersController@info');
-        Route::post('login', 'API\UsersController@login');
-        Route::post('logout', 'API\UsersController@logout');
-        Route::post('refresh', 'API\UsersController@refresh');
+        Route::post('login', 'API\AuthController@login');
 
+        Route::group(
+            ['middleware' => 'auth:api'],
+            function ($router) {
+                Route::get('info', 'API\AuthController@info');
+                Route::post('logout', 'API\AuthController@logout');
+                Route::post('refresh', 'API\AuthController@refresh');
+            }
+        );
+    }
+);
+
+Route::group(
+    [
+        'domain' => \config('app.domain'),
+        'middleware' => 'api',
+        'prefix' => 'auth'
+    ],
+    function ($router) {
         Route::post('password-reset/init', 'API\PasswordResetController@init');
         Route::post('password-reset/verify', 'API\PasswordResetController@verify');
         Route::post('password-reset', 'API\PasswordResetController@reset');
@@ -37,21 +52,47 @@ Route::group(
 
 Route::group(
     [
+        'domain' => \config('app.domain'),
         'middleware' => 'auth:api',
         'prefix' => 'v4'
     ],
     function () {
-        Route::apiResource('domains', API\DomainsController::class);
-        Route::get('domains/{id}/confirm', 'API\DomainsController@confirm');
+        Route::apiResource('domains', API\V4\DomainsController::class);
+        Route::get('domains/{id}/confirm', 'API\V4\DomainsController@confirm');
 
-        Route::apiResource('entitlements', API\EntitlementsController::class);
-        Route::apiResource('packages', API\PackagesController::class);
-        Route::apiResource('skus', API\SkusController::class);
-        Route::apiResource('users', API\UsersController::class);
-        Route::apiResource('wallets', API\WalletsController::class);
+        Route::apiResource('entitlements', API\V4\EntitlementsController::class);
+        Route::apiResource('packages', API\V4\PackagesController::class);
+        Route::apiResource('skus', API\V4\SkusController::class);
+        Route::apiResource('users', API\V4\UsersController::class);
+        Route::apiResource('wallets', API\V4\WalletsController::class);
 
-        Route::post('payments', 'API\PaymentsController@store');
+        Route::post('payments', 'API\V4\PaymentsController@store');
     }
 );
 
-Route::post('webhooks/payment/mollie', 'API\PaymentsController@webhook');
+Route::group(
+    [
+        'domain' => \config('app.domain'),
+    ],
+    function () {
+        Route::post('webhooks/payment/mollie', 'API\V4\PaymentsController@webhook');
+    }
+);
+
+Route::group(
+    [
+        'domain' => 'admin.' . \config('app.domain'),
+        'middleware' => ['auth:api', 'admin'],
+        'prefix' => 'v4',
+    ],
+    function () {
+        Route::apiResource('domains', API\V4\Admin\DomainsController::class);
+        Route::get('domains/{id}/confirm', 'API\V4\Admin\DomainsController@confirm');
+
+        Route::apiResource('entitlements', API\V4\Admin\EntitlementsController::class);
+        Route::apiResource('packages', API\V4\Admin\PackagesController::class);
+        Route::apiResource('skus', API\V4\Admin\SkusController::class);
+        Route::apiResource('users', API\V4\Admin\UsersController::class);
+        Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
+    }
+);

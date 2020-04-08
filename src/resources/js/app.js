@@ -8,7 +8,6 @@ require('./bootstrap')
 
 import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Menu'
-import router from './routes'
 import store from './store'
 import FontAwesomeIcon from './fontawesome'
 import VueToastr from '@deveodk/vue-toastr'
@@ -128,7 +127,7 @@ const app = new Vue({
         'menu-component': MenuComponent
     },
     store,
-    router,
+    router: window.router,
     data() {
         return {
             isLoading: true
@@ -165,7 +164,7 @@ const app = new Vue({
             axios.defaults.headers.common.Authorization = 'Bearer ' + token
 
             if (dashboard !== false) {
-                router.push(store.state.afterLogin || { name: 'dashboard' })
+                this.$router.push(store.state.afterLogin || { name: 'dashboard' })
             }
 
             store.state.afterLogin = null
@@ -175,7 +174,7 @@ const app = new Vue({
             store.commit('logoutUser')
             localStorage.setItem('token', '')
             delete axios.defaults.headers.common.Authorization
-            router.push({ name: 'login' })
+            this.$router.push({ name: 'login' })
         },
         // Display "loading" overlay (to be used by route components)
         startLoading() {

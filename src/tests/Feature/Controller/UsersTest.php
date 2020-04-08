@@ -4,7 +4,7 @@ namespace Tests\Feature\Controller;
 
 use App\Discount;
 use App\Domain;
-use App\Http\Controllers\API\UsersController;
+use App\Http\Controllers\API\V4\UsersController;
 use App\Package;
 use App\Sku;
 use App\User;
@@ -53,32 +53,6 @@ class UsersTest extends TestCase
         $wallet->save();
 
         parent::tearDown();
-    }
-
-    /**
-     * Test fetching current user info (/api/auth/info)
-     */
-    public function testInfo(): void
-    {
-        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
-        $domain = $this->getTestDomain('userscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
-        ]);
-
-        $response = $this->actingAs($user)->get("api/auth/info");
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertEquals($user->id, $json['id']);
-        $this->assertEquals($user->email, $json['email']);
-        $this->assertEquals(User::STATUS_NEW | User::STATUS_ACTIVE, $json['status']);
-        $this->assertTrue(is_array($json['statusInfo']));
-        $this->assertTrue(is_array($json['settings']));
-        $this->assertTrue(is_array($json['aliases']));
-
-        // Note: Details of the content are tested in testUserResponse()
     }
 
     /**
@@ -233,81 +207,6 @@ class UsersTest extends TestCase
         $this->assertSame($joe->email, $json[1]['email']);
         $this->assertSame($john->email, $json[2]['email']);
         $this->assertSame($ned->email, $json[3]['email']);
-    }
-
-    /**
-     * Test /api/auth/login
-     */
-    public function testLogin(): string
-    {
-        // Request with no data
-        $response = $this->post("api/auth/login", []);
-        $response->assertStatus(422);
-        $json = $response->json();
-
-        $this->assertSame('error', $json['status']);
-        $this->assertCount(2, $json['errors']);
-        $this->assertArrayHasKey('email', $json['errors']);
-        $this->assertArrayHasKey('password', $json['errors']);
-
-        // Request with invalid password
-        $post = ['email' => 'john@kolab.org', 'password' => 'wrong'];
-        $response = $this->post("api/auth/login", $post);
-        $response->assertStatus(401);
-
-        $json = $response->json();
-
-        $this->assertSame('error', $json['status']);
-        $this->assertSame('Invalid username or password.', $json['message']);
-
-        // Valid user+password
-        $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
-        $response = $this->post("api/auth/login", $post);
-        $json = $response->json();
-
-        $response->assertStatus(200);
-        $this->assertTrue(!empty($json['access_token']));
-        $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
-        $this->assertEquals('bearer', $json['token_type']);
-
-        // TODO: We have browser tests for 2FA but we should probably also test it here
-
-        return $json['access_token'];
-    }
-
-    /**
-     * Test /api/auth/logout
-     *
-     * @depends testLogin
-     */
-    public function testLogout($token): void
-    {
-        // Request with no token, testing that it requires auth
-        $response = $this->post("api/auth/logout");
-        $response->assertStatus(401);
-
-        // Test the same using JSON mode
-        $response = $this->json('POST', "api/auth/logout", []);
-        $response->assertStatus(401);
-
-        // Request with valid token
-        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->post("api/auth/logout");
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertEquals('success', $json['status']);
-        $this->assertEquals('Successfully logged out.', $json['message']);
-
-        // Check if it really destroyed the token?
-        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->get("api/auth/info");
-        $response->assertStatus(401);
-    }
-
-    public function testRefresh(): void
-    {
-        // TODO
-        $this->markTestIncomplete();
     }
 
     public function testStatusInfo(): void
@@ -485,6 +384,7 @@ class UsersTest extends TestCase
         $secondfactor_sku = Sku::where('title', '2fa')->first();
 
         $this->assertCount(5, $json['skus']);
+
         $this->assertSame(2, $json['skus'][$storage_sku->id]['count']);
         $this->assertSame(1, $json['skus'][$groupware_sku->id]['count']);
         $this->assertSame(1, $json['skus'][$mailbox_sku->id]['count']);
@@ -866,7 +766,7 @@ class UsersTest extends TestCase
      */
     public function testValidateEmail($alias, $user, $is_alias, $expected_result): void
     {
-        $result = $this->invokeMethod(new UsersController(), 'validateEmail', [$alias, $user, $is_alias]);
+        $result = $this->invokeMethod(new \App\Utils(), 'validateEmail', [$alias, $user, $is_alias]);
 
         $this->assertSame($expected_result, $result);
     }

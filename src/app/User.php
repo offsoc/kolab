@@ -71,6 +71,7 @@ class User extends Authenticatable implements JWTSubject
         'password',
         'password_ldap',
         'remember_token',
+        'role'
     ];
 
     protected $nullable = [
@@ -221,6 +222,10 @@ class User extends Authenticatable implements JWTSubject
             return false;
         }
 
+        if ($this->role == "admin") {
+            return true;
+        }
+
         $wallet = $object->wallet();
 
         // TODO: For now controller can delete/update the account owner,
@@ -240,6 +245,10 @@ class User extends Authenticatable implements JWTSubject
     {
         if (!method_exists($object, 'wallet')) {
             return false;
+        }
+
+        if ($this->role == "admin") {
+            return true;
         }
 
         if ($object instanceof User && $this->id == $object->id) {
@@ -262,6 +271,10 @@ class User extends Authenticatable implements JWTSubject
     {
         if (!method_exists($object, 'wallet')) {
             return false;
+        }
+
+        if ($this->role == "admin") {
+            return true;
         }
 
         if ($object instanceof User && $this->id == $object->id) {

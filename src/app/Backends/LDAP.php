@@ -309,7 +309,10 @@ class LDAP
         }
 
         if (!array_key_exists('nsroledn', $oldEntry)) {
-            $oldEntry['nsroledn'] = (array)$ldap->get_entry_attributes($dn, ['nsroledn']);
+            $roles = $ldap->get_entry_attributes($dn, ['nsroledn']);
+            if (!empty($roles)) {
+                $oldEntry['nsroledn'] = (array)$roles['nsroledn'];
+            }
         }
 
         $newEntry = $oldEntry;
@@ -385,56 +388,48 @@ class LDAP
 
         $entry['mailquota'] = 0;
 
-        if (!array_key_exists('nsroledn', $entry)) {
-            $entry['nsroledn'] = [];
-        } else if (!is_array($entry['nsroledn'])) {
-            $entry['nsroledn'] = (array)$entry['nsroledn'];
-        }
-
         $roles = [];
 
         foreach ($user->entitlements as $entitlement) {
             \Log::debug("Examining {$entitlement->sku->title}");
 
             switch ($entitlement->sku->title) {
+                case "mailbox":
+                    break;
+
                 case "storage":
                     $entry['mailquota'] += 1048576;
                     break;
-            }
 
-            $roles[] = $entitlement->sku->title;
+                default:
+                    $roles[] = $entitlement->sku->title;
+                    break;
+            }
         }
 
         $hostedRootDN = \config('ldap.hosted.root_dn');
 
+        if (empty($roles)) {
+            if (array_key_exists('nsroledn', $entry)) {
+                unset($entry['nsroledn']);
+            }
+
+            return;
+        }
+
+        $entry['nsroledn'] = [];
+
         if (in_array("2fa", $roles)) {
             $entry['nsroledn'][] = "cn=2fa-user,{$hostedRootDN}";
-        } else {
-            $key = array_search("cn=2fa-user,{$hostedRootDN}", $entry['nsroledn']);
-            if ($key !== false) {
-                unset($entry['nsroledn'][$key]);
-            }
         }
 
         if (in_array("activesync", $roles)) {
             $entry['nsroledn'][] = "cn=activesync-user,{$hostedRootDN}";
-        } else {
-            $key = array_search("cn=activesync-user,{$hostedRootDN}", $entry['nsroledn']);
-            if ($key !== false) {
-                unset($entry['nsroledn'][$key]);
-            }
         }
 
         if (!in_array("groupware", $roles)) {
             $entry['nsroledn'][] = "cn=imap-user,{$hostedRootDN}";
-        } else {
-            $key = array_search("cn=imap-user,{$hostedRootDN}", $entry['nsroledn']);
-            if ($key !== false) {
-                unset($entry['nsroledn'][$key]);
-            }
         }
-
-        $entry['nsroledn'] = array_unique($entry['nsroledn']);
     }
 
     /**

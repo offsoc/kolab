@@ -231,7 +231,7 @@ class SecondFactor extends Base
 
         if (!isset($this->cache[$key])) {
             $factors = $this->getFactors();
-            $this->cache[$key] = $factors[$key];
+            $this->cache[$key] = isset($factors[$key]) ? $factors[$key] : null;
         }
 
         return $this->cache[$key];

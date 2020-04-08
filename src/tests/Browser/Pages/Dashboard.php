@@ -27,7 +27,7 @@ class Dashboard extends Page
     {
         $browser->assertPathIs('/dashboard')
             ->waitUntilMissing('@app .app-loader')
-            ->assertVisible('@links');
+            ->assertPresent('@links');
     }
 
     /**

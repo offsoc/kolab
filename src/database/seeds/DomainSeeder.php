@@ -36,6 +36,16 @@ class DomainSeeder extends Seeder
             );
         }
 
+        if (!in_array(\config('app.domain'), $domains)) {
+            Domain::create(
+                [
+                    'namespace' => \config('app.domain'),
+                    'status' => DOMAIN::STATUS_CONFIRMED + Domain::STATUS_ACTIVE,
+                    'type' => Domain::TYPE_PUBLIC
+                ]
+            );
+        }
+
         $domains = [
             'example.com',
             'example.net',

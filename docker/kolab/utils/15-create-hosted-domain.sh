@@ -54,7 +54,7 @@
 
 (
     for role in "2fa-user" "activesync-user" "imap-user"; do
-        echo "cn=${role},${hosted_domain_rootdn}"
+        echo "dn: cn=${role},${hosted_domain_rootdn}"
         echo "cn: ${role}"
         echo "description: ${role} role"
         echo "objectclass: top"

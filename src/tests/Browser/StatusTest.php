@@ -150,9 +150,9 @@ class StatusTest extends TestCaseDusk
                 // Assert user status icons
                 ->assertVisible('@table tbody tr:first-child td:first-child svg.fa-user.text-success')
                 ->assertText('@table tbody tr:first-child td:first-child svg title', 'Active')
-                ->assertVisible('@table tbody tr:nth-child(2) td:first-child svg.fa-user.text-danger')
-                ->assertText('@table tbody tr:nth-child(2) td:first-child svg title', 'Not Ready')
-                ->click('@table tbody tr:nth-child(2) td:first-child a')
+                ->assertVisible('@table tbody tr:nth-child(3) td:first-child svg.fa-user.text-danger')
+                ->assertText('@table tbody tr:nth-child(3) td:first-child svg title', 'Not Ready')
+                ->click('@table tbody tr:nth-child(3) td:first-child a')
                 ->on(new UserInfo())
                 ->with('@form', function (Browser $browser) {
                     // Assert stet in the user edit form

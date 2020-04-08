@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\API\V4;
 
-use App\Package;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class PackagesController extends Controller
+class EntitlementsController extends Controller
 {
     /**
-     * Show the form for creating a new package.
+     * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -20,9 +19,9 @@ class PackagesController extends Controller
     }
 
     /**
-     * Remove the specified package from storage.
+     * Remove the specified resource from storage.
      *
-     * @param int $id Package identifier
+     * @param int $id
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -33,9 +32,9 @@ class PackagesController extends Controller
     }
 
     /**
-     * Show the form for editing the specified package.
+     * Show the form for editing the specified resource.
      *
-     * @param int $id Package identifier
+     * @param int $id
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -46,32 +45,18 @@ class PackagesController extends Controller
     }
 
     /**
-     * Display a listing of packages.
+     * Display a listing of the resource.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
-        // TODO: Packages should have an 'active' flag too, I guess
-        $response = [];
-        $packages = Package::select()->orderBy('title')->get();
-
-        foreach ($packages as $package) {
-            $response[] = [
-                'id' => $package->id,
-                'title' => $package->title,
-                'name' => $package->name,
-                'description' => $package->description,
-                'cost' => $package->cost(),
-                'isDomain' => $package->isDomain(),
-            ];
-        }
-
-        return response()->json($response);
+        // TODO
+        return $this->errorResponse(404);
     }
 
     /**
-     * Store a newly created package in storage.
+     * Store a newly created resource in storage.
      *
      * @param \Illuminate\Http\Request $request
      *
@@ -84,9 +69,9 @@ class PackagesController extends Controller
     }
 
     /**
-     * Display the specified package.
+     * Display the specified resource.
      *
-     * @param int $id Package identifier
+     * @param int $id
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -97,10 +82,10 @@ class PackagesController extends Controller
     }
 
     /**
-     * Update the specified package in storage.
+     * Update the specified resource in storage.
      *
-     * @param \Illuminate\Http\Request $request Request object
-     * @param int                      $id      Package identifier
+     * @param \Illuminate\Http\Request $request
+     * @param int                      $id
      *
      * @return \Illuminate\Http\JsonResponse
      */

@@ -232,7 +232,7 @@ class SignupController extends Controller
 
         DB::commit();
 
-        return UsersController::logonResponse($user);
+        return AuthController::logonResponse($user);
     }
 
     /**

@@ -132,5 +132,18 @@ class UserSeeder extends Seeder
         $john->assignPackage($package_lite, $joe);
 
         factory(User::class, 10)->create();
+
+        $jeroen = User::create(
+            [
+                'name' => 'Jeroen van Meeuwen',
+                'email' => 'jeroen@jeroen.jeroen',
+                'password' => 'jeroen',
+                'email_verified_at' => now()
+            ]
+        );
+
+        $jeroen->role = "admin";
+
+        $jeroen->save();
     }
 }
