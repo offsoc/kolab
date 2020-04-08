@@ -261,25 +261,25 @@ class UsersTest extends TestCaseDusk
                                 'tbody tr:nth-child(3) td.buttons button',
                                 'Groupware functions like Calendar, Tasks, Notes, etc.'
                             )
-                            // 2FA SKU
-                            ->assertSeeIn('tbody tr:nth-child(4) td.name', '2-Factor Authentication')
-                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '0,00 CHF/month')
+                            // ActiveSync SKU
+                            ->assertSeeIn('tbody tr:nth-child(4) td.name', 'Activesync')
+                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '1,00 CHF/month')
                             ->assertNotChecked('tbody tr:nth-child(4) td.selection input')
                             ->assertEnabled('tbody tr:nth-child(4) td.selection input')
                             ->assertTip(
                                 'tbody tr:nth-child(4) td.buttons button',
-                                'Two factor authentication for webmail and administration panel'
+                                'Mobile synchronization'
                             )
-                            // ActiveSync SKU
-                            ->assertSeeIn('tbody tr:nth-child(5) td.name', 'Activesync')
-                            ->assertSeeIn('tbody tr:nth-child(5) td.price', '1,00 CHF/month')
+                            // 2FA SKU
+                            ->assertSeeIn('tbody tr:nth-child(5) td.name', '2-Factor Authentication')
+                            ->assertSeeIn('tbody tr:nth-child(5) td.price', '0,00 CHF/month')
                             ->assertNotChecked('tbody tr:nth-child(5) td.selection input')
                             ->assertEnabled('tbody tr:nth-child(5) td.selection input')
                             ->assertTip(
                                 'tbody tr:nth-child(5) td.buttons button',
-                                'Mobile synchronization'
+                                'Two factor authentication for webmail and administration panel'
                             )
-                            ->click('tbody tr:nth-child(5) td.selection input');
+                            ->click('tbody tr:nth-child(4) td.selection input');
                     })
                     ->assertMissing('@skus table + .hint')
                     ->click('button[type=submit]');
@@ -561,10 +561,10 @@ class UsersTest extends TestCaseDusk
                             ->assertSeeIn('tr:nth-child(2) td.price', '21,56 CHF/month¹')
                             // groupware SKU
                             ->assertSeeIn('tbody tr:nth-child(3) td.price', '4,99 CHF/month¹')
-                            // 2FA SKU
-                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '0,00 CHF/month¹')
                             // ActiveSync SKU
-                            ->assertSeeIn('tbody tr:nth-child(5) td.price', '0,90 CHF/month¹');
+                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '0,90 CHF/month¹')
+                            // 2FA SKU
+                            ->assertSeeIn('tbody tr:nth-child(5) td.price', '0,00 CHF/month¹');
                     })
                     ->assertSeeIn('@skus table + .hint', '¹ applied discount: 10% - Test voucher');
                 });

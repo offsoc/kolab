@@ -356,16 +356,9 @@ class Domain extends Model
             throw new \Exception("Failed to get DNS record for {$this->namespace}");
         }
 
-        // It may happen that result contains other domains depending on the host
-        // DNS setup
-        $hosts = array_map(
-            function ($record) {
-                return $record['host'];
-            },
-            $records
-        );
-
-        if (in_array($this->namespace, $hosts)) {
+        // It may happen that result contains other domains depending on the host DNS setup
+        // that's why in_array() and not just !empty()
+        if (in_array($this->namespace, array_column($records, 'host'))) {
             $this->status |= Domain::STATUS_VERIFIED;
             $this->save();
 
@@ -380,8 +373,11 @@ class Domain extends Model
      *
      * @return \App\Wallet A wallet object
      */
-    public function wallet(): Wallet
+    public function wallet(): ?Wallet
     {
-        return $this->entitlement()->first()->wallet;
+        // Note: Not all domains have a entitlement/wallet
+        $entitlement = $this->entitlement()->first();
+
+        return $entitlement ? $entitlement->wallet : null;
     }
 }

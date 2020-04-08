@@ -18,4 +18,9 @@ class Activesync extends \App\Handlers\Base
 
         return true;
     }
+
+    public static function priority(): int
+    {
+        return 70;
+    }
 }

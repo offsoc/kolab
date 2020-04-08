@@ -33,7 +33,6 @@ abstract class TestCaseDusk extends BaseTestCase
             '--lang=en_US',
             '--disable-gpu',
             '--headless',
-            '--window-size=1280,720',
         ]);
 
         // For file download handling
@@ -57,7 +56,7 @@ abstract class TestCaseDusk extends BaseTestCase
             $options->setExperimentalOption('mobileEmulation', ['userAgent' => $ua]);
             $options->addArguments(['--window-size=800,640']);
         } else {
-            $options->addArguments(['--window-size=1280,720']);
+            $options->addArguments(['--window-size=2560,1440']);
         }
 
         // Make sure downloads dir exists and is empty
@@ -84,5 +83,16 @@ abstract class TestCaseDusk extends BaseTestCase
     protected function newBrowser($driver)
     {
         return new Browser($driver);
+    }
+
+    /**
+     * Set baseURL to the admin UI location
+     */
+    protected static function useAdminUrl(): void
+    {
+        // This will set baseURL for all tests in this file
+        // If we wanted to visit both user and admin in one test
+        // we can also just call visit() with full url
+        Browser::$baseUrl = str_replace('//', '//admin.', \config('app.url'));
     }
 }

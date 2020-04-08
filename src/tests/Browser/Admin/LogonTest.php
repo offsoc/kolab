@@ -18,11 +18,7 @@ class LogonTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
-
-        // This will set baseURL for all tests in this file
-        // If we wanted to visit both user and admin in one test
-        // we can also just call visit() with full url
-        Browser::$baseUrl = str_replace('//', '//admin.', \config('app.url'));
+        self::useAdminUrl();
     }
 
     /**

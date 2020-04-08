@@ -355,11 +355,12 @@ class User extends Authenticatable implements JWTSubject
      * Helper to find user by email address, whether it is
      * main email address, alias or external email
      *
-     * @param string $email Email address
+     * @param string $email    Email address
+     * @param bool   $external Search also by an external email
      *
      * @return \App\User User model object if found
      */
-    public static function findByEmail(string $email): ?User
+    public static function findByEmail(string $email, bool $external = false): ?User
     {
         if (strpos($email, '@') === false) {
             return null;

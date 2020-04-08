@@ -8,6 +8,7 @@ import Error404Component from '../vue/404'
 import LoginComponent from '../vue/Login'
 import LogoutComponent from '../vue/Logout'
 import PasswordResetComponent from '../vue/PasswordReset'
+import UserComponent from '../vue/Admin/User'
 
 import store from './store'
 
@@ -36,6 +37,12 @@ const routes = [
         path: '/password-reset/:code?',
         name: 'password-reset',
         component: PasswordResetComponent
+    },
+    {
+        path: '/user/:user',
+        name: 'user',
+        component: UserComponent,
+        meta: { requiresAuth: true }
     },
     {
         name: '404',

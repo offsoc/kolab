@@ -52,6 +52,7 @@ class Dashboard extends Page
             '@app' => '#app',
             '@links' => '#dashboard-nav',
             '@status' => '#status-box',
+            '@search' => '#search-box',
         ];
     }
 }

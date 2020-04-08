@@ -24,4 +24,6 @@ return [
     'user-update-success' => 'User data updated successfully.',
     'user-create-success' => 'User created successfully.',
     'user-delete-success' => 'User deleted successfully.',
+
+    'search-foundxusers' => ':x user accounts have been found.',
 ];

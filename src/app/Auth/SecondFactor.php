@@ -227,8 +227,6 @@ class SecondFactor extends Base
      */
     public function read($key)
     {
-        \Log::debug(__METHOD__ . ' ' . $key);
-
         if (!isset($this->cache[$key])) {
             $factors = $this->getFactors();
             $this->cache[$key] = isset($factors[$key]) ? $factors[$key] : null;
