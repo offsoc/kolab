@@ -158,7 +158,7 @@
                 discount: 0,
                 discount_description: '',
                 user_id: null,
-                user: {},
+                user: { aliases: [] },
                 packages: [],
                 package_id: null,
                 skus: []

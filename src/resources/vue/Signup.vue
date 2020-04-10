@@ -65,7 +65,7 @@
                                 <span class="input-group-text">@</span>
                             </span>
                             <input v-if="is_domain" type="text" class="form-control rounded-right" id="signup_domain" required v-model="domain" placeholder="Domain">
-                            <select v-if="!is_domain" class="custom-select rounded-right" id="signup_domain" required v-model="domain"></select>
+                            <select v-else class="custom-select rounded-right" id="signup_domain" required v-model="domain"></select>
                         </div>
                     </div>
                     <div class="form-group">

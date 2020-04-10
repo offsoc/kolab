@@ -4,10 +4,10 @@ import VueRouter from 'vue-router'
 Vue.use(VueRouter)
 
 import DashboardComponent from '../vue/Admin/Dashboard'
+import DomainComponent from '../vue/Admin/Domain'
 import Error404Component from '../vue/404'
 import LoginComponent from '../vue/Login'
 import LogoutComponent from '../vue/Logout'
-import PasswordResetComponent from '../vue/PasswordReset'
 import UserComponent from '../vue/Admin/User'
 
 import store from './store'
@@ -24,6 +24,12 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
+        path: '/domain/:domain',
+        name: 'domain',
+        component: DomainComponent,
+        meta: { requiresAuth: true }
+    },
+    {
         path: '/login',
         name: 'login',
         component: LoginComponent
@@ -32,11 +38,6 @@ const routes = [
         path: '/logout',
         name: 'logout',
         component: LogoutComponent
-    },
-    {
-        path: '/password-reset/:code?',
-        name: 'password-reset',
-        component: PasswordResetComponent
     },
     {
         path: '/user/:user',

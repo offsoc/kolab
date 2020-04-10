@@ -27,10 +27,12 @@ class LogonTest extends TestCaseDusk
     public function testLogonMenu(): void
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit(new Home());
-            $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
-            });
+            $browser->visit(new Home())
+                ->with(new Menu(), function ($browser) {
+                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                })
+                ->assertMissing('@second-factor-input')
+                ->assertMissing('@forgot-password');
         });
     }
 

@@ -119,5 +119,25 @@ class UsersTest extends TestCase
 
         $this->assertContains($user->email, $emails);
         $this->assertContains($jack->email, $emails);
+
+        // Search by owner
+        $response = $this->actingAs($admin)->get("api/v4/users?owner={$user->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(4, $json['count']);
+        $this->assertCount(4, $json['list']);
+
+        // Search by owner (Ned is a controller on John's wallets,
+        // here we expect only users assigned to Ned's wallet(s))
+        $ned = $this->getTestUser('ned@kolab.org');
+        $response = $this->actingAs($admin)->get("api/v4/users?owner={$ned->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(0, $json['count']);
+        $this->assertCount(0, $json['list']);
     }
 }

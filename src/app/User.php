@@ -499,16 +499,18 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Return users controlled by the current user.
      *
-     * Users assigned to wallets the current user controls or owns.
+     * @param bool $with_accounts Include users assigned to wallets
+     *                            the current user controls but not owns.
      *
      * @return \Illuminate\Database\Eloquent\Builder Query builder
      */
-    public function users()
+    public function users($with_accounts = true)
     {
-        $wallets = array_merge(
-            $this->wallets()->pluck('id')->all(),
-            $this->accounts()->pluck('wallet_id')->all()
-        );
+        $wallets = $this->wallets()->pluck('id')->all();
+
+        if ($with_accounts) {
+            $wallets = array_merge($wallets, $this->accounts()->pluck('wallet_id')->all());
+        }
 
         return $this->select(['users.*', 'entitlements.wallet_id'])
             ->distinct()

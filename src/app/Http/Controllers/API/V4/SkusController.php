@@ -52,12 +52,14 @@ class SkusController extends Controller
      */
     public function index()
     {
-        $response = [];
-        $skus = Sku::select()->get();
+        // Note: Order by title for consistent ordering in tests
+        $skus = Sku::select()->orderBy('title')->get();
 
         // Note: we do not limit the result to active SKUs only.
         //       It's because we might need users assigned to old SKUs,
         //       we need to display these old SKUs on the entitlements list
+
+        $response = [];
 
         foreach ($skus as $sku) {
             if ($data = $this->skuElement($sku)) {

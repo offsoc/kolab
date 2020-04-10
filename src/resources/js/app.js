@@ -180,7 +180,10 @@ const app = new Vue({
         startLoading() {
             this.isLoading = true
             // Lock the UI with the 'loading...' element
-            $('#app').append($('<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'))
+            let loading = $('#app > .app-loader').show()
+            if (!loading.length) {
+                $('#app').append($('<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'))
+            }
         },
         // Hide "loading" overlay
         stopLoading() {

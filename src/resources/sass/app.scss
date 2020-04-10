@@ -113,17 +113,18 @@ pre {
     }
 }
 
-table.form-list {
+tfoot.table-fake-body {
+    background-color: #f8f8f8;
+    color: grey;
+    text-align: center;
+    height: 8em;
+
     td {
-        border: 0;
+        vertical-align: middle;
+    }
 
-        &:first-child {
-            padding-left: 0;
-        }
-
-        &:last-child {
-            padding-right: 0;
-        }
+    tbody:not(:empty) + & {
+        display: none;
     }
 }
 
@@ -136,6 +137,20 @@ table {
 
     td.price {
         text-align: right;
+    }
+
+    &.form-list {
+        td {
+            border: 0;
+
+            &:first-child {
+                padding-left: 0;
+            }
+
+            &:last-child {
+                padding-right: 0;
+            }
+        }
     }
 }
 

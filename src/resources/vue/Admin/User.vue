@@ -4,11 +4,29 @@
             <div class="card-body">
                 <div class="card-title">{{ user.email }}</div>
                 <div class="card-text">
-                    <form @submit.prevent="submit">
-                        <div class="form-group row mb-0">
-                            <label for="first_name" class="col-sm-4 col-form-label">Status</label>
+                    <form>
+                        <div v-if="user.wallet.user_id != user.id" class="form-group row mb-0">
+                            <label for="manager" class="col-sm-4 col-form-label">Managed by</label>
                             <div class="col-sm-8">
-                                <span :class="$root.userStatusClass(user) + ' form-control-plaintext'" id="status">{{ $root.userStatusText(user) }}</span>
+                                <span class="form-control-plaintext" id="manager">
+                                    <router-link :to="{ path: '/user/' + user.wallet.user_id }">{{ user.wallet.user_email }}</router-link>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group row mb-0">
+                            <label for="userid" class="col-sm-4 col-form-label">ID <span class="text-muted">(Created at)</span></label>
+                            <div class="col-sm-8">
+                                <span class="form-control-plaintext" id="userid">
+                                    {{ user.id }} <span class="text-muted">({{ user.created_at }})</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group row mb-0">
+                            <label for="status" class="col-sm-4 col-form-label">Status</label>
+                            <div class="col-sm-8">
+                                <span class="form-control-plaintext" id="status">
+                                    <span :class="$root.userStatusClass(user)">{{ $root.userStatusText(user) }}</span>
+                                </span>
                             </div>
                         </div>
                         <div class="form-group row mb-0" v-if="user.first_name">
@@ -32,7 +50,10 @@
                         <div class="form-group row mb-0">
                             <label for="external_email" class="col-sm-4 col-form-label">External email</label>
                             <div class="col-sm-8">
-                                <span class="form-control-plaintext" id="external_email">{{ user.external_email }}</span>
+                                <span class="form-control-plaintext" id="external_email">
+                                    <a v-if="user.external_email" :href="'mailto:' + user.external_email">{{ user.external_email }}</a>
+                                    <button type="button" class="btn btn-secondary btn-sm">Edit</button>
+                                </span>
                             </div>
                         </div>
                         <div class="form-group row mb-0" v-if="user.billing_address">
@@ -51,29 +72,198 @@
                 </div>
             </div>
         </div>
+        <ul class="nav nav-tabs mt-3" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="tab-finances" href="#user-finances" role="tab" aria-controls="user-finances" aria-selected="true">
+                    Finances
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-aliases" href="#user-aliases" role="tab" aria-controls="user-aliases" aria-selected="false">
+                    Aliases ({{ user.aliases.length }})
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-subscriptions" href="#user-subscriptions" role="tab" aria-controls="user-subscriptions" aria-selected="false">
+                    Subscriptions ({{ skus.length }})
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-domains" href="#user-domains" role="tab" aria-controls="user-domains" aria-selected="false">
+                    Domains ({{ domains.length }})
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-users" href="#user-users" role="tab" aria-controls="user-users" aria-selected="false">
+                    Users ({{ users.length }})
+                </a>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane show active" id="user-finances" role="tabpanel" aria-labelledby="tab-finances">
+                <div class="card-body">
+                    <div class="card-title">Account balance <span :class="balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(balance) }}</strong></span></div>
+                    <div class="card-text">
+                        <form>
+                            <div class="form-group row mb-0">
+                                <label for="first_name" class="col-sm-2 col-form-label">Discount:</label>
+                                <div class="col-sm-10">
+                                    <span class="form-control-plaintext" id="discount">
+                                        <span>{{ wallet_discount ? (wallet_discount + '% - ' + wallet_discount_description) : 'none' }}</span>
+                                        <button type="button" class="btn btn-secondary btn-sm">Edit</button>
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="user-aliases" role="tabpanel" aria-labelledby="tab-aliases">
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-sm table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th scope="col">Email address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(alias, index) in user.aliases" :id="'alias' + index" :key="index">
+                                    <td>{{ alias }}</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-fake-body">
+                                <tr>
+                                    <td>This user has no email aliases.</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="user-subscriptions" role="tabpanel" aria-labelledby="tab-subscriptions">
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-sm table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th scope="col">Subscription</th>
+                                    <th scope="col">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(sku, sku_id) in skus" :id="'sku' + sku_id" :key="sku_id">
+                                    <td>{{ sku.name }}</td>
+                                    <td>{{ sku.price }}</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-fake-body">
+                                <tr>
+                                    <td colspan="2">This user has no subscriptions.</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <small v-if="discount > 0" class="hint">
+                            <hr class="m-0">
+                            &sup1; applied discount: {{ discount }}% - {{ discount_description }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="user-domains" role="tabpanel" aria-labelledby="tab-domains">
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-sm table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th scope="col">Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="domain in domains" :id="'domain' + domain.id" :key="domain.id">
+                                    <td>
+                                        <svg-icon icon="globe" :class="$root.domainStatusClass(domain)" :title="$root.domainStatusText(domain)"></svg-icon>
+                                        <router-link :to="{ path: '/domain/' + domain.id }">{{ domain.namespace }}</router-link>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-fake-body">
+                                <tr>
+                                    <td>There are no domains in this account.</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="user-users" role="tabpanel" aria-labelledby="tab-users">
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-sm table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th scope="col">Primary Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="item in users" :id="'user' + item.id" :key="item.id">
+                                    <td>
+                                        <svg-icon icon="user" :class="$root.userStatusClass(item)" :title="$root.userStatusText(item)"></svg-icon>
+                                        <router-link :to="{ path: '/user/' + item.id }">{{ item.email }}</router-link>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-fake-body">
+                                <tr>
+                                    <td>There are no users in this account.</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script>
     export default {
+        beforeRouteUpdate (to, from, next) {
+            // An event called when the route that renders this component has changed,
+            // but this component is reused in the new route.
+            // Required to handle links from /user/XXX to /user/YYY
+            next()
+            this.$parent.routerReload()
+        },
         data() {
             return {
+                balance: 0,
                 discount: 0,
                 discount_description: '',
-                user: {},
-                skus: []
+                wallet_discount: 0,
+                wallet_discount_description: '',
+                domains: [],
+                skus: [],
+                users: [],
+                user: {
+                    aliases: [],
+                    wallet: {},
+                    skus: {},
+                }
             }
         },
         created() {
-            let user_id = this.$route.params.user
+            const user_id = this.$route.params.user
 
             this.$root.startLoading()
 
             axios.get('/api/v4/users/' + user_id)
                 .then(response => {
+                    this.$root.stopLoading()
+
                     this.user = response.data
 
-                    let keys = ['first_name', 'last_name', 'external_email', 'billing_address']
+                    let keys = ['first_name', 'last_name', 'external_email', 'billing_address', 'phone']
                     let country = this.user.settings.country
 
                     if (country) {
@@ -85,15 +275,66 @@
                     this.discount = this.user.wallet.discount
                     this.discount_description = this.user.wallet.discount_description
 
-                    this.$root.stopLoading()
+                    // TODO: currencies, multi-wallets, accounts
+                    this.user.wallets.forEach(wallet => {
+                        this.balance += wallet.balance
+                    })
+
+                    this.wallet_discount = this.user.wallets[0].discount
+                    this.wallet_discount_description = this.user.wallets[0].discount_description
+
+                    // Create subscriptions list
+                    axios.get('/api/v4/skus')
+                        .then(response => {
+                            // "merge" SKUs with user entitlement-SKUs
+                            response.data.forEach(sku => {
+                                if (sku.id in this.user.skus) {
+                                    let count = this.user.skus[sku.id].count
+                                    let item = {
+                                        id: sku.id,
+                                        name: sku.name,
+                                        price: this.price(sku.cost, count - sku.units_free)
+                                    }
+
+                                    if (sku.range) {
+                                        item.name += ' ' + count + ' ' + sku.range.unit
+                                    }
+
+                                    this.skus.push(item)
+                                }
+                            })
+                        })
+
+                    // Fetch users
+                    // TODO: Multiple wallets
+                    axios.get('/api/v4/users?owner=' + user_id)
+                        .then(response => {
+                            this.users = response.data.list.filter(user => {
+                                return user.id != user_id;
+                            })
+                        })
+
+                    // Fetch domains
+                    axios.get('/api/v4/domains?owner=' + user_id)
+                        .then(response => {
+                            this.domains = response.data.list
+                        })
                 })
                 .catch(this.$root.errorHandler)
         },
         mounted() {
+            $(this.$el).find('ul.nav-tabs a').on('click', e => {
+                e.preventDefault()
+                $(e.target).tab('show')
+            })
         },
         methods: {
             price(cost, units = 1) {
                 let index = ''
+
+                if (units < 0) {
+                    units = 1
+                }
 
                 if (this.discount) {
                     cost = Math.floor(cost * ((100 - this.discount) / 100))

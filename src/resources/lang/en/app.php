@@ -25,5 +25,6 @@ return [
     'user-create-success' => 'User created successfully.',
     'user-delete-success' => 'User deleted successfully.',
 
+    'search-foundxdomains' => ':x domains have been found.',
     'search-foundxusers' => ':x user accounts have been found.',
 ];

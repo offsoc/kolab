@@ -16,9 +16,14 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
     public function index()
     {
         $search = trim(request()->input('search'));
+        $owner = trim(request()->input('owner'));
         $result = collect([]);
 
-        if (strpos($search, '@')) {
+        if ($owner) {
+            if ($owner = User::find($owner)) {
+                $result = $owner->users(false)->orderBy('email')->get();
+            }
+        } elseif (strpos($search, '@')) {
             // Search by email
             if ($user = User::findByEmail($search, false)) {
                 $result->push($user);

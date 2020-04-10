@@ -40,7 +40,6 @@ class Wallet extends Model
         'balance' => 'integer',
     ];
 
-    protected $guarded = ['balance'];
 
     /**
      * Add a controller to this wallet.
