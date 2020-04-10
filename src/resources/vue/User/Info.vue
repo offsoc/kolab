@@ -69,7 +69,7 @@
                                                 {{ pkg.name }}
                                             </td>
                                             <td class="price text-nowrap">
-                                                {{ price(pkg.cost) }}
+                                                {{ $root.priceLabel(pkg.cost, 1, discount) }}
                                             </td>
                                             <td class="buttons">
                                                 <button v-if="pkg.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="pkg.description">
@@ -121,7 +121,7 @@
                                                 </div>
                                             </td>
                                             <td class="price text-nowrap">
-                                                {{ price(sku.cost) }}
+                                                {{ $root.priceLabel(sku.cost, 1, discount) }}
                                             </td>
                                             <td class="buttons">
                                                 <button v-if="sku.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="sku.description">
@@ -336,7 +336,7 @@
                 input.prev().text(value + ' ' + sku.range.unit)
 
                 // Update the price
-                record.find('.price').text(this.price(cost, value - sku.units_free))
+                record.find('.price').text(this.$root.priceLabel(cost, value - sku.units_free, this.discount))
             },
             findSku(id) {
                 for (let i = 0; i < this.skus.length; i++) {
@@ -345,16 +345,6 @@
                     }
                 }
             },
-            price(cost, units = 1) {
-                let index = ''
-
-                if (this.discount) {
-                    cost = Math.floor(cost * ((100 - this.discount) / 100))
-                    index = '\u00B9'
-                }
-
-                return this.$root.price(cost * units) + '/month' + index
-            }
         }
     }
 </script>

@@ -1,8 +1,3 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-
-Vue.use(VueRouter)
-
 import DashboardComponent from '../vue/Dashboard'
 import DomainInfoComponent from '../vue/Domain/Info'
 import DomainListComponent from '../vue/Domain/List'
@@ -16,8 +11,6 @@ import UserListComponent from '../vue/User/List'
 import UserProfileComponent from '../vue/User/Profile'
 import UserProfileDeleteComponent from '../vue/User/ProfileDelete'
 import WalletComponent from '../vue/Wallet'
-
-import store from './store'
 
 const routes = [
     {
@@ -100,24 +93,4 @@ const routes = [
     }
 ]
 
-const router = new VueRouter({
-    mode: 'history',
-    routes
-})
-
-router.beforeEach((to, from, next) => {
-    // check if the route requires authentication and user is not logged in
-    if (to.matched.some(route => route.meta.requiresAuth) && !store.state.isLoggedIn) {
-        // remember the original request, to use after login
-        store.state.afterLogin = to;
-
-        // redirect to login page
-        next({ name: 'login' })
-
-        return
-    }
-
-    next()
-})
-
-export default router
+export default routes

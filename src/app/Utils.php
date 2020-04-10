@@ -95,8 +95,8 @@ class Utils
         $countries = include resource_path('countries.php');
         $env['countries'] = $countries ?: [];
 
-        $env['isAdmin'] = strpos(request()->getHttpHost(), 'admin.') === 0;
-        $env['jsapp'] = $env['isAdmin'] ? 'admin.js' : 'user.js';
+        $isAdmin = strpos(request()->getHttpHost(), 'admin.') === 0;
+        $env['jsapp'] = $isAdmin ? 'admin.js' : 'user.js';
 
         return $env;
     }

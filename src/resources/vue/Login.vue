@@ -23,7 +23,7 @@
                                 <input type="password" id="inputPassword" class="form-control" placeholder="Password" required v-model="password">
                             </div>
                         </div>
-                        <div class="form-group pt-3" v-if="!isAdmin">
+                        <div class="form-group pt-3" v-if="!$root.isAdmin">
                             <label for="secondfactor" class="sr-only">2FA</label>
                             <div class="input-group">
                                 <span class="input-group-prepend">
@@ -43,7 +43,7 @@
             </div>
         </div>
         <div class="mt-1">
-            <router-link v-if="!isAdmin" :to="{ name: 'password-reset' }" id="forgot-password">Forgot password?</router-link>
+            <router-link v-if="!$root.isAdmin" :to="{ name: 'password-reset' }" id="forgot-password">Forgot password?</router-link>
         </div>
     </div>
 </template>
@@ -56,7 +56,6 @@
                 email: '',
                 password: '',
                 secondFactor: '',
-                isAdmin: window.config.isAdmin,
                 loginError: false
             }
         },

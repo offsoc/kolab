@@ -325,7 +325,7 @@
                                         name: sku.name,
                                         cost: sku.cost,
                                         units: count - sku.units_free,
-                                        price: this.price(sku.cost, count - sku.units_free)
+                                        price: this.$root.priceLabel(sku.cost, count - sku.units_free, this.discount)
                                     }
 
                                     if (sku.range) {
@@ -376,20 +376,6 @@
                         })
                 }
             },
-            price(cost, units = 1) {
-                let index = ''
-
-                if (units < 0) {
-                    units = 1
-                }
-
-                if (this.discount) {
-                    cost = Math.floor(cost * ((100 - this.discount) / 100))
-                    index = '\u00B9'
-                }
-
-                return this.$root.price(cost * units) + '/month' + index
-            },
             submitDiscount() {
                 let dialog = $('#discount-dialog').modal('hide')
 
@@ -407,7 +393,7 @@
                                 this.discount_description = this.wallet_discount_description
 
                                 this.skus.forEach(sku => {
-                                    sku.price = this.price(sku.cost, sku.units)
+                                    sku.price = this.$root.priceLabel(sku.cost, sku.units, this.discount)
                                 })
                             }
                         }

@@ -14,6 +14,71 @@ try {
 } catch (e) {}
 
 /**
+ * We'll load Vue, VueRouter and global components
+ */
+
+import FontAwesomeIcon from './fontawesome'
+import VueRouter from 'vue-router'
+import VueToastr from '@deveodk/vue-toastr'
+import store from './store'
+
+window.Vue = require('vue')
+
+Vue.component('svg-icon', FontAwesomeIcon)
+
+Vue.use(VueToastr, {
+    defaultPosition: 'toast-bottom-right',
+    defaultTimeout: 5000
+})
+
+const vTooltip = (el, binding) => {
+    const t = []
+
+    if (binding.modifiers.focus) t.push('focus')
+    if (binding.modifiers.hover) t.push('hover')
+    if (binding.modifiers.click) t.push('click')
+    if (!t.length) t.push('hover')
+
+    $(el).tooltip({
+        title: binding.value,
+        placement: binding.arg || 'top',
+        trigger: t.join(' '),
+        html: !!binding.modifiers.html,
+    });
+}
+
+Vue.directive('tooltip', {
+    bind: vTooltip,
+    update: vTooltip,
+    unbind (el) {
+        $(el).tooltip('dispose')
+    }
+})
+
+
+Vue.use(VueRouter)
+
+window.router = new VueRouter({
+    mode: 'history',
+    routes: window.routes
+})
+
+router.beforeEach((to, from, next) => {
+    // check if the route requires authentication and user is not logged in
+    if (to.matched.some(route => route.meta.requiresAuth) && !store.state.isLoggedIn) {
+        // remember the original request, to use after login
+        store.state.afterLogin = to;
+
+        // redirect to login page
+        next({ name: 'login' })
+
+        return
+    }
+
+    next()
+})
+
+/**
  * We'll load the axios HTTP library which allows us to easily issue requests
  * to our Laravel back-end. This library automatically handles sending the
  * CSRF token as a header based on the value of the "XSRF" token cookie.
@@ -21,21 +86,4 @@ try {
 
 window.axios = require('axios')
 
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
-
-/**
- * Echo exposes an expressive API for subscribing to channels and listening
- * for events that are broadcast by Laravel. Echo and event broadcasting
- * allows your team to easily build robust real-time web applications.
- */
-
-// import Echo from 'laravel-echo';
-
-// window.Pusher = require('pusher-js');
-
-// window.Echo = new Echo({
-//     broadcaster: 'pusher',
-//     key: process.env.MIX_PUSHER_APP_KEY,
-//     cluster: process.env.MIX_PUSHER_APP_CLUSTER,
-//     encrypted: true
-// });
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'

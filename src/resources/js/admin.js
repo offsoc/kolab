@@ -2,8 +2,9 @@
  * Application code for the admin UI
  */
 
-import router from './routes-admin'
+import routes from './routes-admin.js'
 
-window.router = router
+window.routes = routes
+window.isAdmin = true
 
 require('./app')

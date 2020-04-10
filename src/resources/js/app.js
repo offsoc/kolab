@@ -9,116 +9,6 @@ require('./bootstrap')
 import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Menu'
 import store from './store'
-import FontAwesomeIcon from './fontawesome'
-import VueToastr from '@deveodk/vue-toastr'
-
-window.Vue = require('vue')
-
-Vue.component('svg-icon', FontAwesomeIcon)
-
-Vue.use(VueToastr, {
-    defaultPosition: 'toast-bottom-right',
-    defaultTimeout: 5000
-})
-
-const vTooltip = (el, binding) => {
-    const t = []
-
-    if (binding.modifiers.focus) t.push('focus')
-    if (binding.modifiers.hover) t.push('hover')
-    if (binding.modifiers.click) t.push('click')
-    if (!t.length) t.push('hover')
-
-    $(el).tooltip({
-        title: binding.value,
-        placement: binding.arg || 'top',
-        trigger: t.join(' '),
-        html: !!binding.modifiers.html,
-    });
-}
-
-Vue.directive('tooltip', {
-    bind: vTooltip,
-    update: vTooltip,
-    unbind (el) {
-        $(el).tooltip('dispose')
-    }
-})
-
-// Add a response interceptor for general/validation error handler
-// This have to be before Vue and Router setup. Otherwise we would
-// not be able to handle axios responses initiated from inside
-// components created/mounted handlers (e.g. signup code verification link)
-window.axios.interceptors.response.use(
-    response => {
-        // Do nothing
-        return response
-    },
-    error => {
-        let error_msg
-        let status = error.response ? error.response.status : 200
-
-        if (error.response && status == 422) {
-            error_msg = "Form validation error"
-
-            $.each(error.response.data.errors || {}, (idx, msg) => {
-                $('form').each((i, form) => {
-                    const input_name = ($(form).data('validation-prefix') || '') + idx
-                    const input = $('#' + input_name)
-
-                    if (input.length) {
-                        // Create an error message\
-                        // API responses can use a string, array or object
-                        let msg_text = ''
-                        if ($.type(msg) !== 'string') {
-                            $.each(msg, (index, str) => {
-                                msg_text += str + ' '
-                            })
-                        }
-                        else {
-                            msg_text = msg
-                        }
-
-                        let feedback = $('<div class="invalid-feedback">').text(msg_text)
-
-                        if (input.is('.list-input')) {
-                            // List input widget
-                            input.children(':not(:first-child)').each((index, element) => {
-                                if (msg[index]) {
-                                    $(element).find('input').addClass('is-invalid')
-                                }
-                            })
-
-                            input.addClass('is-invalid').next('.invalid-feedback').remove()
-                            input.after(feedback)
-                        }
-                        else {
-                            // Standard form element
-                            input.addClass('is-invalid')
-                            input.parent().find('.invalid-feedback').remove()
-                            input.parent().append(feedback)
-                        }
-
-                        return false
-                    }
-                });
-            })
-
-            $('form .is-invalid:not(.listinput-widget)').first().focus()
-        }
-        else if (error.response && error.response.data) {
-            error_msg = error.response.data.message
-        }
-        else {
-            error_msg = error.request ? error.request.statusText : error.message
-        }
-
-        app.$toastr('error', error_msg || "Server Error", 'Error')
-
-        // Pass the error as-is
-        return Promise.reject(error)
-    }
-)
 
 const app = new Vue({
     el: '#app',
@@ -130,7 +20,8 @@ const app = new Vue({
     router: window.router,
     data() {
         return {
-            isLoading: true
+            isLoading: true,
+            isAdmin: window.isAdmin
         }
     },
     methods: {
@@ -225,6 +116,20 @@ const app = new Vue({
         price(price) {
             return (price/100).toLocaleString('de-DE', { style: 'currency', currency: 'CHF' })
         },
+        priceLabel(cost, units = 1, discount) {
+            let index = ''
+
+            if (units < 0) {
+                units = 1
+            }
+
+            if (discount) {
+                cost = Math.floor(cost * ((100 - discount) / 100))
+                index = '\u00B9'
+            }
+
+            return this.price(cost * units) + '/month' + index
+        },
         domainStatusClass(domain) {
             if (domain.isDeleted) {
                 return 'text-muted'
@@ -287,3 +192,75 @@ const app = new Vue({
         }
     }
 })
+
+// Add a axios response interceptor for general/validation error handler
+window.axios.interceptors.response.use(
+    response => {
+        // Do nothing
+        return response
+    },
+    error => {
+        let error_msg
+        let status = error.response ? error.response.status : 200
+
+        if (error.response && status == 422) {
+            error_msg = "Form validation error"
+
+            $.each(error.response.data.errors || {}, (idx, msg) => {
+                $('form').each((i, form) => {
+                    const input_name = ($(form).data('validation-prefix') || '') + idx
+                    const input = $('#' + input_name)
+
+                    if (input.length) {
+                        // Create an error message\
+                        // API responses can use a string, array or object
+                        let msg_text = ''
+                        if ($.type(msg) !== 'string') {
+                            $.each(msg, (index, str) => {
+                                msg_text += str + ' '
+                            })
+                        }
+                        else {
+                            msg_text = msg
+                        }
+
+                        let feedback = $('<div class="invalid-feedback">').text(msg_text)
+
+                        if (input.is('.list-input')) {
+                            // List input widget
+                            input.children(':not(:first-child)').each((index, element) => {
+                                if (msg[index]) {
+                                    $(element).find('input').addClass('is-invalid')
+                                }
+                            })
+
+                            input.addClass('is-invalid').next('.invalid-feedback').remove()
+                            input.after(feedback)
+                        }
+                        else {
+                            // Standard form element
+                            input.addClass('is-invalid')
+                            input.parent().find('.invalid-feedback').remove()
+                            input.parent().append(feedback)
+                        }
+
+                        return false
+                    }
+                });
+            })
+
+            $('form .is-invalid:not(.listinput-widget)').first().focus()
+        }
+        else if (error.response && error.response.data) {
+            error_msg = error.response.data.message
+        }
+        else {
+            error_msg = error.request ? error.request.statusText : error.message
+        }
+
+        app.$toastr('error', error_msg || "Server Error", 'Error')
+
+        // Pass the error as-is
+        return Promise.reject(error)
+    }
+)
