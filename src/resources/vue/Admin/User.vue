@@ -110,7 +110,7 @@
                                 <div class="col-sm-10">
                                     <span class="form-control-plaintext" id="discount">
                                         <span>{{ wallet_discount ? (wallet_discount + '% - ' + wallet_discount_description) : 'none' }}</span>
-                                        <button type="button" class="btn btn-secondary btn-sm">Edit</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" @click="discountEdit">Edit</button>
                                     </span>
                                 </div>
                             </div>
@@ -223,6 +223,33 @@
                 </div>
             </div>
         </div>
+
+        <div id="discount-dialog" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Account discount</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="form-group">
+                            <select v-model="wallet_discount_id" class="custom-select">
+                                <option value="">- none -</option>
+                                <option v-for="item in discounts" :value="item.id" :key="item.id">{{ item.label }}</option>
+                            </select>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary modal-action" @click="submitDiscount()">
+                            <svg-icon icon="check"></svg-icon> Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -240,8 +267,10 @@
                 balance: 0,
                 discount: 0,
                 discount_description: '',
+                discounts: [],
                 wallet_discount: 0,
                 wallet_discount_description: '',
+                wallet_discount_id: '',
                 domains: [],
                 skus: [],
                 users: [],
@@ -281,6 +310,7 @@
                     })
 
                     this.wallet_discount = this.user.wallets[0].discount
+                    this.wallet_discount_id = this.user.wallets[0].discount_id || ''
                     this.wallet_discount_description = this.user.wallets[0].discount_description
 
                     // Create subscriptions list
@@ -293,6 +323,8 @@
                                     let item = {
                                         id: sku.id,
                                         name: sku.name,
+                                        cost: sku.cost,
+                                        units: count - sku.units_free,
                                         price: this.price(sku.cost, count - sku.units_free)
                                     }
 
@@ -329,6 +361,21 @@
             })
         },
         methods: {
+            discountEdit() {
+                $('#discount-dialog')
+                    .on('shown.bs.modal', (e, a) => {
+                        $(e.target).find('select').focus()
+                    })
+                    .modal()
+
+                if (!this.discounts.length) {
+                    // Fetch discounts
+                    axios.get('/api/v4/discounts')
+                        .then(response => {
+                            this.discounts = response.data.list
+                        })
+                }
+            },
             price(cost, units = 1) {
                 let index = ''
 
@@ -342,7 +389,30 @@
                 }
 
                 return this.$root.price(cost * units) + '/month' + index
-            }
+            },
+            submitDiscount() {
+                let dialog = $('#discount-dialog').modal('hide')
+
+                axios.put('/api/v4/wallets/' + this.user.wallets[0].id, { discount: this.wallet_discount_id })
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toastr('success', response.data.message)
+                            this.wallet_discount = response.data.discount
+                            this.wallet_discount_id = response.data.discount_id || ''
+                            this.wallet_discount_description = response.data.discount_description
+
+                            // Update prices in Subscriptions tab
+                            if (this.user.wallet.id == response.data.id) {
+                                this.discount = this.wallet_discount
+                                this.discount_description = this.wallet_discount_description
+
+                                this.skus.forEach(sku => {
+                                    sku.price = this.price(sku.cost, sku.units)
+                                })
+                            }
+                        }
+                    })
+            },
         }
     }
 </script>

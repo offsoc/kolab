@@ -4,6 +4,7 @@ namespace Tests\Browser\Admin;
 
 use App\Discount;
 use Tests\Browser;
+use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Admin\User as UserPage;
 use Tests\Browser\Pages\Dashboard;
@@ -336,6 +337,65 @@ class UserTest extends TestCaseDusk
                 ->with('@user-users', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no users in this account.');
+                });
+        });
+    }
+
+    /**
+     * Test editing wallet discount
+     *
+     * @depends testUserInfo2
+     */
+    public function testWalletDiscount(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $john = $this->getTestUser('john@kolab.org');
+
+            $browser->visit(new UserPage($john->id))
+                ->pause(100)
+                ->click('@user-finances #discount button')
+                // Test dialog content, and closing it with Cancel button
+                ->with(new Dialog('#discount-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Account discount')
+                        ->assertFocused('@body select')
+                        ->assertSelected('@body select', '')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
+                        ->click('@button-cancel');
+                })
+                ->assertMissing('#discount-dialog')
+                ->click('@user-finances #discount button')
+                // Change the discount
+                ->with(new Dialog('#discount-dialog'), function (Browser $browser) {
+                    $browser->click('@body select')
+                        ->click('@body select option:nth-child(2)')
+                        ->click('@button-action');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, '', 'User wallet updated successfully.')
+                ->assertSeeIn('#discount span', '10% - Test voucher')
+                ->click('@nav #tab-subscriptions')
+                ->with('@user-subscriptions', function (Browser $browser) {
+                    $browser->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '3,99 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,99 CHF/month¹')
+                        ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher');
+                })
+                // Change back to 'none'
+                ->click('@nav #tab-finances')
+                ->click('@user-finances #discount button')
+                ->with(new Dialog('#discount-dialog'), function (Browser $browser) {
+                    $browser->click('@body select')
+                        ->click('@body select option:nth-child(1)')
+                        ->click('@button-action');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, '', 'User wallet updated successfully.')
+                ->assertSeeIn('#discount span', 'none')
+                ->click('@nav #tab-subscriptions')
+                ->with('@user-subscriptions', function (Browser $browser) {
+                    $browser->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,44 CHF/month')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month')
+                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '5,55 CHF/month')
+                        ->assertMissing('table + .hint');
                 });
         });
     }

@@ -27,4 +27,6 @@ return [
 
     'search-foundxdomains' => ':x domains have been found.',
     'search-foundxusers' => ':x user accounts have been found.',
+
+    'wallet-update-success' => 'User wallet updated successfully.',
 ];

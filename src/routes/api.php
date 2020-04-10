@@ -94,5 +94,6 @@ Route::group(
         Route::apiResource('skus', API\V4\Admin\SkusController::class);
         Route::apiResource('users', API\V4\Admin\UsersController::class);
         Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
+        Route::apiResource('discounts', API\V4\Admin\DiscountsController::class);
     }
 );
