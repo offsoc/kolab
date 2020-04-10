@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Jobs\SignupVerificationEmail;
 use App\Jobs\SignupVerificationSMS;
+use App\Discount;
 use App\Domain;
 use App\Plan;
 use App\Rules\ExternalEmail;
@@ -40,7 +41,8 @@ class SignupController extends Controller
     {
         $plans = [];
 
-        Plan::all()->map(function ($plan) use (&$plans) {
+        // Use reverse order just to have individual on left, group on right ;)
+        Plan::select()->orderByDesc('title')->get()->map(function ($plan) use (&$plans) {
             $plans[] = [
                 'title' => $plan->title,
                 'name' => $plan->name,
@@ -71,6 +73,7 @@ class SignupController extends Controller
                 'email' => 'required',
                 'name' => 'required|max:512',
                 'plan' => 'nullable|alpha_num|max:128',
+                'voucher' => 'max:32',
             ]
         );
 
@@ -89,6 +92,7 @@ class SignupController extends Controller
                     'email' => $request->email,
                     'name' => $request->name,
                     'plan' => $request->plan,
+                    'voucher' => $request->voucher,
                 ]
         ]);
 
@@ -142,12 +146,13 @@ class SignupController extends Controller
 
         $has_domain = $this->getPlan()->hasDomain();
 
-        // Return user name and email/phone from the codes database,
+        // Return user name and email/phone/voucher from the codes database,
         // domains list for selection and "plan type" flag
         return response()->json([
                 'status' => 'success',
                 'email' => $code->data['email'],
                 'name' => $code->data['name'],
+                'voucher' => $code->data['voucher'],
                 'is_domain' => $has_domain,
                 'domains' => $has_domain ? [] : Domain::getPublicDomains(),
         ]);
@@ -169,6 +174,7 @@ class SignupController extends Controller
                 'login' => 'required|min:2',
                 'password' => 'required|min:4|confirmed',
                 'domain' => 'required',
+                'voucher' => 'max:32',
             ]
         );
 
@@ -180,6 +186,17 @@ class SignupController extends Controller
         $v = $this->verify($request);
         if ($v->status() !== 200) {
             return $v;
+        }
+
+        // Find the voucher discount
+        if ($request->voucher) {
+            $discount = Discount::where('code', \strtoupper($request->voucher))
+                ->where('active', true)->first();
+
+            if (!$discount) {
+                $errors = ['voucher' => \trans('validation.voucherinvalid')];
+                return response()->json(['status' => 'error', 'errors' => $errors], 422);
+            }
         }
 
         // Get the plan
@@ -220,6 +237,12 @@ class SignupController extends Controller
                     'status' => Domain::STATUS_NEW,
                     'type' => Domain::TYPE_EXTERNAL,
             ]);
+        }
+
+        if (!empty($discount)) {
+            $wallet = $user->wallets()->first();
+            $wallet->discount()->associate($discount);
+            $wallet->save();
         }
 
         $user->assignPlan($plan, $domain);

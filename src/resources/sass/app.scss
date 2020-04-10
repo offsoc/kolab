@@ -200,3 +200,19 @@ ul.status-list {
         height: 6rem;
     }
 }
+
+.plan-selector {
+    .plan-ico {
+        width: 100px;
+        font-size: 4em;
+        color: #f1a539;
+        border: 3px solid #f1a539;
+        width: 100px;
+        margin-bottom: 1rem;
+        border-radius: 50%;
+    }
+
+    ul:last-child {
+        margin-bottom: 0;
+    }
+}

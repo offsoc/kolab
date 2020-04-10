@@ -71,6 +71,7 @@ const routes = [
     },
     {
         path: '/signup/:param?',
+        alias: '/signup/voucher/:param',
         name: 'signup',
         component: SignupComponent
     },

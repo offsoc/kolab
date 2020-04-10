@@ -129,6 +129,7 @@ return [
     'packageinvalid' => 'Invalid package selected.',
     'packagerequired' => 'Package is required.',
     'usernotexists' => 'Unable to find user.',
+    'voucherinvalid' => 'The voucher code is invalid or expired.',
     'noextemail' => 'This user has no external email address.',
     'entryinvalid' => 'The specified :attribute is invalid.',
     'entryexists' => 'The specified :attribute is not available.',

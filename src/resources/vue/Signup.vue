@@ -1,7 +1,15 @@
 <template>
     <div class="container">
         <div id="step0">
-            <div class="plan-selector d-flex justify-content-around align-items-stretch mb-3"></div>
+            <div class="plan-selector d-flex justify-content-around align-items-stretch mb-3">
+                <div v-for="plan in plans" :key="plan.id" :class="'p-3 m-1 text-center bg-light flex-fill plan-box d-flex flex-column align-items-center plan-' + plan.title">
+                    <div class="plan-ico">
+                        <svg-icon :icon="plan_icons[plan.title]"></svg-icon>
+                    </div>
+                    <button class="btn btn-primary" :data-title="plan.title" @click="selectPlan(plan.title)" v-html="plan.button"></button>
+                    <div class="plan-description text-left mt-3" v-html="plan.description"></div>
+                </div>
+            </div>
             <h3>FAQs</h3>
             <ul>
                 <li><a href="https://kolabnow.com/tos">What are your terms of service?</a></li>
@@ -76,6 +84,10 @@
                         <label for="signup_confirm" class="sr-only">Confirm Password</label>
                         <input type="password" class="form-control" id="signup_confirm" placeholder="Confirm Password" required v-model="password_confirmation">
                     </div>
+                    <div class="form-group pt-2 pb-2">
+                        <label for="signup_voucher" class="sr-only">Voucher code</label>
+                        <input type="text" class="form-control" id="signup_voucher" placeholder="Voucher code" v-model="voucher">
+                    </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
                     <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
                 </form>
@@ -98,13 +110,23 @@
                 domain: '',
                 plan: null,
                 is_domain: false,
-                plans: null
+                plan_icons: {
+                    individual: 'user',
+                    group: 'users'
+                },
+                plans: [],
+                voucher: ''
             }
         },
         mounted() {
             let param = this.$route.params.param;
+
             if (param) {
-                if (/^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(param)) {
+                if (this.$route.path.indexOf('/signup/voucher/') === 0) {
+                    // Voucher (discount) code
+                    this.voucher = param
+                    this.displayForm(0)
+                } else if (/^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(param)) {
                     // Verification code provided, auto-submit Step 2
                     this.short_code = RegExp.$1
                     this.code = RegExp.$2
@@ -121,31 +143,16 @@
             }
         },
         methods: {
+            selectPlan(plan) {
+                this.$router.push({path: '/signup/' + plan})
+                this.plan = plan
+                this.displayForm(1, true)
+            },
             // Composes plan selection page
             step0() {
-                if (!this.plans) {
+                if (!this.plans.length) {
                     axios.get('/api/auth/signup/plans', {}).then(response => {
-                        let boxes = []
-
                         this.plans = response.data.plans
-
-                        this.plans.forEach(plan => {
-                            boxes.push($(
-                                `<div class="p-3 m-1 text-center bg-light flex-fill plan-box plan-${plan.title}">
-                                    <button class="btn btn-primary" data-title="${plan.title}">${plan.button}</button>
-                                    <div class="plan-description text-left mt-3">${plan.description}</div>
-                                </div>`
-                            ))
-                        })
-
-                        $('#step0').find('.plan-selector')
-                            .append(boxes)
-                            .find('button').on('click', event => {
-                                let plan = $(event.target).data('title')
-                                this.$router.push({path: '/signup/' + plan})
-                                this.plan = plan
-                                this.displayForm(1, true)
-                            })
                     })
                 }
             },
@@ -156,7 +163,8 @@
                 axios.post('/api/auth/signup/init', {
                     email: this.email,
                     name: this.name,
-                    plan: this.plan
+                    plan: this.plan,
+                    voucher: this.voucher
                 }).then(response => {
                     this.displayForm(2, true)
                     this.code = response.data.code
@@ -179,6 +187,7 @@
                     this.name = response.data.name
                     this.email = response.data.email
                     this.is_domain = response.data.is_domain
+                    this.voucher = response.data.voucher
 
                     // Fill the domain selector with available domains
                     if (!this.is_domain) {
@@ -208,7 +217,8 @@
                     login: this.login,
                     domain: this.domain,
                     password: this.password,
-                    password_confirmation: this.password_confirmation
+                    password_confirmation: this.password_confirmation,
+                    voucher: this.voucher
                 }).then(response => {
                     // auto-login and goto dashboard
                     this.$root.loginUser(response.data.access_token)

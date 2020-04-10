@@ -3,6 +3,7 @@
 namespace Tests\Feature\Controller;
 
 use App\Http\Controllers\API\SignupController;
+use App\Discount;
 use App\Domain;
 use App\SignupCode;
 use App\User;
@@ -77,8 +78,6 @@ class SignupTest extends TestCase
      */
     public function testSignupPlans()
     {
-        // Note: this uses plans that already have been seeded into the DB
-
         $response = $this->get('/api/auth/signup/plans');
         $json = $response->json();
 
@@ -141,6 +140,22 @@ class SignupTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertArrayHasKey('email', $json['errors']);
 
+        // Sanity check on voucher code
+        $data = [
+            'voucher' => '123456789012345678901234567890123',
+            'name' => 'Signup User',
+            'email' => 'valid@email.com',
+        ];
+
+        $response = $this->post('/api/auth/signup/init', $data);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertArrayHasKey('voucher', $json['errors']);
+
         // TODO: Test phone validation
     }
 
@@ -183,11 +198,34 @@ class SignupTest extends TestCase
                 && $code->data['name'] === $data['name'];
         });
 
+        // Try the same with voucher
+        $data['voucher'] = 'TEST';
+
+        $response = $this->post('/api/auth/signup/init', $data);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertCount(2, $json);
+        $this->assertSame('success', $json['status']);
+        $this->assertNotEmpty($json['code']);
+
+        // Assert the job has proper data assigned
+        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
+            $code = TestCase::getObjectProperty($job, 'code');
+
+            return $code->code === $json['code']
+                && $code->data['plan'] === $data['plan']
+                && $code->data['email'] === $data['email']
+                && $code->data['voucher'] === $data['voucher']
+                && $code->data['name'] === $data['name'];
+        });
+
         return [
             'code' => $json['code'],
             'email' => $data['email'],
             'name' => $data['name'],
             'plan' => $data['plan'],
+            'voucher' => $data['voucher']
         ];
     }
 
@@ -260,10 +298,11 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(5, $json);
+        $this->assertCount(6, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame($result['email'], $json['email']);
         $this->assertSame($result['name'], $json['name']);
+        $this->assertSame($result['voucher'], $json['voucher']);
         $this->assertSame(false, $json['is_domain']);
         $this->assertTrue(is_array($json['domains']) && !empty($json['domains']));
 
@@ -362,8 +401,28 @@ class SignupTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertArrayHasKey('short_code', $json['errors']);
 
-        // Valid code, invalid login
         $code = SignupCode::find($result['code']);
+
+        // Data with invalid voucher
+        $data = [
+            'login' => 'TestLogin',
+            'domain' => $domain,
+            'password' => 'test',
+            'password_confirmation' => 'test',
+            'code' => $result['code'],
+            'short_code' => $code->short_code,
+            'voucher' => 'XXX',
+        ];
+
+        $response = $this->post('/api/auth/signup', $data);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertArrayHasKey('voucher', $json['errors']);
+
+        // Valid code, invalid login
         $data = [
             'login' => 'żżżżżż',
             'domain' => $domain,
@@ -402,6 +461,7 @@ class SignupTest extends TestCase
             'password_confirmation' => 'test',
             'code' => $code->code,
             'short_code' => $code->short_code,
+            'voucher' => 'TEST',
         ];
 
         $response = $this->post('/api/auth/signup', $data);
@@ -433,6 +493,10 @@ class SignupTest extends TestCase
 
         // Check external email in user settings
         $this->assertSame($result['email'], $user->getSetting('external_email'));
+
+        // Discount
+        $discount = Discount::where('code', 'TEST')->first();
+        $this->assertSame($discount->id, $user->wallets()->first()->discount_id);
 
         // TODO: Check SKUs/Plan
 
@@ -487,10 +551,11 @@ class SignupTest extends TestCase
         $result = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(5, $result);
+        $this->assertCount(6, $result);
         $this->assertSame('success', $result['status']);
         $this->assertSame($user_data['email'], $result['email']);
         $this->assertSame($user_data['name'], $result['name']);
+        $this->assertSame(null, $result['voucher']);
         $this->assertSame(true, $result['is_domain']);
         $this->assertSame([], $result['domains']);
 
