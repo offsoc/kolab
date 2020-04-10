@@ -190,12 +190,11 @@ class PaymentsController extends Controller
     {
         $url = \url($route);
 
-        // When testing the host might be e.g. 127.0.0.1:8000.
-        // This will not be accepted by Mollie. Let's use our fqdn instead.
-        // This does not have to be working URL, we do not require Mollie
-        // to come back (yet).
-        if (preg_match('|^https?://[0-9][^/]+|', $url, $matches)) {
-            $url = str_replace($matches[0], \config('app.public_url'), $url);
+        $app_url = trim(\config('app.url'), '/');
+        $pub_url = trim(\config('app.public_url'), '/');
+
+        if ($pub_url != $app_url) {
+            $url = str_replace($app_url, $pub_url, $url);
         }
 
         return $url;
