@@ -44,9 +44,25 @@ class DomainCreateTest extends TestCase
 
         $this->assertFalse($domain->isLdapReady());
 
+        // Fake the queue, assert that no jobs were pushed...
+        Queue::fake();
+        Queue::assertNothingPushed();
+
         $job = new DomainCreate($domain);
         $job->handle();
 
         $this->assertTrue($domain->fresh()->isLdapReady());
+
+        Queue::assertPushed(\App\Jobs\DomainVerify::class, 1);
+
+        Queue::assertPushed(
+            \App\Jobs\DomainVerify::class,
+            function ($job) use ($domain) {
+                $job_domain = TestCase::getObjectProperty($job, 'domain');
+
+                return $job_domain->id === $domain->id &&
+                    $job_domain->namespace === $domain->namespace;
+            }
+        );
     }
 }

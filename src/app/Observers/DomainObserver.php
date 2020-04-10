@@ -36,7 +36,8 @@ class DomainObserver
      */
     public function created(Domain $domain)
     {
-        // Create domain record in LDAP, then check if it exists in DNS
+        // Create domain record in LDAP
+        // Note: DomainCreate job will dispatch DomainVerify job
         \App\Jobs\DomainCreate::dispatch($domain);
     }
 

@@ -48,6 +48,8 @@ class DomainCreate implements ShouldQueue
 
             $this->domain->status |= Domain::STATUS_LDAP_READY;
             $this->domain->save();
+
+            DomainVerify::dispatch($this->domain);
         }
     }
 }
