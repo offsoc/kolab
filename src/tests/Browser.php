@@ -13,22 +13,6 @@ use Tests\Browser\Components\Toast;
 class Browser extends \Laravel\Dusk\Browser
 {
     /**
-     * Assert element's attribute value
-     */
-    public function assertAttribute($selector, $name, $value)
-    {
-        $element = $this->resolver->findOrFail($selector);
-
-        Assert::assertEquals(
-            $element->getAttribute($name),
-            $value,
-            "Failed asserting value of [$selector][$name] attribute"
-        );
-
-        return $this;
-    }
-
-    /**
      * Assert number of (visible) elements
      */
     public function assertElementsCount($selector, $expected_count, $visible = true)
