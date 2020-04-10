@@ -33,7 +33,7 @@
                         <div class="form-group row">
                             <label for="aliases-input" class="col-sm-4 col-form-label">Email aliases</label>
                             <div class="col-sm-8">
-                                <list-input id="aliases" v-bind:list="user.aliases"></list-input>
+                                <list-input id="aliases" :list="user.aliases"></list-input>
                             </div>
                         </div>
                         <div class="form-group row">

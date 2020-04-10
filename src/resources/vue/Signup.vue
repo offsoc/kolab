@@ -2,12 +2,12 @@
     <div class="container">
         <div id="step0">
             <div class="plan-selector d-flex justify-content-around align-items-stretch mb-3">
-                <div v-for="plan in plans" :key="plan.id" :class="'p-3 m-1 text-center bg-light flex-fill plan-box d-flex flex-column align-items-center plan-' + plan.title">
+                <div v-for="item in plans" :key="item.id" :class="'p-3 m-1 text-center bg-light flex-fill plan-box d-flex flex-column align-items-center plan-' + item.title">
                     <div class="plan-ico">
-                        <svg-icon :icon="plan_icons[plan.title]"></svg-icon>
+                        <svg-icon :icon="plan_icons[item.title]"></svg-icon>
                     </div>
-                    <button class="btn btn-primary" :data-title="plan.title" @click="selectPlan(plan.title)" v-html="plan.button"></button>
-                    <div class="plan-description text-left mt-3" v-html="plan.description"></div>
+                    <button class="btn btn-primary" :data-title="item.title" @click="selectPlan(item.title)" v-html="item.button"></button>
+                    <div class="plan-description text-left mt-3" v-html="item.description"></div>
                 </div>
             </div>
             <h3>FAQs</h3>

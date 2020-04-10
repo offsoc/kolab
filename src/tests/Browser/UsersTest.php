@@ -550,7 +550,8 @@ class UsersTest extends TestCaseDusk
                 ->with('@form', function (Browser $browser) {
                     $browser->whenAvailable('@skus', function (Browser $browser) {
                         $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
-                        $browser->assertElementsCount('tbody tr', 5)
+                        $browser->waitFor('tbody tr')
+                            ->assertElementsCount('tbody tr', 5)
                             // Mailbox SKU
                             ->assertSeeIn('tbody tr:nth-child(1) td.price', '3,99 CHF/month¹')
                             // Storage SKU
