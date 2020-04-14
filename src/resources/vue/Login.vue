@@ -1,5 +1,5 @@
 <template>
-    <div class="container d-flex flex-column align-items-center">
+    <div class="container d-flex flex-column align-items-center justify-content-center">
         <div class="card col-sm-8 col-lg-6">
             <div class="card-body">
                 <h1 class="card-title text-center mb-3">Please sign in</h1>

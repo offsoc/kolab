@@ -1,5 +1,5 @@
-#primary-menu {
-    background-color: #f6f5f3;
+#header-menu {
+    background-color: $menu-bg-color;
     padding: 0;
     line-height: 85px;
 
@@ -25,7 +25,7 @@
         }
 
         &:hover {
-            color: #f1a539;
+            color: $main-color;
             text-decoration: underline;
         }
 
@@ -35,11 +35,22 @@
     }
 }
 
+#footer-menu {
+    background-color: $main-color;
+    height: 100px;
+
+    .navbar-brand {
+        img {
+            width: 170px;
+        }
+    }
+}
+
 @include media-breakpoint-up(lg) {
-    #primary-menu {
+    #header-menu {
         a.menulogin {
             text-transform: uppercase;
-            border: 2px solid #f1a539;
+            border: 2px solid $main-color;
             border-radius: 21px;
             line-height: 21px;
             letter-spacing: 1px;
@@ -49,16 +60,22 @@
             &:focus,
             &:hover {
                 text-decoration: none;
-                background-color: #f1a539;
+                background-color: $main-color;
                 color: #fff;
                 font-weight: normal;
             }
         }
     }
+
+    .navbar {
+        .navbar {
+            justify-content: flex-end;
+        }
+    }
 }
 
 @include media-breakpoint-down(md) {
-    #primary-menu {
+    #header-menu {
         .navbar-nav {
             padding-bottom: 1em;
         }
@@ -71,13 +88,13 @@
 }
 
 @include media-breakpoint-down(sm) {
-    #primary-menu {
+    #header-menu {
         padding: 0 1em;
     }
 }
 
 @media (max-width: 340px) {
-    #primary-menu {
+    #header-menu {
         .navbar-brand img {
             width: 160px;
         }

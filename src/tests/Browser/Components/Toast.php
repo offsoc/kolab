@@ -2,6 +2,7 @@
 
 namespace Tests\Browser\Components;
 
+use Facebook\WebDriver\WebDriverBy;
 use Laravel\Dusk\Component as BaseComponent;
 use PHPUnit\Framework\Assert as PHPUnit;
 
@@ -52,21 +53,34 @@ class Toast extends BaseComponent
     public function elements()
     {
         return [
-            '@title' => ".toast-title",
-            '@message' =>  ".toast-message",
+            '@title' => ".toast-header > strong",
+            '@message' =>  ".toast-body",
         ];
     }
 
     /**
      * Assert title of the toast element
      */
-    public function assertToastTitle($browser, string $title)
+    public function assertToastTitle($browser, string $title = null)
     {
         if (empty($title)) {
-            $browser->assertMissing('@title');
-        } else {
-            $browser->assertSeeIn('@title', $title);
+            switch ($this->type) {
+                case self::TYPE_ERROR:
+                    $title = 'Error';
+                    break;
+                case self::TYPE_SUCCESS:
+                    $title = 'Success';
+                    break;
+                case self::TYPE_WARNING:
+                    $title = 'Warning';
+                    break;
+                case self::TYPE_INFO:
+                    $title = 'Information';
+                    break;
+            }
         }
+
+        $browser->assertSeeIn('@title', $title);
     }
 
     /**
@@ -82,6 +96,6 @@ class Toast extends BaseComponent
      */
     public function closeToast($browser)
     {
-        $this->element->click();
+        $this->element->findElements(WebDriverBy::cssSelector('button.close'))[0]->click();
     }
 }

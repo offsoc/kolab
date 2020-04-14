@@ -60,8 +60,8 @@ class DomainTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->visit($user_page)
                 ->on($user_page)
-                ->pause(500)
                 ->click('@nav #tab-domains')
+                ->pause(1000)
                 ->click('@user-domains table tbody tr:first-child td a');
 
             $browser->on($domain_page)

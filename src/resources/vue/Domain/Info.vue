@@ -87,7 +87,7 @@
                         if (response.data.status == 'success') {
                             this.domain.isConfirmed = true
                             this.parseStatusInfo(response.data.statusInfo)
-                            this.$toastr('success', response.data.message)
+                            this.$toast.success(response.data.message)
                         }
                     })
             },

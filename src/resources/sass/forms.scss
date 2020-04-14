@@ -1,0 +1,34 @@
+
+.list-input {
+    & > div {
+        &:not(:last-child) {
+            margin-bottom: -1px;
+
+            input,
+            a.btn {
+                border-bottom-right-radius: 0;
+                border-bottom-left-radius: 0;
+            }
+        }
+
+        &:not(:first-child) {
+            input,
+            a.btn {
+                border-top-right-radius: 0;
+                border-top-left-radius: 0;
+            }
+        }
+    }
+
+    input.is-invalid {
+        z-index: 2;
+    }
+}
+
+.range-input {
+    display: flex;
+
+    label {
+        margin-right: 0.5em;
+    }
+}

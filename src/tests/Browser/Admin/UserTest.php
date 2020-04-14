@@ -371,7 +371,7 @@ class UserTest extends TestCaseDusk
                         ->click('@body select option:nth-child(2)')
                         ->click('@button-action');
                 })
-                ->assertToast(Toast::TYPE_SUCCESS, '', 'User wallet updated successfully.')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User wallet updated successfully.')
                 ->assertSeeIn('#discount span', '10% - Test voucher')
                 ->click('@nav #tab-subscriptions')
                 ->with('@user-subscriptions', function (Browser $browser) {
@@ -388,7 +388,7 @@ class UserTest extends TestCaseDusk
                         ->click('@body select option:nth-child(1)')
                         ->click('@button-action');
                 })
-                ->assertToast(Toast::TYPE_SUCCESS, '', 'User wallet updated successfully.')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User wallet updated successfully.')
                 ->assertSeeIn('#discount span', 'none')
                 ->click('@nav #tab-subscriptions')
                 ->with('@user-subscriptions', function (Browser $browser) {

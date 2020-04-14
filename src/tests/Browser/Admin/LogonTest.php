@@ -57,17 +57,11 @@ class LogonTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', 'wrong');
-
-            // Error message
-            $browser->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
-                $browser->assertToastTitle('Error')
-                    ->assertToastMessage('Invalid username or password.')
-                    ->closeToast();
-            });
-
-            // Checks if we're still on the logon page
-            $browser->on(new Home());
+                ->submitLogon('jeroen@jeroen.jeroen', 'wrong')
+                // Error message
+                ->assertToast(Toast::TYPE_ERROR, 'Invalid username or password.')
+                // Checks if we're still on the logon page
+                ->on(new Home());
         });
     }
 
@@ -118,11 +112,7 @@ class LogonTest extends TestCaseDusk
             });
 
             // Success toast message
-            $browser->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                $browser->assertToastTitle('')
-                    ->assertToastMessage('Successfully logged out')
-                    ->closeToast();
-            });
+            $browser->assertToast(Toast::TYPE_SUCCESS, 'Successfully logged out');
         });
     }
 
@@ -149,11 +139,7 @@ class LogonTest extends TestCaseDusk
             });
 
             // Success toast message
-            $browser->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                $browser->assertToastTitle('')
-                    ->assertToastMessage('Successfully logged out')
-                    ->closeToast();
-            });
+            $browser->assertToast(Toast::TYPE_SUCCESS, 'Successfully logged out');
         });
     }
 }

@@ -56,7 +56,7 @@ abstract class TestCaseDusk extends BaseTestCase
             $options->setExperimentalOption('mobileEmulation', ['userAgent' => $ua]);
             $options->addArguments(['--window-size=800,640']);
         } else {
-            $options->addArguments(['--window-size=2560,1440']);
+            $options->addArguments(['--window-size=1280,1024']);
         }
 
         // Make sure downloads dir exists and is empty

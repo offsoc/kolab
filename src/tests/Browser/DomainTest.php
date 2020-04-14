@@ -74,11 +74,7 @@ class DomainTest extends TestCaseDusk
                     $browser->assertSeeIn('pre', $domain->namespace);
                 })
                 ->assertMissing('@verify')
-                ->with(new Toast(Toast::TYPE_SUCCESS), function ($browser) {
-                    $browser->assertToastTitle('')
-                        ->assertToastMessage('Domain verified successfully')
-                        ->closeToast();
-                });
+                ->assertToast(Toast::TYPE_SUCCESS, 'Domain verified successfully.');
 
             // Check that confirmed domain page contains only the config box
             $browser->visit('/domain/' . $domain->id)

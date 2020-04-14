@@ -1,17 +1,13 @@
-window._ = require('lodash')
-
 /**
  * We'll load jQuery and the Bootstrap jQuery plugin which provides support
  * for JavaScript based Bootstrap features such as modals and tabs. This
  * code may be modified to fit the specific needs of your application.
  */
 
-try {
-    window.Popper = require('popper.js').default
-    window.$ = window.jQuery = require('jquery')
+window.Popper = require('popper.js').default
+window.$ = window.jQuery = require('jquery')
 
-    require('bootstrap')
-} catch (e) {}
+require('bootstrap')
 
 /**
  * We'll load Vue, VueRouter and global components
@@ -19,17 +15,12 @@ try {
 
 import FontAwesomeIcon from './fontawesome'
 import VueRouter from 'vue-router'
-import VueToastr from '@deveodk/vue-toastr'
+import Toast from '../vue/Widgets/Toast'
 import store from './store'
 
 window.Vue = require('vue')
 
 Vue.component('svg-icon', FontAwesomeIcon)
-
-Vue.use(VueToastr, {
-    defaultPosition: 'toast-bottom-right',
-    defaultTimeout: 5000
-})
 
 const vTooltip = (el, binding) => {
     const t = []
@@ -55,6 +46,7 @@ Vue.directive('tooltip', {
     }
 })
 
+Vue.use(Toast)
 
 Vue.use(VueRouter)
 

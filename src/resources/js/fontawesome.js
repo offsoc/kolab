@@ -9,7 +9,9 @@ import {
 
 import {
     faCheck,
+    faCheckCircle,
     faGlobe,
+    faExclamationCircle,
     faInfoCircle,
     faLock,
     faKey,
@@ -26,8 +28,10 @@ import {
 
 // Register only these icons we need
 library.add(
-    faCheckSquare,
     faCheck,
+    faCheckCircle,
+    faCheckSquare,
+    faExclamationCircle,
     faGlobe,
     faInfoCircle,
     faLock,

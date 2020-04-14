@@ -49,7 +49,7 @@ class DashboardTest extends TestCaseDusk
             // Test search with no results
             $browser->type('@search input', 'unknown')
                 ->click('@search form button')
-                ->assertToast(Toast::TYPE_INFO, '', '0 user accounts have been found.')
+                ->assertToast(Toast::TYPE_INFO, '0 user accounts have been found.')
                 ->assertMissing('@search table');
 
             $john = $this->getTestUser('john@kolab.org');
@@ -59,7 +59,7 @@ class DashboardTest extends TestCaseDusk
             // Test search with multiple results
             $browser->type('@search input', 'john.doe.external@gmail.com')
                 ->click('@search form button')
-                ->assertToast(Toast::TYPE_INFO, '', '2 user accounts have been found.')
+                ->assertToast(Toast::TYPE_INFO, '2 user accounts have been found.')
                 ->whenAvailable('@search table', function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 2);
                     // TODO: Assert table content

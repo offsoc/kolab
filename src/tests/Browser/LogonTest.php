@@ -19,10 +19,13 @@ class LogonTest extends TestCaseDusk
     public function testLogonMenu(): void
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit(new Home());
-            $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
-            });
+            $browser->visit(new Home())
+                ->within(new Menu(), function ($browser) {
+                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                })
+                ->within(new Menu('footer'), function ($browser) {
+                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'tos', 'webmail']);
+                });
         });
     }
 
@@ -50,11 +53,7 @@ class LogonTest extends TestCaseDusk
                 ->submitLogon('john@kolab.org', 'wrong');
 
             // Error message
-            $browser->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
-                $browser->assertToastTitle('Error')
-                    ->assertToastMessage('Invalid username or password.')
-                    ->closeToast();
-            });
+            $browser->assertToast(Toast::TYPE_ERROR, 'Invalid username or password.');
 
             // Checks if we're still on the logon page
             $browser->on(new Home());
@@ -73,6 +72,9 @@ class LogonTest extends TestCaseDusk
             // Checks if we're really on Dashboard page
             $browser->on(new Dashboard())
                 ->within(new Menu(), function ($browser) {
+                    $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
+                })
+                ->within(new Menu('footer'), function ($browser) {
                     $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
                 })
                 ->assertUser('john@kolab.org');
@@ -118,11 +120,7 @@ class LogonTest extends TestCaseDusk
             });
 
             // Success toast message
-            $browser->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                $browser->assertToastTitle('')
-                    ->assertToastMessage('Successfully logged out')
-                    ->closeToast();
-            });
+            $browser->assertToast(Toast::TYPE_SUCCESS, 'Successfully logged out');
         });
     }
 
@@ -149,11 +147,7 @@ class LogonTest extends TestCaseDusk
             });
 
             // Success toast message
-            $browser->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                $browser->assertToastTitle('')
-                    ->assertToastMessage('Successfully logged out')
-                    ->closeToast();
-            });
+            $browser->assertToast(Toast::TYPE_SUCCESS, 'Successfully logged out');
         });
     }
 
@@ -176,7 +170,7 @@ class LogonTest extends TestCaseDusk
                     'Second factor code is required.'
                 )
                 ->assertFocused('@second-factor-input')
-                ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+                ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
 
             // Test invalid code
             $browser->type('@second-factor-input', '123456')
@@ -188,7 +182,7 @@ class LogonTest extends TestCaseDusk
                     'Second factor code is invalid.'
                 )
                 ->assertFocused('@second-factor-input')
-                ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+                ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
 
             $code = \App\Auth\SecondFactor::code('ned@kolab.org');
 

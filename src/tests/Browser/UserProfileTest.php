@@ -100,11 +100,7 @@ class UserProfileTest extends TestCaseDusk
                         ->select('#country', '')
                         ->click('button[type=submit]');
                 })
-                ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                    $browser->assertToastTitle('')
-                        ->assertToastMessage('User data updated successfully')
-                        ->closeToast();
-                });
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
             // Test error handling
             $browser->with('@form', function (Browser $browser) {
@@ -117,12 +113,8 @@ class UserProfileTest extends TestCaseDusk
                         '#external_email + .invalid-feedback',
                         'The external email must be a valid email address.'
                     )
-                    ->assertFocused('#phone');
-            })
-            ->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
-                $browser->assertToastTitle('Error')
-                    ->assertToastMessage('Form validation error')
-                    ->closeToast();
+                    ->assertFocused('#phone')
+                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
         });
     }
@@ -184,11 +176,7 @@ class UserProfileTest extends TestCaseDusk
                 ->waitForLocation('/profile/delete')
                 ->click('#user-delete .button-delete')
                 ->waitForLocation('/login')
-                ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                    $browser->assertToastTitle('')
-                        ->assertToastMessage('User deleted successfully.')
-                        ->closeToast();
-                });
+                ->assertToast(Toast::TYPE_SUCCESS, 'User deleted successfully.');
 
             $this->assertTrue($user->fresh()->trashed());
         });

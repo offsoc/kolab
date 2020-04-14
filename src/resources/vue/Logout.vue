@@ -5,7 +5,7 @@
         mounted () {
             axios.post('/api/auth/logout')
                 .then(response => {
-                    this.$toastr('success', response.data.message)
+                    this.$toast.success(response.data.message)
                 })
 
             this.$root.logoutUser()

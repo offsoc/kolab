@@ -24,8 +24,8 @@
 <script>
     export default {
         props: {
-            'list': { type: Array, default: () => [] },
-            'id': { type: String, default: '' }
+            list: { type: Array, default: () => [] },
+            id: { type: String, default: '' }
         },
         methods: {
             addItem() {

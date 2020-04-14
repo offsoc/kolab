@@ -160,11 +160,7 @@ class UsersTest extends TestCaseDusk
                         ->type('#last_name', '')
                         ->click('button[type=submit]');
                 })
-                ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                    $browser->assertToastTitle('')
-                        ->assertToastMessage('User data updated successfully')
-                        ->closeToast();
-                });
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
             // Test error handling (password)
             $browser->with('@form', function (Browser $browser) {
@@ -173,12 +169,8 @@ class UsersTest extends TestCaseDusk
                     ->click('button[type=submit]')
                     ->waitFor('#password + .invalid-feedback')
                     ->assertSeeIn('#password + .invalid-feedback', 'The password confirmation does not match.')
-                    ->assertFocused('#password');
-            })
-            ->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
-                $browser->assertToastTitle('Error')
-                    ->assertToastMessage('Form validation error')
-                    ->closeToast();
+                    ->assertFocused('#password')
+                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
 
             // TODO: Test password change
@@ -193,12 +185,8 @@ class UsersTest extends TestCaseDusk
                     ->with(new ListInput('#aliases'), function (Browser $browser) {
                         $browser->addListEntry('invalid address');
                     })
-                    ->click('button[type=submit]');
-            })
-            ->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
-                $browser->assertToastTitle('Error')
-                    ->assertToastMessage('Form validation error')
-                    ->closeToast();
+                    ->click('button[type=submit]')
+                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             })
             ->with('@form', function (Browser $browser) {
                 $browser->with(new ListInput('#aliases'), function (Browser $browser) {
@@ -212,12 +200,8 @@ class UsersTest extends TestCaseDusk
                     $browser->removeListEntry(2)
                         ->addListEntry('john.test@kolab.org');
                 })
-                    ->click('button[type=submit]');
-            })
-            ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                $browser->assertToastTitle('')
-                    ->assertToastMessage('User data updated successfully')
-                    ->closeToast();
+                    ->click('button[type=submit]')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
             });
 
             $john = User::where('email', 'john@kolab.org')->first();
@@ -282,12 +266,8 @@ class UsersTest extends TestCaseDusk
                             ->click('tbody tr:nth-child(4) td.selection input');
                     })
                     ->assertMissing('@skus table + .hint')
-                    ->click('button[type=submit]');
-            })
-            ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                $browser->assertToastTitle('')
-                    ->assertToastMessage('User data updated successfully')
-                    ->closeToast();
+                    ->click('button[type=submit]')
+                    ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
             });
 
             $expected = ['activesync', 'groupware', 'mailbox', 'storage', 'storage', 'storage'];
@@ -380,15 +360,9 @@ class UsersTest extends TestCaseDusk
                         ->click('button[type=submit]')
                         ->assertFocused('#password_confirmation')
                         ->type('#password_confirmation', 'simple')
-                        ->click('button[type=submit]');
-                })
-                ->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
-                    $browser->assertToastTitle('Error')
-                        ->assertToastMessage('Form validation error')
-                        ->closeToast();
-                })
-                ->with('@form', function (Browser $browser) {
-                    $browser->assertSeeIn('#email + .invalid-feedback', 'The specified email is invalid.')
+                        ->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        ->assertSeeIn('#email + .invalid-feedback', 'The specified email is invalid.')
                         ->assertSeeIn('#password + .invalid-feedback', 'The password confirmation does not match.');
                 });
 
@@ -399,17 +373,11 @@ class UsersTest extends TestCaseDusk
                     ->with(new ListInput('#aliases'), function (Browser $browser) {
                         $browser->addListEntry('invalid address');
                     })
-                    ->click('button[type=submit]');
-            })
-            ->with(new Toast(Toast::TYPE_ERROR), function (Browser $browser) {
-                $browser->assertToastTitle('Error')
-                    ->assertToastMessage('Form validation error')
-                    ->closeToast();
-            })
-            ->with('@form', function (Browser $browser) {
-                $browser->with(new ListInput('#aliases'), function (Browser $browser) {
-                    $browser->assertFormError(1, 'The specified alias is invalid.', false);
-                });
+                    ->click('button[type=submit]')
+                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                    ->with(new ListInput('#aliases'), function (Browser $browser) {
+                        $browser->assertFormError(1, 'The specified alias is invalid.', false);
+                    });
             });
 
             // Successful account creation
@@ -420,11 +388,7 @@ class UsersTest extends TestCaseDusk
                 })
                     ->click('button[type=submit]');
             })
-            ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                $browser->assertToastTitle('')
-                    ->assertToastMessage('User created successfully')
-                    ->closeToast();
-            })
+            ->assertToast(Toast::TYPE_SUCCESS, 'User created successfully.')
             // check redirection to users list
             ->waitForLocation('/users')
             ->on(new UserList())
@@ -474,11 +438,7 @@ class UsersTest extends TestCaseDusk
                 ->with(new Dialog('#delete-warning'), function (Browser $browser) {
                     $browser->click('@button-action');
                 })
-                ->with(new Toast(Toast::TYPE_SUCCESS), function (Browser $browser) {
-                    $browser->assertToastTitle('')
-                        ->assertToastMessage('User deleted successfully')
-                        ->closeToast();
-                })
+                ->assertToast(Toast::TYPE_SUCCESS, 'User deleted successfully.')
                 ->with('@table', function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')

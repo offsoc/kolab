@@ -7,6 +7,18 @@ use PHPUnit\Framework\Assert as PHPUnit;
 
 class Menu extends BaseComponent
 {
+    protected $mode;
+
+    /**
+     * Object constructor
+     *
+     * @param string $mode Menu mode ('header' or 'footer')
+     */
+    public function __construct($mode = 'header')
+    {
+        $this->mode = $mode;
+    }
+
     /**
      * Get the root selector for the component.
      *
@@ -14,7 +26,7 @@ class Menu extends BaseComponent
      */
     public function selector()
     {
-        return '#primary-menu';
+        return '#' . $this->mode . '-menu';
     }
 
     /**
@@ -27,7 +39,6 @@ class Menu extends BaseComponent
     public function assert($browser)
     {
         $browser->assertVisible($this->selector());
-        $browser->assertVisible('@brand');
     }
 
     /**
@@ -75,9 +86,9 @@ class Menu extends BaseComponent
         $selector = $this->selector();
 
         return [
-            '@list' => "$selector .navbar-nav",
-            '@brand' =>  "$selector .navbar-brand",
-            '@toggler' => "$selector .navbar-toggler",
+            '@list' => ".navbar-nav",
+            '@brand' =>  ".navbar-brand",
+            '@toggler' => ".navbar-toggler",
         ];
     }
 }

@@ -11,7 +11,6 @@
     "lint": "eslint --ext .js,.vue resources && stylelint \"resources/sass/*.scss\" \"resources/vue/*.vue\""
   },
   "devDependencies": {
-    "@deveodk/vue-toastr": "^1.1.0",
     "axios": "^0.19",
     "bootstrap": "^4.4.1",
     "cross-env": "^5.1",
@@ -24,7 +23,6 @@
     "@fortawesome/vue-fontawesome": "^0.1.9",
     "jquery": "^3.4.1",
     "laravel-mix": "^4.0.7",
-    "lodash": "^4.17.13",
     "popper.js": "^1.12",
     "resolve-url-loader": "^2.3.1",
     "sass": "^1.15.2",

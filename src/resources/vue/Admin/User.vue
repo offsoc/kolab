@@ -382,7 +382,7 @@
                 axios.put('/api/v4/wallets/' + this.user.wallets[0].id, { discount: this.wallet_discount_id })
                     .then(response => {
                         if (response.data.status == 'success') {
-                            this.$toastr('success', response.data.message)
+                            this.$toast.success(response.data.message)
                             this.wallet_discount = response.data.discount
                             this.wallet_discount_id = response.data.discount_id || ''
                             this.wallet_discount_description = response.data.discount_description

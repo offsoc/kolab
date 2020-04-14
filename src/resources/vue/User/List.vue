@@ -89,7 +89,7 @@
                     axios.delete('/api/v4/users/' + id)
                         .then(response => {
                             if (response.data.status == 'success') {
-                                this.$toastr('success', response.data.message)
+                                this.$toast.success(response.data.message)
                                 $('#user' + id).remove()
                             }
                         })

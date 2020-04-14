@@ -99,7 +99,7 @@
                         delete this.profile.password_confirm
 
                         if (response.data.status == 'success') {
-                            this.$toastr('success', response.data.message)
+                            this.$toast.success(response.data.message)
                         }
                     })
             }

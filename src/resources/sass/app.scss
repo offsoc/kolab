@@ -6,22 +6,39 @@
 // Bootstrap
 @import '~bootstrap/scss/bootstrap';
 
-// Toastr
-@import '~@deveodk/vue-toastr/dist/@deveodk/vue-toastr.css';
-
-// Fixes Toastr incompatibility with Bootstrap
-.toast-container > .toast {
-    opacity: 1;
-}
-
 @import 'menu';
+@import 'toast';
+@import 'forms';
 
-nav + .container {
-    margin-top: 120px;
+html,
+body,
+body > .outer-container {
+    height: 100%;
 }
 
 #app {
-    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+
+    & > nav {
+        flex-shrink: 0;
+        z-index: 1;
+    }
+
+    & > div.container {
+        flex-grow: 1;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    & > .filler {
+        flex-grow: 1;
+    }
+
+    & > div.container + .filler {
+        display: none;
+    }
 }
 
 #error-page {
@@ -77,40 +94,6 @@ pre {
 .card-title {
     font-size: 1.2rem;
     font-weight: bold;
-}
-
-.list-input {
-    & > div {
-        &:not(:last-child) {
-            margin-bottom: -1px;
-
-            input,
-            a.btn {
-                border-bottom-right-radius: 0;
-                border-bottom-left-radius: 0;
-            }
-        }
-
-        &:not(:first-child) {
-            input,
-            a.btn {
-                border-top-right-radius: 0;
-                border-top-left-radius: 0;
-            }
-        }
-    }
-
-    input.is-invalid {
-        z-index: 2;
-    }
-}
-
-.range-input {
-    display: flex;
-
-    label {
-        margin-right: 0.5em;
-    }
 }
 
 tfoot.table-fake-body {

@@ -7,14 +7,14 @@
 require('./bootstrap')
 
 import AppComponent from '../vue/App'
-import MenuComponent from '../vue/Menu'
+import MenuComponent from '../vue/Widgets/Menu'
 import store from './store'
 
 const app = new Vue({
     el: '#app',
     components: {
-        'app-component': AppComponent,
-        'menu-component': MenuComponent
+        AppComponent,
+        MenuComponent,
     },
     store,
     router: window.router,
@@ -258,7 +258,7 @@ window.axios.interceptors.response.use(
             error_msg = error.request ? error.request.statusText : error.message
         }
 
-        app.$toastr('error', error_msg || "Server Error", 'Error')
+        app.$toast.error(error_msg || "Server Error")
 
         // Pass the error as-is
         return Promise.reject(error)

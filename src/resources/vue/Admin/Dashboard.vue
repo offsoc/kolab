@@ -71,7 +71,7 @@
                         }
 
                         if (response.data.message) {
-                            this.$toastr('info', response.data.message)
+                            this.$toast.info(response.data.message)
                         }
 
                         this.users = response.data.list

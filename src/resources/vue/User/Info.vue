@@ -251,7 +251,7 @@
                 axios[method](location, this.user)
                     .then(response => {
                         if (response.data.status == 'success') {
-                            this.$toastr('success', response.data.message)
+                            this.$toast.success(response.data.message)
                         }
 
                         // on new user redirect to users list

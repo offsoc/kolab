@@ -66,7 +66,7 @@ class SignupTest extends TestCaseDusk
             // FIXME: User will not be able to continue anyway, so we should
             //        either display 1st step or 404 error page
             $browser->waitFor('@step1')
-                ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+                ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
         });
 
         // Test valid code
@@ -188,7 +188,7 @@ class SignupTest extends TestCaseDusk
                     ->click('[type=submit]')
                     ->waitFor('#signup_email.is-invalid')
                     ->assertVisible('#signup_email + .invalid-feedback')
-                    ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
 
             // Submit valid data
@@ -254,7 +254,7 @@ class SignupTest extends TestCaseDusk
                 $step->waitFor('#signup_short_code.is-invalid')
                     ->assertVisible('#signup_short_code + .invalid-feedback')
                     ->assertFocused('#signup_short_code')
-                    ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
 
             // Submit valid code
@@ -341,7 +341,7 @@ class SignupTest extends TestCaseDusk
                     ->assertVisible('#signup_password.is-invalid')
                     ->assertVisible('#signup_password + .invalid-feedback')
                     ->assertFocused('#signup_login')
-                    ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
 
             // Submit invalid data (valid login, invalid password)
@@ -353,7 +353,7 @@ class SignupTest extends TestCaseDusk
                     ->assertMissing('#signup_login.is-invalid')
                     ->assertMissing('#signup_domain + .invalid-feedback')
                     ->assertFocused('#signup_password')
-                    ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
 
             // Submit valid data
@@ -433,7 +433,7 @@ class SignupTest extends TestCaseDusk
                     ->assertVisible('#signup_password.is-invalid')
                     ->assertVisible('#signup_password + .invalid-feedback')
                     ->assertFocused('#signup_login')
-                    ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
 
             // Submit invalid domain
@@ -444,11 +444,11 @@ class SignupTest extends TestCaseDusk
                     ->type('#signup_confirm', '12345678')
                     ->click('[type=submit]')
                     ->waitUntilMissing('#signup_login.is-invalid')
-                    ->assertVisible('#signup_domain.is-invalid + .invalid-feedback')
+                    ->waitFor('#signup_domain.is-invalid + .invalid-feedback')
                     ->assertMissing('#signup_password.is-invalid')
                     ->assertMissing('#signup_password + .invalid-feedback')
                     ->assertFocused('#signup_domain')
-                    ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error');
+                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
 
             // Submit invalid domain
@@ -506,7 +506,7 @@ class SignupTest extends TestCaseDusk
                         ->waitFor('#signup_voucher.is-invalid')
                         ->assertVisible('#signup_voucher + .invalid-feedback')
                         ->assertFocused('#signup_voucher')
-                        ->assertToast(Toast::TYPE_ERROR, 'Error', 'Form validation error')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
                         // Submit the correct code
                         ->type('#signup_voucher', 'TEST')
                         ->click('[type=submit]');

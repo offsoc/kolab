@@ -40,7 +40,8 @@ class Browser extends \Laravel\Dusk\Browser
     {
         return $this->click($selector)
             ->withinBody(function ($browser) use ($content) {
-                $browser->assertSeeIn('div.tooltip .tooltip-inner', $content);
+                $browser->waitFor('div.tooltip .tooltip-inner')
+                    ->assertSeeIn('div.tooltip .tooltip-inner', $content);
             })
             ->click($selector);
     }
@@ -48,7 +49,7 @@ class Browser extends \Laravel\Dusk\Browser
     /**
      * Assert Toast element content (and close it)
      */
-    public function assertToast($type, $title, $message)
+    public function assertToast(string $type, string $message, $title = null)
     {
         return $this->withinBody(function ($browser) use ($type, $title, $message) {
             $browser->with(new Toast($type), function (Browser $browser) use ($title, $message) {
