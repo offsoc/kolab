@@ -169,14 +169,6 @@ class LDAP
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
 
-        list($_local, $_domain) = explode('@', $user->email, 2);
-
-        $domain = $ldap->find_domain($_domain);
-
-        if (!$domain) {
-            return false;
-        }
-
         $entry = [
             'objectclass' => [
                 'top',
@@ -191,12 +183,9 @@ class LDAP
             'nsroledn' => []
         ];
 
-        self::setUserAttributes($user, $entry);
+        if (!self::getUserEntry($ldap, $user->email, $dn) && $dn) {
+            self::setUserAttributes($user, $entry);
 
-        $base_dn = $ldap->domain_root_dn($_domain);
-        $dn = "uid={$user->email},ou=People,{$base_dn}";
-
-        if (!$ldap->get_entry($dn)) {
             $ldap->add_entry($dn, $entry);
         }
 
@@ -210,7 +199,7 @@ class LDAP
      *
      * @return void
      */
-    public static function updateDomain($domain)
+    public static function updateDomain(Domain $domain)
     {
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
@@ -227,7 +216,14 @@ class LDAP
         $ldap->close();
     }
 
-    public static function deleteDomain($domain)
+    /**
+     * Delete a domain from LDAP.
+     *
+     * @param \App\Domain $domain The domain to update.
+     *
+     * @return void
+     */
+    public static function deleteDomain(Domain $domain)
     {
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
@@ -250,31 +246,42 @@ class LDAP
         $ldap->close();
     }
 
-    public static function deleteUser($user)
+    /**
+     * Delete a user from LDAP.
+     *
+     * @param \App\User $user The user account to update.
+     *
+     * @return void
+     */
+    public static function deleteUser(User $user)
     {
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
 
-        list($_local, $_domain) = explode('@', $user->email, 2);
-
-        $domain = $ldap->find_domain($_domain);
-
-        if (!$domain) {
-            $ldap->close();
-            return false;
+        if (self::getUserEntry($ldap, $user->email, $dn)) {
+            $ldap->delete_entry($dn);
         }
-
-        $base_dn = $ldap->domain_root_dn($_domain);
-        $dn = "uid={$user->email},ou=People,{$base_dn}";
-
-        if (!$ldap->get_entry($dn)) {
-            $ldap->close();
-            return false;
-        }
-
-        $ldap->delete_entry($dn);
 
         $ldap->close();
+    }
+
+    /**
+     * Get a user data from LDAP.
+     *
+     * @param string $email The user email.
+     *
+     * @return array|false|null
+     */
+    public static function getUser(string $email)
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $user = self::getUserEntry($ldap, $email, $dn, true);
+
+        $ldap->close();
+
+        return $user;
     }
 
     /**
@@ -282,46 +289,24 @@ class LDAP
      *
      * @param \App\User $user The user account to update.
      *
-     * @return bool|void
+     * @return false|void
      */
     public static function updateUser(User $user)
     {
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
 
-        list($_local, $_domain) = explode('@', $user->email, 2);
+        $newEntry = $oldEntry = self::getUserEntry($ldap, $user->email, $dn, true);
 
-        $domain = $ldap->find_domain($_domain);
+        if ($oldEntry) {
+            self::setUserAttributes($user, $newEntry);
 
-        if (!$domain) {
+            $ldap->modify_entry($dn, $oldEntry, $newEntry);
+            $ldap->close();
+        } else {
             $ldap->close();
             return false;
         }
-
-        $base_dn = $ldap->domain_root_dn($_domain);
-        $dn = "uid={$user->email},ou=People,{$base_dn}";
-
-        $oldEntry = $ldap->get_entry($dn);
-
-        if (!$oldEntry) {
-            $ldap->close();
-            return false;
-        }
-
-        if (!array_key_exists('nsroledn', $oldEntry)) {
-            $roles = $ldap->get_entry_attributes($dn, ['nsroledn']);
-            if (!empty($roles)) {
-                $oldEntry['nsroledn'] = (array)$roles['nsroledn'];
-            }
-        }
-
-        $newEntry = $oldEntry;
-
-        self::setUserAttributes($user, $newEntry);
-
-        $ldap->modify_entry($dn, $oldEntry, $newEntry);
-
-        $ldap->close();
     }
 
     /**
@@ -388,6 +373,8 @@ class LDAP
 
         $entry['mailquota'] = 0;
 
+        $entry['alias'] = $user->aliases->pluck('alias')->toArray();
+
         $roles = [];
 
         foreach ($user->entitlements as $entitlement) {
@@ -452,6 +439,43 @@ class LDAP
         ];
 
         return $config;
+    }
+
+    /**
+     * Get user entry from LDAP.
+     *
+     * @param \Net_LDAP3 $ldap  Ldap connection
+     * @param string     $email User email (uid)
+     * @param string     $dn    Reference to user DN
+     * @param bool       $full  Get extra attributes, e.g. nsroledn
+     *
+     * @return false|null|array User entry, False on error, NULL if not found
+     */
+    protected static function getUserEntry($ldap, $email, &$dn = null, $full = false)
+    {
+        list($_local, $_domain) = explode('@', $email, 2);
+
+        $domain = $ldap->find_domain($_domain);
+
+        if (!$domain) {
+            return false;
+        }
+
+        $base_dn = $ldap->domain_root_dn($_domain);
+        $dn = "uid={$email},ou=People,{$base_dn}";
+
+        $entry = $ldap->get_entry($dn);
+
+        if ($entry && $full) {
+            if (!array_key_exists('nsroledn', $entry)) {
+                $roles = $ldap->get_entry_attributes($dn, ['nsroledn']);
+                if (!empty($roles)) {
+                    $entry['nsroledn'] = (array) $roles['nsroledn'];
+                }
+            }
+        }
+
+        return $entry ?: null;
     }
 
     /**

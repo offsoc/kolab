@@ -292,6 +292,7 @@ class UserTest extends TestCase
     public function testSetAliases(): void
     {
         Queue::fake();
+        Queue::assertNothingPushed();
 
         $user = $this->getTestUser('UserAccountA@UserAccount.com');
 
@@ -300,12 +301,16 @@ class UserTest extends TestCase
         // Add an alias
         $user->setAliases(['UserAlias1@UserAccount.com']);
 
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 1);
+
         $aliases = $user->aliases()->get();
         $this->assertCount(1, $aliases);
         $this->assertSame('useralias1@useraccount.com', $aliases[0]['alias']);
 
         // Add another alias
         $user->setAliases(['UserAlias1@UserAccount.com', 'UserAlias2@UserAccount.com']);
+
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 2);
 
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
@@ -315,6 +320,8 @@ class UserTest extends TestCase
         // Remove an alias
         $user->setAliases(['UserAlias1@UserAccount.com']);
 
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 3);
+
         $aliases = $user->aliases()->get();
         $this->assertCount(1, $aliases);
         $this->assertSame('useralias1@useraccount.com', $aliases[0]['alias']);
@@ -322,9 +329,9 @@ class UserTest extends TestCase
         // Remove all aliases
         $user->setAliases([]);
 
-        $this->assertCount(0, $user->aliases()->get());
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 4);
 
-        // TODO: Test that the changes are propagated to ldap
+        $this->assertCount(0, $user->aliases()->get());
     }
 
     /**

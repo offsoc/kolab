@@ -3,8 +3,6 @@
 namespace Tests\Feature\Jobs;
 
 use App\Jobs\UserCreate;
-use App\User;
-use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class UserCreateTest extends TestCase

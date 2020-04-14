@@ -61,28 +61,4 @@ class UserAliasObserver
     {
         \App\Jobs\UserUpdate::dispatch($alias->user);
     }
-
-    /**
-     * Handle the user alias "restored" event.
-     *
-     * @param \App\UserAlias $alias User email alias
-     *
-     * @return void
-     */
-    public function restored(UserAlias $alias)
-    {
-        // not used
-    }
-
-    /**
-     * Handle the user alias "force deleted" event.
-     *
-     * @param \App\UserAlias $alias User email alias
-     *
-     * @return void
-     */
-    public function forceDeleted(UserAlias $alias)
-    {
-        // not used
-    }
 }
