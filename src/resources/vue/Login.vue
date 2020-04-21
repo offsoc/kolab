@@ -55,13 +55,11 @@
             return {
                 email: '',
                 password: '',
-                secondFactor: '',
-                loginError: false
+                secondFactor: ''
             }
         },
         methods: {
             submitLogin() {
-                this.loginError = false
                 this.$root.clearFormValidation($('form.form-signin'))
 
                 axios.post('/api/auth/login', {
@@ -71,9 +69,7 @@
                 }).then(response => {
                     // login user and redirect to dashboard
                     this.$root.loginUser(response.data.access_token)
-                }).catch(error => {
-                    this.loginError = true
-                });
+                })
             }
         }
     }

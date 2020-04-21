@@ -206,10 +206,18 @@ window.axios.interceptors.response.use(
         if (error.response && status == 422) {
             error_msg = "Form validation error"
 
-            $.each(error.response.data.errors || {}, (idx, msg) => {
-                $('form').each((i, form) => {
-                    const input_name = ($(form).data('validation-prefix') || '') + idx
-                    const input = $('#' + input_name)
+            const modal = $('div.modal.show')
+
+            $(modal.length ? modal : 'form').each((i, form) => {
+                form = $(form)
+
+                $.each(error.response.data.errors || {}, (idx, msg) => {
+                    const input_name = (form.data('validation-prefix') || '') + idx
+                    let input = form.find('#' + input_name)
+
+                    if (!input.length) {
+                        input = form.find('[name="' + input_name + '"]');
+                    }
 
                     if (input.length) {
                         // Create an error message\
@@ -243,13 +251,11 @@ window.axios.interceptors.response.use(
                             input.parent().find('.invalid-feedback').remove()
                             input.parent().append(feedback)
                         }
-
-                        return false
                     }
-                });
-            })
+                })
 
-            $('form .is-invalid:not(.listinput-widget)').first().focus()
+                form.find('.is-invalid:not(.listinput-widget)').first().focus()
+            })
         }
         else if (error.response && error.response.data) {
             error_msg = error.response.data.message

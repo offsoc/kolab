@@ -58,7 +58,7 @@
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="external_email">
                                     <a v-if="user.external_email" :href="'mailto:' + user.external_email">{{ user.external_email }}</a>
-                                    <button type="button" class="btn btn-secondary btn-sm">Edit</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" @click="emailEdit">Edit</button>
                                 </span>
                             </div>
                         </div>
@@ -256,6 +256,30 @@
                 </div>
             </div>
         </div>
+
+        <div id="email-dialog" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">External email</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="form-group">
+                            <input v-model="external_email" name="external_email" class="form-control">
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary modal-action" @click="submitEmail()">
+                            <svg-icon icon="check"></svg-icon> Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -274,6 +298,7 @@
                 discount: 0,
                 discount_description: '',
                 discounts: [],
+                external_email: '',
                 wallet_discount: 0,
                 wallet_discount_description: '',
                 wallet_discount_id: '',
@@ -369,7 +394,7 @@
         methods: {
             discountEdit() {
                 $('#discount-dialog')
-                    .on('shown.bs.modal', (e, a) => {
+                    .on('shown.bs.modal', e => {
                         $(e.target).find('select').focus()
                     })
                     .modal()
@@ -382,8 +407,18 @@
                         })
                 }
             },
+            emailEdit() {
+                this.external_email = this.user.external_email
+                this.$root.clearFormValidation($('#email-dialog'))
+
+                $('#email-dialog')
+                    .on('shown.bs.modal', e => {
+                        $(e.target).find('input').focus()
+                    })
+                    .modal()
+            },
             submitDiscount() {
-                let dialog = $('#discount-dialog').modal('hide')
+                $('#discount-dialog').modal('hide')
 
                 axios.put('/api/v4/wallets/' + this.user.wallets[0].id, { discount: this.wallet_discount_id })
                     .then(response => {
@@ -405,6 +440,17 @@
                         }
                     })
             },
+            submitEmail() {
+                axios.put('/api/v4/users/' + this.user.id, { external_email: this.external_email })
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            $('#email-dialog').modal('hide')
+                            this.$toast.success(response.data.message)
+                            this.user.external_email = this.external_email
+                            this.external_email = null // required because of Vue
+                        }
+                    })
+            }
         }
     }
 </script>

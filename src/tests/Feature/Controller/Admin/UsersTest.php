@@ -140,4 +140,50 @@ class UsersTest extends TestCase
         $this->assertSame(0, $json['count']);
         $this->assertCount(0, $json['list']);
     }
+
+    /**
+     * Test user update (PUT /api/v4/users/<user-id>)
+     */
+    public function testUpdate(): void
+    {
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        // Test unauthorized access to admin API
+        $response = $this->actingAs($user)->get("/api/v4/users/{$user->id}", []);
+        $response->assertStatus(403);
+
+        // Test updatig the user data (empty data)
+        $response = $this->actingAs($admin)->put("/api/v4/users/{$user->id}", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User data updated successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        // Test error handling
+        $post = ['external_email' => 'aaa'];
+        $response = $this->actingAs($admin)->put("/api/v4/users/{$user->id}", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("The external email must be a valid email address.", $json['errors']['external_email'][0]);
+        $this->assertCount(2, $json);
+
+        // Test real update
+        $post = ['external_email' => 'modified@test.com'];
+        $response = $this->actingAs($admin)->put("/api/v4/users/{$user->id}", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User data updated successfully.", $json['message']);
+        $this->assertCount(2, $json);
+        $this->assertSame('modified@test.com', $user->getSetting('external_email'));
+    }
 }

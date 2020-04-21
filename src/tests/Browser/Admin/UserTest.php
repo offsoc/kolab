@@ -25,6 +25,7 @@ class UserTest extends TestCaseDusk
         $john = $this->getTestUser('john@kolab.org');
         $john->setSettings([
                 'phone' => '+48123123123',
+                'external_email' => 'john.doe.external@gmail.com',
         ]);
 
         $wallet = $john->wallets()->first();
@@ -41,6 +42,7 @@ class UserTest extends TestCaseDusk
         $john = $this->getTestUser('john@kolab.org');
         $john->setSettings([
                 'phone' => null,
+                'external_email' => 'john.doe.external@gmail.com',
         ]);
 
         $wallet = $john->wallets()->first();
@@ -340,6 +342,61 @@ class UserTest extends TestCaseDusk
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no users in this account.');
                 });
+        });
+    }
+
+    /**
+     * Test editing an external email
+     *
+     * @depends testUserInfo2
+     */
+    public function testExternalEmail(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $john = $this->getTestUser('john@kolab.org');
+
+            $browser->visit(new UserPage($john->id))
+                ->waitFor('@user-info #external_email button')
+                ->click('@user-info #external_email button')
+                // Test dialog content, and closing it with Cancel button
+                ->with(new Dialog('#email-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'External email')
+                        ->assertFocused('@body input')
+                        ->assertValue('@body input', 'john.doe.external@gmail.com')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
+                        ->click('@button-cancel');
+                })
+                ->assertMissing('#email-dialog')
+                ->click('@user-info #external_email button')
+                // Test email validation error handling, and email update
+                ->with(new Dialog('#email-dialog'), function (Browser $browser) {
+                    $browser->type('@body input', 'test')
+                        ->click('@button-action')
+                        ->waitFor('@body input.is-invalid')
+                        ->assertSeeIn(
+                            '@body input + .invalid-feedback',
+                            'The external email must be a valid email address.'
+                        )
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        ->type('@body input', 'test@test.com')
+                        ->click('@button-action');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.')
+                ->assertSeeIn('@user-info #external_email a', 'test@test.com')
+                ->click('@user-info #external_email button')
+                ->with(new Dialog('#email-dialog'), function (Browser $browser) {
+                    $browser->assertValue('@body input', 'test@test.com')
+                        ->assertMissing('@body input.is-invalid')
+                        ->assertMissing('@body input + .invalid-feedback')
+                        ->click('@button-cancel');
+                })
+                ->assertSeeIn('@user-info #external_email a', 'test@test.com');
+
+            // $john->getSetting() may not work here as it uses internal cache
+            // read the value form database
+            $current_ext_email = $john->settings()->where('key', 'external_email')->first()->value;
+            $this->assertSame('test@test.com', $current_ext_email);
         });
     }
 
