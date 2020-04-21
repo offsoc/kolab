@@ -24,6 +24,7 @@ class UsersTest extends TestCaseDusk
     private $profile = [
         'first_name' => 'John',
         'last_name' => 'Doe',
+        'organization' => 'Kolab Developers',
     ];
 
     /**
@@ -140,19 +141,21 @@ class UsersTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(2) input[type=text]', $this->profile['first_name'])
                         ->assertSeeIn('div.row:nth-child(3) label', 'Last name')
                         ->assertValue('div.row:nth-child(3) input[type=text]', $this->profile['last_name'])
-                        ->assertSeeIn('div.row:nth-child(4) label', 'Email')
-                        ->assertValue('div.row:nth-child(4) input[type=text]', 'john@kolab.org')
-                        ->assertDisabled('div.row:nth-child(4) input[type=text]')
-                        ->assertSeeIn('div.row:nth-child(5) label', 'Email aliases')
-                        ->assertVisible('div.row:nth-child(5) .list-input')
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Organization')
+                        ->assertValue('div.row:nth-child(4) input[type=text]', $this->profile['organization'])
+                        ->assertSeeIn('div.row:nth-child(5) label', 'Email')
+                        ->assertValue('div.row:nth-child(5) input[type=text]', 'john@kolab.org')
+                        ->assertDisabled('div.row:nth-child(5) input[type=text]')
+                        ->assertSeeIn('div.row:nth-child(6) label', 'Email aliases')
+                        ->assertVisible('div.row:nth-child(6) .list-input')
                         ->with(new ListInput('#aliases'), function (Browser $browser) {
                             $browser->assertListInputValue(['john.doe@kolab.org'])
                                 ->assertValue('@input', '');
                         })
-                        ->assertSeeIn('div.row:nth-child(6) label', 'Password')
-                        ->assertValue('div.row:nth-child(6) input[type=password]', '')
-                        ->assertSeeIn('div.row:nth-child(7) label', 'Confirm password')
+                        ->assertSeeIn('div.row:nth-child(7) label', 'Password')
                         ->assertValue('div.row:nth-child(7) input[type=password]', '')
+                        ->assertSeeIn('div.row:nth-child(8) label', 'Confirm password')
+                        ->assertValue('div.row:nth-child(8) input[type=password]', '')
                         ->assertSeeIn('button[type=submit]', 'Submit');
 
                     // Clear some fields and submit
@@ -210,8 +213,8 @@ class UsersTest extends TestCaseDusk
 
             // Test subscriptions
             $browser->with('@form', function (Browser $browser) {
-                $browser->assertSeeIn('div.row:nth-child(8) label', 'Subscriptions')
-                    ->assertVisible('@skus.row:nth-child(8)')
+                $browser->assertSeeIn('div.row:nth-child(9) label', 'Subscriptions')
+                    ->assertVisible('@skus.row:nth-child(9)')
                     ->with('@skus', function ($browser) {
                         $browser->assertElementsCount('tbody tr', 5)
                             // Mailbox SKU
@@ -321,20 +324,22 @@ class UsersTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(1) input[type=text]', '')
                         ->assertSeeIn('div.row:nth-child(2) label', 'Last name')
                         ->assertValue('div.row:nth-child(2) input[type=text]', '')
-                        ->assertSeeIn('div.row:nth-child(3) label', 'Email')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Organization')
                         ->assertValue('div.row:nth-child(3) input[type=text]', '')
-                        ->assertEnabled('div.row:nth-child(3) input[type=text]')
-                        ->assertSeeIn('div.row:nth-child(4) label', 'Email aliases')
-                        ->assertVisible('div.row:nth-child(4) .list-input')
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Email')
+                        ->assertValue('div.row:nth-child(4) input[type=text]', '')
+                        ->assertEnabled('div.row:nth-child(4) input[type=text]')
+                        ->assertSeeIn('div.row:nth-child(5) label', 'Email aliases')
+                        ->assertVisible('div.row:nth-child(5) .list-input')
                         ->with(new ListInput('#aliases'), function (Browser $browser) {
                             $browser->assertListInputValue([])
                                 ->assertValue('@input', '');
                         })
-                        ->assertSeeIn('div.row:nth-child(5) label', 'Password')
-                        ->assertValue('div.row:nth-child(5) input[type=password]', '')
-                        ->assertSeeIn('div.row:nth-child(6) label', 'Confirm password')
+                        ->assertSeeIn('div.row:nth-child(6) label', 'Password')
                         ->assertValue('div.row:nth-child(6) input[type=password]', '')
-                        ->assertSeeIn('div.row:nth-child(7) label', 'Package')
+                        ->assertSeeIn('div.row:nth-child(7) label', 'Confirm password')
+                        ->assertValue('div.row:nth-child(7) input[type=password]', '')
+                        ->assertSeeIn('div.row:nth-child(8) label', 'Package')
                         // assert packages list widget, select "Lite Account"
                         ->with('@packages', function ($browser) {
                             $browser->assertElementsCount('tbody tr', 2)
@@ -382,10 +387,13 @@ class UsersTest extends TestCaseDusk
 
             // Successful account creation
             $browser->with('@form', function (Browser $browser) {
-                $browser->with(new ListInput('#aliases'), function (Browser $browser) {
-                    $browser->removeListEntry(1)
-                        ->addListEntry('julia.roberts2@kolab.org');
-                })
+                $browser->type('#first_name', 'Julia')
+                    ->type('#last_name', 'Roberts')
+                    ->type('#organization', 'Test Org')
+                    ->with(new ListInput('#aliases'), function (Browser $browser) {
+                        $browser->removeListEntry(1)
+                            ->addListEntry('julia.roberts2@kolab.org');
+                    })
                     ->click('button[type=submit]');
             })
             ->assertToast(Toast::TYPE_SUCCESS, 'User created successfully.')
@@ -401,6 +409,9 @@ class UsersTest extends TestCaseDusk
             $alias = UserAlias::where('user_id', $julia->id)->where('alias', 'julia.roberts2@kolab.org')->first();
             $this->assertTrue(!empty($alias));
             $this->assertUserEntitlements($julia, ['mailbox', 'storage', 'storage']);
+            $this->assertSame('Julia', $julia->getSetting('first_name'));
+            $this->assertSame('Roberts', $julia->getSetting('last_name'));
+            $this->assertSame('Test Org', $julia->getSetting('organization'));
         });
     }
 

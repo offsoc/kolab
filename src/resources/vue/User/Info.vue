@@ -25,6 +25,12 @@
                             </div>
                         </div>
                         <div class="form-group row">
+                            <label for="organization" class="col-sm-4 col-form-label">Organization</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="organization" v-model="user.organization">
+                            </div>
+                        </div>
+                        <div class="form-group row">
                             <label for="email" class="col-sm-4 col-form-label">Email</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="email" :disabled="user_id !== 'new'" required v-model="user.email">
@@ -193,6 +199,7 @@
                         this.user = response.data
                         this.user.first_name = response.data.settings.first_name
                         this.user.last_name = response.data.settings.last_name
+                        this.user.organization = response.data.settings.organization
                         this.discount = this.user.wallet.discount
                         this.discount_description = this.user.wallet.discount_description
 

@@ -35,6 +35,6 @@ class PasswordResetTest extends TestCase
         $this->assertSame(\config('app.name') . ' Password Reset', $mail->subject);
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $link) > 0);
-        $this->assertTrue(strpos($html, $code->user->name) > 0);
+        $this->assertTrue(strpos($html, $code->user->name(true)) > 0);
     }
 }

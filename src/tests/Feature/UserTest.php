@@ -13,8 +13,7 @@ class UserTest extends TestCase
     {
         parent::setUp();
 
-        $this->deleteTestUser('user-create-test@' . \config('app.domain'));
-        $this->deleteTestUser('userdeletejob@kolabnow.com');
+        $this->deleteTestUser('user-test@' . \config('app.domain'));
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
         $this->deleteTestUser('UserAccountC@UserAccount.com');
@@ -23,8 +22,7 @@ class UserTest extends TestCase
 
     public function tearDown(): void
     {
-        $this->deleteTestUser('user-create-test@' . \config('app.domain'));
-        $this->deleteTestUser('userdeletejob@kolabnow.com');
+        $this->deleteTestUser('user-test@' . \config('app.domain'));
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
         $this->deleteTestUser('UserAccountC@UserAccount.com');
@@ -67,7 +65,7 @@ class UserTest extends TestCase
         Queue::assertNothingPushed();
 
         $user = User::create([
-                'email' => 'user-create-test@' . \config('app.domain')
+                'email' => 'user-test@' . \config('app.domain')
         ]);
 
         Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
@@ -191,7 +189,7 @@ class UserTest extends TestCase
     {
         Queue::fake();
 
-        $user = $this->getTestUser('userdeletejob@kolabnow.com');
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
         $package = \App\Package::where('title', 'kolab')->first();
         $user->assignPackage($package);
 
@@ -287,6 +285,29 @@ class UserTest extends TestCase
     }
 
     /**
+     * Test User::name()
+     */
+    public function testName(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+
+        $this->assertSame('', $user->name());
+        $this->assertSame(\config('app.name') . ' User', $user->name(true));
+
+        $user->setSetting('first_name', 'First');
+
+        $this->assertSame('First', $user->name());
+        $this->assertSame('First', $user->name(true));
+
+        $user->setSetting('last_name', 'Last');
+
+        $this->assertSame('First Last', $user->name());
+        $this->assertSame('First Last', $user->name(true));
+    }
+
+    /**
      * Tests for UserAliasesTrait::setAliases()
      */
     public function testSetAliases(): void
@@ -335,11 +356,88 @@ class UserTest extends TestCase
     }
 
     /**
-     * Tests for UserSettingsTrait::setSettings()
+     * Tests for UserSettingsTrait::setSettings() and getSetting()
      */
-    public function testSetSettings(): void
+    public function testUserSettings(): void
     {
-        $this->markTestIncomplete();
+        Queue::fake();
+        Queue::assertNothingPushed();
+
+        $user = $this->getTestUser('UserAccountA@UserAccount.com');
+
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 0);
+
+        // Test default settings
+        // Note: Technicly this tests UserObserver::created() behavior
+        $all_settings = $user->settings()->orderBy('key')->get();
+        $this->assertCount(2, $all_settings);
+        $this->assertSame('country', $all_settings[0]->key);
+        $this->assertSame('CH', $all_settings[0]->value);
+        $this->assertSame('currency', $all_settings[1]->key);
+        $this->assertSame('CHF', $all_settings[1]->value);
+
+        // Add a setting
+        $user->setSetting('first_name', 'Firstname');
+
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 1);
+
+        // Note: We test both current user as well as fresh user object
+        //       to make sure cache works as expected
+        $this->assertSame('Firstname', $user->getSetting('first_name'));
+        $this->assertSame('Firstname', $user->fresh()->getSetting('first_name'));
+
+        // Update a setting
+        $user->setSetting('first_name', 'Firstname1');
+
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 2);
+
+        // Note: We test both current user as well as fresh user object
+        //       to make sure cache works as expected
+        $this->assertSame('Firstname1', $user->getSetting('first_name'));
+        $this->assertSame('Firstname1', $user->fresh()->getSetting('first_name'));
+
+        // Delete a setting (null)
+        $user->setSetting('first_name', null);
+
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 3);
+
+        // Note: We test both current user as well as fresh user object
+        //       to make sure cache works as expected
+        $this->assertSame(null, $user->getSetting('first_name'));
+        $this->assertSame(null, $user->fresh()->getSetting('first_name'));
+
+        // Delete a setting (empty string)
+        $user->setSetting('first_name', 'Firstname1');
+        $user->setSetting('first_name', '');
+
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 5);
+
+        // Note: We test both current user as well as fresh user object
+        //       to make sure cache works as expected
+        $this->assertSame(null, $user->getSetting('first_name'));
+        $this->assertSame(null, $user->fresh()->getSetting('first_name'));
+
+        // Set multiple settings at once
+        $user->setSettings([
+                'first_name' => 'Firstname2',
+                'last_name' => 'Lastname2',
+                'country' => null,
+        ]);
+
+        // TODO: This really should create a single UserUpdate job, not 3
+        Queue::assertPushed(\App\Jobs\UserUpdate::class, 7);
+
+        // Note: We test both current user as well as fresh user object
+        //       to make sure cache works as expected
+        $this->assertSame('Firstname2', $user->getSetting('first_name'));
+        $this->assertSame('Firstname2', $user->fresh()->getSetting('first_name'));
+        $this->assertSame('Lastname2', $user->getSetting('last_name'));
+        $this->assertSame('Lastname2', $user->fresh()->getSetting('last_name'));
+        $this->assertSame(null, $user->getSetting('country'));
+        $this->assertSame(null, $user->fresh()->getSetting('country'));
+
+        $all_settings = $user->settings()->orderBy('key')->get();
+        $this->assertCount(3, $all_settings);
     }
 
     /**

@@ -7,6 +7,13 @@ use App\User;
 
 class LDAP
 {
+    /** @const array UserSettings used by th backend */
+    public const USER_SETTINGS = [
+        'first_name',
+        'last_name',
+        'organization',
+    ];
+
     /**
      * Create a domain in LDAP.
      *
@@ -368,11 +375,9 @@ class LDAP
         $entry['givenname'] = $firstName;
         $entry['sn'] = $lastName;
         $entry['userpassword'] = $user->password_ldap;
-
         $entry['inetuserstatus'] = $user->status;
-
+        $entry['o'] = $user->getSetting('organization');
         $entry['mailquota'] = 0;
-
         $entry['alias'] = $user->aliases->pluck('alias')->toArray();
 
         $roles = [];

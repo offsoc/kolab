@@ -14,12 +14,16 @@ class UserVerifyTest extends TestCase
     {
         parent::setUp();
 
-        $this->deleteTestUser('jane@kolabnow.com');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $ned->status |= User::STATUS_IMAP_READY;
+        $ned->save();
     }
 
     public function tearDown(): void
     {
-        $this->deleteTestUser('jane@kolabnow.com');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $ned->status |= User::STATUS_IMAP_READY;
+        $ned->save();
 
         parent::tearDown();
     }
@@ -33,17 +37,11 @@ class UserVerifyTest extends TestCase
     {
         Queue::fake();
 
-        $user = $this->getTestUser('jane@kolabnow.com');
-
-        // This is a valid assertion in a feature, not functional test environment.
-        $this->assertFalse($user->isImapReady());
-        $this->assertFalse($user->isLdapReady());
-
-        $job = new UserCreate($user);
-        $job->handle();
+        $user = $this->getTestUser('ned@kolab.org');
+        $user->status ^= User::STATUS_IMAP_READY;
+        $user->save();
 
         $this->assertFalse($user->isImapReady());
-        $this->assertTrue($user->isLdapReady());
 
         for ($i = 0; $i < 10; $i++) {
             $job = new UserVerify($user);

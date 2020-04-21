@@ -26,8 +26,10 @@
                 </p>
                 <form @submit.prevent="submitStep1" data-validation-prefix="signup_">
                     <div class="form-group">
-                        <label for="signup_name" class="sr-only">Your Name</label>
-                        <input type="text" class="form-control" id="signup_name" placeholder="Your Name" required autofocus v-model="name">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="signup_first_name" placeholder="First Name" autofocus v-model="first_name">
+                            <input type="text" class="form-control rounded-right" id="signup_last_name" placeholder="Surname" v-model="last_name">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="signup_email" class="sr-only">Existing Email Address</label>
@@ -101,7 +103,8 @@
         data() {
             return {
                 email: '',
-                name: '',
+                first_name: '',
+                last_name: '',
                 code: '',
                 short_code: '',
                 login: '',
@@ -162,7 +165,8 @@
 
                 axios.post('/api/auth/signup/init', {
                     email: this.email,
-                    name: this.name,
+                    last_name: this.last_name,
+                    first_name: this.first_name,
                     plan: this.plan,
                     voucher: this.voucher
                 }).then(response => {
@@ -184,7 +188,8 @@
                 }).then(response => {
                     this.displayForm(3, true)
                     // Reset user name/email/plan, we don't have them if user used a verification link
-                    this.name = response.data.name
+                    this.first_name = response.data.first_name
+                    this.last_name = response.data.last_name
                     this.email = response.data.email
                     this.is_domain = response.data.is_domain
                     this.voucher = response.data.voucher

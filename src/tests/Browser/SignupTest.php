@@ -74,7 +74,8 @@ class SignupTest extends TestCaseDusk
             $code = SignupCode::create([
                     'data' => [
                         'email' => 'User@example.org',
-                        'name' => 'User Name',
+                        'first_name' => 'User',
+                        'last_name' => 'Name',
                         'plan' => 'individual',
                         'voucher' => '',
                     ]
@@ -125,7 +126,7 @@ class SignupTest extends TestCaseDusk
                 ->assertMissing('@step0')
                 ->assertMissing('@step2')
                 ->assertMissing('@step3')
-                ->assertFocused('@step1 #signup_name');
+                ->assertFocused('@step1 #signup_first_name');
 
             // Click Back button
             $browser->click('@step1 [type=button]')
@@ -142,7 +143,7 @@ class SignupTest extends TestCaseDusk
                 ->assertMissing('@step0')
                 ->assertMissing('@step2')
                 ->assertMissing('@step3')
-                ->assertFocused('@step1 #signup_name');
+                ->assertFocused('@step1 #signup_first_name');
 
             // TODO: Test if 'plan' variable is set properly in vue component
         });
@@ -165,41 +166,44 @@ class SignupTest extends TestCaseDusk
 
             // Here we expect two text inputs and Back and Continue buttons
             $browser->with('@step1', function ($step) {
-                $step->assertVisible('#signup_name')
-                    ->assertFocused('#signup_name')
+                $step->assertVisible('#signup_last_name')
+                    ->assertVisible('#signup_first_name')
+                    ->assertFocused('#signup_first_name')
                     ->assertVisible('#signup_email')
                     ->assertVisible('[type=button]')
                     ->assertVisible('[type=submit]');
             });
 
             // Submit empty form
-            // Both Step 1 inputs are required, so after pressing Submit
-            // we expect focus to be moved to the first input
+            // Email is required, so after pressing Submit
+            // we expect focus to be moved to the email input
             $browser->with('@step1', function ($step) {
                 $step->click('[type=submit]');
-                $step->assertFocused('#signup_name');
+                $step->assertFocused('#signup_email');
             });
 
-            // Submit invalid email
-            // We expect email input to have is-invalid class added, with .invalid-feedback element
+            // Submit invalid email, and first_name
+            // We expect both inputs to have is-invalid class added, with .invalid-feedback element
             $browser->with('@step1', function ($step) use ($browser) {
-                $step->type('#signup_name', 'Test User')
+                $step->type('#signup_first_name', str_repeat('a', 250))
                     ->type('#signup_email', '@test')
                     ->click('[type=submit]')
                     ->waitFor('#signup_email.is-invalid')
+                    ->assertVisible('#signup_first_name.is-invalid')
                     ->assertVisible('#signup_email + .invalid-feedback')
+                    ->assertVisible('#signup_last_name + .invalid-feedback')
                     ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
 
             // Submit valid data
             // We expect error state on email input to be removed, and Step 2 form visible
             $browser->with('@step1', function ($step) {
-                $step->type('#signup_name', 'Test User');
-                $step->type('#signup_email', 'BrowserSignupTestUser1@kolab.org');
-                $step->click('[type=submit]');
-
-                $step->assertMissing('#signup_email.is-invalid');
-                $step->assertMissing('#signup_email + .invalid-feedback');
+                $step->type('#signup_first_name', 'Test')
+                    ->type('#signup_last_name', 'User')
+                    ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
+                    ->click('[type=submit]')
+                    ->assertMissing('#signup_email.is-invalid')
+                    ->assertMissing('#signup_email + .invalid-feedback');
             });
 
             $browser->waitUntilMissing('@step2 #signup_code[value=""]');
@@ -232,14 +236,15 @@ class SignupTest extends TestCaseDusk
             // Test Back button functionality
             $browser->click('@step2 [type=button]')
                 ->waitFor('@step1')
-                ->assertFocused('@step1 #signup_name')
+                ->assertFocused('@step1 #signup_first_name')
                 ->assertMissing('@step2');
 
             // Submit valid Step 1 data (again)
             $browser->with('@step1', function ($step) {
-                $step->type('#signup_name', 'Test User');
-                $step->type('#signup_email', 'BrowserSignupTestUser1@kolab.org');
-                $step->click('[type=submit]');
+                $step->type('#signup_first_name', 'User')
+                    ->type('#signup_last_name', 'User')
+                    ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
+                    ->click('[type=submit]');
             });
 
             $browser->waitFor('@step2');
@@ -389,7 +394,8 @@ class SignupTest extends TestCaseDusk
             // Submit valid data
             // We expect error state on email input to be removed, and Step 2 form visible
             $browser->whenAvailable('@step1', function ($step) {
-                $step->type('#signup_name', 'Test User')
+                $step->type('#signup_first_name', 'Test')
+                    ->type('#signup_last_name', 'User')
                     ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
                     ->click('[type=submit]');
             });
@@ -478,7 +484,8 @@ class SignupTest extends TestCaseDusk
                 ->waitFor('@step0')
                 ->click('.plan-individual button')
                 ->whenAvailable('@step1', function (Browser $browser) {
-                    $browser->type('#signup_name', 'Test User')
+                    $browser->type('#signup_first_name', 'Test')
+                        ->type('#signup_last_name', 'User')
                         ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
                         ->click('[type=submit]');
                 })

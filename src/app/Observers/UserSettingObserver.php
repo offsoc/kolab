@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Backends\LDAP;
 use App\UserSetting;
 
 class UserSettingObserver
@@ -9,55 +10,42 @@ class UserSettingObserver
     /**
      * Handle the user setting "created" event.
      *
-     * @param  \App\UserSetting  $userSetting
+     * @param \App\UserSetting $userSetting Settings object
+     *
      * @return void
      */
     public function created(UserSetting $userSetting)
     {
-        //
+        if (in_array($userSetting->key, LDAP::USER_SETTINGS)) {
+            \App\Jobs\UserUpdate::dispatch($userSetting->user);
+        }
     }
 
     /**
      * Handle the user setting "updated" event.
      *
-     * @param  \App\UserSetting  $userSetting
+     * @param \App\UserSetting $userSetting Settings object
+     *
      * @return void
      */
     public function updated(UserSetting $userSetting)
     {
-        \App\Jobs\UserUpdate::dispatch($userSetting->user);
+        if (in_array($userSetting->key, LDAP::USER_SETTINGS)) {
+            \App\Jobs\UserUpdate::dispatch($userSetting->user);
+        }
     }
 
     /**
      * Handle the user setting "deleted" event.
      *
-     * @param  \App\UserSetting  $userSetting
+     * @param \App\UserSetting $userSetting Settings object
+     *
      * @return void
      */
     public function deleted(UserSetting $userSetting)
     {
-        //
-    }
-
-    /**
-     * Handle the user setting "restored" event.
-     *
-     * @param  \App\UserSetting  $userSetting
-     * @return void
-     */
-    public function restored(UserSetting $userSetting)
-    {
-        //
-    }
-
-    /**
-     * Handle the user setting "force deleted" event.
-     *
-     * @param  \App\UserSetting  $userSetting
-     * @return void
-     */
-    public function forceDeleted(UserSetting $userSetting)
-    {
-        //
+        if (in_array($userSetting->key, LDAP::USER_SETTINGS)) {
+            \App\Jobs\UserUpdate::dispatch($userSetting->user);
+        }
     }
 }

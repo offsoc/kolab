@@ -107,13 +107,14 @@ class SignupTest extends TestCase
         $response->assertStatus(422);
 
         $this->assertSame('error', $json['status']);
-        $this->assertCount(2, $json['errors']);
+        $this->assertCount(1, $json['errors']);
         $this->assertArrayHasKey('email', $json['errors']);
-        $this->assertArrayHasKey('name', $json['errors']);
 
         // Data with missing name
         $data = [
             'email' => 'UsersApiControllerTest1@UsersApiControllerTest.com',
+            'first_name' => str_repeat('a', 250),
+            'last_name' => str_repeat('a', 250),
         ];
 
         $response = $this->post('/api/auth/signup/init', $data);
@@ -122,13 +123,15 @@ class SignupTest extends TestCase
         $response->assertStatus(422);
 
         $this->assertSame('error', $json['status']);
-        $this->assertCount(1, $json['errors']);
-        $this->assertArrayHasKey('name', $json['errors']);
+        $this->assertCount(2, $json['errors']);
+        $this->assertArrayHasKey('first_name', $json['errors']);
+        $this->assertArrayHasKey('last_name', $json['errors']);
 
         // Data with invalid email (but not phone number)
         $data = [
             'email' => '@example.org',
-            'name' => 'Signup User',
+            'first_name' => 'Signup',
+            'last_name' => 'User',
         ];
 
         $response = $this->post('/api/auth/signup/init', $data);
@@ -140,10 +143,9 @@ class SignupTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertArrayHasKey('email', $json['errors']);
 
-        // Sanity check on voucher code
+        // Sanity check on voucher code, last/first name is optional
         $data = [
             'voucher' => '123456789012345678901234567890123',
-            'name' => 'Signup User',
             'email' => 'valid@email.com',
         ];
 
@@ -173,7 +175,8 @@ class SignupTest extends TestCase
 
         $data = [
             'email' => 'testuser@external.com',
-            'name' => 'Signup User',
+            'first_name' => 'Signup',
+            'last_name' => 'User',
             'plan' => 'individual',
         ];
 
@@ -195,7 +198,8 @@ class SignupTest extends TestCase
             return $code->code === $json['code']
                 && $code->data['plan'] === $data['plan']
                 && $code->data['email'] === $data['email']
-                && $code->data['name'] === $data['name'];
+                && $code->data['first_name'] === $data['first_name']
+                && $code->data['last_name'] === $data['last_name'];
         });
 
         // Try the same with voucher
@@ -217,13 +221,15 @@ class SignupTest extends TestCase
                 && $code->data['plan'] === $data['plan']
                 && $code->data['email'] === $data['email']
                 && $code->data['voucher'] === $data['voucher']
-                && $code->data['name'] === $data['name'];
+                && $code->data['first_name'] === $data['first_name']
+                && $code->data['last_name'] === $data['last_name'];
         });
 
         return [
             'code' => $json['code'],
             'email' => $data['email'],
-            'name' => $data['name'],
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
             'plan' => $data['plan'],
             'voucher' => $data['voucher']
         ];
@@ -298,10 +304,11 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(6, $json);
+        $this->assertCount(7, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame($result['email'], $json['email']);
-        $this->assertSame($result['name'], $json['name']);
+        $this->assertSame($result['first_name'], $json['first_name']);
+        $this->assertSame($result['last_name'], $json['last_name']);
         $this->assertSame($result['voucher'], $json['voucher']);
         $this->assertSame(false, $json['is_domain']);
         $this->assertTrue(is_array($json['domains']) && !empty($json['domains']));
@@ -489,9 +496,10 @@ class SignupTest extends TestCase
 
         $this->assertNotEmpty($user);
         $this->assertSame($identity, $user->email);
-        $this->assertSame($result['name'], $user->name);
 
-        // Check external email in user settings
+        // Check user settings
+        $this->assertSame($result['first_name'], $user->getSetting('first_name'));
+        $this->assertSame($result['last_name'], $user->getSetting('last_name'));
         $this->assertSame($result['email'], $user->getSetting('external_email'));
 
         // Discount
@@ -515,7 +523,8 @@ class SignupTest extends TestCase
         // Initial signup request
         $user_data = $data = [
             'email' => 'testuser@external.com',
-            'name' => 'Signup User',
+            'first_name' => 'Signup',
+            'last_name' => 'User',
             'plan' => 'group',
         ];
 
@@ -537,7 +546,8 @@ class SignupTest extends TestCase
             return $code->code === $json['code']
                 && $code->data['plan'] === $data['plan']
                 && $code->data['email'] === $data['email']
-                && $code->data['name'] === $data['name'];
+                && $code->data['first_name'] === $data['first_name']
+                && $code->data['last_name'] === $data['last_name'];
         });
 
         // Verify the code
@@ -551,10 +561,11 @@ class SignupTest extends TestCase
         $result = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(6, $result);
+        $this->assertCount(7, $result);
         $this->assertSame('success', $result['status']);
         $this->assertSame($user_data['email'], $result['email']);
-        $this->assertSame($user_data['name'], $result['name']);
+        $this->assertSame($user_data['first_name'], $result['first_name']);
+        $this->assertSame($user_data['last_name'], $result['last_name']);
         $this->assertSame(null, $result['voucher']);
         $this->assertSame(true, $result['is_domain']);
         $this->assertSame([], $result['domains']);
@@ -602,12 +613,13 @@ class SignupTest extends TestCase
         $user = User::where('email', $login . '@' . $domain)->first();
 
         $this->assertNotEmpty($user);
-        $this->assertSame($user_data['name'], $user->name);
 
-        // Check domain record
-
-        // Check external email in user settings
+        // Check user settings
         $this->assertSame($user_data['email'], $user->getSetting('external_email'));
+        $this->assertSame($user_data['first_name'], $user->getSetting('first_name'));
+        $this->assertSame($user_data['last_name'], $user->getSetting('last_name'));
+
+        // TODO: Check domain record
 
         // TODO: Check SKUs/Plan
 

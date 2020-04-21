@@ -21,6 +21,7 @@ class UserProfileTest extends TestCaseDusk
         'billing_address' => "601 13th Street NW\nSuite 900 South\nWashington, DC 20005",
         'external_email' => 'john.doe.external@gmail.com',
         'phone' => '+1 509-248-1111',
+        'organization' => 'Kolab Developers',
     ];
 
     /**
@@ -76,24 +77,27 @@ class UserProfileTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(1) input[type=text]', $this->profile['first_name'])
                         ->assertSeeIn('div.row:nth-child(2) label', 'Last name')
                         ->assertValue('div.row:nth-child(2) input[type=text]', $this->profile['last_name'])
-                        ->assertSeeIn('div.row:nth-child(3) label', 'Phone')
-                        ->assertValue('div.row:nth-child(3) input[type=text]', $this->profile['phone'])
-                        ->assertSeeIn('div.row:nth-child(4) label', 'External email')
-                        ->assertValue('div.row:nth-child(4) input[type=text]', $this->profile['external_email'])
-                        ->assertSeeIn('div.row:nth-child(5) label', 'Address')
-                        ->assertValue('div.row:nth-child(5) textarea', $this->profile['billing_address'])
-                        ->assertSeeIn('div.row:nth-child(6) label', 'Country')
-                        ->assertValue('div.row:nth-child(6) select', $this->profile['country'])
-                        ->assertSeeIn('div.row:nth-child(7) label', 'Password')
-                        ->assertValue('div.row:nth-child(7) input[type=password]', '')
-                        ->assertSeeIn('div.row:nth-child(8) label', 'Confirm password')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Organization')
+                        ->assertValue('div.row:nth-child(3) input[type=text]', $this->profile['organization'])
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Phone')
+                        ->assertValue('div.row:nth-child(4) input[type=text]', $this->profile['phone'])
+                        ->assertSeeIn('div.row:nth-child(5) label', 'External email')
+                        ->assertValue('div.row:nth-child(5) input[type=text]', $this->profile['external_email'])
+                        ->assertSeeIn('div.row:nth-child(6) label', 'Address')
+                        ->assertValue('div.row:nth-child(6) textarea', $this->profile['billing_address'])
+                        ->assertSeeIn('div.row:nth-child(7) label', 'Country')
+                        ->assertValue('div.row:nth-child(7) select', $this->profile['country'])
+                        ->assertSeeIn('div.row:nth-child(8) label', 'Password')
                         ->assertValue('div.row:nth-child(8) input[type=password]', '')
+                        ->assertSeeIn('div.row:nth-child(9) label', 'Confirm password')
+                        ->assertValue('div.row:nth-child(9) input[type=password]', '')
                         ->assertSeeIn('button[type=submit]', 'Submit');
 
                     // Clear all fields and submit
                     // FIXME: Should any of these fields be required?
                     $browser->type('#first_name', '')
                         ->type('#last_name', '')
+                        ->type('#organization', '')
                         ->type('#phone', '')
                         ->type('#external_email', '')
                         ->type('#billing_address', '')

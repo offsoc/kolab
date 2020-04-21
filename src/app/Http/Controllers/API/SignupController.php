@@ -71,26 +71,33 @@ class SignupController extends Controller
             $request->all(),
             [
                 'email' => 'required',
-                'name' => 'required|max:512',
+                'first_name' => 'max:128',
+                'last_name' => 'max:128',
                 'plan' => 'nullable|alpha_num|max:128',
                 'voucher' => 'max:32',
             ]
         );
 
-        if ($v->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
-        }
+        $is_phone = false;
+        $errors = $v->fails() ? $v->errors()->toArray() : [];
 
         // Validate user email (or phone)
-        if ($error = $this->validatePhoneOrEmail($request->email, $is_phone)) {
-            return response()->json(['status' => 'error', 'errors' => ['email' => $error]], 422);
+        if (empty($errors['email'])) {
+            if ($error = $this->validatePhoneOrEmail($request->email, $is_phone)) {
+                $errors['email'] = $error;
+            }
+        }
+
+        if (!empty($errors)) {
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
         // Generate the verification code
         $code = SignupCode::create([
                 'data' => [
                     'email' => $request->email,
-                    'name' => $request->name,
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
                     'plan' => $request->plan,
                     'voucher' => $request->voucher,
                 ]
@@ -151,7 +158,8 @@ class SignupController extends Controller
         return response()->json([
                 'status' => 'success',
                 'email' => $code->data['email'],
-                'name' => $code->data['name'],
+                'first_name' => $code->data['first_name'],
+                'last_name' => $code->data['last_name'],
                 'voucher' => $code->data['voucher'],
                 'is_domain' => $has_domain,
                 'domains' => $has_domain ? [] : Domain::getPublicDomains(),
@@ -213,7 +221,6 @@ class SignupController extends Controller
 
         // Get user name/email from the verification code database
         $code_data  = $v->getData();
-        $user_name  = $code_data->name;
         $user_email = $code_data->email;
 
         // We allow only ASCII, so we can safely lower-case the email address
@@ -224,7 +231,6 @@ class SignupController extends Controller
 
         // Create user record
         $user = User::create([
-                'name' => $user_name,
                 'email' => $login . '@' . $domain,
                 'password' => $request->password,
         ]);
@@ -248,7 +254,11 @@ class SignupController extends Controller
         $user->assignPlan($plan, $domain);
 
         // Save the external email and plan in user settings
-        $user->setSetting('external_email', $user_email);
+        $user->setSettings([
+                'external_email' => $user_email,
+                'first_name' => $code_data->first_name,
+                'last_name' => $code_data->last_name,
+        ]);
 
         // Remove the verification code
         $this->code->delete();

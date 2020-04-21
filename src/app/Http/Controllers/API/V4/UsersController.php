@@ -16,6 +16,18 @@ use Illuminate\Support\Str;
 
 class UsersController extends Controller
 {
+    // List of user settings keys available for modification in UI
+    public const USER_SETTINGS = [
+        'billing_address',
+        'country',
+        'currency',
+        'external_email',
+        'first_name',
+        'last_name',
+        'organization',
+        'phone',
+    ];
+
     /**
      * Delete a user.
      *
@@ -178,16 +190,10 @@ class UsersController extends Controller
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
-        $user_name = !empty($settings['first_name']) ? $settings['first_name'] : '';
-        if (!empty($settings['last_name'])) {
-            $user_name .= ' ' . $settings['last_name'];
-        }
-
         DB::beginTransaction();
 
         // Create user record
         $user = User::create([
-                'name' => $user_name,
                 'email' => $request->email,
                 'password' => $request->password,
         ]);
@@ -342,10 +348,8 @@ class UsersController extends Controller
         $response = $user->toArray();
 
         // Settings
-        // TODO: It might be reasonable to limit the list of settings here to these
-        // that are safe and are used in the UI
         $response['settings'] = [];
-        foreach ($user->settings as $item) {
+        foreach ($user->settings()->whereIn('key', self::USER_SETTINGS)->get() as $item) {
             $response['settings'][$item->key] = $item->value;
         }
 
@@ -416,8 +420,9 @@ class UsersController extends Controller
         $rules = [
             'external_email' => 'nullable|email',
             'phone' => 'string|nullable|max:64|regex:/^[0-9+() -]+$/',
-            'first_name' => 'string|nullable|max:512',
-            'last_name' => 'string|nullable|max:512',
+            'first_name' => 'string|nullable|max:128',
+            'last_name' => 'string|nullable|max:128',
+            'organization' => 'string|nullable|max:512',
             'billing_address' => 'string|nullable|max:1024',
             'country' => 'string|nullable|alpha|size:2',
             'currency' => 'string|nullable|alpha|size:3',

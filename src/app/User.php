@@ -8,7 +8,6 @@ use App\Traits\UserAliasesTrait;
 use App\Traits\UserSettingsTrait;
 use App\Wallet;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Iatstuti\Database\Support\NullableFields;
@@ -19,7 +18,6 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  *
  * @property string $email
  * @property int    $id
- * @property string $name
  * @property string $password
  * @property int    $status
  */
@@ -55,7 +53,6 @@ class User extends Authenticatable implements JWTSubject
      * @var array
      */
     protected $fillable = [
-        'name',
         'email',
         'password',
         'password_ldap',
@@ -70,23 +67,12 @@ class User extends Authenticatable implements JWTSubject
     protected $hidden = [
         'password',
         'password_ldap',
-        'remember_token',
         'role'
     ];
 
     protected $nullable = [
-        'name',
         'password',
         'password_ldap'
-    ];
-
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
     ];
 
     /**
@@ -454,6 +440,27 @@ class User extends Authenticatable implements JWTSubject
     public function isSuspended(): bool
     {
         return ($this->status & self::STATUS_SUSPENDED) > 0;
+    }
+
+    /**
+     * A shortcut to get the user name.
+     *
+     * @param bool $fallback Return "<aa.name> User" if there's no name
+     *
+     * @return string Full user name
+     */
+    public function name(bool $fallback = false): string
+    {
+        $firstname = $this->getSetting('first_name');
+        $lastname = $this->getSetting('last_name');
+
+        $name = trim($firstname . ' ' . $lastname);
+
+        if (empty($name) && $fallback) {
+            return \config('app.name') . ' User';
+        }
+
+        return $name;
     }
 
     /**

@@ -49,7 +49,7 @@ class PasswordReset extends Mailable
                     'code' => $this->code->code,
                     'short_code' => $this->code->short_code,
                     'link' => sprintf('<a href="%s">%s</a>', $href, $href),
-                    'username' => $this->code->user->name
+                    'username' => $this->code->user->name(true)
             ]);
 
         return $this;

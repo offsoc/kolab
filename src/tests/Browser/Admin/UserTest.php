@@ -180,7 +180,7 @@ class UserTest extends TestCaseDusk
                 ->with('@user-info form', function (Browser $browser) use ($john) {
                     $ext_email = $john->getSetting('external_email');
 
-                    $browser->assertElementsCount('.row', 8)
+                    $browser->assertElementsCount('.row', 9)
                         ->assertSeeIn('.row:nth-child(1) label', 'ID (Created at)')
                         ->assertSeeIn('.row:nth-child(1) #userid', "{$john->id} ({$john->created_at})")
                         ->assertSeeIn('.row:nth-child(2) label', 'Status')
@@ -189,15 +189,17 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(3) #first_name', 'John')
                         ->assertSeeIn('.row:nth-child(4) label', 'Last name')
                         ->assertSeeIn('.row:nth-child(4) #last_name', 'Doe')
-                        ->assertSeeIn('.row:nth-child(5) label', 'Phone')
-                        ->assertSeeIn('.row:nth-child(5) #phone', $john->getSetting('phone'))
-                        ->assertSeeIn('.row:nth-child(6) label', 'External email')
-                        ->assertSeeIn('.row:nth-child(6) #external_email a', $ext_email)
-                        ->assertAttribute('.row:nth-child(6) #external_email a', 'href', "mailto:$ext_email")
-                        ->assertSeeIn('.row:nth-child(7) label', 'Address')
-                        ->assertSeeIn('.row:nth-child(7) #billing_address', $john->getSetting('billing_address'))
-                        ->assertSeeIn('.row:nth-child(8) label', 'Country')
-                        ->assertSeeIn('.row:nth-child(8) #country', 'United States of America');
+                        ->assertSeeIn('.row:nth-child(5) label', 'Organization')
+                        ->assertSeeIn('.row:nth-child(5) #organization', 'Kolab Developers')
+                        ->assertSeeIn('.row:nth-child(6) label', 'Phone')
+                        ->assertSeeIn('.row:nth-child(6) #phone', $john->getSetting('phone'))
+                        ->assertSeeIn('.row:nth-child(7) label', 'External email')
+                        ->assertSeeIn('.row:nth-child(7) #external_email a', $ext_email)
+                        ->assertAttribute('.row:nth-child(7) #external_email a', 'href', "mailto:$ext_email")
+                        ->assertSeeIn('.row:nth-child(8) label', 'Address')
+                        ->assertSeeIn('.row:nth-child(8) #billing_address', $john->getSetting('billing_address'))
+                        ->assertSeeIn('.row:nth-child(9) label', 'Country')
+                        ->assertSeeIn('.row:nth-child(9) #country', 'United States of America');
                 });
 
             // Some tabs are loaded in background, wait a second

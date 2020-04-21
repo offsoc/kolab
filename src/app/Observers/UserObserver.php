@@ -46,17 +46,30 @@ class UserObserver
      */
     public function created(User $user)
     {
-        // FIXME: Actual proper settings
-        $user->setSettings(
-            [
-                'country' => 'CH',
-                'currency' => 'CHF',
-                'first_name' => '',
-                'last_name' => '',
-                'billing_address' => '',
-                'organization' => ''
-            ]
-        );
+        $settings = [
+            'country' => 'CH',
+            'currency' => 'CHF',
+            /*
+            'first_name' => '',
+            'last_name' => '',
+            'billing_address' => '',
+            'organization' => '',
+            'phone' => '',
+            'external_email' => '',
+            */
+        ];
+
+        foreach ($settings as $key => $value) {
+            $settings[$key] = [
+                'key' => $key,
+                'value' => $value,
+                'user_id' => $user->id,
+            ];
+        }
+
+        // Note: Don't use setSettings() here to bypass UserSetting observers
+        // Note: This is a single multi-insert query
+        $user->settings()->insert(array_values($settings));
 
         $user->wallets()->create();
 

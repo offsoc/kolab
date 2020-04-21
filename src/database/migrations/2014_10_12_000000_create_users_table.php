@@ -17,13 +17,11 @@ class CreateUsersTable extends Migration
             'users',
             function (Blueprint $table) {
                 $table->bigInteger('id');
-                $table->string('name')->nullable();
                 $table->string('email')->unique();
-                $table->timestamp('email_verified_at')->nullable();
                 $table->string('password')->nullable();
                 $table->string('password_ldap')->nullable();
                 $table->smallinteger('status');
-                $table->rememberToken();
+//                $table->rememberToken();
                 $table->timestamps();
 
                 $table->primary('id');

@@ -81,7 +81,9 @@ trait UserSettingsTrait
     private function storeSetting(string $key, $value): void
     {
         if ($value === null || $value === '') {
-            UserSetting::where(['user_id' => $this->id, 'key' => $key])->delete();
+            if ($setting = UserSetting::where(['user_id' => $this->id, 'key' => $key])->first()) {
+                $setting->delete();
+            }
         } else {
             UserSetting::updateOrCreate(
                 ['user_id' => $this->id, 'key' => $key],

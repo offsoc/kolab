@@ -139,7 +139,7 @@ class UsersTest extends TestCase
         // TODO/FIXME:
         //   For now controller can delete himself, as well as
         //   the whole account he has control to, including the owner
-        //   Probably he should not be able to do either of those
+        //   Probably he should not be able to do none of those
         //   However, this is not 0-regression scenario as we
         //   do not fully support additional controllers.
 
@@ -290,6 +290,7 @@ class UsersTest extends TestCase
         $this->assertTrue(is_array($result['settings']));
         $this->assertSame('US', $result['settings']['country']);
         $this->assertSame('USD', $result['settings']['currency']);
+        // TODO: Test all settings
 
         $this->assertTrue(is_array($result['accounts']));
         $this->assertTrue(is_array($result['wallets']));
@@ -460,6 +461,7 @@ class UsersTest extends TestCase
             'first_name' => 'John2',
             'last_name' => 'Doe2',
             'email' => 'john2.doe2@kolab.org',
+            'organization' => 'TestOrg',
             'aliases' => ['useralias1@kolab.org', 'useralias2@kolab.org'],
         ];
 
@@ -499,6 +501,7 @@ class UsersTest extends TestCase
         $this->assertInstanceOf(User::class, $user);
         $this->assertSame('John2', $user->getSetting('first_name'));
         $this->assertSame('Doe2', $user->getSetting('last_name'));
+        $this->assertSame('TestOrg', $user->getSetting('organization'));
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
         $this->assertSame('useralias1@kolab.org', $aliases[0]->alias);
@@ -575,6 +578,7 @@ class UsersTest extends TestCase
             'password_confirmation' => 'simple',
             'first_name' => 'John2',
             'last_name' => 'Doe2',
+            'organization' => 'TestOrg',
             'phone' => '+123 123 123',
             'external_email' => 'external@gmail.com',
             'billing_address' => 'billing',
@@ -605,6 +609,7 @@ class UsersTest extends TestCase
         $post = [
             'first_name' => '',
             'last_name' => '',
+            'organization' => '',
             'phone' => '',
             'external_email' => '',
             'billing_address' => '',

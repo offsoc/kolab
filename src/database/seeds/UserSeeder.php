@@ -32,10 +32,8 @@ class UserSeeder extends Seeder
 
         $john = User::create(
             [
-                'name' => 'John Doe',
                 'email' => 'john@kolab.org',
                 'password' => 'simple123',
-                'email_verified_at' => now()
             ]
         );
 
@@ -47,6 +45,7 @@ class UserSeeder extends Seeder
                 'country' => 'US',
                 'billing_address' => "601 13th Street NW\nSuite 900 South\nWashington, DC 20005",
                 'external_email' => 'john.doe.external@gmail.com',
+                'organization' => 'Kolab Developers',
                 'phone' => '+1 509-248-1111',
             ]
         );
@@ -64,10 +63,8 @@ class UserSeeder extends Seeder
 
         $jack = User::create(
             [
-                'name' => 'Jack Daniels',
                 'email' => 'jack@kolab.org',
                 'password' => 'simple123',
-                'email_verified_at' => now()
             ]
         );
 
@@ -92,10 +89,8 @@ class UserSeeder extends Seeder
 
         $ned = User::create(
             [
-                'name' => 'Edward Flanders',
                 'email' => 'ned@kolab.org',
                 'password' => 'simple123',
-                'email_verified_at' => now()
             ]
         );
 
@@ -122,10 +117,8 @@ class UserSeeder extends Seeder
 
         $joe = User::create(
             [
-                'name' => 'Joe Sixpack',
                 'email' => 'joe@kolab.org',
                 'password' => 'simple123',
-                'email_verified_at' => now()
             ]
         );
 
@@ -135,10 +128,8 @@ class UserSeeder extends Seeder
 
         $jeroen = User::create(
             [
-                'name' => 'Jeroen van Meeuwen',
                 'email' => 'jeroen@jeroen.jeroen',
                 'password' => 'jeroen',
-                'email_verified_at' => now()
             ]
         );
 

@@ -24,7 +24,8 @@ class SignupVerificationEmailTest extends TestCase
         $this->code = SignupCode::create([
                 'data' => [
                     'email' => 'SignupVerificationEmailTest1@' . \config('app.domain'),
-                    'name' => "Test Job"
+                    'first_name' => "Test",
+                    'last_name' => "Job"
                 ]
         ]);
     }

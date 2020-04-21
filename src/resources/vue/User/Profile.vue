@@ -18,6 +18,12 @@
                             </div>
                         </div>
                         <div class="form-group row">
+                            <label for="organization" class="col-sm-4 col-form-label">Organization</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="organization" v-model="profile.organization">
+                            </div>
+                        </div>
+                        <div class="form-group row">
                             <label for="phone" class="col-sm-4 col-form-label">Phone</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="phone" v-model="profile.phone">

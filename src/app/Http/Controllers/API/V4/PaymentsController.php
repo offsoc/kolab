@@ -47,7 +47,7 @@ class PaymentsController extends Controller
 
         if (empty($customer_id)) {
             $customer = mollie()->customers()->create([
-                    'name'  => $current_user->name,
+                    'name'  => $current_user->name(),
                     'email' => $current_user->email,
             ]);
 

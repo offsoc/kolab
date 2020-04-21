@@ -41,6 +41,12 @@
                                 <span class="form-control-plaintext" id="last_name">{{ user.last_name }}</span>
                             </div>
                         </div>
+                        <div class="form-group row mb-0" v-if="user.organization">
+                            <label for="organization" class="col-sm-4 col-form-label">Organization</label>
+                            <div class="col-sm-8">
+                                <span class="form-control-plaintext" id="organization">{{ user.organization }}</span>
+                            </div>
+                        </div>
                         <div class="form-group row mb-0" v-if="user.phone">
                             <label for="phone" class="col-sm-4 col-form-label">Phone</label>
                             <div class="col-sm-8">
@@ -106,7 +112,7 @@
                     <div class="card-text">
                         <form>
                             <div class="form-group row mb-0">
-                                <label for="first_name" class="col-sm-2 col-form-label">Discount:</label>
+                                <label class="col-sm-2 col-form-label">Discount:</label>
                                 <div class="col-sm-10">
                                     <span class="form-control-plaintext" id="discount">
                                         <span>{{ wallet_discount ? (wallet_discount + '% - ' + wallet_discount_description) : 'none' }}</span>
@@ -292,7 +298,7 @@
 
                     this.user = response.data
 
-                    let keys = ['first_name', 'last_name', 'external_email', 'billing_address', 'phone']
+                    let keys = ['first_name', 'last_name', 'external_email', 'billing_address', 'phone', 'organization']
                     let country = this.user.settings.country
 
                     if (country) {
