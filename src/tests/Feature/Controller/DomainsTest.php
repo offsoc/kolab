@@ -58,7 +58,9 @@ class DomainsTest extends TestCase
 
         $json = $response->json();
 
+        $this->assertCount(2, $json);
         $this->assertEquals('error', $json['status']);
+        $this->assertEquals('Domain ownership verification failed.', $json['message']);
 
         $domain->status |= Domain::STATUS_CONFIRMED;
         $domain->save();
@@ -185,5 +187,57 @@ class DomainsTest extends TestCase
         // Jack has no entitlement/control over kolab.org
         $response = $this->actingAs($jack)->get("api/v4/domains/{$domain->id}");
         $response->assertStatus(403);
+    }
+
+    /**
+     * Test fetching domain status (GET /api/v4/domains/<domain-id>/status)
+     * and forcing setup process update (?refresh=1)
+     *
+     * @group dns
+     */
+    public function testStatus(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // Test unauthorized access
+        $response = $this->actingAs($jack)->get("/api/v4/domains/{$domain->id}/status");
+        $response->assertStatus(403);
+
+        $domain->status ^= Domain::STATUS_VERIFIED | Domain::STATUS_CONFIRMED;
+        $domain->save();
+
+        // Get domain status
+        $response = $this->actingAs($john)->get("/api/v4/domains/{$domain->id}/status");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertFalse($json['isVerified']);
+        $this->assertFalse($json['isReady']);
+        $this->assertCount(4, $json['process']);
+        $this->assertSame('domain-verified', $json['process'][2]['label']);
+        $this->assertSame(false, $json['process'][2]['state']);
+        $this->assertTrue(empty($json['status']));
+        $this->assertTrue(empty($json['message']));
+
+        // Now "reboot" the process and verify the domain
+        $response = $this->actingAs($john)->get("/api/v4/domains/{$domain->id}/status?refresh=1");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertTrue($json['isVerified']);
+        $this->assertFalse($json['isReady']);
+        $this->assertCount(4, $json['process']);
+        $this->assertSame('domain-verified', $json['process'][2]['label']);
+        $this->assertSame(true, $json['process'][2]['state']);
+        $this->assertSame('domain-confirmed', $json['process'][3]['label']);
+        $this->assertSame(false, $json['process'][3]['state']);
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('Failed to verify an ownership of a domain.', $json['message']);
+
+        // TODO: Test completing all process steps
     }
 }

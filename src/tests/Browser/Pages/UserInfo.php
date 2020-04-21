@@ -40,6 +40,7 @@ class UserInfo extends Page
             '@form' => '#user-info form',
             '@packages' => '#user-packages',
             '@skus' => '#user-skus',
+            '@status' => '#status-box',
         ];
     }
 }

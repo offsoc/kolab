@@ -1,22 +1,7 @@
 <template>
     <div class="container">
-        <div v-if="!isReady" id="domain-status-box" class="card">
-            <div class="card-body">
-                <div class="card-title">Domain status: <span class="text-danger">Not ready</span></div>
-                <div class="card-text">
-                    <p>The process to create the domain has not been completed yet.
-                        Some features may be disabled or readonly.</p>
-                    <ul class="status-list">
-                        <li v-for="item in statusProcess" :key="item.label">
-                            <svg-icon :icon="['far', item.state ? 'check-square' : 'square']"
-                                      :class="item.state ? 'text-success' : 'text-muted'"
-                            ></svg-icon>
-                            <span>{{ item.title }}</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+        <status-component v-bind:status="status" @status-update="statusUpdate"></status-component>
+
         <div v-if="domain && !domain.isConfirmed" class="card" id="domain-verify">
             <div class="card-body">
                 <div class="card-title">Domain verification</div>
@@ -52,14 +37,18 @@
 </template>
 
 <script>
+    import StatusComponent from '../Widgets/Status'
+
     export default {
+        components: {
+            StatusComponent
+        },
         data() {
             return {
                 domain_id: null,
                 domain: null,
                 app_name: window.config['app.name'],
-                isReady: true,
-                statusProcess: []
+                status: {}
             }
         },
         created() {
@@ -70,15 +59,12 @@
                         if (!this.domain.isConfirmed) {
                             $('#domain-verify button').focus()
                         }
-                        this.parseStatusInfo(response.data.statusInfo)
+                        this.status = response.data.statusInfo
                     })
                     .catch(this.$root.errorHandler)
             } else {
                 this.$root.errorPage(404)
             }
-        },
-        destroyed() {
-            clearTimeout(window.domainRequest)
         },
         methods: {
             confirm() {
@@ -86,32 +72,17 @@
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.domain.isConfirmed = true
-                            this.parseStatusInfo(response.data.statusInfo)
-                            this.$toast.success(response.data.message)
+                            this.status = response.data.statusInfo
+                        }
+
+                        if (response.data.message) {
+                            this.$toast[response.data.status](response.data.message)
                         }
                     })
             },
-            // Displays domain status information
-            parseStatusInfo(info) {
-                this.statusProcess = info.process
-                this.isReady = info.isReady
-
-                // Update status process info every 10 seconds
-                // FIXME: This probably should have some limit, or the interval
-                //        should grow (well, until it could be done with websocket notifications)
-                if (!info.isReady) {
-                    window.domainRequest = setTimeout(() => {
-                        axios.get('/api/v4/domains/' + this.domain_id)
-                            .then(response => {
-                                this.domain = response.data
-                                this.parseStatusInfo(this.domain.statusInfo)
-                            })
-                            .catch(error => {
-                                this.parseStatusInfo(info)
-                            })
-                    }, 10000);
-                }
-            },
+            statusUpdate(domain) {
+                this.domain = Object.assign({}, this.domain, domain)
+            }
         }
     }
 </script>

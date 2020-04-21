@@ -8,6 +8,7 @@ use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\Sku;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -113,6 +114,59 @@ class UsersController extends Controller
     }
 
     /**
+     * Fetch user status (and reload setup process)
+     *
+     * @param int $id User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function status($id)
+    {
+        $user = User::find($id);
+
+        if (empty($user)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canRead($user)) {
+            return $this->errorResponse(403);
+        }
+
+        $response = self::statusInfo($user);
+
+        if (!empty(request()->input('refresh'))) {
+            $updated = false;
+            $last_step = 'none';
+
+            foreach ($response['process'] as $idx => $step) {
+                $last_step = $step['label'];
+
+                if (!$step['state']) {
+                    if (!$this->execProcessStep($user, $step['label'])) {
+                        break;
+                    }
+
+                    $updated = true;
+                }
+            }
+
+            if ($updated) {
+                $response = self::statusInfo($user);
+            }
+
+            $success = $response['isReady'];
+            $suffix = $success ? 'success' : 'error-' . $last_step;
+
+            $response['status'] = $success ? 'success' : 'error';
+            $response['message'] = \trans('app.process-' . $suffix);
+        }
+
+        $response = array_merge($response, self::userStatuses($user));
+
+        return response()->json($response);
+    }
+
+    /**
      * User status (extended) information
      *
      * @param \App\User $user User object
@@ -139,7 +193,6 @@ class UsersController extends Controller
             $process[] = $step;
         }
 
-
         list ($local, $domain) = explode('@', $user->email);
         $domain = Domain::where('namespace', $domain)->first();
 
@@ -154,8 +207,17 @@ class UsersController extends Controller
                 return $v['state'];
         }));
 
+        $state = $all === $checked ? 'done' : 'running';
+
+        // After 180 seconds assume the process is in failed state,
+        // this should unlock the Refresh button in the UI
+        if ($all !== $checked && $user->created_at->diffInSeconds(Carbon::now()) > 180) {
+            $state = 'failed';
+        }
+
         return [
             'process' => $process,
+            'processState' => $state,
             'isReady' => $all === $checked,
         ];
     }
@@ -493,5 +555,43 @@ class UsersController extends Controller
         // Update user settings
         $settings = $request->only(array_keys($rules));
         unset($settings['password'], $settings['aliases'], $settings['email']);
+    }
+
+    /**
+     * Execute (synchronously) specified step in a user setup process.
+     *
+     * @param \App\User $user User object
+     * @param string    $step Step identifier (as in self::statusInfo())
+     *
+     * @return bool True if the execution succeeded, False otherwise
+     */
+    public static function execProcessStep(User $user, string $step): bool
+    {
+        try {
+            if (strpos($step, 'domain-') === 0) {
+                list ($local, $domain) = explode('@', $user->email);
+                $domain = Domain::where('namespace', $domain)->first();
+
+                return DomainsController::execProcessStep($domain, $step);
+            }
+
+            switch ($step) {
+                case 'user-ldap-ready':
+                    // User not in LDAP, create it
+                    $job = new \App\Jobs\UserCreate($user);
+                    $job->handle();
+                    return $user->isLdapReady();
+
+                case 'user-imap-ready':
+                    // User not in IMAP? Verify again
+                    $job = new \App\Jobs\UserVerify($user);
+                    $job->handle();
+                    return $user->isImapReady();
+            }
+        } catch (\Exception $e) {
+            \Log::error($e);
+        }
+
+        return false;
     }
 }

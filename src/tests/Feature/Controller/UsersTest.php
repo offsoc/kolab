@@ -9,6 +9,7 @@ use App\Package;
 use App\Sku;
 use App\User;
 use App\Wallet;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -33,6 +34,8 @@ class UsersTest extends TestCase
         $wallet = $user->wallets()->first();
         $wallet->discount()->dissociate();
         $wallet->save();
+        $user->status |= User::STATUS_IMAP_READY;
+        $user->save();
     }
 
     /**
@@ -51,6 +54,8 @@ class UsersTest extends TestCase
         $wallet = $user->wallets()->first();
         $wallet->discount()->dissociate();
         $wallet->save();
+        $user->status |= User::STATUS_IMAP_READY;
+        $user->save();
 
         parent::tearDown();
     }
@@ -209,127 +214,6 @@ class UsersTest extends TestCase
         $this->assertSame($ned->email, $json[3]['email']);
     }
 
-    public function testStatusInfo(): void
-    {
-        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
-        $domain = $this->getTestDomain('userscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
-        ]);
-
-        $user->status = User::STATUS_NEW;
-        $user->save();
-
-        $result = UsersController::statusInfo($user);
-
-        $this->assertFalse($result['isReady']);
-        $this->assertCount(3, $result['process']);
-        $this->assertSame('user-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
-        $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
-        $this->assertSame(false, $result['process'][1]['state']);
-        $this->assertSame('user-imap-ready', $result['process'][2]['label']);
-        $this->assertSame(false, $result['process'][2]['state']);
-
-        $user->status |= User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
-        $user->save();
-
-        $result = UsersController::statusInfo($user);
-
-        $this->assertTrue($result['isReady']);
-        $this->assertCount(3, $result['process']);
-        $this->assertSame('user-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
-        $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
-        $this->assertSame(true, $result['process'][1]['state']);
-        $this->assertSame('user-imap-ready', $result['process'][2]['label']);
-        $this->assertSame(true, $result['process'][2]['state']);
-
-        $domain->status |= Domain::STATUS_VERIFIED;
-        $domain->type = Domain::TYPE_EXTERNAL;
-        $domain->save();
-
-        $result = UsersController::statusInfo($user);
-
-        $this->assertFalse($result['isReady']);
-        $this->assertCount(7, $result['process']);
-        $this->assertSame('user-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
-        $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
-        $this->assertSame(true, $result['process'][1]['state']);
-        $this->assertSame('user-imap-ready', $result['process'][2]['label']);
-        $this->assertSame(true, $result['process'][2]['state']);
-        $this->assertSame('domain-new', $result['process'][3]['label']);
-        $this->assertSame(true, $result['process'][3]['state']);
-        $this->assertSame('domain-ldap-ready', $result['process'][4]['label']);
-        $this->assertSame(false, $result['process'][4]['state']);
-        $this->assertSame('domain-verified', $result['process'][5]['label']);
-        $this->assertSame(true, $result['process'][5]['state']);
-        $this->assertSame('domain-confirmed', $result['process'][6]['label']);
-        $this->assertSame(false, $result['process'][6]['state']);
-    }
-
-    /**
-     * Test user data response used in show and info actions
-     */
-    public function testUserResponse(): void
-    {
-        $user = $this->getTestUser('john@kolab.org');
-        $wallet = $user->wallets()->first();
-        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
-
-        $this->assertEquals($user->id, $result['id']);
-        $this->assertEquals($user->email, $result['email']);
-        $this->assertEquals($user->status, $result['status']);
-        $this->assertTrue(is_array($result['statusInfo']));
-
-        $this->assertTrue(is_array($result['aliases']));
-        $this->assertCount(1, $result['aliases']);
-        $this->assertSame('john.doe@kolab.org', $result['aliases'][0]);
-
-        $this->assertTrue(is_array($result['settings']));
-        $this->assertSame('US', $result['settings']['country']);
-        $this->assertSame('USD', $result['settings']['currency']);
-        // TODO: Test all settings
-
-        $this->assertTrue(is_array($result['accounts']));
-        $this->assertTrue(is_array($result['wallets']));
-        $this->assertCount(0, $result['accounts']);
-        $this->assertCount(1, $result['wallets']);
-        $this->assertSame($wallet->id, $result['wallet']['id']);
-        $this->assertArrayNotHasKey('discount', $result['wallet']);
-
-        $ned = $this->getTestUser('ned@kolab.org');
-        $ned_wallet = $ned->wallets()->first();
-        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$ned]);
-
-        $this->assertEquals($ned->id, $result['id']);
-        $this->assertEquals($ned->email, $result['email']);
-        $this->assertTrue(is_array($result['accounts']));
-        $this->assertTrue(is_array($result['wallets']));
-        $this->assertCount(1, $result['accounts']);
-        $this->assertCount(1, $result['wallets']);
-        $this->assertSame($wallet->id, $result['wallet']['id']);
-        $this->assertSame($wallet->id, $result['accounts'][0]['id']);
-        $this->assertSame($ned_wallet->id, $result['wallets'][0]['id']);
-
-        // Test discount in a response
-        $discount = Discount::where('code', 'TEST')->first();
-        $wallet->discount()->associate($discount);
-        $wallet->save();
-        $user->refresh();
-
-        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
-
-        $this->assertEquals($user->id, $result['id']);
-        $this->assertSame($discount->id, $result['wallet']['discount_id']);
-        $this->assertSame($discount->discount, $result['wallet']['discount']);
-        $this->assertSame($discount->description, $result['wallet']['discount_description']);
-        $this->assertSame($discount->id, $result['wallets'][0]['discount_id']);
-        $this->assertSame($discount->discount, $result['wallets'][0]['discount']);
-        $this->assertSame($discount->description, $result['wallets'][0]['discount_description']);
-    }
-
     /**
      * Test fetching user data/profile (GET /api/v4/users/<user-id>)
      */
@@ -392,6 +276,130 @@ class UsersTest extends TestCase
         $this->assertSame(1, $json['skus'][$secondfactor_sku->id]['count']);
     }
 
+    /**
+     * Test fetching user status (GET /api/v4/users/<user-id>/status)
+     * and forcing setup process update (?refresh=1)
+     *
+     * @group imap
+     * @group dns
+     */
+    public function testStatus(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+
+        // Test unauthorized access
+        $response = $this->actingAs($jack)->get("/api/v4/users/{$john->id}/status");
+        $response->assertStatus(403);
+
+        $john->status ^= User::STATUS_IMAP_READY;
+        $john->save();
+
+        // Get user status
+        $response = $this->actingAs($john)->get("/api/v4/users/{$john->id}/status");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertFalse($json['isImapReady']);
+        $this->assertFalse($json['isReady']);
+        $this->assertCount(7, $json['process']);
+        $this->assertSame('user-imap-ready', $json['process'][2]['label']);
+        $this->assertSame(false, $json['process'][2]['state']);
+        $this->assertTrue(empty($json['status']));
+        $this->assertTrue(empty($json['message']));
+
+        // Now "reboot" the process and verify the user in imap syncronously
+        $response = $this->actingAs($john)->get("/api/v4/users/{$john->id}/status?refresh=1");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertTrue($json['isImapReady']);
+        $this->assertFalse($json['isReady']);
+        $this->assertCount(7, $json['process']);
+        $this->assertSame('user-imap-ready', $json['process'][2]['label']);
+        $this->assertSame(true, $json['process'][2]['state']);
+        $this->assertSame('domain-confirmed', $json['process'][6]['label']);
+        $this->assertSame(false, $json['process'][6]['state']);
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('Failed to verify an ownership of a domain.', $json['message']);
+
+        // TODO: Test completing all process steps
+    }
+
+    /**
+     * Test UsersController::statusInfo()
+     */
+    public function testStatusInfo(): void
+    {
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $domain = $this->getTestDomain('userscontroller.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_PUBLIC,
+        ]);
+
+        $user->created_at = Carbon::now();
+        $user->status = User::STATUS_NEW;
+        $user->save();
+
+        $result = UsersController::statusInfo($user);
+
+        $this->assertFalse($result['isReady']);
+        $this->assertCount(3, $result['process']);
+        $this->assertSame('user-new', $result['process'][0]['label']);
+        $this->assertSame(true, $result['process'][0]['state']);
+        $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
+        $this->assertSame(false, $result['process'][1]['state']);
+        $this->assertSame('user-imap-ready', $result['process'][2]['label']);
+        $this->assertSame(false, $result['process'][2]['state']);
+        $this->assertSame('running', $result['processState']);
+
+        $user->created_at = Carbon::now()->subSeconds(181);
+        $user->save();
+
+        $result = UsersController::statusInfo($user);
+
+        $this->assertSame('failed', $result['processState']);
+
+        $user->status |= User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
+        $user->save();
+
+        $result = UsersController::statusInfo($user);
+
+        $this->assertTrue($result['isReady']);
+        $this->assertCount(3, $result['process']);
+        $this->assertSame('user-new', $result['process'][0]['label']);
+        $this->assertSame(true, $result['process'][0]['state']);
+        $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
+        $this->assertSame(true, $result['process'][1]['state']);
+        $this->assertSame('user-imap-ready', $result['process'][2]['label']);
+        $this->assertSame(true, $result['process'][2]['state']);
+        $this->assertSame('done', $result['processState']);
+
+        $domain->status |= Domain::STATUS_VERIFIED;
+        $domain->type = Domain::TYPE_EXTERNAL;
+        $domain->save();
+
+        $result = UsersController::statusInfo($user);
+
+        $this->assertFalse($result['isReady']);
+        $this->assertCount(7, $result['process']);
+        $this->assertSame('user-new', $result['process'][0]['label']);
+        $this->assertSame(true, $result['process'][0]['state']);
+        $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
+        $this->assertSame(true, $result['process'][1]['state']);
+        $this->assertSame('user-imap-ready', $result['process'][2]['label']);
+        $this->assertSame(true, $result['process'][2]['state']);
+        $this->assertSame('domain-new', $result['process'][3]['label']);
+        $this->assertSame(true, $result['process'][3]['state']);
+        $this->assertSame('domain-ldap-ready', $result['process'][4]['label']);
+        $this->assertSame(false, $result['process'][4]['state']);
+        $this->assertSame('domain-verified', $result['process'][5]['label']);
+        $this->assertSame(true, $result['process'][5]['state']);
+        $this->assertSame('domain-confirmed', $result['process'][6]['label']);
+        $this->assertSame(false, $result['process'][6]['state']);
+    }
     /**
      * Test user creation (POST /api/v4/users)
      */
@@ -713,6 +721,66 @@ class UsersTest extends TestCase
     {
         // TODO: Test more cases of entitlements update
         $this->markTestIncomplete();
+    }
+
+    /**
+     * Test user data response used in show and info actions
+     */
+    public function testUserResponse(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
+        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
+
+        $this->assertEquals($user->id, $result['id']);
+        $this->assertEquals($user->email, $result['email']);
+        $this->assertEquals($user->status, $result['status']);
+        $this->assertTrue(is_array($result['statusInfo']));
+
+        $this->assertTrue(is_array($result['aliases']));
+        $this->assertCount(1, $result['aliases']);
+        $this->assertSame('john.doe@kolab.org', $result['aliases'][0]);
+
+        $this->assertTrue(is_array($result['settings']));
+        $this->assertSame('US', $result['settings']['country']);
+        $this->assertSame('USD', $result['settings']['currency']);
+
+        $this->assertTrue(is_array($result['accounts']));
+        $this->assertTrue(is_array($result['wallets']));
+        $this->assertCount(0, $result['accounts']);
+        $this->assertCount(1, $result['wallets']);
+        $this->assertSame($wallet->id, $result['wallet']['id']);
+        $this->assertArrayNotHasKey('discount', $result['wallet']);
+
+        $ned = $this->getTestUser('ned@kolab.org');
+        $ned_wallet = $ned->wallets()->first();
+        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$ned]);
+
+        $this->assertEquals($ned->id, $result['id']);
+        $this->assertEquals($ned->email, $result['email']);
+        $this->assertTrue(is_array($result['accounts']));
+        $this->assertTrue(is_array($result['wallets']));
+        $this->assertCount(1, $result['accounts']);
+        $this->assertCount(1, $result['wallets']);
+        $this->assertSame($wallet->id, $result['wallet']['id']);
+        $this->assertSame($wallet->id, $result['accounts'][0]['id']);
+        $this->assertSame($ned_wallet->id, $result['wallets'][0]['id']);
+
+        // Test discount in a response
+        $discount = Discount::where('code', 'TEST')->first();
+        $wallet->discount()->associate($discount);
+        $wallet->save();
+        $user->refresh();
+
+        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
+
+        $this->assertEquals($user->id, $result['id']);
+        $this->assertSame($discount->id, $result['wallet']['discount_id']);
+        $this->assertSame($discount->discount, $result['wallet']['discount']);
+        $this->assertSame($discount->description, $result['wallet']['discount_description']);
+        $this->assertSame($discount->id, $result['wallets'][0]['discount_id']);
+        $this->assertSame($discount->discount, $result['wallets'][0]['discount']);
+        $this->assertSame($discount->description, $result['wallets'][0]['discount_description']);
     }
 
     /**

@@ -137,18 +137,28 @@ table {
     }
 }
 
-ul.status-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+#status-box {
+    background-color: lighten($green, 35);
 
-    svg {
-        width: 1.25rem !important;
-        height: 1.25rem;
+    .progress {
+        background-color: #fff;
+        height: 10px;
     }
 
-    span {
-        vertical-align: top;
+    .progress-label {
+        font-size: 0.9em;
+    }
+
+    .progress-bar {
+        background-color: $green;
+    }
+
+    &.process-failed {
+        background-color: lighten($orange, 30);
+
+        .progress-bar {
+            background-color: $red;
+        }
     }
 }
 
@@ -156,15 +166,14 @@ ul.status-list {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    margin-top: 1rem;
 
     & > a {
         padding: 1rem;
         text-align: center;
         white-space: nowrap;
-        margin: 0 0.5rem 0.5rem 0;
+        margin-top: 0.5rem;
         text-decoration: none;
-        min-width: 8rem;
+        width: 150px;
 
         &.disabled {
             pointer-events: none;
@@ -176,11 +185,16 @@ ul.status-list {
             top: 0.5rem;
             right: 0.5rem;
         }
+
+        & + a {
+            margin-left: 0.5rem;
+        }
     }
 
     svg {
         width: 6rem;
         height: 6rem;
+        margin: auto;
     }
 }
 

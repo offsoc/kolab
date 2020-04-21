@@ -40,7 +40,7 @@ class DomainInfo extends Page
             '@app' => '#app',
             '@config' => '#domain-config',
             '@verify' => '#domain-verify',
-            '@status' => '#domain-status-box',
+            '@status' => '#status-box',
         ];
     }
 }

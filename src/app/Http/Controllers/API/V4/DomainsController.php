@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Domain;
 use App\Http\Controllers\Controller;
+use App\Backends\LDAP;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -57,14 +59,16 @@ class DomainsController extends Controller
         }
 
         if (!$domain->confirm()) {
-            // TODO: This should include an error message to display to the user
-            return response()->json(['status' => 'error']);
+            return response()->json([
+                    'status' => 'error',
+                    'message' => \trans('app.domain-verify-error'),
+            ]);
         }
 
         return response()->json([
                 'status' => 'success',
                 'statusInfo' => self::statusInfo($domain),
-                'message' => __('app.domain-verify-success'),
+                'message' => \trans('app.domain-verify-success'),
         ]);
     }
 
@@ -133,6 +137,56 @@ class DomainsController extends Controller
 
         // Status info
         $response['statusInfo'] = self::statusInfo($domain);
+
+        $response = array_merge($response, self::domainStatuses($domain));
+
+        return response()->json($response);
+    }
+
+    /**
+     * Fetch domain status (and reload setup process)
+     *
+     * @param int $id Domain identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function status($id)
+    {
+        $domain = Domain::find($id);
+
+        // Only owner (or admin) has access to the domain
+        if (!Auth::guard()->user()->canRead($domain)) {
+            return $this->errorResponse(403);
+        }
+
+        $response = self::statusInfo($domain);
+
+        if (!empty(request()->input('refresh'))) {
+            $updated = false;
+            $last_step = 'none';
+
+            foreach ($response['process'] as $idx => $step) {
+                $last_step = $step['label'];
+
+                if (!$step['state']) {
+                    if (!$this->execProcessStep($domain, $step['label'])) {
+                        break;
+                    }
+
+                    $updated = true;
+                }
+            }
+
+            if ($updated) {
+                $response = self::statusInfo($domain);
+            }
+
+            $success = $response['isReady'];
+            $suffix = $success ? 'success' : 'error-' . $last_step;
+
+            $response['status'] = $success ? 'success' : 'error';
+            $response['message'] = \trans('app.process-' . $suffix);
+        }
 
         $response = array_merge($response, self::domainStatuses($domain));
 
@@ -272,9 +326,56 @@ class DomainsController extends Controller
             }
         }
 
+        $state = $count === 0 ? 'done' : 'running';
+
+        // After 180 seconds assume the process is in failed state,
+        // this should unlock the Refresh button in the UI
+        if ($count > 0 && $domain->created_at->diffInSeconds(Carbon::now()) > 180) {
+            $state = 'failed';
+        }
+
         return [
             'process' => $process,
+            'processState' => $state,
             'isReady' => $count === 0,
         ];
+    }
+
+    /**
+     * Execute (synchronously) specified step in a domain setup process.
+     *
+     * @param \App\Domain $domain Domain object
+     * @param string      $step   Step identifier (as in self::statusInfo())
+     *
+     * @return bool True if the execution succeeded, False otherwise
+     */
+    public static function execProcessStep(Domain $domain, string $step): bool
+    {
+        try {
+            switch ($step) {
+                case 'domain-ldap-ready':
+                    // Domain not in LDAP, create it
+                    if (!$domain->isLdapReady()) {
+                        LDAP::createDomain($domain);
+                        $domain->status |= Domain::STATUS_LDAP_READY;
+                        $domain->save();
+                    }
+                    return $domain->isLdapReady();
+
+                case 'domain-verified':
+                    // Domain existence not verified
+                    $domain->verify();
+                    return $domain->isVerified();
+
+                case 'domain-confirmed':
+                    // Domain ownership confirmation
+                    $domain->confirm();
+                    return $domain->isConfirmed();
+            }
+        } catch (\Exception $e) {
+            \Log::error($e);
+        }
+
+        return false;
     }
 }

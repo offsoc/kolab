@@ -97,7 +97,6 @@
                     return
                 }
 
-
                 // Deleting self, redirect to /profile/delete page
                 if (id == this.$store.state.authInfo.id) {
                     this.$router.push({ name: 'profile-delete' })

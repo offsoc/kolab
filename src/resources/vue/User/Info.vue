@@ -1,5 +1,7 @@
 <template>
     <div class="container">
+        <status-component v-if="user_id !== 'new'" v-bind:status="status" @status-update="statusUpdate"></status-component>
+
         <div class="card" id="user-info">
             <div class="card-body">
                 <div class="card-title" v-if="user_id !== 'new'">User account</div>
@@ -154,10 +156,12 @@
 
 <script>
     import ListInput from '../Widgets/ListInput'
+    import StatusComponent from '../Widgets/Status'
 
     export default {
         components: {
             ListInput,
+            StatusComponent
         },
         data() {
             return {
@@ -167,7 +171,8 @@
                 user: { aliases: [] },
                 packages: [],
                 package_id: null,
-                skus: []
+                skus: [],
+                status: {}
             }
         },
         created() {
@@ -202,6 +207,7 @@
                         this.user.organization = response.data.settings.organization
                         this.discount = this.user.wallet.discount
                         this.discount_description = this.user.wallet.discount_description
+                        this.status = response.data.statusInfo
 
                         axios.get('/api/v4/skus')
                             .then(response => {
@@ -352,6 +358,9 @@
                     }
                 }
             },
+            statusUpdate(user) {
+                this.user = Object.assign({}, this.user, user)
+            }
         }
     }
 </script>

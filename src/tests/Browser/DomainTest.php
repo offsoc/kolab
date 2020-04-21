@@ -59,22 +59,23 @@ class DomainTest extends TestCaseDusk
 
             $browser->visit('/domain/' . $domain->id)
                 ->on(new DomainInfo())
-                ->assertVisible('@status')
                 ->whenAvailable('@verify', function ($browser) use ($domain) {
+                    $browser->assertSeeIn('pre', $domain->namespace)
+                        ->assertSeeIn('pre', $domain->hash())
+                        ->click('button')
+                        ->assertToast(Toast::TYPE_ERROR, 'Domain ownership verification failed.');
+
                     // Make sure the domain is confirmed now
-                    // TODO: Test verification process failure
                     $domain->status |= Domain::STATUS_CONFIRMED;
                     $domain->save();
 
-                    $browser->assertSeeIn('pre', $domain->namespace)
-                        ->assertSeeIn('pre', $domain->hash())
-                        ->click('button');
+                    $browser->click('button')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'Domain verified successfully.');
                 })
                 ->whenAvailable('@config', function ($browser) use ($domain) {
                     $browser->assertSeeIn('pre', $domain->namespace);
                 })
-                ->assertMissing('@verify')
-                ->assertToast(Toast::TYPE_SUCCESS, 'Domain verified successfully.');
+                ->assertMissing('@verify');
 
             // Check that confirmed domain page contains only the config box
             $browser->visit('/domain/' . $domain->id)

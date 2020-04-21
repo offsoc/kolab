@@ -4,7 +4,10 @@ namespace Tests\Browser;
 
 use App\Domain;
 use App\User;
+use Carbon\Carbon;
 use Tests\Browser;
+use Tests\Browser\Components\Status;
+use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\DomainInfo;
 use Tests\Browser\Pages\DomainList;
@@ -23,7 +26,8 @@ class StatusTest extends TestCaseDusk
     {
         parent::setUp();
 
-        DB::statement("UPDATE domains SET status = (status | " . Domain::STATUS_CONFIRMED . ")"
+        $domain_status = Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED;
+        DB::statement("UPDATE domains SET status = (status | {$domain_status})"
             . " WHERE namespace = 'kolab.org'");
         DB::statement("UPDATE users SET status = (status | " . User::STATUS_IMAP_READY . ")"
             . " WHERE email = 'john@kolab.org'");
@@ -34,7 +38,8 @@ class StatusTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
-        DB::statement("UPDATE domains SET status = (status | " . Domain::STATUS_CONFIRMED . ")"
+        $domain_status = Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED;
+        DB::statement("UPDATE domains SET status = (status | {$domain_status})"
             . " WHERE namespace = 'kolab.org'");
         DB::statement("UPDATE users SET status = (status | " . User::STATUS_IMAP_READY . ")"
             . " WHERE email = 'john@kolab.org'");
@@ -47,43 +52,82 @@ class StatusTest extends TestCaseDusk
      */
     public function testDashboard(): void
     {
-        // Unconfirmed domain
+        // Unconfirmed domain and user
         $domain = Domain::where('namespace', 'kolab.org')->first();
         $domain->status ^= Domain::STATUS_CONFIRMED;
         $domain->save();
+        $john = $this->getTestUser('john@kolab.org');
+        $john->created_at = Carbon::now();
+        $john->status ^= User::STATUS_IMAP_READY;
+        $john->save();
 
-        $this->browse(function ($browser) use ($domain) {
+        $this->browse(function ($browser) use ($john, $domain) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
-                ->whenAvailable('@status', function ($browser) {
-                    $browser->assertSeeIn('.card-title', 'Account status:')
-                        ->assertSeeIn('.card-title span.text-danger', 'Not ready')
-                        ->with('ul.status-list', function ($browser) {
-                            $browser->assertElementsCount('li', 7)
-                                ->assertVisible('li:nth-child(1) svg.fa-check-square')
-                                ->assertSeeIn('li:nth-child(1) span', 'User registered')
-                                ->assertVisible('li:nth-child(2) svg.fa-check-square')
-                                ->assertSeeIn('li:nth-child(2) span', 'User created')
-                                ->assertVisible('li:nth-child(3) svg.fa-check-square')
-                                ->assertSeeIn('li:nth-child(3) span', 'User mailbox created')
-                                ->assertVisible('li:nth-child(4) svg.fa-check-square')
-                                ->assertSeeIn('li:nth-child(4) span', 'Custom domain registered')
-                                ->assertVisible('li:nth-child(5) svg.fa-check-square')
-                                ->assertSeeIn('li:nth-child(5) span', 'Custom domain created')
-                                ->assertVisible('li:nth-child(6) svg.fa-check-square')
-                                ->assertSeeIn('li:nth-child(6) span', 'Custom domain verified')
-                                ->assertVisible('li:nth-child(7) svg.fa-square')
-                                ->assertSeeIn('li:nth-child(7) a', 'Custom domain ownership verified');
-                        });
+                ->with(new Status(), function ($browser) use ($john) {
+                    $browser->assertSeeIn('@body', 'We are preparing your account')
+                        ->assertProgress(28, 'Creating a mailbox...', 'pending')
+                        ->assertMissing('#status-verify')
+                        ->assertMissing('#status-link')
+                        ->assertMissing('@refresh-button')
+                        ->assertMissing('@refresh-text');
+
+                    $john->created_at = Carbon::now();
+                    $john->status ^= User::STATUS_IMAP_READY;
+                    $john->save();
+
+                    // Wait for auto-refresh, expect domain-confirmed step
+                    $browser->pause(6000)
+                        ->assertSeeIn('@body', 'Your account is almost ready')
+                        ->assertProgress(85, 'Verifying an ownership of a custom domain...', 'failed')
+                        ->assertMissing('@refresh-button')
+                        ->assertMissing('@refresh-text')
+                        ->assertMissing('#status-verify')
+                        ->assertVisible('#status-link');
+                })
+                // check if the link to domain info page works
+                ->click('#status-link')
+                ->on(new DomainInfo())
+                ->back()
+                ->on(new Dashboard())
+                ->with(new Status(), function ($browser) use ($john) {
+                    $browser->assertMissing('@refresh-button')
+                        ->assertProgress(85, 'Verifying an ownership of a custom domain...', 'failed');
                 });
 
             // Confirm the domain and wait until the whole status box disappears
             $domain->status |= Domain::STATUS_CONFIRMED;
             $domain->save();
 
-            // At the moment, this may take about 10 seconds
-            $browser->waitUntilMissing('@status', 15);
+            // This should take less than 10 seconds
+            $browser->waitUntilMissing('@status', 10);
+        });
+
+        // Test  the Refresh button
+        $domain->status ^= Domain::STATUS_CONFIRMED;
+        $domain->save();
+        $john->created_at = Carbon::now()->subSeconds(3600);
+        $john->status ^= User::STATUS_IMAP_READY;
+        $john->save();
+
+        $this->browse(function ($browser) use ($john, $domain) {
+            $browser->visit(new Dashboard())
+                ->with(new Status(), function ($browser) use ($john, $domain) {
+                    $browser->assertSeeIn('@body', 'We are preparing your account')
+                        ->assertProgress(28, 'Creating a mailbox...', 'failed')
+                        ->assertVisible('@refresh-button')
+                        ->assertVisible('@refresh-text');
+
+                    $john->status ^= User::STATUS_IMAP_READY;
+                    $john->save();
+                    $domain->status |= Domain::STATUS_CONFIRMED;
+                    $domain->save();
+
+                    $browser->click('@refresh-button')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'Setup process finished successfully.');
+                })
+                ->assertMissing('@status');
         });
     }
 
@@ -95,10 +139,12 @@ class StatusTest extends TestCaseDusk
     public function testDomainStatus(): void
     {
         $domain = Domain::where('namespace', 'kolab.org')->first();
-        $domain->status ^= Domain::STATUS_CONFIRMED;
+        $domain->created_at = Carbon::now();
+        $domain->status ^= Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED;
         $domain->save();
 
         $this->browse(function ($browser) use ($domain) {
+            // Test auto-refresh
             $browser->on(new Dashboard())
                 ->click('@links a.link-domains')
                 ->on(new DomainList())
@@ -107,43 +153,58 @@ class StatusTest extends TestCaseDusk
                 ->assertText('@table tbody tr:first-child td:first-child svg title', 'Not Ready')
                 ->click('@table tbody tr:first-child td:first-child a')
                 ->on(new DomainInfo())
-                ->whenAvailable('@status', function ($browser) {
-                    $browser->assertSeeIn('.card-title', 'Domain status:')
-                        ->assertSeeIn('.card-title span.text-danger', 'Not ready')
-                        ->with('ul.status-list', function ($browser) {
-                            $browser->assertElementsCount('li', 4)
-                                ->assertVisible('li:nth-child(1) svg.fa-check-square')
-                                ->assertSeeIn('li:nth-child(1) span', 'Custom domain registered')
-                                ->assertVisible('li:nth-child(2) svg.fa-check-square')
-                                ->assertSeeIn('li:nth-child(2) span', 'Custom domain created')
-                                ->assertVisible('li:nth-child(3) svg.fa-check-square')
-                                ->assertSeeIn('li:nth-child(3) span', 'Custom domain verified')
-                                ->assertVisible('li:nth-child(4) svg.fa-square')
-                                ->assertSeeIn('li:nth-child(4) span', 'Custom domain ownership verified');
-                        });
+                ->with(new Status(), function ($browser) {
+                    $browser->assertSeeIn('@body', 'We are preparing the domain')
+                        ->assertProgress(50, 'Verifying a custom domain...', 'pending')
+                        ->assertMissing('@refresh-button')
+                        ->assertMissing('@refresh-text')
+                        ->assertMissing('#status-link')
+                        ->assertMissing('#status-verify');
                 });
 
-            // Confirm the domain and wait until the whole status box disappears
+            $domain->status |= Domain::STATUS_VERIFIED;
+            $domain->save();
+
+            // This should take less than 10 seconds
+            $browser->waitFor('@status.process-failed')
+                ->with(new Status(), function ($browser) {
+                    $browser->assertSeeIn('@body', 'The domain is almost ready')
+                        ->assertProgress(75, 'Verifying an ownership of a custom domain...', 'failed')
+                        ->assertMissing('@refresh-button')
+                        ->assertMissing('@refresh-text')
+                        ->assertMissing('#status-link')
+                        ->assertVisible('#status-verify');
+                });
+
             $domain->status |= Domain::STATUS_CONFIRMED;
             $domain->save();
 
-            // At the moment, this may take about 10 seconds
-            $browser->waitUntilMissing('@status', 15);
+            // Test Verify button
+            $browser->click('@status #status-verify')
+                ->assertToast(Toast::TYPE_SUCCESS, 'Domain verified successfully.')
+                ->waitUntilMissing('@status')
+                ->assertMissing('@verify')
+                ->assertVisible('@config');
         });
     }
 
     /**
-     * Test user status on users list
+     * Test user status on users list and user info page
      *
      * @depends testDashboard
      */
     public function testUserStatus(): void
     {
         $john = $this->getTestUser('john@kolab.org');
+        $john->created_at = Carbon::now();
         $john->status ^= User::STATUS_IMAP_READY;
         $john->save();
 
-        $this->browse(function ($browser) {
+        $domain = Domain::where('namespace', 'kolab.org')->first();
+        $domain->status ^= Domain::STATUS_CONFIRMED;
+        $domain->save();
+
+        $this->browse(function ($browser) use ($john, $domain) {
             $browser->visit(new Dashboard())
                 ->click('@links a.link-users')
                 ->on(new UserList())
@@ -155,13 +216,38 @@ class StatusTest extends TestCaseDusk
                 ->click('@table tbody tr:nth-child(3) td:first-child a')
                 ->on(new UserInfo())
                 ->with('@form', function (Browser $browser) {
-                    // Assert stet in the user edit form
+                    // Assert state in the user edit form
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Status')
                         ->assertSeeIn('div.row:nth-child(1) #status', 'Not Ready');
-                });
+                })
+                ->with(new Status(), function ($browser) use ($john) {
+                    $browser->assertSeeIn('@body', 'We are preparing the user account')
+                        ->assertProgress(28, 'Creating a mailbox...', 'pending')
+                        ->assertMissing('#status-verify')
+                        ->assertMissing('#status-link')
+                        ->assertMissing('@refresh-button')
+                        ->assertMissing('@refresh-text');
 
-            // TODO: The status should also be live-updated here
-            //       Maybe when we have proper websocket communication
+                    $john->status ^= User::STATUS_IMAP_READY;
+                    $john->save();
+
+                    // Wait for auto-refresh, expect domain-confirmed step
+                    $browser->pause(6000)
+                        ->assertSeeIn('@body', 'The user account is almost ready')
+                        ->assertProgress(85, 'Verifying an ownership of a custom domain...', 'failed')
+                        ->assertMissing('@refresh-button')
+                        ->assertMissing('@refresh-text')
+                        ->assertMissing('#status-verify')
+                        ->assertVisible('#status-link');
+                })
+                ->assertSeeIn('#status', 'Active');
+
+            // Confirm the domain and wait until the whole status box disappears
+            $domain->status |= Domain::STATUS_CONFIRMED;
+            $domain->save();
+
+            // This should take less than 10 seconds
+            $browser->waitUntilMissing('@status', 10);
         });
     }
 }

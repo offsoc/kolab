@@ -59,11 +59,14 @@ Route::group(
     function () {
         Route::apiResource('domains', API\V4\DomainsController::class);
         Route::get('domains/{id}/confirm', 'API\V4\DomainsController@confirm');
+        Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
 
         Route::apiResource('entitlements', API\V4\EntitlementsController::class);
         Route::apiResource('packages', API\V4\PackagesController::class);
         Route::apiResource('skus', API\V4\SkusController::class);
         Route::apiResource('users', API\V4\UsersController::class);
+        Route::get('users/{id}/status', 'API\V4\UsersController@status');
+
         Route::apiResource('wallets', API\V4\WalletsController::class);
 
         Route::post('payments', 'API\V4\PaymentsController@store');
