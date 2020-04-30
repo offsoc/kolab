@@ -4,6 +4,7 @@ import DomainListComponent from '../vue/Domain/List'
 import Error404Component from '../vue/404'
 import LoginComponent from '../vue/Login'
 import LogoutComponent from '../vue/Logout'
+import MeetComponent from '../vue/Meet'
 import PasswordResetComponent from '../vue/PasswordReset'
 import SignupComponent from '../vue/Signup'
 import UserInfoComponent from '../vue/User/Info'
@@ -44,6 +45,12 @@ const routes = [
         path: '/logout',
         name: 'logout',
         component: LogoutComponent
+    },
+    {
+        path: '/meet/:room',
+        name: 'meet',
+        component: MeetComponent,
+        meta: { requiresAuth: true }
     },
     {
         path: '/password-reset/:code?',
