@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenVidu Server
+
+[Service]
+Type=simple
+User=openvidu
+Group=openvidu
+ExecStart=java -jar /home/openvidu/openvidu-server.jar
+
+[Install]
+WantedBy=multi-user.target
