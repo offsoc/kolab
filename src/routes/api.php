@@ -62,6 +62,7 @@ Route::group(
         Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
 
         Route::apiResource('entitlements', API\V4\EntitlementsController::class);
+        Route::apiResource('meet/openvidu', API\V4\OpenViduController::class);
         Route::apiResource('packages', API\V4\PackagesController::class);
         Route::apiResource('skus', API\V4\SkusController::class);
         Route::apiResource('users', API\V4\UsersController::class);
@@ -86,6 +87,7 @@ Route::group(
     ],
     function () {
         Route::post('webhooks/payment/{provider}', 'API\V4\PaymentsController@webhook');
+        Route::post('webhooks/meet/openvidu', 'API\V4\OpenViduController@webhook');
     }
 );
 
