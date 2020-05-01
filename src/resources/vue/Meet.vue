@@ -54,8 +54,6 @@
                 }
             },
             loadOpenvidu() {
-                this.webComponent.setAttribute('openvidu-server-url', 'https://localhost:4443')
-
                 this.webComponent.addEventListener('sessionCreated', event => {
                     var session = event.detail
 
