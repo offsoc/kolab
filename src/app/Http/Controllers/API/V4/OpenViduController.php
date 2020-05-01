@@ -17,11 +17,12 @@ class OpenViduController extends Controller
     {
         $user = Auth::guard()->user();
 
-        $room = \App\OpenVidu\Room::where('session_id', $id);
+        $room = \App\OpenVidu\Room::where('session_id', $id)->first();
 
         // see if room exists, return session and token
         $client = new \GuzzleHttp\Client(
             [
+                'http_errors' => false, // No exceptions from Guzzle
                 'base_uri' => \config('openvidu.api_url'),
                 'verify' => \config('openvidu.api_verify_tls')
             ]
@@ -36,7 +37,7 @@ class OpenViduController extends Controller
         $sessionExists = $response->getStatusCode() == 200;
 
         if (!$sessionExists) {
-            if ($room->user_id == $user) {
+            if ($room->user_id == $user->id) {
                 $json = [
                     'mediaMode' => 'ROUTED',
                     'recordingMode' => 'MANUAL',
@@ -59,7 +60,7 @@ class OpenViduController extends Controller
                     ]
                 );
 
-                if ($response->getResponseCode() !== 200) {
+                if ($response->getStatusCode() !== 200) {
                     return response()->json(['status' => 'error'], 422);
                 }
 
