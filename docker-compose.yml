@@ -1,5 +1,26 @@
 version: '3'
 services:
+  coturn:
+    build:
+      context: ./docker/coturn/
+    container_name: kolab-coturn
+    environment:
+      - DB_NAME=${OPENVIDU_COTURN_REDIS_DB}
+      - REDIS_IP=${OPENVIDU_COTURN_REDIS_IP}
+      - TURN_PUBLIC_IP=${OPENVIDU_PUBLIC_IP}
+      - TURN_PUBLIC_POST=${OPENVIDU_PUBLIC_PORT}
+    hostname: sturn.mgmt.com
+    image: kolab-coturn
+    network_mode: host
+    restart: on-failure
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
   kolab:
     build:
       context: ./docker/kolab/
@@ -35,6 +56,10 @@ services:
     build:
       context: ./docker/kurento-media-server/
     container_name: kolab-kurento
+    environment:
+      - KMS_STUN_IP=${OPENVIDU_PUBLIC_IP}
+      - KMS_STUN_PORT=${OPENVIDU_PUBLIC_PORT}
+      - KMS_TURN_URL="${OPENVIDU_PUBLIC_IP}:${OPENVIDU_PUBLIC_PORT}?transport=udp"
     hostname: kurento.meet.hosted.com
     image: kolab-kurento
     network_mode: host
@@ -63,6 +88,17 @@ services:
     container_name: kolab-openvidu
     depends_on:
       - kurento
+    environment:
+      #- SERVER_SSL_ENABLED=false
+      #- SERVER_PORT=5080
+      - DOTENV_PATH
+      - COTURN_IP=${OPENVIDU_PUBLIC_IP}
+      - COTURN_REDIS_CONNECT_TIMEOUT=
+      - COTURN_REDIS_DBNAME=1
+      - COTURN_REDIS_IP=127.0.0.1
+      - COTURN_REDIS_PASSWORD=
+      - JAVA_OPTIONS=${OPENVIDU_JAVA_OPTIONS}
+      - KMS_URIS=[]
     hostname: meet.hosted.com
     image: kolab-openvidu
     network_mode: host

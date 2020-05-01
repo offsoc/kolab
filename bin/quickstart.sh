@@ -35,7 +35,7 @@ base_dir=$(dirname $(dirname $0))
 
 bin/regen-certs
 
-docker pull kolab/centos7:latest
+docker pull docker.io/kolab/centos7:latest
 
 docker-compose down
 docker-compose build
@@ -72,7 +72,7 @@ fi
 npm run dev
 popd
 
-docker-compose up -d worker openvidu kurento
+docker-compose up -d worker coturn openvidu kurento
 
 pushd ${base_dir}/src/
 rm -rf database/database.sqlite
