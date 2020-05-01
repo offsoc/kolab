@@ -11,11 +11,24 @@
             }
         },
         mounted() {
+            this.room = this.$route.params.room
+
+            if (!this.room) {
+                this.room = this.$store.state.authInfo.email.split('@')[0]
+            }
+
             this.webComponent = this.$el.querySelector('openvidu-webcomponent')
+
+            this.$root.startLoading()
+
             this.loadUI(() => {
                 this.loadOpenvidu()
                 this.joinSession()
+                this.$root.stopLoading()
             })
+        },
+        destroyed() {
+            this.webComponent.sessionConfig = {}
         },
         methods: {
             loadUI(callback) {
@@ -41,7 +54,8 @@
                 }
             },
             loadOpenvidu() {
-                this.webComponent.setAttribute('openvidu-server-url', 'todo')
+                this.webComponent.setAttribute('openvidu-server-url', 'https://localhost:4443')
+
                 this.webComponent.addEventListener('sessionCreated', event => {
                     var session = event.detail
 
@@ -67,11 +81,16 @@
                 })
             },
             joinSession() {
-                axios.get('/api/v4/meet/openvidu', {room: this.$route.params.room})
+                axios.get('/api/v4/meet/openvidu/' + this.room)
                     .then(response => {
                         // Response data contains: sessionName, user, tokens
-                        this.webComponent.sessionConfig = response.data
+                        this.webComponent.sessionConfig = {
+                            sessionName: response.data.session,
+                            user: this.$store.state.authInfo.email,
+                            tokens: [response.data.token]
+                        }
                     })
+                    .catch(this.$root.errorHandler)
             }
         }
     }

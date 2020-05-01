@@ -16,7 +16,7 @@
                 <svg-icon icon="wallet"></svg-icon><span class="name">Wallet</span>
                 <span v-if="balance < 0" class="badge badge-danger">{{ $root.price(balance) }}</span>
             </router-link>
-            <router-link class="card link-meet" v-if="$store.state.authInfo" :to="{ name: 'meet', params: { room: $store.state.authInfo.email} }">
+            <router-link class="card link-meet" :to="{ name: 'meet' }">
                 <svg-icon icon="comments"></svg-icon><span class="name">Video Chat</span>
             </router-link>
         </div>

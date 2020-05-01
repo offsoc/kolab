@@ -47,7 +47,7 @@ const routes = [
         component: LogoutComponent
     },
     {
-        path: '/meet/:room',
+        path: '/meet/:room?',
         name: 'meet',
         component: MeetComponent,
         meta: { requiresAuth: true }
