@@ -44,5 +44,6 @@ class CreateOpenviduTables extends Migration
     public function down()
     {
         Schema::dropIfExists('openvidu_rooms');
+        Schema::dropIfExists('openvidu_room_settings');
     }
 }

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             'PackageSeeder',
             'PlanSeeder',
             'UserSeeder'
+            'OpenViduRoomSeeder',
         ];
 
         $env = ucfirst(App::environment());

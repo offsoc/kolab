@@ -10,6 +10,103 @@ use Illuminate\Support\Facades\Validator;
 class OpenViduController extends Controller
 {
     /**
+     * Join or create the room. Each room as one owner, and the room isn't open until the owner
+     * joins (and effectively creates the session.
+     */
+    public function joinOrCreate($id)
+    {
+        $user = Auth::guard()->user();
+
+        $room = \App\OpenVidu\Room::where('session_id', $id);
+
+        // see if room exists, return session and token
+        $client = new \GuzzleHttp\Client(
+            [
+                'base_uri' => \config('openvidu.api_url'),
+                'verify' => \config('openvidu.api_verify_tls')
+            ]
+        );
+
+        $response = $client->request(
+            'GET',
+            "sessions/{$id}",
+            ['auth' => [\config('openvidu.api_username'), \config('openvidu.api_password')]]
+        );
+
+        $sessionExists = $response->getStatusCode() == 200;
+
+        if (!$sessionExists) {
+            if ($room->user_id == $user) {
+                $json = [
+                    'mediaMode' => 'ROUTED',
+                    'recordingMode' => 'MANUAL',
+                    'customSessionId' => $room->session_id
+                ];
+
+                $response = $client->request(
+                    'POST',
+                    'sessions',
+                    [
+                        'auth' => [
+                            \config('openvidu.api_username'),
+                            \config('openvidu.api_password')
+                        ],
+                        'json' => [
+                            'mediaMode' => 'ROUTED',
+                            'recordingMode' => 'MANUAL',
+                            'customSessionId' => $room->session_id
+                        ]
+                    ]
+                );
+
+                if ($response->getResponseCode() !== 200) {
+                    return response()->json(['status' => 'error'], 422);
+                }
+
+                $response = $client->request(
+                    'POST',
+                    'tokens',
+                    [
+                        'auth' => [
+                            \config('openvidu.api_username'),
+                            \config('openvidu.api_password')
+                        ],
+                        'json' => [
+                            'session' => $room->session_id,
+                            'role' => 'MODERATOR'
+                        ]
+                    ]
+                );
+
+                $json = json_decode($response->getBody(), true);
+
+                return response()->json($json, 200);
+            } else {
+                return response()->json(['status' => 'waiting'], 422);
+            }
+        }
+
+        $response = $client->request(
+            'POST',
+            'tokens',
+            [
+                'auth' => [
+                    \config('openvidu.api_username'),
+                    \config('openvidu.api_password')
+                ],
+                'json' => [
+                    'session' => $room->session_id,
+                    'role' => 'MODERATOR'
+                ]
+            ]
+        );
+
+        $json = json_decode($response->getBody(), true);
+
+        return response()->json($json, 200);
+    }
+
+    /**
      * Webhook as triggered from OpenVidu server
      *
      * @param \Illuminate\Http\Request $request The API request.
@@ -19,93 +116,5 @@ class OpenViduController extends Controller
     public function webhook(Request $request)
     {
         return response('Success', 200);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function create()
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy($id)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function edit($id)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int                      $id
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Request $request, $id)
-    {
-        // TODO
-        return $this->errorResponse(404);
     }
 }
