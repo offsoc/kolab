@@ -212,3 +212,20 @@ table {
         margin-bottom: 0;
     }
 }
+
+// Openvidu webcomponent improvements
+mat-sidenav-container {
+    z-index: 10 !important;
+}
+
+#dialogChooseRoom {
+    top: 0;
+    left: 0;
+    z-index: 10;
+    background: #fff;
+
+    & > .mat-card {
+        max-height: unset;
+        margin: 2em auto;
+    }
+}
