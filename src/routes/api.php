@@ -62,7 +62,7 @@ Route::group(
         Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
 
         Route::apiResource('entitlements', API\V4\EntitlementsController::class);
-        Route::apiResource('meet/openvidu', API\V4\OpenViduController::class);
+        Route::get('meet/openvidu/{:id}', 'API\V4\OpenViduController@joinOrCreate');
         Route::apiResource('packages', API\V4\PackagesController::class);
         Route::apiResource('skus', API\V4\SkusController::class);
         Route::apiResource('users', API\V4\UsersController::class);
