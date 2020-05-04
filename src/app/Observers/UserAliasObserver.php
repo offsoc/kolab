@@ -14,9 +14,9 @@ class UserAliasObserver
      *
      * @param \App\UserAlias $alias The user email alias
      *
-     * @return bool|null
+     * @return bool
      */
-    public function creating(UserAlias $alias)
+    public function creating(UserAlias $alias): bool
     {
         $alias->alias = \strtolower($alias->alias);
 
@@ -24,6 +24,8 @@ class UserAliasObserver
             \Log::error("Failed creating alias {$alias->alias}. User exists.");
             return false;
         }
+
+        return true;
     }
 
     /**

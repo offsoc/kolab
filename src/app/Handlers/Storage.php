@@ -7,12 +7,12 @@ class Storage extends \App\Handlers\Base
     public const MAX_ITEMS = 100;
     public const ITEM_UNIT = 'GB';
 
-    public static function entitleableClass()
+    public static function entitleableClass(): string
     {
         return \App\User::class;
     }
 
-    public static function preReq($entitlement, $object)
+    public static function preReq($entitlement, $object): bool
     {
         if (!$entitlement->sku->active) {
             \Log::error("Sku not active");

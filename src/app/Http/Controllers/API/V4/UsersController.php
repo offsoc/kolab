@@ -383,7 +383,7 @@ class UsersController extends Controller
                 if ($skus[$sku_id] < 0) {
                     $ent->delete();
                 }
-            } elseif ($all_skus[$sku_id]->handler_class != \App\Handlers\Mailbox::class) {
+            } elseif ($all_skus->get($sku_id)->handler_class != \App\Handlers\Mailbox::class) {
                 // An existing entitlement does not exists on the requested list
                 // Never delete 'mailbox' SKU
                 $ent->delete();
@@ -475,7 +475,7 @@ class UsersController extends Controller
      * @param \App\User|null           $user     User identifier
      * @param array                    $settings User settings (from the request)
      *
-     * @return \Illuminate\Http\JsonResponse The response on error
+     * @return \Illuminate\Http\JsonResponse|null The error response on error
      */
     protected function validateUserRequest(Request $request, $user, &$settings = [])
     {
@@ -555,6 +555,8 @@ class UsersController extends Controller
         // Update user settings
         $settings = $request->only(array_keys($rules));
         unset($settings['password'], $settings['aliases'], $settings['email']);
+
+        return null;
     }
 
     /**

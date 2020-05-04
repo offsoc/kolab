@@ -7,11 +7,11 @@ abstract class Base
     /**
      * The entitleable class for this handler.
      *
-     * @return mixed
+     * @return string
      */
-    public static function entitleableClass()
+    public static function entitleableClass(): string
     {
-        //
+        return '';
     }
 
     /**
@@ -22,9 +22,9 @@ abstract class Base
      *
      * @return bool
      */
-    public static function preReq($entitlement, $object)
+    public static function preReq($entitlement, $object): bool
     {
-        //
+        return true;
     }
 
     /**

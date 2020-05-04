@@ -8,7 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * The eloquent definition of a SignupCode.
  *
- * @property datetime $expires_at
+ * @property string         $code
+ * @property array          $data
+ * @property \Carbon\Carbon $expires_at
+ * @property string         $short_code
  */
 class SignupCode extends Model
 {
@@ -77,6 +80,7 @@ class SignupCode extends Model
      */
     public function isExpired()
     {
+        // @phpstan-ignore-next-line
         return $this->expires_at ? Carbon::now()->gte($this->expires_at) : false;
     }
 

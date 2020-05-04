@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * The eloquent definition of a VerificationCode
+ *
+ * @property string    $mode
+ * @property \App\User $user
  */
 class VerificationCode extends SignupCode
 {

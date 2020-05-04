@@ -17,7 +17,7 @@ class WalletsController extends Controller
      */
     public function index()
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**
@@ -27,7 +27,7 @@ class WalletsController extends Controller
      */
     public function create()
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**
@@ -39,7 +39,7 @@ class WalletsController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**
@@ -51,7 +51,7 @@ class WalletsController extends Controller
      */
     public function show($id)
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**
@@ -63,7 +63,7 @@ class WalletsController extends Controller
      */
     public function edit($id)
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**
@@ -76,7 +76,7 @@ class WalletsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**
@@ -88,6 +88,6 @@ class WalletsController extends Controller
      */
     public function destroy($id)
     {
-        //
+        return $this->errorResponse(404);
     }
 }

@@ -14,7 +14,7 @@ class DomainObserver
      *
      * @return void
      */
-    public function creating(Domain $domain)
+    public function creating(Domain $domain): void
     {
         while (true) {
             $allegedly_unique = \App\Utils::uuidInt();

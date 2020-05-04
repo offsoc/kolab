@@ -7,7 +7,13 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 /**
  * Link Packages to Plans.
  *
- * @property integer      $qty_min
+ * @property int          $discount_qty
+ * @property int          $discount_rate
+ * @property string       $plan_id
+ * @property string       $package_id
+ * @property int          $qty
+ * @property int          $qty_max
+ * @property int          $qty_min
  * @property \App\Package $package
  */
 class PlanPackage extends Pivot

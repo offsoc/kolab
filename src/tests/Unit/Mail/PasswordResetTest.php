@@ -22,6 +22,8 @@ class PasswordResetTest extends TestCase
                 'code' => 'code',
                 'short_code' => 'short-code',
         ]);
+
+        // @phpstan-ignore-next-line
         $code->user = new User([
                 'name' => 'User Name',
         ]);

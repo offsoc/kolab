@@ -38,9 +38,9 @@ class WalletObserver
      *
      * @param Wallet $wallet The wallet being deleted.
      *
-     * @return boolean|null
+     * @return bool
      */
-    public function deleting(Wallet $wallet)
+    public function deleting(Wallet $wallet): bool
     {
         // can't delete a wallet that has any balance on it (positive and negative).
         if ($wallet->balance != 0.00) {
@@ -66,5 +66,7 @@ class WalletObserver
             return false;
         }
 */
+
+        return true;
     }
 }

@@ -119,11 +119,8 @@ class SecondFactor extends Base
      */
     protected function verify($factor, $code): bool
     {
-        if ($driver = $this->getDriver($factor)) {
-            return $driver->verify($code, time());
-        }
-
-        return false;
+        $driver = $this->getDriver($factor);
+        return $driver->verify($code, time());
     }
 
     /**

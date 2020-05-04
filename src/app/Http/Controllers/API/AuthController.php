@@ -17,7 +17,7 @@ class AuthController extends Controller
      */
     public function info()
     {
-        $user = $this->guard()->user();
+        $user = Auth::guard()->user();
         $response = V4\UsersController::userResponse($user);
 
         return response()->json($response);
@@ -31,12 +31,13 @@ class AuthController extends Controller
      */
     public static function logonResponse(User $user)
     {
-        $token = auth()->login($user);
+        $token = Auth::guard()->login($user);
 
         return response()->json([
                 'status' => 'success',
                 'access_token' => $token,
                 'token_type' => 'bearer',
+                // @phpstan-ignore-next-line
                 'expires_in' => Auth::guard()->factory()->getTTL() * 60,
         ]);
     }
@@ -65,8 +66,8 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
 
-        if ($token = $this->guard()->attempt($credentials)) {
-            $sf = new \App\Auth\SecondFactor($this->guard()->user());
+        if ($token = Auth::guard()->attempt($credentials)) {
+            $sf = new \App\Auth\SecondFactor(Auth::guard()->user());
 
             if ($response = $sf->requestHandler($request)) {
                 return $response;
@@ -85,7 +86,7 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        $this->guard()->logout();
+        Auth::guard()->logout();
 
         return response()->json([
                 'status' => 'success',
@@ -100,7 +101,7 @@ class AuthController extends Controller
      */
     public function refresh()
     {
-        return $this->respondWithToken($this->guard()->refresh());
+        return $this->respondWithToken(Auth::guard()->refresh());
     }
 
     /**
@@ -116,18 +117,9 @@ class AuthController extends Controller
             [
                 'access_token' => $token,
                 'token_type' => 'bearer',
-                'expires_in' => $this->guard()->factory()->getTTL() * 60
+                // @phpstan-ignore-next-line
+                'expires_in' => Auth::guard()->factory()->getTTL() * 60
             ]
         );
-    }
-
-    /**
-     * Get the guard to be used during authentication.
-     *
-     * @return \Illuminate\Contracts\Auth\Guard
-     */
-    public function guard()
-    {
-        return Auth::guard();
     }
 }

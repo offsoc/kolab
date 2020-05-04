@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * A payment operation on a wallet.
  *
- * @property int    $amount      Amount of money in cents
- * @property string $description Payment description
- * @property string $id          Mollie's Payment ID
- * @property int    $wallet_id   The ID of the wallet
+ * @property int         $amount      Amount of money in cents
+ * @property string      $description Payment description
+ * @property string      $id          Mollie's Payment ID
+ * @property \App\Wallet $wallet      The wallet
+ * @property string      $wallet_id   The ID of the wallet
  */
 class Payment extends Model
 {

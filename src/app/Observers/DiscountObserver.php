@@ -16,7 +16,7 @@ class DiscountObserver
      *
      * @return void
      */
-    public function creating(Discount $discount)
+    public function creating(Discount $discount): void
     {
         while (true) {
             $allegedly_unique = \App\Utils::uuidStr();

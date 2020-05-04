@@ -39,7 +39,7 @@ class DomainsController extends Controller
      */
     public function create()
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**
@@ -81,7 +81,7 @@ class DomainsController extends Controller
      */
     public function destroy($id)
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**
@@ -89,11 +89,11 @@ class DomainsController extends Controller
      *
      * @param int $id
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function edit($id)
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**
@@ -101,11 +101,11 @@ class DomainsController extends Controller
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**
@@ -199,11 +199,11 @@ class DomainsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @param int                      $id
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, $id)
     {
-        //
+        return $this->errorResponse(404);
     }
 
     /**

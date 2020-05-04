@@ -2,9 +2,18 @@
 
 namespace App\Observers;
 
+use App\PackageSku;
+
 class PackageSkuObserver
 {
-    public function created(\App\PackageSku $packageSku)
+    /**
+     * Handle the "created" event on an PackageSku relation
+     *
+     * @param \App\PackageSku $packageSku The package-sku relation
+     *
+     * @return void
+     */
+    public function created(PackageSku $packageSku)
     {
         // TODO: free units...
         $package = $packageSku->package;

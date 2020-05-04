@@ -44,7 +44,7 @@ class WalletPayment implements ShouldQueue
      */
     public function handle()
     {
-        if (!$this->wallet->balance < 0) {
+        if ($this->wallet->balance < 0) {
             PaymentsController::directCharge($this->wallet, $this->wallet->balance * -1);
         }
     }

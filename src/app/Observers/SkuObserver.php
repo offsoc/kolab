@@ -9,7 +9,7 @@ class SkuObserver
     /**
      * Ensure the SKU ID is a custom ID (uuid).
      *
-     * @param Sku $sku
+     * @param Sku $sku The SKU object
      *
      * @return void
      */
@@ -22,10 +22,5 @@ class SkuObserver
                 break;
             }
         }
-    }
-
-    public function created(Sku $sku)
-    {
-        \Log::info(var_export(get_class_methods($sku->handler_class), true));
     }
 }

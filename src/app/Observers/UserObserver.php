@@ -81,6 +81,13 @@ class UserObserver
         \App\Jobs\UserCreate::withChain($chain)->dispatch($user);
     }
 
+    /**
+     * Handle the "deleted" event.
+     *
+     * @param \App\User $user The user deleted.
+     *
+     * @return void
+     */
     public function deleted(User $user)
     {
         //

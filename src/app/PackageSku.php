@@ -6,6 +6,13 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
  * Link SKUs to Packages.
+ *
+ * @property int          $cost
+ * @property string       $package_id
+ * @property \App\Package $package
+ * @property int          $qty
+ * @property \App\Sku     $sku
+ * @property string       $sku_id
  */
 class PackageSku extends Pivot
 {

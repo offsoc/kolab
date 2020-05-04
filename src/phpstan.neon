@@ -5,8 +5,9 @@ parameters:
         - tests/Browser
     inferPrivatePropertyTypeFromConstructor: true
     ignoreErrors:
-        - '#Call to an undefined method Illuminate\\Contracts\\Auth\\Guard::factory#'
-    level: 3
+        - '#Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable#'
+        - '#Access to an undefined property App\\Package::\$pivot#'
+    level: 4
     paths:
         - app/
         - tests/

@@ -20,9 +20,9 @@ class EntitlementObserver
      *
      * @param Entitlement $entitlement The entitlement being created.
      *
-     * @return bool|null
+     * @return bool
      */
-    public function creating(Entitlement $entitlement)
+    public function creating(Entitlement $entitlement): bool
     {
         while (true) {
             $allegedly_unique = \App\Utils::uuidStr();
@@ -52,8 +52,17 @@ class EntitlementObserver
         if (!$result) {
             return false;
         }
+
+        return true;
     }
 
+    /**
+     * Handle the entitlement "created" event.
+     *
+     * @param \App\Entitlement $entitlement The entitlement.
+     *
+     * @return void
+     */
     public function created(Entitlement $entitlement)
     {
         $entitlement->entitleable->updated_at = Carbon::now();

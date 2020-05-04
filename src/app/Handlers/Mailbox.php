@@ -4,12 +4,12 @@ namespace App\Handlers;
 
 class Mailbox extends \App\Handlers\Base
 {
-    public static function entitleableClass()
+    public static function entitleableClass(): string
     {
         return \App\User::class;
     }
 
-    public static function preReq($entitlement, $user)
+    public static function preReq($entitlement, $user): bool
     {
         if (!$entitlement->sku->active) {
             \Log::error("Sku not active");

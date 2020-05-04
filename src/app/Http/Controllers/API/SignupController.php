@@ -23,10 +23,10 @@ use Illuminate\Support\Str;
  */
 class SignupController extends Controller
 {
-    /** @var \App\SignupCode A verification code object */
+    /** @var ?\App\SignupCode A verification code object */
     protected $code;
 
-    /** @var \App\Plan Signup plan object */
+    /** @var ?\App\Plan Signup plan object */
     protected $plan;
 
 
