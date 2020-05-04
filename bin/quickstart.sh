@@ -40,8 +40,6 @@ docker pull docker.io/kolab/centos7:latest
 docker-compose down
 docker-compose build
 
-docker-compose up -d kolab mariadb redis
-
 pushd ${base_dir}/src/
 cp .env.example .env
 
@@ -50,6 +48,12 @@ if [ -f ".env.local" ]; then
     echo "" >> .env
     cat .env.local >> .env
 fi
+
+popd
+
+docker-compose up -d kolab mariadb openvidu proxy redis
+
+pushd ${base_dir}/src/
 
 rm -rf vendor/ composer.lock
 composer install
@@ -72,7 +76,7 @@ fi
 npm run dev
 popd
 
-docker-compose up -d worker coturn openvidu kurento
+docker-compose up -d worker
 
 pushd ${base_dir}/src/
 rm -rf database/database.sqlite
