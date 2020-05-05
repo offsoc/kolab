@@ -58,7 +58,8 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'password_ldap',
-        'status'
+        'status',
+        'tenant_id'
     ];
 
     /**
@@ -586,6 +587,16 @@ class User extends Authenticatable implements JWTSubject
 
         $this->status |= User::STATUS_SUSPENDED;
         $this->save();
+    }
+
+    /**
+     * The tenant for this user account.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function tenant()
+    {
+        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**
