@@ -14,7 +14,6 @@ class Tenant extends Model
 {
     protected $fillable = [
         'title',
-//        'currency'
     ];
 
     protected $keyType = 'bigint';
