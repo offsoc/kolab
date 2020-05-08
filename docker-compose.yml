@@ -66,6 +66,7 @@ services:
   openvidu:
     container_name: kolab-openvidu
     environment:
+      - APP_DOMAIN=${APP_DOMAIN}
       - COTURN_IP=${OPENVIDU_PUBLIC_IP}
       - COTURN_REDIS_DBNAME=2
       - COTURN_REDIS_IP=127.0.0.1
