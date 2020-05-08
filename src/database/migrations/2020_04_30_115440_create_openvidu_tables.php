@@ -19,8 +19,11 @@ class CreateOpenviduTables extends Migration
             function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('user_id');
-                $table->string('session_id', 16)->unique()->index();
+                $table->string('name', 16)->unique()->index();
+                $table->string('session_id', 16)->nullable();
                 $table->timestamps();
+
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             }
         );
 
@@ -28,10 +31,13 @@ class CreateOpenviduTables extends Migration
             'openvidu_room_settings',
             function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->bigInteger('room_id');
+                $table->bigInteger('room_id')->unsigned();
                 $table->string('key', 16);
                 $table->string('value');
                 $table->timestamps();
+
+                $table->foreign('room_id')->references('id')
+                    ->on('openvidu_rooms')->onDelete('cascade');
             }
         );
     }
@@ -43,7 +49,7 @@ class CreateOpenviduTables extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('openvidu_rooms');
         Schema::dropIfExists('openvidu_room_settings');
+        Schema::dropIfExists('openvidu_rooms');
     }
 }

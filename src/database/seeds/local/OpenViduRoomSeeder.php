@@ -5,6 +5,7 @@ namespace Database\Seeds\Local;
 use App\OpenVidu\Room;
 use Illuminate\Database\Seeder;
 
+// phpcs:ignore
 class OpenViduRoomSeeder extends Seeder
 {
     /**
@@ -18,7 +19,7 @@ class OpenViduRoomSeeder extends Seeder
         $room = \App\OpenVidu\Room::create(
             [
                 'user_id' => $user->id,
-                'session_id' => 'john'
+                'name' => 'john'
             ]
         );
     }
