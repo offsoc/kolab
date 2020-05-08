@@ -18,6 +18,11 @@ class Room extends Model
 
     private static $client = null;
 
+    public function owner()
+    {
+        return $this->belongsTo('\App\User', 'user_id', 'id');
+    }
+
     private function client()
     {
         if (!self::$client) {
