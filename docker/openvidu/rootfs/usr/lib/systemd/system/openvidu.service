@@ -5,7 +5,7 @@ Description=OpenVidu Server
 Type=simple
 User=openvidu
 Group=openvidu
-ExecStart=java -jar /home/openvidu/openvidu-server.jar
+ExecStart=java -Dserver.port=4443 -jar /home/openvidu/openvidu-server.jar
 
 [Install]
 WantedBy=multi-user.target

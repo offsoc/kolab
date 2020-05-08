@@ -1,13 +1,20 @@
 <template>
-    <div class="container" dusk="meet-component" v-html="html">
+    <div class="container" dusk="meet-component">
+        <div id="openvidu">
+            <div id="publisher"></div>
+            <div id="subscriber"></div>
+        </div>
     </div>
 </template>
 
 <script>
+    let OV
+    let session
+
     export default {
         data() {
             return {
-                html: '<openvidu-webcomponent theme="light"></openvidu-webcomponent>'
+                html: ''
             }
         },
         mounted() {
@@ -17,18 +24,16 @@
                 this.room = this.$store.state.authInfo.email.split('@')[0]
             }
 
-            this.webComponent = this.$el.querySelector('openvidu-webcomponent')
-
             this.$root.startLoading()
 
             this.loadUI(() => {
-                this.loadOpenvidu()
+//                this.loadOpenvidu()
                 this.joinSession()
                 this.$root.stopLoading()
             })
         },
         destroyed() {
-            this.webComponent.sessionConfig = {}
+
         },
         methods: {
             loadUI(callback) {
@@ -39,20 +44,16 @@
                     script.onload = callback
 
                     script.id = 'openvidu-script'
-                    script.src = '/js/openvidu-webcomponent-2.12.0.js'
-
-                    let link = document.createElement('link')
-                    link.rel = 'stylesheet'
-                    link.href = '/css/openvidu-webcomponent-2.12.0.css'
+                    script.src = '/js/openvidu-browser-2.13.0.js'
 
                     let head = document.getElementsByTagName('head')[0]
 
                     head.appendChild(script)
-                    head.appendChild(link)
                 } else {
                     callback()
                 }
             },
+/*
             loadOpenvidu() {
                 this.webComponent.addEventListener('sessionCreated', event => {
                     var session = event.detail
@@ -78,17 +79,46 @@
                     console.log('Error event', event)
                 })
             },
+*/
             joinSession() {
                 axios.get('/api/v4/meet/openvidu/' + this.room)
                     .then(response => {
                         // Response data contains: sessionName, user, tokens
-                        this.webComponent.sessionConfig = {
-                            sessionName: response.data.session,
-                            user: this.$store.state.authInfo.email,
-                            tokens: [response.data.token]
-                        }
+                        this.startSession(response.data)
                     })
                     .catch(this.$root.errorHandler)
+            },
+            startSession(data) {
+                OV = new OpenVidu()
+                OV.setAdvancedConfiguration(
+                    {
+                        iceServers: [
+                            {
+                                urls: "stun:kanarip.internet-box.ch:3478"
+                            },
+                            {
+                                urls: [ "turn:kanarip.internet-box.ch:3478?transport=tcp" ],
+                                username: "openvidu",
+                                credential: "openvidu"
+                            }
+                        ]
+                    }
+                )
+
+                session = OV.initSession()
+
+                session.on("streamCreated", function (event) {
+                    session.subscribe(event.stream, "subscriber")
+                })
+
+                session.connect(data.token)
+                    .then(() => {
+                        var publisher = OV.initPublisher("publisher");
+                        session.publish(publisher);
+                    })
+                    .catch(error => {
+                        console.log("There was an error connecting to the session:", error.code, error.message);
+                    })
             }
         }
     }

@@ -1,16 +1,16 @@
 version: '3'
 services:
   coturn:
-    build:
-      context: ./docker/coturn/
     container_name: kolab-coturn
     environment:
       - DB_NAME=${OPENVIDU_COTURN_REDIS_DB}
+      - DB_PASSWORD=turn
+      - MIN_PORT=57001
+      - MAX_PORT=65535
       - REDIS_IP=${OPENVIDU_COTURN_REDIS_IP}
-      - TURN_PUBLIC_IP=${OPENVIDU_PUBLIC_IP}
-      - TURN_PUBLIC_POST=${OPENVIDU_PUBLIC_PORT}
+      - TURN_LISTEN_PORT=3478
     hostname: sturn.mgmt.com
-    image: kolab-coturn
+    image: openvidu/openvidu-coturn:1.0.0
     network_mode: host
     restart: on-failure
     tmpfs:
@@ -19,8 +19,6 @@ services:
       - /var/run
       - /var/tmp
     tty: true
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
   kolab:
     build:
       context: ./docker/kolab/
@@ -44,6 +42,7 @@ services:
       - /var/tmp
     tty: true
     volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
       - ./docker/certs/ca.cert:/etc/pki/tls/certs/ca.cert:ro
       - ./docker/certs/ca.cert:/etc/pki/ca-trust/source/anchors/ca.cert:ro
       - ./docker/certs/kolab.hosted.com.cert:/etc/pki/tls/certs/kolab.hosted.com.cert
@@ -51,25 +50,7 @@ services:
       - ./docker/certs/kolab.mgmt.com.cert:/etc/pki/tls/certs/kolab.mgmt.com.cert
       - ./docker/certs/kolab.mgmt.com.key:/etc/pki/tls/certs/kolab.mgmt.com.key
       - ./docker/kolab/utils:/root/utils:ro
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-  kurento:
-    build:
-      context: ./docker/kurento-media-server/
-    container_name: kolab-kurento
-    environment:
-      - KMS_STUN_IP=${OPENVIDU_PUBLIC_IP}
-      - KMS_STUN_PORT=${OPENVIDU_PUBLIC_PORT}
-      - KMS_TURN_URL="${OPENVIDU_PUBLIC_IP}:${OPENVIDU_PUBLIC_PORT}?transport=udp"
-    hostname: kurento.meet.hosted.com
-    image: kolab-kurento
-    network_mode: host
-    tmpfs:
-      - /run
-      - /tmp
-      - /var/run
-      - /var/tmp
-    tty: true
-    volumes:
+      - ./src/.env:/.dockerenv:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
   mariadb:
     container_name: kolab-mariadb
@@ -83,24 +64,35 @@ services:
     image: mariadb
     network_mode: host
   openvidu:
-    build:
-      context: ./docker/openvidu/
     container_name: kolab-openvidu
-    depends_on:
-      - kurento
     environment:
-      #- SERVER_SSL_ENABLED=false
-      #- SERVER_PORT=5080
-      - DOTENV_PATH
       - COTURN_IP=${OPENVIDU_PUBLIC_IP}
-      - COTURN_REDIS_CONNECT_TIMEOUT=
-      - COTURN_REDIS_DBNAME=1
+      - COTURN_REDIS_DBNAME=2
       - COTURN_REDIS_IP=127.0.0.1
-      - COTURN_REDIS_PASSWORD=
-      - JAVA_OPTIONS=${OPENVIDU_JAVA_OPTIONS}
-      - KMS_URIS=[]
-    hostname: meet.hosted.com
-    image: kolab-openvidu
+      - HTTP_PORT=${OPENVIDU_SERVER_PORT}
+      - KMS_STUN_IP=${OPENVIDU_PUBLIC_IP}
+      - KMS_STUN_PORT=3478
+      - KMS_TURN_URL=openvidu:openvidu@${OPENVIDU_PUBLIC_IP}
+      - KMS_URIS=["ws://localhost:8888/kurento"]
+      - OPENVIDU_DOMAIN_OR_PUBLIC_IP=${OPENVIDU_PUBLIC_IP}
+      - OPENVIDU_SECRET=${OPENVIDU_API_PASSWORD}
+      - SERVER_PORT=${OPENVIDU_SERVER_PORT}
+      - SERVER_SSL_ENABLED=false
+    hostname: openvidu.hosted.com
+    image: openvidu/openvidu-server-kms:2.13.0
+    network_mode: host
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+  proxy:
+    build:
+      context: ./docker/proxy/
+    container_name: kolab-proxy
+    hostname: kanarip.internet-box.ch
+    image: kolab-proxy
     network_mode: host
     tmpfs:
       - /run
@@ -109,10 +101,8 @@ services:
       - /var/tmp
     tty: true
     volumes:
-      #- ./docker/certs/ca.cert:etc/pki/tls/certs/ca.cert:ro
-      #- ./docker/certs/ca.cert:/etc/pki/ca-trust/source/anchors/ca.cert:ro
-      #- ./docker/certs/meet.hosted.com.cert:/etc/pki/tls/certs/meet.hosted.com.cert
-      #- ./docker/certs/meet.hosted.com.key:/etc/pki/tls/certs/meet.hosted.com.key
+      - ./docker/certs/:/etc/certs/:ro
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
   redis:
     build:
