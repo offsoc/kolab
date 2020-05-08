@@ -17,7 +17,11 @@ class OpenViduController extends Controller
     {
         $user = Auth::guard()->user();
 
-        $room = \App\OpenVidu\Room::where('session_id', $id)->first();
+        $room = \App\OpenVidu\Room::where('name', $id)->first();
+
+        if (!$room) {
+            return response()->json(['status' => 'error'], 422);
+        }
 
         // see if room exists, return session and token
         $client = new \GuzzleHttp\Client(
@@ -54,8 +58,7 @@ class OpenViduController extends Controller
                         ],
                         'json' => [
                             'mediaMode' => 'ROUTED',
-                            'recordingMode' => 'MANUAL',
-                            'customSessionId' => $room->session_id
+                            'recordingMode' => 'MANUAL'
                         ]
                     ]
                 );
@@ -81,6 +84,14 @@ class OpenViduController extends Controller
 
                 $json = json_decode($response->getBody(), true);
 
+                //$json['token'] .= '&coturnIp=' . \config('openvidu.coturn_ip', 'kanarip.internet-box.ch');
+                //$json['token'] .= '&turnUsername=' . \config('openvidu.turn_username', 'openvidu');
+                //$json['token'] .= '&turnCredential=' . \config('openvidu.turn_credential', 'openvidu');
+
+                //$json['id'] = $json['token'];
+
+                \Log::debug("json: " . var_export($json, true));
+
                 return response()->json($json, 200);
             } else {
                 return response()->json(['status' => 'waiting'], 422);
@@ -97,12 +108,20 @@ class OpenViduController extends Controller
                 ],
                 'json' => [
                     'session' => $room->session_id,
-                    'role' => 'MODERATOR'
+                    'role' => 'PUBLISHER'
                 ]
             ]
         );
 
         $json = json_decode($response->getBody(), true);
+
+        //$json['token'] .= '&coturnIp=' . \config('openvidu.coturn_ip', 'kanarip.internet-box.ch');
+        //$json['token'] .= '&turnUsername=' . \config('openvidu.turn_username', 'openvidu');
+        //$json['token'] .= '&turnCredential=' . \config('openvidu.turn_credential', 'openvidu');
+
+        //$json['id'] = $json['token'];
+
+        \Log::debug("json: " . var_export($json, true));
 
         return response()->json($json, 200);
     }

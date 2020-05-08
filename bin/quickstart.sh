@@ -33,8 +33,6 @@ rpm -qv php-mysqlnd >/dev/null 2>&1 || \
 
 base_dir=$(dirname $(dirname $0))
 
-bin/regen-certs
-
 docker pull docker.io/kolab/centos7:latest
 
 docker-compose down
@@ -51,7 +49,9 @@ fi
 
 popd
 
-docker-compose up -d kolab mariadb openvidu proxy redis
+bin/regen-certs
+
+docker-compose up -d coturn kolab mariadb openvidu proxy redis
 
 pushd ${base_dir}/src/
 
