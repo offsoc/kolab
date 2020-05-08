@@ -13,11 +13,20 @@ class OpenViduRoomSeeder extends Seeder
      */
     public function run()
     {
-        $user = \App\User::where('email', 'john@kolab.org')->first();
-        $room = \App\OpenVidu\Room::create(
+        $john = \App\User::where('email', 'john@kolab.org')->first();
+        $jack = \App\User::where('email', 'jack@kolab.org')->first();
+
+        \App\OpenVidu\Room::create(
             [
-                'user_id' => $user->id,
+                'user_id' => $john->id,
                 'name' => 'john'
+            ]
+        );
+
+        \App\OpenVidu\Room::create(
+            [
+                'user_id' => $jack->id,
+                'name' => strtolower(\App\Utils::randStr(3, 3, '-'))
             ]
         );
     }

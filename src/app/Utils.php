@@ -12,6 +12,9 @@ use Ramsey\Uuid\Uuid;
  */
 class Utils
 {
+    // Note: Removed '0', 'O', '1', 'I' as problematic with some fonts
+    public const CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
     /**
      * Provide all unique combinations of elements in $input, with order and duplicates irrelevant.
      *
@@ -28,6 +31,43 @@ class Utils
         }
 
         return $output;
+    }
+
+    /**
+     * Returns a random string consisting of a quantity of segments of a certain length joined.
+     *
+     * Example:
+     *
+     * ```php
+     * $roomName = strtolower(\App\Utils::randStr(3, 3, '-');
+     * // $roomName == '3qb-7cs-cjj'
+     * ```
+     *
+     * @param int $length  The length of each segment
+     * @param int $qty     The quantity of segments
+     * @param string $join The string to use to join the segments
+     *
+     * @return string
+     */
+    public static function randStr($length, $qty = 1, $join = '')
+    {
+        $chars = env('SHORTCODE_CHARS', self::CHARS);
+
+        $randStrs = [];
+
+        for ($x = 0; $x < $qty; $x++) {
+            $randStrs[$x] = [];
+
+            for ($y = 0; $y < $length; $y++) {
+                $randStrs[$x][] = $chars[rand(0, strlen($chars) - 1)];
+            }
+
+            shuffle($randStrs[$x]);
+
+            $randStrs[$x] = implode('', $randStrs[$x]);
+        }
+
+        return implode($join, $randStrs);
     }
 
     /**
