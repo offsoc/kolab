@@ -27,6 +27,8 @@
                     .catch(this.$root.errorHandler)
             },
             startSession(data) {
+                this.meet = new Meet('#meet-room');
+/*
                 this.meet = new Meet('#meet-room', {
                     iceServers: [
                         {
@@ -39,7 +41,7 @@
                         }
                     ]
                 })
-
+*/
                 this.meet.joinRoom(data)
             }
         }
