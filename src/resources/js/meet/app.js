@@ -1,6 +1,5 @@
 import { OpenVidu } from 'openvidu-browser'
 
-//function Meet(container, config)
 function Meet(container)
 {
     let OV                     // OpenVidu object to initialize a session
@@ -15,6 +14,7 @@ function Meet(container)
 
     OV = new OpenVidu()
 
+    // if there's anything to do, do it here.
     //OV.setAdvancedConfiguration(config)
 
     // Disconnect participant on browser's window closed

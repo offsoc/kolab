@@ -28,20 +28,6 @@
             },
             startSession(data) {
                 this.meet = new Meet('#meet-room');
-/*
-                this.meet = new Meet('#meet-room', {
-                    iceServers: [
-                        {
-                            urls: "stun:kanarip.internet-box.ch:3478"
-                        },
-                        {
-                            urls: [ "turn:kanarip.internet-box.ch:3478?transport=tcp" ],
-                            username: "openvidu",
-                            credential: "openvidu"
-                        }
-                    ]
-                })
-*/
                 this.meet.joinRoom(data)
             }
         }
