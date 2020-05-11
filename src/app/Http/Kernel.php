@@ -19,7 +19,10 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\CheckForMaintenanceMode::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
-        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class
+        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        // FIXME: CORS handling added here, I didn't find a nice way
+        // to add this only the the API routes
+        \App\Http\Middleware\Cors::class,
     ];
 
     /**

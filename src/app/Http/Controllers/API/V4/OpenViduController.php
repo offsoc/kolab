@@ -21,7 +21,7 @@ class OpenViduController extends Controller
 
         // this isn't a room, bye bye
         if (!$room) {
-            return response()->json(['status' => 'error'], 422);
+            return response()->json(['status' => 'error'], 404);
         }
 
         // there's no existing session
