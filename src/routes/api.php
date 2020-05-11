@@ -62,7 +62,6 @@ Route::group(
         Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
 
         Route::apiResource('entitlements', API\V4\EntitlementsController::class);
-        Route::get('meet/openvidu/{id}', 'API\V4\OpenViduController@joinOrCreate');
         Route::apiResource('packages', API\V4\PackagesController::class);
         Route::apiResource('skus', API\V4\SkusController::class);
         Route::apiResource('users', API\V4\UsersController::class);
@@ -78,6 +77,17 @@ Route::group(
         Route::post('payments/mandate', 'API\V4\PaymentsController@mandateCreate');
         Route::put('payments/mandate', 'API\V4\PaymentsController@mandateUpdate');
         Route::delete('payments/mandate', 'API\V4\PaymentsController@mandateDelete');
+    }
+);
+
+Route::group(
+    [
+        'domain' => \config('app.domain'),
+        'middleware' => 'api',
+        'prefix' => 'v4'
+    ],
+    function () {
+        Route::get('meet/openvidu/{id}', 'API\V4\OpenViduController@joinOrCreate');
     }
 );
 

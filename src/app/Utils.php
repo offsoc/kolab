@@ -172,7 +172,7 @@ class Utils
      * Create a configuration/environment data to be passed to
      * the UI
      *
-     * @todo For a lack of better place this is put here for now
+     * @todo Move this to App\Http\Controllers\Controller
      *
      * @return array Configuration data
      */
@@ -182,10 +182,24 @@ class Utils
         $env = \app('config')->getMany($opts);
 
         $countries = include resource_path('countries.php');
-        $env['countries'] = $countries ?: [];
 
-        $isAdmin = strpos(request()->getHttpHost(), 'admin.') === 0;
-        $env['jsapp'] = $isAdmin ? 'admin.js' : 'user.js';
+        $env['countries'] = $countries ?: [];
+        $env['view'] = 'root';
+        $env['jsapp'] = 'user.js';
+
+        $req_domain = preg_replace('/:[0-9]+$/', '', request()->getHttpHost());
+        $sys_domain = \config('app.domain');
+
+        switch ($req_domain) {
+            case "meet.$sys_domain":
+                $env['view'] = 'meet';
+                $env['jsapp'] = 'meet.js';
+                break;
+
+            case "admin.$sys_domain":
+                $env['jsapp'] = 'admin.js';
+                break;
+        }
 
         $env['paymentProvider'] = \config('services.payment_provider');
         $env['stripePK'] = \config('services.stripe.public_key');
