@@ -5,6 +5,7 @@ services:
     environment:
       - DB_NAME=${OPENVIDU_COTURN_REDIS_DB}
       - DB_PASSWORD=turn
+      - DEBUG=true
       - MIN_PORT=57001
       - MAX_PORT=65535
       - REDIS_IP=${OPENVIDU_COTURN_REDIS_IP}
@@ -13,11 +14,6 @@ services:
     image: openvidu/openvidu-coturn:1.0.0
     network_mode: host
     restart: on-failure
-    tmpfs:
-      - /run
-      - /tmp
-      - /var/run
-      - /var/tmp
     tty: true
   kolab:
     build:
