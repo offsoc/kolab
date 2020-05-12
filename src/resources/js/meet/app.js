@@ -9,8 +9,19 @@ function Meet(container)
     let audioEnabled = true    // True if the audio track of publisher is active
     let videoEnabled = true    // True if the video track of publisher is active
     let numOfVideos = 0        // Keeps track of the number of videos that are being shown
+    let audioSource = ''       // Currently selected microphone
+    let videoSource = ''       // Currently selected camera
 
-    $(container).append('<div id="session"><div id="videos"></div></div>')
+    let publisherDefaults = {
+        publishAudio: true,     // Whether to start publishing with your audio unmuted or not
+        publishVideo: true,     // Whether to start publishing with your video enabled or not
+        resolution: '640x480',  // The resolution of your video
+        frameRate: 30,          // The frame rate of your video
+        mirror: true            // Whether to mirror your local video or not
+    }
+
+    let cameras = []           // List of user video devices
+    let microphones = []       // List of user audio devices
 
     OV = new OpenVidu()
 
@@ -26,6 +37,110 @@ function Meet(container)
 
     // Public methods
     this.joinRoom = joinRoom
+    this.leaveRoom = leaveRoom
+    this.muteAudio = muteAudio
+    this.muteVideo = muteVideo
+    this.setup = setup
+    this.setupSetAudioDevice = setupSetAudioDevice
+    this.setupSetVideoDevice = setupSetVideoDevice
+
+
+    function setup(videoElement, success_callback, error_callback) {
+        publisher = OV.initPublisher(null, publisherDefaults)
+
+        publisher.once('accessDenied', error => {
+            error_callback(error)
+        })
+
+        publisher.once('accessAllowed', async () => {
+            let mediaStream = publisher.stream.getMediaStream()
+            let videoStream = mediaStream.getVideoTracks()[0]
+            let audioStream = mediaStream.getAudioTracks()[0]
+
+            audioEnabled = !!audioStream
+            videoEnabled = !!videoStream
+
+            publisher.addVideoElement(videoElement)
+
+            const devices = await OV.getDevices()
+
+            devices.forEach(device => {
+                // device's props: deviceId, kind, label
+                if (device.kind == 'videoinput') {
+                    cameras.push(device)
+                    if (videoStream && videoStream.label == device.label) {
+                        videoSource = device.deviceId
+                    }
+                } else if (device.kind == 'audioinput') {
+                    microphones.push(device)
+                    if (audioStream && audioStream.label == device.label) {
+                        audioSource = device.deviceId
+                    }
+                }
+            })
+
+            success_callback({
+                microphones,
+                cameras,
+                audioSource,
+                videoSource,
+                audioEnabled,
+                videoEnabled
+            })
+        })
+    }
+
+    async function setupSetAudioDevice(deviceId) {
+        if (!deviceId) {
+            publisher.publishAudio(false)
+            audioEnabled = false
+        } else if (deviceId == audioSource) {
+            publisher.publishAudio(true)
+            audioEnabled = true
+        } else {
+/*
+            let mediaStream = publisher.stream.getMediaStream()
+            let audioStream = mediaStream.getAudioTracks()[0]
+
+            audioStream.stop()
+
+            publisher = OV.initPublisher(null, properties);
+            publisher.addVideoElement(videoElement)
+*/
+
+            // FIXME: None of this is working
+
+            let properties = Object.assign({}, publisherDefaults, {
+                publishAudio: true,
+                publishVideo: videoEnabled,
+                audioSource: deviceId,
+                videoSource: videoSource
+            })
+
+            await OV.getUserMedia(properties)
+                .then(async (mediaStream) => {
+                    const track = mediaStream.getAudioTracks()[0]
+                    await publisher.replaceTrack(track)
+                    audioEnabled = true
+                })
+        }
+
+        return audioEnabled
+    }
+
+    function setupSetVideoDevice(deviceId) {
+        if (!deviceId) {
+            publisher.publishVideo(false)
+            videoEnabled = false
+        } else if (deviceId == videoSource) {
+            publisher.publishVideo(true)
+            videoEnabled = true
+        } else {
+            // TODO
+        }
+
+        return videoEnabled
+    }
 
     function joinRoom(data) {
         sessionId = data.session
@@ -35,8 +150,9 @@ function Meet(container)
 
         // On every new Stream received...
         session.on('streamCreated', function (event) {
-            // Subscribe to the Stream to receive it. HTML video will be appended to element with 'subscriber' id
-            var subscriber = session.subscribe(event.stream, 'videos');
+            // Subscribe to the Stream to receive it
+            let subscriber = session.subscribe(event.stream, addVideoWrapper(container));
+
             // When the new video is added to DOM, update the page layout to fit one more participant
             subscriber.on('videoElementCreated', (event) => {
                 numOfVideos++
@@ -51,34 +167,25 @@ function Meet(container)
             updateLayout()
         })
 
+        // TODO
+        let params = {
+            clientData: 'Test', // user nickname
+            avatar: undefined   // avatar image
+        }
+
         // Connect with the token
-        session.connect(data.token)
+        session.connect(data.token, params)
             .then(() => {
-                // Update the URL shown in the browser's navigation bar to show the session id
-                ///var path = (location.pathname.slice(-1) == "/" ? location.pathname : location.pathname + "/");
-                ///window.history.pushState("", "", path + '#' + sessionId);
-
-                // Auxiliary methods to show the session's view
-                //showSessionHideJoin()
-
-                // Get the camera stream with the desired properties
-                publisher = OV.initPublisher('videos', {
-                    audioSource: undefined, // The source of audio. If undefined default audio input
-                    videoSource: undefined, // The source of video. If undefined default video input
-                    publishAudio: true,     // Whether to start publishing with your audio unmuted or not
-                    publishVideo: true,     // Whether to start publishing with your video enabled or not
-                    resolution: '640x480',  // The resolution of your video
-                    frameRate: 30,          // The frame rate of your video
-                    insertMode: 'PREPEND',  // How the video is inserted in target element 'video-container'
-                    mirror: true            // Whether to mirror your local video or not
-                })
+                publisher.createVideoElement(addVideoWrapper(container), 'PREPEND')
 
                 // When our HTML video has been added to DOM...
                 publisher.on('videoElementCreated', (event) => {
+                    $(event.element).addClass('publisher')
+                        .prop('muted', true) // Mute local video to avoid feedback
+
                     // When your own video is added to DOM, update the page layout to fit it
                     numOfVideos++
                     updateLayout()
-                    $(event.element).prop('muted', true) // Mute local video to avoid feedback
                 })
 
                 // Publish the stream
@@ -91,86 +198,31 @@ function Meet(container)
 
     function leaveRoom() {
         // Leave the session by calling 'disconnect' method over the Session object
-        session.disconnect();
+        if (session) {
+            session.disconnect();
+        }
     }
 
     function muteAudio() {
         audioEnabled = !audioEnabled
         publisher.publishAudio(audioEnabled)
 
-        if (!audioEnabled) {
-            $('#mute-audio').removeClass('btn-primary')
-            $('#mute-audio').addClass('btn-default')
-        } else {
-            $('#mute-audio').addClass('btn-primary')
-            $('#mute-audio').removeClass('btn-default')
-        }
+        return audioEnabled
     }
 
     function muteVideo() {
         videoEnabled = !videoEnabled
         publisher.publishVideo(videoEnabled)
 
-        if (!videoEnabled) {
-            $('#mute-video').removeClass('btn-primary')
-            $('#mute-video').addClass('btn-default')
-        } else {
-            $('#mute-video').addClass('btn-primary')
-            $('#mute-video').removeClass('btn-default')
-        }
+        return videoEnabled
     }
 
-    // 'Session' page
-    function showSessionHideJoin() {
-        $('#nav-join').hide()
-        $('#nav-session').show()
-        $('#join').hide()
-        $('#session').show()
-        $('footer').hide()
-        $('#main-container').removeClass('container')
-    }
-
-    // 'Join' page
-    function showJoinHideSession() {
-        $('#nav-join').show()
-        $('#nav-session').hide()
-        $('#join').show()
-        $('#session').hide()
-        $('footer').show()
-        $('#main-container').addClass('container')
-    }
-
-    // Dynamic layout adjustemnt depending on number of videos
     function updateLayout() {
-        console.warn('There are now ' + numOfVideos + ' videos')
+        // update the "matrix" layout
+    }
 
-        var publisherDiv = $('#publisher')
-        var publisherVideo = $("#publisher video")
-        var subscriberVideos = $('#videos > video')
-
-        switch (numOfVideos) {
-            case 1:
-                publisherVideo.addClass('video1')
-                break
-            case 2:
-                publisherDiv.addClass('video2')
-                subscriberVideos.addClass('video2')
-                break
-            case 3:
-                publisherDiv.addClass('video3')
-                subscriberVideos.addClass('video3')
-                break
-            case 4:
-                publisherDiv.addClass('video4')
-                publisherVideo.addClass('video4')
-                subscriberVideos.addClass('video4')
-                break
-            default:
-                publisherDiv.addClass('videoMore')
-                publisherVideo.addClass('videoMore')
-                subscriberVideos.addClass('videoMore')
-                break
-        }
+    function addVideoWrapper(container) {
+        return $('<div class="meet-video">').appendTo(container).get(0)
     }
 }
 

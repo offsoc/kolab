@@ -11,7 +11,7 @@ import {
 import {
     faCheck,
     faCheckCircle,
-    faComments,
+//    faComments,
     faDownload,
     faGlobe,
     faExclamationCircle,
@@ -34,7 +34,7 @@ library.add(
     faCheck,
     faCheckCircle,
     faCheckSquare,
-    faComments,
+//    faComments,
     faCreditCard,
     faDownload,
     faExclamationCircle,

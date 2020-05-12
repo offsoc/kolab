@@ -1,0 +1,42 @@
+#meet-component {
+
+}
+
+#meet-session-toolbar {
+    display: flex;
+    justify-content: center;
+}
+
+#meet-session-menu {
+    button {
+        font-size: 1.3rem;
+        padding: 0.5rem 1rem;
+    }
+}
+
+#meet-session {
+    display: flex;
+    justify-content: center;
+}
+
+.meet-video {
+    position: relative;
+
+    video {
+        display: block;
+        width: 100%;
+    }
+}
+
+#meet-setup {
+}
+
+#setup-preview {
+    display: flex;
+
+    video {
+        width: 100%;
+        transform: rotateY(180deg);
+        background: black;
+    }
+}

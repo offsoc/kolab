@@ -69,3 +69,21 @@ window.axios.interceptors.request.use(
         return Promise.reject(error)
     }
 )
+
+// Register additional icons
+import { library } from '@fortawesome/fontawesome-svg-core'
+
+import {
+    faExpand,
+    faMicrophone,
+    faPowerOff,
+    faVideo
+} from '@fortawesome/free-solid-svg-icons'
+
+// Register only these icons we need
+library.add(
+    faExpand,
+    faMicrophone,
+    faPowerOff,
+    faVideo
+)
