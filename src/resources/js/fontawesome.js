@@ -10,7 +10,7 @@ import {
 import {
     faCheck,
     faCheckCircle,
-    faComments,
+//    faComments,
     faGlobe,
     faExclamationCircle,
     faInfoCircle,
@@ -32,7 +32,7 @@ library.add(
     faCheck,
     faCheckCircle,
     faCheckSquare,
-    faComments,
+//    faComments,
     faExclamationCircle,
     faGlobe,
     faInfoCircle,

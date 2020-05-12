@@ -4,6 +4,7 @@ import RoomComponent from '../vue/Meet/Room'
 const routes = [
     {
         path: '/',
+        name: 'dashboard',
         component: DashboardComponent
     },
     {
