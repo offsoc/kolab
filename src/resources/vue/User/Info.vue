@@ -59,7 +59,7 @@
                         <div v-if="user_id === 'new'" id="user-packages" class="form-group row">
                             <label class="col-sm-4 col-form-label">Package</label>
                             <div class="col-sm-8">
-                                <table class="table form-list">
+                                <table class="table table-sm form-list">
                                     <thead class="thead-light sr-only">
                                         <tr>
                                             <th scope="col"></th>
@@ -97,7 +97,7 @@
                         <div v-if="user_id !== 'new'" id="user-skus" class="form-group row">
                             <label class="col-sm-4 col-form-label">Subscriptions</label>
                             <div class="col-sm-8">
-                                <table class="table form-list">
+                                <table class="table table-sm form-list">
                                     <thead class="thead-light sr-only">
                                         <tr>
                                             <th scope="col"></th>

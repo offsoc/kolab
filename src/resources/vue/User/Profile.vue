@@ -36,7 +36,7 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="billing_address" class="col-sm-4 col-form-label">Address</label>
+                            <label for="billing_address" class="col-sm-4 col-form-label" rows="3">Address</label>
                             <div class="col-sm-8">
                                 <textarea class="form-control" id="billing_address" v-model="profile.billing_address"></textarea>
                             </div>

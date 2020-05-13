@@ -200,10 +200,11 @@ table {
 
 .plan-selector {
     .plan-ico {
-        font-size: 4em;
+        font-size: 3.8rem;
         color: #f1a539;
         border: 3px solid #f1a539;
-        width: 100px;
+        width: 6rem;
+        height: 6rem;
         margin-bottom: 1rem;
         border-radius: 50%;
     }
@@ -211,4 +212,9 @@ table {
     ul:last-child {
         margin-bottom: 0;
     }
+}
+
+// Bootstrap style fix
+.btn-link {
+    border: 0;
 }

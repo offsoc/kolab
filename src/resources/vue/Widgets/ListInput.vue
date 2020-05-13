@@ -3,7 +3,7 @@
         <div class="input-group">
             <input :id="id + '-input'" type="text" class="form-control main-input" @keydown="keyDown">
             <div class="input-group-append">
-                <a href="#" class="btn btn-outline-secondary" @click="addItem">
+                <a href="#" class="btn btn-outline-secondary" @click.prevent="addItem">
                     <svg-icon icon="plus"></svg-icon>
                     <span class="sr-only">Add</span>
                 </a>
@@ -12,7 +12,7 @@
         <div class="input-group" v-for="(item, index) in list" :key="index">
             <input type="text" class="form-control" :value="item">
             <div class="input-group-append">
-                <a href="#" class="btn btn-outline-secondary" @click="deleteItem(index)">
+                <a href="#" class="btn btn-outline-secondary" @click.prevent="deleteItem(index)">
                     <svg-icon icon="trash-alt"></svg-icon>
                     <span class="sr-only">Delete</span>
                 </a>
