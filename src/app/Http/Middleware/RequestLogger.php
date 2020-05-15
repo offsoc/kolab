@@ -13,13 +13,13 @@ class RequestLogger
 
     public function terminate($request, $response)
     {
-        if (\app('env') != 'production') {
+        if (\App::environment('local')) {
             $url = $request->fullUrl();
             $method = $request->getMethod();
+            $time = microtime(true) - LARAVEL_START;
+            $mem = round(memory_get_peak_usage() / 1024 / 1024, 1);
 
-            \Log::debug("C: $method $url -> " . var_export($request->bearerToken(), true));
-            // On error response this is so noisy that makes the log unusable
-            // \Log::debug("S: " . var_export($response->getContent(), true));
+            \Log::debug(sprintf("C: %s %s [%sM]: %.4f sec.", $method, $url, $mem, $time));
         }
     }
 }
