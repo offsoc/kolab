@@ -10,12 +10,14 @@
                     <div class="plan-description text-left mt-3" v-html="item.description"></div>
                 </div>
             </div>
-            <h3>FAQs</h3>
-            <ul>
-                <li><a href="https://kolabnow.com/tos">What are your terms of service?</a></li>
-                <li><a href="https://kb.kolabnow.com/faq/can-i-upgrade-an-individual-account-to-a-group-account">Can I upgrade an individual account to a group account?</a></li>
-                <li><a href="https://kb.kolabnow.com/faq/how-much-storage-comes-with-my-account">How much storage comes with my account?</a></li>
-            </ul>
+            <div class="faq">
+                <h5>FAQ</h5>
+                <ul class="pl-4">
+                    <li><a href="https://kolabnow.com/tos">What are your terms of service?</a></li>
+                    <li><a href="https://kb.kolabnow.com/faq/can-i-upgrade-an-individual-account-to-a-group-account">Can I upgrade an individual account to a group account?</a></li>
+                    <li><a href="https://kb.kolabnow.com/faq/how-much-storage-comes-with-my-account">How much storage comes with my account?</a></li>
+                </ul>
+            </div>
         </div>
 
         <div class="card d-none" id="step1">
