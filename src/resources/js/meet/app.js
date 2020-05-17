@@ -2,15 +2,20 @@ import { OpenVidu } from 'openvidu-browser'
 
 function Meet(container)
 {
-    let OV                     // OpenVidu object to initialize a session
-    let session                // Session object where the user will connect
-    let publisher              // Publisher object which the user will publish
-    let sessionId              // Unique identifier of the session
-    let audioEnabled = true    // True if the audio track of publisher is active
-    let videoEnabled = true    // True if the video track of publisher is active
-    let numOfVideos = 0        // Keeps track of the number of videos that are being shown
-    let audioSource = ''       // Currently selected microphone
-    let videoSource = ''       // Currently selected camera
+    let OV                      // OpenVidu object to initialize a session
+    let session                 // Session object where the user will connect
+    let publisher               // Publisher object which the user will publish
+    let sessionId               // Unique identifier of the session
+    let audioEnabled = true     // True if the audio track of publisher is active
+    let videoEnabled = true     // True if the video track of publisher is active
+    let numOfVideos = 0         // Keeps track of the number of videos that are being shown
+    let audioSource = ''        // Currently selected microphone
+    let videoSource = ''        // Currently selected camera
+    let sessionData
+
+    let screenOV                // OpenVidu object to initialize a screen sharing session
+    let screenSession           // Session object where the user will connect for screen sharing
+    let screenPublisher         // Publisher object which the user will publish the screen sharing
 
     let publisherDefaults = {
         publishAudio: true,     // Whether to start publishing with your audio unmuted or not
@@ -20,10 +25,11 @@ function Meet(container)
         mirror: true            // Whether to mirror your local video or not
     }
 
-    let cameras = []           // List of user video devices
-    let microphones = []       // List of user audio devices
+    let cameras = []            // List of user video devices
+    let microphones = []        // List of user audio devices
 
     OV = new OpenVidu()
+    screenOV = new OpenVidu()
 
     // if there's anything to do, do it here.
     //OV.setAdvancedConfiguration(config)
@@ -36,13 +42,15 @@ function Meet(container)
 */
 
     // Public methods
+    this.isScreenSharingSupported = isScreenSharingSupported
     this.joinRoom = joinRoom
     this.leaveRoom = leaveRoom
-    this.muteAudio = muteAudio
-    this.muteVideo = muteVideo
     this.setup = setup
     this.setupSetAudioDevice = setupSetAudioDevice
     this.setupSetVideoDevice = setupSetVideoDevice
+    this.switchAudio = switchAudio
+    this.switchScreen = switchScreen
+    this.switchVideo = switchVideo
 
 
     function setup(videoElement, success_callback, error_callback) {
@@ -142,7 +150,19 @@ function Meet(container)
         return videoEnabled
     }
 
+    /**
+     * Join the room session
+     *
+     * @param data Session metadata (session, token, shareToken)
+     */
     function joinRoom(data) {
+        // TODO
+        data.params = {
+            clientData: 'Test', // user nickname
+            avatar: undefined   // avatar image
+        }
+
+        sessionData = data
         sessionId = data.session
 
         // Init a session
@@ -167,14 +187,8 @@ function Meet(container)
             updateLayout()
         })
 
-        // TODO
-        let params = {
-            clientData: 'Test', // user nickname
-            avatar: undefined   // avatar image
-        }
-
         // Connect with the token
-        session.connect(data.token, params)
+        session.connect(data.token, data.params)
             .then(() => {
                 publisher.createVideoElement(addVideoWrapper(container), 'PREPEND')
 
@@ -192,29 +206,64 @@ function Meet(container)
                 session.publish(publisher)
             })
             .catch(error => {
-                console.log('There was an error connecting to the session:', error.code, error.message);
+                console.error('There was an error connecting to the session:', error.code, error.message);
             })
     }
 
+
+    /**
+     * Leave the room (disconnect)
+     */
     function leaveRoom() {
-        // Leave the session by calling 'disconnect' method over the Session object
         if (session) {
             session.disconnect();
         }
+
+        if (screenSession) {
+            screenSession.disconnect();
+        }
     }
 
-    function muteAudio() {
+    /**
+     * Mute/Unmute audio for current session publisher
+     */
+    function switchAudio() {
         audioEnabled = !audioEnabled
         publisher.publishAudio(audioEnabled)
 
         return audioEnabled
     }
 
-    function muteVideo() {
+    /**
+     * Mute/Unmute video for current session publisher
+     */
+    function switchVideo() {
         videoEnabled = !videoEnabled
         publisher.publishVideo(videoEnabled)
 
         return videoEnabled
+    }
+
+    /**
+     * Switch on/off screen sharing
+     */
+    function switchScreen(callback) {
+        if (screenPublisher) {
+            screenSession.unpublish(screenPublisher)
+            screenPublisher = null
+
+            if (callback) {
+                callback(false)
+            }
+
+            return
+        }
+
+        screenConnect(callback)
+    }
+
+    function isScreenSharingSupported() {
+        return !!OV.checkScreenSharingCapabilities();
     }
 
     function updateLayout() {
@@ -223,6 +272,64 @@ function Meet(container)
 
     function addVideoWrapper(container) {
         return $('<div class="meet-video">').appendTo(container).get(0)
+    }
+
+    /**
+     * Initialize screen sharing session/publisher
+     */
+    function screenConnect(callback) {
+        if (!sessionData.shareToken) {
+            return false
+        }
+
+        let gotSession = !!screenSession
+
+        // Init screen sharing session
+        if (!gotSession) {
+            screenSession = screenOV.initSession();
+        }
+
+        let successFunc = function() {
+            screenSession.publish(screenPublisher)
+            if (callback) {
+                callback(true)
+            }
+        }
+
+        let errorFunc = function() {
+            screenPublisher = null
+            if (callback) {
+                callback(false)
+            }
+        }
+
+        // Init the publisher
+        let params = {
+            videoSource: 'screen',
+            publishAudio: false
+        }
+
+        screenPublisher = screenOV.initPublisher(null, params)
+
+        screenPublisher.once('accessAllowed', (event) => {
+            if (gotSession) {
+                successFunc()
+            } else {
+                screenSession.connect(sessionData.shareToken, sessionData.params)
+                    .then(() => {
+                        successFunc()
+                    })
+                    .catch(error => {
+                        console.error('There was an error connecting to the session:', error.code, error.message);
+                        errorFunc()
+                    })
+            }
+        })
+
+        screenPublisher.once('accessDenied', () => {
+            console.info('ScreenShare: Access Denied')
+            errorFunc()
+        })
     }
 }
 

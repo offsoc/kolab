@@ -30,9 +30,15 @@ class OpenViduController extends Controller
             $room->createSession();
         }
 
-        $json = $room->getSessionToken('PUBLISHER');
+        $response = $room->getSessionToken('PUBLISHER');
 
-        return response()->json($json, 200);
+        if (!empty(request()->input('screenShare'))) {
+            $add_token = $room->getSessionToken('PUBLISHER');
+
+            $response['shareToken'] = $add_token['token'];
+        }
+
+        return response()->json($response, 200);
     }
 
     /**

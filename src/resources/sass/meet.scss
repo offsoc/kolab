@@ -1,5 +1,9 @@
 #meet-component {
+    flex-grow: 1;
 
+    & + .filler {
+        display: none;
+    }
 }
 
 #meet-session-toolbar {
@@ -17,14 +21,20 @@
 #meet-session {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .meet-video {
     position: relative;
+    max-hwight: 480px;
+    max-width: 640px;
+    // Note: To make object-fit:cover working we have to set
+    //       height in px on the wrapper element
 
     video {
-        display: block;
+        object-fit: cover;
         width: 100%;
+        height: 100%;
     }
 }
 
