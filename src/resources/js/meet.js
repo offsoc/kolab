@@ -74,6 +74,7 @@ window.axios.interceptors.request.use(
 import { library } from '@fortawesome/fontawesome-svg-core'
 
 import {
+    faDesktop,
     faExpand,
     faMicrophone,
     faPowerOff,
@@ -82,6 +83,7 @@ import {
 
 // Register only these icons we need
 library.add(
+    faDesktop,
     faExpand,
     faMicrophone,
     faPowerOff,
