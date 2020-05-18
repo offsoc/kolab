@@ -17,8 +17,6 @@
             </div>
         </div>
 
-        <div id="meet-session"></div>
-
         <div id="meet-setup" class="card container mt-5 mb-5">
             <div class="card-body">
                 <div class="card-title">Set up your session</div>
@@ -54,6 +52,8 @@
                 </div>
             </div>
         </div>
+
+        <div id="meet-session"></div>
     </div>
 </template>
 
@@ -96,8 +96,9 @@
 
                 axios.get('/api/v4/meet/openvidu/' + this.room + addUrl)
                     .then(response => {
-                        // Response data contains: token and shareToken
+                        // Response data contains: session, token and shareToken
                         this.meet.joinRoom(response.data)
+                        $('#app').addClass('meet')
                     })
                     .catch(this.$root.errorHandler)
             },
