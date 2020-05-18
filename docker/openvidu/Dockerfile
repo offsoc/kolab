@@ -38,10 +38,10 @@ RUN dnf -y install \
         wget && \
     dnf clean all
 
-RUN git clone https://github.com/OpenVidu/openvidu.git /openvidu.git && \
+RUN git clone --branch v2.14.0 https://github.com/OpenVidu/openvidu.git /openvidu.git && \
     cd /openvidu.git/ && \
     mvn clean install -DskipTests && \
-    cp /openvidu.git/openvidu-server/target/openvidu-server-2.13.0.jar /root/ && \
+    cp /openvidu.git/openvidu-server/target/openvidu-server-2.14.0.jar /root/ && \
     cd /root/ && \
     rm -rf /openvidu.git/ /root/.m2/
 
