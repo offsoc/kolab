@@ -11,7 +11,7 @@ function Meet(container)
     let numOfVideos = 0         // Keeps track of the number of videos that are being shown
     let audioSource = ''        // Currently selected microphone
     let videoSource = ''        // Currently selected camera
-    let sessionData
+    let sessionData             // Room session metadata
 
     let screenOV                // OpenVidu object to initialize a screen sharing session
     let screenSession           // Session object where the user will connect for screen sharing
@@ -28,6 +28,9 @@ function Meet(container)
     let cameras = []            // List of user video devices
     let microphones = []        // List of user audio devices
 
+    let containerWidth
+    let containerHeight
+
     OV = new OpenVidu()
     screenOV = new OpenVidu()
 
@@ -35,11 +38,11 @@ function Meet(container)
     //OV.setAdvancedConfiguration(config)
 
     // Disconnect participant on browser's window closed
-/*
     window.addEventListener('beforeunload', () => {
-        if (session) session.disconnect();
+        leaveRoom()
     })
-*/
+
+    window.addEventListener('resize', resize)
 
     // Public methods
     this.isScreenSharingSupported = isScreenSharingSupported
@@ -156,6 +159,8 @@ function Meet(container)
      * @param data Session metadata (session, token, shareToken)
      */
     function joinRoom(data) {
+        resize();
+
         // TODO
         data.params = {
             clientData: 'Test', // user nickname
@@ -173,34 +178,41 @@ function Meet(container)
             // Subscribe to the Stream to receive it
             let subscriber = session.subscribe(event.stream, addVideoWrapper(container));
 
-            // When the new video is added to DOM, update the page layout to fit one more participant
+            // When the new video is added to DOM, update the page layout
             subscriber.on('videoElementCreated', (event) => {
                 numOfVideos++
                 updateLayout()
             })
-        })
 
+            // When a video is removed from DOM, update the page layout
+            subscriber.on('videoElementDestroyed', (event) => {
+                numOfVideos--
+                updateLayout()
+            })
+        })
+/*
         // On every new Stream destroyed...
         session.on('streamDestroyed', (event) => {
             // Update the page layout
             numOfVideos--
             updateLayout()
         })
-
+*/
         // Connect with the token
         session.connect(data.token, data.params)
             .then(() => {
-                publisher.createVideoElement(addVideoWrapper(container), 'PREPEND')
-
                 // When our HTML video has been added to DOM...
+                let wrapper = addVideoWrapper(container, 'publisher')
+
                 publisher.on('videoElementCreated', (event) => {
-                    $(event.element).addClass('publisher')
-                        .prop('muted', true) // Mute local video to avoid feedback
+                    $(event.element).prop('muted', true) // Mute local video to avoid feedback
 
                     // When your own video is added to DOM, update the page layout to fit it
                     numOfVideos++
                     updateLayout()
                 })
+
+                publisher.createVideoElement(wrapper, 'PREPEND')
 
                 // Publish the stream
                 session.publish(publisher)
@@ -266,12 +278,72 @@ function Meet(container)
         return !!OV.checkScreenSharingCapabilities();
     }
 
-    function updateLayout() {
-        // update the "matrix" layout
+    function addVideoWrapper(container, className) {
+        return $('<div class="meet-video">').addClass(className || '')
+            .appendTo(container).get(0)
     }
 
-    function addVideoWrapper(container) {
-        return $('<div class="meet-video">').appendTo(container).get(0)
+    /**
+     * Window onresize event handler (updates room layout)
+     */
+    function resize() {
+        containerWidth = container.offsetWidth
+        containerHeight = container.offsetHeight
+        updateLayout()
+    }
+
+    /**
+     * Update the room "matrix" layout
+     */
+    function updateLayout() {
+        if (!numOfVideos) {
+            return
+        }
+
+        let css, rows, cols, height
+
+        if (numOfVideos == 1) {
+            cols = 1
+        } else if (numOfVideos <= 4) {
+            cols = 2
+        } else if (numOfVideos <= 9) {
+            cols = 3
+        } else if (numOfVideos <= 16) {
+            cols = 4
+        } else if (numOfVideos <= 25) {
+            cols = 5
+        } else {
+            cols = 6
+        }
+
+        rows = Math.ceil(numOfVideos / cols)
+
+        if (rows < cols && containerWidth < containerHeight) {
+            cols = rows
+            rows = Math.ceil(numOfVideos / cols)
+        }
+
+        height = containerHeight / rows
+        css = {
+            width: (100 / cols) + '%',
+            // Height must be in pixels to make object-fit:cover working
+            height: height + 'px'
+        }
+
+        // Update the matrix
+        $(container).find('.meet-video').css(css)
+            .each((idx, elem) => {
+                let video = $(elem).children('video')[0]
+                if (!video) {
+                    // Remove orphaned video wrappers (after video has been removed)
+                    $(elem).remove()
+                } else if (video.videoWidth && video.videoHeight && video.videoWidth > video.videoHeight) {
+                    // Set max-width to keep the original aspect ratio in cases
+                    // when there's enough room to display the element
+                    let maxWidth = height * video.videoWidth / video.videoHeight
+                    $(elem).css('max-width', maxWidth)
+                }
+            })
     }
 
     /**

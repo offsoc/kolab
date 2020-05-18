@@ -1,5 +1,15 @@
+#app.meet {
+    height: 100%;
+
+    #meet-component {
+        overflow: hidden;
+    }
+}
+
 #meet-component {
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 
     & + .filler {
         display: none;
@@ -22,16 +32,16 @@
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
+    flex: 1;
+
+    overflow: hidden;
 }
 
 .meet-video {
     position: relative;
-    max-hwight: 480px;
-    max-width: 640px;
-    // Note: To make object-fit:cover working we have to set
-    //       height in px on the wrapper element
-
     video {
+        // To make object-fit:cover working we have to set the height in pixels
+        // on the wrapper element. This is what javascript method will do.
         object-fit: cover;
         width: 100%;
         height: 100%;
