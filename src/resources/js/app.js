@@ -10,6 +10,8 @@ import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Widgets/Menu'
 import store from './store'
 
+const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'
+
 const app = new Vue({
     el: '#app',
     components: {
@@ -67,13 +69,20 @@ const app = new Vue({
             delete axios.defaults.headers.common.Authorization
             this.$router.push({ name: 'login' })
         },
-        // Display "loading" overlay (to be used by route components)
+        // Display "loading" overlay inside of the specified element
+        addLoader(elem) {
+            $(elem).css({position: 'relative'}).append($(loader).addClass('small'))
+        },
+        // Remove loader element added in addLoader()
+        removeLoader(elem) {
+            $(elem).find('.app-loader').remove()
+        },
         startLoading() {
             this.isLoading = true
             // Lock the UI with the 'loading...' element
             let loading = $('#app > .app-loader').show()
             if (!loading.length) {
-                $('#app').append($('<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'))
+                $('#app').append($(loader))
             }
         },
         // Hide "loading" overlay
@@ -193,6 +202,21 @@ const app = new Vue({
     }
 })
 
+// Add a axios request interceptor
+window.axios.interceptors.request.use(
+    config => {
+        // This is the only way I found to change configuration options
+        // on a running application. We need this for browser testing.
+        config.headers['X-Test-Payment-Provider'] = window.config.paymentProvider
+
+        return config
+    },
+    error => {
+        // Do something with request error
+        return Promise.reject(error)
+    }
+)
+
 // Add a axios response interceptor for general/validation error handler
 window.axios.interceptors.response.use(
     response => {
@@ -212,7 +236,7 @@ window.axios.interceptors.response.use(
                 form = $(form)
 
                 $.each(error.response.data.errors || {}, (idx, msg) => {
-                    const input_name = (form.data('validation-prefix') || '') + idx
+                    const input_name = (form.data('validation-prefix') || form.find('form').first().data('validation-prefix') || '') + idx
                     let input = form.find('#' + input_name)
 
                     if (!input.length) {

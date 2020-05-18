@@ -39,7 +39,8 @@ class Wallet extends Page
     {
         return [
             '@app' => '#app',
-            '@main' => '#wallet'
+            '@main' => '#wallet',
+            '@payment-dialog' => '#payment-dialog',
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App;
 
 use App\User;
+use App\Traits\SettingsTrait;
 use Carbon\Carbon;
 use Iatstuti\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 class Wallet extends Model
 {
     use NullableFields;
+    use SettingsTrait;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -207,5 +209,15 @@ class Wallet extends Model
     public function payments()
     {
         return $this->hasMany('App\Payment');
+    }
+
+    /**
+     * Any (additional) properties of this wallet.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function settings()
+    {
+        return $this->hasMany('App\WalletSetting');
     }
 }

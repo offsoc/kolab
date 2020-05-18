@@ -26,6 +26,6 @@ abstract class TestCase extends BaseTestCase
         // If we wanted to access both user and admin in one test
         // we can also just call post/get/whatever with full url
         \config(['app.url' => str_replace('//', '//admin.', \config('app.url'))]);
-        url()->forceRootUrl(config('app.url'));
+        url()->forceRootUrl(config('app.url')); // @phpstan-ignore-line
     }
 }

@@ -10,6 +10,9 @@ return [
     | The following language lines are used in the application.
     */
 
+    'mandate-delete-success' => 'The auto-payment has been removed.',
+    'mandate-update-success' => 'The auto-payment has been updated.',
+
     'planbutton' => 'Choose :plan',
 
     'process-user-new' => 'Registering a user...',

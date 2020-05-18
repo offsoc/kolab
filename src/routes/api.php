@@ -70,6 +70,10 @@ Route::group(
         Route::apiResource('wallets', API\V4\WalletsController::class);
 
         Route::post('payments', 'API\V4\PaymentsController@store');
+        Route::get('payments/mandate', 'API\V4\PaymentsController@mandate');
+        Route::post('payments/mandate', 'API\V4\PaymentsController@mandateCreate');
+        Route::put('payments/mandate', 'API\V4\PaymentsController@mandateUpdate');
+        Route::delete('payments/mandate', 'API\V4\PaymentsController@mandateDelete');
     }
 );
 
@@ -78,7 +82,7 @@ Route::group(
         'domain' => \config('app.domain'),
     ],
     function () {
-        Route::post('webhooks/payment/mollie', 'API\V4\PaymentsController@webhook');
+        Route::post('webhooks/payment/{provider}', 'API\V4\PaymentsController@webhook');
     }
 );
 

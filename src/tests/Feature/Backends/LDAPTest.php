@@ -108,7 +108,6 @@ class LDAPTest extends TestCase
         $expected['inetuserstatus'] = $user->status;
         $expected['mailquota'] = 2097152;
         $expected['nsroledn'] = null;
-        // TODO: country? dn
 
         $ldap_user = LDAP::getUser($user->email);
 

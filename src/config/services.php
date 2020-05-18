@@ -34,4 +34,16 @@ return [
         'secret' => env('SPARKPOST_SECRET'),
     ],
 
+    'payment_provider' => env('PAYMENT_PROVIDER', 'mollie'),
+
+    'mollie' => [
+        'key' => env('MOLLIE_KEY'),
+    ],
+
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'public_key' => env('STRIPE_PUBLIC_KEY'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
 ];

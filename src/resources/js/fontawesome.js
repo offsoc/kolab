@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 //import { } from '@fortawesome/free-brands-svg-icons'
 import {
     faCheckSquare,
+    faCreditCard,
     faSquare,
 } from '@fortawesome/free-regular-svg-icons'
 
@@ -31,6 +32,7 @@ library.add(
     faCheck,
     faCheckCircle,
     faCheckSquare,
+    faCreditCard,
     faExclamationCircle,
     faGlobe,
     faInfoCircle,

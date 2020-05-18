@@ -117,7 +117,6 @@ return [
     'url' => 'The :attribute format is invalid.',
     'uuid' => 'The :attribute must be a valid UUID.',
 
-
     '2fareq' => 'Second factor code is required.',
     '2fainvalid' => 'Second factor code is invalid.',
     'emailinvalid' => 'The specified email address is invalid.',
@@ -133,6 +132,7 @@ return [
     'noextemail' => 'This user has no external email address.',
     'entryinvalid' => 'The specified :attribute is invalid.',
     'entryexists' => 'The specified :attribute is not available.',
+    'minamount' => 'Minimum amount for a single payment is :amount.',
 
     /*
     |--------------------------------------------------------------------------

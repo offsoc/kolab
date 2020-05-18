@@ -4,8 +4,8 @@
             <div class="card-body">
                 <div class="card-title">{{ user.email }}</div>
                 <div class="card-text">
-                    <form>
-                        <div v-if="user.wallet.user_id != user.id" class="form-group row mb-0">
+                    <form class="read-only">
+                        <div v-if="user.wallet.user_id != user.id" class="form-group row">
                             <label for="manager" class="col-sm-4 col-form-label">Managed by</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="manager">
@@ -13,7 +13,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row mb-0">
+                        <div class="form-group row">
                             <label for="userid" class="col-sm-4 col-form-label">ID <span class="text-muted">(Created at)</span></label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="userid">
@@ -21,7 +21,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row mb-0">
+                        <div class="form-group row">
                             <label for="status" class="col-sm-4 col-form-label">Status</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="status">
@@ -29,31 +29,31 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row mb-0" v-if="user.first_name">
+                        <div class="form-group row" v-if="user.first_name">
                             <label for="first_name" class="col-sm-4 col-form-label">First name</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="first_name">{{ user.first_name }}</span>
                             </div>
                         </div>
-                        <div class="form-group row mb-0" v-if="user.last_name">
+                        <div class="form-group row" v-if="user.last_name">
                             <label for="last_name" class="col-sm-4 col-form-label">Last name</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="last_name">{{ user.last_name }}</span>
                             </div>
                         </div>
-                        <div class="form-group row mb-0" v-if="user.organization">
+                        <div class="form-group row" v-if="user.organization">
                             <label for="organization" class="col-sm-4 col-form-label">Organization</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="organization">{{ user.organization }}</span>
                             </div>
                         </div>
-                        <div class="form-group row mb-0" v-if="user.phone">
+                        <div class="form-group row" v-if="user.phone">
                             <label for="phone" class="col-sm-4 col-form-label">Phone</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="phone">{{ user.phone }}</span>
                             </div>
                         </div>
-                        <div class="form-group row mb-0">
+                        <div class="form-group row">
                             <label for="external_email" class="col-sm-4 col-form-label">External email</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="external_email">
@@ -62,13 +62,13 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row mb-0" v-if="user.billing_address">
+                        <div class="form-group row" v-if="user.billing_address">
                             <label for="billing_address" class="col-sm-4 col-form-label">Address</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" style="white-space:pre" id="billing_address">{{ user.billing_address }}</span>
                             </div>
                         </div>
-                        <div class="form-group row mb-0">
+                        <div class="form-group row">
                             <label for="country" class="col-sm-4 col-form-label">Country</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="country">{{ user.country }}</span>
@@ -108,16 +108,32 @@
         <div class="tab-content">
             <div class="tab-pane show active" id="user-finances" role="tabpanel" aria-labelledby="tab-finances">
                 <div class="card-body">
-                    <div class="card-title">Account balance <span :class="balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(balance) }}</strong></span></div>
+                    <div class="card-title">Account balance <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(wallet.balance) }}</strong></span></div>
                     <div class="card-text">
-                        <form>
-                            <div class="form-group row mb-0">
-                                <label class="col-sm-2 col-form-label">Discount:</label>
-                                <div class="col-sm-10">
+                        <form class="read-only">
+                            <div class="form-group row">
+                                <label class="col-sm-4 col-form-label">Discount</label>
+                                <div class="col-sm-8">
                                     <span class="form-control-plaintext" id="discount">
-                                        <span>{{ wallet_discount ? (wallet_discount + '% - ' + wallet_discount_description) : 'none' }}</span>
+                                        <span>{{ wallet.discount ? (wallet.discount + '% - ' + wallet.discount_description) : 'none' }}</span>
                                         <button type="button" class="btn btn-secondary btn-sm" @click="discountEdit">Edit</button>
                                     </span>
+                                </div>
+                            </div>
+                            <div class="form-group row" v-if="wallet.mandate && wallet.mandate.id">
+                                <label class="col-sm-4 col-form-label">Auto-payment</label>
+                                <div class="col-sm-8">
+                                    <span class="form-control-plaintext" id="autopayment">
+                                        Fill up by <b>{{ wallet.mandate.amount }} CHF</b>
+                                        when under <b>{{ wallet.mandate.balance }} CHF</b>
+                                        using {{ wallet.mandate.method }}.</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group row" v-if="wallet.providerLink">
+                                <label class="col-sm-4 col-form-label">{{ capitalize(wallet.provider) }} ID</label>
+                                <div class="col-sm-8">
+                                    <span class="form-control-plaintext" v-html="wallet.providerLink"></span>
                                 </div>
                             </div>
                         </form>
@@ -241,7 +257,7 @@
                     </div>
                     <div class="modal-body">
                         <p class="form-group">
-                            <select v-model="wallet_discount_id" class="custom-select">
+                            <select v-model="wallet.discount_id" class="custom-select">
                                 <option value="">- none -</option>
                                 <option v-for="item in discounts" :value="item.id" :key="item.id">{{ item.label }}</option>
                             </select>
@@ -294,14 +310,11 @@
         },
         data() {
             return {
-                balance: 0,
                 discount: 0,
                 discount_description: '',
                 discounts: [],
                 external_email: '',
-                wallet_discount: 0,
-                wallet_discount_description: '',
-                wallet_discount_id: '',
+                wallet: {},
                 domains: [],
                 skus: [],
                 users: [],
@@ -323,8 +336,9 @@
 
                     this.user = response.data
 
-                    let keys = ['first_name', 'last_name', 'external_email', 'billing_address', 'phone', 'organization']
-                    let country = this.user.settings.country
+                    const financesTab = '#user-finances'
+                    const keys = ['first_name', 'last_name', 'external_email', 'billing_address', 'phone', 'organization']
+                    const country = this.user.settings.country
 
                     if (country) {
                         this.user.country = window.config.countries[country][1]
@@ -336,13 +350,16 @@
                     this.discount_description = this.user.wallet.discount_description
 
                     // TODO: currencies, multi-wallets, accounts
-                    this.user.wallets.forEach(wallet => {
-                        this.balance += wallet.balance
-                    })
-
-                    this.wallet_discount = this.user.wallets[0].discount
-                    this.wallet_discount_id = this.user.wallets[0].discount_id || ''
-                    this.wallet_discount_description = this.user.wallets[0].discount_description
+                    // Get more info about the wallet (e.g. payment provider related)
+                    this.$root.addLoader(financesTab)
+                    axios.get('/api/v4/wallets/' + this.user.wallets[0].id)
+                        .then(response => {
+                            this.$root.removeLoader(financesTab)
+                            this.wallet = response.data
+                        })
+                        .catch(error => {
+                            this.$root.removeLoader(financesTab)
+                        })
 
                     // Create subscriptions list
                     axios.get('/api/v4/skus')
@@ -392,10 +409,15 @@
             })
         },
         methods: {
+            capitalize(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1)
+            },
             discountEdit() {
                 $('#discount-dialog')
                     .on('shown.bs.modal', e => {
                         $(e.target).find('select').focus()
+                        // Note: Vue v-model is strict, convert null to a string
+                        this.wallet.discount_id = this.wallet_discount_id || ''
                     })
                     .modal()
 
@@ -420,18 +442,16 @@
             submitDiscount() {
                 $('#discount-dialog').modal('hide')
 
-                axios.put('/api/v4/wallets/' + this.user.wallets[0].id, { discount: this.wallet_discount_id })
+                axios.put('/api/v4/wallets/' + this.user.wallets[0].id, { discount: this.wallet.discount_id })
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
-                            this.wallet_discount = response.data.discount
-                            this.wallet_discount_id = response.data.discount_id || ''
-                            this.wallet_discount_description = response.data.discount_description
+                            this.wallet = Object.assign({}, this.wallet, response.data)
 
                             // Update prices in Subscriptions tab
                             if (this.user.wallet.id == response.data.id) {
-                                this.discount = this.wallet_discount
-                                this.discount_description = this.wallet_discount_description
+                                this.discount = this.wallet.discount
+                                this.discount_description = this.wallet.discount_description
 
                                 this.skus.forEach(sku => {
                                     sku.price = this.$root.priceLabel(sku.cost, sku.units, this.discount)

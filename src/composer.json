@@ -27,6 +27,7 @@
         "silviolleite/laravelpwa": "^1.0",
         "spatie/laravel-translatable": "^4.2",
         "spomky-labs/otphp": "~4.0.0",
+        "stripe/stripe-php": "^7.29",
         "swooletw/laravel-swoole": "^2.6",
         "torann/currency": "^1.0",
         "torann/geoip": "^1.0",

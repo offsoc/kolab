@@ -426,7 +426,7 @@ class UsersController extends Controller
 
         $response = array_merge($response, self::userStatuses($user));
 
-        // Add discount info to wallet object output
+        // Add more info to the wallet object output
         $map_func = function ($wallet) use ($user) {
             $result = $wallet->toArray();
 
@@ -438,6 +438,9 @@ class UsersController extends Controller
             if ($wallet->user_id != $user->id) {
                 $result['user_email'] = $wallet->owner->email;
             }
+
+            $provider = \App\Providers\PaymentProvider::factory($wallet);
+            $result['provider'] = $provider->name();
 
             return $result;
         };

@@ -31,6 +31,7 @@ class AuthController extends Controller
      */
     public static function logonResponse(User $user)
     {
+        // @phpstan-ignore-next-line
         $token = Auth::guard()->login($user);
 
         return response()->json([
@@ -101,6 +102,7 @@ class AuthController extends Controller
      */
     public function refresh()
     {
+        // @phpstan-ignore-next-line
         return $this->respondWithToken(Auth::guard()->refresh());
     }
 

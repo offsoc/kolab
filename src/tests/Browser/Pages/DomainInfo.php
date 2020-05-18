@@ -25,8 +25,7 @@ class DomainInfo extends Page
      */
     public function assert($browser)
     {
-        $browser->waitUntilMissing('@app .app-loader')
-            ->assertPresent('@config,@verify');
+        $browser->waitUntilMissing('@app .app-loader');
     }
 
     /**

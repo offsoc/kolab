@@ -32,3 +32,13 @@
         margin-right: 0.5em;
     }
 }
+
+.form-control-plaintext .btn-sm {
+    margin-top: -0.25rem;
+}
+
+form.read-only {
+    .row {
+        margin-bottom: 0;
+    }
+}

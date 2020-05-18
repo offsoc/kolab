@@ -2,15 +2,155 @@
 
 namespace App\Http\Controllers\API\V4;
 
-use App\Payment;
-use App\Wallet;
 use App\Http\Controllers\Controller;
+use App\Providers\PaymentProvider;
+use App\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class PaymentsController extends Controller
 {
+    /**
+     * Get the auto-payment mandate info.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function mandate()
+    {
+        $user = Auth::guard()->user();
+
+        // TODO: Wallet selection
+        $wallet = $user->wallets->first();
+
+        $mandate = self::walletMandate($wallet);
+
+        return response()->json($mandate);
+    }
+
+    /**
+     * Create a new auto-payment mandate.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function mandateCreate(Request $request)
+    {
+        $current_user = Auth::guard()->user();
+
+        // TODO: Wallet selection
+        $wallet = $current_user->wallets->first();
+
+        $rules = [
+            'amount' => 'required|numeric',
+            'balance' => 'required|numeric|min:0',
+        ];
+
+        // Check required fields
+        $v = Validator::make($request->all(), $rules);
+
+        // TODO: allow comma as a decimal point?
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        $amount = (int) ($request->amount * 100);
+
+        // Validate the minimum value
+        if ($amount < PaymentProvider::MIN_AMOUNT) {
+            $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
+            $errors = ['amount' => \trans('validation.minamount', ['amount' => $min])];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        $wallet->setSetting('mandate_amount', $request->amount);
+        $wallet->setSetting('mandate_balance', $request->balance);
+
+        $request = [
+            'currency' => 'CHF',
+            'amount' => $amount,
+            'description' => \config('app.name') . ' Auto-Payment Setup',
+        ];
+
+        $provider = PaymentProvider::factory($wallet);
+
+        $result = $provider->createMandate($wallet, $request);
+
+        $result['status'] = 'success';
+
+        return response()->json($result);
+    }
+
+    /**
+     * Revoke the auto-payment mandate.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function mandateDelete()
+    {
+        $user = Auth::guard()->user();
+
+        // TODO: Wallet selection
+        $wallet = $user->wallets->first();
+
+        $provider = PaymentProvider::factory($wallet);
+
+        $provider->deleteMandate($wallet);
+
+        return response()->json([
+                'status' => 'success',
+                'message' => \trans('app.mandate-delete-success'),
+        ]);
+    }
+
+    /**
+     * Update a new auto-payment mandate.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function mandateUpdate(Request $request)
+    {
+        $current_user = Auth::guard()->user();
+
+        // TODO: Wallet selection
+        $wallet = $current_user->wallets->first();
+
+        $rules = [
+            'amount' => 'required|numeric',
+            'balance' => 'required|numeric|min:0',
+        ];
+
+        // Check required fields
+        $v = Validator::make($request->all(), $rules);
+
+        // TODO: allow comma as a decimal point?
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        $amount = (int) ($request->amount * 100);
+
+        // Validate the minimum value
+        if ($amount < PaymentProvider::MIN_AMOUNT) {
+            $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
+            $errors = ['amount' => \trans('validation.minamount', ['amount' => $min])];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        $wallet->setSetting('mandate_amount', $request->amount);
+        $wallet->setSetting('mandate_balance', $request->balance);
+
+        return response()->json([
+                'status' => 'success',
+                'message' => \trans('app.mandate-update-success'),
+        ]);
+    }
+
     /**
      * Create a new payment.
      *
@@ -23,114 +163,62 @@ class PaymentsController extends Controller
         $current_user = Auth::guard()->user();
 
         // TODO: Wallet selection
-        $wallet = $current_user->wallets()->first();
+        $wallet = $current_user->wallets->first();
+
+        $rules = [
+            'amount' => 'required|numeric',
+        ];
 
         // Check required fields
-        $v = Validator::make(
-            $request->all(),
-            [
-                'amount' => 'required|int|min:1',
-            ]
-        );
+        $v = Validator::make($request->all(), $rules);
+
+        // TODO: allow comma as a decimal point?
 
         if ($v->fails()) {
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        // Register the user in Mollie, if not yet done
-        // FIXME: Maybe Mollie ID should be bound to a wallet, but then
-        //        The same customer could technicly have multiple
-        //        Mollie IDs, then we'd need to use some "virtual" email
-        //        address (e.g. <wallet-id>@<user-domain>) instead of the user email address
-        $customer_id = $current_user->getSetting('mollie_id');
-        $seq_type = 'oneoff';
+        $amount = (int) ($request->amount * 100);
 
-        if (empty($customer_id)) {
-            $customer = mollie()->customers()->create([
-                    'name'  => $current_user->name(),
-                    'email' => $current_user->email,
-            ]);
-
-            $seq_type = 'first';
-            $customer_id = $customer->id;
-            $current_user->setSetting('mollie_id', $customer_id);
+        // Validate the minimum value
+        if ($amount < PaymentProvider::MIN_AMOUNT) {
+            $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
+            $errors = ['amount' => \trans('validation.minamount', ['amount' => $min])];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
-        $payment_request = [
-            'amount' => [
-                'currency' => 'CHF',
-                // a number with two decimals is required
-                'value' => sprintf('%.2f', $request->amount / 100),
-            ],
-            'customerId' => $customer_id,
-            'sequenceType' => $seq_type,            // 'first' / 'oneoff' / 'recurring'
-            'description' => 'Kolab Now Payment',   // required
-            'redirectUrl' => \url('/wallet'),       // required for non-recurring payments
-            'webhookUrl' => self::serviceUrl('/api/webhooks/payment/mollie'),
-            'locale' => 'en_US',
+        $request = [
+            'type' => PaymentProvider::TYPE_ONEOFF,
+            'currency' => 'CHF',
+            'amount' => $amount,
+            'description' => \config('app.name') . ' Payment',
         ];
 
-        // Create the payment in Mollie
-        $payment = mollie()->payments()->create($payment_request);
+        $provider = PaymentProvider::factory($wallet);
 
-        // Store the payment reference in database
-        self::storePayment($payment, $wallet->id, $request->amount);
+        $result = $provider->payment($wallet, $request);
 
-        return response()->json([
-                'status' => 'success',
-                'redirectUrl' => $payment->getCheckoutUrl(),
-        ]);
+        $result['status'] = 'success';
+
+        return response()->json($result);
     }
 
     /**
      * Update payment status (and balance).
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param string $provider Provider name
      *
      * @return \Illuminate\Http\Response The response
      */
-    public function webhook(Request $request)
+    public function webhook($provider)
     {
-        $db_payment = Payment::find($request->id);
+        $code = 200;
 
-        // Mollie recommends to return "200 OK" even if the payment does not exist
-        if (empty($db_payment)) {
-            return response('Success', 200);
+        if ($provider = PaymentProvider::factory($provider)) {
+            $code = $provider->webhook();
         }
 
-        // Get the payment details from Mollie
-        $payment = mollie()->payments()->get($request->id);
-
-        if (empty($payment)) {
-            return response('Success', 200);
-        }
-
-        if ($payment->isPaid()) {
-            if (!$payment->hasRefunds() && !$payment->hasChargebacks()) {
-                // The payment is paid and isn't refunded or charged back.
-                // Update the balance, if it wasn't already
-                if ($db_payment->status != 'paid') {
-                    $db_payment->wallet->credit($db_payment->amount);
-                }
-            } elseif ($payment->hasRefunds()) {
-                // The payment has been (partially) refunded.
-                // The status of the payment is still "paid"
-                // TODO: Update balance
-            } elseif ($payment->hasChargebacks()) {
-                // The payment has been (partially) charged back.
-                // The status of the payment is still "paid"
-                // TODO: Update balance
-            }
-        }
-
-        // This is a sanity check, just in case the payment provider api
-        // sent us open -> paid -> open -> paid. So, we lock the payment after it's paid.
-        if ($db_payment->status != 'paid') {
-            $db_payment->status = $payment->status;
-            $db_payment->save();
-        }
-
-        return response('Success', 200);
+        return response($code < 400 ? 'Success' : 'Server error', $code);
     }
 
     /**
@@ -143,78 +231,45 @@ class PaymentsController extends Controller
      */
     public static function directCharge(Wallet $wallet, $amount): bool
     {
-        $customer_id = $wallet->owner->getSetting('mollie_id');
-
-        if (empty($customer_id)) {
-            return false;
-        }
-
-        // Check if there's at least one valid mandate
-        $mandates = mollie()->mandates()->listFor($customer_id)->filter(function ($mandate) {
-            return $mandate->isValid();
-        });
-
-        if (empty($mandates)) {
-            return false;
-        }
-
-        $payment_request = [
-            'amount' => [
-                'currency' => 'CHF',
-                // a number with two decimals is required
-                'value' => sprintf('%.2f', $amount / 100),
-            ],
-            'customerId' => $customer_id,
-            'sequenceType' => 'recurring',
-            'description' => 'Kolab Now Recurring Payment',
-            'webhookUrl' => self::serviceUrl('/api/webhooks/payment/mollie'),
+        $request = [
+            'type' => PaymentProvider::TYPE_RECURRING,
+            'currency' => 'CHF',
+            'amount' => $amount,
+            'description' => \config('app.name') . ' Recurring Payment',
         ];
 
-        // Create the payment in Mollie
-        $payment = mollie()->payments()->create($payment_request);
+        $provider = PaymentProvider::factory($wallet);
 
-        // Store the payment reference in database
-        self::storePayment($payment, $wallet->id, $amount);
-
-        return true;
-    }
-
-    /**
-     * Create self URL
-     *
-     * @param string $route Route/Path
-     *
-     * @return string Full URL
-     */
-    protected static function serviceUrl(string $route): string
-    {
-        $url = \url($route);
-
-        $app_url = trim(\config('app.url'), '/');
-        $pub_url = trim(\config('app.public_url'), '/');
-
-        if ($pub_url != $app_url) {
-            $url = str_replace($app_url, $pub_url, $url);
+        if ($result = $provider->payment($wallet, $request)) {
+            return true;
         }
 
-        return $url;
+        return false;
     }
 
     /**
-     * Create a payment record in DB
+     * Returns auto-payment mandate info for the specified wallet
      *
-     * @param object $payment   Mollie payment
-     * @param string $wallet_id Wallet ID
-     * @param int    $amount    Amount of money in cents
+     * @param \App\Wallet $wallet A wallet object
+     *
+     * @return array A mandate metadata
      */
-    protected static function storePayment($payment, $wallet_id, $amount): void
+    public static function walletMandate(Wallet $wallet): array
     {
-        $db_payment = new Payment();
-        $db_payment->id = $payment->id;
-        $db_payment->description = $payment->description;
-        $db_payment->status = $payment->status;
-        $db_payment->amount = $amount;
-        $db_payment->wallet_id = $wallet_id;
-        $db_payment->save();
+        $provider = PaymentProvider::factory($wallet);
+
+        // Get the Mandate info
+        $mandate = (array) $provider->getMandate($wallet);
+
+        $mandate['amount'] = (int) (PaymentProvider::MIN_AMOUNT / 100);
+        $mandate['balance'] = 0;
+
+        foreach (['amount', 'balance'] as $key) {
+            if (($value = $wallet->getSetting("mandate_{$key}")) !== null) {
+                $mandate[$key] = $value;
+            }
+        }
+
+        return $mandate;
     }
 }

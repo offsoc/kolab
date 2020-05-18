@@ -33,6 +33,7 @@ class UsersTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
         $wallet->discount()->dissociate();
+        $wallet->settings()->whereIn('key', ['mollie_id', 'stripe_id'])->delete();
         $wallet->save();
         $user->status |= User::STATUS_IMAP_READY;
         $user->save();
@@ -53,6 +54,7 @@ class UsersTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
         $wallet->discount()->dissociate();
+        $wallet->settings()->whereIn('key', ['mollie_id', 'stripe_id'])->delete();
         $wallet->save();
         $user->status |= User::STATUS_IMAP_READY;
         $user->save();
@@ -316,16 +318,12 @@ class UsersTest extends TestCase
         $json = $response->json();
 
         $this->assertTrue($json['isImapReady']);
-        $this->assertFalse($json['isReady']);
+        $this->assertTrue($json['isReady']);
         $this->assertCount(7, $json['process']);
         $this->assertSame('user-imap-ready', $json['process'][2]['label']);
         $this->assertSame(true, $json['process'][2]['state']);
-        $this->assertSame('domain-confirmed', $json['process'][6]['label']);
-        $this->assertSame(false, $json['process'][6]['state']);
-        $this->assertSame('error', $json['status']);
-        $this->assertSame('Failed to verify an ownership of a domain.', $json['message']);
-
-        // TODO: Test completing all process steps
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('Setup process finished successfully.', $json['message']);
     }
 
     /**
@@ -728,6 +726,7 @@ class UsersTest extends TestCase
      */
     public function testUserResponse(): void
     {
+        $provider = \config('payment_provider') ?: 'mollie';
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
@@ -765,11 +764,15 @@ class UsersTest extends TestCase
         $this->assertSame($wallet->id, $result['wallet']['id']);
         $this->assertSame($wallet->id, $result['accounts'][0]['id']);
         $this->assertSame($ned_wallet->id, $result['wallets'][0]['id']);
+        $this->assertSame($provider, $result['wallet']['provider']);
+        $this->assertSame($provider, $result['wallets'][0]['provider']);
 
         // Test discount in a response
         $discount = Discount::where('code', 'TEST')->first();
         $wallet->discount()->associate($discount);
         $wallet->save();
+        $mod_provider = $provider == 'mollie' ? 'stripe' : 'mollie';
+        $wallet->setSetting($mod_provider . '_id', 123);
         $user->refresh();
 
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
@@ -778,9 +781,11 @@ class UsersTest extends TestCase
         $this->assertSame($discount->id, $result['wallet']['discount_id']);
         $this->assertSame($discount->discount, $result['wallet']['discount']);
         $this->assertSame($discount->description, $result['wallet']['discount_description']);
+        $this->assertSame($mod_provider, $result['wallet']['provider']);
         $this->assertSame($discount->id, $result['wallets'][0]['discount_id']);
         $this->assertSame($discount->discount, $result['wallets'][0]['discount']);
         $this->assertSame($discount->description, $result['wallets'][0]['discount_description']);
+        $this->assertSame($mod_provider, $result['wallets'][0]['provider']);
     }
 
     /**

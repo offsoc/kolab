@@ -25,6 +25,46 @@ class WalletsTest extends TestCase
     }
 
     /**
+     * Test fetching a wallet (GET /api/v4/wallets/:id)
+     *
+     * @group stripe
+     */
+    public function testShow(): void
+    {
+        \config(['services.payment_provider' => 'stripe']);
+
+        $user = $this->getTestUser('john@kolab.org');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $wallet = $user->wallets()->first();
+
+        // Make sure there's no stripe/mollie identifiers
+        $wallet->setSetting('stripe_id', null);
+        $wallet->setSetting('stripe_mandate_id', null);
+        $wallet->setSetting('mollie_id', null);
+        $wallet->setSetting('mollie_mandate_id', null);
+
+        // Non-admin user
+        $response = $this->actingAs($user)->get("api/v4/wallets/{$wallet->id}");
+        $response->assertStatus(403);
+
+        // Admin user
+        $response = $this->actingAs($admin)->get("api/v4/wallets/{$wallet->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame($wallet->id, $json['id']);
+        $this->assertSame('CHF', $json['currency']);
+        $this->assertSame(0, $json['balance']);
+        $this->assertSame(0, $json['discount']);
+        $this->assertTrue(empty($json['description']));
+        $this->assertTrue(empty($json['discount_description']));
+        $this->assertTrue(!empty($json['provider']));
+        $this->assertTrue(!empty($json['providerLink']));
+        $this->assertTrue(!empty($json['mandate']));
+    }
+
+    /**
      * Test updating a wallet (PUT /api/v4/wallets/:id)
      */
     public function testUpdate(): void

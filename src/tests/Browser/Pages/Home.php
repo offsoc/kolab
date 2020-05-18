@@ -51,17 +51,29 @@ class Home extends Page
      * @param string                $username User name
      * @param string                $password User password
      * @param bool                  $wait_for_dashboard
+     * @param array                 $config   Client-site config
      *
      * @return void
      */
-    public function submitLogon($browser, $username, $password, $wait_for_dashboard = false)
-    {
+    public function submitLogon(
+        $browser,
+        $username,
+        $password,
+        $wait_for_dashboard = false,
+        $config = []
+    ) {
         $browser->type('@email-input', $username)
             ->type('@password-input', $password);
 
         if ($username == 'ned@kolab.org') {
             $code = \App\Auth\SecondFactor::code('ned@kolab.org');
             $browser->type('@second-factor-input', $code);
+        }
+
+        if (!empty($config)) {
+            $browser->script(
+                sprintf('Object.assign(window.config, %s)', \json_encode($config))
+            );
         }
 
         $browser->press('form button');

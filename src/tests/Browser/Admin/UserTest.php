@@ -107,12 +107,16 @@ class UserTest extends TestCaseDusk
             // Assert Finances tab
             $browser->assertSeeIn('@nav #tab-finances', 'Finances')
                 ->with('@user-finances', function (Browser $browser) {
-                    $browser->assertSeeIn('.card-title', 'Account balance')
+                    $browser->waitUntilMissing('.app-loader')
+                        ->assertSeeIn('.card-title', 'Account balance')
                         ->assertSeeIn('.card-title .text-success', '0,00 CHF')
                         ->with('form', function (Browser $browser) {
-                            $browser->assertElementsCount('.row', 1)
+                            $payment_provider = ucfirst(\config('services.payment_provider'));
+                            $browser->assertElementsCount('.row', 2)
                                 ->assertSeeIn('.row:nth-child(1) label', 'Discount')
-                                ->assertSeeIn('.row:nth-child(1) #discount span', 'none');
+                                ->assertSeeIn('.row:nth-child(1) #discount span', 'none')
+                                ->assertSeeIn('.row:nth-child(2) label', $payment_provider . ' ID')
+                                ->assertVisible('.row:nth-child(2) a');
                         });
                 });
 
@@ -211,10 +215,11 @@ class UserTest extends TestCaseDusk
             // Assert Finances tab
             $browser->assertSeeIn('@nav #tab-finances', 'Finances')
                 ->with('@user-finances', function (Browser $browser) {
-                    $browser->assertSeeIn('.card-title', 'Account balance')
+                    $browser->waitUntilMissing('.app-loader')
+                        ->assertSeeIn('.card-title', 'Account balance')
                         ->assertSeeIn('.card-title .text-danger', '-20,10 CHF')
                         ->with('form', function (Browser $browser) {
-                            $browser->assertElementsCount('.row', 1)
+                            $browser->assertElementsCount('.row', 2)
                                 ->assertSeeIn('.row:nth-child(1) label', 'Discount')
                                 ->assertSeeIn('.row:nth-child(1) #discount span', '10% - Test voucher');
                         });
@@ -291,10 +296,11 @@ class UserTest extends TestCaseDusk
             // Assert Finances tab
             $browser->assertSeeIn('@nav #tab-finances', 'Finances')
                 ->with('@user-finances', function (Browser $browser) {
-                    $browser->assertSeeIn('.card-title', 'Account balance')
+                    $browser->waitUntilMissing('.app-loader')
+                        ->assertSeeIn('.card-title', 'Account balance')
                         ->assertSeeIn('.card-title .text-success', '0,00 CHF')
                         ->with('form', function (Browser $browser) {
-                            $browser->assertElementsCount('.row', 1)
+                            $browser->assertElementsCount('.row', 2)
                                 ->assertSeeIn('.row:nth-child(1) label', 'Discount')
                                 ->assertSeeIn('.row:nth-child(1) #discount span', 'none');
                         });
@@ -412,6 +418,7 @@ class UserTest extends TestCaseDusk
 
             $browser->visit(new UserPage($john->id))
                 ->pause(100)
+                ->waitUntilMissing('@user-finances .app-loader')
                 ->click('@user-finances #discount button')
                 // Test dialog content, and closing it with Cancel button
                 ->with(new Dialog('#discount-dialog'), function (Browser $browser) {

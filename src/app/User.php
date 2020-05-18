@@ -5,7 +5,7 @@ namespace App;
 use App\Entitlement;
 use App\UserAlias;
 use App\Traits\UserAliasesTrait;
-use App\Traits\UserSettingsTrait;
+use App\Traits\SettingsTrait;
 use App\Wallet;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -26,7 +26,7 @@ class User extends Authenticatable implements JWTSubject
     use Notifiable;
     use NullableFields;
     use UserAliasesTrait;
-    use UserSettingsTrait;
+    use SettingsTrait;
     use SoftDeletes;
 
     // a new user, default on creation

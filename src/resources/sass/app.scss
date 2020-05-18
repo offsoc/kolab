@@ -84,6 +84,12 @@ body > .outer-container {
         border-width: 15px;
         color: #b2aa99;
     }
+
+    &.small .spinner-border {
+        width: 25px;
+        height: 25px;
+        border-width: 3px;
+    }
 }
 
 pre {
@@ -212,6 +218,27 @@ table {
         &:last-child {
             margin-bottom: 0;
         }
+    }
+}
+
+.form-separator {
+    position: relative;
+    margin: 1em 0;
+    display: flex;
+    justify-content: center;
+
+    hr {
+        border-color: #999;
+        margin: 0;
+        position: absolute;
+        top: .75em;
+        width: 100%;
+    }
+
+    span {
+        background: #fff;
+        padding: 0 1em;
+        z-index: 1;
     }
 }
 

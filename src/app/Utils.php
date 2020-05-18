@@ -98,7 +98,31 @@ class Utils
         $isAdmin = strpos(request()->getHttpHost(), 'admin.') === 0;
         $env['jsapp'] = $isAdmin ? 'admin.js' : 'user.js';
 
+        $env['paymentProvider'] = \config('services.payment_provider');
+        $env['stripePK'] = \config('services.stripe.public_key');
+
         return $env;
+    }
+
+    /**
+     * Create self URL
+     *
+     * @param string $route Route/Path
+     *
+     * @return string Full URL
+     */
+    public static function serviceUrl(string $route): string
+    {
+        $url = \url($route);
+
+        $app_url = trim(\config('app.url'), '/');
+        $pub_url = trim(\config('app.public_url'), '/');
+
+        if ($pub_url != $app_url) {
+            $url = str_replace($app_url, $pub_url, $url);
+        }
+
+        return $url;
     }
 
     /**

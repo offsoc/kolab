@@ -43,4 +43,22 @@ class PaymentMollie extends Page
             '@status-table' => 'table.table--select-status',
         ];
     }
+
+    /**
+     * Submit payment form.
+     *
+     * @param \Laravel\Dusk\Browser $browser  The browser object
+     *
+     * @return void
+     */
+    public function submitValidCreditCard($browser)
+    {
+        if ($browser->element('@methods')) {
+            $browser->click('@methods button.grid-button-creditcard')
+                ->waitFor('button.form__button');
+        }
+
+        $browser->click('@status-table input[value="paid"]')
+            ->click('button.form__button');
+    }
 }

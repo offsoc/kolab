@@ -28,7 +28,7 @@ class Browser extends \Laravel\Dusk\Browser
             }
         }
 
-        Assert::assertEquals($expected_count, $count, "Count of [$selector] elements is not $count");
+        Assert::assertEquals($expected_count, $count, "Count of [$selector] elements is not $expected_count");
 
         return $this;
     }

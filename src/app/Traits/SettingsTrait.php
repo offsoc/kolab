@@ -2,10 +2,9 @@
 
 namespace App\Traits;
 
-use App\UserSetting;
 use Illuminate\Support\Facades\Cache;
 
-trait UserSettingsTrait
+trait SettingsTrait
 {
     /**
      * Obtain the value for a setting.
@@ -17,9 +16,9 @@ trait UserSettingsTrait
      * $locale = $user->getSetting('locale');
      * ```
      *
-     * @param string $key Lookup key
+     * @param string $key Setting name
      *
-     * @return string|null
+     * @return string|null Setting value
      */
     public function getSetting(string $key)
     {
@@ -32,6 +31,25 @@ trait UserSettingsTrait
         $value = $settings[$key];
 
         return empty($value) ? null : $value;
+    }
+
+    /**
+     * Remove a setting.
+     *
+     * Example Usage:
+     *
+     * ```php
+     * $user = User::firstOrCreate(['email' => 'some@other.erg']);
+     * $user->removeSetting('locale');
+     * ```
+     *
+     * @param string $key Setting name
+     *
+     * @return void
+     */
+    public function removeSetting(string $key): void
+    {
+        $this->setSetting($key, null);
     }
 
     /**
@@ -49,7 +67,7 @@ trait UserSettingsTrait
      *
      * @return void
      */
-    public function setSetting(string $key, $value)
+    public function setSetting(string $key, $value): void
     {
         $this->storeSetting($key, $value);
         $this->setCache();
@@ -69,7 +87,7 @@ trait UserSettingsTrait
      *
      * @return void
      */
-    public function setSettings(array $data = [])
+    public function setSettings(array $data = []): void
     {
         foreach ($data as $key => $value) {
             $this->storeSetting($key, $value);
@@ -81,12 +99,13 @@ trait UserSettingsTrait
     private function storeSetting(string $key, $value): void
     {
         if ($value === null || $value === '') {
-            if ($setting = UserSetting::where(['user_id' => $this->id, 'key' => $key])->first()) {
+            // Note: We're selecting the record first, so observers can act
+            if ($setting = $this->settings()->where('key', $key)->first()) {
                 $setting->delete();
             }
         } else {
-            UserSetting::updateOrCreate(
-                ['user_id' => $this->id, 'key' => $key],
+            $this->settings()->updateOrCreate(
+                ['key' => $key],
                 ['value' => $value]
             );
         }
@@ -94,8 +113,10 @@ trait UserSettingsTrait
 
     private function getCache()
     {
-        if (Cache::has('user_settings_' . $this->id)) {
-            return Cache::get('user_settings_' . $this->id);
+        $model = \strtolower(get_class($this));
+
+        if (Cache::has("{$model}_settings_{$this->id}")) {
+            return Cache::get("{$model}_settings_{$this->id}");
         }
 
         return $this->setCache();
@@ -103,8 +124,10 @@ trait UserSettingsTrait
 
     private function setCache()
     {
-        if (Cache::has('user_settings_' . $this->id)) {
-            Cache::forget('user_settings_' . $this->id);
+        $model = \strtolower(get_class($this));
+
+        if (Cache::has("{$model}_settings_{$this->id}")) {
+            Cache::forget("{$model}_settings_{$this->id}");
         }
 
         $cached = [];
@@ -114,7 +137,7 @@ trait UserSettingsTrait
             }
         }
 
-        Cache::forever('user_settings_' . $this->id, $cached);
+        Cache::forever("{$model}_settings_{$this->id}", $cached);
 
         return $this->getCache();
     }

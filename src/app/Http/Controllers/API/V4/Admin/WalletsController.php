@@ -3,11 +3,48 @@
 namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Discount;
+use App\Http\Controllers\API\V4\PaymentsController;
+use App\Providers\PaymentProvider;
 use App\Wallet;
 use Illuminate\Http\Request;
 
 class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
 {
+    /**
+     * Return data of the specified wallet.
+     *
+     * @param string $id A wallet identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function show($id)
+    {
+        $wallet = Wallet::find($id);
+
+        if (empty($wallet)) {
+            return $this->errorResponse(404);
+        }
+
+        $result = $wallet->toArray();
+
+        $result['discount'] = 0;
+        $result['discount_description'] = '';
+
+        if ($wallet->discount) {
+            $result['discount'] = $wallet->discount->discount;
+            $result['discount_description'] = $wallet->discount->description;
+        }
+
+        $result['mandate'] = PaymentsController::walletMandate($wallet);
+
+        $provider = PaymentProvider::factory($wallet);
+
+        $result['provider'] = $provider->name();
+        $result['providerLink'] = $provider->customerLink($wallet);
+
+        return $result;
+    }
+
     /**
      * Update wallet data.
      *
