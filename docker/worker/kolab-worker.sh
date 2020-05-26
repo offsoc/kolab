@@ -5,6 +5,7 @@ if [ -d /home/worker/src/ ]; then
 fi
 
 cp -a /home/worker/src.orig/ /home/worker/src/
+mkdir -p /home/worker/src/storage/framework/{cache,sessions,views}
 chown -R worker:worker /home/worker/src/
 
 pushd /home/worker/src/
