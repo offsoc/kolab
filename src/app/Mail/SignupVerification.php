@@ -42,11 +42,17 @@ class SignupVerification extends Mailable
             $this->code->code
         );
 
+        $username = $this->code->data['first_name'] ?? '';
+        if (!empty($this->code->data['last_name'])) {
+            $username .= ' ' . $this->code->data['last_name'];
+        }
+        $username = trim($username);
+
         $this->view('emails.signup_code')
             ->subject(__('mail.signupcode-subject', ['site' => \config('app.name')]))
             ->with([
                     'site' => \config('app.name'),
-                    'username' => $this->code->data['name'],
+                    'username' => $username ?: 'User',
                     'code' => $this->code->code,
                     'short_code' => $this->code->short_code,
                     'link' => sprintf('<a href="%s">%s</a>', $href, $href),

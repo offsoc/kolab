@@ -20,7 +20,8 @@ class SignupVerificationTest extends TestCase
                 'short_code' => 'short-code',
                 'data' => [
                     'email' => 'test@email',
-                    'name' => 'Test Name',
+                    'first_name' => 'First',
+                    'last_name' => 'Last',
                 ],
         ]);
 
@@ -33,6 +34,6 @@ class SignupVerificationTest extends TestCase
         $this->assertSame(\config('app.name') . ' Registration', $mail->subject);
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $link) > 0);
-        $this->assertTrue(strpos($html, $code->data['name']) > 0);
+        $this->assertTrue(strpos($html, 'First Last') > 0);
     }
 }

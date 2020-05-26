@@ -20,7 +20,6 @@ class SignupCodeTest extends TestCase
         $data = [
             'data' => [
                 'email' => 'User@email.org',
-                'name' => 'User Name',
             ]
         ];
 
