@@ -13,4 +13,6 @@ pushd /home/worker/src/
 rm -rf bootstrap/cache/
 mkdir -p bootstrap/cache/
 
+./artisan db:ping --wait
+
 ./artisan queue:work
