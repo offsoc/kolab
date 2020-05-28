@@ -726,7 +726,7 @@ class UsersTest extends TestCase
      */
     public function testUserResponse(): void
     {
-        $provider = \config('payment_provider') ?: 'mollie';
+        $provider = \config('services.payment_provider') ?: 'mollie';
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
