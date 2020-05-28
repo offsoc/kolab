@@ -20,14 +20,17 @@ class UserObserver
      */
     public function creating(User $user)
     {
-        while (true) {
-            $allegedly_unique = \App\Utils::uuidInt();
-            if (!User::find($allegedly_unique)) {
-                $user->{$user->getKeyName()} = $allegedly_unique;
-                break;
+        if (!$user->id) {
+            while (true) {
+                $allegedly_unique = \App\Utils::uuidInt();
+                if (!User::find($allegedly_unique)) {
+                    $user->{$user->getKeyName()} = $allegedly_unique;
+                    break;
+                }
             }
         }
 
+        // only users that are not imported get the benefit of the doubt.
         $user->status |= User::STATUS_NEW | User::STATUS_ACTIVE;
 
         // can't dispatch job here because it'll fail serialization
