@@ -42,7 +42,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
         $result['provider'] = $provider->name();
         $result['providerLink'] = $provider->customerLink($wallet);
 
-        return $result;
+        return response()->json($result);
     }
 
     /**

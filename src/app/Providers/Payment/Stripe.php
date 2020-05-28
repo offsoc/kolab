@@ -328,6 +328,10 @@ class Stripe extends \App\Providers\PaymentProvider
                 }
 
                 break;
+
+            default:
+                \Log::debug("Unhandled Stripe event: " . var_export($payload, true));
+                break;
         }
 
         return 200;

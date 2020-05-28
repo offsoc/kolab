@@ -1,5 +1,6 @@
 FROM fedora:30
 
+ENV container docker
 ENV SYSTEMD_PAGER=''
 
 RUN dnf -y install \

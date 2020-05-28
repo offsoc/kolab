@@ -67,6 +67,8 @@ class EntitlementObserver
     {
         $entitlement->entitleable->updated_at = Carbon::now();
         $entitlement->entitleable->save();
+
+        $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_CREATED);
     }
 
     /**
@@ -87,5 +89,7 @@ class EntitlementObserver
 
         $entitlement->entitleable->updated_at = Carbon::now();
         $entitlement->entitleable->save();
+
+        $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_DELETED);
     }
 }

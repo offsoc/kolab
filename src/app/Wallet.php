@@ -7,6 +7,7 @@ use App\Traits\SettingsTrait;
 use Carbon\Carbon;
 use Iatstuti\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * The eloquent definition of a wallet -- a container with a chunk of change.
@@ -60,8 +61,12 @@ class Wallet extends Model
     public function chargeEntitlements($apply = true)
     {
         $charges = 0;
-        $discount = $this->discount ? $this->discount->discount : 0;
-        $discount = (100 - $discount) / 100;
+        $discount = $this->getDiscountRate();
+
+        DB::beginTransaction();
+
+        // used to parent individual entitlement billings to the wallet debit.
+        $entitlementTransactions = [];
 
         foreach ($this->entitlements()->get()->fresh() as $entitlement) {
             // This entitlement has been created less than or equal to 14 days ago (this is at
@@ -91,79 +96,24 @@ class Wallet extends Model
                 $entitlement->updated_at = $entitlement->updated_at->copy()->addMonthsWithoutOverflow($diff);
                 $entitlement->save();
 
-                // TODO: This would be better done out of the loop (debit() will call save()),
-                //       but then, maybe we should use a db transaction
-                $this->debit($cost);
+                if ($cost == 0) {
+                    continue;
+                }
+
+                $entitlementTransactions[] = $entitlement->createTransaction(
+                    \App\Transaction::ENTITLEMENT_BILLED,
+                    $cost
+                );
             }
         }
 
-        return $charges;
-    }
-
-    /**
-     * The discount assigned to the wallet.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function discount()
-    {
-        return $this->belongsTo('App\Discount', 'discount_id', 'id');
-    }
-
-    /**
-     * Calculate the expected charges to this wallet.
-     *
-     * @return int
-     */
-    public function expectedCharges()
-    {
-        return $this->chargeEntitlements(false);
-    }
-
-    /**
-     * Remove a controller from this wallet.
-     *
-     * @param \App\User $user The user to remove as a controller from this wallet.
-     *
-     * @return void
-     */
-    public function removeController(User $user)
-    {
-        if ($this->controllers->contains($user)) {
-            $this->controllers()->detach($user);
+        if ($apply) {
+            $this->debit($charges, $entitlementTransactions);
         }
-    }
 
-    /**
-     * Add an amount of pecunia to this wallet's balance.
-     *
-     * @param int $amount The amount of pecunia to add (in cents).
-     *
-     * @return Wallet Self
-     */
-    public function credit(int $amount): Wallet
-    {
-        $this->balance += $amount;
+        DB::commit();
 
-        $this->save();
-
-        return $this;
-    }
-
-    /**
-     * Deduct an amount of pecunia from this wallet's balance.
-     *
-     * @param int $amount The amount of pecunia to deduct (in cents).
-     *
-     * @return Wallet Self
-     */
-    public function debit(int $amount): Wallet
-    {
-        $this->balance -= $amount;
-
-        $this->save();
-
-        return $this;
+        return $charges;
     }
 
     /**
@@ -182,6 +132,75 @@ class Wallet extends Model
     }
 
     /**
+     * Add an amount of pecunia to this wallet's balance.
+     *
+     * @param int $amount The amount of pecunia to add (in cents).
+     *
+     * @return Wallet Self
+     */
+    public function credit(int $amount): Wallet
+    {
+        $this->balance += $amount;
+
+        $this->save();
+
+        \App\Transaction::create(
+            [
+                'user_email' => \App\Utils::userEmailOrNull(),
+                'object_id' => $this->id,
+                'object_type' => \App\Wallet::class,
+                'type' => \App\Transaction::WALLET_CREDIT,
+                'amount' => $amount
+            ]
+        );
+
+        return $this;
+    }
+
+    /**
+     * Deduct an amount of pecunia from this wallet's balance.
+     *
+     * @param int   $amount The amount of pecunia to deduct (in cents).
+     * @param array $eTIDs  List of transaction IDs for the individual entitlements that make up
+     *                      this debit record, if any.
+     * @return Wallet Self
+     */
+    public function debit(int $amount, array $eTIDs = []): Wallet
+    {
+        if ($amount == 0) {
+            return $this;
+        }
+
+        $this->balance -= $amount;
+
+        $this->save();
+
+        $transaction = \App\Transaction::create(
+            [
+                'user_email' => \App\Utils::userEmailOrNull(),
+                'object_id' => $this->id,
+                'object_type' => \App\Wallet::class,
+                'type' => \App\Transaction::WALLET_DEBIT,
+                'amount' => $amount
+            ]
+        );
+
+        \App\Transaction::whereIn('id', $eTIDs)->update(['transaction_id' => $transaction->id]);
+
+        return $this;
+    }
+
+    /**
+     * The discount assigned to the wallet.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function discount()
+    {
+        return $this->belongsTo('App\Discount', 'discount_id', 'id');
+    }
+
+    /**
      * Entitlements billed to this wallet.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -189,6 +208,38 @@ class Wallet extends Model
     public function entitlements()
     {
         return $this->hasMany('App\Entitlement');
+    }
+
+    /**
+     * Calculate the expected charges to this wallet.
+     *
+     * @return int
+     */
+    public function expectedCharges()
+    {
+        return $this->chargeEntitlements(false);
+    }
+
+    /**
+     * Return the exact, numeric version of the discount to be applied.
+     *
+     * Ranges from 0 - 100.
+     *
+     * @return int
+     */
+    public function getDiscount()
+    {
+        return $this->discount ? $this->discount->discount : 0;
+    }
+
+    /**
+     * The actual discount rate for use in multiplication
+     *
+     * Ranges from 0.00 to 1.00.
+     */
+    public function getDiscountRate()
+    {
+        return (100 - $this->getDiscount()) / 100;
     }
 
     /**
@@ -212,6 +263,20 @@ class Wallet extends Model
     }
 
     /**
+     * Remove a controller from this wallet.
+     *
+     * @param \App\User $user The user to remove as a controller from this wallet.
+     *
+     * @return void
+     */
+    public function removeController(User $user)
+    {
+        if ($this->controllers->contains($user)) {
+            $this->controllers()->detach($user);
+        }
+    }
+
+    /**
      * Any (additional) properties of this wallet.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -219,5 +284,20 @@ class Wallet extends Model
     public function settings()
     {
         return $this->hasMany('App\WalletSetting');
+    }
+
+    /**
+     * Retrieve the transactions against this wallet.
+     *
+     * @return iterable \App\Transaction
+     */
+    public function transactions()
+    {
+        return \App\Transaction::where(
+            [
+                'object_id' => $this->id,
+                'object_type' => \App\Wallet::class
+            ]
+        )->orderBy('created_at')->get();
     }
 }

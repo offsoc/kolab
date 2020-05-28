@@ -9,10 +9,11 @@ use App\Wallet;
 use App\WalletSetting;
 use GuzzleHttp\Psr7\Response;
 use Tests\TestCase;
+use Tests\MollieMocksTrait;
 
 class PaymentsMollieTest extends TestCase
 {
-    use \Tests\MollieMocksTrait;
+    use MollieMocksTrait;
 
     /**
      * {@inheritDoc}

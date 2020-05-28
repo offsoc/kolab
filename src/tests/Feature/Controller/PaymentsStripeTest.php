@@ -9,10 +9,11 @@ use App\Wallet;
 use App\WalletSetting;
 use GuzzleHttp\Psr7\Response;
 use Tests\TestCase;
+use Tests\StripeMocksTrait;
 
 class PaymentsStripeTest extends TestCase
 {
-    use \Tests\StripeMocksTrait;
+    use StripeMocksTrait;
 
     /**
      * {@inheritDoc}

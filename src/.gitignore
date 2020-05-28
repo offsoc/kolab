@@ -1,3 +1,4 @@
+*.swp
 database/database.sqlite
 node_modules/
 package-lock.json

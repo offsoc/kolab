@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
+// phpcs:ignore
 class CreateUsersTable extends Migration
 {
     /**
@@ -21,7 +22,6 @@ class CreateUsersTable extends Migration
                 $table->string('password')->nullable();
                 $table->string('password_ldap')->nullable();
                 $table->smallinteger('status');
-//                $table->rememberToken();
                 $table->timestamps();
 
                 $table->primary('id');

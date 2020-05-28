@@ -111,9 +111,12 @@ class UserObserver
 
         // Entitlements do not have referential integrity on the entitled object, so this is our
         // way of doing an onDelete('cascade') without the foreign key.
-        Entitlement::where('entitleable_id', $user->id)
-            ->where('entitleable_type', User::class)
-            ->delete();
+        $entitlements = Entitlement::where('entitleable_id', $user->id)
+            ->where('entitleable_type', User::class)->get();
+
+        foreach ($entitlements as $entitlement) {
+            $entitlement->delete();
+        }
 
         // Remove owned users/domains
         $wallets = $user->wallets()->pluck('id')->all();

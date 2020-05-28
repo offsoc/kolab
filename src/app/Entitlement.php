@@ -53,13 +53,37 @@ class Entitlement extends Model
     ];
 
     /**
+     * Create a transaction record for this entitlement.
+     *
+     * @param string $type The type of transaction ('created', 'billed', 'deleted'), but use the
+     *                     \App\Transaction constants.
+     * @param int $amount  The amount involved in cents
+     *
+     * @return string The transaction ID
+     */
+    public function createTransaction($type, $amount = null)
+    {
+        $transaction = \App\Transaction::create(
+            [
+                'user_email' => \App\Utils::userEmailOrNull(),
+                'object_id' => $this->id,
+                'object_type' => \App\Entitlement::class,
+                'type' => $type,
+                'amount' => $amount
+            ]
+        );
+
+        return $transaction->id;
+    }
+
+    /**
      * Principally entitleable objects such as 'Domain' or 'User'.
      *
      * @return mixed
      */
     public function entitleable()
     {
-        return $this->morphTo();
+        return $this->morphTo()->withTrashed();
     }
 
     /**

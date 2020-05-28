@@ -3,6 +3,8 @@
 namespace App;
 
 use App\Rules\UserEmailLocal;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Ramsey\Uuid\Uuid;
@@ -12,6 +14,19 @@ use Ramsey\Uuid\Uuid;
  */
 class Utils
 {
+    /**
+     * Return the number of days in the month prior to this one.
+     *
+     * @return int
+     */
+    public static function daysInLastMonth()
+    {
+        $start = new Carbon('first day of last month');
+        $end = new Carbon('last day of last month');
+
+        return $start->diffInDays($end);
+    }
+
     /**
      * Provide all unique combinations of elements in $input, with order and duplicates irrelevant.
      *
@@ -28,6 +43,22 @@ class Utils
         }
 
         return $output;
+    }
+
+    /**
+     * Returns the current user's email address or null.
+     *
+     * @return string
+     */
+    public static function userEmailOrNull(): ?string
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return null;
+        }
+
+        return $user->email;
     }
 
     /**
@@ -80,6 +111,27 @@ class Utils
     }
 
     /**
+     * Create self URL
+     *
+     * @param string $route Route/Path
+     *
+     * @return string Full URL
+     */
+    public static function serviceUrl(string $route): string
+    {
+        $url = \url($route);
+
+        $app_url = trim(\config('app.url'), '/');
+        $pub_url = trim(\config('app.public_url'), '/');
+
+        if ($pub_url != $app_url) {
+            $url = str_replace($app_url, $pub_url, $url);
+        }
+
+        return $url;
+    }
+
+    /**
      * Create a configuration/environment data to be passed to
      * the UI
      *
@@ -102,27 +154,6 @@ class Utils
         $env['stripePK'] = \config('services.stripe.public_key');
 
         return $env;
-    }
-
-    /**
-     * Create self URL
-     *
-     * @param string $route Route/Path
-     *
-     * @return string Full URL
-     */
-    public static function serviceUrl(string $route): string
-    {
-        $url = \url($route);
-
-        $app_url = trim(\config('app.url'), '/');
-        $pub_url = trim(\config('app.public_url'), '/');
-
-        if ($pub_url != $app_url) {
-            $url = str_replace($app_url, $pub_url, $url);
-        }
-
-        return $url;
     }
 
     /**
