@@ -236,4 +236,12 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
     ],
+
+    // Locations of knowledge base articles
+    'kb' => [
+        // An article about suspended accounts
+        'account_suspended' => env('KB_ACCOUNT_SUSPENDED'),
+        // An article about a way to delete an owned account
+        'account_delete' => env('KB_ACCOUNT_DELETE'),
+    ],
 ];

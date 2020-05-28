@@ -2,10 +2,12 @@
 
 namespace App\Mail;
 
+use App\User;
 use App\VerificationCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
 
 class PasswordReset extends Mailable
 {
@@ -53,5 +55,26 @@ class PasswordReset extends Mailable
             ]);
 
         return $this;
+    }
+
+    /**
+     * Render the mail template with fake data
+     *
+     * @return string HTML output
+     */
+    public static function fakeRender(): string
+    {
+        $code = new VerificationCode([
+                'code' => Str::random(VerificationCode::CODE_LENGTH),
+                'short_code' => VerificationCode::generateShortCode(),
+        ]);
+
+        $code->user = new User([
+              'email' => 'test@' . \config('app.domain'),
+        ]);
+
+        $mail = new self($code);
+
+        return $mail->build()->render();
     }
 }

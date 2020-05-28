@@ -6,6 +6,7 @@ use App\SignupCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
 
 class SignupVerification extends Mailable
 {
@@ -59,5 +60,28 @@ class SignupVerification extends Mailable
             ]);
 
         return $this;
+    }
+
+    /**
+     * Render the mail template with fake data
+     *
+     * @return string HTML output
+     */
+    public static function fakeRender(): string
+    {
+        $code = new SignupCode([
+                'code' => Str::random(SignupCode::CODE_LENGTH),
+                'short_code' => SignupCode::generateShortCode(),
+                'data' => [
+                    'email' => 'test@' . \config('app.domain'),
+                    'first_name' => 'Firstname',
+                    'last_name' => 'Lastname',
+                ],
+        ]);
+
+
+        $mail = new self($code);
+
+        return $mail->build()->render();
     }
 }
