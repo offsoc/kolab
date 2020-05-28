@@ -3,6 +3,7 @@
 namespace Tests\Browser\Admin;
 
 use App\Discount;
+use App\User;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Toast;
@@ -23,6 +24,7 @@ class UserTest extends TestCaseDusk
         self::useAdminUrl();
 
         $john = $this->getTestUser('john@kolab.org');
+        $john->update(['status' => $john->status ^= User::STATUS_SUSPENDED]);
         $john->setSettings([
                 'phone' => '+48123123123',
                 'external_email' => 'john.doe.external@gmail.com',
@@ -40,6 +42,7 @@ class UserTest extends TestCaseDusk
     public function tearDown(): void
     {
         $john = $this->getTestUser('john@kolab.org');
+        $john->update(['status' => $john->status ^= User::STATUS_SUSPENDED]);
         $john->setSettings([
                 'phone' => null,
                 'external_email' => 'john.doe.external@gmail.com',
@@ -403,6 +406,29 @@ class UserTest extends TestCaseDusk
             // read the value form database
             $current_ext_email = $john->settings()->where('key', 'external_email')->first()->value;
             $this->assertSame('test@test.com', $current_ext_email);
+        });
+    }
+
+    /**
+     * Test suspending/unsuspending the user
+     */
+    public function testSuspendAndUnsuspend(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $john = $this->getTestUser('john@kolab.org');
+
+            $browser->visit(new UserPage($john->id))
+                ->assertVisible('@user-info #button-suspend')
+                ->assertMissing('@user-info #button-unsuspend')
+                ->click('@user-info #button-suspend')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User suspended successfully.')
+                ->assertSeeIn('@user-info #status span.text-warning', 'Suspended')
+                ->assertMissing('@user-info #button-suspend')
+                ->click('@user-info #button-unsuspend')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User unsuspended successfully.')
+                ->assertSeeIn('@user-info #status span.text-success', 'Active')
+                ->assertVisible('@user-info #button-suspend')
+                ->assertMissing('@user-info #button-unsuspend');
         });
     }
 

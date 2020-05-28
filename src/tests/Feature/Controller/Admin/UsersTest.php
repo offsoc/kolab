@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Controller\Admin;
 
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class UsersTest extends TestCase
@@ -14,6 +15,8 @@ class UsersTest extends TestCase
         parent::setUp();
         self::useAdminUrl();
 
+        $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
+
         $jack = $this->getTestUser('jack@kolab.org');
         $jack->setSetting('external_email', null);
     }
@@ -23,6 +26,8 @@ class UsersTest extends TestCase
      */
     public function tearDown(): void
     {
+        $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
+
         $jack = $this->getTestUser('jack@kolab.org');
         $jack->setSetting('external_email', null);
 
@@ -142,6 +147,66 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test user suspending (POST /api/v4/users/<user-id>/suspend)
+     */
+    public function testSuspend(): void
+    {
+        Queue::fake(); // disable jobs
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        // Test unauthorized access to admin API
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/suspend", []);
+        $response->assertStatus(403);
+
+        $this->assertFalse($user->isSuspended());
+
+        // Test suspending the user
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/suspend", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User suspended successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $this->assertTrue($user->fresh()->isSuspended());
+    }
+
+    /**
+     * Test user un-suspending (POST /api/v4/users/<user-id>/unsuspend)
+     */
+    public function testUnsuspend(): void
+    {
+        Queue::fake(); // disable jobs
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        // Test unauthorized access to admin API
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/unsuspend", []);
+        $response->assertStatus(403);
+
+        $this->assertFalse($user->isSuspended());
+        $user->suspend();
+        $this->assertTrue($user->isSuspended());
+
+        // Test suspending the user
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/unsuspend", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User unsuspended successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $this->assertFalse($user->fresh()->isSuspended());
+    }
+
+    /**
      * Test user update (PUT /api/v4/users/<user-id>)
      */
     public function testUpdate(): void
@@ -150,7 +215,7 @@ class UsersTest extends TestCase
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
 
         // Test unauthorized access to admin API
-        $response = $this->actingAs($user)->get("/api/v4/users/{$user->id}", []);
+        $response = $this->actingAs($user)->put("/api/v4/users/{$user->id}", []);
         $response->assertStatus(403);
 
         // Test updatig the user data (empty data)

@@ -74,6 +74,8 @@
                                 <span class="form-control-plaintext" id="country">{{ user.country }}</span>
                             </div>
                         </div>
+                        <button v-if="!user.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendUser">Suspend</button>
+                        <button v-if="user.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendUser">Unsuspend</button>
                     </form>
                 </div>
             </div>
@@ -468,6 +470,24 @@
                             this.$toast.success(response.data.message)
                             this.user.external_email = this.external_email
                             this.external_email = null // required because of Vue
+                        }
+                    })
+            },
+            suspendUser() {
+                axios.post('/api/v4/users/' + this.user.id + '/suspend', {})
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.user = Object.assign({}, this.user, { isSuspended: true })
+                        }
+                    })
+            },
+            unsuspendUser() {
+                axios.post('/api/v4/users/' + this.user.id + '/unsuspend', {})
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.user = Object.assign({}, this.user, { isSuspended: false })
                         }
                     })
             }

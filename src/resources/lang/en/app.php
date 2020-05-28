@@ -31,9 +31,12 @@ return [
 
     'domain-verify-success' => 'Domain verified successfully.',
     'domain-verify-error' => 'Domain ownership verification failed.',
+
     'user-update-success' => 'User data updated successfully.',
     'user-create-success' => 'User created successfully.',
     'user-delete-success' => 'User deleted successfully.',
+    'user-suspend-success' => 'User suspended successfully.',
+    'user-unsuspend-success' => 'User unsuspended successfully.',
 
     'search-foundxdomains' => ':x domains have been found.',
     'search-foundxusers' => ':x user accounts have been found.',

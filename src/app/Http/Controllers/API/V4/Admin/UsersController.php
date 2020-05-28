@@ -69,6 +69,54 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
     }
 
     /**
+     * Suspend the user
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @params string                  $id      User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function suspend(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (empty($user)) {
+            return $this->errorResponse(404);
+        }
+
+        $user->suspend();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.user-suspend-success'),
+        ]);
+    }
+
+    /**
+     * Un-Suspend the user
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @params string                  $id      User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function unsuspend(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (empty($user)) {
+            return $this->errorResponse(404);
+        }
+
+        $user->unsuspend();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.user-unsuspend-success'),
+        ]);
+    }
+
+    /**
      * Update user data.
      *
      * @param \Illuminate\Http\Request $request The API request.

@@ -12,7 +12,7 @@ $indigo: #6574cd;
 $purple: #9561e2;
 $pink: #f66d9b;
 $red: #e3342f;
-$orange: #f6993f;
+$orange: #f1a539;
 $yellow: #ffed4a;
 $green: #38c172;
 $teal: #4dc0b5;
@@ -22,4 +22,5 @@ $light: #f6f5f3;
 
 // App colors
 $menu-bg-color: $light;
-$main-color: #f1a539;
+$main-color: $orange;
+$warning: $orange;
