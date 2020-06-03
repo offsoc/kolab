@@ -22,6 +22,8 @@ class CreatePayments extends Migration
                 $table->string('status', 16);
                 $table->integer('amount');
                 $table->text('description');
+                $table->string('provider', 16);
+                $table->string('type', 16);
                 $table->timestamps();
 
                 $table->foreign('wallet_id')->references('id')->on('wallets')->onDelete('cascade');

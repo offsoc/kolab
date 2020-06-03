@@ -2,11 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Domain;
-use App\User;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class WalletCharge extends Command
 {
@@ -44,19 +40,15 @@ class WalletCharge extends Command
         $wallets = \App\Wallet::all();
 
         foreach ($wallets as $wallet) {
-            $charge = $wallet->expectedCharges();
+            $charge = $wallet->chargeEntitlements();
 
             if ($charge > 0) {
                 $this->info(
-                    "charging wallet {$wallet->id} for user {$wallet->owner->email} with {$charge}"
+                    "Charged wallet {$wallet->id} for user {$wallet->owner->email} with {$charge}"
                 );
 
-                $wallet->chargeEntitlements();
-
-                if ($wallet->balance < 0) {
-                    // Disabled for now
-                    // \App\Jobs\WalletPayment::dispatch($wallet);
-                }
+                // Top-up the wallet if auto-payment enabled for the wallet
+                \App\Jobs\WalletCharge::dispatch($wallet);
             }
         }
     }

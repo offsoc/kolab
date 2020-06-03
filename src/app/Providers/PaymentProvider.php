@@ -17,6 +17,7 @@ abstract class PaymentProvider
 
     public const TYPE_ONEOFF = 'oneoff';
     public const TYPE_RECURRING = 'recurring';
+    public const TYPE_MANDATE = 'mandate';
 
     /** const int Minimum amount of money in a single payment (in cents) */
     public const MIN_AMOUNT = 1000;
@@ -135,15 +136,21 @@ abstract class PaymentProvider
      *
      * @param array  $payment   Payment information
      * @param string $wallet_id Wallet ID
+     *
+     * @return \App\Payment Payment object
      */
-    protected static function storePayment(array $payment, $wallet_id): void
+    protected function storePayment(array $payment, $wallet_id): Payment
     {
         $db_payment = new Payment();
         $db_payment->id = $payment['id'];
-        $db_payment->description = $payment['description'];
-        $db_payment->status = $payment['status'];
-        $db_payment->amount = $payment['amount'];
+        $db_payment->description = $payment['description'] ?? '';
+        $db_payment->status = $payment['status'] ?? self::STATUS_OPEN;
+        $db_payment->amount = $payment['amount'] ?? 0;
+        $db_payment->type = $payment['type'];
         $db_payment->wallet_id = $wallet_id;
+        $db_payment->provider = $this->name();
         $db_payment->save();
+
+        return $db_payment;
     }
 }

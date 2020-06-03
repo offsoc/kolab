@@ -172,12 +172,25 @@ class PaymentMollieTest extends TestCaseDusk
 
         // Test updating auto-payment
         $this->browse(function (Browser $browser) use ($user) {
-            $browser->on(new WalletPage())
+            $wallet = $user->wallets()->first();
+            $wallet->setSetting('mandate_disabled', 1);
+
+            $browser->refresh()
+                ->on(new WalletPage())
                 ->click('@main button')
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
-                    $browser->assertSeeIn('@body #mandate-info button.btn-primary', 'Change auto-payment')
+                ->with(new Dialog('@payment-dialog'), function (Browser $browser) use ($wallet) {
+                    $browser->waitFor('@body #mandate-info')
+                        ->assertSeeIn(
+                            '@body #mandate-info p.disabled-mandate',
+                            'The configured auto-payment has been disabled'
+                        )
+                        ->assertSeeIn('@body #mandate-info button.btn-primary', 'Change auto-payment')
                         ->click('@body #mandate-info button.btn-primary')
                         ->assertSeeIn('@title', 'Update auto-payment')
+                        ->assertSeeIn(
+                            '@body form p.disabled-mandate',
+                            'The auto-payment is disabled.'
+                        )
                         ->assertValue('@body #mandate_amount', '100')
                         ->assertValue('@body #mandate_balance', '0')
                         ->assertSeeIn('@button-cancel', 'Cancel')
@@ -193,7 +206,15 @@ class PaymentMollieTest extends TestCaseDusk
                         ->click('@button-action');
                 })
                 ->waitUntilMissing('#payment-dialog')
-                ->assertToast(Toast::TYPE_SUCCESS, 'The auto-payment has been updated.');
+                ->assertToast(Toast::TYPE_SUCCESS, 'The auto-payment has been updated.')
+                // Open the dialog again and make sure the "disabled" text isn't there
+                ->click('@main button')
+                ->with(new Dialog('@payment-dialog'), function (Browser $browser) use ($wallet) {
+                    $browser->assertMissing('@body #mandate-info p.disabled-mandate')
+                        ->click('@body #mandate-info button.btn-primary')
+                        ->assertMissing('@body form p.disabled-mandate')
+                        ->click('@button-cancel');
+                });
         });
 
         // Test deleting auto-payment

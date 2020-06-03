@@ -4,6 +4,7 @@ namespace Tests\Unit\Mail;
 
 use App\Mail\PasswordReset;
 use App\User;
+use App\Utils;
 use App\VerificationCode;
 use Tests\TestCase;
 
@@ -31,7 +32,7 @@ class PasswordResetTest extends TestCase
         $mail = new PasswordReset($code);
         $html = $mail->build()->render();
 
-        $url = \config('app.url') . '/login/reset/' . $code->short_code . '-' . $code->code;
+        $url = Utils::serviceUrl('/login/reset/' . $code->short_code . '-' . $code->code);
         $link = "<a href=\"$url\">$url</a>";
 
         $this->assertSame(\config('app.name') . ' Password Reset', $mail->subject);

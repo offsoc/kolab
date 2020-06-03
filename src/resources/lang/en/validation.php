@@ -133,6 +133,7 @@ return [
     'entryinvalid' => 'The specified :attribute is invalid.',
     'entryexists' => 'The specified :attribute is not available.',
     'minamount' => 'Minimum amount for a single payment is :amount.',
+    'minamountdebt' => 'The specified amount does not cover the balance on the account.',
 
     /*
     |--------------------------------------------------------------------------

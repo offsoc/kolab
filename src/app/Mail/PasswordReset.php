@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\User;
+use App\Utils;
 use App\VerificationCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -37,11 +38,8 @@ class PasswordReset extends Mailable
      */
     public function build()
     {
-        $href = sprintf(
-            '%s/login/reset/%s-%s',
-            \config('app.url'),
-            $this->code->short_code,
-            $this->code->code
+        $href = Utils::serviceUrl(
+            sprintf('/login/reset/%s-%s', $this->code->short_code, $this->code->code)
         );
 
         $this->view('emails.password_reset')

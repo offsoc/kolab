@@ -58,7 +58,7 @@ class PaymentMollie extends Page
                 ->waitFor('button.form__button');
         }
 
-        $browser->click('@status-table input[value="paid"]')
+        $browser->click('input[value="paid"]')
             ->click('button.form__button');
     }
 }

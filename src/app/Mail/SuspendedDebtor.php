@@ -70,6 +70,18 @@ class SuspendedDebtor extends Mailable
     {
         $user = new User();
 
+        if (!\config('app.support_url')) {
+            \config(['app.support_url' => 'https://not-configured-support.url']);
+        }
+
+        if (!\config('app.kb.account_delete')) {
+            \config(['app.kb.account_delete' => 'https://not-configured-kb.url']);
+        }
+
+        if (!\config('app.kb.account_suspended')) {
+            \config(['app.kb.account_suspended' => 'https://not-configured-kb.url']);
+        }
+
         $mail = new self($user);
 
         return $mail->build()->render();

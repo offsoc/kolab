@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\SignupCode;
+use App\Utils;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -36,11 +37,8 @@ class SignupVerification extends Mailable
      */
     public function build()
     {
-        $href = sprintf(
-            '%s/signup/%s-%s',
-            \config('app.url'),
-            $this->code->short_code,
-            $this->code->code
+        $href = Utils::serviceUrl(
+            sprintf('/signup/%s-%s', $this->code->short_code, $this->code->code)
         );
 
         $username = $this->code->data['first_name'] ?? '';

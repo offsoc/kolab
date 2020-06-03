@@ -128,7 +128,7 @@
                                     <span class="form-control-plaintext" id="autopayment">
                                         Fill up by <b>{{ wallet.mandate.amount }} CHF</b>
                                         when under <b>{{ wallet.mandate.balance }} CHF</b>
-                                        using {{ wallet.mandate.method }}.</span>
+                                        using {{ wallet.mandate.method }}<span v-if="wallet.mandate.isDisabled"> (disabled)</span>.
                                     </span>
                                 </div>
                             </div>

@@ -117,6 +117,28 @@ class Wallet extends Model
     }
 
     /**
+     * A helper to display human-readable amount of money using
+     * the wallet currency and specified locale.
+     *
+     * @param int    $amount A amount of money (in cents)
+     * @param string $locale A locale for the output
+     *
+     * @return string String representation, e.g. "9.99 CHF"
+     */
+    public function money(int $amount, $locale = 'de_DE')
+    {
+        $amount = round($amount / 100, 2);
+
+        // Prefer intl extension's number formatter
+        if (class_exists('NumberFormatter')) {
+            $nf = new \NumberFormatter($locale, \NumberFormatter::DECIMAL);
+            return $nf->formatCurrency($amount, $this->currency);
+        }
+
+        return sprintf('%.2f %s', $amount, $this->currency);
+    }
+
+    /**
      * Controllers of this wallet.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
@@ -134,11 +156,12 @@ class Wallet extends Model
     /**
      * Add an amount of pecunia to this wallet's balance.
      *
-     * @param int $amount The amount of pecunia to add (in cents).
+     * @param int    $amount      The amount of pecunia to add (in cents).
+     * @param string $description The transaction description
      *
      * @return Wallet Self
      */
-    public function credit(int $amount): Wallet
+    public function credit(int $amount, string $description = ''): Wallet
     {
         $this->balance += $amount;
 
@@ -150,7 +173,8 @@ class Wallet extends Model
                 'object_id' => $this->id,
                 'object_type' => \App\Wallet::class,
                 'type' => \App\Transaction::WALLET_CREDIT,
-                'amount' => $amount
+                'amount' => $amount,
+                'description' => $description
             ]
         );
 

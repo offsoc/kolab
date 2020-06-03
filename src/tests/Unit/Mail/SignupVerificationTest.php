@@ -4,6 +4,7 @@ namespace Tests\Unit\Mail;
 
 use App\Mail\SignupVerification;
 use App\SignupCode;
+use App\Utils;
 use Tests\TestCase;
 
 class SignupVerificationTest extends TestCase
@@ -28,7 +29,7 @@ class SignupVerificationTest extends TestCase
         $mail = new SignupVerification($code);
         $html = $mail->build()->render();
 
-        $url = \config('app.url') . '/signup/' . $code->short_code . '-' . $code->code;
+        $url = Utils::serviceUrl('/signup/' . $code->short_code . '-' . $code->code);
         $link = "<a href=\"$url\">$url</a>";
 
         $this->assertSame(\config('app.name') . ' Registration', $mail->subject);

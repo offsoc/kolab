@@ -5,6 +5,7 @@ namespace App\Providers\Payment;
 use App\Payment;
 use App\Utils;
 use App\Wallet;
+use Illuminate\Support\Facades\DB;
 
 class Mollie extends \App\Providers\PaymentProvider
 {
@@ -117,41 +118,8 @@ class Mollie extends \App\Providers\PaymentProvider
             'id' => $mandate->id,
             'isPending' => $mandate->isPending(),
             'isValid' => $mandate->isValid(),
+            'method' => self::paymentMethod($mandate, 'Unknown method')
         ];
-
-        $details = $mandate->details;
-
-        // Mollie supports 3 methods here
-        switch ($mandate->method) {
-            case 'creditcard':
-                // If the customer started, but never finished the 'first' payment
-                // card details will be empty, and mandate will be 'pending'.
-                if (empty($details->cardNumber)) {
-                    $result['method'] = 'Credit Card';
-                } else {
-                    $result['method'] = sprintf(
-                        '%s (**** **** **** %s)',
-                        $details->cardLabel ?: 'Card', // @phpstan-ignore-line
-                        $details->cardNumber
-                    );
-                }
-                break;
-
-            case 'directdebit':
-                $result['method'] = sprintf(
-                    'Direct Debit (%s)',
-                    $details->customerAccount
-                );
-                break;
-
-            case 'paypal':
-                $result['method'] = sprintf('PayPal (%s)', $details->consumerAccount);
-                break;
-
-
-            default:
-                $result['method'] = 'Unknown method';
-        }
 
         return $result;
     }
@@ -182,6 +150,10 @@ class Mollie extends \App\Providers\PaymentProvider
      */
     public function payment(Wallet $wallet, array $payment): ?array
     {
+        if ($payment['type'] == self::TYPE_RECURRING) {
+            return $this->paymentRecurring($wallet, $payment);
+        }
+
         // Register the user in Mollie, if not yet done
         $customer_id = self::mollieCustomerId($wallet);
 
@@ -199,25 +171,12 @@ class Mollie extends \App\Providers\PaymentProvider
             'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
             'locale' => 'en_US',
             // 'method' => 'creditcard',
+            'redirectUrl' => \url('/wallet') // required for non-recurring payments
         ];
 
-        if ($payment['type'] == self::TYPE_RECURRING) {
-            // Check if there's a valid mandate
-            $mandate = self::mollieMandate($wallet);
-
-            if (empty($mandate) || !$mandate->isValid() || $mandate->isPending()) {
-                return null;
-            }
-
-            $request['mandateId'] = $mandate->id;
-        } else {
-            // required for non-recurring payments
-            $request['redirectUrl'] = \url('/wallet');
-
-            // TODO: Additional payment parameters for better fraud protection:
-            //   billingEmail - for bank transfers, Przelewy24, but not creditcard
-            //   billingAddress (it is a structured field not just text)
-        }
+        // TODO: Additional payment parameters for better fraud protection:
+        //   billingEmail - for bank transfers, Przelewy24, but not creditcard
+        //   billingAddress (it is a structured field not just text)
 
         // Create the payment in Mollie
         $response = mollie()->payments()->create($request);
@@ -226,11 +185,86 @@ class Mollie extends \App\Providers\PaymentProvider
         $payment['status'] = $response->status;
         $payment['id'] = $response->id;
 
-        self::storePayment($payment, $wallet->id);
+        $this->storePayment($payment, $wallet->id);
 
         return [
             'id' => $payment['id'],
             'redirectUrl' => $response->getCheckoutUrl(),
+        ];
+    }
+
+    /**
+     * Create a new automatic payment operation.
+     *
+     * @param \App\Wallet $wallet  The wallet
+     * @param array       $payment Payment data (see self::payment())
+     *
+     * @return array Provider payment/session data:
+     *               - id: Operation identifier
+     */
+    protected function paymentRecurring(Wallet $wallet, array $payment): ?array
+    {
+        // Check if there's a valid mandate
+        $mandate = self::mollieMandate($wallet);
+
+        if (empty($mandate) || !$mandate->isValid() || $mandate->isPending()) {
+            return null;
+        }
+
+        $customer_id = self::mollieCustomerId($wallet);
+
+        // Note: Required fields: description, amount/currency, amount/value
+
+        $request = [
+            'amount' => [
+                'currency' => $payment['currency'],
+                // a number with two decimals is required
+                'value' => sprintf('%.2f', $payment['amount'] / 100),
+            ],
+            'customerId' => $customer_id,
+            'sequenceType' => $payment['type'],
+            'description' => $payment['description'],
+            'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
+            'locale' => 'en_US',
+            // 'method' => 'creditcard',
+            'mandateId' => $mandate->id
+        ];
+
+        // Create the payment in Mollie
+        $response = mollie()->payments()->create($request);
+
+        // Store the payment reference in database
+        $payment['status'] = $response->status;
+        $payment['id'] = $response->id;
+
+        DB::beginTransaction();
+
+        $payment = $this->storePayment($payment, $wallet->id);
+
+        // Mollie can return 'paid' status immediately, so we don't
+        // have to wait for the webhook. What's more, the webhook would ignore
+        // the payment because it will be marked as paid before the webhook.
+        // Let's handle paid status here too.
+        if ($response->isPaid()) {
+            self::creditPayment($payment, $response);
+            $notify = true;
+        } elseif ($response->isFailed()) {
+            // Note: I didn't find a way to get any description of the problem with a payment
+            \Log::info(sprintf('Mollie payment failed (%s)', $response->id));
+
+            // Disable the mandate
+            $wallet->setSetting('mandate_disabled', 1);
+            $notify = true;
+        }
+
+        DB::commit();
+
+        if (!empty($notify)) {
+            \App\Jobs\PaymentEmail::dispatch($payment);
+        }
+
+        return [
+            'id' => $payment['id'],
         ];
     }
 
@@ -267,7 +301,8 @@ class Mollie extends \App\Providers\PaymentProvider
                 // The payment is paid and isn't refunded or charged back.
                 // Update the balance, if it wasn't already
                 if ($payment->status != self::STATUS_PAID && $payment->amount > 0) {
-                    $payment->wallet->credit($payment->amount);
+                    $credit = true;
+                    $notify = $payment->type == self::TYPE_RECURRING;
                 }
             } elseif ($mollie_payment->hasRefunds()) {
                 // The payment has been (partially) refunded.
@@ -281,13 +316,33 @@ class Mollie extends \App\Providers\PaymentProvider
         } elseif ($mollie_payment->isFailed()) {
             // Note: I didn't find a way to get any description of the problem with a payment
             \Log::info(sprintf('Mollie payment failed (%s)', $payment->id));
+
+            // Disable the mandate
+            if ($payment->type == self::TYPE_RECURRING) {
+                $notify = true;
+                $payment->wallet->setSetting('mandate_disabled', 1);
+            }
         }
 
+        DB::beginTransaction();
+
         // This is a sanity check, just in case the payment provider api
-        // sent us open -> paid -> open -> paid. So, we lock the payment after it's paid.
-        if ($payment->status != self::STATUS_PAID) {
+        // sent us open -> paid -> open -> paid. So, we lock the payment after
+        // recivied a "final" state.
+        $pending_states = [self::STATUS_OPEN, self::STATUS_PENDING, self::STATUS_AUTHORIZED];
+        if (in_array($payment->status, $pending_states)) {
             $payment->status = $mollie_payment->status;
             $payment->save();
+        }
+
+        if (!empty($credit)) {
+            self::creditPayment($payment, $mollie_payment);
+        }
+
+        DB::commit();
+
+        if (!empty($notify)) {
+            \App\Jobs\PaymentEmail::dispatch($payment);
         }
 
         return 200;
@@ -345,5 +400,57 @@ class Mollie extends \App\Providers\PaymentProvider
             }
         }
         */
+    }
+
+    /**
+     * Apply the successful payment's pecunia to the wallet
+     */
+    protected static function creditPayment($payment, $mollie_payment)
+    {
+        // Extract the payment method for transaction description
+        $method = self::paymentMethod($mollie_payment, 'Mollie');
+
+        // TODO: Localization?
+        $description = $payment->type == self::TYPE_RECURRING ? 'Auto-payment' : 'Payment';
+        $description .= " transaction {$payment->id} using {$method}";
+
+        $payment->wallet->credit($payment->amount, $description);
+
+        // Unlock the disabled auto-payment mandate
+        if ($payment->wallet->balance >= 0) {
+            $payment->wallet->setSetting('mandate_disabled', null);
+        }
+    }
+
+    /**
+     * Extract payment method description from Mollie payment/mandate details
+     */
+    protected static function paymentMethod($object, $default = ''): string
+    {
+        $details = $object->details;
+
+        // Mollie supports 3 methods here
+        switch ($object->method) {
+            case 'creditcard':
+                // If the customer started, but never finished the 'first' payment
+                // card details will be empty, and mandate will be 'pending'.
+                if (empty($details->cardNumber)) {
+                    return 'Credit Card';
+                }
+
+                return sprintf(
+                    '%s (**** **** **** %s)',
+                    $details->cardLabel ?: 'Card', // @phpstan-ignore-line
+                    $details->cardNumber
+                );
+
+            case 'directdebit':
+                return sprintf('Direct Debit (%s)', $details->customerAccount);
+
+            case 'paypal':
+                return sprintf('PayPal (%s)', $details->consumerAccount);
+        }
+
+        return $default;
     }
 }

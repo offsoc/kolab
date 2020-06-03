@@ -26,6 +26,7 @@ class Home extends Page
     public function assert($browser)
     {
         $browser->waitForLocation($this->url())
+            ->waitUntilMissing('.app-loader')
             ->assertVisible('form.form-signin');
     }
 

@@ -51,6 +51,10 @@
                                     every time your account balance gets under <b>{{ mandate.balance }} CHF</b>.
                                     You will be charged via {{ mandate.method }}.
                                 </p>
+                                <p v-if="mandate.isDisabled" class="disabled-mandate text-danger">
+                                    The configured auto-payment has been disabled. Top up your wallet or
+                                    raise the auto-payment amount.
+                                </p>
                                 <p>You can cancel or change the auto-payment at any time.</p>
                                 <div class="form-group d-flex justify-content-around">
                                     <button type="button" class="btn btn-danger" @click="autoPaymentDelete">Cancel auto-payment</button>
@@ -87,6 +91,10 @@
                                 <p v-if="!mandate.id">
                                     Next, you will be redirected to the checkout page, where you can provide
                                     your credit card details.
+                                </p>
+                                <p v-if="mandate.isDisabled" class="disabled-mandate text-danger">
+                                    The auto-payment is disabled. Immediately after you submit new settings we'll
+                                    attempt to top up your wallet.
                                 </p>
                             </form>
                         </div>
@@ -181,13 +189,18 @@
 
                 axios[method]('/api/v4/payments/mandate', post)
                     .then(response => {
-                        if (response.data.redirectUrl) {
-                            location.href = response.data.redirectUrl
-                        } else if (response.data.id) {
-                            this.stripeCheckout(response.data)
+                        if (method == 'post') {
+                            // a new mandate, redirect to the chackout page
+                            if (response.data.redirectUrl) {
+                                location.href = response.data.redirectUrl
+                            } else if (response.data.id) {
+                                this.stripeCheckout(response.data)
+                            }
                         } else {
-                            this.dialog.modal('hide')
+                            // an update
                             if (response.data.status == 'success') {
+                                this.dialog.modal('hide');
+                                this.mandate = response.data
                                 this.$toast.success(response.data.message)
                             }
                         }

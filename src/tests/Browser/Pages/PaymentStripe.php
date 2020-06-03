@@ -59,7 +59,7 @@ class PaymentStripe extends Page
     public function submitValidCreditCard($browser)
     {
         $browser->type('@name-input', 'Test')
-            ->type('@cardnumber-input', '4242424242424242')
+            ->typeSlowly('@cardnumber-input', '4242424242424242', 50)
             ->type('@cardexpiry-input', '12/' . (date('y') + 1))
             ->type('@cardcvc-input', '123')
             ->press('@submit-button');

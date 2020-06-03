@@ -311,7 +311,12 @@ class UsersTest extends TestCase
         $this->assertTrue(empty($json['status']));
         $this->assertTrue(empty($json['message']));
 
-        // Now "reboot" the process and verify the user in imap syncronously
+        // Make sure the domain is confirmed (other test might unset that status)
+        $domain = $this->getTestDomain('kolab.org');
+        $domain->status |= Domain::STATUS_CONFIRMED;
+        $domain->save();
+
+        // Now "reboot" the process and verify the user in imap synchronously
         $response = $this->actingAs($john)->get("/api/v4/users/{$john->id}/status?refresh=1");
         $response->assertStatus(200);
 

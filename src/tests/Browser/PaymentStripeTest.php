@@ -80,7 +80,7 @@ class PaymentStripeTest extends TestCaseDusk
             // Looks like in test-mode the webhook is executed before redirect
             // so we can expect balance updated on the wallet page
 
-            $browser->waitForLocation('/wallet', 15) // need more time than default 5 sec.
+            $browser->waitForLocation('/wallet', 30) // need more time than default 5 sec.
                 ->on(new WalletPage())
                 ->assertSeeIn('@main .card-text', 'Current account balance is 12,34 CHF');
         });
@@ -144,7 +144,7 @@ class PaymentStripeTest extends TestCaseDusk
                 ->assertMissing('@amount')
                 ->assertValue('@email-input', $user->email)
                 ->submitValidCreditCard()
-                ->waitForLocation('/wallet', 15) // need more time than default 5 sec.
+                ->waitForLocation('/wallet', 30) // need more time than default 5 sec.
                 ->visit('/wallet?paymentProvider=stripe')
                 ->on(new WalletPage())
                 ->click('@main button')

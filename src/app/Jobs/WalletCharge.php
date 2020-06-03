@@ -10,25 +10,30 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class WalletPayment implements ShouldQueue
+class WalletCharge implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
 
+    /** @var \App\Wallet A wallet object */
     protected $wallet;
 
+    /** @var int The number of seconds to wait before retrying the job. */
+    public $retryAfter = 10;
+
+    /** @var int How many times retry the job if it fails. */
     public $tries = 5;
 
-    /** @var bool Delete the job if its models no longer exist. */
+    /** @var bool Delete the job if the wallet no longer exist. */
     public $deleteWhenMissingModels = true;
 
 
     /**
      * Create a new job instance.
      *
-     * @param \App\Wallet $wallet The wallet to charge.
+     * @param \App\Wallet $wallet The wallet that has been charged.
      *
      * @return void
      */
@@ -44,8 +49,6 @@ class WalletPayment implements ShouldQueue
      */
     public function handle()
     {
-        if ($this->wallet->balance < 0) {
-            PaymentsController::directCharge($this->wallet, $this->wallet->balance * -1);
-        }
+        PaymentsController::topUpWallet($this->wallet);
     }
 }

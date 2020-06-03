@@ -24,12 +24,13 @@ class UserTest extends TestCaseDusk
         self::useAdminUrl();
 
         $john = $this->getTestUser('john@kolab.org');
-        $john->update(['status' => $john->status ^= User::STATUS_SUSPENDED]);
         $john->setSettings([
                 'phone' => '+48123123123',
                 'external_email' => 'john.doe.external@gmail.com',
         ]);
-
+        if ($john->isSuspended()) {
+            User::where('email', $john->email)->update(['status' => $john->status - User::STATUS_SUSPENDED]);
+        }
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
         $wallet->balance = 0;
@@ -42,12 +43,13 @@ class UserTest extends TestCaseDusk
     public function tearDown(): void
     {
         $john = $this->getTestUser('john@kolab.org');
-        $john->update(['status' => $john->status ^= User::STATUS_SUSPENDED]);
         $john->setSettings([
                 'phone' => null,
                 'external_email' => 'john.doe.external@gmail.com',
         ]);
-
+        if ($john->isSuspended()) {
+            User::where('email', $john->email)->update(['status' => $john->status - User::STATUS_SUSPENDED]);
+        }
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
         $wallet->balance = 0;

@@ -6,6 +6,8 @@ use App\Payment;
 use App\Utils;
 use App\Wallet;
 use App\WalletSetting;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Request;
 use Stripe as StripeAPI;
 
 class Stripe extends \App\Providers\PaymentProvider
@@ -73,6 +75,13 @@ class Stripe extends \App\Providers\PaymentProvider
 
         $session = StripeAPI\Checkout\Session::create($request);
 
+        $payment = [
+            'id' => $session->setup_intent,
+            'type' => self::TYPE_MANDATE,
+        ];
+
+        $this->storePayment($payment, $wallet->id);
+
         return [
             'id' => $session->id,
         ];
@@ -128,24 +137,8 @@ class Stripe extends \App\Providers\PaymentProvider
             'id' => $mandate->id,
             'isPending' => $mandate->status != 'succeeded' && $mandate->status != 'canceled',
             'isValid' => $mandate->status == 'succeeded',
+            'method' => self::paymentMethod($pm, 'Unknown method')
         ];
-
-        switch ($pm->type) {
-            case 'card':
-                // TODO: card number
-                $result['method'] = \sprintf(
-                    '%s (**** **** **** %s)',
-                    // @phpstan-ignore-next-line
-                    \ucfirst($pm->card->brand) ?: 'Card',
-                    // @phpstan-ignore-next-line
-                    $pm->card->last4
-                );
-
-                break;
-
-            default:
-                $result['method'] = 'Unknown method';
-        }
 
         return $result;
     }
@@ -201,10 +194,9 @@ class Stripe extends \App\Providers\PaymentProvider
         $session = StripeAPI\Checkout\Session::create($request);
 
         // Store the payment reference in database
-        $payment['status'] = self::STATUS_OPEN;
         $payment['id'] = $session->payment_intent;
 
-        self::storePayment($payment, $wallet->id);
+        $this->storePayment($payment, $wallet->id);
 
         return [
             'id' => $session->id,
@@ -233,20 +225,19 @@ class Stripe extends \App\Providers\PaymentProvider
             'amount' => $payment['amount'],
             'currency' => \strtolower($payment['currency']),
             'description' => $payment['description'],
-            'locale' => 'en',
-            'off_session' => true,
             'receipt_email' => $wallet->owner->email,
             'customer' => $mandate->customer,
             'payment_method' => $mandate->payment_method,
+            'off_session' => true,
+            'confirm' => true,
         ];
 
         $intent = StripeAPI\PaymentIntent::create($request);
 
         // Store the payment reference in database
-        $payment['status'] = self::STATUS_OPEN;
         $payment['id'] = $intent->id;
 
-        self::storePayment($payment, $wallet->id);
+        $this->storePayment($payment, $wallet->id);
 
         return [
             'id' => $payment['id'],
@@ -260,8 +251,11 @@ class Stripe extends \App\Providers\PaymentProvider
      */
     public function webhook(): int
     {
-        $payload = file_get_contents('php://input');
-        $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'];
+        // We cannot just use php://input as it's already "emptied" by the framework
+        // $payload = file_get_contents('php://input');
+        $request = Request::instance();
+        $payload = $request->getContent();
+        $sig_header = $request->header('Stripe-Signature');
 
         // Parse and validate the input
         try {
@@ -270,7 +264,7 @@ class Stripe extends \App\Providers\PaymentProvider
                 $sig_header,
                 \config('services.stripe.webhook_secret')
             );
-        } catch (\UnexpectedValueException $e) {
+        } catch (\Exception $e) {
             // Invalid payload
             return 400;
         }
@@ -282,6 +276,10 @@ class Stripe extends \App\Providers\PaymentProvider
                 $intent = $event->data->object; // @phpstan-ignore-line
                 $payment = Payment::find($intent->id);
 
+                if (empty($payment) || $payment->type == self::TYPE_MANDATE) {
+                    return 404;
+                }
+
                 switch ($intent->status) {
                     case StripeAPI\PaymentIntent::STATUS_CANCELED:
                         $status = self::STATUS_CANCELED;
@@ -290,42 +288,73 @@ class Stripe extends \App\Providers\PaymentProvider
                         $status = self::STATUS_PAID;
                         break;
                     default:
-                        $status = self::STATUS_PENDING;
+                        $status = self::STATUS_FAILED;
                 }
+
+                DB::beginTransaction();
 
                 if ($status == self::STATUS_PAID) {
                     // Update the balance, if it wasn't already
                     if ($payment->status != self::STATUS_PAID) {
-                        $payment->wallet->credit($payment->amount);
+                        $this->creditPayment($payment, $intent);
                     }
-                } elseif (!empty($intent->last_payment_error)) {
-                    // See https://stripe.com/docs/error-codes for more info
-                    \Log::info(sprintf(
-                        'Stripe payment failed (%s): %s',
-                        $payment->id,
-                        json_encode($intent->last_payment_error)
-                    ));
+                } else {
+                    if (!empty($intent->last_payment_error)) {
+                        // See https://stripe.com/docs/error-codes for more info
+                        \Log::info(sprintf(
+                            'Stripe payment failed (%s): %s',
+                            $payment->id,
+                            json_encode($intent->last_payment_error)
+                        ));
+                    }
                 }
 
                 if ($payment->status != self::STATUS_PAID) {
                     $payment->status = $status;
                     $payment->save();
+
+                    if ($status != self::STATUS_CANCELED && $payment->type == self::TYPE_RECURRING) {
+                        // Disable the mandate
+                        if ($status == self::STATUS_FAILED) {
+                            $payment->wallet->setSetting('mandate_disabled', 1);
+                        }
+
+                        // Notify the user
+                        \App\Jobs\PaymentEmail::dispatch($payment);
+                    }
                 }
+
+                DB::commit();
 
                 break;
 
             case StripeAPI\Event::SETUP_INTENT_SUCCEEDED:
+            case StripeAPI\Event::SETUP_INTENT_SETUP_FAILED:
+            case StripeAPI\Event::SETUP_INTENT_CANCELED:
                 $intent = $event->data->object; // @phpstan-ignore-line
+                $payment = Payment::find($intent->id);
 
-                // Find the wallet
-                // TODO: This query is potentially slow, we should find another way
-                //       Maybe use payment/transactions table to store the reference
-                $setting = WalletSetting::where('key', 'stripe_id')
-                    ->where('value', $intent->customer)->first();
-
-                if ($setting) {
-                    $setting->wallet->setSetting('stripe_mandate_id', $intent->id);
+                if (empty($payment) || $payment->type != self::TYPE_MANDATE) {
+                    return 404;
                 }
+
+                switch ($intent->status) {
+                    case StripeAPI\SetupIntent::STATUS_CANCELED:
+                        $status = self::STATUS_CANCELED;
+                        break;
+                    case StripeAPI\SetupIntent::STATUS_SUCCEEDED:
+                        $status = self::STATUS_PAID;
+                        break;
+                    default:
+                        $status = self::STATUS_FAILED;
+                }
+
+                if ($status == self::STATUS_PAID) {
+                    $payment->wallet->setSetting('stripe_mandate_id', $intent->id);
+                }
+
+                $payment->status = $status;
+                $payment->save();
 
                 break;
 
@@ -381,5 +410,53 @@ class Stripe extends \App\Providers\PaymentProvider
                 return $mandate;
             }
         }
+    }
+
+    /**
+     * Apply the successful payment's pecunia to the wallet
+     */
+    protected static function creditPayment(Payment $payment, $intent)
+    {
+        $method = 'Stripe';
+
+        // Extract the payment method for transaction description
+        if (
+            !empty($intent->charges)
+            && ($charge = $intent->charges->data[0])
+            && ($pm = $charge->payment_method_details)
+        ) {
+            $method = self::paymentMethod($pm);
+        }
+
+        // TODO: Localization?
+        $description = $payment->type == self::TYPE_RECURRING ? 'Auto-payment' : 'Payment';
+        $description .= " transaction {$payment->id} using {$method}";
+
+        $payment->wallet->credit($payment->amount, $description);
+
+        // Unlock the disabled auto-payment mandate
+        if ($payment->wallet->balance >= 0) {
+            $payment->wallet->setSetting('mandate_disabled', null);
+        }
+    }
+
+    /**
+     * Extract payment method description from Stripe payment details
+     */
+    protected static function paymentMethod($details, $default = ''): string
+    {
+        switch ($details->type) {
+            case 'card':
+                // TODO: card number
+                return \sprintf(
+                    '%s (**** **** **** %s)',
+                    // @phpstan-ignore-next-line
+                    \ucfirst($details->card->brand) ?: 'Card',
+                    // @phpstan-ignore-next-line
+                    $details->card->last4
+                );
+        }
+
+        return $default;
     }
 }

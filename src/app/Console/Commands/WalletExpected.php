@@ -2,11 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Domain;
-use App\User;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class WalletExpected extends Command
 {

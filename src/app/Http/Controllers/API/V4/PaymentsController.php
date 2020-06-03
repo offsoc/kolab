@@ -65,8 +65,10 @@ class PaymentsController extends Controller
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
-        $wallet->setSetting('mandate_amount', $request->amount);
-        $wallet->setSetting('mandate_balance', $request->balance);
+        $wallet->setSettings([
+                'mandate_amount' => $request->amount,
+                'mandate_balance' => $request->balance,
+        ]);
 
         $request = [
             'currency' => 'CHF',
@@ -98,6 +100,8 @@ class PaymentsController extends Controller
         $provider = PaymentProvider::factory($wallet);
 
         $provider->deleteMandate($wallet);
+
+        $wallet->setSetting('mandate_disabled', null);
 
         return response()->json([
                 'status' => 'success',
@@ -142,13 +146,31 @@ class PaymentsController extends Controller
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
-        $wallet->setSetting('mandate_amount', $request->amount);
-        $wallet->setSetting('mandate_balance', $request->balance);
+        // If the mandate is disabled the update will trigger
+        // an auto-payment and the amount must cover the debt
+        if ($wallet->getSetting('mandate_disabled')) {
+            if ($wallet->balance < 0 && $wallet->balance + $amount < 0) {
+                $errors = ['amount' => \trans('validation.minamountdebt')];
+                return response()->json(['status' => 'error', 'errors' => $errors], 422);
+            }
 
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.mandate-update-success'),
+            $wallet->setSetting('mandate_disabled', null);
+
+            if ($wallet->balance < intval($request->balance * 100)) {
+                \App\Jobs\WalletCharge::dispatch($wallet);
+            }
+        }
+
+        $wallet->setSettings([
+                'mandate_amount' => $request->amount,
+                'mandate_balance' => $request->balance,
         ]);
+
+        $result = self::walletMandate($wallet);
+        $result['status'] = 'success';
+        $result['message'] = \trans('app.mandate-update-success');
+
+        return response()->json($result);
     }
 
     /**
@@ -222,15 +244,43 @@ class PaymentsController extends Controller
     }
 
     /**
-     * Charge a wallet with a "recurring" payment.
+     * Top up a wallet with a "recurring" payment.
      *
      * @param \App\Wallet $wallet The wallet to charge
-     * @param int         $amount The amount of money in cents
      *
-     * @return bool
+     * @return bool True if the payment has been initialized
      */
-    public static function directCharge(Wallet $wallet, $amount): bool
+    public static function topUpWallet(Wallet $wallet): bool
     {
+        if ((bool) $wallet->getSetting('mandate_disabled')) {
+            return false;
+        }
+
+        $min_balance = (int) (floatval($wallet->getSetting('mandate_balance')) * 100);
+        $amount = (int) (floatval($wallet->getSetting('mandate_amount')) * 100);
+
+        // The wallet balance is greater than the auto-payment threshold
+        if ($wallet->balance >= $min_balance) {
+            // Do nothing
+            return false;
+        }
+
+        // The defined top-up amount is not enough
+        // Disable auto-payment and notify the user
+        if ($wallet->balance + $amount < 0) {
+            // Disable (not remove) the mandate
+            $wallet->setSetting('mandate_disabled', 1);
+            \App\Jobs\PaymentMandateDisabledEmail::dispatch($wallet);
+            return false;
+        }
+
+        $provider = PaymentProvider::factory($wallet);
+        $mandate = (array) $provider->getMandate($wallet);
+
+        if (empty($mandate['isValid'])) {
+            return false;
+        }
+
         $request = [
             'type' => PaymentProvider::TYPE_RECURRING,
             'currency' => 'CHF',
@@ -238,13 +288,9 @@ class PaymentsController extends Controller
             'description' => \config('app.name') . ' Recurring Payment',
         ];
 
-        $provider = PaymentProvider::factory($wallet);
+        $result = $provider->payment($wallet, $request);
 
-        if ($result = $provider->payment($wallet, $request)) {
-            return true;
-        }
-
-        return false;
+        return !empty($result);
     }
 
     /**
@@ -263,6 +309,7 @@ class PaymentsController extends Controller
 
         $mandate['amount'] = (int) (PaymentProvider::MIN_AMOUNT / 100);
         $mandate['balance'] = 0;
+        $mandate['isDisabled'] = !empty($mandate['id']) && $wallet->getSetting('mandate_disabled');
 
         foreach (['amount', 'balance'] as $key) {
             if (($value = $wallet->getSetting("mandate_{$key}")) !== null) {
