@@ -176,6 +176,7 @@ return [
         /*
          * Package Service Providers...
          */
+        Barryvdh\DomPDF\ServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -221,6 +222,7 @@ return [
         'Mail' => Illuminate\Support\Facades\Mail::class,
         'Notification' => Illuminate\Support\Facades\Notification::class,
         'Password' => Illuminate\Support\Facades\Password::class,
+        'PDF' => Barryvdh\DomPDF\Facade::class,
         'Queue' => Illuminate\Support\Facades\Queue::class,
         'Redirect' => Illuminate\Support\Facades\Redirect::class,
         'Redis' => Illuminate\Support\Facades\Redis::class,
@@ -242,5 +244,13 @@ return [
         'account_suspended' => env('KB_ACCOUNT_SUSPENDED'),
         // An article about a way to delete an owned account
         'account_delete' => env('KB_ACCOUNT_DELETE'),
+    ],
+
+    'company' => [
+        'name' => env('COMPANY_NAME'),
+        'address' => env('COMPANY_ADDRESS'),
+        'details' => env('COMPANY_DETAILS'),
+        'email' => env('COMPANY_EMAIL'),
+        'logo' => env('COMPANY_LOGO'),
     ],
 ];

@@ -22,6 +22,16 @@ class Payment extends Model
         'amount' => 'integer'
     ];
 
+    protected $fillable = [
+        'id',
+        'wallet_id',
+        'amount',
+        'description',
+        'provider',
+        'status',
+        'type',
+    ];
+
     /**
      * The wallet to which this payment belongs.
      *

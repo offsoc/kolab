@@ -11,7 +11,7 @@ class TemplateRender extends Command
      *
      * @var string
      */
-    protected $signature = 'template:render {template}';
+    protected $signature = 'template:render {template} {--html} {--pdf}';
 
     /**
      * The console command description.
@@ -28,10 +28,32 @@ class TemplateRender extends Command
     public function handle()
     {
         $template = $this->argument('template');
-        $template = str_replace('/', '\\', $template);
+        $template = str_replace("/", "\\", $template);
 
-        $class = '\\App\\' . $template;
+        $class = "\\App\\{$template}";
 
-        echo $class::fakeRender();
+        // Invalid template, list all templates
+        if (!class_exists($class)) {
+            $this->info("Invalid template name. Available templates:");
+
+            foreach (glob(app_path() . '/Documents/*.php') as $file) {
+                $file = basename($file, '.php');
+                $this->info("Documents/$file");
+            }
+
+            foreach (glob(app_path() . '/Mail/*.php') as $file) {
+                $file = basename($file, '.php');
+                $this->info("Mail/$file");
+            }
+
+            return 1;
+        }
+
+        $mode = 'html';
+        if (!empty($this->option('pdf'))) {
+            $mode = 'pdf';
+        }
+
+        echo $class::fakeRender($mode);
     }
 }
