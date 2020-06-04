@@ -138,8 +138,8 @@
                                     <span class="form-control-plaintext" v-html="wallet.providerLink"></span>
                                 </div>
                             </div>
-                            <button id="button-award" class="btn btn-success" type="button" @click="awardDialog">Award</button>
-                            <button id="button-penalty" class="btn btn-danger" type="button" @click="penalizeDialog">Penalize</button>
+                            <button id="button-award" class="btn btn-success" type="button" @click="awardDialog">Add bonus</button>
+                            <button id="button-penalty" class="btn btn-danger" type="button" @click="penalizeDialog">Add penalty</button>
                         </form>
                     </div>
                 </div>
@@ -354,7 +354,6 @@
                 oneoff_currency: 'CHF',
                 oneoff_description: '',
                 oneoff_negative: false,
-                balance: 0,
                 discount: 0,
                 discount_description: '',
                 discounts: [],
@@ -551,7 +550,7 @@
                         if (response.data.status == 'success') {
                             this.dialog.modal('hide')
                             this.$toast.success(response.data.message)
-                            this.balance = response.data.balance
+                            this.wallet = Object.assign({}, this.wallet, {balance: response.data.balance})
                             this.oneoff_amount = ''
                             this.oneoff_description = ''
                         }

@@ -38,6 +38,7 @@ class User extends Page
     public function assert($browser): void
     {
         $browser->waitForLocation($this->url())
+            ->waitUntilMissing('@app .app-loader')
             ->waitFor('@user-info');
     }
 
