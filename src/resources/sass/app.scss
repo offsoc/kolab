@@ -107,10 +107,10 @@ tfoot.table-fake-body {
     background-color: #f8f8f8;
     color: grey;
     text-align: center;
-    height: 8em;
 
     td {
         vertical-align: middle;
+        height: 8em;
     }
 
     tbody:not(:empty) + & {
@@ -121,12 +121,17 @@ tfoot.table-fake-body {
 table {
     td.buttons,
     td.price,
+    td.datetime,
     td.selection {
         width: 1%;
+        white-space: nowrap;
     }
 
+    th.price,
     td.price {
+        width: 1%;
         text-align: right;
+        white-space: nowrap;
     }
 
     &.form-list {
@@ -141,6 +146,20 @@ table {
                 padding-right: 0;
             }
         }
+    }
+
+    .list-details {
+        min-height: 1em;
+
+        ul {
+            margin: 0;
+            padding-left: 1.2em;
+        }
+    }
+
+    .btn-action {
+        line-height: 1;
+        padding: 0;
     }
 }
 
@@ -244,5 +263,9 @@ table {
 
 // Bootstrap style fix
 .btn-link {
+    border: 0;
+}
+
+.table thead th {
     border: 0;
 }

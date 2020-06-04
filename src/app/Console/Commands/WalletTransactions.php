@@ -43,7 +43,7 @@ class WalletTransactions extends Command
             return 1;
         }
 
-        foreach ($wallet->transactions() as $transaction) {
+        foreach ($wallet->transactions()->orderBy('created_at')->get() as $transaction) {
             $this->info(
                 sprintf(
                     "%s: %s %s",

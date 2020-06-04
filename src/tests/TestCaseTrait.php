@@ -3,7 +3,9 @@
 namespace Tests;
 
 use App\Domain;
+use App\Transaction;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Assert;
@@ -36,6 +38,73 @@ trait TestCaseTrait
         $app->make(Kernel::class)->bootstrap();
 
         return $app;
+    }
+
+    /**
+     * Create a set of transaction log entries for a wallet
+     */
+    protected function createTestTransactions($wallet)
+    {
+        $result = [];
+        $date = Carbon::now();
+        $debit = 0;
+        $entitlementTransactions = [];
+        foreach ($wallet->entitlements as $entitlement) {
+            if ($entitlement->cost) {
+                $debit += $entitlement->cost;
+                $entitlementTransactions[] = $entitlement->createTransaction(
+                    Transaction::ENTITLEMENT_BILLED,
+                    $entitlement->cost
+                );
+            }
+        }
+
+        $transaction = Transaction::create([
+                'user_email' => null,
+                'object_id' => $wallet->id,
+                'object_type' => \App\Wallet::class,
+                'type' => Transaction::WALLET_DEBIT,
+                'amount' => $debit,
+                'description' => 'Payment',
+        ]);
+        $result[] = $transaction;
+
+        Transaction::whereIn('id', $entitlementTransactions)->update(['transaction_id' => $transaction->id]);
+
+        $transaction = Transaction::create([
+                'user_email' => null,
+                'object_id' => $wallet->id,
+                'object_type' => \App\Wallet::class,
+                'type' => Transaction::WALLET_CREDIT,
+                'amount' => 2000,
+                'description' => 'Payment',
+        ]);
+        $transaction->created_at = $date->next(Carbon::MONDAY);
+        $transaction->save();
+        $result[] = $transaction;
+
+        $types = [
+            Transaction::WALLET_AWARD,
+            Transaction::WALLET_PENALTY,
+        ];
+
+        // The page size is 10, so we generate so many to have at least two pages
+        $loops = 10;
+        while ($loops-- > 0) {
+            $transaction = Transaction::create([
+                'user_email' => 'jeroen.@jeroen.jeroen',
+                'object_id' => $wallet->id,
+                'object_type' => \App\Wallet::class,
+                'type' => $types[count($result) % count($types)],
+                'amount' => 11 * (count($result) + 1),
+                'description' => 'TRANS' . $loops,
+            ]);
+            $transaction->created_at = $date->next(Carbon::MONDAY);
+            $transaction->save();
+            $result[] = $transaction;
+        }
+
+        return $result;
     }
 
     protected function deleteTestDomain($name)

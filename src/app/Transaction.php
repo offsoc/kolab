@@ -4,6 +4,18 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * The eloquent definition of a Transaction.
+ *
+ * @property int    $amount
+ * @property string $description
+ * @property string $id
+ * @property string $object_id
+ * @property string $object_type
+ * @property string $type
+ * @property string $transaction_id
+ * @property string $user_email
+ */
 class Transaction extends Model
 {
     protected $fillable = [
@@ -96,6 +108,13 @@ class Transaction extends Model
     public function toString()
     {
         $label = $this->objectTypeToLabelString() . '-' . $this->{'type'};
+
+        return \trans("transactions.{$label}", $this->toArray());
+    }
+
+    public function shortDescription()
+    {
+        $label = $this->objectTypeToLabelString() . '-' . $this->{'type'} . '-short';
 
         return \trans("transactions.{$label}", $this->toArray());
     }

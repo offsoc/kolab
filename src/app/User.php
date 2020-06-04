@@ -220,22 +220,26 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Check if current user can read data of another object.
      *
-     * @param \App\User|\App\Domain $object A user|domain object
+     * @param \App\User|\App\Domain|\App\Wallet $object A user|domain|wallet object
      *
      * @return bool True if he can, False otherwise
      */
     public function canRead($object): bool
     {
-        if (!method_exists($object, 'wallet')) {
-            return false;
-        }
-
         if ($this->role == "admin") {
             return true;
         }
 
         if ($object instanceof User && $this->id == $object->id) {
             return true;
+        }
+
+        if ($object instanceof Wallet) {
+            return $object->user_id == $this->id || $object->controllers->contains($this);
+        }
+
+        if (!method_exists($object, 'wallet')) {
+            return false;
         }
 
         $wallet = $object->wallet();

@@ -7,6 +7,9 @@ parameters:
     ignoreErrors:
         - '#Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable#'
         - '#Access to an undefined property App\\Package::\$pivot#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$id#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$created_at#'
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Model::toString()#'
     level: 4
     paths:
         - app/

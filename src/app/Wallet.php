@@ -131,8 +131,10 @@ class Wallet extends Model
 
         // Prefer intl extension's number formatter
         if (class_exists('NumberFormatter')) {
-            $nf = new \NumberFormatter($locale, \NumberFormatter::DECIMAL);
-            return $nf->formatCurrency($amount, $this->currency);
+            $nf = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+            $result = $nf->formatCurrency($amount, $this->currency);
+            // Replace non-breaking space
+            return str_replace("\xC2\xA0", " ", $result);
         }
 
         return sprintf('%.2f %s', $amount, $this->currency);
@@ -313,7 +315,7 @@ class Wallet extends Model
     /**
      * Retrieve the transactions against this wallet.
      *
-     * @return iterable \App\Transaction
+     * @return \Illuminate\Database\Eloquent\Builder Query builder
      */
     public function transactions()
     {
@@ -322,6 +324,6 @@ class Wallet extends Model
                 'object_id' => $this->id,
                 'object_type' => \App\Wallet::class
             ]
-        )->orderBy('created_at')->get();
+        );
     }
 }

@@ -8,5 +8,14 @@ return [
     'wallet-award' => 'Bonus of :amount awarded to :wallet_description; :description',
     'wallet-credit' => ':amount was added to the balance of :wallet_description',
     'wallet-debit' => ':amount was deducted from the balance of :wallet_description',
-    'wallet-penalty' => 'The balance of wallet :wallet_description was reduced by :amount; :description'
+    'wallet-penalty' => 'The balance of wallet :wallet_description was reduced by :amount; :description',
+
+    'entitlement-created-short' => 'Added :sku_title for :object_email',
+    'entitlement-billed-short' => 'Billed :sku_title for :object_email',
+    'entitlement-deleted-short' => 'Deleted :sku_title for :object_email',
+
+    'wallet-award-short' => 'Bonus: :description',
+    'wallet-credit-short' => 'Payment',
+    'wallet-debit-short' => 'Deduction',
+    'wallet-penalty-short' => 'Charge: :description',
 ];
