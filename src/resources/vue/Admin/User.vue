@@ -138,6 +138,8 @@
                                     <span class="form-control-plaintext" v-html="wallet.providerLink"></span>
                                 </div>
                             </div>
+                            <button id="button-award" class="btn btn-success" type="button" @click="awardDialog">Award</button>
+                            <button id="button-penalty" class="btn btn-danger" type="button" @click="penalizeDialog">Penalize</button>
                         </form>
                     </div>
                 </div>
@@ -298,6 +300,42 @@
                 </div>
             </div>
         </div>
+
+        <div id="oneoff-dialog" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ oneoff_negative ? 'Add a penalty to the wallet' : 'Add a bonus to the wallet' }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form data-validation-prefix="oneoff_">
+                            <div class="form-group">
+                                <label for="oneoff_amount">Amount</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="oneoff_amount" v-model="oneoff_amount" required>
+                                    <span class="input-group-append">
+                                        <span class="input-group-text">{{ oneoff_currency }}</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="oneoff_description">Description</label>
+                                <input class="form-control" id="oneoff_description" v-model="oneoff_description" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary modal-action" @click="submitOneOff()">
+                            <svg-icon icon="check"></svg-icon> Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -312,6 +350,11 @@
         },
         data() {
             return {
+                oneoff_amount: '',
+                oneoff_currency: 'CHF',
+                oneoff_description: '',
+                oneoff_negative: false,
+                balance: 0,
                 discount: 0,
                 discount_description: '',
                 discounts: [],
@@ -414,6 +457,9 @@
             capitalize(str) {
                 return str.charAt(0).toUpperCase() + str.slice(1)
             },
+            awardDialog() {
+                this.oneOffDialog(false)
+            },
             discountEdit() {
                 $('#discount-dialog')
                     .on('shown.bs.modal', e => {
@@ -440,6 +486,16 @@
                         $(e.target).find('input').focus()
                     })
                     .modal()
+            },
+            oneOffDialog(negative) {
+                this.oneoff_negative = negative
+                this.dialog = $('#oneoff-dialog').on('shown.bs.modal', event => {
+                    this.$root.clearFormValidation(event.target)
+                    $(event.target).find('#oneoff_amount').focus()
+                }).modal()
+            },
+            penalizeDialog() {
+                this.oneOffDialog(true)
             },
             submitDiscount() {
                 $('#discount-dialog').modal('hide')
@@ -470,6 +526,34 @@
                             this.$toast.success(response.data.message)
                             this.user.external_email = this.external_email
                             this.external_email = null // required because of Vue
+                        }
+                    })
+            },
+            submitOneOff() {
+                let wallet_id = this.user.wallets[0].id
+                let post = {
+                    amount: this.oneoff_amount,
+                    description: this.oneoff_description
+                }
+
+                if (this.oneoff_negative && /^\d+(\.?\d+)?$/.test(post.amount)) {
+                    post.amount *= -1
+                }
+
+                // TODO: We maybe should use system currency not wallet currency,
+                //       or have a selector so the operator does not have to calculate
+                //       exchange rates
+
+                this.$root.clearFormValidation(this.dialog)
+
+                axios.post('/api/v4/wallets/' + wallet_id + '/one-off', post)
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.dialog.modal('hide')
+                            this.$toast.success(response.data.message)
+                            this.balance = response.data.balance
+                            this.oneoff_amount = ''
+                            this.oneoff_description = ''
                         }
                     })
             },

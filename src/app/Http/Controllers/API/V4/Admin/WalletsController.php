@@ -5,8 +5,11 @@ namespace App\Http\Controllers\API\V4\Admin;
 use App\Discount;
 use App\Http\Controllers\API\V4\PaymentsController;
 use App\Providers\PaymentProvider;
+use App\Transaction;
 use App\Wallet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
 {
@@ -43,6 +46,65 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
         $result['providerLink'] = $provider->customerLink($wallet);
 
         return response()->json($result);
+    }
+
+    /**
+     * Award/penalize a wallet.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @params string                  $id      Wallet identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function oneOff(Request $request, $id)
+    {
+        $wallet = Wallet::find($id);
+
+        if (empty($wallet)) {
+            return $this->errorResponse(404);
+        }
+
+        // Check required fields
+        $v = Validator::make(
+            $request->all(),
+            [
+                'amount' => 'required|numeric',
+                'description' => 'required|string|max:1024',
+            ]
+        );
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        $amount = (int) ($request->amount * 100);
+        $type = $amount > 0 ? Transaction::WALLET_AWARD : Transaction::WALLET_PENALTY;
+
+        DB::beginTransaction();
+
+        $wallet->balance += $amount;
+        $wallet->save();
+
+        Transaction::create(
+            [
+                'user_email' => \App\Utils::userEmailOrNull(),
+                'object_id' => $wallet->id,
+                'object_type' => Wallet::class,
+                'type' => $type,
+                'amount' => $amount < 0 ? $amount * -1 : $amount,
+                'description' => $request->description
+            ]
+        );
+
+        DB::commit();
+
+        $response = [
+            'status' => 'success',
+            'message' => \trans("app.wallet-{$type}-success"),
+            'balance' => $wallet->balance
+        ];
+
+        return response()->json($response);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Controller\Admin;
 
 use App\Discount;
+use App\Transaction;
 use Tests\TestCase;
 
 class WalletsTest extends TestCase
@@ -55,13 +56,83 @@ class WalletsTest extends TestCase
 
         $this->assertSame($wallet->id, $json['id']);
         $this->assertSame('CHF', $json['currency']);
-        $this->assertSame(0, $json['balance']);
+        $this->assertSame($wallet->balance, $json['balance']);
         $this->assertSame(0, $json['discount']);
         $this->assertTrue(empty($json['description']));
         $this->assertTrue(empty($json['discount_description']));
         $this->assertTrue(!empty($json['provider']));
         $this->assertTrue(!empty($json['providerLink']));
         $this->assertTrue(!empty($json['mandate']));
+    }
+
+    /**
+     * Test awarding/penalizing a wallet (POST /api/v4/wallets/:id/one-off)
+     */
+    public function testOneOff(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $wallet = $user->wallets()->first();
+        $balance = $wallet->balance;
+
+        Transaction::where('object_id', $wallet->id)
+            ->whereIn('type', [Transaction::WALLET_AWARD, Transaction::WALLET_PENALTY])
+            ->delete();
+
+        // Non-admin user
+        $response = $this->actingAs($user)->post("api/v4/wallets/{$wallet->id}/one-off", []);
+        $response->assertStatus(403);
+
+        // Admin user - invalid input
+        $post = ['amount' => 'aaaa'];
+        $response = $this->actingAs($admin)->post("api/v4/wallets/{$wallet->id}/one-off", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('The amount must be a number.', $json['errors']['amount'][0]);
+        $this->assertSame('The description field is required.', $json['errors']['description'][0]);
+        $this->assertCount(2, $json);
+        $this->assertCount(2, $json['errors']);
+
+        // Admin user - a valid bonus
+        $post = ['amount' => '50', 'description' => 'A bonus'];
+        $response = $this->actingAs($admin)->post("api/v4/wallets/{$wallet->id}/one-off", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('The bonus has been added to the wallet successfully.', $json['message']);
+        $this->assertSame($balance += 5000, $json['balance']);
+        $this->assertSame($balance, $wallet->fresh()->balance);
+
+        $transaction = Transaction::where('object_id', $wallet->id)
+            ->where('type', Transaction::WALLET_AWARD)->first();
+
+        $this->assertSame($post['description'], $transaction->description);
+        $this->assertSame(5000, $transaction->amount);
+        $this->assertSame($admin->email, $transaction->user_email);
+
+        // Admin user - a valid penalty
+        $post = ['amount' => '-40', 'description' => 'A penalty'];
+        $response = $this->actingAs($admin)->post("api/v4/wallets/{$wallet->id}/one-off", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('The penalty has been added to the wallet successfully.', $json['message']);
+        $this->assertSame($balance -= 4000, $json['balance']);
+        $this->assertSame($balance, $wallet->fresh()->balance);
+
+        $transaction = Transaction::where('object_id', $wallet->id)
+            ->where('type', Transaction::WALLET_PENALTY)->first();
+
+        $this->assertSame($post['description'], $transaction->description);
+        $this->assertSame(4000, $transaction->amount);
+        $this->assertSame($admin->email, $transaction->user_email);
     }
 
     /**

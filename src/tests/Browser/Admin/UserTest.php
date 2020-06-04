@@ -493,4 +493,105 @@ class UserTest extends TestCaseDusk
                 });
         });
     }
+
+    /**
+     * Test awarding/penalizing a wallet
+     */
+    public function testBonusPenalty(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $john = $this->getTestUser('john@kolab.org');
+
+            $browser->visit(new UserPage($john->id))
+                ->waitFor('@user-finances #button-award')
+                ->click('@user-finances #button-award')
+                // Test dialog content, and closing it with Cancel button
+                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Add a bonus to the wallet')
+                        ->assertFocused('@body input#oneoff_amount')
+                        ->assertSeeIn('@body label[for="oneoff_amount"]', 'Amount')
+                        ->assertvalue('@body input#oneoff_amount', '')
+                        ->assertSeeIn('@body label[for="oneoff_description"]', 'Description')
+                        ->assertvalue('@body input#oneoff_description', '')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
+                        ->click('@button-cancel');
+                })
+                ->assertMissing('#oneoff-dialog');
+
+            // Test bonus
+            $browser->click('@user-finances #button-award')
+                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
+                    // Test input validation for a bonus
+                    $browser->type('@body #oneoff_amount', 'aaa')
+                        ->type('@body #oneoff_description', '')
+                        ->click('@button-action')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        ->assertVisible('@body #oneoff_amount.is-invalid')
+                        ->assertVisible('@body #oneoff_description.is-invalid')
+                        ->assertSeeIn(
+                            '@body #oneoff_amount + span + .invalid-feedback',
+                            'The amount must be a number.'
+                        )
+                        ->assertSeeIn(
+                            '@body #oneoff_description + .invalid-feedback',
+                            'The description field is required.'
+                        );
+
+                    // Test adding a bonus
+                    $browser->type('@body #oneoff_amount', '12.34')
+                        ->type('@body #oneoff_description', 'Test bonus')
+                        ->click('@button-action')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'The bonus has been added to the wallet successfully.');
+                })
+                ->assertMissing('#oneoff-dialog')
+                ->assertSeeIn('@user-finances .card-title span.text-success', '12,34 CHF');
+
+            $this->assertSame(1234, $john->wallets()->first()->balance);
+
+            // Test penalty
+            $browser->click('@user-finances #button-penalty')
+                // Test dialog content, and closing it with Cancel button
+                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Add a penalty to the wallet')
+                        ->assertFocused('@body input#oneoff_amount')
+                        ->assertSeeIn('@body label[for="oneoff_amount"]', 'Amount')
+                        ->assertvalue('@body input#oneoff_amount', '')
+                        ->assertSeeIn('@body label[for="oneoff_description"]', 'Description')
+                        ->assertvalue('@body input#oneoff_description', '')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
+                        ->click('@button-cancel');
+                })
+                ->assertMissing('#oneoff-dialog')
+                ->click('@user-finances #button-penalty')
+                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
+                    // Test input validation for a penalty
+                    $browser->type('@body #oneoff_amount', '')
+                        ->type('@body #oneoff_description', '')
+                        ->click('@button-action')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        ->assertVisible('@body #oneoff_amount.is-invalid')
+                        ->assertVisible('@body #oneoff_description.is-invalid')
+                        ->assertSeeIn(
+                            '@body #oneoff_amount + span + .invalid-feedback',
+                            'The amount field is required.'
+                        )
+                        ->assertSeeIn(
+                            '@body #oneoff_description + .invalid-feedback',
+                            'The description field is required.'
+                        );
+
+                    // Test adding a penalty
+                    $browser->type('@body #oneoff_amount', '12.35')
+                        ->type('@body #oneoff_description', 'Test penalty')
+                        ->click('@button-action')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'The penalty has been added to the wallet successfully.');
+                })
+                ->assertMissing('#oneoff-dialog')
+                ->assertSeeIn('@user-finances .card-title span.text-danger', '-0,01 CHF');
+
+            $this->assertSame(-1, $john->wallets()->first()->balance);
+        });
+    }
 }
