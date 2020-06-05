@@ -734,6 +734,7 @@ class UsersTest extends TestCase
         $provider = \config('services.payment_provider') ?: 'mollie';
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
+        $wallet->setSettings(['mollie_id' => null, 'stripe_id' => null]);
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
 
         $this->assertEquals($user->id, $result['id']);
