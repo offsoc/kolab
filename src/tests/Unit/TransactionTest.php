@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Transaction;
 use Tests\TestCase;
 
 class TransactionTest extends TestCase
@@ -18,7 +19,7 @@ class TransactionTest extends TestCase
 
     public function testLabel()
     {
-        $transactions = \App\Transaction::all();
+        $transactions = Transaction::limit(20)->get();
 
         foreach ($transactions as $transaction) {
             $this->assertNotNull($transaction->toString());
@@ -30,16 +31,16 @@ class TransactionTest extends TestCase
         $user = $this->getTestUser('jane@kolabnow.com');
         $wallet = $user->wallets()->first();
 
-        $transaction = \App\Transaction::create(
+        $transaction = Transaction::create(
             [
                 'object_id' => $wallet->id,
                 'object_type' => \App\Wallet::class,
-                'type' => \App\Transaction::WALLET_PENALTY,
+                'type' => Transaction::WALLET_PENALTY,
                 'amount' => 9
             ]
         );
 
-        $this->assertEquals($transaction->{'type'}, 'penalty');
+        $this->assertEquals($transaction->{'type'}, Transaction::WALLET_PENALTY);
     }
 
     public function testInvalidType()
@@ -49,7 +50,7 @@ class TransactionTest extends TestCase
 
         $this->expectException(\Exception::class);
 
-        $transaction = \App\Transaction::create(
+        $transaction = Transaction::create(
             [
                 'object_id' => $wallet->id,
                 'object_type' => \App\Wallet::class,
