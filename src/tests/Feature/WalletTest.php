@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Package;
 use App\User;
+use App\Sku;
 use App\Wallet;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -20,6 +22,7 @@ class WalletTest extends TestCase
         'WalletControllerB@WalletController.com',
         'WalletController2A@WalletController.com',
         'WalletController2B@WalletController.com',
+        'jane@kolabnow.com'
     ];
 
     public function setUp(): void
@@ -38,6 +41,44 @@ class WalletTest extends TestCase
         }
 
         parent::tearDown();
+    }
+
+    public function testBalanceLastsUntil(): void
+    {
+        $user = $this->getTestUser('jane@kolabnow.com');
+        $package = Package::where('title', 'kolab')->first();
+        $mailbox = Sku::where('title', 'mailbox')->first();
+
+        $user->assignPackage($package);
+
+        $wallet = $user->wallets()->first();
+
+        $until = $wallet->balanceLastsUntil();
+
+        // TODO: Test this for typical cases
+        // TODO: Test this for a user with no entitlements
+        // TODO: Test this for a user with 100% discount
+        $this->markTestIncomplete();
+    }
+
+    public function testCostsPerDay(): void
+    {
+        // 999
+        // 28 days: 35.68
+        // 31 days: 32.22
+        $user = $this->getTestUser('jane@kolabnow.com');
+
+        $package = Package::where('title', 'kolab')->first();
+        $mailbox = Sku::where('title', 'mailbox')->first();
+
+        $user->assignPackage($package);
+
+        $wallet = $user->wallets()->first();
+
+        $costsPerDay = $wallet->costsPerDay();
+
+        $this->assertTrue($costsPerDay < 35.68);
+        $this->assertTrue($costsPerDay > 32.22);
     }
 
     /**

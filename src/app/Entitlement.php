@@ -53,6 +53,26 @@ class Entitlement extends Model
     ];
 
     /**
+     * Return the costs per day for this entitlement.
+     *
+     * @return float
+     */
+    public function costsPerDay()
+    {
+        if ($this->cost == 0) {
+            return (float) 0;
+        }
+
+        $discount = $this->wallet->getDiscountRate();
+
+        $daysInLastMonth = \App\Utils::daysInLastMonth();
+
+        $costsPerDay = (float) ($this->cost * $discount) / $daysInLastMonth;
+
+        return $costsPerDay;
+    }
+
+    /**
      * Create a transaction record for this entitlement.
      *
      * @param string $type The type of transaction ('created', 'billed', 'deleted'), but use the

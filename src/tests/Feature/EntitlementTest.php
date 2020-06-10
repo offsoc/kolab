@@ -32,6 +32,25 @@ class EntitlementTest extends TestCase
         parent::tearDown();
     }
 
+    public function testCostsPerDay(): void
+    {
+        // 444
+        // 28 days: 15.86
+        // 31 days: 14.32
+        $user = $this->getTestUser('entitlement-test@kolabnow.com');
+        $package = Package::where('title', 'kolab')->first();
+        $mailbox = Sku::where('title', 'mailbox')->first();
+
+        $user->assignPackage($package);
+
+        $entitlement = $user->entitlements->where('sku_id', $mailbox->id)->first();
+
+        $costsPerDay = $entitlement->costsPerDay();
+
+        $this->assertTrue($costsPerDay < 15.86);
+        $this->assertTrue($costsPerDay > 14.32);
+    }
+
     /**
      * Tests for User::AddEntitlement()
      */

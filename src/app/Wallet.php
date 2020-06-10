@@ -117,6 +117,30 @@ class Wallet extends Model
     }
 
     /**
+     * Calculate for how long the current balance will last.
+     *
+     * @return \Carbon\Carbon Date
+     */
+    public function balanceLastsUntil()
+    {
+        $balance = $this->balance;
+
+        // retrieve any expected charges
+        $expectedCharge = $this->expectedCharges();
+
+        // get the costs per day for all entitlements billed against this wallet
+        $costsPerDay = $this->costsPerDay();
+
+        // the number of days this balance, minus the expected charges, would last
+        $daysDelta = ($balance - $expectedCharge) / $costsPerDay;
+
+        // calculate from the last entitlement billed
+        $entitlement = $this->entitlements()->orderBy('updated_at', 'desc')->first();
+
+        return $entitlement->updated_at->copy()->addDays($daysDelta);
+    }
+
+    /**
      * A helper to display human-readable amount of money using
      * the wallet currency and specified locale.
      *
@@ -153,6 +177,22 @@ class Wallet extends Model
             'wallet_id',      // The local foreign key
             'user_id'         // The remote foreign key
         );
+    }
+
+    /**
+     * Retrieve the costs per day of everything charged to this wallet.
+     *
+     * @return float
+     */
+    public function costsPerDay()
+    {
+        $costs = (float) 0;
+
+        foreach ($this->entitlements as $entitlement) {
+            $costs += $entitlement->costsPerDay();
+        }
+
+        return $costs;
     }
 
     /**
