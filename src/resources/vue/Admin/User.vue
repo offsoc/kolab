@@ -511,7 +511,7 @@
             reload() {
                 // this is to reload transaction log
                 this.walletReload = true
-                this.$nextTick(function() { this.walletReload = false })
+                this.$nextTick(() => { this.walletReload = false })
             },
             submitDiscount() {
                 $('#discount-dialog').modal('hide')

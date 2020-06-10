@@ -33,7 +33,7 @@
             </tfoot>
         </table>
         <div class="text-center p-3" id="transactions-loader" v-if="hasMore">
-            <button class="btn btn-secondary"@click="loadLog(true)">Load more</button>
+            <button class="btn btn-secondary" @click="loadLog(true)">Load more</button>
         </div>
     </div>
 </template>
@@ -41,8 +41,8 @@
 <script>
     export default {
         props: {
-            walletId: { type: String, default: () => { return null } },
-            isAdmin: { type: Boolean, default: () => { return false } },
+            walletId: { type: String, default: null },
+            isAdmin: { type: Boolean, default: false },
         },
         data() {
             return {

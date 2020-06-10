@@ -19,7 +19,7 @@
 <script>
     export default {
         props: {
-            data: { type: Object, default: () => { return {} } }
+            data: { type: Object, default: () => {} }
         },
         mounted() {
             $(this.$el).on('hidden.bs.toast', () => {

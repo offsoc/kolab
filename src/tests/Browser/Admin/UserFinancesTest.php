@@ -15,7 +15,7 @@ use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\TestCaseDusk;
 
-class UserTest extends TestCaseDusk
+class UserFinancesTest extends TestCaseDusk
 {
     /**
      * {@inheritDoc}
@@ -90,7 +90,7 @@ class UserTest extends TestCaseDusk
                     'amount' => 100,
                     'description' => 'Payment',
             ]);
-            $transaction->updated_at = Carbon::now()->previous(Carbon::MONDAY);
+            $transaction->created_at = Carbon::now()->subMonth();
             $transaction->save();
 
             // Click the managed-by link on Jack's page

@@ -43,7 +43,7 @@
 <script>
     export default {
         props: {
-            status: { type: Object, default: {} }
+            status: { type: Object, default: () => {} }
         },
         data() {
             return {
