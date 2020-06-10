@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <status-component v-if="user_id !== 'new'" v-bind:status="status" @status-update="statusUpdate"></status-component>
+        <status-component v-if="user_id !== 'new'" :status="status" @status-update="statusUpdate"></status-component>
 
         <div class="card" id="user-info">
             <div class="card-body">

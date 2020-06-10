@@ -113,6 +113,7 @@ class WalletsController extends Controller
         $pageSize = 10;
         $page = intval(request()->input('page')) ?: 1;
         $hasMore = false;
+        $isAdmin = $this instanceof Admin\WalletsController;
 
         if ($transaction = request()->input('transaction')) {
             // Get sub-transactions for the specified transaction ID, first
@@ -144,14 +145,14 @@ class WalletsController extends Controller
             }
         }
 
-        $result = $result->map(function ($item) {
+        $result = $result->map(function ($item) use ($isAdmin) {
             $amount = $item->amount;
 
             if (in_array($item->type, [Transaction::WALLET_PENALTY, Transaction::WALLET_DEBIT])) {
                 $amount *= -1;
             }
 
-            return [
+            $entry = [
                 'id' => $item->id,
                 'createdAt' => $item->created_at->format('Y-m-d H:i'),
                 'type' => $item->type,
@@ -159,6 +160,12 @@ class WalletsController extends Controller
                 'amount' => $amount,
                 'hasDetails' => !empty($item->cnt),
             ];
+
+            if ($isAdmin && $item->user_email) {
+                $entry['user'] = $item->user_email;
+            }
+
+            return $entry;
         });
 
         return response()->json([

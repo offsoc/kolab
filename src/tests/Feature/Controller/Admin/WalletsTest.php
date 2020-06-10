@@ -136,6 +136,51 @@ class WalletsTest extends TestCase
     }
 
     /**
+     * Test fetching wallet transactions (GET /api/v4/wallets/:id/transactions)
+     */
+    public function testTransactions(): void
+    {
+        // Note: Here we're testing only that the end-point works,
+        // and admin can get the transaction log, response details
+        // are tested in Feature/Controller/WalletsTest.php
+        $this->deleteTestUser('wallets-controller@kolabnow.com');
+        $user = $this->getTestUser('wallets-controller@kolabnow.com');
+        $wallet = $user->wallets()->first();
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        // Non-admin
+        $response = $this->actingAs($user)->get("api/v4/wallets/{$wallet->id}/transactions");
+        $response->assertStatus(403);
+
+        // Create some sample transactions
+        $transactions = $this->createTestTransactions($wallet);
+        $transactions = array_reverse($transactions);
+        $pages = array_chunk($transactions, 10 /* page size*/);
+
+        // Get the 2nd page
+        $response = $this->actingAs($admin)->get("api/v4/wallets/{$wallet->id}/transactions?page=2");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(5, $json);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame(2, $json['page']);
+        $this->assertSame(2, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertCount(2, $json['list']);
+        foreach ($pages[1] as $idx => $transaction) {
+            $this->assertSame($transaction->id, $json['list'][$idx]['id']);
+            $this->assertSame($transaction->type, $json['list'][$idx]['type']);
+            $this->assertSame($transaction->shortDescription(), $json['list'][$idx]['description']);
+            $this->assertFalse($json['list'][$idx]['hasDetails']);
+        }
+
+        // The 'user' key is set only on the admin end-point
+        $this->assertSame('jeroen@jeroen.jeroen', $json['list'][1]['user']);
+    }
+
+    /**
      * Test updating a wallet (PUT /api/v4/wallets/:id)
      */
     public function testUpdate(): void

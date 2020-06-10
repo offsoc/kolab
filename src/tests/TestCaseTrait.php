@@ -60,7 +60,7 @@ trait TestCaseTrait
         }
 
         $transaction = Transaction::create([
-                'user_email' => null,
+                'user_email' => 'jeroen@jeroen.jeroen',
                 'object_id' => $wallet->id,
                 'object_type' => \App\Wallet::class,
                 'type' => Transaction::WALLET_DEBIT,

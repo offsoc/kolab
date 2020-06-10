@@ -105,6 +105,7 @@ Route::group(
         Route::post('users/{id}/unsuspend', 'API\V4\Admin\UsersController@unsuspend');
         Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
         Route::post('wallets/{id}/one-off', 'API\V4\Admin\WalletsController@oneOff');
+        Route::get('wallets/{id}/transactions', 'API\V4\Admin\WalletsController@transactions');
         Route::apiResource('discounts', API\V4\Admin\DiscountsController::class);
     }
 );

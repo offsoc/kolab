@@ -22,41 +22,7 @@
         <div class="tab-content">
             <div class="tab-pane show active" id="wallet-history" role="tabpanel" aria-labelledby="tab-history">
                 <div class="card-body">
-                    <div class="card-text">
-                        <table class="table table-sm m-0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th scope="col">Date</th>
-                                    <th scope="col"></th>
-                                    <th scope="col">Description</th>
-                                    <th scope="col" class="price">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="transaction in transactions" :id="'log' + transaction.id" :key="transaction.id">
-                                    <td class="datetime">{{ transaction.createdAt }}</td>
-                                    <td class="selection">
-                                        <button class="btn btn-lg btn-link btn-action" title="Details"
-                                                v-if="transaction.hasDetails"
-                                                @click="loadTransaction(transaction.id)"
-                                        >
-                                            <svg-icon icon="info-circle"></svg-icon>
-                                        </button>
-                                    </td>
-                                    <td class="description">{{ transactionDescription(transaction) }}</td>
-                                    <td :class="'price ' + transactionClass(transaction)">{{ transactionAmount(transaction) }}</td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-fake-body">
-                                <tr>
-                                    <td colspan="4">There are no transactions for this account.</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                        <div class="text-center p-3" id="transactions-loader">
-                            <button class="btn btn-secondary" v-if="transactions_more" @click="loadTransactions(true)">Load more</button>
-                        </div>
-                    </div>
+                    <transaction-log v-if="walletId" class="card-text" :wallet-id="walletId"></transaction-log>
                 </div>
             </div>
         </div>
@@ -164,7 +130,12 @@
 </template>
 
 <script>
+    import TransactionLog from './Widgets/TransactionLog'
+
     export default {
+        components: {
+            TransactionLog
+        },
         data() {
             return {
                 amount: '',
@@ -177,6 +148,7 @@
                 transactions: [],
                 transactions_more: false,
                 transactions_page: 1,
+                walletId: null,
                 wallet_currency: 'CHF'
             }
         },
@@ -188,58 +160,13 @@
                 this.provider = wallet.provider
             })
 
-            this.loadTransactions()
+            this.walletId = this.$store.state.authInfo.wallets[0].id
 
             if (this.provider == 'stripe') {
                 this.stripeInit()
             }
         },
         methods: {
-            loadTransactions(more) {
-                let loader = $('#wallet-history')
-                let walletId = this.$store.state.authInfo.wallets[0].id
-                let param = ''
-
-                if (more) {
-                    param = '?page=' + (this.transactions_page + 1)
-                    loader = $('#transactions-loader')
-                }
-
-                this.$root.addLoader(loader)
-                axios.get('/api/v4/wallets/' + walletId + '/transactions' + param)
-                    .then(response => {
-                        this.$root.removeLoader(loader)
-                        // Note: In Vue we can't just use .concat()
-                        for (let i in response.data.list) {
-                            this.$set(this.transactions, this.transactions.length, response.data.list[i])
-                        }
-                        this.transactions_more = response.data.hasMore
-                        this.transactions_page = response.data.page || 1
-                    })
-                    .catch(error => {
-                        this.$root.removeLoader(loader)
-                    })
-            },
-            loadTransaction(id) {
-                let walletId = this.$store.state.authInfo.wallets[0].id
-                let record = $('#log' + id)
-                let cell = record.find('td.description')
-                let details = $('<div class="list-details"><ul></ul><div>').appendTo(cell)
-
-                this.$root.addLoader(cell)
-                axios.get('/api/v4/wallets/' + walletId + '/transactions' + '?transaction=' + id)
-                    .then(response => {
-                        this.$root.removeLoader(cell)
-                        record.find('button').remove()
-                        let list = details.find('ul')
-                        response.data.list.forEach(elem => {
-                           list.append($('<li>').text(this.transactionDescription(elem)))
-                        })
-                    })
-                    .catch(error => {
-                        this.$root.removeLoader(cell)
-                    })
-            },
             paymentDialog() {
                 const dialog = $('#payment-dialog')
                 const mandate_form = $('#mandate-form')
@@ -354,19 +281,6 @@
                         this.$toast.error(result.error.message)
                     }
                 })
-            },
-            transactionAmount(transaction) {
-                return this.$root.price(transaction.amount)
-            },
-            transactionClass(transaction) {
-                return transaction.amount < 0 ? 'text-danger' : 'text-success';
-            },
-            transactionDescription(transaction) {
-                let desc = transaction.description
-                if (/^(billed|created|deleted)$/.test(transaction.type)) {
-                    desc += ' (' + this.$root.price(transaction.amount) + ')'
-                }
-                return desc
             }
         }
     }

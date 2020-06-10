@@ -80,6 +80,7 @@ class WalletsTest extends TestCase
             $this->assertSame($transaction->type, $json['list'][$idx]['type']);
             $this->assertSame($transaction->shortDescription(), $json['list'][$idx]['description']);
             $this->assertFalse($json['list'][$idx]['hasDetails']);
+            $this->assertFalse(array_key_exists('user', $json['list'][$idx]));
         }
 
         $search = null;
@@ -104,6 +105,7 @@ class WalletsTest extends TestCase
                 $transaction->type == Transaction::WALLET_DEBIT,
                 $json['list'][$idx]['hasDetails']
             );
+            $this->assertFalse(array_key_exists('user', $json['list'][$idx]));
 
             if ($transaction->type == Transaction::WALLET_DEBIT) {
                 $search = $transaction->id;

@@ -2,7 +2,7 @@
     <div class="container">
         <div class="card" id="user-info">
             <div class="card-body">
-                <div class="card-title">{{ user.email }}</div>
+                <h1 class="card-title">{{ user.email }}</h1>
                 <div class="card-text">
                     <form class="read-only">
                         <div v-if="user.wallet.user_id != user.id" class="form-group row">
@@ -74,9 +74,11 @@
                                 <span class="form-control-plaintext" id="country">{{ user.country }}</span>
                             </div>
                         </div>
+                    </form>
+                    <div class="mt-2">
                         <button v-if="!user.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendUser">Suspend</button>
                         <button v-if="user.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendUser">Unsuspend</button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -110,7 +112,7 @@
         <div class="tab-content">
             <div class="tab-pane show active" id="user-finances" role="tabpanel" aria-labelledby="tab-finances">
                 <div class="card-body">
-                    <div class="card-title">Account balance <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(wallet.balance) }}</strong></span></div>
+                    <h2 class="card-title">Account balance <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(wallet.balance) }}</strong></span></h2>
                     <div class="card-text">
                         <form class="read-only">
                             <div class="form-group row">
@@ -138,10 +140,14 @@
                                     <span class="form-control-plaintext" v-html="wallet.providerLink"></span>
                                 </div>
                             </div>
+                        </form>
+                        <div class="mt-2">
                             <button id="button-award" class="btn btn-success" type="button" @click="awardDialog">Add bonus</button>
                             <button id="button-penalty" class="btn btn-danger" type="button" @click="penalizeDialog">Add penalty</button>
-                        </form>
+                        </div>
                     </div>
+                    <h2 class="card-title mt-4">Transactions</h2>
+                    <transaction-log v-if="wallet.id && !walletReload" class="card-text" :wallet-id="wallet.id" :is-admin="true"></transaction-log>
                 </div>
             </div>
             <div class="tab-pane" id="user-aliases" role="tabpanel" aria-labelledby="tab-aliases">
@@ -340,6 +346,8 @@
 </template>
 
 <script>
+    import TransactionLog from '../Widgets/TransactionLog'
+
     export default {
         beforeRouteUpdate (to, from, next) {
             // An event called when the route that renders this component has changed,
@@ -347,6 +355,9 @@
             // Required to handle links from /user/XXX to /user/YYY
             next()
             this.$parent.routerReload()
+        },
+        components: {
+            TransactionLog
         },
         data() {
             return {
@@ -359,6 +370,7 @@
                 discounts: [],
                 external_email: '',
                 wallet: {},
+                walletReload: false,
                 domains: [],
                 skus: [],
                 users: [],
@@ -496,6 +508,11 @@
             penalizeDialog() {
                 this.oneOffDialog(true)
             },
+            reload() {
+                // this is to reload transaction log
+                this.walletReload = true
+                this.$nextTick(function() { this.walletReload = false })
+            },
             submitDiscount() {
                 $('#discount-dialog').modal('hide')
 
@@ -553,6 +570,7 @@
                             this.wallet = Object.assign({}, this.wallet, {balance: response.data.balance})
                             this.oneoff_amount = ''
                             this.oneoff_description = ''
+                            this.reload()
                         }
                     })
             },

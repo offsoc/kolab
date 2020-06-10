@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <status-component v-bind:status="status" @status-update="statusUpdate"></status-component>
+        <status-component :status="status" @status-update="statusUpdate"></status-component>
 
         <div v-if="domain && !domain.isConfirmed" class="card" id="domain-verify">
             <div class="card-body">

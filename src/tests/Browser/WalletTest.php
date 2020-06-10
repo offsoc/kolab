@@ -111,6 +111,7 @@ class WalletTest extends TestCaseDusk
                 ->assertSeeIn('@nav #tab-history', 'History')
                 ->with('@history-tab', function (Browser $browser) use ($pages, $wallet) {
                     $browser->assertElementsCount('table tbody tr', 10)
+                        ->assertMissing('table td.email')
                         ->assertSeeIn('#transactions-loader button', 'Load more');
 
                     foreach ($pages[0] as $idx => $transaction) {

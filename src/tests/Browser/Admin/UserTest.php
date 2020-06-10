@@ -33,8 +33,6 @@ class UserTest extends TestCaseDusk
         }
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
-        $wallet->balance = 0;
-        $wallet->save();
     }
 
     /**
@@ -52,8 +50,6 @@ class UserTest extends TestCaseDusk
         }
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
-        $wallet->balance = 0;
-        $wallet->save();
 
         parent::tearDown();
     }
@@ -109,21 +105,8 @@ class UserTest extends TestCaseDusk
             $browser->pause(500)
                 ->assertElementsCount('@nav a', 5);
 
-            // Assert Finances tab
-            $browser->assertSeeIn('@nav #tab-finances', 'Finances')
-                ->with('@user-finances', function (Browser $browser) {
-                    $browser->waitUntilMissing('.app-loader')
-                        ->assertSeeIn('.card-title', 'Account balance')
-                        ->assertSeeIn('.card-title .text-success', '0,00 CHF')
-                        ->with('form', function (Browser $browser) {
-                            $payment_provider = ucfirst(\config('services.payment_provider'));
-                            $browser->assertElementsCount('.row', 2)
-                                ->assertSeeIn('.row:nth-child(1) label', 'Discount')
-                                ->assertSeeIn('.row:nth-child(1) #discount span', 'none')
-                                ->assertSeeIn('.row:nth-child(2) label', $payment_provider . ' ID')
-                                ->assertVisible('.row:nth-child(2) a');
-                        });
-                });
+            // Note: Finances tab is tested in UserFinancesTest.php
+            $browser->assertSeeIn('@nav #tab-finances', 'Finances');
 
             // Assert Aliases tab
             $browser->assertSeeIn('@nav #tab-aliases', 'Aliases (1)')
@@ -217,18 +200,8 @@ class UserTest extends TestCaseDusk
             $browser->pause(500)
                 ->assertElementsCount('@nav a', 5);
 
-            // Assert Finances tab
-            $browser->assertSeeIn('@nav #tab-finances', 'Finances')
-                ->with('@user-finances', function (Browser $browser) {
-                    $browser->waitUntilMissing('.app-loader')
-                        ->assertSeeIn('.card-title', 'Account balance')
-                        ->assertSeeIn('.card-title .text-danger', '-20,10 CHF')
-                        ->with('form', function (Browser $browser) {
-                            $browser->assertElementsCount('.row', 2)
-                                ->assertSeeIn('.row:nth-child(1) label', 'Discount')
-                                ->assertSeeIn('.row:nth-child(1) #discount span', '10% - Test voucher');
-                        });
-                });
+            // Note: Finances tab is tested in UserFinancesTest.php
+            $browser->assertSeeIn('@nav #tab-finances', 'Finances');
 
             // Assert Aliases tab
             $browser->assertSeeIn('@nav #tab-aliases', 'Aliases (1)')
@@ -298,18 +271,8 @@ class UserTest extends TestCaseDusk
             $browser->pause(500)
                 ->assertElementsCount('@nav a', 5);
 
-            // Assert Finances tab
-            $browser->assertSeeIn('@nav #tab-finances', 'Finances')
-                ->with('@user-finances', function (Browser $browser) {
-                    $browser->waitUntilMissing('.app-loader')
-                        ->assertSeeIn('.card-title', 'Account balance')
-                        ->assertSeeIn('.card-title .text-success', '0,00 CHF')
-                        ->with('form', function (Browser $browser) {
-                            $browser->assertElementsCount('.row', 2)
-                                ->assertSeeIn('.row:nth-child(1) label', 'Discount')
-                                ->assertSeeIn('.row:nth-child(1) #discount span', 'none');
-                        });
-                });
+            // Note: Finances tab is tested in UserFinancesTest.php
+            $browser->assertSeeIn('@nav #tab-finances', 'Finances');
 
             // Assert Aliases tab
             $browser->assertSeeIn('@nav #tab-aliases', 'Aliases (0)')
@@ -431,167 +394,6 @@ class UserTest extends TestCaseDusk
                 ->assertSeeIn('@user-info #status span.text-success', 'Active')
                 ->assertVisible('@user-info #button-suspend')
                 ->assertMissing('@user-info #button-unsuspend');
-        });
-    }
-
-    /**
-     * Test editing wallet discount
-     *
-     * @depends testUserInfo2
-     */
-    public function testWalletDiscount(): void
-    {
-        $this->browse(function (Browser $browser) {
-            $john = $this->getTestUser('john@kolab.org');
-
-            $browser->visit(new UserPage($john->id))
-                ->pause(100)
-                ->waitUntilMissing('@user-finances .app-loader')
-                ->click('@user-finances #discount button')
-                // Test dialog content, and closing it with Cancel button
-                ->with(new Dialog('#discount-dialog'), function (Browser $browser) {
-                    $browser->assertSeeIn('@title', 'Account discount')
-                        ->assertFocused('@body select')
-                        ->assertSelected('@body select', '')
-                        ->assertSeeIn('@button-cancel', 'Cancel')
-                        ->assertSeeIn('@button-action', 'Submit')
-                        ->click('@button-cancel');
-                })
-                ->assertMissing('#discount-dialog')
-                ->click('@user-finances #discount button')
-                // Change the discount
-                ->with(new Dialog('#discount-dialog'), function (Browser $browser) {
-                    $browser->click('@body select')
-                        ->click('@body select option:nth-child(2)')
-                        ->click('@button-action');
-                })
-                ->assertToast(Toast::TYPE_SUCCESS, 'User wallet updated successfully.')
-                ->assertSeeIn('#discount span', '10% - Test voucher')
-                ->click('@nav #tab-subscriptions')
-                ->with('@user-subscriptions', function (Browser $browser) {
-                    $browser->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '3,99 CHF/month¹')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month¹')
-                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,99 CHF/month¹')
-                        ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher');
-                })
-                // Change back to 'none'
-                ->click('@nav #tab-finances')
-                ->click('@user-finances #discount button')
-                ->with(new Dialog('#discount-dialog'), function (Browser $browser) {
-                    $browser->click('@body select')
-                        ->click('@body select option:nth-child(1)')
-                        ->click('@button-action');
-                })
-                ->assertToast(Toast::TYPE_SUCCESS, 'User wallet updated successfully.')
-                ->assertSeeIn('#discount span', 'none')
-                ->click('@nav #tab-subscriptions')
-                ->with('@user-subscriptions', function (Browser $browser) {
-                    $browser->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,44 CHF/month')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month')
-                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '5,55 CHF/month')
-                        ->assertMissing('table + .hint');
-                });
-        });
-    }
-
-    /**
-     * Test awarding/penalizing a wallet
-     */
-    public function testBonusPenalty(): void
-    {
-        $this->browse(function (Browser $browser) {
-            $john = $this->getTestUser('john@kolab.org');
-
-            $browser->visit(new UserPage($john->id))
-                ->waitFor('@user-finances #button-award')
-                ->click('@user-finances #button-award')
-                // Test dialog content, and closing it with Cancel button
-                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
-                    $browser->assertSeeIn('@title', 'Add a bonus to the wallet')
-                        ->assertFocused('@body input#oneoff_amount')
-                        ->assertSeeIn('@body label[for="oneoff_amount"]', 'Amount')
-                        ->assertvalue('@body input#oneoff_amount', '')
-                        ->assertSeeIn('@body label[for="oneoff_description"]', 'Description')
-                        ->assertvalue('@body input#oneoff_description', '')
-                        ->assertSeeIn('@button-cancel', 'Cancel')
-                        ->assertSeeIn('@button-action', 'Submit')
-                        ->click('@button-cancel');
-                })
-                ->assertMissing('#oneoff-dialog');
-
-            // Test bonus
-            $browser->click('@user-finances #button-award')
-                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
-                    // Test input validation for a bonus
-                    $browser->type('@body #oneoff_amount', 'aaa')
-                        ->type('@body #oneoff_description', '')
-                        ->click('@button-action')
-                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
-                        ->assertVisible('@body #oneoff_amount.is-invalid')
-                        ->assertVisible('@body #oneoff_description.is-invalid')
-                        ->assertSeeIn(
-                            '@body #oneoff_amount + span + .invalid-feedback',
-                            'The amount must be a number.'
-                        )
-                        ->assertSeeIn(
-                            '@body #oneoff_description + .invalid-feedback',
-                            'The description field is required.'
-                        );
-
-                    // Test adding a bonus
-                    $browser->type('@body #oneoff_amount', '12.34')
-                        ->type('@body #oneoff_description', 'Test bonus')
-                        ->click('@button-action')
-                        ->assertToast(Toast::TYPE_SUCCESS, 'The bonus has been added to the wallet successfully.');
-                })
-                ->assertMissing('#oneoff-dialog')
-                ->assertSeeIn('@user-finances .card-title span.text-success', '12,34 CHF');
-
-            $this->assertSame(1234, $john->wallets()->first()->balance);
-
-            // Test penalty
-            $browser->click('@user-finances #button-penalty')
-                // Test dialog content, and closing it with Cancel button
-                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
-                    $browser->assertSeeIn('@title', 'Add a penalty to the wallet')
-                        ->assertFocused('@body input#oneoff_amount')
-                        ->assertSeeIn('@body label[for="oneoff_amount"]', 'Amount')
-                        ->assertvalue('@body input#oneoff_amount', '')
-                        ->assertSeeIn('@body label[for="oneoff_description"]', 'Description')
-                        ->assertvalue('@body input#oneoff_description', '')
-                        ->assertSeeIn('@button-cancel', 'Cancel')
-                        ->assertSeeIn('@button-action', 'Submit')
-                        ->click('@button-cancel');
-                })
-                ->assertMissing('#oneoff-dialog')
-                ->click('@user-finances #button-penalty')
-                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
-                    // Test input validation for a penalty
-                    $browser->type('@body #oneoff_amount', '')
-                        ->type('@body #oneoff_description', '')
-                        ->click('@button-action')
-                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
-                        ->assertVisible('@body #oneoff_amount.is-invalid')
-                        ->assertVisible('@body #oneoff_description.is-invalid')
-                        ->assertSeeIn(
-                            '@body #oneoff_amount + span + .invalid-feedback',
-                            'The amount field is required.'
-                        )
-                        ->assertSeeIn(
-                            '@body #oneoff_description + .invalid-feedback',
-                            'The description field is required.'
-                        );
-
-                    // Test adding a penalty
-                    $browser->type('@body #oneoff_amount', '12.35')
-                        ->type('@body #oneoff_description', 'Test penalty')
-                        ->click('@button-action')
-                        ->assertToast(Toast::TYPE_SUCCESS, 'The penalty has been added to the wallet successfully.');
-                })
-                ->assertMissing('#oneoff-dialog')
-                ->assertSeeIn('@user-finances .card-title span.text-danger', '-0,01 CHF');
-
-            $this->assertSame(-1, $john->wallets()->first()->balance);
         });
     }
 }

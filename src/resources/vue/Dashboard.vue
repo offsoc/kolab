@@ -1,6 +1,6 @@
 <template>
     <div class="container" dusk="dashboard-component">
-        <status-component v-bind:status="status" @status-update="statusUpdate"></status-component>
+        <status-component :status="status" @status-update="statusUpdate"></status-component>
 
         <div id="dashboard-nav">
             <router-link class="card link-profile" :to="{ name: 'profile' }">
