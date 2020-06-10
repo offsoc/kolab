@@ -69,6 +69,8 @@ Route::group(
 
         Route::apiResource('wallets', API\V4\WalletsController::class);
         Route::get('wallets/{id}/transactions', 'API\V4\WalletsController@transactions');
+        Route::get('wallets/{id}/receipts', 'API\V4\WalletsController@receipts');
+        Route::get('wallets/{id}/receipts/{receipt}', 'API\V4\WalletsController@receiptDownload');
 
         Route::post('payments', 'API\V4\PaymentsController@store');
         Route::get('payments/mandate', 'API\V4\PaymentsController@mandate');

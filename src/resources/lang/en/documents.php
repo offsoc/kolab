@@ -29,6 +29,7 @@ return [
     'month11' => "November",
     'month12' => "December",
 
+    'receipt-filename' => ":site Receipt for :id",
     'receipt-title' => "Receipt for :month :year",
     'receipt-item-desc' => ":site Services",
 

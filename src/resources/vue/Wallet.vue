@@ -14,15 +14,44 @@
 
         <ul class="nav nav-tabs mt-3" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" id="tab-history" href="#wallet-history" role="tab" aria-controls="wallet-history" aria-selected="true">
+                <a class="nav-link active" id="tab-receipts" href="#wallet-receipts" role="tab" aria-controls="wallet-receipts" aria-selected="true">
+                    Receipts
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-history" href="#wallet-history" role="tab" aria-controls="wallet-history" aria-selected="false">
                     History
                 </a>
             </li>
         </ul>
         <div class="tab-content">
-            <div class="tab-pane show active" id="wallet-history" role="tabpanel" aria-labelledby="tab-history">
+            <div class="tab-pane show active" id="wallet-receipts" role="tabpanel" aria-labelledby="tab-receipts">
                 <div class="card-body">
-                    <transaction-log v-if="walletId" class="card-text" :wallet-id="walletId"></transaction-log>
+                    <div class="card-text">
+                        <p v-if="receipts.length">
+                            Here you can download receipts (in PDF format) for payments in specified period.
+                            Select the period and press the Download button.
+                        </p>
+                        <div v-if="receipts.length" class="input-group">
+                            <select id="receipt-id" class="form-control">
+                                <option v-for="(receipt, index) in receipts" :key="index" :value="receipt">{{ receipt }}</option>
+                            </select>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-secondary" @click="receiptDownload">
+                                    <svg-icon icon="download"></svg-icon> Download
+                                </button>
+                            </div>
+                        </div>
+                        <p v-if="!receipts.length">
+                            There are no receipts for payments in this account. Please, note that you can download
+                            receipts after the month ends.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane show" id="wallet-history" role="tabpanel" aria-labelledby="tab-history">
+                <div class="card-body">
+                    <transaction-log v-if="walletId && loadTransactions" class="card-text" :wallet-id="walletId"></transaction-log>
                 </div>
             </div>
         </div>
@@ -144,15 +173,16 @@
                 paymentDialogTitle: null,
                 paymentForm: 'init',
                 provider: window.config.paymentProvider,
+                receipts: [],
                 stripe: null,
-                transactions: [],
-                transactions_more: false,
-                transactions_page: 1,
+                loadTransactions: false,
                 walletId: null,
                 wallet_currency: 'CHF'
             }
         },
         mounted() {
+            $('#wallet button').focus()
+
             this.balance = 0
             // TODO: currencies, multi-wallets, accounts
             this.$store.state.authInfo.wallets.forEach(wallet => {
@@ -161,6 +191,26 @@
             })
 
             this.walletId = this.$store.state.authInfo.wallets[0].id
+
+            const receiptsTab = $('#wallet-receipts')
+
+            this.$root.addLoader(receiptsTab)
+            axios.get('/api/v4/wallets/' + this.walletId + '/receipts')
+                .then(response => {
+                    this.$root.removeLoader(receiptsTab)
+                    this.receipts = response.data.list
+                })
+                .catch(error => {
+                    this.$root.removeLoader(receiptsTab)
+                })
+
+            $(this.$el).find('ul.nav-tabs a').on('click', e => {
+                e.preventDefault()
+                $(e.target).tab('show')
+                if ($(e.target).is('#tab-history')) {
+                    this.loadTransactions = true
+                }
+            })
 
             if (this.provider == 'stripe') {
                 this.stripeInit()
@@ -248,6 +298,10 @@
                 this.paymentForm = 'auto'
                 this.paymentDialogTitle = title || 'Add auto-payment'
                 setTimeout(() => { this.dialog.find('#mandate_amount').focus()}, 10)
+            },
+            receiptDownload() {
+                const receipt = $('#receipt-id').val()
+                this.$root.downloadFile('/api/v4/wallets/' + this.walletId + '/receipts/' + receipt)
             },
             stripeInit() {
                 let script = $('#stripe-script')

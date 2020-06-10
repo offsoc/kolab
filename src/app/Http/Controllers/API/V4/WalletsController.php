@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V4;
 use App\Transaction;
 use App\Wallet;
 use App\Http\Controllers\Controller;
+use App\Providers\PaymentProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -92,6 +93,86 @@ class WalletsController extends Controller
     public function destroy($id)
     {
         return $this->errorResponse(404);
+    }
+
+    /**
+     * Download a receipt in pdf format.
+     *
+     * @param string $id      Wallet identifier
+     * @param string $receipt Receipt identifier (YYYY-MM)
+     *
+     * @return \Illuminate\Http\Response|void
+     */
+    public function receiptDownload($id, $receipt)
+    {
+        $wallet = Wallet::find($id);
+
+        // Only owner (or admin) has access to the wallet
+        if (!Auth::guard()->user()->canRead($wallet)) {
+            return abort(403);
+        }
+
+        list ($year, $month) = explode('-', $receipt);
+
+        if (empty($year) || empty($month) || $year < 2000 || $month < 1 || $month > 12) {
+            return abort(404);
+        }
+
+        if ($receipt >= date('Y-m')) {
+            return abort(404);
+        }
+
+        $params = [
+            'id' => sprintf('%04d-%02d', $year, $month),
+            'site' => \config('app.name')
+        ];
+
+        $filename = \trans('documents.receipt-filename', $params);
+
+        $receipt = new \App\Documents\Receipt($wallet, (int) $year, (int) $month);
+
+        $content = $receipt->pdfOutput();
+
+        return response($content)
+            ->withHeaders([
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' =>  'attachment; filename="' . $filename . '"',
+                'Content-Length' => strlen($content),
+            ]);
+    }
+
+    /**
+     * Fetch wallet receipts list.
+     *
+     * @param string $id Wallet identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function receipts($id)
+    {
+        $wallet = Wallet::find($id);
+
+        // Only owner (or admin) has access to the wallet
+        if (!Auth::guard()->user()->canRead($wallet)) {
+            return $this->errorResponse(403);
+        }
+
+        $result = $wallet->payments()
+            ->selectRaw('distinct date_format(updated_at, "%Y-%m") as ident')
+            ->where('status', PaymentProvider::STATUS_PAID)
+            ->where('amount', '>', 0)
+            ->orderBy('ident', 'desc')
+            ->get()
+            ->whereNotIn('ident', [date('Y-m')]) // exclude current month
+            ->pluck('ident');
+
+        return response()->json([
+                'status' => 'success',
+                'list' => $result,
+                'count' => count($result),
+                'hasMore' => false,
+                'page' => 1,
+        ]);
     }
 
     /**

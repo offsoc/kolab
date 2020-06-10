@@ -161,13 +161,13 @@ class Browser extends \Laravel\Dusk\Browser
     /**
      * Returns content of a downloaded file
      */
-    public function readDownloadedFile($filename)
+    public function readDownloadedFile($filename, $sleep = 5)
     {
         $filename = __DIR__ . "/Browser/downloads/$filename";
 
         // Give the browser a chance to finish download
-        if (!file_exists($filename)) {
-            sleep(2);
+        if (!file_exists($filename) && $sleep) {
+            sleep($sleep);
         }
 
         Assert::assertFileExists($filename);

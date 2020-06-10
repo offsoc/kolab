@@ -122,6 +122,29 @@ const app = new Vue({
                 this.errorPage(error.response.status, error.response.statusText)
             }
         },
+        downloadFile(url) {
+            // TODO: This might not be a best way for big files as the content
+            //       will be stored (temporarily) in browser memory
+            // TODO: This method does not show the download progress in the browser
+            //       but it could be implemented in the UI, axios has 'progress' property
+            axios.get(url, { responseType: 'blob' })
+                .then (response => {
+                    const link = document.createElement('a')
+                    const contentDisposition = response.headers['content-disposition']
+                    let filename = 'unknown'
+
+                    if (contentDisposition) {
+                        const match = contentDisposition.match(/filename="(.+)"/);
+                        if (match.length === 2) {
+                            filename = match[1];
+                        }
+                    }
+
+                    link.href = window.URL.createObjectURL(response.data)
+                    link.download = filename
+                    link.click()
+                })
+        },
         price(price) {
             return (price/100).toLocaleString('de-DE', { style: 'currency', currency: 'CHF' })
         },
