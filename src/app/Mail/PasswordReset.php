@@ -42,7 +42,8 @@ class PasswordReset extends Mailable
             sprintf('/login/reset/%s-%s', $this->code->short_code, $this->code->code)
         );
 
-        $this->view('emails.password_reset')
+        $this->view('emails.html.password_reset')
+            ->text('emails.plain.password_reset')
             ->subject(__('mail.passwordreset-subject', ['site' => \config('app.name')]))
             ->with([
                     'site' => \config('app.name'),
@@ -58,9 +59,11 @@ class PasswordReset extends Mailable
     /**
      * Render the mail template with fake data
      *
-     * @return string HTML output
+     * @param string $type Output format ('html' or 'text')
+     *
+     * @return string HTML or Plain Text output
      */
-    public static function fakeRender(): string
+    public static function fakeRender(string $type = 'html'): string
     {
         $code = new VerificationCode([
                 'code' => Str::random(VerificationCode::CODE_LENGTH),
@@ -73,6 +76,6 @@ class PasswordReset extends Mailable
 
         $mail = new self($code);
 
-        return $mail->build()->render();
+        return Helper::render($mail, $type);
     }
 }

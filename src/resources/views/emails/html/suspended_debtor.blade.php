@@ -6,7 +6,7 @@
     <body>
         <p>{{ __('mail.header', ['name' => $username]) }}</p>
 
-        <p>{{ __('mail.suspendeddebtor-body', ['site' => $site, 'days' => $days]) }} {!! $moreInfo !!}</p>
+        <p>{{ __('mail.suspendeddebtor-body', ['site' => $site, 'days' => $days]) }} {!! $moreInfoHtml !!}</p>
         <p>{{ __('mail.suspendeddebtor-middle') }}</p>
         <p><a href="{{ $walletUrl }}">{{ $walletUrl }}</a></p>
 
@@ -19,6 +19,6 @@
         <p><a href="{{ $cancelUrl }}">{{ $cancelUrl }}</a></p>
 @endif
 
-        <p>{{ __('mail.footer', ['site' => $site, 'appurl' => config('app.url')]) }}</p>
+        <p>{{ __('mail.footer', ['site' => $site]) }}</p>
     </body>
 </html>

@@ -6,7 +6,8 @@
     <body>
         <p>{{ __('mail.header', ['name' => $username]) }}</p>
 
-        <p>{{ __('mail.paymentsuccess-body', ['site' => $site]) }}</p>
+        <p>{{ __('mail.negativebalance-body', ['site' => $site]) }}</p>
+        <p>{{ __('mail.negativebalance-body-ext', ['site' => $site]) }}</p>
         <p><a href="{{ $walletUrl }}">{{ $walletUrl }}</a></p>
 
 @if ($supportUrl)
@@ -14,6 +15,6 @@
         <p><a href="{{ $supportUrl }}">{{ $supportUrl }}</a></p>
 @endif
 
-        <p>{{ __('mail.footer', ['site' => $site, 'appurl' => config('app.url')]) }}</p>
+        <p>{{ __('mail.footer', ['site' => $site]) }}</p>
     </body>
 </html>

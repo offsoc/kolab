@@ -46,7 +46,8 @@ class PaymentFailure extends Mailable
 
         $subject = \trans('mail.paymentfailure-subject', ['site' => \config('app.name')]);
 
-        $this->view('emails.payment_failure')
+        $this->view('emails.html.payment_failure')
+            ->text('emails.plain.payment_failure')
             ->subject($subject)
             ->with([
                     'site' => \config('app.name'),
@@ -62,21 +63,19 @@ class PaymentFailure extends Mailable
     /**
      * Render the mail template with fake data
      *
-     * @return string HTML output
+     * @param string $type Output format ('html' or 'text')
+     *
+     * @return string HTML or Plain Text output
      */
-    public static function fakeRender(): string
+    public static function fakeRender(string $type = 'mail'): string
     {
         $payment = new Payment();
         $user = new User([
               'email' => 'test@' . \config('app.domain'),
         ]);
 
-        if (!\config('app.support_url')) {
-            \config(['app.support_url' => 'https://not-configured-support.url']);
-        }
-
         $mail = new self($payment, $user);
 
-        return $mail->build()->render();
+        return Helper::render($mail, $type);
     }
 }

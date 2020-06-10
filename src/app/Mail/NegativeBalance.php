@@ -40,7 +40,8 @@ class NegativeBalance extends Mailable
 
         $subject = \trans('mail.negativebalance-subject', ['site' => \config('app.name')]);
 
-        $this->view('emails.negative_balance')
+        $this->view('emails.html.negative_balance')
+            ->text('emails.plain.negative_balance')
             ->subject($subject)
             ->with([
                     'site' => \config('app.name'),
@@ -56,14 +57,16 @@ class NegativeBalance extends Mailable
     /**
      * Render the mail template with fake data
      *
-     * @return string HTML output
+     * @param string $type Output format ('html' or 'text')
+     *
+     * @return string HTML or Plain Text output
      */
-    public static function fakeRender(): string
+    public static function fakeRender(string $type = 'html'): string
     {
         $user = new User();
 
         $mail = new self($user);
 
-        return $mail->build()->render();
+        return Helper::render($mail, $type);
     }
 }

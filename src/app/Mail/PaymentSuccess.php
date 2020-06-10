@@ -46,7 +46,8 @@ class PaymentSuccess extends Mailable
 
         $subject = \trans('mail.paymentsuccess-subject', ['site' => \config('app.name')]);
 
-        $this->view('emails.payment_success')
+        $this->view('emails.html.payment_success')
+            ->text('emails.plain.payment_success')
             ->subject($subject)
             ->with([
                     'site' => \config('app.name'),
@@ -62,21 +63,19 @@ class PaymentSuccess extends Mailable
     /**
      * Render the mail template with fake data
      *
-     * @return string HTML output
+     * @param string $type Output format ('html' or 'text')
+     *
+     * @return string HTML or Plain Text output
      */
-    public static function fakeRender(): string
+    public static function fakeRender(string $type = 'html'): string
     {
         $payment = new Payment();
         $user = new User([
               'email' => 'test@' . \config('app.domain'),
         ]);
 
-        if (!\config('app.support_url')) {
-            \config(['app.support_url' => 'https://not-configured-support.url']);
-        }
-
         $mail = new self($payment, $user);
 
-        return $mail->build()->render();
+        return Helper::render($mail, $type);
     }
 }

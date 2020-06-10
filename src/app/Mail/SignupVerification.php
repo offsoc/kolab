@@ -47,14 +47,15 @@ class SignupVerification extends Mailable
         }
         $username = trim($username);
 
-        $this->view('emails.signup_code')
+        $this->view('emails.html.signup_code')
+            ->text('emails.plain.signup_code')
             ->subject(__('mail.signupcode-subject', ['site' => \config('app.name')]))
             ->with([
                     'site' => \config('app.name'),
                     'username' => $username ?: 'User',
                     'code' => $this->code->code,
                     'short_code' => $this->code->short_code,
-                    'link' => sprintf('<a href="%s">%s</a>', $href, $href),
+                    'href' => $href,
             ]);
 
         return $this;
@@ -63,9 +64,11 @@ class SignupVerification extends Mailable
     /**
      * Render the mail template with fake data
      *
-     * @return string HTML output
+     * @param string $type Output format ('html' or 'text')
+     *
+     * @return string HTML or Plain Text output
      */
-    public static function fakeRender(): string
+    public static function fakeRender(string $type = 'html'): string
     {
         $code = new SignupCode([
                 'code' => Str::random(SignupCode::CODE_LENGTH),
@@ -77,9 +80,8 @@ class SignupVerification extends Mailable
                 ],
         ]);
 
-
         $mail = new self($code);
 
-        return $mail->build()->render();
+        return Helper::render($mail, $type);
     }
 }

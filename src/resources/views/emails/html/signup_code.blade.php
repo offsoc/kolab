@@ -8,8 +8,8 @@
 
         <p>{{ __('mail.signupcode-body', ['code' => $short_code, 'site' => $site]) }}</p>
 
-        <p>{!! $link !!}</p>
+        <p><a href="{!! $href !!}">{!! $href !!}</a></p>
 
-        <p>{{ __('mail.footer', ['site' => $site, 'appurl' => config('app.url')]) }}</p>
+        <p>{{ __('mail.footer', ['site' => $site]) }}</p>
     </body>
 </html>

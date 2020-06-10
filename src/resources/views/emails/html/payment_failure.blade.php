@@ -7,6 +7,7 @@
         <p>{{ __('mail.header', ['name' => $username]) }}</p>
 
         <p>{{ __('mail.paymentfailure-body', ['site' => $site]) }}</p>
+        <p>{{ __('mail.paymentfailure-body-ext', ['site' => $site]) }}</p>
         <p><a href="{{ $walletUrl }}">{{ $walletUrl }}</a></p>
         <p>{{ __('mail.paymentfailure-body-rest', ['site' => $site]) }}</p>
 
@@ -15,6 +16,6 @@
         <p><a href="{{ $supportUrl }}">{{ $supportUrl }}</a></p>
 @endif
 
-        <p>{{ __('mail.footer', ['site' => $site, 'appurl' => config('app.url')]) }}</p>
+        <p>{{ __('mail.footer', ['site' => $site]) }}</p>
     </body>
 </html>

@@ -11,7 +11,7 @@ class TemplateRender extends Command
      *
      * @var string
      */
-    protected $signature = 'template:render {template} {--html} {--pdf}';
+    protected $signature = 'template:render {template} {--html} {--text} {--pdf}';
 
     /**
      * The console command description.
@@ -52,6 +52,8 @@ class TemplateRender extends Command
         $mode = 'html';
         if (!empty($this->option('pdf'))) {
             $mode = 'pdf';
+        } elseif (!empty($this->option('text'))) {
+            $mode = 'text';
         }
 
         echo $class::fakeRender($mode);

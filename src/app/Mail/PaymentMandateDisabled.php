@@ -46,7 +46,8 @@ class PaymentMandateDisabled extends Mailable
 
         $subject = \trans('mail.paymentmandatedisabled-subject', ['site' => \config('app.name')]);
 
-        $this->view('emails.payment_mandate_disabled')
+        $this->view('emails.html.payment_mandate_disabled')
+            ->text('emails.plain.payment_mandate_disabled')
             ->subject($subject)
             ->with([
                     'site' => \config('app.name'),
@@ -62,21 +63,19 @@ class PaymentMandateDisabled extends Mailable
     /**
      * Render the mail template with fake data
      *
-     * @return string HTML output
+     * @param string $type Output format ('html' or 'text')
+     *
+     * @return string HTML or Plain Text output
      */
-    public static function fakeRender(): string
+    public static function fakeRender(string $type = 'html'): string
     {
         $wallet = new Wallet();
         $user = new User([
               'email' => 'test@' . \config('app.domain'),
         ]);
 
-        if (!\config('app.support_url')) {
-            \config(['app.support_url' => 'https://not-configured-support.url']);
-        }
-
         $mail = new self($wallet, $user);
 
-        return $mail->build()->render();
+        return Helper::render($mail, $type);
     }
 }

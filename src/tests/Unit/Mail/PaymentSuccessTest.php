@@ -5,26 +5,28 @@ namespace Tests\Unit\Mail;
 use App\Mail\PaymentSuccess;
 use App\Payment;
 use App\User;
+use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class PaymentSuccessTest extends TestCase
 {
+    use MailInterceptTrait;
+
     /**
      * Test email content
-     *
-     * @return void
      */
-    public function testBuild()
+    public function testBuild(): void
     {
-        // @phpstan-ignore-next-line
         $user = new User();
         $payment = new Payment();
         $payment->amount = 123;
 
         \config(['app.support_url' => 'https://kolab.org/support']);
 
-        $mail = new PaymentSuccess($payment, $user);
-        $html = $mail->build()->render();
+        $mail = $this->fakeMail(new PaymentSuccess($payment, $user));
+
+        $html = $mail['html'];
+        $plain = $mail['plain'];
 
         $walletUrl = \App\Utils::serviceUrl('/wallet');
         $walletLink = sprintf('<a href="%s">%s</a>', $walletUrl, $walletUrl);
@@ -32,7 +34,8 @@ class PaymentSuccessTest extends TestCase
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
         $appName = \config('app.name');
 
-        $this->assertSame("$appName Payment Succeeded", $mail->subject);
+        $this->assertMailSubject("$appName Payment Succeeded", $mail['message']);
+
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
         $this->assertTrue(strpos($html, $walletLink) > 0);
@@ -40,5 +43,12 @@ class PaymentSuccessTest extends TestCase
         $this->assertTrue(strpos($html, "$appName Support") > 0);
         $this->assertTrue(strpos($html, "The auto-payment for your $appName account") > 0);
         $this->assertTrue(strpos($html, "$appName Team") > 0);
+
+        $this->assertStringStartsWith('Dear ' . $user->name(true), $plain);
+        $this->assertTrue(strpos($plain, $walletUrl) > 0);
+        $this->assertTrue(strpos($plain, $supportUrl) > 0);
+        $this->assertTrue(strpos($plain, "$appName Support") > 0);
+        $this->assertTrue(strpos($plain, "The auto-payment for your $appName account") > 0);
+        $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }
 }

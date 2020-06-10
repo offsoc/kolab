@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <style>
-{!! include('public/css/document.css') !!}
+<?php include public_path('css/document.css') ?>
         </style>
     </head>
     <body>

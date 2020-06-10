@@ -10,6 +10,6 @@
 
         <p>{!! $link !!}</p>
 
-        <p>{{ __('mail.footer', ['site' => $site, 'appurl' => config('app.url')]) }}</p>
+        <p>{{ __('mail.footer', ['site' => $site]) }}</p>
     </body>
 </html>

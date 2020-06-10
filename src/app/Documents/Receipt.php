@@ -42,6 +42,8 @@ class Receipt
     /**
      * Render the mail template with fake data
      *
+     * @param string $type Output format ('html' or 'pdf')
+     *
      * @return string HTML or PDF output
      */
     public static function fakeRender(string $type = 'html'): string
@@ -56,6 +58,8 @@ class Receipt
 
         if ($type == 'pdf') {
             return $receipt->pdfOutput();
+        } elseif ($type !== 'html') {
+            throw new \Exception("Unsupported output format");
         }
 
         return $receipt->htmlOutput();
