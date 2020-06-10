@@ -70,6 +70,11 @@ router.beforeEach((to, from, next) => {
     next()
 })
 
+router.afterEach((to, from) => {
+    // Remove the (old) error page when changing a page
+    $('#error-page').remove()
+})
+
 /**
  * We'll load the axios HTTP library which allows us to easily issue requests
  * to our Laravel back-end. This library automatically handles sending the

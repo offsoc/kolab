@@ -108,7 +108,7 @@ const app = new Vue({
 
             const error_page = `<div id="error-page"><div class="code">${code}</div><div class="message">${msg}</div></div>`
 
-            $('#app').children(':not(nav)').remove()
+            $('#error-page').remove()
             $('#app').append(error_page)
         },
         errorHandler(error) {

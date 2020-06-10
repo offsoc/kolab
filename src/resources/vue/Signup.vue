@@ -156,8 +156,13 @@
             // Composes plan selection page
             step0() {
                 if (!this.plans.length) {
+                    this.$root.startLoading()
                     axios.get('/api/auth/signup/plans', {}).then(response => {
+                        this.$root.stopLoading()
                         this.plans = response.data.plans
+                    })
+                    .catch(error => {
+                        this.$root.errorHandler(error)
                     })
                 }
             },
