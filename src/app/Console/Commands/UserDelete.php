@@ -2,26 +2,23 @@
 
 namespace App\Console\Commands;
 
-use App\Domain;
-use App\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
-class UserDomains extends Command
+class UserDelete extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'user:domains {userid}';
+    protected $signature = 'user:delete {user}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Delete a user';
 
     /**
      * Create a new command instance.
@@ -40,14 +37,12 @@ class UserDomains extends Command
      */
     public function handle()
     {
-        $user = User::where('email', $this->argument('userid'))->first();
+        $user = \App\User::where('email', $this->argument('user'))->first();
 
         if (!$user) {
             return 1;
         }
 
-        foreach ($user->domains() as $domain) {
-            $this->info("{$domain->namespace}");
-        }
+        $user->delete();
     }
 }

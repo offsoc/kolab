@@ -11,14 +11,14 @@ class WalletExpected extends Command
      *
      * @var string
      */
-    protected $signature = 'wallet:expected';
+    protected $signature = 'wallet:expected {--user=} {--non-zero}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Show expected charges to wallets';
+    protected $description = 'Show expected charges to wallets (for user)';
 
     /**
      * Create a new command instance.
@@ -37,15 +37,40 @@ class WalletExpected extends Command
      */
     public function handle()
     {
-        $wallets = \App\Wallet::all();
+        if ($this->option('user')) {
+            $user = \App\User::where('email', $this->option('user'))
+                ->orWhere('id', $this->option('user'))->first();
+
+            if (!$user) {
+                return 1;
+            }
+
+            $wallets = $user->wallets;
+        } else {
+            $wallets = \App\Wallet::all();
+        }
 
         foreach ($wallets as $wallet) {
             $charge = 0;
             $expected = $wallet->expectedCharges();
 
-            if ($expected > 0) {
-                $this->info("expect charging wallet {$wallet->id} for user {$wallet->owner->email} with {$expected}");
+            if (!$wallet->owner) {
+                \Log::debug("{$wallet->id} has no owner: {$wallet->user_id}");
+                continue;
             }
+
+            if ($this->option('non-zero') && $expected < 1) {
+                continue;
+            }
+
+            $this->info(
+                sprintf(
+                    "expect charging wallet %s for user %s with %d",
+                    $wallet->id,
+                    $wallet->owner->email,
+                    $expected
+                )
+            );
         }
     }
 }

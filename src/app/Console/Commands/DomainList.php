@@ -12,7 +12,7 @@ class DomainList extends Command
      *
      * @var string
      */
-    protected $signature = 'domain:list';
+    protected $signature = 'domain:list {--deleted}';
 
     /**
      * The console command description.
@@ -38,9 +38,21 @@ class DomainList extends Command
      */
     public function handle()
     {
-        $domains = Domain::withTrashed()->orderBy('namespace')->each(
+        if ($this->option('deleted')) {
+            $domains = Domain::withTrashed()->orderBy('namespace');
+        } else {
+            $domains = Domain::orderBy('namespace');
+        }
+
+        $domains->each(
             function ($domain) {
-                $this->info($domain->namespace);
+                $msg = $domain->namespace;
+
+                if ($domain->deleted_at) {
+                    $msg .= " (deleted at {$domain->deleted_at})";
+                }
+
+                $this->info($msg);
             }
         );
     }

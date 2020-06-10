@@ -40,8 +40,14 @@ class Discount extends Model
     {
         $discount = (int) $discount;
 
-        if ($discount < 0 || $discount > 100) {
-            throw new \Exception("Invalid discount value, expected integer in range of 0-100");
+        if ($discount < 0) {
+            \Log::warning("Expecting a discount rate >= 0");
+            $discount = 0;
+        }
+
+        if ($discount > 100) {
+            \Log::warning("Expecting a discount rate <= 100");
+            $discount = 100;
         }
 
         $this->attributes['discount'] = $discount;

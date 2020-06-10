@@ -2,26 +2,23 @@
 
 namespace App\Console\Commands;
 
-use App\Domain;
-use App\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
-class UserDomains extends Command
+class WalletGetDiscount extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'user:domains {userid}';
+    protected $signature = 'wallet:get-discount {wallet}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Display the existing discount to a wallet, if any.';
 
     /**
      * Create a new command instance.
@@ -40,14 +37,17 @@ class UserDomains extends Command
      */
     public function handle()
     {
-        $user = User::where('email', $this->argument('userid'))->first();
+        $wallet = \App\Wallet::find($this->argument('wallet'));
 
-        if (!$user) {
+        if (!$wallet) {
             return 1;
         }
 
-        foreach ($user->domains() as $domain) {
-            $this->info("{$domain->namespace}");
+        if (!$wallet->discount) {
+            $this->info("No discount on this wallet.");
+            return 0;
         }
+
+        $this->info($wallet->discount->discount);
     }
 }

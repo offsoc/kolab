@@ -61,6 +61,22 @@ class Domain extends Model
      */
     public function assignPackage($package, $user)
     {
+        // If this domain is public it can not be assigned to a user.
+        if ($this->isPublic()) {
+            return $this;
+        }
+
+        // See if this domain is already owned by another user.
+        $wallet = $this->wallet();
+
+        if ($wallet) {
+            \Log::error(
+                "Domain {$this->namespace} is already assigned to {$wallet->owner->email}"
+            );
+
+            return $this;
+        }
+
         $wallet_id = $user->wallets()->first()->id;
 
         foreach ($package->skus as $sku) {
@@ -79,7 +95,6 @@ class Domain extends Model
 
         return $this;
     }
-
 
     public function entitlement()
     {
@@ -195,6 +210,14 @@ class Domain extends Model
     public function isVerified(): bool
     {
         return ($this->status & self::STATUS_VERIFIED) > 0;
+    }
+
+    /**
+     * Ensure the namespace is appropriately cased.
+     */
+    public function setNamespaceAttribute($namespace)
+    {
+        $this->attributes['namespace'] = strtolower($namespace);
     }
 
     /**

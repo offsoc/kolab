@@ -41,6 +41,10 @@ class UserEntitlements extends Command
     {
         $user = User::where('email', $this->argument('userid'))->first();
 
+        if (!$user) {
+            return 1;
+        }
+
         $this->info("Found user: {$user->id}");
 
         $skus_counted = [];

@@ -12,10 +12,10 @@ class DiscountTest extends TestCase
      */
     public function testDiscountValueLessThanZero(): void
     {
-        $this->expectException(\Exception::class);
-
         $discount = new Discount();
         $discount->discount = -1;
+
+        $this->assertTrue($discount->discount == 0);
     }
 
     /**
@@ -23,9 +23,9 @@ class DiscountTest extends TestCase
      */
     public function testDiscountValueMoreThanHundred(): void
     {
-        $this->expectException(\Exception::class);
-
         $discount = new Discount();
         $discount->discount = 101;
+
+        $this->assertTrue($discount->discount == 100);
     }
 }
