@@ -36,18 +36,28 @@
             <tr>
                 <th class="align-left">{{ __('documents.date') }}</th>
                 <th class="align-left description">{{ __('documents.description') }}</th>
-                <th class="align-right">{{ __('documents.amount') }}</th>
+                <th class="price">{{ __('documents.amount') }}</th>
             </tr>
 @foreach ($items as $item)
             <tr>
                 <td class="align-left">{{ $item['date'] }}</td>
                 <td class="align-left">{{ $item['description'] }}</td>
-                <td class="align-right">{{ $item['amount'] }}</td>
+                <td class="price">{{ $item['amount'] }}</td>
             </tr>
 @endforeach
+@if ($vat)
+            <tr class="total subtotal">
+                <td colspan="2" class="align-right bold">{{ __('documents.subtotal') }}</td>
+                <td class="price bold">{{ $subTotal }}</td>
+            </tr>
+            <tr class="total vat">
+                <td colspan="2" class="align-right bold">{{ __('documents.vat', ['rate' => $vatRate]) }}</td>
+                <td class="price bold">{{ $totalVat }}</td>
+            </tr>
+@endif
             <tr class="total">
-                <td colspan="2" class="align-left bold">{{ __('documents.total') }}</td>
-                <td class="align-right bold">{{ $total }}</td>
+                <td colspan="2" class="align-right bold">{{ __('documents.total') }}</td>
+                <td class="price bold">{{ $total }}</td>
             </tr>
         </table>
 

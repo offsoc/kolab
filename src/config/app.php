@@ -253,4 +253,9 @@ return [
         'email' => env('COMPANY_EMAIL'),
         'logo' => env('COMPANY_LOGO'),
     ],
+
+    'vat' => [
+        'countries' => env('VAT_COUNTRIES'),
+        'rate' => (float) env('VAT_RATE'),
+    ],
 ];

@@ -127,6 +127,7 @@ class Receipt
         $company = $this->companyData();
 
         if (self::$fakeMode) {
+            $country = 'CH';
             $customer = [
                 'id' => $this->wallet->owner->id,
                 'wallet_id' => $this->wallet->id,
@@ -156,6 +157,7 @@ class Receipt
             ]);
         } else {
             $customer = $this->customerData();
+            $country = $this->wallet->owner->getSetting('country');
 
             $items = $this->wallet->payments()
                 ->where('status', PaymentProvider::STATUS_PAID)
@@ -166,17 +168,32 @@ class Receipt
                 ->get();
         }
 
+        $vatRate = \config('app.vat.rate');
+        $vatCountries = explode(',', \config('app.vat.countries'));
+        $vatCountries = array_map('strtoupper', array_map('trim', $vatCountries));
+
+        if (!$country || !in_array(strtoupper($country), $vatCountries)) {
+            $vatRate = 0;
+        }
+
+        $totalVat = 0;
         $total = 0;
-        $items = $items->map(function ($item) use (&$total, $appName) {
-            $total += $item->amount;
+        $items = $items->map(function ($item) use (&$total, &$totalVat, $appName, $vatRate) {
+            $amount = $item->amount;
+
+            if ($vatRate > 0) {
+                $amount = round($amount * ((100 - $vatRate) / 100));
+                $totalVat += $item->amount - $amount;
+            }
+
+            $total += $amount;
+
             return [
-                'amount' => sprintf('%.2f %s', $item->amount / 100, $this->wallet->currency),
+                'amount' => $this->wallet->money($amount),
                 'description' => \trans('documents.receipt-item-desc', ['site' => $appName]),
                 'date' => $item->updated_at->toDateString(),
             ];
         });
-
-        $total = sprintf('%.2f %s', $total / 100, $this->wallet->currency);
 
         // Load the template
         $view = view('documents.receipt')
@@ -186,7 +203,11 @@ class Receipt
                     'company' => $company,
                     'customer' => $customer,
                     'items' => $items,
-                    'total' => $total,
+                    'subTotal' => $this->wallet->money($total),
+                    'total' => $this->wallet->money($total + $totalVat),
+                    'totalVat' => $this->wallet->money($totalVat),
+                    'vatRate' => preg_replace('/([.,]00|0|[.,])$/', '', sprintf('%.2f', $vatRate)),
+                    'vat' => $vatRate > 0,
             ]);
 
         return $view;

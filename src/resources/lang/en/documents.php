@@ -33,4 +33,6 @@ return [
     'receipt-title' => "Receipt for :month :year",
     'receipt-item-desc' => ":site Services",
 
+    'subtotal' => "Subtotal",
+    'vat' => "VAT (:rate%)",
 ];

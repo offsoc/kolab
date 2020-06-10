@@ -24,11 +24,9 @@ class ReceiptTest extends TestCase
     }
 
     /**
-     * Test receipt HTML output
-     *
-     * @return void
+     * Test receipt HTML output (without VAT)
      */
-    public function testHtmlOutput()
+    public function testHtmlOutput(): void
     {
         $appName = \config('app.name');
         $wallet = $this->getTestData();
@@ -64,21 +62,21 @@ class ReceiptTest extends TestCase
         $this->assertCount(3, $cells);
         $this->assertSame('2020-05-01', $this->getNodeContent($cells[0]));
         $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
-        $this->assertSame('12.34 CHF', $this->getNodeContent($cells[2]));
+        $this->assertSame('12,34 CHF', $this->getNodeContent($cells[2]));
         $cells = $records[2]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
         $this->assertSame('2020-05-10', $this->getNodeContent($cells[0]));
         $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
-        $this->assertSame('0.01 CHF', $this->getNodeContent($cells[2]));
+        $this->assertSame('0,01 CHF', $this->getNodeContent($cells[2]));
         $cells = $records[3]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
         $this->assertSame('2020-05-31', $this->getNodeContent($cells[0]));
         $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
-        $this->assertSame('1.00 CHF', $this->getNodeContent($cells[2]));
+        $this->assertSame('1,00 CHF', $this->getNodeContent($cells[2]));
         $summaryCells = $records[4]->getElementsByTagName('td');
         $this->assertCount(2, $summaryCells);
         $this->assertSame('Total', $this->getNodeContent($summaryCells[0]));
-        $this->assertSame('13.35 CHF', $this->getNodeContent($summaryCells[1]));
+        $this->assertSame('13,35 CHF', $this->getNodeContent($summaryCells[1]));
 
         // Customer data
         $customer = $dom->getElementById('customer');
@@ -90,7 +88,7 @@ class ReceiptTest extends TestCase
         $this->assertTrue(strpos($customerIdents, "Account ID {$wallet->id}") !== false);
         $this->assertTrue(strpos($customerIdents, "Customer No. {$wallet->owner->id}") !== false);
 
-        // TODO: Company details in the footer
+        // Company details in the footer
         $footer = $dom->getElementById('footer');
         $footerOutput = $footer->textContent;
         $this->assertStringStartsWith(\config('app.company.details'), $footerOutput);
@@ -98,11 +96,61 @@ class ReceiptTest extends TestCase
     }
 
     /**
-     * Test receipt PDF output
-     *
-     * @return void
+     * Test receipt HTML output (with VAT)
      */
-    public function testPdfOutput()
+    public function testHtmlOutputVat(): void
+    {
+        \config(['app.vat.rate' => 7.7]);
+        \config(['app.vat.countries' => 'ch']);
+
+        $appName = \config('app.name');
+        $wallet = $this->getTestData('CH');
+        $receipt = new Receipt($wallet, 2020, 5);
+        $html = $receipt->htmlOutput();
+
+        $this->assertStringStartsWith('<!DOCTYPE html>', $html);
+
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->loadHTML($html);
+
+        // The main table content
+        $content = $dom->getElementById('content');
+        $records = $content->getElementsByTagName('tr');
+        $this->assertCount(7, $records);
+
+        $cells = $records[1]->getElementsByTagName('td');
+        $this->assertCount(3, $cells);
+        $this->assertSame('2020-05-01', $this->getNodeContent($cells[0]));
+        $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
+        $this->assertSame('11,39 CHF', $this->getNodeContent($cells[2]));
+        $cells = $records[2]->getElementsByTagName('td');
+        $this->assertCount(3, $cells);
+        $this->assertSame('2020-05-10', $this->getNodeContent($cells[0]));
+        $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
+        $this->assertSame('0,01 CHF', $this->getNodeContent($cells[2]));
+        $cells = $records[3]->getElementsByTagName('td');
+        $this->assertCount(3, $cells);
+        $this->assertSame('2020-05-31', $this->getNodeContent($cells[0]));
+        $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
+        $this->assertSame('0,92 CHF', $this->getNodeContent($cells[2]));
+        $subtotalCells = $records[4]->getElementsByTagName('td');
+        $this->assertCount(2, $subtotalCells);
+        $this->assertSame('Subtotal', $this->getNodeContent($subtotalCells[0]));
+        $this->assertSame('12,32 CHF', $this->getNodeContent($subtotalCells[1]));
+        $vatCells = $records[5]->getElementsByTagName('td');
+        $this->assertCount(2, $vatCells);
+        $this->assertSame('VAT (7.7%)', $this->getNodeContent($vatCells[0]));
+        $this->assertSame('1,03 CHF', $this->getNodeContent($vatCells[1]));
+        $totalCells = $records[6]->getElementsByTagName('td');
+        $this->assertCount(2, $totalCells);
+        $this->assertSame('Total', $this->getNodeContent($totalCells[0]));
+        $this->assertSame('13,35 CHF', $this->getNodeContent($totalCells[1]));
+    }
+
+    /**
+     * Test receipt PDF output
+     */
+    public function testPdfOutput(): void
     {
         $wallet = $this->getTestData();
         $receipt = new Receipt($wallet, 2020, 5);
@@ -117,9 +165,11 @@ class ReceiptTest extends TestCase
     /**
      * Prepare data for a test
      *
+     * @param string $country User country code
+     *
      * @return \App\Wallet
      */
-    protected function getTestData()
+    protected function getTestData(string $country = null): Wallet
     {
         Bus::fake();
 
@@ -128,6 +178,7 @@ class ReceiptTest extends TestCase
                 'first_name' => 'Firstname',
                 'last_name' => 'Lastname',
                 'billing_address' => "Test Unicode Straße 150\n10115 Berlin",
+                'country' => $country
         ]);
 
         $wallet = $user->wallets()->first();
