@@ -59,4 +59,25 @@ class TransactionTest extends TestCase
             ]
         );
     }
+
+    public function testEntitlementForWallet(): void
+    {
+        $transaction = \App\Transaction::where('object_type', \App\Wallet::class)
+            ->whereIn('object_id', \App\Wallet::pluck('id'))->first();
+
+        $entitlement = $transaction->entitlement();
+        $this->assertNull($entitlement);
+        $this->assertNotNull($transaction->wallet());
+    }
+
+    public function testWalletForEntitlement(): void
+    {
+        $transaction = \App\Transaction::where('object_type', \App\Entitlement::class)
+            ->whereIn('object_id', \App\Entitlement::pluck('id'))->first();
+
+        $wallet = $transaction->wallet();
+        $this->assertNull($wallet);
+
+        $this->assertNotNull($transaction->entitlement());
+    }
 }

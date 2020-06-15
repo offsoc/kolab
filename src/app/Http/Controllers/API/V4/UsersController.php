@@ -66,7 +66,6 @@ class UsersController extends Controller
      */
     public function index()
     {
-        \Log::debug("Regular API");
         $user = $this->guard()->user();
 
         $result = $user->users()->orderBy('email')->get()->map(function ($user) {
@@ -352,48 +351,48 @@ class UsersController extends Controller
     /**
      * Update user entitlements.
      *
-     * @param \App\User  $user The user
-     * @param array|null $skus Set of SKUs for the user
+     * @param \App\User $user  The user
+     * @param array     $rSkus List of SKU IDs requested for the user in the form [id=>qty]
      */
-    protected function updateEntitlements(User $user, $skus)
+    protected function updateEntitlements(User $user, $rSkus)
     {
-        if (!is_array($skus)) {
+        if (!is_array($rSkus)) {
             return;
         }
 
-        // Existing SKUs
-        // FIXME: Is there really no query builder method to get result indexed
-        //        by some column or primary key?
-        $all_skus = Sku::all()->mapWithKeys(function ($sku) {
-            return [$sku->id => $sku];
-        });
-
-        // Existing user entitlements
-        // Note: We sort them by cost, so e.g. for storage we get these free first
-        $entitlements = $user->entitlements()->orderBy('cost')->get();
-
-        // Go through existing entitlements and remove those no longer needed
-        foreach ($entitlements as $ent) {
-            $sku_id = $ent->sku_id;
-
-            if (array_key_exists($sku_id, $skus)) {
-                // An existing entitlement exists on the requested list
-                $skus[$sku_id] -= 1;
-
-                if ($skus[$sku_id] < 0) {
-                    $ent->delete();
-                }
-            } elseif ($all_skus->get($sku_id)->handler_class != \App\Handlers\Mailbox::class) {
-                // An existing entitlement does not exists on the requested list
-                // Never delete 'mailbox' SKU
-                $ent->delete();
+        // list of skus, [id=>obj]
+        $skus = Sku::all()->mapWithKeys(
+            function ($sku) {
+                return [$sku->id => $sku];
             }
-        }
+        );
 
-        // Add missing entitlements
-        foreach ($skus as $sku_id => $count) {
-            if ($count > 0 && $all_skus->has($sku_id)) {
-                $user->assignSku($all_skus[$sku_id], $count);
+        // existing entitlement's SKUs
+        $eSkus = [];
+
+        $user->entitlements()->groupBy('sku_id')
+            ->selectRaw('count(*) as total, sku_id')->each(
+                function ($e) use (&$eSkus) {
+                    $eSkus[$e->sku_id] = $e->total;
+                }
+            );
+
+        foreach ($skus as $skuID => $sku) {
+            $e = array_key_exists($skuID, $eSkus) ? $eSkus[$skuID] : 0;
+            $r = array_key_exists($skuID, $rSkus) ? $rSkus[$skuID] : 0;
+
+            if ($sku->handler_class == \App\Handlers\Mailbox::class) {
+                if ($r != 1) {
+                    throw new \Exception("Invalid quantity of mailboxes");
+                }
+            }
+
+            if ($e > $r) {
+                // remove those entitled more than existing
+                $user->removeSku($sku, ($e - $r));
+            } elseif ($e < $r) {
+                // add those requested more than entitled
+                $user->assignSku($sku, ($r - $e));
             }
         }
     }

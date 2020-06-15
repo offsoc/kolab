@@ -56,11 +56,11 @@ class EntitlementTest extends TestCase
      */
     public function testUserAddEntitlement(): void
     {
-        $package_domain = Package::where('title', 'domain-hosting')->first();
-        $package_kolab = Package::where('title', 'kolab')->first();
+        $packageDomain = Package::where('title', 'domain-hosting')->first();
+        $packageKolab = Package::where('title', 'kolab')->first();
 
-        $sku_domain = Sku::where('title', 'domain-hosting')->first();
-        $sku_mailbox = Sku::where('title', 'mailbox')->first();
+        $skuDomain = Sku::where('title', 'domain-hosting')->first();
+        $skuMailbox = Sku::where('title', 'mailbox')->first();
 
         $owner = $this->getTestUser('entitlement-test@kolabnow.com');
         $user = $this->getTestUser('entitled-user@custom-domain.com');
@@ -73,19 +73,22 @@ class EntitlementTest extends TestCase
             ]
         );
 
-        $domain->assignPackage($package_domain, $owner);
+        $domain->assignPackage($packageDomain, $owner);
 
-        $owner->assignPackage($package_kolab);
-        $owner->assignPackage($package_kolab, $user);
+        $owner->assignPackage($packageKolab);
+        $owner->assignPackage($packageKolab, $user);
 
         $wallet = $owner->wallets->first();
 
         $this->assertCount(4, $owner->entitlements()->get());
-        $this->assertCount(1, $sku_domain->entitlements()->where('wallet_id', $wallet->id)->get());
-        $this->assertCount(2, $sku_mailbox->entitlements()->where('wallet_id', $wallet->id)->get());
+        $this->assertCount(1, $skuDomain->entitlements()->where('wallet_id', $wallet->id)->get());
+        $this->assertCount(2, $skuMailbox->entitlements()->where('wallet_id', $wallet->id)->get());
         $this->assertCount(9, $wallet->entitlements);
 
-        $this->backdateEntitlements($owner->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
+        $this->backdateEntitlements(
+            $owner->entitlements,
+            Carbon::now()->subMonthsWithoutOverflow(1)
+        );
 
         $wallet->chargeEntitlements();
 
@@ -111,17 +114,55 @@ class EntitlementTest extends TestCase
         $sku = \App\Sku::where('title', 'mailbox')->first();
         $this->assertNotNull($sku);
 
-        $entitlement = Entitlement::where('wallet_id', $wallet->id)->where('sku_id', $sku->id)->first();
+        $entitlement = Entitlement::where('wallet_id', $wallet->id)
+            ->where('sku_id', $sku->id)->first();
+
         $this->assertNotNull($entitlement);
 
-        $e_sku = $entitlement->sku;
-        $this->assertSame($sku->id, $e_sku->id);
+        $eSKU = $entitlement->sku;
+        $this->assertSame($sku->id, $eSKU->id);
 
-        $e_wallet = $entitlement->wallet;
-        $this->assertSame($wallet->id, $e_wallet->id);
+        $eWallet = $entitlement->wallet;
+        $this->assertSame($wallet->id, $eWallet->id);
 
-        $e_entitleable = $entitlement->entitleable;
-        $this->assertEquals($user->id, $e_entitleable->id);
-        $this->assertTrue($e_entitleable instanceof \App\User);
+        $eEntitleable = $entitlement->entitleable;
+        $this->assertEquals($user->id, $eEntitleable->id);
+        $this->assertTrue($eEntitleable instanceof \App\User);
+    }
+
+    public function testBillDeletedEntitlement(): void
+    {
+        $user = $this->getTestUser('entitlement-test@kolabnow.com');
+        $package = \App\Package::where('title', 'kolab')->first();
+
+        $storage = \App\Sku::where('title', 'storage')->first();
+
+        $user->assignPackage($package);
+        // some additional SKUs so we have something to delete.
+        $user->assignSku($storage, 4);
+
+        // the mailbox, the groupware, the 2 original storage and the additional 4
+        $this->assertCount(8, $user->fresh()->entitlements);
+
+        $wallet = $user->wallets()->first();
+
+        $this->backdateEntitlements($user->entitlements, Carbon::now()->subWeeks(7));
+
+        $charge = $wallet->chargeEntitlements();
+
+        $this->assertTrue($wallet->balance < 0);
+
+        $balance = $wallet->balance;
+
+        $user->removeSku($storage, 4);
+
+        // we expect the wallet to have been charged.
+        $this->assertTrue($wallet->fresh()->balance < $balance);
+
+        $transactions = \App\Transaction::where('object_id', $wallet->id)
+            ->where('object_type', \App\Wallet::class)->get();
+
+        // one round of the monthly invoicing, four sku deletions getting invoiced
+        $this->assertCount(5, $transactions);
     }
 }

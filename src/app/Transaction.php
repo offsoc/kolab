@@ -162,14 +162,14 @@ class Transaction extends Model
             return null;
         }
 
-        $entitleable = $entitlement->entitleable;
+        $user = \App\User::withTrashed()->where('id', $entitlement->object_id)->first();
 
-        if (!$entitleable) {
+        if (!$user) {
             \Log::debug("No entitleable for {$entitlement->id} ?");
             return null;
         }
 
-        return $entitleable->email;
+        return $user->email;
     }
 
     /**

@@ -23,6 +23,7 @@ class UsersTest extends TestCase
     {
         parent::setUp();
 
+        $this->deleteTestUser('jane@kolabnow.com');
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('UsersControllerTest2@userscontroller.com');
         $this->deleteTestUser('UsersControllerTest3@userscontroller.com');
@@ -44,6 +45,7 @@ class UsersTest extends TestCase
      */
     public function tearDown(): void
     {
+        $this->deleteTestUser('jane@kolabnow.com');
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('UsersControllerTest2@userscontroller.com');
         $this->deleteTestUser('UsersControllerTest3@userscontroller.com');
@@ -713,7 +715,11 @@ class UsersTest extends TestCase
             ->orderBy('cost')
             ->pluck('cost')->all();
 
-        $this->assertUserEntitlements($user, ['groupware', 'mailbox', 'storage', 'storage', 'storage']);
+        $this->assertUserEntitlements(
+            $user,
+            ['groupware', 'mailbox', 'storage', 'storage', 'storage']
+        );
+
         $this->assertSame([0, 0, 25], $storage_cost);
     }
 
@@ -722,8 +728,146 @@ class UsersTest extends TestCase
      */
     public function testUpdateEntitlements(): void
     {
-        // TODO: Test more cases of entitlements update
-        $this->markTestIncomplete();
+        $jane = $this->getTestUser('jane@kolabnow.com');
+
+        $kolab = \App\Package::where('title', 'kolab')->first();
+        $storage = \App\Sku::where('title', 'storage')->first();
+        $activesync = \App\Sku::where('title', 'activesync')->first();
+        $groupware = \App\Sku::where('title', 'groupware')->first();
+        $mailbox = \App\Sku::where('title', 'mailbox')->first();
+
+        // standard package, 1 mailbox, 1 groupware, 2 storage
+        $jane->assignPackage($kolab);
+
+        // add 2 storage, 1 activesync
+        $post = [
+            'skus' => [
+                $mailbox->id => 1,
+                $groupware->id => 1,
+                $storage->id => 4,
+                $activesync->id => 1
+            ]
+        ];
+
+        $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
+        $response->assertStatus(200);
+
+        $this->assertUserEntitlements(
+            $jane,
+            [
+                'activesync',
+                'groupware',
+                'mailbox',
+                'storage',
+                'storage',
+                'storage',
+                'storage'
+            ]
+        );
+
+        // add 2 storage, remove 1 activesync
+        $post = [
+            'skus' => [
+                $mailbox->id => 1,
+                $groupware->id => 1,
+                $storage->id => 6,
+                $activesync->id => 0
+            ]
+        ];
+
+        $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
+        $response->assertStatus(200);
+
+        $this->assertUserEntitlements(
+            $jane,
+            [
+                'groupware',
+                'mailbox',
+                'storage',
+                'storage',
+                'storage',
+                'storage',
+                'storage',
+                'storage'
+            ]
+        );
+
+        // add mailbox
+        $post = [
+            'skus' => [
+                $mailbox->id => 2,
+                $groupware->id => 1,
+                $storage->id => 6,
+                $activesync->id => 0
+            ]
+        ];
+
+        $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
+        $response->assertStatus(500);
+
+        $this->assertUserEntitlements(
+            $jane,
+            [
+                'groupware',
+                'mailbox',
+                'storage',
+                'storage',
+                'storage',
+                'storage',
+                'storage',
+                'storage'
+            ]
+        );
+
+        // remove mailbox
+        $post = [
+            'skus' => [
+                $mailbox->id => 0,
+                $groupware->id => 1,
+                $storage->id => 6,
+                $activesync->id => 0
+            ]
+        ];
+
+        $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
+        $response->assertStatus(500);
+
+        $this->assertUserEntitlements(
+            $jane,
+            [
+                'groupware',
+                'mailbox',
+                'storage',
+                'storage',
+                'storage',
+                'storage',
+                'storage',
+                'storage'
+            ]
+        );
+
+        // less than free storage
+        $post = [
+            'skus' => [
+                $mailbox->id => 1,
+                $groupware->id => 1,
+                $storage->id => 1,
+                $activesync->id => 0
+            ]
+        ];
+
+        $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
+        $response->assertStatus(200);
+
+        $this->assertUserEntitlements(
+            $jane,
+            [
+                'groupware',
+                'mailbox',
+                'storage',
+                'storage'
+            ]
+        );
     }
 
     /**

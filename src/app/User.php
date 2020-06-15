@@ -4,6 +4,7 @@ namespace App;
 
 use App\Entitlement;
 use App\UserAlias;
+use App\Sku;
 use App\Traits\UserAliasesTrait;
 use App\Traits\SettingsTrait;
 use App\Wallet;
@@ -168,7 +169,7 @@ class User extends Authenticatable implements JWTSubject
      * @return \App\User Self
      * @throws \Exception
      */
-    public function assignSku($sku, int $count = 1): User
+    public function assignSku(Sku $sku, int $count = 1): User
     {
         // TODO: I guess wallet could be parametrized in future
         $wallet = $this->wallet();
@@ -184,7 +185,7 @@ class User extends Authenticatable implements JWTSubject
             \App\Entitlement::create([
                 'wallet_id' => $wallet->id,
                 'sku_id' => $sku->id,
-                'cost' => $sku->units_free >= $exists ? $sku->cost : 0,
+                'cost' => $exists >= $sku->units_free ? $sku->cost : 0,
                 'entitleable_id' => $this->id,
                 'entitleable_type' => User::class
             ]);
@@ -458,6 +459,39 @@ class User extends Authenticatable implements JWTSubject
         }
 
         return $name;
+    }
+
+    /**
+     * Remove a number of entitlements for the SKU.
+     *
+     * @param \App\Sku $sku   The SKU
+     * @param int      $count The number of entitlements to remove
+     *
+     * @return User Self
+     */
+    public function removeSku(Sku $sku, int $count = 1): User
+    {
+        $entitlements = $this->entitlements()
+            ->where('sku_id', $sku->id)
+            ->orderBy('cost', 'desc')
+            ->orderBy('created_at')
+            ->get();
+
+        $entitlements_count = count($entitlements);
+
+        foreach ($entitlements as $entitlement) {
+            if ($entitlements_count <= $sku->units_free) {
+                continue;
+            }
+
+            if ($count > 0) {
+                $entitlement->delete();
+                $entitlements_count--;
+                $count--;
+            }
+        }
+
+        return $this;
     }
 
     /**

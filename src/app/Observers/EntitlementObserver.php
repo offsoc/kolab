@@ -92,4 +92,55 @@ class EntitlementObserver
 
         $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_DELETED);
     }
+
+    public function deleting(Entitlement $entitlement)
+    {
+        // Start calculating the costs for the consumption of this entitlement if the
+        // existing consumption spans >= 14 days.
+        // anything's free for 14 days
+        if ($entitlement->created_at >= Carbon::now()->subDays(14)) {
+            return;
+        }
+
+        $cost = 0;
+
+        // get the discount rate applied to the wallet.
+        $discount = $entitlement->wallet->getDiscountRate();
+
+        // just in case this had not been billed yet, ever
+        $diffInMonths = $entitlement->updated_at->diffInMonths(Carbon::now());
+        $cost += (int) ($entitlement->cost * $discount * $diffInMonths);
+
+        // this moves the hypothetical updated at forward to however many months past the original
+        $updatedAt = $entitlement->updated_at->copy()->addMonthsWithoutOverflow($diffInMonths);
+
+        // now we have the diff in days since the last "billed" period end.
+        // This may be an entitlement paid up until February 28th, 2020, with today being March
+        // 12th 2020. Calculating the costs for the entitlement is based on the daily price for the
+        // past month -- i.e. $price/29 in the case at hand -- times the number of (full) days in
+        // between the period end and now.
+        //
+        // a) The number of days left in the past month, 1
+        // b) The cost divided by the number of days in the past month, for example, 555/29,
+        // c) a) + Todays day-of-month, 12, so 13.
+        //
+
+        $diffInDays = $updatedAt->diffInDays(Carbon::now());
+
+        $dayOfThisMonth = Carbon::now()->day;
+
+        // days in the month for the month prior to this one.
+        // the price per day is based on the number of days left in the last month
+        $daysInLastMonth = \App\Utils::daysInLastMonth();
+
+        $pricePerDay = (float)$entitlement->cost / $daysInLastMonth;
+
+        $cost += (int) (round($pricePerDay * $diffInDays, 0));
+
+        if ($cost == 0) {
+            return;
+        }
+
+        $entitlement->wallet->debit($cost);
+    }
 }

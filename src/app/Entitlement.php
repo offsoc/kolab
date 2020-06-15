@@ -103,7 +103,7 @@ class Entitlement extends Model
      */
     public function entitleable()
     {
-        return $this->morphTo()->withTrashed();
+        return $this->morphTo();
     }
 
     /**
