@@ -145,8 +145,8 @@ const app = new Vue({
                     link.click()
                 })
         },
-        price(price) {
-            return (price/100).toLocaleString('de-DE', { style: 'currency', currency: 'CHF' })
+        price(price, currency) {
+            return (price/100).toLocaleString('de-DE', { style: 'currency', currency: currency || 'CHF' })
         },
         priceLabel(cost, units = 1, discount) {
             let index = ''

@@ -43,8 +43,8 @@ class WalletUntil extends Command
             return 1;
         }
 
-        $lastsUntil = $wallet->balanceLastsUntil();
+        $until = $wallet->balanceLastsUntil();
 
-        $this->info("Lasts until: {$lastsUntil}");
+        $this->info("Lasts until: " . ($until ? $until->toDateString() : 'unknown'));
     }
 }

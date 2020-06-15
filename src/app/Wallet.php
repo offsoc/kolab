@@ -119,11 +119,15 @@ class Wallet extends Model
     /**
      * Calculate for how long the current balance will last.
      *
-     * @return \Carbon\Carbon Date
+     * Returns NULL for balance < 0 or discount = 100% or on a fresh account
+     *
+     * @return \Carbon\Carbon|null Date
      */
     public function balanceLastsUntil()
     {
-        $balance = $this->balance;
+        if ($this->balance < 0 || $this->getDiscount() == 100) {
+            return null;
+        }
 
         // retrieve any expected charges
         $expectedCharge = $this->expectedCharges();
@@ -131,37 +135,24 @@ class Wallet extends Model
         // get the costs per day for all entitlements billed against this wallet
         $costsPerDay = $this->costsPerDay();
 
+        if (!$costsPerDay) {
+            return null;
+        }
+
         // the number of days this balance, minus the expected charges, would last
-        $daysDelta = ($balance - $expectedCharge) / $costsPerDay;
+        $daysDelta = ($this->balance - $expectedCharge) / $costsPerDay;
 
         // calculate from the last entitlement billed
         $entitlement = $this->entitlements()->orderBy('updated_at', 'desc')->first();
 
-        return $entitlement->updated_at->copy()->addDays($daysDelta);
-    }
+        $until = $entitlement->updated_at->copy()->addDays($daysDelta);
 
-    /**
-     * A helper to display human-readable amount of money using
-     * the wallet currency and specified locale.
-     *
-     * @param int    $amount A amount of money (in cents)
-     * @param string $locale A locale for the output
-     *
-     * @return string String representation, e.g. "9.99 CHF"
-     */
-    public function money(int $amount, $locale = 'de_DE')
-    {
-        $amount = round($amount / 100, 2);
-
-        // Prefer intl extension's number formatter
-        if (class_exists('NumberFormatter')) {
-            $nf = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-            $result = $nf->formatCurrency($amount, $this->currency);
-            // Replace non-breaking space
-            return str_replace("\xC2\xA0", " ", $result);
+        // Don't return dates from the past
+        if ($until < Carbon::now() && !$until->isToday()) {
+            return null;
         }
 
-        return sprintf('%.2f %s', $amount, $this->currency);
+        return $until;
     }
 
     /**
@@ -304,6 +295,30 @@ class Wallet extends Model
     public function getDiscountRate()
     {
         return (100 - $this->getDiscount()) / 100;
+    }
+
+    /**
+     * A helper to display human-readable amount of money using
+     * the wallet currency and specified locale.
+     *
+     * @param int    $amount A amount of money (in cents)
+     * @param string $locale A locale for the output
+     *
+     * @return string String representation, e.g. "9.99 CHF"
+     */
+    public function money(int $amount, $locale = 'de_DE')
+    {
+        $amount = round($amount / 100, 2);
+
+        // Prefer intl extension's number formatter
+        if (class_exists('NumberFormatter')) {
+            $nf = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+            $result = $nf->formatCurrency($amount, $this->currency);
+            // Replace non-breaking space
+            return str_replace("\xC2\xA0", " ", $result);
+        }
+
+        return sprintf('%.2f %s', $amount, $this->currency);
     }
 
     /**

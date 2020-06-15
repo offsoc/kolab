@@ -6,6 +6,7 @@ use App\Transaction;
 use App\Wallet;
 use App\Http\Controllers\Controller;
 use App\Providers\PaymentProvider;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -47,15 +48,33 @@ class WalletsController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Return data of the specified wallet.
      *
-     * @param string $id
+     * @param string $id A wallet identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\JsonResponse The response
      */
     public function show($id)
     {
-        return $this->errorResponse(404);
+        $wallet = Wallet::find($id);
+
+        if (empty($wallet)) {
+            return $this->errorResponse(404);
+        }
+
+        // Only owner (or admin) has access to the wallet
+        if (!Auth::guard()->user()->canRead($wallet)) {
+            return $this->errorResponse(403);
+        }
+
+        $result = $wallet->toArray();
+
+        $provider = \App\Providers\PaymentProvider::factory($wallet);
+
+        $result['provider'] = $provider->name();
+        $result['notice'] = $this->getWalletNotice($wallet);
+
+        return response()->json($result);
     }
 
     /**
@@ -256,5 +275,44 @@ class WalletsController extends Controller
                 'hasMore' => $hasMore,
                 'page' => $page,
         ]);
+    }
+
+    /**
+     * Returns human readable notice about the wallet state.
+     *
+     * @param \App\Wallet $wallet The wallet
+     */
+    protected function getWalletNotice(Wallet $wallet): ?string
+    {
+        if ($wallet->balance < 0) {
+            return \trans('app.wallet-notice-nocredit');
+        }
+
+        if ($wallet->discount && $wallet->discount->discount == 100) {
+            return null;
+        }
+
+        if ($wallet->owner->created_at > Carbon::now()->subDays(14)) {
+            return \trans('app.wallet-notice-trial');
+        }
+
+        if ($until = $wallet->balanceLastsUntil()) {
+            if ($until->isToday()) {
+                if ($wallet->owner->created_at > Carbon::now()->subDays(30)) {
+                    return \trans('app.wallet-notice-trial-end');
+                }
+
+                return \trans('app.wallet-notice-today');
+            }
+
+            $params = [
+                'date' => $until->toDateString(),
+                'days' => Carbon::now()->diffForHumans($until, Carbon::DIFF_ABSOLUTE),
+            ];
+
+            return \trans('app.wallet-notice-date', $params);
+        }
+
+        return null;
     }
 }

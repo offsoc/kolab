@@ -6,6 +6,7 @@ use App\Package;
 use App\User;
 use App\Sku;
 use App\Wallet;
+use Carbon\Carbon;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,24 +44,63 @@ class WalletTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * Test for Wallet::balanceLastsUntil()
+     */
     public function testBalanceLastsUntil(): void
     {
+        // Monthly cost of all entitlements: 999
+        // 28 days: 35.68 per day
+        // 31 days: 32.22 per day
+
         $user = $this->getTestUser('jane@kolabnow.com');
         $package = Package::where('title', 'kolab')->first();
-        $mailbox = Sku::where('title', 'mailbox')->first();
-
         $user->assignPackage($package);
-
         $wallet = $user->wallets()->first();
 
+        // User/entitlements created today, balance=0
         $until = $wallet->balanceLastsUntil();
 
-        // TODO: Test this for typical cases
-        // TODO: Test this for a user with no entitlements
-        // TODO: Test this for a user with 100% discount
-        $this->markTestIncomplete();
+        $this->assertSame(Carbon::now()->toDateString(), $until->toDateString());
+
+        // User/entitlements created today, balance=-10 CHF
+        $wallet->balance = -1000;
+        $until = $wallet->balanceLastsUntil();
+
+        $this->assertSame(null, $until);
+
+        // User/entitlements created today, balance=-9,99 CHF (monthly cost)
+        $wallet->balance = 999;
+        $until = $wallet->balanceLastsUntil();
+
+        $daysInLastMonth = \App\Utils::daysInLastMonth();
+
+        $this->assertSame(
+            Carbon::now()->addDays($daysInLastMonth)->toDateString(),
+            $until->toDateString()
+        );
+
+        // Old entitlements, 100% discount
+        $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));
+        $discount = \App\Discount::where('discount', 100)->first();
+        $wallet->discount()->associate($discount);
+
+        $until = $wallet->refresh()->balanceLastsUntil();
+
+        $this->assertSame(null, $until);
+
+        // User with no entitlements
+        $wallet->discount()->dissociate($discount);
+        $wallet->entitlements()->delete();
+
+        $until = $wallet->refresh()->balanceLastsUntil();
+
+        $this->assertSame(null, $until);
     }
 
+    /**
+     * Test for Wallet::costsPerDay()
+     */
     public function testCostsPerDay(): void
     {
         // 999

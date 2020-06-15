@@ -44,4 +44,10 @@ return [
     'wallet-award-success' => 'The bonus has been added to the wallet successfully.',
     'wallet-penalty-success' => 'The penalty has been added to the wallet successfully.',
     'wallet-update-success' => 'User wallet updated successfully.',
+
+    'wallet-notice-date' => 'With your current subscriptions your account balance will last until about :date (:days).',
+    'wallet-notice-nocredit' => 'You are out of credit, top up your balance now.',
+    'wallet-notice-today' => 'You will run out of credit today, top up your balance now.',
+    'wallet-notice-trial' => 'You are in your free trial period.',
+    'wallet-notice-trial-end' => 'Your free trial is about to end, top up to continue.',
 ];

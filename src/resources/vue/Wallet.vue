@@ -1,12 +1,11 @@
 <template>
     <div class="container" dusk="wallet-component">
-        <div id="wallet" class="card">
+        <div v-if="wallet.id" id="wallet" class="card">
             <div class="card-body">
-                <div class="card-title">Account balance</div>
+                <div class="card-title">Account balance <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'">{{ $root.price(wallet.balance, wallet.currency) }}</span></div>
                 <div class="card-text">
-                    <p>Current account balance is
-                        <span :class="balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(balance) }}</strong></span>
-                    </p>
+                    <p v-if="wallet.notice" id="wallet-notice">{{ wallet.notice }}</p>
+                    <p>Add credit to your account or setup an automatic payment by using the button below.</p>
                     <button type="button" class="btn btn-primary" @click="paymentDialog()">Add credit</button>
                 </div>
             </div>
@@ -73,7 +72,7 @@
                                     <div class="input-group">
                                         <input type="text" class="form-control" id="amount" v-model="amount" required>
                                         <span class="input-group-append">
-                                            <span class="input-group-text">{{ wallet_currency }}</span>
+                                            <span class="input-group-text">{{ wallet.currency }}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -117,7 +116,7 @@
                                     <div class="input-group col-sm-6">
                                         <input type="text" class="form-control" id="mandate_amount" v-model="mandate.amount" required>
                                         <span class="input-group-append">
-                                            <span class="input-group-text">{{ wallet_currency }}</span>
+                                            <span class="input-group-text">{{ wallet.currency }}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -127,7 +126,7 @@
                                         <div class="input-group">
                                             <input type="text" class="form-control" id="mandate_balance" v-model="mandate.balance" required>
                                             <span class="input-group-append">
-                                                <span class="input-group-text">{{ wallet_currency }}</span>
+                                                <span class="input-group-text">{{ wallet.currency }}</span>
                                             </span>
                                         </div>
                                     </div>
@@ -168,41 +167,44 @@
         data() {
             return {
                 amount: '',
-                balance: 0,
                 mandate: { amount: 10, balance: 0 },
                 paymentDialogTitle: null,
                 paymentForm: 'init',
-                provider: window.config.paymentProvider,
                 receipts: [],
                 stripe: null,
                 loadTransactions: false,
-                walletId: null,
-                wallet_currency: 'CHF'
+                wallet: {},
+                walletId: null
             }
         },
         mounted() {
             $('#wallet button').focus()
 
-            this.balance = 0
-            // TODO: currencies, multi-wallets, accounts
-            this.$store.state.authInfo.wallets.forEach(wallet => {
-                this.balance += wallet.balance
-                this.provider = wallet.provider
-            })
-
             this.walletId = this.$store.state.authInfo.wallets[0].id
 
-            const receiptsTab = $('#wallet-receipts')
-
-            this.$root.addLoader(receiptsTab)
-            axios.get('/api/v4/wallets/' + this.walletId + '/receipts')
+            this.$root.startLoading()
+            axios.get('/api/v4/wallets/' + this.walletId)
                 .then(response => {
-                    this.$root.removeLoader(receiptsTab)
-                    this.receipts = response.data.list
+                    this.$root.stopLoading()
+                    this.wallet = response.data
+
+                    const receiptsTab = $('#wallet-receipts')
+
+                    this.$root.addLoader(receiptsTab)
+                    axios.get('/api/v4/wallets/' + this.walletId + '/receipts')
+                        .then(response => {
+                            this.$root.removeLoader(receiptsTab)
+                            this.receipts = response.data.list
+                        })
+                        .catch(error => {
+                            this.$root.removeLoader(receiptsTab)
+                        })
+
+                    if (this.wallet.provider == 'stripe') {
+                        this.stripeInit()
+                    }
                 })
-                .catch(error => {
-                    this.$root.removeLoader(receiptsTab)
-                })
+                .catch(this.$root.errorHandler)
 
             $(this.$el).find('ul.nav-tabs a').on('click', e => {
                 e.preventDefault()
@@ -211,10 +213,6 @@
                     this.loadTransactions = true
                 }
             })
-
-            if (this.provider == 'stripe') {
-                this.stripeInit()
-            }
         },
         methods: {
             paymentDialog() {

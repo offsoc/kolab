@@ -78,8 +78,9 @@ class WalletTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->click('@links .link-wallet')
                 ->on(new WalletPage())
-                ->assertSeeIn('#wallet .card-title', 'Account balance')
-                ->assertSeeIn('#wallet .card-text', 'Current account balance is -12,34 CHF');
+                ->assertSeeIn('#wallet .card-title', 'Account balance -12,34 CHF')
+                ->assertSeeIn('#wallet .card-title .text-danger', '-12,34 CHF')
+                ->assertSeeIn('#wallet .card-text', 'You are out of credit');
         });
     }
 
@@ -105,6 +106,9 @@ class WalletTest extends TestCaseDusk
             $browser->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
+                ->assertSeeIn('#wallet .card-title', 'Account balance 0,00 CHF')
+                ->assertSeeIn('#wallet .card-title .text-success', '0,00 CHF')
+                ->assertSeeIn('#wallet .card-text', 'You are in your free trial period.')
                 ->assertSeeIn('@nav #tab-receipts', 'Receipts')
                 ->with('@receipts-tab', function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')

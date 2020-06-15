@@ -31,6 +31,55 @@ class WalletsTest extends TestCase
         parent::tearDown();
     }
 
+
+    /**
+     * Test for getWalletNotice() method
+     */
+    public function testGetWalletNotice(): void
+    {
+        $user = $this->getTestUser('wallets-controller@kolabnow.com');
+        $package = \App\Package::where('title', 'kolab')->first();
+        $user->assignPackage($package);
+        $wallet = $user->wallets()->first();
+
+        $controller = new WalletsController();
+        $method = new \ReflectionMethod($controller, 'getWalletNotice');
+        $method->setAccessible(true);
+
+        // User/entitlements created today, balance=0
+        $notice = $method->invoke($controller, $wallet);
+
+        $this->assertSame('You are in your free trial period.', $notice);
+
+        $wallet->owner->created_at = Carbon::now()->subDays(15);
+        $wallet->owner->save();
+
+        $notice = $method->invoke($controller, $wallet);
+
+        $this->assertSame('Your free trial is about to end, top up to continue.', $notice);
+
+        // User/entitlements created today, balance=-10 CHF
+        $wallet->balance = -1000;
+        $notice = $method->invoke($controller, $wallet);
+
+        $this->assertSame('You are out of credit, top up your balance now.', $notice);
+
+        // User/entitlements created today, balance=-9,99 CHF (monthly cost)
+        $wallet->balance = 999;
+        $notice = $method->invoke($controller, $wallet);
+
+        $this->assertTrue(strpos($notice, '(1 month)') !== false);
+
+        // Old entitlements, 100% discount
+        $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));
+        $discount = \App\Discount::where('discount', 100)->first();
+        $wallet->discount()->associate($discount);
+
+        $notice = $method->invoke($controller, $wallet->refresh());
+
+        $this->assertSame(null, $notice);
+    }
+
     /**
      * Test fetching pdf receipt
      */
@@ -128,6 +177,36 @@ class WalletsTest extends TestCase
         $this->assertSame(1, $json['page']);
         $this->assertSame(1, $json['count']);
         $this->assertSame(false, $json['hasMore']);
+    }
+
+    /**
+     * Test fetching a wallet (GET /api/v4/wallets/:id)
+     */
+    public function testShow(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $wallet = $john->wallets()->first();
+
+        // Accessing a wallet of someone else
+        $response = $this->actingAs($jack)->get("api/v4/wallets/{$wallet->id}");
+        $response->assertStatus(403);
+
+        // Accessing non-existing wallet
+        $response = $this->actingAs($jack)->get("api/v4/wallets/aaa");
+        $response->assertStatus(404);
+
+        // Wallet owner
+        $response = $this->actingAs($john)->get("api/v4/wallets/{$wallet->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame($wallet->id, $json['id']);
+        $this->assertSame('CHF', $json['currency']);
+        $this->assertSame($wallet->balance, $json['balance']);
+        $this->assertTrue(empty($json['description']));
+        $this->assertTrue(!empty($json['notice']));
     }
 
     /**
