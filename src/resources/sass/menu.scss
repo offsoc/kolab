@@ -40,9 +40,18 @@
     height: 100px;
 
     .navbar-brand {
+        margin: 0;
+
         img {
             width: 170px;
         }
+    }
+
+    .footer {
+        text-align: right;
+        color: #fff;
+        font-size: 0.75rem;
+        padding: 0 0.5rem;
     }
 }
 
@@ -67,6 +76,13 @@
         }
     }
 
+    #footer-menu {
+        .navbar {
+            flex-direction: column;
+            align-items: flex-end;
+        }
+    }
+
     .navbar {
         .navbar {
             justify-content: flex-end;
@@ -85,11 +101,33 @@
             padding: 0;
         }
     }
+
+    #footer-menu {
+        .navbar-nav {
+            display: none;
+        }
+
+        .container {
+            flex-wrap: nowrap;
+        }
+    }
 }
 
 @include media-breakpoint-down(sm) {
     #header-menu {
         padding: 0 1em;
+    }
+
+    #footer-menu {
+        height: 80px;
+
+        .container {
+            flex-direction: column;
+        }
+
+        #footer-company {
+            display: none;
+        }
     }
 }
 

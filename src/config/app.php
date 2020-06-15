@@ -252,6 +252,7 @@ return [
         'details' => env('COMPANY_DETAILS'),
         'email' => env('COMPANY_EMAIL'),
         'logo' => env('COMPANY_LOGO'),
+        'footer' => env('COMPANY_FOOTER', env('COMPANY_DETAILS')),
     ],
 
     'vat' => [

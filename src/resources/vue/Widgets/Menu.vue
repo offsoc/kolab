@@ -10,7 +10,7 @@
             >
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div :id="mode + '-menu-navbar'" class="navbar collapse navbar-collapse">
+            <div :id="mode + '-menu-navbar'" :class="'navbar' + (mode == 'header' ? ' collapse navbar-collapse' : '')">
                 <ul class="navbar-nav">
                     <li class="nav-item" v-if="!logged_in">
                         <router-link v-if="!$root.isAdmin" class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
@@ -44,6 +44,10 @@
                         <router-link class="nav-link menulogin link-login" active-class="active" :to="{name: 'login'}">Login</router-link>
                     </li>
                 </ul>
+                <div v-if="mode == 'footer'" class="footer">
+                    <div id="footer-copyright">@ Apheleia IT AG, 2020</div>
+                    <div v-if="footer" id="footer-company">{{ footer }}</div>
+                </div>
             </div>
         </div>
     </nav>
@@ -52,7 +56,8 @@
 <script>
     export default {
         props: {
-            mode: { type: String, default: 'header' }
+            mode: { type: String, default: 'header' },
+            footer: { type: String, default: '' }
         },
         data() {
             return {
