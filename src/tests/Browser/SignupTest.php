@@ -107,8 +107,7 @@ class SignupTest extends TestCaseDusk
                 ->assertMissing('@step3');
 
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
-                $browser->assertActiveItem('signup');
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login'], 'signup');
             });
 
             $browser->waitFor('@step0 .plan-selector > .plan-box');
@@ -155,14 +154,8 @@ class SignupTest extends TestCaseDusk
     public function testSignupStep1(): void
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/signup/individual')->onWithoutAssert(new Signup());
-
-            $browser->assertVisible('@step1');
-
-            $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
-                $browser->assertActiveItem('signup');
-            });
+            $browser->visit('/signup/individual')
+                ->onWithoutAssert(new Signup());
 
             // Here we expect two text inputs and Back and Continue buttons
             $browser->with('@step1', function ($step) {
@@ -180,6 +173,10 @@ class SignupTest extends TestCaseDusk
             $browser->with('@step1', function ($step) {
                 $step->click('[type=submit]');
                 $step->assertFocused('#signup_email');
+            });
+
+            $browser->within(new Menu(), function ($browser) {
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login'], 'signup');
             });
 
             // Submit invalid email, and first_name
@@ -375,7 +372,9 @@ class SignupTest extends TestCaseDusk
                 ->assertUser('signuptestdusk@' . \config('app.domain'));
 
             // Logout the user
-            $browser->click('a.link-logout');
+            $browser->within(new Menu(), function ($browser) {
+                $browser->clickMenuItem('logout');
+            });
         });
     }
 
@@ -469,7 +468,9 @@ class SignupTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->assertUser('admin@user-domain-signup.com');
 
-            $browser->click('a.link-logout');
+            $browser->within(new Menu(), function ($browser) {
+                $browser->clickMenuItem('logout');
+            });
         });
     }
 
@@ -523,7 +524,9 @@ class SignupTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->assertUser('signuptestdusk@' . \config('app.domain'))
                 // Logout the user
-                ->click('a.link-logout');
+                ->within(new Menu(), function ($browser) {
+                    $browser->clickMenuItem('logout');
+                });
         });
 
         $user = $this->getTestUser('signuptestdusk@' . \config('app.domain'));

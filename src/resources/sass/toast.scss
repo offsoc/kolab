@@ -5,6 +5,11 @@
     margin: 0.5rem;
     width: 320px;
     z-index: 1055; // above Bootstrap's modal backdrop and dialogs
+
+    @media (max-width: 375px) {
+        left: 0;
+        width: auto;
+    }
 }
 
 .toast {
@@ -12,6 +17,10 @@
 
     &:not(:last-child) {
         margin-bottom: 0.3rem;
+    }
+
+    @media (max-width: 375px) {
+        max-width: 100%;
     }
 }
 

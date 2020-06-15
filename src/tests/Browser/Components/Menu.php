@@ -46,12 +46,16 @@ class Menu extends BaseComponent
      *
      * @param \Laravel\Dusk\Browser $browser
      * @param array                 $items   List of menu items
+     * @param string                $active  Expected active item
      *
      * @return void
      */
-    public function assertMenuItems($browser, array $items)
+    public function assertMenuItems($browser, array $items, string $active = null)
     {
-        // TODO: On mobile the links will not be visible
+        // On mobile the links are not visible, show them first (wait for transition)
+        if ($browser->isPhone()) {
+            $browser->click('@toggler')->waitFor('.navbar-collapse.show');
+        }
 
         foreach ($items as $item) {
             $browser->assertVisible('.link-' . $item);
@@ -59,21 +63,36 @@ class Menu extends BaseComponent
 
         // Check number of items, to make sure there's no extra items
         PHPUnit::assertCount(count($items), $browser->elements('li'));
+
+        if ($active) {
+            $browser->assertPresent(".link-{$active}.active");
+        }
+
+        if ($browser->isPhone()) {
+            $browser->click('@toggler')->waitUntilMissing('.navbar-collapse.show');
+        }
     }
 
     /**
-     * Assert that specified menu item is active
+     * Click menu link.
      *
-     * @param \Laravel\Dusk\Browser $browser
-     * @param string                $item    Menu item name
+     * @param \Laravel\Dusk\Browser $browser The browser object
+     * @param string                $name    Menu item name
      *
      * @return void
      */
-    public function assertActiveItem($browser, string $item)
+    public function clickMenuItem($browser, string $name)
     {
-        // TODO: On mobile the links will not be visible
+        // On mobile the links are not visible, show them first (wait for transition)
+        if ($browser->isPhone()) {
+            $browser->click('@toggler')->waitFor('.navbar-collapse.show');
+        }
 
-        $browser->assertVisible(".link-{$item}.active");
+        $browser->click('.link-' . $name);
+
+        if ($browser->isPhone()) {
+            $browser->waitUntilMissing('.navbar-collapse.show');
+        }
     }
 
     /**

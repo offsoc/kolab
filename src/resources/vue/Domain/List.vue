@@ -12,7 +12,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="domain in domains" :key="domain.id">
+                            <tr v-for="domain in domains" :key="domain.id" @click="$root.clickRecord">
                                 <td>
                                     <svg-icon icon="globe" :class="$root.domainStatusClass(domain)" :title="$root.domainStatusText(domain)"></svg-icon>
                                     <router-link :to="{ path: 'domain/' + domain.id }">{{ domain.namespace }}</router-link>

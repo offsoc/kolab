@@ -99,7 +99,7 @@ class LogonTest extends TestCaseDusk
 
             // Click the Logout button
             $browser->within(new Menu(), function ($browser) {
-                $browser->click('.link-logout');
+                $browser->clickMenuItem('logout');
             });
 
             // We expect the logon page

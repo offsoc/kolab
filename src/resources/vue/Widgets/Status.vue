@@ -22,7 +22,7 @@
                 Verify your domain to finish the setup process.
             </p>
             <div v-if="scope == 'domain'">
-                <button id="status-verify" class="btn btn-secondary" @click="confirmDomain">
+                <button id="status-verify" class="btn btn-secondary text-nowrap" @click="confirmDomain">
                     <svg-icon icon="sync-alt"></svg-icon> Verify
                 </button>
             </div>

@@ -1,4 +1,3 @@
-
 .list-input {
     & > div {
         &:not(:last-child) {
@@ -22,6 +21,10 @@
 
     input.is-invalid {
         z-index: 2;
+    }
+
+    .btn svg {
+        vertical-align: middle;
     }
 }
 

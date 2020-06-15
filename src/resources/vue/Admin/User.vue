@@ -4,8 +4,8 @@
             <div class="card-body">
                 <h1 class="card-title">{{ user.email }}</h1>
                 <div class="card-text">
-                    <form class="read-only">
-                        <div v-if="user.wallet.user_id != user.id" class="form-group row">
+                    <form class="read-only short">
+                        <div v-if="user.wallet.user_id != user.id" class="form-group row plaintext">
                             <label for="manager" class="col-sm-4 col-form-label">Managed by</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="manager">
@@ -13,7 +13,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="form-group row plaintext">
                             <label for="userid" class="col-sm-4 col-form-label">ID <span class="text-muted">(Created at)</span></label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="userid">
@@ -21,7 +21,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="form-group row plaintext">
                             <label for="status" class="col-sm-4 col-form-label">Status</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="status">
@@ -29,31 +29,31 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row" v-if="user.first_name">
+                        <div class="form-group row plaintext" v-if="user.first_name">
                             <label for="first_name" class="col-sm-4 col-form-label">First name</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="first_name">{{ user.first_name }}</span>
                             </div>
                         </div>
-                        <div class="form-group row" v-if="user.last_name">
+                        <div class="form-group row plaintext" v-if="user.last_name">
                             <label for="last_name" class="col-sm-4 col-form-label">Last name</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="last_name">{{ user.last_name }}</span>
                             </div>
                         </div>
-                        <div class="form-group row" v-if="user.organization">
+                        <div class="form-group row plaintext" v-if="user.organization">
                             <label for="organization" class="col-sm-4 col-form-label">Organization</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="organization">{{ user.organization }}</span>
                             </div>
                         </div>
-                        <div class="form-group row" v-if="user.phone">
+                        <div class="form-group row plaintext" v-if="user.phone">
                             <label for="phone" class="col-sm-4 col-form-label">Phone</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="phone">{{ user.phone }}</span>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="form-group row plaintext">
                             <label for="external_email" class="col-sm-4 col-form-label">External email</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="external_email">
@@ -62,13 +62,13 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row" v-if="user.billing_address">
+                        <div class="form-group row plaintext" v-if="user.billing_address">
                             <label for="billing_address" class="col-sm-4 col-form-label">Address</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" style="white-space:pre" id="billing_address">{{ user.billing_address }}</span>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="form-group row plaintext">
                             <label for="country" class="col-sm-4 col-form-label">Country</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="country">{{ user.country }}</span>
@@ -114,7 +114,7 @@
                 <div class="card-body">
                     <h2 class="card-title">Account balance <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(wallet.balance) }}</strong></span></h2>
                     <div class="card-text">
-                        <form class="read-only">
+                        <form class="read-only short">
                             <div class="form-group row">
                                 <label class="col-sm-4 col-form-label">Discount</label>
                                 <div class="col-sm-8">
@@ -212,7 +212,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="domain in domains" :id="'domain' + domain.id" :key="domain.id">
+                                <tr v-for="domain in domains" :id="'domain' + domain.id" :key="domain.id" @click="$root.clickRecord">
                                     <td>
                                         <svg-icon icon="globe" :class="$root.domainStatusClass(domain)" :title="$root.domainStatusText(domain)"></svg-icon>
                                         <router-link :to="{ path: '/domain/' + domain.id }">{{ domain.namespace }}</router-link>
@@ -238,7 +238,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="item in users" :id="'user' + item.id" :key="item.id">
+                                <tr v-for="item in users" :id="'user' + item.id" :key="item.id" @click="$root.clickRecord">
                                     <td>
                                         <svg-icon icon="user" :class="$root.userStatusClass(item)" :title="$root.userStatusText(item)"></svg-icon>
                                         <router-link :to="{ path: '/user/' + item.id }">{{ item.email }}</router-link>
@@ -319,7 +319,7 @@
                     <div class="modal-body">
                         <form data-validation-prefix="oneoff_">
                             <div class="form-group">
-                                <label for="oneoff_amount">Amount</label>
+                                <label for="oneoff_amount" class="col-form-label">Amount</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="oneoff_amount" v-model="oneoff_amount" required>
                                     <span class="input-group-append">
@@ -328,7 +328,7 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="oneoff_description">Description</label>
+                                <label for="oneoff_description" class="col-form-label">Description</label>
                                 <input class="form-control" id="oneoff_description" v-model="oneoff_description" required>
                             </div>
                         </form>

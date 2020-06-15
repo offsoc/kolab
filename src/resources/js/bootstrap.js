@@ -52,7 +52,11 @@ Vue.use(VueRouter)
 
 window.router = new VueRouter({
     mode: 'history',
-    routes: window.routes
+    routes: window.routes,
+    scrollBehavior (to, from, savedPosition) {
+        // Scroll the page to top, but not on Back action
+        return savedPosition || { x: 0, y: 0 }
+    }
 })
 
 router.beforeEach((to, from, next) => {
@@ -71,8 +75,10 @@ router.beforeEach((to, from, next) => {
 })
 
 router.afterEach((to, from) => {
-    // Remove the (old) error page when changing a page
-    $('#error-page').remove()
+    // When changing a page remove old:
+    // - error page
+    // - modal backdrop
+    $('#error-page,.modal-backdrop.show').remove()
 })
 
 /**

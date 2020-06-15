@@ -22,10 +22,15 @@ class LogonTest extends TestCaseDusk
             $browser->visit(new Home())
                 ->within(new Menu(), function ($browser) {
                     $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
-                })
-                ->within(new Menu('footer'), function ($browser) {
+                });
+
+            if ($browser->isDesktop()) {
+                $browser->within(new Menu('footer'), function ($browser) {
                     $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'tos', 'webmail']);
                 });
+            } else {
+                $browser->assertMissing('#footer-menu .navbar-nav');
+            }
         });
     }
 
@@ -73,11 +78,17 @@ class LogonTest extends TestCaseDusk
             $browser->on(new Dashboard())
                 ->within(new Menu(), function ($browser) {
                     $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
-                })
-                ->within(new Menu('footer'), function ($browser) {
+                });
+
+            if ($browser->isDesktop()) {
+                $browser->within(new Menu('footer'), function ($browser) {
                     $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
-                })
-                ->assertUser('john@kolab.org');
+                });
+            } else {
+                $browser->assertMissing('#footer-menu .navbar-nav');
+            }
+
+            $browser->assertUser('john@kolab.org');
 
             // Assert no "Account status" for this account
             $browser->assertMissing('@status');
@@ -107,7 +118,7 @@ class LogonTest extends TestCaseDusk
 
             // Click the Logout button
             $browser->within(new Menu(), function ($browser) {
-                $browser->click('.link-logout');
+                $browser->clickMenuItem('logout');
             });
 
             // We expect the logon page

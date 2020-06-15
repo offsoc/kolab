@@ -116,6 +116,16 @@
 @include media-breakpoint-down(sm) {
     #header-menu {
         padding: 0 1em;
+
+        .navbar-nav {
+            display: block;
+            width: 100%;
+            padding: 0;
+
+            li {
+                border-top: 1px solid #eee;
+            }
+        }
     }
 
     #footer-menu {

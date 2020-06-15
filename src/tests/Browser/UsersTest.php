@@ -280,25 +280,25 @@ class UsersTest extends TestCaseDusk
             $browser->with('@form', function (Browser $browser) {
                 $browser->with('@skus', function ($browser) {
                     // Uncheck 'groupware', expect activesync unchecked
-                    $browser->click('@sku-input-groupware')
-                        ->assertNotChecked('@sku-input-groupware')
-                        ->assertNotChecked('@sku-input-activesync')
-                        ->assertEnabled('@sku-input-activesync')
-                        ->assertNotReadonly('@sku-input-activesync')
+                    $browser->click('#sku-input-groupware')
+                        ->assertNotChecked('#sku-input-groupware')
+                        ->assertNotChecked('#sku-input-activesync')
+                        ->assertEnabled('#sku-input-activesync')
+                        ->assertNotReadonly('#sku-input-activesync')
                         // Check 'activesync', expect an alert
-                        ->click('@sku-input-activesync')
+                        ->click('#sku-input-activesync')
                         ->assertDialogOpened('Activesync requires Groupware Features.')
                         ->acceptDialog()
-                        ->assertNotChecked('@sku-input-activesync')
+                        ->assertNotChecked('#sku-input-activesync')
                         // Check '2FA', expect 'activesync' unchecked and readonly
-                        ->click('@sku-input-2fa')
-                        ->assertChecked('@sku-input-2fa')
-                        ->assertNotChecked('@sku-input-activesync')
-                        ->assertReadonly('@sku-input-activesync')
+                        ->click('#sku-input-2fa')
+                        ->assertChecked('#sku-input-2fa')
+                        ->assertNotChecked('#sku-input-activesync')
+                        ->assertReadonly('#sku-input-activesync')
                         // Uncheck '2FA'
-                        ->click('@sku-input-2fa')
-                        ->assertNotChecked('@sku-input-2fa')
-                        ->assertNotReadonly('@sku-input-activesync');
+                        ->click('#sku-input-2fa')
+                        ->assertNotChecked('#sku-input-2fa')
+                        ->assertNotReadonly('#sku-input-activesync');
                 });
             });
         });

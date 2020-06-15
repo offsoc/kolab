@@ -162,6 +162,11 @@ const app = new Vue({
 
             return this.price(cost * units) + '/month' + index
         },
+        clickRecord(event) {
+            if (!/^(a|button|svg|path)$/i.test(event.target.nodeName)) {
+                $(event.target).closest('tr').find('a')[0].click()
+            }
+        },
         domainStatusClass(domain) {
             if (domain.isDeleted) {
                 return 'text-muted'

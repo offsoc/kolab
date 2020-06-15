@@ -8,7 +8,7 @@
                 <div class="card-title" v-if="user_id === 'new'">New user account</div>
                 <div class="card-text">
                     <form @submit.prevent="submit">
-                        <div v-if="user_id !== 'new'" class="form-group row">
+                        <div v-if="user_id !== 'new'" class="form-group row plaintext">
                             <label for="first_name" class="col-sm-4 col-form-label">Status</label>
                             <div class="col-sm-8">
                                 <span :class="$root.userStatusClass(user) + ' form-control-plaintext'" id="status">{{ $root.userStatusText(user) }}</span>
@@ -71,10 +71,14 @@
                                     <tbody>
                                         <tr v-for="pkg in packages" :id="'p' + pkg.id" :key="pkg.id">
                                             <td class="selection">
-                                                <input type="checkbox" :value="pkg.id" @click="selectPackage" :checked="pkg.id == package_id">
+                                                <input type="checkbox" @click="selectPackage"
+                                                       :value="pkg.id"
+                                                       :checked="pkg.id == package_id"
+                                                       :id="'pkg-input-' + pkg.id"
+                                                >
                                             </td>
                                             <td class="name">
-                                                {{ pkg.name }}
+                                                <label :for="'pkg-input-' + pkg.id">{{ pkg.name }}</label>
                                             </td>
                                             <td class="price text-nowrap">
                                                 {{ $root.priceLabel(pkg.cost, 1, discount) }}
@@ -113,11 +117,11 @@
                                                        :value="sku.id"
                                                        :disabled="sku.readonly"
                                                        :checked="sku.enabled"
-                                                       :dusk="'sku-input-' + sku.title"
+                                                       :id="'sku-input-' + sku.title"
                                                 >
                                             </td>
                                             <td class="name">
-                                                <span class="name">{{ sku.name }}</span>
+                                                <label :for="'sku-input-' + sku.title">{{ sku.name }}</label>
                                                 <div v-if="sku.range" class="range-input">
                                                     <label class="text-nowrap">{{ sku.range.min }} {{ sku.range.unit }}</label>
                                                     <input
