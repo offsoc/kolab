@@ -22,5 +22,9 @@ class TransactionObserver
                 break;
             }
         }
+
+        if (!isset($transaction->user_email)) {
+            $transaction->user_email = \App\Utils::userEmailOrNull();
+        }
     }
 }

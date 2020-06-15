@@ -211,7 +211,6 @@ class Wallet extends Model
 
         \App\Transaction::create(
             [
-                'user_email' => \App\Utils::userEmailOrNull(),
                 'object_id' => $this->id,
                 'object_type' => \App\Wallet::class,
                 'type' => \App\Transaction::WALLET_CREDIT,
@@ -243,7 +242,6 @@ class Wallet extends Model
 
         $transaction = \App\Transaction::create(
             [
-                'user_email' => \App\Utils::userEmailOrNull(),
                 'object_id' => $this->id,
                 'object_type' => \App\Wallet::class,
                 'type' => \App\Transaction::WALLET_DEBIT,

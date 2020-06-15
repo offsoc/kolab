@@ -60,9 +60,8 @@ class WalletTransactions extends Command
                 foreach ($elements as $element) {
                     $this->info(
                         sprintf(
-                            "  + %s: %s %s",
+                            "  + %s: %s",
                             $element->id,
-                            $element->created_at,
                             $element->toString()
                         )
                     );

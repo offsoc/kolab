@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Entitlement;
+use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -18,6 +20,15 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Transaction extends Model
 {
+    public const ENTITLEMENT_BILLED = 'billed';
+    public const ENTITLEMENT_CREATED = 'created';
+    public const ENTITLEMENT_DELETED = 'deleted';
+
+    public const WALLET_AWARD = 'award';
+    public const WALLET_CREDIT = 'credit';
+    public const WALLET_DEBIT = 'debit';
+    public const WALLET_PENALTY = 'penalty';
+
     protected $fillable = [
         // actor, if any
         'user_email',
@@ -49,25 +60,27 @@ class Transaction extends Model
     /** @var string The type of the primary key */
     protected $keyType = 'string';
 
-    public const ENTITLEMENT_BILLED = 'billed';
-    public const ENTITLEMENT_CREATED = 'created';
-    public const ENTITLEMENT_DELETED = 'deleted';
 
-    public const WALLET_AWARD = 'award';
-    public const WALLET_CREDIT = 'credit';
-    public const WALLET_DEBIT = 'debit';
-    public const WALLET_PENALTY = 'penalty';
-
-    public function entitlement()
+    /**
+     * Returns the entitlement to which the transaction is assigned (if any)
+     *
+     * @return \App\Entitlement|null The entitlement
+     */
+    public function entitlement(): ?Entitlement
     {
-        if ($this->object_type !== \App\Entitlement::class) {
+        if ($this->object_type !== Entitlement::class) {
             return null;
         }
 
-        return \App\Entitlement::withTrashed()->where('id', $this->object_id)->first();
+        return Entitlement::withTrashed()->find($this->object_id);
     }
 
-    public function setTypeAttribute($value)
+    /**
+     * Transaction type mutator
+     *
+     * @throws \Exception
+     */
+    public function setTypeAttribute($value): void
     {
         switch ($value) {
             case self::ENTITLEMENT_BILLED:
@@ -90,120 +103,72 @@ class Transaction extends Model
         }
     }
 
-    public function toArray()
-    {
-        $result = [
-            'user_email' => $this->user_email,
-            'entitlement_cost' => $this->getEntitlementCost(),
-            'object_email' => $this->getEntitlementObjectEmail(),
-            'sku_title' => $this->getEntitlementSkuTitle(),
-            'wallet_description' => $this->getWalletDescription(),
-            'description' => $this->{'description'},
-            'amount' => $this->amount
-        ];
-
-        return $result;
-    }
-
-    public function toString()
-    {
-        $label = $this->objectTypeToLabelString() . '-' . $this->{'type'};
-
-        return \trans("transactions.{$label}", $this->toArray());
-    }
-
-    public function shortDescription()
+    /**
+     * Returns a short text describing the transaction.
+     *
+     * @return string The description
+     */
+    public function shortDescription(): string
     {
         $label = $this->objectTypeToLabelString() . '-' . $this->{'type'} . '-short';
 
-        return \trans("transactions.{$label}", $this->toArray());
-    }
-
-    public function wallet()
-    {
-        if ($this->object_type !== \App\Wallet::class) {
-            return null;
-        }
-
-        return \App\Wallet::where('id', $this->object_id)->first();
+        return \trans("transactions.{$label}", $this->descriptionParams());
     }
 
     /**
-     * Return the costs for this entitlement.
+     * Returns a text describing the transaction.
      *
-     * @return int|null
+     * @return string The description
      */
-    private function getEntitlementCost(): ?int
+    public function toString(): string
     {
-        if (!$this->entitlement()) {
-            return null;
-        }
+        $label = $this->objectTypeToLabelString() . '-' . $this->{'type'};
 
-        // FIXME: without wallet discount
-        // FIXME: in cents
-        // FIXME: without wallet currency
-        $cost = $this->entitlement()->cost;
-
-        $discount = $this->entitlement()->wallet->getDiscountRate();
-
-        return $cost * $discount;
+        return \trans("transactions.{$label}", $this->descriptionParams());
     }
 
     /**
-     * Return the object email if any. This is the email for the target user entitlement.
+     * Returns a wallet to which the transaction is assigned (if any)
      *
-     * @return string|null
+     * @return \App\Wallet|null The wallet
      */
-    private function getEntitlementObjectEmail(): ?string
+    public function wallet(): ?Wallet
     {
-        $entitlement = $this->entitlement();
-
-        if (!$entitlement) {
+        if ($this->object_type !== Wallet::class) {
             return null;
         }
 
-        $user = \App\User::withTrashed()->where('id', $entitlement->object_id)->first();
-
-        if (!$user) {
-            \Log::debug("No entitleable for {$entitlement->id} ?");
-            return null;
-        }
-
-        return $user->email;
+        return Wallet::find($this->object_id);
     }
 
     /**
-     * Return the title for the SKU this entitlement is for.
+     * Collect transaction parameters used in (localized) descriptions
      *
-     * @return string|null
+     * @return array Parameters
      */
-    private function getEntitlementSkuTitle(): ?string
+    private function descriptionParams(): array
     {
-        if (!$this->entitlement()) {
-            return null;
-        }
-
-        return $this->entitlement()->sku->{'title'};
-    }
-
-    /**
-     * Return the description for the wallet, if any, or 'default wallet'.
-     *
-     * @return string
-     */
-    public function getWalletDescription()
-    {
-        $description = null;
+        $result = [
+            'user_email' => $this->user_email,
+            'description' => $this->{'description'},
+        ];
 
         if ($entitlement = $this->entitlement()) {
-            $description = $entitlement->wallet->{'description'};
+            $wallet = $entitlement->wallet;
+            $cost = $entitlement->cost;
+            $discount = $entitlement->wallet->getDiscountRate();
+
+            $result['entitlement_cost'] = $cost * $discount;
+            $result['object'] = $entitlement->entitleableTitle();
+            $result['sku_title'] = $entitlement->sku->{'title'};
+        } else {
+            $wallet = $this->wallet();
         }
 
-        if ($wallet = $this->wallet()) {
-            $description = $wallet->{'description'};
-        }
+        $result['wallet'] = $wallet->{'description'} ?: 'Default wallet';
+        $result['amount'] = $wallet->money($this->amount);
 
-        return $description ?: 'Default wallet';
+        return $result;
     }
 
     /**
@@ -213,11 +178,11 @@ class Transaction extends Model
      */
     private function objectTypeToLabelString(): ?string
     {
-        if ($this->object_type == \App\Entitlement::class) {
+        if ($this->object_type == Entitlement::class) {
             return 'entitlement';
         }
 
-        if ($this->object_type == \App\Wallet::class) {
+        if ($this->object_type == Wallet::class) {
             return 'wallet';
         }
 

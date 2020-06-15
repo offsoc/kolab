@@ -85,7 +85,6 @@ class Entitlement extends Model
     {
         $transaction = \App\Transaction::create(
             [
-                'user_email' => \App\Utils::userEmailOrNull(),
                 'object_id' => $this->id,
                 'object_type' => \App\Entitlement::class,
                 'type' => $type,
@@ -104,6 +103,22 @@ class Entitlement extends Model
     public function entitleable()
     {
         return $this->morphTo();
+    }
+
+    /**
+     * Returns entitleable object title (e.g. email or domain name).
+     *
+     * @return string|null An object title/name
+     */
+    public function entitleableTitle(): ?string
+    {
+        if ($this->entitleable instanceof \App\User) {
+            return $this->entitleable->email;
+        }
+
+        if ($this->entitleable instanceof \App\Domain) {
+            return $this->entitleable->namespace;
+        }
     }
 
     /**
