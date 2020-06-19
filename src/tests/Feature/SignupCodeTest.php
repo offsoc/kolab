@@ -27,23 +27,15 @@ class SignupCodeTest extends TestCase
 
         $code = SignupCode::create($data);
 
+        $code_length = env('VERIFICATION_CODE_LENGTH', SignupCode::SHORTCODE_LENGTH);
+        $exp = Carbon::now()->addHours(env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS));
+
         $this->assertFalse($code->isExpired());
         $this->assertTrue(strlen($code->code) === SignupCode::CODE_LENGTH);
-
-        $this->assertTrue(
-            strlen($code->short_code) === env(
-                'VERIFICATION_CODE_LENGTH',
-                SignupCode::SHORTCODE_LENGTH
-            )
-        );
-
+        $this->assertTrue(strlen($code->short_code) === $code_length);
         $this->assertSame($data['data'], $code->data);
         $this->assertInstanceOf(Carbon::class, $code->expires_at);
-
-        $this->assertSame(
-            env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS),
-            $code->expires_at->diffInHours($now) + 1
-        );
+        $this->assertSame($code->expires_at->toDateTimeString(), $exp->toDateTimeString());
 
         $inst = SignupCode::find($code->code);
 
