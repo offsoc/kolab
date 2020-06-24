@@ -1,5 +1,7 @@
 <?php
 
+namespace Database\Seeds\Local;
+
 use App\Domain;
 use Illuminate\Database\Seeder;
 

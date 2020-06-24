@@ -9,4 +9,5 @@
 
     <file>src/app/</file>
     <file>src/tests/</file>
+    <file>src/database/</file>
 </ruleset>

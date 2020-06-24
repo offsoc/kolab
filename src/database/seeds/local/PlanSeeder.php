@@ -1,10 +1,11 @@
 <?php
 
+namespace Database\Seeds\Local;
+
 use App\Package;
 use App\Plan;
 use Illuminate\Database\Seeder;
 
-// phpcs:ignore
 class PlanSeeder extends Seeder
 {
     /**

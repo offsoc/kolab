@@ -1,5 +1,7 @@
 <?php
 
+namespace Database\Seeds\Production;
+
 use App\Sku;
 use Illuminate\Database\Seeder;
 
@@ -79,7 +81,7 @@ class SkuSeeder extends Seeder
                 'title' => 'storage',
                 'name' => 'Storage Quota',
                 'description' => 'Some wiggle room',
-                'cost' => 25,
+                'cost' => 50,
                 'units_free' => 2,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Storage',

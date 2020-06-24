@@ -1,10 +1,11 @@
 <?php
 
+namespace Database\Seeds\Local;
+
 use App\Package;
 use App\Sku;
 use Illuminate\Database\Seeder;
 
-// phpcs:ignore
 class PackageSeeder extends Seeder
 {
     /**

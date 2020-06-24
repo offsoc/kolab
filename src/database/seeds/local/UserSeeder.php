@@ -1,5 +1,7 @@
 <?php
 
+namespace Database\Seeds\Local;
+
 use App\Auth\SecondFactor;
 use App\Domain;
 use App\Entitlement;
@@ -9,7 +11,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use App\Wallet;
 
-// phpcs:ignore
 class UserSeeder extends Seeder
 {
     /**

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Seeder;
 
+// phpcs:ignore
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -11,15 +12,26 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call(
-            [
-                DiscountSeeder::class,
-                DomainSeeder::class,
-                SkuSeeder::class,
-                PackageSeeder::class,
-                PlanSeeder::class,
-                UserSeeder::class
-            ]
-        );
+        // Define seeders order
+        $seeders = [
+            'DiscountSeeder',
+            'DomainSeeder',
+            'SkuSeeder',
+            'PackageSeeder',
+            'PlanSeeder',
+            'UserSeeder'
+        ];
+
+        $env = ucfirst(App::environment());
+
+        // Check if the seeders exists
+        foreach ($seeders as $idx => $name) {
+            $class = "Database\\Seeds\\$env\\$name";
+            $seeders[$idx] = class_exists($class) ? $class : null;
+        }
+
+        $seeders = array_filter($seeders);
+
+        $this->call($seeders);
     }
 }

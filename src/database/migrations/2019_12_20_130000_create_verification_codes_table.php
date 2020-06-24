@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
+// phpcs:ignore
 class CreateVerificationCodesTable extends Migration
 {
     /**
