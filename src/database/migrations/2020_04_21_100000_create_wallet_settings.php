@@ -21,7 +21,8 @@ class CreateWalletSettings extends Migration
                 $table->string('wallet_id');
                 $table->string('key');
                 $table->string('value');
-                $table->timestamps();
+                $table->timestamp('created_at')->useCurrent();
+                $table->timestamp('updated_at')->useCurrent();
 
                 $table->foreign('wallet_id')->references('id')->on('wallets')->onDelete('cascade');
                 $table->unique(['wallet_id', 'key']);

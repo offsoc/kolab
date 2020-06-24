@@ -26,7 +26,8 @@ class CreateSkuEntitlements extends Migration
                 $table->string('period', strlen('monthly'))->default('monthly');
                 $table->string('handler_class')->nullable();
                 $table->boolean('active')->default(false);
-                $table->timestamps();
+                $table->timestamp('created_at')->useCurrent();
+                $table->timestamp('updated_at')->useCurrent();
             }
         );
 

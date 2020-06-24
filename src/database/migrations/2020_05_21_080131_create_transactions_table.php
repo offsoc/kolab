@@ -25,7 +25,8 @@ class CreateTransactionsTable extends Migration
                 $table->integer('amount')->nullable();
                 $table->string('description')->nullable();
                 $table->string('transaction_id', 36)->nullable()->index();
-                $table->timestamps();
+                $table->timestamp('created_at')->useCurrent();
+                $table->timestamp('updated_at')->useCurrent();
 
                 $table->index(['object_id', 'object_type']);
             }

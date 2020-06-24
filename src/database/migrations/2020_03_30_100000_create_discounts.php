@@ -22,7 +22,8 @@ class CreateDiscounts extends Migration
                 $table->json('description');
                 $table->string('code', 32)->nullable();
                 $table->boolean('active')->default(false);
-                $table->timestamps();
+                $table->timestamp('created_at')->useCurrent();
+                $table->timestamp('updated_at')->useCurrent();
 
                 $table->primary('id');
             }

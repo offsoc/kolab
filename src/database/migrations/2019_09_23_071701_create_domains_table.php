@@ -19,7 +19,8 @@ class CreateDomainsTable extends Migration
             $table->string('namespace')->unique();
             $table->smallinteger('status');
             $table->tinyinteger('type');
-            $table->timestamps();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent();
         });
     }
 

@@ -24,7 +24,8 @@ class CreatePayments extends Migration
                 $table->text('description');
                 $table->string('provider', 16);
                 $table->string('type', 16);
-                $table->timestamps();
+                $table->timestamp('created_at')->useCurrent();
+                $table->timestamp('updated_at')->useCurrent();
 
                 $table->foreign('wallet_id')->references('id')->on('wallets')->onDelete('cascade');
             }

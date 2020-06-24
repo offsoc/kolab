@@ -20,7 +20,8 @@ class CreateUserAliasesTable extends Migration
                 $table->bigIncrements('id');
                 $table->bigInteger('user_id');
                 $table->string('alias')->unique();
-                $table->timestamps();
+                $table->timestamp('created_at')->useCurrent();
+                $table->timestamp('updated_at')->useCurrent();
 
                 $table->foreign('user_id')->references('id')->on('users')
                     ->onDelete('cascade')->onUpdate('cascade');

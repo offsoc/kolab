@@ -22,7 +22,8 @@ class CreateUsersTable extends Migration
                 $table->string('password')->nullable();
                 $table->string('password_ldap')->nullable();
                 $table->smallinteger('status');
-                $table->timestamps();
+                $table->timestamp('created_at')->useCurrent();
+                $table->timestamp('updated_at')->useCurrent();
 
                 $table->primary('id');
             }
