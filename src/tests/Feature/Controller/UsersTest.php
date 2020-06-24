@@ -970,8 +970,11 @@ class UsersTest extends TestCase
             // forbidden (other user's domain)
             ["testtest@kolab.org", $user, true, 'The specified domain is not available.'],
 
-            // existing alias of other user
-            ["jack.daniels@kolab.org", $john, true, 'The specified alias is not available.'],
+            // existing alias of other user, to be a user email
+            ["jack.daniels@kolab.org", $john, false, 'The specified email is not available.'],
+
+            // existing alias of other user, to be an alias, user in the same group account
+            ["jack.daniels@kolab.org", $john, true, null],
 
             // existing user
             ["jack@kolab.org", $john, true, 'The specified alias is not available.'],
@@ -994,7 +997,8 @@ class UsersTest extends TestCase
      */
     public function testValidateEmail($alias, $user, $is_alias, $expected_result): void
     {
-        $result = $this->invokeMethod(new \App\Utils(), 'validateEmail', [$alias, $user, $is_alias]);
+        $args = [$alias, $user, $is_alias];
+        $result = $this->invokeMethod(new UsersController(), 'validateEmail', $args);
 
         $this->assertSame($expected_result, $result);
     }

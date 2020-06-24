@@ -2,11 +2,8 @@
 
 namespace App;
 
-use App\Rules\UserEmailLocal;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -154,66 +151,5 @@ class Utils
         $env['stripePK'] = \config('services.stripe.public_key');
 
         return $env;
-    }
-
-    /**
-     * Email address (login or alias) validation
-     *
-     * @param string    $email    Email address
-     * @param \App\User $user     The account owner
-     * @param bool      $is_alias The email is an alias
-     *
-     * @return string Error message on validation error
-     */
-    public static function validateEmail(
-        string $email,
-        \App\User $user,
-        bool $is_alias = false
-    ): ?string {
-        $attribute = $is_alias ? 'alias' : 'email';
-
-        if (strpos($email, '@') === false) {
-            return \trans('validation.entryinvalid', ['attribute' => $attribute]);
-        }
-
-        list($login, $domain) = explode('@', $email);
-
-        // Check if domain exists
-        $domain = Domain::where('namespace', Str::lower($domain))->first();
-
-        if (empty($domain)) {
-            return \trans('validation.domaininvalid');
-        }
-
-        // Validate login part alone
-        $v = Validator::make(
-            [$attribute => $login],
-            [$attribute => ['required', new UserEmailLocal(!$domain->isPublic())]]
-        );
-
-        if ($v->fails()) {
-            return $v->errors()->toArray()[$attribute][0];
-        }
-
-        // Check if it is one of domains available to the user
-        // TODO: We should have a helper that returns "flat" array with domain names
-        //       I guess we could use pluck() somehow
-        $domains = array_map(
-            function ($domain) {
-                return $domain->namespace;
-            },
-            $user->domains()
-        );
-
-        if (!in_array($domain->namespace, $domains)) {
-            return \trans('validation.entryexists', ['attribute' => 'domain']);
-        }
-
-        // Check if user with specified address already exists
-        if (User::findByEmail($email)) {
-            return \trans('validation.entryexists', ['attribute' => $attribute]);
-        }
-
-        return null;
     }
 }

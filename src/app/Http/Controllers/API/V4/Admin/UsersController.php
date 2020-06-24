@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Domain;
 use App\User;
+use App\UserAlias;
 use App\UserSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -27,16 +28,21 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
             }
         } elseif (strpos($search, '@')) {
             // Search by email
-            if ($user = User::findByEmail($search, false)) {
+            $user = User::where('email', $search)->first();
+            if ($user) {
                 $result->push($user);
             } else {
-                // Search by an external email
-                // TODO: This is not optimal (external email should be in users table)
-                $user_ids = UserSetting::where('key', 'external_email')->where('value', $search)
-                    ->get()->pluck('user_id');
+                // Search by an alias
+                $user_ids = UserAlias::where('alias', $search)->get()->pluck('user_id');
+                if ($user_ids->isEmpty()) {
+                    // Search by an external email
+                    $user_ids = UserSetting::where('key', 'external_email')
+                        ->where('value', $search)->get()->pluck('user_id');
+                }
 
-                // TODO: Sort order
-                $result = User::find($user_ids);
+                if (!$user_ids->isEmpty()) {
+                    $result = User::whereIn('id', $user_ids)->orderBy('email')->get();
+                }
             }
         } elseif (is_numeric($search)) {
             // Search by user ID

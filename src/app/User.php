@@ -336,11 +336,47 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Find whether an email address exists (user or alias).
+     * Note: This will also find deleted users.
+     *
+     * @param string $email       Email address
+     * @param bool   $return_user Return User instance instead of boolean
+     * @param bool   $is_alias    Set to True if the existing email is an alias
+     *
+     * @return \App\User|bool True or User model object if found, False otherwise
+     */
+    public static function emailExists(string $email, bool $return_user = false, &$is_alias = false)
+    {
+        if (strpos($email, '@') === false) {
+            return false;
+        }
+
+        $email = \strtolower($email);
+
+        $user = self::withTrashed()->where('email', $email)->first();
+
+        if ($user) {
+            return $return_user ? $user : true;
+        }
+
+        $alias = UserAlias::where('alias', $email)->first();
+
+        if ($alias) {
+            $is_alias = true;
+            return $return_user ? User::withTrashed()->find($alias->user_id) : true;
+        }
+
+        return false;
+    }
+
+    /**
      * Helper to find user by email address, whether it is
-     * main email address, alias or external email
+     * main email address, alias or an external email.
+     *
+     * If there's more than one alias NULL will be returned.
      *
      * @param string $email    Email address
-     * @param bool   $external Search also by an external email
+     * @param bool   $external Search also for an external email
      *
      * @return \App\User User model object if found
      */
@@ -358,10 +394,10 @@ class User extends Authenticatable implements JWTSubject
             return $user;
         }
 
-        $alias = UserAlias::where('alias', $email)->first();
+        $aliases = UserAlias::where('alias', $email)->get();
 
-        if ($alias) {
-            return $alias->user;
+        if (count($aliases) == 1) {
+            return $aliases->first()->user;
         }
 
         // TODO: External email

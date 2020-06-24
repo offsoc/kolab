@@ -125,6 +125,8 @@ class UserSeeder extends Seeder
 
         $john->assignPackage($package_lite, $joe);
 
+        $joe->setAliases(['joe.monster@kolab.org']);
+
         factory(User::class, 10)->create();
 
         $jeroen = User::create(

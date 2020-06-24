@@ -514,7 +514,7 @@ class UsersController extends Controller
 
             if (empty($email)) {
                 $errors['email'] = \trans('validation.required', ['attribute' => 'email']);
-            } elseif ($error = \App\Utils::validateEmail($email, $controller, false)) {
+            } elseif ($error = self::validateEmail($email, $controller, false)) {
                 $errors['email'] = $error;
             }
         }
@@ -534,7 +534,7 @@ class UsersController extends Controller
                     // validate new aliases
                     if (
                         !in_array($alias, $existing_aliases)
-                        && ($error = \App\Utils::validateEmail($alias, $controller, true))
+                        && ($error = self::validateEmail($alias, $controller, true))
                     ) {
                         if (!isset($errors['aliases'])) {
                             $errors['aliases'] = [];
@@ -597,5 +597,75 @@ class UsersController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Email address (login or alias) validation
+     *
+     * @param string    $email    Email address
+     * @param \App\User $user     The account owner
+     * @param bool      $is_alias The email is an alias
+     *
+     * @return string Error message on validation error
+     */
+    public static function validateEmail(
+        string $email,
+        \App\User $user,
+        bool $is_alias = false
+    ): ?string {
+        $attribute = $is_alias ? 'alias' : 'email';
+
+        if (strpos($email, '@') === false) {
+            return \trans('validation.entryinvalid', ['attribute' => $attribute]);
+        }
+
+        list($login, $domain) = explode('@', $email);
+
+        // Check if domain exists
+        $domain = Domain::where('namespace', Str::lower($domain))->first();
+
+        if (empty($domain)) {
+            return \trans('validation.domaininvalid');
+        }
+
+        // Validate login part alone
+        $v = Validator::make(
+            [$attribute => $login],
+            [$attribute => ['required', new UserEmailLocal(!$domain->isPublic())]]
+        );
+
+        if ($v->fails()) {
+            return $v->errors()->toArray()[$attribute][0];
+        }
+
+        // Check if it is one of domains available to the user
+        // TODO: We should have a helper that returns "flat" array with domain names
+        //       I guess we could use pluck() somehow
+        $domains = array_map(
+            function ($domain) {
+                return $domain->namespace;
+            },
+            $user->domains()
+        );
+
+        if (!in_array($domain->namespace, $domains)) {
+            return \trans('validation.entryexists', ['attribute' => 'domain']);
+        }
+
+        // Check if a user/alias with specified address already exists
+        // Allow assigning the same alias to a user in the same group account,
+        // but only for non-public domains
+        if ($exists = User::emailExists($email, true, $alias_exists)) {
+            if (
+                !$is_alias
+                || !$alias_exists
+                || $domain->isPublic()
+                || $exists->wallet()->user_id != $user->id
+            ) {
+                return \trans('validation.entryexists', ['attribute' => $attribute]);
+            }
+        }
+
+        return null;
     }
 }

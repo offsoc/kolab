@@ -259,6 +259,14 @@ class UserTest extends TestCase
     }
 
     /**
+     * Tests for User::emailExists()
+     */
+    public function testEmailExists(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    /**
      * Tests for User::findByEmail()
      */
     public function testFindByEmail(): void
@@ -279,6 +287,13 @@ class UserTest extends TestCase
         $result = User::findByEmail('john.doe@kolab.org');
         $this->assertInstanceOf(User::class, $result);
         $this->assertSame($user->id, $result->id);
+
+        // A case where two users have the same alias
+        $ned = $this->getTestUser('ned@kolab.org');
+        $ned->setAliases(['joe.monster@kolab.org']);
+        $result = User::findByEmail('joe.monster@kolab.org');
+        $this->assertNull($result);
+        $ned->setAliases([]);
 
         // TODO: searching by external email (setting)
         $this->markTestIncomplete();
@@ -353,6 +368,37 @@ class UserTest extends TestCase
         Queue::assertPushed(\App\Jobs\UserUpdate::class, 4);
 
         $this->assertCount(0, $user->aliases()->get());
+
+        // Test sanity checks in UserAliasObserver
+        Queue::fake();
+
+        // Existing user
+        $user->setAliases(['john@kolab.org']);
+        $this->assertCount(0, $user->aliases()->get());
+
+        // Existing alias (in another account)
+        $user->setAliases(['john.doe@kolab.org']);
+        $this->assertCount(0, $user->aliases()->get());
+
+        Queue::assertNothingPushed();
+
+        // Existing user (in the same group account)
+        $ned = $this->getTestUser('ned@kolab.org');
+        $ned->setAliases(['john@kolab.org']);
+        $this->assertCount(0, $ned->aliases()->get());
+
+        // Existing alias (in the same group account)
+        $ned = $this->getTestUser('ned@kolab.org');
+        $ned->setAliases(['john.doe@kolab.org']);
+        $this->assertSame('john.doe@kolab.org', $ned->aliases()->first()->alias);
+
+        // Existing alias (in another account, public domain)
+        $user->setAliases(['alias@kolabnow.com']);
+        $ned->setAliases(['alias@kolabnow.com']);
+        $this->assertCount(0, $ned->aliases()->get());
+
+        // cleanup
+        $ned->setAliases([]);
     }
 
     /**

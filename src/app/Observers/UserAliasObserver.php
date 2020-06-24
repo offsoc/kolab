@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Domain;
 use App\User;
 use App\UserAlias;
 
@@ -20,9 +21,25 @@ class UserAliasObserver
     {
         $alias->alias = \strtolower($alias->alias);
 
-        if (User::where('email', $alias->alias)->first()) {
-            \Log::error("Failed creating alias {$alias->alias}. User exists.");
-            return false;
+        if ($exists = User::emailExists($alias->alias, true, $alias_exists)) {
+            if (!$alias_exists) {
+                \Log::error("Failed creating alias {$alias->alias}. Email address exists.");
+                return false;
+            }
+
+            list($login, $domain) = explode('@', $alias->alias);
+
+            $domain = Domain::where('namespace', $domain)->first();
+
+            if (!$domain || $domain->isPublic()) {
+                \Log::error("Failed creating alias {$alias->alias}. Alias exists in public domain.");
+                return false;
+            }
+
+            if ($exists->wallet()->user_id != $alias->user->wallet()->user_id) {
+                \Log::error("Failed creating alias {$alias->alias}. Alias exists in another account.");
+                return false;
+            }
         }
 
         return true;
@@ -37,7 +54,9 @@ class UserAliasObserver
      */
     public function created(UserAlias $alias)
     {
-        \App\Jobs\UserUpdate::dispatch($alias->user);
+        if ($alias->user) {
+            \App\Jobs\UserUpdate::dispatch($alias->user);
+        }
     }
 
     /**
@@ -49,7 +68,9 @@ class UserAliasObserver
      */
     public function updated(UserAlias $alias)
     {
-        \App\Jobs\UserUpdate::dispatch($alias->user);
+        if ($alias->user) {
+            \App\Jobs\UserUpdate::dispatch($alias->user);
+        }
     }
 
     /**
@@ -61,6 +82,8 @@ class UserAliasObserver
      */
     public function deleted(UserAlias $alias)
     {
-        \App\Jobs\UserUpdate::dispatch($alias->user);
+        if ($alias->user) {
+            \App\Jobs\UserUpdate::dispatch($alias->user);
+        }
     }
 }

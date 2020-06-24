@@ -371,7 +371,7 @@ class SignupController extends Controller
 
         // Check if user with specified login already exists
         $email = $login . '@' . $domain;
-        if (User::findByEmail($email)) {
+        if (User::emailExists($email)) {
             return ['login' => \trans('validation.loginexists')];
         }
 
