@@ -11,7 +11,8 @@ return [
     */
 
     'header' => "Dear :name,",
-    'footer' => "Best regards,\nYour :site Team",
+    'footer1' => "Best regards,",
+    'footer2' => "Your :site Team",
 
     'more-info-html' => "See <a href=\":href\">here</a> for more information.",
     'more-info-text' => "See :href for more information.",
@@ -19,13 +20,13 @@ return [
     'negativebalance-subject' => ":site Payment Reminder",
     'negativebalance-body' => "It has probably skipped your attention that you are behind on paying for your :site account. "
         . "Consider setting up auto-payment to avoid messages like this in the future.",
-    'negativebalance-body-extd' => "Settle up to keep your account running.",
+    'negativebalance-body-ext' => "Settle up to keep your account running:",
 
     'passwordreset-subject' => ":site Password Reset",
-    'passwordreset-body' => "Someone recently asked to change your :site password.\n"
-        . "If this was you, use this verification code to complete the process: :code.\n"
-        . "You can also click the link below.\n"
-        . "If you did not make such a request, you can either ignore this message or get in touch with us about this incident.",
+    'passwordreset-body1' => "Someone recently asked to change your :site password.",
+    'passwordreset-body2' => "If this was you, use this verification code to complete the process:",
+    'passwordreset-body3' => "You can also click the link below:",
+    'passwordreset-body4' => "If you did not make such a request, you can either ignore this message or get in touch with us about this incident.",
 
     'paymentmandatedisabled-subject' => ":site Auto-payment Problem",
     'paymentmandatedisabled-body' => "Your :site account balance is negative "
@@ -52,8 +53,8 @@ return [
         . ":site Support is here to help.",
 
     'signupcode-subject' => ":site Registration",
-    'signupcode-body' => "This is your verification code for the :site registration process: :code.\n"
-        . "You can also click the link below to continue the registration process:",
+    'signupcode-body1' => "This is your verification code for the :site registration process:",
+    'signupcode-body2' => "You can also click the link below to continue the registration process:",
 
     'suspendeddebtor-subject' => ":site Account Suspended",
     'suspendeddebtor-body' => "You have been behind on paying for your :site account "

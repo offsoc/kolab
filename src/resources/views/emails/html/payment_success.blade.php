@@ -14,6 +14,7 @@
         <p><a href="{{ $supportUrl }}">{{ $supportUrl }}</a></p>
 @endif
 
-        <p>{{ __('mail.footer', ['site' => $site]) }}</p>
+        <p>{{ __('mail.footer1') }}</p>
+        <p>{{ __('mail.footer2', ['site' => $site]) }}</p>
     </body>
 </html>

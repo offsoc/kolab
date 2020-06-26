@@ -13,4 +13,5 @@
 @endif
 
 -- 
-{!! __('mail.footer', ['site' => $site]) !!}
+{!! __('mail.footer1') !!}
+{!! __('mail.footer2', ['site' => $site]) !!}
