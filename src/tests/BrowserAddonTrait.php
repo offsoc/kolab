@@ -11,6 +11,8 @@ trait BrowserAddonTrait
 {
     use SupportsChrome;
 
+    protected $browser;
+
 
     /**
      * Initialize and start Chrome driver and browser

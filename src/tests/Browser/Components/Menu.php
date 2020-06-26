@@ -32,7 +32,7 @@ class Menu extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param \Laravel\Dusk\Browser $browser
+     * @param \Tests\Browser $browser
      *
      * @return void
      */
@@ -44,9 +44,9 @@ class Menu extends BaseComponent
     /**
      * Assert that menu contains only specified menu items.
      *
-     * @param \Laravel\Dusk\Browser $browser
-     * @param array                 $items   List of menu items
-     * @param string                $active  Expected active item
+     * @param \Tests\Browser $browser
+     * @param array          $items   List of menu items
+     * @param string         $active  Expected active item
      *
      * @return void
      */
@@ -76,8 +76,8 @@ class Menu extends BaseComponent
     /**
      * Click menu link.
      *
-     * @param \Laravel\Dusk\Browser $browser The browser object
-     * @param string                $name    Menu item name
+     * @param \Tests\Browser $browser The browser object
+     * @param string         $name    Menu item name
      *
      * @return void
      */

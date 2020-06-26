@@ -71,7 +71,7 @@ class DashboardTest extends TestCaseDusk
                 ->assertMissing('@search table')
                 ->waitForLocation('/user/' . $john->id)
                 ->waitFor('#user-info')
-                ->assertVisible('#user-info .card-title', $john->email);
+                ->assertSeeIn('#user-info .card-title', $john->email);
         });
     }
 }

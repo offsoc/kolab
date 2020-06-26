@@ -205,13 +205,13 @@ class WalletTest extends TestCaseDusk
         $transactions = array_reverse($transactions);
         $pages = array_chunk($transactions, 10 /* page size*/);
 
-        $this->browse(function (Browser $browser) use ($pages, $wallet) {
+        $this->browse(function (Browser $browser) use ($pages) {
             $browser->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
                 ->assertSeeIn('@nav #tab-history', 'History')
                 ->click('@nav #tab-history')
-                ->with('@history-tab', function (Browser $browser) use ($pages, $wallet) {
+                ->with('@history-tab', function (Browser $browser) use ($pages) {
                     $browser->waitUntilMissing('.app-loader')
                         ->assertElementsCount('table tbody tr', 10)
                         ->assertMissing('table td.email')

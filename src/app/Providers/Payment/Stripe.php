@@ -450,9 +450,7 @@ class Stripe extends \App\Providers\PaymentProvider
                 // TODO: card number
                 return \sprintf(
                     '%s (**** **** **** %s)',
-                    // @phpstan-ignore-next-line
                     \ucfirst($details->card->brand) ?: 'Card',
-                    // @phpstan-ignore-next-line
                     $details->card->last4
                 );
         }

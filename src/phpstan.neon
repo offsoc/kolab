@@ -1,15 +1,13 @@
 includes:
     - ./vendor/nunomaduro/larastan/extension.neon
 parameters:
-    excludes_analyse:
-        - tests/Browser
-    inferPrivatePropertyTypeFromConstructor: true
     ignoreErrors:
         - '#Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable#'
         - '#Access to an undefined property App\\Package::\$pivot#'
         - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$id#'
         - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$created_at#'
         - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Model::toString()#'
+        - '#Call to an undefined method Tests\\Browser::#'
     level: 4
     paths:
         - app/

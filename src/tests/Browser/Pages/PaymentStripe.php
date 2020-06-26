@@ -60,7 +60,7 @@ class PaymentStripe extends Page
     {
         $browser->type('@name-input', 'Test')
             ->typeSlowly('@cardnumber-input', '4242424242424242', 50)
-            ->type('@cardexpiry-input', '12/' . (date('y') + 1))
+            ->type('@cardexpiry-input', '12/' . (intval(date('y')) + 1))
             ->type('@cardcvc-input', '123')
             ->press('@submit-button');
     }

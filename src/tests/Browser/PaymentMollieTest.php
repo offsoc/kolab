@@ -178,7 +178,7 @@ class PaymentMollieTest extends TestCaseDusk
             $browser->refresh()
                 ->on(new WalletPage())
                 ->click('@main button')
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) use ($wallet) {
+                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->waitFor('@body #mandate-info')
                         ->assertSeeIn(
                             '@body #mandate-info p.disabled-mandate',
@@ -209,7 +209,7 @@ class PaymentMollieTest extends TestCaseDusk
                 ->assertToast(Toast::TYPE_SUCCESS, 'The auto-payment has been updated.')
                 // Open the dialog again and make sure the "disabled" text isn't there
                 ->click('@main button')
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) use ($wallet) {
+                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertMissing('@body #mandate-info p.disabled-mandate')
                         ->click('@body #mandate-info button.btn-primary')
                         ->assertMissing('@body form p.disabled-mandate')
@@ -218,7 +218,7 @@ class PaymentMollieTest extends TestCaseDusk
         });
 
         // Test deleting auto-payment
-        $this->browse(function (Browser $browser) use ($user) {
+        $this->browse(function (Browser $browser) {
             $browser->on(new WalletPage())
                 ->click('@main button')
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {

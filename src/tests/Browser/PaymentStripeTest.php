@@ -161,7 +161,7 @@ class PaymentStripeTest extends TestCaseDusk
         });
 
         // Test updating auto-payment
-        $this->browse(function (Browser $browser) use ($user) {
+        $this->browse(function (Browser $browser) {
             $browser->on(new WalletPage())
                 ->click('@main button')
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
@@ -187,7 +187,7 @@ class PaymentStripeTest extends TestCaseDusk
         });
 
         // Test deleting auto-payment
-        $this->browse(function (Browser $browser) use ($user) {
+        $this->browse(function (Browser $browser) {
             $browser->on(new WalletPage())
                 ->click('@main button')
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {

@@ -31,9 +31,9 @@ trait MollieMocksTrait
 
         $guzzle = new Client(['handler' => $handler]);
 
-        $this->app->forgetInstance('mollie.api.client'); // @phpstan-ignore-line
-        $this->app->forgetInstance('mollie.api'); // @phpstan-ignore-line
-        $this->app->forgetInstance('mollie'); // @phpstan-ignore-line
+        $this->app->forgetInstance('mollie.api.client');
+        $this->app->forgetInstance('mollie.api');
+        $this->app->forgetInstance('mollie');
 
         $this->app->singleton('mollie.api.client', function () use ($guzzle) {
             return new MollieApiClient($guzzle);
@@ -44,9 +44,9 @@ trait MollieMocksTrait
 
     public function unmockMollie()
     {
-        $this->app->forgetInstance('mollie.api.client'); // @phpstan-ignore-line
-        $this->app->forgetInstance('mollie.api'); // @phpstan-ignore-line
-        $this->app->forgetInstance('mollie'); // @phpstan-ignore-line
+        $this->app->forgetInstance('mollie.api.client');
+        $this->app->forgetInstance('mollie.api');
+        $this->app->forgetInstance('mollie');
 
         $guzzle = new Client();
 

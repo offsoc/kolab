@@ -91,7 +91,7 @@ class StatusTest extends TestCaseDusk
                 ->on(new DomainInfo())
                 ->back()
                 ->on(new Dashboard())
-                ->with(new Status(), function ($browser) use ($john) {
+                ->with(new Status(), function ($browser) {
                     $browser->assertMissing('@refresh-button')
                         ->assertProgress(85, 'Verifying an ownership of a custom domain...', 'failed');
                 });

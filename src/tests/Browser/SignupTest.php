@@ -181,7 +181,7 @@ class SignupTest extends TestCaseDusk
 
             // Submit invalid email, and first_name
             // We expect both inputs to have is-invalid class added, with .invalid-feedback element
-            $browser->with('@step1', function ($step) use ($browser) {
+            $browser->with('@step1', function ($step) {
                 $step->type('#signup_first_name', str_repeat('a', 250))
                     ->type('#signup_email', '@test')
                     ->click('[type=submit]')
@@ -249,7 +249,7 @@ class SignupTest extends TestCaseDusk
 
             // Submit invalid code
             // We expect code input to have is-invalid class added, with .invalid-feedback element
-            $browser->with('@step2', function ($step) use ($browser) {
+            $browser->with('@step2', function ($step) {
                 $step->type('#signup_short_code', 'XXXXX');
                 $step->click('[type=submit]');
 
@@ -332,7 +332,7 @@ class SignupTest extends TestCaseDusk
             $browser->waitFor('@step3');
 
             // Submit invalid data
-            $browser->with('@step3', function ($step) use ($browser) {
+            $browser->with('@step3', function ($step) {
                 $step->assertFocused('#signup_login')
                     ->type('#signup_login', '*')
                     ->type('#signup_password', '12345678')
@@ -347,7 +347,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Submit invalid data (valid login, invalid password)
-            $browser->with('@step3', function ($step) use ($browser) {
+            $browser->with('@step3', function ($step) {
                 $step->type('#signup_login', 'SignupTestDusk')
                     ->click('[type=submit]')
                     ->waitFor('#signup_password.is-invalid')
@@ -426,7 +426,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Submit invalid login and password data
-            $browser->with('@step3', function ($step) use ($browser) {
+            $browser->with('@step3', function ($step) {
                 $step->assertFocused('#signup_login')
                     ->type('#signup_login', '*')
                     ->type('#signup_domain', 'test.com')
@@ -442,7 +442,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Submit invalid domain
-            $browser->with('@step3', function ($step) use ($browser) {
+            $browser->with('@step3', function ($step) {
                 $step->type('#signup_login', 'admin')
                     ->type('#signup_domain', 'aaa')
                     ->type('#signup_password', '12345678')

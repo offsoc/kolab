@@ -120,7 +120,7 @@ class WalletsController extends Controller
      * @param string $id      Wallet identifier
      * @param string $receipt Receipt identifier (YYYY-MM)
      *
-     * @return \Illuminate\Http\Response|void
+     * @return \Illuminate\Http\Response
      */
     public function receiptDownload($id, $receipt)
     {
@@ -128,17 +128,17 @@ class WalletsController extends Controller
 
         // Only owner (or admin) has access to the wallet
         if (!Auth::guard()->user()->canRead($wallet)) {
-            return abort(403);
+            abort(403);
         }
 
         list ($year, $month) = explode('-', $receipt);
 
         if (empty($year) || empty($month) || $year < 2000 || $month < 1 || $month > 12) {
-            return abort(404);
+            abort(404);
         }
 
         if ($receipt >= date('Y-m')) {
-            return abort(404);
+            abort(404);
         }
 
         $params = [

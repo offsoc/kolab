@@ -96,7 +96,7 @@ class UserFinancesTest extends TestCaseDusk
             // Click the managed-by link on Jack's page
             $browser->click('@user-info #manager a')
                 ->on($page)
-                ->with('@user-finances', function (Browser $browser) use ($transaction) {
+                ->with('@user-finances', function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')
                         ->assertSeeIn('.card-title:first-child', 'Account balance')
                         ->assertSeeIn('.card-title:first-child .text-danger', '-20,10 CHF')
@@ -106,7 +106,7 @@ class UserFinancesTest extends TestCaseDusk
                                 ->assertSeeIn('.row:nth-child(1) #discount span', '10% - Test voucher');
                         })
                         ->assertSeeIn('h2:nth-of-type(2)', 'Transactions')
-                        ->with('table', function (Browser $browser) use ($transaction) {
+                        ->with('table', function (Browser $browser) {
                             $browser->assertElementsCount('tbody tr', 2)
                                 ->assertMissing('tfoot')
                                 ->assertSeeIn('tbody tr:last-child td.email', 'jeroen@jeroen.jeroen');

@@ -42,8 +42,8 @@
         "kirschbaum-development/mail-intercept": "^0.2.4",
         "laravel/dusk": "~5.11.0",
         "mockery/mockery": "^1.0",
-        "nunomaduro/larastan": "^0.5",
-        "phpstan/phpstan": "0.12.25",
+        "nunomaduro/larastan": "^0.6",
+        "phpstan/phpstan": "^0.12",
         "phpunit/phpunit": "^8"
     },
     "config": {
