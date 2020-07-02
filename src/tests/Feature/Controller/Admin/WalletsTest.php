@@ -37,6 +37,8 @@ class WalletsTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
         $wallet = $user->wallets()->first();
+        $wallet->discount_id = null;
+        $wallet->save();
 
         // Make sure there's no stripe/mollie identifiers
         $wallet->setSetting('stripe_id', null);

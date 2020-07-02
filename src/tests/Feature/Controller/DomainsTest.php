@@ -205,7 +205,7 @@ class DomainsTest extends TestCase
         $response = $this->actingAs($jack)->get("/api/v4/domains/{$domain->id}/status");
         $response->assertStatus(403);
 
-        $domain->status ^= Domain::STATUS_VERIFIED | Domain::STATUS_CONFIRMED;
+        $domain->status = Domain::STATUS_NEW | Domain::STATUS_ACTIVE | Domain::STATUS_LDAP_READY;
         $domain->save();
 
         // Get domain status

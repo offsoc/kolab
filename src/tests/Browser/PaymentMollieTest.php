@@ -94,7 +94,7 @@ class PaymentMollieTest extends TestCaseDusk
 
             $browser->waitForLocation('/wallet')
                 ->on(new WalletPage())
-                ->assertSeeIn('@main .card-text', 'Current account balance is 12,34 CHF');
+                ->assertSeeIn('@main .card-title', 'Account balance 12,34 CHF');
         });
     }
 

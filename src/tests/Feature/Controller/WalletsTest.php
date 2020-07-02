@@ -68,7 +68,7 @@ class WalletsTest extends TestCase
         $wallet->balance = 999;
         $notice = $method->invoke($controller, $wallet);
 
-        $this->assertTrue(strpos($notice, '(1 month)') !== false);
+        $this->assertRegExp('/\((1 month|4 weeks)\)/', $notice);
 
         // Old entitlements, 100% discount
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));

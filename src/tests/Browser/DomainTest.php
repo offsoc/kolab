@@ -54,8 +54,10 @@ class DomainTest extends TestCaseDusk
         $this->browse(function ($browser) {
             // Unconfirmed domain
             $domain = Domain::where('namespace', 'kolab.org')->first();
-            $domain->status ^= Domain::STATUS_CONFIRMED;
-            $domain->save();
+            if ($domain->isConfirmed()) {
+                $domain->status ^= Domain::STATUS_CONFIRMED;
+                $domain->save();
+            }
 
             $browser->visit('/domain/' . $domain->id)
                 ->on(new DomainInfo())

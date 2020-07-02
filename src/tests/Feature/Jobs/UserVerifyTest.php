@@ -38,8 +38,10 @@ class UserVerifyTest extends TestCase
         Queue::fake();
 
         $user = $this->getTestUser('ned@kolab.org');
-        $user->status ^= User::STATUS_IMAP_READY;
-        $user->save();
+        if ($user->isImapReady()) {
+            $user->status ^= User::STATUS_IMAP_READY;
+            $user->save();
+        }
 
         $this->assertFalse($user->isImapReady());
 

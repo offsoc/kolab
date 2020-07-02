@@ -296,8 +296,10 @@ class UsersTest extends TestCase
         $response = $this->actingAs($jack)->get("/api/v4/users/{$john->id}/status");
         $response->assertStatus(403);
 
-        $john->status ^= User::STATUS_IMAP_READY;
-        $john->save();
+        if ($john->isImapReady()) {
+            $john->status ^= User::STATUS_IMAP_READY;
+            $john->save();
+        }
 
         // Get user status
         $response = $this->actingAs($john)->get("/api/v4/users/{$john->id}/status");

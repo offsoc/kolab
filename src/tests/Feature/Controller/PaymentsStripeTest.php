@@ -340,7 +340,9 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
-        $transaction = $wallet->transactions()->where('type', Transaction::WALLET_CREDIT)->last();
+        $transaction = $wallet->transactions()
+            ->where('type', Transaction::WALLET_CREDIT)->get()->last();
+
         $this->assertSame(1234, $transaction->amount);
         $this->assertSame(
             "Payment transaction {$payment->id} using Stripe",
@@ -590,7 +592,9 @@ class PaymentsStripeTest extends TestCase
 
         $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(2010, $wallet->fresh()->balance);
-        $transaction = $wallet->transactions()->where('type', Transaction::WALLET_CREDIT)->last();
+        $transaction = $wallet->transactions()
+            ->where('type', Transaction::WALLET_CREDIT)->get()->last();
+
         $this->assertSame(2010, $transaction->amount);
         $this->assertSame(
             "Auto-payment transaction {$payment->id} using Stripe",

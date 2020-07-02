@@ -54,11 +54,16 @@ class StatusTest extends TestCaseDusk
     {
         // Unconfirmed domain and user
         $domain = Domain::where('namespace', 'kolab.org')->first();
-        $domain->status ^= Domain::STATUS_CONFIRMED;
-        $domain->save();
+        if ($domain->isConfirmed()) {
+            $domain->status ^= Domain::STATUS_CONFIRMED;
+            $domain->save();
+        }
+
         $john = $this->getTestUser('john@kolab.org');
         $john->created_at = Carbon::now();
-        $john->status ^= User::STATUS_IMAP_READY;
+        if ($john->isImapReady()) {
+            $john->status ^= User::STATUS_IMAP_READY;
+        }
         $john->save();
 
         $this->browse(function ($browser) use ($john, $domain) {
@@ -73,8 +78,7 @@ class StatusTest extends TestCaseDusk
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text');
 
-                    $john->created_at = Carbon::now();
-                    $john->status ^= User::STATUS_IMAP_READY;
+                    $john->status |= User::STATUS_IMAP_READY;
                     $john->save();
 
                     // Wait for auto-refresh, expect domain-confirmed step
@@ -105,10 +109,14 @@ class StatusTest extends TestCaseDusk
         });
 
         // Test  the Refresh button
-        $domain->status ^= Domain::STATUS_CONFIRMED;
-        $domain->save();
+        if ($domain->isConfirmed()) {
+            $domain->status ^= Domain::STATUS_CONFIRMED;
+            $domain->save();
+        }
         $john->created_at = Carbon::now()->subSeconds(3600);
-        $john->status ^= User::STATUS_IMAP_READY;
+        if ($john->isImapReady()) {
+            $john->status ^= User::STATUS_IMAP_READY;
+        }
         $john->save();
 
         $this->browse(function ($browser) use ($john, $domain) {
@@ -119,8 +127,10 @@ class StatusTest extends TestCaseDusk
                         ->assertVisible('@refresh-button')
                         ->assertVisible('@refresh-text');
 
-                    $john->status ^= User::STATUS_IMAP_READY;
-                    $john->save();
+                    if ($john->refresh()->isImapReady()) {
+                        $john->status ^= User::STATUS_IMAP_READY;
+                        $john->save();
+                    }
                     $domain->status |= Domain::STATUS_CONFIRMED;
                     $domain->save();
 
@@ -140,7 +150,7 @@ class StatusTest extends TestCaseDusk
     {
         $domain = Domain::where('namespace', 'kolab.org')->first();
         $domain->created_at = Carbon::now();
-        $domain->status ^= Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED;
+        $domain->status = Domain::STATUS_NEW | Domain::STATUS_ACTIVE | Domain::STATUS_LDAP_READY;
         $domain->save();
 
         $this->browse(function ($browser) use ($domain) {
@@ -197,12 +207,16 @@ class StatusTest extends TestCaseDusk
     {
         $john = $this->getTestUser('john@kolab.org');
         $john->created_at = Carbon::now();
-        $john->status ^= User::STATUS_IMAP_READY;
+        if ($john->isImapReady()) {
+            $john->status ^= User::STATUS_IMAP_READY;
+        }
         $john->save();
 
         $domain = Domain::where('namespace', 'kolab.org')->first();
-        $domain->status ^= Domain::STATUS_CONFIRMED;
-        $domain->save();
+        if ($domain->isConfirmed()) {
+            $domain->status ^= Domain::STATUS_CONFIRMED;
+            $domain->save();
+        }
 
         $this->browse(function ($browser) use ($john, $domain) {
             $browser->visit(new Dashboard())
@@ -228,7 +242,8 @@ class StatusTest extends TestCaseDusk
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text');
 
-                    $john->status ^= User::STATUS_IMAP_READY;
+
+                    $john->status |= User::STATUS_IMAP_READY;
                     $john->save();
 
                     // Wait for auto-refresh, expect domain-confirmed step

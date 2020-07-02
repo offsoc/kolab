@@ -82,7 +82,7 @@ class PaymentStripeTest extends TestCaseDusk
 
             $browser->waitForLocation('/wallet', 30) // need more time than default 5 sec.
                 ->on(new WalletPage())
-                ->assertSeeIn('@main .card-text', 'Current account balance is 12,34 CHF');
+                ->assertSeeIn('@main .card-title', 'Account balance 12,34 CHF');
         });
     }
 

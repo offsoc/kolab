@@ -19,7 +19,7 @@ class DomainTest extends TestCase
             Domain::STATUS_SUSPENDED,
             Domain::STATUS_DELETED,
             Domain::STATUS_LDAP_READY,
-//            Domain::STATUS_VERIFIED,
+            Domain::STATUS_VERIFIED,
         ];
 
         $domains = \App\Utils::powerSet($statuses);
@@ -39,7 +39,7 @@ class DomainTest extends TestCase
             $this->assertTrue($domain->isSuspended() === in_array(Domain::STATUS_SUSPENDED, $domain_statuses));
             $this->assertTrue($domain->isDeleted() === in_array(Domain::STATUS_DELETED, $domain_statuses));
             $this->assertTrue($domain->isLdapReady() === in_array(Domain::STATUS_LDAP_READY, $domain_statuses));
-//            $this->assertTrue($domain->isVerified() === in_array(Domain::STATUS_VERIFIED, $domain_statuses));
+            $this->assertTrue($domain->isVerified() === in_array(Domain::STATUS_VERIFIED, $domain_statuses));
         }
     }
 
