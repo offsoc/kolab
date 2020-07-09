@@ -87,7 +87,7 @@ const app = new Vue({
         },
         // Hide "loading" overlay
         stopLoading() {
-            $('#app > .app-loader').fadeOut()
+            $('#app > .app-loader').addClass('fadeOut')
             this.isLoading = false
         },
         errorPage(code, msg) {

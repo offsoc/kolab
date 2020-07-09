@@ -84,6 +84,12 @@ body > .outer-container {
         height: 25px;
         border-width: 3px;
     }
+
+    &.fadeOut {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 400ms linear, opacity 400ms linear;
+    }
 }
 
 pre {

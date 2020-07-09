@@ -11,6 +11,14 @@ const mix = require('laravel-mix');
  |
  */
 
+mix.webpackConfig({
+    resolve: {
+        alias: {
+            'jquery$': 'jquery/dist/jquery.slim.js',
+        }
+    }
+})
+
 mix.js('resources/js/user.js', 'public/js')
     .js('resources/js/admin.js', 'public/js')
     .sass('resources/sass/app.scss', 'public/css')
