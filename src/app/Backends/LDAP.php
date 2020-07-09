@@ -7,12 +7,40 @@ use App\User;
 
 class LDAP
 {
-    /** @const array UserSettings used by th backend */
+    /** @const array UserSettings used by the backend */
     public const USER_SETTINGS = [
         'first_name',
         'last_name',
         'organization',
     ];
+
+    /** @var ?\Net_LDAP3 LDAP connection object */
+    protected static $ldap;
+
+
+    /**
+     * Starts a new LDAP connection that will be used by all methods
+     * until you call self::disconnect() explicitely. Normally every
+     * method uses a separate connection.
+     */
+    public static function connect(): void
+    {
+        if (empty(self::$ldap)) {
+            $config = self::getConfig('admin');
+            self::$ldap = self::initLDAP($config);
+        }
+    }
+
+    /**
+     * Close the connection created by self::connect()
+     */
+    public static function disconnect(): void
+    {
+        if (!empty(self::$ldap)) {
+            self::$ldap->close();
+            self::$ldap = null;
+        }
+    }
 
     /**
      * Create a domain in LDAP.
@@ -146,7 +174,9 @@ class LDAP
             }
         }
 
-        $ldap->close();
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
     }
 
     /**
@@ -196,7 +226,9 @@ class LDAP
             $ldap->add_entry($dn, $entry);
         }
 
-        $ldap->close();
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
     }
 
     /**
@@ -220,7 +252,9 @@ class LDAP
 
         $ldap->modify_entry($ldapDomain['dn'], $oldEntry, $newEntry);
 
-        $ldap->close();
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
     }
 
     /**
@@ -250,7 +284,9 @@ class LDAP
             }
         }
 
-        $ldap->close();
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
     }
 
     /**
@@ -269,7 +305,9 @@ class LDAP
             $ldap->delete_entry($dn);
         }
 
-        $ldap->close();
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
     }
 
     /**
@@ -286,7 +324,9 @@ class LDAP
 
         $user = self::getUserEntry($ldap, $email, $dn, true);
 
-        $ldap->close();
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
 
         return $user;
     }
@@ -305,14 +345,16 @@ class LDAP
 
         $newEntry = $oldEntry = self::getUserEntry($ldap, $user->email, $dn, true);
 
-        if ($oldEntry) {
-            self::setUserAttributes($user, $newEntry);
-
-            $ldap->modify_entry($dn, $oldEntry, $newEntry);
-            $ldap->close();
-        } else {
-            $ldap->close();
+        if (!$oldEntry) {
             return false;
+        }
+
+        self::setUserAttributes($user, $newEntry);
+
+        $ldap->modify_entry($dn, $oldEntry, $newEntry);
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
         }
     }
 
@@ -321,6 +363,10 @@ class LDAP
      */
     private static function initLDAP(array $config, string $privilege = 'admin')
     {
+        if (self::$ldap) {
+            return self::$ldap;
+        }
+
         $ldap = new \Net_LDAP3($config);
 
         $ldap->connect();
