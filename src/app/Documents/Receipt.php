@@ -141,17 +141,14 @@ class Receipt
                 ],
                 (object) [
                     'amount' => 10000,
-                    // @phpstan-ignore-next-line
                     'updated_at' => $start->copy()->next()->next(),
                 ],
                 (object) [
                     'amount' => 1234,
-                    // @phpstan-ignore-next-line
                     'updated_at' => $start->copy()->next()->next()->next(Carbon::MONDAY),
                 ],
                 (object) [
                     'amount' => 99,
-                    // @phpstan-ignore-next-line
                     'updated_at' => $start->copy()->next()->next()->next(),
                 ],
             ]);
