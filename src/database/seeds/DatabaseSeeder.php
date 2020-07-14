@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             'SkuSeeder',
             'PackageSeeder',
             'PlanSeeder',
-            'UserSeeder'
+            'UserSeeder',
             'OpenViduRoomSeeder',
         ];
 

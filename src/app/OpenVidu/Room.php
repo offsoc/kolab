@@ -2,12 +2,12 @@
 
 namespace App\OpenVidu;
 
-use App\Traits\OpenVidu\RoomSettingsTrait;
+use App\Traits\SettingsTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
-    use RoomSettingsTrait;
+    use SettingsTrait;
 
     protected $fillable = [
         'user_id',
@@ -95,5 +95,15 @@ class Room extends Model
         $response = $this->client()->request('GET', "sessions/{$this->session_id}");
 
         return $response->getStatusCode() == 200;
+    }
+
+    /**
+     * Any (additional) properties of this room.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function settings()
+    {
+        return $this->hasMany('App\OpenVidu\RoomSetting', 'room_id');
     }
 }
