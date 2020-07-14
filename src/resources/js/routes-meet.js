@@ -3,12 +3,12 @@ import RoomComponent from '../vue/Meet/Room'
 
 const routes = [
     {
-        path: '/',
+        path: '/meet',
         name: 'dashboard',
         component: DashboardComponent
     },
     {
-        path: '*',
+        path: '/meet/:room',
         component: RoomComponent
     }
 ]

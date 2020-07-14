@@ -9,8 +9,10 @@ window.routes = routes
 require('./bootstrap')
 
 import AppComponent from '../vue/Meet/App'
-import MenuComponent from '../vue/Widgets/Menu'
+import MenuComponent from '../vue/Meet/Widgets/Menu'
 import store from './store'
+
+const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'
 
 const app = new Vue({
     el: '#app',
@@ -53,22 +55,50 @@ const app = new Vue({
             } else {
                 this.errorPage(error.response.status, error.response.statusText)
             }
+        },
+        // Set user state to "logged in"
+        loginUser(token, dashboard) {
+            store.commit('logoutUser') // destroy old state data
+            store.commit('loginUser')
+            localStorage.setItem('token', token)
+            axios.defaults.headers.common.Authorization = 'Bearer ' + token
+
+            if (dashboard !== false) {
+                this.$router.push(store.state.afterLogin || { name: 'dashboard' })
+            }
+
+            store.state.afterLogin = null
+        },
+        // Set user state to "not logged in"
+        logoutUser() {
+            store.commit('logoutUser')
+            localStorage.setItem('token', '')
+            delete axios.defaults.headers.common.Authorization
+            this.$router.push({ name: 'dashboard' })
+        },
+        // Display "loading" overlay inside of the specified element
+        addLoader(elem) {
+            $(elem).css({position: 'relative'}).append($(loader).addClass('small'))
+        },
+        // Remove loader element added in addLoader()
+        removeLoader(elem) {
+            $(elem).find('.app-loader').remove()
+        },
+        startLoading() {
+            this.isLoading = true
+            // Lock the UI with the 'loading...' element
+            let loading = $('#app > .app-loader').show()
+            if (!loading.length) {
+                $('#app').append($(loader))
+            }
+        },
+        // Hide "loading" overlay
+        stopLoading() {
+            $('#app > .app-loader').addClass('fadeOut')
+            this.isLoading = false
         }
     }
 })
-
-// Add a axios request interceptor
-window.axios.interceptors.request.use(
-    config => {
-        // We're connecting to the API on the main domain
-        config.url = window.config['app.url'] + config.url
-        return config
-    },
-    error => {
-        // Do something with request error
-        return Promise.reject(error)
-    }
-)
 
 // Register additional icons
 import { library } from '@fortawesome/fontawesome-svg-core'

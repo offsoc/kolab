@@ -22,8 +22,8 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \App\Http\Middleware\DevelConfig::class,
         // FIXME: CORS handling added here, I didn't find a nice way
-        // to add this only the the API routes
-        \App\Http\Middleware\Cors::class,
+        // to add this only to the API routes
+        // \App\Http\Middleware\Cors::class,
     ];
 
     /**

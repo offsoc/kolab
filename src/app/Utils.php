@@ -178,27 +178,23 @@ class Utils
      */
     public static function uiEnv(): array
     {
+        $countries = include resource_path('countries.php');
+        $req_domain = preg_replace('/:[0-9]+$/', '', request()->getHttpHost());
+        $sys_domain = \config('app.domain');
+        $path = request()->path();
+
         $opts = ['app.name', 'app.url', 'app.domain'];
         $env = \app('config')->getMany($opts);
-
-        $countries = include resource_path('countries.php');
 
         $env['countries'] = $countries ?: [];
         $env['view'] = 'root';
         $env['jsapp'] = 'user.js';
 
-        $req_domain = preg_replace('/:[0-9]+$/', '', request()->getHttpHost());
-        $sys_domain = \config('app.domain');
-
-        switch ($req_domain) {
-            case "meet.$sys_domain":
-                $env['view'] = 'meet';
-                $env['jsapp'] = 'meet.js';
-                break;
-
-            case "admin.$sys_domain":
-                $env['jsapp'] = 'admin.js';
-                break;
+        if ($path == 'meet' || strpos($path, 'meet/') === 0) {
+            $env['view'] = 'meet';
+            $env['jsapp'] = 'meet.js';
+        } elseif ($req_domain == "admin.$sys_domain") {
+            $env['jsapp'] = 'admin.js';
         }
 
         $env['paymentProvider'] = \config('services.payment_provider');

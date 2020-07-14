@@ -74,7 +74,7 @@
             }
         },
         mounted() {
-            this.room = this.$route.path.replace(/^\//, '')
+            this.room = this.$route.params.room
 
             this.meet = new Meet($('#meet-session')[0]);
 
