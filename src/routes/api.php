@@ -94,6 +94,17 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.domain'),
+        'middleware' => 'api',
+        'prefix' => 'v4'
+    ],
+    function () {
+        Route::get('meet/openvidu/{id}', 'API\V4\OpenViduController@joinOrCreate');
+    }
+);
+
+Route::group(
+    [
+        'domain' => \config('app.domain'),
     ],
     function () {
         Route::post('webhooks/payment/{provider}', 'API\V4\PaymentsController@webhook');

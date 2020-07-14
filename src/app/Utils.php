@@ -151,6 +151,7 @@ class Utils
      * Create self URL
      *
      * @param string $route Route/Path
+     * @todo Move this to App\Http\Controllers\Controller
      *
      * @return string Full URL
      */
