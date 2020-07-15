@@ -63,11 +63,14 @@ const app = new Vue({
             store.state.afterLogin = null
         },
         // Set user state to "not logged in"
-        logoutUser() {
+        logoutUser(redirect) {
             store.commit('logoutUser')
             localStorage.setItem('token', '')
             delete axios.defaults.headers.common.Authorization
-            this.$router.push({ name: 'login' })
+
+            if (redirect !== false ) {
+                this.$router.push({ name: 'login' })
+            }
         },
         // Display "loading" overlay inside of the specified element
         addLoader(elem) {

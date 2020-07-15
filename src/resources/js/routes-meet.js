@@ -1,22 +1,34 @@
 import DashboardComponent from '../vue/Meet/Dashboard'
+import Error404Component from '../vue/404'
 import LoginComponent from '../vue/Login'
+import LogoutComponent from '../vue/Logout'
 import RoomComponent from '../vue/Meet/Room'
 
 const routes = [
     {
-        path: '/meet',
+        component: DashboardComponent,
         name: 'dashboard',
-        component: DashboardComponent
+        path: '/meet'
     },
     {
-        path: '/meet/login',
+        component: LoginComponent,
         name: 'login',
-        component: LoginComponent
+        path: '/meet/login'
     },
     {
-        path: '/meet/:room',
+        component: LogoutComponent,
+        name: 'logout',
+        path: '/logout'
+    },
+    {
+        component: RoomComponent,
         name: 'room',
-        component: RoomComponent
+        path: '/meet/:room'
+    },
+    {
+        component: Error404Component,
+        name: '404',
+        path: '*'
     }
 ]
 
