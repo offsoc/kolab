@@ -69,12 +69,20 @@
                 },
                 canShareScreen: false,
                 camera: '',
+                meet: null,
                 microphone: '',
-                nickname: ''
+                nickname: '',
+                room: null
             }
         },
         mounted() {
             this.room = this.$route.params.room
+
+            if (!this.$store.state.isLoggedIn) {
+                this.$store.state.afterLogin = { name: 'room', params: { room: this.room } }
+                this.$router.push({ name: 'login' })
+                return
+            }
 
             this.meet = new Meet($('#meet-session')[0]);
 
@@ -82,7 +90,9 @@
             this.setupSession()
         },
         beforeDestroy() {
-            this.leaveSession()
+            if (this.meet) {
+                this.leaveSession()
+            }
         },
         methods: {
             joinSession() {

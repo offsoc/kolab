@@ -18,11 +18,6 @@ class Room extends Model
 
     private static $client = null;
 
-    public function owner()
-    {
-        return $this->belongsTo('\App\User', 'user_id', 'id');
-    }
-
     private function client()
     {
         if (!self::$client) {
@@ -95,6 +90,16 @@ class Room extends Model
         $response = $this->client()->request('GET', "sessions/{$this->session_id}");
 
         return $response->getStatusCode() == 200;
+    }
+
+    /**
+     * The room owner.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\belongsTo
+     */
+    public function owner()
+    {
+        return $this->belongsTo('\App\User', 'user_id', 'id');
     }
 
     /**

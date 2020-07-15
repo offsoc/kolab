@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 class OpenViduController extends Controller
 {
     /**
-     * Join or create the room. Each room as one owner, and the room isn't open until the owner
+     * Join or create the room. Each room has one owner, and the room isn't open until the owner
      * joins (and effectively creates the session.
      */
     public function joinOrCreate($id)

@@ -29,6 +29,7 @@
                         // FIXME: This causes dashboard to call /api/auth/info again
                         this.isLoading = false
                         this.$root.errorHandler(error)
+                        this.$root.logoutUser(false)
                     })
             } else {
                 this.$root.stopLoading()

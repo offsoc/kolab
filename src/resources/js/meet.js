@@ -28,6 +28,11 @@ const app = new Vue({
         }
     },
     methods: {
+        // Clear (bootstrap) form validation state
+        clearFormValidation(form) {
+            $(form).find('.is-invalid').removeClass('is-invalid')
+            $(form).find('.invalid-feedback').remove()
+        },
         errorPage(code, msg) {
             // Until https://github.com/vuejs/vue-router/issues/977 is implemented
             // we can't really use router to display error page as it has two side
@@ -46,7 +51,7 @@ const app = new Vue({
 
             const error_page = `<div id="error-page"><div class="code">${code}</div><div class="message">${msg}</div></div>`
 
-            $('#app').children(':not(nav)').remove()
+            $('#error-page').remove()
             $('#app').append(error_page)
         },
         errorHandler(error) {
@@ -70,11 +75,14 @@ const app = new Vue({
             store.state.afterLogin = null
         },
         // Set user state to "not logged in"
-        logoutUser() {
+        logoutUser(dashboard) {
             store.commit('logoutUser')
             localStorage.setItem('token', '')
             delete axios.defaults.headers.common.Authorization
-            this.$router.push({ name: 'dashboard' })
+
+            if (dashboard !== false) {
+                this.$router.push({ name: 'dashboard' })
+            }
         },
         // Display "loading" overlay inside of the specified element
         addLoader(elem) {
