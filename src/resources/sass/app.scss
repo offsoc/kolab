@@ -272,6 +272,29 @@ table {
     }
 }
 
+.status-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .app-loader {
+        width: auto;
+        position: initial;
+
+        .spinner-border {
+            color: $body-color;
+        }
+    }
+
+    svg {
+        font-size: 1.5em;
+    }
+
+    :first-child {
+        margin-right: 0.4em;
+    }
+}
+
 // Various improvements for mobile
 @include media-breakpoint-down(sm) {
     .card {
@@ -333,39 +356,5 @@ table {
                 margin-right: 0.25rem;
             }
         }
-    }
-}
-
-// Openvidu webcomponent improvements
-mat-sidenav-container {
-    z-index: 10 !important;
-}
-
-#dialogChooseRoom {
-    top: 0;
-    left: 0;
-    z-index: 10;
-    background: #fff;
-
-    & > .mat-card {
-        max-height: unset;
-        margin: 2em auto;
-    }
-}
-
-// Openvidu webcomponent improvements
-mat-sidenav-container {
-    z-index: 10 !important;
-}
-
-#dialogChooseRoom {
-    top: 0;
-    left: 0;
-    z-index: 10;
-    background: #fff;
-
-    & > .mat-card {
-        max-height: unset;
-        margin: 2em auto;
     }
 }

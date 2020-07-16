@@ -16,8 +16,15 @@ class Room extends Model
 
     protected $table = 'openvidu_rooms';
 
+    /** @var \GuzzleHttp\Client|null HTTP client instance */
     private static $client = null;
 
+
+    /**
+     * Creates HTTP client for connections to OpenVidu server
+     *
+     * @return \GuzzleHttp\Client HTTP client instance
+     */
     private function client()
     {
         if (!self::$client) {
@@ -37,7 +44,12 @@ class Room extends Model
         return self::$client;
     }
 
-    public function createSession()
+    /**
+     * Create a OpenVidu session
+     *
+     * @return array|null Session data on success, NULL otherwise
+     */
+    public function createSession(): ?array
     {
         $response = $this->client()->request(
             'POST',
@@ -63,7 +75,12 @@ class Room extends Model
         return $session;
     }
 
-    public function getSessionToken($role = 'PUBLISHER')
+    /**
+     * Create a OpenVidu session (connection) token
+     *
+     * @return array|null Token data on success, NULL otherwise
+     */
+    public function getSessionToken($role = 'PUBLISHER'): ?array
     {
         $response = $this->client()->request(
             'POST',
@@ -76,12 +93,21 @@ class Room extends Model
             ]
         );
 
-        $json = json_decode($response->getBody(), true);
+        if ($response->getStatusCode() == 200) {
+            $json = json_decode($response->getBody(), true);
 
-        return $json;
+            return $json;
+        }
+
+        return null;
     }
 
-    public function hasSession()
+    /**
+     * Check if the room has an active session
+     *
+     * @return bool True when the session exists, False otherwise
+     */
+    public function hasSession(): bool
     {
         if (!$this->session_id) {
             return false;
@@ -95,7 +121,7 @@ class Room extends Model
     /**
      * The room owner.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\belongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function owner()
     {

@@ -5,7 +5,6 @@ namespace Database\Seeds\Local;
 use App\OpenVidu\Room;
 use Illuminate\Database\Seeder;
 
-// phpcs:ignore
 class OpenViduRoomSeeder extends Seeder
 {
     /**

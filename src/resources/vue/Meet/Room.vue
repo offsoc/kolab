@@ -46,7 +46,8 @@
                             </div>
                         </div>
                         <div class="text-center mt-4 col-sm-12">
-                            <button class="btn btn-primary pl-5 pr-5">JOIN</button>
+                            <status-message :status="roomState" :statusLabels="roomStateLabels"></status-message>
+                            <button v-if="roomState == 'ready'" class="btn btn-primary pl-5 pr-5">JOIN</button>
                         </div>
                     </form>
                 </div>
@@ -59,8 +60,12 @@
 
 <script>
     import Meet from '../../js/meet/app.js'
+    import StatusMessage from '../Widgets/StatusMessage'
 
     export default {
+        components: {
+            StatusMessage
+        },
         data() {
             return {
                 setup: {
@@ -72,21 +77,33 @@
                 meet: null,
                 microphone: '',
                 nickname: '',
-                room: null
+                room: null,
+                roomState: 'init',
+                roomStateLabels: {
+                    init: 'Checking the room...',
+                    404: 'The room does not exist.',
+                    423: 'The room is closed. Refresh the page to try again.'
+                },
+                session: null
             }
         },
         mounted() {
             this.room = this.$route.params.room
 
             if (!this.$store.state.isLoggedIn) {
-                this.$store.state.afterLogin = { name: 'room', params: { room: this.room } }
+                this.$store.state.afterLogin = this.$router.currentRoute
                 this.$router.push({ name: 'login' })
                 return
             }
 
+            // Initialize OpenVidu and do some basic checks
             this.meet = new Meet($('#meet-session')[0]);
-
             this.canShareScreen = this.meet.isScreenSharingSupported()
+
+            // Check the room and init the session
+            this.initSession()
+
+            // Setup the room UI
             this.setupSession()
         },
         beforeDestroy() {
@@ -95,22 +112,24 @@
             }
         },
         methods: {
-            joinSession() {
-                $('#meet-setup').addClass('d-none')
-                $('#meet-session-toolbar').removeClass('d-none')
-
-                let addUrl = ''
-                if (this.canShareScreen) {
-                    addUrl = '?screenShare=1'
-                }
+            initSession() {
+                let addUrl = this.canShareScreen ? '?screenShare=1' : ''
 
                 axios.get('/api/v4/meet/openvidu/' + this.room + addUrl)
                     .then(response => {
                         // Response data contains: session, token and shareToken
-                        this.meet.joinRoom(response.data)
+                        this.roomState = 'ready'
+                        this.session = response.data
                         $('#app').addClass('meet')
                     })
-                    .catch(this.$root.errorHandler)
+                    .catch(error => {
+                        this.roomState = error.response.status
+                    })
+            },
+            joinSession() {
+                $('#meet-setup').addClass('d-none')
+                $('#meet-session-toolbar').removeClass('d-none')
+                this.meet.joinRoom(this.session)
             },
             leaveSession() {
                 this.meet.leaveRoom()

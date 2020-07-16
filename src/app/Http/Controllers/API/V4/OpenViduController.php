@@ -19,18 +19,31 @@ class OpenViduController extends Controller
 
         $room = \App\OpenVidu\Room::where('name', $id)->first();
 
-        // this isn't a room, bye bye
+        // This isn't a room, bye bye
         if (!$room) {
-            return $this->errorResponse(404);
+            return $this->errorResponse(404, \trans('meet.roomnotfound'));
         }
 
-        // there's no existing session
+        // There's no existing session
         if (!$room->hasSession()) {
-            // TODO: only the room owner should be able to create the session
-            $room->createSession();
+            // Only the room owner can create the session
+            if ($user->id != $room->user_id) {
+                return $this->errorResponse(423, \trans('meet.sessionnotfound'));
+            }
+
+            $session = $room->createSession();
+
+            if (empty($session)) {
+                return $this->errorResponse(500, \trans('meet.sessioncreateerror'));
+            }
         }
 
+        // Create session token for the current user/connection
         $response = $room->getSessionToken('PUBLISHER');
+
+        if (empty($response)) {
+            return $this->errorResponse(500, \trans('meet.sessionjoinerror'));
+        }
 
         if (!empty(request()->input('screenShare'))) {
             $add_token = $room->getSessionToken('PUBLISHER');

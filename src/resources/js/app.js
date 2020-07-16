@@ -68,7 +68,7 @@ const app = new Vue({
             localStorage.setItem('token', '')
             delete axios.defaults.headers.common.Authorization
 
-            if (redirect !== false ) {
+            if (redirect !== false) {
                 this.$router.push({ name: 'login' })
             }
         },
@@ -120,6 +120,10 @@ const app = new Vue({
             if (!error.response) {
                 // TODO: probably network connection error
             } else if (error.response.status === 401) {
+                if (!store.state.afterLogin && this.$router.currentRoute.name != 'login') {
+                    store.state.afterLogin = this.$router.currentRoute
+                }
+
                 this.logoutUser()
             } else {
                 this.errorPage(error.response.status, error.response.statusText)
@@ -131,7 +135,7 @@ const app = new Vue({
             // TODO: This method does not show the download progress in the browser
             //       but it could be implemented in the UI, axios has 'progress' property
             axios.get(url, { responseType: 'blob' })
-                .then (response => {
+                .then(response => {
                     const link = document.createElement('a')
                     const contentDisposition = response.headers['content-disposition']
                     let filename = 'unknown'
