@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
+use App\OpenVidu\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -11,13 +12,13 @@ class OpenViduController extends Controller
 {
     /**
      * Join or create the room. Each room has one owner, and the room isn't open until the owner
-     * joins (and effectively creates the session.
+     * joins (and effectively creates the session).
      */
     public function joinOrCreate($id)
     {
         $user = Auth::guard()->user();
 
-        $room = \App\OpenVidu\Room::where('name', $id)->first();
+        $room = Room::where('name', $id)->first();
 
         // This isn't a room, bye bye
         if (!$room) {

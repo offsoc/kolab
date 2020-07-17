@@ -77,16 +77,9 @@ Route::group(
         Route::post('payments/mandate', 'API\V4\PaymentsController@mandateCreate');
         Route::put('payments/mandate', 'API\V4\PaymentsController@mandateUpdate');
         Route::delete('payments/mandate', 'API\V4\PaymentsController@mandateDelete');
-    }
-);
 
-Route::group(
-    [
-        'domain' => \config('app.domain'),
-        'middleware' => 'api',
-        'prefix' => 'v4'
-    ],
-    function () {
+        // For now we require authenticated users
+        // TODO: Allow guests/external users
         Route::get('meet/openvidu/{id}', 'API\V4\OpenViduController@joinOrCreate');
     }
 );

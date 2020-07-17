@@ -82,7 +82,8 @@
                 roomStateLabels: {
                     init: 'Checking the room...',
                     404: 'The room does not exist.',
-                    423: 'The room is closed. Refresh the page to try again.'
+                    423: 'The room is closed. Refresh the page to try again.',
+                    500: 'Failed to create a session. Server error.'
                 },
                 session: null
             }
