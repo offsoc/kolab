@@ -13,18 +13,24 @@ require('./app')
 import { library } from '@fortawesome/fontawesome-svg-core'
 
 import {
+    faAlignLeft,
+    faCompress,
     faDesktop,
     faExpand,
     faMicrophone,
     faPowerOff,
-    faVideo
+    faVideo,
+    faVolumeMute
 } from '@fortawesome/free-solid-svg-icons'
 
 // Register only these icons we need
 library.add(
+    faAlignLeft,
+    faCompress,
     faDesktop,
     faExpand,
     faMicrophone,
     faPowerOff,
-    faVideo
+    faVideo,
+    faVolumeMute
 )

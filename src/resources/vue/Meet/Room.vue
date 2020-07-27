@@ -2,16 +2,25 @@
     <div id="meet-component">
         <div id="meet-session-toolbar" class="d-none">
             <div id="meet-session-menu">
-                <button class="btn btn-link link-audio" @click="switchSound">
+                <button class="btn btn-link link-audio" @click="switchSound" title="Mute audio">
                     <svg-icon icon="microphone"></svg-icon>
                 </button>
-                <button class="btn btn-link link-video" @click="switchVideo">
+                <button class="btn btn-link link-video" @click="switchVideo" title="Mute video">
                     <svg-icon icon="video"></svg-icon>
                 </button>
-                <button class="btn btn-link link-screen text-danger" @click="switchScreen" :disabled="!canShareScreen">
+                <button class="btn btn-link link-screen text-danger" @click="switchScreen" :disabled="!canShareScreen" title="Share screen">
                     <svg-icon icon="desktop"></svg-icon>
                 </button>
-                <button class="btn btn-link link-logout" @click="sessionLogout">
+                <button class="btn btn-link link-chat text-danger" @click="switchChat" title="Chat">
+                    <svg-icon icon="align-left"></svg-icon>
+                </button>
+                <button class="btn btn-link link-fullscreen d-none" @click="switchFullscreen" title="Full screen">
+                    <svg-icon icon="expand"></svg-icon>
+                </button>
+                <button class="btn btn-link link-fullscreen d-none" @click="switchFullscreen" title="Full screen">
+                    <svg-icon icon="compress"></svg-icon>
+                </button>
+                <button class="btn btn-link link-logout" @click="sessionLogout" title="Leave session">
                     <svg-icon icon="power-off"></svg-icon>
                 </button>
             </div>
@@ -24,6 +33,7 @@
                     <form class="setup-form row" @submit.prevent="joinSession">
                         <div id="setup-preview" class="col-sm-6">
                             <video class="rounded"></video>
+                            <div class="volume"><div class="bar"></div></div>
                         </div>
                         <div class="col-sm-6">
                             <div class="form-group">
@@ -46,7 +56,7 @@
                             </div>
                         </div>
                         <div class="text-center mt-4 col-sm-12">
-                            <status-message :status="roomState" :statusLabels="roomStateLabels"></status-message>
+                            <status-message :status="roomState" :status-labels="roomStateLabels"></status-message>
                             <button v-if="roomState == 'ready'" class="btn btn-primary pl-5 pr-5">JOIN</button>
                         </div>
                     </form>
@@ -54,7 +64,15 @@
             </div>
         </div>
 
-        <div id="meet-session"></div>
+        <div id="meet-session-layout" class="d-flex">
+            <div id="meet-session"></div>
+            <div id="meet-chat">
+                <div class="chat"></div>
+                <div class="chat-input m-2">
+                    <textarea class="form-control" rows="1"></textarea>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -97,6 +115,8 @@
                 return
             }
 
+            // this.nickname = this.$store.state.authInfo.email.replace(/@.*$/, '')
+
             // Initialize OpenVidu and do some basic checks
             this.meet = new Meet($('#meet-session')[0]);
             this.canShareScreen = this.meet.isScreenSharingSupported()
@@ -126,10 +146,19 @@
                     .catch(error => {
                         this.roomState = error.response.status
                     })
+
+                if (document.fullscreenEnabled) {
+                    $('#meet-session-menu').find('.link-fullscreen').first().removeClass('d-none')
+                }
             },
             joinSession() {
                 $('#meet-setup').addClass('d-none')
                 $('#meet-session-toolbar').removeClass('d-none')
+
+                this.session.nickname = this.nickname
+                this.session.menuElement = $('#meet-session-menu')[0]
+                this.session.chatElement = $('#meet-chat')[0]
+
                 this.meet.joinRoom(this.session)
             },
             leaveSession() {
@@ -139,44 +168,68 @@
                 $('#meet-session-menu').find('.link-' + type)[state ? 'removeClass' : 'addClass']('text-danger')
             },
             setupSession() {
-                this.meet.setup($('#setup-preview video')[0],
-                    setup => {
+                this.meet.setup({
+                    videoElement: $('#setup-preview video')[0],
+                    volumeElement: $('#setup-preview .volume')[0],
+                    success: setup => {
                         this.setup = setup
                         this.microphone = setup.audioSource
                         this.camera = setup.videoSource
 
-                        this.setMenuItem('audio', this.setup.audioEnabled)
-                        this.setMenuItem('audio', this.setup.videoEnabled)
+                        this.setMenuItem('audio', setup.audioEnabled)
+                        this.setMenuItem('audio', setup.videoEnabled)
                     },
-                    error => {
+                    error: error => {
                         // TODO: display nice error to the user
                         // FIXME: It looks like OpenVidu requires audio or video,
                         //        otherwise it will not connect to the session?
                     }
-                )
+                })
             },
             setupCameraChange() {
-                const enabled = this.meet.setupSetVideoDevice(this.camera)
-                this.setMenuItem('video', enabled)
+                this.meet.setupSetVideoDevice(this.camera).then(enabled => {
+                    this.setMenuItem('video', enabled)
+                })
             },
             setupMicrophoneChange() {
-                const enabled = this.meet.setupSetAudioDevice(this.microphone)
-                this.setMenuItem('audio', enabled)
+                this.meet.setupSetAudioDevice(this.microphone).then(enabled => {
+                    this.setMenuItem('audio', enabled)
+                })
             },
             sessionLogout() {
                 this.leaveSession()
                 this.$router.push({ name: 'dashboard' })
                 // TODO: If user is logged in, log him out?
             },
-            switchSound(event) {
+            switchChat() {
+                let chat = $('#meet-chat')
+                let enabled = chat.is('.open')
+
+                this.setMenuItem('chat', !enabled)
+                chat.toggleClass('open')
+
+                if (!enabled) {
+                    chat.find('textarea').focus()
+                }
+            },
+            switchFullscreen() {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen()
+                } else {
+                    this.$el.requestFullscreen()
+                }
+
+                $('#meet-session-menu').find('.link-fullscreen').toggleClass('d-none')
+            },
+            switchSound() {
                 const enabled = this.meet.switchAudio()
                 this.setMenuItem('audio', enabled)
             },
-            switchVideo(event) {
+            switchVideo() {
                 const enabled = this.meet.switchVideo()
                 this.setMenuItem('video', enabled)
             },
-            switchScreen(event) {
+            switchScreen() {
                 this.meet.switchScreen(enabled => {
                     this.setMenuItem('screen', enabled)
                 })

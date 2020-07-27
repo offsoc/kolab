@@ -1,11 +1,13 @@
+import anchorme from 'anchorme'
+import { library } from '@fortawesome/fontawesome-svg-core'
 import { OpenVidu } from 'openvidu-browser'
+
 
 function Meet(container)
 {
     let OV                      // OpenVidu object to initialize a session
     let session                 // Session object where the user will connect
     let publisher               // Publisher object which the user will publish
-    let sessionId               // Unique identifier of the session
     let audioEnabled = true     // True if the audio track of publisher is active
     let videoEnabled = true     // True if the video track of publisher is active
     let numOfVideos = 0         // Keeps track of the number of videos that are being shown
@@ -27,9 +29,13 @@ function Meet(container)
 
     let cameras = []            // List of user video devices
     let microphones = []        // List of user audio devices
+    let connections = {}        // Connected users in the session
 
     let containerWidth
     let containerHeight
+    let chatCount = 0
+    let volumeElement
+    let setupProps
 
     OV = new OpenVidu()
     screenOV = new OpenVidu()
@@ -37,7 +43,7 @@ function Meet(container)
     // if there's anything to do, do it here.
     //OV.setAdvancedConfiguration(config)
 
-    // Disconnect participant on browser's window closed
+    // Disconnect participant when browser's window close
     window.addEventListener('beforeunload', () => {
         leaveRoom()
     })
@@ -56,11 +62,125 @@ function Meet(container)
     this.switchVideo = switchVideo
 
 
-    function setup(videoElement, success_callback, error_callback) {
+    /**
+     * Join the room session
+     *
+     * @param data Session metadata (session, token, shareToken, nickname, chatElement, menuElement)
+     */
+    function joinRoom(data) {
+        resize();
+        volumeMeterStop()
+
+        data.params = {
+            nickname: data.nickname, // user nickname
+            // avatar: undefined        // avatar image
+        }
+
+        sessionData = data
+
+        // Init a session
+        session = OV.initSession()
+
+        // On every new Stream received...
+        session.on('streamCreated', event => {
+            let connection = event.stream.connection
+            let connectionId = connection.connectionId
+            let metadata = JSON.parse(connection.data)
+
+            let wrapper = addVideoWrapper(container, metadata, event.stream)
+
+            // Subscribe to the Stream to receive it
+            let subscriber = session.subscribe(event.stream, wrapper);
+
+            // When the new video is added to DOM, update the page layout
+            subscriber.on('videoElementCreated', event => {
+                numOfVideos++
+                updateLayout()
+
+                connections[connectionId] = {
+                    element: wrapper
+                }
+
+                // Send the current user status to the connecting user
+                // otherwise e.g. nickname might be not up to date
+                signalUserUpdate(connection)
+            })
+
+            // When a video is removed from DOM, update the page layout
+            subscriber.on('videoElementDestroyed', event => {
+                numOfVideos--
+                updateLayout()
+
+                delete connections[connectionId]
+            })
+        })
+/*
+        // On every new Stream destroyed...
+        session.on('streamDestroyed', event => {
+            // Update the page layout
+            numOfVideos--
+            updateLayout()
+        })
+*/
+        // Register handler for signals from other participants
+        session.on('signal', signalEventHandler)
+
+        // Connect with the token
+        session.connect(data.token, data.params)
+            .then(() => {
+                data.params.publisher = true
+
+                let wrapper = addVideoWrapper(container, data.params)
+
+                publisher.on('videoElementCreated', event => {
+                    $(event.element).prop('muted', true) // Mute local video to avoid feedback
+
+                    numOfVideos++
+                    updateLayout()
+                })
+
+                publisher.createVideoElement(wrapper, 'PREPEND')
+                sessionData.wrapper = wrapper
+
+                // Publish the stream
+                session.publish(publisher)
+            })
+            .catch(error => {
+                console.error('There was an error connecting to the session: ', error.message);
+            })
+
+        // Prepare the chat
+        setupChat()
+    }
+
+    /**
+     * Leave the room (disconnect)
+     */
+    function leaveRoom() {
+        if (session) {
+            session.disconnect();
+        }
+
+        if (screenSession) {
+            screenSession.disconnect();
+        }
+
+        volumeMeterStop()
+    }
+
+    /**
+     * Sets the audio and video devices for the session.
+     * This will ask user for permission to access media devices.
+     *
+     * @param props Setup properties (videoElement, volumeElement, success, error)
+     */
+    function setup(props) {
+        setupProps = props
+
         publisher = OV.initPublisher(null, publisherDefaults)
 
         publisher.once('accessDenied', error => {
-            error_callback(error)
+            props.error(error)
         })
 
         publisher.once('accessAllowed', async () => {
@@ -70,8 +190,11 @@ function Meet(container)
 
             audioEnabled = !!audioStream
             videoEnabled = !!videoStream
+            volumeElement = props.volumeElement
 
-            publisher.addVideoElement(videoElement)
+            publisher.addVideoElement(props.videoElement)
+
+            volumeMeterStart()
 
             const devices = await OV.getDevices()
 
@@ -90,7 +213,7 @@ function Meet(container)
                 }
             })
 
-            success_callback({
+            props.success({
                 microphones,
                 cameras,
                 audioSource,
@@ -101,25 +224,23 @@ function Meet(container)
         })
     }
 
+    /**
+     * Change the publisher audio device
+     *
+     * @param deviceId Device identifier string
+     */
     async function setupSetAudioDevice(deviceId) {
         if (!deviceId) {
             publisher.publishAudio(false)
+            volumeMeterStop()
             audioEnabled = false
         } else if (deviceId == audioSource) {
             publisher.publishAudio(true)
+            volumeMeterStart()
             audioEnabled = true
         } else {
-/*
-            let mediaStream = publisher.stream.getMediaStream()
-            let audioStream = mediaStream.getAudioTracks()[0]
-
-            audioStream.stop()
-
-            publisher = OV.initPublisher(null, properties);
-            publisher.addVideoElement(videoElement)
-*/
-
-            // FIXME: None of this is working
+            const mediaStream = publisher.stream.mediaStream
+            const oldTrack = mediaStream.getAudioTracks()[0]
 
             let properties = Object.assign({}, publisherDefaults, {
                 publishAudio: true,
@@ -128,18 +249,36 @@ function Meet(container)
                 videoSource: videoSource
             })
 
+            volumeMeterStop()
+
+            // Note: We're not using publisher.replaceTrack() as it wasn't working for me
+
+            // Stop and remove the old track
+            if (oldTrack) {
+                oldTrack.stop()
+                mediaStream.removeTrack(oldTrack)
+            }
+
+            // TODO: Handle errors
+
             await OV.getUserMedia(properties)
-                .then(async (mediaStream) => {
-                    const track = mediaStream.getAudioTracks()[0]
-                    await publisher.replaceTrack(track)
+                .then(async (newMediaStream) => {
+                    publisher.stream.mediaStream = newMediaStream
+                    volumeMeterStart()
                     audioEnabled = true
+                    audioSource = deviceId
                 })
         }
 
         return audioEnabled
     }
 
-    function setupSetVideoDevice(deviceId) {
+    /**
+     * Change the publisher video device
+     *
+     * @param deviceId Device identifier string
+     */
+    async function setupSetVideoDevice(deviceId) {
         if (!deviceId) {
             publisher.publishVideo(false)
             videoEnabled = false
@@ -147,93 +286,186 @@ function Meet(container)
             publisher.publishVideo(true)
             videoEnabled = true
         } else {
-            // TODO
+            const mediaStream = publisher.stream.mediaStream
+            const oldTrack = mediaStream.getAudioTracks()[0]
+
+            let properties = Object.assign({}, publisherDefaults, {
+                publishAudio: audioEnabled,
+                publishVideo: true,
+                audioSource: audioSource,
+                videoSource: deviceId
+            })
+
+            volumeMeterStop()
+
+            // Stop and remove the old track
+            if (oldTrack) {
+                oldTrack.stop()
+                mediaStream.removeTrack(oldTrack)
+            }
+
+            // TODO: Handle errors
+
+            await OV.getUserMedia(properties)
+                .then(async (newMediaStream) => {
+                    publisher.stream.mediaStream = newMediaStream
+                    volumeMeterStart()
+                    videoEnabled = true
+                    videoSource = deviceId
+                })
         }
 
         return videoEnabled
     }
 
     /**
-     * Join the room session
-     *
-     * @param data Session metadata (session, token, shareToken)
+     * Setup the chat UI
      */
-    function joinRoom(data) {
-        resize();
+    function setupChat() {
+        // The UI elements are created in the vue template
+        // Here we add a logic for how they work
 
-        // TODO
-        data.params = {
-            clientData: 'Test', // user nickname
-            avatar: undefined   // avatar image
-        }
+        const textarea = $(sessionData.chatElement).find('textarea')
+        const button = $(sessionData.menuElement).find('.link-chat')
 
-        sessionData = data
-        sessionId = data.session
+        textarea.on('keydown', e => {
+            if (e.keyCode == 13 && !e.shiftKey) {
+                if (textarea.val().length) {
+                    signalChat(textarea.val())
+                    textarea.val('')
+                }
 
-        // Init a session
-        session = OV.initSession()
-
-        // On every new Stream received...
-        session.on('streamCreated', function (event) {
-            // Subscribe to the Stream to receive it
-            let subscriber = session.subscribe(event.stream, addVideoWrapper(container));
-
-            // When the new video is added to DOM, update the page layout
-            subscriber.on('videoElementCreated', (event) => {
-                numOfVideos++
-                updateLayout()
-            })
-
-            // When a video is removed from DOM, update the page layout
-            subscriber.on('videoElementDestroyed', (event) => {
-                numOfVideos--
-                updateLayout()
-            })
+                return false
+            }
         })
-/*
-        // On every new Stream destroyed...
-        session.on('streamDestroyed', (event) => {
-            // Update the page layout
-            numOfVideos--
-            updateLayout()
-        })
-*/
-        // Connect with the token
-        session.connect(data.token, data.params)
-            .then(() => {
-                // When our HTML video has been added to DOM...
-                let wrapper = addVideoWrapper(container, 'publisher')
 
-                publisher.on('videoElementCreated', (event) => {
-                    $(event.element).prop('muted', true) // Mute local video to avoid feedback
-
-                    // When your own video is added to DOM, update the page layout to fit it
-                    numOfVideos++
-                    updateLayout()
-                })
-
-                publisher.createVideoElement(wrapper, 'PREPEND')
-
-                // Publish the stream
-                session.publish(publisher)
-            })
-            .catch(error => {
-                console.error('There was an error connecting to the session:', error.code, error.message);
-            })
+        // Add an element for the count of unread messages on the chat button
+        button.append('<span class="badge badge-dark blinker">')
+            .on('click', () => { button.find('.badge').text('') })
     }
 
+    /**
+     * Signal events handler
+     */
+    function signalEventHandler(signal) {
+        let conn, data
+
+        switch (signal.type) {
+            case 'signal:userChanged':
+                if (conn = connections[signal.from.connectionId]) {
+                    data = JSON.parse(signal.data)
+                    $(conn.element).find('.nickname > span').text(data.nickname || '')
+                    $(conn.element).find('.status-audio')[data.audioEnabled ? 'addClass' : 'removeClass']('d-none')
+                    $(conn.element).find('.status-video')[data.videoEnabled ? 'addClass' : 'removeClass']('d-none')
+                }
+                break
+
+            case 'signal:chat':
+                data = JSON.parse(signal.data)
+                data.id = signal.from.connectionId
+                pushChatMessage(data)
+                break
+        }
+    }
 
     /**
-     * Leave the room (disconnect)
+     * Send the chat message to other participants
+     *
+     * @param message Message string
      */
-    function leaveRoom() {
-        if (session) {
-            session.disconnect();
+    function signalChat(message) {
+        let data = {
+            nickname: sessionData.params.nickname,
+            message
         }
 
-        if (screenSession) {
-            screenSession.disconnect();
+        session.signal({
+            data: JSON.stringify(data),
+            type: 'chat'
+        })
+    }
+
+    /**
+     * Add a message to the chat
+     *
+     * @param data Object with a message, nickname, id (of the connection, empty for self)
+     */
+    function pushChatMessage(data) {
+        let message = $('<span>').text(data.message).text() // make the message secure
+
+        // Format the message, convert emails and urls to links
+        message = anchorme({
+            input: message,
+            options: {
+                attributes: {
+                    target: "_blank"
+                },
+                // any link above 20 characters will be truncated
+                // to 20 characters and ellipses at the end
+                truncate: 20,
+                // characters will be taken out of the middle
+                middleTruncation: true
+            }
+            // TODO: anchorme is extensible, we could support
+            //       github/phabricator's markup e.g. backticks for code samples
+        })
+
+        message = message.replace(/\r?\n/, '<br>')
+
+        // Display the message
+        let isSelf = data.id == publisher.stream.connection.connectionId
+        let chat = $(sessionData.chatElement).find('.chat')
+        let box = chat.find('.message').last()
+
+        message = $('<div>').html(message)
+
+        message.find('a').attr('rel', 'noreferrer')
+
+        if (box.length && box.data('id') == data.id) {
+            // A message from the same user as the last message, no new box needed
+            message.appendTo(box)
+        } else {
+            box = $('<div class="message">').data('id', data.id)
+                .append($('<div class="nickname">').text(data.nickname || ''))
+                .append(message)
+                .appendTo(chat)
+
+            if (isSelf) {
+                box.addClass('self')
+            }
         }
+
+        // Count unread messages
+        if (!$(sessionData.chatElement).is('.open')) {
+            if (!isSelf) {
+                chatCount++
+            }
+        } else {
+            chatCount = 0
+        }
+
+        $(sessionData.menuElement).find('.link-chat .badge').text(chatCount ? chatCount : '')
+    }
+
+    /**
+     * Send the user properties update signal to other participants
+     *
+     * @param connection Optional connection to which the signal will be sent
+     *                   If not specified the signal is sent to all participants
+     */
+    function signalUserUpdate(connection) {
+        let data = {
+            audioEnabled,
+            videoEnabled,
+            nickname: sessionData.params.nickname
+        }
+
+        // TODO: The same for screen sharing session?
+        session.signal({
+            data: JSON.stringify(data),
+            type: 'userChanged',
+            to: connection ? [connection] : undefined
+        })
     }
 
     /**
@@ -242,6 +474,10 @@ function Meet(container)
     function switchAudio() {
         audioEnabled = !audioEnabled
         publisher.publishAudio(audioEnabled)
+
+        $(sessionData.wrapper).find('.status-audio')[audioEnabled ? 'addClass' : 'removeClass']('d-none')
+
+        signalUserUpdate()
 
         return audioEnabled
     }
@@ -252,6 +488,10 @@ function Meet(container)
     function switchVideo() {
         videoEnabled = !videoEnabled
         publisher.publishVideo(videoEnabled)
+
+        $(sessionData.wrapper).find('.status-video')[videoEnabled ? 'addClass' : 'removeClass']('d-none')
+
+        signalUserUpdate()
 
         return videoEnabled
     }
@@ -274,13 +514,113 @@ function Meet(container)
         screenConnect(callback)
     }
 
+    /**
+     * Detect if screen sharing is supported by the browser
+     */
     function isScreenSharingSupported() {
         return !!OV.checkScreenSharingCapabilities();
     }
 
-    function addVideoWrapper(container, className) {
-        return $('<div class="meet-video">').addClass(className || '')
-            .appendTo(container).get(0)
+    /**
+     * Create a <video> element wrapper with controls
+     *
+     * @param container The parent element
+     * @param metadata  Connection metadata
+     * @param stream    Connection stream
+     */
+    function addVideoWrapper(container, metadata, stream) {
+        // Create the element
+        let wrapper = $('<div class="meet-video">').html(`
+            <div class="nickname" title="Nickname">
+                <span></span>
+            </div>
+            <div class="controls">
+                <button class="btn btn-link link-audio d-none" title="Mute audio">` + svgIcon("volume-mute") + `</button>
+                <button class="btn btn-link link-fullscreen d-none" title="Full screen">` + svgIcon("expand") + `</button>
+                <button class="btn btn-link link-fullscreen-close d-none" title="Full screen">` + svgIcon("compress") + `</button>
+            </div>
+            <div class="status">
+                <span class="bg-danger status-audio d-none">` + svgIcon("microphone") + `</span>
+                <span class="bg-danger status-video d-none">` + svgIcon("video") + `</span>
+            </div>`)
+
+        if (metadata.publisher) {
+            // Add events for nickname change
+            let nickname = wrapper.addClass('publisher').find('.nickname')
+            let editable = nickname.find('span').get(0)
+            let editableEnable = () => {
+                editable.contentEditable = true
+                editable.focus()
+            }
+            let editableUpdate = () => {
+                editable.contentEditable = false
+                sessionData.params.nickname = editable.innerText
+                signalUserUpdate()
+            }
+
+            nickname.on('click', editableEnable)
+
+            $(editable).on('blur', editableUpdate)
+                .on('click', editableEnable)
+                .on('keydown', e => {
+                    // Enter or Esc
+                    if (e.keyCode == 13 || e.keyCode == 27) {
+                        editableUpdate()
+                        return false
+                    }
+                })
+
+            // Status
+            if (!audioEnabled) {
+                wrapper.find('.status-audio').removeClass('d-none')
+            }
+
+            if (!videoEnabled) {
+                wrapper.find('.status-video').removeClass('d-none')
+            }
+        } else {
+            wrapper.find('.nickname > svg').addClass('d-none')
+
+            wrapper.find('.link-audio').removeClass('d-none')
+                .on('click', e => {
+                    let video = wrapper.find('video')[0]
+                    video.muted = !video.muted
+                    wrapper.find('.link-audio')[video.muted ? 'addClass' : 'removeClass']('text-danger')
+                })
+
+            if (!stream.audioActive) {
+                wrapper.find('.status-audio').removeClass('d-none')
+            }
+
+            if (!stream.videoActive) {
+                wrapper.find('.status-video').removeClass('d-none')
+            }
+        }
+
+        if (metadata.nickname) {
+            wrapper.find('.nickname > span').text(metadata.nickname)
+        }
+
+        // Fullscreen control
+        if (document.fullscreenEnabled) {
+            wrapper.find('.link-fullscreen').removeClass('d-none')
+                .on('click', () => {
+                    wrapper.get(0).requestFullscreen()
+                })
+
+            wrapper.find('.link-fullscreen-close')
+                .on('click', () => {
+                    document.exitFullscreen()
+                })
+
+            wrapper.on('fullscreenchange', () => {
+                // const enabled = document.fullscreenElement
+                wrapper.find('.link-fullscreen').toggleClass('d-none')
+                wrapper.find('.link-fullscreen-close').toggleClass('d-none')
+            })
+        }
+
+        return wrapper.appendTo(container).get(0)
     }
 
     /**
@@ -402,6 +742,55 @@ function Meet(container)
             console.info('ScreenShare: Access Denied')
             errorFunc()
         })
+    }
+
+    /**
+     * Create an svg element (string) for a FontAwesome icon
+     *
+     * @todo Find if there's a "official" way to do this
+     */
+    function svgIcon(name, type) {
+        // Note: the library will contain definitions for all icons registered elswhere
+        const icon = library.definitions[type || 'fas'][name]
+
+        return $(`<svg><path fill="currentColor" d="${icon[4]}"></path></svg>`)
+            .attr({
+                'class': 'svg-inline--fa',
+                'aria-hidden': true,
+                focusable: false,
+                role: 'img',
+                xmlns: 'http://www.w3.org/2000/svg',
+                viewBox: `0 0 ${icon[0]} ${icon[1]}`
+            })
+            .get(0).outerHTML
+    }
+
+    function volumeChangeHandler(event) {
+        let value = 100 + Math.min(0, Math.max(-100, event.value.newValue))
+        let color = 'lime'
+        const bar = volumeElement.firstChild
+
+        if (value >= 70) {
+            color = '#ff3300'
+        } else if (value >= 50) {
+            color = '#ff9933'
+        }
+
+        bar.style.height = value + '%'
+        bar.style.background = color
+    }
+
+    function volumeMeterStart() {
+        if (publisher) {
+            publisher.on('streamAudioVolumeChange', volumeChangeHandler)
+        }
+    }
+
+    function volumeMeterStop() {
+        if (publisher) {
+            publisher.off('streamAudioVolumeChange')
+            volumeElement.firstChild.style.height = 0
+        }
     }
 }
 
