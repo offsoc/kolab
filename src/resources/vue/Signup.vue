@@ -233,7 +233,7 @@
                     voucher: this.voucher
                 }).then(response => {
                     // auto-login and goto dashboard
-                    this.$root.loginUser(response.data.access_token)
+                    this.$root.loginUser(response.data)
                 })
             },
             // Moves the user a step back in registration form

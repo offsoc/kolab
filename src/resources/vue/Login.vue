@@ -69,7 +69,7 @@
                     secondfactor: this.secondFactor
                 }).then(response => {
                     // login user and redirect to dashboard
-                    this.$root.loginUser(response.data.access_token)
+                    this.$root.loginUser(response.data)
                 })
             }
         }

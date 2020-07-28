@@ -53,17 +53,40 @@ const app = new Vue({
             return false
         },
         // Set user state to "logged in"
-        loginUser(token, dashboard) {
-            store.commit('logoutUser') // destroy old state data
-            store.commit('loginUser')
-            localStorage.setItem('token', token)
-            axios.defaults.headers.common.Authorization = 'Bearer ' + token
+        loginUser(response, dashboard, update) {
+            if (!update) {
+                store.commit('logoutUser') // destroy old state data
+                store.commit('loginUser')
+            }
+
+            localStorage.setItem('token', response.access_token)
+            axios.defaults.headers.common.Authorization = 'Bearer ' + response.access_token
 
             if (dashboard !== false) {
                 this.$router.push(store.state.afterLogin || { name: 'dashboard' })
             }
 
             store.state.afterLogin = null
+
+            // Refresh the token before it expires
+            let timeout = response.expires_in || 0
+
+            // We'll refresh 60 seconds before the token expires
+            // or immediately when we have no expiration time (on token re-use)
+            if (timeout > 60) {
+                timeout -= 60
+            }
+
+            // TODO: We probably should try a few times in case of an error
+            // TODO: We probably should prevent axios from doing any requests
+            //       while the token is being refreshed
+
+            this.refreshTimeout = setTimeout(() => {
+                axios.post('/api/auth/refresh').then(response => {
+                    this.loginUser(response.data, false, true)
+                })
+
+            }, timeout * 1000)
         },
         // Set user state to "not logged in"
         logoutUser(redirect) {
@@ -74,6 +97,8 @@ const app = new Vue({
             if (redirect !== false) {
                 this.$router.push({ name: 'login' })
             }
+
+            clearTimeout(this.refreshTimeout)
         },
         // Display "loading" overlay inside of the specified element
         addLoader(elem) {
