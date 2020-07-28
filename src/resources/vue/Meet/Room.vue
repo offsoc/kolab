@@ -213,13 +213,21 @@
                 }
             },
             switchFullscreen() {
+                const element = this.$el
+
+                $(element).off('fullscreenchange').on('fullscreenchange', (e) => {
+                    let enabled = document.fullscreenElement == element
+                    let buttons = $('#meet-session-menu').find('.link-fullscreen')
+
+                    buttons.first()[enabled ? 'addClass' : 'removeClass']('d-none')
+                    buttons.last()[!enabled ? 'addClass' : 'removeClass']('d-none')
+                })
+
                 if (document.fullscreenElement) {
                     document.exitFullscreen()
                 } else {
-                    this.$el.requestFullscreen()
+                    element.requestFullscreen()
                 }
-
-                $('#meet-session-menu').find('.link-fullscreen').toggleClass('d-none')
             },
             switchSound() {
                 const enabled = this.meet.switchAudio()
