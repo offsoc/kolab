@@ -157,15 +157,23 @@ function Meet(container)
      * Leave the room (disconnect)
      */
     function leaveRoom() {
+        if (publisher) {
+            volumeMeterStop()
+            publisher.publishAudio(false)
+            publisher.publishVideo(false)
+        }
+
         if (session) {
             session.disconnect();
+            session = null
         }
 
         if (screenSession) {
             screenSession.disconnect();
+            screenSession = null
         }
 
-        volumeMeterStop()
+        publisher = null
     }
 
     /**
@@ -177,7 +185,7 @@ function Meet(container)
     function setup(props) {
         setupProps = props
 
-        publisher = OV.initPublisher(null, publisherDefaults)
+        publisher = OV.initPublisher(undefined, publisherDefaults)
 
         publisher.once('accessDenied', error => {
             props.error(error)

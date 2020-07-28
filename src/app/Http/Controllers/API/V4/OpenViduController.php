@@ -10,11 +10,52 @@ use Illuminate\Support\Facades\Validator;
 
 class OpenViduController extends Controller
 {
+
     /**
-     * Join or create the room. Each room has one owner, and the room isn't open until the owner
+     * Listing of rooms that belong to the current user.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index()
+    {
+        $user = Auth::guard()->user();
+
+        $rooms = Room::where('user_id', $user->id)->orderBy('name')->get();
+
+        if (count($rooms) == 0) {
+            // Create a room for the user
+            list($name, $domain) = explode('@', $user->email);
+
+            // Room name is limited to 16 characters by the DB schema
+            if (strlen($name) > 16) {
+                $name = substr($name, 0, 16);
+            }
+
+            while (Room::where('name', $name)->first()) {
+                $name = \App\Utils::randStr(8);
+            }
+
+            $room = Room::create([
+                    'name' => $name,
+                    'user_id' => $user->id
+            ]);
+
+            $rooms = collect([$room]);
+        }
+
+        $result = [
+            'list' => $rooms,
+            'count' => count($rooms),
+        ];
+
+        return response()->json($result);
+    }
+
+    /**
+     * Join the room session. Each room has one owner, and the room isn't open until the owner
      * joins (and effectively creates the session).
      */
-    public function joinOrCreate($id)
+    public function joinRoom($id)
     {
         $user = Auth::guard()->user();
 

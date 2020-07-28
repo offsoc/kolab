@@ -136,7 +136,7 @@
             initSession() {
                 let addUrl = this.canShareScreen ? '?screenShare=1' : ''
 
-                axios.get('/api/v4/meet/openvidu/' + this.room + addUrl)
+                axios.get('/api/v4/openvidu/rooms/' + this.room + addUrl)
                     .then(response => {
                         // Response data contains: session, token and shareToken
                         this.roomState = 'ready'
@@ -144,7 +144,7 @@
                         $('#app').addClass('meet')
                     })
                     .catch(error => {
-                        this.roomState = error.response.status
+                        this.roomState = String(error.response.status)
                     })
 
                 if (document.fullscreenEnabled) {

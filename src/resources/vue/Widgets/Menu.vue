@@ -13,7 +13,7 @@
             <div :id="mode + '-menu-navbar'" :class="'navbar' + (mode == 'header' ? ' collapse navbar-collapse' : '')">
                 <ul class="navbar-nav">
                     <li class="nav-item" v-if="!logged_in">
-                        <router-link v-if="!$root.isAdmin && hasRoute('signup')" class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
+                        <router-link v-if="!$root.isAdmin && $root.hasRoute('signup')" class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
                         <a v-else class="nav-link link-signup" :href="app_url + '/signup'">Signup</a>
                     </li>
                     <li class="nav-item" v-if="!logged_in">
@@ -73,11 +73,6 @@
             // On mobile close the menu when the menu item is clicked
             if (this.mode == 'header') {
                 $('#header-menu .navbar').on('click', function() { $(this).removeClass('show') })
-            }
-        },
-        methods: {
-            hasRoute(name) {
-                return this.$router.resolve({ name: name }).resolved.matched.length > 0
             }
         }
     }

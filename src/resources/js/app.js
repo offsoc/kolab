@@ -32,6 +32,9 @@ const app = new Vue({
             $(form).find('.is-invalid').removeClass('is-invalid')
             $(form).find('.invalid-feedback').remove()
         },
+        hasRoute(name) {
+            return this.$router.resolve({ name: name }).resolved.matched.length > 0
+        },
         isController(wallet_id) {
             if (wallet_id && store.state.authInfo) {
                 let i

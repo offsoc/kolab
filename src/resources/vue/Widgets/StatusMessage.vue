@@ -21,10 +21,6 @@
             status: { type: String, default: () => 'init' },
             statusLabels: { type: Object, default: () => defaultLabels }
         },
-        data() {
-            return {
-            }
-        },
         methods: {
             statusClass() {
                 let className = 'status-message'

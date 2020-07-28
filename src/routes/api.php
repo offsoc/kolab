@@ -80,7 +80,8 @@ Route::group(
 
         // For now we require authenticated users
         // TODO: Allow guests/external users
-        Route::get('meet/openvidu/{id}', 'API\V4\OpenViduController@joinOrCreate');
+        Route::get('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
+        Route::get('openvidu/rooms', 'API\V4\OpenViduController@index');
     }
 );
 
