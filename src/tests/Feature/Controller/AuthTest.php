@@ -125,9 +125,42 @@ class AuthTest extends TestCase
         $response->assertStatus(401);
     }
 
+    /**
+     * Test /api/auth/refresh
+     */
     public function testRefresh(): void
     {
-        // TODO
-        $this->markTestIncomplete();
+        // Request with no token, testing that it requires auth
+        $response = $this->post("api/auth/refresh");
+        $response->assertStatus(401);
+
+        // Test the same using JSON mode
+        $response = $this->json('POST', "api/auth/refresh", []);
+        $response->assertStatus(401);
+
+        // Login the user to get a valid token
+        $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
+        $response = $this->post("api/auth/login", $post);
+        $response->assertStatus(200);
+        $json = $response->json();
+        $token = $json['access_token'];
+
+        // Request with a valid token
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->post("api/auth/refresh");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertTrue(!empty($json['access_token']));
+        $this->assertTrue($json['access_token'] != $token);
+        $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
+        $this->assertEquals('bearer', $json['token_type']);
+        $new_token = $json['access_token'];
+
+        // TODO: Shall we invalidate the old token?
+
+        // And if the new token is working
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $new_token])->get("api/auth/info");
+        $response->assertStatus(200);
     }
 }

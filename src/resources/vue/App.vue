@@ -21,7 +21,7 @@
                     .then(response => {
                         this.isLoading = false
                         this.$root.stopLoading()
-                        this.$root.loginUser(token, false)
+                        this.$root.loginUser({ access_token: token }, false)
                         this.$store.state.authInfo = response.data
                     })
                     .catch(error => {

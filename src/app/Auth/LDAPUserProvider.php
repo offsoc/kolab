@@ -14,21 +14,7 @@ use Illuminate\Contracts\Auth\UserProvider;
 class LDAPUserProvider extends EloquentUserProvider implements UserProvider
 {
     /**
-     * Retrieve the user by its ID.
-     *
-     * @param string $identifier The unique ID for the user to attempt to retrieve.
-     *
-     * @return \Illuminate\Contracts\Auth\Authenticatable|null
-     */
-    public function retrieveById($identifier)
-    {
-        return parent::retrieveById($identifier);
-    }
-
-    /**
-     * Retrieve the user by its credentials.
-     *
-     * Please note that this function also validates the password.
+     * Retrieve the user by its credentials (email).
      *
      * @param array $credentials An array containing the email and password.
      *
@@ -36,18 +22,12 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
      */
     public function retrieveByCredentials(array $credentials)
     {
-        $entries = User::where('email', '=', $credentials['email']);
+        $entries = User::where('email', '=', $credentials['email'])->get();
 
         $count = $entries->count();
 
         if ($count == 1) {
-            $user = $entries->select(['id', 'email', 'password', 'password_ldap'])->first();
-
-            if (!$this->validateCredentials($user, $credentials)) {
-                return null;
-            }
-
-            return $user;
+            return $entries->first();
         }
 
         if ($count > 1) {
@@ -103,12 +83,10 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
             }
         }
 
-        // TODO: update last login time
-        // TODO: Update password if necessary, examine whether writing to
-        // user->password is sufficient?
         if ($authenticated) {
             \Log::info("Successful authentication for {$user->email}");
 
+            // TODO: update last login time
             if (empty($user->password) || empty($user->password_ldap)) {
                 $user->password = $credentials['password'];
                 $user->save();
