@@ -8,8 +8,8 @@ function Meet(container)
     let OV                      // OpenVidu object to initialize a session
     let session                 // Session object where the user will connect
     let publisher               // Publisher object which the user will publish
-    let audioEnabled = true     // True if the audio track of publisher is active
-    let videoEnabled = true     // True if the video track of publisher is active
+    let audioEnabled = false    // True if the audio track of publisher is active
+    let videoEnabled = false    // True if the video track of publisher is active
     let numOfVideos = 0         // Keeps track of the number of videos that are being shown
     let audioSource = ''        // Currently selected microphone
     let videoSource = ''        // Currently selected camera
@@ -483,6 +483,9 @@ function Meet(container)
         audioEnabled = !audioEnabled
         publisher.publishAudio(audioEnabled)
 
+        // TODO: Handle enabling audio if it was never enabled (e.g. user joined the room
+        //       without giving access to his mic)
+
         $(sessionData.wrapper).find('.status-audio')[audioEnabled ? 'addClass' : 'removeClass']('d-none')
 
         signalUserUpdate()
@@ -496,6 +499,9 @@ function Meet(container)
     function switchVideo() {
         videoEnabled = !videoEnabled
         publisher.publishVideo(videoEnabled)
+
+        // TODO: Handle enabling video if it was never enabled (e.g. user joined the room
+        //       without giving access to his camera)
 
         $(sessionData.wrapper).find('.status-video')[videoEnabled ? 'addClass' : 'removeClass']('d-none')
 
@@ -789,13 +795,13 @@ function Meet(container)
     }
 
     function volumeMeterStart() {
-        if (publisher) {
+        if (publisher && volumeElement) {
             publisher.on('streamAudioVolumeChange', volumeChangeHandler)
         }
     }
 
     function volumeMeterStop() {
-        if (publisher) {
+        if (publisher && volumeElement) {
             publisher.off('streamAudioVolumeChange')
             volumeElement.firstChild.style.height = 0
         }

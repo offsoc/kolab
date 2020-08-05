@@ -78,10 +78,18 @@ Route::group(
         Route::put('payments/mandate', 'API\V4\PaymentsController@mandateUpdate');
         Route::delete('payments/mandate', 'API\V4\PaymentsController@mandateDelete');
 
-        // For now we require authenticated users
-        // TODO: Allow guests/external users
-        Route::get('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
         Route::get('openvidu/rooms', 'API\V4\OpenViduController@index');
+    }
+);
+
+// Note: In Laravel 7.x we could just use withoutMiddleware() instead of a separate group
+Route::group(
+    [
+        'domain' => \config('app.domain'),
+        'prefix' => 'v4'
+    ],
+    function () {
+        Route::get('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
     }
 );
 

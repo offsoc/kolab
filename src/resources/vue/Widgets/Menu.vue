@@ -40,8 +40,11 @@
                     <li class="nav-item" v-if="!logged_in && route == 'login'">
                         <a class="nav-link menulogin link-webmail" href="https://kolabnow.com/apps" target="_blank">Webmail</a>
                     </li>
-                    <li class="nav-item" v-if="!logged_in && (!route || route == 'signup' || $route.path == '/meet')">
+                    <li class="nav-item" v-if="!logged_in && (!route || route == 'signup')">
                         <router-link class="nav-link menulogin link-login" active-class="active" :to="{name: 'login'}">Login</router-link>
+                    </li>
+                    <li class="nav-item" v-if="!logged_in && route == 'room'">
+                        <a class="nav-link menulogin link-login" :href="app_url + '/login'">Login</a>
                     </li>
                 </ul>
                 <div v-if="mode == 'footer'" class="footer">

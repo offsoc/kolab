@@ -54,11 +54,13 @@ class OpenViduController extends Controller
     /**
      * Join the room session. Each room has one owner, and the room isn't open until the owner
      * joins (and effectively creates the session).
+     *
+     * @param string $id Room identifier (name)
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function joinRoom($id)
     {
-        $user = Auth::guard()->user();
-
         $room = Room::where('name', $id)->first();
 
         // This isn't a room, bye bye
@@ -66,11 +68,18 @@ class OpenViduController extends Controller
             return $this->errorResponse(404, \trans('meet.roomnotfound'));
         }
 
+        $user = Auth::guard()->user();
+
         // There's no existing session
         if (!$room->hasSession()) {
-            // Only the room owner can create the session
-            if ($user->id != $room->user_id) {
+            // Participants can't join the room until the session is created by the owner
+            if (!$user || $user->id != $room->user_id) {
                 return $this->errorResponse(423, \trans('meet.sessionnotfound'));
+            }
+
+            // The room owner can create the session on request
+            if (empty(request()->input('init'))) {
+                return $this->errorResponse(424, \trans('meet.sessionnotfound'));
             }
 
             $session = $room->createSession();
@@ -87,11 +96,15 @@ class OpenViduController extends Controller
             return $this->errorResponse(500, \trans('meet.sessionjoinerror'));
         }
 
+        // Create session token for screen sharing connection
         if (!empty(request()->input('screenShare'))) {
             $add_token = $room->getSessionToken('PUBLISHER');
 
             $response['shareToken'] = $add_token['token'];
         }
+
+        // Tell the UI who's the room owner
+        $response['owner'] = $user && $user->id == $room->user_id;
 
         return response()->json($response, 200);
     }
@@ -105,6 +118,23 @@ class OpenViduController extends Controller
      */
     public function webhook(Request $request)
     {
+        \Log::debug($request->getContent());
+
+        switch ((string) $request->input('event')) {
+            case 'sessionDestroyed':
+                // When all participants left the room OpenVidu dispatches sessionDestroyed
+                // event. We'll remove the session reference from the database.
+                $sessionId = $request->input('sessionId');
+                $room = Room::where('session_id', $sessionId)->first();
+
+                if ($room) {
+                    $room->session_id = null;
+                    $room->save();
+                }
+
+                break;
+        }
+
         return response('Success', 200);
     }
 }

@@ -59,6 +59,9 @@
                 secondFactor: ''
             }
         },
+        props: {
+            dashboard: { type: Boolean, default: true }
+        },
         methods: {
             submitLogin() {
                 this.$root.clearFormValidation($('form.form-signin'))
@@ -69,7 +72,8 @@
                     secondfactor: this.secondFactor
                 }).then(response => {
                     // login user and redirect to dashboard
-                    this.$root.loginUser(response.data)
+                    this.$root.loginUser(response.data, this.dashboard)
+                    this.$emit('success')
                 })
             }
         }

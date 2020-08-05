@@ -20,7 +20,7 @@
                 <button class="btn btn-link link-fullscreen d-none" @click="switchFullscreen" title="Full screen">
                     <svg-icon icon="compress"></svg-icon>
                 </button>
-                <button class="btn btn-link link-logout" @click="sessionLogout" title="Leave session">
+                <button class="btn btn-link link-logout" @click="logout" title="Leave session">
                     <svg-icon icon="power-off"></svg-icon>
                 </button>
             </div>
@@ -30,7 +30,7 @@
             <div class="card-body">
                 <div class="card-title">Set up your session</div>
                 <div class="card-text">
-                    <form class="setup-form row" @submit.prevent="joinSession">
+                    <form class="setup-form row">
                         <div id="setup-preview" class="col-sm-6">
                             <video class="rounded"></video>
                             <div class="volume"><div class="bar"></div></div>
@@ -56,15 +56,24 @@
                             </div>
                         </div>
                         <div class="text-center mt-4 col-sm-12">
-                            <status-message :status="roomState" :status-labels="roomStateLabels"></status-message>
-                            <button v-if="roomState == 'ready'" class="btn btn-primary pl-5 pr-5">JOIN</button>
+                            <status-message :status="roomState" :status-labels="roomStateLabels" class="mb-3"></status-message>
+                            <button v-if="roomState == 'ready' || roomState == 424"
+                                    type="button"
+                                    @click="joinSession"
+                                    class="btn btn-primary pl-5 pr-5"
+                            >JOIN</button>
+                            <button v-if="roomState == 423"
+                                    type="button"
+                                    @click="joinSession"
+                                    class="btn btn-primary pl-5 pr-5"
+                            >I'm the owner</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <div id="meet-session-layout" class="d-flex">
+        <div id="meet-session-layout" class="d-flex d-none">
             <div id="meet-session"></div>
             <div id="meet-chat">
                 <div class="chat"></div>
@@ -73,15 +82,19 @@
                 </div>
             </div>
         </div>
+
+        <logon-form id="meet-auth" class="d-none" :dashboard="false" v-on:success="authSuccess"></logon-form>
     </div>
 </template>
 
 <script>
     import Meet from '../../js/meet/app.js'
     import StatusMessage from '../Widgets/StatusMessage'
+    import LogonForm from '../Login'
 
     export default {
         components: {
+            LogonForm,
             StatusMessage
         },
         data() {
@@ -100,22 +113,15 @@
                 roomStateLabels: {
                     init: 'Checking the room...',
                     404: 'The room does not exist.',
-                    423: 'The room is closed. Refresh the page to try again.',
+                    423: 'The room is closed. Please, wait for the owner to start the session.',
+                    424: 'The room is closed. It will be open for others after you join.',
                     500: 'Failed to create a session. Server error.'
                 },
-                session: null
+                session: {}
             }
         },
         mounted() {
             this.room = this.$route.params.room
-
-            if (!this.$store.state.isLoggedIn) {
-                this.$store.state.afterLogin = this.$router.currentRoute
-                this.$router.push({ name: 'login' })
-                return
-            }
-
-            // this.nickname = this.$store.state.authInfo.email.replace(/@.*$/, '')
 
             // Initialize OpenVidu and do some basic checks
             this.meet = new Meet($('#meet-session')[0]);
@@ -133,15 +139,34 @@
             }
         },
         methods: {
-            initSession() {
-                let addUrl = this.canShareScreen ? '?screenShare=1' : ''
+            authSuccess() {
+                // The user (owner) authentication succeeded
+                this.roomState = 'init'
+                this.initSession()
 
-                axios.get('/api/v4/openvidu/rooms/' + this.room + addUrl)
+                $('#meet-setup').removeClass('d-none')
+                $('#meet-auth').addClass('d-none')
+            },
+            initSession(init) {
+                let params = []
+
+                if (this.canShareScreen) {
+                    params.push('screenShare=1')
+                }
+
+                if (init) {
+                    params.push('init=1')
+                }
+
+                axios.get('/api/v4/openvidu/rooms/' + this.room + '?' + params.join('&'))
                     .then(response => {
                         // Response data contains: session, token and shareToken
                         this.roomState = 'ready'
                         this.session = response.data
-                        $('#app').addClass('meet')
+
+                        if (init) {
+                            this.joinSession()
+                        }
                     })
                     .catch(error => {
                         this.roomState = String(error.response.status)
@@ -152,8 +177,20 @@
                 }
             },
             joinSession() {
+                if (this.roomState == 423) {
+                    $('#meet-setup').addClass('d-none')
+                    $('#meet-auth').removeClass('d-none')
+                    return
+                }
+
+                if (this.roomState == 424) {
+                    this.initSession(true)
+                    return
+                }
+
+                $('#app').addClass('meet')
                 $('#meet-setup').addClass('d-none')
-                $('#meet-session-toolbar').removeClass('d-none')
+                $('#meet-session-toolbar,#meet-session-layout').removeClass('d-none')
 
                 this.session.nickname = this.nickname
                 this.session.menuElement = $('#meet-session-menu')[0]
@@ -163,6 +200,14 @@
             },
             leaveSession() {
                 this.meet.leaveRoom()
+            },
+            logout() {
+                this.leaveSession()
+
+                // FIXME: Where exactly the user should land? Currently he'll land
+                //        on dashboard (if he's logged in) or login form (if he's not).
+
+                window.location = window.config['app.url']
             },
             setMenuItem(type, state) {
                 $('#meet-session-menu').find('.link-' + type)[state ? 'removeClass' : 'addClass']('text-danger')
@@ -177,12 +222,15 @@
                         this.camera = setup.videoSource
 
                         this.setMenuItem('audio', setup.audioEnabled)
-                        this.setMenuItem('audio', setup.videoEnabled)
+                        this.setMenuItem('video', setup.videoEnabled)
                     },
                     error: error => {
                         // TODO: display nice error to the user
                         // FIXME: It looks like OpenVidu requires audio or video,
                         //        otherwise it will not connect to the session?
+
+                        this.setMenuItem('audio', false)
+                        this.setMenuItem('video', false)
                     }
                 })
             },
@@ -195,11 +243,6 @@
                 this.meet.setupSetAudioDevice(this.microphone).then(enabled => {
                     this.setMenuItem('audio', enabled)
                 })
-            },
-            sessionLogout() {
-                this.leaveSession()
-                this.$router.push({ name: 'dashboard' })
-                // TODO: If user is logged in, log him out?
             },
             switchChat() {
                 let chat = $('#meet-chat')

@@ -19,8 +19,8 @@ class CreateOpenviduTables extends Migration
             function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('user_id');
-                $table->string('name', 16)->unique()->index();
-                $table->string('session_id', 16)->nullable();
+                $table->string('name', 16)->unique();
+                $table->string('session_id', 16)->nullable()->unique();
                 $table->timestamps();
 
                 $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

@@ -95,7 +95,11 @@ const app = new Vue({
             delete axios.defaults.headers.common.Authorization
 
             if (redirect !== false) {
-                this.$router.push({ name: 'login' })
+                if (this.hasRoute('login')) {
+                    this.$router.push({ name: 'login' })
+                } else {
+                    window.location = window.config['app.url']
+                }
             }
 
             clearTimeout(this.refreshTimeout)
