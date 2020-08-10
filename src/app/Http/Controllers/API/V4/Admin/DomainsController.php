@@ -29,7 +29,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
                     }
                 }
 
-                $result = $result->sortBy('namespace');
+                $result = $result->sortBy('namespace')->values();
             }
         } elseif (!empty($search)) {
             if ($domain = Domain::where('namespace', $search)->first()) {
