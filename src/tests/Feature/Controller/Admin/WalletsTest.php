@@ -63,7 +63,7 @@ class WalletsTest extends TestCase
         $this->assertTrue(empty($json['description']));
         $this->assertTrue(empty($json['discount_description']));
         $this->assertTrue(!empty($json['provider']));
-        $this->assertTrue(!empty($json['providerLink']));
+        $this->assertTrue(empty($json['providerLink']));
         $this->assertTrue(!empty($json['mandate']));
     }
 

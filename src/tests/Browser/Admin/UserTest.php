@@ -33,6 +33,7 @@ class UserTest extends TestCaseDusk
         }
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
+        $wallet->save();
     }
 
     /**
@@ -50,6 +51,7 @@ class UserTest extends TestCaseDusk
         }
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
+        $wallet->save();
 
         parent::tearDown();
     }

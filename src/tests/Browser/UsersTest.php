@@ -107,7 +107,8 @@ class UsersTest extends TestCaseDusk
                 ->click('@links .link-users')
                 ->on(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 4)
+                    $browser->waitFor('tbody tr')
+                        ->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
                         ->assertSeeIn('tbody tr:nth-child(2) a', 'joe@kolab.org')
                         ->assertSeeIn('tbody tr:nth-child(3) a', 'john@kolab.org')
@@ -516,6 +517,7 @@ class UsersTest extends TestCaseDusk
                 ->on(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->visit(new UserList())
+                ->waitFor('@table tr:nth-child(2)')
                 ->click('@table tr:nth-child(2) a')
                 ->on(new UserInfo())
                 ->with('@form', function (Browser $browser) {

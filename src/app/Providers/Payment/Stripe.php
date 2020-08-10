@@ -29,7 +29,11 @@ class Stripe extends \App\Providers\PaymentProvider
      */
     public function customerLink(Wallet $wallet): ?string
     {
-        $customer_id = self::stripeCustomerId($wallet);
+        $customer_id = self::stripeCustomerId($wallet, false);
+
+        if (!$customer_id) {
+            return null;
+        }
 
         $location = 'https://dashboard.stripe.com';
 
@@ -62,7 +66,7 @@ class Stripe extends \App\Providers\PaymentProvider
     public function createMandate(Wallet $wallet, array $payment): ?array
     {
         // Register the user in Stripe, if not yet done
-        $customer_id = self::stripeCustomerId($wallet);
+        $customer_id = self::stripeCustomerId($wallet, true);
 
         $request = [
             'customer' => $customer_id,
@@ -173,7 +177,7 @@ class Stripe extends \App\Providers\PaymentProvider
         }
 
         // Register the user in Stripe, if not yet done
-        $customer_id = self::stripeCustomerId($wallet);
+        $customer_id = self::stripeCustomerId($wallet, true);
 
         $request = [
             'customer' => $customer_id,
@@ -371,15 +375,16 @@ class Stripe extends \App\Providers\PaymentProvider
      * Create one if does not exist yet.
      *
      * @param \App\Wallet $wallet The wallet
+     * @param bool        $create Create the customer if does not exist yet
      *
-     * @return string Stripe customer identifier
+     * @return string|null Stripe customer identifier
      */
-    protected static function stripeCustomerId(Wallet $wallet): string
+    protected static function stripeCustomerId(Wallet $wallet, bool $create = false): ?string
     {
         $customer_id = $wallet->getSetting('stripe_id');
 
         // Register the user in Stripe
-        if (empty($customer_id)) {
+        if (empty($customer_id) && $create) {
             $customer = StripeAPI\Customer::create([
                     'name'  => $wallet->owner->name(),
                     // Stripe will display the email on Checkout page, editable,

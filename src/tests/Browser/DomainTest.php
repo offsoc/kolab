@@ -118,6 +118,7 @@ class DomainTest extends TestCaseDusk
                 ->click('@links a.link-domains')
                 // On Domains List page click the domain entry
                 ->on(new DomainList())
+                ->waitFor('@table tbody tr')
                 ->assertVisible('@table tbody tr:first-child td:first-child svg.fa-globe.text-success')
                 ->assertText('@table tbody tr:first-child td:first-child svg title', 'Active')
                 ->assertSeeIn('@table tbody tr:first-child td:first-child', 'kolab.org')

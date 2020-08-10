@@ -18,7 +18,11 @@ class Mollie extends \App\Providers\PaymentProvider
      */
     public function customerLink(Wallet $wallet): ?string
     {
-        $customer_id = self::mollieCustomerId($wallet);
+        $customer_id = self::mollieCustomerId($wallet, false);
+
+        if (!$customer_id) {
+            return null;
+        }
 
         return sprintf(
             '<a href="https://www.mollie.com/dashboard/customers/%s" target="_blank">%s</a>',
@@ -43,7 +47,7 @@ class Mollie extends \App\Providers\PaymentProvider
     public function createMandate(Wallet $wallet, array $payment): ?array
     {
         // Register the user in Mollie, if not yet done
-        $customer_id = self::mollieCustomerId($wallet);
+        $customer_id = self::mollieCustomerId($wallet, true);
 
         $request = [
             'amount' => [
@@ -155,7 +159,7 @@ class Mollie extends \App\Providers\PaymentProvider
         }
 
         // Register the user in Mollie, if not yet done
-        $customer_id = self::mollieCustomerId($wallet);
+        $customer_id = self::mollieCustomerId($wallet, true);
 
         // Note: Required fields: description, amount/currency, amount/value
 
@@ -211,7 +215,7 @@ class Mollie extends \App\Providers\PaymentProvider
             return null;
         }
 
-        $customer_id = self::mollieCustomerId($wallet);
+        $customer_id = self::mollieCustomerId($wallet, true);
 
         // Note: Required fields: description, amount/currency, amount/value
 
@@ -353,15 +357,16 @@ class Mollie extends \App\Providers\PaymentProvider
      * Create one if does not exist yet.
      *
      * @param \App\Wallet $wallet The wallet
+     * @param bool        $create Create the customer if does not exist yet
      *
-     * @return string Mollie customer identifier
+     * @return ?string Mollie customer identifier
      */
-    protected static function mollieCustomerId(Wallet $wallet): string
+    protected static function mollieCustomerId(Wallet $wallet, bool $create = false): ?string
     {
         $customer_id = $wallet->getSetting('mollie_id');
 
         // Register the user in Mollie
-        if (empty($customer_id)) {
+        if (empty($customer_id) && $create) {
             $customer = mollie()->customers()->create([
                     'name'  => $wallet->owner->name(),
                     'email' => $wallet->id . '@private.' . \config('app.domain'),

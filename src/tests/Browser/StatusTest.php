@@ -158,6 +158,7 @@ class StatusTest extends TestCaseDusk
             $browser->on(new Dashboard())
                 ->click('@links a.link-domains')
                 ->on(new DomainList())
+                ->waitFor('@table tbody tr')
                 // Assert domain status icon
                 ->assertVisible('@table tbody tr:first-child td:first-child svg.fa-globe.text-danger')
                 ->assertText('@table tbody tr:first-child td:first-child svg title', 'Not Ready')
@@ -222,6 +223,7 @@ class StatusTest extends TestCaseDusk
             $browser->visit(new Dashboard())
                 ->click('@links a.link-users')
                 ->on(new UserList())
+                ->waitFor('@table tbody tr')
                 // Assert user status icons
                 ->assertVisible('@table tbody tr:first-child td:first-child svg.fa-user.text-success')
                 ->assertText('@table tbody tr:first-child td:first-child svg title', 'Active')

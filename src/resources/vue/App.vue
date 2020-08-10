@@ -17,11 +17,11 @@
                 this.$root.startLoading()
                 axios.defaults.headers.common.Authorization = 'Bearer ' + token
 
-                axios.get('/api/auth/info')
+                axios.get('/api/auth/info?refresh_token=1')
                     .then(response => {
                         this.isLoading = false
                         this.$root.stopLoading()
-                        this.$root.loginUser({ access_token: token }, false)
+                        this.$root.loginUser(response.data, false)
                         this.$store.state.authInfo = response.data
                     })
                     .catch(error => {

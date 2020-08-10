@@ -193,10 +193,14 @@
                 this.discount_description = wallet.discount_description
             }
 
+            this.$root.startLoading()
+
             if (this.user_id === 'new') {
                 // do nothing (for now)
                 axios.get('/api/v4/packages')
                     .then(response => {
+                        this.$root.stopLoading()
+
                         this.packages = response.data.filter(pkg => !pkg.isDomain)
                         this.package_id = this.packages[0].id
                     })
@@ -205,6 +209,8 @@
             else {
                 axios.get('/api/v4/users/' + this.user_id)
                     .then(response => {
+                        this.$root.stopLoading()
+
                         this.user = response.data
                         this.user.first_name = response.data.settings.first_name
                         this.user.last_name = response.data.settings.last_name

@@ -30,6 +30,7 @@ class UserFinancesTest extends TestCaseDusk
         $wallet->discount()->dissociate();
         $wallet->balance = 0;
         $wallet->save();
+        $wallet->setSettings(['mollie_id' => null, 'stripe_id' => null]);
     }
 
     /**
@@ -40,7 +41,9 @@ class UserFinancesTest extends TestCaseDusk
         // Assert Jack's Finances tab
         $this->browse(function (Browser $browser) {
             $jack = $this->getTestUser('jack@kolab.org');
-            $jack->wallets()->first()->transactions()->delete();
+            $wallet = $jack->wallets()->first();
+            $wallet->transactions()->delete();
+            $wallet->setSetting('stripe_id', 'abc');
             $page = new UserPage($jack->id);
 
             $browser->visit(new Home())
@@ -54,12 +57,11 @@ class UserFinancesTest extends TestCaseDusk
                         ->assertSeeIn('.card-title:first-child', 'Account balance')
                         ->assertSeeIn('.card-title:first-child .text-success', '0,00 CHF')
                         ->with('form', function (Browser $browser) {
-                            $payment_provider = ucfirst(\config('services.payment_provider'));
                             $browser->assertElementsCount('.row', 2)
                                 ->assertSeeIn('.row:nth-child(1) label', 'Discount')
                                 ->assertSeeIn('.row:nth-child(1) #discount span', 'none')
-                                ->assertSeeIn('.row:nth-child(2) label', $payment_provider . ' ID')
-                                ->assertVisible('.row:nth-child(2) a');
+                                ->assertSeeIn('.row:nth-child(2) label', 'Stripe ID')
+                                ->assertSeeIn('.row:nth-child(2) a', 'abc');
                         })
                         ->assertSeeIn('h2:nth-of-type(2)', 'Transactions')
                         ->with('table', function (Browser $browser) {
@@ -101,7 +103,7 @@ class UserFinancesTest extends TestCaseDusk
                         ->assertSeeIn('.card-title:first-child', 'Account balance')
                         ->assertSeeIn('.card-title:first-child .text-danger', '-20,10 CHF')
                         ->with('form', function (Browser $browser) {
-                            $browser->assertElementsCount('.row', 2)
+                            $browser->assertElementsCount('.row', 1)
                                 ->assertSeeIn('.row:nth-child(1) label', 'Discount')
                                 ->assertSeeIn('.row:nth-child(1) #discount span', '10% - Test voucher');
                         })
@@ -127,7 +129,7 @@ class UserFinancesTest extends TestCaseDusk
                         ->assertSeeIn('.card-title:first-child', 'Account balance')
                         ->assertSeeIn('.card-title:first-child .text-success', '0,00 CHF')
                         ->with('form', function (Browser $browser) {
-                            $browser->assertElementsCount('.row', 2)
+                            $browser->assertElementsCount('.row', 1)
                                 ->assertSeeIn('.row:nth-child(1) label', 'Discount')
                                 ->assertSeeIn('.row:nth-child(1) #discount span', 'none');
                         })

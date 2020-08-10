@@ -70,8 +70,10 @@ class DashboardTest extends TestCaseDusk
                 ->click('@search form button')
                 ->assertMissing('@search table')
                 ->waitForLocation('/user/' . $john->id)
-                ->waitFor('#user-info')
-                ->assertSeeIn('#user-info .card-title', $john->email);
+                ->waitUntilMissing('.app-loader')
+                ->whenAvailable('#user-info', function (Browser $browser) use ($john) {
+                    $browser->assertSeeIn('.card-title', $john->email);
+                });
         });
     }
 }

@@ -482,6 +482,7 @@ class SignupTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit('/signup/voucher/TEST')
                 ->onWithoutAssert(new Signup())
+                ->waitUntilMissing('.app-loader')
                 ->waitFor('@step0')
                 ->click('.plan-individual button')
                 ->whenAvailable('@step1', function (Browser $browser) {

@@ -20,6 +20,11 @@ class AuthController extends Controller
         $user = Auth::guard()->user();
         $response = V4\UsersController::userResponse($user);
 
+        if (!empty(request()->input('refresh_token'))) {
+            // @phpstan-ignore-next-line
+            return $this->respondWithToken(Auth::guard()->refresh(), $response);
+        }
+
         return response()->json($response);
     }
 
@@ -34,13 +39,7 @@ class AuthController extends Controller
         // @phpstan-ignore-next-line
         $token = Auth::guard()->login($user);
 
-        return response()->json([
-                'status' => 'success',
-                'access_token' => $token,
-                'token_type' => 'bearer',
-                // @phpstan-ignore-next-line
-                'expires_in' => Auth::guard()->factory()->getTTL() * 60,
-        ]);
+        return self::respondWithToken($token, ['status' => 'success']);
     }
 
     /**
@@ -109,19 +108,18 @@ class AuthController extends Controller
     /**
      * Get the token array structure.
      *
-     * @param string $token Respond with this token.
+     * @param string $token    Respond with this token.
+     * @param array  $response Additional response data
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function respondWithToken($token)
+    protected static function respondWithToken($token, array $response = [])
     {
-        return response()->json(
-            [
-                'access_token' => $token,
-                'token_type' => 'bearer',
-                // @phpstan-ignore-next-line
-                'expires_in' => Auth::guard()->factory()->getTTL() * 60
-            ]
-        );
+        $response['access_token'] = $token;
+        $response['token_type'] = 'bearer';
+        // @phpstan-ignore-next-line
+        $response['expires_in'] = Auth::guard()->factory()->getTTL() * 60;
+
+        return response()->json($response);
     }
 }

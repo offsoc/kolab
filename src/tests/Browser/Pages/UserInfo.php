@@ -25,7 +25,8 @@ class UserInfo extends Page
      */
     public function assert($browser)
     {
-        $browser->waitFor('@form');
+        $browser->waitFor('@form')
+            ->waitUntilMissing('.app-loader');
     }
 
     /**
