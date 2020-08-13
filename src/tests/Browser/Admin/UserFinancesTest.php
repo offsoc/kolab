@@ -110,8 +110,11 @@ class UserFinancesTest extends TestCaseDusk
                         ->assertSeeIn('h2:nth-of-type(2)', 'Transactions')
                         ->with('table', function (Browser $browser) {
                             $browser->assertElementsCount('tbody tr', 2)
-                                ->assertMissing('tfoot')
-                                ->assertSeeIn('tbody tr:last-child td.email', 'jeroen@jeroen.jeroen');
+                                ->assertMissing('tfoot');
+
+                            if (!$browser->isPhone()) {
+                                $browser->assertSeeIn('tbody tr:last-child td.email', 'jeroen@jeroen.jeroen');
+                            }
                         });
                 });
         });
@@ -262,8 +265,11 @@ class UserFinancesTest extends TestCaseDusk
                     $browser->assertElementsCount('tbody tr', 3)
                         ->assertMissing('tfoot')
                         ->assertSeeIn('tbody tr:first-child td.description', 'Bonus: Test bonus')
-                        ->assertSeeIn('tbody tr:first-child td.email', 'jeroen@jeroen.jeroen')
                         ->assertSeeIn('tbody tr:first-child td.price', '12,34 CHF');
+
+                    if (!$browser->isPhone()) {
+                        $browser->assertSeeIn('tbody tr:first-child td.email', 'jeroen@jeroen.jeroen');
+                    }
                 });
 
             $this->assertSame(1234, $john->wallets()->first()->balance);
