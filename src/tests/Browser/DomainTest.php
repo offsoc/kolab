@@ -122,6 +122,7 @@ class DomainTest extends TestCaseDusk
                 ->assertVisible('@table tbody tr:first-child td:first-child svg.fa-globe.text-success')
                 ->assertText('@table tbody tr:first-child td:first-child svg title', 'Active')
                 ->assertSeeIn('@table tbody tr:first-child td:first-child', 'kolab.org')
+                ->assertMissing('@table tfoot')
                 ->click('@table tbody tr:first-child td:first-child a')
                 // On Domain Info page verify that's the clicked domain
                 ->on(new DomainInfo())
@@ -131,5 +132,26 @@ class DomainTest extends TestCaseDusk
         });
 
         // TODO: Test domains list acting as Ned (John's "delegatee")
+    }
+
+    /**
+     * Test domains list page (user with no domains)
+     */
+    public function testDomainListEmpty(): void
+    {
+        $this->browse(function ($browser) {
+            // Login the user
+            $browser->visit('/login')
+                ->on(new Home())
+                ->submitLogon('jack@kolab.org', 'simple123', true)
+                // On dashboard click the "Domains" link
+                ->on(new Dashboard())
+                ->assertSeeIn('@links a.link-domains', 'Domains')
+                ->click('@links a.link-domains')
+                // On Domains List page click the domain entry
+                ->on(new DomainList())
+                ->assertMissing('@table tbody')
+                ->assertSeeIn('tfoot td', 'There are no domains in this account.');
+        });
     }
 }

@@ -116,7 +116,8 @@ class UsersTest extends TestCaseDusk
                         ->assertVisible('tbody tr:nth-child(1) button.button-delete')
                         ->assertVisible('tbody tr:nth-child(2) button.button-delete')
                         ->assertVisible('tbody tr:nth-child(3) button.button-delete')
-                        ->assertVisible('tbody tr:nth-child(4) button.button-delete');
+                        ->assertVisible('tbody tr:nth-child(4) button.button-delete')
+                        ->assertMissing('tfoot');
                 });
         });
     }
@@ -478,7 +479,8 @@ class UsersTest extends TestCaseDusk
                 ->submitLogon('jack@kolab.org', 'simple123', true)
                 ->visit(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 0);
+                    $browser->assertElementsCount('tbody tr', 0)
+                        ->assertSeeIn('tfoot td', 'There are no users in this account.');
                 });
         });
 
