@@ -72,14 +72,22 @@
             parseStatusInfo(info) {
                 if (info) {
                     if (!info.isReady) {
+                        let failedCount = 0
+                        let allCount = info.process.length
+
                         info.process.forEach((step, idx) => {
-                            if (!step.state && !('percent' in info)) {
-                                info.title = step.title
-                                info.step = step.label
-                                info.percent = Math.floor(idx / info.process.length * 100);
-                                info.link = step.link
+                            if (!step.state) {
+                                failedCount++
+
+                                if (!info.title) {
+                                    info.title = step.title
+                                    info.step = step.label
+                                    info.link = step.link
+                                }
                             }
                         })
+
+                        info.percent = Math.floor((allCount - failedCount) / allCount * 100);
                     }
 
                     this.state = info || {}
