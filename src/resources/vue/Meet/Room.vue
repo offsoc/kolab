@@ -84,6 +84,25 @@
         </div>
 
         <logon-form id="meet-auth" class="d-none" :dashboard="false" v-on:success="authSuccess"></logon-form>
+
+        <div id="leave-dialog" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Room closed</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>The session has been closed by the room owner.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger modal-action" @click="leaveRoom()">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -135,7 +154,7 @@
         },
         beforeDestroy() {
             if (this.meet) {
-                this.leaveSession()
+                this.meet.leaveRoom()
             }
         },
         methods: {
@@ -195,19 +214,35 @@
                 this.session.nickname = this.nickname
                 this.session.menuElement = $('#meet-session-menu')[0]
                 this.session.chatElement = $('#meet-chat')[0]
+                this.session.onDestroy = event => {
+                    // TODO: Handle nicely other reasons: disconnect, forceDisconnectByUser,
+                    //       forceDisconnectByServer, networkDisconnect?
+                    if (event.reason == 'sessionClosedByServer') {
+                        $('#leave-dialog').modal()
+                    }
+                }
 
                 this.meet.joinRoom(this.session)
             },
-            leaveSession() {
-                this.meet.leaveRoom()
-            },
-            logout() {
-                this.leaveSession()
+            leaveRoom() {
+                $('#leave-dialog').modal('hide')
 
                 // FIXME: Where exactly the user should land? Currently he'll land
                 //        on dashboard (if he's logged in) or login form (if he's not).
 
                 window.location = window.config['app.url']
+            },
+            logout() {
+                if (this.session.owner) {
+                    axios.post('/api/v4/openvidu/rooms/' + this.room + '/close')
+                        .then(response => {
+                            this.meet.leaveRoom()
+                            this.leaveRoom()
+                        })
+                } else {
+                    this.meet.leaveRoom()
+                    this.leaveRoom()
+                }
             },
             setMenuItem(type, state) {
                 $('#meet-session-menu').find('.link-' + type)[state ? 'removeClass' : 'addClass']('text-danger')

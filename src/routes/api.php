@@ -79,6 +79,7 @@ Route::group(
         Route::delete('payments/mandate', 'API\V4\PaymentsController@mandateDelete');
 
         Route::get('openvidu/rooms', 'API\V4\OpenViduController@index');
+        Route::post('openvidu/rooms/{id}/close', 'API\V4\OpenViduController@closeRoom');
     }
 );
 

@@ -49,7 +49,7 @@ class OpenViduTest extends TestCase
      *
      * @group openvidu
      */
-    public function testJoin(): void
+    public function testJoinRoom(): void
     {
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
@@ -57,9 +57,9 @@ class OpenViduTest extends TestCase
         $room->session_id = null;
         $room->save();
 
-        // Unauth access not allowed (yet)
+        // Unauth access, no session yet
         $response = $this->get("api/v4/openvidu/rooms/{$room->name}");
-        $response->assertStatus(401);
+        $response->assertStatus(423);
 
         // Non-existing room name
         $response = $this->actingAs($john)->get("api/v4/openvidu/rooms/non-existing");
@@ -69,8 +69,11 @@ class OpenViduTest extends TestCase
         $response = $this->actingAs($jack)->get("api/v4/openvidu/rooms/{$room->name}");
         $response->assertStatus(423);
 
-        // Room owner
+        // Room owner, no session yet
         $response = $this->actingAs($john)->get("api/v4/openvidu/rooms/{$room->name}");
+        $response->assertStatus(424);
+
+        $response = $this->actingAs($john)->get("api/v4/openvidu/rooms/{$room->name}?init=1");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -96,20 +99,83 @@ class OpenViduTest extends TestCase
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
         $this->assertTrue($json['token'] != $john_token);
         $this->assertTrue(!array_key_exists('shareToken', $json));
+    }
 
-        $jack_token = $json['token'];
+    /**
+     * Test joining the room
+     *
+     * @group openvidu
+     * @depends testJoinRoom
+     */
+    public function testJoinRoomGuest(): void
+    {
+        // There's no asy way to logout the user in the same test after
+        // using actingAs(). That's why this is moved to a separate test
+        $room = Room::where('name', 'john')->first();
 
-        // request with screenShare token
-        $response = $this->actingAs($john)->get("api/v4/openvidu/rooms/{$room->name}?screenShare=1");
+        // Guest, request with screenShare token
+        $response = $this->get("api/v4/openvidu/rooms/{$room->name}?screenShare=1");
         $response->assertStatus(200);
 
         $json = $response->json();
 
         $this->assertSame('PUBLISHER', $json['role']);
-        $this->assertSame($session_id, $json['session']);
+        $this->assertSame($room->session_id, $json['session']);
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
-        $this->assertTrue($json['token'] != $john_token);
         $this->assertTrue(strpos($json['shareToken'], 'wss://') === 0);
-        $this->assertTrue($json['shareToken'] != $john_token && $json['shareToken'] != $json['token']);
+        $this->assertTrue($json['shareToken'] != $json['token']);
+    }
+
+    /**
+     * Test closing the room (session)
+     *
+     * @group openvidu
+     * @depends testJoinRoom
+     */
+    public function testCloseRoom(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $room = Room::where('name', 'john')->first();
+
+        // Unauth access not allowed
+        $response = $this->post("api/v4/openvidu/rooms/{$room->name}/close", []);
+        $response->assertStatus(401);
+
+        // Non-existing room name
+        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/non-existing/close", []);
+        $response->assertStatus(404);
+
+        // Non-owner
+        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}/close", []);
+        $response->assertStatus(403);
+
+        // Room owner
+        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/close", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertNull($room->fresh()->session_id);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("The session has been closed successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        // TODO: Test if the session is removed from the OpenVidu server too
+
+        // Test error handling when it's not possible to delete the session on
+        // the OpenVidu server (use fake session_id)
+        $room->session_id = 'aaa';
+        $room->save();
+
+        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/close", []);
+        $response->assertStatus(500);
+
+        $json = $response->json();
+
+        $this->assertSame('aaa', $room->fresh()->session_id);
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Failed to close the session.", $json['message']);
+        $this->assertCount(2, $json);
     }
 }

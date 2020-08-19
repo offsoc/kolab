@@ -65,7 +65,8 @@ function Meet(container)
     /**
      * Join the room session
      *
-     * @param data Session metadata (session, token, shareToken, nickname, chatElement, menuElement)
+     * @param data Session metadata and event handlers (session, token, shareToken, nickname,
+     *             chatElement, menuElement, onDestroy)
      */
     function joinRoom(data) {
         resize();
@@ -114,14 +115,16 @@ function Meet(container)
                 delete connections[connectionId]
             })
         })
-/*
-        // On every new Stream destroyed...
-        session.on('streamDestroyed', event => {
-            // Update the page layout
-            numOfVideos--
+
+        // Handle session disconnection events
+        session.on('sessionDisconnected', event => {
+            if (data.onDestroy) {
+                data.onDestroy(event)
+            }
+
             updateLayout()
         })
-*/
+
         // Register handler for signals from other participants
         session.on('signal', signalEventHandler)
 

@@ -10,6 +10,38 @@ use Illuminate\Support\Facades\Validator;
 
 class OpenViduController extends Controller
 {
+    /**
+     * Close the room session.
+     *
+     * @param string $id Room identifier (name)
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function closeRoom($id)
+    {
+        $room = Room::where('name', $id)->first();
+
+        // This isn't a room, bye bye
+        if (!$room) {
+            return $this->errorResponse(404, \trans('meet.room-not-found'));
+        }
+
+        $user = Auth::guard()->user();
+
+        // Only the room owner can do it
+        if (!$user || $user->id != $room->user_id) {
+            return $this->errorResponse(403);
+        }
+
+        if (!$room->deleteSession()) {
+            return $this->errorResponse(500, \trans('meet.session-close-error'));
+        }
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('meet.session-close-success'),
+        ]);
+    }
 
     /**
      * Listing of rooms that belong to the current user.
@@ -65,7 +97,7 @@ class OpenViduController extends Controller
 
         // This isn't a room, bye bye
         if (!$room) {
-            return $this->errorResponse(404, \trans('meet.roomnotfound'));
+            return $this->errorResponse(404, \trans('meet.room-not-found'));
         }
 
         $user = Auth::guard()->user();
@@ -74,18 +106,18 @@ class OpenViduController extends Controller
         if (!$room->hasSession()) {
             // Participants can't join the room until the session is created by the owner
             if (!$user || $user->id != $room->user_id) {
-                return $this->errorResponse(423, \trans('meet.sessionnotfound'));
+                return $this->errorResponse(423, \trans('meet.session-not-found'));
             }
 
             // The room owner can create the session on request
             if (empty(request()->input('init'))) {
-                return $this->errorResponse(424, \trans('meet.sessionnotfound'));
+                return $this->errorResponse(424, \trans('meet.session-not-found'));
             }
 
             $session = $room->createSession();
 
             if (empty($session)) {
-                return $this->errorResponse(500, \trans('meet.sessioncreateerror'));
+                return $this->errorResponse(500, \trans('meet.session-create-error'));
             }
         }
 
@@ -93,7 +125,7 @@ class OpenViduController extends Controller
         $response = $room->getSessionToken('PUBLISHER');
 
         if (empty($response)) {
-            return $this->errorResponse(500, \trans('meet.sessionjoinerror'));
+            return $this->errorResponse(500, \trans('meet.session-join-error'));
         }
 
         // Create session token for screen sharing connection
@@ -106,7 +138,7 @@ class OpenViduController extends Controller
         // Tell the UI who's the room owner
         $response['owner'] = $user && $user->id == $room->user_id;
 
-        return response()->json($response, 200);
+        return response()->json($response);
     }
 
     /**

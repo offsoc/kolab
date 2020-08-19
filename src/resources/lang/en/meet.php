@@ -13,9 +13,10 @@ return [
     |
     */
 
-    'roomnotfound' => 'The room does not exist.',
-    'sessionnotfound' => 'The session does not exist.',
-    'sessioncreateerror' => 'Failed to create the session.',
-    'sessionjoinerror' => 'Failed to join the session.',
-
+    'room-not-found' => 'The room does not exist.',
+    'session-not-found' => 'The session does not exist.',
+    'session-create-error' => 'Failed to create the session.',
+    'session-join-error' => 'Failed to join the session.',
+    'session-close-error' => 'Failed to close the session.',
+    'session-close-success' => 'The session has been closed successfully.',
 ];
