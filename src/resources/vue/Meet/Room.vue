@@ -250,7 +250,7 @@
                 this.meet.setup({
                     videoElement: $('#setup-preview video')[0],
                     volumeElement: $('#setup-preview .volume')[0],
-                    success: setup => {
+                    onSuccess: setup => {
                         this.setup = setup
                         this.microphone = setup.audioSource
                         this.camera = setup.videoSource
@@ -258,7 +258,7 @@
                         this.setMenuItem('audio', setup.audioActive)
                         this.setMenuItem('video', setup.videoActive)
                     },
-                    error: error => {
+                    onError: error => {
                         // TODO: display nice error to the user
                         // FIXME: It looks like OpenVidu requires audio or video,
                         //        otherwise it will not connect to the session?

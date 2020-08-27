@@ -226,7 +226,7 @@ function Meet(container)
      * Sets the audio and video devices for the session.
      * This will ask user for permission to access media devices.
      *
-     * @param props Setup properties (videoElement, volumeElement, success, error)
+     * @param props Setup properties (videoElement, volumeElement, onSuccess, onError)
      */
     function setup(props) {
         setupProps = props
@@ -234,7 +234,7 @@ function Meet(container)
         publisher = OV.initPublisher(undefined, publisherDefaults)
 
         publisher.once('accessDenied', error => {
-            props.error(error)
+            props.onError(error)
         })
 
         publisher.once('accessAllowed', async () => {
@@ -267,7 +267,7 @@ function Meet(container)
                 }
             })
 
-            props.success({
+            props.onSuccess({
                 microphones,
                 cameras,
                 audioSource,
@@ -511,6 +511,10 @@ function Meet(container)
             videoActive,
             nickname: sessionData.params.nickname
         }
+
+        // Note: StreamPropertyChangedEvent might be more standard way
+        // to propagate the audio/video state change to other users.
+        // It looks there's no other way to propagate nickname changes.
 
         // TODO: The same for screen sharing session?
         session.signal({
