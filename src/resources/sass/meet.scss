@@ -1,5 +1,16 @@
 .meet-video {
     position: relative;
+    background: $menu-bg-color;
+    // Use flexbox for centering .watermark
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .watermark {
+        color: darken($menu-bg-color, 20%);
+        width: 50%;
+        height: 50%;
+    }
 
     video {
         // To make object-fit:cover working we have to set the height in pixels
@@ -8,6 +19,10 @@
         width: 100%;
         height: 100%;
         background: #000;
+
+        & + .watermark {
+            display: none;
+        }
     }
 
     .controls {
@@ -48,6 +63,7 @@
     .nickname {
         position: absolute;
         top: 0;
+        left: 0;
         margin: 0.5em;
         padding: 0 1em;
         line-height: 2em;

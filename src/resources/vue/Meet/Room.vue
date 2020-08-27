@@ -98,7 +98,7 @@
                         <p>The session has been closed by the room owner.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-danger modal-action" @click="leaveRoom()">Close</button>
+                        <button type="button" class="btn btn-danger modal-action" data-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -217,31 +217,30 @@
                 this.session.onDestroy = event => {
                     // TODO: Handle nicely other reasons: disconnect, forceDisconnectByUser,
                     //       forceDisconnectByServer, networkDisconnect?
-                    if (event.reason == 'sessionClosedByServer') {
-                        $('#leave-dialog').modal()
+                    if (event.reason == 'sessionClosedByServer' && !this.session.owner) {
+                        $('#leave-dialog').on('hide.bs.modal', () => {
+                            // FIXME: Where exactly the user should land? Currently he'll land
+                            //        on dashboard (if he's logged in) or login form (if he's not).
+
+                            window.location = window.config['app.url']
+                        }).modal()
                     }
                 }
 
                 this.meet.joinRoom(this.session)
-            },
-            leaveRoom() {
-                $('#leave-dialog').modal('hide')
-
-                // FIXME: Where exactly the user should land? Currently he'll land
-                //        on dashboard (if he's logged in) or login form (if he's not).
-
-                window.location = window.config['app.url']
             },
             logout() {
                 if (this.session.owner) {
                     axios.post('/api/v4/openvidu/rooms/' + this.room + '/close')
                         .then(response => {
                             this.meet.leaveRoom()
-                            this.leaveRoom()
+                            this.meet = null
+                            window.location = window.config['app.url']
                         })
                 } else {
                     this.meet.leaveRoom()
-                    this.leaveRoom()
+                    this.meet = null
+                    window.location = window.config['app.url']
                 }
             },
             setMenuItem(type, state) {

@@ -111,6 +111,7 @@ function Meet(container)
 
             // Send the current user status to the connecting user
             // otherwise e.g. nickname might be not up to date
+            // TODO: Verify if it is indeed required with recent OpenVidu version
             signalUserUpdate(event.connection)
         })
 
@@ -130,9 +131,13 @@ function Meet(container)
             let connectionId = connection.connectionId
             let metadata = JSON.parse(connection.data)
             let wrapper = connections[connectionId].element
+            let props = {
+                // Prepend the video element so it is always before the watermark element
+                insertMode: 'PREPEND'
+            }
 
             // Subscribe to the Stream to receive it
-            let subscriber = session.subscribe(event.stream, wrapper);
+            let subscriber = session.subscribe(event.stream, wrapper, props);
 /*
             // When the new video is added to DOM, update the page layout
             subscriber.on('videoElementCreated', event => {
@@ -194,12 +199,16 @@ function Meet(container)
     function leaveRoom() {
         if (publisher) {
             volumeMeterStop()
-            if (audioActive) {
+
+            // FIXME: We have to unpublish streams only if there's no session yet
+            if (!session && audioActive) {
                 publisher.publishAudio(false)
             }
-            if (videoActive) {
+            if (!session && videoActive) {
                 publisher.publishVideo(false)
             }
+
+            publisher = null
         }
 
         if (session) {
@@ -211,8 +220,6 @@ function Meet(container)
             screenSession.disconnect();
             screenSession = null
         }
-
-        publisher = null
     }
 
     /**
@@ -580,19 +587,21 @@ function Meet(container)
      */
     function videoWrapperCreate(container, params) {
         // Create the element
-        let wrapper = $('<div class="meet-video">').html(`
+        let wrapper = $('<div class="meet-video">').html(
+            svgIcon("user", 'fas', 'watermark') + `
             <div class="nickname" title="Nickname">
                 <span></span>
             </div>
             <div class="controls">
-                <button class="btn btn-link link-audio d-none" title="Mute audio">` + svgIcon("volume-mute") + `</button>
-                <button class="btn btn-link link-fullscreen d-none" title="Full screen">` + svgIcon("expand") + `</button>
-                <button class="btn btn-link link-fullscreen-close d-none" title="Full screen">` + svgIcon("compress") + `</button>
+                <button class="btn btn-link link-audio d-none" title="Mute audio">` + svgIcon('volume-mute') + `</button>
+                <button class="btn btn-link link-fullscreen d-none" title="Full screen">` + svgIcon('expand') + `</button>
+                <button class="btn btn-link link-fullscreen-close d-none" title="Full screen">` + svgIcon('compress') + `</button>
             </div>
             <div class="status">
-                <span class="bg-danger status-audio d-none">` + svgIcon("microphone") + `</span>
-                <span class="bg-danger status-video d-none">` + svgIcon("video") + `</span>
-            </div>`)
+                <span class="bg-danger status-audio d-none">` + svgIcon('microphone') + `</span>
+                <span class="bg-danger status-video d-none">` + svgIcon('video') + `</span>
+            </div>`
+        )
 
         if (params.publisher) {
             // Add events for nickname change
@@ -804,19 +813,25 @@ function Meet(container)
      *
      * @todo Find if there's a "official" way to do this
      */
-    function svgIcon(name, type) {
+    function svgIcon(name, type, className) {
         // Note: the library will contain definitions for all icons registered elswhere
         const icon = library.definitions[type || 'fas'][name]
 
+        let attrs = {
+            'class': 'svg-inline--fa',
+            'aria-hidden': true,
+            focusable: false,
+            role: 'img',
+            xmlns: 'http://www.w3.org/2000/svg',
+            viewBox: `0 0 ${icon[0]} ${icon[1]}`
+        }
+
+        if (className) {
+            attrs['class'] += ' ' + className
+        }
+
         return $(`<svg><path fill="currentColor" d="${icon[4]}"></path></svg>`)
-            .attr({
-                'class': 'svg-inline--fa',
-                'aria-hidden': true,
-                focusable: false,
-                role: 'img',
-                xmlns: 'http://www.w3.org/2000/svg',
-                viewBox: `0 0 ${icon[0]} ${icon[1]}`
-            })
+            .attr(attrs)
             .get(0).outerHTML
     }
 
