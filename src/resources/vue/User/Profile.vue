@@ -5,6 +5,12 @@
                 <div class="card-title">Your profile</div>
                 <div class="card-text">
                     <form @submit.prevent="submit">
+                        <div class="form-group row plaintext">
+                            <label class="col-sm-4 col-form-label">Customer No.</label>
+                            <div class="col-sm-8">
+                                <span class="form-control-plaintext" id="userid">{{ user_id }}</span>
+                            </div>
+                        </div>
                         <div class="form-group row">
                             <label for="first_name" class="col-sm-4 col-form-label">First name</label>
                             <div class="col-sm-8">
@@ -80,6 +86,7 @@
         data() {
             return {
                 profile: {},
+                user_id: null,
                 wallet_id: null,
                 countries: window.config.countries
             }
@@ -87,6 +94,7 @@
         created() {
             this.wallet_id = this.$store.state.authInfo.wallet.id
             this.profile = this.$store.state.authInfo.settings
+            this.user_id = this.$store.state.authInfo.id
         },
         mounted() {
             $('#first_name').focus()
@@ -99,7 +107,7 @@
 
                 this.$root.clearFormValidation($('#user-profile form'))
 
-                axios.put('/api/v4/users/' + this.$store.state.authInfo.id, this.profile)
+                axios.put('/api/v4/users/' + this.user_id, this.profile)
                     .then(response => {
                         delete this.profile.password
                         delete this.profile.password_confirm
