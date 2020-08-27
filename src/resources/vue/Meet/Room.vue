@@ -37,21 +37,21 @@
                         </div>
                         <div class="col-sm-6">
                             <div class="form-group">
-                                <label>Microphone</label>
+                                <label for="setup-microphone">Microphone</label>
                                 <select class="custom-select" id="setup-microphone" v-model="microphone" @change="setupMicrophoneChange">
                                     <option value="">None</option>
                                     <option v-for="mic in setup.microphones" :value="mic.deviceId" :key="mic.deviceId">{{ mic.label }}</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Camera</label>
+                                <label for="setup-camera">Camera</label>
                                 <select class="custom-select" id="setup-camera" v-model="camera" @change="setupCameraChange">
                                     <option value="">None</option>
                                     <option v-for="cam in setup.cameras" :value="cam.deviceId" :key="cam.deviceId">{{ cam.label }}</option>
                                 </select>
                             </div>
                             <div class="form-group mb-0">
-                                <label>Nickname</label>
+                                <label for="setup-nickname">Nickname</label>
                                 <input class="form-control" type="text" id="setup-nickname" v-model="nickname">
                             </div>
                         </div>
@@ -83,7 +83,7 @@
             </div>
         </div>
 
-        <logon-form id="meet-auth" class="d-none" :dashboard="false" v-on:success="authSuccess"></logon-form>
+        <logon-form id="meet-auth" class="d-none" :dashboard="false" @success="authSuccess"></logon-form>
 
         <div id="leave-dialog" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
@@ -256,8 +256,8 @@
                         this.microphone = setup.audioSource
                         this.camera = setup.videoSource
 
-                        this.setMenuItem('audio', setup.audioEnabled)
-                        this.setMenuItem('video', setup.videoEnabled)
+                        this.setMenuItem('audio', setup.audioActive)
+                        this.setMenuItem('video', setup.videoActive)
                     },
                     error: error => {
                         // TODO: display nice error to the user

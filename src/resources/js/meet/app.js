@@ -8,8 +8,8 @@ function Meet(container)
     let OV                      // OpenVidu object to initialize a session
     let session                 // Session object where the user will connect
     let publisher               // Publisher object which the user will publish
-    let audioEnabled = false    // True if the audio track of publisher is active
-    let videoEnabled = false    // True if the video track of publisher is active
+    let audioActive = false     // True if the audio track of the publisher is active
+    let videoActive = false     // True if the video track of the publisher is active
     let numOfVideos = 0         // Keeps track of the number of videos that are being shown
     let audioSource = ''        // Currently selected microphone
     let videoSource = ''        // Currently selected camera
@@ -82,40 +82,75 @@ function Meet(container)
         // Init a session
         session = OV.initSession()
 
+        // Handle connection creation events
+        session.on('connectionCreated', event => {
+            // Ignore the current user connection
+            if (!event.connection.options) {
+                return
+            }
+
+            // This is the first event executed when a user joins in.
+            // We'll create the video wrapper here, which will be re-used
+            // in 'streamCreated' event handler.
+            // Note: For a user with no cam/mic enabled streamCreated even
+            // is not being dispatched at all
+
+            // TODO: We may consider placing users with no video enabled
+            // in a separate place, so they do not fill the precious
+            // screen estate
+
+            let connectionId = event.connection.connectionId
+            let metadata = JSON.parse(event.connection.data)
+            let wrapper = videoWrapperCreate(container, metadata)
+
+            connections[connectionId] = {
+                element: wrapper
+            }
+
+            updateLayout()
+
+            // Send the current user status to the connecting user
+            // otherwise e.g. nickname might be not up to date
+            signalUserUpdate(event.connection)
+        })
+
+        session.on('connectionDestroyed', event => {
+            let conn = connections[event.connection.connectionId]
+            if (conn) {
+                $(conn.element).remove()
+                numOfVideos--
+                updateLayout()
+                delete connections[event.connection.connectionId]
+            }
+        })
+
         // On every new Stream received...
         session.on('streamCreated', event => {
             let connection = event.stream.connection
             let connectionId = connection.connectionId
             let metadata = JSON.parse(connection.data)
-
-            let wrapper = addVideoWrapper(container, metadata, event.stream)
+            let wrapper = connections[connectionId].element
 
             // Subscribe to the Stream to receive it
             let subscriber = session.subscribe(event.stream, wrapper);
-
+/*
             // When the new video is added to DOM, update the page layout
             subscriber.on('videoElementCreated', event => {
-                numOfVideos++
                 updateLayout()
-
-                connections[connectionId] = {
-                    element: wrapper
-                }
-
-                // Send the current user status to the connecting user
-                // otherwise e.g. nickname might be not up to date
-                signalUserUpdate(connection)
             })
 
             // When a video is removed from DOM, update the page layout
             subscriber.on('videoElementDestroyed', event => {
-                numOfVideos--
                 updateLayout()
-
-                delete connections[connectionId]
             })
+*/
+            // Update the wrapper controls/status
+            videoWrapperUpdate(wrapper, event.stream)
         })
-
+/*
+        session.on('streamDestroyed', event => {
+        })
+*/
         // Handle session disconnection events
         session.on('sessionDisconnected', event => {
             if (data.onDestroy) {
@@ -125,20 +160,17 @@ function Meet(container)
             updateLayout()
         })
 
-        // Register handler for signals from other participants
+        // Handle signals from all participants
         session.on('signal', signalEventHandler)
 
         // Connect with the token
         session.connect(data.token, data.params)
             .then(() => {
-                data.params.publisher = true
-
-                let wrapper = addVideoWrapper(container, data.params)
+                let params = { publisher: true, audioActive, videoActive }
+                let wrapper = videoWrapperCreate(container, Object.assign({}, data.params, params))
 
                 publisher.on('videoElementCreated', event => {
                     $(event.element).prop('muted', true) // Mute local video to avoid feedback
-
-                    numOfVideos++
                     updateLayout()
                 })
 
@@ -162,8 +194,12 @@ function Meet(container)
     function leaveRoom() {
         if (publisher) {
             volumeMeterStop()
-            publisher.publishAudio(false)
-            publisher.publishVideo(false)
+            if (audioActive) {
+                publisher.publishAudio(false)
+            }
+            if (videoActive) {
+                publisher.publishVideo(false)
+            }
         }
 
         if (session) {
@@ -199,8 +235,8 @@ function Meet(container)
             let videoStream = mediaStream.getVideoTracks()[0]
             let audioStream = mediaStream.getAudioTracks()[0]
 
-            audioEnabled = !!audioStream
-            videoEnabled = !!videoStream
+            audioActive = !!audioStream
+            videoActive = !!videoStream
             volumeElement = props.volumeElement
 
             publisher.addVideoElement(props.videoElement)
@@ -229,8 +265,8 @@ function Meet(container)
                 cameras,
                 audioSource,
                 videoSource,
-                audioEnabled,
-                videoEnabled
+                audioActive,
+                videoActive
             })
         })
     }
@@ -244,18 +280,18 @@ function Meet(container)
         if (!deviceId) {
             publisher.publishAudio(false)
             volumeMeterStop()
-            audioEnabled = false
+            audioActive = false
         } else if (deviceId == audioSource) {
             publisher.publishAudio(true)
             volumeMeterStart()
-            audioEnabled = true
+            audioActive = true
         } else {
             const mediaStream = publisher.stream.mediaStream
             const oldTrack = mediaStream.getAudioTracks()[0]
 
             let properties = Object.assign({}, publisherDefaults, {
                 publishAudio: true,
-                publishVideo: videoEnabled,
+                publishVideo: videoActive,
                 audioSource: deviceId,
                 videoSource: videoSource
             })
@@ -276,12 +312,12 @@ function Meet(container)
                 .then(async (newMediaStream) => {
                     publisher.stream.mediaStream = newMediaStream
                     volumeMeterStart()
-                    audioEnabled = true
+                    audioActive = true
                     audioSource = deviceId
                 })
         }
 
-        return audioEnabled
+        return audioActive
     }
 
     /**
@@ -292,16 +328,16 @@ function Meet(container)
     async function setupSetVideoDevice(deviceId) {
         if (!deviceId) {
             publisher.publishVideo(false)
-            videoEnabled = false
+            videoActive = false
         } else if (deviceId == videoSource) {
             publisher.publishVideo(true)
-            videoEnabled = true
+            videoActive = true
         } else {
             const mediaStream = publisher.stream.mediaStream
             const oldTrack = mediaStream.getAudioTracks()[0]
 
             let properties = Object.assign({}, publisherDefaults, {
-                publishAudio: audioEnabled,
+                publishAudio: audioActive,
                 publishVideo: true,
                 audioSource: audioSource,
                 videoSource: deviceId
@@ -321,12 +357,12 @@ function Meet(container)
                 .then(async (newMediaStream) => {
                     publisher.stream.mediaStream = newMediaStream
                     volumeMeterStart()
-                    videoEnabled = true
+                    videoActive = true
                     videoSource = deviceId
                 })
         }
 
-        return videoEnabled
+        return videoActive
     }
 
     /**
@@ -365,9 +401,7 @@ function Meet(container)
             case 'signal:userChanged':
                 if (conn = connections[signal.from.connectionId]) {
                     data = JSON.parse(signal.data)
-                    $(conn.element).find('.nickname > span').text(data.nickname || '')
-                    $(conn.element).find('.status-audio')[data.audioEnabled ? 'addClass' : 'removeClass']('d-none')
-                    $(conn.element).find('.status-video')[data.videoEnabled ? 'addClass' : 'removeClass']('d-none')
+                    videoWrapperUpdate(conn.element, data)
                 }
                 break
 
@@ -466,8 +500,8 @@ function Meet(container)
      */
     function signalUserUpdate(connection) {
         let data = {
-            audioEnabled,
-            videoEnabled,
+            audioActive,
+            videoActive,
             nickname: sessionData.params.nickname
         }
 
@@ -483,34 +517,34 @@ function Meet(container)
      * Mute/Unmute audio for current session publisher
      */
     function switchAudio() {
-        audioEnabled = !audioEnabled
-        publisher.publishAudio(audioEnabled)
+        audioActive = !audioActive
+        publisher.publishAudio(audioActive)
 
         // TODO: Handle enabling audio if it was never enabled (e.g. user joined the room
         //       without giving access to his mic)
 
-        $(sessionData.wrapper).find('.status-audio')[audioEnabled ? 'addClass' : 'removeClass']('d-none')
+        videoWrapperUpdate(sessionData.wrapper, { audioActive })
 
         signalUserUpdate()
 
-        return audioEnabled
+        return audioActive
     }
 
     /**
      * Mute/Unmute video for current session publisher
      */
     function switchVideo() {
-        videoEnabled = !videoEnabled
-        publisher.publishVideo(videoEnabled)
+        videoActive = !videoActive
+        publisher.publishVideo(videoActive)
 
         // TODO: Handle enabling video if it was never enabled (e.g. user joined the room
         //       without giving access to his camera)
 
-        $(sessionData.wrapper).find('.status-video')[videoEnabled ? 'addClass' : 'removeClass']('d-none')
+        videoWrapperUpdate(sessionData.wrapper, { videoActive })
 
         signalUserUpdate()
 
-        return videoEnabled
+        return videoActive
     }
 
     /**
@@ -542,10 +576,9 @@ function Meet(container)
      * Create a <video> element wrapper with controls
      *
      * @param container The parent element
-     * @param metadata  Connection metadata
-     * @param stream    Connection stream
+     * @param params  Connection metadata/params
      */
-    function addVideoWrapper(container, metadata, stream) {
+    function videoWrapperCreate(container, params) {
         // Create the element
         let wrapper = $('<div class="meet-video">').html(`
             <div class="nickname" title="Nickname">
@@ -561,7 +594,7 @@ function Meet(container)
                 <span class="bg-danger status-video d-none">` + svgIcon("video") + `</span>
             </div>`)
 
-        if (metadata.publisher) {
+        if (params.publisher) {
             // Add events for nickname change
             let nickname = wrapper.addClass('publisher').find('.nickname')
             let editable = nickname.find('span').get(0)
@@ -586,15 +619,6 @@ function Meet(container)
                         return false
                     }
                 })
-
-            // Status
-            if (!audioEnabled) {
-                wrapper.find('.status-audio').removeClass('d-none')
-            }
-
-            if (!videoEnabled) {
-                wrapper.find('.status-video').removeClass('d-none')
-            }
         } else {
             wrapper.find('.nickname > svg').addClass('d-none')
 
@@ -604,19 +628,9 @@ function Meet(container)
                     video.muted = !video.muted
                     wrapper.find('.link-audio')[video.muted ? 'addClass' : 'removeClass']('text-danger')
                 })
-
-            if (!stream.audioActive) {
-                wrapper.find('.status-audio').removeClass('d-none')
-            }
-
-            if (!stream.videoActive) {
-                wrapper.find('.status-video').removeClass('d-none')
-            }
         }
 
-        if (metadata.nickname) {
-            wrapper.find('.nickname > span').text(metadata.nickname)
-        }
+        videoWrapperUpdate(wrapper, params)
 
         // Fullscreen control
         if (document.fullscreenEnabled) {
@@ -637,7 +651,29 @@ function Meet(container)
             })
         }
 
-        return wrapper.appendTo(container).get(0)
+        numOfVideos++
+
+        return wrapper[params.publisher ? 'prependTo' : 'appendTo'](container).get(0)
+    }
+
+    /**
+     * Update the <video> wrapper controls
+     *
+     * @param wrapper The wrapper element
+     * @param params  Connection metadata/params
+     */
+    function videoWrapperUpdate(wrapper, params) {
+        if ('audioActive' in params) {
+            $(wrapper).find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('d-none')
+        }
+
+        if ('videoActive' in params) {
+            $(wrapper).find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('d-none')
+        }
+
+        if ('nickname' in params) {
+            $(wrapper).find('.nickname > span').text(params.nickname)
+        }
     }
 
     /**
@@ -691,10 +727,12 @@ function Meet(container)
         $(container).find('.meet-video').css(css)
             .each((idx, elem) => {
                 let video = $(elem).children('video')[0]
+/*
                 if (!video) {
                     // Remove orphaned video wrappers (after video has been removed)
                     $(elem).remove()
-                } else if (video.videoWidth && video.videoHeight && video.videoWidth > video.videoHeight) {
+                } else */
+                if (video && video.videoWidth && video.videoHeight && video.videoWidth > video.videoHeight) {
                     // Set max-width to keep the original aspect ratio in cases
                     // when there's enough room to display the element
                     let maxWidth = height * video.videoWidth / video.videoHeight

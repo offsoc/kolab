@@ -25,7 +25,9 @@
             statusClass() {
                 let className = 'status-message'
 
-                if (Number(this.status) >= 400) {
+                if (this.status === 'init') {
+                    className += ' loading'
+                } else if (Number(this.status) >= 400) {
                     className += ' text-danger'
                 }
 

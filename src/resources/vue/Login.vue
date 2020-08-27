@@ -51,6 +51,9 @@
 
 <script>
     export default {
+        props: {
+            dashboard: { type: Boolean, default: true }
+        },
         data() {
             return {
                 app_url: window.config['app.url'],
@@ -58,9 +61,6 @@
                 password: '',
                 secondFactor: ''
             }
-        },
-        props: {
-            dashboard: { type: Boolean, default: true }
         },
         methods: {
             submitLogin() {
