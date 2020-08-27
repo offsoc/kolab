@@ -186,6 +186,27 @@ class Browser extends \Laravel\Dusk\Browser
     }
 
     /**
+     * Clears the input field and related vue v-model data.
+     */
+    public function vueClear($selector)
+    {
+        if ($this->resolver->prefix != 'body') {
+            $selector = $this->resolver->prefix . ' ' . $selector;
+        }
+
+        // The existing clear(), and type() with empty string do not work.
+        // We have to clear the field and dispatch 'input' event programatically.
+
+        $this->script(
+            "var element = document.querySelector('$selector');"
+            . "element.value = '';"
+            . "element.dispatchEvent(new Event('input'))"
+        );
+
+        return $this;
+    }
+
+    /**
      * Execute code within body context.
      * Useful to execute code that selects elements outside of a component context
      */

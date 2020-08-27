@@ -273,14 +273,8 @@
 
                 axios[method](location, this.user)
                     .then(response => {
-                        if (response.data.status == 'success') {
-                            this.$toast.success(response.data.message)
-                        }
-
-                        // on new user redirect to users list
-                        if (this.user_id === 'new') {
-                            this.$router.push({ name: 'users' })
-                        }
+                        this.$toast.success(response.data.message)
+                        this.$router.push({ name: 'users' })
                     })
             },
             onInputSku(e) {

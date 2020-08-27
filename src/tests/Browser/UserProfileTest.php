@@ -93,33 +93,33 @@ class UserProfileTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(9) input[type=password]', '')
                         ->assertSeeIn('button[type=submit]', 'Submit');
 
+                    // Test form error handling
+                    $browser->type('#phone', 'aaaaaa')
+                        ->type('#external_email', 'bbbbb')
+                        ->click('button[type=submit]')
+                        ->waitFor('#phone + .invalid-feedback')
+                        ->assertSeeIn('#phone + .invalid-feedback', 'The phone format is invalid.')
+                        ->assertSeeIn(
+                            '#external_email + .invalid-feedback',
+                            'The external email must be a valid email address.'
+                        )
+                        ->assertFocused('#phone')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        ->clearToasts();
+
                     // Clear all fields and submit
                     // FIXME: Should any of these fields be required?
-                    $browser->type('#first_name', '')
-                        ->type('#last_name', '')
-                        ->type('#organization', '')
-                        ->type('#phone', '')
-                        ->type('#external_email', '')
-                        ->type('#billing_address', '')
-                        ->select('#country', '')
-                        ->click('button[type=submit]');
+                    $browser->vueClear('#first_name')
+                        ->vueClear('#last_name')
+                        ->vueClear('#organization')
+                        ->vueClear('#phone')
+                        ->vueClear('#external_email')
+                        ->vueClear('#billing_address')
+                        ->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
                 })
-                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
-
-            // Test error handling
-            $browser->with('@form', function (Browser $browser) {
-                $browser->type('#phone', 'aaaaaa')
-                    ->type('#external_email', 'bbbbb')
-                    ->click('button[type=submit]')
-                    ->waitFor('#phone + .invalid-feedback')
-                    ->assertSeeIn('#phone + .invalid-feedback', 'The phone format is invalid.')
-                    ->assertSeeIn(
-                        '#external_email + .invalid-feedback',
-                        'The external email must be a valid email address.'
-                    )
-                    ->assertFocused('#phone')
-                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
-            });
+                // On success we're redirected to Dashboard
+                ->on(new Dashboard());
         });
     }
 

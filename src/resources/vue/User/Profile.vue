@@ -104,9 +104,8 @@
                         delete this.profile.password
                         delete this.profile.password_confirm
 
-                        if (response.data.status == 'success') {
-                            this.$toast.success(response.data.message)
-                        }
+                        this.$toast.success(response.data.message)
+                        this.$router.push({ name: 'dashboard' })
                     })
             }
         }
