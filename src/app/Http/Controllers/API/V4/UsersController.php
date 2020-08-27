@@ -621,6 +621,10 @@ class UsersController extends Controller
 
         list($login, $domain) = explode('@', $email);
 
+        if (strlen($login) === 0 || strlen($domain) === 0) {
+            return \trans('validation.entryinvalid', ['attribute' => $attribute]);
+        }
+
         // Check if domain exists
         $domain = Domain::where('namespace', Str::lower($domain))->first();
 

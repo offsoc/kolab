@@ -10,7 +10,7 @@
             </div>
         </div>
         <div class="input-group" v-for="(item, index) in list" :key="index">
-            <input type="text" class="form-control" :value="item">
+            <input type="text" class="form-control" v-model="list[index]">
             <div class="input-group-append">
                 <a href="#" class="btn btn-outline-secondary" @click.prevent="deleteItem(index)">
                     <svg-icon icon="trash-alt"></svg-icon>

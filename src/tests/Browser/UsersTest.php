@@ -413,6 +413,29 @@ class UsersTest extends TestCaseDusk
             $this->assertSame('Julia', $julia->getSetting('first_name'));
             $this->assertSame('Roberts', $julia->getSetting('last_name'));
             $this->assertSame('Test Org', $julia->getSetting('organization'));
+
+            // Some additional tests for the list input widget
+            $browser->click('tbody tr:nth-child(4) a')
+                ->on(new UserInfo())
+                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    $browser->assertListInputValue(['julia.roberts2@kolab.org'])
+                        ->addListEntry('invalid address')
+                        ->type('.input-group:nth-child(2) input', '@kolab.org');
+                })
+                ->click('button[type=submit]')
+                ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    $browser->assertVisible('.input-group:nth-child(2) input.is-invalid')
+                        ->assertVisible('.input-group:nth-child(3) input.is-invalid')
+                        ->type('.input-group:nth-child(2) input', 'julia.roberts3@kolab.org')
+                        ->type('.input-group:nth-child(3) input', 'julia.roberts4@kolab.org');
+                })
+                ->click('button[type=submit]')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+
+            $julia = User::where('email', 'julia.roberts@kolab.org')->first();
+            $aliases = $julia->aliases()->orderBy('alias')->get()->pluck('alias')->all();
+            $this->assertSame(['julia.roberts3@kolab.org', 'julia.roberts4@kolab.org'], $aliases);
         });
     }
 

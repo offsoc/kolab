@@ -649,11 +649,14 @@ class UsersTest extends TestCase
         $this->assertCount(1, $aliases);
         $this->assertSame('useralias2@' . \config('app.domain'), $aliases[0]->alias);
 
-        // Test error on setting an alias to other user's domain
-        // and missing password confirmation
+        // Test error on some invalid aliases missing password confirmation
         $post = [
             'password' => 'simple123',
-            'aliases' => ['useralias2@' . \config('app.domain'), 'useralias1@kolab.org']
+            'aliases' => [
+                'useralias2@' . \config('app.domain'),
+                'useralias1@kolab.org',
+                '@kolab.org',
+            ]
         ];
 
         $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
@@ -663,8 +666,9 @@ class UsersTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(2, $json['errors']);
-        $this->assertCount(1, $json['errors']['aliases']);
+        $this->assertCount(2, $json['errors']['aliases']);
         $this->assertSame("The specified domain is not available.", $json['errors']['aliases'][1]);
+        $this->assertSame("The specified alias is invalid.", $json['errors']['aliases'][2]);
         $this->assertSame("The password confirmation does not match.", $json['errors']['password'][0]);
 
         // Test authorized update of other user
