@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Controller\Admin;
 
+use App\Auth\SecondFactor;
+use App\Sku;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -144,6 +146,45 @@ class UsersTest extends TestCase
 
         $this->assertSame(0, $json['count']);
         $this->assertCount(0, $json['list']);
+    }
+
+    /**
+     * Test reseting 2FA (POST /api/v4/users/<user-id>/reset2FA)
+     */
+    public function testReset2FA(): void
+    {
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        $sku2fa = Sku::firstOrCreate(['title' => '2fa']);
+        $user->assignSku($sku2fa);
+        SecondFactor::seed('userscontrollertest1@userscontroller.com');
+
+        // Test unauthorized access to admin API
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response->assertStatus(403);
+
+        $entitlements = $user->fresh()->entitlements()->where('sku_id', $sku2fa->id)->get();
+        $this->assertCount(1, $entitlements);
+
+        $sf = new SecondFactor($user);
+        $this->assertCount(1, $sf->factors());
+
+        // Test reseting 2FA
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("2-Factor authentication reset successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $entitlements = $user->fresh()->entitlements()->where('sku_id', $sku2fa->id)->get();
+        $this->assertCount(0, $entitlements);
+
+        $sf = new SecondFactor($user);
+        $this->assertCount(0, $sf->factors());
     }
 
     /**

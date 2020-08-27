@@ -2,7 +2,9 @@
 
 namespace Tests\Browser\Admin;
 
+use App\Auth\SecondFactor;
 use App\Discount;
+use App\Sku;
 use App\User;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
@@ -130,7 +132,8 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:first-child', 'Groupware Features')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '5,55 CHF')
-                        ->assertMissing('table tfoot');
+                        ->assertMissing('table tfoot')
+                        ->assertMissing('#reset2fa');
                 });
 
             // Assert Domains tab
@@ -300,7 +303,8 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('table tbody tr:nth-child(5) td:first-child', '2-Factor Authentication')
                         ->assertSeeIn('table tbody tr:nth-child(5) td:last-child', '0,00 CHF/month¹')
                         ->assertMissing('table tfoot')
-                        ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher');
+                        ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher')
+                        ->assertSeeIn('#reset2fa', 'Reset 2-Factor Auth');
                 });
 
             // We don't expect John's domains here
@@ -396,6 +400,38 @@ class UserTest extends TestCaseDusk
                 ->assertSeeIn('@user-info #status span.text-success', 'Active')
                 ->assertVisible('@user-info #button-suspend')
                 ->assertMissing('@user-info #button-unsuspend');
+        });
+    }
+
+    /**
+     * Test resetting 2FA for the user
+     */
+    public function testReset2FA(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $this->deleteTestUser('userstest1@kolabnow.com');
+            $user = $this->getTestUser('userstest1@kolabnow.com');
+            $sku2fa = Sku::firstOrCreate(['title' => '2fa']);
+            $user->assignSku($sku2fa);
+            SecondFactor::seed('userstest1@kolabnow.com');
+
+            $browser->visit(new UserPage($user->id))
+                ->click('@nav #tab-subscriptions')
+                ->with('@user-subscriptions', function (Browser $browser) use ($sku2fa) {
+                    $browser->waitFor('#reset2fa')
+                        ->assertVisible('#sku' . $sku2fa->id);
+                })
+                ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (1)')
+                ->click('#reset2fa')
+                ->with(new Dialog('#reset-2fa-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', '2-Factor Authentication Reset')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Reset')
+                        ->click('@button-action');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, '2-Factor authentication reset successfully.')
+                ->assertMissing('#sku' . $sku2fa->id)
+                ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (0)');
         });
     }
 }

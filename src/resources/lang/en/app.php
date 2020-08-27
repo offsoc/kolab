@@ -37,6 +37,7 @@ return [
     'user-delete-success' => 'User deleted successfully.',
     'user-suspend-success' => 'User suspended successfully.',
     'user-unsuspend-success' => 'User unsuspended successfully.',
+    'user-reset-2fa-success' => '2-Factor authentication reset successfully.',
 
     'search-foundxdomains' => ':x domains have been found.',
     'search-foundxusers' => ':x user accounts have been found.',

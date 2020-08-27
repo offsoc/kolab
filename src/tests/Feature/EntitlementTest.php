@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Auth\SecondFactor;
 use App\Domain;
 use App\Entitlement;
 use App\Package;

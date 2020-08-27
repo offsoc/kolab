@@ -176,7 +176,7 @@
             <div class="tab-pane" id="user-subscriptions" role="tabpanel" aria-labelledby="tab-subscriptions">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover">
+                        <table class="table table-sm table-hover mb-0">
                             <thead class="thead-light">
                                 <tr>
                                     <th scope="col">Subscription</th>
@@ -184,7 +184,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(sku, sku_id) in skus" :id="'sku' + sku_id" :key="sku_id">
+                                <tr v-for="(sku, sku_id) in skus" :id="'sku' + sku.id" :key="sku_id">
                                     <td>{{ sku.name }}</td>
                                     <td>{{ sku.price }}</td>
                                 </tr>
@@ -199,6 +199,9 @@
                             <hr class="m-0">
                             &sup1; applied discount: {{ discount }}% - {{ discount_description }}
                         </small>
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-danger" id="reset2fa" v-if="has2FA" @click="reset2FADialog">Reset 2-Factor Auth</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -342,6 +345,28 @@
                 </div>
             </div>
         </div>
+
+        <div id="reset-2fa-dialog" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">2-Factor Authentication Reset</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>This will remove 2-Factor Authentication entitlement as well
+                            as the user-configured factors.</p>
+                        <p>Please, make sure to confirm the user identity properly.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger modal-action" @click="reset2FA()">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -369,10 +394,12 @@
                 discount_description: '',
                 discounts: [],
                 external_email: '',
+                has2FA: false,
                 wallet: {},
                 walletReload: false,
                 domains: [],
                 skus: [],
+                sku2FA: null,
                 users: [],
                 user: {
                     aliases: [],
@@ -437,6 +464,11 @@
                                     }
 
                                     this.skus.push(item)
+
+                                    if (sku.title == '2fa') {
+                                        this.has2FA = true
+                                        this.sku2FA = sku.id
+                                    }
                                 }
                             })
                         })
@@ -512,6 +544,20 @@
                 // this is to reload transaction log
                 this.walletReload = true
                 this.$nextTick(() => { this.walletReload = false })
+            },
+            reset2FA() {
+                $('#reset-2fa-dialog').modal('hide')
+                axios.post('/api/v4/users/' + this.user.id + '/reset2FA')
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.skus = this.skus.filter(sku => sku.id != this.sku2FA)
+                            this.has2FA = false
+                        }
+                    })
+            },
+            reset2FADialog() {
+                $('#reset-2fa-dialog').modal()
             },
             submitDiscount() {
                 $('#discount-dialog').modal('hide')

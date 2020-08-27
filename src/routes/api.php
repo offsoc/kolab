@@ -103,6 +103,7 @@ Route::group(
         Route::apiResource('packages', API\V4\Admin\PackagesController::class);
         Route::apiResource('skus', API\V4\Admin\SkusController::class);
         Route::apiResource('users', API\V4\Admin\UsersController::class);
+        Route::post('users/{id}/reset2FA', 'API\V4\Admin\UsersController@reset2FA');
         Route::post('users/{id}/suspend', 'API\V4\Admin\UsersController@suspend');
         Route::post('users/{id}/unsuspend', 'API\V4\Admin\UsersController@unsuspend');
         Route::apiResource('wallets', API\V4\Admin\WalletsController::class);

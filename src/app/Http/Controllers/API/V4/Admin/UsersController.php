@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Domain;
+use App\Sku;
 use App\User;
 use App\UserAlias;
 use App\UserSetting;
@@ -72,6 +73,36 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         ];
 
         return response()->json($result);
+    }
+
+    /**
+     * Reset 2-Factor Authentication for the user
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @params string                  $id      User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function reset2FA(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (empty($user)) {
+            return $this->errorResponse(404);
+        }
+
+        $sku = Sku::where('title', '2fa')->first();
+
+        // Note: we do select first, so the observer can delete
+        //       2FA preferences from Roundcube database, so don't
+        //       be tempted to replace first() with delete() below
+        $entitlement = $user->entitlements()->where('sku_id', $sku->id)->first();
+        $entitlement->delete();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.user-reset-2fa-success'),
+        ]);
     }
 
     /**
