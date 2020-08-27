@@ -22,6 +22,8 @@ class LDAP
      * Starts a new LDAP connection that will be used by all methods
      * until you call self::disconnect() explicitely. Normally every
      * method uses a separate connection.
+     *
+     * @throws \Exception
      */
     public static function connect(): void
     {
@@ -47,9 +49,9 @@ class LDAP
      *
      * @param \App\Domain $domain The domain to create.
      *
-     * @return void
+     * @throws \Exception
      */
-    public static function createDomain(Domain $domain)
+    public static function createDomain(Domain $domain): void
     {
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
@@ -90,8 +92,14 @@ class LDAP
 
         $dn = "associateddomain={$domain->namespace},{$config['domain_base_dn']}";
 
+        self::setDomainAttributes($domain, $entry);
+
         if (!$ldap->get_entry($dn)) {
-            $ldap->add_entry($dn, $entry);
+            $result = $ldap->add_entry($dn, $entry);
+
+            if (!$result) {
+                self::throwException($ldap, "Failed to create a domain in LDAP");
+            }
         }
 
         // create ou, roles, ous
@@ -155,7 +163,7 @@ class LDAP
             }
         }
 
-        foreach (['kolab-admin', 'billing-user'] as $item) {
+        foreach (['kolab-admin'] as $item) {
             if (!$ldap->get_entry("cn={$item},{$domainBaseDN}")) {
                 $ldap->add_entry(
                     "cn={$item},{$domainBaseDN}",
@@ -173,6 +181,8 @@ class LDAP
                 );
             }
         }
+
+        // TODO: Assign kolab-admin role to the owner?
 
         if (empty(self::$ldap)) {
             $ldap->close();
@@ -199,9 +209,9 @@ class LDAP
      *
      * @param \App\User $user The user account to create.
      *
-     * @return bool|void
+     * @throws \Exception
      */
-    public static function createUser(User $user)
+    public static function createUser(User $user): void
     {
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
@@ -223,34 +233,12 @@ class LDAP
         if (!self::getUserEntry($ldap, $user->email, $dn) && $dn) {
             self::setUserAttributes($user, $entry);
 
-            $ldap->add_entry($dn, $entry);
+            $result = $ldap->add_entry($dn, $entry);
+
+            if (!$result) {
+                self::throwException($ldap, "Failed to create a user in LDAP");
+            }
         }
-
-        if (empty(self::$ldap)) {
-            $ldap->close();
-        }
-    }
-
-    /**
-     * Update a domain in LDAP.
-     *
-     * @param \App\Domain $domain The domain to update.
-     *
-     * @return void
-     */
-    public static function updateDomain(Domain $domain)
-    {
-        $config = self::getConfig('admin');
-        $ldap = self::initLDAP($config);
-
-        $ldapDomain = $ldap->find_domain($domain->namespace);
-
-        $oldEntry = $ldap->get_entry($ldapDomain['dn']);
-        $newEntry = $oldEntry;
-
-        self::setDomainAttributes($domain, $newEntry);
-
-        $ldap->modify_entry($ldapDomain['dn'], $oldEntry, $newEntry);
 
         if (empty(self::$ldap)) {
             $ldap->close();
@@ -262,9 +250,9 @@ class LDAP
      *
      * @param \App\Domain $domain The domain to update.
      *
-     * @return void
+     * @throws \Exception
      */
-    public static function deleteDomain(Domain $domain)
+    public static function deleteDomain(Domain $domain): void
     {
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
@@ -275,12 +263,20 @@ class LDAP
         $domainBaseDN = "ou={$domain->namespace},{$hostedRootDN}";
 
         if ($ldap->get_entry($domainBaseDN)) {
-            $ldap->delete_entry_recursive($domainBaseDN);
+            $result = $ldap->delete_entry_recursive($domainBaseDN);
+
+            if (!$result) {
+                self::throwException($ldap, "Failed to delete a domain from LDAP");
+            }
         }
 
         if ($ldap_domain = $ldap->find_domain($domain->namespace)) {
             if ($ldap->get_entry($ldap_domain['dn'])) {
-                $ldap->delete_entry($ldap_domain['dn']);
+                $result = $ldap->delete_entry($ldap_domain['dn']);
+
+                if (!$result) {
+                    self::throwException($ldap, "Failed to delete a domain from LDAP");
+                }
             }
         }
 
@@ -294,15 +290,19 @@ class LDAP
      *
      * @param \App\User $user The user account to update.
      *
-     * @return void
+     * @throws \Exception
      */
-    public static function deleteUser(User $user)
+    public static function deleteUser(User $user): void
     {
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
 
         if (self::getUserEntry($ldap, $user->email, $dn)) {
-            $ldap->delete_entry($dn);
+            $result = $ldap->delete_entry($dn);
+
+            if (!$result) {
+                self::throwException($ldap, "Failed to delete a user from LDAP");
+            }
         }
 
         if (empty(self::$ldap)) {
@@ -311,11 +311,38 @@ class LDAP
     }
 
     /**
+     * Get a domain data from LDAP.
+     *
+     * @param string $namespace The domain name
+     *
+     * @return array|false|null
+     * @throws \Exception
+     */
+    public static function getDomain(string $namespace)
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $ldapDomain = $ldap->find_domain($namespace);
+
+        if ($ldapDomain) {
+            $domain = $ldap->get_entry($ldapDomain['dn']);
+        }
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+
+        return $domain ?? null;
+    }
+
+    /**
      * Get a user data from LDAP.
      *
      * @param string $email The user email.
      *
      * @return array|false|null
+     * @throws \Exception
      */
     public static function getUser(string $email)
     {
@@ -332,13 +359,47 @@ class LDAP
     }
 
     /**
+     * Update a domain in LDAP.
+     *
+     * @param \App\Domain $domain The domain to update.
+     *
+     * @throws \Exception
+     */
+    public static function updateDomain(Domain $domain): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $ldapDomain = $ldap->find_domain($domain->namespace);
+
+        if (!$ldapDomain) {
+            self::throwException($ldap, "Failed to update a domain in LDAP (domain not found)");
+        }
+
+        $oldEntry = $ldap->get_entry($ldapDomain['dn']);
+        $newEntry = $oldEntry;
+
+        self::setDomainAttributes($domain, $newEntry);
+
+        $result = $ldap->modify_entry($ldapDomain['dn'], $oldEntry, $newEntry);
+
+        if (!is_array($result)) {
+            self::throwException($ldap, "Failed to update a domain in LDAP");
+        }
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+    }
+
+    /**
      * Update a user in LDAP.
      *
      * @param \App\User $user The user account to update.
      *
-     * @return false|void
+     * @throws \Exception
      */
-    public static function updateUser(User $user)
+    public static function updateUser(User $user): void
     {
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
@@ -346,12 +407,16 @@ class LDAP
         $newEntry = $oldEntry = self::getUserEntry($ldap, $user->email, $dn, true);
 
         if (!$oldEntry) {
-            return false;
+            self::throwException($ldap, "Failed to update a user in LDAP (user not found)");
         }
 
         self::setUserAttributes($user, $newEntry);
 
-        $ldap->modify_entry($dn, $oldEntry, $newEntry);
+        $result = $ldap->modify_entry($dn, $oldEntry, $newEntry);
+
+        if (!is_array($result)) {
+            self::throwException($ldap, "Failed to update a user in LDAP");
+        }
 
         if (empty(self::$ldap)) {
             $ldap->close();
@@ -369,11 +434,17 @@ class LDAP
 
         $ldap = new \Net_LDAP3($config);
 
-        $ldap->connect();
+        $connected = $ldap->connect();
 
-        $ldap->bind(\config("ldap.{$privilege}.bind_dn"), \config("ldap.{$privilege}.bind_pw"));
+        if (!$connected) {
+            throw new \Exception("Failed to connect to LDAP");
+        }
 
-        // TODO: error handling
+        $bound = $ldap->bind(\config("ldap.{$privilege}.bind_dn"), \config("ldap.{$privilege}.bind_pw"));
+
+        if (!$bound) {
+            throw new \Exception("Failed to bind to LDAP");
+        }
 
         return $ldap;
     }
@@ -502,14 +573,14 @@ class LDAP
      *
      * @return false|null|array User entry, False on error, NULL if not found
      */
-    protected static function getUserEntry($ldap, $email, &$dn = null, $full = false)
+    private static function getUserEntry($ldap, $email, &$dn = null, $full = false)
     {
         list($_local, $_domain) = explode('@', $email, 2);
 
         $domain = $ldap->find_domain($_domain);
 
         if (!$domain) {
-            return false;
+            return $domain;
         }
 
         $base_dn = $ldap->domain_root_dn($_domain);
@@ -581,5 +652,22 @@ class LDAP
         $msg = '[LDAP] ' . $msg;
 
         \Log::{$function}($msg);
+    }
+
+    /**
+     * Throw exception and close the connection when needed
+     *
+     * @param \Net_LDAP3 $ldap    Ldap connection
+     * @param string     $message Exception message
+     *
+     * @throws \Exception
+     */
+    private static function throwException($ldap, string $message): void
+    {
+        if (empty(self::$ldap) && !empty($ldap)) {
+            $ldap->close();
+        }
+
+        throw new \Exception($message);
     }
 }

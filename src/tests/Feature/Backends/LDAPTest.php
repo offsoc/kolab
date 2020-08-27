@@ -11,6 +11,8 @@ use Tests\TestCase;
 
 class LDAPTest extends TestCase
 {
+    private $ldap_config = [];
+
     /**
      * {@inheritDoc}
      */
@@ -18,7 +20,12 @@ class LDAPTest extends TestCase
     {
         parent::setUp();
 
+        $this->ldap_config = [
+            'ldap.hosts' => \config('ldap.hosts'),
+        ];
+
         $this->deleteTestUser('user-ldap-test@' . \config('app.domain'));
+        $this->deleteTestDomain('testldap.com');
     }
 
     /**
@@ -26,9 +33,26 @@ class LDAPTest extends TestCase
      */
     public function tearDown(): void
     {
+        \config($this->ldap_config);
+
         $this->deleteTestUser('user-ldap-test@' . \config('app.domain'));
+        $this->deleteTestDomain('testldap.com');
 
         parent::tearDown();
+    }
+
+    /**
+     * Test handling connection errors
+     *
+     * @group ldap
+     */
+    public function testConnectException(): void
+    {
+        \config(['ldap.hosts' => 'non-existing.host']);
+
+        $this->expectException(\Exception::class);
+
+        LDAP::connect();
     }
 
     /**
@@ -38,7 +62,51 @@ class LDAPTest extends TestCase
      */
     public function testDomain(): void
     {
-        $this->markTestIncomplete();
+        Queue::fake();
+
+        $domain = $this->getTestDomain('testldap.com', [
+                'type' => Domain::TYPE_EXTERNAL,
+                'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
+        ]);
+
+        // Create the domain
+        LDAP::createDomain($domain);
+
+        $ldap_domain = LDAP::getDomain($domain->namespace);
+
+        $expected = [
+            'associateddomain' => $domain->namespace,
+            'inetdomainstatus' => $domain->status,
+            'objectclass' => [
+                'top',
+                'domainrelatedobject',
+                'inetdomain'
+            ],
+        ];
+
+        foreach ($expected as $attr => $value) {
+            $this->assertEquals($value, isset($ldap_domain[$attr]) ? $ldap_domain[$attr] : null);
+        }
+
+        // TODO: Test other attributes, aci, roles/ous
+
+        // Update the domain
+        $domain->status |= User::STATUS_LDAP_READY;
+
+        LDAP::updateDomain($domain);
+
+        $expected['inetdomainstatus'] = $domain->status;
+
+        $ldap_domain = LDAP::getDomain($domain->namespace);
+
+        foreach ($expected as $attr => $value) {
+            $this->assertEquals($value, isset($ldap_domain[$attr]) ? $ldap_domain[$attr] : null);
+        }
+
+        // Delete the domain
+        LDAP::deleteDomain($domain);
+
+        $this->assertSame(null, LDAP::getDomain($domain->namespace));
     }
 
     /**
@@ -149,5 +217,42 @@ class LDAPTest extends TestCase
         LDAP::deleteUser($user);
 
         $this->assertSame(null, LDAP::getUser($user->email));
+    }
+
+    /**
+     * Test handling update of a non-existing domain
+     *
+     * @group ldap
+     */
+    public function testUpdateDomainException(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/domain not found/');
+
+        $domain = new Domain([
+                'namespace' => 'testldap.com',
+                'type' => Domain::TYPE_EXTERNAL,
+                'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
+        ]);
+
+        LDAP::updateDomain($domain);
+    }
+
+    /**
+     * Test handling update of a non-existing user
+     *
+     * @group ldap
+     */
+    public function testUpdateUserException(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/user not found/');
+
+        $user = new User([
+                'email' => 'test-non-existing-ldap@kolab.org',
+                'status' => User::STATUS_ACTIVE,
+        ]);
+
+        LDAP::updateUser($user);
     }
 }
