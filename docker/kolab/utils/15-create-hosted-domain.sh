@@ -3,7 +3,7 @@
 . ./settings.sh
 
 (
-    echo "dn: associateddomain=${hosted_domain},ou=Domains,${rootdn}"
+    echo "dn: associateddomain=${hosted_domain},${domain_base_dn}"
     echo "objectclass: top"
     echo "objectclass: domainrelatedobject"
     echo "objectclass: inetdomain"
@@ -31,7 +31,7 @@
     echo "nsslapd-cachememsize: 10485760"
     echo "nsslapd-readonly: off"
     echo "nsslapd-require-index: off"
-    echo "nsslapd-directory: /var/lib/dirsrv/slapd-$(hostname -s)/db/$(echo ${hosted_domain} | sed -e 's/\./_/g')"
+    echo "nsslapd-directory: /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME:-$(hostname -s)}/db/$(echo ${hosted_domain} | sed -e 's/\./_/g')"
     echo "nsslapd-dncachememsize: 10485760"
     echo ""
 

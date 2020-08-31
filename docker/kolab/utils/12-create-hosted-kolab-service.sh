@@ -1,6 +1,7 @@
 #!/bin/bash
 
- . ./settings.sh
+. ./settings.sh
+
 (
     echo "dn: uid=hosted-kolab-service,ou=Special Users,${rootdn}"
     echo "objectclass: top"

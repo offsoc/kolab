@@ -1,8 +1,11 @@
 [Unit]
 Description=Kolab Setup Service
+Requires=kolab-setenv.service
+After=kolab-setenv.service
 
 [Service]
 Type=oneshot
+EnvironmentFile=/etc/openshift-environment
 ExecStart=/usr/local/sbin/kolab-init.sh
 
 [Install]

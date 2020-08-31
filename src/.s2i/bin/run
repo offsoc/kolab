@@ -1,0 +1,55 @@
+#!/bin/bash
+
+shopt -s dotglob
+
+pushd /opt/app-root/src
+
+echo "----> Remove bootstrap cache"
+find bootstrap/cache/ -type f ! -name ".gitignore" -delete
+
+if [ -z ${APP_KEY} ]; then
+    echo "----> Run artisan key:generate"
+    ./artisan key:generate
+fi
+
+if [ -z ${JWT_SECRET} ]; then
+    echo "----> Run artisan jwt:secret"
+    ./artisan jwt:secret --always-no
+fi
+
+echo "----> Run artisan clear-compiled"
+./artisan clear-compiled
+
+echo "----> Run artisan cache:clear"
+./artisan ${ARTISAN_VERBOSITY} cache:clear || true
+
+# rpm -qv chromium
+# if [ ! -z "$(rpm -qv chromium 2>/dev/null)" ]; then
+#     echo "---- Run artisan dusk:chrome-driver"
+#     chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
+#     ./artisan dusk:chrome-driver ${chver}
+# fi
+
+if [ ! -f 'resources/countries.php' ]; then
+    echo "----> Run artisan data:countries"
+    ./artisan data:countries
+fi
+
+rm -rvf bootstrap/cache/
+mkdir -vp bootstrap/cache/
+chown default bootstrap/cache
+
+case ${HKCCP_APP} in
+    worker|WORKER )
+        echo "----> Running worker "
+        ./artisan queue:work;;
+    server|SERVER )
+        echo "----> Running server "
+       ./artisan serve;;
+    apache|APACHE|httpd|HTTPD )
+        echo "----> Starting httpd "
+        /usr/libexec/s2i/run;;
+    * )
+        echo "----> Sleeping"
+        sleep 10000;;
+esac
