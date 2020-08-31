@@ -153,6 +153,8 @@
             this.setupSession()
         },
         beforeDestroy() {
+            clearTimeout(window.roomRequest)
+
             if (this.meet) {
                 this.meet.leaveRoom()
             }
@@ -189,6 +191,12 @@
                     })
                     .catch(error => {
                         this.roomState = String(error.response.status)
+
+                        // Waiting for the owner to open the room...
+                        if (error.response.status == 423) {
+                            // Update room state every 10 seconds
+                            window.roomRequest = setTimeout(() => { this.initSession() }, 10000)
+                        }
                     })
 
                 if (document.fullscreenEnabled) {
@@ -206,6 +214,8 @@
                     this.initSession(true)
                     return
                 }
+
+                clearTimeout(window.roomRequest)
 
                 $('#app').addClass('meet')
                 $('#meet-setup').addClass('d-none')

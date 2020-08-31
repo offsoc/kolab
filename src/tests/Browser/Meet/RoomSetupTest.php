@@ -109,8 +109,24 @@ class RoomSetupTest extends TestCaseDusk
     public function testTwoUsersInARoom(): void
     {
         $this->browse(function (Browser $browser, Browser $guest) {
-            // Join the room as an owner (authenticate)
+            // In one browser window act as a guest
+            $guest->visit(new RoomPage('john'))
+                ->assertMissing('@toolbar')
+                ->assertMissing('@menu')
+                ->assertMissing('@session')
+                ->assertMissing('@chat')
+                ->assertMissing('@login-form')
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                ->assertSeeIn(
+                    '@setup-status-message',
+                    "The room is closed. Please, wait for the owner to start the session."
+                )
+                ->assertSeeIn('@setup-button', "I'm the owner");
+
+            // In another window join the room as the owner (authenticate)
             $browser->on(new RoomPage('john'))
+                ->assertSeeIn('@setup-button', "I'm the owner")
                 ->click('@setup-button')
                 ->assertMissing('@toolbar')
                 ->assertMissing('@menu')
@@ -155,16 +171,8 @@ class RoomSetupTest extends TestCaseDusk
                 });
             }
 
-            // In another browser act as a guest
-            $guest->visit(new RoomPage('john'))
-                ->assertMissing('@toolbar')
-                ->assertMissing('@menu')
-                ->assertMissing('@session')
-                ->assertMissing('@chat')
-                ->assertMissing('@login-form')
-                ->waitFor('@setup-form')
-                ->waitUntilMissing('@setup-status-message.loading')
-                ->assertMissing('@setup-status-message')
+            // After the owner "opened the room" guest should be able to join
+            $guest->waitUntilMissing('@setup-status-message', 10)
                 ->assertSeeIn('@setup-button', "JOIN")
                 // Join the room, disable cam/mic
                 ->select('@setup-mic-select', '')
@@ -247,10 +255,12 @@ class RoomSetupTest extends TestCaseDusk
                 ->waitFor('@session');
 
             // Leave the room as the room owner
+            // TODO: Test leaving the room by closing the browser window,
+            //       it should not destroy the session
             $browser->click('@menu button.link-logout')
                 ->waitForLocation('/dashboard');
 
-            // Expect other participants be informed about the end of session
+            // Expect other participants be informed about the end of the session
             $guest->with(new Dialog('#leave-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Room closed')
                         ->assertSeeIn('@body', "The session has been closed by the room owner.")
