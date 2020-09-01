@@ -1,16 +1,28 @@
-FROM centos/systemd
+FROM centos:7
 
 LABEL maintainer="contact@kolabsystems.com"
 LABEL dist=centos7
 LABEL tier=${TIER}
 
+
+ENV container docker
+MAINTAINER The CentOS Project <cloud-ops@centos.org>
+
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+    rm -f /lib/systemd/system/multi-user.target.wants/*; \
+    rm -f /etc/systemd/system/*.wants/*; \
+    rm -f /lib/systemd/system/local-fs.target.wants/*; \
+    rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+    rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+    rm -f /lib/systemd/system/basic.target.wants/*; \
+    rm -f /lib/systemd/system/anaconda.target.wants/*;
+
+VOLUME [ "/sys/fs/cgroup" ]
+
 ENV PLESK_DISABLE_HOSTNAME_CHECKING 1
 ENV SYSTEMD_PAGER=''
 
 ENV DISTRO=centos7
-
-# This should really be a part of the base image.
-RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 
 # To speed things up, disable fastestmirror.
 RUN sed -r -i \
