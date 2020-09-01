@@ -3,6 +3,7 @@
 namespace Tests\Browser\Pages\Meet;
 
 use Laravel\Dusk\Page;
+use PHPUnit\Framework\Assert;
 
 class Room extends Page
 {
@@ -92,9 +93,58 @@ class Room extends Page
         $browser->assertElementsCount('@menu button', count($menu));
 
         foreach ($menu as $item => $state) {
-            $class = 'link-' . $item . ($state ? ':not(.text-danger)' : '.text-danger');
-            $browser->assertVisible('@menu button.' . $class);
+            $this->assertToolbarButtonState($browser, $item, $state);
         }
+    }
+
+    /**
+     * Assert menu button state.
+     *
+     * @param \Tests\Browser $browser The browser object
+     * @param string         $button  Button name
+     * @param bool           $state   Expected button state
+     */
+    public function assertToolbarButtonState($browser, $button, $state): void
+    {
+        $class = 'link-' . $button . ($state ? ':not(.text-danger)' : '.text-danger');
+        $browser->assertVisible('@menu button.' . $class);
+    }
+
+    /**
+     * Assert the <video> element's 'muted' property state
+     *
+     * @param \Tests\Browser $browser  The browser object
+     * @param string         $selector Video element selector
+     * @param bool           $state    Expected state
+     */
+    public function assertAudioMuted($browser, $selector, $state): void
+    {
+        $selector = addslashes($browser->resolver->format($selector));
+
+        $result = $browser->script(
+            "var video = document.querySelector('$selector'); return video.muted"
+        );
+
+        Assert::assertSame((bool) $result[0], $state);
+    }
+
+    /**
+     * Set the nickname for the participant
+     *
+     * @param \Tests\Browser $browser  The browser object
+     * @param string         $selector Participant element selector
+     * @param string         $nickname Nickname
+     */
+    public function setNickname($browser, $selector, $nickname): void
+    {
+        // Use script() because type() does not work with this contenteditable widget
+        $selector = $selector . ' .nickname span';
+        $browser->script(
+            "var element = document.querySelector('$selector');"
+            . "element.focus();"
+            . "element.innerText = '$nickname';"
+            . "element.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 27 }))"
+        );
     }
 
     /**

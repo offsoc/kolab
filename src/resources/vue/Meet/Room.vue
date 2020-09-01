@@ -14,10 +14,10 @@
                 <button class="btn btn-link link-chat text-danger" @click="switchChat" title="Chat">
                     <svg-icon icon="align-left"></svg-icon>
                 </button>
-                <button class="btn btn-link link-fullscreen d-none" @click="switchFullscreen" title="Full screen">
+                <button class="btn btn-link link-fullscreen closed d-none" @click="switchFullscreen" title="Full screen">
                     <svg-icon icon="expand"></svg-icon>
                 </button>
-                <button class="btn btn-link link-fullscreen d-none" @click="switchFullscreen" title="Full screen">
+                <button class="btn btn-link link-fullscreen open d-none" @click="switchFullscreen" title="Full screen">
                     <svg-icon icon="compress"></svg-icon>
                 </button>
                 <button class="btn btn-link link-logout" @click="logout" title="Leave session">
@@ -200,7 +200,7 @@
                     })
 
                 if (document.fullscreenEnabled) {
-                    $('#meet-session-menu').find('.link-fullscreen').first().removeClass('d-none')
+                    $('#meet-session-menu').find('.link-fullscreen.closed').removeClass('d-none')
                 }
             },
             joinSession() {

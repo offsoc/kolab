@@ -145,14 +145,6 @@ class RoomSetupTest extends TestCaseDusk
                 ->click('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
-                ->assertToolbar([
-                    'audio' => true,
-                    'video' => true,
-                    'screen' => false,
-                    'chat' => false,
-                    'fullscreen' => true,
-                    'logout' => true,
-                ])
                 ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
                     $browser->assertVisible('video')
                         ->assertSeeIn('.nickname', 'john')
@@ -180,14 +172,6 @@ class RoomSetupTest extends TestCaseDusk
                 ->click('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
-                ->assertToolbar([
-                    'audio' => false,
-                    'video' => false,
-                    'screen' => false,
-                    'chat' => false,
-                    'fullscreen' => true,
-                    'logout' => true,
-                ])
                 ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
                     $browser->assertVisible('video')
                         ->assertVisible('.nickname')

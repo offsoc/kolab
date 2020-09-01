@@ -395,7 +395,10 @@ function Meet(container)
 
         // Add an element for the count of unread messages on the chat button
         button.append('<span class="badge badge-dark blinker">')
-            .on('click', () => { button.find('.badge').text('') })
+            .on('click', () => {
+                button.find('.badge').text('')
+                chatCount = 0
+            })
     }
 
     /**
@@ -403,18 +406,21 @@ function Meet(container)
      */
     function signalEventHandler(signal) {
         let conn, data
+        let connId = signal.from.connectionId
 
         switch (signal.type) {
             case 'signal:userChanged':
-                if (conn = connections[signal.from.connectionId]) {
+                if (conn = connections[connId]) {
                     data = JSON.parse(signal.data)
+
                     videoWrapperUpdate(conn.element, data)
+                    nicknameUpdate(data.nickname, connId)
                 }
                 break
 
             case 'signal:chat':
                 data = JSON.parse(signal.data)
-                data.id = signal.from.connectionId
+                data.id = connId
                 pushChatMessage(data)
                 break
         }
@@ -584,10 +590,27 @@ function Meet(container)
     }
 
     /**
+     * Update nickname in chat
+     *
+     * @param nickname     Nickname
+     * @param connectionId Connection identifier of the user
+     */
+    function nicknameUpdate(nickname, connectionId) {
+        if (connectionId) {
+            $(sessionData.chatElement).find('.chat').find('.message').each(function() {
+                let elem = $(this)
+                if (elem.data('id') == connectionId) {
+                    elem.find('.nickname').text(nickname || '')
+                }
+            })
+        }
+    }
+
+    /**
      * Create a <video> element wrapper with controls
      *
      * @param container The parent element
-     * @param params  Connection metadata/params
+     * @param params    Connection metadata/params
      */
     function videoWrapperCreate(container, params) {
         // Create the element
@@ -598,8 +621,8 @@ function Meet(container)
             </div>
             <div class="controls">
                 <button class="btn btn-link link-audio d-none" title="Mute audio">` + svgIcon('volume-mute') + `</button>
-                <button class="btn btn-link link-fullscreen d-none" title="Full screen">` + svgIcon('expand') + `</button>
-                <button class="btn btn-link link-fullscreen-close d-none" title="Full screen">` + svgIcon('compress') + `</button>
+                <button class="btn btn-link link-fullscreen closed d-none" title="Full screen">` + svgIcon('expand') + `</button>
+                <button class="btn btn-link link-fullscreen open d-none" title="Full screen">` + svgIcon('compress') + `</button>
             </div>
             <div class="status">
                 <span class="bg-danger status-audio d-none">` + svgIcon('microphone') + `</span>
@@ -619,6 +642,7 @@ function Meet(container)
                 editable.contentEditable = false
                 sessionData.params.nickname = editable.innerText
                 signalUserUpdate()
+                nicknameUpdate(editable.innerText, session.connection.connectionId)
             }
 
             nickname.on('click', editableEnable)
@@ -647,20 +671,20 @@ function Meet(container)
 
         // Fullscreen control
         if (document.fullscreenEnabled) {
-            wrapper.find('.link-fullscreen').removeClass('d-none')
+            wrapper.find('.link-fullscreen.closed').removeClass('d-none')
                 .on('click', () => {
                     wrapper.get(0).requestFullscreen()
                 })
 
-            wrapper.find('.link-fullscreen-close')
+            wrapper.find('.link-fullscreen.open')
                 .on('click', () => {
                     document.exitFullscreen()
                 })
 
             wrapper.on('fullscreenchange', () => {
                 // const enabled = document.fullscreenElement
-                wrapper.find('.link-fullscreen').toggleClass('d-none')
-                wrapper.find('.link-fullscreen-close').toggleClass('d-none')
+                wrapper.find('.link-fullscreen.closed').toggleClass('d-none')
+                wrapper.find('.link-fullscreen.open').toggleClass('d-none')
             })
         }
 
