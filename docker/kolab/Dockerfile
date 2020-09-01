@@ -1,4 +1,4 @@
-FROM centos:7
+FROM ppc64le/centos:7
 
 LABEL maintainer="contact@kolabsystems.com"
 LABEL dist=centos7
