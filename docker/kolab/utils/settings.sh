@@ -12,6 +12,7 @@ export cyrus_admin=${IMAP_ADMIN_LOGIN:-"cyrus-admin"}
 export imap_host=${IMAP_HOST:-"127.0.0.1"}
 export cyrus_admin_pw=${IMAP_ADMIN_PASSWORD:-"Welcome2KolabSystems"}
 
+export kolab_service_pw=${LDAP_SERVICE_BIND_PW:-"Welcome2KolabSystems"}
 export hosted_kolab_service_pw=${LDAP_HOSTED_BIND_PW:-"Welcome2KolabSystems"}
 
 export hosted_domain=${HOSTED_DOMAIN:-"hosted.com"}
