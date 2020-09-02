@@ -43,9 +43,8 @@ RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 RUN rpm --import https://mirror.kolabenterprise.com/maipo.asc
 
 RUN yum -y install https://mirror.kolabenterprise.com/kolab-16-for-el7.rpm && \
+    yum -y install kolab-16-release-development && \
         yum clean all
-
-RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo
 
 RUN yum -y --setopt tsflags= install kolab
 
