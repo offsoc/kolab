@@ -92,7 +92,7 @@ function Meet(container)
             // This is the first event executed when a user joins in.
             // We'll create the video wrapper here, which will be re-used
             // in 'streamCreated' event handler.
-            // Note: For a user with no cam/mic enabled streamCreated even
+            // Note: For a user with no cam/mic enabled streamCreated event
             // is not being dispatched at all
 
             // TODO: We may consider placing users with no video enabled
@@ -111,7 +111,6 @@ function Meet(container)
 
             // Send the current user status to the connecting user
             // otherwise e.g. nickname might be not up to date
-            // TODO: Verify if it is indeed required with recent OpenVidu version
             signalUserUpdate(event.connection)
         })
 
@@ -139,14 +138,10 @@ function Meet(container)
             // Subscribe to the Stream to receive it
             let subscriber = session.subscribe(event.stream, wrapper, props);
 /*
-            // When the new video is added to DOM, update the page layout
             subscriber.on('videoElementCreated', event => {
-                updateLayout()
             })
 
-            // When a video is removed from DOM, update the page layout
             subscriber.on('videoElementDestroyed', event => {
-                updateLayout()
             })
 */
             // Update the wrapper controls/status
@@ -764,11 +759,7 @@ function Meet(container)
         $(container).find('.meet-video').css(css)
             .each((idx, elem) => {
                 let video = $(elem).children('video')[0]
-/*
-                if (!video) {
-                    // Remove orphaned video wrappers (after video has been removed)
-                    $(elem).remove()
-                } else */
+
                 if (video && video.videoWidth && video.videoHeight && video.videoWidth > video.videoHeight) {
                     // Set max-width to keep the original aspect ratio in cases
                     // when there's enough room to display the element
@@ -863,6 +854,9 @@ function Meet(container)
             .get(0).outerHTML
     }
 
+    /**
+     * A handler for volume level change events
+     */
     function volumeChangeHandler(event) {
         let value = 100 + Math.min(0, Math.max(-100, event.value.newValue))
         let color = 'lime'
@@ -878,12 +872,18 @@ function Meet(container)
         bar.style.background = color
     }
 
+    /**
+     * Start the volume meter
+     */
     function volumeMeterStart() {
         if (publisher && volumeElement) {
             publisher.on('streamAudioVolumeChange', volumeChangeHandler)
         }
     }
 
+    /**
+     * Stop the volume meter
+     */
     function volumeMeterStop() {
         if (publisher && volumeElement) {
             publisher.off('streamAudioVolumeChange')
