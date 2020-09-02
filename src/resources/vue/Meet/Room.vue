@@ -179,7 +179,9 @@
                     params.push('init=1')
                 }
 
-                axios.get('/api/v4/openvidu/rooms/' + this.room + '?' + params.join('&'))
+                const url = '/api/v4/openvidu/rooms/' + this.room + '?' + params.join('&')
+
+                axios.get(url, { ignoreErrors: true })
                     .then(response => {
                         // Response data contains: session, token and shareToken
                         this.roomState = 'ready'

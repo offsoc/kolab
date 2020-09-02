@@ -6,7 +6,6 @@ use App\OpenVidu\Room;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Menu;
-use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Meet\Room as RoomPage;
 use Tests\TestCaseDusk;
 

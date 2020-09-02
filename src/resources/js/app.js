@@ -292,6 +292,11 @@ window.axios.interceptors.response.use(
         let error_msg
         let status = error.response ? error.response.status : 200
 
+        // Do not display the error in a toast message, pass the error as-is
+        if (error.config.ignoreErrors) {
+            return Promise.reject(error)
+        }
+
         if (error.response && status == 422) {
             error_msg = "Form validation error"
 
