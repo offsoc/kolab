@@ -49,12 +49,15 @@ RUN yum -y install https://mirror.kolabenterprise.com/kolab-16-for-el7.rpm && \
 RUN yum -y --setopt tsflags= install kolab
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
+COPY kolab-setenv.service /etc/systemd/system/kolab-setenv.service
 COPY kolab-vlv.service /etc/systemd/system/kolab-vlv.service
 COPY utils /root/utils
 
 RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && \
     ln -s /etc/systemd/system/kolab-init.service \
         /etc/systemd/system/multi-user.target.wants/kolab-init.service && \
+    ln -s /etc/systemd/system/kolab-setenv.service \
+        /etc/systemd/system/multi-user.target.wants/kolab-setenv.service && \
     ln -s /etc/systemd/system/kolab-vlv.service \
         /etc/systemd/system/multi-user.target.wants/kolab-vlv.service
 
