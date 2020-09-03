@@ -17,7 +17,6 @@ ServerIdentifier = ${DS_INSTANCE_NAME}
 RootDN = ${LDAP_ADMIN_BIND_DN}
 RootDNPwd = ${LDAP_ADMIN_BIND_PW}
 AddSampleEntries = No
-SchemaFile = /99kolab-schema.ldif
 ## InstallLdifFile = /ds_install.ldif
 ConfigFile = /ds_adjustments.ldif
 ds_bename = ${DOMAIN_DB}

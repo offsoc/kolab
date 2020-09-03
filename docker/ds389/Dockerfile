@@ -2,12 +2,15 @@ FROM centos/centos7:latest
 
 MAINTAINER Liutauras Adomaitis <adomaitis@kolabsys.com>
 
-RUN yum install -y epel-release 389-ds-base 389-adminutil gettext \
-  && yum update -y \
-  && yum clean all
+RUN yum -y install \
+        epel-release \
+        389-ds-base \
+        389-adminutil \
+        gettext && \
+    yum clean all
 
 COPY *.tpl /
-COPY kolab-schema.ldif /usr/share/dirsrv/schema/99kolab-schema.ldif
+COPY kolab-schema.ldif /etc/dirsrv/schema/99kolab-schema.ldif
 
 RUN for F in $(ls *.tpl); do eval "echo \"$(cat $F)\"" | tee ${F%%.tpl}; done
 
@@ -34,9 +37,9 @@ CMD cd /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/ && \
         namespace=$(echo "${ldif}" | sed -e 's/-import.ldif$//' -e 's/-install.ldif$//'); \
         /usr/lib64/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif2db \
             -Z ${DS_INSTANCE_NAME} \
-            -n ${N} \
-            -i /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/${I}; \
+            -n ${namespace} \
+            -i /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/${ldif}; \
     done && \
   /usr/lib64/dirsrv/slapd-hkccp/start-slapd && \
-  tail -F /var/log/dirsrv/slapd-$DS_INSTANCE_NAME/{access,audit,errors}
+  tail -F /var/log/dirsrv/slapd-${DS_INSTANCE_NAME}/{access,audit,errors}
 
