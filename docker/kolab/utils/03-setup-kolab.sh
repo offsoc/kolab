@@ -24,11 +24,15 @@ while ! mysqladmin -u root ping > /dev/null 2>&1 ; do
         sleep 3
 done | tee -a /root/setup-kolab.log
 echo "OK!" | tee -a /root/setup-kolab.log
-echo -n "Wait for DS389 container: " | tee -a /root/setup-kolab.log
-while ! ldapsearch -h ${LDAP_HOST} -D "${LDAP_ADMIN_BIND_DN}" -w "${LDAP_ADMIN_BIND_PW}" -b "" -s base > /dev/null 2>&1 ; do
-        echo -n '.'
-        sleep 3
-done | tee -a /root/setup-kolab.log
-echo "OK!" | tee -a /root/setup-kolab.log
+
+if [ ! -z "${LDAP_HOST}" ]; then
+    echo -n "Wait for DS389 container: " | tee -a /root/setup-kolab.log
+    while ! ldapsearch -h ${LDAP_HOST} -D "${LDAP_ADMIN_BIND_DN}" -w "${LDAP_ADMIN_BIND_PW}" -b "" -s base > /dev/null 2>&1 ; do
+            echo -n '.'
+            sleep 3
+    done | tee -a /root/setup-kolab.log
+    echo "OK!" | tee -a /root/setup-kolab.log
+fi
+
 ${CMD} 2>&1 | tee -a /root/setup-kolab.log
 
