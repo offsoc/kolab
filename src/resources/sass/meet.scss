@@ -73,16 +73,39 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+
+        button {
+            display: none;
+        }
+
+        span {
+            outline: none;
+        }
     }
 
     &.publisher .nickname {
         cursor: pointer;
         background: rgba($main-color, 0.9);
 
+        &:focus-within {
+            box-shadow: $btn-focus-box-shadow;
+        }
+
         span:empty {
-            // A hack to make the .nickname element not disappear when empty
             display: block;
             height: 2em;
+
+            &:not(:focus) + button {
+                display: block;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 2em;
+                height: 2em;
+                border-radius: 50%;
+                padding: 0;
+                color: $menu-gray;
+            }
         }
     }
 }
@@ -154,11 +177,12 @@
 
 #meet-chat {
     width: 0;
-    display: flex;
+    display: none;
     flex-direction: column;
 
     &.open {
         width: 30%;
+        display: flex !important;
     }
 
     .chat {

@@ -173,7 +173,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertMissing('@setup-form')
                 ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
                     $browser->assertVisible('video')
-                        ->assertVisible('.nickname')
+                        ->assertVisible('.nickname button')
                         ->assertMissing('.nickname span')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertMissing('.controls button.link-audio')

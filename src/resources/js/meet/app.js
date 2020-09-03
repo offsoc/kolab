@@ -137,10 +137,13 @@ function Meet(container)
 
             // Subscribe to the Stream to receive it
             let subscriber = session.subscribe(event.stream, wrapper, props);
-/*
-            subscriber.on('videoElementCreated', event => {
-            })
 
+            subscriber.on('videoElementCreated', event => {
+                $(event.element).prop({
+                    tabindex: -1
+                })
+            })
+/*
             subscriber.on('videoElementDestroyed', event => {
             })
 */
@@ -170,7 +173,10 @@ function Meet(container)
                 let wrapper = videoWrapperCreate(container, Object.assign({}, data.params, params))
 
                 publisher.on('videoElementCreated', event => {
-                    $(event.element).prop('muted', true) // Mute local video to avoid feedback
+                    $(event.element).prop({
+                            muted: true, // Mute local video to avoid feedback
+                            tabindex: -1
+                    })
                     updateLayout()
                 })
 
@@ -610,18 +616,19 @@ function Meet(container)
     function videoWrapperCreate(container, params) {
         // Create the element
         let wrapper = $('<div class="meet-video">').html(
-            svgIcon("user", 'fas', 'watermark') + `
+            `${svgIcon("user", 'fas', 'watermark')}
             <div class="nickname" title="Nickname">
                 <span></span>
+                <button type="button" class="btn btn-link">${svgIcon('user')}</button>
             </div>
             <div class="controls">
-                <button class="btn btn-link link-audio d-none" title="Mute audio">` + svgIcon('volume-mute') + `</button>
-                <button class="btn btn-link link-fullscreen closed d-none" title="Full screen">` + svgIcon('expand') + `</button>
-                <button class="btn btn-link link-fullscreen open d-none" title="Full screen">` + svgIcon('compress') + `</button>
+                <button type="button" class="btn btn-link link-audio d-none" title="Mute audio">${svgIcon('volume-mute')}</button>
+                <button type="button" class="btn btn-link link-fullscreen closed d-none" title="Full screen">${svgIcon('expand')}</button>
+                <button type="button" class="btn btn-link link-fullscreen open d-none" title="Full screen">${svgIcon('compress')}</button>
             </div>
             <div class="status">
-                <span class="bg-danger status-audio d-none">` + svgIcon('microphone') + `</span>
-                <span class="bg-danger status-video d-none">` + svgIcon('video') + `</span>
+                <span class="bg-danger status-audio d-none">${svgIcon('microphone')}</span>
+                <span class="bg-danger status-video d-none">${svgIcon('video')}</span>
             </div>`
         )
 
