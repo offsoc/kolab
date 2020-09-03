@@ -17,13 +17,9 @@ RUN for F in $(ls *.tpl); do eval "echo \"$(cat $F)\"" | tee ${F%%.tpl}; done
 RUN rm -fr /var/lock /usr/lib/systemd/system && \
     setup-ds.pl -ddd --silent --file /ds_setup.inf && \
     chown nobody.nobody -R /var/lib/dirsrv/ && \
-    mv mgmt_com-install.ldif /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/${DOMAIN_DB}-install.ldif && \
-    for backend in ${BACKENDS}; do \
-        if [ -f /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/${DOMAIN_DB}-install.ldif ]; then \
-            continue; \
-        fi; \
-        mv hosted_com-install.ldif /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/${backend}-install.ldif; \
-    done
+    mv mgmt_com-install.ldif ${DOMAIN_DB}-install.ldif && \
+    mv hosted_com-install.ldif ${HOSTED_DOMAIN_DB}-install.ldif && \
+    mv *.ldif /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/.
 
 # This only copies another kolab-schema.ldif
 #COPY *.ldif /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/
