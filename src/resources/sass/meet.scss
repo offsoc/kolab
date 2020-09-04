@@ -25,6 +25,14 @@
         }
     }
 
+    &.fullscreen {
+        video {
+            // We don't want the video to be cut in fullscreen
+            // This will preserve the aspect ratio of the video stream
+            object-fit: contain;
+        }
+    }
+
     .controls {
         position: absolute;
         bottom: 0;

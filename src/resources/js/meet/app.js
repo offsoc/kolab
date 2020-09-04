@@ -700,6 +700,7 @@ function Meet(container)
                 // const enabled = document.fullscreenElement
                 wrapper.find('.link-fullscreen.closed').toggleClass('d-none')
                 wrapper.find('.link-fullscreen.open').toggleClass('d-none')
+                wrapper.toggleClass('fullscreen')
             })
         }
 
