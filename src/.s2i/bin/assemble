@@ -5,22 +5,20 @@ set -e
 shopt -s dotglob
 echo "--->> $(rm -vrf vendor/ composer.lock)"
 
-#cp -v /tmp/src/.env.example .env
-
 if [ -f ".env.local" ]; then
     # Ensure there's a line ending
-    echo "----> Append .env.local"
+    echo "---->> Append .env.local"
     echo "" >> .env
     cat .env.local >> .env
 fi
 
-cat /usr/libexec/s2i/assemble
+env
 
 /usr/libexec/s2i/assemble
 
 pushd /opt/app-root/src
 
-echo "----> Run npm run prod"
+echo "---->> Run npm run prod"
 npm install cross-env
 npm run prod
 

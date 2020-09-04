@@ -10,7 +10,7 @@
 
         {{-- TODO: PWA disabled for now: @laravelPWA --}}
         <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
-        <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+        <link href="{{ secure_asset('css/app.css') }}" rel="stylesheet">
     </head>
     <body>
         <div class="outer-container">
@@ -18,6 +18,6 @@
         </div>
 
         <script>window.config = {!! json_encode($env) !!}</script>
-        <script src="{{ asset('js/' . $env['jsapp']) }}" defer></script>
+        <script src="{{ secure_asset('js/' . $env['jsapp']) }}" defer></script>
     </body>
 </html>
