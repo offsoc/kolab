@@ -12,9 +12,6 @@ const mix = require('laravel-mix');
  */
 
 mix.webpackConfig({
-    output: {
-        publicPath: process.env.MIX_ASSET_PATH
-    },
     resolve: {
         alias: {
             'jquery$': 'jquery/dist/jquery.slim.js',
