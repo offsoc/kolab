@@ -2,7 +2,7 @@
 database/database.sqlite
 node_modules/
 package-lock.json
-public/css/app.css
+public/css/*.css
 public/hot
 public/js/*.js
 public/storage/
