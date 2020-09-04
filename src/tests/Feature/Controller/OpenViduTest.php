@@ -33,7 +33,7 @@ class OpenViduTest extends TestCase
         $this->assertCount(1, $json['list']);
         $this->assertSame('john', $json['list'][0]['name']);
 
-        // John has no room, but it will be auto-created
+        // Jack has no room, but it will be auto-created
         $response = $this->actingAs($jack)->get("api/v4/openvidu/rooms");
         $response->assertStatus(200);
 
@@ -41,7 +41,7 @@ class OpenViduTest extends TestCase
 
         $this->assertSame(1, $json['count']);
         $this->assertCount(1, $json['list']);
-        $this->assertSame('jack', $json['list'][0]['name']);
+        $this->assertRegExp('/^[0-9A-Z]{8}$/', $json['list'][0]['name']);
     }
 
     /**

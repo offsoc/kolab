@@ -55,16 +55,12 @@ class OpenViduController extends Controller
         $rooms = Room::where('user_id', $user->id)->orderBy('name')->get();
 
         if (count($rooms) == 0) {
-            // Create a room for the user
-            list($name, $domain) = explode('@', $user->email);
-
-            // Room name is limited to 16 characters by the DB schema
-            if (strlen($name) > 16) {
-                $name = substr($name, 0, 16);
-            }
-
-            while (Room::where('name', $name)->first()) {
+            // Create a room for the user (with a random and unique name)
+            while (true) {
                 $name = \App\Utils::randStr(8);
+                if (!Room::where('name', $name)->count()) {
+                    break;
+                }
             }
 
             $room = Room::create([
