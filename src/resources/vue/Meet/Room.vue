@@ -255,8 +255,14 @@
                     window.location = window.config['app.url']
                 }
             },
-            setMenuItem(type, state) {
-                $('#meet-session-menu').find('.link-' + type)[state ? 'removeClass' : 'addClass']('text-danger')
+            setMenuItem(type, state, disabled) {
+                let button = $('#meet-session-menu').find('.link-' + type)
+
+                button[state ? 'removeClass' : 'addClass']('text-danger')
+
+                if (disabled !== undefined) {
+                    button.prop('disabled', disabled)
+                }
             },
             setupSession() {
                 this.meet.setup({
@@ -271,12 +277,8 @@
                         this.setMenuItem('video', setup.videoActive)
                     },
                     onError: error => {
-                        // TODO: display nice error to the user
-                        // FIXME: It looks like OpenVidu requires audio or video,
-                        //        otherwise it will not connect to the session?
-
-                        this.setMenuItem('audio', false)
-                        this.setMenuItem('video', false)
+                        this.setMenuItem('audio', false, true)
+                        this.setMenuItem('video', false, true)
                     }
                 })
             },

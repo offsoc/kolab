@@ -16,7 +16,7 @@ class RoomControlsTest extends TestCaseDusk
      */
     public function testFullscreen(): void
     {
-        // TODO: This test does not work in --headless mode
+        // TODO: This test does not work in headless mode
         $this->markTestIncomplete();
 
         // Make sure there's no session yet
@@ -61,8 +61,6 @@ class RoomControlsTest extends TestCaseDusk
                 ->click('@session button.link-fullscreen.open')
                 ->assertVisible('nav')
                 ->assertVisible('@toolbar');
-
-                // TODO: Test video fullscreen while in the room fullscreen
         });
     }
 
@@ -105,12 +103,12 @@ class RoomControlsTest extends TestCaseDusk
 
             // Assert current UI state
             $owner->assertToolbar([
-                    'audio' => true,
-                    'video' => true,
-                    'screen' => false,
-                    'chat' => false,
-                    'fullscreen' => true,
-                    'logout' => true,
+                    'audio' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'video' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
+                    'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                 ])
                 ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
                     $browser->assertVisible('video')
@@ -134,12 +132,12 @@ class RoomControlsTest extends TestCaseDusk
 
             // Assert current UI state
             $guest->assertToolbar([
-                    'audio' => false,
-                    'video' => false,
-                    'screen' => false,
-                    'chat' => false,
-                    'fullscreen' => true,
-                    'logout' => true,
+                    'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'video' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
+                    'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                 ])
                 ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
                     $browser->assertVisible('video')
@@ -171,7 +169,7 @@ class RoomControlsTest extends TestCaseDusk
 
             // Test muting audio
             $owner->click('@menu button.link-audio')
-                ->assertToolbarButtonState('audio', false)
+                ->assertToolbarButtonState('audio', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertVisible('div.meet-video.publisher .status .status-audio');
 
             // FIXME: It looks that we can't just check the <video> element state
@@ -180,14 +178,14 @@ class RoomControlsTest extends TestCaseDusk
 
             // Test unmuting audio
             $owner->click('@menu button.link-audio')
-                ->assertToolbarButtonState('audio', true)
+                ->assertToolbarButtonState('audio', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertMissing('div.meet-video.publisher .status .status-audio');
 
             $guest->waitUntilMissing('div.meet-video:not(.publisher) .status .status-audio');
 
             // Test muting video
             $owner->click('@menu button.link-video')
-                ->assertToolbarButtonState('video', false)
+                ->assertToolbarButtonState('video', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertVisible('div.meet-video.publisher .status .status-video');
 
             // FIXME: It looks that we can't just check the <video> element state
@@ -196,7 +194,7 @@ class RoomControlsTest extends TestCaseDusk
 
             // Test unmuting video
             $owner->click('@menu button.link-video')
-                ->assertToolbarButtonState('video', true)
+                ->assertToolbarButtonState('video', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertMissing('div.meet-video.publisher .status .status-video');
 
             $guest->waitUntilMissing('div.meet-video:not(.publisher) .status .status-video');
@@ -245,7 +243,7 @@ class RoomControlsTest extends TestCaseDusk
             // Test chat elements
 
             $owner->click('@menu button.link-chat')
-                ->assertToolbarButtonState('chat', true)
+                ->assertToolbarButtonState('chat', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertVisible('@chat')
                 ->assertVisible('@session')
                 ->assertFocused('@chat-input')
@@ -259,7 +257,7 @@ class RoomControlsTest extends TestCaseDusk
             $guest->waitFor('@menu button.link-chat .badge')
                 ->assertSeeIn('@menu button.link-chat .badge', '1')
                 ->click('@menu button.link-chat')
-                ->assertToolbarButtonState('chat', true)
+                ->assertToolbarButtonState('chat', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertMissing('@menu button.link-chat .badge')
                 ->assertVisible('@chat')
                 ->assertVisible('@session')
@@ -304,7 +302,7 @@ class RoomControlsTest extends TestCaseDusk
                 ->assertSeeIn('@chat-list .message:last-child .nickname', 'guest')
                 ->assertSeeIn('@chat-list .message:last-child div:last-child', 'guest2');
 
-            // TODO: Test chat features, e.g. link handling
+            // TODO: Test text chat features, e.g. link handling
         });
     }
 
@@ -315,7 +313,8 @@ class RoomControlsTest extends TestCaseDusk
      */
     public function testShareScreen(): void
     {
-        // TODO: I'm not sure it's possible to test that at all
+        // It looks that screen sharing API is not available in headless chrome
+        // Note that other tests already assert that the button is disabled
         $this->markTestIncomplete();
     }
 }

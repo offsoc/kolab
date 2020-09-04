@@ -7,6 +7,11 @@ use PHPUnit\Framework\Assert;
 
 class Room extends Page
 {
+    public const BUTTON_ACTIVE = 1;
+    public const BUTTON_ENABLED = 2;
+    public const BUTTON_INACTIVE = 4;
+    public const BUTTON_DISABLED = 8;
+
     protected $roomName;
 
     /**
@@ -102,12 +107,29 @@ class Room extends Page
      *
      * @param \Tests\Browser $browser The browser object
      * @param string         $button  Button name
-     * @param bool           $state   Expected button state
+     * @param int            $state   Expected button state (sum of BUTTON_* consts)
      */
     public function assertToolbarButtonState($browser, $button, $state): void
     {
-        $class = 'link-' . $button . ($state ? ':not(.text-danger)' : '.text-danger');
-        $browser->assertVisible('@menu button.' . $class);
+        $class = '';
+
+        if ($state & self::BUTTON_ACTIVE) {
+            $class .= ':not(.text-danger)';
+        }
+
+        if ($state & self::BUTTON_INACTIVE) {
+            $class .= '.text-danger';
+        }
+
+        if ($state & self::BUTTON_DISABLED) {
+            $class .= '[disabled]';
+        }
+
+        if ($state & self::BUTTON_ENABLED) {
+            $class .= ':not([disabled])';
+        }
+
+        $browser->assertVisible('@menu button.link-' . $button . $class);
     }
 
     /**

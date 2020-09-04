@@ -40,8 +40,11 @@ function Meet(container)
     OV = new OpenVidu()
     screenOV = new OpenVidu()
 
-    // if there's anything to do, do it here.
+    // If there's anything to do, do it here.
     //OV.setAdvancedConfiguration(config)
+
+    // Disable all logging except errors
+    // OV.enableProdMode()
 
     // Disconnect participant when browser's window close
     window.addEventListener('beforeunload', () => {
@@ -535,15 +538,20 @@ function Meet(container)
      * Mute/Unmute audio for current session publisher
      */
     function switchAudio() {
-        audioActive = !audioActive
-        publisher.publishAudio(audioActive)
-
-        // TODO: Handle enabling audio if it was never enabled (e.g. user joined the room
-        //       without giving access to his mic)
-
-        videoWrapperUpdate(sessionData.wrapper, { audioActive })
-
-        signalUserUpdate()
+        // TODO: If user has no devices or denied access to them in the setup,
+        //       the button will just not work. Find a way to make it working
+        //       after user unlocks his devices. For now he has to refresh
+        //       the page and join the room again.
+        if (microphones.length) {
+            try {
+                publisher.publishAudio(!audioActive)
+                audioActive = !audioActive
+                videoWrapperUpdate(sessionData.wrapper, { audioActive })
+                signalUserUpdate()
+            } catch (e) {
+                console.error(e)
+            }
+        }
 
         return audioActive
     }
@@ -552,15 +560,20 @@ function Meet(container)
      * Mute/Unmute video for current session publisher
      */
     function switchVideo() {
-        videoActive = !videoActive
-        publisher.publishVideo(videoActive)
-
-        // TODO: Handle enabling video if it was never enabled (e.g. user joined the room
-        //       without giving access to his camera)
-
-        videoWrapperUpdate(sessionData.wrapper, { videoActive })
-
-        signalUserUpdate()
+        // TODO: If user has no devices or denied access to them in the setup,
+        //       the button will just not work. Find a way to make it working
+        //       after user unlocks his devices. For now he has to refresh
+        //       the page and join the room again.
+        if (cameras.length) {
+            try {
+                publisher.publishVideo(!videoActive)
+                videoActive = !videoActive
+                videoWrapperUpdate(sessionData.wrapper, { videoActive })
+                signalUserUpdate()
+            } catch (e) {
+                console.error(e)
+            }
+        }
 
         return videoActive
     }
