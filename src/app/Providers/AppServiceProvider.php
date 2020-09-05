@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -38,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
         \App\UserSetting::observe(\App\Observers\UserSettingObserver::class);
         \App\VerificationCode::observe(\App\Observers\VerificationCodeObserver::class);
         \App\Wallet::observe(\App\Observers\WalletObserver::class);
+
+        Schema::defaultStringLength(191);
 
         // Log SQL queries in debug mode
         if (\config('app.debug')) {
