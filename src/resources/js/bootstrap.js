@@ -97,5 +97,5 @@ router.afterEach((to, from) => {
  */
 
 window.axios = require('axios')
-
+axios.defaults.baseURL = vueRouterBase
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
