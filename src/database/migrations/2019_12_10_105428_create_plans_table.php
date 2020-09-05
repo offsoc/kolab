@@ -19,8 +19,10 @@ class CreatePlansTable extends Migration
             function (Blueprint $table) {
                 $table->string('id', 36);
                 $table->string('title', 36);
-                $table->json('name');
-                $table->json('description');
+                // were json, but mariadb
+                $table->text('name');
+                $table->text('description');
+                // end of
                 $table->datetime('promo_from')->nullable();
                 $table->datetime('promo_to')->nullable();
                 $table->integer('qty_min')->default(0)->nullable();

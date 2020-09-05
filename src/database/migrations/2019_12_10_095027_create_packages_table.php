@@ -19,8 +19,10 @@ class CreatePackagesTable extends Migration
             function (Blueprint $table) {
                 $table->string('id', 36);
                 $table->string('title', 36);
-                $table->json('name');
-                $table->json('description');
+                // were json, but mariadb
+                $table->text('name');
+                $table->text('description');
+                // end of
                 $table->integer('discount_rate')->default(0)->nullable();
 
                 $table->primary('id');

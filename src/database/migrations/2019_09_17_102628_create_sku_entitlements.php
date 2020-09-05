@@ -19,8 +19,10 @@ class CreateSkuEntitlements extends Migration
             function (Blueprint $table) {
                 $table->string('id', 36)->primary();
                 $table->string('title', 64);
-                $table->json('name');
-                $table->json('description');
+                // were json, but mariadb
+                $table->text('name');
+                $table->text('description');
+                // end of
                 $table->integer('cost');
                 $table->smallinteger('units_free')->default('0');
                 $table->string('period', strlen('monthly'))->default('monthly');
