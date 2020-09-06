@@ -12,13 +12,13 @@ if [ -f ".env.local" ]; then
     cat .env.local >> .env
 fi
 
-env
+#env
 
 /usr/libexec/s2i/assemble
 
-cat >> /opt/app-root/etc/conf.d/99-loglevel.conf << EOF
-LogLevel debug mod_rewrite.c:trace2
-EOF
+#cat >> /opt/app-root/etc/conf.d/99-loglevel.conf << EOF
+#LogLevel debug mod_rewrite.c:trace2
+#EOF
 
 # Won't work due to:
 # Cannot install, php_dir for channel "pecl.php.net" is not writeable by the current user
