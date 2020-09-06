@@ -20,7 +20,10 @@ cat >> /opt/app-root/etc/conf.d/99-loglevel.conf << EOF
 LogLevel debug mod_rewrite.c:trace2
 EOF
 
-pecl install swoole
+# Won't work due to:
+# Cannot install, php_dir for channel "pecl.php.net" is not writeable by the current user
+#pecl channel-update pecl.php.net
+#pecl install swoole
 
 pushd /opt/app-root/src
 
