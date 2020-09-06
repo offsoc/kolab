@@ -53,7 +53,7 @@ case ${HKCCP_APP} in
        ./artisan serve;;
     apache|APACHE|httpd|HTTPD )
         echo "----> Starting httpd "
-        /usr/libexec/s2i/run;;
+        /usr/libexec/s2i/run 2>&1;;
     * )
         echo "----> Sleeping"
         sleep 10000;;
