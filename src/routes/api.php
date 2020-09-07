@@ -85,7 +85,7 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.domain'),
-        // TODO: $prefix?
+        'prefix' => $prefix,
     ],
     function () {
         Route::post('webhooks/payment/{provider}', 'API\V4\PaymentsController@webhook');
