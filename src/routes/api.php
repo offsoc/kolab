@@ -15,15 +15,15 @@ use Illuminate\Http\Request;
 
 Route::group(
     [
-        'prefix' => \config('app.path'),
+        'middleware' => 'api',
+        'prefix' => 'auth'
     ],
-    function () {
+    function ($router) {
         Route::group(
             [
-                'middleware' => 'api',
-                'prefix' => 'auth'
+                'prefix' => \config('app.path'),
             ],
-            function ($router) {
+            function () {
                 Route::post('login', 'API\AuthController@login');
 
                 Route::group(
@@ -36,14 +36,21 @@ Route::group(
                 );
             }
         );
+    }
+);
 
+Route::group(
+    [
+        'domain' => \config('app.domain'),
+        'middleware' => 'api',
+        'prefix' => 'auth'
+    ],
+    function ($router) {
         Route::group(
             [
-                'domain' => \config('app.domain'),
-                'middleware' => 'api',
-                'prefix' => 'auth'
+                'prefix' => \config('app.path'),
             ],
-            function ($router) {
+            function () {
                 Route::post('password-reset/init', 'API\PasswordResetController@init');
                 Route::post('password-reset/verify', 'API\PasswordResetController@verify');
                 Route::post('password-reset', 'API\PasswordResetController@reset');
@@ -54,12 +61,19 @@ Route::group(
                 Route::post('signup', 'API\SignupController@signup');
             }
         );
+    }
+);
 
+Route::group(
+    [
+        'domain' => \config('app.domain'),
+        'middleware' => 'auth:api',
+        'prefix' => 'v4'
+    ],
+    function () {
         Route::group(
             [
-                'domain' => \config('app.domain'),
-                'middleware' => 'auth:api',
-                'prefix' => 'v4'
+                'prefix' => \config('app.path'),
             ],
             function () {
                 Route::apiResource('domains', API\V4\DomainsController::class);
@@ -84,21 +98,39 @@ Route::group(
                 Route::delete('payments/mandate', 'API\V4\PaymentsController@mandateDelete');
             }
         );
+    }
+);
 
+Route::group(
+    [
+        'domain' => \config('app.domain'),
+        'middleware' => 'api'
+    ],
+    function () {
         Route::group(
             [
-                'domain' => \config('app.domain'),
+                'prefix' => \config('app.path'),
             ],
             function () {
-                Route::post('webhooks/payment/{provider}', 'API\V4\PaymentsController@webhook');
+                Route::post(
+                    'webhooks/payment/{provider}',
+                    'API\V4\PaymentsController@webhook'
+                );
             }
         );
+    }
+);
 
+Route::group(
+    [
+        'domain' => 'admin.' . \config('app.domain'),
+        'middleware' => ['auth:api', 'admin'],
+        'prefix' => 'v4',
+    ],
+    function () {
         Route::group(
             [
-                'domain' => 'admin.' . \config('app.domain'),
-                'middleware' => ['auth:api', 'admin'],
-                'prefix' => 'v4',
+                'prefix' => \config('app.path'),
             ],
             function () {
                 Route::apiResource('domains', API\V4\Admin\DomainsController::class);
