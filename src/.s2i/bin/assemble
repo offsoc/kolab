@@ -17,7 +17,7 @@ fi
 /usr/libexec/s2i/assemble
 
 cat >> /opt/app-root/etc/conf.d/99-loglevel.conf << EOF
-LogLevel debug mod_rewrite.c:trace2
+LogLevel debug mod_rewrite.c:trace4
 EOF
 
 # Won't work due to:
