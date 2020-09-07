@@ -17,7 +17,6 @@
 Route::group(
     [
         'domain' => \config('app.domain'),
-        'prefix' => \config('app.path')
     ],
     function () {
         Route::fallback(

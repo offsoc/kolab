@@ -53,8 +53,6 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    'path' => env('APP_PATH', '/'),
-
     'public_url' => env('APP_PUBLIC_URL', env('APP_URL', 'http://localhost')),
 
     'asset_url' => env('ASSET_URL', null),
