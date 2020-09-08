@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\OpenVidu;
 
 use Illuminate\Console\Command;
 
-class OpenViduRooms extends Command
+class Rooms extends Command
 {
     /**
      * The name and signature of the console command.
