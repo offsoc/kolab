@@ -63,6 +63,7 @@ function Meet(container)
     this.switchAudio = switchAudio
     this.switchScreen = switchScreen
     this.switchVideo = switchVideo
+    this.updateSession = updateSession
 
 
     /**
@@ -525,13 +526,22 @@ function Meet(container)
         // Note: StreamPropertyChangedEvent might be more standard way
         // to propagate the audio/video state change to other users.
         // It looks there's no other way to propagate nickname changes.
-
-        // TODO: The same for screen sharing session?
         session.signal({
             data: JSON.stringify(data),
             type: 'userChanged',
             to: connection ? [connection] : undefined
         })
+
+        // The same nickname for screen sharing session
+        if (screenSession) {
+            data.audioActive = false
+            data.videoActive = true
+            screenSession.signal({
+                data: JSON.stringify(data),
+                type: 'userChanged',
+                to: connection ? [connection] : undefined
+            })
+        }
     }
 
     /**
@@ -583,10 +593,13 @@ function Meet(container)
      */
     function switchScreen(callback) {
         if (screenPublisher) {
-            screenSession.unpublish(screenPublisher)
+            screenSession.disconnect()
+            screenSession = null
             screenPublisher = null
 
             if (callback) {
+                // Note: Disconnecting invalidates the token. The callback should request
+                //       a new token for the next screen sharing session.
                 callback(false)
             }
 
@@ -873,6 +886,15 @@ function Meet(container)
         return $(`<svg><path fill="currentColor" d="${icon[4]}"></path></svg>`)
             .attr(attrs)
             .get(0).outerHTML
+    }
+
+    /**
+     * A way to update some session data, after you joined the room
+     *
+     * @param data Same input as for joinRoom(), but for now it supports only shareToken
+     */
+    function updateSession(data) {
+        sessionData.shareToken = data.shareToken
     }
 
     /**

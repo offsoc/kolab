@@ -331,6 +331,17 @@
             switchScreen() {
                 this.meet.switchScreen(enabled => {
                     this.setMenuItem('screen', enabled)
+
+                    // After one screen sharing session ended request a new token
+                    // for the next screen sharing session
+                    if (!enabled) {
+                        axios.get('/api/v4/openvidu/rooms/' + this.room, { ignoreErrors: true })
+                            .then(response => {
+                                // Response data contains: session, token and shareToken
+                                this.session.shareToken = response.data.token
+                                this.meet.updateSession(this.session)
+                            })
+                    }
                 })
             }
         }
