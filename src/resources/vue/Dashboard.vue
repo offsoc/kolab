@@ -18,6 +18,7 @@
             </router-link>
             <router-link class="card link-chat" :to="{ name: 'rooms' }">
                 <svg-icon icon="comments"></svg-icon><span class="name">Video chat</span>
+                <span class="badge badge-primary">beta</span>
             </router-link>
         </div>
     </div>
