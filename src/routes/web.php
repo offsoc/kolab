@@ -16,7 +16,7 @@
 // This way we don't have to define any "deep link" routes here.
 Route::group(
     [
-        'prefix' => \config('app.path')
+        'domain' => \config('app.domain'),
     ],
     function () {
         Route::fallback(
