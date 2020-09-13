@@ -59,6 +59,12 @@ class LDAP
         $hostedRootDN = \config('ldap.hosted.root_dn');
         $mgmtRootDN = \config('ldap.admin.root_dn');
 
+        $result = $ldap->search($hostedRootDN, "(associateddomain={$domain->namespace})", "sub");
+
+        if ($result && $result->count() > 0) {
+            return;
+        }
+
         $domainBaseDN = "ou={$domain->namespace},{$hostedRootDN}";
 
         $aci = [
