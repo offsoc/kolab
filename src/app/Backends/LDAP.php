@@ -387,6 +387,10 @@ class LDAP
 
         self::setDomainAttributes($domain, $newEntry);
 
+        if (array_key_exists('inetdomainstatus', $newEntry)) {
+            $newEntry['inetdomainstatus'] = (string) $newEntry['inetdomainstatus'];
+        }
+
         $result = $ldap->modify_entry($ldapDomain['dn'], $oldEntry, $newEntry);
 
         if (!is_array($result)) {
@@ -417,6 +421,20 @@ class LDAP
         }
 
         self::setUserAttributes($user, $newEntry);
+
+        if (array_key_exists('objectclass', $newEntry)) {
+            if (!in_array('inetuser', $newEntry['objectclass'])) {
+                $newEntry['objectclass'][] = 'inetuser';
+            }
+        }
+
+        if (array_key_exists('inetuserstatus', $newEntry)) {
+            $newEntry['inetuserstatus'] = (string) $newEntry['inetuserstatus'];
+        }
+
+        if (array_key_exists('mailquota', $newEntry)) {
+            $newEntry['mailquota'] = (string) $newEntry['mailquota'];
+        }
 
         $result = $ldap->modify_entry($dn, $oldEntry, $newEntry);
 
