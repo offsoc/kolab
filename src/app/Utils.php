@@ -116,7 +116,7 @@ class Utils
      */
     public static function serviceUrl(string $route): string
     {
-        $url = \url($route);
+        $url = \secure_url($route);
 
         $app_url = trim(\config('app.url'), '/');
         $pub_url = trim(\config('app.public_url'), '/');
