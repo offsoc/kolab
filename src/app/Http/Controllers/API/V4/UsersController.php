@@ -643,14 +643,7 @@ class UsersController extends Controller
         }
 
         // Check if it is one of domains available to the user
-        // TODO: We should have a helper that returns "flat" array with domain names
-        //       I guess we could use pluck() somehow
-        $domains = array_map(
-            function ($domain) {
-                return $domain->namespace;
-            },
-            $user->domains()
-        );
+        $domains = \collect($user->domains())->pluck('namespace')->all();
 
         if (!in_array($domain->namespace, $domains)) {
             return \trans('validation.entryexists', ['attribute' => 'domain']);
@@ -659,7 +652,8 @@ class UsersController extends Controller
         // Check if a user/alias with specified address already exists
         // Allow assigning the same alias to a user in the same group account,
         // but only for non-public domains
-        if ($exists = User::emailExists($email, true, $alias_exists)) {
+        // Allow an alias in a custom domain to an address that was a user before
+        if ($exists = User::emailExists($email, true, $alias_exists, $is_alias && !$domain->isPublic())) {
             if (
                 !$is_alias
                 || !$alias_exists

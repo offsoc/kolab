@@ -29,6 +29,8 @@ class UsersTest extends TestCase
         $this->deleteTestUser('UsersControllerTest3@userscontroller.com');
         $this->deleteTestUser('UserEntitlement2A@UserEntitlement.com');
         $this->deleteTestUser('john2.doe2@kolab.org');
+        $this->deleteTestUser('deleted@kolab.org');
+        $this->deleteTestUser('deleted@kolabnow.com');
         $this->deleteTestDomain('userscontroller.com');
 
         $user = $this->getTestUser('john@kolab.org');
@@ -51,6 +53,8 @@ class UsersTest extends TestCase
         $this->deleteTestUser('UsersControllerTest3@userscontroller.com');
         $this->deleteTestUser('UserEntitlement2A@UserEntitlement.com');
         $this->deleteTestUser('john2.doe2@kolab.org');
+        $this->deleteTestUser('deleted@kolab.org');
+        $this->deleteTestUser('deleted@kolabnow.com');
         $this->deleteTestDomain('userscontroller.com');
 
         $user = $this->getTestUser('john@kolab.org');
@@ -1007,5 +1011,39 @@ class UsersTest extends TestCase
         $result = $this->invokeMethod(new UsersController(), 'validateEmail', $args);
 
         $this->assertSame($expected_result, $result);
+    }
+
+    /**
+     * User email/alias validation - more cases.
+     *
+     * Note: Technically these include unit tests, but let's keep it here for now.
+     * FIXME: Shall we do a http request for each case?
+     */
+    public function testValidateEmail2(): void
+    {
+        Queue::fake();
+
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $deleted_priv = $this->getTestUser('deleted@kolab.org');
+        $deleted_priv->setAliases(['deleted-alias@kolab.org']);
+        $deleted_priv->delete();
+        $deleted_pub = $this->getTestUser('deleted@kolabnow.com');
+        $deleted_pub->setAliases(['deleted-alias@kolabnow.com']);
+        $deleted_pub->delete();
+
+        // An alias that was a user email before is allowed, but only for custom domains
+        $result = UsersController::validateEmail('deleted@kolab.org', $john, true);
+        $this->assertSame(null, $result);
+
+        $result = UsersController::validateEmail('deleted-alias@kolab.org', $john, true);
+        $this->assertSame(null, $result);
+
+        $result = UsersController::validateEmail('deleted@kolabnow.com', $john, true);
+        $this->assertSame('The specified alias is not available.', $result);
+
+        $result = UsersController::validateEmail('deleted-alias@kolabnow.com', $john, true);
+        $this->assertSame('The specified alias is not available.', $result);
     }
 }
