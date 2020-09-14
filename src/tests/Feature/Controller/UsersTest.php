@@ -418,6 +418,8 @@ class UsersTest extends TestCase
     {
         $jack = $this->getTestUser('jack@kolab.org');
         $john = $this->getTestUser('john@kolab.org');
+        $deleted_priv = $this->getTestUser('deleted@kolab.org');
+        $deleted_priv->delete();
 
         // Test empty request
         $response = $this->actingAs($john)->post("/api/v4/users", []);
@@ -481,7 +483,7 @@ class UsersTest extends TestCase
             'last_name' => 'Doe2',
             'email' => 'john2.doe2@kolab.org',
             'organization' => 'TestOrg',
-            'aliases' => ['useralias1@kolab.org', 'useralias2@kolab.org'],
+            'aliases' => ['useralias1@kolab.org', 'deleted@kolab.org'],
         ];
 
         // Missing package
@@ -523,8 +525,8 @@ class UsersTest extends TestCase
         $this->assertSame('TestOrg', $user->getSetting('organization'));
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
-        $this->assertSame('useralias1@kolab.org', $aliases[0]->alias);
-        $this->assertSame('useralias2@kolab.org', $aliases[1]->alias);
+        $this->assertSame('deleted@kolab.org', $aliases[0]->alias);
+        $this->assertSame('useralias1@kolab.org', $aliases[1]->alias);
         // Assert the new user entitlements
         $this->assertUserEntitlements($user, ['groupware', 'mailbox', 'storage', 'storage']);
         // Assert the wallet to which the new user should be assigned to

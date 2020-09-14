@@ -21,17 +21,22 @@ class UserAliasObserver
     {
         $alias->alias = \strtolower($alias->alias);
 
-        if ($exists = User::emailExists($alias->alias, true, $alias_exists)) {
+        list($login, $domain) = explode('@', $alias->alias);
+
+        $domain = Domain::where('namespace', $domain)->first();
+
+        if (!$domain) {
+            \Log::error("Failed creating alias {$alias->alias}. Domain does not exist.");
+            return false;
+        }
+/*
+        if ($exists = User::emailExists($alias->alias, true, $alias_exists, !$domain->isPublic())) {
             if (!$alias_exists) {
                 \Log::error("Failed creating alias {$alias->alias}. Email address exists.");
                 return false;
             }
 
-            list($login, $domain) = explode('@', $alias->alias);
-
-            $domain = Domain::where('namespace', $domain)->first();
-
-            if (!$domain || $domain->isPublic()) {
+            if ($domain->isPublic()) {
                 \Log::error("Failed creating alias {$alias->alias}. Alias exists in public domain.");
                 return false;
             }
@@ -41,7 +46,7 @@ class UserAliasObserver
                 return false;
             }
         }
-
+*/
         return true;
     }
 

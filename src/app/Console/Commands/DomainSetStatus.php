@@ -4,32 +4,23 @@ namespace App\Console\Commands;
 
 use App\Domain;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Queue;
 
-class DomainStatus extends Command
+class DomainSetStatus extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'domain:status {domain}';
+    protected $signature = 'domain:set-status {domain} {status}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Display the status of a domain';
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
+    protected $description = "Set a domain's status.";
 
     /**
      * Execute the console command.
@@ -43,6 +34,11 @@ class DomainStatus extends Command
         if (!$domain) {
             return 1;
         }
+
+        Queue::fake(); // ignore LDAP for now
+
+        $domain->status = (int) $this->argument('status');
+        $domain->save();
 
         $this->info($domain->status);
     }
