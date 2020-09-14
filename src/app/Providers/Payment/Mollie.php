@@ -58,7 +58,7 @@ class Mollie extends \App\Providers\PaymentProvider
             'sequenceType' => 'first',
             'description' => $payment['description'],
             'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
-            'redirectUrl' => \url('/wallet'),
+            'redirectUrl' => Utils::serviceUrl('/wallet'),
             'locale' => 'en_US',
             // 'method' => 'creditcard',
         ];
@@ -175,7 +175,7 @@ class Mollie extends \App\Providers\PaymentProvider
             'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
             'locale' => 'en_US',
             // 'method' => 'creditcard',
-            'redirectUrl' => \url('/wallet') // required for non-recurring payments
+            'redirectUrl' => Utils::serviceUrl('/wallet') // required for non-recurring payments
         ];
 
         // TODO: Additional payment parameters for better fraud protection:
