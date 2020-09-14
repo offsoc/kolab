@@ -85,10 +85,10 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.domain'),
-        'prefix' => $prefix,
+        'prefix' => $prefix . 'api/webhooks',
     ],
     function () {
-        Route::post('webhooks/payment/{provider}', 'API\V4\PaymentsController@webhook');
+        Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
     }
 );
 
