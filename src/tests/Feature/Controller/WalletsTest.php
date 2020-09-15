@@ -119,7 +119,7 @@ class WalletsTest extends TestCase
 
         $length = $response->headers->get('content-length');
         $content = $response->content();
-        $this->assertStringStartsWith("%PDF-1.3\n", $content);
+        $this->assertStringStartsWith("%PDF-1.", $content);
         $this->assertEquals(strlen($content), $length);
     }
 

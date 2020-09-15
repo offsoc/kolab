@@ -136,7 +136,9 @@ class LDAPTest extends TestCase
             ],
             'mail' => $user->email,
             'uid' => $user->email,
-            'nsroledn' => null,
+            'nsroledn' => [
+                'cn=imap-user,' . \config('ldap.hosted.root_dn')
+            ],
             'cn' => 'unknown',
             'displayname' => '',
             'givenname' => '',
