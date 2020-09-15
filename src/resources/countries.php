@@ -157,6 +157,7 @@
   'NF' => ['AUD','Norfolk Island'],
   'MK' => ['MKD','North Macedonia'],
   'MP' => ['USD','Northern Mariana Islands'],
+  'NL' => ['EUR','The Netherlands'],
   'NO' => ['NOK','Norway'],
   'OM' => ['OMR','Oman'],
   'PK' => ['PKR','Pakistan'],
