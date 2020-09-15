@@ -135,7 +135,7 @@ class EntitlementObserver
 
         $pricePerDay = (float)$entitlement->cost / $daysInLastMonth;
 
-        $cost += (int) (round($pricePerDay * $diffInDays, 0));
+        $cost += (int) (round($pricePerDay * $discount * $diffInDays, 0));
 
         if ($cost == 0) {
             return;
