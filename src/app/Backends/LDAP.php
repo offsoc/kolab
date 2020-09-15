@@ -555,10 +555,6 @@ class LDAP
         if (!in_array("groupware", $roles)) {
             $entry['nsroledn'][] = "cn=imap-user,{$hostedRootDN}";
         }
-
-        if (empty($entry['nsroledn'])) {
-            unset($entry['nsroledn']);
-        }
     }
 
     /**
