@@ -390,7 +390,6 @@
                 oneoff_currency: 'CHF',
                 oneoff_description: '',
                 oneoff_negative: false,
-                countries: window.config.countries,
                 discount: 0,
                 discount_description: '',
                 discounts: [],
