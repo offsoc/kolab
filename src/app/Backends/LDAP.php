@@ -542,14 +542,6 @@ class LDAP
 
         $hostedRootDN = \config('ldap.hosted.root_dn');
 
-        if (empty($roles)) {
-            if (array_key_exists('nsroledn', $entry)) {
-                unset($entry['nsroledn']);
-            }
-
-            return;
-        }
-
         $entry['nsroledn'] = [];
 
         if (in_array("2fa", $roles)) {
