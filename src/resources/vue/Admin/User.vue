@@ -390,6 +390,7 @@
                 oneoff_currency: 'CHF',
                 oneoff_description: '',
                 oneoff_negative: false,
+                countries: window.config.countries,
                 discount: 0,
                 discount_description: '',
                 discounts: [],
@@ -421,11 +422,13 @@
 
                     const financesTab = '#user-finances'
                     const keys = ['first_name', 'last_name', 'external_email', 'billing_address', 'phone', 'organization']
-                    const country = this.user.settings.country
 
-                    if (country) {
-                        this.user.country = window.config.countries[country][1]
+                    let country = this.user.settings.country
+                    if (country && country in window.config.countries) {
+                        country = window.config.countries[country][1]
                     }
+
+                    this.user.country = country
 
                     keys.forEach(key => { this.user[key] = this.user.settings[key] })
 

@@ -101,10 +101,6 @@
         },
         methods: {
             submit() {
-                if (this.profile.country) {
-                    this.profile.currency = this.countries[this.profile.country][0]
-                }
-
                 this.$root.clearFormValidation($('#user-profile form'))
 
                 axios.put('/api/v4/users/' + this.user_id, this.profile)
