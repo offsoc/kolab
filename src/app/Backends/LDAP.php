@@ -59,12 +59,6 @@ class LDAP
         $hostedRootDN = \config('ldap.hosted.root_dn');
         $mgmtRootDN = \config('ldap.admin.root_dn');
 
-        $result = $ldap->search($hostedRootDN, "(associateddomain={$domain->namespace})", "sub");
-
-        if ($result && $result->count() > 0) {
-            return;
-        }
-
         $domainBaseDN = "ou={$domain->namespace},{$hostedRootDN}";
 
         $aci = [
@@ -104,7 +98,7 @@ class LDAP
             $result = $ldap->add_entry($dn, $entry);
 
             if (!$result) {
-                self::throwException($ldap, "Failed to create a domain in LDAP");
+                self::throwException($ldap, "Failed to create domain {$domain->namespace} in LDAP");
             }
         }
 
@@ -242,7 +236,7 @@ class LDAP
             $result = $ldap->add_entry($dn, $entry);
 
             if (!$result) {
-                self::throwException($ldap, "Failed to create a user in LDAP");
+                self::throwException($ldap, "Failed to create user {$user->email} in LDAP");
             }
         }
 
@@ -272,7 +266,7 @@ class LDAP
             $result = $ldap->delete_entry_recursive($domainBaseDN);
 
             if (!$result) {
-                self::throwException($ldap, "Failed to delete a domain from LDAP");
+                self::throwException($ldap, "Failed to delete domain {$domain->namespace} from LDAP");
             }
         }
 
@@ -281,7 +275,7 @@ class LDAP
                 $result = $ldap->delete_entry($ldap_domain['dn']);
 
                 if (!$result) {
-                    self::throwException($ldap, "Failed to delete a domain from LDAP");
+                    self::throwException($ldap, "Failed to delete domain {$domain->namespace} from LDAP");
                 }
             }
         }
@@ -307,7 +301,7 @@ class LDAP
             $result = $ldap->delete_entry($dn);
 
             if (!$result) {
-                self::throwException($ldap, "Failed to delete a user from LDAP");
+                self::throwException($ldap, "Failed to delete user {$user->email} from LDAP");
             }
         }
 
@@ -379,7 +373,7 @@ class LDAP
         $ldapDomain = $ldap->find_domain($domain->namespace);
 
         if (!$ldapDomain) {
-            self::throwException($ldap, "Failed to update a domain in LDAP (domain not found)");
+            self::throwException($ldap, "Failed to update domain {$domain->namespace} in LDAP (domain not found)");
         }
 
         $oldEntry = $ldap->get_entry($ldapDomain['dn']);
@@ -394,7 +388,7 @@ class LDAP
         $result = $ldap->modify_entry($ldapDomain['dn'], $oldEntry, $newEntry);
 
         if (!is_array($result)) {
-            self::throwException($ldap, "Failed to update a domain in LDAP");
+            self::throwException($ldap, "Failed to update domain {$domain->namespace} in LDAP");
         }
 
         if (empty(self::$ldap)) {
@@ -417,7 +411,7 @@ class LDAP
         $newEntry = $oldEntry = self::getUserEntry($ldap, $user->email, $dn, true);
 
         if (!$oldEntry) {
-            self::throwException($ldap, "Failed to update a user in LDAP (user not found)");
+            self::throwException($ldap, "Failed to update user {$user->email} in LDAP (user not found)");
         }
 
         self::setUserAttributes($user, $newEntry);
@@ -439,7 +433,7 @@ class LDAP
         $result = $ldap->modify_entry($dn, $oldEntry, $newEntry);
 
         if (!is_array($result)) {
-            self::throwException($ldap, "Failed to update a user in LDAP");
+            self::throwException($ldap, "Failed to update user {$user->email} in LDAP");
         }
 
         if (empty(self::$ldap)) {
