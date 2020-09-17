@@ -141,6 +141,12 @@ class EntitlementObserver
             return;
         }
 
-        $entitlement->wallet->debit($cost);
+        $transaction = $entitlement->createTransaction(
+            \App\Transaction::ENTITLEMENT_BILLED,
+            $cost
+        );
+
+
+        $entitlement->wallet->debit($cost, [$transaction]);
     }
 }
