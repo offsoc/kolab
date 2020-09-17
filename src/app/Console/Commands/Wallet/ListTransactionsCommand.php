@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use Illuminate\Console\Command;
 
-class WalletTransactions extends Command
+class ListTransactionsCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'wallet:transactions {--detail} {wallet}';
+    protected $signature = 'wallet:list-transactions {--detail} {wallet}';
 
     /**
      * The console command description.
