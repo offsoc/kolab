@@ -49,17 +49,13 @@ class HKCCPImportLdap extends Command
             $result = null;
 
             try {
-                $result = LDAP::updateDomain($domain);
+                LDAP::updateDomain($domain);
             } catch (\Exception $e) {
-                \Log::error("Domain {$domain->namespace} failed (exception)");
+                \Log::error("Domain {$domain->namespace} failed");
                 continue;
             }
 
-            if ($result) {
-                \Log::info("Domain {$domain->namespace} updated");
-            } else {
-                \Log::error("Domain {$domain->namespace} failed");
-            }
+            \Log::info("Domain {$domain->namespace} updated");
         }
 
         $bar->finish();
@@ -79,17 +75,13 @@ class HKCCPImportLdap extends Command
             $result = null;
 
             try {
-                $result = LDAP::updateUser($user);
+                LDAP::updateUser($user);
             } catch (\Exception $e) {
-                \Log::error("User {$user->email} failed (exception)");
+                \Log::error("User {$user->email} failed");
                 continue;
             }
 
-            if ($result) {
-                \Log::info("User {$user->email} updated");
-            } else {
-                \Log::error("User {$user->email} failed");
-            }
+            \Log::info("User {$user->email} updated");
         }
 
         $bar->finish();
