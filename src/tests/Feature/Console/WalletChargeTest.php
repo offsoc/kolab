@@ -30,7 +30,7 @@ class WalletChargeTest extends TestCase
     /**
      * Test command run for a specified wallet
      */
-    public function testHandle(): void
+    public function testHandleSingle(): void
     {
         $user = $this->getTestUser('wallet-charge@kolabnow.com');
         $wallet = $user->wallets()->first();
@@ -98,6 +98,38 @@ class WalletChargeTest extends TestCase
 
         Queue::assertPushed(\App\Jobs\WalletCheck::class, 1);
         Queue::assertPushed(\App\Jobs\WalletCheck::class, function ($job) use ($wallet) {
+            $job_wallet = TestCase::getObjectProperty($job, 'wallet');
+            return $job_wallet->id === $wallet->id;
+        });
+    }
+
+    /**
+     * Test command run for all wallets
+     */
+    public function testHandleAll(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
+        $wallet->balance = 0;
+        $wallet->save();
+
+        // backdate john's entitlements and set balance=0 for all wallets
+        $this->backdateEntitlements($user->entitlements, \Carbon\Carbon::now()->subWeeks(5));
+        \App\Wallet::where('balance', '<', '0')->update(['balance' => 0]);
+
+        Queue::fake();
+
+        // Non-existing wallet ID
+        $this->artisan('wallet:charge')->assertExitCode(0);
+
+        Queue::assertPushed(\App\Jobs\WalletCheck::class, 1);
+        Queue::assertPushed(\App\Jobs\WalletCheck::class, function ($job) use ($wallet) {
+            $job_wallet = TestCase::getObjectProperty($job, 'wallet');
+            return $job_wallet->id === $wallet->id;
+        });
+
+        Queue::assertPushed(\App\Jobs\WalletCharge::class, 1);
+        Queue::assertPushed(\App\Jobs\WalletCharge::class, function ($job) use ($wallet) {
             $job_wallet = TestCase::getObjectProperty($job, 'wallet');
             return $job_wallet->id === $wallet->id;
         });

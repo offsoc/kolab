@@ -54,7 +54,9 @@ class WalletCheckTest extends TestCase
         $wallet = $user->wallets()->first();
         $now = Carbon::now();
 
-        // Balance is not negative
+        // Balance is not negative, double-update+save for proper resetting of the state
+        $wallet->balance = -100;
+        $wallet->save();
         $wallet->balance = 0;
         $wallet->save();
 
@@ -74,6 +76,7 @@ class WalletCheckTest extends TestCase
 
         // Balance turned negative 2 hours ago, expect mail sent
         $wallet->setSetting('balance_negative_since', $now->subHours(2)->toDateTimeString());
+        $wallet->setSetting('balance_warning_initial', null);
 
         $job = new WalletCheck($wallet);
         $job->handle();
@@ -113,6 +116,8 @@ class WalletCheckTest extends TestCase
 
     /**
      * Test job handle, reminder notification
+     *
+     * @depends testHandleInitial
      */
     public function testHandleReminder(): void
     {
@@ -145,6 +150,8 @@ class WalletCheckTest extends TestCase
 
     /**
      * Test job handle, account suspending
+     *
+     * @depends testHandleReminder
      */
     public function testHandleSuspended(): void
     {
@@ -193,6 +200,8 @@ class WalletCheckTest extends TestCase
 
     /**
      * Test job handle, final warning before delete
+     *
+     * @depends testHandleSuspended
      */
     public function testHandleBeforeDelete(): void
     {
@@ -229,6 +238,8 @@ class WalletCheckTest extends TestCase
 
     /**
      * Test job handle, account delete
+     *
+     * @depends testHandleBeforeDelete
      */
     public function testHandleDelete(): void
     {
