@@ -63,7 +63,7 @@ class WalletCheckTest extends TestCase
 
         Mail::assertNothingSent();
 
-        // Balance is not negative now
+        // Balance is negative now
         $wallet->balance = -100;
         $wallet->save();
 
@@ -90,6 +90,25 @@ class WalletCheckTest extends TestCase
         $job->handle();
 
         Mail::assertNothingSent();
+
+        // Test the migration scenario where a negative wallet has no balance_negative_since set yet
+        Mail::fake();
+        $wallet->setSetting('balance_negative_since', null);
+        $wallet->setSetting('balance_warning_initial', null);
+
+        $job = new WalletCheck($wallet);
+        $job->handle();
+
+        // Assert the mail was sent to the user's email, but not to his external email
+        Mail::assertSent(\App\Mail\NegativeBalance::class, 1);
+        Mail::assertSent(\App\Mail\NegativeBalance::class, function ($mail) use ($user) {
+            return $mail->hasTo($user->email) && !$mail->hasCc('external@test.com');
+        });
+
+        $wallet->refresh();
+        $today_regexp = '/' . Carbon::now()->toDateString() . ' [0-9]{2}:[0-9]{2}:[0-9]{2}/';
+        $this->assertRegExp($today_regexp, $wallet->getSetting('balance_negative_since'));
+        $this->assertRegExp($today_regexp, $wallet->getSetting('balance_warning_initial'));
     }
 
     /**
