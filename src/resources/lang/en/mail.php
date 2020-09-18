@@ -17,10 +17,29 @@ return [
     'more-info-html' => "See <a href=\":href\">here</a> for more information.",
     'more-info-text' => "See :href for more information.",
 
-    'negativebalance-subject' => ":site Payment Reminder",
-    'negativebalance-body' => "It has probably skipped your attention that you are behind on paying for your :site account. "
-        . "Consider setting up auto-payment to avoid messages like this in the future.",
+    'negativebalance-subject' => ":site Payment Required",
+    'negativebalance-body' => "This is a notification to let you know that your :site account balance has run into the negative and requires your attention. "
+        . "Consider setting up an automatic payment to avoid messages like this in the future.",
     'negativebalance-body-ext' => "Settle up to keep your account running:",
+
+    'negativebalancereminder-subject' => ":site Payment Reminder",
+    'negativebalancereminder-body' => "It has probably skipped your attention that you are behind on paying for your :site account. "
+        . "Consider setting up an automatic payment to avoid messages like this in the future.",
+    'negativebalancereminder-body-ext' => "Settle up to keep your account running:",
+    'negativebalancereminder-body-warning' => "Please, be aware that your account will be suspended "
+        . "if your account balance is not settled by :date.",
+
+    'negativebalancesuspended-subject' => ":site Account Suspended",
+    'negativebalancesuspended-body' => "Your :site account has been suspended for having a negative balance for too long. "
+        . "Consider setting up an automatic payment to avoid messages like this in the future.",
+    'negativebalancesuspended-body-ext' => "Settle up now to unsuspend your account:",
+    'negativebalancesuspended-body-warning' => "Please, be aware that your account and all its data will be deleted "
+        . "if your account balance is not settled by :date.",
+
+    'negativebalancebeforedelete-subject' => ":site Final Warning",
+    'negativebalancebeforedelete-body' => "This is a final reminder to settle your :site account balance. "
+        . "Your account and all its data will be deleted if your account balance is not settled by :date.",
+    'negativebalancebeforedelete-body-ext' => "Settle up now to keep your account:",
 
     'passwordreset-subject' => ":site Password Reset",
     'passwordreset-body1' => "Someone recently asked to change your :site password.",

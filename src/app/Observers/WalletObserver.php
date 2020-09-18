@@ -69,4 +69,44 @@ class WalletObserver
 
         return true;
     }
+
+    /**
+     * Handle the wallet "updated" event.
+     *
+     * @param \App\Wallet $wallet The wallet.
+     *
+     * @return void
+     */
+    public function updated(Wallet $wallet)
+    {
+        $negative_since = $wallet->getSetting('balance_negative_since');
+
+        if ($wallet->balance < 0) {
+            if (!$negative_since) {
+                $now = \Carbon\Carbon::now()->toDateTimeString();
+                $wallet->setSetting('balance_negative_since', $now);
+            }
+        } elseif ($negative_since) {
+            $wallet->setSettings([
+                    'balance_negative_since' => null,
+                    'balance_warning_initial' => null,
+                    'balance_warning_reminder' => null,
+                    'balance_warning_suspended' => null,
+                    'balance_warning_before_delete' => null,
+            ]);
+
+            // Unsuspend the account/domains/users
+            if ($wallet->owner) {
+                $wallet->owner->unsuspend();
+            }
+            foreach ($wallet->entitlements as $entitlement) {
+                if (
+                    $entitlement->entitleable_type == \App\Domain::class
+                    || $entitlement->entitleable_type == \App\User::class
+                ) {
+                    $entitlement->entitleable->unsuspend();
+                }
+            }
+        }
+    }
 }

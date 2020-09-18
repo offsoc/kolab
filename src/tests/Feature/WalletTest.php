@@ -44,6 +44,33 @@ class WalletTest extends TestCase
         parent::tearDown();
     }
 
+
+
+    /**
+     * Test that turning wallet balance from negative to positive
+     * unsuspends the account
+     */
+    public function testBalancePositiveUnsuspend(): void
+    {
+        $user = $this->getTestUser('UserWallet1@UserWallet.com');
+        $user->suspend();
+
+        $wallet = $user->wallets()->first();
+        $wallet->balance = -100;
+        $wallet->save();
+
+        $this->assertTrue($user->isSuspended());
+        $this->assertNotNull($wallet->getSetting('balance_negative_since'));
+
+        $wallet->balance = 100;
+        $wallet->save();
+
+        $this->assertFalse($user->fresh()->isSuspended());
+        $this->assertNull($wallet->getSetting('balance_negative_since'));
+
+        // TODO: Test group account and unsuspending domain/members
+    }
+
     /**
      * Test for Wallet::balanceLastsUntil()
      */

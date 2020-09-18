@@ -19,6 +19,9 @@ class UserUpdateTest extends TestCase
         $this->deleteTestUser('new-job-user@' . \config('app.domain'));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         $this->deleteTestUser('new-job-user@' . \config('app.domain'));

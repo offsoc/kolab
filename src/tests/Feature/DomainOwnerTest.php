@@ -9,6 +9,9 @@ use Tests\TestCase;
 
 class DomainOwnerTest extends TestCase
 {
+    /**
+     * {@inheritDoc}
+     */
     public function setUp(): void
     {
         parent::setUp();
@@ -16,6 +19,9 @@ class DomainOwnerTest extends TestCase
         $this->deleteTestUser('jane@kolab.org');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         $this->deleteTestUser('jane@kolab.org');

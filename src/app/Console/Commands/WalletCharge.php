@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Wallet;
 use Illuminate\Console\Command;
 
 class WalletCharge extends Command
@@ -11,7 +12,7 @@ class WalletCharge extends Command
      *
      * @var string
      */
-    protected $signature = 'wallet:charge';
+    protected $signature = 'wallet:charge {wallet?}';
 
     /**
      * The console command description.
@@ -37,7 +38,21 @@ class WalletCharge extends Command
      */
     public function handle()
     {
-        $wallets = \App\Wallet::all();
+        if ($wallet = $this->argument('wallet')) {
+            // Find specified wallet by ID
+            $wallet = Wallet::find($wallet);
+
+            if (!$wallet || !$wallet->owner) {
+                return 1;
+            }
+
+            $wallets = [$wallet];
+        } else {
+            // Get all wallets, excluding deleted accounts
+            $wallets = Wallet::join('users', 'users.id', '=', 'wallets.user_id')
+                ->whereNull('users.deleted_at')
+                ->get();
+        }
 
         foreach ($wallets as $wallet) {
             $charge = $wallet->chargeEntitlements();
@@ -49,6 +64,11 @@ class WalletCharge extends Command
 
                 // Top-up the wallet if auto-payment enabled for the wallet
                 \App\Jobs\WalletCharge::dispatch($wallet);
+            }
+
+            if ($wallet->balance < 0) {
+                // Check the account balance, send notifications, suspend, delete
+                \App\Jobs\WalletCheck::dispatch($wallet);
             }
         }
     }

@@ -2,13 +2,14 @@
 
 namespace Tests\Unit\Mail;
 
-use App\Mail\NegativeBalance;
+use App\Jobs\WalletCheck;
+use App\Mail\NegativeBalanceBeforeDelete;
 use App\User;
 use App\Wallet;
 use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
-class NegativeBalanceTest extends TestCase
+class NegativeBalanceBeforeDeleteTest extends TestCase
 {
     use MailInterceptTrait;
 
@@ -17,14 +18,18 @@ class NegativeBalanceTest extends TestCase
      */
     public function testBuild(): void
     {
-        $user = new User();
-        $wallet = new Wallet();
+        $user = $this->getTestUser('ned@kolab.org');
+        $wallet = $user->wallets->first();
+        $wallet->balance = -100;
+        $wallet->save();
+
+        $threshold = WalletCheck::threshold($wallet, WalletCheck::THRESHOLD_DELETE);
 
         \config([
                 'app.support_url' => 'https://kolab.org/support',
         ]);
 
-        $mail = $this->fakeMail(new NegativeBalance($wallet, $user));
+        $mail = $this->fakeMail(new NegativeBalanceBeforeDelete($wallet, $user));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -35,20 +40,22 @@ class NegativeBalanceTest extends TestCase
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
         $appName = \config('app.name');
 
-        $this->assertMailSubject("$appName Payment Required", $mail['message']);
+        $this->assertMailSubject("$appName Final Warning", $mail['message']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
         $this->assertTrue(strpos($html, $walletLink) > 0);
         $this->assertTrue(strpos($html, $supportLink) > 0);
-        $this->assertTrue(strpos($html, "your $appName account balance has run into the nega") > 0);
+        $this->assertTrue(strpos($html, "This is a final reminder to settle your $appName") > 0);
+        $this->assertTrue(strpos($html, $threshold->toDateString()) > 0);
         $this->assertTrue(strpos($html, "$appName Support") > 0);
         $this->assertTrue(strpos($html, "$appName Team") > 0);
 
         $this->assertStringStartsWith('Dear ' . $user->name(true), $plain);
         $this->assertTrue(strpos($plain, $walletUrl) > 0);
         $this->assertTrue(strpos($plain, $supportUrl) > 0);
-        $this->assertTrue(strpos($plain, "your $appName account balance has run into the nega") > 0);
+        $this->assertTrue(strpos($plain, "This is a final reminder to settle your $appName") > 0);
+        $this->assertTrue(strpos($plain, $threshold->toDateString()) > 0);
         $this->assertTrue(strpos($plain, "$appName Support") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }

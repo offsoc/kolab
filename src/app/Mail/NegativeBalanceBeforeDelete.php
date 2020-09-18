@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Jobs\WalletCheck;
 use App\User;
 use App\Utils;
 use App\Wallet;
@@ -9,7 +10,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class NegativeBalance extends Mailable
+class NegativeBalanceBeforeDelete extends Mailable
 {
     use Queueable;
     use SerializesModels;
@@ -42,10 +43,12 @@ class NegativeBalance extends Mailable
      */
     public function build()
     {
-        $subject = \trans('mail.negativebalance-subject', ['site' => \config('app.name')]);
+        $threshold = WalletCheck::threshold($this->wallet, WalletCheck::THRESHOLD_DELETE);
 
-        $this->view('emails.html.negative_balance')
-            ->text('emails.plain.negative_balance')
+        $subject = \trans('mail.negativebalancebeforedelete-subject', ['site' => \config('app.name')]);
+
+        $this->view('emails.html.negative_balance_before_delete')
+            ->text('emails.plain.negative_balance_before_delete')
             ->subject($subject)
             ->with([
                     'site' => \config('app.name'),
@@ -53,6 +56,7 @@ class NegativeBalance extends Mailable
                     'username' => $this->user->name(true),
                     'supportUrl' => \config('app.support_url'),
                     'walletUrl' => Utils::serviceUrl('/wallet'),
+                    'date' => $threshold->toDateString(),
             ]);
 
         return $this;

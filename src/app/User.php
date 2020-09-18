@@ -428,6 +428,24 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Check if user has an entitlement for the specified SKU.
+     *
+     * @param string $title The SKU title
+     *
+     * @return bool True if specified SKU entitlement exists
+     */
+    public function hasSku($title): bool
+    {
+        $sku = Sku::where('title', $title)->first();
+
+        if (!$sku) {
+            return false;
+        }
+
+        return $this->entitlements()->where('sku_id', $sku->id)->count() > 0;
+    }
+
+    /**
      * Returns whether this domain is active.
      *
      * @return bool

@@ -12,7 +12,9 @@ use Tests\TestCase;
 
 class EntitlementTest extends TestCase
 {
-
+    /**
+     * {@inheritDoc}
+     */
     public function setUp(): void
     {
         parent::setUp();
@@ -22,6 +24,9 @@ class EntitlementTest extends TestCase
         $this->deleteTestDomain('custom-domain.com');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         $this->deleteTestUser('entitlement-test@kolabnow.com');

@@ -10,6 +10,9 @@ use Tests\TestCase;
 
 class UserVerifyTest extends TestCase
 {
+    /**
+     * {@inheritDoc}
+     */
     public function setUp(): void
     {
         parent::setUp();
@@ -19,6 +22,9 @@ class UserVerifyTest extends TestCase
         $ned->save();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         $ned = $this->getTestUser('ned@kolab.org');
