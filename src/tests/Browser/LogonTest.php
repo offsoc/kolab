@@ -72,10 +72,13 @@ class LogonTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('john@kolab.org', 'simple123', true);
-
-            // Checks if we're really on Dashboard page
-            $browser->on(new Dashboard())
+                ->submitLogon('john@kolab.org', 'simple123', true)
+                // Checks if we're really on Dashboard page
+                ->on(new Dashboard())
+                ->assertVisible('@links a.link-profile')
+                ->assertVisible('@links a.link-domains')
+                ->assertVisible('@links a.link-users')
+                ->assertVisible('@links a.link-wallet')
                 ->within(new Menu(), function ($browser) {
                     $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
                 });
@@ -201,7 +204,8 @@ class LogonTest extends TestCaseDusk
             $browser->type('@second-factor-input', $code)
                 ->press('form button')
                 ->waitUntilMissing('@second-factor-input.is-invalid')
-                ->waitForLocation('/dashboard')->on(new Dashboard());
+                ->waitForLocation('/dashboard')
+                ->on(new Dashboard());
         });
     }
 }

@@ -913,6 +913,11 @@ class UsersTest extends TestCase
         $this->assertSame($wallet->id, $result['wallet']['id']);
         $this->assertArrayNotHasKey('discount', $result['wallet']);
 
+        $this->assertTrue($result['statusInfo']['enableDomains']);
+        $this->assertTrue($result['statusInfo']['enableWallets']);
+        $this->assertTrue($result['statusInfo']['enableUsers']);
+
+        // Ned is John's wallet controller
         $ned = $this->getTestUser('ned@kolab.org');
         $ned_wallet = $ned->wallets()->first();
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$ned]);
@@ -928,6 +933,10 @@ class UsersTest extends TestCase
         $this->assertSame($ned_wallet->id, $result['wallets'][0]['id']);
         $this->assertSame($provider, $result['wallet']['provider']);
         $this->assertSame($provider, $result['wallets'][0]['provider']);
+
+        $this->assertTrue($result['statusInfo']['enableDomains']);
+        $this->assertTrue($result['statusInfo']['enableWallets']);
+        $this->assertTrue($result['statusInfo']['enableUsers']);
 
         // Test discount in a response
         $discount = Discount::where('code', 'TEST')->first();
@@ -948,6 +957,14 @@ class UsersTest extends TestCase
         $this->assertSame($discount->discount, $result['wallets'][0]['discount']);
         $this->assertSame($discount->description, $result['wallets'][0]['discount_description']);
         $this->assertSame($mod_provider, $result['wallets'][0]['provider']);
+
+        // Jack is not a John's wallet controller
+        $jack = $this->getTestUser('jack@kolab.org');
+        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$jack]);
+
+        $this->assertFalse($result['statusInfo']['enableDomains']);
+        $this->assertFalse($result['statusInfo']['enableWallets']);
+        $this->assertFalse($result['statusInfo']['enableUsers']);
     }
 
     /**

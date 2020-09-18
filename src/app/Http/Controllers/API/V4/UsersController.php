@@ -214,7 +214,17 @@ class UsersController extends Controller
             $state = 'failed';
         }
 
+        // Check if the user is a controller of his wallet
+        $isController = $user->canDelete($user);
+        $hasCustomDomain = $user->wallet()->entitlements()
+            ->where('entitleable_type', Domain::class)
+            ->count() > 0;
+
         return [
+            // TODO: This will change when we enable all users to create domains
+            'enableDomains' => $isController && $hasCustomDomain,
+            'enableUsers' => $isController,
+            'enableWallets' => $isController,
             'process' => $process,
             'processState' => $state,
             'isReady' => $all === $checked,

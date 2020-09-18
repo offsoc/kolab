@@ -144,14 +144,20 @@ class DomainTest extends TestCaseDusk
             $browser->visit('/login')
                 ->on(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)
-                // On dashboard click the "Domains" link
                 ->on(new Dashboard())
+                ->assertVisible('@links a.link-profile')
+                ->assertMissing('@links a.link-domains')
+                ->assertMissing('@links a.link-users')
+                ->assertMissing('@links a.link-wallet');
+/*
+                // On dashboard click the "Domains" link
                 ->assertSeeIn('@links a.link-domains', 'Domains')
                 ->click('@links a.link-domains')
                 // On Domains List page click the domain entry
                 ->on(new DomainList())
                 ->assertMissing('@table tbody')
                 ->assertSeeIn('tfoot td', 'There are no domains in this account.');
+*/
         });
     }
 }

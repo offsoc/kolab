@@ -6,13 +6,13 @@
             <router-link class="card link-profile" :to="{ name: 'profile' }">
                 <svg-icon icon="user-cog"></svg-icon><span class="name">Your profile</span>
             </router-link>
-            <router-link class="card link-domains" :to="{ name: 'domains' }">
+            <router-link v-if="status.enableDomains" class="card link-domains" :to="{ name: 'domains' }">
                 <svg-icon icon="globe"></svg-icon><span class="name">Domains</span>
             </router-link>
-            <router-link class="card link-users" :to="{ name: 'users' }">
+            <router-link v-if="status.enableUsers" class="card link-users" :to="{ name: 'users' }">
                 <svg-icon icon="users"></svg-icon><span class="name">User accounts</span>
             </router-link>
-            <router-link class="card link-wallet" :to="{ name: 'wallet' }">
+            <router-link v-if="status.enableWallets" class="card link-wallet" :to="{ name: 'wallet' }">
                 <svg-icon icon="wallet"></svg-icon><span class="name">Wallet</span>
                 <span v-if="balance < 0" class="badge badge-danger">{{ $root.price(balance) }}</span>
             </router-link>
