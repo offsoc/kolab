@@ -216,7 +216,19 @@ class WalletCheck implements ShouldQueue
         list($to, $cc) = \App\Mail\Helper::userEmails($this->wallet->owner, $with_external);
 
         if (!empty($to) || !empty($cc)) {
-            Mail::to($to)->cc($cc)->send($mail);
+            try {
+                Mail::to($to)->cc($cc)->send($mail);
+            } catch (\Exception $e) {
+                $msg = sprintf(
+                    "[WalletCheck] Failed to send mail for wallet %s (%s): %s",
+                    $this->wallet->id,
+                    json_encode(array_merge([$to], $cc)),
+                    $e->getMessage()
+                );
+
+                \Log::error($msg);
+                throw $e;
+            }
         }
     }
 
