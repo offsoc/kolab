@@ -31,6 +31,8 @@ return [
 
     'domain-verify-success' => 'Domain verified successfully.',
     'domain-verify-error' => 'Domain ownership verification failed.',
+    'domain-suspend-success' => 'Domain suspended successfully.',
+    'domain-unsuspend-success' => 'Domain unsuspended successfully.',
 
     'user-update-success' => 'User data updated successfully.',
     'user-create-success' => 'User created successfully.',

@@ -101,6 +101,8 @@ Route::group(
     function () {
         Route::apiResource('domains', API\V4\Admin\DomainsController::class);
         Route::get('domains/{id}/confirm', 'API\V4\Admin\DomainsController@confirm');
+        Route::post('domains/{id}/suspend', 'API\V4\Admin\DomainsController@suspend');
+        Route::post('domains/{id}/unsuspend', 'API\V4\Admin\DomainsController@unsuspend');
 
         Route::apiResource('entitlements', API\V4\Admin\EntitlementsController::class);
         Route::apiResource('packages', API\V4\Admin\PackagesController::class);

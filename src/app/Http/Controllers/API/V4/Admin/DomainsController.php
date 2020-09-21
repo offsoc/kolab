@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Domain;
 use App\User;
+use Illuminate\Http\Request;
 
 class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
 {
@@ -51,5 +52,53 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
         ];
 
         return response()->json($result);
+    }
+
+    /**
+     * Suspend the domain
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @params string                  $id      Domain identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function suspend(Request $request, $id)
+    {
+        $domain = Domain::find($id);
+
+        if (empty($domain) || $domain->isPublic()) {
+            return $this->errorResponse(404);
+        }
+
+        $domain->suspend();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.domain-suspend-success'),
+        ]);
+    }
+
+    /**
+     * Un-Suspend the domain
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @params string                  $id      Domain identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function unsuspend(Request $request, $id)
+    {
+        $domain = Domain::find($id);
+
+        if (empty($domain) || $domain->isPublic()) {
+            return $this->errorResponse(404);
+        }
+
+        $domain->unsuspend();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.domain-unsuspend-success'),
+        ]);
     }
 }

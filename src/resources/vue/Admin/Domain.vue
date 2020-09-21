@@ -22,6 +22,10 @@
                             </div>
                         </div>
                     </form>
+                    <div class="mt-2">
+                        <button v-if="!domain.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendDomain">Suspend</button>
+                        <button v-if="domain.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendDomain">Unsuspend</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -64,6 +68,24 @@
                 .catch(this.$root.errorHandler)
         },
         methods: {
+            suspendDomain() {
+                axios.post('/api/v4/domains/' + this.domain.id + '/suspend', {})
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.domain = Object.assign({}, this.domain, { isSuspended: true })
+                        }
+                    })
+            },
+            unsuspendDomain() {
+                axios.post('/api/v4/domains/' + this.domain.id + '/unsuspend', {})
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.domain = Object.assign({}, this.domain, { isSuspended: false })
+                        }
+                    })
+            }
         }
     }
 </script>
