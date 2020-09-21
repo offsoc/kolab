@@ -12,14 +12,14 @@ class UserAddAlias extends Command
      *
      * @var string
      */
-    protected $signature = 'user:add-alias {user} {alias}';
+    protected $signature = 'user:add-alias {--force} {user} {alias}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Add an email alias to a user';
+    protected $description = 'Add an email alias to a user (forcefully)';
 
     /**
      * Create a new command instance.
@@ -58,8 +58,10 @@ class UserAddAlias extends Command
         $error = UsersController::validateEmail($alias, $controller, true);
 
         if ($error) {
-            $this->error($error);
-            return 1;
+            if (!$this->option('force')) {
+                $this->error($error);
+                return 1;
+            }
         }
 
         $user->aliases()->create(['alias' => $alias]);
