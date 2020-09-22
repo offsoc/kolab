@@ -104,12 +104,12 @@ class WalletCheck implements ShouldQueue
 
         // TODO: Should we check if the account is already suspended?
 
-        $this->sendMail(\App\Mail\NegativeBalance::class);
+        $label = "Notification sent for";
+
+        $this->sendMail(\App\Mail\NegativeBalance::class, false, $label);
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_initial', $now);
-
-        \Log::info("[WalletCheck] Notification sent for {$this->wallet->owner->email}");
     }
 
     /**
@@ -123,12 +123,12 @@ class WalletCheck implements ShouldQueue
 
         // TODO: Should we check if the account is already suspended?
 
-        $this->sendMail(\App\Mail\NegativeBalanceReminder::class);
+        $label = "Reminder sent for";
+
+        $this->sendMail(\App\Mail\NegativeBalanceReminder::class, false, $label);
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_reminder', $now);
-
-        \Log::info("[WalletCheck] Reminder sent for {$this->wallet->owner->email}");
     }
 
     /**
@@ -145,8 +145,6 @@ class WalletCheck implements ShouldQueue
             return;
         }
 
-        \Log::info("[WalletCheck] Suspend account {$this->wallet->owner->email}");
-
         // Suspend the account
         $this->wallet->owner->suspend();
         foreach ($this->wallet->entitlements as $entitlement) {
@@ -158,7 +156,9 @@ class WalletCheck implements ShouldQueue
             }
         }
 
-        $this->sendMail(\App\Mail\NegativeBalanceSuspended::class);
+        $label = "Account suspended";
+
+        $this->sendMail(\App\Mail\NegativeBalanceSuspended::class, false, $label);
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_suspended', $now);
@@ -178,12 +178,12 @@ class WalletCheck implements ShouldQueue
             return;
         }
 
-        $this->sendMail(\App\Mail\NegativeBalanceBeforeDelete::class, true);
+        $label = "Last warning sent for";
+
+        $this->sendMail(\App\Mail\NegativeBalanceBeforeDelete::class, true, $label);
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_before_delete', $now);
-
-        \Log::info("[WalletCheck] Last warning sent for {$this->wallet->owner->email}");
     }
 
     /**
@@ -196,18 +196,28 @@ class WalletCheck implements ShouldQueue
         //       and calculate summarized balance from all wallets.
         // The dirty work will be done by UserObserver
         if ($this->wallet->owner) {
-            \Log::info("[WalletCheck] Delete account {$this->wallet->owner->email}");
+            $email = $this->wallet->owner->email;
+
             $this->wallet->owner->delete();
+
+            \Log::info(
+                sprintf(
+                    "[WalletCheck] Account deleted %s (%s)",
+                    $this->wallet->id,
+                    $email
+                )
+            );
         }
     }
 
     /**
      * Send the email
      *
-     * @param string $class         Mailable class name
-     * @param bool   $with_external Use users's external email
+     * @param string  $class         Mailable class name
+     * @param bool    $with_external Use users's external email
+     * @param ?string $log_label     Log label
      */
-    protected function sendMail($class, $with_external = false): void
+    protected function sendMail($class, $with_external = false, $log_label = null): void
     {
         // TODO: Send the email to all wallet controllers?
 
@@ -218,11 +228,22 @@ class WalletCheck implements ShouldQueue
         if (!empty($to) || !empty($cc)) {
             try {
                 Mail::to($to)->cc($cc)->send($mail);
+
+                if ($log_label) {
+                    $msg = sprintf(
+                        "[WalletCheck] %s %s (%s)",
+                        $log_label,
+                        $this->wallet->id,
+                        empty($cc) ? $to : implode(', ', array_merge([$to], $cc)),
+                    );
+
+                    \Log::info($msg);
+                }
             } catch (\Exception $e) {
                 $msg = sprintf(
-                    "[WalletCheck] Failed to send mail for wallet %s (%s): %s",
+                    "[WalletCheck] Failed to send mail for %s (%s): %s",
                     $this->wallet->id,
-                    json_encode(array_merge([$to], $cc)),
+                    empty($cc) ? $to : implode(', ', array_merge([$to], $cc)),
                     $e->getMessage()
                 );
 

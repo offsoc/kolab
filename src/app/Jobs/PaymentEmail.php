@@ -62,25 +62,49 @@ class PaymentEmail implements ShouldQueue
             $this->controller = $wallet->owner;
         }
 
-        $ext_email = $this->controller->getSetting('external_email');
-        $cc = [];
-
-        if ($ext_email && $ext_email != $this->controller->email) {
-            $cc[] = $ext_email;
+        if (empty($this->controller)) {
+            return;
         }
 
         if ($this->payment->status == PaymentProvider::STATUS_PAID) {
             $mail = new \App\Mail\PaymentSuccess($this->payment, $this->controller);
+            $label = "Success";
         } elseif (
             $this->payment->status == PaymentProvider::STATUS_EXPIRED
             || $this->payment->status == PaymentProvider::STATUS_FAILED
         ) {
             $mail = new \App\Mail\PaymentFailure($this->payment, $this->controller);
+            $label = "Failure";
         } else {
             return;
         }
 
-        Mail::to($this->controller->email)->cc($cc)->send($mail);
+        list($to, $cc) = \App\Mail\Helper::userEmails($this->controller);
+
+        if (!empty($to)) {
+            try {
+                Mail::to($to)->cc($cc)->send($mail);
+
+                $msg = sprintf(
+                    "[Payment] %s mail sent for %s (%s)",
+                    $label,
+                    $wallet->id,
+                    empty($cc) ? $to : implode(', ', array_merge([$to], $cc))
+                );
+
+                \Log::info($msg);
+            } catch (\Exception $e) {
+                $msg = sprintf(
+                    "[Payment] Failed to send mail for wallet %s (%s): %s",
+                    $wallet->id,
+                    empty($cc) ? $to : implode(', ', array_merge([$to], $cc)),
+                    $e->getMessage()
+                );
+
+                \Log::error($msg);
+                throw $e;
+            }
+        }
 
         /*
         // Send the email to all wallet controllers too

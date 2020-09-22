@@ -69,8 +69,8 @@ class PaymentEmailTest extends TestCase
         Mail::assertSent(PaymentSuccess::class, 1);
 
         // Assert the mail was sent to the user's email
-        Mail::assertSent(PaymentSuccess::class, function ($mail) use ($user) {
-            return $mail->hasTo($user->email) && $mail->hasCc('ext@email.tld');
+        Mail::assertSent(PaymentSuccess::class, function ($mail) {
+            return $mail->hasTo('ext@email.tld') && !$mail->hasCc('ext@email.tld');
         });
 
         $payment->status = PaymentProvider::STATUS_FAILED;
@@ -83,8 +83,8 @@ class PaymentEmailTest extends TestCase
         Mail::assertSent(PaymentFailure::class, 1);
 
         // Assert the mail was sent to the user's email
-        Mail::assertSent(PaymentFailure::class, function ($mail) use ($user) {
-            return $mail->hasTo($user->email) && $mail->hasCc('ext@email.tld');
+        Mail::assertSent(PaymentFailure::class, function ($mail) {
+            return $mail->hasTo('ext@email.tld') && !$mail->hasCc('ext@email.tld');
         });
 
         $payment->status = PaymentProvider::STATUS_EXPIRED;

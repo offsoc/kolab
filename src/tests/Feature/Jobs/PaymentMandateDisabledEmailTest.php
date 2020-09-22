@@ -56,8 +56,8 @@ class PaymentMandateDisabledEmailTest extends TestCase
         Mail::assertSent(PaymentMandateDisabled::class, 1);
 
         // Assert the mail was sent to the user's email
-        Mail::assertSent(PaymentMandateDisabled::class, function ($mail) use ($user) {
-            return $mail->hasTo($user->email) && $mail->hasCc('ext@email.tld');
+        Mail::assertSent(PaymentMandateDisabled::class, function ($mail) {
+            return $mail->hasTo('ext@email.tld') && !$mail->hasCc('ext@email.tld');
         });
     }
 }
