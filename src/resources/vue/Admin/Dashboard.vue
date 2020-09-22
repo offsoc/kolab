@@ -15,17 +15,23 @@
                         <tr>
                             <th scope="col">Primary Email</th>
                             <th scope="col">ID</th>
+                            <th scope="col" class="d-none d-md-table-cell">Created</th>
+                            <th scope="col" class="d-none d-md-table-cell">Deleted</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="user in users" :id="'user' + user.id" :key="user.id">
-                            <td>
+                        <tr v-for="user in users" :id="'user' + user.id" :key="user.id" :class="user.isDeleted ? 'text-secondary' : ''">
+                            <td class="text-nowrap">
                                 <svg-icon icon="user" :class="$root.userStatusClass(user)" :title="$root.userStatusText(user)"></svg-icon>
-                                <router-link :to="{ path: 'user/' + user.id }">{{ user.email }}</router-link>
+                                <router-link v-if="!user.isDeleted" :to="{ path: 'user/' + user.id }">{{ user.email }}</router-link>
+                                <span v-if="user.isDeleted">{{ user.email }}</span>
                             </td>
                             <td>
-                                <router-link :to="{ path: 'user/' + user.id }">{{ user.id }}</router-link>
+                                <router-link v-if="!user.isDeleted" :to="{ path: 'user/' + user.id }">{{ user.id }}</router-link>
+                                <span v-if="user.isDeleted">{{ user.id }}</span>
                             </td>
+                            <td class="d-none d-md-table-cell">{{ toDate(user.created_at) }}</td>
+                            <td class="d-none d-md-table-cell">{{ toDate(user.deleted_at) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -65,7 +71,7 @@
 
                 axios.get('/api/v4/users', { params: { search: this.search } })
                     .then(response => {
-                        if (response.data.count == 1) {
+                        if (response.data.count == 1 && !response.data.list[0].isDeleted) {
                             this.$router.push({ name: 'user', params: { user: response.data.list[0].id } })
                             return
                         }
@@ -77,6 +83,11 @@
                         this.users = response.data.list
                     })
                     .catch(this.$root.errorHandler)
+            },
+            toDate(datetime) {
+                if (datetime) {
+                    return datetime.split(' ')[0]
+                }
             }
         }
     }

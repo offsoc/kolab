@@ -119,7 +119,24 @@ class Browser extends \Laravel\Dusk\Browser
     {
         $element = $this->resolver->findOrFail($selector);
 
-        Assert::assertTrue(strpos($element->getText(), $text) !== false, "No expected text in [$selector]");
+        if ($text === '') {
+            Assert::assertTrue((string) $element->getText() === $text, "Element's text is not empty [$selector]");
+        } else {
+            Assert::assertTrue(strpos($element->getText(), $text) !== false, "No expected text in [$selector]");
+        }
+
+        return $this;
+    }
+
+    /**
+     * Assert that the given element contains specified text,
+     * no matter it's displayed or not - using a regular expression.
+     */
+    public function assertTextRegExp($selector, $regexp)
+    {
+        $element = $this->resolver->findOrFail($selector);
+
+        Assert::assertRegExp($regexp, $element->getText(), "No expected text in [$selector]");
 
         return $this;
     }
