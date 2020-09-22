@@ -110,6 +110,16 @@ class AuthTest extends TestCase
         $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
         $this->assertEquals('bearer', $json['token_type']);
 
+        // Valid user+password (upper-case)
+        $post = ['email' => 'John@Kolab.org', 'password' => 'simple123'];
+        $response = $this->post("api/auth/login", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertTrue(!empty($json['access_token']));
+        $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
+        $this->assertEquals('bearer', $json['token_type']);
+
         // TODO: We have browser tests for 2FA but we should probably also test it here
 
         return $json['access_token'];
