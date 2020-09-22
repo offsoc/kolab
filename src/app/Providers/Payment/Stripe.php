@@ -70,8 +70,8 @@ class Stripe extends \App\Providers\PaymentProvider
 
         $request = [
             'customer' => $customer_id,
-            'cancel_url' => \url('/wallet'), // required
-            'success_url' => \url('/wallet'), // required
+            'cancel_url' => Utils::serviceUrl('/wallet'), // required
+            'success_url' => Utils::serviceUrl('/wallet'), // required
             'payment_method_types' => ['card'], // required
             'locale' => 'en',
             'mode' => 'setup',
@@ -181,8 +181,8 @@ class Stripe extends \App\Providers\PaymentProvider
 
         $request = [
             'customer' => $customer_id,
-            'cancel_url' => \url('/wallet'), // required
-            'success_url' => \url('/wallet'), // required
+            'cancel_url' => Utils::serviceUrl('/wallet'), // required
+            'success_url' => Utils::serviceUrl('/wallet'), // required
             'payment_method_types' => ['card'], // required
             'locale' => 'en',
             'line_items' => [

@@ -116,20 +116,13 @@ class Utils
      */
     public static function serviceUrl(string $route): string
     {
-        return trim(\config('app.public_url'), '/') . '/' . ltrim($route, '/');
+        $url = \config('app.public_url');
 
-        // TODO: Investigate why it does not work
-
-        $url = \secure_url($route);
-
-        $app_url = trim(\config('app.url'), '/');
-        $pub_url = trim(\config('app.public_url'), '/');
-
-        if ($pub_url != $app_url) {
-            $url = str_replace($app_url, $pub_url, $url);
+        if (!$url) {
+            $url = \config('app.url');
         }
 
-        return $url;
+        return rtrim(trim($url, '/') . '/' . ltrim($route, '/'), '/');
     }
 
     /**

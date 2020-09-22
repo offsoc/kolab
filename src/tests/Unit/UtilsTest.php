@@ -9,10 +9,8 @@ class UtilsTest extends TestCase
 {
     /**
      * Test for Utils::powerSet()
-     *
-     * @return void
      */
-    public function testPowerSet()
+    public function testPowerSet(): void
     {
         $set = [];
 
@@ -55,11 +53,36 @@ class UtilsTest extends TestCase
     }
 
     /**
-     * Test for Utils::uuidInt()
-     *
-     * @return void
+     * Test for Utils::serviceUrl()
      */
-    public function testUuidInt()
+    public function testServiceUrl(): void
+    {
+        $public_href = 'https://public.url/cockpit';
+        $local_href = 'https://local.url/cockpit';
+
+        \config([
+            'app.url' => $local_href,
+            'app.public_url' => '',
+        ]);
+
+        $this->assertSame($local_href, Utils::serviceUrl(''));
+        $this->assertSame($local_href . '/unknown', Utils::serviceUrl('unknown'));
+        $this->assertSame($local_href . '/unknown', Utils::serviceUrl('/unknown'));
+
+        \config([
+            'app.url' => $local_href,
+            'app.public_url' => $public_href,
+        ]);
+
+        $this->assertSame($public_href, Utils::serviceUrl(''));
+        $this->assertSame($public_href . '/unknown', Utils::serviceUrl('unknown'));
+        $this->assertSame($public_href . '/unknown', Utils::serviceUrl('/unknown'));
+    }
+
+    /**
+     * Test for Utils::uuidInt()
+     */
+    public function testUuidInt(): void
     {
         $result = Utils::uuidInt();
 
@@ -69,10 +92,8 @@ class UtilsTest extends TestCase
 
     /**
      * Test for Utils::uuidStr()
-     *
-     * @return void
      */
-    public function testUuidStr()
+    public function testUuidStr(): void
     {
         $result = Utils::uuidStr();
 
