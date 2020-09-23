@@ -150,18 +150,32 @@ class EntitlementTest extends TestCase
 
         $wallet = $user->wallets()->first();
 
-        $this->backdateEntitlements($user->entitlements, Carbon::now()->subWeeks(7));
+        $backdate = Carbon::now()->subWeeks(7);
+        $this->backdateEntitlements($user->entitlements, $backdate);
 
         $charge = $wallet->chargeEntitlements();
 
-        $this->assertTrue($wallet->balance < 0);
+        $this->assertSame(-1099, $wallet->balance);
 
         $balance = $wallet->balance;
+        $discount = \App\Discount::where('discount', 30)->first();
+        $wallet->discount()->associate($discount);
+        $wallet->save();
 
         $user->removeSku($storage, 4);
 
-        // we expect the wallet to have been charged.
-        $this->assertTrue($wallet->fresh()->balance < $balance);
+        // we expect the wallet to have been charged for ~3 weeks of use of
+        // 4 deleted storage entitlements, it should also take discount into account
+        $backdate->addMonthsWithoutOverflow(1);
+        $diffInDays = $backdate->diffInDays(Carbon::now());
+
+        // entitlements-num * cost * discount * days-in-month
+        $max = intval(4 * 25 * 0.7 * $diffInDays / 28);
+        $min = intval(4 * 25 * 0.7 * $diffInDays / 31);
+
+        $wallet->refresh();
+        $this->assertTrue($wallet->balance >= $balance - $max);
+        $this->assertTrue($wallet->balance <= $balance - $min);
 
         $transactions = \App\Transaction::where('object_id', $wallet->id)
             ->where('object_type', \App\Wallet::class)->get();
