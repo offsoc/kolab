@@ -122,6 +122,9 @@ class UserFinancesTest extends TestCaseDusk
         // Now we go to Ned's info page, he's a controller on John's wallet
         $this->browse(function (Browser $browser) {
             $ned = $this->getTestUser('ned@kolab.org');
+            $wallet = $ned->wallets()->first();
+            $wallet->balance = 0;
+            $wallet->save();
             $page = new UserPage($ned->id);
 
             $browser->click('@nav #tab-users')
