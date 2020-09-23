@@ -97,8 +97,18 @@ class EntitlementObserver
     {
         // Start calculating the costs for the consumption of this entitlement if the
         // existing consumption spans >= 14 days.
-        // anything's free for 14 days
+        //
+        // Effect is that anything's free for the first 14 days
         if ($entitlement->created_at >= Carbon::now()->subDays(14)) {
+            return;
+        }
+
+        $owner = $entitlement->wallet->owner;
+
+        // Determine if we're still within the free first month
+        $freeMonthEnds = $owner->created_at->copy()->addMonthsWithoutOverflow(1);
+
+        if ($freeMonthEnds >= Carbon::now()) {
             return;
         }
 

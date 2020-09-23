@@ -44,8 +44,6 @@ class WalletTest extends TestCase
         parent::tearDown();
     }
 
-
-
     /**
      * Test that turning wallet balance from negative to positive
      * unsuspends the account
@@ -88,7 +86,10 @@ class WalletTest extends TestCase
         // User/entitlements created today, balance=0
         $until = $wallet->balanceLastsUntil();
 
-        $this->assertSame(Carbon::now()->toDateString(), $until->toDateString());
+        $this->assertSame(
+            Carbon::now()->addMonthWithoutOverflow(1)->toDateString(),
+            $until->toDateString()
+        );
 
         // User/entitlements created today, balance=-10 CHF
         $wallet->balance = -1000;
@@ -103,7 +104,7 @@ class WalletTest extends TestCase
         $daysInLastMonth = \App\Utils::daysInLastMonth();
 
         $this->assertSame(
-            Carbon::now()->addDays($daysInLastMonth)->toDateString(),
+            Carbon::now()->addMonthsWithoutOverflow(1)->addDays($daysInLastMonth)->toDateString(),
             $until->toDateString()
         );
 

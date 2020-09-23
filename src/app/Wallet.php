@@ -60,6 +60,22 @@ class Wallet extends Model
 
     public function chargeEntitlements($apply = true)
     {
+        // This wallet has been created less than a month ago, this is the trial period
+        if ($this->owner->created_at >= Carbon::now()->subMonthsWithoutOverflow(1)) {
+            // Move all the current entitlement's updated_at timestamps forward to one month after
+            // this wallet was created.
+            $freeMonthEnds = $this->owner->created_at->copy()->addMonthsWithoutOverflow(1);
+
+            foreach ($this->entitlements()->get()->fresh() as $entitlement) {
+                if ($entitlement->updated_at < $freeMonthEnds) {
+                    $entitlement->updated_at = $freeMonthEnds;
+                    $entitlement->save();
+                }
+            }
+
+            return 0;
+        }
+
         $charges = 0;
         $discount = $this->getDiscountRate();
 
@@ -80,7 +96,7 @@ class Wallet extends Model
                 continue;
             }
 
-            // created more than a month ago -- was it billed?
+            // updated last more than a month ago -- was it billed?
             if ($entitlement->updated_at <= Carbon::now()->subMonthsWithoutOverflow(1)) {
                 $diff = $entitlement->updated_at->diffInMonths(Carbon::now());
 
@@ -93,7 +109,9 @@ class Wallet extends Model
                     continue;
                 }
 
-                $entitlement->updated_at = $entitlement->updated_at->copy()->addMonthsWithoutOverflow($diff);
+                $entitlement->updated_at = $entitlement->updated_at->copy()
+                    ->addMonthsWithoutOverflow($diff);
+
                 $entitlement->save();
 
                 if ($cost == 0) {
