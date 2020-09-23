@@ -87,7 +87,7 @@ class WalletTest extends TestCase
         $until = $wallet->balanceLastsUntil();
 
         $this->assertSame(
-            Carbon::now()->addMonthWithoutOverflow(1)->toDateString(),
+            Carbon::now()->addMonthsWithoutOverflow(1)->toDateString(),
             $until->toDateString()
         );
 
