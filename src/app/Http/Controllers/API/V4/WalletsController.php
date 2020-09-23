@@ -284,24 +284,28 @@ class WalletsController extends Controller
      */
     protected function getWalletNotice(Wallet $wallet): ?string
     {
+        // there is no credit
         if ($wallet->balance < 0) {
             return \trans('app.wallet-notice-nocredit');
         }
 
+        // the discount is 100%, no credit is needed
         if ($wallet->discount && $wallet->discount->discount == 100) {
             return null;
         }
 
-        if ($wallet->owner->created_at > Carbon::now()->subDays(14)) {
+        // the owner was created less than a month ago
+        if ($wallet->owner->created_at > Carbon::now()->subMonthsWithoutOverflow(1)) {
+            // but more than two weeks ago, notice of trial ending
+            if ($wallet->owner->created_at <= Carbon::now()->subWeeks(2)) {
+                return \trans('app.wallet-notice-trial-end');
+            }
+
             return \trans('app.wallet-notice-trial');
         }
 
         if ($until = $wallet->balanceLastsUntil()) {
             if ($until->isToday()) {
-                if ($wallet->owner->created_at > Carbon::now()->subDays(30)) {
-                    return \trans('app.wallet-notice-trial-end');
-                }
-
                 return \trans('app.wallet-notice-today');
             }
 
