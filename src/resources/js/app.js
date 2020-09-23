@@ -186,7 +186,10 @@ const app = new Vue({
         },
         clickRecord(event) {
             if (!/^(a|button|svg|path)$/i.test(event.target.nodeName)) {
-                $(event.target).closest('tr').find('a')[0].click()
+                let link = $(event.target).closest('tr').find('a')[0]
+                if (link) {
+                    link.click()
+                }
             }
         },
         domainStatusClass(domain) {

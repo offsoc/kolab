@@ -244,7 +244,8 @@
                                 <tr v-for="item in users" :id="'user' + item.id" :key="item.id" @click="$root.clickRecord">
                                     <td>
                                         <svg-icon icon="user" :class="$root.userStatusClass(item)" :title="$root.userStatusText(item)"></svg-icon>
-                                        <router-link :to="{ path: '/user/' + item.id }">{{ item.email }}</router-link>
+                                        <router-link v-if="item.id != user.id" :to="{ path: '/user/' + item.id }">{{ item.email }}</router-link>
+                                        <span v-else>{{ item.email }}</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -479,9 +480,7 @@
                     // TODO: Multiple wallets
                     axios.get('/api/v4/users?owner=' + user_id)
                         .then(response => {
-                            this.users = response.data.list.filter(user => {
-                                return user.id != user_id;
-                            })
+                            this.users = response.data.list;
                         })
 
                     // Fetch domains

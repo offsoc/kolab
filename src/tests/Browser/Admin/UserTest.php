@@ -102,7 +102,7 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(6) label', 'External email')
                         ->assertMissing('.row:nth-child(6) #external_email a')
                         ->assertSeeIn('.row:nth-child(7) label', 'Country')
-                        ->assertSeeIn('.row:nth-child(7) #country', 'United States of America');
+                        ->assertSeeIn('.row:nth-child(7) #country', 'United States');
                 });
 
             // Some tabs are loaded in background, wait a second
@@ -198,7 +198,7 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(8) label', 'Address')
                         ->assertSeeIn('.row:nth-child(8) #billing_address', $john->getSetting('billing_address'))
                         ->assertSeeIn('.row:nth-child(9) label', 'Country')
-                        ->assertSeeIn('.row:nth-child(9) #country', 'United States of America');
+                        ->assertSeeIn('.row:nth-child(9) #country', 'United States');
                 });
 
             // Some tabs are loaded in background, wait a second
@@ -243,16 +243,18 @@ class UserTest extends TestCaseDusk
                 });
 
             // Assert Users tab
-            $browser->assertSeeIn('@nav #tab-users', 'Users (3)')
+            $browser->assertSeeIn('@nav #tab-users', 'Users (4)')
                 ->click('@nav #tab-users')
                 ->with('@user-users table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 3)
+                    $browser->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'jack@kolab.org')
                         ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-success')
                         ->assertSeeIn('tbody tr:nth-child(2) td:first-child a', 'joe@kolab.org')
                         ->assertVisible('tbody tr:nth-child(2) td:first-child svg.text-success')
-                        ->assertSeeIn('tbody tr:nth-child(3) td:first-child a', 'ned@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(3) td:first-child span', 'john@kolab.org')
                         ->assertVisible('tbody tr:nth-child(3) td:first-child svg.text-success')
+                        ->assertSeeIn('tbody tr:nth-child(4) td:first-child a', 'ned@kolab.org')
+                        ->assertVisible('tbody tr:nth-child(4) td:first-child svg.text-success')
                         ->assertMissing('tfoot');
                 });
         });
@@ -262,7 +264,7 @@ class UserTest extends TestCaseDusk
             $ned = $this->getTestUser('ned@kolab.org');
             $page = new UserPage($ned->id);
 
-            $browser->click('@user-users tbody tr:nth-child(3) td:first-child a')
+            $browser->click('@user-users tbody tr:nth-child(4) td:first-child a')
                 ->on($page);
 
             // Assert main info box content

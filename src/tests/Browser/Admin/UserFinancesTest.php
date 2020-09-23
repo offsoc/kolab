@@ -125,7 +125,7 @@ class UserFinancesTest extends TestCaseDusk
             $page = new UserPage($ned->id);
 
             $browser->click('@nav #tab-users')
-                ->click('@user-users tbody tr:nth-child(3) td:first-child a')
+                ->click('@user-users tbody tr:nth-child(4) td:first-child a')
                 ->on($page)
                 ->with('@user-finances', function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')
