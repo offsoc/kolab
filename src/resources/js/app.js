@@ -32,6 +32,9 @@ const app = new Vue({
             $(form).find('.is-invalid').removeClass('is-invalid')
             $(form).find('.invalid-feedback').remove()
         },
+        hasRoute(name) {
+            return this.$router.resolve({ name: name }).resolved.matched.length > 0
+        },
         isController(wallet_id) {
             if (wallet_id && store.state.authInfo) {
                 let i
@@ -84,11 +87,17 @@ const app = new Vue({
             }, timeout * 1000)
         },
         // Set user state to "not logged in"
-        logoutUser() {
+        logoutUser(redirect) {
             store.commit('logoutUser')
             localStorage.setItem('token', '')
             delete axios.defaults.headers.common.Authorization
-            this.$router.push({ name: 'login' })
+
+            if (redirect !== false) {
+                if (this.hasRoute('login')) {
+                    this.$router.push({ name: 'login' })
+                }
+            }
+
             clearTimeout(this.refreshTimeout)
         },
         // Display "loading" overlay inside of the specified element
@@ -139,6 +148,10 @@ const app = new Vue({
             if (!error.response) {
                 // TODO: probably network connection error
             } else if (error.response.status === 401) {
+                if (!store.state.afterLogin && this.$router.currentRoute.name != 'login') {
+                    store.state.afterLogin = this.$router.currentRoute
+                }
+
                 this.logoutUser()
             } else {
                 this.errorPage(error.response.status, error.response.statusText)
@@ -150,7 +163,7 @@ const app = new Vue({
             // TODO: This method does not show the download progress in the browser
             //       but it could be implemented in the UI, axios has 'progress' property
             axios.get(url, { responseType: 'blob' })
-                .then (response => {
+                .then(response => {
                     const link = document.createElement('a')
                     const contentDisposition = response.headers['content-disposition']
                     let filename = 'unknown'
@@ -279,6 +292,11 @@ window.axios.interceptors.response.use(
     error => {
         let error_msg
         let status = error.response ? error.response.status : 200
+
+        // Do not display the error in a toast message, pass the error as-is
+        if (error.config.ignoreErrors) {
+            return Promise.reject(error)
+        }
 
         if (error.response && status == 422) {
             error_msg = "Form validation error"

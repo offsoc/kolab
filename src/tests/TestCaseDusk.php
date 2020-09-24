@@ -33,6 +33,9 @@ abstract class TestCaseDusk extends BaseTestCase
             '--lang=en_US',
             '--disable-gpu',
             '--headless',
+            '--use-fake-ui-for-media-stream',
+            '--ignore-certificate-errors',
+            '--incognito',
         ]);
 
         // For file download handling

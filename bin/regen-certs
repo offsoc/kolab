@@ -2,22 +2,22 @@
 
 base_dir=$(dirname $(dirname $0))
 
-base_dir="${base_dir}/docker/certs/"
+cert_dir="${base_dir}/docker/certs/"
 
-if [ ! -d "${base_dir}" ]; then
-    mkdir -p ${base_dir}
+if [ ! -d "${cert_dir}" ]; then
+    mkdir -p ${cert_dir}
 fi
 
-if [ ! -f "${base_dir}/ca.key" ]; then
-    openssl genrsa -out ${base_dir}/ca.key 4096
+if [ ! -f "${cert_dir}/ca.key" ]; then
+    openssl genrsa -out ${cert_dir}/ca.key 4096
 
     openssl req \
         -new \
         -x509 \
         -nodes \
         -days 3650 \
-        -key ${base_dir}/ca.key \
-        -out ${base_dir}/ca.cert \
+        -key ${cert_dir}/ca.key \
+        -out ${cert_dir}/ca.cert \
         -subj '/O=Example CA/'
 fi
 
@@ -30,13 +30,15 @@ else
     exit 1
 fi
 
-for name in kolab.mgmt.com kolab.hosted.com; do
-    openssl genrsa -out ${base_dir}/${name}.key 4096
+export $(cat ${base_dir}/src/.env | xargs) >/dev/null 2>&1
+
+for name in kolab.mgmt.com kolab.hosted.com {{admin,meet}.,}${APP_DOMAIN}; do
+    openssl genrsa -out ${cert_dir}/${name}.key 4096
 
     openssl req \
         -new \
-        -key ${base_dir}/${name}.key \
-        -out ${base_dir}/${name}.csr \
+        -key ${cert_dir}/${name}.key \
+        -out ${cert_dir}/${name}.csr \
         -subj "/O=Example CA/CN=${name}/" \
         -reqexts SAN \
         -config <(cat ${openssl_cnf} \
@@ -44,11 +46,11 @@ for name in kolab.mgmt.com kolab.hosted.com; do
 
     openssl x509 \
         -req \
-        -in ${base_dir}/${name}.csr \
-        -CA ${base_dir}/ca.cert \
-        -CAkey ${base_dir}/ca.key \
+        -in ${cert_dir}/${name}.csr \
+        -CA ${cert_dir}/ca.cert \
+        -CAkey ${cert_dir}/ca.key \
         -CAcreateserial \
-        -out ${base_dir}/${name}.cert \
+        -out ${cert_dir}/${name}.cert \
         -days 28 \
         -extfile <(cat ${openssl_cnf} \
             <(printf "[SAN]\nsubjectAltName=DNS:${name}")) \
@@ -58,8 +60,13 @@ for name in kolab.mgmt.com kolab.hosted.com; do
     openssl pkcs8 \
         -topk8 \
         -inform pem \
-        -in ${base_dir}/${name}.key \
+        -in ${cert_dir}/${name}.key \
         -outform pem \
         -nocrypt \
-        -out ${base_dir}/${name}_p8.key
+        -out ${cert_dir}/${name}_p8.key
+
+    cat ${cert_dir}/${name}.cert \
+        ${cert_dir}/ca.cert > ${cert_dir}/${name}.chain.pem
+
+    chmod 644 ${cert_dir}/*.{cert,key,pem}
 done

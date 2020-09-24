@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\DomainsController;
 use App\Domain;
 use App\Entitlement;
 use App\Sku;

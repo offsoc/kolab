@@ -43,16 +43,20 @@
             </div>
         </div>
         <div class="mt-1">
-            <router-link v-if="!$root.isAdmin" :to="{ name: 'password-reset' }" id="forgot-password">Forgot password?</router-link>
+            <router-link v-if="!$root.isAdmin && $root.hasRoute('password-reset')" :to="{ name: 'password-reset' }" id="forgot-password">Forgot password?</router-link>
+            <a v-if="!$root.isAdmin && !$root.hasRoute('password-reset')" :href="app_url + '/password-reset'" id="forgot-password">Forgot password?</a>
         </div>
     </div>
 </template>
 
-
 <script>
     export default {
+        props: {
+            dashboard: { type: Boolean, default: true }
+        },
         data() {
             return {
+                app_url: window.config['app.url'],
                 email: '',
                 password: '',
                 secondFactor: ''
@@ -68,7 +72,8 @@
                     secondfactor: this.secondFactor
                 }).then(response => {
                     // login user and redirect to dashboard
-                    this.$root.loginUser(response.data)
+                    this.$root.loginUser(response.data, this.dashboard)
+                    this.$emit('success')
                 })
             }
         }

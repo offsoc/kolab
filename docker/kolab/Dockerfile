@@ -63,6 +63,9 @@ RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && 
 
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
 
+RUN sed -i -r -e 's/^Listen 80$/Listen 9080/g' /etc/httpd/conf/httpd.conf
+#RUN sed -i -r -e 's/^Listen 443$/Listen 9443/g' /etc/httpd/conf/httpd.conf
+
 COPY kolab-init.sh /usr/local/sbin/
 RUN chmod 750 /usr/local/sbin/kolab-init.sh
 COPY kolab-vlv.sh /usr/local/sbin/

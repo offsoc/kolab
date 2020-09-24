@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\PackagesController;
 use App\Package;
 use Tests\TestCase;
 

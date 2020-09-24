@@ -1,5 +1,6 @@
 @import 'variables';
 @import 'bootstrap';
+@import 'meet';
 @import 'menu';
 @import 'toast';
 @import 'forms';
@@ -14,6 +15,7 @@ body > .outer-container {
     display: flex;
     flex-direction: column;
     min-height: 100%;
+    overflow: hidden;
 
     & > nav {
         flex-shrink: 0;
@@ -193,6 +195,50 @@ table {
     }
 }
 
+.status-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .app-loader {
+        width: auto;
+        position: initial;
+
+        .spinner-border {
+            color: $body-color;
+        }
+    }
+
+    svg {
+        font-size: 1.5em;
+    }
+
+    :first-child {
+        margin-right: 0.4em;
+    }
+}
+
+.form-separator {
+    position: relative;
+    margin: 1em 0;
+    display: flex;
+    justify-content: center;
+
+    hr {
+        border-color: #999;
+        margin: 0;
+        position: absolute;
+        top: 0.75em;
+        width: 100%;
+    }
+
+    span {
+        background: #fff;
+        padding: 0 1em;
+        z-index: 1;
+    }
+}
+
 #status-box {
     background-color: lighten($green, 35);
 
@@ -216,6 +262,16 @@ table {
             background-color: $red;
         }
     }
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+.blinker {
+    animation: blinker 750ms step-start infinite;
 }
 
 #dashboard-nav {
@@ -247,27 +303,6 @@ table {
         width: 6rem;
         height: 6rem;
         margin: auto;
-    }
-}
-
-.form-separator {
-    position: relative;
-    margin: 1em 0;
-    display: flex;
-    justify-content: center;
-
-    hr {
-        border-color: #999;
-        margin: 0;
-        position: absolute;
-        top: 0.75em;
-        width: 100%;
-    }
-
-    span {
-        background: #fff;
-        padding: 0 1em;
-        z-index: 1;
     }
 }
 

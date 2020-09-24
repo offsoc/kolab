@@ -16,6 +16,10 @@
                 <svg-icon icon="wallet"></svg-icon><span class="name">Wallet</span>
                 <span v-if="balance < 0" class="badge badge-danger">{{ $root.price(balance) }}</span>
             </router-link>
+            <router-link class="card link-chat" :to="{ name: 'rooms' }">
+                <svg-icon icon="comments"></svg-icon><span class="name">Video chat</span>
+                <span class="badge badge-primary">beta</span>
+            </router-link>
         </div>
     </div>
 </template>

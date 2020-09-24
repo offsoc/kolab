@@ -79,6 +79,20 @@ Route::group(
         Route::post('payments/mandate', 'API\V4\PaymentsController@mandateCreate');
         Route::put('payments/mandate', 'API\V4\PaymentsController@mandateUpdate');
         Route::delete('payments/mandate', 'API\V4\PaymentsController@mandateDelete');
+
+        Route::get('openvidu/rooms', 'API\V4\OpenViduController@index');
+        Route::post('openvidu/rooms/{id}/close', 'API\V4\OpenViduController@closeRoom');
+    }
+);
+
+// Note: In Laravel 7.x we could just use withoutMiddleware() instead of a separate group
+Route::group(
+    [
+        'domain' => \config('app.domain'),
+        'prefix' => $prefix . 'api/v4'
+    ],
+    function () {
+        Route::get('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
     }
 );
 
@@ -89,6 +103,7 @@ Route::group(
     ],
     function () {
         Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
+        Route::post('meet/openvidu', 'API\V4\OpenViduController@webhook');
     }
 );
 

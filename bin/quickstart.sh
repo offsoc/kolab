@@ -33,14 +33,10 @@ rpm -qv php-mysqlnd >/dev/null 2>&1 || \
 
 base_dir=$(dirname $(dirname $0))
 
-bin/regen-certs
-
-docker pull kolab/centos7:latest
+docker pull docker.io/kolab/centos7:latest
 
 docker-compose down
 docker-compose build
-
-docker-compose up -d kolab mariadb redis
 
 pushd ${base_dir}/src/
 cp .env.example .env
@@ -50,6 +46,14 @@ if [ -f ".env.local" ]; then
     echo "" >> .env
     cat .env.local >> .env
 fi
+
+popd
+
+bin/regen-certs
+
+docker-compose up -d coturn kolab mariadb openvidu proxy redis
+
+pushd ${base_dir}/src/
 
 rm -rf vendor/ composer.lock
 php -dmemory_limit=-1 /bin/composer install
