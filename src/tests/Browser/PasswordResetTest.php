@@ -146,9 +146,10 @@ class PasswordResetTest extends TestCaseDusk
 
                 $browser->waitFor('.toast-error');
 
-                $step->assertVisible('#reset_short_code.is-invalid');
-                $step->assertVisible('#reset_short_code + .invalid-feedback');
-                $step->assertFocused('#reset_short_code');
+                $step->waitFor('#reset_short_code.is-invalid')
+                    ->assertVisible('#reset_short_code.is-invalid')
+                    ->assertVisible('#reset_short_code + .invalid-feedback')
+                    ->assertFocused('#reset_short_code');
 
                 $browser->click('.toast-error'); // remove the toast
             });
@@ -249,9 +250,10 @@ class PasswordResetTest extends TestCaseDusk
 
                 $browser->waitFor('.toast-error');
 
-                $step->assertVisible('#reset_password.is-invalid');
-                $step->assertVisible('#reset_password + .invalid-feedback');
-                $step->assertFocused('#reset_password');
+                $step->waitFor('#reset_password.is-invalid')
+                    ->assertVisible('#reset_password.is-invalid')
+                    ->assertVisible('#reset_password + .invalid-feedback')
+                    ->assertFocused('#reset_password');
 
                 $browser->click('.toast-error'); // remove the toast
             });

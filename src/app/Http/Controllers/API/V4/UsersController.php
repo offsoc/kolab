@@ -214,7 +214,17 @@ class UsersController extends Controller
             $state = 'failed';
         }
 
+        // Check if the user is a controller of his wallet
+        $isController = $user->canDelete($user);
+        $hasCustomDomain = $user->wallet()->entitlements()
+            ->where('entitleable_type', Domain::class)
+            ->count() > 0;
+
         return [
+            // TODO: This will change when we enable all users to create domains
+            'enableDomains' => $isController && $hasCustomDomain,
+            'enableUsers' => $isController,
+            'enableWallets' => $isController,
             'process' => $process,
             'processState' => $state,
             'isReady' => $all === $checked,
@@ -621,6 +631,10 @@ class UsersController extends Controller
 
         list($login, $domain) = explode('@', $email);
 
+        if (strlen($login) === 0 || strlen($domain) === 0) {
+            return \trans('validation.entryinvalid', ['attribute' => $attribute]);
+        }
+
         // Check if domain exists
         $domain = Domain::where('namespace', Str::lower($domain))->first();
 
@@ -639,14 +653,7 @@ class UsersController extends Controller
         }
 
         // Check if it is one of domains available to the user
-        // TODO: We should have a helper that returns "flat" array with domain names
-        //       I guess we could use pluck() somehow
-        $domains = array_map(
-            function ($domain) {
-                return $domain->namespace;
-            },
-            $user->domains()
-        );
+        $domains = \collect($user->domains())->pluck('namespace')->all();
 
         if (!in_array($domain->namespace, $domains)) {
             return \trans('validation.entryexists', ['attribute' => 'domain']);
@@ -655,7 +662,8 @@ class UsersController extends Controller
         // Check if a user/alias with specified address already exists
         // Allow assigning the same alias to a user in the same group account,
         // but only for non-public domains
-        if ($exists = User::emailExists($email, true, $alias_exists)) {
+        // Allow an alias in a custom domain to an address that was a user before
+        if ($exists = User::emailExists($email, true, $alias_exists, $is_alias && !$domain->isPublic())) {
             if (
                 !$is_alias
                 || !$alias_exists

@@ -44,8 +44,6 @@ class DomainStatus extends Command
             return 1;
         }
 
-        $this->info("Found domain: {$domain->id}");
-
         $this->info($domain->status);
     }
 }

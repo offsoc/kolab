@@ -52,8 +52,27 @@ class AuthTest extends TestCase
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue(is_array($json['aliases']));
+        $this->assertTrue(!isset($json['access_token']));
 
         // Note: Details of the content are tested in testUserResponse()
+
+        // Test token refresh via the info request
+        // First we log in as we need the token (actingAs() will not work)
+        $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
+        $response = $this->post("api/auth/login", $post);
+        $json = $response->json();
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $json['access_token']])
+            ->get("api/auth/info?refresh_token=1");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertEquals('john@kolab.org', $json['email']);
+        $this->assertTrue(is_array($json['statusInfo']));
+        $this->assertTrue(is_array($json['settings']));
+        $this->assertTrue(is_array($json['aliases']));
+        $this->assertTrue(!empty($json['access_token']));
+        $this->assertTrue(!empty($json['expires_in']));
     }
 
     /**
@@ -83,6 +102,16 @@ class AuthTest extends TestCase
 
         // Valid user+password
         $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
+        $response = $this->post("api/auth/login", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertTrue(!empty($json['access_token']));
+        $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
+        $this->assertEquals('bearer', $json['token_type']);
+
+        // Valid user+password (upper-case)
+        $post = ['email' => 'John@Kolab.org', 'password' => 'simple123'];
         $response = $this->post("api/auth/login", $post);
         $json = $response->json();
 

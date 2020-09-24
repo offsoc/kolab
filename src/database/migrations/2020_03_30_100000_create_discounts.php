@@ -19,7 +19,9 @@ class CreateDiscounts extends Migration
             function (Blueprint $table) {
                 $table->string('id', 36);
                 $table->tinyInteger('discount')->unsigned();
-                $table->json('description');
+                // was json, but mariadb
+                $table->text('description');
+                // end of
                 $table->string('code', 32)->nullable();
                 $table->boolean('active')->default(false);
                 $table->timestamp('created_at')->useCurrent();

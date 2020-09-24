@@ -22,7 +22,7 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
      */
     public function retrieveByCredentials(array $credentials)
     {
-        $entries = User::where('email', '=', $credentials['email'])->get();
+        $entries = User::where('email', \strtolower($credentials['email']))->get();
 
         $count = $entries->count();
 
@@ -51,7 +51,7 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
     {
         $authenticated = false;
 
-        if ($user->email == $credentials['email']) {
+        if ($user->email === \strtolower($credentials['email'])) {
             if (!empty($user->password)) {
                 if (Hash::check($credentials['password'], $user->password)) {
                     $authenticated = true;

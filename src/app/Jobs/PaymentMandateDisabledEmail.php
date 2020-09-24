@@ -60,16 +60,37 @@ class PaymentMandateDisabledEmail implements ShouldQueue
             $this->controller = $this->wallet->owner;
         }
 
-        $ext_email = $this->controller->getSetting('external_email');
-        $cc = [];
-
-        if ($ext_email && $ext_email != $this->controller->email) {
-            $cc[] = $ext_email;
+        if (empty($this->controller)) {
+            return;
         }
 
         $mail = new PaymentMandateDisabled($this->wallet, $this->controller);
 
-        Mail::to($this->controller->email)->cc($cc)->send($mail);
+        list($to, $cc) = \App\Mail\Helper::userEmails($this->controller);
+
+        if (!empty($to)) {
+            try {
+                Mail::to($to)->cc($cc)->send($mail);
+
+                $msg = sprintf(
+                    "[PaymentMandateDisabled] Sent mail for %s (%s)",
+                    $this->wallet->id,
+                    empty($cc) ? $to : implode(', ', array_merge([$to], $cc))
+                );
+
+                \Log::info($msg);
+            } catch (\Exception $e) {
+                $msg = sprintf(
+                    "[PaymentMandateDisabled] Failed to send mail for wallet %s (%s): %s",
+                    $this->wallet->id,
+                    empty($cc) ? $to : implode(', ', array_merge([$to], $cc)),
+                    $e->getMessage()
+                );
+
+                \Log::error($msg);
+                throw $e;
+            }
+        }
 
         /*
         // Send the email to all controllers too

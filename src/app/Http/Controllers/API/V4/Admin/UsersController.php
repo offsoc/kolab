@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Domain;
+use App\Sku;
 use App\User;
 use App\UserAlias;
 use App\UserSetting;
@@ -28,32 +29,34 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
             }
         } elseif (strpos($search, '@')) {
             // Search by email
-            $user = User::where('email', $search)->first();
-            if ($user) {
-                $result->push($user);
-            } else {
+            $result = User::withTrashed()->where('email', $search)
+                ->orderBy('email')->get();
+
+            if ($result->isEmpty()) {
                 // Search by an alias
                 $user_ids = UserAlias::where('alias', $search)->get()->pluck('user_id');
-                if ($user_ids->isEmpty()) {
-                    // Search by an external email
-                    $user_ids = UserSetting::where('key', 'external_email')
-                        ->where('value', $search)->get()->pluck('user_id');
-                }
+
+                // Search by an external email
+                $ext_user_ids = UserSetting::where('key', 'external_email')
+                    ->where('value', $search)->get()->pluck('user_id');
+
+                $user_ids = $user_ids->merge($ext_user_ids)->unique();
 
                 if (!$user_ids->isEmpty()) {
-                    $result = User::whereIn('id', $user_ids)->orderBy('email')->get();
+                    $result = User::withTrashed()->whereIn('id', $user_ids)
+                        ->orderBy('email')->get();
                 }
             }
         } elseif (is_numeric($search)) {
             // Search by user ID
-            if ($user = User::find($search)) {
+            if ($user = User::withTrashed()->find($search)) {
                 $result->push($user);
             }
         } elseif (!empty($search)) {
             // Search by domain
-            if ($domain = Domain::where('namespace', $search)->first()) {
+            if ($domain = Domain::withTrashed()->where('namespace', $search)->first()) {
                 if ($wallet = $domain->wallet()) {
-                    $result->push($wallet->owner);
+                    $result->push($wallet->owner()->withTrashed()->first());
                 }
             }
         }
@@ -72,6 +75,36 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         ];
 
         return response()->json($result);
+    }
+
+    /**
+     * Reset 2-Factor Authentication for the user
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @params string                  $id      User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function reset2FA(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (empty($user)) {
+            return $this->errorResponse(404);
+        }
+
+        $sku = Sku::where('title', '2fa')->first();
+
+        // Note: we do select first, so the observer can delete
+        //       2FA preferences from Roundcube database, so don't
+        //       be tempted to replace first() with delete() below
+        $entitlement = $user->entitlements()->where('sku_id', $sku->id)->first();
+        $entitlement->delete();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.user-reset-2fa-success'),
+        ]);
     }
 
     /**

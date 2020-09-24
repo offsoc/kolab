@@ -44,22 +44,7 @@ class UserVerify implements ShouldQueue
      */
     public function handle()
     {
-        // Verify a mailbox sku is among the user entitlements.
-        $skuMailbox = \App\Sku::where('title', 'mailbox')->first();
-
-        if (!$skuMailbox) {
-            return;
-        }
-
-        $mailbox = \App\Entitlement::where(
-            [
-                'sku_id' => $skuMailbox->id,
-                'entitleable_id' => $this->user->id,
-                'entitleable_type' => User::class
-            ]
-        )->first();
-
-        if (!$mailbox) {
+        if (!$this->user->hasSku('mailbox')) {
             return;
         }
 

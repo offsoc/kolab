@@ -265,19 +265,19 @@ class PaymentsController extends Controller
             return false;
         }
 
+        $provider = PaymentProvider::factory($wallet);
+        $mandate = (array) $provider->getMandate($wallet);
+
+        if (empty($mandate['isValid'])) {
+            return false;
+        }
+
         // The defined top-up amount is not enough
         // Disable auto-payment and notify the user
         if ($wallet->balance + $amount < 0) {
             // Disable (not remove) the mandate
             $wallet->setSetting('mandate_disabled', 1);
             \App\Jobs\PaymentMandateDisabledEmail::dispatch($wallet);
-            return false;
-        }
-
-        $provider = PaymentProvider::factory($wallet);
-        $mandate = (array) $provider->getMandate($wallet);
-
-        if (empty($mandate['isValid'])) {
             return false;
         }
 

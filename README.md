@@ -21,7 +21,7 @@ $ echo "" >> .env
 $ cat .env.local >> .env
 $ ./artisan key:generate
 $ ./artisan jwt:secret -f
-$ artisan clear-compiled
+$ ./artisan clear-compiled
 $ npm run dev
 $ rm -rf database/database.sqlite
 $ touch database/database.sqlite

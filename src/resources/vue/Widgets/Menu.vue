@@ -2,7 +2,7 @@
     <nav :id="mode + '-menu'" class="navbar navbar-expand-lg navbar-light">
         <div class="container">
             <router-link class="navbar-brand" :to="{ name: 'dashboard' }">
-                <img :src="'/images/logo_' + mode + '.png'" :alt="app_name">
+                <img :src="app_url + '/images/logo_' + mode + '.png'" :alt="app_name">
             </router-link>
             <button v-if="mode == 'header'" class="navbar-toggler" type="button"
                     data-toggle="collapse" :data-target="'#' + mode + '-menu-navbar'"

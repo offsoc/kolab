@@ -50,7 +50,16 @@ Vue.use(Toast)
 
 Vue.use(VueRouter)
 
+let vueRouterBase = '/'
+try {
+  let url = new URL(window.config['app.url'])
+  vueRouterBase = url.pathname
+} catch(e) {
+    // ignore
+}
+
 window.router = new VueRouter({
+    base: vueRouterBase,
     mode: 'history',
     routes: window.routes,
     scrollBehavior (to, from, savedPosition) {
@@ -88,5 +97,5 @@ router.afterEach((to, from) => {
  */
 
 window.axios = require('axios')
-
+axios.defaults.baseURL = vueRouterBase
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'

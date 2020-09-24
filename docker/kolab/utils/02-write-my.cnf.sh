@@ -2,8 +2,7 @@
 
 cat > /root/.my.cnf << EOF
 [client]
-host=127.0.0.1
+host=${DB_HOST:-127.0.0.1}
 user=root
-password=Welcome2KolabSystems
+password=${DB_ROOT_PASSWORD:-Welcome2KolabSystems}
 EOF
-

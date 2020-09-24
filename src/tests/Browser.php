@@ -119,7 +119,24 @@ class Browser extends \Laravel\Dusk\Browser
     {
         $element = $this->resolver->findOrFail($selector);
 
-        Assert::assertTrue(strpos($element->getText(), $text) !== false, "No expected text in [$selector]");
+        if ($text === '') {
+            Assert::assertTrue((string) $element->getText() === $text, "Element's text is not empty [$selector]");
+        } else {
+            Assert::assertTrue(strpos($element->getText(), $text) !== false, "No expected text in [$selector]");
+        }
+
+        return $this;
+    }
+
+    /**
+     * Assert that the given element contains specified text,
+     * no matter it's displayed or not - using a regular expression.
+     */
+    public function assertTextRegExp($selector, $regexp)
+    {
+        $element = $this->resolver->findOrFail($selector);
+
+        Assert::assertRegExp($regexp, $element->getText(), "No expected text in [$selector]");
 
         return $this;
     }
@@ -181,6 +198,27 @@ class Browser extends \Laravel\Dusk\Browser
     public function removeDownloadedFile($filename)
     {
         @unlink(__DIR__ . "/Browser/downloads/$filename");
+
+        return $this;
+    }
+
+    /**
+     * Clears the input field and related vue v-model data.
+     */
+    public function vueClear($selector)
+    {
+        if ($this->resolver->prefix != 'body') {
+            $selector = $this->resolver->prefix . ' ' . $selector;
+        }
+
+        // The existing clear(), and type() with empty string do not work.
+        // We have to clear the field and dispatch 'input' event programatically.
+
+        $this->script(
+            "var element = document.querySelector('$selector');"
+            . "element.value = '';"
+            . "element.dispatchEvent(new Event('input'))"
+        );
 
         return $this;
     }

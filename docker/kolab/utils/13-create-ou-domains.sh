@@ -1,6 +1,7 @@
 #!/bin/bash
 
  . ./settings.sh
+
 (
     echo "dn: ou=Domains,${rootdn}"
     echo "ou: Domains"

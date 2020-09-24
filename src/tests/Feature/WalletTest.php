@@ -45,6 +45,31 @@ class WalletTest extends TestCase
     }
 
     /**
+     * Test that turning wallet balance from negative to positive
+     * unsuspends the account
+     */
+    public function testBalancePositiveUnsuspend(): void
+    {
+        $user = $this->getTestUser('UserWallet1@UserWallet.com');
+        $user->suspend();
+
+        $wallet = $user->wallets()->first();
+        $wallet->balance = -100;
+        $wallet->save();
+
+        $this->assertTrue($user->isSuspended());
+        $this->assertNotNull($wallet->getSetting('balance_negative_since'));
+
+        $wallet->balance = 100;
+        $wallet->save();
+
+        $this->assertFalse($user->fresh()->isSuspended());
+        $this->assertNull($wallet->getSetting('balance_negative_since'));
+
+        // TODO: Test group account and unsuspending domain/members
+    }
+
+    /**
      * Test for Wallet::balanceLastsUntil()
      */
     public function testBalanceLastsUntil(): void
@@ -61,7 +86,10 @@ class WalletTest extends TestCase
         // User/entitlements created today, balance=0
         $until = $wallet->balanceLastsUntil();
 
-        $this->assertSame(Carbon::now()->toDateString(), $until->toDateString());
+        $this->assertSame(
+            Carbon::now()->addMonthsWithoutOverflow(1)->toDateString(),
+            $until->toDateString()
+        );
 
         // User/entitlements created today, balance=-10 CHF
         $wallet->balance = -1000;
@@ -76,7 +104,7 @@ class WalletTest extends TestCase
         $daysInLastMonth = \App\Utils::daysInLastMonth();
 
         $this->assertSame(
-            Carbon::now()->addDays($daysInLastMonth)->toDateString(),
+            Carbon::now()->addMonthsWithoutOverflow(1)->addDays($daysInLastMonth)->toDateString(),
             $until->toDateString()
         );
 

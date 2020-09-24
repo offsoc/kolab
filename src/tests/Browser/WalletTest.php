@@ -174,7 +174,7 @@ class WalletTest extends TestCaseDusk
                     $this->assertTrue(strpos($filename, $receipts[0]) !== false);
 
                     $content = $browser->readDownloadedFile($filename, 0);
-                    $this->assertStringStartsWith("%PDF-1.3\n", $content);
+                    $this->assertStringStartsWith("%PDF-1.", $content);
 
                     $browser->removeDownloadedFile($filename);
                 });

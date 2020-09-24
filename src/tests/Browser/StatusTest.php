@@ -72,7 +72,7 @@ class StatusTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->with(new Status(), function ($browser) use ($john) {
                     $browser->assertSeeIn('@body', 'We are preparing your account')
-                        ->assertProgress(28, 'Creating a mailbox...', 'pending')
+                        ->assertProgress(71, 'Creating a mailbox...', 'pending')
                         ->assertMissing('#status-verify')
                         ->assertMissing('#status-link')
                         ->assertMissing('@refresh-button')
@@ -123,7 +123,7 @@ class StatusTest extends TestCaseDusk
             $browser->visit(new Dashboard())
                 ->with(new Status(), function ($browser) use ($john, $domain) {
                     $browser->assertSeeIn('@body', 'We are preparing your account')
-                        ->assertProgress(28, 'Creating a mailbox...', 'failed')
+                        ->assertProgress(71, 'Creating a mailbox...', 'failed')
                         ->assertVisible('@refresh-button')
                         ->assertVisible('@refresh-text');
 
@@ -158,6 +158,7 @@ class StatusTest extends TestCaseDusk
             $browser->on(new Dashboard())
                 ->click('@links a.link-domains')
                 ->on(new DomainList())
+                ->waitFor('@table tbody tr')
                 // Assert domain status icon
                 ->assertVisible('@table tbody tr:first-child td:first-child svg.fa-globe.text-danger')
                 ->assertText('@table tbody tr:first-child td:first-child svg title', 'Not Ready')
@@ -222,6 +223,7 @@ class StatusTest extends TestCaseDusk
             $browser->visit(new Dashboard())
                 ->click('@links a.link-users')
                 ->on(new UserList())
+                ->waitFor('@table tbody tr')
                 // Assert user status icons
                 ->assertVisible('@table tbody tr:first-child td:first-child svg.fa-user.text-success')
                 ->assertText('@table tbody tr:first-child td:first-child svg title', 'Active')
@@ -236,7 +238,7 @@ class StatusTest extends TestCaseDusk
                 })
                 ->with(new Status(), function ($browser) use ($john) {
                     $browser->assertSeeIn('@body', 'We are preparing the user account')
-                        ->assertProgress(28, 'Creating a mailbox...', 'pending')
+                        ->assertProgress(71, 'Creating a mailbox...', 'pending')
                         ->assertMissing('#status-verify')
                         ->assertMissing('#status-link')
                         ->assertMissing('@refresh-button')

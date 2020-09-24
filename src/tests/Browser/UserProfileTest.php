@@ -71,55 +71,58 @@ class UserProfileTest extends TestCaseDusk
                 ->on(new UserProfile())
                 ->assertSeeIn('#user-profile .button-delete', 'Delete account')
                 ->whenAvailable('@form', function (Browser $browser) {
+                    $user = User::where('email', 'john@kolab.org')->first();
                     // Assert form content
-                    $browser->assertFocused('div.row:nth-child(1) input')
-                        ->assertSeeIn('div.row:nth-child(1) label', 'First name')
-                        ->assertValue('div.row:nth-child(1) input[type=text]', $this->profile['first_name'])
-                        ->assertSeeIn('div.row:nth-child(2) label', 'Last name')
-                        ->assertValue('div.row:nth-child(2) input[type=text]', $this->profile['last_name'])
-                        ->assertSeeIn('div.row:nth-child(3) label', 'Organization')
-                        ->assertValue('div.row:nth-child(3) input[type=text]', $this->profile['organization'])
-                        ->assertSeeIn('div.row:nth-child(4) label', 'Phone')
-                        ->assertValue('div.row:nth-child(4) input[type=text]', $this->profile['phone'])
-                        ->assertSeeIn('div.row:nth-child(5) label', 'External email')
-                        ->assertValue('div.row:nth-child(5) input[type=text]', $this->profile['external_email'])
-                        ->assertSeeIn('div.row:nth-child(6) label', 'Address')
-                        ->assertValue('div.row:nth-child(6) textarea', $this->profile['billing_address'])
-                        ->assertSeeIn('div.row:nth-child(7) label', 'Country')
-                        ->assertValue('div.row:nth-child(7) select', $this->profile['country'])
-                        ->assertSeeIn('div.row:nth-child(8) label', 'Password')
-                        ->assertValue('div.row:nth-child(8) input[type=password]', '')
-                        ->assertSeeIn('div.row:nth-child(9) label', 'Confirm password')
+                    $browser->assertFocused('div.row:nth-child(2) input')
+                        ->assertSeeIn('div.row:nth-child(1) label', 'Customer No.')
+                        ->assertSeeIn('div.row:nth-child(1) .form-control-plaintext', $user->id)
+                        ->assertSeeIn('div.row:nth-child(2) label', 'First name')
+                        ->assertValue('div.row:nth-child(2) input[type=text]', $this->profile['first_name'])
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Last name')
+                        ->assertValue('div.row:nth-child(3) input[type=text]', $this->profile['last_name'])
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Organization')
+                        ->assertValue('div.row:nth-child(4) input[type=text]', $this->profile['organization'])
+                        ->assertSeeIn('div.row:nth-child(5) label', 'Phone')
+                        ->assertValue('div.row:nth-child(5) input[type=text]', $this->profile['phone'])
+                        ->assertSeeIn('div.row:nth-child(6) label', 'External email')
+                        ->assertValue('div.row:nth-child(6) input[type=text]', $this->profile['external_email'])
+                        ->assertSeeIn('div.row:nth-child(7) label', 'Address')
+                        ->assertValue('div.row:nth-child(7) textarea', $this->profile['billing_address'])
+                        ->assertSeeIn('div.row:nth-child(8) label', 'Country')
+                        ->assertValue('div.row:nth-child(8) select', $this->profile['country'])
+                        ->assertSeeIn('div.row:nth-child(9) label', 'Password')
                         ->assertValue('div.row:nth-child(9) input[type=password]', '')
+                        ->assertSeeIn('div.row:nth-child(10) label', 'Confirm password')
+                        ->assertValue('div.row:nth-child(10) input[type=password]', '')
                         ->assertSeeIn('button[type=submit]', 'Submit');
+
+                    // Test form error handling
+                    $browser->type('#phone', 'aaaaaa')
+                        ->type('#external_email', 'bbbbb')
+                        ->click('button[type=submit]')
+                        ->waitFor('#phone + .invalid-feedback')
+                        ->assertSeeIn('#phone + .invalid-feedback', 'The phone format is invalid.')
+                        ->assertSeeIn(
+                            '#external_email + .invalid-feedback',
+                            'The external email must be a valid email address.'
+                        )
+                        ->assertFocused('#phone')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        ->clearToasts();
 
                     // Clear all fields and submit
                     // FIXME: Should any of these fields be required?
-                    $browser->type('#first_name', '')
-                        ->type('#last_name', '')
-                        ->type('#organization', '')
-                        ->type('#phone', '')
-                        ->type('#external_email', '')
-                        ->type('#billing_address', '')
-                        ->select('#country', '')
-                        ->click('button[type=submit]');
+                    $browser->vueClear('#first_name')
+                        ->vueClear('#last_name')
+                        ->vueClear('#organization')
+                        ->vueClear('#phone')
+                        ->vueClear('#external_email')
+                        ->vueClear('#billing_address')
+                        ->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
                 })
-                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
-
-            // Test error handling
-            $browser->with('@form', function (Browser $browser) {
-                $browser->type('#phone', 'aaaaaa')
-                    ->type('#external_email', 'bbbbb')
-                    ->click('button[type=submit]')
-                    ->waitFor('#phone + .invalid-feedback')
-                    ->assertSeeIn('#phone + .invalid-feedback', 'The phone format is invalid.')
-                    ->assertSeeIn(
-                        '#external_email + .invalid-feedback',
-                        'The external email must be a valid email address.'
-                    )
-                    ->assertFocused('#phone')
-                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
-            });
+                // On success we're redirected to Dashboard
+                ->on(new Dashboard());
         });
     }
 

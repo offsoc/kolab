@@ -1,6 +1,7 @@
 #!/bin/bash
 
- . ./settings.sh
+. ./settings.sh
+
 (
     echo "dn: associateddomain=${domain},ou=Domains,${rootdn}"
     echo "changetype: modify"

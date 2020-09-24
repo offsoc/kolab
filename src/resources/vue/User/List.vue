@@ -33,6 +33,11 @@
                                 </td>
                             </tr>
                         </tbody>
+                        <tfoot class="table-fake-body">
+                            <tr>
+                                <td colspan="2">There are no users in this account.</td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -73,8 +78,11 @@
             }
         },
         created() {
+            this.$root.startLoading()
+
             axios.get('/api/v4/users')
                 .then(response => {
+                    this.$root.stopLoading()
                     this.users = response.data
                 })
                 .catch(this.$root.errorHandler)

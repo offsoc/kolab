@@ -15,6 +15,7 @@ class PackageSeeder extends Seeder
      */
     public function run()
     {
+        $skuActiveSync = Sku::firstOrCreate(['title' => 'activesync']);
         $skuGroupware = Sku::firstOrCreate(['title' => 'groupware']);
         $skuMailbox = Sku::firstOrCreate(['title' => 'mailbox']);
         $skuStorage = Sku::firstOrCreate(['title' => 'storage']);
@@ -31,7 +32,8 @@ class PackageSeeder extends Seeder
         $skus = [
             $skuMailbox,
             $skuGroupware,
-            $skuStorage
+            $skuStorage,
+            $skuActiveSync
         ];
 
         $package->skus()->saveMany($skus);

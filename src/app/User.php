@@ -342,10 +342,11 @@ class User extends Authenticatable implements JWTSubject
      * @param string $email       Email address
      * @param bool   $return_user Return User instance instead of boolean
      * @param bool   $is_alias    Set to True if the existing email is an alias
+     * @param bool   $existing    Ignore deleted users
      *
      * @return \App\User|bool True or User model object if found, False otherwise
      */
-    public static function emailExists(string $email, bool $return_user = false, &$is_alias = false)
+    public static function emailExists(string $email, bool $return_user = false, &$is_alias = false, $existing = false)
     {
         if (strpos($email, '@') === false) {
             return false;
@@ -353,17 +354,28 @@ class User extends Authenticatable implements JWTSubject
 
         $email = \strtolower($email);
 
-        $user = self::withTrashed()->where('email', $email)->first();
+        if ($existing) {
+            $user = self::where('email', $email)->first();
+        } else {
+            $user = self::withTrashed()->where('email', $email)->first();
+        }
 
         if ($user) {
             return $return_user ? $user : true;
         }
 
-        $alias = UserAlias::where('alias', $email)->first();
+        $aliases = UserAlias::where('alias', $email);
+
+        if ($existing) {
+            $aliases = $aliases->join('users', 'user_id', '=', 'users.id')
+                ->whereNull('users.deleted_at');
+        }
+
+        $alias = $aliases->first();
 
         if ($alias) {
             $is_alias = true;
-            return $return_user ? User::withTrashed()->find($alias->user_id) : true;
+            return $return_user ? self::withTrashed()->find($alias->user_id) : true;
         }
 
         return false;
@@ -413,6 +425,24 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    /**
+     * Check if user has an entitlement for the specified SKU.
+     *
+     * @param string $title The SKU title
+     *
+     * @return bool True if specified SKU entitlement exists
+     */
+    public function hasSku($title): bool
+    {
+        $sku = Sku::where('title', $title)->first();
+
+        if (!$sku) {
+            return false;
+        }
+
+        return $this->entitlements()->where('sku_id', $sku->id)->count() > 0;
     }
 
     /**

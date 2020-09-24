@@ -53,12 +53,17 @@
         },
         created() {
             if (this.domain_id = this.$route.params.domain) {
+                this.$root.startLoading()
+
                 axios.get('/api/v4/domains/' + this.domain_id)
                     .then(response => {
+                        this.$root.stopLoading()
                         this.domain = response.data
+
                         if (!this.domain.isConfirmed) {
                             $('#domain-verify button').focus()
                         }
+
                         this.status = response.data.statusInfo
                     })
                     .catch(this.$root.errorHandler)

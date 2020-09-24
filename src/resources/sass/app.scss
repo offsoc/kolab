@@ -113,6 +113,7 @@ tfoot.table-fake-body {
     td {
         vertical-align: middle;
         height: 8em;
+        border: 0;
     }
 
     tbody:not(:empty) + & {
@@ -319,6 +320,16 @@ table {
         margin-bottom: 0.5rem;
     }
 
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+
+        .nav-link {
+            white-space: nowrap;
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
     .tab-content {
         margin-top: 0.5rem;
     }
@@ -343,6 +354,7 @@ table {
     #app > div.container {
         margin-bottom: 1rem;
         margin-top: 1rem;
+        max-width: 100%;
     }
 
     #header-menu-navbar {
@@ -364,6 +376,57 @@ table {
             & > svg {
                 font-size: 125%;
                 margin-right: 0.25rem;
+            }
+        }
+    }
+
+    .table.transactions {
+        thead {
+            display: none;
+        }
+
+        tbody {
+            tr {
+                position: relative;
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            td {
+                width: auto;
+                border: 0;
+                padding: 0.5rem;
+
+                &.datetime {
+                    width: 50%;
+                    padding-left: 0;
+                }
+
+                &.description {
+                    order: 3;
+                    width: 100%;
+                    border-bottom: 1px solid $border-color;
+                    color: $secondary;
+                    padding: 0 1.5em 0.5rem 0;
+                    margin-top: -0.25em;
+                }
+
+                &.selection {
+                    position: absolute;
+                    right: 0;
+                    border: 0;
+                    top: 1.7em;
+                    padding-right: 0;
+                }
+
+                &.price {
+                    width: 50%;
+                    padding-right: 0;
+                }
+
+                &.email {
+                    display: none;
+                }
             }
         }
     }

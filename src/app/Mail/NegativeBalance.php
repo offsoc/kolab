@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\User;
 use App\Utils;
+use App\Wallet;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -13,20 +14,25 @@ class NegativeBalance extends Mailable
     use Queueable;
     use SerializesModels;
 
-    /** @var \App\User A user (account) that is behind with payments */
-    protected $account;
+    /** @var \App\Wallet A wallet with a negative balance */
+    protected $wallet;
+
+    /** @var \App\User A wallet controller to whom the email is being sent */
+    protected $user;
 
 
     /**
      * Create a new message instance.
      *
-     * @param \App\User $account A user (account)
+     * @param \App\Wallet $wallet A wallet
+     * @param \App\User   $user   An email recipient
      *
      * @return void
      */
-    public function __construct(User $account)
+    public function __construct(Wallet $wallet, User $user)
     {
-        $this->account = $account;
+        $this->wallet = $wallet;
+        $this->user = $user;
     }
 
     /**
@@ -36,8 +42,6 @@ class NegativeBalance extends Mailable
      */
     public function build()
     {
-        $user = $this->account;
-
         $subject = \trans('mail.negativebalance-subject', ['site' => \config('app.name')]);
 
         $this->view('emails.html.negative_balance')
@@ -46,7 +50,7 @@ class NegativeBalance extends Mailable
             ->with([
                     'site' => \config('app.name'),
                     'subject' => $subject,
-                    'username' => $user->name(true),
+                    'username' => $this->user->name(true),
                     'supportUrl' => \config('app.support_url'),
                     'walletUrl' => Utils::serviceUrl('/wallet'),
             ]);
@@ -63,9 +67,10 @@ class NegativeBalance extends Mailable
      */
     public static function fakeRender(string $type = 'html'): string
     {
+        $wallet = new Wallet();
         $user = new User();
 
-        $mail = new self($user);
+        $mail = new self($wallet, $user);
 
         return Helper::render($mail, $type);
     }

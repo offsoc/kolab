@@ -97,18 +97,29 @@ class EntitlementObserver
     {
         // Start calculating the costs for the consumption of this entitlement if the
         // existing consumption spans >= 14 days.
-        // anything's free for 14 days
+        //
+        // Effect is that anything's free for the first 14 days
         if ($entitlement->created_at >= Carbon::now()->subDays(14)) {
             return;
         }
 
+        $owner = $entitlement->wallet->owner;
+
+        // Determine if we're still within the free first month
+        $freeMonthEnds = $owner->created_at->copy()->addMonthsWithoutOverflow(1);
+
+        if ($freeMonthEnds >= Carbon::now()) {
+            return;
+        }
+
         $cost = 0;
+        $now = Carbon::now();
 
         // get the discount rate applied to the wallet.
         $discount = $entitlement->wallet->getDiscountRate();
 
         // just in case this had not been billed yet, ever
-        $diffInMonths = $entitlement->updated_at->diffInMonths(Carbon::now());
+        $diffInMonths = $entitlement->updated_at->diffInMonths($now);
         $cost += (int) ($entitlement->cost * $discount * $diffInMonths);
 
         // this moves the hypothetical updated at forward to however many months past the original
@@ -116,26 +127,23 @@ class EntitlementObserver
 
         // now we have the diff in days since the last "billed" period end.
         // This may be an entitlement paid up until February 28th, 2020, with today being March
-        // 12th 2020. Calculating the costs for the entitlement is based on the daily price for the
-        // past month -- i.e. $price/29 in the case at hand -- times the number of (full) days in
-        // between the period end and now.
-        //
-        // a) The number of days left in the past month, 1
-        // b) The cost divided by the number of days in the past month, for example, 555/29,
-        // c) a) + Todays day-of-month, 12, so 13.
-        //
+        // 12th 2020. Calculating the costs for the entitlement is based on the daily price
 
-        $diffInDays = $updatedAt->diffInDays(Carbon::now());
+        // the price per day is based on the number of days in the last month
+        // or the current month if the period does not overlap with the previous month
+        // FIXME: This really should be simplified to $daysInMonth=30
 
-        $dayOfThisMonth = Carbon::now()->day;
+        $diffInDays = $updatedAt->diffInDays($now);
 
-        // days in the month for the month prior to this one.
-        // the price per day is based on the number of days left in the last month
-        $daysInLastMonth = \App\Utils::daysInLastMonth();
+        if ($now->day >= $diffInDays) {
+            $daysInMonth = $now->daysInMonth;
+        } else {
+            $daysInMonth = \App\Utils::daysInLastMonth();
+        }
 
-        $pricePerDay = (float)$entitlement->cost / $daysInLastMonth;
+        $pricePerDay = $entitlement->cost / $daysInMonth;
 
-        $cost += (int) (round($pricePerDay * $diffInDays, 0));
+        $cost += (int) (round($pricePerDay * $discount * $diffInDays, 0));
 
         if ($cost == 0) {
             return;

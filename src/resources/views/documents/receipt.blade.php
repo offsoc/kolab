@@ -26,7 +26,7 @@
                     {!! $customer['customer'] !!}
                 </td>
                 <td class="idents">
-                    <span class="gray">{{ __('documents.account-id') }}</span> {{ $customer['wallet_id'] }}<br>
+                    {{--<span class="gray">{{ __('documents.account-id') }}</span> {{ $customer['wallet_id'] }}<br>--}}
                     <span class="gray">{{ __('documents.customer-no') }}</span> {{ $customer['id'] }}
                 </td>
             </tr>

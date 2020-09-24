@@ -82,7 +82,10 @@ class BillingTest extends TestCase
      */
     public function testFullTrial(): void
     {
-        $this->backdateEntitlements($this->wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
+        $this->backdateEntitlements(
+            $this->wallet->entitlements,
+            Carbon::now()->subMonthsWithoutOverflow(1)
+        );
 
         $this->assertEquals(999, $this->wallet->expectedCharges());
     }

@@ -1,15 +1,63 @@
-FROM kolab/centos7:latest
+FROM centos:7
 
-RUN yum -y install rsyslog && \
-    yum --enablerepo=kolab-16-updates-testing -y update pykolab && \
+LABEL maintainer="contact@kolabsystems.com"
+LABEL dist=centos7
+LABEL tier=${TIER}
+
+ENV container docker
+ENV SYSTEMD_PAGER=''
+ENV DISTRO=centos7
+ENV LANG=en_US.utf8
+ENV LC_ALL=en_US.utf8
+
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+    rm -f /lib/systemd/system/multi-user.target.wants/*; \
+    rm -f /etc/systemd/system/*.wants/*; \
+    rm -f /lib/systemd/system/local-fs.target.wants/*; \
+    rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+    rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+    rm -f /lib/systemd/system/basic.target.wants/*; \
+    rm -f /lib/systemd/system/anaconda.target.wants/*;
+
+# To speed things up, disable fastestmirror.
+RUN sed -r -i \
+        -e 's/^enabled.*$/enabled = 0/g' \
+        /etc/yum/pluginconf.d/fastestmirror.conf
+
+# Avoid using a mirrorlist (use a transparent proxy and cache everything instead).
+RUN sed -r -i \
+        -e 's/^mirrorlist/#mirrorlist/g' \
+        -e 's/^#baseurl/baseurl/g' \
+        /etc/yum.repos.d/*.repo
+
+RUN sed -i -e '/tsflags=nodocs/d' /etc/yum.conf
+
+# Add EPEL.
+RUN yum -y install \
+        epel-release && \
     yum clean all
 
+# Add the EPEL key.
+RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+
+RUN rpm --import https://mirror.kolabenterprise.com/maipo.asc
+
+RUN yum -y install https://mirror.kolabenterprise.com/kolab-16-for-el7.rpm && \
+    yum -y install kolab-16-release-development && \
+        yum clean all
+
+RUN yum -y --setopt tsflags= install kolab
+
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
+COPY kolab-setenv.service /etc/systemd/system/kolab-setenv.service
 COPY kolab-vlv.service /etc/systemd/system/kolab-vlv.service
+COPY utils /root/utils
 
 RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && \
     ln -s /etc/systemd/system/kolab-init.service \
         /etc/systemd/system/multi-user.target.wants/kolab-init.service && \
+    ln -s /etc/systemd/system/kolab-setenv.service \
+        /etc/systemd/system/multi-user.target.wants/kolab-setenv.service && \
     ln -s /etc/systemd/system/kolab-vlv.service \
         /etc/systemd/system/multi-user.target.wants/kolab-vlv.service
 
@@ -22,6 +70,10 @@ COPY kolab-init.sh /usr/local/sbin/
 RUN chmod 750 /usr/local/sbin/kolab-init.sh
 COPY kolab-vlv.sh /usr/local/sbin/
 RUN chmod 750 /usr/local/sbin/kolab-vlv.sh
+
+VOLUME [ "/sys/fs/cgroup" ]
+
+WORKDIR /root/
 
 CMD ["/lib/systemd/systemd"]
 

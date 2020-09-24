@@ -37,8 +37,8 @@ class PaymentStripe extends Page
     {
         return [
             '@form' => '.App-Payment > form',
-            '@title' => '.App-Overview .ProductSummary-Info .Text',
-            '@amount' => '#ProductSummary-TotalAmount',
+            '@title' => '.App-Overview .ProductSummary',
+            '@amount' => '#ProductSummary-totalAmount',
             '@description' => '#ProductSummary-Description',
             '@email-input' => '.App-Payment #email',
             '@cardnumber-input' => '.App-Payment #cardNumber',

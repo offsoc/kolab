@@ -1,6 +1,7 @@
 #!/bin/bash
 
- . ./settings.sh
+. ./settings.sh
+
 (
     echo "dn: associateddomain=${domain},${domain_base_dn}"
     echo "aci: (targetattr = \"*\")(version 3.0;acl \"Deny Rest\";deny (all)(userdn != \"ldap:///uid=kolab-service,ou=Special Users,${rootdn} || ldap:///${rootdn}??sub?(objectclass=*)\");)"

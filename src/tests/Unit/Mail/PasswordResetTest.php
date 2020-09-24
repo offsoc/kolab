@@ -34,7 +34,7 @@ class PasswordResetTest extends TestCase
         $html = $mail['html'];
         $plain = $mail['plain'];
 
-        $url = Utils::serviceUrl('/login/reset/' . $code->short_code . '-' . $code->code);
+        $url = Utils::serviceUrl('/password-reset/' . $code->short_code . '-' . $code->code);
         $link = "<a href=\"$url\">$url</a>";
         $appName = \config('app.name');
 

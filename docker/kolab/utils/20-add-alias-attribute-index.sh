@@ -1,6 +1,6 @@
 #!/bin/bash
 
- . ./settings.sh
+. ./settings.sh
 
 export index_attr=alias
 

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Controller\Admin;
 
+use App\Auth\SecondFactor;
+use App\Sku;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -16,6 +18,8 @@ class UsersTest extends TestCase
         self::useAdminUrl();
 
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
+        $this->deleteTestUser('test@testsearch.com');
+        $this->deleteTestDomain('testsearch.com');
 
         $jack = $this->getTestUser('jack@kolab.org');
         $jack->setSetting('external_email', null);
@@ -27,6 +31,8 @@ class UsersTest extends TestCase
     public function tearDown(): void
     {
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
+        $this->deleteTestUser('test@testsearch.com');
+        $this->deleteTestDomain('testsearch.com');
 
         $jack = $this->getTestUser('jack@kolab.org');
         $jack->setSetting('external_email', null);
@@ -144,6 +150,87 @@ class UsersTest extends TestCase
 
         $this->assertSame(0, $json['count']);
         $this->assertCount(0, $json['list']);
+
+        // Deleted users/domains
+        $domain = $this->getTestDomain('testsearch.com', ['type' => \App\Domain::TYPE_EXTERNAL]);
+        $user = $this->getTestUser('test@testsearch.com');
+        $plan = \App\Plan::where('title', 'group')->first();
+        $user->assignPlan($plan, $domain);
+        $user->setAliases(['alias@testsearch.com']);
+        Queue::fake();
+        $user->delete();
+
+        $response = $this->actingAs($admin)->get("api/v4/users?search=test@testsearch.com");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($user->id, $json['list'][0]['id']);
+        $this->assertSame($user->email, $json['list'][0]['email']);
+        $this->assertTrue($json['list'][0]['isDeleted']);
+
+        $response = $this->actingAs($admin)->get("api/v4/users?search=alias@testsearch.com");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($user->id, $json['list'][0]['id']);
+        $this->assertSame($user->email, $json['list'][0]['email']);
+        $this->assertTrue($json['list'][0]['isDeleted']);
+
+        $response = $this->actingAs($admin)->get("api/v4/users?search=testsearch.com");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($user->id, $json['list'][0]['id']);
+        $this->assertSame($user->email, $json['list'][0]['email']);
+        $this->assertTrue($json['list'][0]['isDeleted']);
+    }
+
+    /**
+     * Test reseting 2FA (POST /api/v4/users/<user-id>/reset2FA)
+     */
+    public function testReset2FA(): void
+    {
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        $sku2fa = Sku::firstOrCreate(['title' => '2fa']);
+        $user->assignSku($sku2fa);
+        SecondFactor::seed('userscontrollertest1@userscontroller.com');
+
+        // Test unauthorized access to admin API
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response->assertStatus(403);
+
+        $entitlements = $user->fresh()->entitlements()->where('sku_id', $sku2fa->id)->get();
+        $this->assertCount(1, $entitlements);
+
+        $sf = new SecondFactor($user);
+        $this->assertCount(1, $sf->factors());
+
+        // Test reseting 2FA
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("2-Factor authentication reset successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $entitlements = $user->fresh()->entitlements()->where('sku_id', $sku2fa->id)->get();
+        $this->assertCount(0, $entitlements);
+
+        $sf = new SecondFactor($user);
+        $this->assertCount(0, $sf->factors());
     }
 
     /**

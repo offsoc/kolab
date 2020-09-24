@@ -56,7 +56,7 @@ docker-compose up -d coturn kolab mariadb openvidu proxy redis
 pushd ${base_dir}/src/
 
 rm -rf vendor/ composer.lock
-composer install
+php -dmemory_limit=-1 /bin/composer install
 npm install
 find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan key:generate

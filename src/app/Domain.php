@@ -399,7 +399,7 @@ class Domain extends Model
     public function wallet(): ?Wallet
     {
         // Note: Not all domains have a entitlement/wallet
-        $entitlement = $this->entitlement()->first();
+        $entitlement = $this->entitlement()->withTrashed()->first();
 
         return $entitlement ? $entitlement->wallet : null;
     }

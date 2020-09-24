@@ -2,7 +2,9 @@
 
 namespace Tests\Browser\Admin;
 
+use App\Auth\SecondFactor;
 use App\Discount;
+use App\Sku;
 use App\User;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
@@ -33,6 +35,7 @@ class UserTest extends TestCaseDusk
         }
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
+        $wallet->save();
     }
 
     /**
@@ -50,6 +53,7 @@ class UserTest extends TestCaseDusk
         }
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
+        $wallet->save();
 
         parent::tearDown();
     }
@@ -98,7 +102,7 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(6) label', 'External email')
                         ->assertMissing('.row:nth-child(6) #external_email a')
                         ->assertSeeIn('.row:nth-child(7) label', 'Country')
-                        ->assertSeeIn('.row:nth-child(7) #country', 'United States of America');
+                        ->assertSeeIn('.row:nth-child(7) #country', 'United States');
                 });
 
             // Some tabs are loaded in background, wait a second
@@ -128,7 +132,8 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:first-child', 'Groupware Features')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '5,55 CHF')
-                        ->assertMissing('table tfoot');
+                        ->assertMissing('table tfoot')
+                        ->assertMissing('#reset2fa');
                 });
 
             // Assert Domains tab
@@ -193,7 +198,7 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(8) label', 'Address')
                         ->assertSeeIn('.row:nth-child(8) #billing_address', $john->getSetting('billing_address'))
                         ->assertSeeIn('.row:nth-child(9) label', 'Country')
-                        ->assertSeeIn('.row:nth-child(9) #country', 'United States of America');
+                        ->assertSeeIn('.row:nth-child(9) #country', 'United States');
                 });
 
             // Some tabs are loaded in background, wait a second
@@ -238,16 +243,18 @@ class UserTest extends TestCaseDusk
                 });
 
             // Assert Users tab
-            $browser->assertSeeIn('@nav #tab-users', 'Users (3)')
+            $browser->assertSeeIn('@nav #tab-users', 'Users (4)')
                 ->click('@nav #tab-users')
                 ->with('@user-users table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 3)
+                    $browser->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'jack@kolab.org')
                         ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-success')
                         ->assertSeeIn('tbody tr:nth-child(2) td:first-child a', 'joe@kolab.org')
                         ->assertVisible('tbody tr:nth-child(2) td:first-child svg.text-success')
-                        ->assertSeeIn('tbody tr:nth-child(3) td:first-child a', 'ned@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(3) td:first-child span', 'john@kolab.org')
                         ->assertVisible('tbody tr:nth-child(3) td:first-child svg.text-success')
+                        ->assertSeeIn('tbody tr:nth-child(4) td:first-child a', 'ned@kolab.org')
+                        ->assertVisible('tbody tr:nth-child(4) td:first-child svg.text-success')
                         ->assertMissing('tfoot');
                 });
         });
@@ -257,7 +264,7 @@ class UserTest extends TestCaseDusk
             $ned = $this->getTestUser('ned@kolab.org');
             $page = new UserPage($ned->id);
 
-            $browser->click('@user-users tbody tr:nth-child(3) td:first-child a')
+            $browser->click('@user-users tbody tr:nth-child(4) td:first-child a')
                 ->on($page);
 
             // Assert main info box content
@@ -298,7 +305,8 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('table tbody tr:nth-child(5) td:first-child', '2-Factor Authentication')
                         ->assertSeeIn('table tbody tr:nth-child(5) td:last-child', '0,00 CHF/month¹')
                         ->assertMissing('table tfoot')
-                        ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher');
+                        ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher')
+                        ->assertSeeIn('#reset2fa', 'Reset 2-Factor Auth');
                 });
 
             // We don't expect John's domains here
@@ -394,6 +402,38 @@ class UserTest extends TestCaseDusk
                 ->assertSeeIn('@user-info #status span.text-success', 'Active')
                 ->assertVisible('@user-info #button-suspend')
                 ->assertMissing('@user-info #button-unsuspend');
+        });
+    }
+
+    /**
+     * Test resetting 2FA for the user
+     */
+    public function testReset2FA(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $this->deleteTestUser('userstest1@kolabnow.com');
+            $user = $this->getTestUser('userstest1@kolabnow.com');
+            $sku2fa = Sku::firstOrCreate(['title' => '2fa']);
+            $user->assignSku($sku2fa);
+            SecondFactor::seed('userstest1@kolabnow.com');
+
+            $browser->visit(new UserPage($user->id))
+                ->click('@nav #tab-subscriptions')
+                ->with('@user-subscriptions', function (Browser $browser) use ($sku2fa) {
+                    $browser->waitFor('#reset2fa')
+                        ->assertVisible('#sku' . $sku2fa->id);
+                })
+                ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (1)')
+                ->click('#reset2fa')
+                ->with(new Dialog('#reset-2fa-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', '2-Factor Authentication Reset')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Reset')
+                        ->click('@button-action');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, '2-Factor authentication reset successfully.')
+                ->assertMissing('#sku' . $sku2fa->id)
+                ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (0)');
         });
     }
 }

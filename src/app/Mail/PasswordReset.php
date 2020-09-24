@@ -39,7 +39,7 @@ class PasswordReset extends Mailable
     public function build()
     {
         $href = Utils::serviceUrl(
-            sprintf('/login/reset/%s-%s', $this->code->short_code, $this->code->code)
+            sprintf('/password-reset/%s-%s', $this->code->short_code, $this->code->code)
         );
 
         $this->view('emails.html.password_reset')

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-mysql -h 127.0.0.1 -u root --password=Welcome2KolabSystems \
-    -e "CREATE DATABASE kolabdev;"
+mysql -h ${DB_HOST:-127.0.0.1} -u root --password=${DB_ROOT_PASSWORD:-Welcome2KolabSystems} \
+    -e "CREATE DATABASE IF NOT EXISTS ${DB_HKCCP_DATABASE:-kolabdev};"
 
-mysql -h 127.0.0.1 -u root --password=Welcome2KolabSystems \
-    -e "GRANT ALL PRIVILEGES ON kolabdev.* TO 'kolabdev'@'127.0.0.1' IDENTIFIED BY 'kolab';"
+mysql -h ${DB_HOST:-127.0.0.1} -u root --password=${DB_ROOT_PASSWORD:-Welcome2KolabSystems} \
+    -e "GRANT ALL PRIVILEGES ON ${DB_HKCCP_DATABASE:-kolabdev}.* TO '${DB_HKCCP_USERNAME:-kolabdev}'@'%' IDENTIFIED BY '${DB_HKCCP_PASSWORD:-kolab}';"
 
-mysql -h 127.0.0.1 -u root --password=Welcome2KolabSystems \
+mysql -h ${DB_HOST:-127.0.0.1} -u root --password=${DB_ROOT_PASSWORD:-Welcome2KolabSystems} \
     -e "FLUSH PRIVILEGES;"
 

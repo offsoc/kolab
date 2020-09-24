@@ -72,7 +72,6 @@ const app = new Vue({
             let timeout = response.expires_in || 0
 
             // We'll refresh 60 seconds before the token expires
-            // or immediately when we have no expiration time (on token re-use)
             if (timeout > 60) {
                 timeout -= 60
             }
@@ -85,7 +84,6 @@ const app = new Vue({
                 axios.post('/api/auth/refresh').then(response => {
                     this.loginUser(response.data, false, true)
                 })
-
             }, timeout * 1000)
         },
         // Set user state to "not logged in"
@@ -113,7 +111,7 @@ const app = new Vue({
         startLoading() {
             this.isLoading = true
             // Lock the UI with the 'loading...' element
-            let loading = $('#app > .app-loader').show()
+            let loading = $('#app > .app-loader').removeClass('fadeOut')
             if (!loading.length) {
                 $('#app').append($(loader))
             }
@@ -183,7 +181,7 @@ const app = new Vue({
                 })
         },
         price(price, currency) {
-            return (price/100).toLocaleString('de-DE', { style: 'currency', currency: currency || 'CHF' })
+            return ((price || 0) / 100).toLocaleString('de-DE', { style: 'currency', currency: currency || 'CHF' })
         },
         priceLabel(cost, units = 1, discount) {
             let index = ''
@@ -201,7 +199,10 @@ const app = new Vue({
         },
         clickRecord(event) {
             if (!/^(a|button|svg|path)$/i.test(event.target.nodeName)) {
-                $(event.target).closest('tr').find('a')[0].click()
+                let link = $(event.target).closest('tr').find('a')[0]
+                if (link) {
+                    link.click()
+                }
             }
         },
         domainStatusClass(domain) {

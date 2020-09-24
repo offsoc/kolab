@@ -64,7 +64,10 @@ class WalletsTest extends TestCase
 
         $this->assertSame('You are out of credit, top up your balance now.', $notice);
 
-        // User/entitlements created today, balance=-9,99 CHF (monthly cost)
+        // User/entitlements created slightly more than a month ago, balance=9,99 CHF (monthly)
+        $wallet->owner->created_at = Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1);
+        $wallet->owner->save();
+
         $wallet->balance = 999;
         $notice = $method->invoke($controller, $wallet);
 
@@ -119,7 +122,7 @@ class WalletsTest extends TestCase
 
         $length = $response->headers->get('content-length');
         $content = $response->content();
-        $this->assertStringStartsWith("%PDF-1.3\n", $content);
+        $this->assertStringStartsWith("%PDF-1.", $content);
         $this->assertEquals(strlen($content), $length);
     }
 

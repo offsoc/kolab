@@ -2,7 +2,7 @@
 
 namespace Tests\Browser\Admin;
 
-use App\Discount;
+use App\Domain;
 use Tests\Browser;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Admin\Domain as DomainPage;
@@ -84,6 +84,36 @@ class DomainTest extends TestCaseDusk
                     $browser->assertSeeIn('pre#dns-verify', 'kolab-verify.kolab.org.')
                         ->assertSeeIn('pre#dns-config', 'kolab.org.');
                 });
+        });
+    }
+
+    /**
+     * Test suspending/unsuspending a domain
+     *
+     * @depends testDomainInfo
+     */
+    public function testSuspendAndUnsuspend(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $domain = $this->getTestDomain('domainscontroller.com', [
+                    'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE
+                        | Domain::STATUS_LDAP_READY | Domain::STATUS_CONFIRMED
+                        | Domain::STATUS_VERIFIED,
+                    'type' => Domain::TYPE_EXTERNAL,
+            ]);
+
+            $browser->visit(new DomainPage($domain->id))
+                ->assertVisible('@domain-info #button-suspend')
+                ->assertMissing('@domain-info #button-unsuspend')
+                ->click('@domain-info #button-suspend')
+                ->assertToast(Toast::TYPE_SUCCESS, 'Domain suspended successfully.')
+                ->assertSeeIn('@domain-info #status span.text-warning', 'Suspended')
+                ->assertMissing('@domain-info #button-suspend')
+                ->click('@domain-info #button-unsuspend')
+                ->assertToast(Toast::TYPE_SUCCESS, 'Domain unsuspended successfully.')
+                ->assertSeeIn('@domain-info #status span.text-success', 'Active')
+                ->assertVisible('@domain-info #button-suspend')
+                ->assertMissing('@domain-info #button-unsuspend');
         });
     }
 }

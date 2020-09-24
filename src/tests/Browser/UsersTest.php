@@ -107,7 +107,8 @@ class UsersTest extends TestCaseDusk
                 ->click('@links .link-users')
                 ->on(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 4)
+                    $browser->waitFor('tbody tr')
+                        ->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
                         ->assertSeeIn('tbody tr:nth-child(2) a', 'joe@kolab.org')
                         ->assertSeeIn('tbody tr:nth-child(3) a', 'john@kolab.org')
@@ -115,7 +116,8 @@ class UsersTest extends TestCaseDusk
                         ->assertVisible('tbody tr:nth-child(1) button.button-delete')
                         ->assertVisible('tbody tr:nth-child(2) button.button-delete')
                         ->assertVisible('tbody tr:nth-child(3) button.button-delete')
-                        ->assertVisible('tbody tr:nth-child(4) button.button-delete');
+                        ->assertVisible('tbody tr:nth-child(4) button.button-delete')
+                        ->assertMissing('tfoot');
                 });
         });
     }
@@ -156,56 +158,53 @@ class UsersTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(7) input[type=password]', '')
                         ->assertSeeIn('div.row:nth-child(8) label', 'Confirm password')
                         ->assertValue('div.row:nth-child(8) input[type=password]', '')
-                        ->assertSeeIn('button[type=submit]', 'Submit');
-
-                    // Clear some fields and submit
-                    $browser->type('#first_name', '')
-                        ->type('#last_name', '')
+                        ->assertSeeIn('button[type=submit]', 'Submit')
+                        // Clear some fields and submit
+                        ->vueClear('#first_name')
+                        ->vueClear('#last_name')
                         ->click('button[type=submit]');
                 })
-                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.')
+                ->on(new UserList())
+                ->click('@table tr:nth-child(3) a')
+                ->on(new UserInfo())
+                ->assertSeeIn('#user-info .card-title', 'User account')
+                ->with('@form', function (Browser $browser) {
+                    // Test error handling (password)
+                    $browser->type('#password', 'aaaaaa')
+                        ->vueClear('#password_confirmation')
+                        ->click('button[type=submit]')
+                        ->waitFor('#password + .invalid-feedback')
+                        ->assertSeeIn('#password + .invalid-feedback', 'The password confirmation does not match.')
+                        ->assertFocused('#password')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
 
-            // Test error handling (password)
-            $browser->with('@form', function (Browser $browser) {
-                $browser->type('#password', 'aaaaaa')
-                    ->type('#password_confirmation', '')
-                    ->click('button[type=submit]')
-                    ->waitFor('#password + .invalid-feedback')
-                    ->assertSeeIn('#password + .invalid-feedback', 'The password confirmation does not match.')
-                    ->assertFocused('#password')
-                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
-            });
+                    // TODO: Test password change
 
-            // TODO: Test password change
+                    // Test form error handling (aliases)
+                    $browser->vueClear('#password')
+                        ->vueClear('#password_confirmation')
+                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                            $browser->addListEntry('invalid address');
+                        })
+                        ->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
 
-            // Test form error handling (aliases)
-            $browser->with('@form', function (Browser $browser) {
-                // TODO: For some reason, clearing the input value
-                // with ->type('#password', '') does not work, maybe some dusk/vue intricacy
-                // For now we just use the default password
-                $browser->type('#password', 'simple123')
-                    ->type('#password_confirmation', 'simple123')
-                    ->with(new ListInput('#aliases'), function (Browser $browser) {
-                        $browser->addListEntry('invalid address');
+                    $browser->with(new ListInput('#aliases'), function (Browser $browser) {
+                        $browser->assertFormError(2, 'The specified alias is invalid.', false);
+                    });
+
+                    // Test adding aliases
+                    $browser->with(new ListInput('#aliases'), function (Browser $browser) {
+                        $browser->removeListEntry(2)
+                            ->addListEntry('john.test@kolab.org');
                     })
-                    ->click('button[type=submit]')
-                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
-            })
-            ->with('@form', function (Browser $browser) {
-                $browser->with(new ListInput('#aliases'), function (Browser $browser) {
-                    $browser->assertFormError(2, 'The specified alias is invalid.', false);
-                });
-            });
-
-            // Test adding aliases
-            $browser->with('@form', function (Browser $browser) {
-                $browser->with(new ListInput('#aliases'), function (Browser $browser) {
-                    $browser->removeListEntry(2)
-                        ->addListEntry('john.test@kolab.org');
+                        ->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
                 })
-                    ->click('button[type=submit]')
-                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
-            });
+                ->on(new UserList())
+                ->click('@table tr:nth-child(3) a')
+                ->on(new UserInfo());
 
             $john = User::where('email', 'john@kolab.org')->first();
             $alias = UserAlias::where('user_id', $john->id)->where('alias', 'john.test@kolab.org')->first();
@@ -271,7 +270,10 @@ class UsersTest extends TestCaseDusk
                     ->assertMissing('@skus table + .hint')
                     ->click('button[type=submit]')
                     ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
-            });
+            })
+                ->on(new UserList())
+                ->click('@table tr:nth-child(3) a')
+                ->on(new UserInfo());
 
             $expected = ['activesync', 'groupware', 'mailbox', 'storage', 'storage', 'storage'];
             $this->assertUserEntitlements($john, $expected);
@@ -398,7 +400,6 @@ class UsersTest extends TestCaseDusk
             })
             ->assertToast(Toast::TYPE_SUCCESS, 'User created successfully.')
             // check redirection to users list
-            ->waitForLocation('/users')
             ->on(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 5)
@@ -412,6 +413,29 @@ class UsersTest extends TestCaseDusk
             $this->assertSame('Julia', $julia->getSetting('first_name'));
             $this->assertSame('Roberts', $julia->getSetting('last_name'));
             $this->assertSame('Test Org', $julia->getSetting('organization'));
+
+            // Some additional tests for the list input widget
+            $browser->click('tbody tr:nth-child(4) a')
+                ->on(new UserInfo())
+                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    $browser->assertListInputValue(['julia.roberts2@kolab.org'])
+                        ->addListEntry('invalid address')
+                        ->type('.input-group:nth-child(2) input', '@kolab.org');
+                })
+                ->click('button[type=submit]')
+                ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    $browser->assertVisible('.input-group:nth-child(2) input.is-invalid')
+                        ->assertVisible('.input-group:nth-child(3) input.is-invalid')
+                        ->type('.input-group:nth-child(2) input', 'julia.roberts3@kolab.org')
+                        ->type('.input-group:nth-child(3) input', 'julia.roberts4@kolab.org');
+                })
+                ->click('button[type=submit]')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+
+            $julia = User::where('email', 'julia.roberts@kolab.org')->first();
+            $aliases = $julia->aliases()->orderBy('alias')->get()->pluck('alias')->all();
+            $this->assertSame(['julia.roberts3@kolab.org', 'julia.roberts4@kolab.org'], $aliases);
         });
     }
 
@@ -477,7 +501,8 @@ class UsersTest extends TestCaseDusk
                 ->submitLogon('jack@kolab.org', 'simple123', true)
                 ->visit(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 0);
+                    $browser->assertElementsCount('tbody tr', 0)
+                        ->assertSeeIn('tfoot td', 'There are no users in this account.');
                 });
         });
 
@@ -516,6 +541,7 @@ class UsersTest extends TestCaseDusk
                 ->on(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->visit(new UserList())
+                ->waitFor('@table tr:nth-child(2)')
                 ->click('@table tr:nth-child(2) a')
                 ->on(new UserInfo())
                 ->with('@form', function (Browser $browser) {

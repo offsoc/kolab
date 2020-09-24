@@ -369,7 +369,11 @@ class SignupTest extends TestCaseDusk
             $browser->waitUntilMissing('@step3')
                 ->waitUntilMissing('.app-loader')
                 ->on(new Dashboard())
-                ->assertUser('signuptestdusk@' . \config('app.domain'));
+                ->assertUser('signuptestdusk@' . \config('app.domain'))
+                ->assertVisible('@links a.link-profile')
+                ->assertMissing('@links a.link-domains')
+                ->assertVisible('@links a.link-users')
+                ->assertVisible('@links a.link-wallet');
 
             // Logout the user
             $browser->within(new Menu(), function ($browser) {
@@ -466,7 +470,11 @@ class SignupTest extends TestCaseDusk
             $browser->waitUntilMissing('@step3')
                 ->waitUntilMissing('.app-loader')
                 ->on(new Dashboard())
-                ->assertUser('admin@user-domain-signup.com');
+                ->assertUser('admin@user-domain-signup.com')
+                ->assertVisible('@links a.link-profile')
+                ->assertVisible('@links a.link-domains')
+                ->assertVisible('@links a.link-users')
+                ->assertVisible('@links a.link-wallet');
 
             $browser->within(new Menu(), function ($browser) {
                 $browser->clickMenuItem('logout');
@@ -482,6 +490,7 @@ class SignupTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit('/signup/voucher/TEST')
                 ->onWithoutAssert(new Signup())
+                ->waitUntilMissing('.app-loader')
                 ->waitFor('@step0')
                 ->click('.plan-individual button')
                 ->whenAvailable('@step1', function (Browser $browser) {

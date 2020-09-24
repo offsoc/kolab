@@ -23,6 +23,9 @@ class DomainTest extends TestCase
         'ci-failure-none.kolab.org',
     ];
 
+    /**
+     * {@inheritDoc}
+     */
     public function setUp(): void
     {
         parent::setUp();
@@ -32,6 +35,9 @@ class DomainTest extends TestCase
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         foreach ($this->domains as $domain) {

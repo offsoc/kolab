@@ -13,10 +13,12 @@ use Illuminate\Http\Request;
 |
 */
 
+$prefix = \trim(\parse_url(\config('app.url'), PHP_URL_PATH), '/') . '/';
+
 Route::group(
     [
         'middleware' => 'api',
-        'prefix' => 'auth'
+        'prefix' => $prefix . 'api/auth'
     ],
     function ($router) {
         Route::post('login', 'API\AuthController@login');
@@ -36,7 +38,7 @@ Route::group(
     [
         'domain' => \config('app.domain'),
         'middleware' => 'api',
-        'prefix' => 'auth'
+        'prefix' => $prefix . 'api/auth'
     ],
     function ($router) {
         Route::post('password-reset/init', 'API\PasswordResetController@init');
@@ -54,7 +56,7 @@ Route::group(
     [
         'domain' => \config('app.domain'),
         'middleware' => 'auth:api',
-        'prefix' => 'v4'
+        'prefix' => $prefix . 'api/v4'
     ],
     function () {
         Route::apiResource('domains', API\V4\DomainsController::class);
@@ -97,9 +99,10 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.domain'),
+        'prefix' => $prefix . 'api/webhooks',
     ],
     function () {
-        Route::post('webhooks/payment/{provider}', 'API\V4\PaymentsController@webhook');
+        Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
         Route::post('webhooks/meet/openvidu', 'API\V4\OpenViduController@webhook');
     }
 );
@@ -108,16 +111,19 @@ Route::group(
     [
         'domain' => 'admin.' . \config('app.domain'),
         'middleware' => ['auth:api', 'admin'],
-        'prefix' => 'v4',
+        'prefix' => $prefix . 'api/v4',
     ],
     function () {
         Route::apiResource('domains', API\V4\Admin\DomainsController::class);
         Route::get('domains/{id}/confirm', 'API\V4\Admin\DomainsController@confirm');
+        Route::post('domains/{id}/suspend', 'API\V4\Admin\DomainsController@suspend');
+        Route::post('domains/{id}/unsuspend', 'API\V4\Admin\DomainsController@unsuspend');
 
         Route::apiResource('entitlements', API\V4\Admin\EntitlementsController::class);
         Route::apiResource('packages', API\V4\Admin\PackagesController::class);
         Route::apiResource('skus', API\V4\Admin\SkusController::class);
         Route::apiResource('users', API\V4\Admin\UsersController::class);
+        Route::post('users/{id}/reset2FA', 'API\V4\Admin\UsersController@reset2FA');
         Route::post('users/{id}/suspend', 'API\V4\Admin\UsersController@suspend');
         Route::post('users/{id}/unsuspend', 'API\V4\Admin\UsersController@unsuspend');
         Route::apiResource('wallets', API\V4\Admin\WalletsController::class);

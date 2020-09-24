@@ -29,6 +29,8 @@ class UsersTest extends TestCase
         $this->deleteTestUser('UsersControllerTest3@userscontroller.com');
         $this->deleteTestUser('UserEntitlement2A@UserEntitlement.com');
         $this->deleteTestUser('john2.doe2@kolab.org');
+        $this->deleteTestUser('deleted@kolab.org');
+        $this->deleteTestUser('deleted@kolabnow.com');
         $this->deleteTestDomain('userscontroller.com');
 
         $user = $this->getTestUser('john@kolab.org');
@@ -51,6 +53,8 @@ class UsersTest extends TestCase
         $this->deleteTestUser('UsersControllerTest3@userscontroller.com');
         $this->deleteTestUser('UserEntitlement2A@UserEntitlement.com');
         $this->deleteTestUser('john2.doe2@kolab.org');
+        $this->deleteTestUser('deleted@kolab.org');
+        $this->deleteTestUser('deleted@kolabnow.com');
         $this->deleteTestDomain('userscontroller.com');
 
         $user = $this->getTestUser('john@kolab.org');
@@ -414,6 +418,8 @@ class UsersTest extends TestCase
     {
         $jack = $this->getTestUser('jack@kolab.org');
         $john = $this->getTestUser('john@kolab.org');
+        $deleted_priv = $this->getTestUser('deleted@kolab.org');
+        $deleted_priv->delete();
 
         // Test empty request
         $response = $this->actingAs($john)->post("/api/v4/users", []);
@@ -477,7 +483,7 @@ class UsersTest extends TestCase
             'last_name' => 'Doe2',
             'email' => 'john2.doe2@kolab.org',
             'organization' => 'TestOrg',
-            'aliases' => ['useralias1@kolab.org', 'useralias2@kolab.org'],
+            'aliases' => ['useralias1@kolab.org', 'deleted@kolab.org'],
         ];
 
         // Missing package
@@ -519,8 +525,8 @@ class UsersTest extends TestCase
         $this->assertSame('TestOrg', $user->getSetting('organization'));
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
-        $this->assertSame('useralias1@kolab.org', $aliases[0]->alias);
-        $this->assertSame('useralias2@kolab.org', $aliases[1]->alias);
+        $this->assertSame('deleted@kolab.org', $aliases[0]->alias);
+        $this->assertSame('useralias1@kolab.org', $aliases[1]->alias);
         // Assert the new user entitlements
         $this->assertUserEntitlements($user, ['groupware', 'mailbox', 'storage', 'storage']);
         // Assert the wallet to which the new user should be assigned to
@@ -649,11 +655,14 @@ class UsersTest extends TestCase
         $this->assertCount(1, $aliases);
         $this->assertSame('useralias2@' . \config('app.domain'), $aliases[0]->alias);
 
-        // Test error on setting an alias to other user's domain
-        // and missing password confirmation
+        // Test error on some invalid aliases missing password confirmation
         $post = [
             'password' => 'simple123',
-            'aliases' => ['useralias2@' . \config('app.domain'), 'useralias1@kolab.org']
+            'aliases' => [
+                'useralias2@' . \config('app.domain'),
+                'useralias1@kolab.org',
+                '@kolab.org',
+            ]
         ];
 
         $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
@@ -663,8 +672,9 @@ class UsersTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(2, $json['errors']);
-        $this->assertCount(1, $json['errors']['aliases']);
+        $this->assertCount(2, $json['errors']['aliases']);
         $this->assertSame("The specified domain is not available.", $json['errors']['aliases'][1]);
+        $this->assertSame("The specified alias is invalid.", $json['errors']['aliases'][2]);
         $this->assertSame("The password confirmation does not match.", $json['errors']['password'][0]);
 
         // Test authorized update of other user
@@ -903,6 +913,11 @@ class UsersTest extends TestCase
         $this->assertSame($wallet->id, $result['wallet']['id']);
         $this->assertArrayNotHasKey('discount', $result['wallet']);
 
+        $this->assertTrue($result['statusInfo']['enableDomains']);
+        $this->assertTrue($result['statusInfo']['enableWallets']);
+        $this->assertTrue($result['statusInfo']['enableUsers']);
+
+        // Ned is John's wallet controller
         $ned = $this->getTestUser('ned@kolab.org');
         $ned_wallet = $ned->wallets()->first();
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$ned]);
@@ -918,6 +933,10 @@ class UsersTest extends TestCase
         $this->assertSame($ned_wallet->id, $result['wallets'][0]['id']);
         $this->assertSame($provider, $result['wallet']['provider']);
         $this->assertSame($provider, $result['wallets'][0]['provider']);
+
+        $this->assertTrue($result['statusInfo']['enableDomains']);
+        $this->assertTrue($result['statusInfo']['enableWallets']);
+        $this->assertTrue($result['statusInfo']['enableUsers']);
 
         // Test discount in a response
         $discount = Discount::where('code', 'TEST')->first();
@@ -938,6 +957,14 @@ class UsersTest extends TestCase
         $this->assertSame($discount->discount, $result['wallets'][0]['discount']);
         $this->assertSame($discount->description, $result['wallets'][0]['discount_description']);
         $this->assertSame($mod_provider, $result['wallets'][0]['provider']);
+
+        // Jack is not a John's wallet controller
+        $jack = $this->getTestUser('jack@kolab.org');
+        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$jack]);
+
+        $this->assertFalse($result['statusInfo']['enableDomains']);
+        $this->assertFalse($result['statusInfo']['enableWallets']);
+        $this->assertFalse($result['statusInfo']['enableUsers']);
     }
 
     /**
@@ -1003,5 +1030,39 @@ class UsersTest extends TestCase
         $result = $this->invokeMethod(new UsersController(), 'validateEmail', $args);
 
         $this->assertSame($expected_result, $result);
+    }
+
+    /**
+     * User email/alias validation - more cases.
+     *
+     * Note: Technically these include unit tests, but let's keep it here for now.
+     * FIXME: Shall we do a http request for each case?
+     */
+    public function testValidateEmail2(): void
+    {
+        Queue::fake();
+
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $deleted_priv = $this->getTestUser('deleted@kolab.org');
+        $deleted_priv->setAliases(['deleted-alias@kolab.org']);
+        $deleted_priv->delete();
+        $deleted_pub = $this->getTestUser('deleted@kolabnow.com');
+        $deleted_pub->setAliases(['deleted-alias@kolabnow.com']);
+        $deleted_pub->delete();
+
+        // An alias that was a user email before is allowed, but only for custom domains
+        $result = UsersController::validateEmail('deleted@kolab.org', $john, true);
+        $this->assertSame(null, $result);
+
+        $result = UsersController::validateEmail('deleted-alias@kolab.org', $john, true);
+        $this->assertSame(null, $result);
+
+        $result = UsersController::validateEmail('deleted@kolabnow.com', $john, true);
+        $this->assertSame('The specified alias is not available.', $result);
+
+        $result = UsersController::validateEmail('deleted-alias@kolabnow.com', $john, true);
+        $this->assertSame('The specified alias is not available.', $result);
     }
 }
