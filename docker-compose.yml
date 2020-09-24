@@ -76,7 +76,7 @@ services:
       - SERVER_PORT=${OPENVIDU_SERVER_PORT}
       - SERVER_SSL_ENABLED=false
     hostname: openvidu.hosted.com
-    image: openvidu/openvidu-server-kms:2.13.0
+    image: openvidu/openvidu-server-kms:2.15.0
     network_mode: host
     tmpfs:
       - /run
