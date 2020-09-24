@@ -89,7 +89,7 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.domain'),
-        'prefix' => 'v4'
+        'prefix' => $prefix . 'api/v4'
     ],
     function () {
         Route::get('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
@@ -103,7 +103,7 @@ Route::group(
     ],
     function () {
         Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
-        Route::post('webhooks/meet/openvidu', 'API\V4\OpenViduController@webhook');
+        Route::post('meet/openvidu', 'API\V4\OpenViduController@webhook');
     }
 );
 
