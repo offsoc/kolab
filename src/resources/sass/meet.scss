@@ -191,6 +191,12 @@
     &.open {
         width: 30%;
         display: flex !important;
+
+        .mobile & {
+            width: 100%;
+            z-index: 1;
+            background: $body-bg;
+        }
     }
 
     .chat {

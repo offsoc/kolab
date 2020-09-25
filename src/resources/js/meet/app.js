@@ -749,6 +749,7 @@ function Meet(container)
         containerWidth = container.offsetWidth
         containerHeight = container.offsetHeight
         updateLayout()
+        $(container).parent()[window.screen.width <= 768 ? 'addClass' : 'removeClass']('mobile')
     }
 
     /**

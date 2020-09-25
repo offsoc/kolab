@@ -26,12 +26,12 @@
             </div>
         </div>
 
-        <div id="meet-setup" class="card container mt-5 mb-5">
+        <div id="meet-setup" class="card container mt-2 mt-md-5 mb-5">
             <div class="card-body">
                 <div class="card-title">Set up your session</div>
                 <div class="card-text">
                     <form class="setup-form row">
-                        <div id="setup-preview" class="col-sm-6">
+                        <div id="setup-preview" class="col-sm-6 mb-3 mb-sm-0">
                             <video class="rounded"></video>
                             <div class="volume"><div class="bar"></div></div>
                         </div>
