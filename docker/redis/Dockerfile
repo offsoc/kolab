@@ -24,4 +24,4 @@ RUN systemctl enable redis
 
 WORKDIR /root/
 
-CMD ["/lib/systemd/systemd"]
+CMD ["/usr/bin/redis-server"]
