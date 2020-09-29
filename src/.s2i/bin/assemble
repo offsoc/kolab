@@ -14,7 +14,13 @@ fi
 
 #env
 
-/usr/libexec/s2i/assemble
+echo "--->> Run stock assemble script ${ASSEMBLE_SCRIPT:=/usr/libexec/s2i/assemble}"
+
+if [[ -f "/usr/libexec/s2i/assemble" ]]; then
+    ${ASSEMBLE_SCRIPT}
+else
+    echo "--->> ${ASSEMBLE_SCRIPT} does not exist"
+fi
 
 #cat >> /opt/app-root/etc/conf.d/99-loglevel.conf << EOF
 #LogLevel warn mod_rewrite.c:trace4
