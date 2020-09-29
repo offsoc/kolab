@@ -16,7 +16,7 @@ fi
 
 echo "--->> Run stock assemble script ${ASSEMBLE_SCRIPT:=/usr/libexec/s2i/assemble}"
 
-if [[ -f "/usr/libexec/s2i/assemble" ]]; then
+if [[ -f "${ASSEMBLE_SCRIPT}" || -f "/tmp/src/${ASSEMBLE_SCRIPT}" ]]; then
     ${ASSEMBLE_SCRIPT}
 else
     echo "--->> ${ASSEMBLE_SCRIPT} does not exist"
