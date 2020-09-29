@@ -55,7 +55,7 @@ RUN dnf -y install \
 RUN groupadd -g 1001 default && \
     useradd -d /opt/app-root/ -u 1001 -g 1001 default
 
-USER default
+USER 1001
 
 WORKDIR /opt/app-root/
 
