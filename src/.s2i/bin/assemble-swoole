@@ -2,6 +2,13 @@
 
 set -x
 set -e
+
+echo "---> Installing application source..."
+
+rm -fR /tmp/src/.git
+
+mv /tmp/src/* ./
+
 pwd
 
 if [ -f "composer.json" ]; then
