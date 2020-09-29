@@ -12,7 +12,9 @@ if [ -f ".env.local" ]; then
     cat .env.local >> .env
 fi
 
-#env
+env
+
+ls -la /tmp/scripts/
 
 echo "--->> Run stock assemble script ${ASSEMBLE_SCRIPT:=/usr/libexec/s2i/assemble}"
 
