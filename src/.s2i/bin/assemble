@@ -14,8 +14,6 @@ fi
 
 env
 
-ls -la /tmp/scripts/
-
 echo "--->> Run stock assemble script ${ASSEMBLE_SCRIPT:=/usr/libexec/s2i/assemble}"
 
 if [[ -f "${ASSEMBLE_SCRIPT}" || -f "/tmp/src/${ASSEMBLE_SCRIPT}" ]]; then
