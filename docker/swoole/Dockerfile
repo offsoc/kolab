@@ -33,7 +33,7 @@ RUN dnf -y install \
             --enable-sockets \
             --disable-mysqlnd \
             --enable-http2 \
-            --enable-openssl && \
+            --enable-openssl \
             --enable-debug \
             --enable-debug-log \
             --enable-trace-log && \
