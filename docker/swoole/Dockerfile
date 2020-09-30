@@ -7,7 +7,8 @@ LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
       io.openshift.expose-services="8000:http" \
       io.openshift.tags="builder,php,swoole"
 
-ENV SWOOLE_VERSION=4.4.x
+ENV SWOOLE_VERSION=4.4.x \
+    HOME=/opt/app-root/src
 
 RUN dnf -y install \
         composer \
@@ -56,7 +57,7 @@ RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/ -u 1001
 
 USER 1001
 
-WORKDIR /opt/app-root/
+WORKDIR ${HOME}
 
 COPY /rootfs /
 
