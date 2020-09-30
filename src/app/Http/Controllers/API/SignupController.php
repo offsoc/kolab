@@ -211,11 +211,11 @@ class SignupController extends Controller
         $plan = $this->getPlan();
         $is_domain = $plan->hasDomain();
 
-        $login  = $request->login;
-        $domain = $request->domain;
+        $login = $request->login;
+        $domain_name = $request->domain;
 
         // Validate login
-        if ($errors = self::validateLogin($login, $domain, $is_domain)) {
+        if ($errors = self::validateLogin($login, $domain_name, $is_domain)) {
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
@@ -225,25 +225,25 @@ class SignupController extends Controller
 
         // We allow only ASCII, so we can safely lower-case the email address
         $login = Str::lower($login);
-        $domain = Str::lower($domain);
+        $domain_name = Str::lower($domain_name);
+        $domain = null;
 
         DB::beginTransaction();
 
-        // Create user record
-        $user = User::create([
-                'email' => $login . '@' . $domain,
-                'password' => $request->password,
-        ]);
-
         // Create domain record
-        // FIXME: Should we do this in UserObserver::created()?
         if ($is_domain) {
             $domain = Domain::create([
-                    'namespace' => $domain,
+                    'namespace' => $domain_name,
                     'status' => Domain::STATUS_NEW,
                     'type' => Domain::TYPE_EXTERNAL,
             ]);
         }
+
+        // Create user record
+        $user = User::create([
+                'email' => $login . '@' . $domain_name,
+                'password' => $request->password,
+        ]);
 
         if (!empty($discount)) {
             $wallet = $user->wallets()->first();
