@@ -136,8 +136,7 @@ class UserSeeder extends Seeder
             ]
         );
 
-        $jeroen->role = "admin";
-
+        $jeroen->role = 'admin';
         $jeroen->save();
     }
 }

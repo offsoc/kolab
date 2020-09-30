@@ -56,9 +56,63 @@ class UserTest extends TestCase
     }
 
     /**
+     * Verify a wallet assigned a controller is among the accounts of the assignee.
+     */
+    public function testAccounts(): void
+    {
+        $userA = $this->getTestUser('UserAccountA@UserAccount.com');
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+
+        $this->assertTrue($userA->wallets()->count() == 1);
+
+        $userA->wallets()->each(
+            function ($wallet) use ($userB) {
+                $wallet->addController($userB);
+            }
+        );
+
+        $this->assertTrue($userB->accounts()->get()[0]->id === $userA->wallets()->get()[0]->id);
+    }
+
+    public function testCanDelete(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testCanRead(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testCanUpdate(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    /**
+     * Test user create/creating observer
+     */
+    public function testCreate(): void
+    {
+        Queue::fake();
+
+        $domain = \config('app.domain');
+
+        $user = User::create([
+                'email' => 'USER-test@' . \strtoupper($domain)
+        ]);
+
+        $result = User::where('email', 'user-test@' . $domain)->first();
+
+        $this->assertSame('user-test@' . $domain, $result->email);
+        $this->assertSame($user->id, $result->id);
+        $this->assertSame(User::STATUS_NEW | User::STATUS_ACTIVE, $result->status);
+    }
+
+    /**
      * Verify user creation process
      */
-    public function testUserCreateJob(): void
+    public function testCreateJobs(): void
     {
         // Fake the queue, assert that no jobs were pushed...
         Queue::fake();
@@ -93,45 +147,6 @@ class UserTest extends TestCase
                 && $job_user->email === $user->email;
         });
 */
-    }
-
-    /**
-     * Verify a wallet assigned a controller is among the accounts of the assignee.
-     */
-    public function testListUserAccounts(): void
-    {
-        $userA = $this->getTestUser('UserAccountA@UserAccount.com');
-        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
-
-        $this->assertTrue($userA->wallets()->count() == 1);
-
-        $userA->wallets()->each(
-            function ($wallet) use ($userB) {
-                $wallet->addController($userB);
-            }
-        );
-
-        $this->assertTrue($userB->accounts()->get()[0]->id === $userA->wallets()->get()[0]->id);
-    }
-
-    public function testAccounts(): void
-    {
-        $this->markTestIncomplete();
-    }
-
-    public function testCanDelete(): void
-    {
-        $this->markTestIncomplete();
-    }
-
-    public function testCanRead(): void
-    {
-        $this->markTestIncomplete();
-    }
-
-    public function testCanUpdate(): void
-    {
-        $this->markTestIncomplete();
     }
 
     /**

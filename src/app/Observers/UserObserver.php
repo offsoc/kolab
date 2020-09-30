@@ -32,6 +32,8 @@ class UserObserver
             }
         }
 
+        $user->email = \strtolower($user->email);
+
         // only users that are not imported get the benefit of the doubt.
         $user->status |= User::STATUS_NEW | User::STATUS_ACTIVE;
 

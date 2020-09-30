@@ -629,14 +629,14 @@ class UsersController extends Controller
             return \trans('validation.entryinvalid', ['attribute' => $attribute]);
         }
 
-        list($login, $domain) = explode('@', $email);
+        list($login, $domain) = explode('@', Str::lower($email));
 
         if (strlen($login) === 0 || strlen($domain) === 0) {
             return \trans('validation.entryinvalid', ['attribute' => $attribute]);
         }
 
         // Check if domain exists
-        $domain = Domain::where('namespace', Str::lower($domain))->first();
+        $domain = Domain::where('namespace', $domain)->first();
 
         if (empty($domain)) {
             return \trans('validation.domaininvalid');

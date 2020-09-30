@@ -48,6 +48,27 @@ class DomainTest extends TestCase
     }
 
     /**
+     * Test domain create/creating observer
+     */
+    public function testCreate(): void
+    {
+        Queue::fake();
+
+        $domain = Domain::create([
+                'namespace' => 'GMAIL.COM',
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_EXTERNAL,
+        ]);
+
+        $result = Domain::where('namespace', 'gmail.com')->first();
+
+        $this->assertSame('gmail.com', $result->namespace);
+        $this->assertSame($domain->id, $result->id);
+        $this->assertSame($domain->type, $result->type);
+        $this->assertSame(Domain::STATUS_NEW | Domain::STATUS_ACTIVE, $result->status);
+    }
+
+    /**
      * Test domain creating jobs
      */
     public function testCreateJobs(): void
