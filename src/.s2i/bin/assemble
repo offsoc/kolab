@@ -22,12 +22,6 @@ else
     echo "--->> ${ASSEMBLE_SCRIPT} does not exist"
 fi
 
-ls -l /tmp/scripts/
-
-#cat >> /opt/app-root/etc/conf.d/99-loglevel.conf << EOF
-#LogLevel warn mod_rewrite.c:trace4
-#EOF
-
 # Won't work due to:
 # Cannot install, php_dir for channel "pecl.php.net" is not writeable by the current user
 #pecl channel-update pecl.php.net
