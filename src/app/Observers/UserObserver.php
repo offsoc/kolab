@@ -4,7 +4,9 @@ namespace App\Observers;
 
 use App\Entitlement;
 use App\Domain;
+use App\Transaction;
 use App\User;
+use App\Wallet;
 use Illuminate\Support\Facades\DB;
 
 class UserObserver
@@ -105,6 +107,11 @@ class UserObserver
      */
     public function deleting(User $user)
     {
+        if ($user->isForceDeleting()) {
+            $this->forceDeleting($user);
+            return;
+        }
+
         // TODO: Especially in tests we're doing delete() on a already deleted user.
         //       Should we escape here - for performance reasons?
         // TODO: I think all of this should use database transactions
@@ -138,9 +145,8 @@ class UserObserver
         $users = array_unique($users);
         $domains = array_unique($domains);
 
-        // Note: Domains/users need to be deleted one by one to make sure
-        //       events are fired and observers can do the proper cleanup.
-        //       Entitlements have no delete event handlers as for now.
+        // Domains/users/entitlements need to be deleted one by one to make sure
+        // events are fired and observers can do the proper cleanup.
         if (!empty($users)) {
             foreach (User::whereIn('id', $users)->get() as $_user) {
                 $_user->delete();
@@ -160,6 +166,69 @@ class UserObserver
         // FIXME: What do we do with user wallets?
 
         \App\Jobs\UserDelete::dispatch($user->id);
+    }
+
+    /**
+     * Handle the "deleting" event on forceDelete() call.
+     *
+     * @param User $user The user that is being deleted.
+     *
+     * @return void
+     */
+    public function forceDeleting(User $user)
+    {
+        // TODO: We assume that at this moment all belongings are already soft-deleted.
+
+        // Remove owned users/domains
+        $wallets = $user->wallets()->pluck('id')->all();
+        $assignments = Entitlement::withTrashed()->whereIn('wallet_id', $wallets)->get();
+        $entitlements = [];
+        $domains = [];
+        $users = [];
+
+        foreach ($assignments as $entitlement) {
+            $entitlements[] = $entitlement->id;
+
+            if ($entitlement->entitleable_type == Domain::class) {
+                $domains[] = $entitlement->entitleable_id;
+            } elseif (
+                $entitlement->entitleable_type == User::class
+                && $entitlement->entitleable_id != $user->id
+            ) {
+                $users[] = $entitlement->entitleable_id;
+            }
+        }
+
+        $users = array_unique($users);
+        $domains = array_unique($domains);
+
+        // Remove the user "direct" entitlements explicitely, if they belong to another
+        // user's wallet they will not be removed by the wallets foreign key cascade
+        Entitlement::withTrashed()
+            ->where('entitleable_id', $user->id)
+            ->where('entitleable_type', User::class)
+            ->forceDelete();
+
+        // Users need to be deleted one by one to make sure observers can do the proper cleanup.
+        if (!empty($users)) {
+            foreach (User::withTrashed()->whereIn('id', $users)->get() as $_user) {
+                $_user->forceDelete();
+            }
+        }
+
+        // Domains can be just removed
+        if (!empty($domains)) {
+            Domain::withTrashed()->whereIn('id', $domains)->forceDelete();
+        }
+
+        // Remove transactions, they also have no foreign key constraint
+        Transaction::where('object_type', Entitlement::class)
+            ->whereIn('object_id', $entitlements)
+            ->delete();
+
+        Transaction::where('object_type', Wallet::class)
+            ->whereIn('object_id', $wallets)
+            ->delete();
     }
 
     /**

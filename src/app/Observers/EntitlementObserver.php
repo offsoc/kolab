@@ -93,8 +93,19 @@ class EntitlementObserver
         $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_DELETED);
     }
 
+    /**
+     * Handle the entitlement "deleting" event.
+     *
+     * @param \App\Entitlement $entitlement The entitlement.
+     *
+     * @return void
+     */
     public function deleting(Entitlement $entitlement)
     {
+        if ($entitlement->trashed()) {
+            return;
+        }
+
         // Start calculating the costs for the consumption of this entitlement if the
         // existing consumption spans >= 14 days.
         //
