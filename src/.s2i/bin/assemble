@@ -3,24 +3,20 @@
 set -x
 set -e
 
-function app_source () {
-    echo "---> Installing application source..."
-    rm -fR /tmp/src/.git
-    mv /tmp/src /opt/app-root/
-}
-
 function composer_install () {
     echo "--->> Detected composer.json, running install"
     php -dmemory_limit=${COMPOSER_MEMORY_LIMIT:--1} /usr/bin/composer install ${COMPOSER_ARGS}
     rm -rf ~/.cache/composer/
 }
 
-fix-permissions
-
 shopt -s dotglob
 echo "--->> $(rm -vrf vendor/ composer.lock)"
 
-app_source
+echo "---> Installing application source..."
+rm -fR /tmp/src/.git
+mv /tmp/src/* ./
+
+fix-permissions
 
 pushd /opt/app-root/src
 
