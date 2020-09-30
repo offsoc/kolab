@@ -16,9 +16,9 @@ echo "---> Installing application source..."
 rm -fR /tmp/src/.git
 mv /tmp/src/* ./
 
-fix-permissions
-
 pushd /opt/app-root/src
+
+fix-permissions ./
 
 if [ -f ".env.local" ]; then
     # Ensure there's a line ending
@@ -40,4 +40,4 @@ echo "---->> Run npm run prod"
 npm install
 npm run ${LARAVEL_ENV:=prod} && rm -rf ~/.npm/
 
-fix-permissions
+fix-permissions ./
