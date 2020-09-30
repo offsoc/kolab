@@ -119,8 +119,6 @@ class Entitlement extends Model
         if ($this->entitleable instanceof \App\Domain) {
             return $this->entitleable->namespace;
         }
-
-        return null;
     }
 
     /**
