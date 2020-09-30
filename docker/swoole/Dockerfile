@@ -52,7 +52,7 @@ RUN dnf -y install \
     echo "extension=swoole.so" >> /etc/php.d/swoole.ini && \
     php -m 2>&1 | grep -q swoole
 
-RUN groupadd -g 1001 default && \
+RUN id default || groupadd -g 1001 default && \
     useradd -d /opt/app-root/ -u 1001 -g 1001 default
 
 USER 1001
