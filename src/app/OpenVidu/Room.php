@@ -122,6 +122,14 @@ class Room extends Model
         if ($response->getStatusCode() == 200) {
             $json = json_decode($response->getBody(), true);
 
+            if ($rewrite_host = \config('openvidu.rewrite_host')) {
+                $json['token'] = preg_replace(
+                    '|^(wss?://)([^?/]+)|',
+                    '\\1' . $rewrite_host,
+                    $json['token']
+                );
+            }
+
             return $json;
         }
 
