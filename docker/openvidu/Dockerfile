@@ -2,8 +2,9 @@ FROM fedora:31
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@kolabsys.com>
 
-ENV container docker
-ENV SYSTEMD_PAGER=''
+ENV CERTIFICATE_TYPE=selfsigned
+ENV DOMAIN_OR_PUBLIC_IP=localhost.localdomain
+ENV OPENVIDU_SECRET=MY_SECRET
 
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
@@ -47,7 +48,7 @@ RUN dnf -y install \
             /src/openvidu.git/openvidu-server/target/openvidu-server-2.15.0.jar \
             /home/openvidu/openvidu-server.jar && \
         chown -R openvidu:openvidu /home/openvidu/ && \
-        rm -rvf /src/ /root/.m2/ && \
+        rm -rvf /src/ /root/.m2/
 
 USER openvidu
 
