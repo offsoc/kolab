@@ -36,24 +36,25 @@ RUN dnf -y install \
         traceroute \
         vim-enhanced \
         wget && \
-    dnf clean all
+    dnf clean all && \
+    mkdir -p /src/ && \
+    git clone --branch v2.15.0 https://github.com/OpenVidu/openvidu.git /src/openvidu.git && \
+        cd /src/openvidu.git/ && \
+        mvn clean install -DskipTests && \
+        mkdir -p /usr/share/openvidu/ && \
+        useradd openvidu && \
+        mv -v \
+            /src/openvidu.git/openvidu-server/target/openvidu-server-2.15.0.jar \
+            /home/openvidu/openvidu-server.jar && \
+        chown -R openvidu:openvidu /home/openvidu/ && \
+        rm -rvf /src/ /root/.m2/ && \
 
-RUN git clone --branch v2.14.0 https://github.com/OpenVidu/openvidu.git /openvidu.git && \
-    cd /openvidu.git/ && \
-    mvn clean install -DskipTests && \
-    cp /openvidu.git/openvidu-server/target/openvidu-server-2.14.0.jar /root/ && \
-    cd /root/ && \
-    rm -rf /openvidu.git/ /root/.m2/
+USER openvidu
 
-COPY rootfs/ /
-
-RUN useradd openvidu
-
-RUN mv /root/openvidu-server-*.jar /home/openvidu/openvidu-server.jar
-
-RUN chown -R openvidu:openvidu /home/openvidu/
-
-RUN systemctl enable openvidu
-
-CMD ["/lib/systemd/systemd", "--system"]
-ENTRYPOINT "/lib/systemd/systemd"
+CMD [ \
+        "/usr/bin/java", \
+        "-Dserver.port=8080", \
+        "-Dserver.ssl.enabled=false", \
+        "-jar", \
+        "/home/openvidu/openvidu-server.jar" \
+    ]
