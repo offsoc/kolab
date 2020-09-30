@@ -15,7 +15,7 @@ function composer_install () {
     rm -rf ~/.cache/composer/
 }
 
-fix_permissions
+fix-permissions
 
 shopt -s dotglob
 echo "--->> $(rm -vrf vendor/ composer.lock)"
