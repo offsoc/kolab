@@ -61,20 +61,20 @@ services:
     container_name: kolab-openvidu
     environment:
       - APP_DOMAIN=${APP_DOMAIN}
+      - CERTIFICATE_TYPE=letsencrypt
       - COTURN_IP=${OPENVIDU_COTURN_IP}
       - COTURN_REDIS_DBNAME=${OPENVIDU_COTURN_REDIS_DATABASE}
       - COTURN_REDIS_PASSWORD=${OPENVIDU_COTURN_REDIS_PASSWORD}
       - COTURN_REDIS_IP=${OPENVIDU_COTURN_REDIS_IP}
-      - HTTP_PORT=${OPENVIDU_SERVER_PORT}
+      - DOMAIN_OR_PUBLIC_IP=${OPENVIDU_PUBLIC_IP}
+      - HTTP_PORT=8080
+      - HTTPS_PORT=8443
       - KMS_STUN_IP=${OPENVIDU_COTURN_IP}
       - KMS_STUN_PORT=3478
       - KMS_URIS=["ws://localhost:8888/kurento"]
-      - OPENVIDU_DOMAIN_OR_PUBLIC_IP=${OPENVIDU_PUBLIC_IP}
       - OPENVIDU_SECRET=${OPENVIDU_API_PASSWORD}
       - OPENVIDU_WEBHOOK=${OPENVIDU_WEBHOOK}
       - OPENVIDU_WEBHOOK_ENDPOINT=${OPENVIDU_WEBHOOK_ENDPOINT}
-      - SERVER_PORT=${OPENVIDU_SERVER_PORT}
-      - SERVER_SSL_ENABLED=false
     hostname: openvidu.hosted.com
     image: openvidu/openvidu-server-kms:2.15.0
     network_mode: host
@@ -84,6 +84,8 @@ services:
       - /var/run
       - /var/tmp
     tty: true
+    volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
   proxy:
     build:
       context: ./docker/proxy/
