@@ -40,3 +40,4 @@ echo "---->> Run npm run prod"
 npm install
 npm run ${LARAVEL_ENV:=prod} && rm -rf ~/.npm/
 
+fix-permissions
