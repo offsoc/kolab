@@ -157,6 +157,9 @@ RUN dnf -y install \
         sed -r -i \
             -e 's/gstreamer-(.*)1.5/gstreamer-\11.0/g' \
             $(find -type f -name CMakeLists.txt) && \
+        sed -i \
+            -e '603,618d' \
+            server/death_handler.cpp && \
         mkdir build && \
         cd build && \
         cmake \
