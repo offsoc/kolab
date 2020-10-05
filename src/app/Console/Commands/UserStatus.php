@@ -44,8 +44,20 @@ class UserStatus extends Command
             return 1;
         }
 
-        $this->info("Found user: {$user->id}");
+        $statuses = [
+            'active' => User::STATUS_ACTIVE,
+            'suspended' => User::STATUS_SUSPENDED,
+            'deleted' => User::STATUS_DELETED,
+            'ldapReady' => User::STATUS_LDAP_READY,
+            'imapReady' => User::STATUS_IMAP_READY,
+        ];
 
-        $this->info($user->status);
+        foreach ($statuses as $text => $bit) {
+            $func = 'is' . \ucfirst($text);
+
+            $this->info(sprintf("%d %s: %s", $bit, $text, $user->$func()));
+        }
+
+        $this->info("In total: {$user->status}");
     }
 }

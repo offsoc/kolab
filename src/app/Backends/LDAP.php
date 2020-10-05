@@ -98,7 +98,10 @@ class LDAP
             $result = $ldap->add_entry($dn, $entry);
 
             if (!$result) {
-                self::throwException($ldap, "Failed to create domain {$domain->namespace} in LDAP");
+                self::throwException(
+                    $ldap,
+                    "Failed to create domain {$domain->namespace} in LDAP (" . __LINE__ . ")"
+                );
             }
         }
 
@@ -144,12 +147,19 @@ class LDAP
         );
 
         if (!$ldap->get_entry($domainBaseDN)) {
-            $ldap->add_entry($domainBaseDN, $entry);
+            $result = $ldap->add_entry($domainBaseDN, $entry);
+
+            if (!$result) {
+                self::throwException(
+                    $ldap,
+                    "Failed to create domain {$domain->namespace} in LDAP (" . __LINE__ . ")"
+                );
+            }
         }
 
         foreach (['Groups', 'People', 'Resources', 'Shared Folders'] as $item) {
             if (!$ldap->get_entry("ou={$item},{$domainBaseDN}")) {
-                $ldap->add_entry(
+                $result = $ldap->add_entry(
                     "ou={$item},{$domainBaseDN}",
                     [
                         'ou' => $item,
@@ -160,12 +170,19 @@ class LDAP
                         ]
                     ]
                 );
+
+                if (!$result) {
+                    self::throwException(
+                        $ldap,
+                        "Failed to create domain {$domain->namespace} in LDAP (" . __LINE__ . ")"
+                    );
+                }
             }
         }
 
         foreach (['kolab-admin'] as $item) {
             if (!$ldap->get_entry("cn={$item},{$domainBaseDN}")) {
-                $ldap->add_entry(
+                $result = $ldap->add_entry(
                     "cn={$item},{$domainBaseDN}",
                     [
                         'cn' => $item,
@@ -179,6 +196,13 @@ class LDAP
                         ]
                     ]
                 );
+
+                if (!$result) {
+                    self::throwException(
+                        $ldap,
+                        "Failed to create domain {$domain->namespace} in LDAP (" . __LINE__ . ")"
+                    );
+                }
             }
         }
 
@@ -240,7 +264,10 @@ class LDAP
             $result = $ldap->add_entry($dn, $entry);
 
             if (!$result) {
-                self::throwException($ldap, "Failed to create user {$user->email} in LDAP");
+                self::throwException(
+                    $ldap,
+                    "Failed to create user {$user->email} in LDAP (" . __LINE__ . ")"
+                );
             }
         }
 
@@ -270,7 +297,10 @@ class LDAP
             $result = $ldap->delete_entry_recursive($domainBaseDN);
 
             if (!$result) {
-                self::throwException($ldap, "Failed to delete domain {$domain->namespace} from LDAP");
+                self::throwException(
+                    $ldap,
+                    "Failed to delete domain {$domain->namespace} from LDAP (" . __LINE__ . ")"
+                );
             }
         }
 
@@ -279,7 +309,10 @@ class LDAP
                 $result = $ldap->delete_entry($ldap_domain['dn']);
 
                 if (!$result) {
-                    self::throwException($ldap, "Failed to delete domain {$domain->namespace} from LDAP");
+                    self::throwException(
+                        $ldap,
+                        "Failed to delete domain {$domain->namespace} from LDAP (" . __LINE__ . ")"
+                    );
                 }
             }
         }
@@ -305,7 +338,10 @@ class LDAP
             $result = $ldap->delete_entry($dn);
 
             if (!$result) {
-                self::throwException($ldap, "Failed to delete user {$user->email} from LDAP");
+                self::throwException(
+                    $ldap,
+                    "Failed to delete user {$user->email} from LDAP (" . __LINE__ . ")"
+                );
             }
         }
 
@@ -377,7 +413,10 @@ class LDAP
         $ldapDomain = $ldap->find_domain($domain->namespace);
 
         if (!$ldapDomain) {
-            self::throwException($ldap, "Failed to update domain {$domain->namespace} in LDAP (domain not found)");
+            self::throwException(
+                $ldap,
+                "Failed to update domain {$domain->namespace} in LDAP (domain not found)"
+            );
         }
 
         $oldEntry = $ldap->get_entry($ldapDomain['dn']);
@@ -392,7 +431,10 @@ class LDAP
         $result = $ldap->modify_entry($ldapDomain['dn'], $oldEntry, $newEntry);
 
         if (!is_array($result)) {
-            self::throwException($ldap, "Failed to update domain {$domain->namespace} in LDAP");
+            self::throwException(
+                $ldap,
+                "Failed to update domain {$domain->namespace} in LDAP (" . __LINE__ . ")"
+            );
         }
 
         if (empty(self::$ldap)) {
@@ -415,7 +457,10 @@ class LDAP
         $newEntry = $oldEntry = self::getUserEntry($ldap, $user->email, $dn, true);
 
         if (!$oldEntry) {
-            self::throwException($ldap, "Failed to update user {$user->email} in LDAP (user not found)");
+            self::throwException(
+                $ldap,
+                "Failed to update user {$user->email} in LDAP (user not found)"
+            );
         }
 
         self::setUserAttributes($user, $newEntry);
@@ -437,7 +482,10 @@ class LDAP
         $result = $ldap->modify_entry($dn, $oldEntry, $newEntry);
 
         if (!is_array($result)) {
-            self::throwException($ldap, "Failed to update user {$user->email} in LDAP");
+            self::throwException(
+                $ldap,
+                "Failed to update user {$user->email} in LDAP (" . __LINE__ . ")"
+            );
         }
 
         if (empty(self::$ldap)) {
@@ -462,7 +510,10 @@ class LDAP
             throw new \Exception("Failed to connect to LDAP");
         }
 
-        $bound = $ldap->bind(\config("ldap.{$privilege}.bind_dn"), \config("ldap.{$privilege}.bind_pw"));
+        $bound = $ldap->bind(
+            \config("ldap.{$privilege}.bind_dn"),
+            \config("ldap.{$privilege}.bind_pw")
+        );
 
         if (!$bound) {
             throw new \Exception("Failed to bind to LDAP");
