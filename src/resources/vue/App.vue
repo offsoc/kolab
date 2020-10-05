@@ -19,10 +19,9 @@
 
                 axios.get('/api/auth/info?refresh_token=1')
                     .then(response => {
-                        this.isLoading = false
-                        this.$root.stopLoading()
                         this.$root.loginUser(response.data, false)
-                        this.$store.state.authInfo = response.data
+                        this.$root.stopLoading()
+                        this.isLoading = false
                     })
                     .catch(error => {
                         // Release lock on the router-view, otherwise links (e.g. Logout) will not work

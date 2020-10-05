@@ -304,11 +304,12 @@ class PasswordResetTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(4, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame('bearer', $json['token_type']);
         $this->assertTrue(!empty($json['expires_in']) && is_int($json['expires_in']) && $json['expires_in'] > 0);
         $this->assertNotEmpty($json['access_token']);
+        $this->assertSame($user->email, $json['email']);
+        $this->assertSame($user->id, $json['id']);
 
         Queue::assertPushed(\App\Jobs\UserUpdate::class, 1);
         Queue::assertPushed(\App\Jobs\UserUpdate::class, function ($job) use ($user) {

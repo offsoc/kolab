@@ -475,11 +475,11 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(4, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame('bearer', $json['token_type']);
         $this->assertTrue(!empty($json['expires_in']) && is_int($json['expires_in']) && $json['expires_in'] > 0);
         $this->assertNotEmpty($json['access_token']);
+        $this->assertSame($identity, $json['email']);
 
         Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
         Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
@@ -586,11 +586,11 @@ class SignupTest extends TestCase
         $result = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(4, $result);
         $this->assertSame('success', $result['status']);
         $this->assertSame('bearer', $result['token_type']);
         $this->assertTrue(!empty($result['expires_in']) && is_int($result['expires_in']) && $result['expires_in'] > 0);
         $this->assertNotEmpty($result['access_token']);
+        $this->assertSame("$login@$domain", $result['email']);
 
         Queue::assertPushed(\App\Jobs\DomainCreate::class, 1);
         Queue::assertPushed(\App\Jobs\DomainCreate::class, function ($job) use ($domain) {
