@@ -230,7 +230,11 @@ class LDAP
             'nsroledn' => []
         ];
 
-        if (!self::getUserEntry($ldap, $user->email, $dn) && $dn) {
+        if (!self::getUserEntry($ldap, $user->email, $dn)) {
+            if (empty($dn)) {
+                self::throwException($ldap, "Failed to create user {$user->email} in LDAP");
+            }
+
             self::setUserAttributes($user, $entry);
 
             $result = $ldap->add_entry($dn, $entry);
