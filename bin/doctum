@@ -6,6 +6,7 @@ pushd ${cwd}/../src/
 
 php -dmemory_limit=-1 \
     vendor/bin/doctum.php \
+    update \
     doctum.config.php
 
 popd
