@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Jobs;
 
-use App\Jobs\UserCreate;
 use Tests\TestCase;
 
 class UserCreateTest extends TestCase
@@ -35,7 +34,7 @@ class UserCreateTest extends TestCase
 
         $this->assertFalse($user->isLdapReady());
 
-        $job = new UserCreate($user);
+        $job = new \App\Jobs\User\CreateJob($user->id);
         $job->handle();
 
         $this->assertTrue($user->fresh()->isLdapReady());

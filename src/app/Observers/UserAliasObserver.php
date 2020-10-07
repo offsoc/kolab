@@ -60,7 +60,7 @@ class UserAliasObserver
     public function created(UserAlias $alias)
     {
         if ($alias->user) {
-            \App\Jobs\UserUpdate::dispatch($alias->user);
+            \App\Jobs\User\UpdateJob::dispatch($alias->user_id);
         }
     }
 
@@ -74,7 +74,7 @@ class UserAliasObserver
     public function updated(UserAlias $alias)
     {
         if ($alias->user) {
-            \App\Jobs\UserUpdate::dispatch($alias->user);
+            \App\Jobs\User\UpdateJob::dispatch($alias->user_id);
         }
     }
 
@@ -88,7 +88,7 @@ class UserAliasObserver
     public function deleted(UserAlias $alias)
     {
         if ($alias->user) {
-            \App\Jobs\UserUpdate::dispatch($alias->user);
+            \App\Jobs\User\UpdateJob::dispatch($alias->user_id);
         }
     }
 }

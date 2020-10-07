@@ -45,7 +45,7 @@ class UserVerify extends Command
 
         $this->info("Found user: {$user->id}");
 
-        $job = new \App\Jobs\UserVerify($user);
+        $job = new \App\Jobs\User\VerifyJob($user->id);
         $job->handle();
     }
 }

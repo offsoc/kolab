@@ -34,7 +34,7 @@ class UserUpdate extends Command
             return 1;
         }
 
-        $job = new \App\Jobs\UserUpdate($user);
+        $job = new \App\Jobs\User\UpdateJob($user->id);
         $job->handle();
     }
 }

@@ -93,7 +93,7 @@ class WalletsController extends Controller
      * Update the specified resource in storage.
      *
      * @param \Illuminate\Http\Request $request
-     * @param int                      $id
+     * @param string                   $id
      *
      * @return \Illuminate\Http\JsonResponse
      */

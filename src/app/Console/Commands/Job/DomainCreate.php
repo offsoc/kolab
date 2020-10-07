@@ -34,7 +34,7 @@ class DomainCreate extends Command
             return 1;
         }
 
-        $job = new \App\Jobs\DomainCreate($domain);
+        $job = new \App\Jobs\Domain\CreateJob($domain->id);
         $job->handle();
     }
 }

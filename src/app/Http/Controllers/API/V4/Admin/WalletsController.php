@@ -52,7 +52,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
      * Award/penalize a wallet.
      *
      * @param \Illuminate\Http\Request $request The API request.
-     * @params string                  $id      Wallet identifier
+     * @param string                   $id      Wallet identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
@@ -111,7 +111,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
      * Update wallet data.
      *
      * @param \Illuminate\Http\Request $request The API request.
-     * @params string                  $id      Wallet identifier
+     * @param string                   $id      Wallet identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */

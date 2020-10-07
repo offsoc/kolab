@@ -13,12 +13,23 @@ use Tests\TestCase;
 
 class ReceiptTest extends TestCase
 {
+    private $paymentIDs = ['AAA1', 'AAA2', 'AAA3', 'AAA4', 'AAA5', 'AAA6', 'AAA7'];
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        Payment::whereIn('id', $this->paymentIDs)->delete();
+    }
+
     /**
      * {@inheritDoc}
      */
     public function tearDown(): void
     {
         $this->deleteTestUser('receipt-test@kolabnow.com');
+
+        Payment::whereIn('id', $this->paymentIDs)->delete();
 
         parent::tearDown();
     }

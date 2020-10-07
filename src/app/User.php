@@ -269,6 +269,20 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Return the \App\Domain for this user.
+     *
+     * @return \App\Domain|null
+     */
+    public function domain()
+    {
+        list($local, $domainName) = explode('@', $this->email);
+
+        $domain = \App\Domain::withTrashed()->where('namespace', $domainName)->first();
+
+        return $domain;
+    }
+
+    /**
      * List the domains to which this user is entitled.
      *
      * @return Domain[]

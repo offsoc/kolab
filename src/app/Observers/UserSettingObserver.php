@@ -17,7 +17,7 @@ class UserSettingObserver
     public function created(UserSetting $userSetting)
     {
         if (in_array($userSetting->key, LDAP::USER_SETTINGS)) {
-            \App\Jobs\UserUpdate::dispatch($userSetting->user);
+            \App\Jobs\User\UpdateJob::dispatch($userSetting->user_id);
         }
     }
 
@@ -31,7 +31,7 @@ class UserSettingObserver
     public function updated(UserSetting $userSetting)
     {
         if (in_array($userSetting->key, LDAP::USER_SETTINGS)) {
-            \App\Jobs\UserUpdate::dispatch($userSetting->user);
+            \App\Jobs\User\UpdateJob::dispatch($userSetting->user_id);
         }
     }
 
@@ -45,7 +45,7 @@ class UserSettingObserver
     public function deleted(UserSetting $userSetting)
     {
         if (in_array($userSetting->key, LDAP::USER_SETTINGS)) {
-            \App\Jobs\UserUpdate::dispatch($userSetting->user);
+            \App\Jobs\User\UpdateJob::dispatch($userSetting->user_id);
         }
     }
 }

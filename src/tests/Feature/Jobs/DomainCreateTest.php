@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Jobs;
 
-use App\Jobs\DomainCreate;
 use App\Domain;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
@@ -48,20 +47,21 @@ class DomainCreateTest extends TestCase
         Queue::fake();
         Queue::assertNothingPushed();
 
-        $job = new DomainCreate($domain);
+        $job = new \App\Jobs\Domain\CreateJob($domain->id);
         $job->handle();
 
         $this->assertTrue($domain->fresh()->isLdapReady());
 
-        Queue::assertPushed(\App\Jobs\DomainVerify::class, 1);
+        Queue::assertPushed(\App\Jobs\Domain\VerifyJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\DomainVerify::class,
+            \App\Jobs\Domain\VerifyJob::class,
             function ($job) use ($domain) {
-                $job_domain = TestCase::getObjectProperty($job, 'domain');
+                $domainId = TestCase::getObjectProperty($job, 'domainId');
+                $domainNamespace = TestCase::getObjectProperty($job, 'domainNamespace');
 
-                return $job_domain->id === $domain->id &&
-                    $job_domain->namespace === $domain->namespace;
+                return $domainId === $domain->id &&
+                    $domainNamespace === $domain->namespace;
             }
         );
     }

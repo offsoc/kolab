@@ -81,7 +81,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      * Reset 2-Factor Authentication for the user
      *
      * @param \Illuminate\Http\Request $request The API request.
-     * @params string                  $id      User identifier
+     * @param string                   $id      User identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
@@ -111,7 +111,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      * Suspend the user
      *
      * @param \Illuminate\Http\Request $request The API request.
-     * @params string                  $id      User identifier
+     * @param string                   $id      User identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
@@ -135,7 +135,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      * Un-Suspend the user
      *
      * @param \Illuminate\Http\Request $request The API request.
-     * @params string                  $id      User identifier
+     * @param string                   $id      User identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
@@ -159,7 +159,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      * Update user data.
      *
      * @param \Illuminate\Http\Request $request The API request.
-     * @params string                  $id      User identifier
+     * @param string                   $id      User identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */

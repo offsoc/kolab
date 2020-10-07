@@ -83,19 +83,20 @@ class DomainTest extends TestCase
                 'type' => Domain::TYPE_EXTERNAL,
         ]);
 
-        Queue::assertPushed(\App\Jobs\DomainCreate::class, 1);
+        Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\DomainCreate::class,
+            \App\Jobs\Domain\CreateJob::class,
             function ($job) use ($domain) {
-                $job_domain = TestCase::getObjectProperty($job, 'domain');
+                $domainId = TestCase::getObjectProperty($job, 'domainId');
+                $domainNamespace = TestCase::getObjectProperty($job, 'domainNamespace');
 
-                return $job_domain->id === $domain->id &&
-                    $job_domain->namespace === $domain->namespace;
+                return $domainId === $domain->id &&
+                    $domainNamespace === $domain->namespace;
             }
         );
 
-        $job = new \App\Jobs\DomainCreate($domain);
+        $job = new \App\Jobs\Domain\CreateJob($domain->id);
         $job->handle();
     }
 
@@ -208,7 +209,7 @@ class DomainTest extends TestCase
         $this->assertFalse($domain->fresh()->isDeleted());
 
         // Delete the domain for real
-        $job = new \App\Jobs\DomainDelete($domain->id);
+        $job = new \App\Jobs\Domain\DeleteJob($domain->id);
         $job->handle();
 
         $this->assertTrue(Domain::withTrashed()->where('id', $domain->id)->first()->isDeleted());

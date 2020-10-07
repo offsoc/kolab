@@ -481,12 +481,15 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($json['access_token']);
         $this->assertSame($identity, $json['email']);
 
-        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
-            $job_user = TestCase::getObjectProperty($job, 'user');
+        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
 
-            return $job_user->email === \strtolower($data['login'] . '@' . $data['domain']);
-        });
+        Queue::assertPushed(
+            \App\Jobs\User\CreateJob::class,
+            function ($job) use ($data) {
+                $userEmail = TestCase::getObjectProperty($job, 'userEmail');
+                return $userEmail === \strtolower($data['login'] . '@' . $data['domain']);
+            }
+        );
 
         // Check if the code has been removed
         $this->assertNull(SignupCode::where('code', $result['code'])->first());
@@ -592,19 +595,27 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($result['access_token']);
         $this->assertSame("$login@$domain", $result['email']);
 
-        Queue::assertPushed(\App\Jobs\DomainCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\DomainCreate::class, function ($job) use ($domain) {
-            $job_domain = TestCase::getObjectProperty($job, 'domain');
+        Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
 
-            return $job_domain->namespace === $domain;
-        });
+        Queue::assertPushed(
+            \App\Jobs\Domain\CreateJob::class,
+            function ($job) use ($domain) {
+                $domainNamespace = TestCase::getObjectProperty($job, 'domainNamespace');
 
-        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($data) {
-            $job_user = TestCase::getObjectProperty($job, 'user');
+                return $domainNamespace === $domain;
+            }
+        );
 
-            return $job_user->email === $data['login'] . '@' . $data['domain'];
-        });
+        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
+
+        Queue::assertPushed(
+            \App\Jobs\User\CreateJob::class,
+            function ($job) use ($data) {
+                $userEmail = TestCase::getObjectProperty($job, 'userEmail');
+
+                return $userEmail === $data['login'] . '@' . $data['domain'];
+            }
+        );
 
         // Check if the code has been removed
         $this->assertNull(SignupCode::find($code->id));

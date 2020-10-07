@@ -34,7 +34,7 @@ class DomainUpdate extends Command
             return 1;
         }
 
-        $job = new \App\Jobs\DomainUpdate($domain->id);
+        $job = new \App\Jobs\Domain\UpdateJob($domain->id);
         $job->handle();
     }
 }

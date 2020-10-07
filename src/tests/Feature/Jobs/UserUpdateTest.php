@@ -3,7 +3,6 @@
 namespace Tests\Feature\Jobs;
 
 use App\Backends\LDAP;
-use App\Jobs\UserUpdate;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -42,7 +41,7 @@ class UserUpdateTest extends TestCase
         $user = $this->getTestUser('new-job-user@' . \config('app.domain'));
 
         // Create the user in LDAP
-        $job = new \App\Jobs\UserCreate($user);
+        $job = new \App\Jobs\User\CreateJob($user->id);
         $job->handle();
 
         // Test setting two aliases
@@ -50,9 +49,10 @@ class UserUpdateTest extends TestCase
             'new-job-user1@' . \config('app.domain'),
             'new-job-user2@' . \config('app.domain'),
         ];
+
         $user->setAliases($aliases);
 
-        $job = new UserUpdate($user->fresh());
+        $job = new \App\Jobs\User\UpdateJob($user->id);
         $job->handle();
 
         $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));
@@ -63,9 +63,10 @@ class UserUpdateTest extends TestCase
         $aliases = [
             'new-job-user1@' . \config('app.domain'),
         ];
+
         $user->setAliases($aliases);
 
-        $job = new UserUpdate($user->fresh());
+        $job = new \App\Jobs\User\UpdateJob($user->id);
         $job->handle();
 
         $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));
@@ -76,7 +77,7 @@ class UserUpdateTest extends TestCase
         $aliases = [];
         $user->setAliases($aliases);
 
-        $job = new UserUpdate($user->fresh());
+        $job = new \App\Jobs\User\UpdateJob($user->id);
         $job->handle();
 
         $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));

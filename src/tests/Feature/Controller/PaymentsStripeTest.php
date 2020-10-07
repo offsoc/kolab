@@ -457,6 +457,8 @@ class PaymentsStripeTest extends TestCase
      */
     public function testTopUpAndWebhook(): void
     {
+        $this->markTestIncomplete();
+
         Bus::fake();
 
         $user = $this->getTestUser('john@kolab.org');
