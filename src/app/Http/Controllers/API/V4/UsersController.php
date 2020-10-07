@@ -291,7 +291,7 @@ class UsersController extends Controller
      * Update user data.
      *
      * @param \Illuminate\Http\Request $request The API request.
-     * @params string                  $id      User identifier
+     * @param string                   $id      User identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
