@@ -57,7 +57,7 @@ class UserUpdateTest extends TestCase
 
         $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));
 
-        $this->assertSame($aliases, $ldap_user['alias']);
+        $this->assertSame($aliases, $ldap_user['alias'], var_export($ldap_user, true));
 
         // Test updating aliases list
         $aliases = [

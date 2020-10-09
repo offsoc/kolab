@@ -21,11 +21,15 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class UsersTest extends TestCaseDusk
 {
+    private $password;
+
     private $profile = [
         'first_name' => 'John',
         'last_name' => 'Doe',
-        'organization' => 'Kolab Developers',
+        'organization' => 'Test Domain Owner',
     ];
+
+    private $users = [];
 
     /**
      * {@inheritDoc}
@@ -34,18 +38,41 @@ class UsersTest extends TestCaseDusk
     {
         parent::setUp();
 
-        $this->deleteTestUser('julia.roberts@kolab.org');
+        $this->password = \App\Utils::generatePassphrase();
 
-        $john = User::where('email', 'john@kolab.org')->first();
-        $john->setSettings($this->profile);
-        UserAlias::where('user_id', $john->id)
-            ->where('alias', 'john.test@kolab.org')->delete();
+        $this->domain = $this->getTestDomain(
+            'test.domain',
+            [
+                'type' => \App\Domain::TYPE_EXTERNAL,
+                'status' => \App\Domain::STATUS_ACTIVE | \App\Domain::STATUS_CONFIRMED | \App\Domain::STATUS_VERIFIED
+            ]
+        );
 
-        Entitlement::where('entitleable_id', $john->id)->whereIn('cost', [25, 100])->delete();
+        $packageKolab = \App\Package::where('title', 'kolab')->first();
 
-        $wallet = $john->wallets()->first();
-        $wallet->discount()->dissociate();
-        $wallet->save();
+        $this->owner = $this->getTestUser('john@test.domain', ['password' => $this->password]);
+        $this->owner->assignPackage($packageKolab);
+        $this->owner->setSettings($this->profile);
+
+        $this->users[] = $this->getTestUser('jack@test.domain', ['password' => $this->password]);
+        $this->users[] = $this->getTestUser('jane@test.domain', ['password' => $this->password]);
+        $this->users[] = $this->getTestUser('jill@test.domain', ['password' => $this->password]);
+        $this->users[] = $this->getTestUser('joe@test.domain', ['password' => $this->password]);
+
+        foreach ($this->users as $user) {
+            $this->owner->assignPackage($packageKolab, $user);
+        }
+
+        $this->users[] = $this->owner;
+
+        usort(
+            $this->users,
+            function ($a, $b) {
+                return $a->email > $b->email;
+            }
+        );
+
+        $this->domain->assignPackage(\App\Package::where('title', 'domain-hosting')->first(), $this->owner);
     }
 
     /**
@@ -53,263 +80,323 @@ class UsersTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
-        $this->deleteTestUser('julia.roberts@kolab.org');
+        foreach ($this->users as $user) {
+            if ($user == $this->owner) {
+                continue;
+            }
 
-        $john = User::where('email', 'john@kolab.org')->first();
-        $john->setSettings($this->profile);
-        UserAlias::where('user_id', $john->id)
-            ->where('alias', 'john.test@kolab.org')->delete();
+            $this->deleteTestUser($user->email);
+        }
 
-        Entitlement::where('entitleable_id', $john->id)->whereIn('cost', [25, 100])->delete();
-
-        $wallet = $john->wallets()->first();
-        $wallet->discount()->dissociate();
-        $wallet->save();
+        $this->deleteTestUser('john@test.domain');
+        $this->deleteTestDomain('test.domain');
 
         parent::tearDown();
     }
 
     /**
-     * Test user info page (unauthenticated)
+     * Verify that a user page requires authentication.
      */
-    public function testInfoUnauth(): void
+    public function testUserPageRequiresAuth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
-            $user = User::where('email', 'john@kolab.org')->first();
-
-            $browser->visit('/user/' . $user->id)->on(new Home());
-        });
+        $this->browse(
+            function (Browser $browser) {
+                $browser->visit('/user/' . $this->owner->id)->on(new Home());
+            }
+        );
     }
 
     /**
-     * Test users list page (unauthenticated)
+     * VErify that the page with a list of users requires authentication
      */
-    public function testListUnauth(): void
+    public function testUserListPageRequiresAuthentication(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/users')->on(new Home());
-        });
+        $this->browse(
+            function (Browser $browser) {
+                $browser->visit('/users')->on(new Home());
+            }
+        );
     }
 
     /**
      * Test users list page
      */
-    public function testList(): void
+    public function testUsersListPageAsOwner(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
-            $browser->visit(new Home())
-                ->submitLogon('john@kolab.org', 'simple123', true)
-                ->on(new Dashboard())
-                ->assertSeeIn('@links .link-users', 'User accounts')
-                ->click('@links .link-users')
-                ->on(new UserList())
-                ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->waitFor('tbody tr')
-                        ->assertElementsCount('tbody tr', 4)
-                        ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
-                        ->assertSeeIn('tbody tr:nth-child(2) a', 'joe@kolab.org')
-                        ->assertSeeIn('tbody tr:nth-child(3) a', 'john@kolab.org')
-                        ->assertSeeIn('tbody tr:nth-child(4) a', 'ned@kolab.org')
-                        ->assertVisible('tbody tr:nth-child(1) button.button-delete')
-                        ->assertVisible('tbody tr:nth-child(2) button.button-delete')
-                        ->assertVisible('tbody tr:nth-child(3) button.button-delete')
-                        ->assertVisible('tbody tr:nth-child(4) button.button-delete')
-                        ->assertMissing('tfoot');
-                });
-        });
+        $this->browse(
+            function (Browser $browser) {
+                $browser->visit(new Home());
+                $browser->submitLogon($this->owner->email, $this->password, true);
+                $browser->on(new Dashboard());
+                $browser->assertSeeIn('@links .link-users', 'User accounts');
+                $browser->click('@links .link-users');
+                $browser->on(new UserList());
+                $browser->whenAvailable(
+                    '@table',
+                    function (Browser $browser) {
+                        $browser->waitFor('tbody tr');
+                        $browser->assertElementsCount('tbody tr', sizeof($this->users));
+
+                        foreach ($this->users as $user) {
+                            $arrayPosition = array_search($user, $this->users);
+                            $listPosition = $arrayPosition + 1;
+
+                            $browser->assertSeeIn("tbody tr:nth-child({$listPosition}) a", $user->email);
+                            $browser->assertVisible("tbody tr:nth-child({$listPosition}) button.button-delete");
+                        }
+
+                        $browser->assertMissing('tfoot');
+                    }
+                );
+            }
+        );
     }
 
     /**
      * Test user account editing page (not profile page)
      *
-     * @depends testList
+     * @depends testUsersListPageAsOwner
      */
-    public function testInfo(): void
+    public function testUserInfoPageAsOwner(): void
     {
-        $this->browse(function (Browser $browser) {
-            $browser->on(new UserList())
-                ->click('@table tr:nth-child(3) a')
-                ->on(new UserInfo())
-                ->assertSeeIn('#user-info .card-title', 'User account')
-                ->with('@form', function (Browser $browser) {
-                    // Assert form content
-                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Status')
-                        ->assertSeeIn('div.row:nth-child(1) #status', 'Active')
-                        ->assertFocused('div.row:nth-child(2) input')
-                        ->assertSeeIn('div.row:nth-child(2) label', 'First name')
-                        ->assertValue('div.row:nth-child(2) input[type=text]', $this->profile['first_name'])
-                        ->assertSeeIn('div.row:nth-child(3) label', 'Last name')
-                        ->assertValue('div.row:nth-child(3) input[type=text]', $this->profile['last_name'])
-                        ->assertSeeIn('div.row:nth-child(4) label', 'Organization')
-                        ->assertValue('div.row:nth-child(4) input[type=text]', $this->profile['organization'])
-                        ->assertSeeIn('div.row:nth-child(5) label', 'Email')
-                        ->assertValue('div.row:nth-child(5) input[type=text]', 'john@kolab.org')
-                        ->assertDisabled('div.row:nth-child(5) input[type=text]')
-                        ->assertSeeIn('div.row:nth-child(6) label', 'Email aliases')
-                        ->assertVisible('div.row:nth-child(6) .list-input')
-                        ->with(new ListInput('#aliases'), function (Browser $browser) {
-                            $browser->assertListInputValue(['john.doe@kolab.org'])
-                                ->assertValue('@input', '');
-                        })
-                        ->assertSeeIn('div.row:nth-child(7) label', 'Password')
-                        ->assertValue('div.row:nth-child(7) input[type=password]', '')
-                        ->assertSeeIn('div.row:nth-child(8) label', 'Confirm password')
-                        ->assertValue('div.row:nth-child(8) input[type=password]', '')
-                        ->assertSeeIn('button[type=submit]', 'Submit')
+        $this->browse(
+            function (Browser $browser) {
+                $browser->on(new UserList());
+                $browser->click('@table tr:nth-child(' . (array_search($this->owner, $this->users) + 1) . ') a');
+                $browser->on(new UserInfo());
+                $browser->assertSeeIn('#user-info .card-title', 'User account');
+                $browser->with(
+                    '@form',
+                    function (Browser $browser) {
+                        // Assert form content
+                        $browser->assertSeeIn('div.row:nth-child(1) label', 'Status');
+                        $browser->assertSeeIn('div.row:nth-child(1) #status', 'Active');
+                        $browser->assertFocused('div.row:nth-child(2) input');
+                        $browser->assertSeeIn('div.row:nth-child(2) label', 'First name');
+                        $browser->assertValue('div.row:nth-child(2) input[type=text]', $this->profile['first_name']);
+                        $browser->assertSeeIn('div.row:nth-child(3) label', 'Last name');
+                        $browser->assertValue('div.row:nth-child(3) input[type=text]', $this->profile['last_name']);
+                        $browser->assertSeeIn('div.row:nth-child(4) label', 'Organization');
+                        $browser->assertValue('div.row:nth-child(4) input[type=text]', $this->profile['organization']);
+                        $browser->assertSeeIn('div.row:nth-child(5) label', 'Email');
+                        $browser->assertValue('div.row:nth-child(5) input[type=text]', 'john@kolab.org');
+                        $browser->assertDisabled('div.row:nth-child(5) input[type=text]');
+                        $browser->assertSeeIn('div.row:nth-child(6) label', 'Email aliases');
+                        $browser->assertVisible('div.row:nth-child(6) .list-input');
+
+                        $browser->with(
+                            new ListInput('#aliases'),
+                            function (Browser $browser) {
+                                $browser->assertListInputValue(['john.doe@' . $this->domain->namespace])
+                                    ->assertValue('@input', '');
+                            }
+                        );
+
+                        $browser->assertSeeIn('div.row:nth-child(7) label', 'Password');
+                        $browser->assertValue('div.row:nth-child(7) input[type=password]', '');
+                        $browser->assertSeeIn('div.row:nth-child(8) label', 'Confirm password');
+                        $browser->assertValue('div.row:nth-child(8) input[type=password]', '');
+                        $browser->assertSeeIn('button[type=submit]', 'Submit');
+
                         // Clear some fields and submit
-                        ->vueClear('#first_name')
-                        ->vueClear('#last_name')
-                        ->click('button[type=submit]');
-                })
-                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.')
-                ->on(new UserList())
-                ->click('@table tr:nth-child(3) a')
-                ->on(new UserInfo())
-                ->assertSeeIn('#user-info .card-title', 'User account')
-                ->with('@form', function (Browser $browser) {
-                    // Test error handling (password)
-                    $browser->type('#password', 'aaaaaa')
-                        ->vueClear('#password_confirmation')
-                        ->click('button[type=submit]')
-                        ->waitFor('#password + .invalid-feedback')
-                        ->assertSeeIn('#password + .invalid-feedback', 'The password confirmation does not match.')
-                        ->assertFocused('#password')
-                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
+                        $browser->vueClear('#first_name');
+                        $browser->vueClear('#last_name');
+                        $browser->click('button[type=submit]');
+                    }
+                );
+                $browser->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+                $browser->on(new UserList());
+                $browser->click('@table tr:nth-child(3) a');
+                $browser->on(new UserInfo());
+                $browser->assertSeeIn('#user-info .card-title', 'User account');
+                $browser->with(
+                    '@form',
+                    function (Browser $browser) {
+                        // Test error handling (password)
+                        $browser->type('#password', 'aaaaaa');
+                        $browser->vueClear('#password_confirmation');
+                        $browser->click('button[type=submit]');
+                        $browser->waitFor('#password + .invalid-feedback');
+                        $browser->assertSeeIn(
+                            '#password + .invalid-feedback',
+                            'The password confirmation does not match.'
+                        );
 
-                    // TODO: Test password change
+                        $browser->assertFocused('#password');
+                        $browser->assertToast(Toast::TYPE_ERROR, 'Form validation error');
 
-                    // Test form error handling (aliases)
-                    $browser->vueClear('#password')
-                        ->vueClear('#password_confirmation')
-                        ->with(new ListInput('#aliases'), function (Browser $browser) {
-                            $browser->addListEntry('invalid address');
-                        })
-                        ->click('button[type=submit]')
-                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
+                        // TODO: Test password change
 
-                    $browser->with(new ListInput('#aliases'), function (Browser $browser) {
-                        $browser->assertFormError(2, 'The specified alias is invalid.', false);
-                    });
+                        // Test form error handling (aliases)
+                        $browser->vueClear('#password');
+                        $browser->vueClear('#password_confirmation');
 
-                    // Test adding aliases
-                    $browser->with(new ListInput('#aliases'), function (Browser $browser) {
-                        $browser->removeListEntry(2)
-                            ->addListEntry('john.test@kolab.org');
-                    })
-                        ->click('button[type=submit]')
-                        ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
-                })
-                ->on(new UserList())
-                ->click('@table tr:nth-child(3) a')
-                ->on(new UserInfo());
+                        $browser->with(
+                            new ListInput('#aliases'),
+                            function (Browser $browser) {
+                                $browser->addListEntry('invalid address');
+                            }
+                        );
 
-            $john = User::where('email', 'john@kolab.org')->first();
-            $alias = UserAlias::where('user_id', $john->id)->where('alias', 'john.test@kolab.org')->first();
-            $this->assertTrue(!empty($alias));
+                        $browser->click('button[type=submit]');
+                        $browser->assertToast(Toast::TYPE_ERROR, 'Form validation error');
 
-            // Test subscriptions
-            $browser->with('@form', function (Browser $browser) {
-                $browser->assertSeeIn('div.row:nth-child(9) label', 'Subscriptions')
-                    ->assertVisible('@skus.row:nth-child(9)')
-                    ->with('@skus', function ($browser) {
-                        $browser->assertElementsCount('tbody tr', 5)
-                            // Mailbox SKU
-                            ->assertSeeIn('tbody tr:nth-child(1) td.name', 'User Mailbox')
-                            ->assertSeeIn('tbody tr:nth-child(1) td.price', '4,44 CHF/month')
-                            ->assertChecked('tbody tr:nth-child(1) td.selection input')
-                            ->assertDisabled('tbody tr:nth-child(1) td.selection input')
-                            ->assertTip(
-                                'tbody tr:nth-child(1) td.buttons button',
-                                'Just a mailbox'
-                            )
-                            // Storage SKU
-                            ->assertSeeIn('tbody tr:nth-child(2) td.name', 'Storage Quota')
-                            ->assertSeeIn('tr:nth-child(2) td.price', '0,00 CHF/month')
-                            ->assertChecked('tbody tr:nth-child(2) td.selection input')
-                            ->assertDisabled('tbody tr:nth-child(2) td.selection input')
-                            ->assertTip(
-                                'tbody tr:nth-child(2) td.buttons button',
-                                'Some wiggle room'
-                            )
-                            ->with(new QuotaInput('tbody tr:nth-child(2) .range-input'), function ($browser) {
-                                $browser->assertQuotaValue(2)->setQuotaValue(3);
-                            })
-                            ->assertSeeIn('tr:nth-child(2) td.price', '0,25 CHF/month')
-                            // groupware SKU
-                            ->assertSeeIn('tbody tr:nth-child(3) td.name', 'Groupware Features')
-                            ->assertSeeIn('tbody tr:nth-child(3) td.price', '5,55 CHF/month')
-                            ->assertChecked('tbody tr:nth-child(3) td.selection input')
-                            ->assertEnabled('tbody tr:nth-child(3) td.selection input')
-                            ->assertTip(
-                                'tbody tr:nth-child(3) td.buttons button',
-                                'Groupware functions like Calendar, Tasks, Notes, etc.'
-                            )
-                            // ActiveSync SKU
-                            ->assertSeeIn('tbody tr:nth-child(4) td.name', 'Activesync')
-                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '1,00 CHF/month')
-                            ->assertNotChecked('tbody tr:nth-child(4) td.selection input')
-                            ->assertEnabled('tbody tr:nth-child(4) td.selection input')
-                            ->assertTip(
-                                'tbody tr:nth-child(4) td.buttons button',
-                                'Mobile synchronization'
-                            )
-                            // 2FA SKU
-                            ->assertSeeIn('tbody tr:nth-child(5) td.name', '2-Factor Authentication')
-                            ->assertSeeIn('tbody tr:nth-child(5) td.price', '0,00 CHF/month')
-                            ->assertNotChecked('tbody tr:nth-child(5) td.selection input')
-                            ->assertEnabled('tbody tr:nth-child(5) td.selection input')
-                            ->assertTip(
-                                'tbody tr:nth-child(5) td.buttons button',
-                                'Two factor authentication for webmail and administration panel'
-                            )
-                            ->click('tbody tr:nth-child(4) td.selection input');
-                    })
-                    ->assertMissing('@skus table + .hint')
-                    ->click('button[type=submit]')
-                    ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
-            })
-                ->on(new UserList())
-                ->click('@table tr:nth-child(3) a')
-                ->on(new UserInfo());
+                        $browser->with(new ListInput('#aliases'), function (Browser $browser) {
+                            $browser->assertFormError(2, 'The specified alias is invalid.', false);
+                        });
 
-            $expected = ['activesync', 'groupware', 'mailbox', 'storage', 'storage', 'storage'];
-            $this->assertUserEntitlements($john, $expected);
+                        // Test adding aliases
+                        $browser->with(
+                            new ListInput('#aliases'),
+                            function (Browser $browser) {
+                                $browser->removeListEntry(2);
+                                $browser->addListEntry('john.test@' . $this->domain->namespace);
+                            }
+                        );
 
-            // Test subscriptions interaction
-            $browser->with('@form', function (Browser $browser) {
-                $browser->with('@skus', function ($browser) {
-                    // Uncheck 'groupware', expect activesync unchecked
-                    $browser->click('#sku-input-groupware')
-                        ->assertNotChecked('#sku-input-groupware')
-                        ->assertNotChecked('#sku-input-activesync')
-                        ->assertEnabled('#sku-input-activesync')
-                        ->assertNotReadonly('#sku-input-activesync')
-                        // Check 'activesync', expect an alert
-                        ->click('#sku-input-activesync')
-                        ->assertDialogOpened('Activesync requires Groupware Features.')
-                        ->acceptDialog()
-                        ->assertNotChecked('#sku-input-activesync')
-                        // Check '2FA', expect 'activesync' unchecked and readonly
-                        ->click('#sku-input-2fa')
-                        ->assertChecked('#sku-input-2fa')
-                        ->assertNotChecked('#sku-input-activesync')
-                        ->assertReadonly('#sku-input-activesync')
-                        // Uncheck '2FA'
-                        ->click('#sku-input-2fa')
-                        ->assertNotChecked('#sku-input-2fa')
-                        ->assertNotReadonly('#sku-input-activesync');
-                });
-            });
-        });
+                        $browser->click('button[type=submit]');
+                        $browser->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+                    }
+                );
+
+                $browser->on(new UserList());
+                $browser->click('@table tr:nth-child(' . (array_search($this->owner, $this->users) + 1) . ') a');
+                $browser->on(new UserInfo());
+
+                $alias = $this->owner->aliases();
+                $this->assertTrue(!empty($alias));
+
+                // Test subscriptions
+                $browser->with(
+                    '@form',
+                    function (Browser $browser) {
+                        $browser->assertSeeIn('div.row:nth-child(9) label', 'Subscriptions');
+                        $browser->assertVisible('@skus.row:nth-child(9)');
+                        $browser->with(
+                            '@skus',
+                            function ($browser) {
+                                $browser->assertElementsCount('tbody tr', 5);
+                                // Mailbox SKU
+                                $browser->assertSeeIn('tbody tr:nth-child(1) td.name', 'User Mailbox');
+                                $browser->assertSeeIn('tbody tr:nth-child(1) td.price', '4,44 CHF/month');
+                                $browser->assertChecked('tbody tr:nth-child(1) td.selection input');
+                                $browser->assertDisabled('tbody tr:nth-child(1) td.selection input');
+                                $browser->assertTip(
+                                    'tbody tr:nth-child(1) td.buttons button',
+                                    'Just a mailbox'
+                                );
+
+                                // Storage SKU
+                                $browser->assertSeeIn('tbody tr:nth-child(2) td.name', 'Storage Quota');
+                                $browser->assertSeeIn('tr:nth-child(2) td.price', '0,00 CHF/month');
+                                $browser->assertChecked('tbody tr:nth-child(2) td.selection input');
+                                $browser->assertDisabled('tbody tr:nth-child(2) td.selection input');
+                                $browser->assertTip(
+                                    'tbody tr:nth-child(2) td.buttons button',
+                                    'Some wiggle room'
+                                );
+
+                                $browser->with(
+                                    new QuotaInput('tbody tr:nth-child(2) .range-input'),
+                                    function ($browser) {
+                                        $browser->assertQuotaValue(2)->setQuotaValue(3);
+                                    }
+                                );
+
+                                $browser->assertSeeIn('tr:nth-child(2) td.price', '0,25 CHF/month');
+
+                                // groupware SKU
+                                $browser->assertSeeIn('tbody tr:nth-child(3) td.name', 'Groupware Features');
+                                $browser->assertSeeIn('tbody tr:nth-child(3) td.price', '5,55 CHF/month');
+                                $browser->assertChecked('tbody tr:nth-child(3) td.selection input');
+                                $browser->assertEnabled('tbody tr:nth-child(3) td.selection input');
+                                $browser->assertTip(
+                                    'tbody tr:nth-child(3) td.buttons button',
+                                    'Groupware functions like Calendar, Tasks, Notes, etc.'
+                                );
+
+                                // ActiveSync SKU
+                                $browser->assertSeeIn('tbody tr:nth-child(4) td.name', 'Activesync');
+                                $browser->assertSeeIn('tbody tr:nth-child(4) td.price', '1,00 CHF/month');
+                                $browser->assertNotChecked('tbody tr:nth-child(4) td.selection input');
+                                $browser->assertEnabled('tbody tr:nth-child(4) td.selection input');
+                                $browser->assertTip(
+                                    'tbody tr:nth-child(4) td.buttons button',
+                                    'Mobile synchronization'
+                                );
+
+                                // 2FA SKU
+                                $browser->assertSeeIn('tbody tr:nth-child(5) td.name', '2-Factor Authentication');
+                                $browser->assertSeeIn('tbody tr:nth-child(5) td.price', '0,00 CHF/month');
+                                $browser->assertNotChecked('tbody tr:nth-child(5) td.selection input');
+                                $browser->assertEnabled('tbody tr:nth-child(5) td.selection input');
+                                $browser->assertTip(
+                                    'tbody tr:nth-child(5) td.buttons button',
+                                    'Two factor authentication for webmail and administration panel'
+                                );
+
+                                $browser->click('tbody tr:nth-child(4) td.selection input');
+                            }
+                        );
+
+                        $browser->assertMissing('@skus table + .hint');
+                        $browser->click('button[type=submit]');
+                        $browser->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+                    }
+                );
+
+                $browser->on(new UserList());
+                $browser->click('@table tr:nth-child(' (array_search($this->owner, $this->users) + 1) . ') a');
+                $browser->on(new UserInfo());
+
+                $expected = ['activesync', 'groupware', 'mailbox', 'storage', 'storage', 'storage'];
+                $this->assertUserEntitlements($john, $expected);
+
+                // Test subscriptions interaction
+                $browser->with(
+                    '@form',
+                    function (Browser $browser) {
+                        $browser->with(
+                            '@skus',
+                            function ($browser) {
+                                // Uncheck 'groupware', expect activesync unchecked
+                                $browser->click('#sku-input-groupware');
+                                $browser->assertNotChecked('#sku-input-groupware');
+                                $browser->assertNotChecked('#sku-input-activesync');
+                                $browser->assertEnabled('#sku-input-activesync');
+                                $browser->assertNotReadonly('#sku-input-activesync');
+
+                                // Check 'activesync', expect an alert
+                                $browser->click('#sku-input-activesync');
+                                $browser->assertDialogOpened('Activesync requires Groupware Features.');
+                                $browser->acceptDialog();
+                                $browser->assertNotChecked('#sku-input-activesync');
+
+                                // Check '2FA', expect 'activesync' unchecked and readonly
+                                $browser->click('#sku-input-2fa');
+                                $browser->assertChecked('#sku-input-2fa');
+                                $browser->assertNotChecked('#sku-input-activesync');
+                                $browser->assertReadonly('#sku-input-activesync');
+
+                                // Uncheck '2FA'
+                                $browser->click('#sku-input-2fa');
+                                $browser->assertNotChecked('#sku-input-2fa');
+                                $browser->assertNotReadonly('#sku-input-activesync');
+                            }
+                        );
+                    }
+                );
+            }
+        );
     }
 
     /**
      * Test user adding page
      *
-     * @depends testList
+     * @depends testUsersListPageAsOwner
      */
     public function testNewUser(): void
     {
@@ -388,19 +475,27 @@ class UsersTest extends TestCaseDusk
             });
 
             // Successful account creation
-            $browser->with('@form', function (Browser $browser) {
-                $browser->type('#first_name', 'Julia')
-                    ->type('#last_name', 'Roberts')
-                    ->type('#organization', 'Test Org')
-                    ->with(new ListInput('#aliases'), function (Browser $browser) {
-                        $browser->removeListEntry(1)
-                            ->addListEntry('julia.roberts2@kolab.org');
-                    })
-                    ->click('button[type=submit]');
-            })
-            ->assertToast(Toast::TYPE_SUCCESS, 'User created successfully.')
+            $browser->with(
+                '@form',
+                function (Browser $browser) {
+                    $browser->type('#first_name', 'Julia');
+                    $browser->type('#last_name', 'Roberts');
+                    $browser->type('#organization', 'Test Org');
+                    $browser->with(
+                        new ListInput('#aliases'),
+                        function (Browser $browser) {
+                            $browser->removeListEntry(1)->addListEntry('julia.roberts2@kolab.org');
+                        }
+                    );
+
+                    $browser->click('button[type=submit]');
+                }
+            );
+
+            $browser->assertToast(Toast::TYPE_SUCCESS, 'User created successfully.');
+
             // check redirection to users list
-            ->on(new UserList())
+            $browser->on(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 5)
                         ->assertSeeIn('tbody tr:nth-child(4) a', 'julia.roberts@kolab.org');

@@ -25,6 +25,35 @@ class Utils
     }
 
     /**
+     * Generate a passphrase. Not intended for use in production, so limited to environments that are not production.
+     *
+     * @return string
+     *
+     * @throws \Exception
+     */
+    public static function generatePassphrase()
+    {
+        if (\config('app.env') == "production") {
+            throw new \Exception("Thou shall not pass");
+        }
+
+        $alphaLow = 'abcdefghijklmnopqrstuvwxyz';
+        $alphaUp = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $num = '0123456789';
+        $stdSpecial = '~`!@#$%^&*()-_+=[{]}\\|\'";:/?.>,<';
+
+        $source = $alphaLow . $alphaUp . $num . $stdSpecial;
+
+        $result = '';
+
+        for ($x = 0; $x < 16; $x++) {
+            $result .= substr($source, rand(0, (strlen($source) - 1)), 1);
+        }
+
+        return $result;
+    }
+
+    /**
      * Provide all unique combinations of elements in $input, with order and duplicates irrelevant.
      *
      * @param array $input The input array of elements.

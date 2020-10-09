@@ -22,6 +22,7 @@
         "iatstuti/laravel-nullable-fields": "*",
         "kolab/net_ldap3": "dev-master",
         "laravel/framework": "6.*",
+        "laravel/horizon": "^3",
         "laravel/tinker": "^2.4",
         "mollie/laravel-mollie": "^2.9",
         "morrislaptop/laravel-queue-clear": "^1.2",
