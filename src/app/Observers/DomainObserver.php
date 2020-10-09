@@ -26,7 +26,7 @@ class DomainObserver
 
         $domain->namespace = \strtolower($domain->namespace);
 
-        $domain->status |= Domain::STATUS_NEW | Domain::STATUS_ACTIVE;
+        $domain->status |= Domain::STATUS_NEW;
     }
 
     /**

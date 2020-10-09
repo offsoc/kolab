@@ -65,7 +65,7 @@ class DomainTest extends TestCase
         $this->assertSame('gmail.com', $result->namespace);
         $this->assertSame($domain->id, $result->id);
         $this->assertSame($domain->type, $result->type);
-        $this->assertSame(Domain::STATUS_NEW | Domain::STATUS_ACTIVE, $result->status);
+        $this->assertSame(Domain::STATUS_NEW, $result->status);
     }
 
     /**

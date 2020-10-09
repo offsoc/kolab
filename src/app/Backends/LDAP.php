@@ -256,7 +256,7 @@ class LDAP
 
         if (!self::getUserEntry($ldap, $user->email, $dn)) {
             if (empty($dn)) {
-                self::throwException($ldap, "Failed to create user {$user->email} in LDAP");
+                self::throwException($ldap, "Failed to create user {$user->email} in LDAP (" . __LINE__ . ")");
             }
 
             self::setUserAttributes($user, $entry);

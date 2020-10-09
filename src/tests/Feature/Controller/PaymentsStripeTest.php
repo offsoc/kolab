@@ -541,6 +541,7 @@ class PaymentsStripeTest extends TestCase
         $wallet->setSetting('mandate_disabled', null);
         $wallet->balance = -2050;
         $wallet->save();
+
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertFalse($result);
         $this->assertCount(1, $wallet->payments()->get());

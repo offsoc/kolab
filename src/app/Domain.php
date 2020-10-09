@@ -232,11 +232,11 @@ class Domain extends Model
         $allowed_values = [
             self::STATUS_NEW,
             self::STATUS_ACTIVE,
-            self::STATUS_CONFIRMED,
             self::STATUS_SUSPENDED,
             self::STATUS_DELETED,
-            self::STATUS_LDAP_READY,
+            self::STATUS_CONFIRMED,
             self::STATUS_VERIFIED,
+            self::STATUS_LDAP_READY,
         ];
 
         foreach ($allowed_values as $value) {
@@ -248,6 +248,31 @@ class Domain extends Model
 
         if ($status > 0) {
             throw new \Exception("Invalid domain status: {$status}");
+        }
+
+        if ($this->isPublic()) {
+            $this->attributes['status'] = $new_status;
+            return;
+        }
+
+        if ($new_status & self::STATUS_CONFIRMED) {
+            // if we have confirmed ownership of or management access to the domain, then we have
+            // also confirmed the domain exists in DNS.
+            $new_status |= self::STATUS_VERIFIED;
+            $new_status |= self::STATUS_ACTIVE;
+        }
+
+        if ($new_status & self::STATUS_DELETED && $new_status & self::STATUS_ACTIVE) {
+            $new_status ^= self::STATUS_ACTIVE;
+        }
+
+        if ($new_status & self::STATUS_SUSPENDED && $new_status & self::STATUS_ACTIVE) {
+            $new_status ^= self::STATUS_ACTIVE;
+        }
+
+        // if the domain is now active, it is not new anymore.
+        if ($new_status & self::STATUS_ACTIVE && $new_status & self::STATUS_NEW) {
+            $new_status ^= self::STATUS_NEW;
         }
 
         $this->attributes['status'] = $new_status;
@@ -349,6 +374,15 @@ class Domain extends Model
     /**
      * Unsuspend this domain.
      *
+     * The domain is unsuspended through either of the following courses of actions;
+     *
+     *   * The account balance has been topped up, or
+     *   * a suspected spammer has resolved their issues, or
+     *   * the command-line is triggered.
+     *
+     * Therefore, we can also confidently set the domain status to 'active' should the ownership of or management
+     * access to have been confirmed before.
+     *
      * @return void
      */
     public function unsuspend(): void
@@ -358,6 +392,11 @@ class Domain extends Model
         }
 
         $this->status ^= Domain::STATUS_SUSPENDED;
+
+        if ($this->isConfirmed() && $this->isVerified()) {
+            $this->status |= Domain::STATUS_ACTIVE;
+        }
+
         $this->save();
     }
 
