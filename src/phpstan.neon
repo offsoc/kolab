@@ -11,4 +11,10 @@ parameters:
     level: 4
     paths:
         - app/
-        - tests/
+        - tests/Browser/
+        - tests/Unit/
+        - tests/Functional/
+        - tests/Feature/
+        - tests/TestCase.php
+        - tests/TestCaseDusk.php
+        - tests/TestCaseTrait.php

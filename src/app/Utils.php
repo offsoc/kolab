@@ -54,6 +54,23 @@ class Utils
     }
 
     /**
+     * Validate an email address against RFC conventions
+     *
+     * @param string $email The email address
+     *
+     * @return bool
+     */
+    public static function isValidEmailAddress($email): bool
+    {
+        // the email address can not start with a dot.
+        if (substr($email, 0, 1) == '.') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Provide all unique combinations of elements in $input, with order and duplicates irrelevant.
      *
      * @param array $input The input array of elements.

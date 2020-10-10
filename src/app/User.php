@@ -575,6 +575,67 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * User password mutator
+     *
+     * @param string $password The password in plain text.
+     *
+     * @return void
+     */
+    public function setPasswordAttribute($password)
+    {
+        if (!empty($password)) {
+            $this->attributes['password'] = bcrypt($password, [ "rounds" => 12 ]);
+            $this->attributes['password_ldap'] = '{SSHA512}' . base64_encode(
+                pack('H*', hash('sha512', $password))
+            );
+        }
+    }
+
+    /**
+     * User LDAP password mutator
+     *
+     * @param string $password The password in plain text.
+     *
+     * @return void
+     */
+    public function setPasswordLdapAttribute($password)
+    {
+        $this->setPasswordAttribute($password);
+    }
+
+    /**
+     * User status mutator
+     *
+     * @throws \Exception
+     */
+    public function setStatusAttribute($status)
+    {
+        $new_status = 0;
+
+        $allowed_values = [
+            self::STATUS_NEW,
+            self::STATUS_ACTIVE,
+            self::STATUS_SUSPENDED,
+            self::STATUS_DELETED,
+            self::STATUS_LDAP_READY,
+            self::STATUS_IMAP_READY,
+        ];
+
+        foreach ($allowed_values as $value) {
+            if ($status & $value) {
+                $new_status |= $value;
+                $status ^= $value;
+            }
+        }
+
+        if ($status > 0) {
+            throw new \Exception("Invalid user status: {$status}");
+        }
+
+        $this->attributes['status'] = $new_status;
+    }
+
+    /**
      * Any (additional) properties of this user.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -669,66 +730,5 @@ class User extends Authenticatable implements JWTSubject
     public function wallets()
     {
         return $this->hasMany('App\Wallet');
-    }
-
-    /**
-     * User password mutator
-     *
-     * @param string $password The password in plain text.
-     *
-     * @return void
-     */
-    public function setPasswordAttribute($password)
-    {
-        if (!empty($password)) {
-            $this->attributes['password'] = bcrypt($password, [ "rounds" => 12 ]);
-            $this->attributes['password_ldap'] = '{SSHA512}' . base64_encode(
-                pack('H*', hash('sha512', $password))
-            );
-        }
-    }
-
-    /**
-     * User LDAP password mutator
-     *
-     * @param string $password The password in plain text.
-     *
-     * @return void
-     */
-    public function setPasswordLdapAttribute($password)
-    {
-        $this->setPasswordAttribute($password);
-    }
-
-    /**
-     * User status mutator
-     *
-     * @throws \Exception
-     */
-    public function setStatusAttribute($status)
-    {
-        $new_status = 0;
-
-        $allowed_values = [
-            self::STATUS_NEW,
-            self::STATUS_ACTIVE,
-            self::STATUS_SUSPENDED,
-            self::STATUS_DELETED,
-            self::STATUS_LDAP_READY,
-            self::STATUS_IMAP_READY,
-        ];
-
-        foreach ($allowed_values as $value) {
-            if ($status & $value) {
-                $new_status |= $value;
-                $status ^= $value;
-            }
-        }
-
-        if ($status > 0) {
-            throw new \Exception("Invalid user status: {$status}");
-        }
-
-        $this->attributes['status'] = $new_status;
     }
 }

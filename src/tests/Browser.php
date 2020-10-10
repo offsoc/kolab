@@ -203,6 +203,40 @@ class Browser extends \Laravel\Dusk\Browser
     }
 
     /**
+     * Take a screenshot
+     */
+    public function screenshot($lineno)
+    {
+        $backtrace = debug_backtrace();
+        $class = null;
+        $function = null;
+        $line = null;
+
+        foreach ($backtrace as $step) {
+            if (!array_key_exists('class', $step)) {
+                continue;
+            }
+
+            if (substr($step['class'], 0, 5) == "Tests" && substr($step['class'], -4, 4) == "Test") {
+                if (substr($step['function'], 0, 4) == "test") {
+                    $class = $step['class'];
+                    $function = $step['function'];
+                    $line = $step['line'];
+                    break;
+                }
+            }
+        }
+
+        $screenshotName = str_replace(
+            ['\\', '/'],
+            ['.'],
+            "{$class}.{$function}.{$lineno}"
+        );
+
+        return parent::screenshot($screenshotName);
+    }
+
+    /**
      * Clears the input field and related vue v-model data.
      */
     public function vueClear($selector)

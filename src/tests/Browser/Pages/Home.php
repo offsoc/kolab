@@ -66,8 +66,10 @@ class Home extends Page
         $browser->type('@email-input', $username)
             ->type('@password-input', $password);
 
-        if ($username == 'ned@kolab.org') {
-            $code = \App\Auth\SecondFactor::code('ned@kolab.org');
+        $user = \App\User::where('email', $username)->first();
+
+        if ($user->hasSku('2fa')) {
+            $code = \App\Auth\SecondFactor::code($username);
             $browser->type('@second-factor-input', $code);
         }
 

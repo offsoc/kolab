@@ -9,42 +9,87 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * The eloquent definition of a Domain.
  *
- * @property string $namespace
+ * @property string $namespace The namespace for a domain.
+ * @property int $status       A bitflip of STATUS constants reflecting the current status of the domain.
+ * @property int $type         A representation of the type of domain (public, hosted, external).
  */
 class Domain extends Model
 {
     use SoftDeletes;
 
-    // we've simply never heard of this domain
+    /**
+     * The domain is new, and has not completed its registration.
+     */
     public const STATUS_NEW        = 1 << 0;
-    // it's been activated
+
+    /**
+     * The domain has been activated.
+     */
     public const STATUS_ACTIVE     = 1 << 1;
-    // domain has been suspended.
+
+    /**
+     * The domain has been suspended.
+     */
     public const STATUS_SUSPENDED  = 1 << 2;
-    // domain has been deleted
+
+    /**
+     * The domain has been deleted.
+     */
     public const STATUS_DELETED    = 1 << 3;
-    // ownership of the domain has been confirmed
+
+    /**
+     * The ownership of or management access to the domain has been confirmed.
+     */
     public const STATUS_CONFIRMED  = 1 << 4;
-    // domain has been verified that it exists in DNS
+
+    /**
+     * We have verified that the domain exists in DNS.
+     */
     public const STATUS_VERIFIED   = 1 << 5;
-    // domain has been created in LDAP
+
+    /**
+     * We have created the domain in LDAP.
+     */
     public const STATUS_LDAP_READY = 1 << 6;
 
-    // open for public registration
+    /**
+     * The domain is open for public registration.
+     */
     public const TYPE_PUBLIC       = 1 << 0;
-    // zone hosted with us
+
+    /**
+     * The zone is hosted with us, meaning we run the authoritative nameservers as part of this application suite.
+     */
     public const TYPE_HOSTED       = 1 << 1;
-    // zone registered externally
+
+    /**
+     * The zone is hosted externally -- meaning probably only the kolab aspects are with us.
+     */
     public const TYPE_EXTERNAL     = 1 << 2;
 
     public const HASH_CODE = 1;
     public const HASH_TEXT = 2;
     public const HASH_CNAME = 3;
 
+    /**
+     * The primary key for this model is not auto-incrementing.
+     *
+     * @var bool
+     */
     public $incrementing = false;
 
+    /**
+     * The primary key type is a big integer.
+     *
+     * @var string
+     */
     protected $keyType = 'bigint';
 
+    /**
+     * The names of properties that can be filled during the creation of an \App\User.
+     *
+     * @var array
+     */
     protected $fillable = [
         'namespace',
         'status',
@@ -52,7 +97,9 @@ class Domain extends Model
     ];
 
     /**
-     * Assign a package to a domain. The domain should not belong to any existing entitlements.
+     * Assign a package to the domain.
+     *
+     * The domain can not be a public domain, and should not already be an entitlement to a wallet.
      *
      * @param \App\Package $package The package to assign.
      * @param \App\User    $user    The wallet owner.
@@ -96,6 +143,11 @@ class Domain extends Model
         return $this;
     }
 
+    /**
+     * Return the entitlement to which this domain belongs, if any.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne<\App\Entitlement>
+     */
     public function entitlement()
     {
         return $this->morphOne('App\Entitlement', 'entitleable');

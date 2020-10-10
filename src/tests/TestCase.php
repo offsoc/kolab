@@ -15,7 +15,7 @@ abstract class TestCase extends BaseTestCase
             $entitlement->updated_at = $targetDate;
             $entitlement->save();
 
-            $owner = $entitlement->wallet->owner;
+            $owner = $entitlement->wallet->domainOwner;
             $owner->created_at = $targetDate;
             $owner->save();
         }

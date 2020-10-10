@@ -13,6 +13,9 @@ class UserEmailLocalTest extends TestCase
      */
     public function testUserEmailLocal(): void
     {
-        $this->markTestIncomplete();
+        //$this->markTestIncomplete();
+
+        // the email address can not start with a dot.
+        $this->assertFalse(\App\Utils::isValidEmailAddress('.something@test.domain'));
     }
 }
