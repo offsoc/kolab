@@ -12,35 +12,6 @@ use Tests\TestCase;
 class DomainTest extends TestCase
 {
     /**
-     * One of the domains that is available for public registration.
-     *
-     * @var \App\Domain
-     */
-    private $publicDomain;
-
-    /**
-     * A newly generated user in a public domain.
-     *
-     * @var \App\User
-     */
-    private $publicDomainUser;
-
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        $this->publicDomain = \App\Domain::where('type', \App\Domain::TYPE_PUBLIC)->first();
-        $this->publicDomainUser = $this->getTestUser('john@' . $this->publicDomain->namespace);
-    }
-
-    public function tearDown(): void
-    {
-        $this->deleteTestUser($this->publicDomainUser->email);
-
-        parent::tearDown();
-    }
-
-    /**
      * Test that a public domain can not be assigned a package.
      */
     public function testAssignPackagePublicDomain()
@@ -80,9 +51,10 @@ class DomainTest extends TestCase
         $numEntitlementsAfter = $sku->fresh()->entitlements->count();
         $this->assertEqual($numEntitlementsBefore, $numEntitlementsAfter);
 
-        // the wallet for this temporary user still holds no entitlements
+        // the wallet for this temporary user still holds no additional entitlements
         $wallet = $this->publicDomainUser->wallets()->first();
-        $this->assertCount(0, $wallet->entitlements);
+
+        $this->assertCount(4, $wallet->entitlements);
     }
 
     /**

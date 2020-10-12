@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * The eloquent definition of a Domain.
  *
- * @property string $namespace The namespace for a domain.
- * @property int $status       A bitflip of STATUS constants reflecting the current status of the domain.
- * @property int $type         A representation of the type of domain (public, hosted, external).
+ * @property string $namespace             The namespace for a domain.
+ * @property int $status                   A bitflip of STATUS constants reflecting the current status of the domain.
+ * @property int $type                     A representation of the type of domain (public, hosted, external).
+ * @property \App\Entitlement $entitlement The entitlement associated with this domain.
  */
 class Domain extends Model
 {
@@ -79,14 +80,14 @@ class Domain extends Model
     public $incrementing = false;
 
     /**
-     * The primary key type is a big integer.
+     * The primary key type is a `bigint`.
      *
      * @var string
      */
     protected $keyType = 'bigint';
 
     /**
-     * The names of properties that can be filled during the creation of an \App\User.
+     * The names of properties that can be filled during the creation of an App\Domain.
      *
      * @var array
      */
@@ -146,7 +147,7 @@ class Domain extends Model
     /**
      * Return the entitlement to which this domain belongs, if any.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphOne<\App\Entitlement>
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
      */
     public function entitlement()
     {
@@ -266,6 +267,8 @@ class Domain extends Model
 
     /**
      * Ensure the namespace is appropriately cased.
+     *
+     * @return void
      */
     public function setNamespaceAttribute($namespace)
     {
@@ -274,6 +277,8 @@ class Domain extends Model
 
     /**
      * Domain status mutator
+     *
+     * @return void
      *
      * @throws \Exception
      */

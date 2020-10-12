@@ -6,6 +6,9 @@ pushd ${cwd}/../src/
 
 rm -rf ../docs/build/ cache/store/
 
+./artisan clear-compiled
+./artisan cache:clear
+
 php -dmemory_limit=-1 \
     vendor/bin/doctum.php \
     update \

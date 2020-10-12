@@ -8,11 +8,20 @@ class DomainTest extends TestCase
 {
     private $domain;
 
+    /**
+     * Unit tests need no extensive setup.
+     */
     public function setUp(): void
     {
-        parent::setUp();
-
         $this->domain = new \App\Domain();
+    }
+
+    /**
+     * With no setup, no teardown is needed.
+     */
+    public function tearDown(): void
+    {
+        // nothing to do here
     }
 
     /**

@@ -12,15 +12,15 @@ $iterator = Finder::create()
     ->exclude('database')
     ->exclude('include')
     ->exclude('node_modules')
-    ->exclude('tests')
+    #->exclude('tests')
     ->exclude('vendor')
     ->in(__DIR__);
 
 $doctum = new Doctum(
     $iterator,
     [
-        'build_dir' => __DIR__ . '/../docs/build/%version%/',
-        'cache_dir' => __DIR__ . '/cache/',
+        'build_dir' => __DIR__ . '/../docs/build/%version%',
+        'cache_dir' => __DIR__ . '/cache',
         'default_opened_level' => 1,
         'include_parent_data' => false,
     ]

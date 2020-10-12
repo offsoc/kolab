@@ -63,7 +63,11 @@ class Entitlement extends Model
             return (float) 0;
         }
 
-        $discount = $this->wallet->getDiscountRate();
+        if ($this->wallet) {
+            $discount = $this->wallet->getDiscountRate();
+        } else {
+            $discount = 0;
+        }
 
         $daysInLastMonth = \App\Utils::daysInLastMonth();
 
@@ -119,6 +123,8 @@ class Entitlement extends Model
         if ($this->entitleable instanceof \App\Domain) {
             return $this->entitleable->namespace;
         }
+
+        return null;
     }
 
     /**

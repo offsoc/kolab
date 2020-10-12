@@ -33,10 +33,11 @@ class Utils
      */
     public static function generatePassphrase()
     {
+/*
         if (\config('app.env') == "production") {
             throw new \Exception("Thou shall not pass");
         }
-
+*/
         $alphaLow = 'abcdefghijklmnopqrstuvwxyz';
         $alphaUp = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $num = '0123456789';

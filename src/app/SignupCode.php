@@ -23,7 +23,6 @@ class SignupCode extends Model
     // Code expires after so many hours
     public const CODE_EXP_HOURS    = 24;
 
-
     /**
      * The primary key associated with the table.
      *

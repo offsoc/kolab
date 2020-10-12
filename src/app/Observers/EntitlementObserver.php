@@ -34,6 +34,11 @@ class EntitlementObserver
 
         // can't dispatch job here because it'll fail serialization
 
+        // make sure we only have entitlements that entitle valid subjects
+        if (!in_array($entitlement->entitleable_type, [\App\User::class, \App\Domain::class])) {
+            return false;
+        }
+
         // Make sure the owner is at least a controller on the wallet
         $wallet = \App\Wallet::find($entitlement->wallet_id);
 

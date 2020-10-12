@@ -60,4 +60,74 @@ class SecondFactorTest extends TestCase
         $factors = $mf->factors();
         $this->assertEmpty($factors);
     }
+
+    public function testFactorDriverValid()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testVerifySuccess()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testVerifyFailure()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testSeed()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function code()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testDbh()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testMultipleFactors()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testRead()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testWrite()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testRemove()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testGetFactors()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testKey2property()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testGetPrefs()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testSavePrefs()
+    {
+        $this->markTestIncomplete();
+    }
 }

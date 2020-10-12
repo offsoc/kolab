@@ -165,8 +165,15 @@ class Transaction extends Model
             $wallet = $this->wallet();
         }
 
-        $result['wallet'] = $wallet->{'description'} ?: 'Default wallet';
-        $result['amount'] = $wallet->money($this->amount);
+        if ($wallet) {
+            $description = $wallet->{'description'} ?: 'Default wallet';
+            $result['amount'] = $wallet->money($this->amount);
+        } else {
+            $description = 'No wallet';
+            $result['amount'] = "{$this->amount} cents in unknown currency";
+        }
+
+        $result['wallet'] = $description;
 
         return $result;
     }

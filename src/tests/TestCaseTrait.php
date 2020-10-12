@@ -13,6 +13,20 @@ use PHPUnit\Framework\Assert;
 trait TestCaseTrait
 {
     /**
+     * One of the domains that is available for public registration.
+     *
+     * @var \App\Domain
+     */
+    protected $publicDomain;
+
+    /**
+     * A newly generated user in a public domain.
+     *
+     * @var \App\User
+     */
+    protected $publicDomainUser;
+
+    /**
      * A placeholder for a password that can be generated.
      *
      * Should be generated with `\App\Utils::generatePassphrase()`.
@@ -353,11 +367,22 @@ trait TestCaseTrait
             }
         );
 
-        $this->domainHosted->assignPackage(\App\Package::where('title', 'domain-hosting')->first(), $this->domainOwner);
+        $this->domainHosted->assignPackage(
+            \App\Package::where('title', 'domain-hosting')->first(),
+            $this->domainOwner
+        );
 
         $wallet = $this->domainOwner->wallets()->first();
 
         $wallet->addController($this->jane);
+
+        $this->publicDomain = \App\Domain::where('type', \App\Domain::TYPE_PUBLIC)->first();
+        $this->publicDomainUser = $this->getTestUser(
+            'john@' . $this->publicDomain->namespace,
+            ['password' => $this->userPassword]
+        );
+
+        $this->publicDomainUser->assignPackage($packageKolab);
     }
 
     public function tearDown(): void
@@ -372,6 +397,8 @@ trait TestCaseTrait
 
         $this->deleteTestUser($this->domainOwner->email);
         $this->deleteTestDomain($this->domainHosted->namespace);
+
+        $this->deleteTestUser($this->publicDomainUser->email);
 
         parent::tearDown();
     }

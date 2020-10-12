@@ -351,6 +351,7 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Find whether an email address exists (user or alias).
+     *
      * Note: This will also find deleted users.
      *
      * @param string $email       Email address
@@ -396,8 +397,7 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Helper to find user by email address, whether it is
-     * main email address, alias or an external email.
+     * Helper to find user by email address, whether it is main email address, alias or an external email.
      *
      * If there's more than one alias NULL will be returned.
      *
@@ -460,7 +460,7 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Returns whether this domain is active.
+     * Returns whether this user is active.
      *
      * @return bool
      */
@@ -470,7 +470,7 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Returns whether this domain is deleted.
+     * Returns whether this user is deleted.
      *
      * @return bool
      */
@@ -480,8 +480,7 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Returns whether this (external) domain has been verified
-     * to exist in DNS.
+     * Returns whether this user is confirmed to exist in IMAP.
      *
      * @return bool
      */
@@ -511,7 +510,7 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Returns whether this domain is suspended.
+     * Returns whether this user is suspended.
      *
      * @return bool
      */
@@ -621,8 +620,12 @@ class User extends Authenticatable implements JWTSubject
             self::STATUS_IMAP_READY,
         ];
 
+        if (!is_numeric($status)) {
+            throw new \Exception("non-numeric status.");
+        }
+
         foreach ($allowed_values as $value) {
-            if ($status & $value) {
+            if (($status & $value) > 0) {
                 $new_status |= $value;
                 $status ^= $value;
             }
