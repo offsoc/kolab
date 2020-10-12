@@ -87,13 +87,18 @@ trait TestCaseTrait
      *
      * @param int|double|float $a
      * @param int|double|float $b
+     * @param string|null $msg
      */
-    protected function assertEqual($a, $b)
+    protected function assertEqual($a, $b, $msg = null)
     {
-        Assert::assertTrue(is_numeric($a));
-        Assert::assertTrue(is_numeric($b));
+        Assert::assertTrue(is_numeric($a), "Param #1 isn't numeric");
+        Assert::assertTrue(is_numeric($b), "Param #2 isn't numeric");
 
-        Assert::assertSame($a, $b);
+        if (empty($msg)) {
+            Assert::assertSame($a, $b);
+        } else {
+            Assert::assertSame($a, $b, $msg);
+        }
     }
 
     /**
