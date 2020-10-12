@@ -51,6 +51,15 @@ if [ -f ".env.local" ]; then
     cat .env.local >> .env
 fi
 
+rm -rf vendor/ composer.lock
+php -dmemory_limit=-1 /bin/composer install
+npm install
+find bootstrap/cache/ -type f ! -name ".gitignore" -delete
+./artisan key:generate
+./artisan jwt:secret -f
+./artisan clear-compiled
+./artisan cache:clear
+
 if [ ! -z "$(rpm -qv chromium 2>/dev/null)" ]; then
     chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
     ./artisan dusk:chrome-driver ${chver}
