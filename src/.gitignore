@@ -1,7 +1,9 @@
 *.swp
+cache/
 database/database.sqlite
 node_modules/
 package-lock.json
+phpunit-strict.xml
 public/css/*.css
 public/hot
 public/js/*.js
