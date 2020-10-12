@@ -21,16 +21,42 @@ class Wallet extends Model
     use NullableFields;
     use SettingsTrait;
 
+    /**
+     * This model doesn't use an auto-incrementing primary key.
+     *
+     * @var bool
+     */
     public $incrementing = false;
+
+    /**
+     * The primary key is a `string`.
+     *
+     * @var string
+     */
     protected $keyType = 'string';
 
+    /**
+     * This model does not use timestamps.
+     *
+     * @var bool
+     */
     public $timestamps = false;
 
+    /**
+     * Wallet attributes and defaults.
+     *
+     * @var array
+     */
     protected $attributes = [
         'balance' => 0,
         'currency' => 'CHF'
     ];
 
+    /**
+     * A wallet can be created with these properties
+     *
+     * @var array
+     */
     protected $fillable = [
         'currency'
     ];

@@ -13,8 +13,25 @@ use Kolab2FA\Storage\Base;
  */
 class SecondFactor extends Base
 {
+    /**
+     * The user to which this second factor applies.
+     *
+     * @var \App\User
+     */
     protected $user;
+
+    /**
+     * A local cache for configuration.
+     *
+     * @var array
+     */
     protected $cache = [];
+
+    /**
+     * The configuration for this factor.
+     *
+     * @var array
+     */
     protected $config = [
         'keymap' => [],
     ];
