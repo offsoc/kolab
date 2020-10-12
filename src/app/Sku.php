@@ -7,6 +7,19 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * The eloquent definition of a Stock Keeping Unit (SKU).
+ *
+ * @property string $id
+ * @property bool $incrementing
+ * @property array $casts
+ * @property array $fillable
+ * @property bool $active
+ * @property int $cost
+ * @property string $description
+ * @property string $handler_class
+ * @property string $name
+ * @property string $period
+ * @property string $title
+ * @property integer $units_free
  */
 class Sku extends Model
 {
@@ -16,6 +29,7 @@ class Sku extends Model
     protected $keyType = 'string';
 
     protected $casts = [
+        'cost' => 'integer',
         'units_free' => 'integer'
     ];
 
