@@ -110,5 +110,4 @@ class DomainTest extends TestCase
         $this->assertFalse($this->domain->isConfirmed());
         $this->assertTrue($this->domain->isVerified());
     }
-
 }

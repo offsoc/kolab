@@ -115,9 +115,35 @@ class WalletCheckTest extends TestCase
     }
 
     /**
-     * Test job handle, reminder notification
+     * Test job handle, top-up before reminder notification
      *
      * @depends testHandleInitial
+     */
+    public function testHandleBeforeReminder(): void
+    {
+        Mail::fake();
+
+        $user = $this->getTestUser('ned@kolab.org');
+        $wallet = $user->wallets()->first();
+        $now = Carbon::now();
+
+        // Balance turned negative 7-1 days ago
+        $wallet->setSetting('balance_negative_since', $now->subDays(7 - 1)->toDateTimeString());
+
+        $job = new WalletCheck($wallet);
+        $res = $job->handle();
+
+        Mail::assertNothingSent();
+
+        // TODO: Test that it actually executed the topUpWallet()
+        $this->assertSame(WalletCheck::THRESHOLD_BEFORE_REMINDER, $res);
+        $this->assertFalse($user->fresh()->isSuspended());
+    }
+
+    /**
+     * Test job handle, reminder notification
+     *
+     * @depends testHandleBeforeReminder
      */
     public function testHandleReminder(): void
     {
@@ -149,9 +175,36 @@ class WalletCheckTest extends TestCase
     }
 
     /**
-     * Test job handle, account suspending
+     * Test job handle, top-up wallet before account suspending
      *
      * @depends testHandleReminder
+     */
+    public function testHandleBeforeSuspended(): void
+    {
+        Mail::fake();
+
+        $user = $this->getTestUser('ned@kolab.org');
+        $wallet = $user->wallets()->first();
+        $now = Carbon::now();
+
+        // Balance turned negative 7+14-1 days ago
+        $days = 7 + 14 - 1;
+        $wallet->setSetting('balance_negative_since', $now->subDays($days)->toDateTimeString());
+
+        $job = new WalletCheck($wallet);
+        $res = $job->handle();
+
+        Mail::assertNothingSent();
+
+        // TODO: Test that it actually executed the topUpWallet()
+        $this->assertSame(WalletCheck::THRESHOLD_BEFORE_SUSPEND, $res);
+        $this->assertFalse($user->fresh()->isSuspended());
+    }
+
+    /**
+     * Test job handle, account suspending
+     *
+     * @depends testHandleBeforeSuspended
      */
     public function testHandleSuspended(): void
     {
