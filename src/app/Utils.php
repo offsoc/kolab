@@ -28,16 +28,9 @@ class Utils
      * Generate a passphrase. Not intended for use in production, so limited to environments that are not production.
      *
      * @return string
-     *
-     * @throws \Exception
      */
     public static function generatePassphrase()
     {
-/*
-        if (\config('app.env') == "production") {
-            throw new \Exception("Thou shall not pass");
-        }
-*/
         $alphaLow = 'abcdefghijklmnopqrstuvwxyz';
         $alphaUp = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $num = '0123456789';

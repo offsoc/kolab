@@ -13,29 +13,6 @@ use PHPUnit\Framework\Assert;
 trait TestCaseTrait
 {
     /**
-     * One of the domains that is available for public registration.
-     *
-     * @var \App\Domain
-     */
-    protected $publicDomain;
-
-    /**
-     * A newly generated user in a public domain.
-     *
-     * @var \App\User
-     */
-    protected $publicDomainUser;
-
-    /**
-     * A placeholder for a password that can be generated.
-     *
-     * Should be generated with `\App\Utils::generatePassphrase()`.
-     *
-     * @var string
-     */
-    protected $userPassword;
-
-    /**
      * A domain that is hosted.
      *
      * @var \App\Domain
@@ -81,6 +58,29 @@ trait TestCaseTrait
      * A specific user that has a second factor configured.
      */
     protected $joe;
+
+    /**
+     * One of the domains that is available for public registration.
+     *
+     * @var \App\Domain
+     */
+    protected $publicDomain;
+
+    /**
+     * A newly generated user in a public domain.
+     *
+     * @var \App\User
+     */
+    protected $publicDomainUser;
+
+    /**
+     * A placeholder for a password that can be generated.
+     *
+     * Should be generated with `\App\Utils::generatePassphrase()`.
+     *
+     * @var string
+     */
+    protected $userPassword;
 
     /**
      * Assert two numeric values are the same.
@@ -257,6 +257,18 @@ trait TestCaseTrait
     }
 
     /**
+     * Helper to access protected property of an object
+     */
+    protected static function getObjectProperty($object, $property_name)
+    {
+        $reflection = new \ReflectionClass($object);
+        $property = $reflection->getProperty($property_name);
+        $property->setAccessible(true);
+
+        return $property->getValue($object);
+    }
+
+    /**
      * Get Domain object by namespace, create it if needed.
      * Skip LDAP jobs.
      *
@@ -290,18 +302,6 @@ trait TestCaseTrait
         }
 
         return $user;
-    }
-
-    /**
-     * Helper to access protected property of an object
-     */
-    protected static function getObjectProperty($object, $property_name)
-    {
-        $reflection = new \ReflectionClass($object);
-        $property = $reflection->getProperty($property_name);
-        $property->setAccessible(true);
-
-        return $property->getValue($object);
     }
 
     /**
