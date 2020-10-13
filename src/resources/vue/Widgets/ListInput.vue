@@ -28,13 +28,15 @@
             id: { type: String, default: '' }
         },
         methods: {
-            addItem() {
-                let input = $(this.$el).find('.main-input')
-                let value = input.val()
+            addItem(focus) {
+                let value = this.input.value
 
                 if (value) {
                     this.list.push(value)
-                    input.val('').focus()
+                    this.input.value = ''
+                    if (focus !== false) {
+                        this.input.focus()
+                    }
                 }
             },
             deleteItem(index) {
@@ -50,6 +52,18 @@
                     e.preventDefault()
                 }
             }
+        },
+        mounted() {
+            this.input = $(this.$el).find('.main-input')[0]
+
+            // On form submit add the text from main input to the list
+            // Users tend to forget about pressing the "plus" button
+            // Note: We can't use form.onsubmit (too late)
+            // Note: Use of input.onblur has been proven to be problematic
+            // TODO: What with forms that have no submit button?
+            $(this.$el).closest('form').find('button[type=submit]').on('click', () => {
+                this.addItem(false)
+            })
         }
     }
 </script>
