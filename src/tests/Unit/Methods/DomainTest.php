@@ -6,6 +6,8 @@ use Tests\TestCase;
 
 class DomainTest extends TestCase
 {
+    protected $domain;
+
     public function setUp(): void
     {
         parent::setUp();
@@ -22,7 +24,7 @@ class DomainTest extends TestCase
 
         $this->domain->namespace = 'UPPERCASE';
 
-        $this->assertTrue($this->domain->namespace === 'uppercase');
+        $this->assertTrue($this->domain->namespace === 'uppercase'); // @phpstan-ignore-line
     }
 
     /**

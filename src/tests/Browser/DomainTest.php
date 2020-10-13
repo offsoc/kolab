@@ -65,14 +65,9 @@ class DomainTest extends TestCaseDusk
                     $browser->assertSeeIn('pre', $domain->namespace)
                         ->assertSeeIn('pre', $domain->hash())
                         ->click('button')
-                        ->assertToast(Toast::TYPE_ERROR, 'Domain ownership verification failed.');
-
-                    // Make sure the domain is confirmed now
-                    $domain->status |= Domain::STATUS_CONFIRMED;
-                    $domain->save();
-
-                    $browser->click('button')
                         ->assertToast(Toast::TYPE_SUCCESS, 'Domain verified successfully.');
+
+                        // TODO: Test scenario when a domain confirmation failed
                 })
                 ->whenAvailable('@config', function ($browser) use ($domain) {
                     $browser->assertSeeIn('pre', $domain->namespace);

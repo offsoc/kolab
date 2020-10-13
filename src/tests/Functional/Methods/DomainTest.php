@@ -7,6 +7,8 @@ use Tests\TestCase;
 
 class DomainTest extends TestCase
 {
+    protected $domain;
+
     public function setUp(): void
     {
         parent::setUp();

@@ -595,14 +595,18 @@ class UsersController extends Controller
                     $job = new \App\Jobs\User\CreateJob($user->id);
                     $job->handle();
 
-                    return $user->fresh()->isLdapReady();
+                    $user->refresh();
+
+                    return $user->isLdapReady();
 
                 case 'user-imap-ready':
                     // User not in IMAP? Verify again
                     $job = new \App\Jobs\User\VerifyJob($user->id);
                     $job->handle();
 
-                    return $user->fresh()->isImapReady();
+                    $user->refresh();
+
+                    return $user->isImapReady();
             }
         } catch (\Exception $e) {
             \Log::error($e);
