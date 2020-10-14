@@ -15,14 +15,20 @@ class VerifyJob extends UserJob
     {
         $user = $this->getUser();
 
+        if (!$user) {
+            return;
+        }
+
         // sanity checks
         if (!$user->hasSku('mailbox')) {
             $this->fail(new \Exception("User {$this->userId} has no mailbox SKU."));
+            return;
         }
 
         // the user has a mailbox (or is marked as such)
         if ($user->isImapReady()) {
             $this->fail(new \Exception("User {$this->userId} is already verified."));
+            return;
         }
 
         if (\App\Backends\IMAP::verifyAccount($user->email)) {

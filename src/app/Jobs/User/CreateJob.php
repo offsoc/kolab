@@ -27,17 +27,24 @@ class CreateJob extends UserJob
     {
         $user = $this->getUser();
 
+        if (!$user) {
+            return;
+        }
+
         // sanity checks
         if ($user->isDeleted()) {
             $this->fail(new \Exception("User {$this->userId} is marked as deleted."));
+            return;
         }
 
         if ($user->deleted_at) {
             $this->fail(new \Exception("User {$this->userId} is actually deleted."));
+            return;
         }
 
         if ($user->isLdapReady()) {
             $this->fail(new \Exception("User {$this->userId} is already marked as ldap-ready."));
+            return;
         }
 
         // see if the domain is ready
@@ -45,10 +52,12 @@ class CreateJob extends UserJob
 
         if (!$domain) {
             $this->fail(new \Exception("The domain for {$this->userId} does not exist."));
+            return;
         }
 
         if ($domain->isDeleted()) {
             $this->fail(new \Exception("The domain for {$this->userId} is marked as deleted."));
+            return;
         }
 
         if (!$domain->isLdapReady()) {

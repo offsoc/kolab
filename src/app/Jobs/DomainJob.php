@@ -2,11 +2,6 @@
 
 namespace App\Jobs;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-
 /**
  * The abstract \App\Jobs\DomainJob implements the logic needed for all dispatchable Jobs related to
  * \App\Domain objects.
@@ -16,12 +11,8 @@ use Illuminate\Queue\InteractsWithQueue;
  * $job->handle();
  * ```
  */
-abstract class DomainJob implements ShouldQueue
+abstract class DomainJob extends CommonJob
 {
-    use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
-
     /**
      * The ID for the \App\Domain. This is the shortest globally unique identifier and saves Redis space
      * compared to a serialized version of the complete \App\Domain object.
@@ -36,13 +27,6 @@ abstract class DomainJob implements ShouldQueue
      * @var string
      */
     protected $domainNamespace;
-
-    /**
-     * The number of tries for this Job.
-     *
-     * @var int
-     */
-    public $tries = 5;
 
     /**
      * Create a new job instance.
@@ -61,13 +45,6 @@ abstract class DomainJob implements ShouldQueue
             $this->domainNamespace = $domain->namespace;
         }
     }
-
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    abstract public function handle();
 
     /**
      * Get the \App\Domain entry associated with this job.

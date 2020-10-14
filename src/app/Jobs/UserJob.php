@@ -2,11 +2,6 @@
 
 namespace App\Jobs;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-
 /**
  * The abstract \App\Jobs\UserJob implements the logic needed for all dispatchable Jobs related to
  * \App\User objects.
@@ -16,12 +11,8 @@ use Illuminate\Queue\InteractsWithQueue;
  * $job->handle();
  * ```
  */
-abstract class UserJob implements ShouldQueue
+abstract class UserJob extends CommonJob
 {
-    use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
-
     /**
      * The ID for the \App\User. This is the shortest globally unique identifier and saves Redis space
      * compared to a serialized version of the complete \App\User object.
@@ -38,13 +29,6 @@ abstract class UserJob implements ShouldQueue
     protected $userEmail;
 
     /**
-     * The number of tries for this Job.
-     *
-     * @var int
-     */
-    public $tries = 5;
-
-    /**
      * Create a new job instance.
      *
      * @param int $userId The ID for the user to create.
@@ -57,15 +41,10 @@ abstract class UserJob implements ShouldQueue
 
         $user = $this->getUser();
 
-        $this->userEmail = $user->email;
+        if ($user) {
+            $this->userEmail = $user->email;
+        }
     }
-
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    abstract public function handle();
 
     /**
      * Get the \App\User entry associated with this job.

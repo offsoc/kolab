@@ -15,9 +15,14 @@ class DeleteJob extends UserJob
     {
         $user = $this->getUser();
 
+        if (!$user) {
+            return;
+        }
+
         // sanity checks
         if ($user->isDeleted()) {
             $this->fail(new \Exception("User {$this->userId} is already marked as deleted."));
+            return;
         }
 
         \App\Backends\LDAP::deleteUser($user);

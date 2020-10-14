@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs;
 
+use App\User;
 use Tests\TestCase;
 
 class UserCreateTest extends TestCase
@@ -38,5 +39,40 @@ class UserCreateTest extends TestCase
         $job->handle();
 
         $this->assertTrue($user->fresh()->isLdapReady());
+        $this->assertFalse($job->hasFailed());
+
+        // Test job failures
+        $job = new \App\Jobs\User\CreateJob($user->id);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("User {$user->id} is already marked as ldap-ready.", $job->failureMessage);
+
+        $user->status |= User::STATUS_DELETED;
+        $user->save();
+
+        $job = new \App\Jobs\User\CreateJob($user->id);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("User {$user->id} is marked as deleted.", $job->failureMessage);
+
+        $user->status ^= User::STATUS_DELETED;
+        $user->save();
+        $user->delete();
+
+        $job = new \App\Jobs\User\CreateJob($user->id);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("User {$user->id} is actually deleted.", $job->failureMessage);
+
+        // TODO: Test failures on domain sanity checks
+
+        $job = new \App\Jobs\User\CreateJob(123);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("User 123 could not be found in the database.", $job->failureMessage);
     }
 }
