@@ -36,11 +36,9 @@ COPY rootfs/ /
 
 RUN /usr/local/sbin/coturn.sh
 
-RUN chmod 770 /etc/coturn/ && chmod 660 /etc/coturn/turnserver.conf
+RUN chmod 755 /etc/coturn/ && chmod 644 /etc/coturn/turnserver.conf
 
 CMD [ \
         "/usr/bin/turnserver", \
-        "-o", \
-        "-c", "/etc/coturn/turnserver.conf", \
-        "--pidfile", "/run/coturn/turnserver.pid" \
+        "-c", "/etc/coturn/turnserver.conf" \
     ]
