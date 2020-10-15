@@ -34,11 +34,4 @@ RUN dnf -y install \
 
 COPY rootfs/ /
 
-RUN /usr/local/sbin/coturn.sh
-
-RUN chmod 755 /etc/coturn/ && chmod 644 /etc/coturn/turnserver.conf
-
-CMD [ \
-        "/usr/bin/turnserver", \
-        "-c", "/etc/coturn/turnserver.conf" \
-    ]
+CMD ["/usr/local/bin/coturn.sh"]
