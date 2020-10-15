@@ -2,9 +2,6 @@ FROM fedora:31
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@kolabsys.com>
 
-ENV container docker
-ENV SYSTEMD_PAGER=''
-
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
         bash-completion \
@@ -37,9 +34,8 @@ RUN dnf -y install \
 
 COPY rootfs/ /
 
+RUN /usr/local/sbin/coturn.sh
+
 RUN chmod 770 /etc/coturn/ && chmod 660 /etc/coturn/turnserver.conf
 
-RUN systemctl enable coturn
-
-CMD ["/lib/systemd/systemd", "--system"]
-ENTRYPOINT "/lib/systemd/systemd"
+CMD ["/bin/coturn"]
