@@ -53,5 +53,5 @@ CMD [ \
         "-Dserver.port=8080", \
         "-Dserver.ssl.enabled=false", \
         "-jar", \
-        "/home/openvidu/openvidu-server.jar" \
+        "/usr/share/openvidu/openvidu-server.jar" \
     ]
