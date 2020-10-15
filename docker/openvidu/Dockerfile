@@ -43,14 +43,10 @@ RUN dnf -y install \
         cd /src/openvidu.git/ && \
         mvn clean install -DskipTests && \
         mkdir -p /usr/share/openvidu/ && \
-        useradd openvidu && \
         mv -v \
             /src/openvidu.git/openvidu-server/target/openvidu-server-2.15.0.jar \
-            /home/openvidu/openvidu-server.jar && \
-        chown -R openvidu:openvidu /home/openvidu/ && \
+            /usr/share/openvidu/openvidu-server.jar && \
         rm -rvf /src/ /root/.m2/
-
-USER openvidu
 
 CMD [ \
         "/usr/bin/java", \
