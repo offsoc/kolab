@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd /tmp/
+
 cat > ./turnserver.conf << EOF
 external-ip=${TURN_PUBLIC_IP:-127.0.0.1}
 listening-port=${TURN_LISTEN_PORT:-3478}
