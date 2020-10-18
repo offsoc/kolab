@@ -54,7 +54,7 @@ class UserObserver
     public function created(User $user)
     {
         $settings = [
-            'country' => 'CH',
+            'country' => \App\Utils::countryForRequest(),
             'currency' => 'CHF',
             /*
             'first_name' => '',

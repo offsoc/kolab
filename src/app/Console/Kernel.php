@@ -25,8 +25,18 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        // This command imports countries and the current set of IPv4 and IPv6 networks allocated to countries.
+        $schedule->command('data:import')->dailyAt('05:00');
+
+        $schedule->command('wallet:charge')->dailyAt('00:00');
+        $schedule->command('wallet:charge')->dailyAt('04:00');
+        $schedule->command('wallet:charge')->dailyAt('08:00');
+        $schedule->command('wallet:charge')->dailyAt('12:00');
+        $schedule->command('wallet:charge')->dailyAt('16:00');
+        $schedule->command('wallet:charge')->dailyAt('20:00');
+
+        // this is a laravel 8-ism
+        //$schedule->command('wallet:charge')->everyFourHours();
     }
 
     /**
