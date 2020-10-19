@@ -6,8 +6,6 @@ use App\User;
 use App\VerificationCode;
 use Carbon\Carbon;
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class VerificationCodeTest extends TestCase
 {
