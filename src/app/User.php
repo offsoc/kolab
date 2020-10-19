@@ -175,12 +175,6 @@ class User extends Authenticatable implements JWTSubject
         $wallet = $this->wallet();
         $exists = $this->entitlements()->where('sku_id', $sku->id)->count();
 
-        // TODO: Sanity check, this probably should be in preReq() on handlers
-        //       or in EntitlementObserver
-        if ($sku->handler_class::entitleableClass() != User::class) {
-            throw new \Exception("Cannot assign non-user SKU ({$sku->title}) to a user");
-        }
-
         while ($count > 0) {
             \App\Entitlement::create([
                 'wallet_id' => $wallet->id,
@@ -266,6 +260,20 @@ class User extends Authenticatable implements JWTSubject
         }
 
         return $this->canDelete($object);
+    }
+
+    /**
+     * Return the \App\Domain for this user.
+     *
+     * @return \App\Domain|null
+     */
+    public function domain()
+    {
+        list($local, $domainName) = explode('@', $this->email);
+
+        $domain = \App\Domain::withTrashed()->where('namespace', $domainName)->first();
+
+        return $domain;
     }
 
     /**

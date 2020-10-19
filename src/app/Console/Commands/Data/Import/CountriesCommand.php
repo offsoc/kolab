@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Data\Import;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
+use Carbon\Carbon;
 
-class DataCountries extends Command
+class CountriesCommand extends Command
 {
     private $currency_fixes = [
         // Country code => currency
@@ -16,14 +17,14 @@ class DataCountries extends Command
      *
      * @var string
      */
-    protected $signature = 'data:countries';
+    protected $signature = 'data:import:countries';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Fetches countries map from wikipedia';
+    protected $description = 'Fetches countries map from country.io';
 
     /**
      * Execute the console command.
@@ -32,50 +33,65 @@ class DataCountries extends Command
      */
     public function handle()
     {
+        $today = Carbon::now()->toDateString();
+
         $countries = [];
         $currencies = [];
-        $currencies_url = 'http://country.io/currency.json';
-        $countries_url = 'http://country.io/names.json';
+        $currencySource = 'http://country.io/currency.json';
+        $countrySource = 'http://country.io/names.json';
 
-        $this->info("Fetching currencies from $currencies_url...");
+        //
+        // countries
+        //
+        $file = storage_path("countries-{$today}.json");
+
+        \App\Utils::downloadFile($countrySource, $file);
+
+        $countryJson = file_get_contents($file);
+
+        if (!$countryJson) {
+            $this->error("Failed to fetch countries");
+            return 1;
+        }
+
+        $countries = json_decode($countryJson, true);
+
+        if (!is_array($countries) || empty($countries)) {
+            $this->error("Invalid countries data");
+            return 1;
+        }
+
+        //
+        // currencies
+        //
+        $file = storage_path("currencies-{$today}.json");
+
+        \App\Utils::downloadFile($currencySource, $file);
 
         // fetch currency table and create an index by country page url
-        $currencies_json = file_get_contents($currencies_url);
+        $currencyJson = file_get_contents($file);
 
-        if (!$currencies_json) {
+        if (!$currencyJson) {
             $this->error("Failed to fetch currencies");
             return;
         }
 
-        $this->info("Fetching countries from $countries_url...");
-
-        $countries_json = file_get_contents($countries_url);
-
-        if (!$countries_json) {
-            $this->error("Failed to fetch countries");
-            return;
-        }
-
-        $currencies = json_decode($currencies_json, true);
-        $countries = json_decode($countries_json, true);
-
-        if (!is_array($countries) || empty($countries)) {
-            $this->error("Invalid countries data");
-            return;
-        }
+        $currencies = json_decode($currencyJson, true);
 
         if (!is_array($currencies) || empty($currencies)) {
             $this->error("Invalid currencies data");
-            return;
+            return 1;
         }
 
+        //
+        // export
+        //
         $file = resource_path('countries.php');
-
-        $this->info("Generating resource file $file...");
 
         asort($countries);
 
         $out = "<?php return [\n";
+
         foreach ($countries as $code => $name) {
             $currency = $currencies[$code] ?? null;
 
@@ -84,12 +100,13 @@ class DataCountries extends Command
             }
 
             if (!$currency) {
-                $this->error("Unknown currency for {$name} ({$code}). Skipped.");
+                $this->warn("Unknown currency for {$name} ({$code}). Skipped.");
                 continue;
             }
 
             $out .= sprintf("  '%s' => ['%s','%s'],\n", $code, $currency, addslashes($name));
         }
+
         $out .= "];\n";
 
         file_put_contents($file, $out);

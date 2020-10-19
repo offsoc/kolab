@@ -46,6 +46,9 @@ class UsersTest extends TestCaseDusk
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
         $wallet->save();
+
+        $betas = Sku::where('handler_class', 'like', '%\\Beta%')->pluck('id')->all();
+        Entitlement::whereIn('sku_id', $betas)->delete();
     }
 
     /**
@@ -65,6 +68,9 @@ class UsersTest extends TestCaseDusk
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
         $wallet->save();
+
+        $betas = Sku::where('handler_class', 'like', '%\\Beta%')->pluck('id')->all();
+        Entitlement::whereIn('sku_id', $betas)->delete();
 
         parent::tearDown();
     }
@@ -581,6 +587,70 @@ class UsersTest extends TestCaseDusk
                     })
                     ->assertSeeIn('@packages table + .hint', '¹ applied discount: 10% - Test voucher');
                 });
+        });
+    }
+
+    /**
+     * Test beta entitlements
+     *
+     * @depends testList
+     */
+    public function testBetaEntitlements(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $john = User::where('email', 'john@kolab.org')->first();
+            $sku = Sku::where('title', 'beta')->first();
+            $john->assignSku($sku);
+
+            $browser->visit('/user/' . $john->id)
+                ->on(new UserInfo())
+                ->with('@skus', function ($browser) {
+                    $browser->assertElementsCount('tbody tr', 7)
+                        // Beta SKU
+                        ->assertSeeIn('tbody tr:nth-child(6) td.name', 'Beta program')
+                        ->assertSeeIn('tbody tr:nth-child(6) td.price', '0,00 CHF/month')
+                        ->assertChecked('tbody tr:nth-child(6) td.selection input')
+                        ->assertEnabled('tbody tr:nth-child(6) td.selection input')
+                        ->assertTip(
+                            'tbody tr:nth-child(6) td.buttons button',
+                            'Access to beta program subscriptions'
+                        )
+                        // Beta/Meet SKU
+                        ->assertSeeIn('tbody tr:nth-child(7) td.name', 'Video chat')
+                        ->assertSeeIn('tr:nth-child(7) td.price', '0,00 CHF/month')
+                        ->assertNotChecked('tbody tr:nth-child(7) td.selection input')
+                        ->assertEnabled('tbody tr:nth-child(7) td.selection input')
+                        ->assertTip(
+                            'tbody tr:nth-child(7) td.buttons button',
+                            'Video conferencing tool'
+                        )
+                        // Check Meet, Uncheck Beta, expect Meet unchecked
+                        ->click('#sku-input-meet')
+                        ->click('#sku-input-beta')
+                        ->assertNotChecked('#sku-input-beta')
+                        ->assertNotChecked('#sku-input-meet')
+                        // Click Meet expect an alert
+                        ->click('#sku-input-meet')
+                        ->assertDialogOpened('Video chat requires Beta program.')
+                        ->acceptDialog()
+                        // Enable Meet and Beta and submit
+                        ->click('#sku-input-beta')
+                        ->click('#sku-input-meet');
+                })
+                ->click('button[type=submit]')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+
+            $expected = ['beta', 'groupware', 'mailbox', 'meet', 'storage', 'storage'];
+            $this->assertUserEntitlements($john, $expected);
+
+            $browser->visit('/user/' . $john->id)
+                ->on(new UserInfo())
+                ->click('#sku-input-beta')
+                ->click('button[type=submit]')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+
+            $expected = ['groupware', 'mailbox', 'storage', 'storage'];
+            $this->assertUserEntitlements($john, $expected);
         });
     }
 }

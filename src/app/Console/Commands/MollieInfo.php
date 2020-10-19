@@ -43,10 +43,21 @@ class MollieInfo extends Command
             if ($mandate = $provider->getMandate($wallet)) {
                 $amount = $wallet->getSetting('mandate_amount');
                 $balance = $wallet->getSetting('mandate_balance') ?: 0;
+                $status = 'invalid';
+
+                if ($mandate['isPending']) {
+                    $status = 'pending';
+                } elseif ($mandate['isValid']) {
+                    $status = 'valid';
+                }
+
+                if ($wallet->getSetting('mandate_disabled')) {
+                    $status .= ' (disabled)';
+                }
 
                 $this->info("Auto-payment: {$mandate['method']}");
                 $this->info("    id: {$mandate['id']}");
-                $this->info("    status: " . ($mandate['isPending'] ? 'pending' : 'valid'));
+                $this->info("    status: {$status}");
                 $this->info("    amount: {$amount} {$wallet->currency}");
                 $this->info("    min-balance: {$balance} {$wallet->currency}");
             } else {

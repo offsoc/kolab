@@ -34,7 +34,7 @@ class UserCreate extends Command
             return 1;
         }
 
-        $job = new \App\Jobs\UserCreate($user);
+        $job = new \App\Jobs\User\CreateJob($user->id);
         $job->handle();
     }
 }

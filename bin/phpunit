@@ -4,7 +4,9 @@ cwd=$(dirname $0)
 
 pushd ${cwd}/../src/
 
-php -dzend_extension=xdebug.so \
+php \
+    -dmemory_limit=-1 \
+    -dzend_extension=xdebug.so \
     vendor/bin/phpunit \
     --stop-on-defect \
     --stop-on-error \

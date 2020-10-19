@@ -117,7 +117,7 @@ trait TestCaseTrait
             return;
         }
 
-        $job = new \App\Jobs\DomainDelete($domain->id);
+        $job = new \App\Jobs\Domain\DeleteJob($domain->id);
         $job->handle();
 
         $domain->forceDelete();
@@ -133,7 +133,7 @@ trait TestCaseTrait
             return;
         }
 
-        $job = new \App\Jobs\UserDelete($user->id);
+        $job = new \App\Jobs\User\DeleteJob($user->id);
         $job->handle();
 
         $user->forceDelete();

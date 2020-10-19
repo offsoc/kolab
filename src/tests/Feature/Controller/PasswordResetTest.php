@@ -304,20 +304,24 @@ class PasswordResetTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(4, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame('bearer', $json['token_type']);
         $this->assertTrue(!empty($json['expires_in']) && is_int($json['expires_in']) && $json['expires_in'] > 0);
         $this->assertNotEmpty($json['access_token']);
+        $this->assertSame($user->email, $json['email']);
+        $this->assertSame($user->id, $json['id']);
 
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 1);
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, function ($job) use ($user) {
-            $job_user = TestCase::getObjectProperty($job, 'user');
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
 
-            return $job_user->id == $user->id
-                && $job_user->email == $user->email
-                && $job_user->password_ldap != $user->password_ldap;
-        });
+        Queue::assertPushed(
+            \App\Jobs\User\UpdateJob::class,
+            function ($job) use ($user) {
+                $userEmail = TestCase::getObjectProperty($job, 'userEmail');
+                $userId = TestCase::getObjectProperty($job, 'userId');
+
+                return $userEmail == $user->email && $userId == $user->id;
+            }
+        );
 
         // Check if the code has been removed
         $this->assertNull(VerificationCode::find($code->code));

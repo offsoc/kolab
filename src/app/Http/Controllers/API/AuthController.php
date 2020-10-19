@@ -38,8 +38,10 @@ class AuthController extends Controller
     {
         // @phpstan-ignore-next-line
         $token = Auth::guard()->login($user);
+        $response = V4\UsersController::userResponse($user);
+        $response['status'] = 'success';
 
-        return self::respondWithToken($token, ['status' => 'success']);
+        return self::respondWithToken($token, $response);
     }
 
     /**
@@ -67,13 +69,16 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if ($token = Auth::guard()->attempt($credentials)) {
-            $sf = new \App\Auth\SecondFactor(Auth::guard()->user());
+            $user = Auth::guard()->user();
+            $sf = new \App\Auth\SecondFactor($user);
 
             if ($response = $sf->requestHandler($request)) {
                 return $response;
             }
 
-            return $this->respondWithToken($token);
+            $response = V4\UsersController::userResponse($user);
+
+            return $this->respondWithToken($token, $response);
         }
 
         return response()->json(['status' => 'error', 'message' => __('auth.failed')], 401);

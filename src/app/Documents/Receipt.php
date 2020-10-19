@@ -160,7 +160,7 @@ class Receipt
                 ->where('status', PaymentProvider::STATUS_PAID)
                 ->where('updated_at', '>=', $start)
                 ->where('updated_at', '<', $end)
-                ->where('amount', '>', 0)
+                ->where('amount', '<>', 0)
                 ->orderBy('updated_at')
                 ->get();
         }
@@ -185,9 +185,17 @@ class Receipt
 
             $total += $amount;
 
+            if ($item->type == PaymentProvider::TYPE_REFUND) {
+                $description = \trans('documents.receipt-refund');
+            } elseif ($item->type == PaymentProvider::TYPE_CHARGEBACK) {
+                $description = \trans('documents.receipt-chargeback');
+            } else {
+                $description = \trans('documents.receipt-item-desc', ['site' => $appName]);
+            }
+
             return [
                 'amount' => $this->wallet->money($amount),
-                'description' => \trans('documents.receipt-item-desc', ['site' => $appName]),
+                'description' => $description,
                 'date' => $item->updated_at->toDateString(),
             ];
         });

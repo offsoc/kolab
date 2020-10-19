@@ -98,9 +98,7 @@ class UserTest extends TestCase
 
         $domain = \config('app.domain');
 
-        $user = User::create([
-                'email' => 'USER-test@' . \strtoupper($domain)
-        ]);
+        $user = User::create(['email' => 'USER-test@' . \strtoupper($domain)]);
 
         $result = User::where('email', 'user-test@' . $domain)->first();
 
@@ -122,29 +120,38 @@ class UserTest extends TestCase
                 'email' => 'user-test@' . \config('app.domain')
         ]);
 
-        Queue::assertPushed(\App\Jobs\UserCreate::class, 1);
-        Queue::assertPushed(\App\Jobs\UserCreate::class, function ($job) use ($user) {
-            $job_user = TestCase::getObjectProperty($job, 'user');
+        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
 
-            return $job_user->id === $user->id
-                && $job_user->email === $user->email;
-        });
+        Queue::assertPushed(
+            \App\Jobs\User\CreateJob::class,
+            function ($job) use ($user) {
+                $userEmail = TestCase::getObjectProperty($job, 'userEmail');
+                $userId = TestCase::getObjectProperty($job, 'userId');
 
-        Queue::assertPushedWithChain(\App\Jobs\UserCreate::class, [
-            \App\Jobs\UserVerify::class,
-        ]);
+                return $userEmail === $user->email
+                    && $userId === $user->id;
+            }
+        );
+
+        Queue::assertPushedWithChain(
+            \App\Jobs\User\CreateJob::class,
+            [
+                \App\Jobs\User\VerifyJob::class,
+            ]
+        );
 /*
         FIXME: Looks like we can't really do detailed assertions on chained jobs
                Another thing to consider is if we maybe should run these jobs
                independently (not chained) and make sure there's no race-condition
                in status update
 
-        Queue::assertPushed(\App\Jobs\UserVerify::class, 1);
-        Queue::assertPushed(\App\Jobs\UserVerify::class, function ($job) use ($user) {
-            $job_user = TestCase::getObjectProperty($job, 'user');
+        Queue::assertPushed(\App\Jobs\User\VerifyJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\VerifyJob::class, function ($job) use ($user) {
+            $userEmail = TestCase::getObjectProperty($job, 'userEmail');
+            $userId = TestCase::getObjectProperty($job, 'userId');
 
-            return $job_user->id === $user->id
-                && $job_user->email === $user->email;
+            return $userEmail === $user->email
+                && $userId === $user->id;
         });
 */
     }
@@ -219,7 +226,7 @@ class UserTest extends TestCase
         $this->assertFalse($user->fresh()->isDeleted());
 
         // Delete the user for real
-        $job = new \App\Jobs\UserDelete($id);
+        $job = new \App\Jobs\User\DeleteJob($id);
         $job->handle();
 
         $this->assertTrue(User::withTrashed()->where('id', $id)->first()->isDeleted());
@@ -356,7 +363,7 @@ class UserTest extends TestCase
         // Add an alias
         $user->setAliases(['UserAlias1@UserAccount.com']);
 
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 1);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
 
         $aliases = $user->aliases()->get();
         $this->assertCount(1, $aliases);
@@ -365,7 +372,7 @@ class UserTest extends TestCase
         // Add another alias
         $user->setAliases(['UserAlias1@UserAccount.com', 'UserAlias2@UserAccount.com']);
 
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 2);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 2);
 
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
@@ -375,7 +382,7 @@ class UserTest extends TestCase
         // Remove an alias
         $user->setAliases(['UserAlias1@UserAccount.com']);
 
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 3);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 3);
 
         $aliases = $user->aliases()->get();
         $this->assertCount(1, $aliases);
@@ -384,7 +391,7 @@ class UserTest extends TestCase
         // Remove all aliases
         $user->setAliases([]);
 
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 4);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 4);
 
         $this->assertCount(0, $user->aliases()->get());
 
@@ -433,7 +440,7 @@ class UserTest extends TestCase
 
         $user = $this->getTestUser('UserAccountA@UserAccount.com');
 
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 0);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
 
         // Test default settings
         // Note: Technicly this tests UserObserver::created() behavior
@@ -447,7 +454,7 @@ class UserTest extends TestCase
         // Add a setting
         $user->setSetting('first_name', 'Firstname');
 
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 1);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected
@@ -457,7 +464,7 @@ class UserTest extends TestCase
         // Update a setting
         $user->setSetting('first_name', 'Firstname1');
 
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 2);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 2);
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected
@@ -467,7 +474,7 @@ class UserTest extends TestCase
         // Delete a setting (null)
         $user->setSetting('first_name', null);
 
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 3);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 3);
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected
@@ -478,7 +485,7 @@ class UserTest extends TestCase
         $user->setSetting('first_name', 'Firstname1');
         $user->setSetting('first_name', '');
 
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 5);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 5);
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected
@@ -493,7 +500,7 @@ class UserTest extends TestCase
         ]);
 
         // TODO: This really should create a single UserUpdate job, not 3
-        Queue::assertPushed(\App\Jobs\UserUpdate::class, 7);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 7);
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected

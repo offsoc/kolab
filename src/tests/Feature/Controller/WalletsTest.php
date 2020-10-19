@@ -89,7 +89,7 @@ class WalletsTest extends TestCase
     public function testReceiptDownload(): void
     {
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
-        $john = $this->getTestUser('john@klab.org');
+        $john = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
 
         // Unauth access not allowed
@@ -132,7 +132,7 @@ class WalletsTest extends TestCase
     public function testReceipts(): void
     {
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
-        $john = $this->getTestUser('john@klab.org');
+        $john = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
         $wallet->payments()->delete();
 
@@ -209,6 +209,7 @@ class WalletsTest extends TestCase
         $this->assertSame('CHF', $json['currency']);
         $this->assertSame($wallet->balance, $json['balance']);
         $this->assertTrue(empty($json['description']));
+        // TODO: This assertion does not work after a longer while from seeding
         $this->assertTrue(!empty($json['notice']));
     }
 
@@ -220,7 +221,7 @@ class WalletsTest extends TestCase
         $package_kolab = \App\Package::where('title', 'kolab')->first();
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
         $user->assignPackage($package_kolab);
-        $john = $this->getTestUser('john@klab.org');
+        $john = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
 
         // Unauth access not allowed

@@ -101,6 +101,7 @@ class AuthTest extends TestCase
         $this->assertSame('Invalid username or password.', $json['message']);
 
         // Valid user+password
+        $user = $this->getTestUser('john@kolab.org');
         $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
         $response = $this->post("api/auth/login", $post);
         $json = $response->json();
@@ -109,6 +110,11 @@ class AuthTest extends TestCase
         $this->assertTrue(!empty($json['access_token']));
         $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
         $this->assertEquals('bearer', $json['token_type']);
+        $this->assertEquals($user->id, $json['id']);
+        $this->assertEquals($user->email, $json['email']);
+        $this->assertTrue(is_array($json['statusInfo']));
+        $this->assertTrue(is_array($json['settings']));
+        $this->assertTrue(is_array($json['aliases']));
 
         // Valid user+password (upper-case)
         $post = ['email' => 'John@Kolab.org', 'password' => 'simple123'];

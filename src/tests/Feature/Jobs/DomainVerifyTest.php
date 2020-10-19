@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Jobs;
 
-use App\Jobs\DomainVerify;
 use App\Domain;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -45,7 +44,7 @@ class DomainVerifyTest extends TestCase
 
         $this->assertFalse($domain->isVerified());
 
-        $job = new DomainVerify($domain);
+        $job = new \App\Jobs\Domain\VerifyJob($domain->id);
         $job->handle();
 
         $this->assertTrue($domain->fresh()->isVerified());
@@ -68,7 +67,7 @@ class DomainVerifyTest extends TestCase
 
         $this->assertFalse($domain->isVerified());
 
-        $job = new DomainVerify($domain);
+        $job = new \App\Jobs\Domain\VerifyJob($domain->id);
         $job->handle();
 
         $this->assertFalse($domain->fresh()->isVerified());

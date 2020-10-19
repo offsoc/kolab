@@ -24,38 +24,59 @@ class DomainTest extends TestCase
 
         $domains = \App\Utils::powerSet($statuses);
 
-        foreach ($domains as $domain_statuses) {
+        foreach ($domains as $domainStatuses) {
             $domain = new Domain(
                 [
                     'namespace' => 'test.com',
-                    'status' => \array_sum($domain_statuses),
+                    'status' => \array_sum($domainStatuses),
                     'type' => Domain::TYPE_EXTERNAL
                 ]
             );
 
-            $this->assertTrue($domain->isNew() === in_array(Domain::STATUS_NEW, $domain_statuses));
-            $this->assertTrue($domain->isActive() === in_array(Domain::STATUS_ACTIVE, $domain_statuses));
-            $this->assertTrue($domain->isConfirmed() === in_array(Domain::STATUS_CONFIRMED, $domain_statuses));
-            $this->assertTrue($domain->isSuspended() === in_array(Domain::STATUS_SUSPENDED, $domain_statuses));
-            $this->assertTrue($domain->isDeleted() === in_array(Domain::STATUS_DELETED, $domain_statuses));
-            $this->assertTrue($domain->isLdapReady() === in_array(Domain::STATUS_LDAP_READY, $domain_statuses));
-            $this->assertTrue($domain->isVerified() === in_array(Domain::STATUS_VERIFIED, $domain_statuses));
+            $domainStatuses = [];
+
+            foreach ($statuses as $status) {
+                if ($domain->status & $status) {
+                    $domainStatuses[] = $status;
+                }
+            }
+
+            $this->assertSame($domain->status, \array_sum($domainStatuses));
+
+            // either one is true, but not both
+            $this->assertSame(
+                $domain->isNew() === in_array(Domain::STATUS_NEW, $domainStatuses),
+                $domain->isActive() === in_array(Domain::STATUS_ACTIVE, $domainStatuses)
+            );
+
+            $this->assertTrue(
+                $domain->isNew() === in_array(Domain::STATUS_NEW, $domainStatuses)
+            );
+
+            $this->assertTrue(
+                $domain->isActive() === in_array(Domain::STATUS_ACTIVE, $domainStatuses)
+            );
+
+            $this->assertTrue(
+                $domain->isConfirmed() === in_array(Domain::STATUS_CONFIRMED, $domainStatuses)
+            );
+
+            $this->assertTrue(
+                $domain->isSuspended() === in_array(Domain::STATUS_SUSPENDED, $domainStatuses)
+            );
+
+            $this->assertTrue(
+                $domain->isDeleted() === in_array(Domain::STATUS_DELETED, $domainStatuses)
+            );
+
+            $this->assertTrue(
+                $domain->isLdapReady() === in_array(Domain::STATUS_LDAP_READY, $domainStatuses)
+            );
+
+            $this->assertTrue(
+                $domain->isVerified() === in_array(Domain::STATUS_VERIFIED, $domainStatuses)
+            );
         }
-    }
-
-    /**
-     * Test setStatusAttribute exception
-     */
-    public function testDomainStatusInvalid(): void
-    {
-        $this->expectException(\Exception::class);
-
-        $domain = new Domain(
-            [
-                'namespace' => 'test.com',
-                'status' => 1234567,
-            ]
-        );
     }
 
     /**

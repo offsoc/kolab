@@ -38,22 +38,9 @@
             }
         },
         mounted() {
-            const authInfo = this.$store.state.isLoggedIn ? this.$store.state.authInfo : null
-
-            if (authInfo) {
-                this.status = authInfo.statusInfo
-                this.getBalance(authInfo)
-            } else {
-                this.$root.startLoading()
-                axios.get('/api/auth/info')
-                    .then(response => {
-                        this.$store.state.authInfo = response.data
-                        this.status = response.data.statusInfo
-                        this.getBalance(response.data)
-                        this.$root.stopLoading()
-                    })
-                    .catch(this.$root.errorHandler)
-            }
+            const authInfo = this.$store.state.authInfo
+            this.status = authInfo.statusInfo
+            this.getBalance(authInfo)
         },
         methods: {
             getBalance(authInfo) {

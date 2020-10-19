@@ -228,14 +228,14 @@ class DomainsTest extends TestCase
         $json = $response->json();
 
         $this->assertTrue($json['isVerified']);
-        $this->assertFalse($json['isReady']);
+        $this->assertTrue($json['isReady']);
         $this->assertCount(4, $json['process']);
         $this->assertSame('domain-verified', $json['process'][2]['label']);
         $this->assertSame(true, $json['process'][2]['state']);
         $this->assertSame('domain-confirmed', $json['process'][3]['label']);
-        $this->assertSame(false, $json['process'][3]['state']);
-        $this->assertSame('error', $json['status']);
-        $this->assertSame('Failed to verify an ownership of a domain.', $json['message']);
+        $this->assertSame(true, $json['process'][3]['state']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('Setup process finished successfully.', $json['message']);
 
         // TODO: Test completing all process steps
     }

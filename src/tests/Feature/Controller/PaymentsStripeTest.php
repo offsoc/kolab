@@ -457,6 +457,8 @@ class PaymentsStripeTest extends TestCase
      */
     public function testTopUpAndWebhook(): void
     {
+        $this->markTestIncomplete();
+
         Bus::fake();
 
         $user = $this->getTestUser('john@kolab.org');
@@ -539,6 +541,7 @@ class PaymentsStripeTest extends TestCase
         $wallet->setSetting('mandate_disabled', null);
         $wallet->balance = -2050;
         $wallet->save();
+
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertFalse($result);
         $this->assertCount(1, $wallet->payments()->get());

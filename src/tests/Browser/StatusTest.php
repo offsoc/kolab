@@ -54,16 +54,20 @@ class StatusTest extends TestCaseDusk
     {
         // Unconfirmed domain and user
         $domain = Domain::where('namespace', 'kolab.org')->first();
+
         if ($domain->isConfirmed()) {
             $domain->status ^= Domain::STATUS_CONFIRMED;
             $domain->save();
         }
 
         $john = $this->getTestUser('john@kolab.org');
+
         $john->created_at = Carbon::now();
+
         if ($john->isImapReady()) {
             $john->status ^= User::STATUS_IMAP_READY;
         }
+
         $john->save();
 
         $this->browse(function ($browser) use ($john, $domain) {
@@ -113,10 +117,13 @@ class StatusTest extends TestCaseDusk
             $domain->status ^= Domain::STATUS_CONFIRMED;
             $domain->save();
         }
+
         $john->created_at = Carbon::now()->subSeconds(3600);
+
         if ($john->isImapReady()) {
             $john->status ^= User::STATUS_IMAP_READY;
         }
+
         $john->save();
 
         $this->browse(function ($browser) use ($john, $domain) {
@@ -152,6 +159,18 @@ class StatusTest extends TestCaseDusk
         $domain->created_at = Carbon::now();
         $domain->status = Domain::STATUS_NEW | Domain::STATUS_ACTIVE | Domain::STATUS_LDAP_READY;
         $domain->save();
+
+        // side-step
+        $this->assertFalse($domain->isNew());
+        $this->assertTrue($domain->isActive());
+        $this->assertTrue($domain->isLdapReady());
+        $this->assertTrue($domain->isExternal());
+
+        $this->assertFalse($domain->isHosted());
+        $this->assertFalse($domain->isConfirmed());
+        $this->assertFalse($domain->isVerified());
+        $this->assertFalse($domain->isSuspended());
+        $this->assertFalse($domain->isDeleted());
 
         $this->browse(function ($browser) use ($domain) {
             // Test auto-refresh

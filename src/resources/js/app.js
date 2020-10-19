@@ -62,6 +62,10 @@ const app = new Vue({
             localStorage.setItem('token', response.access_token)
             axios.defaults.headers.common.Authorization = 'Bearer ' + response.access_token
 
+            if (response.email) {
+                store.state.authInfo = response
+            }
+
             if (dashboard !== false) {
                 this.$router.push(store.state.afterLogin || { name: 'dashboard' })
             }

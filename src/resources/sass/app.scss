@@ -90,7 +90,7 @@ body > .outer-container {
     &.fadeOut {
         visibility: hidden;
         opacity: 0;
-        transition: visibility 400ms linear, opacity 400ms linear;
+        transition: visibility 300ms linear, opacity 300ms linear;
     }
 }
 

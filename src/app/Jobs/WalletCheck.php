@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Http\Controllers\API\V4\PaymentsController;
 use App\Wallet;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -21,7 +22,9 @@ class WalletCheck implements ShouldQueue
     public const THRESHOLD_DELETE = 'delete';
     public const THRESHOLD_BEFORE_DELETE = 'before_delete';
     public const THRESHOLD_SUSPEND = 'suspend';
+    public const THRESHOLD_BEFORE_SUSPEND = 'before_suspend';
     public const THRESHOLD_REMINDER = 'reminder';
+    public const THRESHOLD_BEFORE_REMINDER = 'before_reminder';
     public const THRESHOLD_INITIAL = 'initial';
 
     /** @var int The number of seconds to wait before retrying the job. */
@@ -52,12 +55,12 @@ class WalletCheck implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @return void
+     * @return ?string Executed action (THRESHOLD_*)
      */
     public function handle()
     {
         if ($this->wallet->balance >= 0) {
-            return;
+            return null;
         }
 
         $now = Carbon::now();
@@ -65,32 +68,46 @@ class WalletCheck implements ShouldQueue
         // Delete the account
         if (self::threshold($this->wallet, self::THRESHOLD_DELETE) < $now) {
             $this->deleteAccount();
-            return;
+            return self::THRESHOLD_DELETE;
         }
 
         // Warn about the upcomming account deletion
         if (self::threshold($this->wallet, self::THRESHOLD_BEFORE_DELETE) < $now) {
             $this->warnBeforeDelete();
-            return;
+            return self::THRESHOLD_BEFORE_DELETE;
         }
 
         // Suspend the account
         if (self::threshold($this->wallet, self::THRESHOLD_SUSPEND) < $now) {
             $this->suspendAccount();
-            return;
+            return self::THRESHOLD_SUSPEND;
+        }
+
+        // Try to top-up the wallet before suspending the account
+        if (self::threshold($this->wallet, self::THRESHOLD_BEFORE_SUSPEND) < $now) {
+            PaymentsController::topUpWallet($this->wallet);
+            return self::THRESHOLD_BEFORE_SUSPEND;
         }
 
         // Send the second reminder
         if (self::threshold($this->wallet, self::THRESHOLD_REMINDER) < $now) {
             $this->secondReminder();
-            return;
+            return self::THRESHOLD_REMINDER;
+        }
+
+        // Try to top-up the wallet before the second reminder
+        if (self::threshold($this->wallet, self::THRESHOLD_BEFORE_REMINDER) < $now) {
+            PaymentsController::topUpWallet($this->wallet);
+            return self::THRESHOLD_BEFORE_REMINDER;
         }
 
         // Send the initial reminder
         if (self::threshold($this->wallet, self::THRESHOLD_INITIAL) < $now) {
             $this->initialReminder();
-            return;
+            return self::THRESHOLD_INITIAL;
         }
+
+        return null;
     }
 
     /**
@@ -295,9 +312,19 @@ class WalletCheck implements ShouldQueue
             return $negative_since->addDays($suspend + $remind);
         }
 
+        // A day before account suspension
+        if ($type == self::THRESHOLD_BEFORE_SUSPEND) {
+            return $negative_since->addDays($suspend + $remind - 1);
+        }
+
         // Second notification
         if ($type == self::THRESHOLD_REMINDER) {
             return $negative_since->addDays($remind);
+        }
+
+        // A day before the second reminder
+        if ($type == self::THRESHOLD_BEFORE_REMINDER) {
+            return $negative_since->addDays($remind - 1);
         }
 
         // Initial notification

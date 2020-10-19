@@ -13,12 +13,23 @@ use Tests\TestCase;
 
 class ReceiptTest extends TestCase
 {
+    private $paymentIDs = ['AAA1', 'AAA2', 'AAA3', 'AAA4', 'AAA5', 'AAA6', 'AAA7'];
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        Payment::whereIn('id', $this->paymentIDs)->delete();
+    }
+
     /**
      * {@inheritDoc}
      */
     public function tearDown(): void
     {
         $this->deleteTestUser('receipt-test@kolabnow.com');
+
+        Payment::whereIn('id', $this->paymentIDs)->delete();
 
         parent::tearDown();
     }
@@ -51,7 +62,7 @@ class ReceiptTest extends TestCase
         // The main table content
         $content = $dom->getElementById('content');
         $records = $content->getElementsByTagName('tr');
-        $this->assertCount(5, $records);
+        $this->assertCount(7, $records);
 
         $headerCells = $records[0]->getElementsByTagName('th');
         $this->assertCount(3, $headerCells);
@@ -70,13 +81,23 @@ class ReceiptTest extends TestCase
         $this->assertSame('0,01 CHF', $this->getNodeContent($cells[2]));
         $cells = $records[3]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
-        $this->assertSame('2020-05-31', $this->getNodeContent($cells[0]));
+        $this->assertSame('2020-05-21', $this->getNodeContent($cells[0]));
         $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
         $this->assertSame('1,00 CHF', $this->getNodeContent($cells[2]));
-        $summaryCells = $records[4]->getElementsByTagName('td');
+        $cells = $records[4]->getElementsByTagName('td');
+        $this->assertCount(3, $cells);
+        $this->assertSame('2020-05-30', $this->getNodeContent($cells[0]));
+        $this->assertSame("Refund", $this->getNodeContent($cells[1]));
+        $this->assertSame('-1,00 CHF', $this->getNodeContent($cells[2]));
+        $cells = $records[5]->getElementsByTagName('td');
+        $this->assertCount(3, $cells);
+        $this->assertSame('2020-05-31', $this->getNodeContent($cells[0]));
+        $this->assertSame("Chargeback", $this->getNodeContent($cells[1]));
+        $this->assertSame('-0,10 CHF', $this->getNodeContent($cells[2]));
+        $summaryCells = $records[6]->getElementsByTagName('td');
         $this->assertCount(2, $summaryCells);
         $this->assertSame('Total', $this->getNodeContent($summaryCells[0]));
-        $this->assertSame('13,35 CHF', $this->getNodeContent($summaryCells[1]));
+        $this->assertSame('12,25 CHF', $this->getNodeContent($summaryCells[1]));
 
         // Customer data
         $customer = $dom->getElementById('customer');
@@ -116,7 +137,7 @@ class ReceiptTest extends TestCase
         // The main table content
         $content = $dom->getElementById('content');
         $records = $content->getElementsByTagName('tr');
-        $this->assertCount(7, $records);
+        $this->assertCount(9, $records);
 
         $cells = $records[1]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
@@ -130,21 +151,31 @@ class ReceiptTest extends TestCase
         $this->assertSame('0,01 CHF', $this->getNodeContent($cells[2]));
         $cells = $records[3]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
-        $this->assertSame('2020-05-31', $this->getNodeContent($cells[0]));
+        $this->assertSame('2020-05-21', $this->getNodeContent($cells[0]));
         $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
         $this->assertSame('0,92 CHF', $this->getNodeContent($cells[2]));
-        $subtotalCells = $records[4]->getElementsByTagName('td');
+        $cells = $records[4]->getElementsByTagName('td');
+        $this->assertCount(3, $cells);
+        $this->assertSame('2020-05-30', $this->getNodeContent($cells[0]));
+        $this->assertSame("Refund", $this->getNodeContent($cells[1]));
+        $this->assertSame('-0,92 CHF', $this->getNodeContent($cells[2]));
+        $cells = $records[5]->getElementsByTagName('td');
+        $this->assertCount(3, $cells);
+        $this->assertSame('2020-05-31', $this->getNodeContent($cells[0]));
+        $this->assertSame("Chargeback", $this->getNodeContent($cells[1]));
+        $this->assertSame('-0,09 CHF', $this->getNodeContent($cells[2]));
+        $subtotalCells = $records[6]->getElementsByTagName('td');
         $this->assertCount(2, $subtotalCells);
         $this->assertSame('Subtotal', $this->getNodeContent($subtotalCells[0]));
-        $this->assertSame('12,32 CHF', $this->getNodeContent($subtotalCells[1]));
-        $vatCells = $records[5]->getElementsByTagName('td');
+        $this->assertSame('11,31 CHF', $this->getNodeContent($subtotalCells[1]));
+        $vatCells = $records[7]->getElementsByTagName('td');
         $this->assertCount(2, $vatCells);
         $this->assertSame('VAT (7.7%)', $this->getNodeContent($vatCells[0]));
-        $this->assertSame('1,03 CHF', $this->getNodeContent($vatCells[1]));
-        $totalCells = $records[6]->getElementsByTagName('td');
+        $this->assertSame('0,94 CHF', $this->getNodeContent($vatCells[1]));
+        $totalCells = $records[8]->getElementsByTagName('td');
         $this->assertCount(2, $totalCells);
         $this->assertSame('Total', $this->getNodeContent($totalCells[0]));
-        $this->assertSame('13,35 CHF', $this->getNodeContent($totalCells[1]));
+        $this->assertSame('12,25 CHF', $this->getNodeContent($totalCells[1]));
     }
 
     /**
@@ -185,7 +216,7 @@ class ReceiptTest extends TestCase
 
         // Create two payments out of the 2020-05 period
         // and three in it, plus one in the period but unpaid,
-        // and one with amount 0
+        // and one with amount 0, and an extra refund and chanrgeback
 
         $payment = Payment::create([
                 'id' => 'AAA1',
@@ -235,7 +266,7 @@ class ReceiptTest extends TestCase
         $payment->updated_at = Carbon::create(2020, 5, 1, 0, 0, 0);
         $payment->save();
 
-        // ... so we expect the last three on the receipt
+        // ... so we expect the five three on the receipt
         $payment = Payment::create([
                 'id' => 'AAA5',
                 'status' => PaymentProvider::STATUS_PAID,
@@ -268,6 +299,30 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 100,
+        ]);
+        $payment->updated_at = Carbon::create(2020, 5, 21, 23, 59, 0);
+        $payment->save();
+
+        $payment = Payment::create([
+                'id' => 'ref1',
+                'status' => PaymentProvider::STATUS_PAID,
+                'type' => PaymentProvider::TYPE_REFUND,
+                'description' => 'refund desc',
+                'wallet_id' => $wallet->id,
+                'provider' => 'stripe',
+                'amount' => -100,
+        ]);
+        $payment->updated_at = Carbon::create(2020, 5, 30, 23, 59, 0);
+        $payment->save();
+
+        $payment = Payment::create([
+                'id' => 'chback1',
+                'status' => PaymentProvider::STATUS_PAID,
+                'type' => PaymentProvider::TYPE_CHARGEBACK,
+                'description' => '',
+                'wallet_id' => $wallet->id,
+                'provider' => 'stripe',
+                'amount' => -10,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 31, 23, 59, 0);
         $payment->save();

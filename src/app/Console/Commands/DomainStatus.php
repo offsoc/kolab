@@ -44,6 +44,21 @@ class DomainStatus extends Command
             return 1;
         }
 
-        $this->info($domain->status);
+        $statuses = [
+            'active' => Domain::STATUS_ACTIVE,
+            'suspended' => Domain::STATUS_SUSPENDED,
+            'deleted' => Domain::STATUS_DELETED,
+            'ldapReady' => Domain::STATUS_LDAP_READY,
+            'verified' => Domain::STATUS_VERIFIED,
+            'confirmed' => Domain::STATUS_CONFIRMED,
+        ];
+
+        foreach ($statuses as $text => $bit) {
+            $func = 'is' . \ucfirst($text);
+
+            $this->info(sprintf("%d %s: %s", $bit, $text, $domain->$func()));
+        }
+
+        $this->info("In total: {$domain->status}");
     }
 }

@@ -293,6 +293,7 @@ class Mollie extends \App\Providers\PaymentProvider
         }
 
         // Get the payment details from Mollie
+        // TODO: Consider https://github.com/mollie/mollie-api-php/issues/502 when it's fixed
         $mollie_payment = mollie()->payments()->get($payment_id);
 
         if (empty($mollie_payment)) {
@@ -300,22 +301,44 @@ class Mollie extends \App\Providers\PaymentProvider
             return 200;
         }
 
+        $refunds = [];
+
         if ($mollie_payment->isPaid()) {
-            if (!$mollie_payment->hasRefunds() && !$mollie_payment->hasChargebacks()) {
-                // The payment is paid and isn't refunded or charged back.
-                // Update the balance, if it wasn't already
-                if ($payment->status != self::STATUS_PAID && $payment->amount > 0) {
-                    $credit = true;
-                    $notify = $payment->type == self::TYPE_RECURRING;
+            // The payment is paid. Update the balance, and notify the user
+            if ($payment->status != self::STATUS_PAID && $payment->amount > 0) {
+                $credit = true;
+                $notify = $payment->type == self::TYPE_RECURRING;
+            }
+
+            // The payment has been (partially) refunded.
+            // Let's process refunds with status "refunded".
+            if ($mollie_payment->hasRefunds()) {
+                foreach ($mollie_payment->refunds() as $refund) {
+                    if ($refund->isTransferred() && $refund->amount->value) {
+                        $refunds[] = [
+                            'id' => $refund->id,
+                            'description' => $refund->description,
+                            'amount' => round(floatval($refund->amount->value) * 100),
+                            'type' => self::TYPE_REFUND,
+                            // Note: we assume this is the original payment/wallet currency
+                        ];
+                    }
                 }
-            } elseif ($mollie_payment->hasRefunds()) {
-                // The payment has been (partially) refunded.
-                // The status of the payment is still "paid"
-                // TODO: Update balance
-            } elseif ($mollie_payment->hasChargebacks()) {
-                // The payment has been (partially) charged back.
-                // The status of the payment is still "paid"
-                // TODO: Update balance
+            }
+
+            // The payment has been (partially) charged back.
+            // Let's process chargebacks (they have no states as refunds)
+            if ($mollie_payment->hasChargebacks()) {
+                foreach ($mollie_payment->chargebacks() as $chargeback) {
+                    if ($chargeback->amount->value) {
+                        $refunds[] = [
+                            'id' => $chargeback->id,
+                            'amount' => round(floatval($chargeback->amount->value) * 100),
+                            'type' => self::TYPE_CHARGEBACK,
+                            // Note: we assume this is the original payment/wallet currency
+                        ];
+                    }
+                }
             }
         } elseif ($mollie_payment->isFailed()) {
             // Note: I didn't find a way to get any description of the problem with a payment
@@ -341,6 +364,10 @@ class Mollie extends \App\Providers\PaymentProvider
 
         if (!empty($credit)) {
             self::creditPayment($payment, $mollie_payment);
+        }
+
+        foreach ($refunds as $refund) {
+            $this->storeRefund($payment->wallet, $refund);
         }
 
         DB::commit();

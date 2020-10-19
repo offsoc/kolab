@@ -291,7 +291,7 @@ class UsersController extends Controller
      * Update user data.
      *
      * @param \Illuminate\Http\Request $request The API request.
-     * @params string                  $id      User identifier
+     * @param string                   $id      User identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
@@ -592,14 +592,20 @@ class UsersController extends Controller
             switch ($step) {
                 case 'user-ldap-ready':
                     // User not in LDAP, create it
-                    $job = new \App\Jobs\UserCreate($user);
+                    $job = new \App\Jobs\User\CreateJob($user->id);
                     $job->handle();
+
+                    $user->refresh();
+
                     return $user->isLdapReady();
 
                 case 'user-imap-ready':
                     // User not in IMAP? Verify again
-                    $job = new \App\Jobs\UserVerify($user);
+                    $job = new \App\Jobs\User\VerifyJob($user->id);
                     $job->handle();
+
+                    $user->refresh();
+
                     return $user->isImapReady();
             }
         } catch (\Exception $e) {

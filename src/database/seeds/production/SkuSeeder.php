@@ -151,5 +151,31 @@ class SkuSeeder extends Seeder
                 'active' => true,
             ]
         );
+
+        Sku::create(
+            [
+                'title' => 'beta',
+                'name' => 'Beta program',
+                'description' => 'Access to beta program subscriptions',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Beta',
+                'active' => false,
+            ]
+        );
+
+        Sku::create(
+            [
+                'title' => 'meet',
+                'name' => 'Video chat',
+                'description' => 'Video conferencing tool',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Beta\Meet',
+                'active' => true,
+            ]
+        );
     }
 }

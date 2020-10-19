@@ -222,6 +222,24 @@ class LDAPTest extends TestCase
     }
 
     /**
+     * Test handling errors on user creation
+     *
+     * @group ldap
+     */
+    public function testCreateUserException(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/Failed to create user/');
+
+        $user = new User([
+                'email' => 'test-non-existing-ldap@non-existing.org',
+                'status' => User::STATUS_ACTIVE,
+        ]);
+
+        LDAP::createUser($user);
+    }
+
+    /**
      * Test handling update of a non-existing domain
      *
      * @group ldap

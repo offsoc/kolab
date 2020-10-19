@@ -26,7 +26,7 @@ class DomainObserver
 
         $domain->namespace = \strtolower($domain->namespace);
 
-        $domain->status |= Domain::STATUS_NEW | Domain::STATUS_ACTIVE;
+        $domain->status |= Domain::STATUS_NEW;
     }
 
     /**
@@ -40,7 +40,7 @@ class DomainObserver
     {
         // Create domain record in LDAP
         // Note: DomainCreate job will dispatch DomainVerify job
-        \App\Jobs\DomainCreate::dispatch($domain);
+        \App\Jobs\Domain\CreateJob::dispatch($domain->id);
     }
 
     /**
@@ -68,7 +68,7 @@ class DomainObserver
      */
     public function deleted(Domain $domain)
     {
-        \App\Jobs\DomainDelete::dispatch($domain->id);
+        \App\Jobs\Domain\DeleteJob::dispatch($domain->id);
     }
 
     /**
@@ -80,7 +80,7 @@ class DomainObserver
      */
     public function updated(Domain $domain)
     {
-        \App\Jobs\DomainUpdate::dispatch($domain->id);
+        \App\Jobs\Domain\UpdateJob::dispatch($domain->id);
     }
 
     /**

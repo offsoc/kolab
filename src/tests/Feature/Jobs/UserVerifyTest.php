@@ -2,8 +2,6 @@
 
 namespace Tests\Feature\Jobs;
 
-use App\Jobs\UserCreate;
-use App\Jobs\UserVerify;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -44,6 +42,7 @@ class UserVerifyTest extends TestCase
         Queue::fake();
 
         $user = $this->getTestUser('ned@kolab.org');
+
         if ($user->isImapReady()) {
             $user->status ^= User::STATUS_IMAP_READY;
             $user->save();
@@ -52,7 +51,7 @@ class UserVerifyTest extends TestCase
         $this->assertFalse($user->isImapReady());
 
         for ($i = 0; $i < 10; $i++) {
-            $job = new UserVerify($user);
+            $job = new \App\Jobs\User\VerifyJob($user->id);
             $job->handle();
 
             if ($user->fresh()->isImapReady()) {

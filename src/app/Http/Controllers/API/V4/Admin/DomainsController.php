@@ -58,7 +58,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
      * Suspend the domain
      *
      * @param \Illuminate\Http\Request $request The API request.
-     * @params string                  $id      Domain identifier
+     * @param string                   $id      Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
@@ -82,7 +82,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
      * Un-Suspend the domain
      *
      * @param \Illuminate\Http\Request $request The API request.
-     * @params string                  $id      Domain identifier
+     * @param string                   $id      Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */

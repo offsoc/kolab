@@ -54,7 +54,7 @@ class UserObserver
     public function created(User $user)
     {
         $settings = [
-            'country' => 'CH',
+            'country' => \App\Utils::countryForRequest(),
             'currency' => 'CHF',
             /*
             'first_name' => '',
@@ -82,10 +82,10 @@ class UserObserver
 
         // Create user record in LDAP, then check if the account is created in IMAP
         $chain = [
-            new \App\Jobs\UserVerify($user),
+            new \App\Jobs\User\VerifyJob($user->id),
         ];
 
-        \App\Jobs\UserCreate::withChain($chain)->dispatch($user);
+        \App\Jobs\User\CreateJob::withChain($chain)->dispatch($user->id);
     }
 
     /**
@@ -167,7 +167,7 @@ class UserObserver
 
         // FIXME: What do we do with user wallets?
 
-        \App\Jobs\UserDelete::dispatch($user->id);
+        \App\Jobs\User\DeleteJob::dispatch($user->id);
     }
 
     /**
@@ -244,7 +244,7 @@ class UserObserver
      */
     public function retrieving(User $user)
     {
-        // TODO   \App\Jobs\UserRead::dispatch($user);
+        // TODO   \App\Jobs\User\ReadJob::dispatch($user->id);
     }
 
     /**
@@ -256,6 +256,6 @@ class UserObserver
      */
     public function updating(User $user)
     {
-        \App\Jobs\UserUpdate::dispatch($user);
+        \App\Jobs\User\UpdateJob::dispatch($user->id);
     }
 }

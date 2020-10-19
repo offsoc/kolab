@@ -7,7 +7,8 @@ LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
       io.openshift.expose-services="8000:http" \
       io.openshift.tags="builder,php,swoole"
 
-ENV SWOOLE_VERSION=4.4.x
+ENV SWOOLE_VERSION=4.4.x \
+    HOME=/opt/app-root/src
 
 RUN dnf -y install \
         composer \
@@ -23,6 +24,7 @@ RUN dnf -y install \
         php-ldap \
         php-opcache \
         php-pecl-apcu \
+        php-mysqlnd \
         re2c && \
     git clone -b v4.4.x https://github.com/swoole/swoole-src.git/ /swoole-src.git/ && \
         cd /swoole-src.git/ && \
@@ -34,9 +36,6 @@ RUN dnf -y install \
             --disable-mysqlnd \
             --enable-http2 \
             --enable-openssl && \
-            --enable-debug \
-            --enable-debug-log \
-            --enable-trace-log && \
         make -j4 && \
         make install && \
         cd / && \
@@ -52,12 +51,11 @@ RUN dnf -y install \
     echo "extension=swoole.so" >> /etc/php.d/swoole.ini && \
     php -m 2>&1 | grep -q swoole
 
-RUN groupadd -g 1001 default && \
-    useradd -d /opt/app-root/ -u 1001 -g 1001 default
+RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/ -u 1001 -g 1001 default)
 
-USER default
+USER 1001
 
-WORKDIR /opt/app-root/
+WORKDIR ${HOME}
 
 COPY /rootfs /
 
