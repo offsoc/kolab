@@ -179,7 +179,7 @@ class WalletsController extends Controller
         $result = $wallet->payments()
             ->selectRaw('distinct date_format(updated_at, "%Y-%m") as ident')
             ->where('status', PaymentProvider::STATUS_PAID)
-            ->where('amount', '>', 0)
+            ->where('amount', '<>', 0)
             ->orderBy('ident', 'desc')
             ->get()
             ->whereNotIn('ident', [date('Y-m')]) // exclude current month

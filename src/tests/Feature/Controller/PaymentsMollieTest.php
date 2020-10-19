@@ -34,8 +34,12 @@ class PaymentsMollieTest extends TestCase
         Payment::where('wallet_id', $wallet->id)->delete();
         Wallet::where('id', $wallet->id)->update(['balance' => 0]);
         WalletSetting::where('wallet_id', $wallet->id)->delete();
-        Transaction::where('object_id', $wallet->id)
-            ->where('type', Transaction::WALLET_CREDIT)->delete();
+        $types = [
+            Transaction::WALLET_CREDIT,
+            Transaction::WALLET_REFUND,
+            Transaction::WALLET_CHARGEBACK,
+        ];
+        Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
     }
 
     /**
@@ -48,8 +52,12 @@ class PaymentsMollieTest extends TestCase
         Payment::where('wallet_id', $wallet->id)->delete();
         Wallet::where('id', $wallet->id)->update(['balance' => 0]);
         WalletSetting::where('wallet_id', $wallet->id)->delete();
-        Transaction::where('object_id', $wallet->id)
-            ->where('type', Transaction::WALLET_CREDIT)->delete();
+        $types = [
+            Transaction::WALLET_CREDIT,
+            Transaction::WALLET_REFUND,
+            Transaction::WALLET_CHARGEBACK,
+        ];
+        Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
 
         parent::tearDown();
     }
@@ -569,7 +577,162 @@ class PaymentsMollieTest extends TestCase
             return $job_payment->id === $payment->id;
         });
 
-        $responseStack = $this->unmockMollie();
+        $this->unmockMollie();
+    }
+
+    /**
+     * Test refund/chargeback handling by the webhook
+     *
+     * @group mollie
+     */
+    public function testRefundAndChargeback(): void
+    {
+        Bus::fake();
+
+        $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
+        $wallet->transactions()->delete();
+
+        $mollie = PaymentProvider::factory('mollie');
+
+        // Create a paid payment
+        $payment = Payment::create([
+                'id' => 'tr_123456',
+                'status' => PaymentProvider::STATUS_PAID,
+                'amount' => 123,
+                'type' => PaymentProvider::TYPE_ONEOFF,
+                'wallet_id' => $wallet->id,
+                'provider' => 'mollie',
+                'description' => 'test',
+        ]);
+
+        // Test handling a refund by the webhook
+
+        $mollie_response1 = [
+            "resource" => "payment",
+            "id" => $payment->id,
+            "status" => "paid",
+            // Status is not enough, paidAt is used to distinguish the state
+            "paidAt" => date('c'),
+            "mode" => "test",
+            "_links" => [
+                "refunds" => [
+                   "href" => "https://api.mollie.com/v2/payments/{$payment->id}/refunds",
+                   "type" => "application/hal+json"
+                ]
+            ]
+        ];
+
+        $mollie_response2 = [
+            "count" => 1,
+            "_links" => [],
+            "_embedded" => [
+                "refunds" => [
+                    [
+                        "resource" => "refund",
+                        "id" => "re_123456",
+                        "status" => \Mollie\Api\Types\RefundStatus::STATUS_REFUNDED,
+                        "paymentId" => $payment->id,
+                        "description" => "refund desc",
+                        "amount" => [
+                            "currency" => "CHF",
+                            "value" => "1.01",
+                        ],
+                    ]
+                ]
+            ]
+        ];
+
+        // We'll trigger the webhook with payment id and use mocking for
+        // requests to the Mollie payments API.
+        $responseStack = $this->mockMollie();
+        $responseStack->append(new Response(200, [], json_encode($mollie_response1)));
+        $responseStack->append(new Response(200, [], json_encode($mollie_response2)));
+
+        $post = ['id' => $payment->id];
+        $response = $this->post("api/webhooks/payment/mollie", $post);
+        $response->assertStatus(200);
+
+        $wallet->refresh();
+
+        $this->assertEquals(-101, $wallet->balance);
+
+        $transactions = $wallet->transactions()->where('type', Transaction::WALLET_REFUND)->get();
+
+        $this->assertCount(1, $transactions);
+        $this->assertSame(101, $transactions[0]->amount);
+        $this->assertSame(Transaction::WALLET_REFUND, $transactions[0]->type);
+        $this->assertSame("refund desc", $transactions[0]->description);
+
+        $payments = $wallet->payments()->where('id', 're_123456')->get();
+
+        $this->assertCount(1, $payments);
+        $this->assertSame(-101, $payments[0]->amount);
+        $this->assertSame(PaymentProvider::STATUS_PAID, $payments[0]->status);
+        $this->assertSame(PaymentProvider::TYPE_REFUND, $payments[0]->type);
+        $this->assertSame("mollie", $payments[0]->provider);
+        $this->assertSame("refund desc", $payments[0]->description);
+
+        // Test handling a chargeback by the webhook
+
+        $mollie_response1["_links"] = [
+            "chargebacks" => [
+               "href" => "https://api.mollie.com/v2/payments/{$payment->id}/chargebacks",
+               "type" => "application/hal+json"
+            ]
+        ];
+
+        $mollie_response2 = [
+            "count" => 1,
+            "_links" => [],
+            "_embedded" => [
+                "chargebacks" => [
+                    [
+                        "resource" => "chargeback",
+                        "id" => "chb_123456",
+                        "paymentId" => $payment->id,
+                        "amount" => [
+                            "currency" => "CHF",
+                            "value" => "0.15",
+                        ],
+                    ]
+                ]
+            ]
+        ];
+
+        // We'll trigger the webhook with payment id and use mocking for
+        // requests to the Mollie payments API.
+        $responseStack = $this->mockMollie();
+        $responseStack->append(new Response(200, [], json_encode($mollie_response1)));
+        $responseStack->append(new Response(200, [], json_encode($mollie_response2)));
+
+        $post = ['id' => $payment->id];
+        $response = $this->post("api/webhooks/payment/mollie", $post);
+        $response->assertStatus(200);
+
+        $wallet->refresh();
+
+        $this->assertEquals(-116, $wallet->balance);
+
+        $transactions = $wallet->transactions()->where('type', Transaction::WALLET_CHARGEBACK)->get();
+
+        $this->assertCount(1, $transactions);
+        $this->assertSame(15, $transactions[0]->amount);
+        $this->assertSame(Transaction::WALLET_CHARGEBACK, $transactions[0]->type);
+        $this->assertSame('', $transactions[0]->description);
+
+        $payments = $wallet->payments()->where('id', 'chb_123456')->get();
+
+        $this->assertCount(1, $payments);
+        $this->assertSame(-15, $payments[0]->amount);
+        $this->assertSame(PaymentProvider::STATUS_PAID, $payments[0]->status);
+        $this->assertSame(PaymentProvider::TYPE_CHARGEBACK, $payments[0]->type);
+        $this->assertSame("mollie", $payments[0]->provider);
+        $this->assertSame('', $payments[0]->description);
+
+        Bus::assertNotDispatched(\App\Jobs\PaymentEmail::class);
+
+        $this->unmockMollie();
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Transaction;
 use App\Payment;
 use App\Wallet;
 
@@ -18,6 +19,8 @@ abstract class PaymentProvider
     public const TYPE_ONEOFF = 'oneoff';
     public const TYPE_RECURRING = 'recurring';
     public const TYPE_MANDATE = 'mandate';
+    public const TYPE_REFUND = 'refund';
+    public const TYPE_CHARGEBACK = 'chargeback';
 
     /** const int Minimum amount of money in a single payment (in cents) */
     public const MIN_AMOUNT = 1000;
@@ -152,5 +155,43 @@ abstract class PaymentProvider
         $db_payment->save();
 
         return $db_payment;
+    }
+
+    /**
+     * Deduct an amount of pecunia from the wallet.
+     * Creates a payment and transaction records for the refund/chargeback operation.
+     *
+     * @param \App\Wallet $wallet A wallet object
+     * @param array       $refund A refund or chargeback data (id, type, amount, description)
+     *
+     * @return void
+     */
+    protected function storeRefund(Wallet $wallet, array $refund): void
+    {
+        if (empty($refund) || empty($refund['amount'])) {
+            return;
+        }
+
+        $wallet->balance -= $refund['amount'];
+        $wallet->save();
+
+        if ($refund['type'] == self::TYPE_CHARGEBACK) {
+            $transaction_type = Transaction::WALLET_CHARGEBACK;
+        } else {
+            $transaction_type = Transaction::WALLET_REFUND;
+        }
+
+        Transaction::create([
+                'object_id' => $wallet->id,
+                'object_type' => Wallet::class,
+                'type' => $transaction_type,
+                'amount' => $refund['amount'],
+                'description' => $refund['description'] ?? '',
+        ]);
+
+        $refund['status'] = self::STATUS_PAID;
+        $refund['amount'] *= -1;
+
+        $this->storePayment($refund, $wallet->id);
     }
 }

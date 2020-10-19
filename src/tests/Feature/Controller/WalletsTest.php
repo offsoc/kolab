@@ -209,6 +209,7 @@ class WalletsTest extends TestCase
         $this->assertSame('CHF', $json['currency']);
         $this->assertSame($wallet->balance, $json['balance']);
         $this->assertTrue(empty($json['description']));
+        // TODO: This assertion does not work after a longer while from seeding
         $this->assertTrue(!empty($json['notice']));
     }
 
