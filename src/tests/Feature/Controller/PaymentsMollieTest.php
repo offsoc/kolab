@@ -213,7 +213,7 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame($mandate_id, $json['id']);
         $this->assertFalse($json['isDisabled']);
 
-        $wallet = $user->wallets()->first();
+        $wallet->refresh();
 
         $this->assertEquals(30.10, $wallet->getSetting('mandate_amount'));
         $this->assertEquals(1, $wallet->getSetting('mandate_balance'));
@@ -271,6 +271,34 @@ class PaymentsMollieTest extends TestCase
         $this->expectExceptionMessageMatches('/410: Gone/');
         $mandate = mollie()->mandates()->getForId($customer_id, $mandate_id);
 
+        $this->assertNull($wallet->fresh()->getSetting('mollie_mandate_id'));
+
+        // Test Mollie's "410 Gone" response handling when fetching the mandate info
+        // It is expected to remove the mandate reference
+        $mollie_response = [
+            'status' => 410,
+            'title' => "Gone",
+            'detail' => "You are trying to access an object, which has previously been deleted",
+            '_links' => [
+                'documentation' => [
+                    'href' => "https://docs.mollie.com/errors",
+                    'type' => "text/html"
+                ]
+            ]
+        ];
+
+        $responseStack = $this->mockMollie();
+        $responseStack->append(new Response(410, [], json_encode($mollie_response)));
+
+        $wallet->fresh()->setSetting('mollie_mandate_id', '123');
+
+        $response = $this->actingAs($user)->get("api/v4/payments/mandate");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertFalse(array_key_exists('id', $json));
+        $this->assertFalse(array_key_exists('method', $json));
         $this->assertNull($wallet->fresh()->getSetting('mollie_mandate_id'));
     }
 

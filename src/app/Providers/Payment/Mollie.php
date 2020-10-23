@@ -6,6 +6,7 @@ use App\Payment;
 use App\Utils;
 use App\Wallet;
 use Illuminate\Support\Facades\DB;
+use Mollie\Api\Exceptions\ApiException;
 
 class Mollie extends \App\Providers\PaymentProvider
 {
@@ -417,21 +418,21 @@ class Mollie extends \App\Providers\PaymentProvider
 
         // Get the manadate reference we already have
         if ($customer_id && $mandate_id) {
-            $mandate = mollie()->mandates()->getForId($customer_id, $mandate_id);
-            if ($mandate) {// && ($mandate->isValid() || $mandate->isPending())) {
-                return $mandate;
-            }
-        }
+            try {
+                return mollie()->mandates()->getForId($customer_id, $mandate_id);
+            } catch (ApiException $e) {
+                // FIXME: What about 404?
+                if ($e->getCode() == 410) {
+                    // The mandate is gone, remove the reference
+                    $wallet->setSetting('mollie_mandate_id', null);
+                    return null;
+                }
 
-        // Get all mandates from Mollie and find the active one
-        /*
-        foreach ($customer->mandates() as $mandate) {
-            if ($mandate->isValid() || $mandate->isPending()) {
-                $wallet->setSetting('mollie_mandate_id', $mandate->id);
-                return $mandate;
+                // TODO: Maybe we shouldn't always throw? It make sense in the job
+                //       but for example when we're just fetching wallet info...
+                throw $e;
             }
         }
-        */
     }
 
     /**
