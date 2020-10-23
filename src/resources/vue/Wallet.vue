@@ -83,21 +83,28 @@
                                 </div>
                             </form>
                             <div class="form-separator"><hr><span>or</span></div>
-                            <div id="mandate-form" v-if="!mandate.id">
+                            <div id="mandate-form" v-if="!mandate.isValid && !mandate.isPending">
                                 <p>Add auto-payment, so you never run out.</p>
+                                <div v-if="mandate.id && !mandate.isValid" class="alert alert-danger">
+                                    The setup of automatic payments failed. Restart the process to enable automatic top-ups.
+                                </div>
                                 <div class="w-100 text-center">
                                     <button type="button" class="btn btn-primary" @click="autoPaymentForm">Set up auto-payment</button>
                                 </div>
                             </div>
-                            <div id="mandate-info" v-if="mandate.id">
-                                <p>Auto-payment is set to fill up your account by <b>{{ mandate.amount }} CHF</b>
+                            <div id="mandate-info" v-else>
+                                <p>
+                                    Auto-payment is set to fill up your account by <b>{{ mandate.amount }} CHF</b>
                                     every time your account balance gets under <b>{{ mandate.balance }} CHF</b>.
                                     You will be charged via {{ mandate.method }}.
                                 </p>
-                                <p v-if="mandate.isDisabled" class="disabled-mandate text-danger">
+                                <div v-if="mandate.isPending" class="alert alert-warning">
+                                    The setup of the automatic payment is still in progress.
+                                </div>
+                                <div v-else-if="mandate.isDisabled" class="disabled-mandate alert alert-danger">
                                     The configured auto-payment has been disabled. Top up your wallet or
                                     raise the auto-payment amount.
-                                </p>
+                                </div>
                                 <p>You can cancel or change the auto-payment at any time.</p>
                                 <div class="form-group d-flex justify-content-around">
                                     <button type="button" class="btn btn-danger" @click="autoPaymentDelete">Cancel auto-payment</button>
@@ -107,7 +114,8 @@
                         </div>
                         <div id="auto-payment" v-if="paymentForm == 'auto'">
                             <form data-validation-prefix="mandate_">
-                                <p>Here is how it works: Every time your account runs low,
+                                <p>
+                                    Here is how it works: Every time your account runs low,
                                     we will charge your preferred payment method for an amount you choose.
                                     You can cancel or change the auto-payment option at any time.
                                 </p>
@@ -131,23 +139,29 @@
                                         </div>
                                     </div>
                                 </div>
-                                <p v-if="!mandate.id">
+                                <p v-if="!mandate.isValid">
                                     Next, you will be redirected to the checkout page, where you can provide
                                     your credit card details.
                                 </p>
-                                <p v-if="mandate.isDisabled" class="disabled-mandate text-danger">
+                                <div v-if="mandate.isValid && mandate.isDisabled" class="disabled-mandate alert alert-danger">
                                     The auto-payment is disabled. Immediately after you submit new settings we'll
-                                    attempt to top up your wallet.
-                                </p>
+                                    enable it and attempt to top up your wallet.
+                                </div>
                             </form>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary modal-action" v-if="paymentForm == 'auto' && mandate.id" @click="autoPayment">
+                        <button type="button" class="btn btn-primary modal-action"
+                                v-if="paymentForm == 'auto' && (mandate.isValid || mandate.isPending)"
+                                @click="autoPayment"
+                        >
                             <svg-icon icon="check"></svg-icon> Submit
                         </button>
-                        <button type="button" class="btn btn-primary modal-action" v-if="paymentForm == 'auto' && !mandate.id" @click="autoPayment">
+                        <button type="button" class="btn btn-primary modal-action"
+                                v-if="paymentForm == 'auto' && !mandate.isValid && !mandate.isPending"
+                                @click="autoPayment"
+                        >
                             <svg-icon :icon="['far', 'credit-card']"></svg-icon> Continue
                         </button>
                     </div>
@@ -221,7 +235,7 @@
 
                 this.$root.removeLoader(mandate_form)
 
-                if (!this.mandate.id) {
+                if (!this.mandate.id || this.mandate.isPending) {
                     this.$root.addLoader(mandate_form)
                     axios.get('/api/v4/payments/mandate')
                         .then(response => {
@@ -253,7 +267,7 @@
                     })
             },
             autoPayment() {
-                const method = this.mandate.id ? 'put' : 'post'
+                const method = this.mandate.id && (this.mandate.isValid || this.mandate.isPending) ? 'put' : 'post'
                 const post = {
                     amount: this.mandate.amount,
                     balance: this.mandate.balance
@@ -264,6 +278,7 @@
                 axios[method]('/api/v4/payments/mandate', post)
                     .then(response => {
                         if (method == 'post') {
+                            this.mandate.id = null
                             // a new mandate, redirect to the chackout page
                             if (response.data.redirectUrl) {
                                 location.href = response.data.redirectUrl

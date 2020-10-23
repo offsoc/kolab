@@ -127,10 +127,11 @@
                             <div class="form-group row" v-if="wallet.mandate && wallet.mandate.id">
                                 <label class="col-sm-4 col-form-label">Auto-payment</label>
                                 <div class="col-sm-8">
-                                    <span class="form-control-plaintext" id="autopayment">
+                                    <span id="autopayment" :class="'form-control-plaintext' + (wallet.mandateState ? ' text-danger' : '')">
                                         Fill up by <b>{{ wallet.mandate.amount }} CHF</b>
                                         when under <b>{{ wallet.mandate.balance }} CHF</b>
-                                        using {{ wallet.mandate.method }}<span v-if="wallet.mandate.isDisabled"> (disabled)</span>.
+                                        using {{ wallet.mandate.method }}
+                                        <span v-if="wallet.mandateState">({{ wallet.mandateState }})</span>.
                                     </span>
                                 </div>
                             </div>
@@ -442,6 +443,7 @@
                         .then(response => {
                             this.$root.removeLoader(financesTab)
                             this.wallet = response.data
+                            this.setMandateState()
                         })
                         .catch(error => {
                             this.$root.removeLoader(financesTab)
@@ -530,6 +532,16 @@
                         $(e.target).find('input').focus()
                     })
                     .modal()
+            },
+            setMandateState() {
+                let mandate = this.wallet.mandate
+                if (mandate && mandate.id) {
+                    if (!mandate.isValid) {
+                        this.wallet.mandateState = mandate.isPending ? 'pending' : 'invalid'
+                    } else if (mandate.isDisabled) {
+                        this.wallet.mandateState = 'disabled'
+                    }
+                }
             },
             oneOffDialog(negative) {
                 this.oneoff_negative = negative
