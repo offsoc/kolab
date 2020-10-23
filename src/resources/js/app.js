@@ -143,6 +143,11 @@ const app = new Vue({
             if (!error.response) {
                 // TODO: probably network connection error
             } else if (error.response.status === 401) {
+                // Remember requested route to come back to it after log in
+                if (this.$route.meta.requiresAuth) {
+                    store.state.afterLogin = this.$route
+                }
+
                 this.logoutUser()
             } else {
                 this.errorPage(error.response.status, error.response.statusText)

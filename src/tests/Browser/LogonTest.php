@@ -7,6 +7,7 @@ use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
+use Tests\Browser\Pages\UserProfile;
 use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
@@ -37,7 +38,7 @@ class LogonTest extends TestCaseDusk
     /**
      * Test redirect to /login if user is unauthenticated
      */
-    public function testLogonRedirect(): void
+    public function testRequiredAuth(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/dashboard');
@@ -206,6 +207,26 @@ class LogonTest extends TestCaseDusk
                 ->waitUntilMissing('@second-factor-input.is-invalid')
                 ->waitForLocation('/dashboard')
                 ->on(new Dashboard());
+        });
+    }
+
+    /**
+     * Test redirect to the requested page after logon
+     *
+     * @depends test2FA
+     */
+    public function testAfterLogonRedirect(): void
+    {
+        $this->browse(function (Browser $browser) {
+            // User is logged in
+            $browser->visit(new UserProfile());
+
+            // Test redirect if the token is invalid
+            $browser->script("localStorage.setItem('token', '123')");
+            $browser->refresh()
+                ->on(new Home())
+                ->submitLogon('john@kolab.org', 'simple123', false)
+                ->waitForLocation('/profile');
         });
     }
 }
