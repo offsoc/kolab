@@ -11,6 +11,20 @@ use Tests\TestCaseDusk;
 
 class RoomSetupTest extends TestCaseDusk
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->clearBetaEntitlements();
+    }
+
+    public function tearDown(): void
+    {
+        $this->clearBetaEntitlements();
+        parent::tearDown();
+    }
 
     /**
      * Test non-existing room
@@ -57,6 +71,8 @@ class RoomSetupTest extends TestCaseDusk
             $room->session_id = null;
             $room->save();
         }
+
+        $this->assignBetaEntitlement('john@kolab.org', 'meet');
 
         $this->browse(function (Browser $browser) {
             $browser->visit(new RoomPage('john'))
@@ -107,6 +123,8 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testTwoUsersInARoom(): void
     {
+        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+
         $this->browse(function (Browser $browser, Browser $guest) {
             // In one browser window act as a guest
             $guest->visit(new RoomPage('john'))

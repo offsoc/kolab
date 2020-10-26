@@ -4,7 +4,7 @@ cwd=$(dirname $0)
 
 pushd ${cwd}/../src/
 
-php -dmemory_limit=320M \
+php -dmemory_limit=340M \
     vendor/bin/phpstan \
     analyse
 

@@ -91,8 +91,14 @@ class OpenViduController extends Controller
     {
         $room = Room::where('name', $id)->first();
 
-        // This isn't a room, bye bye
-        if (!$room) {
+        // Room does not exist, or the owner is deleted
+        if (!$room || !$room->owner) {
+            return $this->errorResponse(404, \trans('meet.room-not-found'));
+        }
+
+        // Check if there's still a valid beta entitlement for the room owner
+        $sku = \App\Sku::where('title', 'meet')->first();
+        if ($sku && !$room->owner->entitlements()->where('sku_id', $sku->id)->first()) {
             return $this->errorResponse(404, \trans('meet.room-not-found'));
         }
 

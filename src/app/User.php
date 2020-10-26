@@ -338,7 +338,8 @@ class User extends Authenticatable implements JWTSubject
      */
     public function entitlements()
     {
-        return $this->hasMany('App\Entitlement', 'entitleable_id', 'id');
+        return $this->hasMany('App\Entitlement', 'entitleable_id', 'id')
+            ->where('entitleable_type', User::class);
     }
 
     public function addEntitlement($entitlement)

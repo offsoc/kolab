@@ -272,6 +272,10 @@
 
                 axios[method](location, this.user)
                     .then(response => {
+                        if (response.data.statusInfo) {
+                            this.$store.state.authInfo.statusInfo = response.data.statusInfo
+                        }
+
                         this.$toast.success(response.data.message)
                         this.$router.push({ name: 'users' })
                     })

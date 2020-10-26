@@ -10,6 +10,21 @@ use Tests\TestCaseDusk;
 class RoomControlsTest extends TestCaseDusk
 {
     /**
+     * {@inheritDoc}
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->clearBetaEntitlements();
+    }
+
+    public function tearDown(): void
+    {
+        $this->clearBetaEntitlements();
+        parent::tearDown();
+    }
+
+    /**
      * Test fullscreen buttons
      *
      * @group openvidu
@@ -25,6 +40,8 @@ class RoomControlsTest extends TestCaseDusk
             $room->session_id = null;
             $room->save();
         }
+
+        $this->assignBetaEntitlement('john@kolab.org', 'meet');
 
         $this->browse(function (Browser $browser) {
             // Join the room as an owner (authenticate)
@@ -77,6 +94,8 @@ class RoomControlsTest extends TestCaseDusk
             $room->session_id = null;
             $room->save();
         }
+
+        $this->assignBetaEntitlement('john@kolab.org', 'meet');
 
         $this->browse(function (Browser $owner, Browser $guest) {
             // Join the room as an owner (authenticate)
@@ -219,6 +238,8 @@ class RoomControlsTest extends TestCaseDusk
      */
     public function testChat(): void
     {
+        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+
         $this->browse(function (Browser $owner, Browser $guest) {
             // Join the room as an owner
             $owner->visit(new RoomPage('john'))

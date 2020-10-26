@@ -2,17 +2,37 @@
 
 namespace Tests\Browser\Meet;
 
+use App\Sku;
 use Tests\Browser;
+use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\Meet\Room as RoomPage;
+use Tests\Browser\Pages\UserInfo;
 use Tests\TestCaseDusk;
 
 class RoomsTest extends TestCaseDusk
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->clearBetaEntitlements();
+    }
 
     /**
-     * Test rooms page (unauthenticated)
+     * {@inheritDoc}
+     */
+    public function tearDown(): void
+    {
+        $this->clearBetaEntitlements();
+        parent::tearDown();
+    }
+
+    /**
+     * Test rooms page (unauthenticated and unauthorized)
      *
      * @group openvidu
      */
@@ -20,7 +40,13 @@ class RoomsTest extends TestCaseDusk
     {
         // Test that the page requires authentication
         $this->browse(function (Browser $browser) {
-            $browser->visit('/rooms')->on(new Home());
+            $browser->visit('/rooms')
+                ->on(new Home())
+                // User has no 'meet' entitlement yet, expect redirect to error page
+                ->submitLogon('john@kolab.org', 'simple123', false)
+                ->waitFor('#app > #error-page')
+                ->assertSeeIn('#error-page .code', '403')
+                ->assertSeeIn('#error-page .message', 'Access denied');
         });
     }
 
@@ -33,14 +59,34 @@ class RoomsTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $href = \config('app.url') . '/meet/john';
+            $john = $this->getTestUser('john@kolab.org');
+            $john->assignSku(Sku::where('title', 'beta')->first());
 
+            // User has no 'meet' entitlement yet
             $browser->visit('/login')
                 ->on(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
-                // On dashboard click the "Video chat" link
+                ->on(new Dashboard())
+                ->assertMissing('@links a.link-chat');
+
+            // Goto user subscriptions, and enable 'meet' subscription
+            $browser->visit('/user/' . $john->id)
+                ->on(new UserInfo())
+                ->with('@skus', function ($browser) {
+                    $browser->click('#sku-input-meet');
+                })
+                ->click('button[type=submit]')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.')
+                ->click('.navbar-brand')
                 ->on(new Dashboard())
                 ->assertSeeIn('@links a.link-chat', 'Video chat')
-                ->click('@links a.link-chat')
+                // Make sure the element also exists on Dashboard page load
+                ->refresh()
+                ->on(new Dashboard())
+                ->assertSeeIn('@links a.link-chat', 'Video chat');
+
+            // Test Video chat page
+            $browser->click('@links a.link-chat')
                 ->waitFor('#meet-rooms')
                 ->waitFor('.card-text a')
                 ->assertSeeIn('.card-title', 'Video chat')

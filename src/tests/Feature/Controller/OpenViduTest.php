@@ -9,6 +9,21 @@ use Tests\TestCase;
 class OpenViduTest extends TestCase
 {
     /**
+     * {@inheritDoc}
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->clearBetaEntitlements();
+    }
+
+    public function tearDown(): void
+    {
+        $this->clearBetaEntitlements();
+        parent::tearDown();
+    }
+
+    /**
      * Test listing user rooms
      *
      * @group openvidu
@@ -57,6 +72,8 @@ class OpenViduTest extends TestCase
         $room->session_id = null;
         $room->save();
 
+        $this->assignBetaEntitlement($john, 'meet');
+
         // Unauth access, no session yet
         $response = $this->get("api/v4/openvidu/rooms/{$room->name}");
         $response->assertStatus(423);
@@ -99,6 +116,8 @@ class OpenViduTest extends TestCase
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
         $this->assertTrue($json['token'] != $john_token);
         $this->assertTrue(!array_key_exists('shareToken', $json));
+
+        // TODO: Test accessing an existing room of deleted owner
     }
 
     /**
@@ -109,6 +128,8 @@ class OpenViduTest extends TestCase
      */
     public function testJoinRoomGuest(): void
     {
+        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+
         // There's no asy way to logout the user in the same test after
         // using actingAs(). That's why this is moved to a separate test
         $room = Room::where('name', 'john')->first();

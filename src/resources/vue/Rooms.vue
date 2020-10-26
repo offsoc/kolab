@@ -34,6 +34,11 @@
             }
         },
         mounted() {
+            if (!this.$root.hasBeta('meet')) {
+                this.$root.errorPage(403)
+                return
+            }
+
             this.$root.startLoading()
 
             axios.get('/api/v4/openvidu/rooms')
@@ -46,8 +51,6 @@
                     }
                 })
                 .catch(this.$root.errorHandler)
-        },
-        methods: {
         }
     }
 </script>
