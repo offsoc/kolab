@@ -146,6 +146,8 @@ function Meet(container)
                 $(event.element).prop({
                     tabindex: -1
                 })
+
+                updateLayout()
             })
 /*
             subscriber.on('videoElementDestroyed', event => {
@@ -762,26 +764,46 @@ function Meet(container)
 
         let css, rows, cols, height
 
-        if (numOfVideos == 1) {
-            cols = 1
-        } else if (numOfVideos <= 4) {
-            cols = 2
-        } else if (numOfVideos <= 9) {
-            cols = 3
-        } else if (numOfVideos <= 16) {
-            cols = 4
-        } else if (numOfVideos <= 25) {
-            cols = 5
+        const factor = containerWidth / containerHeight
+
+        if (factor >= 16/9) {
+            if (numOfVideos <= 3) {
+                rows = 1
+            } else if (numOfVideos <= 8) {
+                rows = 2
+            } else if (numOfVideos <= 15) {
+                rows = 3
+            } else if (numOfVideos <= 20) {
+                rows = 4
+            } else {
+                rows = 5
+            }
+
+            cols = Math.ceil(numOfVideos / rows)
         } else {
-            cols = 6
-        }
+            if (numOfVideos == 1) {
+                cols = 1
+            } else if (numOfVideos <= 4) {
+                cols = 2
+            } else if (numOfVideos <= 9) {
+                cols = 3
+            } else if (numOfVideos <= 16) {
+                cols = 4
+            } else if (numOfVideos <= 25) {
+                cols = 5
+            } else {
+                cols = 6
+            }
 
-        rows = Math.ceil(numOfVideos / cols)
-
-        if (rows < cols && containerWidth < containerHeight) {
-            cols = rows
             rows = Math.ceil(numOfVideos / cols)
+
+            if (rows < cols && containerWidth < containerHeight) {
+                cols = rows
+                rows = Math.ceil(numOfVideos / cols)
+            }
         }
+
+        // console.log('factor=' + factor, 'num=' + numOfVideos, 'cols = '+cols, 'rows=' + rows);
 
         height = containerHeight / rows
         css = {
@@ -792,6 +814,7 @@ function Meet(container)
 
         // Update the matrix
         $(container).find('.meet-video').css(css)
+        /*
             .each((idx, elem) => {
                 let video = $(elem).children('video')[0]
 
@@ -802,6 +825,7 @@ function Meet(container)
                     $(elem).css('max-width', maxWidth)
                 }
             })
+        */
     }
 
     /**

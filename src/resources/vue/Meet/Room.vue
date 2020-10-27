@@ -302,6 +302,9 @@
                 if (!enabled) {
                     chat.find('textarea').focus()
                 }
+
+                // Trigger resize, so participant matrix can update its layout
+                window.dispatchEvent(new Event('resize'));
             },
             switchFullscreen() {
                 const element = this.$el
