@@ -1,6 +1,6 @@
 <template>
     <div id="meet-component">
-        <div id="meet-session-toolbar" class="d-none">
+        <div id="meet-session-toolbar" class="hidden">
             <div id="meet-session-menu">
                 <button class="btn btn-link link-audio" @click="switchSound" title="Mute audio">
                     <svg-icon icon="microphone"></svg-icon>
@@ -14,10 +14,10 @@
                 <button class="btn btn-link link-chat text-danger" @click="switchChat" title="Chat">
                     <svg-icon icon="align-left"></svg-icon>
                 </button>
-                <button class="btn btn-link link-fullscreen closed d-none" @click="switchFullscreen" title="Full screen">
+                <button class="btn btn-link link-fullscreen closed hidden" @click="switchFullscreen" title="Full screen">
                     <svg-icon icon="expand"></svg-icon>
                 </button>
-                <button class="btn btn-link link-fullscreen open d-none" @click="switchFullscreen" title="Full screen">
+                <button class="btn btn-link link-fullscreen open hidden" @click="switchFullscreen" title="Full screen">
                     <svg-icon icon="compress"></svg-icon>
                 </button>
                 <button class="btn btn-link link-logout" @click="logout" title="Leave session">
@@ -73,7 +73,7 @@
             </div>
         </div>
 
-        <div id="meet-session-layout" class="d-flex d-none">
+        <div id="meet-session-layout" class="d-flex hidden">
             <div id="meet-session"></div>
             <div id="meet-chat">
                 <div class="chat"></div>
@@ -83,7 +83,7 @@
             </div>
         </div>
 
-        <logon-form id="meet-auth" class="d-none" :dashboard="false" @success="authSuccess"></logon-form>
+        <logon-form id="meet-auth" class="hidden" :dashboard="false" @success="authSuccess"></logon-form>
 
         <div id="leave-dialog" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
@@ -165,8 +165,8 @@
                 this.roomState = 'init'
                 this.initSession()
 
-                $('#meet-setup').removeClass('d-none')
-                $('#meet-auth').addClass('d-none')
+                $('#meet-setup').removeClass('hidden')
+                $('#meet-auth').addClass('hidden')
             },
             initSession(init) {
                 let params = []
@@ -202,13 +202,13 @@
                     })
 
                 if (document.fullscreenEnabled) {
-                    $('#meet-session-menu').find('.link-fullscreen.closed').removeClass('d-none')
+                    $('#meet-session-menu').find('.link-fullscreen.closed').removeClass('hidden')
                 }
             },
             joinSession() {
                 if (this.roomState == 423) {
-                    $('#meet-setup').addClass('d-none')
-                    $('#meet-auth').removeClass('d-none')
+                    $('#meet-setup').addClass('hidden')
+                    $('#meet-auth').removeClass('hidden')
                     return
                 }
 
@@ -220,8 +220,8 @@
                 clearTimeout(window.roomRequest)
 
                 $('#app').addClass('meet')
-                $('#meet-setup').addClass('d-none')
-                $('#meet-session-toolbar,#meet-session-layout').removeClass('d-none')
+                $('#meet-setup').addClass('hidden')
+                $('#meet-session-toolbar,#meet-session-layout').removeClass('hidden')
 
                 this.session.nickname = this.nickname
                 this.session.menuElement = $('#meet-session-menu')[0]
@@ -313,8 +313,8 @@
                     let enabled = document.fullscreenElement == element
                     let buttons = $('#meet-session-menu').find('.link-fullscreen')
 
-                    buttons.first()[enabled ? 'addClass' : 'removeClass']('d-none')
-                    buttons.last()[!enabled ? 'addClass' : 'removeClass']('d-none')
+                    buttons.first()[enabled ? 'addClass' : 'removeClass']('hidden')
+                    buttons.last()[!enabled ? 'addClass' : 'removeClass']('hidden')
                 })
 
                 if (document.fullscreenElement) {

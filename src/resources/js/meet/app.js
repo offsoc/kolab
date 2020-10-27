@@ -650,13 +650,13 @@ function Meet(container)
                 <button type="button" class="btn btn-link">${svgIcon('user')}</button>
             </div>
             <div class="controls">
-                <button type="button" class="btn btn-link link-audio d-none" title="Mute audio">${svgIcon('volume-mute')}</button>
-                <button type="button" class="btn btn-link link-fullscreen closed d-none" title="Full screen">${svgIcon('expand')}</button>
-                <button type="button" class="btn btn-link link-fullscreen open d-none" title="Full screen">${svgIcon('compress')}</button>
+                <button type="button" class="btn btn-link link-audio hidden" title="Mute audio">${svgIcon('volume-mute')}</button>
+                <button type="button" class="btn btn-link link-fullscreen closed hidden" title="Full screen">${svgIcon('expand')}</button>
+                <button type="button" class="btn btn-link link-fullscreen open hidden" title="Full screen">${svgIcon('compress')}</button>
             </div>
             <div class="status">
-                <span class="bg-danger status-audio d-none">${svgIcon('microphone')}</span>
-                <span class="bg-danger status-video d-none">${svgIcon('video')}</span>
+                <span class="bg-danger status-audio hidden">${svgIcon('microphone')}</span>
+                <span class="bg-danger status-video hidden">${svgIcon('video')}</span>
             </div>`
         )
 
@@ -687,9 +687,9 @@ function Meet(container)
                     }
                 })
         } else {
-            wrapper.find('.nickname > svg').addClass('d-none')
+            wrapper.find('.nickname > svg').addClass('hidden')
 
-            wrapper.find('.link-audio').removeClass('d-none')
+            wrapper.find('.link-audio').removeClass('hidden')
                 .on('click', e => {
                     let video = wrapper.find('video')[0]
                     video.muted = !video.muted
@@ -701,7 +701,7 @@ function Meet(container)
 
         // Fullscreen control
         if (document.fullscreenEnabled) {
-            wrapper.find('.link-fullscreen.closed').removeClass('d-none')
+            wrapper.find('.link-fullscreen.closed').removeClass('hidden')
                 .on('click', () => {
                     wrapper.get(0).requestFullscreen()
                 })
@@ -713,8 +713,8 @@ function Meet(container)
 
             wrapper.on('fullscreenchange', () => {
                 // const enabled = document.fullscreenElement
-                wrapper.find('.link-fullscreen.closed').toggleClass('d-none')
-                wrapper.find('.link-fullscreen.open').toggleClass('d-none')
+                wrapper.find('.link-fullscreen.closed').toggleClass('hidden')
+                wrapper.find('.link-fullscreen.open').toggleClass('hidden')
                 wrapper.toggleClass('fullscreen')
             })
         }
@@ -732,11 +732,11 @@ function Meet(container)
      */
     function videoWrapperUpdate(wrapper, params) {
         if ('audioActive' in params) {
-            $(wrapper).find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('d-none')
+            $(wrapper).find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
         }
 
         if ('videoActive' in params) {
-            $(wrapper).find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('d-none')
+            $(wrapper).find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
         }
 
         if ('nickname' in params) {

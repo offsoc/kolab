@@ -12,8 +12,6 @@ small {
     font-size: 0.875em;
 }
 
-// Re-add .d-none to give it more prio than other .d-* classes
-// https://github.com/twbs/bootstrap/issues/31426
-.d-none {
+.hidden {
     display: none !important;
 }
