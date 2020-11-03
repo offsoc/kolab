@@ -1,8 +1,8 @@
 import DashboardComponent from '../vue/Admin/Dashboard'
 import DomainComponent from '../vue/Admin/Domain'
-import Error404Component from '../vue/404'
 import LoginComponent from '../vue/Login'
 import LogoutComponent from '../vue/Logout'
+import PageComponent from '../vue/Page'
 import UserComponent from '../vue/Admin/User'
 
 const routes = [
@@ -41,7 +41,7 @@ const routes = [
     {
         name: '404',
         path: '*',
-        component: Error404Component
+        component: PageComponent
     }
 ]
 

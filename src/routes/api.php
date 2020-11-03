@@ -100,6 +100,17 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.domain'),
+        'middleware' => 'api',
+        'prefix' => $prefix . 'api/v4'
+    ],
+    function ($router) {
+        Route::post('support/request', 'API\V4\SupportController@request');
+    }
+);
+
+Route::group(
+    [
+        'domain' => \config('app.domain'),
         'prefix' => $prefix . 'api/webhooks',
     ],
     function () {

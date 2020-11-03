@@ -104,6 +104,8 @@
     }
 
     #footer-menu {
+        height: 80px;
+
         .navbar-nav {
             display: none;
         }
@@ -130,8 +132,6 @@
     }
 
     #footer-menu {
-        height: 80px;
-
         .container {
             flex-direction: column;
         }

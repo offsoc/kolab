@@ -7,6 +7,7 @@ use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
+use Tests\Browser\Pages\UserProfile;
 use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
@@ -21,23 +22,26 @@ class LogonTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'tos', 'webmail']);
+                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'tos', 'login']);
                 });
             } else {
                 $browser->assertMissing('#footer-menu .navbar-nav');
             }
+
+            $browser->assertSeeLink('Forgot password?')
+                ->assertSeeLink('Webmail');
         });
     }
 
     /**
      * Test redirect to /login if user is unauthenticated
      */
-    public function testLogonRedirect(): void
+    public function testRequiredAuth(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/dashboard');
@@ -79,13 +83,14 @@ class LogonTest extends TestCaseDusk
                 ->assertVisible('@links a.link-domains')
                 ->assertVisible('@links a.link-users')
                 ->assertVisible('@links a.link-wallet')
+                ->assertVisible('@links a.link-webmail')
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'logout']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'logout']);
                 });
             } else {
                 $browser->assertMissing('#footer-menu .navbar-nav');
@@ -105,7 +110,9 @@ class LogonTest extends TestCaseDusk
 
             // Test that visiting '/' with logged in user does not open logon form
             // but "redirects" to the dashboard
-            $browser->visit('/')->on(new Dashboard());
+            $browser->visit('/')
+                ->waitForLocation('/dashboard')
+                ->on(new Dashboard());
         });
     }
 
@@ -130,7 +137,7 @@ class LogonTest extends TestCaseDusk
 
             // with default menu
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
             });
 
             // Success toast message
@@ -157,7 +164,7 @@ class LogonTest extends TestCaseDusk
 
             // with default menu
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
             });
 
             // Success toast message
@@ -206,6 +213,26 @@ class LogonTest extends TestCaseDusk
                 ->waitUntilMissing('@second-factor-input.is-invalid')
                 ->waitForLocation('/dashboard')
                 ->on(new Dashboard());
+        });
+    }
+
+    /**
+     * Test redirect to the requested page after logon
+     *
+     * @depends test2FA
+     */
+    public function testAfterLogonRedirect(): void
+    {
+        $this->browse(function (Browser $browser) {
+            // User is logged in
+            $browser->visit(new UserProfile());
+
+            // Test redirect if the token is invalid
+            $browser->script("localStorage.setItem('token', '123')");
+            $browser->refresh()
+                ->on(new Home())
+                ->submitLogon('john@kolab.org', 'simple123', false)
+                ->waitForLocation('/profile');
         });
     }
 }

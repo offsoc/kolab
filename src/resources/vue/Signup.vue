@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <div id="step0">
-            <div class="plan-selector d-flex justify-content-around align-items-stretch mb-3">
+            <div class="plan-selector d-flex justify-content-around align-items-stretch">
                 <div v-for="item in plans" :key="item.id" :class="'p-3 m-1 text-center bg-light flex-fill plan-box d-flex flex-column align-items-center plan-' + item.title">
                     <div class="plan-ico">
                         <svg-icon :icon="plan_icons[item.title]"></svg-icon>
@@ -9,14 +9,6 @@
                     <button class="btn btn-primary" :data-title="item.title" @click="selectPlan(item.title)" v-html="item.button"></button>
                     <div class="plan-description text-left mt-3" v-html="item.description"></div>
                 </div>
-            </div>
-            <div class="faq">
-                <h5>FAQ</h5>
-                <ul class="pl-4">
-                    <li><a href="https://kolabnow.com/tos">What are your terms of service?</a></li>
-                    <li><a href="https://kb.kolabnow.com/faq/can-i-upgrade-an-individual-account-to-a-group-account">Can I upgrade an individual account to a group account?</a></li>
-                    <li><a href="https://kb.kolabnow.com/faq/how-much-storage-comes-with-my-account">How much storage comes with my account?</a></li>
-                </ul>
             </div>
         </div>
 
@@ -157,7 +149,7 @@
             step0() {
                 if (!this.plans.length) {
                     this.$root.startLoading()
-                    axios.get('/api/auth/signup/plans', {}).then(response => {
+                    axios.get('/api/auth/signup/plans').then(response => {
                         this.$root.stopLoading()
                         this.plans = response.data.plans
                     })

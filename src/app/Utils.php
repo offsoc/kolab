@@ -366,8 +366,16 @@ class Utils
         $req_domain = preg_replace('/:[0-9]+$/', '', request()->getHttpHost());
         $sys_domain = \config('app.domain');
         $path = request()->path();
+        $opts = [
+            'app.name',
+            'app.url',
+            'app.domain',
+            'app.theme',
+            'app.webmail_url',
+            'app.support_email',
+            'mail.from.address'
+        ];
 
-        $opts = ['app.name', 'app.url', 'app.domain'];
         $env = \app('config')->getMany($opts);
 
         $env['countries'] = $countries ?: [];
@@ -383,6 +391,21 @@ class Utils
 
         $env['paymentProvider'] = \config('services.payment_provider');
         $env['stripePK'] = \config('services.stripe.public_key');
+
+        $theme_file = resource_path("themes/{$env['app.theme']}/theme.json");
+        $menu = [];
+
+        if (file_exists($theme_file)) {
+            $theme = json_decode(file_get_contents($theme_file), true);
+
+            if (json_last_error() != JSON_ERROR_NONE) {
+                \Log::error("Failed to parse $theme_file: " . json_last_error_msg());
+            } elseif (!empty($theme['menu'])) {
+                $menu = $theme['menu'];
+            }
+        }
+
+        $env['menu'] = $menu;
 
         return $env;
     }

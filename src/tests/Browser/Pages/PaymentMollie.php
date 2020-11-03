@@ -47,18 +47,19 @@ class PaymentMollie extends Page
     /**
      * Submit payment form.
      *
-     * @param \Laravel\Dusk\Browser $browser  The browser object
+     * @param \Laravel\Dusk\Browser $browser The browser object
+     * @param string                $state   Test payment status (paid, open, failed, canceled, expired)
      *
      * @return void
      */
-    public function submitValidCreditCard($browser)
+    public function submitValidCreditCard($browser, $status = 'paid')
     {
         if ($browser->element('@methods')) {
             $browser->click('@methods button.grid-button-creditcard')
                 ->waitFor('button.form__button');
         }
 
-        $browser->click('input[value="paid"]')
+        $browser->click('input[value="' . $status . '"]')
             ->click('button.form__button');
     }
 }

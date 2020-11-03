@@ -99,7 +99,7 @@ class Receipt
 
         // Fix font and image paths
         $html = str_replace('url(/fonts/', 'url(fonts/', $html);
-        $html = str_replace('src="/images/', 'src="images/', $html);
+        $html = str_replace('src="/', 'src="', $html);
 
         // TODO: The output file is about ~200KB, we could probably slim it down
         // by using separate font files with small subset of languages when
@@ -254,6 +254,7 @@ class Receipt
         $footer = \config('app.company.details');
         $contact = \config('app.company.email');
         $logo = \config('app.company.logo');
+        $theme = \config('app.theme');
 
         if ($contact) {
             $length = strlen($footer) + strlen($contact) + 3;
@@ -262,8 +263,12 @@ class Receipt
                 . sprintf('<a href="mailto:%s">%s</a>', $contact, $contact);
         }
 
+        if ($logo && strpos($logo, '/') === false) {
+            $logo = "/themes/$theme/images/$logo";
+        }
+
         return [
-            'logo' => $logo ? "<img src=\"/images/$logo\" width=300>" : '',
+            'logo' => $logo ? "<img src=\"$logo\" width=300>" : '',
             'header' => $header,
             'footer' => $footer,
         ];

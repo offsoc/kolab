@@ -20,6 +20,9 @@
                 <svg-icon icon="comments"></svg-icon><span class="name">Video chat</span>
                 <span class="badge badge-primary">beta</span>
             </router-link>
+            <a v-if="webmailURL" class="card link-webmail" :href="webmailURL">
+                <svg-icon icon="envelope"></svg-icon><span class="name">Webmail</span>
+            </a>
         </div>
     </div>
 </template>
@@ -34,7 +37,8 @@
         data() {
             return {
                 status: {},
-                balance: 0
+                balance: 0,
+                webmailURL: window.config['app.webmail_url']
             }
         },
         mounted() {
