@@ -1,4 +1,4 @@
-import Error404Component from '../vue/404'
+import PageComponent from '../vue/Page'
 import LogoutComponent from '../vue/Logout'
 import RoomComponent from '../vue/Meet/Room'
 
@@ -14,7 +14,7 @@ const routes = [
         path: '/meet/:room'
     },
     {
-        component: Error404Component,
+        component: PageComponent,
         name: '404',
         path: '*'
     }

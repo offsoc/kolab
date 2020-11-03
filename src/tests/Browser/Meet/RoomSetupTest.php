@@ -171,12 +171,12 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertMissing('.status .status-video');
                 })
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'logout']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'logout']);
                 });
             }
 

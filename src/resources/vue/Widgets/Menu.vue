@@ -30,7 +30,7 @@
                     <li class="nav-item" v-if="loggedIn">
                         <router-link class="nav-link menulogin link-logout" active-class="active" :to="{name: 'logout'}">Logout</router-link>
                     </li>
-                    <li class="nav-item" v-if="!loggedIn">
+                    <li class="nav-item" v-if="!loggedIn && route != 'room'">
                         <router-link class="nav-link menulogin link-login" active-class="active" :to="{name: 'login'}">Login</router-link>
                     </li>
                     <li class="nav-item" v-if="!loggedIn && route == 'room'">

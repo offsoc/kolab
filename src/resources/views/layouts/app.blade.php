@@ -10,7 +10,7 @@
 
         {{-- TODO: PWA disabled for now: @laravelPWA --}}
         <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
-        <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+        <link href="@theme_asset(app.css)" rel="stylesheet">
     </head>
     <body>
         <div class="outer-container">

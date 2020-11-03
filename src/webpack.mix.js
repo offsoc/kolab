@@ -28,8 +28,6 @@ mix.webpackConfig({
 mix.js('resources/js/user.js', 'public/js')
     .js('resources/js/admin.js', 'public/js')
     .js('resources/js/meet.js', 'public/js')
-    .sass('resources/sass/app.scss', 'public/css')
-    .sass('resources/sass/document.scss', 'public/css');
 
 glob.sync('resources/themes/*/', {}).forEach(fromDir => {
     const toDir = fromDir.replace('resources/themes/', 'public/themes/')
