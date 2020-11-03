@@ -8,6 +8,7 @@ require('./bootstrap')
 
 import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Widgets/Menu'
+import SupportForm from '../vue/Widgets/SupportForm'
 import store from './store'
 
 const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'
@@ -132,10 +133,12 @@ const app = new Vue({
 
             if (!msg) msg = map[code] || "Unknown Error"
 
-            const error_page = `<div id="error-page"><div class="code">${code}</div><div class="message">${msg}</div></div>`
+            const error_page = `<div id="error-page" class="error-page"><div class="code">${code}</div><div class="message">${msg}</div></div>`
 
             $('#error-page').remove()
             $('#app').append(error_page)
+
+            app.updateBodyClass('error')
         },
         errorHandler(error) {
             this.stopLoading()
@@ -231,6 +234,38 @@ const app = new Vue({
 
             return 'Active'
         },
+        pageName(path) {
+            let page = this.$route.path
+
+            // check if it is a "menu page", find the page name
+            // otherwise we'll use the real path as page name
+            window.config.menu.every(item => {
+                if (item.location == page && item.page) {
+                    page = item.page
+                    return false
+                }
+            })
+
+            page = page.replace(/^\//, '')
+
+            return page ? page : '404'
+        },
+        supportDialog(container) {
+            let dialog = $('#support-dialog')
+
+            // FIXME: Find a nicer way of doing this
+            if (!dialog.length) {
+                let form = new Vue(SupportForm)
+                form.$mount($('<div>').appendTo(container)[0])
+                form.$root = this
+                form.$toast = this.$toast
+                dialog = $(form.$el)
+            }
+
+            dialog.on('shown.bs.modal', () => {
+                    dialog.find('input').first().focus()
+                }).modal()
+        },
         userStatusClass(user) {
             if (user.isDeleted) {
                 return 'text-muted'
@@ -260,6 +295,12 @@ const app = new Vue({
             }
 
             return 'Active'
+        },
+        updateBodyClass(name) {
+            // Add 'class' attribute to the body, different for each page
+            // so, we can apply page-specific styles
+            let className = 'page-' + (name || this.pageName()).replace(/\/.*$/, '')
+            $(document.body).removeClass().addClass(className)
         }
     }
 })
@@ -288,6 +329,11 @@ window.axios.interceptors.response.use(
     error => {
         let error_msg
         let status = error.response ? error.response.status : 200
+
+        // Do not display the error in a toast message, pass the error as-is
+        if (error.config.ignoreErrors) {
+            return Promise.reject(error)
+        }
 
         if (error.response && status == 422) {
             error_msg = "Form validation error"
@@ -356,3 +402,13 @@ window.axios.interceptors.response.use(
         return Promise.reject(error)
     }
 )
+
+// TODO: Investigate if we can use App component's childMounted() method instead
+window.router.afterEach((to, from) => {
+    // When changing a page remove old:
+    // - error page
+    // - modal backdrop
+    $('#error-page,.modal-backdrop.show').remove()
+
+    app.updateBodyClass()
+})

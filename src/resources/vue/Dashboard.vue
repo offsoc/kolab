@@ -16,6 +16,9 @@
                 <svg-icon icon="wallet"></svg-icon><span class="name">Wallet</span>
                 <span v-if="balance < 0" class="badge badge-danger">{{ $root.price(balance) }}</span>
             </router-link>
+            <a v-if="webmailURL" class="card link-webmail" :href="webmailURL">
+                <svg-icon icon="envelope"></svg-icon><span class="name">Webmail</span>
+            </a>
         </div>
     </div>
 </template>
@@ -30,7 +33,8 @@
         data() {
             return {
                 status: {},
-                balance: 0
+                balance: 0,
+                webmailURL: window.config['app.webmail_url']
             }
         },
         mounted() {

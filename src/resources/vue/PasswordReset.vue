@@ -4,7 +4,8 @@
             <div class="card-body">
                 <h4 class="card-title">Password Reset - Step 1/3</h4>
                 <p class="card-text">
-                    Enter your email address to reset your password. You may need to check your spam folder or unblock noreply@kolabnow.com.
+                    Enter your email address to reset your password.
+                    <span v-if="fromEmail">You may need to check your spam folder or unblock {{ fromEmail }}.</span>
                 </p>
                 <form @submit.prevent="submitStep1" data-validation-prefix="reset_">
                     <div class="form-group">
@@ -65,7 +66,8 @@
                 code: '',
                 short_code: '',
                 password: '',
-                password_confirmation: ''
+                password_confirmation: '',
+                fromEmail: window.config['mail.from.address']
             }
         },
         created() {

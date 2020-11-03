@@ -1,9 +1,9 @@
 import DashboardComponent from '../vue/Dashboard'
 import DomainInfoComponent from '../vue/Domain/Info'
 import DomainListComponent from '../vue/Domain/List'
-import Error404Component from '../vue/404'
 import LoginComponent from '../vue/Login'
 import LogoutComponent from '../vue/Logout'
+import PageComponent from '../vue/Page'
 import PasswordResetComponent from '../vue/PasswordReset'
 import SignupComponent from '../vue/Signup'
 import UserInfoComponent from '../vue/User/Info'
@@ -13,10 +13,6 @@ import UserProfileDeleteComponent from '../vue/User/ProfileDelete'
 import WalletComponent from '../vue/Wallet'
 
 const routes = [
-    {
-        path: '/',
-        redirect: { name: 'dashboard' }
-    },
     {
         path: '/dashboard',
         name: 'dashboard',
@@ -89,7 +85,7 @@ const routes = [
     {
         name: '404',
         path: '*',
-        component: Error404Component
+        component: PageComponent
     }
 ]
 

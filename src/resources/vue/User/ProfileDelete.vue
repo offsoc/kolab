@@ -8,11 +8,13 @@
                         <strong>This operation is irreversible</strong>.</p>
                     <p>As you will not be able to recover anything after this point, please make sure
                         that you have migrated all data before proceeding.</p>
-                    <p>As we always strive to improve, we would like to ask for 2 minutes of your time.
+                    <p v-if="supportEmail">
+                        As we always strive to improve, we would like to ask for 2 minutes of your time.
                         The best tool for improvement is feedback from users, and we would like to ask
                         for a few words about your reasons for leaving our service. Please send your feedback
-                        to support@kolabnow.com.</p>
-                    <p>Also feel free to contact Kolab Now Support at support@kolabnow.com with any questions
+                        to <a :href="'mailto:' + supportEmail">{{ supportEmail }}</a>.
+                    </p>
+                    <p>Also feel free to contact {{ appName }} Support with any questions
                         or concerns that you may have in this context.</p>
                     <button class="btn btn-secondary button-cancel" @click="$router.go(-1)">Cancel</button>
                     <button class="btn btn-danger button-delete" @click="deleteProfile">
@@ -26,6 +28,12 @@
 
 <script>
     export default {
+        data() {
+            return {
+                appName: window.config['app.name'],
+                supportEmail: window.config['app.support_email']
+            }
+        },
         created() {
             if (!this.$root.isController(this.$store.state.authInfo.wallet.id)) {
                 this.$root.errorPage(403)

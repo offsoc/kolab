@@ -1,4 +1,3 @@
-const mix = require('laravel-mix');
 
 /*
  |--------------------------------------------------------------------------
@@ -10,6 +9,10 @@ const mix = require('laravel-mix');
  | file for the application as well as bundling up all the JS files.
  |
  */
+
+const fs = require('fs');
+const glob = require('glob');
+const mix = require('laravel-mix');
 
 mix.webpackConfig({
     output: {
@@ -24,5 +27,16 @@ mix.webpackConfig({
 
 mix.js('resources/js/user.js', 'public/js')
     .js('resources/js/admin.js', 'public/js')
-    .sass('resources/sass/app.scss', 'public/css')
-    .sass('resources/sass/document.scss', 'public/css');
+
+glob.sync('resources/themes/*/', {}).forEach(fromDir => {
+    const toDir = fromDir.replace('resources/themes/', 'public/themes/')
+
+    mix.sass(fromDir + 'app.scss', toDir)
+        .sass(fromDir + 'document.scss', toDir);
+
+    fs.stat(fromDir + 'images', {}, (err, stats) => {
+        if (stats) {
+            mix.copyDirectory(fromDir + 'images', toDir + 'images')
+        }
+    })
+})

@@ -44,6 +44,7 @@
         </div>
         <div class="mt-1">
             <router-link v-if="!$root.isAdmin" :to="{ name: 'password-reset' }" id="forgot-password">Forgot password?</router-link>
+            <a v-if="webmailURL" :href="webmailURL" class="ml-5" id="webmail">Webmail</a>
         </div>
     </div>
 </template>
@@ -55,7 +56,8 @@
             return {
                 email: '',
                 password: '',
-                secondFactor: ''
+                secondFactor: '',
+                webmailURL: window.config['app.webmail_url']
             }
         },
         methods: {

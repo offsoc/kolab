@@ -22,16 +22,19 @@ class LogonTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'tos', 'webmail']);
+                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'tos', 'login']);
                 });
             } else {
                 $browser->assertMissing('#footer-menu .navbar-nav');
             }
+
+            $browser->assertSeeLink('Forgot password?')
+                ->assertSeeLink('Webmail');
         });
     }
 
@@ -80,13 +83,14 @@ class LogonTest extends TestCaseDusk
                 ->assertVisible('@links a.link-domains')
                 ->assertVisible('@links a.link-users')
                 ->assertVisible('@links a.link-wallet')
+                ->assertVisible('@links a.link-webmail')
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'logout']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'logout']);
                 });
             } else {
                 $browser->assertMissing('#footer-menu .navbar-nav');
@@ -106,7 +110,9 @@ class LogonTest extends TestCaseDusk
 
             // Test that visiting '/' with logged in user does not open logon form
             // but "redirects" to the dashboard
-            $browser->visit('/')->on(new Dashboard());
+            $browser->visit('/')
+                ->waitForLocation('/dashboard')
+                ->on(new Dashboard());
         });
     }
 
@@ -131,7 +137,7 @@ class LogonTest extends TestCaseDusk
 
             // with default menu
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
             });
 
             // Success toast message
@@ -158,7 +164,7 @@ class LogonTest extends TestCaseDusk
 
             // with default menu
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
             });
 
             // Success toast message

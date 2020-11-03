@@ -59,6 +59,12 @@ return [
 
     'support_url' => env('SUPPORT_URL', null),
 
+    'support_email' => env('SUPPORT_EMAIL', null),
+
+    'webmail_url' => env('WEBMAIL_URL', null),
+
+    'theme' => env('APP_THEME', 'default'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Domain

@@ -19,6 +19,11 @@ Route::group(
         //'domain' => \config('app.domain'),
     ],
     function () {
+        Route::get('content/page/{page}', 'ContentController@pageContent')
+            ->where('page', '(.*)');
+        Route::get('content/faq/{page}', 'ContentController@faqContent')
+            ->where('page', '(.*)');
+
         Route::fallback(
             function () {
                 return view('root')->with('env', \App\Utils::uiEnv());

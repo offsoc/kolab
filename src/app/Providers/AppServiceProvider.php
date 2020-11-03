@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -48,5 +49,11 @@ class AppServiceProvider extends ServiceProvider
                 \Log::debug(sprintf('[SQL] %s [%s]', $query->sql, implode(', ', $query->bindings)));
             });
         }
+
+        // Register some template helpers
+        Blade::directive('theme_asset', function ($path) {
+            $path = trim($path, '/\'"');
+            return "<?php echo secure_asset('themes/' . \$env['app.theme'] . '/' . '$path'); ?>";
+        });
     }
 }

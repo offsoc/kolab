@@ -83,13 +83,6 @@ router.beforeEach((to, from, next) => {
     next()
 })
 
-router.afterEach((to, from) => {
-    // When changing a page remove old:
-    // - error page
-    // - modal backdrop
-    $('#error-page,.modal-backdrop.show').remove()
-})
-
 /**
  * We'll load the axios HTTP library which allows us to easily issue requests
  * to our Laravel back-end. This library automatically handles sending the
