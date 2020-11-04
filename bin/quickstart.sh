@@ -59,6 +59,7 @@ find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan jwt:secret -f
 ./artisan clear-compiled
 ./artisan cache:clear
+./artisan horizon:install
 
 if [ ! -z "$(rpm -qv chromium 2>/dev/null)" ]; then
     chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
