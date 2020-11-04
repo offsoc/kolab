@@ -27,14 +27,12 @@ if [ -f ".env.local" ]; then
     cat .env.local >> .env
 fi
 
-env
-
 if [ -f "composer.json" ]; then
     echo "--->> Detected composer.json, running install"
     composer_install
 fi
 
-pwd
+./artisan horizon:install
 
 echo "---->> Run npm run prod"
 npm install
