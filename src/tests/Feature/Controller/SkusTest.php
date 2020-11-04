@@ -2,12 +2,36 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Entitlement;
 use App\Http\Controllers\API\V4\SkusController;
 use App\Sku;
 use Tests\TestCase;
 
 class SkusTest extends TestCase
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $betas = Sku::where('handler_class', 'like', '%\\Beta%')->pluck('id')->all();
+        Entitlement::whereIn('sku_id', $betas)->delete();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function tearDown(): void
+    {
+        $betas = Sku::where('handler_class', 'like', '%\\Beta%')->pluck('id')->all();
+        Entitlement::whereIn('sku_id', $betas)->delete();
+
+        parent::tearDown();
+    }
+
+
     /**
      * Test fetching SKUs list
      */
@@ -25,7 +49,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(9, $json);
+        $this->assertCount(7, $json);
 
         $this->assertSame(100, $json[0]['prio']);
         $this->assertSame($sku->id, $json[0]['id']);
@@ -41,12 +65,125 @@ class SkusTest extends TestCase
     }
 
     /**
-     * Test for SkusController::skuElement()
+     * Test fetching SKUs list for a user (GET /users/<id>/skus)
      */
-    public function testSkuElement(): void
+    public function testUserSkus(): void
     {
-        $sku = Sku::where('title', 'storage')->first();
-        $result = $this->invokeMethod(new SkusController(), 'skuElement', [$sku]);
+        $user = $this->getTestUser('john@kolab.org');
+
+        // Unauth access not allowed
+        $response = $this->get("api/v4/users/{$user->id}/skus");
+        $response->assertStatus(401);
+
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(6, $json);
+
+        $this->assertSkuElement('mailbox', $json[0], [
+                'prio' => 100,
+                'type' => 'user',
+                'handler' => 'mailbox',
+                'enabled' => true,
+                'readonly' => true,
+        ]);
+
+        $this->assertSkuElement('storage', $json[1], [
+                'prio' => 90,
+                'type' => 'user',
+                'handler' => 'storage',
+                'enabled' => true,
+                'readonly' => true,
+                'range' => [
+                    'min' => 2,
+                    'max' => 100,
+                    'unit' => 'GB',
+                ]
+        ]);
+
+        $this->assertSkuElement('groupware', $json[2], [
+                'prio' => 80,
+                'type' => 'user',
+                'handler' => 'groupware',
+                'enabled' => false,
+                'readonly' => false,
+        ]);
+
+        $this->assertSkuElement('activesync', $json[3], [
+                'prio' => 70,
+                'type' => 'user',
+                'handler' => 'activesync',
+                'enabled' => false,
+                'readonly' => false,
+                'required' => ['groupware'],
+        ]);
+
+        $this->assertSkuElement('2fa', $json[4], [
+                'prio' => 60,
+                'type' => 'user',
+                'handler' => 'auth2f',
+                'enabled' => false,
+                'readonly' => false,
+                'forbidden' => ['activesync'],
+        ]);
+
+        $this->assertSkuElement('domain-hosting', $json[5], [
+                'prio' => 0,
+                'type' => 'domain',
+                'handler' => 'domainhosting',
+                'enabled' => false,
+                'readonly' => false,
+        ]);
+
+        // Test filter by type
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus?type=domain");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSame('domain', $json[0]['type']);
+
+        // Test inclusion of beta SKUs
+        $sku = Sku::where('title', 'beta')->first();
+        $user->assignSku($sku);
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus?type=user");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(7, $json);
+
+        $this->assertSkuElement('beta', $json[5], [
+                'prio' => 10,
+                'type' => 'user',
+                'handler' => 'beta',
+                'enabled' => false,
+                'readonly' => false,
+        ]);
+
+        $this->assertSkuElement('meet', $json[6], [
+                'prio' => 0,
+                'type' => 'user',
+                'handler' => 'meet',
+                'enabled' => false,
+                'readonly' => false,
+                'required' => ['beta'],
+        ]);
+    }
+
+    /**
+     * Assert content of the SKU element in an API response
+     *
+     * @param string $sku_title The SKU title
+     * @param array  $result    The result to assert
+     * @param array  $other     Other items the SKU itself does not include
+     */
+    protected function assertSkuElement($sku_title, $result, $other = []): void
+    {
+        $sku = Sku::where('title', $sku_title)->first();
 
         $this->assertSame($sku->id, $result['id']);
         $this->assertSame($sku->title, $result['title']);
@@ -56,15 +193,11 @@ class SkusTest extends TestCase
         $this->assertSame($sku->units_free, $result['units_free']);
         $this->assertSame($sku->period, $result['period']);
         $this->assertSame($sku->active, $result['active']);
-        $this->assertSame('user', $result['type']);
-        $this->assertSame('storage', $result['handler']);
-        $this->assertSame($sku->units_free, $result['range']['min']);
-        $this->assertSame($sku->handler_class::MAX_ITEMS, $result['range']['max']);
-        $this->assertSame($sku->handler_class::ITEM_UNIT, $result['range']['unit']);
-        $this->assertTrue($result['readonly']);
-        $this->assertTrue($result['enabled']);
 
-        // Test all SKU types
-        $this->markTestIncomplete();
+        foreach ($other as $key => $value) {
+            $this->assertSame($value, $result[$key]);
+        }
+
+        $this->assertCount(8 + count($other), $result);
     }
 }

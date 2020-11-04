@@ -450,7 +450,7 @@
                         })
 
                     // Create subscriptions list
-                    axios.get('/api/v4/skus')
+                    axios.get('/api/v4/users/' + user_id + '/skus')
                         .then(response => {
                             // "merge" SKUs with user entitlement-SKUs
                             response.data.forEach(sku => {
@@ -470,7 +470,7 @@
 
                                     this.skus.push(item)
 
-                                    if (sku.title == '2fa') {
+                                    if (sku.handler == 'auth2f') {
                                         this.has2FA = true
                                         this.sku2FA = sku.id
                                     }

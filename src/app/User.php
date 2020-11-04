@@ -175,12 +175,6 @@ class User extends Authenticatable implements JWTSubject
         $wallet = $this->wallet();
         $exists = $this->entitlements()->where('sku_id', $sku->id)->count();
 
-        // TODO: Sanity check, this probably should be in preReq() on handlers
-        //       or in EntitlementObserver
-        if ($sku->handler_class::entitleableClass() != User::class) {
-            throw new \Exception("Cannot assign non-user SKU ({$sku->title}) to a user");
-        }
-
         while ($count > 0) {
             \App\Entitlement::create([
                 'wallet_id' => $wallet->id,

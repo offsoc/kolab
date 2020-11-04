@@ -67,6 +67,7 @@ Route::group(
         Route::apiResource('packages', API\V4\PackagesController::class);
         Route::apiResource('skus', API\V4\SkusController::class);
         Route::apiResource('users', API\V4\UsersController::class);
+        Route::get('users/{id}/skus', 'API\V4\SkusController@userSkus');
         Route::get('users/{id}/status', 'API\V4\UsersController@status');
 
         Route::apiResource('wallets', API\V4\WalletsController::class);
@@ -120,6 +121,7 @@ Route::group(
         Route::apiResource('skus', API\V4\Admin\SkusController::class);
         Route::apiResource('users', API\V4\Admin\UsersController::class);
         Route::post('users/{id}/reset2FA', 'API\V4\Admin\UsersController@reset2FA');
+        Route::get('users/{id}/skus', 'API\V4\Admin\SkusController@userSkus');
         Route::post('users/{id}/suspend', 'API\V4\Admin\UsersController@suspend');
         Route::post('users/{id}/unsuspend', 'API\V4\Admin\UsersController@unsuspend');
         Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
