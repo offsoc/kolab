@@ -35,10 +35,7 @@ RUN dnf -y install \
             --enable-sockets \
             --disable-mysqlnd \
             --enable-http2 \
-            --enable-openssl \
-            --enable-debug \
-            --enable-debug-log \
-            --enable-trace-log && \
+            --enable-openssl && \
         make -j4 && \
         make install && \
         cd / && \
