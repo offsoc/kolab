@@ -18,6 +18,6 @@
         </div>
 
         <script>window.config = {!! json_encode($env) !!}</script>
-        <script src="{{ secure_asset('js/' . $env['jsapp']) }}" defer></script>
+        <script src="{{ asset('js/' . $env['jsapp']) }}" defer></script>
     </body>
 </html>
