@@ -23,4 +23,9 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
 
         Horizon::night();
     }
+
+    protected function gate()
+    {
+        return true;
+    }
 }
