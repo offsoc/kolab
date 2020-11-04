@@ -15,4 +15,4 @@ mkdir -p bootstrap/cache/
 
 ./artisan db:ping --wait
 
-./artisan queue:work
+./artisan horizon
