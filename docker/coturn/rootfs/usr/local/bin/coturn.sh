@@ -12,7 +12,7 @@ min-port=${MIN_PORT:-40000}
 pidfile="$(pwd)/turnserver.pid"
 realm=openvidu
 simple-log
-redis-userdb="ip=${REDIS_IP:-127.0.0.1} dbname=${DB_NAME:-2} connect_timeout=30"
+redis-userdb="ip=${REDIS_IP:-127.0.0.1} dbname=${DB_NAME:-2} password=${DB_PASSWORD:-turn} connect_timeout=30"
 verbose
 EOF
 
