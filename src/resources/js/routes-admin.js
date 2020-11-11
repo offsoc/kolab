@@ -3,6 +3,7 @@ import DomainComponent from '../vue/Admin/Domain'
 import LoginComponent from '../vue/Login'
 import LogoutComponent from '../vue/Logout'
 import PageComponent from '../vue/Page'
+import StatsComponent from '../vue/Admin/Stats'
 import UserComponent from '../vue/Admin/User'
 
 const routes = [
@@ -31,6 +32,12 @@ const routes = [
         path: '/logout',
         name: 'logout',
         component: LogoutComponent
+    },
+    {
+        path: '/stats',
+        name: 'stats',
+        component: StatsComponent,
+        meta: { requiresAuth: true }
     },
     {
         path: '/user/:user',

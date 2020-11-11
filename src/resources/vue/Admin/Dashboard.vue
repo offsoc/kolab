@@ -37,11 +37,19 @@
                 </table>
             </div>
         </div>
-        <div id="dashboard-nav"></div>
+        <div id="dashboard-nav" class="mt-3">
+            <router-link class="card link-stats" :to="{ name: 'stats' }">
+                <svg-icon icon="chart-line"></svg-icon><span class="name">Stats</span>
+            </router-link>
+        </div>
     </div>
 </template>
 
 <script>
+    import { library } from '@fortawesome/fontawesome-svg-core'
+    import { faChartLine } from '@fortawesome/free-solid-svg-icons'
+    library.add(faChartLine)
+
     export default {
         data() {
             return {

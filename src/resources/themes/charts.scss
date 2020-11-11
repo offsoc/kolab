@@ -1,0 +1,19 @@
+@import '~frappe-charts/dist/frappe-charts.min.css';
+
+.chart-container {
+    font-family: unset;
+
+    .title {
+        font-size: 12pt;
+        font-weight: bold;
+    }
+}
+
+#stats-container {
+    & > div {
+        border: 1px solid lightgrey;
+        border-radius: 0.5em;
+        padding-top: 0.5em;
+        min-height: 250px;
+    }
+}

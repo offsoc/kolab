@@ -143,5 +143,7 @@ Route::group(
         Route::post('wallets/{id}/one-off', 'API\V4\Admin\WalletsController@oneOff');
         Route::get('wallets/{id}/transactions', 'API\V4\Admin\WalletsController@transactions');
         Route::apiResource('discounts', API\V4\Admin\DiscountsController::class);
+
+        Route::get('stats/chart/{chart}', 'API\V4\Admin\StatsController@chart');
     }
 );
