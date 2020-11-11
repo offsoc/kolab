@@ -34,6 +34,7 @@
                         // Release lock on the router-view, otherwise links (e.g. Logout) will not work
                         // FIXME: This causes dashboard to call /api/auth/info again
                         this.isLoading = false
+                        this.$root.logoutUser(false)
                         this.$root.errorHandler(error)
                     })
             } else {

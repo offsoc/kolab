@@ -318,6 +318,11 @@ class User extends Authenticatable implements JWTSubject
         return $domains;
     }
 
+    /**
+     * The user entitlement.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
+     */
     public function entitlement()
     {
         return $this->morphOne('App\Entitlement', 'entitleable');
@@ -333,7 +338,8 @@ class User extends Authenticatable implements JWTSubject
      */
     public function entitlements()
     {
-        return $this->hasMany('App\Entitlement', 'entitleable_id', 'id');
+        return $this->hasMany('App\Entitlement', 'entitleable_id', 'id')
+            ->where('entitleable_type', User::class);
     }
 
     public function addEntitlement($entitlement)

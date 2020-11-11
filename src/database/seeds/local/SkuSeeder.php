@@ -152,30 +152,36 @@ class SkuSeeder extends Seeder
             ]
         );
 
-        Sku::create(
-            [
-                'title' => 'beta',
-                'name' => 'Beta program',
-                'description' => 'Access to beta program subscriptions',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Beta',
-                'active' => false,
-            ]
-        );
+        // Check existence because migration might have added this already
+        if (!\App\Sku::where('title', 'beta')->first()) {
+            Sku::create(
+                [
+                    'title' => 'beta',
+                    'name' => 'Beta program',
+                    'description' => 'Access to beta program subscriptions',
+                    'cost' => 0,
+                    'units_free' => 0,
+                    'period' => 'monthly',
+                    'handler_class' => 'App\Handlers\Beta',
+                    'active' => false,
+                ]
+            );
+        }
 
-        Sku::create(
-            [
-                'title' => 'meet',
-                'name' => 'Video chat',
-                'description' => 'Video conferencing tool',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Beta\Meet',
-                'active' => true,
-            ]
-        );
+        // Check existence because migration might have added this already
+        if (!\App\Sku::where('title', 'meet')->first()) {
+            Sku::create(
+                [
+                    'title' => 'meet',
+                    'name' => 'Video chat',
+                    'description' => 'Video conferencing tool',
+                    'cost' => 0,
+                    'units_free' => 0,
+                    'period' => 'monthly',
+                    'handler_class' => 'App\Handlers\Beta\Meet',
+                    'active' => true,
+                ]
+            );
+        }
     }
 }

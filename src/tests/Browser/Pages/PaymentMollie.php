@@ -48,7 +48,7 @@ class PaymentMollie extends Page
      * Submit payment form.
      *
      * @param \Laravel\Dusk\Browser $browser The browser object
-     * @param string                $state   Test payment status (paid, open, failed, canceled, expired)
+     * @param string                $status  Test payment status (paid, open, failed, canceled, expired)
      *
      * @return void
      */

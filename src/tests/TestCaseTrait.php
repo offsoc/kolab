@@ -12,6 +12,23 @@ use PHPUnit\Framework\Assert;
 
 trait TestCaseTrait
 {
+    /**
+     * Assign beta entitlement to a user.
+     * It will add both requested entitlement as well as the 'beta' entitlement
+     *
+     * @param string|\App\User $user The user
+     * @param string           $sku  The beta SKU title
+     */
+    protected function assignBetaEntitlement($user, $sku): void
+    {
+        if (is_string($user)) {
+            $user = $this->getTestUser($user);
+        }
+
+        $user->assignSku(\App\Sku::where('title', 'beta')->first());
+        $user->assignSku(\App\Sku::where('title', $sku)->first());
+    }
+
     protected function assertUserEntitlements($user, $expected)
     {
         // Assert the user entitlements
@@ -24,6 +41,15 @@ trait TestCaseTrait
         sort($skus);
 
         Assert::assertSame($expected, $skus);
+    }
+
+    /**
+     * Removes all beta entitlements from the database
+     */
+    protected function clearBetaEntitlements(): void
+    {
+        $betas = \App\Sku::where('handler_class', 'like', '%\\Beta%')->pluck('id')->all();
+        \App\Entitlement::whereIn('sku_id', $betas)->delete();
     }
 
     /**

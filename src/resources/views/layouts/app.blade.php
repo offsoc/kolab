@@ -9,8 +9,8 @@
         <title>{{ config('app.name') }} -- @yield('title')</title>
 
         {{-- TODO: PWA disabled for now: @laravelPWA --}}
-        <link rel="icon" type="image/x-icon" href="{{ secure_asset('themes/' . $env['app.theme'] . '/images/favicon.ico') }}">
-        <link href="{{ secure_asset('themes/' . $env['app.theme'] . '/app.css') }}" rel="stylesheet">
+        <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
+        <link href="@theme_asset(app.css)" rel="stylesheet">
     </head>
     <body>
         <div class="outer-container">

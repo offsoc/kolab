@@ -11,6 +11,9 @@ use Ramsey\Uuid\Uuid;
  */
 class Utils
 {
+    // Note: Removed '0', 'O', '1', 'I' as problematic with some fonts
+    public const CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
     /**
      * Count the number of lines in a file.
      *
@@ -245,6 +248,43 @@ class Utils
     }
 
     /**
+     * Returns a random string consisting of a quantity of segments of a certain length joined.
+     *
+     * Example:
+     *
+     * ```php
+     * $roomName = strtolower(\App\Utils::randStr(3, 3, '-');
+     * // $roomName == '3qb-7cs-cjj'
+     * ```
+     *
+     * @param int $length  The length of each segment
+     * @param int $qty     The quantity of segments
+     * @param string $join The string to use to join the segments
+     *
+     * @return string
+     */
+    public static function randStr($length, $qty = 1, $join = '')
+    {
+        $chars = env('SHORTCODE_CHARS', self::CHARS);
+
+        $randStrs = [];
+
+        for ($x = 0; $x < $qty; $x++) {
+            $randStrs[$x] = [];
+
+            for ($y = 0; $y < $length; $y++) {
+                $randStrs[$x][] = $chars[rand(0, strlen($chars) - 1)];
+            }
+
+            shuffle($randStrs[$x]);
+
+            $randStrs[$x] = implode('', $randStrs[$x]);
+        }
+
+        return implode($join, $randStrs);
+    }
+
+    /**
      * Returns a UUID in the form of an integer.
      *
      * @return integer
@@ -297,6 +337,7 @@ class Utils
      * Create self URL
      *
      * @param string $route Route/Path
+     * @todo Move this to App\Http\Controllers\Controller
      *
      * @return string Full URL
      */
@@ -315,12 +356,16 @@ class Utils
      * Create a configuration/environment data to be passed to
      * the UI
      *
-     * @todo For a lack of better place this is put here for now
+     * @todo Move this to App\Http\Controllers\Controller
      *
      * @return array Configuration data
      */
     public static function uiEnv(): array
     {
+        $countries = include resource_path('countries.php');
+        $req_domain = preg_replace('/:[0-9]+$/', '', request()->getHttpHost());
+        $sys_domain = \config('app.domain');
+        $path = request()->path();
         $opts = [
             'app.name',
             'app.url',
@@ -333,11 +378,16 @@ class Utils
 
         $env = \app('config')->getMany($opts);
 
-        $countries = include resource_path('countries.php');
         $env['countries'] = $countries ?: [];
+        $env['view'] = 'root';
+        $env['jsapp'] = 'user.js';
 
-        $isAdmin = strpos(request()->getHttpHost(), 'admin.') === 0;
-        $env['jsapp'] = $isAdmin ? 'admin.js' : 'user.js';
+        if ($path == 'meet' || strpos($path, 'meet/') === 0) {
+            $env['view'] = 'meet';
+            $env['jsapp'] = 'meet.js';
+        } elseif ($req_domain == "admin.$sys_domain") {
+            $env['jsapp'] = 'admin.js';
+        }
 
         $env['paymentProvider'] = \config('services.payment_provider');
         $env['stripePK'] = \config('services.stripe.public_key');

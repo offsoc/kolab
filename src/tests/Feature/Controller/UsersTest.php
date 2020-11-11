@@ -357,6 +357,7 @@ class UsersTest extends TestCase
         $result = UsersController::statusInfo($user);
 
         $this->assertFalse($result['isReady']);
+        $this->assertSame([], $result['betaSKUs']);
         $this->assertCount(3, $result['process']);
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
@@ -395,6 +396,7 @@ class UsersTest extends TestCase
         $result = UsersController::statusInfo($user);
 
         $this->assertFalse($result['isReady']);
+        $this->assertSame([], $result['betaSKUs']);
         $this->assertCount(7, $result['process']);
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
@@ -410,7 +412,27 @@ class UsersTest extends TestCase
         $this->assertSame(true, $result['process'][5]['state']);
         $this->assertSame('domain-confirmed', $result['process'][6]['label']);
         $this->assertSame(false, $result['process'][6]['state']);
+
+        // Test betaSKUs property
+        $user->assignSku(Sku::where('title', 'beta')->first());
+
+        $result = UsersController::statusInfo($user);
+
+        $this->assertSame([], $result['betaSKUs']);
+
+        $user->assignSku(Sku::where('title', 'meet')->first());
+
+        $result = UsersController::statusInfo($user);
+
+        $this->assertSame(['meet'], $result['betaSKUs']);
+
+        $user->assignSku(Sku::where('title', 'meet')->first());
+
+        $result = UsersController::statusInfo($user);
+
+        $this->assertSame(['meet'], $result['betaSKUs']);
     }
+
     /**
      * Test user creation (POST /api/v4/users)
      */
@@ -579,7 +601,8 @@ class UsersTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame("User data updated successfully.", $json['message']);
-        $this->assertCount(2, $json);
+        $this->assertTrue(!empty($json['statusInfo']));
+        $this->assertCount(3, $json);
 
         // Test some invalid data
         $post = ['password' => '12345678', 'currency' => 'invalid'];
@@ -615,7 +638,8 @@ class UsersTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame("User data updated successfully.", $json['message']);
-        $this->assertCount(2, $json);
+        $this->assertTrue(!empty($json['statusInfo']));
+        $this->assertCount(3, $json);
         $this->assertTrue($userA->password != $userA->fresh()->password);
         unset($post['password'], $post['password_confirmation'], $post['aliases']);
         foreach ($post as $key => $value) {
@@ -646,7 +670,8 @@ class UsersTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame("User data updated successfully.", $json['message']);
-        $this->assertCount(2, $json);
+        $this->assertTrue(!empty($json['statusInfo']));
+        $this->assertCount(3, $json);
         unset($post['aliases']);
         foreach ($post as $key => $value) {
             $this->assertNull($userA->getSetting($key));
@@ -678,8 +703,12 @@ class UsersTest extends TestCase
         $this->assertSame("The password confirmation does not match.", $json['errors']['password'][0]);
 
         // Test authorized update of other user
-        $response = $this->actingAs($ned)->get("/api/v4/users/{$jack->id}", []);
+        $response = $this->actingAs($ned)->put("/api/v4/users/{$jack->id}", []);
         $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertTrue(empty($json['statusInfo']));
 
         // TODO: Test error on aliases with invalid/non-existing/other-user's domain
 
@@ -722,6 +751,8 @@ class UsersTest extends TestCase
         $response = $this->actingAs($owner)->put("/api/v4/users/{$user->id}", $post);
         $response->assertStatus(200);
 
+        $json = $response->json();
+
         $storage_cost = $user->entitlements()
             ->where('sku_id', $sku_storage->id)
             ->orderBy('cost')
@@ -733,6 +764,7 @@ class UsersTest extends TestCase
         );
 
         $this->assertSame([0, 0, 25], $storage_cost);
+        $this->assertTrue(empty($json['statusInfo']));
     }
 
     /**
@@ -916,6 +948,7 @@ class UsersTest extends TestCase
         $this->assertTrue($result['statusInfo']['enableDomains']);
         $this->assertTrue($result['statusInfo']['enableWallets']);
         $this->assertTrue($result['statusInfo']['enableUsers']);
+        $this->assertSame([], $result['statusInfo']['betaSKUs']);
 
         // Ned is John's wallet controller
         $ned = $this->getTestUser('ned@kolab.org');
@@ -937,6 +970,7 @@ class UsersTest extends TestCase
         $this->assertTrue($result['statusInfo']['enableDomains']);
         $this->assertTrue($result['statusInfo']['enableWallets']);
         $this->assertTrue($result['statusInfo']['enableUsers']);
+        $this->assertSame([], $result['statusInfo']['betaSKUs']);
 
         // Test discount in a response
         $discount = Discount::where('code', 'TEST')->first();
@@ -965,6 +999,7 @@ class UsersTest extends TestCase
         $this->assertFalse($result['statusInfo']['enableDomains']);
         $this->assertFalse($result['statusInfo']['enableWallets']);
         $this->assertFalse($result['statusInfo']['enableUsers']);
+        $this->assertSame([], $result['statusInfo']['betaSKUs']);
     }
 
     /**

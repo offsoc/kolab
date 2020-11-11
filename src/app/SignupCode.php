@@ -15,8 +15,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SignupCode extends Model
 {
-    // Note: Removed '0', 'O', '1', 'I' as problematic with some fonts
-    public const SHORTCODE_CHARS   = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
     public const SHORTCODE_LENGTH  = 5;
     public const CODE_LENGTH       = 32;
 
@@ -92,15 +90,7 @@ class SignupCode extends Model
     public static function generateShortCode(): string
     {
         $code_length = env('SIGNUP_CODE_LENGTH', self::SHORTCODE_LENGTH);
-        $code_chars  = env('SIGNUP_CODE_CHARS', self::SHORTCODE_CHARS);
-        $random      = [];
 
-        for ($i = 1; $i <= $code_length; $i++) {
-            $random[] = $code_chars[rand(0, strlen($code_chars) - 1)];
-        }
-
-        shuffle($random);
-
-        return implode('', $random);
+        return \App\Utils::randStr($code_length);
     }
 }

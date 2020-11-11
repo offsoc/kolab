@@ -3,6 +3,7 @@ import DomainInfoComponent from '../vue/Domain/Info'
 import DomainListComponent from '../vue/Domain/List'
 import LoginComponent from '../vue/Login'
 import LogoutComponent from '../vue/Logout'
+import MeetComponent from '../vue/Rooms'
 import PageComponent from '../vue/Page'
 import PasswordResetComponent from '../vue/PasswordReset'
 import SignupComponent from '../vue/Signup'
@@ -56,6 +57,12 @@ const routes = [
         path: '/profile/delete',
         name: 'profile-delete',
         component: UserProfileDeleteComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/rooms',
+        name: 'rooms',
+        component: MeetComponent,
         meta: { requiresAuth: true }
     },
     {

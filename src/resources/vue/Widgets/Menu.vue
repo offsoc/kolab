@@ -13,7 +13,7 @@
             <div :id="mode + '-menu-navbar'" :class="'navbar' + (mode == 'header' ? ' collapse navbar-collapse' : '')">
                 <ul class="navbar-nav">
                     <li class="nav-item" v-if="!loggedIn">
-                        <router-link v-if="!$root.isAdmin" class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
+                        <router-link v-if="!$root.isAdmin && $root.hasRoute('signup')" class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
                         <a v-else class="nav-link link-signup" :href="appUrl + '/signup'">Signup</a>
                     </li>
                     <li class="nav-item" v-for="item in menu()" :key="item.index">
@@ -30,8 +30,11 @@
                     <li class="nav-item" v-if="loggedIn">
                         <router-link class="nav-link menulogin link-logout" active-class="active" :to="{name: 'logout'}">Logout</router-link>
                     </li>
-                    <li class="nav-item" v-if="!loggedIn">
+                    <li class="nav-item" v-if="!loggedIn && route != 'room'">
                         <router-link class="nav-link menulogin link-login" active-class="active" :to="{name: 'login'}">Login</router-link>
+                    </li>
+                    <li class="nav-item" v-if="!loggedIn && route == 'room'">
+                        <a class="nav-link menulogin link-login" :href="app_url + '/login'">Login</a>
                     </li>
                 </ul>
                 <div v-if="mode == 'footer'" class="footer">

@@ -47,6 +47,11 @@ class Sku extends Model
         return $this->hasMany('App\Entitlement');
     }
 
+    /**
+     * List of packages that use this SKU.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
     public function packages()
     {
         return $this->belongsToMany(

@@ -220,7 +220,17 @@ class UsersController extends Controller
             ->where('entitleable_type', Domain::class)
             ->count() > 0;
 
+        // Get user's beta entitlements
+        $betaSKUs = $user->entitlements()->select('skus.title')
+            ->join('skus', 'skus.id', '=', 'entitlements.sku_id')
+            ->where('handler_class', 'like', 'App\\\\Handlers\\\\Beta\\\\%')
+            ->get()
+            ->pluck('title')
+            ->unique()
+            ->all();
+
         return [
+            'betaSKUs' => $betaSKUs,
             // TODO: This will change when we enable all users to create domains
             'enableDomains' => $isController && $hasCustomDomain,
             'enableUsers' => $isController,
@@ -342,10 +352,17 @@ class UsersController extends Controller
 
         DB::commit();
 
-        return response()->json([
-                'status' => 'success',
-                'message' => __('app.user-update-success'),
-        ]);
+        $response = [
+            'status' => 'success',
+            'message' => __('app.user-update-success'),
+        ];
+
+        // For self-update refresh the statusInfo in the UI
+        if ($user->id == $current_user->id) {
+            $response['statusInfo'] = self::statusInfo($user);
+        }
+
+        return response()->json($response);
     }
 
     /**

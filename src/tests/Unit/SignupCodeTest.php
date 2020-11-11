@@ -18,6 +18,6 @@ class SignupCodeTest extends TestCase
 
         $this->assertTrue(is_string($code));
         $this->assertTrue(strlen($code) === env('SIGNUP_CODE_LENGTH', SignupCode::SHORTCODE_LENGTH));
-        $this->assertTrue(strspn($code, env('SIGNUP_CODE_CHARS', SignupCode::SHORTCODE_CHARS)) === strlen($code));
+        $this->assertTrue(strspn($code, env('SIGNUP_CODE_CHARS', \App\Utils::CHARS)) === strlen($code));
     }
 }
