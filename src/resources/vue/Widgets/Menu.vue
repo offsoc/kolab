@@ -1,7 +1,7 @@
 <template>
     <nav :id="mode + '-menu'" class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <router-link class="navbar-brand" :to="{ name: 'dashboard' }">
+            <router-link class="navbar-brand" :to="appUrl">
                 <img :src="appUrl + themeDir + '/images/logo_' + mode + '.png'" :alt="appName">
             </router-link>
             <button v-if="mode == 'header'" class="navbar-toggler" type="button"
@@ -28,10 +28,13 @@
                         </router-link>
                     </li>
                     <li class="nav-item" v-if="loggedIn">
+                        <router-link class="nav-link link-dashboard" active-class="active" :to="{name: 'dashboard'}">Dashboard</router-link>
+                    </li>
+                    <li class="nav-item" v-if="loggedIn">
                         <router-link class="nav-link menulogin link-logout" active-class="active" :to="{name: 'logout'}">Logout</router-link>
                     </li>
                     <li class="nav-item" v-if="!loggedIn && route != 'room'">
-                        <a v-if="webmailURL" :href="webmailURL" class="ml-5" id="webmail">Login</a>
+                        <a class="nav-link menulogin link-login" :href="webmailURL">Login</a>
                     </li>
                     <li class="nav-item" v-if="!loggedIn && route == 'room'">
                         <a class="nav-link menulogin link-login" :href="app_url + '/login'">Login</a>
