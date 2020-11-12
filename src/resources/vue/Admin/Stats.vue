@@ -13,7 +13,7 @@
             }
         },
         mounted() {
-            this.loadChart('users')
+            ['users', 'users-all', 'income', 'discounts'].forEach(chart => this.loadChart(chart))
         },
         methods: {
             drawChart(name, data) {
@@ -34,6 +34,11 @@
                     .then(response => {
                         this.$root.removeLoader(chart)
                         this.drawChart(name, response.data)
+                    })
+                    .catch(error => {
+                        console.error(error)
+                        this.$root.removeLoader(chart)
+                        chart.append($('<span>').text('Failed to load data.'))
                     })
             }
         }
