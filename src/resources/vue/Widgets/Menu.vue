@@ -1,7 +1,7 @@
 <template>
     <nav :id="mode + '-menu'" class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <a class="navbar-brand" :href="appUrl">
+            <a class="navbar-brand" href="appUrl">
                 <img :src="appUrl + themeDir + '/images/logo_' + mode + '.png'" :alt="appName">
             </a>
             <button v-if="mode == 'header'" class="navbar-toggler" type="button"
