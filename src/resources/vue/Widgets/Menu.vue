@@ -28,7 +28,7 @@
                         </router-link>
                     </li>
                     <li class="nav-item" v-if="loggedIn">
-                        <router-link class="nav-link link-dashboard" active-class="active" :to="{name: 'dashboard'}">Dashboard</router-link>
+                        <router-link class="nav-link link-dashboard" active-class="active" :to="{name: 'dashboard'}">Cockpit</router-link>
                     </li>
                     <li class="nav-item" v-if="loggedIn">
                         <router-link class="nav-link menulogin link-logout" active-class="active" :to="{name: 'logout'}">Logout</router-link>
