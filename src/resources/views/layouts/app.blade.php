@@ -9,7 +9,7 @@
         <title>{{ config('app.name') }} -- @yield('title')</title>
 
         {{-- TODO: PWA disabled for now: @laravelPWA --}}
-        <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
+        <link rel="icon" type="image/x-icon" href="@theme_asset(images/favicon.ico)">
         <link href="@theme_asset(app.css)" rel="stylesheet">
     </head>
     <body>
