@@ -31,7 +31,7 @@
                         <router-link class="nav-link menulogin link-logout" active-class="active" :to="{name: 'logout'}">Logout</router-link>
                     </li>
                     <li class="nav-item" v-if="!loggedIn && route != 'room'">
-                        <router-link class="nav-link menulogin link-login" active-class="active" :to="{name: 'login'}">Login</router-link>
+                        <a v-if="webmailURL" :href="webmailURL" class="ml-5" id="webmail">Login</a>
                     </li>
                     <li class="nav-item" v-if="!loggedIn && route == 'room'">
                         <a class="nav-link menulogin link-login" :href="app_url + '/login'">Login</a>
@@ -56,7 +56,8 @@
             return {
                 appName: window.config['app.name'],
                 appUrl: window.config['app.url'],
-                themeDir:  '/themes/' + window.config['app.theme']
+                themeDir:  '/themes/' + window.config['app.theme'],
+                webmailURL: window.config['app.webmail_url']
             }
         },
         computed: {
