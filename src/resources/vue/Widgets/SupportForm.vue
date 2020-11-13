@@ -44,6 +44,15 @@
 
 <script>
     export default {
+        data() {
+            return {
+                body: '',
+                email: '',
+                name: '',
+                summary: '',
+                user: ''
+            }
+        },
         mounted() {
             this.dialog = $('#support-dialog')
                 .on('hide.bs.modal', () => {
