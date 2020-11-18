@@ -217,4 +217,6 @@ RUN dnf -y install \
         /root/.m2/ \
         /usr/include/*
 
+COPY rootfs/ /
+
 CMD ["/bin/kurento-media-server"]
