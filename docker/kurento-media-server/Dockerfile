@@ -147,8 +147,6 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         make -j $(nproc) VERBOSE=1 && \
         make install -s && \
         cp -av src/server/implementation/HttpServer/libkmshttpep.so /usr/lib64/ && \
-        cp -av src/gst-plugins/webrtcendpoint/libwebrtcdataproto.so.6.14.0 /usr/lib64/gstreamer-1.0/ && \
-        cp -av src/gst-plugins/webrtcendpoint/libkmswebrtcendpointlib.so.6.14.0 /usr/lib64/gstreamer-1.0/ && \
     git clone https://github.com/Kurento/kms-filters.git /src/kms-filters.git && \
         cd /src/kms-filters.git/ && \
         git checkout ${KURENTO_VERSION} && \
@@ -183,48 +181,8 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         make install VERBOSE=1 -s && \
         cp -av $(find . -type f -name 'libtransport.so*') /usr/lib64/ && \
         cp -av $(find . -type f -name 'libwebsocketTransport.so*') /usr/lib64/ && \
-        strip -s /usr/lib64/libkms*.so* /usr/lib64/kurento/modules/*.so* && \
-    dnf -y remove \
-        -x boost-filesystem \
-        -x boost-program-options \
-        -x boost-log \
-        -x boost-thread \
-        -x file \
-        -x gstreamer1-plugins-base \
-        -x gstreamer1-plugins-bad-free \
-        -x glibmm24 \
-        -x java-1.8.0-openjdk \
-        -x libnice \
-        -x libsigc \
-        -x libvpx \
-        -x opencv \
-        boost-devel \
-        cmake \
-        gcc-c++ \
-        git \
-        glibmm24-devel \
-        gstreamer1-devel \
-        gstreamer1-plugins-base-devel \
-        gstreamer1-plugins-bad-free-devel \
-        libevent-devel \
-        libnice-devel \
-        libsigc++20-devel \
-        libsoup-devel \
-        libuuid-devel \
-        libvpx-devel \
-        make \
-        maven \
-        opencv-devel \
-        openssl-devel \
-        redhat-rpm-config \
-        vim-enhanced \
-        websocketpp-devel && \
-    dnf -y clean all && \
-    rm -rvf \
-        /src/ \
-        /root/.m2/ \
-        /usr/include/*
+        strip -s /usr/lib64/libkms*.so* /usr/lib64/kurento/modules/*.so*
 
 COPY rootfs/ /
 
-CMD ["/bin/kurento-media-server"]
+CMD ["/bin/kurento-media-server", "--gst-plugin-path", "/usr/lib64/gstreamer-1.0/"]
