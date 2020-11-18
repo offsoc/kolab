@@ -59,6 +59,7 @@ RUN dnf -y install \
         libvpx-devel \
         make \
         maven \
+        net-tools \
         opencv-devel \
         openssl-devel \
         redhat-rpm-config \
