@@ -39,18 +39,22 @@ ARG CMAKEOPTS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/ -DCMAKE_I
 ARG KURENTO_VERSION="6.14.0"
 ARG KURENTO_JSONCPP_VERSION="1.6.4"
 
-RUN dnf -y install \
+RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31.noarch.rpm && \
+    rpm -Uvh https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-31.noarch.rpm && \
+    dnf -y install \
         boost-devel \
         cmake \
         coreutils \
-        #ffmpeg \
+        ffmpeg \
         gcc-c++ \
         git \
         glibmm24-devel \
         gstreamer1-devel \
         gstreamer1-plugins-base-devel \
         gstreamer1-plugins-bad-free-devel \
+        gstreamer1-plugins-bad-freeworld \
         gstreamer1-plugins-good \
+        gstreamer1-plugins-ugly \
         libevent-devel \
         libnice-devel \
         libsigc++20-devel \
@@ -139,6 +143,7 @@ RUN dnf -y install \
             .. && \
         make -j $(nproc) VERBOSE=1 && \
         make install -s && \
+        cp -av src/server/implementation/HttpServer/libkmshttpep.so /usr/lib64/ && \
     git clone https://github.com/Kurento/kms-filters.git /src/kms-filters.git && \
         cd /src/kms-filters.git/ && \
         git checkout ${KURENTO_VERSION} && \
@@ -170,7 +175,7 @@ RUN dnf -y install \
             -e 's/-lkmsgstcommons/-lkmsgstcommons -lkmscoreinterface/g' \
             server/CMakeFiles/kurento-media-server.dir/link.txt && \
         make -j $(nproc) VERBOSE=1 && \
-        make install -s && \
+        make install VERBOSE=1 -s && \
         cp -av $(find . -type f -name 'libtransport.so*') /usr/lib64/ && \
         cp -av $(find . -type f -name 'libwebsocketTransport.so*') /usr/lib64/ && \
         strip -s /usr/lib64/libkms*.so* /usr/lib64/kurento/modules/*.so* && \
@@ -190,14 +195,12 @@ RUN dnf -y install \
         -x opencv \
         boost-devel \
         cmake \
-        #ffmpeg \
         gcc-c++ \
         git \
         glibmm24-devel \
         gstreamer1-devel \
         gstreamer1-plugins-base-devel \
         gstreamer1-plugins-bad-free-devel \
-        gstreamer1-plugins-good \
         libevent-devel \
         libnice-devel \
         libsigc++20-devel \
