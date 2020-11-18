@@ -141,9 +141,14 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         cmake \
             ${CMAKEOPTS} \
             .. && \
+        sed -i \
+            -e 's/-lkmsgstcommons/-lkmsgstcommons -lkmscoreinterface/g' \
+            $(find . -type f -name link.txt) && \
         make -j $(nproc) VERBOSE=1 && \
         make install -s && \
         cp -av src/server/implementation/HttpServer/libkmshttpep.so /usr/lib64/ && \
+        cp -av src/gst-plugins/webrtcendpoint/libwebrtcdataproto.so.6.14.0 /usr/lib64/gstreamer-1.0/ && \
+        cp -av src/gst-plugins/webrtcendpoint/libkmswebrtcendpointlib.so.6.14.0 /usr/lib64/gstreamer-1.0/ && \
     git clone https://github.com/Kurento/kms-filters.git /src/kms-filters.git && \
         cd /src/kms-filters.git/ && \
         git checkout ${KURENTO_VERSION} && \
@@ -173,7 +178,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             .. && \
         sed -i \
             -e 's/-lkmsgstcommons/-lkmsgstcommons -lkmscoreinterface/g' \
-            server/CMakeFiles/kurento-media-server.dir/link.txt && \
+            $(find . -type f -name link.txt) && \
         make -j $(nproc) VERBOSE=1 && \
         make install VERBOSE=1 -s && \
         cp -av $(find . -type f -name 'libtransport.so*') /usr/lib64/ && \
