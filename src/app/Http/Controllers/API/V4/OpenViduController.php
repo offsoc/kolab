@@ -57,7 +57,7 @@ class OpenViduController extends Controller
         if (count($rooms) == 0) {
             // Create a room for the user (with a random and unique name)
             while (true) {
-                $name = \App\Utils::randStr(8);
+                $name = strtolower(\App\Utils::randStr(3, 3, '-'));
                 if (!Room::where('name', $name)->count()) {
                     break;
                 }
