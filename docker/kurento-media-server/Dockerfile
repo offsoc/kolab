@@ -59,7 +59,8 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         meson \
         net-tools \
         opencv-devel \
-        openni-devel \
+        # not available on ppc64le? \
+        #openni-devel \
         openssl-devel \
         opus-devel \
         redhat-rpm-config \
