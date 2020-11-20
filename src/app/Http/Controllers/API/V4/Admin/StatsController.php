@@ -47,12 +47,13 @@ class StatsController extends \App\Http\Controllers\Controller
      */
     protected function chartDiscounts(): array
     {
-        // TODO: Exclude deleted account wallets
         $discounts = DB::table('wallets')
-            ->join('discounts', 'discounts.id', '=', 'wallets.discount_id')
             ->selectRaw("discount, count(discount_id) as cnt")
+            ->join('discounts', 'discounts.id', '=', 'wallets.discount_id')
+            ->join('users', 'users.id', '=', 'wallets.user_id')
+            ->where('discount', '>', 0)
+            ->whereNull('users.deleted_at')
             ->groupBy('discounts.discount')
-            ->get()
             ->pluck('cnt', 'discount')
             ->all();
 
@@ -112,12 +113,11 @@ class StatsController extends \App\Http\Controllers\Controller
         $start->startOfWeek(Carbon::MONDAY);
 
         $payments = DB::table('payments')
-            ->selectRaw("concat(year(updated_at), '-', week(updated_at, 3)) as period, sum(amount) as amount")
+            ->selectRaw("date_format(updated_at, '%Y-%v') as period, sum(amount) as amount")
             ->where('updated_at', '>=', $start->toDateString())
             ->where('status', PaymentProvider::STATUS_PAID)
             ->whereIn('type', [PaymentProvider::TYPE_ONEOFF, PaymentProvider::TYPE_RECURRING])
             ->groupByRaw('1')
-            ->get()
             ->pluck('amount', 'period')
             ->map(function ($amount) {
                 return $amount / 100;
@@ -129,6 +129,8 @@ class StatsController extends \App\Http\Controllers\Controller
         $payments = array_values(array_merge($empty, $payments->all()));
 
         // $payments = [1000, 1200.25, 3000, 1897.50, 2000, 1900, 2134, 3330];
+
+        $avg = collect($payments)->avg();
 
         // See https://frappe.io/charts/docs for format/options description
 
@@ -149,8 +151,8 @@ class StatsController extends \App\Http\Controllers\Controller
                 ],
                 'yMarkers' => [
                     [
-                        'label' => 'average',
-                        'value' => collect($payments)->avg(),
+                        'label' => sprintf('average = %.2f', $avg),
+                        'value' => $avg,
                         'options' => [ 'labelPos' => 'left' ] // default: 'right'
                     ]
                 ]
@@ -177,13 +179,13 @@ class StatsController extends \App\Http\Controllers\Controller
         $start->startOfWeek(Carbon::MONDAY);
 
         $created = DB::table('users')
-            ->selectRaw("concat(year(created_at), '-', week(created_at, 3)) as period, count(*) as cnt")
+            ->selectRaw("date_format(created_at, '%Y-%v') as period, count(*) as cnt")
             ->where('created_at', '>=', $start->toDateString())
             ->groupByRaw('1')
             ->get();
 
         $deleted = DB::table('users')
-            ->selectRaw("concat(year(deleted_at), '-', week(deleted_at, 3)) as period, count(*) as cnt")
+            ->selectRaw("date_format(deleted_at, '%Y-%v') as period, count(*) as cnt")
             ->where('deleted_at', '>=', $start->toDateString())
             ->groupByRaw('1')
             ->get();
@@ -194,6 +196,8 @@ class StatsController extends \App\Http\Controllers\Controller
 
         // $created = [5, 2, 4, 2, 0, 5, 2, 4];
         // $deleted = [1, 2, 3, 1, 2, 1, 2, 3];
+
+        $avg = collect($created)->avg();
 
         // See https://frappe.io/charts/docs for format/options description
 
@@ -220,7 +224,7 @@ class StatsController extends \App\Http\Controllers\Controller
                 ],
                 'yMarkers' => [
                     [
-                        'label' => 'average',
+                        'label' => sprintf('average = %.1f', $avg),
                         'value' => collect($created)->avg(),
                         'options' => [ 'labelPos' => 'left' ] // default: 'right'
                     ]
@@ -248,7 +252,7 @@ class StatsController extends \App\Http\Controllers\Controller
         $start->startOfWeek(Carbon::MONDAY);
 
         $created = DB::table('users')
-            ->selectRaw("concat(year(created_at), '-', week(created_at, 3)) as period, count(*) as cnt")
+            ->selectRaw("date_format(created_at, '%Y-%v') as period, count(*) as cnt")
             ->where('created_at', '>=', $start->toDateString())
             ->groupByRaw('1')
             ->get();
