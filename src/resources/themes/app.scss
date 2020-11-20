@@ -167,24 +167,19 @@ table {
 }
 
 .plan-selector {
+
+    
+    .plan-header {
+        display: flex;
+    }
     .plan-ico {
+        margin:auto;
         font-size: 3.8rem;
         color: #f1a539;
         border: 3px solid #f1a539;
         width: 6rem;
         height: 6rem;
-        margin-bottom: 1rem;
         border-radius: 50%;
-    }
-}
-
-.plan-description {
-    & > ul {
-        padding-left: 1.2em;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
     }
 }
 

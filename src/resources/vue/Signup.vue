@@ -1,13 +1,18 @@
 <template>
     <div class="container">
         <div id="step0">
-            <div class="plan-selector d-flex justify-content-around align-items-stretch">
-                <div v-for="item in plans" :key="item.id" :class="'p-3 m-1 text-center bg-light flex-fill plan-box d-flex flex-column align-items-center plan-' + item.title">
-                    <div class="plan-ico">
+            <div class="plan-selector card-deck">
+                <div v-for="item in plans" :key="item.id" :class="'card bg-light plan-' + item.title">
+                    <div class="card-header plan-header">
+                            <div class="plan-ico text-center">
                         <svg-icon :icon="plan_icons[item.title]"></svg-icon>
+                        </div>
                     </div>
-                    <button class="btn btn-primary" :data-title="item.title" @click="selectPlan(item.title)" v-html="item.button"></button>
+                    <div class="card-body text-center ">
+                        <button class="btn btn-primary" :data-title="item.title" @click="selectPlan(item.title)" v-html="item.button"></button>
+
                     <div class="plan-description text-left mt-3" v-html="item.description"></div>
+                </div>
                 </div>
             </div>
         </div>
