@@ -135,13 +135,20 @@ class UsersController extends Controller
 
         if (!empty(request()->input('refresh'))) {
             $updated = false;
+            $async = false;
             $last_step = 'none';
 
             foreach ($response['process'] as $idx => $step) {
                 $last_step = $step['label'];
 
                 if (!$step['state']) {
-                    if (!$this->execProcessStep($user, $step['label'])) {
+                    $exec = $this->execProcessStep($user, $step['label']);
+
+                    if (!$exec) {
+                        if ($exec === null) {
+                            $async = true;
+                        }
+
                         break;
                     }
 
@@ -158,6 +165,12 @@ class UsersController extends Controller
 
             $response['status'] = $success ? 'success' : 'error';
             $response['message'] = \trans('app.process-' . $suffix);
+
+            if ($async && !$success) {
+                $response['processState'] = 'waiting';
+                $response['status'] = 'success';
+                $response['message'] = \trans('app.process-async');
+            }
         }
 
         $response = array_merge($response, self::userStatuses($user));
@@ -594,9 +607,10 @@ class UsersController extends Controller
      * @param \App\User $user User object
      * @param string    $step Step identifier (as in self::statusInfo())
      *
-     * @return bool True if the execution succeeded, False otherwise
+     * @return bool|null True if the execution succeeded, False if not, Null when
+     *                   the job has been sent to the worker (result unknown)
      */
-    public static function execProcessStep(User $user, string $step): bool
+    public static function execProcessStep(User $user, string $step): ?bool
     {
         try {
             if (strpos($step, 'domain-') === 0) {
@@ -618,6 +632,14 @@ class UsersController extends Controller
 
                 case 'user-imap-ready':
                     // User not in IMAP? Verify again
+                    // Do it synchronously if the imap admin credentials are available
+                    // otherwise let the worker do the job
+                    if (!\config('imap.admin_password')) {
+                        \App\Jobs\User\VerifyJob::dispatch($user->id);
+
+                        return null;
+                    }
+
                     $job = new \App\Jobs\User\VerifyJob($user->id);
                     $job->handle();
 

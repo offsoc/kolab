@@ -293,6 +293,8 @@ class UsersTest extends TestCase
      */
     public function testStatus(): void
     {
+        Queue::fake();
+
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
 
@@ -337,6 +339,28 @@ class UsersTest extends TestCase
         $this->assertSame(true, $json['process'][2]['state']);
         $this->assertSame('success', $json['status']);
         $this->assertSame('Setup process finished successfully.', $json['message']);
+
+        Queue::size(1);
+
+        // Test case for when the verify job is dispatched to the worker
+        $john->refresh();
+        $john->status ^= User::STATUS_IMAP_READY;
+        $john->save();
+
+        \config(['imap.admin_password' => null]);
+
+        $response = $this->actingAs($john)->get("/api/v4/users/{$john->id}/status?refresh=1");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertFalse($json['isImapReady']);
+        $this->assertFalse($json['isReady']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('waiting', $json['processState']);
+        $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
+
+        Queue::assertPushed(\App\Jobs\User\VerifyJob::class, 1);
     }
 
     /**

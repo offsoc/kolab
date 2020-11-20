@@ -15,6 +15,7 @@ return [
 
     'planbutton' => 'Choose :plan',
 
+    'process-async' => 'Setup process has been pushed. Please wait.',
     'process-user-new' => 'Registering a user...',
     'process-user-ldap-ready' => 'Creating a user...',
     'process-user-imap-ready' => 'Creating a mailbox...',
