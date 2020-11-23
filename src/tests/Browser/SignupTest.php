@@ -110,7 +110,7 @@ class SignupTest extends TestCaseDusk
                 $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login'], 'signup');
             });
 
-            $browser->waitFor('@step0 .plan-selector > .plan-box');
+            $browser->waitFor('@step0 .plan-selector > .card');
 
             // Assert first plan box and press the button
             $browser->with('@step0 .plan-selector > .plan-individual', function ($step) {
