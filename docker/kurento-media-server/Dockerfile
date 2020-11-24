@@ -13,7 +13,8 @@ ENV NM="/bin/gcc-nm"
 ENV CMAKE_CXX_ARCHIVE_CREATE="<CMAKE_AR> qcs <TARGET> <LINK_FLAGS> <OBJECTS>"
 
 ARG CMAKEOPTS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/ -DCMAKE_INSTALL_SYSCONFDIR=/etc/ -DCMAKE_MODULES_INSTALL_DIR=/usr/share/cmake/Modules/ -DBUILD_SHARED_LIBS=ON -DCMAKE_AR=${AR} -DCMAKE_CXX_ARCHIVE_FINISH=true -DCMAKE_MODULES_INSTALL_DIR=/usr/share/cmake/Modules/ -DGENERATE_TESTS=FALSE -DDISABLE_TESTS=TRUE"
-ARG GST_VERSION="1.18.1"
+ARG GST_BASE_VERSION="1.8.1-1kurento2"
+ARG GST_VERSION="1.8.1"
 ARG KURENTO_MEDIA_SERVER_VERSION="6.15.0"
 ARG KURENTO_CMAKE_VERSION="6.15.0"
 ARG KURENTO_CORE_VERSION="6.15.0"
@@ -22,6 +23,7 @@ ARG KURENTO_FILTERS_VERSION="6.15.0"
 ARG KURENTO_MODULE_CREATOR_VERSION="6.15.0"
 ARG KURENTO_JSONCPP_VERSION="1.6.4"
 ARG KURENTO_JSONRPC_VERSION="6.15.0"
+ARG OPENCV_VERSION="3.4.10"
 
 RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31.noarch.rpm && \
     rpm -Uvh https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-31.noarch.rpm && \
@@ -34,6 +36,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         coreutils \
         dnf-plugins-core \
         ffmpeg \
+        ffmpeg-devel \
         flac-devel \
         flex \
         gcc-c++ \
@@ -43,6 +46,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         gsl-devel \
         gtk-doc \
         libevent-devel \
+        libjpeg-devel \
         libmicrodns-devel \
         libnice-devel \
         libpng-devel \
@@ -58,6 +62,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         maven \
         meson \
         net-tools \
+        opencl-headers \
         opencv-devel \
         # not available on ppc64le? \
         #openni-devel \
@@ -65,6 +70,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         opus-devel \
         redhat-rpm-config \
         spandsp-devel \
+        usrsctp-devel \
         vim-enhanced \
         webrtc-audio-processing-devel \
         websocketpp-devel \
@@ -73,85 +79,38 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
     # meson in module older than meson in updates \
     dnf module -y disable meson && \
     dnf -y update meson && \
-    # opencv may not even be needed \
-    #dnf -y builddep opencv && \
+    rpm -e --nodeps gstreamer1 gstreamer1-plugins-base && \
     mkdir -p /src/ && \
-    #git clone https://github.com/Kurento/gstreamer.git /src/gstreamer.git && \
-    #    cd /src/gstreamer.git/ && \
-    #    git submodule init && \
-    #    git submodule update && \
-    #    autopoint --force && \
-    #    autoreconf -vi && \
-    #    ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
-    #    make -j $(nproc) VERBOSE=1 && \
-    #    make install VERBOSE=1 && \
-    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gstreamer /src/gstreamer.git && \
-        cd /src/gstreamer.git/ && \
-        if [ -f 'meson.build' ]; then \
-            meson build --prefix=/usr && \
-            ninja -C build install ; \
-        else \
+    if [ "${GST_BASE_VERSION}" == "1.8.1-1kurento2" ]; then \
+        git clone https://github.com/Kurento/gstreamer.git /src/gstreamer.git && \
+            cd /src/gstreamer.git/ && \
             git submodule init && \
             git submodule update && \
+            #sed -r -i \
+            #    -e 's/^GST_API_VERSION=.*$/GST_API_VERSION=1.0/g' \
+            #    configure.ac && \
             autopoint --force && \
             autoreconf -vi && \
             ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
-        fi && \
-#RUN #git clone https://github.com/opencv/opencv.git /src/opencv.git/ && \
-    #    cd /src/opencv.git/ && \
-    #    mkdir build && \
-    #    cd build && \
-    #    cmake \
-    #        ${CMAKE_OPTS} \
-    #        -DCV_TRACE=OFF \
-    #        -DWITH_IPP=OFF \
-    #        -DWITH_ITT=OFF \
-    #        -DWITH_QT=OFF \
-    #        -DWITH_OPENGL=ON \
-    #        -DOpenGL_GL_PREFERENCE=GLVND \
-    #        -DWITH_GDAL=ON \
-    #        -DWITH_OPENEXR=ON \
-    #        -DWITH_UNICAP=ON \
-    #        -DCMAKE_SKIP_RPATH=ON \
-    #        -DWITH_CAROTENE=OFF \
-    #        -DENABLE_PRECOMPILED_HEADERS=OFF \
-    #        -DCMAKE_BUILD_TYPE=ReleaseWithDebInfo \
-    #        -DBUILD_opencv_java=ON \
-    #        -DOPENCV_JAR_INSTALL_PATH=/usr/lib/java \
-    #        -DWITH_TBB=ON \
-    #        -DWITH_GSTREAMER=ON \
-    #        -DWITH_FFMPEG=ON \
-    #        -DWITH_CUDA=OFF \
-    #        -DWITH_OPENNI=ON \
-    #        -DWITH_XINE=ON \
-    #        -DBUILD_DOCS=ON \
-    #        -DBUILD_EXAMPLES=ON \
-    #        -DBUILD_opencv_python2=OFF \
-    #        -DINSTALL_C_EXAMPLES=OFF \
-    #        -DINSTALL_PYTHON_EXAMPLES=OFF \
-    #        -DENABLE_PYLINT=OFF \
-    #        -DBUILD_PROTOBUF=OFF \
-    #        -DPROTOBUF_UPDATE_FILES=ON \
-    #        -DOPENCL_INCLUDE_DIR=/usr/include/CL \
-    #        -DOPENCV_SKIP_PYTHON_LOADER=ON \
-    #        -DOPENCV_EXTRA_MODULES_PATH=opencv_contrib-4.5.0/modules \
-    #        -DWITH_LIBV4L=ON \
-    #        -DWITH_OPENMP=ON \
-    #        -DOPENCV_CONFIG_INSTALL_PATH=/usr/lib64/cmake/OpenCV \
-    #        -DOPENCV_GENERATE_PKGCONFIG=ON \
-    #        -DOPENCV_TEST_DATA_PATH=opencv_extra-4.5.0/testdata \
-    #        -DWITH_GDCM=ON \
-    #        -DWITH_MFX=ON \
-    #        -DWITH_CLP=ON \
-    #        -DWITH_VA=ON \
-    #        -DWITH_VTK=OFF \
-    #        -DWITH_VULKAN=ON -DVULKAN_INCLUDE_DIRS=/usr/include/vulkan \
-    #        .. && \
-    #    make -j $(nproc) VERBOSE=1 && \
-    #    make install VERBOSE=1 && \
-    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-base /src/gst-plugins-base.git && \
+    else \
+        git clone -b ${GST_BASE_VERSION} https://gitlab.freedesktop.org/gstreamer/gstreamer.git /src/gstreamer.git && \
+            cd /src/gstreamer.git/ && \
+            if [ -f 'meson.build' ]; then \
+                meson build --prefix=/usr && \
+                ninja -C build install ; \
+            else \
+                git submodule init && \
+                git submodule update && \
+                autopoint --force && \
+                autoreconf -vi && \
+                ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
+                make -j $(nproc) VERBOSE=1 && \
+                make install VERBOSE=1 ; \
+            fi ; \
+    fi && \
+    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-base.git /src/gst-plugins-base.git && \
         cd /src/gst-plugins-base.git/ && \
         if [ -f 'meson.build' ]; then \
             meson build --prefix=/usr && \
@@ -159,13 +118,22 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         else \
             git submodule init && \
             git submodule update && \
+            sed -r -i \
+                -e 's/^GST_API_VERSION.*$/GST_API_VERSION=1.5/g' \
+                configure.ac && \
+            sed -r -i \
+                -e 's/^DOMAIN.*$/DOMAIN = gst-plugins-base-1.5/g' \
+                po/Makevars && \
             autopoint --force && \
             autoreconf -vi && \
+            sed -r -i \
+                -e 's/@GST_API_VERSION@\.1/@GST_API_VERSION@/g' \
+                tools/Makefile.in && \
             ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
-    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-good /src/gst-plugins-good.git/ && \
+    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-good.git /src/gst-plugins-good.git/ && \
         cd /src/gst-plugins-good.git/ && \
         if [ -f 'meson.build' ]; then \
             meson build --prefix=/usr && \
@@ -173,13 +141,27 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         else \
             git submodule init && \
             git submodule update && \
+            sed -r -i \
+                -e 's/^GST_API_VERSION.*$/GST_API_VERSION=1.5/g' \
+                configure.ac && \
+            sed -r -i \
+                -e 's/^DOMAIN.*$/DOMAIN = gst-plugins-good-1.5/g' \
+                po/Makevars && \
             autopoint --force && \
             autoreconf -vi && \
+            sed -i \
+                -e '/^#define .* gint64/d' \
+                -e '/^#define .* guint64/d' \
+                sys/v4l2/ext/types-compat.h && \
+            sed -i \
+                -e 's/__s64/gint64/g' \
+                -e 's/__u64/guint64/g' \
+                sys/v4l2/ext/videodev2.h && \
             ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
-    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad /src/gst-plugins-bad.git && \
+    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad.git /src/gst-plugins-bad.git && \
         cd /src/gst-plugins-bad.git/ && \
         if [ -f 'meson.build' ]; then \
             meson build --prefix=/usr && \
@@ -187,13 +169,26 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         else \
             git submodule init && \
             git submodule update && \
+            sed -r -i \
+                -e 's/^GST_API_VERSION.*$/GST_API_VERSION=1.5/g' \
+                -e 's/gstreamer-allocators-1.0/gstreamer-allocators-1.5/g' \
+                configure.ac && \
+            sed -r -i \
+                -e 's/gstaudio-1.0/gstaudio-1.5/g' \
+                -e 's/gstvideo-1.0/gstvideo-1.5/g' \
+                gst/festival/Makefile.am \
+                gst/ivtc/Makefile.am \
+                gst/yadif/Makefile.am && \
+            sed -r -i \
+                -e 's/^DOMAIN.*$/DOMAIN = gst-plugins-bad-1.5/g' \
+                po/Makevars && \
             autopoint --force && \
             autoreconf -vi && \
-            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
+            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-dtls && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
-    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly /src/gst-plugins-ugly.git && \
+    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git /src/gst-plugins-ugly.git && \
         cd /src/gst-plugins-ugly.git/ && \
         if [ -f 'meson.build' ]; then \
             meson build --prefix=/usr && \
@@ -201,12 +196,24 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         else \
             git submodule init && \
             git submodule update && \
+            sed -r -i \
+                -e 's/^GST_API_VERSION.*$/GST_API_VERSION=1.5/g' \
+                configure.ac && \
+            sed -r -i \
+                -e 's/^DOMAIN.*$/DOMAIN = gst-plugins-ugly-1.5/g' \
+                po/Makevars && \
             autopoint --force && \
             autoreconf -vi && \
-            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
+            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-x264 && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
+    git clone https://github.com/Kurento/openwebrtc-gst-plugins.git /src/openwebrtc-gst-plugins.git && \
+        cd /src/openwebrtc-gst-plugins.git/ && \
+        autoreconf -vi && \
+        ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 && \
+        make VERBOSE=1 && \
+        make install VERBOSE=1 && \
     git clone -b ${KURENTO_CMAKE_VERSION} https://github.com/Kurento/kms-cmake-utils.git /src/kms-cmake-utils.git && \
         cd /src/kms-cmake-utils.git/ && \
         mkdir build && \
@@ -251,9 +258,11 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         make install -s && \
     git clone -b ${KURENTO_CORE_VERSION} https://github.com/Kurento/kms-core.git /src/kms-core.git && \
         cd /src/kms-core.git/ && \
-        sed -r -i \
-            -e 's/gstreamer-(.*)1.5/gstreamer-\11.0/g' \
-            $(find -type f -name CMakeLists.txt) && \
+        if [ "${GST_BASE_VERSION}" != "1.8.1-1kurento2" ]; then \
+            sed -r -i \
+                -e 's/gstreamer-(.*)1.5/gstreamer-\11.0/g' \
+                $(find -type f -name CMakeLists.txt) ; \
+        fi && \
         mkdir build && \
         cd build && \
         cmake \
@@ -264,9 +273,11 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         make install -s && \
     git clone -b ${KURENTO_ELEMENTS_VERSION} https://github.com/Kurento/kms-elements.git /src/kms-elements.git && \
         cd /src/kms-elements.git/ && \
-        sed -r -i \
-            -e 's/gstreamer-(.*)1.5/gstreamer-\11.0/g' \
-            $(find -type f -name CMakeLists.txt) && \
+        if [ "${GST_BASE_VERSION}" != "1.8.1-1kurento2" ]; then \
+            sed -r -i \
+                -e 's/gstreamer-(.*)1.5/gstreamer-\11.0/g' \
+                $(find -type f -name CMakeLists.txt) ; \
+        fi && \
         mkdir build && \
         cd build && \
         cmake \
@@ -280,9 +291,11 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         cp -av src/server/implementation/HttpServer/libkmshttpep.so /usr/lib64/ && \
     git clone -b ${KURENTO_FILTERS_VERSION} https://github.com/Kurento/kms-filters.git /src/kms-filters.git && \
         cd /src/kms-filters.git/ && \
-        sed -r -i \
-            -e 's/gstreamer-(.*)1.5/gstreamer-\11.0/g' \
-            $(find -type f -name CMakeLists.txt) && \
+        if [ "${GST_BASE_VERSION}" != "1.8.1-1kurento2" ]; then \
+            sed -r -i \
+                -e 's/gstreamer-(.*)1.5/gstreamer-\11.0/g' \
+                $(find -type f -name CMakeLists.txt) ; \
+        fi && \
         mkdir build && \
         cd build && \
         cmake \
@@ -292,9 +305,12 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         make install -s && \
     git clone -b ${KURENTO_MEDIA_SERVER_VERSION} https://github.com/Kurento/kurento-media-server.git /src/kurento-media-server.git && \
         cd /src/kurento-media-server.git/ && \
-        sed -r -i \
-            -e 's/gstreamer-(.*)1.5/gstreamer-\11.0/g' \
-            $(find -type f -name CMakeLists.txt) && \
+        if [ "${GST_BASE_VERSION}" != "1.8.1-1kurento2" ]; then \
+            sed -r -i \
+                -e 's/gstreamer-(.*)1.5/gstreamer-\11.0/g' \
+                $(find -type f -name CMakeLists.txt) ; \
+        fi && \
+        # work around for kurento not building on pcc64le \
         sed -i \
             -e '603,618d' \
             server/death_handler.cpp && \
@@ -303,6 +319,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         cmake \
             ${CMAKEOPTS} \
             .. && \
+        # a linking error / oversight may occur \
         sed -i \
             -e 's/-lkmsgstcommons/-lkmsgstcommons -lkmscoreinterface/g' \
             $(find . -type f -name link.txt) && \
@@ -310,7 +327,10 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         make install VERBOSE=1 -s && \
         cp -av $(find . -type f -name 'libtransport.so*') /usr/lib64/ && \
         cp -av $(find . -type f -name 'libwebsocketTransport.so*') /usr/lib64/ && \
-        strip -s /usr/lib64/libkms*.so* /usr/lib64/kurento/modules/*.so*
+    strip -s \
+        /usr/lib64/gstreamer-*/*.so \
+        /usr/lib64/kurento/modules/*.so* \
+        /usr/lib64/libkms*.so*
 
 COPY rootfs/ /
 
