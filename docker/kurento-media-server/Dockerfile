@@ -85,7 +85,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         git clone https://github.com/Kurento/gstreamer.git /src/gstreamer.git && \
             cd /src/gstreamer.git/ && \
             sed -i \
-                -e 's/git:/https:/g' \
+                -e 's|git://anongit.freedesktop.org/gstreamer/common.*$|https://anongit.freedesktop.org/git/gstreamer/common.git/|g' \
                 .gitmodules && \
             git submodule init && \
             git submodule update && \
@@ -105,7 +105,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
                 ninja -C build install ; \
             else \
                 sed -i \
-                    -e 's/git:/https:/g' \
+                    -e 's|git://anongit.freedesktop.org/gstreamer/common.*$|https://anongit.freedesktop.org/git/gstreamer/common.git/|g' \
                     .gitmodules && \
                 git submodule init && \
                 git submodule update && \
@@ -123,7 +123,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             ninja -C build install ; \
         else \
             sed -i \
-                -e 's/git:/https:/g' \
+                -e 's|git://anongit.freedesktop.org/gstreamer/common.*$|https://anongit.freedesktop.org/git/gstreamer/common.git/|g' \
                 .gitmodules && \
             git submodule init && \
             git submodule update && \
@@ -149,7 +149,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             ninja -C build install ; \
         else \
             sed -i \
-                -e 's/git:/https:/g' \
+                -e 's|git://anongit.freedesktop.org/gstreamer/common.*$|https://anongit.freedesktop.org/git/gstreamer/common.git/|g' \
                 .gitmodules && \
             git submodule init && \
             git submodule update && \
@@ -180,7 +180,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             ninja -C build install ; \
         else \
             sed -i \
-                -e 's/git:/https:/g' \
+                -e 's|git://anongit.freedesktop.org/gstreamer/common.*$|https://anongit.freedesktop.org/git/gstreamer/common.git/|g' \
                 .gitmodules && \
             git submodule init && \
             git submodule update && \
@@ -210,7 +210,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             ninja -C build install ; \
         else \
             sed -i \
-                -e 's/git:/https:/g' \
+                -e 's|git://anongit.freedesktop.org/gstreamer/common.*$|https://anongit.freedesktop.org/git/gstreamer/common.git/|g' \
                 .gitmodules && \
             git submodule init && \
             git submodule update && \
