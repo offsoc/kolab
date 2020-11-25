@@ -225,7 +225,7 @@ class WalletCheckTest extends TestCase
         // Assert the mail was sent to the user's email, but not to his external email
         Mail::assertSent(\App\Mail\NegativeBalanceSuspended::class, 1);
         Mail::assertSent(\App\Mail\NegativeBalanceSuspended::class, function ($mail) use ($user) {
-            return $mail->hasTo($user->email) && !$mail->hasCc('external@test.com');
+            return $mail->hasTo($user->email) && $mail->hasCc('external@test.com');
         });
 
         // Check that it has been suspended
