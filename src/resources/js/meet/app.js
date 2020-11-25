@@ -89,7 +89,7 @@ function Meet(container)
         // Handle connection creation events
         session.on('connectionCreated', event => {
             // Ignore the current user connection
-            if (!event.connection.options) {
+            if (event.connection.role) {
                 return
             }
 
@@ -181,6 +181,7 @@ function Meet(container)
                 publisher.on('videoElementCreated', event => {
                     $(event.element).prop({
                             muted: true, // Mute local video to avoid feedback
+                            disablePictureInPicture: true, // this does not work in Firefox
                             tabindex: -1
                     })
                     updateLayout()

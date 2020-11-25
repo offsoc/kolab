@@ -39,12 +39,12 @@ RUN dnf -y install \
         wget && \
     dnf clean all && \
     mkdir -p /src/ && \
-    git clone --branch v2.15.0 https://github.com/OpenVidu/openvidu.git /src/openvidu.git && \
+    git clone --branch v2.16.0 https://github.com/OpenVidu/openvidu.git /src/openvidu.git && \
         cd /src/openvidu.git/ && \
         mvn clean install -DskipTests && \
         mkdir -p /usr/share/openvidu/ && \
         mv -v \
-            /src/openvidu.git/openvidu-server/target/openvidu-server-2.15.0.jar \
+            /src/openvidu.git/openvidu-server/target/openvidu-server-2.16.0.jar \
             /usr/share/openvidu/openvidu-server.jar && \
         rm -rvf /src/ /root/.m2/
 
