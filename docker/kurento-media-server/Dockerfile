@@ -84,6 +84,9 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
     if [ "${GST_BASE_VERSION}" == "1.8.1-1kurento2" ]; then \
         git clone https://github.com/Kurento/gstreamer.git /src/gstreamer.git && \
             cd /src/gstreamer.git/ && \
+            sed -i \
+                -e 's/git:/https:/g' \
+                .gitmodules && \
             git submodule init && \
             git submodule update && \
             #sed -r -i \
@@ -101,6 +104,9 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
                 meson build --prefix=/usr && \
                 ninja -C build install ; \
             else \
+                sed -i \
+                    -e 's/git:/https:/g' \
+                    .gitmodules && \
                 git submodule init && \
                 git submodule update && \
                 autopoint --force && \
@@ -116,6 +122,9 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             meson build --prefix=/usr && \
             ninja -C build install ; \
         else \
+            sed -i \
+                -e 's/git:/https:/g' \
+                .gitmodules && \
             git submodule init && \
             git submodule update && \
             sed -r -i \
@@ -139,6 +148,9 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             meson build --prefix=/usr && \
             ninja -C build install ; \
         else \
+            sed -i \
+                -e 's/git:/https:/g' \
+                .gitmodules && \
             git submodule init && \
             git submodule update && \
             sed -r -i \
@@ -167,6 +179,9 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             meson build --prefix=/usr && \
             ninja -C build install ; \
         else \
+            sed -i \
+                -e 's/git:/https:/g' \
+                .gitmodules && \
             git submodule init && \
             git submodule update && \
             sed -r -i \
@@ -194,6 +209,9 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             meson build --prefix=/usr && \
             ninja -C build install ; \
         else \
+            sed -i \
+                -e 's/git:/https:/g' \
+                .gitmodules && \
             git submodule init && \
             git submodule update && \
             sed -r -i \
