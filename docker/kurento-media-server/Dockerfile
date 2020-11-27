@@ -68,6 +68,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         #openni-devel \
         openssl-devel \
         opus-devel \
+        patch \
         redhat-rpm-config \
         spandsp-devel \
         usrsctp-devel \
@@ -199,7 +200,11 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
                 po/Makevars && \
             autopoint --force && \
             autoreconf -vi && \
-            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-dtls && \
+            #./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-dtls && \
+            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
+            git show 31317fd666 -- ext/dtls/gstdtlsagent.c | patch -p1 && \
+            git show 29d48ce8a1 -- ext/dtls/gstdtlsagent.c | patch -p1 && \
+            git show e938933167 -- ext/dtls/gstdtlsconnection.c | patch -p1 && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
