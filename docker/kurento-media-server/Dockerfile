@@ -202,9 +202,39 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             autoreconf -vi && \
             #./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-dtls && \
             ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
-            git show 31317fd666 -- ext/dtls/gstdtlsagent.c | patch -p1 && \
-            git show 29d48ce8a1 -- ext/dtls/gstdtlsagent.c | patch -p1 && \
-            git show e938933167 -- ext/dtls/gstdtlsconnection.c | patch -p1 && \
+            #git show 31317fd666 -- ext/dtls/gstdtlsagent.c | patch -p1 && \
+            #git show 29d48ce8a1 -- ext/dtls/gstdtlsagent.c | patch -p1 && \
+            #git show e938933167 -- ext/dtls/gstdtlsconnection.c | patch -p1 && \
+            git config --global user.name 'Ducker McDuckface' && \
+            git config --global user.email 'Duck@McDucker.quack' && \
+            git cherry-pick 8cdfb13658a069cf8c45a3265bf865849d3dc8e9 && \
+            git cherry-pick d2ef3a4c19a84e45f1e43fecf931b4bcc5008433 && \
+            git cherry-pick 79f9c7671ba5daccd8da3c7e4722f24e09680287 && \
+            git cherry-pick 42af2d66d8e4aa73c38be07c8460397adf21ce30 && \
+            git cherry-pick e938933167c494cdca443334f658b02a03c4486b && \
+            git cherry-pick c35b918ce14de010fc25b6060240ba9c09b0c7af && \
+            git cherry-pick 31317fd66633930b82d51d1c2e65121e24f9df19 && \
+            git cherry-pick 3a069193e25364ebdacac86f4b03022c151ea29c && \
+            git cherry-pick 1a43d5735972c525b8cc69d46b392e903bb4a0aa && \
+            git cherry-pick 18a62b144d7b78302f255199ca26427180579fe9 && \
+            git cherry-pick dc452aa799d80d5f28720e051ac4160a9cf58140 && \
+            git cherry-pick eaef193d082e0e6c87736359c9284ba6640683c9 && \
+            git cherry-pick 3c6f642fa625f8690c6471cd5416a8558dda69c1 && \
+            git cherry-pick fa92909d0d39c1cf7cec2abad598f866729e6889 && \
+            git cherry-pick 49cc7b809114dff4ceb108b530d4c4592a1b03b9 && \
+            git cherry-pick 51f030790060ec22577e3bc52ec2d1a645e3591a && \
+            git cherry-pick b1509b1047bb76c9b2d8b14e9cecd0da72fd8e65 && \
+            git cherry-pick 29d48ce8a1714cbbdc1781429dc7f0043c3c018c && \
+            git cherry-pick 06b18defc7515c047f7cf51c6843504786758f21 && \
+            git cherry-pick 8a6f0a7e45f5327337baf48b3b7a3d418cb8add1 && \
+            git cherry-pick 831711288368fd4b0bec7741f770a8f4fd391893 && \
+            git cherry-pick d289608a999d96fd987d971daf3fc28d9168762b && \
+            git cherry-pick aa0dea09d689461db96e47919f52e515398cf00f && \
+            git cherry-pick e5585b1bde162bc038fd1265438edbcd94ccb5ed && \
+            git cherry-pick 060e72e370a46fa6ff2c6b9bdd4bcfa58db49071 && \
+            git cherry-pick cc8b90967badb2c90f73c6af76abe55dbbb29f92 && \
+            git cherry-pick 8da177c0bfb9e223aaa8e5e698a568e5f42a0e82 && \
+            git cherry-pick 3dd2bbf23cb8c7c1f4efc4106858602fb9e57ecc && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
@@ -353,7 +383,49 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
     strip -s \
         /usr/lib64/gstreamer-*/*.so \
         /usr/lib64/kurento/modules/*.so* \
-        /usr/lib64/libkms*.so*
+        /usr/lib64/libkms*.so* && \
+    dnf -y remove \
+	        -x boost-filesystem \
+	        -x boost-program-options \
+	        -x boost-log \
+	        -x boost-thread \
+	        -x file \
+	        -x gstreamer1-plugins-base \
+	        -x gstreamer1-plugins-bad-free \
+	        -x glibmm24 \
+	        -x java-1.8.0-openjdk \
+	        -x libnice \
+	        -x libsigc \
+	        -x libvpx \
+	        -x opencv \
+	        boost-devel \
+	        cmake \
+	        gcc-c++ \
+	        git \
+	        glibmm24-devel \
+	        gstreamer1-devel \
+	        gstreamer1-plugins-base-devel \
+	        gstreamer1-plugins-bad-free-devel \
+	        libevent-devel \
+	        libnice-devel \
+	        libsigc++20-devel \
+	        libsoup-devel \
+	        libuuid-devel \
+	        libvpx-devel \
+	        make \
+	        maven \
+	        opencv-devel \
+	        openssl-devel \
+	        redhat-rpm-config \
+	        vim-enhanced \
+	        websocketpp-devel && \
+	    dnf -y clean all && \
+	    rm -rvf \
+	        /src/ \
+	        /root/.m2/ \
+	        /usr/include/* \
+            /usr/lib64/*.la \
+            /usr/lib64/gstreamer-*/*.la
 
 COPY rootfs/ /
 
