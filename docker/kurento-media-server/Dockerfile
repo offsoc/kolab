@@ -379,53 +379,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         make -j $(nproc) VERBOSE=1 && \
         make install VERBOSE=1 -s && \
         cp -av $(find . -type f -name 'libtransport.so*') /usr/lib64/ && \
-        cp -av $(find . -type f -name 'libwebsocketTransport.so*') /usr/lib64/ && \
-    strip -s \
-        /usr/lib64/gstreamer-*/*.so \
-        /usr/lib64/kurento/modules/*.so* \
-        /usr/lib64/libkms*.so* && \
-    dnf -y remove \
-	        -x boost-filesystem \
-	        -x boost-program-options \
-	        -x boost-log \
-	        -x boost-thread \
-	        -x file \
-	        -x gstreamer1-plugins-base \
-	        -x gstreamer1-plugins-bad-free \
-	        -x glibmm24 \
-	        -x java-1.8.0-openjdk \
-	        -x libnice \
-	        -x libsigc \
-	        -x libvpx \
-	        -x opencv \
-	        boost-devel \
-	        cmake \
-	        gcc-c++ \
-	        git \
-	        glibmm24-devel \
-	        gstreamer1-devel \
-	        gstreamer1-plugins-base-devel \
-	        gstreamer1-plugins-bad-free-devel \
-	        libevent-devel \
-	        libnice-devel \
-	        libsigc++20-devel \
-	        libsoup-devel \
-	        libuuid-devel \
-	        libvpx-devel \
-	        make \
-	        maven \
-	        opencv-devel \
-	        openssl-devel \
-	        redhat-rpm-config \
-	        vim-enhanced \
-	        websocketpp-devel && \
-	    dnf -y clean all && \
-	    rm -rvf \
-	        /src/ \
-	        /root/.m2/ \
-	        /usr/include/* \
-            /usr/lib64/*.la \
-            /usr/lib64/gstreamer-*/*.la
+        cp -av $(find . -type f -name 'libwebsocketTransport.so*') /usr/lib64/
 
 COPY rootfs/ /
 
