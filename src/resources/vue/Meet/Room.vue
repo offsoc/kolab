@@ -20,6 +20,9 @@
                 <button class="btn btn-link link-fullscreen open hidden" @click="switchFullscreen" title="Full screen">
                     <svg-icon icon="compress"></svg-icon>
                 </button>
+                <button class="btn btn-link link-security" v-if="session && session.owner" @click="securityOptions" title="Security options">
+                    <svg-icon icon="shield-alt"></svg-icon>
+                </button>
                 <button class="btn btn-link link-logout" @click="logout" title="Leave session">
                     <svg-icon icon="power-off"></svg-icon>
                 </button>
@@ -35,38 +38,52 @@
                             <video class="rounded"></video>
                             <div class="volume"><div class="bar"></div></div>
                         </div>
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label for="setup-microphone">Microphone</label>
+                        <div class="col-sm-6 align-self-center">
+                            <div class="input-group">
+                                <label for="setup-microphone" class="input-group-prepend mb-0">
+                                    <span class="input-group-text" title="Microphone"><svg-icon icon="microphone"></svg-icon></span>
+                                </label>
                                 <select class="custom-select" id="setup-microphone" v-model="microphone" @change="setupMicrophoneChange">
                                     <option value="">None</option>
                                     <option v-for="mic in setup.microphones" :value="mic.deviceId" :key="mic.deviceId">{{ mic.label }}</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label for="setup-camera">Camera</label>
+                            <div class="input-group mt-2">
+                                <label for="setup-camera" class="input-group-prepend mb-0">
+                                    <span class="input-group-text" title="Camera"><svg-icon icon="video"></svg-icon></span>
+                                </label>
                                 <select class="custom-select" id="setup-camera" v-model="camera" @change="setupCameraChange">
                                     <option value="">None</option>
                                     <option v-for="cam in setup.cameras" :value="cam.deviceId" :key="cam.deviceId">{{ cam.label }}</option>
                                 </select>
                             </div>
-                            <div class="form-group mb-0">
-                                <label for="setup-nickname">Nickname</label>
-                                <input class="form-control" type="text" id="setup-nickname" v-model="nickname">
+                            <div class="input-group mt-2">
+                                <label for="setup-nickname" class="input-group-prepend mb-0">
+                                    <span class="input-group-text" title="Nickname"><svg-icon icon="user"></svg-icon></span>
+                                </label>
+                                <input class="form-control" type="text" id="setup-nickname" v-model="nickname" placeholder="Your name">
+                            </div>
+                            <div class="input-group mt-2" v-if="session.config && session.config.requires_password">
+                                <label for="setup-password" class="input-group-prepend mb-0">
+                                    <span class="input-group-text" title="Password"><svg-icon icon="key"></svg-icon></span>
+                                </label>
+                                <input type="password" class="form-control" id="setup-password" v-model="password" placeholder="Password">
+                            </div>
+                            <div class="mt-3">
+                                <button v-if="roomState == 'ready' || roomState == 424 || roomState == 425"
+                                        type="button"
+                                        @click="joinSession"
+                                        :class="'btn w-100 btn-' + (roomState == 'ready' ? 'success' : 'primary')"
+                                >JOIN</button>
+                                <button v-if="roomState == 423"
+                                        type="button"
+                                        @click="joinSession"
+                                        class="btn btn-primary w-100"
+                                >I'm the owner</button>
                             </div>
                         </div>
-                        <div class="text-center mt-4 col-sm-12">
-                            <status-message :status="roomState" :status-labels="roomStateLabels" class="mb-3"></status-message>
-                            <button v-if="roomState == 'ready' || roomState == 424"
-                                    type="button"
-                                    @click="joinSession"
-                                    class="btn btn-primary pl-5 pr-5"
-                            >JOIN</button>
-                            <button v-if="roomState == 423"
-                                    type="button"
-                                    @click="joinSession"
-                                    class="btn btn-primary pl-5 pr-5"
-                            >I'm the owner</button>
+                        <div class="mt-4 col-sm-12">
+                            <status-message :status="roomState" :status-labels="roomStateLabels"></status-message>
                         </div>
                     </form>
                 </div>
@@ -103,6 +120,8 @@
                 </div>
             </div>
         </div>
+
+        <session-security-options v-if="session.config" :config="session.config" :room="room" @config-update="configUpdate"></session-security-options>
     </div>
 </template>
 
@@ -110,10 +129,12 @@
     import Meet from '../../js/meet/app.js'
     import StatusMessage from '../Widgets/StatusMessage'
     import LogonForm from '../Login'
+    import SessionSecurityOptions from './SessionSecurityOptions'
 
     export default {
         components: {
             LogonForm,
+            SessionSecurityOptions,
             StatusMessage
         },
         data() {
@@ -127,6 +148,7 @@
                 meet: null,
                 microphone: '',
                 nickname: '',
+                password: '',
                 room: null,
                 roomState: 'init',
                 roomStateLabels: {
@@ -134,6 +156,7 @@
                     404: 'The room does not exist.',
                     423: 'The room is closed. Please, wait for the owner to start the session.',
                     424: 'The room is closed. It will be open for others after you join.',
+                    425: 'The room is ready. Please, provide a valid password.',
                     500: 'Failed to create a session. Server error.'
                 },
                 session: {}
@@ -168,20 +191,20 @@
                 $('#meet-setup').removeClass('hidden')
                 $('#meet-auth').addClass('hidden')
             },
+            configUpdate(config) {
+                this.session.config = Object.assign({}, this.session.config, config)
+            },
             initSession(init) {
-                let params = []
-
-                if (this.canShareScreen) {
-                    params.push('screenShare=1')
+                this.post = {
+                    password: this.password,
+                    nickname: this.nickname,
+                    screenShare: this.canShareScreen ? 1 : 0,
+                    init: init ? 1 : 0
                 }
 
-                if (init) {
-                    params.push('init=1')
-                }
+                $('#setup-password').removeClass('is-invalid')
 
-                const url = '/api/v4/openvidu/rooms/' + this.room + '?' + params.join('&')
-
-                axios.get(url, { ignoreErrors: true })
+                axios.post('/api/v4/openvidu/rooms/' + this.room, this.post, { ignoreErrors: true })
                     .then(response => {
                         // Response data contains: session, token and shareToken
                         this.roomState = 'ready'
@@ -194,10 +217,23 @@
                     .catch(error => {
                         this.roomState = String(error.response.status)
 
-                        // Waiting for the owner to open the room...
-                        if (error.response.status == 423) {
-                            // Update room state every 10 seconds
-                            window.roomRequest = setTimeout(() => { this.initSession() }, 10000)
+                        if (error.response.data && error.response.data.config) {
+                            this.session.config = error.response.data.config
+                        }
+
+                        switch (this.roomState) {
+                            case '423':
+                                // Waiting for the owner to open the room...
+                                // Update room state every 10 seconds
+                                window.roomRequest = setTimeout(() => { this.initSession() }, 10000)
+                                break;
+
+                            case '425':
+                                // Missing/invalid password
+                                if (init) {
+                                    $('#setup-password').addClass('is-invalid').focus()
+                                }
+                                break;
                         }
                     })
 
@@ -212,7 +248,7 @@
                     return
                 }
 
-                if (this.roomState == 424) {
+                if (this.roomState == 424 || this.roomState == 425) {
                     this.initSession(true)
                     return
                 }
@@ -222,6 +258,10 @@
                 $('#app').addClass('meet')
                 $('#meet-setup').addClass('hidden')
                 $('#meet-session-toolbar,#meet-session-layout').removeClass('hidden')
+
+                if (!this.canShareScreen) {
+                    this.setMenuItem('screen', false, true)
+                }
 
                 this.session.nickname = this.nickname
                 this.session.menuElement = $('#meet-session-menu')[0]
@@ -254,6 +294,9 @@
                     this.meet = null
                     window.location = window.config['app.url']
                 }
+            },
+            securityOptions() {
+                $('#security-options-dialog').modal()
             },
             setMenuItem(type, state, disabled) {
                 let button = $('#meet-session-menu').find('.link-' + type)
@@ -338,7 +381,9 @@
                     // After one screen sharing session ended request a new token
                     // for the next screen sharing session
                     if (!enabled) {
-                        axios.get('/api/v4/openvidu/rooms/' + this.room, { ignoreErrors: true })
+                        // TODO: This might need to be a different route. E.g. the room password might have
+                        //       changed since user joined the session
+                        axios.post('/api/v4/openvidu/rooms/' + this.room, this.post, { ignoreErrors: true })
                             .then(response => {
                                 // Response data contains: session, token and shareToken
                                 this.session.shareToken = response.data.token

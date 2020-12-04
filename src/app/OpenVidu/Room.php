@@ -5,6 +5,14 @@ namespace App\OpenVidu;
 use App\Traits\SettingsTrait;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * The eloquent definition of a Room.
+ *
+ * @property int     $id         Room identifier
+ * @property string  $name       Room name
+ * @property int     $user_id    Room owner
+ * @property ?string $session_id OpenVidu session identifier
+ */
 class Room extends Model
 {
     use SettingsTrait;

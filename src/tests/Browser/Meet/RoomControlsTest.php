@@ -124,9 +124,10 @@ class RoomControlsTest extends TestCaseDusk
             $owner->assertToolbar([
                     'audio' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                     'video' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
-                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'security' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                     'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                 ])
                 ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
@@ -153,7 +154,7 @@ class RoomControlsTest extends TestCaseDusk
             $guest->assertToolbar([
                     'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
                     'video' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
-                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                     'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,

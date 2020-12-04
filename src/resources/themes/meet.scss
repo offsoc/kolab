@@ -138,6 +138,10 @@
 
 #meet-setup {
     max-width: 720px;
+
+    .input-group svg {
+        width: 1em;
+    }
 }
 
 #meet-auth {

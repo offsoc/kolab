@@ -14,9 +14,13 @@ return [
     */
 
     'room-not-found' => 'The room does not exist.',
+    'room-setconfig-success' => 'Room configuration updated successfully.',
+    'room-unsupported-option-error' => 'Invalid room configuration option.',
     'session-not-found' => 'The session does not exist.',
     'session-create-error' => 'Failed to create the session.',
     'session-join-error' => 'Failed to join the session.',
     'session-close-error' => 'Failed to close the session.',
     'session-close-success' => 'The session has been closed successfully.',
+    'session-password-error' => 'Failed to join the session. Invalid password.',
+
 ];

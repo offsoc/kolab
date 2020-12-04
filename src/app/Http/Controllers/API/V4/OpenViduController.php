@@ -103,11 +103,12 @@ class OpenViduController extends Controller
         }
 
         $user = Auth::guard()->user();
+        $isOwner = $user && $user->id == $room->user_id;
 
         // There's no existing session
         if (!$room->hasSession()) {
             // Participants can't join the room until the session is created by the owner
-            if (!$user || $user->id != $room->user_id) {
+            if (!$isOwner) {
                 return $this->errorResponse(423, \trans('meet.session-not-found'));
             }
 
@@ -120,6 +121,29 @@ class OpenViduController extends Controller
 
             if (empty($session)) {
                 return $this->errorResponse(500, \trans('meet.session-create-error'));
+            }
+        }
+
+        $password = (string) $room->getSetting('password');
+
+        $config = [
+            'locked' => $room->getSetting('locked') === 'true',
+            'password' => $isOwner ? $password : '',
+            'requires_password' => !$isOwner && strlen($password),
+        ];
+
+        // Validate room password
+        if (!$isOwner && strlen($password)) {
+            $request_password = request()->input('password');
+            if ($request_password !== $password) {
+                // Note: We send the config to the client so it knows to display the password field
+                $response = [
+                    'config' => $config,
+                    'message' => \trans('meet.session-password-error'),
+                    'status' => 'error',
+                ];
+
+                return response()->json($response, 425);
             }
         }
 
@@ -138,9 +162,72 @@ class OpenViduController extends Controller
         }
 
         // Tell the UI who's the room owner
-        $response['owner'] = $user && $user->id == $room->user_id;
+        $response['owner'] = $isOwner;
+
+        // Append the room configuration
+
+        $response['config'] = $config;
 
         return response()->json($response);
+    }
+
+    /**
+     * Set the domain configuration.
+     *
+     * @param string $id Room identifier (name)
+     *
+     * @return \Illuminate\Http\JsonResponse|void
+     */
+    public function setRoomConfig($id)
+    {
+        $room = Room::where('name', $id)->first();
+
+        // Room does not exist, or the owner is deleted
+        if (!$room || !$room->owner) {
+            return $this->errorResponse(404);
+        }
+
+        $user = Auth::guard()->user();
+
+        // Only room owner can configure the room
+        if ($user->id != $room->user_id) {
+            return $this->errorResponse(403);
+        }
+
+        $input = request()->input();
+        $errors = [];
+
+        foreach ($input as $key => $value) {
+            switch ($key) {
+                case 'password':
+                    if ($value === null || $value === '') {
+                        $input[$key] = null;
+                    } else {
+                        // TODO: Do we have to validate the password in any way?
+                    }
+                    break;
+
+                case 'locked':
+                    $input[$key] = $value ? 'true' : null;
+                    break;
+
+                default:
+                    $errors[$key] = \trans('meet.room-unsupported-option-error');
+            }
+        }
+
+        if (!empty($errors)) {
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        if (!empty($input)) {
+            $room->setSettings($input);
+        }
+
+        return response()->json([
+                'status' => 'success',
+                'message' => \trans('meet.room-setconfig-success'),
+        ]);
     }
 
     /**

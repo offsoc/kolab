@@ -15,27 +15,23 @@ use SwooleTW\Http\Websocket\Facades\Websocket;
 Websocket::on(
     'connect',
     function ($websocket, Request $request) {
-        \Log::debug("someone connected");
-        $websocket->emit(
-            'message',
-            'welcome'
-        );
+        return;
     }
 );
 
 Websocket::on(
     'open',
     function ($websocket, Request $request) {
-        \Log::debug("socket opened");
+        return;
     }
 );
 
 Websocket::on(
     'disconnect',
     function ($websocket) {
-        \Log::debug("someone disconnected");
+        return;
     }
 );
 
-Websocket::on('message', 'App\Http\Controllers\WebsocketController@message');
-Websocket::on('ping', 'App\Http\Controllers\WebsocketController@ping');
+//Websocket::on('message', 'App\Http\Controllers\WebsocketController@message');
+//Websocket::on('ping', 'App\Http\Controllers\WebsocketController@ping');

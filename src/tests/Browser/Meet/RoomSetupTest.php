@@ -101,12 +101,17 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertVisible('@setup-form')
                 ->assertSeeIn('@setup-title', 'Set up your session')
                 ->assertVisible('@setup-video')
-                ->assertSeeIn('@setup-form .form-group:nth-child(1) label', 'Microphone')
+                ->assertVisible('@setup-form .input-group:nth-child(1) svg')
+                ->assertAttribute('@setup-form .input-group:nth-child(1) .input-group-text', 'title', 'Microphone')
                 ->assertVisible('@setup-mic-select')
-                ->assertSeeIn('@setup-form .form-group:nth-child(2) label', 'Camera')
+                ->assertVisible('@setup-form .input-group:nth-child(2) svg')
+                ->assertAttribute('@setup-form .input-group:nth-child(2) .input-group-text', 'title', 'Camera')
                 ->assertVisible('@setup-cam-select')
-                ->assertSeeIn('@setup-form .form-group:nth-child(3) label', 'Nickname')
+                ->assertVisible('@setup-form .input-group:nth-child(3) svg')
+                ->assertAttribute('@setup-form .input-group:nth-child(3) .input-group-text', 'title', 'Nickname')
                 ->assertValue('@setup-nickname-input', '')
+                ->assertAttribute('@setup-nickname-input', 'placeholder', 'Your name')
+                ->assertMissing('@setup-password-input')
                 ->assertSeeIn(
                     '@setup-status-message',
                     "The room is closed. Please, wait for the owner to start the session."
@@ -171,12 +176,12 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertMissing('.status .status-video');
                 })
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'dashboard', 'logout']);
                 });
             }
 

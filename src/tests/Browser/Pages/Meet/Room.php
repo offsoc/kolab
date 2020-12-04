@@ -63,6 +63,7 @@ class Room extends Page
             '@setup-mic-select' => '#setup-microphone',
             '@setup-cam-select' => '#setup-camera',
             '@setup-nickname-input' => '#setup-nickname',
+            '@setup-password-input' => '#setup-password',
             '@setup-preview' => '#setup-preview',
             '@setup-volume' => '#setup-preview .volume',
             '@setup-video' => '#setup-preview video',

@@ -20,6 +20,7 @@ import {
     faMicrophone,
     faPowerOff,
     faUser,
+    faShieldAlt,
     faVideo,
     faVolumeMute
 } from '@fortawesome/free-solid-svg-icons'
@@ -33,6 +34,7 @@ library.add(
     faMicrophone,
     faPowerOff,
     faUser,
+    faShieldAlt,
     faVideo,
     faVolumeMute
 )

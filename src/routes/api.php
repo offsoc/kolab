@@ -83,6 +83,7 @@ Route::group(
 
         Route::get('openvidu/rooms', 'API\V4\OpenViduController@index');
         Route::post('openvidu/rooms/{id}/close', 'API\V4\OpenViduController@closeRoom');
+        Route::post('openvidu/rooms/{id}/config', 'API\V4\OpenViduController@setRoomConfig');
     }
 );
 
@@ -93,7 +94,7 @@ Route::group(
         'prefix' => $prefix . 'api/v4'
     ],
     function () {
-        Route::get('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
+        Route::post('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
     }
 );
 
