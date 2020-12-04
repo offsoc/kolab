@@ -288,17 +288,22 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         make install -s && \
     git clone -b ${KURENTO_CORE_VERSION} https://github.com/Kurento/kms-core.git /src/kms-core.git && \
         cd /src/kms-core.git/ && \
+        mkdir build && \
+        cd build && \
         if [ "${GST_BASE_VERSION}" != "1.8.1-1kurento2" ]; then \
             sed -r -i \
                 -e 's/gstreamer-(.*)1.5/gstreamer-\11.0/g' \
-                $(find -type f -name CMakeLists.txt) ; \
+                $(find -type f -name CMakeLists.txt) && \
+            cmake \
+                ${CMAKEOPTS} \
+                -DCMAKE_INSTALL_GST_PLUGINS_DIR=/usr/lib64/gstreamer-1.0/ \
+                .. ; \
+        else \
+            cmake \
+                ${CMAKEOPTS} \
+                -DCMAKE_INSTALL_GST_PLUGINS_DIR=/usr/lib64/gstreamer-1.5/ \
+                .. ; \
         fi && \
-        mkdir build && \
-        cd build && \
-        cmake \
-            ${CMAKEOPTS} \
-            -DCMAKE_INSTALL_GST_PLUGINS_DIR=/usr/lib64/gstreamer-1.0/ \
-            .. && \
         make -j $(nproc) VERBOSE=1 && \
         make install -s && \
     git clone -b ${KURENTO_ELEMENTS_VERSION} https://github.com/Kurento/kms-elements.git /src/kms-elements.git && \
