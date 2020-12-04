@@ -124,6 +124,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             -e 's/-(base|check)-1\.0/-\1-1.5/g' \
             -e 's/gstreamer-1\.0/gstreamer-1.5/g' \
             meson.build \
+            gst/meson.build \
             tests/meson.build && \
         meson build --prefix=/usr && \
         ninja -C build install && \
