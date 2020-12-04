@@ -11,6 +11,7 @@ ENV AR="/bin/gcc-ar"
 ENV RANLIB="/bin/gcc-ranlib"
 ENV NM="/bin/gcc-nm"
 ENV CMAKE_CXX_ARCHIVE_CREATE="<CMAKE_AR> qcs <TARGET> <LINK_FLAGS> <OBJECTS>"
+ENV OPENSSL_CONF=''
 
 ARG CMAKEOPTS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/ -DCMAKE_INSTALL_SYSCONFDIR=/etc/ -DCMAKE_MODULES_INSTALL_DIR=/usr/share/cmake/Modules/ -DBUILD_SHARED_LIBS=ON -DCMAKE_AR=${AR} -DCMAKE_CXX_ARCHIVE_FINISH=true -DCMAKE_MODULES_INSTALL_DIR=/usr/share/cmake/Modules/ -DGENERATE_TESTS=FALSE -DDISABLE_TESTS=TRUE"
 ARG GST_BASE_VERSION="1.8.1-1kurento2"
@@ -48,7 +49,6 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         libevent-devel \
         libjpeg-devel \
         libmicrodns-devel \
-        libnice-devel \
         libpng-devel \
         libsigc++20-devel \
         libsoup-devel \
@@ -81,6 +81,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
     dnf module -y disable meson && \
     dnf -y update meson && \
     rpm -e --nodeps gstreamer1 gstreamer1-plugins-base && \
+    dnf -y clean all && \
     mkdir -p /src/ && \
     if [ "${GST_BASE_VERSION}" == "1.8.1-1kurento2" ]; then \
         git clone https://github.com/Kurento/gstreamer.git /src/gstreamer.git && \
@@ -95,7 +96,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             #    configure.ac && \
             autopoint --force && \
             autoreconf -vi && \
-            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
+            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-static --disable-static-plugins --enable-shared && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
     else \
@@ -112,11 +113,20 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
                 git submodule update && \
                 autopoint --force && \
                 autoreconf -vi && \
-                ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
+                ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-static --disable-static-plugins --enable-shared && \
                 make -j $(nproc) VERBOSE=1 && \
                 make install VERBOSE=1 ; \
             fi ; \
     fi && \
+    git clone https://gitlab.freedesktop.org/libnice/libnice.git /src/libnice.git && \
+        cd /src/libnice.git && \
+        sed -r -i \
+            -e 's/-(base|check)-1\.0/-\1-1.5/g' \
+            -e 's/gstreamer-1\.0/gstreamer-1.5/g' \
+            meson.build \
+            tests/meson.build && \
+        meson build --prefix=/usr && \
+        ninja -C build install && \
     git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-base.git /src/gst-plugins-base.git && \
         cd /src/gst-plugins-base.git/ && \
         if [ -f 'meson.build' ]; then \
@@ -139,7 +149,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             sed -r -i \
                 -e 's/@GST_API_VERSION@\.1/@GST_API_VERSION@/g' \
                 tools/Makefile.in && \
-            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
+            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-static --disable-static-plugins --enable-shared && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
@@ -170,11 +180,10 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
                 -e 's/__s64/gint64/g' \
                 -e 's/__u64/guint64/g' \
                 sys/v4l2/ext/videodev2.h && \
-            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
+            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-static --disable-static-plugins --enable-shared && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
-    #git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad.git /src/gst-plugins-bad.git && \
     git clone https://github.com/kanarip/gst-plugins-bad.git /src/gst-plugins-bad.git && \
         cd /src/gst-plugins-bad.git/ && \
         if [ -f 'meson.build' ]; then \
@@ -202,7 +211,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             autopoint --force && \
             autoreconf -vi && \
             #./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-dtls && \
-            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests && \
+            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-static --disable-static-plugins --enable-shared && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
@@ -225,14 +234,14 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
                 po/Makevars && \
             autopoint --force && \
             autoreconf -vi && \
-            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-x264 && \
+            ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-failing-tests --disable-x264 --disable-static --disable-static-plugins --enable-shared && \
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
     git clone https://github.com/Kurento/openwebrtc-gst-plugins.git /src/openwebrtc-gst-plugins.git && \
         cd /src/openwebrtc-gst-plugins.git/ && \
         autoreconf -vi && \
-        ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 && \
+        ./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-static --disable-static-plugins --enable-shared && \
         make VERBOSE=1 && \
         make install VERBOSE=1 && \
     git clone -b ${KURENTO_CMAKE_VERSION} https://github.com/Kurento/kms-cmake-utils.git /src/kms-cmake-utils.git && \
@@ -347,7 +356,52 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         make -j $(nproc) VERBOSE=1 && \
         make install VERBOSE=1 -s && \
         cp -av $(find . -type f -name 'libtransport.so*') /usr/lib64/ && \
-        cp -av $(find . -type f -name 'libwebsocketTransport.so*') /usr/lib64/
+        cp -av $(find . -type f -name 'libwebsocketTransport.so*') /usr/lib64/ && \
+    strip -s \
+        /usr/lib64/gstreamer-*/*.so \
+        /usr/lib64/kurento/modules/*.so* \
+        /usr/lib64/libkms*.so* && \
+    dnf -y remove \
+	        -x boost-filesystem \
+	        -x boost-program-options \
+	        -x boost-log \
+	        -x boost-thread \
+	        -x file \
+	        -x gstreamer1-plugins-base \
+	        -x gstreamer1-plugins-bad-free \
+	        -x glibmm24 \
+	        -x java-1.8.0-openjdk \
+	        -x libsigc \
+	        -x libvpx \
+	        -x opencv \
+	        boost-devel \
+	        cmake \
+	        gcc-c++ \
+	        git \
+	        glibmm24-devel \
+	        gstreamer1-devel \
+	        gstreamer1-plugins-base-devel \
+	        gstreamer1-plugins-bad-free-devel \
+	        libevent-devel \
+	        libsigc++20-devel \
+	        libsoup-devel \
+	        libuuid-devel \
+	        libvpx-devel \
+	        make \
+	        maven \
+	        opencv-devel \
+	        openssl-devel \
+	        redhat-rpm-config \
+	        vim-enhanced \
+	        websocketpp-devel && \
+	    dnf -y clean all && \
+	    rm -rvf \
+	        /src/ \
+	        /root/.m2/ \
+	        /usr/include/* \
+            /usr/lib64/*.la \
+            /usr/lib64/gstreamer-*/*.la
+
 
 COPY rootfs/ /
 
