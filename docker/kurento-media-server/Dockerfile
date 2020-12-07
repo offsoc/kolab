@@ -12,6 +12,9 @@ ENV RANLIB="/bin/gcc-ranlib"
 ENV NM="/bin/gcc-nm"
 ENV CMAKE_CXX_ARCHIVE_CREATE="<CMAKE_AR> qcs <TARGET> <LINK_FLAGS> <OBJECTS>"
 ENV OPENSSL_CONF=''
+ENV GST_DEBUG="*:3,Kurento*:5,kms*:5,sdp*:4,webrtc*:5,*rtpendpoint:5,rtp*handler:5,rtpsynchronizer:5,agnosticbin:4,GST_ELEMENT_FACTORY:7"
+
+ARG CLEAN=1
 
 ARG CMAKEOPTS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/ -DCMAKE_INSTALL_SYSCONFDIR=/etc/ -DCMAKE_MODULES_INSTALL_DIR=/usr/share/cmake/Modules/ -DBUILD_SHARED_LIBS=ON -DCMAKE_AR=${AR} -DCMAKE_CXX_ARCHIVE_FINISH=true -DCMAKE_MODULES_INSTALL_DIR=/usr/share/cmake/Modules/ -DGENERATE_TESTS=FALSE -DDISABLE_TESTS=TRUE"
 ARG GST_BASE_VERSION="1.8.1-1kurento2"
@@ -154,7 +157,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             make -j $(nproc) VERBOSE=1 && \
             make install VERBOSE=1 ; \
         fi && \
-    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-good.git /src/gst-plugins-good.git/ && \
+    git clone -b ${GST_VERSION} https://gitlab.freedesktop.org/gstreamer/gst-plugins-good.git /src/gst-plugins-good.git && \
         cd /src/gst-plugins-good.git/ && \
         if [ -f 'meson.build' ]; then \
             meson build --prefix=/usr && \
@@ -321,10 +324,14 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             .. && \
         sed -i \
             -e 's/-lkmsgstcommons/-lkmsgstcommons -lkmscoreinterface/g' \
+            -e 's/-lkmscoreinterface/-lkmscoreinterface -lkmsutils/g' \
             $(find . -type f -name link.txt) && \
         make -j $(nproc) VERBOSE=1 && \
+        make -j $(nproc) check VERBOSE=1 && \
         make install -s && \
-        cp -av src/server/implementation/HttpServer/libkmshttpep.so /usr/lib64/ && \
+        cp -av src/server/implementation/HttpServer/libkmshttpep.so /usr/lib64/. && \
+        cp -av /usr/lib64/libkmswebrtcendpointlib.so* /usr/lib64/kurento/modules/. && \
+        cp -av /usr/lib64/libkmshttpep.so* /usr/lib64/kurento/modules/. && \
     git clone -b ${KURENTO_FILTERS_VERSION} https://github.com/Kurento/kms-filters.git /src/kms-filters.git && \
         cd /src/kms-filters.git/ && \
         if [ "${GST_BASE_VERSION}" != "1.8.1-1kurento2" ]; then \
@@ -363,52 +370,54 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
         make install VERBOSE=1 -s && \
         cp -av $(find . -type f -name 'libtransport.so*') /usr/lib64/ && \
         cp -av $(find . -type f -name 'libwebsocketTransport.so*') /usr/lib64/ && \
-    strip -s \
-        /usr/lib64/gstreamer-*/*.so \
-        /usr/lib64/kurento/modules/*.so* \
-        /usr/lib64/libkms*.so* && \
-    dnf -y remove \
-	        -x boost-filesystem \
-	        -x boost-program-options \
-	        -x boost-log \
-	        -x boost-thread \
-	        -x file \
-	        -x gstreamer1-plugins-base \
-	        -x gstreamer1-plugins-bad-free \
-	        -x glibmm24 \
-	        -x java-1.8.0-openjdk \
-	        -x libsigc \
-	        -x libvpx \
-	        -x opencv \
-	        boost-devel \
-	        cmake \
-	        gcc-c++ \
-	        git \
-	        glibmm24-devel \
-	        gstreamer1-devel \
-	        gstreamer1-plugins-base-devel \
-	        gstreamer1-plugins-bad-free-devel \
-	        libevent-devel \
-	        libsigc++20-devel \
-	        libsoup-devel \
-	        libuuid-devel \
-	        libvpx-devel \
-	        make \
-	        maven \
-	        opencv-devel \
-	        openssl-devel \
-	        redhat-rpm-config \
-	        vim-enhanced \
-	        websocketpp-devel && \
-	    dnf -y clean all && \
-	    rm -rvf \
-	        /src/ \
-	        /root/.m2/ \
-	        /usr/include/* \
+    if [ "${CLEAN}" -eq 1 ]; then \
+        strip -s \
+            /usr/lib64/gstreamer-*/*.so \
+            /usr/lib64/kurento/modules/*.so* \
+            /usr/lib64/libkms*.so* && \
+        dnf -y remove \
+            -x boost-filesystem \
+            -x boost-program-options \
+            -x boost-log \
+            -x boost-thread \
+            -x file \
+            -x gstreamer1-plugins-base \
+            -x gstreamer1-plugins-bad-free \
+            -x glibmm24 \
+            -x java-1.8.0-openjdk \
+            -x libsigc \
+            -x libvpx \
+            -x opencv \
+            boost-devel \
+            cmake \
+            gcc-c++ \
+            git \
+            glibmm24-devel \
+            gstreamer1-devel \
+            gstreamer1-plugins-base-devel \
+            gstreamer1-plugins-bad-free-devel \
+            libevent-devel \
+            libsigc++20-devel \
+            libsoup-devel \
+            libuuid-devel \
+            libvpx-devel \
+            make \
+            maven \
+            opencv-devel \
+            openssl-devel \
+            redhat-rpm-config \
+            vim-enhanced \
+            websocketpp-devel && \
+        dnf -y clean all && \
+        rm -rvf \
+            /src/ \
+            /root/.m2/ \
+            /usr/include/* \
             /usr/lib64/*.la \
-            /usr/lib64/gstreamer-*/*.la
-
+            /usr/lib64/gstreamer-*/*.la && \
+        ldconfig ; \
+    fi
 
 COPY rootfs/ /
 
-CMD ["/bin/kurento-media-server", "--gst-plugin-path", "/usr/lib64/gstreamer-1.0/"]
+CMD ["/bin/kurento-media-server"]
