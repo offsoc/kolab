@@ -386,6 +386,7 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
             -x glibmm24 \
             -x java-1.8.0-openjdk \
             -x libsigc \
+            -x libsoup \
             -x libvpx \
             -x opencv \
             boost-devel \
