@@ -46,6 +46,15 @@ services:
       - ./docker/kolab/utils:/root/utils:ro
       - ./src/.env:/.dockerenv:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  kurento-media-server:
+    build:
+      context: ./docker/kurento-media-server/
+    container_name: kolab-kurento-media-server
+    environment:
+      - GST_DEBUG=3,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4
+    hostname: kurento-media-server.hosted.com
+    image: apheleia/kurento-media-server:6.15.0
+    network_mode: host
   mariadb:
     container_name: kolab-mariadb
     environment:
@@ -58,6 +67,8 @@ services:
     image: mariadb
     network_mode: host
   openvidu:
+    build:
+      context: ./docker/openvidu/
     container_name: kolab-openvidu
     environment:
       - APP_DOMAIN=${APP_DOMAIN}
@@ -77,7 +88,7 @@ services:
       - OPENVIDU_WEBHOOK_ENDPOINT=${OPENVIDU_WEBHOOK_ENDPOINT}
       - SERVER_PORT=8443
     hostname: openvidu.hosted.com
-    image: openvidu/openvidu-server-kms:2.15.0
+    image: apheleia/openvidu:2.15.0
     network_mode: host
     tmpfs:
       - /run
