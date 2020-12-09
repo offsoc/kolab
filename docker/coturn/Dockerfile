@@ -23,6 +23,7 @@ RUN dnf -y install \
         openssh-clients \
         openssh-server \
         procps-ng \
+        redis \
         strace \
         systemd-udev \
         tcpdump \
