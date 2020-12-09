@@ -421,4 +421,6 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
 
 COPY rootfs/ /
 
-CMD ["/bin/kurento-media-server"]
+RUN chmod 666 /etc/kurento/modules/kurento/WebRtcEndpoint.conf.ini
+
+CMD ["/usr/local/bin/kurento-media-server.sh"]
