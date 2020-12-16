@@ -105,8 +105,10 @@ class StatsController extends \App\Http\Controllers\Controller
 
         while ($weeks > 0) {
             $labels[] = $start->format('Y-W');
-            $start->subWeeks(1);
             $weeks--;
+            if ($weeks) {
+                $start->subWeeks(1);
+            }
         }
 
         $labels = array_reverse($labels);
@@ -130,7 +132,7 @@ class StatsController extends \App\Http\Controllers\Controller
 
         // $payments = [1000, 1200.25, 3000, 1897.50, 2000, 1900, 2134, 3330];
 
-        $avg = collect($payments)->avg();
+        $avg = collect($payments)->slice(0, count($labels) - 1)->avg();
 
         // See https://frappe.io/charts/docs for format/options description
 
@@ -171,8 +173,10 @@ class StatsController extends \App\Http\Controllers\Controller
 
         while ($weeks > 0) {
             $labels[] = $start->format('Y-W');
-            $start->subWeeks(1);
             $weeks--;
+            if ($weeks) {
+                $start->subWeeks(1);
+            }
         }
 
         $labels = array_reverse($labels);
@@ -197,7 +201,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // $created = [5, 2, 4, 2, 0, 5, 2, 4];
         // $deleted = [1, 2, 3, 1, 2, 1, 2, 3];
 
-        $avg = collect($created)->avg();
+        $avg = collect($created)->slice(0, count($labels) - 1)->avg();
 
         // See https://frappe.io/charts/docs for format/options description
 
@@ -244,8 +248,10 @@ class StatsController extends \App\Http\Controllers\Controller
 
         while ($weeks > 0) {
             $labels[] = $start->format('Y-W');
-            $start->subWeeks(1);
             $weeks--;
+            if ($weeks) {
+                $start->subWeeks(1);
+            }
         }
 
         $labels = array_reverse($labels);
