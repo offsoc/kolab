@@ -5,8 +5,8 @@
         </div>
         <span v-if="status == 'init'">{{ statusLabel() }}</span>
 
-        <svg-icon v-if="Number(status) >= 400 && status in statusLabels" icon="exclamation-circle"></svg-icon>
-        <span v-if="Number(status) >= 400 && status in statusLabels">{{ statusLabel() }}</span>
+        <svg-icon v-if="status != 'init' && statusLabel()" :icon="Number(status) >= 400 ? 'exclamation-circle' : 'info-circle'"></svg-icon>
+        <span v-if="status != 'init' && statusLabel()">{{ statusLabel() }}</span>
     </div>
 </template>
 

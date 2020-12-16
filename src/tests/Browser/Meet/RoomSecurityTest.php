@@ -93,7 +93,7 @@ class RoomSecurityTest extends TestCaseDusk
             $guest->visit(new RoomPage('john'))
                 ->waitFor('@setup-form')
                 ->waitUntilMissing('@setup-status-message.loading')
-                ->assertSeeIn('@setup-status-message.text-danger', "Please, provide a valid password.")
+                ->assertSeeIn('@setup-status-message', "Please, provide a valid password.")
                 ->assertVisible('@setup-form .input-group:nth-child(4) svg')
                 ->assertAttribute('@setup-form .input-group:nth-child(4) .input-group-text', 'title', 'Password')
                 ->assertAttribute('@setup-password-input', 'placeholder', 'Password')
@@ -175,7 +175,7 @@ class RoomSecurityTest extends TestCaseDusk
                 ->click('@setup-button')
                 ->waitFor('@setup-nickname-input.is-invalid')
                 ->assertSeeIn(
-                    '@setup-status-message.text-danger',
+                    '@setup-status-message',
                     "The room is locked. Please, enter your name and try again."
                 )
                 ->assertMissing('@setup-password-input')
@@ -184,7 +184,7 @@ class RoomSecurityTest extends TestCaseDusk
                 ->click('@setup-button')
                 ->assertMissing('@setup-nickname-input.is-invalid')
                 ->waitFor('@setup-button[disabled]')
-                ->assertSeeIn('@setup-status-message.text-danger', "Waiting for permission to join the room.");
+                ->assertSeeIn('@setup-status-message', "Waiting for permission to join the room.");
 
             // Test denying the request (this will also test custom toasts)
             $owner
@@ -209,7 +209,7 @@ class RoomSecurityTest extends TestCaseDusk
                 ->type('@setup-nickname-input', 'guest')
                 ->click('@setup-button')
                 ->waitFor('@setup-button[disabled]')
-                ->assertSeeIn('@setup-status-message.text-danger', "Waiting for permission to join the room.");
+                ->assertSeeIn('@setup-status-message', "Waiting for permission to join the room.");
 
             $owner
                 ->whenAvailable(new Toast(Toast::TYPE_CUSTOM), function ($browser) {

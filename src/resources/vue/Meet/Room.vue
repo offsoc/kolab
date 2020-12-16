@@ -72,11 +72,11 @@
                             <div class="mt-3">
                                 <button type="button"
                                         @click="joinSession"
-                                        :disabled="roomState == 'init' || roomState == 427 || roomState == 404"
+                                        :disabled="roomState == 'init' || roomState == 327 || roomState == 404"
                                         :class="'btn w-100 btn-' + (isRoomReady() ? 'success' : 'primary')"
                                 >
                                     <span v-if="isRoomReady()">JOIN NOW</span>
-                                    <span v-else-if="roomState == 423">I'm the owner</span>
+                                    <span v-else-if="roomState == 323">I'm the owner</span>
                                     <span v-else>JOIN</span>
                                 </button>
                             </div>
@@ -153,11 +153,11 @@
                 roomStateLabels: {
                     init: 'Checking the room...',
                     404: 'The room does not exist.',
-                    423: 'The room is closed. Please, wait for the owner to start the session.',
-                    424: 'The room is closed. It will be open for others after you join.',
-                    425: 'The room is ready. Please, provide a valid password.',
-                    426: 'The room is locked. Please, enter your name and try again.',
-                    427: 'Waiting for permission to join the room.',
+                    323: 'The room is closed. Please, wait for the owner to start the session.',
+                    324: 'The room is closed. It will be open for others after you join.',
+                    325: 'The room is ready. Please, provide a valid password.',
+                    326: 'The room is locked. Please, enter your name and try again.',
+                    327: 'Waiting for permission to join the room.',
                     500: 'Failed to create a session. Server error.'
                 },
                 session: {}
@@ -220,34 +220,40 @@
                         }
                     })
                     .catch(error => {
-                        this.roomState = String(error.response.status)
+                        const data = error.response.data || {}
 
-                        if (error.response.data && error.response.data.config) {
-                            this.session.config = error.response.data.config
+                        if (data.code) {
+                            this.roomState = data.code
+                        } else {
+                            this.roomState = error.response.status
+                        }
+
+                        if (data.config) {
+                            this.session.config = data.config
                         }
 
                         switch (this.roomState) {
-                            case '423':
+                            case 323:
                                 // Waiting for the owner to open the room...
                                 // Update room state every 10 seconds
                                 window.roomRequest = setTimeout(() => { this.initSession() }, 10000)
                                 break;
 
-                            case '425':
+                            case 325:
                                 // Missing/invalid password
                                 if (init) {
                                     $('#setup-password').addClass('is-invalid').focus()
                                 }
                                 break;
 
-                            case '426':
+                            case 326:
                                 // Locked room prerequisites error
                                 if (init && !$('#setup-nickname').val()) {
                                     $('#setup-nickname').addClass('is-invalid').focus()
                                 }
                                 break;
 
-                            case '427':
+                            case 327:
                                 // Waiting for the owner's approval to join
                                 // Update room state every 10 seconds
                                 window.roomRequest = setTimeout(() => { this.initSession(true) }, 10000)
@@ -260,7 +266,7 @@
                 }
             },
             isRoomReady() {
-                return ['ready', '424', '425', '426', '427'].includes(this.roomState)
+                return ['ready', 324, 325, 326, 327].includes(this.roomState)
             },
             // An event received by the room owner when a participant is asking for a permission to join the room
             joinRequest(data) {
@@ -309,7 +315,7 @@
             },
             // Entering the room
             joinSession() {
-                if (this.roomState == 423) {
+                if (this.roomState == 323) {
                     $('#meet-setup').addClass('hidden')
                     $('#meet-auth').removeClass('hidden')
                     return

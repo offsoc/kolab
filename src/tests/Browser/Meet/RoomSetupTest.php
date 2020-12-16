@@ -198,8 +198,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertMissing('@setup-form')
                 ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
                     $browser->assertVisible('video')
-                        ->assertVisible('.nickname button')
-                        ->assertMissing('.nickname span')
+                        ->assertVisible('.nickname')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertMissing('.controls button.link-audio')
                         ->assertVisible('.status .status-audio')
@@ -229,7 +228,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session div.meet-video', 2)
                 ->whenAvailable('div.meet-video:not(.publisher)', function (Browser $browser) {
                     $browser->assertMissing('video')
-                        ->assertMissing('.nickname')
+                        ->assertVisible('.nickname')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
                         ->assertVisible('.status .status-audio')

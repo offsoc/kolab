@@ -82,7 +82,10 @@ class OpenViduTest extends TestCase
 
         // Unauth access, no session yet
         $response = $this->post("api/v4/openvidu/rooms/{$room->name}");
-        $response->assertStatus(423);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+        $this->assertSame(323, $json['code']);
 
         // Non-existing room name
         $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/non-existing");
@@ -92,11 +95,17 @@ class OpenViduTest extends TestCase
 
         // Non-owner, no session yet
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}");
-        $response->assertStatus(423);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+        $this->assertSame(323, $json['code']);
 
         // Room owner, no session yet
         $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}");
-        $response->assertStatus(424);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+        $this->assertSame(324, $json['code']);
 
         $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
         $response->assertStatus(200);
@@ -130,11 +139,12 @@ class OpenViduTest extends TestCase
         // Non-owner, password protected room, password not provided
         $room->setSettings(['password' => 'pass']);
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}");
-        $response->assertStatus(425);
+        $response->assertStatus(422);
 
         $json = $response->json();
 
-        $this->assertCount(3, $json);
+        $this->assertCount(4, $json);
+        $this->assertSame(325, $json['code']);
         $this->assertSame('error', $json['status']);
         $this->assertSame('Failed to join the session. Invalid password.', $json['message']);
         $this->assertEmpty($json['config']['password']);
@@ -142,7 +152,10 @@ class OpenViduTest extends TestCase
 
         // Non-owner, password protected room, invalid provided
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", ['password' => 'aa']);
-        $response->assertStatus(425);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+        $this->assertSame(325, $json['code']);
 
         // Non-owner, password protected room, valid password provided
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", ['password' => 'pass']);
@@ -179,11 +192,12 @@ class OpenViduTest extends TestCase
 
         // Non-owner, locked room, invalid/missing input
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}");
-        $response->assertStatus(426);
+        $response->assertStatus(422);
 
         $json = $response->json();
 
-        $this->assertCount(3, $json);
+        $this->assertCount(4, $json);
+        $this->assertSame(326, $json['code']);
         $this->assertSame('error', $json['status']);
         $this->assertSame('Failed to join the session. Room locked.', $json['message']);
         $this->assertTrue($json['config']['locked']);
@@ -191,22 +205,29 @@ class OpenViduTest extends TestCase
         // Non-owner, locked room, invalid requestId
         $post = ['nickname' => 'name', 'requestId' => '-----'];
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
-        $response->assertStatus(426);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+        $this->assertSame(326, $json['code']);
 
         // Non-owner, locked room, invalid requestId
         $post = ['nickname' => 'name', 'picture' => '-----'];
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
-        $response->assertStatus(426);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+        $this->assertSame(326, $json['code']);
 
         // Non-owner, locked room, valid input
         $reqId = '12345678';
         $post = ['nickname' => 'name', 'requestId' => $reqId, 'picture' => 'data:image/png;base64,01234'];
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
-        $response->assertStatus(427);
+        $response->assertStatus(422);
 
         $json = $response->json();
 
-        $this->assertCount(3, $json);
+        $this->assertCount(4, $json);
+        $this->assertSame(327, $json['code']);
         $this->assertSame('error', $json['status']);
         $this->assertSame('Failed to join the session. Room locked.', $json['message']);
         $this->assertTrue($json['config']['locked']);
@@ -241,7 +262,10 @@ class OpenViduTest extends TestCase
 
         // Non-owner, locked room, join request denied
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
-        $response->assertStatus(427);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+        $this->assertSame(327, $json['code']);
 
         // Test accepting a request
 

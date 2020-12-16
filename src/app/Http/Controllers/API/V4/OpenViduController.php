@@ -202,12 +202,12 @@ class OpenViduController extends Controller
         if (!$room->hasSession()) {
             // Participants can't join the room until the session is created by the owner
             if (!$isOwner) {
-                return $this->errorResponse(423, \trans('meet.session-not-found'));
+                return $this->errorResponse(422, \trans('meet.session-not-found'), ['code' => 323]);
             }
 
             // The room owner can create the session on request
             if (empty(request()->input('init'))) {
-                return $this->errorResponse(424, \trans('meet.session-not-found'));
+                return $this->errorResponse(422, \trans('meet.session-not-found'), ['code' => 324]);
             }
 
             $session = $room->createSession();
@@ -225,11 +225,13 @@ class OpenViduController extends Controller
             'requires_password' => !$isOwner && strlen($password),
         ];
 
+        $response = ['config' => $config];
+
         // Validate room password
         if (!$isOwner && strlen($password)) {
             $request_password = request()->input('password');
             if ($request_password !== $password) {
-                return $this->errorResponse(425, \trans('meet.session-password-error'), ['config' => $config]);
+                return $this->errorResponse(422, \trans('meet.session-password-error'), $response + ['code' => 325]);
             }
         }
 
@@ -247,14 +249,14 @@ class OpenViduController extends Controller
             if (empty($request['status']) || $request['status'] != Room::REQUEST_ACCEPTED) {
                 if (!$request) {
                     if (empty($nickname) || empty($requestId) || !preg_match('/^[a-z0-9]{8,32}$/i', $requestId)) {
-                        return $this->errorResponse(426, $error, ['config' => $config]);
+                        return $this->errorResponse(422, $error, $response + ['code' => 326]);
                     }
 
                     if (empty($picture)) {
                         $svg = file_get_contents(resource_path('images/user.svg'));
                         $picture = 'data:image/svg+xml;base64,' . base64_encode($svg);
                     } elseif (!preg_match('|^data:image/png;base64,[a-zA-Z0-9=+/]+$|', $picture)) {
-                        return $this->errorResponse(426, $error, ['config' => $config]);
+                        return $this->errorResponse(422, $error, $response + ['code' => 326]);
                     }
 
                     // TODO: Resize when big/make safe the user picture?
@@ -263,14 +265,14 @@ class OpenViduController extends Controller
 
                     if (!$room->requestSave($requestId, $request)) {
                         // FIXME: should we use error code 500?
-                        return $this->errorResponse(426, $error, ['config' => $config]);
+                        return $this->errorResponse(422, $error, $response + ['code' => 326]);
                     }
 
                     // Send the request (signal) to the owner
                     $result = $room->signal('joinRequest', $request, Room::ROLE_MODERATOR);
                 }
 
-                return $this->errorResponse(427, $error, ['config' => $config]);
+                return $this->errorResponse(422, $error, $response + ['code' => 327]);
             }
         }
 

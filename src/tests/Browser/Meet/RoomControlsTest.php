@@ -134,7 +134,6 @@ class RoomControlsTest extends TestCaseDusk
                     $browser->assertVisible('video')
                         ->assertAudioMuted('video', true)
                         ->assertSeeIn('.nickname', 'john')
-                        ->assertMissing('.nickname button')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertMissing('.controls button.link-audio')
                         ->assertMissing('.status .status-audio')
@@ -142,7 +141,7 @@ class RoomControlsTest extends TestCaseDusk
                 })
                 ->whenAvailable('div.meet-video:not(.publisher)', function (Browser $browser) {
                     $browser->assertMissing('video')
-                        ->assertMissing('.nickname')
+                        ->assertVisible('.nickname')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
                         ->assertVisible('.status .status-audio')
@@ -162,8 +161,6 @@ class RoomControlsTest extends TestCaseDusk
                 ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
                     $browser->assertVisible('video')
                         //->assertAudioMuted('video', true)
-                        ->assertVisible('.nickname button')
-                        ->assertMissing('.nickname span')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertMissing('.controls button.link-audio')
                         ->assertVisible('.status .status-audio')
@@ -172,7 +169,6 @@ class RoomControlsTest extends TestCaseDusk
                 ->whenAvailable('div.meet-video:not(.publisher)', function (Browser $browser) {
                     $browser->assertVisible('video')
                         ->assertSeeIn('.nickname', 'john')
-                        ->assertMissing('.nickname button')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
                         ->assertMissing('.status .status-audio')
