@@ -554,7 +554,7 @@ class UsersController extends Controller
 
             if (empty($email)) {
                 $errors['email'] = \trans('validation.required', ['attribute' => 'email']);
-            } elseif ($error = self::validateEmail($email, $controller, false)) {
+            } elseif ($error = self::validateEmail($email, $controller)) {
                 $errors['email'] = $error;
             }
         }
@@ -574,7 +574,7 @@ class UsersController extends Controller
                     // validate new aliases
                     if (
                         !in_array($alias, $existing_aliases)
-                        && ($error = self::validateEmail($alias, $controller, true))
+                        && ($error = self::validateAlias($alias, $controller))
                     ) {
                         if (!isset($errors['aliases'])) {
                             $errors['aliases'] = [];
@@ -655,29 +655,23 @@ class UsersController extends Controller
     }
 
     /**
-     * Email address (login or alias) validation
+     * Email address validation for use as a user mailbox (login).
      *
-     * @param string    $email    Email address
-     * @param \App\User $user     The account owner
-     * @param bool      $is_alias The email is an alias
+     * @param string    $email Email address
+     * @param \App\User $user  The account owner
      *
-     * @return string Error message on validation error
+     * @return ?string Error message on validation error
      */
-    public static function validateEmail(
-        string $email,
-        \App\User $user,
-        bool $is_alias = false
-    ): ?string {
-        $attribute = $is_alias ? 'alias' : 'email';
-
+    public static function validateEmail(string $email, \App\User $user): ?string
+    {
         if (strpos($email, '@') === false) {
-            return \trans('validation.entryinvalid', ['attribute' => $attribute]);
+            return \trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
         list($login, $domain) = explode('@', Str::lower($email));
 
         if (strlen($login) === 0 || strlen($domain) === 0) {
-            return \trans('validation.entryinvalid', ['attribute' => $attribute]);
+            return \trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
         // Check if domain exists
@@ -689,12 +683,12 @@ class UsersController extends Controller
 
         // Validate login part alone
         $v = Validator::make(
-            [$attribute => $login],
-            [$attribute => ['required', new UserEmailLocal(!$domain->isPublic())]]
+            ['email' => $login],
+            ['email' => ['required', new UserEmailLocal(!$domain->isPublic())]]
         );
 
         if ($v->fails()) {
-            return $v->errors()->toArray()[$attribute][0];
+            return $v->errors()->toArray()['email'][0];
         }
 
         // Check if it is one of domains available to the user
@@ -704,18 +698,78 @@ class UsersController extends Controller
             return \trans('validation.entryexists', ['attribute' => 'domain']);
         }
 
-        // Check if a user/alias with specified address already exists
-        // Allow assigning the same alias to a user in the same group account,
-        // but only for non-public domains
-        // Allow an alias in a custom domain to an address that was a user before
-        if ($exists = User::emailExists($email, true, $alias_exists, $is_alias && !$domain->isPublic())) {
-            if (
-                !$is_alias
-                || !$alias_exists
-                || $domain->isPublic()
-                || $exists->wallet()->user_id != $user->id
-            ) {
-                return \trans('validation.entryexists', ['attribute' => $attribute]);
+        // Check if a user with specified address already exists
+        if (User::emailExists($email)) {
+            // TODO: Allow force-delete if this is a deleted user in the same custom domain
+            return \trans('validation.entryexists', ['attribute' => 'email']);
+        }
+
+        // Check if an alias with specified address already exists.
+        if (User::aliasExists($email)) {
+            return \trans('validation.entryexists', ['attribute' => 'email']);
+        }
+
+        return null;
+    }
+
+    /**
+     * Email address validation for use as an alias.
+     *
+     * @param string    $email Email address
+     * @param \App\User $user  The account owner
+     *
+     * @return ?string Error message on validation error
+     */
+    public static function validateAlias(string $email, \App\User $user): ?string
+    {
+        if (strpos($email, '@') === false) {
+            return \trans('validation.entryinvalid', ['attribute' => 'alias']);
+        }
+
+        list($login, $domain) = explode('@', Str::lower($email));
+
+        if (strlen($login) === 0 || strlen($domain) === 0) {
+            return \trans('validation.entryinvalid', ['attribute' => 'alias']);
+        }
+
+        // Check if domain exists
+        $domain = Domain::where('namespace', $domain)->first();
+
+        if (empty($domain)) {
+            return \trans('validation.domaininvalid');
+        }
+
+        // Validate login part alone
+        $v = Validator::make(
+            ['alias' => $login],
+            ['alias' => ['required', new UserEmailLocal(!$domain->isPublic())]]
+        );
+
+        if ($v->fails()) {
+            return $v->errors()->toArray()['alias'][0];
+        }
+
+        // Check if it is one of domains available to the user
+        $domains = \collect($user->domains())->pluck('namespace')->all();
+
+        if (!in_array($domain->namespace, $domains)) {
+            return \trans('validation.entryexists', ['attribute' => 'domain']);
+        }
+
+        // Check if a user with specified address already exists
+        if ($existing_user = User::emailExists($email, true)) {
+            // Allow an alias in a custom domain to an address that was a user before
+            if ($domain->isPublic() || !$existing_user->trashed()) {
+                return \trans('validation.entryexists', ['attribute' => 'alias']);
+            }
+        }
+
+        // Check if an alias with specified address already exists
+        if (User::aliasExists($email)) {
+            // Allow assigning the same alias to a user in the same group account,
+            // but only for non-public domains
+            if ($domain->isPublic()) {
+                return \trans('validation.entryexists', ['attribute' => 'alias']);
             }
         }
 

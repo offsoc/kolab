@@ -350,17 +350,14 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Find whether an email address exists (user or alias).
-     * Note: This will also find deleted users.
+     * Find whether an email address exists as a user (including deleted users).
      *
      * @param string $email       Email address
      * @param bool   $return_user Return User instance instead of boolean
-     * @param bool   $is_alias    Set to True if the existing email is an alias
-     * @param bool   $existing    Ignore deleted users
      *
      * @return \App\User|bool True or User model object if found, False otherwise
      */
-    public static function emailExists(string $email, bool $return_user = false, &$is_alias = false, $existing = false)
+    public static function emailExists(string $email, bool $return_user = false)
     {
         if (strpos($email, '@') === false) {
             return false;
@@ -368,28 +365,10 @@ class User extends Authenticatable implements JWTSubject
 
         $email = \strtolower($email);
 
-        if ($existing) {
-            $user = self::where('email', $email)->first();
-        } else {
-            $user = self::withTrashed()->where('email', $email)->first();
-        }
+        $user = self::withTrashed()->where('email', $email)->first();
 
         if ($user) {
             return $return_user ? $user : true;
-        }
-
-        $aliases = UserAlias::where('alias', $email);
-
-        if ($existing) {
-            $aliases = $aliases->join('users', 'user_id', '=', 'users.id')
-                ->whereNull('users.deleted_at');
-        }
-
-        $alias = $aliases->first();
-
-        if ($alias) {
-            $is_alias = true;
-            return $return_user ? self::withTrashed()->find($alias->user_id) : true;
         }
 
         return false;

@@ -29,24 +29,7 @@ class UserAliasObserver
             \Log::error("Failed creating alias {$alias->alias}. Domain does not exist.");
             return false;
         }
-/*
-        if ($exists = User::emailExists($alias->alias, true, $alias_exists, !$domain->isPublic())) {
-            if (!$alias_exists) {
-                \Log::error("Failed creating alias {$alias->alias}. Email address exists.");
-                return false;
-            }
 
-            if ($domain->isPublic()) {
-                \Log::error("Failed creating alias {$alias->alias}. Alias exists in public domain.");
-                return false;
-            }
-
-            if ($exists->wallet()->user_id != $alias->user->wallet()->user_id) {
-                \Log::error("Failed creating alias {$alias->alias}. Alias exists in another account.");
-                return false;
-            }
-        }
-*/
         return true;
     }
 

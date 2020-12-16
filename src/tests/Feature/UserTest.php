@@ -281,11 +281,27 @@ class UserTest extends TestCase
     }
 
     /**
+     * Tests for User::aliasExists()
+     */
+    public function testAliasExists(): void
+    {
+        $this->assertTrue(User::aliasExists('jack.daniels@kolab.org'));
+
+        $this->assertFalse(User::aliasExists('j.daniels@kolab.org'));
+        $this->assertFalse(User::aliasExists('john@kolab.org'));
+    }
+
+    /**
      * Tests for User::emailExists()
      */
     public function testEmailExists(): void
     {
-        $this->markTestIncomplete();
+        $this->assertFalse(User::emailExists('jack.daniels@kolab.org'));
+        $this->assertFalse(User::emailExists('j.daniels@kolab.org'));
+
+        $this->assertTrue(User::emailExists('john@kolab.org'));
+        $user = User::emailExists('john@kolab.org', true);
+        $this->assertSame('john@kolab.org', $user->email);
     }
 
     /**

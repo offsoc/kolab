@@ -1027,7 +1027,7 @@ class UsersTest extends TestCase
     }
 
     /**
-     * List of alias validation cases for testValidateEmail()
+     * List of email address validation cases for testValidateEmail()
      *
      * @return array Arguments for testValidateEmail()
      */
@@ -1043,61 +1043,113 @@ class UsersTest extends TestCase
 
         return [
             // Invalid format
-            ["$domain", $john, true, 'The specified alias is invalid.'],
-            [".@$domain", $john, true, 'The specified alias is invalid.'],
-            ["test123456@localhost", $john, true, 'The specified domain is invalid.'],
-            ["test123456@unknown-domain.org", $john, true, 'The specified domain is invalid.'],
+            ["$domain", $john, 'The specified email is invalid.'],
+            [".@$domain", $john, 'The specified email is invalid.'],
+            ["test123456@localhost", $john, 'The specified domain is invalid.'],
+            ["test123456@unknown-domain.org", $john, 'The specified domain is invalid.'],
 
-            ["$domain", $john, false, 'The specified email is invalid.'],
-            [".@$domain", $john, false, 'The specified email is invalid.'],
+            ["$domain", $john, 'The specified email is invalid.'],
+            [".@$domain", $john, 'The specified email is invalid.'],
 
             // forbidden local part on public domains
-            ["admin@$domain", $john, true, 'The specified alias is not available.'],
-            ["administrator@$domain", $john, true, 'The specified alias is not available.'],
+            ["admin@$domain", $john, 'The specified email is not available.'],
+            ["administrator@$domain", $john, 'The specified email is not available.'],
 
             // forbidden (other user's domain)
-            ["testtest@kolab.org", $user, true, 'The specified domain is not available.'],
+            ["testtest@kolab.org", $user, 'The specified domain is not available.'],
 
             // existing alias of other user, to be a user email
-            ["jack.daniels@kolab.org", $john, false, 'The specified email is not available.'],
-
-            // existing alias of other user, to be an alias, user in the same group account
-            ["jack.daniels@kolab.org", $john, true, null],
-
-            // existing user
-            ["jack@kolab.org", $john, true, 'The specified alias is not available.'],
+            ["jack.daniels@kolab.org", $john, 'The specified email is not available.'],
 
             // valid (user domain)
-            ["admin@kolab.org", $john, true, null],
+            ["admin@kolab.org", $john, null],
 
             // valid (public domain)
-            ["test.test@$domain", $john, true, null],
+            ["test.test@$domain", $john, null],
         ];
     }
 
     /**
-     * User email/alias validation.
+     * User email address validation.
      *
      * Note: Technically these include unit tests, but let's keep it here for now.
      * FIXME: Shall we do a http request for each case?
      *
      * @dataProvider dataValidateEmail
      */
-    public function testValidateEmail($alias, $user, $is_alias, $expected_result): void
+    public function testValidateEmail($email, $user, $expected_result): void
     {
-        $args = [$alias, $user, $is_alias];
-        $result = $this->invokeMethod(new UsersController(), 'validateEmail', $args);
-
+        $result = UsersController::validateEmail($email, $user);
         $this->assertSame($expected_result, $result);
     }
 
     /**
-     * User email/alias validation - more cases.
+     * List of alias validation cases for testValidateAlias()
+     *
+     * @return array Arguments for testValidateAlias()
+     */
+    public function dataValidateAlias(): array
+    {
+        $this->refreshApplication();
+        $public_domains = Domain::getPublicDomains();
+        $domain = reset($public_domains);
+
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+
+        return [
+            // Invalid format
+            ["$domain", $john, 'The specified alias is invalid.'],
+            [".@$domain", $john, 'The specified alias is invalid.'],
+            ["test123456@localhost", $john, 'The specified domain is invalid.'],
+            ["test123456@unknown-domain.org", $john, 'The specified domain is invalid.'],
+
+            ["$domain", $john, 'The specified alias is invalid.'],
+            [".@$domain", $john, 'The specified alias is invalid.'],
+
+            // forbidden local part on public domains
+            ["admin@$domain", $john, 'The specified alias is not available.'],
+            ["administrator@$domain", $john, 'The specified alias is not available.'],
+
+            // forbidden (other user's domain)
+            ["testtest@kolab.org", $user, 'The specified domain is not available.'],
+
+            // existing alias of other user, to be an alias, user in the same group account
+            ["jack.daniels@kolab.org", $john, null],
+
+            // existing user
+            ["jack@kolab.org", $john, 'The specified alias is not available.'],
+
+            // valid (user domain)
+            ["admin@kolab.org", $john, null],
+
+            // valid (public domain)
+            ["test.test@$domain", $john, null],
+        ];
+    }
+
+    /**
+     * User email alias validation.
+     *
+     * Note: Technically these include unit tests, but let's keep it here for now.
+     * FIXME: Shall we do a http request for each case?
+     *
+     * @dataProvider dataValidateAlias
+     */
+    public function testValidateAlias($alias, $user, $expected_result): void
+    {
+        $result = UsersController::validateAlias($alias, $user);
+        $this->assertSame($expected_result, $result);
+    }
+
+    /**
+     * User alias validation - more cases.
      *
      * Note: Technically these include unit tests, but let's keep it here for now.
      * FIXME: Shall we do a http request for each case?
      */
-    public function testValidateEmail2(): void
+    public function testValidateAlias2(): void
     {
         Queue::fake();
 
@@ -1112,16 +1164,16 @@ class UsersTest extends TestCase
         $deleted_pub->delete();
 
         // An alias that was a user email before is allowed, but only for custom domains
-        $result = UsersController::validateEmail('deleted@kolab.org', $john, true);
+        $result = UsersController::validateAlias('deleted@kolab.org', $john);
         $this->assertSame(null, $result);
 
-        $result = UsersController::validateEmail('deleted-alias@kolab.org', $john, true);
+        $result = UsersController::validateAlias('deleted-alias@kolab.org', $john);
         $this->assertSame(null, $result);
 
-        $result = UsersController::validateEmail('deleted@kolabnow.com', $john, true);
+        $result = UsersController::validateAlias('deleted@kolabnow.com', $john);
         $this->assertSame('The specified alias is not available.', $result);
 
-        $result = UsersController::validateEmail('deleted-alias@kolabnow.com', $john, true);
+        $result = UsersController::validateAlias('deleted-alias@kolabnow.com', $john);
         $this->assertSame('The specified alias is not available.', $result);
     }
 }
