@@ -27,11 +27,11 @@
                                 the password before they are allowed to join the meeting.
                             </small>
                         </form>
-                        <hr v-if="false">
-                        <form v-if="false" id="security-options-lock">
-                            <div id="room-lock" class="">
-                                <span class="">Locked room:</span>
-                                <input type="checkbox" name="lock" value="1" :checked="config.locked" @click="lockSave">
+                        <hr>
+                        <form id="security-options-lock">
+                            <div id="room-lock">
+                                <label for="room-lock-input">Locked room:</label>
+                                <input type="checkbox" id="room-lock-input" name="lock" value="1" :checked="config.locked" @click="lockSave">
                             </div>
                             <small class="form-text text-muted">
                                 When the room is locked participants have to be approved by you

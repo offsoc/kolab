@@ -47,6 +47,8 @@ class RoomSetupTest extends TestCaseDusk
                 $browser->assertMissing('#footer-menu .navbar-nav');
             }
 
+            // FIXME: Maybe it would be better to just display the usual 404 Not Found error page?
+
             $browser->assertMissing('@toolbar')
                 ->assertMissing('@menu')
                 ->assertMissing('@session')
@@ -54,7 +56,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertMissing('@login-form')
                 ->assertVisible('@setup-form')
                 ->assertSeeIn('@setup-status-message', "The room does not exist.")
-                ->assertMissing('@setup-button');
+                ->assertVisible('@setup-button[disabled]');
         });
     }
 

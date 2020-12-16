@@ -82,6 +82,16 @@
                 }
 
                 return this.addToast(data)
+            },
+            message(data) {
+                if (data.type === undefined) {
+                    data.type = 'custom'
+                }
+                if (data.timeout === undefined) {
+                    data.timeout = this.defaultTimeout
+                }
+
+                return this.addToast(data)
             }
         },
         // Plugin installer method

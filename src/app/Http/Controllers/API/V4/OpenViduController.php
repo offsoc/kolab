@@ -11,6 +11,68 @@ use Illuminate\Support\Facades\Validator;
 class OpenViduController extends Controller
 {
     /**
+     * Accepting the room join request.
+     *
+     * @param string $id    Room identifier (name)
+     * @param string $reqid Request identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function acceptJoinRequest($id, $reqid)
+    {
+        $room = Room::where('name', $id)->first();
+
+        // This isn't a room, bye bye
+        if (!$room) {
+            return $this->errorResponse(404, \trans('meet.room-not-found'));
+        }
+
+        $user = Auth::guard()->user();
+
+        // Only the room owner can do it
+        if (!$user || $user->id != $room->user_id) {
+            return $this->errorResponse(403);
+        }
+
+        if (!$room->requestAccept($reqid)) {
+            return $this->errorResponse(500, \trans('meet.session-request-accept-error'));
+        }
+
+        return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * Denying the room join request.
+     *
+     * @param string $id    Room identifier (name)
+     * @param string $reqid Request identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function denyJoinRequest($id, $reqid)
+    {
+        $room = Room::where('name', $id)->first();
+
+        // This isn't a room, bye bye
+        if (!$room) {
+            return $this->errorResponse(404, \trans('meet.room-not-found'));
+        }
+
+        $user = Auth::guard()->user();
+
+        // Only the room owner can do it
+        if (!$user || $user->id != $room->user_id) {
+            return $this->errorResponse(403);
+        }
+
+        if (!$room->requestDeny($reqid)) {
+            return $this->errorResponse(500, \trans('meet.session-request-deny-error'));
+        }
+
+        return response()->json(['status' => 'success']);
+    }
+
+    /**
      * Close the room session.
      *
      * @param string $id Room identifier (name)
@@ -41,6 +103,37 @@ class OpenViduController extends Controller
                 'status' => 'success',
                 'message' => __('meet.session-close-success'),
         ]);
+    }
+
+    /**
+     * Accepting the room join request.
+     *
+     * @param string $id   Room identifier (name)
+     * @param string $conn Connection identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function dismissConnection($id, $conn)
+    {
+        $room = Room::where('name', $id)->first();
+
+        // This isn't a room, bye bye
+        if (!$room) {
+            return $this->errorResponse(404, \trans('meet.room-not-found'));
+        }
+
+        $user = Auth::guard()->user();
+
+        // Only the room owner can do it
+        if (!$user || $user->id != $room->user_id) {
+            return $this->errorResponse(403);
+        }
+
+        if (!$room->closeOVConnection($conn)) {
+            return $this->errorResponse(500, \trans('meet.session-dismiss-connection-error'));
+        }
+
+        return response()->json(['status' => 'success']);
     }
 
     /**
@@ -136,19 +229,53 @@ class OpenViduController extends Controller
         if (!$isOwner && strlen($password)) {
             $request_password = request()->input('password');
             if ($request_password !== $password) {
-                // Note: We send the config to the client so it knows to display the password field
-                $response = [
-                    'config' => $config,
-                    'message' => \trans('meet.session-password-error'),
-                    'status' => 'error',
-                ];
+                return $this->errorResponse(425, \trans('meet.session-password-error'), ['config' => $config]);
+            }
+        }
 
-                return response()->json($response, 425);
+        // Handle locked room
+        if (!$isOwner && $config['locked']) {
+            $nickname = request()->input('nickname');
+            $picture = request()->input('picture');
+            $requestId = request()->input('requestId');
+
+            $request = $requestId ? $room->requestGet($requestId) : null;
+
+            $error = \trans('meet.session-room-locked-error');
+
+            // Request already has been processed (not accepted yet, but it could be denied)
+            if (empty($request['status']) || $request['status'] != Room::REQUEST_ACCEPTED) {
+                if (!$request) {
+                    if (empty($nickname) || empty($requestId) || !preg_match('/^[a-z0-9]{8,32}$/i', $requestId)) {
+                        return $this->errorResponse(426, $error, ['config' => $config]);
+                    }
+
+                    if (empty($picture)) {
+                        $svg = file_get_contents(resource_path('images/user.svg'));
+                        $picture = 'data:image/svg+xml;base64,' . base64_encode($svg);
+                    } elseif (!preg_match('|^data:image/png;base64,[a-zA-Z0-9=+/]+$|', $picture)) {
+                        return $this->errorResponse(426, $error, ['config' => $config]);
+                    }
+
+                    // TODO: Resize when big/make safe the user picture?
+
+                    $request = ['nickname' => $nickname, 'requestId' => $requestId, 'picture' => $picture];
+
+                    if (!$room->requestSave($requestId, $request)) {
+                        // FIXME: should we use error code 500?
+                        return $this->errorResponse(426, $error, ['config' => $config]);
+                    }
+
+                    // Send the request (signal) to the owner
+                    $result = $room->signal('joinRequest', $request, Room::ROLE_MODERATOR);
+                }
+
+                return $this->errorResponse(427, $error, ['config' => $config]);
             }
         }
 
         // Create session token for the current user/connection
-        $response = $room->getSessionToken('PUBLISHER');
+        $response = $room->getSessionToken($isOwner ? Room::ROLE_MODERATOR : Room::ROLE_PUBLISHER);
 
         if (empty($response)) {
             return $this->errorResponse(500, \trans('meet.session-join-error'));
@@ -156,7 +283,7 @@ class OpenViduController extends Controller
 
         // Create session token for screen sharing connection
         if (!empty(request()->input('screenShare'))) {
-            $add_token = $room->getSessionToken('PUBLISHER');
+            $add_token = $room->getSessionToken(Room::ROLE_PUBLISHER);
 
             $response['shareToken'] = $add_token['token'];
         }

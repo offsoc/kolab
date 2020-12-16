@@ -1,18 +1,18 @@
 <template>
-    <div :class="'toast hide toast-' + data.type" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-            <svg-icon icon="info-circle" :class="className()" v-if="data.type == 'info'"></svg-icon>
-            <svg-icon icon="check-circle" :class="className()" v-else-if="data.type == 'success'"></svg-icon>
-            <svg-icon icon="exclamation-circle" :class="className()" v-else-if="data.type == 'error'"></svg-icon>
-            <svg-icon icon="exclamation-circle" :class="className()" v-else-if="data.type == 'warning'"></svg-icon>
-            <strong :class="className()">{{ data.title || title() }}</strong>
+    <div :class="toastClassName()" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header" :class="className()">
+            <svg-icon icon="info-circle" v-if="data.type == 'info'"></svg-icon>
+            <svg-icon icon="check-circle" v-else-if="data.type == 'success'"></svg-icon>
+            <svg-icon icon="exclamation-circle" v-else-if="data.type == 'error'"></svg-icon>
+            <svg-icon icon="exclamation-circle" v-else-if="data.type == 'warning'"></svg-icon>
+            <svg-icon :icon="data.icon" v-else-if="data.type == 'custom' && data.icon"></svg-icon>
+            <strong>{{ data.title || title() }}</strong>
             <button type="button" class="close" data-dismiss="toast" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
-        <div class="toast-body">
-            {{ data.msg }}
-        </div>
+        <div v-if="data.body" v-html="data.body" class="toast-body"></div>
+        <div v-else class="toast-body">{{ data.msg }}</div>
     </div>
 </template>
 
@@ -22,13 +22,19 @@
             data: { type: Object, default: () => {} }
         },
         mounted() {
-            $(this.$el).on('hidden.bs.toast', () => {
+            $(this.$el)
+                .on('hidden.bs.toast', () => {
                     (this.$el).remove()
                     this.$destroy()
                 })
+                .on('shown.bs.toast', () => {
+                    if (this.data.onShow) {
+                        this.data.onShow(this.$el)
+                    }
+                })
                 .toast({
                     animation: true,
-                    autohide: true,
+                    autohide: this.data.timeout > 0,
                     delay: this.data.timeout
                 })
                 .toast('show')
@@ -42,6 +48,8 @@
                     case 'info':
                     case 'success':
                         return 'text-' + this.data.type
+                    case 'custom':
+                        return this.data.titleClassName || ''
                 }
             },
             title() {
@@ -54,6 +62,12 @@
                     case 'success':
                         return type.charAt(0).toUpperCase() + type.slice(1)
                 }
+
+                return ''
+            },
+            toastClassName() {
+                return 'toast hide toast-' + this.data.type
+                    + (this.data.className ? ' ' + this.data.className : '')
             }
         }
     }

@@ -14,6 +14,7 @@ function Meet(container)
     let audioSource = ''        // Currently selected microphone
     let videoSource = ''        // Currently selected camera
     let sessionData             // Room session metadata
+    let role                    // Current user role
 
     let screenOV                // OpenVidu object to initialize a screen sharing session
     let screenSession           // Session object where the user will connect for screen sharing
@@ -70,7 +71,7 @@ function Meet(container)
      * Join the room session
      *
      * @param data Session metadata and event handlers (session, token, shareToken, nickname,
-     *             chatElement, menuElement, onDestroy)
+     *             chatElement, menuElement, onDestroy, onJoinRequest)
      */
     function joinRoom(data) {
         resize();
@@ -90,6 +91,7 @@ function Meet(container)
         session.on('connectionCreated', event => {
             // Ignore the current user connection
             if (event.connection.role) {
+                role = event.connection.role
                 return
             }
 
@@ -105,6 +107,7 @@ function Meet(container)
 
             let connectionId = event.connection.connectionId
             let metadata = JSON.parse(event.connection.data)
+            metadata.connId = connectionId
             let wrapper = videoWrapperCreate(container, metadata)
 
             connections[connectionId] = {
@@ -414,7 +417,7 @@ function Meet(container)
      */
     function signalEventHandler(signal) {
         let conn, data
-        let connId = signal.from.connectionId
+        let connId = signal.from ? signal.from.connectionId : null
 
         switch (signal.type) {
             case 'signal:userChanged':
@@ -431,6 +434,12 @@ function Meet(container)
                 data.id = connId
                 pushChatMessage(data)
                 break
+
+            case 'signal:joinRequest':
+                if (sessionData.onJoinRequest) {
+                    sessionData.onJoinRequest(JSON.parse(signal.data))
+                }
+                break;
         }
     }
 
@@ -645,26 +654,31 @@ function Meet(container)
     function videoWrapperCreate(container, params) {
         // Create the element
         let wrapper = $('<div class="meet-video">').html(
-            `${svgIcon("user", 'fas', 'watermark')}
-            <div class="nickname" title="Nickname">
-                <span></span>
-                <button type="button" class="btn btn-link">${svgIcon('user')}</button>
-            </div>
-            <div class="controls">
-                <button type="button" class="btn btn-link link-audio hidden" title="Mute audio">${svgIcon('volume-mute')}</button>
-                <button type="button" class="btn btn-link link-fullscreen closed hidden" title="Full screen">${svgIcon('expand')}</button>
-                <button type="button" class="btn btn-link link-fullscreen open hidden" title="Full screen">${svgIcon('compress')}</button>
-            </div>
-            <div class="status">
-                <span class="bg-danger status-audio hidden">${svgIcon('microphone')}</span>
-                <span class="bg-danger status-video hidden">${svgIcon('video')}</span>
-            </div>`
+            svgIcon('user', 'fas', 'watermark')
+            + '<div class="dropdown">'
+                + '<a href="#" class="nickname btn btn-link" title="Nickname" aria-haspopup="true" aria-expanded="false" role="button">'
+                    + '<span class="content"></span>'
+                    + '<span class="icon">' + svgIcon('user') + '</span>'
+                + '</a>'
+                + '<div class="dropdown-menu">'
+                    + '<a class="dropdown-item action-dismiss" href="#">Dismiss</a>'
+                + '</div>'
+            + '</div>'
+            + '<div class="controls">'
+                + '<button type="button" class="btn btn-link link-audio hidden" title="Mute audio">' + svgIcon('volume-mute') + '</button>'
+                + '<button type="button" class="btn btn-link link-fullscreen closed hidden" title="Full screen">' + svgIcon('expand') + '</button>'
+                + '<button type="button" class="btn btn-link link-fullscreen open hidden" title="Full screen">' + svgIcon('compress') + '</button>'
+            + '</div>'
+            + '<div class="status">'
+                + '<span class="bg-danger status-audio hidden">' + svgIcon('microphone') + '</span>'
+                + '<span class="bg-danger status-video hidden">' + svgIcon('video') + '</span>'
+            + '</div>'
         )
 
         if (params.publisher) {
             // Add events for nickname change
             let nickname = wrapper.addClass('publisher').find('.nickname')
-            let editable = nickname.find('span').get(0)
+            let editable = nickname.find('.content')[0]
             let editableEnable = () => {
                 editable.contentEditable = true
                 editable.focus()
@@ -688,14 +702,24 @@ function Meet(container)
                     }
                 })
         } else {
-            wrapper.find('.nickname > svg').addClass('hidden')
-
             wrapper.find('.link-audio').removeClass('hidden')
                 .on('click', e => {
                     let video = wrapper.find('video')[0]
                     video.muted = !video.muted
                     wrapper.find('.link-audio')[video.muted ? 'addClass' : 'removeClass']('text-danger')
                 })
+
+            if (role == 'MODERATOR') {
+                wrapper.addClass('moderated')
+
+                wrapper.find('.nickname').attr({title: 'Options', 'data-toggle': 'dropdown'}).dropdown()
+
+                wrapper.find('.action-dismiss').on('click', e => {
+                    if (sessionData.onDismiss) {
+                        sessionData.onDismiss(params.connId)
+                    }
+                })
+            }
         }
 
         videoWrapperUpdate(wrapper, params)
@@ -741,7 +765,7 @@ function Meet(container)
         }
 
         if ('nickname' in params) {
-            $(wrapper).find('.nickname > span').text(params.nickname)
+            $(wrapper).find('.nickname > .content').text(params.nickname)
         }
     }
 

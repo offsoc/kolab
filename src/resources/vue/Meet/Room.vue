@@ -70,16 +70,15 @@
                                 <input type="password" class="form-control" id="setup-password" v-model="password" placeholder="Password">
                             </div>
                             <div class="mt-3">
-                                <button v-if="roomState == 'ready' || roomState == 424 || roomState == 425"
-                                        type="button"
+                                <button type="button"
                                         @click="joinSession"
-                                        :class="'btn w-100 btn-' + (roomState == 'ready' ? 'success' : 'primary')"
-                                >JOIN</button>
-                                <button v-if="roomState == 423"
-                                        type="button"
-                                        @click="joinSession"
-                                        class="btn btn-primary w-100"
-                                >I'm the owner</button>
+                                        :disabled="roomState == 'init' || roomState == 427 || roomState == 404"
+                                        :class="'btn w-100 btn-' + (isRoomReady() ? 'success' : 'primary')"
+                                >
+                                    <span v-if="isRoomReady()">JOIN NOW</span>
+                                    <span v-else-if="roomState == 423">I'm the owner</span>
+                                    <span v-else>JOIN</span>
+                                </button>
                             </div>
                         </div>
                         <div class="mt-4 col-sm-12">
@@ -157,6 +156,8 @@
                     423: 'The room is closed. Please, wait for the owner to start the session.',
                     424: 'The room is closed. It will be open for others after you join.',
                     425: 'The room is ready. Please, provide a valid password.',
+                    426: 'The room is locked. Please, enter your name and try again.',
+                    427: 'Waiting for permission to join the room.',
                     500: 'Failed to create a session. Server error.'
                 },
                 session: {}
@@ -184,8 +185,7 @@
         },
         methods: {
             authSuccess() {
-                // The user (owner) authentication succeeded
-                this.roomState = 'init'
+                // The user authentication succeeded, we still don't know it's really the room owner
                 this.initSession()
 
                 $('#meet-setup').removeClass('hidden')
@@ -194,15 +194,20 @@
             configUpdate(config) {
                 this.session.config = Object.assign({}, this.session.config, config)
             },
+            dismissParticipant(id) {
+                axios.post('/api/v4/openvidu/rooms/' + this.room + '/connections/' + id + '/dismiss')
+            },
             initSession(init) {
                 this.post = {
                     password: this.password,
                     nickname: this.nickname,
                     screenShare: this.canShareScreen ? 1 : 0,
-                    init: init ? 1 : 0
+                    init: init ? 1 : 0,
+                    picture: init ? this.makePicture() : '',
+                    requestId: this.requestId()
                 }
 
-                $('#setup-password').removeClass('is-invalid')
+                $('#setup-password,#setup-nickname').removeClass('is-invalid')
 
                 axios.post('/api/v4/openvidu/rooms/' + this.room, this.post, { ignoreErrors: true })
                     .then(response => {
@@ -234,6 +239,19 @@
                                     $('#setup-password').addClass('is-invalid').focus()
                                 }
                                 break;
+
+                            case '426':
+                                // Locked room prerequisites error
+                                if (init && !$('#setup-nickname').val()) {
+                                    $('#setup-nickname').addClass('is-invalid').focus()
+                                }
+                                break;
+
+                            case '427':
+                                // Waiting for the owner's approval to join
+                                // Update room state every 10 seconds
+                                window.roomRequest = setTimeout(() => { this.initSession(true) }, 10000)
+                                break;
                         }
                     })
 
@@ -241,6 +259,55 @@
                     $('#meet-session-menu').find('.link-fullscreen.closed').removeClass('hidden')
                 }
             },
+            isRoomReady() {
+                return ['ready', '424', '425', '426', '427'].includes(this.roomState)
+            },
+            // An event received by the room owner when a participant is asking for a permission to join the room
+            joinRequest(data) {
+                // The toast for this user request already exists, ignore
+                // It's not really needed as we do this on server-side already
+                if ($('#i' + data.requestId).length) {
+                    return
+                }
+
+                // FIXME: Should the message close button act as the Deny button? Do we need the Deny button?
+
+                let body = $(
+                    `<div>`
+                    + `<div class="picture"><img src="${data.picture}"></div>`
+                    + `<div class="content">`
+                        + `<p class="mb-2"></p>`
+                        + `<div class="text-right">`
+                            + `<button type="button" class="btn btn-sm btn-success accept">Accept</button>`
+                            + `<button type="button" class="btn btn-sm btn-danger deny ml-2">Deny</button>`
+                )
+
+                this.$toast.message({
+                    className: 'join-request',
+                    icon: 'user',
+                    timeout: 0,
+                    title: 'Join request',
+                    // titleClassName: '',
+                    body: body.html(),
+                    onShow: element => {
+                        const id = data.requestId
+
+                        $(element).find('p').text((data.nickname || '') + ' requested to join.')
+
+                        // add id attribute, so we can identify it
+                        $(element).attr('id', 'i' + id)
+                            // add action to the buttons
+                            .find('button.accept,button.deny').on('click', e => {
+                                const action = $(e.target).is('.accept') ? 'accept' : 'deny'
+                                axios.post('/api/v4/openvidu/rooms/' + this.room + '/request/' + id + '/' + action)
+                                    .then(response => {
+                                        $('#i' + id).remove()
+                                    })
+                            })
+                    }
+                })
+            },
+            // Entering the room
             joinSession() {
                 if (this.roomState == 423) {
                     $('#meet-setup').addClass('hidden')
@@ -248,7 +315,7 @@
                     return
                 }
 
-                if (this.roomState == 424 || this.roomState == 425) {
+                if (this.roomState != 'ready') {
                     this.initSession(true)
                     return
                 }
@@ -267,9 +334,9 @@
                 this.session.menuElement = $('#meet-session-menu')[0]
                 this.session.chatElement = $('#meet-chat')[0]
                 this.session.onDestroy = event => {
-                    // TODO: Handle nicely other reasons: disconnect, forceDisconnectByUser,
-                    //       forceDisconnectByServer, networkDisconnect?
-                    if (event.reason == 'sessionClosedByServer' && !this.session.owner) {
+                    // TODO: Display different message for each reason: forceDisconnectByUser,
+                    //       forceDisconnectByServer, sessionClosedByServer?
+                    if (event.reason != 'disconnect' && event.reason != 'networkDisconnect' && !this.session.owner) {
                         $('#leave-dialog').on('hide.bs.modal', () => {
                             // FIXME: Where exactly the user should land? Currently he'll land
                             //        on dashboard (if he's logged in) or login form (if he's not).
@@ -279,21 +346,72 @@
                     }
                 }
 
+                this.session.onDismiss = connId => { this.dismissParticipant(connId) }
+
+                if (this.session.owner) {
+                    this.session.onJoinRequest = data => { this.joinRequest(data) }
+                }
+
                 this.meet.joinRoom(this.session)
             },
             logout() {
-                if (this.session.owner) {
-                    axios.post('/api/v4/openvidu/rooms/' + this.room + '/close')
-                        .then(response => {
-                            this.meet.leaveRoom()
-                            this.meet = null
-                            window.location = window.config['app.url']
-                        })
-                } else {
+                const logout = () => {
                     this.meet.leaveRoom()
                     this.meet = null
                     window.location = window.config['app.url']
                 }
+
+                if (this.session.owner) {
+                    axios.post('/api/v4/openvidu/rooms/' + this.room + '/close').then(logout)
+                } else {
+                    logout()
+                }
+            },
+            makePicture() {
+                const video = $("#setup-preview video")[0];
+
+                // Skip if video is not "playing"
+                if (!video.videoWidth || !this.camera) {
+                    return ''
+                }
+
+                // we're going to crop a square from the video and resize it
+                const maxSize = 64
+
+                // Calculate sizing
+                let sh = Math.floor(video.videoHeight / 1.5)
+                let sw = sh
+                let sx = (video.videoWidth - sw) / 2
+                let sy = (video.videoHeight - sh) / 2
+
+                let dh = Math.min(sh, maxSize)
+                let dw = sh < maxSize ? sw : Math.floor(sw * dh/sh)
+
+                const canvas = $("<canvas>")[0];
+                canvas.width = dw;
+                canvas.height = dh;
+
+                // draw the image on the canvas (square cropped and resized)
+                canvas.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, dw, dh);
+
+                // convert it to a usable data URL (png format)
+                return canvas.toDataURL();
+            },
+            requestId() {
+                if (!this.reqId) {
+                    // FIXME: Shall we use some UUID generator? Or better something that identifies the
+                    //        user/browser so we could deny the join request for a longer time.
+                    //        I'm thinking about e.g. a bad actor knocking again and again and again,
+                    //        we don't want the room owner to be bothered every few seconds.
+                    //        Maybe a solution would be to store the identifier in the browser storage
+                    //        This would not prevent hackers from sending the new identifier on every request,
+                    //        but could make sure that it is kept after page refresh for the avg user.
+
+                    // This will create max. 24-char numeric string
+                    this.reqId = (String(Date.now()) + String(Math.random()).substring(2)).substring(0, 24)
+                }
+
+                return this.reqId
             },
             securityOptions() {
                 $('#security-options-dialog').modal()

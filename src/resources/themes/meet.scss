@@ -6,12 +6,6 @@
     align-items: center;
     justify-content: center;
 
-    .watermark {
-        color: darken($menu-bg-color, 20%);
-        width: 50%;
-        height: 50%;
-    }
-
     video {
         // To make object-fit:cover working we have to set the height in pixels
         // on the wrapper element. This is what javascript method will do.
@@ -31,6 +25,19 @@
             // This will preserve the aspect ratio of the video stream
             object-fit: contain;
         }
+    }
+
+    .watermark {
+        color: darken($menu-bg-color, 20%);
+        width: 50%;
+        height: 50%;
+    }
+
+    .dropdown {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
     }
 
     .controls {
@@ -78,41 +85,53 @@
         border-radius: 1em;
         max-width: calc(100% - 1em);
         background: rgba(#fff, 0.8);
+        color: $body-color;
+        text-decoration: none !important;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        display: flex;
 
-        button {
+        .icon {
             display: none;
+            width: 2em;
+            margin: 0 -1em;
         }
 
-        span {
+        .content {
             outline: none;
         }
     }
 
+    &.moderated .nickname {
+        display: flex;
+
+        .content {
+            order: 1;
+
+            &:not(:empty) + .icon {
+                margin-right: 0;
+            }
+        }
+
+        .icon {
+            display: inline-block;
+        }
+    }
+
     &.publisher .nickname {
-        cursor: pointer;
         background: rgba($main-color, 0.9);
 
         &:focus-within {
             box-shadow: $btn-focus-box-shadow;
         }
 
-        span:empty {
+        .content:empty {
             display: block;
             height: 2em;
 
-            &:not(:focus) + button {
-                display: block;
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 2em;
-                height: 2em;
-                border-radius: 50%;
-                padding: 0;
-                color: $menu-gray;
+            &:not(:focus) + .icon {
+                display: inline-block;
             }
         }
     }
@@ -251,5 +270,31 @@
             position: absolute;
             bottom: 0;
         }
+    }
+}
+
+.toast.join-request {
+    .toast-header {
+        color: #eee;
+    }
+
+    .toast-body {
+        display: flex;
+    }
+
+    .picture {
+        margin-right: 1em;
+
+        img {
+            width: 64px;
+            height: 64px;
+            border: 1px solid #555;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    }
+
+    .content {
+        flex: 1;
     }
 }
