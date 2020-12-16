@@ -21,7 +21,7 @@ class PaymentsController extends Controller
         $user = Auth::guard()->user();
 
         // TODO: Wallet selection
-        $wallet = $user->wallets->first();
+        $wallet = $user->wallets()->first();
 
         $mandate = self::walletMandate($wallet);
 
@@ -40,28 +40,10 @@ class PaymentsController extends Controller
         $current_user = Auth::guard()->user();
 
         // TODO: Wallet selection
-        $wallet = $current_user->wallets->first();
+        $wallet = $current_user->wallets()->first();
 
-        $rules = [
-            'amount' => 'required|numeric',
-            'balance' => 'required|numeric|min:0',
-        ];
-
-        // Check required fields
-        $v = Validator::make($request->all(), $rules);
-
-        // TODO: allow comma as a decimal point?
-
-        if ($v->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
-        }
-
-        $amount = (int) ($request->amount * 100);
-
-        // Validate the minimum value
-        if ($amount < PaymentProvider::MIN_AMOUNT) {
-            $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
-            $errors = ['amount' => \trans('validation.minamount', ['amount' => $min])];
+        // Input validation
+        if ($errors = self::mandateValidate($request, $wallet)) {
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
@@ -70,15 +52,20 @@ class PaymentsController extends Controller
                 'mandate_balance' => $request->balance,
         ]);
 
-        $request = [
+        $mandate = [
             'currency' => 'CHF',
-            'amount' => $amount,
             'description' => \config('app.name') . ' Auto-Payment Setup',
         ];
 
+        // Normally the auto-payment setup operation is 0, if the balance is below the threshold
+        // we'll top-up the wallet with the configured auto-payment amount
+        if ($wallet->balance < intval($request->balance * 100)) {
+            $mandate['amount'] = intval($request->amount * 100);
+        }
+
         $provider = PaymentProvider::factory($wallet);
 
-        $result = $provider->createMandate($wallet, $request);
+        $result = $provider->createMandate($wallet, $mandate);
 
         $result['status'] = 'success';
 
@@ -95,7 +82,7 @@ class PaymentsController extends Controller
         $user = Auth::guard()->user();
 
         // TODO: Wallet selection
-        $wallet = $user->wallets->first();
+        $wallet = $user->wallets()->first();
 
         $provider = PaymentProvider::factory($wallet);
 
@@ -121,8 +108,43 @@ class PaymentsController extends Controller
         $current_user = Auth::guard()->user();
 
         // TODO: Wallet selection
-        $wallet = $current_user->wallets->first();
+        $wallet = $current_user->wallets()->first();
 
+        // Input validation
+        if ($errors = self::mandateValidate($request, $wallet)) {
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        $wallet->setSettings([
+                'mandate_amount' => $request->amount,
+                'mandate_balance' => $request->balance,
+                // Re-enable the mandate to give it a chance to charge again
+                // after it has been disabled (e.g. because the mandate amount was too small)
+                'mandate_disabled' => null,
+        ]);
+
+        // Trigger auto-payment if the balance is below the threshold
+        if ($wallet->balance < intval($request->balance * 100)) {
+            \App\Jobs\WalletCharge::dispatch($wallet);
+        }
+
+        $result = self::walletMandate($wallet);
+        $result['status'] = 'success';
+        $result['message'] = \trans('app.mandate-update-success');
+
+        return response()->json($result);
+    }
+
+    /**
+     * Validate an auto-payment mandate request.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @param \App\Wallet              $wallet  The wallet
+     *
+     * @return array|null List of errors on error or Null on success
+     */
+    protected static function mandateValidate(Request $request, Wallet $wallet)
+    {
         $rules = [
             'amount' => 'required|numeric',
             'balance' => 'required|numeric|min:0',
@@ -134,43 +156,27 @@ class PaymentsController extends Controller
         // TODO: allow comma as a decimal point?
 
         if ($v->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+            return $v->errors();
         }
 
         $amount = (int) ($request->amount * 100);
 
         // Validate the minimum value
+        // It has to be at least minimum payment amount and must cover current debt
+        if (
+            $wallet->balance < 0
+            && $wallet->balance * -1 > PaymentProvider::MIN_AMOUNT
+            && $wallet->balance + $amount < 0
+        ) {
+            return ['amount' => \trans('validation.minamountdebt')];
+        }
+
         if ($amount < PaymentProvider::MIN_AMOUNT) {
             $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
-            $errors = ['amount' => \trans('validation.minamount', ['amount' => $min])];
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+            return ['amount' => \trans('validation.minamount', ['amount' => $min])];
         }
 
-        // If the mandate is disabled the update will trigger
-        // an auto-payment and the amount must cover the debt
-        if ($wallet->getSetting('mandate_disabled')) {
-            if ($wallet->balance < 0 && $wallet->balance + $amount < 0) {
-                $errors = ['amount' => \trans('validation.minamountdebt')];
-                return response()->json(['status' => 'error', 'errors' => $errors], 422);
-            }
-
-            $wallet->setSetting('mandate_disabled', null);
-
-            if ($wallet->balance < intval($request->balance * 100)) {
-                \App\Jobs\WalletCharge::dispatch($wallet);
-            }
-        }
-
-        $wallet->setSettings([
-                'mandate_amount' => $request->amount,
-                'mandate_balance' => $request->balance,
-        ]);
-
-        $result = self::walletMandate($wallet);
-        $result['status'] = 'success';
-        $result['message'] = \trans('app.mandate-update-success');
-
-        return response()->json($result);
+        return null;
     }
 
     /**
@@ -185,7 +191,7 @@ class PaymentsController extends Controller
         $current_user = Auth::guard()->user();
 
         // TODO: Wallet selection
-        $wallet = $current_user->wallets->first();
+        $wallet = $current_user->wallets()->first();
 
         $rules = [
             'amount' => 'required|numeric',

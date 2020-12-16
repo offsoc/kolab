@@ -56,7 +56,7 @@ class Stripe extends \App\Providers\PaymentProvider
      *
      * @param \App\Wallet $wallet  The wallet
      * @param array       $payment Payment data:
-     *                             - amount: Value in cents
+     *                             - amount: Value in cents (not used)
      *                             - currency: The operation currency
      *                             - description: Operation desc.
      *
@@ -77,12 +77,14 @@ class Stripe extends \App\Providers\PaymentProvider
             'mode' => 'setup',
         ];
 
+        // Note: Stripe does not allow to set amount for 'setup' operation
+        // We'll dispatch WalletCharge job when we receive a webhook request
+
         $session = StripeAPI\Checkout\Session::create($request);
 
-        $payment = [
-            'id' => $session->setup_intent,
-            'type' => self::TYPE_MANDATE,
-        ];
+        $payment['amount'] = 0;
+        $payment['id'] = $session->setup_intent;
+        $payment['type'] = self::TYPE_MANDATE;
 
         $this->storePayment($payment, $wallet->id);
 
@@ -355,6 +357,12 @@ class Stripe extends \App\Providers\PaymentProvider
 
                 if ($status == self::STATUS_PAID) {
                     $payment->wallet->setSetting('stripe_mandate_id', $intent->id);
+                    $threshold = intval($payment->wallet->getSetting('mandate_balance') * 100);
+
+                    // Top-up the wallet if balance is below the threshold
+                    if ($payment->wallet->balance < $threshold && $payment->status != self::STATUS_PAID) {
+                        \App\Jobs\WalletCharge::dispatch($payment->wallet);
+                    }
                 }
 
                 $payment->status = $status;

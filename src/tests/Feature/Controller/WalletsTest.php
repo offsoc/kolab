@@ -190,6 +190,8 @@ class WalletsTest extends TestCase
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
         $wallet = $john->wallets()->first();
+        $wallet->balance = -100;
+        $wallet->save();
 
         // Accessing a wallet of someone else
         $response = $this->actingAs($jack)->get("api/v4/wallets/{$wallet->id}");
@@ -209,7 +211,6 @@ class WalletsTest extends TestCase
         $this->assertSame('CHF', $json['currency']);
         $this->assertSame($wallet->balance, $json['balance']);
         $this->assertTrue(empty($json['description']));
-        // TODO: This assertion does not work after a longer while from seeding
         $this->assertTrue(!empty($json['notice']));
     }
 

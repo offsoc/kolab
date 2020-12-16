@@ -80,6 +80,7 @@ class PaymentsMollieTest extends TestCase
         $response->assertStatus(401);
 
         $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
 
         // Test creating a mandate (invalid input)
         $post = [];
@@ -104,7 +105,7 @@ class PaymentsMollieTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertSame('The balance must be a number.', $json['errors']['balance'][0]);
 
-        // Test creating a mandate (invalid input)
+        // Test creating a mandate (amount smaller than the minimum value)
         $post = ['amount' => -100, 'balance' => 0];
         $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
         $response->assertStatus(422);
@@ -116,6 +117,18 @@ class PaymentsMollieTest extends TestCase
         $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
+        // Test creating a mandate (negative balance, amount too small)
+        Wallet::where('id', $wallet->id)->update(['balance' => -2000]);
+        $post = ['amount' => PaymentProvider::MIN_AMOUNT / 100, 'balance' => 0];
+        $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame("The specified amount does not cover the balance on the account.", $json['errors']['amount']);
+
         // Test creating a mandate (valid input)
         $post = ['amount' => 20.10, 'balance' => 0];
         $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
@@ -125,6 +138,13 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertRegExp('|^https://www.mollie.com|', $json['redirectUrl']);
+
+        // Assert the proper payment amount has been used
+        $payment = Payment::where('id', $json['id'])->first();
+        $this->assertSame(2010, $payment->amount);
+        $this->assertSame($wallet->id, $payment->wallet_id);
+        $this->assertSame("Kolab Now Auto-Payment Setup", $payment->description);
+        $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information
         $response = $this->actingAs($user)->get("api/v4/payments/mandate");
@@ -176,6 +196,8 @@ class PaymentsMollieTest extends TestCase
 
         Bus::fake();
         $wallet->setSetting('mandate_disabled', null);
+        $wallet->balance = 1000;
+        $wallet->save();
 
         // Test updating mandate details (invalid input)
         $post = [];
@@ -202,7 +224,7 @@ class PaymentsMollieTest extends TestCase
         // Test updating a mandate (valid input)
         $responseStack->append(new Response(200, [], json_encode($mollie_response)));
 
-        $post = ['amount' => 30.10, 'balance' => 1];
+        $post = ['amount' => 30.10, 'balance' => 10];
         $response = $this->actingAs($user)->put("api/v4/payments/mandate", $post);
         $response->assertStatus(200);
 
@@ -216,7 +238,9 @@ class PaymentsMollieTest extends TestCase
         $wallet->refresh();
 
         $this->assertEquals(30.10, $wallet->getSetting('mandate_amount'));
-        $this->assertEquals(1, $wallet->getSetting('mandate_balance'));
+        $this->assertEquals(10, $wallet->getSetting('mandate_balance'));
+
+        Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 0);
 
         // Test updating a disabled mandate (invalid input)
         $wallet->setSetting('mandate_disabled', 1);
@@ -449,19 +473,24 @@ class PaymentsMollieTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
 
-        // Create a valid mandate first
-        $this->createMandate($wallet, ['amount' => 20.10, 'balance' => 10]);
+        // Create a valid mandate first (balance=0, so there's no extra payment yet)
+        $this->createMandate($wallet, ['amount' => 20.10, 'balance' => 0]);
+
+        $wallet->setSetting('mandate_balance', 10);
 
         // Expect a recurring payment as we have a valid mandate at this point
+        // and the balance is below the threshold
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertTrue($result);
 
-        // Check that the payments table contains a new record with proper amount
-        // There should be two records, one for the first payment and another for
-        // the recurring payment
-        $this->assertCount(1, $wallet->payments()->get());
-        $payment = $wallet->payments()->first();
-        $this->assertSame(2010, $payment->amount);
+        // Check that the payments table contains a new record with proper amount.
+        // There should be two records, one for the mandate payment and another for
+        // the top-up payment
+        $payments = $wallet->payments()->orderBy('amount')->get();
+        $this->assertCount(2, $payments);
+        $this->assertSame(0, $payments[0]->amount);
+        $this->assertSame(2010, $payments[1]->amount);
+        $payment = $payments[1];
 
         // In mollie we don't have to wait for a webhook, the response to
         // PaymentIntent already sets the status to 'paid', so we can test
@@ -488,7 +517,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->setSetting('mandate_disabled', 1);
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertFalse($result);
-        $this->assertCount(1, $wallet->payments()->get());
+        $this->assertCount(2, $wallet->payments()->get());
 
         // Expect no payment if balance is ok
         $wallet->setSetting('mandate_disabled', null);
@@ -496,7 +525,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->save();
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertFalse($result);
-        $this->assertCount(1, $wallet->payments()->get());
+        $this->assertCount(2, $wallet->payments()->get());
 
         // Expect no payment if the top-up amount is not enough
         $wallet->setSetting('mandate_disabled', null);
@@ -504,7 +533,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->save();
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertFalse($result);
-        $this->assertCount(1, $wallet->payments()->get());
+        $this->assertCount(2, $wallet->payments()->get());
 
         Bus::assertDispatchedTimes(\App\Jobs\PaymentMandateDisabledEmail::class, 1);
         Bus::assertDispatched(\App\Jobs\PaymentMandateDisabledEmail::class, function ($job) use ($wallet) {
@@ -518,7 +547,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->save();
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertFalse($result);
-        $this->assertCount(1, $wallet->payments()->get());
+        $this->assertCount(2, $wallet->payments()->get());
 
         Bus::assertDispatchedTimes(\App\Jobs\PaymentMandateDisabledEmail::class, 1);
 

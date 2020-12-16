@@ -37,7 +37,7 @@ class Mollie extends \App\Providers\PaymentProvider
      *
      * @param \App\Wallet $wallet  The wallet
      * @param array       $payment Payment data:
-     *                             - amount: Value in cents
+     *                             - amount: Value in cents (optional)
      *                             - currency: The operation currency
      *                             - description: Operation desc.
      *
@@ -50,10 +50,14 @@ class Mollie extends \App\Providers\PaymentProvider
         // Register the user in Mollie, if not yet done
         $customer_id = self::mollieCustomerId($wallet, true);
 
+        if (!isset($payment['amount'])) {
+            $payment['amount'] = 0;
+        }
+
         $request = [
             'amount' => [
                 'currency' => $payment['currency'],
-                'value' => '0.00',
+                'value' => sprintf('%.2f', $payment['amount'] / 100),
             ],
             'customerId' => $customer_id,
             'sequenceType' => 'first',
@@ -70,6 +74,13 @@ class Mollie extends \App\Providers\PaymentProvider
         if ($response->mandateId) {
             $wallet->setSetting('mollie_mandate_id', $response->mandateId);
         }
+
+        // Store the payment reference in database
+        $payment['status'] = $response->status;
+        $payment['id'] = $response->id;
+        $payment['type'] = self::TYPE_MANDATE;
+
+        $this->storePayment($payment, $wallet->id);
 
         return [
             'id' => $response->id,
