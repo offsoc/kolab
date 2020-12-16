@@ -167,11 +167,10 @@ table {
 }
 
 .plan-selector {
-
-    
     .plan-header {
         display: flex;
     }
+
     .plan-ico {
         margin:auto;
         font-size: 3.8rem;
@@ -291,6 +290,12 @@ table {
         width: 6rem;
         height: 6rem;
         margin: auto;
+    }
+}
+
+#logon-form-footer {
+    a:not(:first-child) {
+        margin-left: 2em;
     }
 }
 

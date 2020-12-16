@@ -1,6 +1,6 @@
 <template>
     <div class="container d-flex flex-column align-items-center justify-content-center">
-        <div class="card col-sm-8 col-lg-6">
+        <div id="logon-form" class="card col-sm-8 col-lg-6">
             <div class="card-body">
                 <h1 class="card-title text-center mb-3">Please sign in</h1>
                 <div class="card-text">
@@ -42,9 +42,9 @@
                 </div>
             </div>
         </div>
-        <div class="mt-1">
+        <div id="logon-form-footer" class="mt-1">
             <router-link v-if="!$root.isAdmin && $root.hasRoute('password-reset')" :to="{ name: 'password-reset' }" id="forgot-password">Forgot password?</router-link>
-            <a v-if="webmailURL" :href="webmailURL" class="ml-5" id="webmail">Webmail</a>
+            <a v-if="webmailURL && !$root.isAdmin" :href="webmailURL" id="webmail">Webmail</a>
         </div>
     </div>
 </template>

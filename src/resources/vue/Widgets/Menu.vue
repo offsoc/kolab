@@ -12,10 +12,6 @@
             </button>
             <div :id="mode + '-menu-navbar'" :class="'navbar' + (mode == 'header' ? ' collapse navbar-collapse' : '')">
                 <ul class="navbar-nav">
-                    <li class="nav-item" v-if="!loggedIn">
-                        <router-link v-if="!$root.isAdmin && $root.hasRoute('signup')" class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
-                        <a v-else class="nav-link link-signup" :href="appUrl + '/signup'">Signup</a>
-                    </li>
                     <li class="nav-item" v-for="item in menu()" :key="item.index">
                         <a v-if="item.href" :class="'nav-link link-' + item.index" :href="item.href">{{ item.title }}</a>
                         <router-link v-if="item.to"
@@ -27,17 +23,18 @@
                             {{ item.title }}
                         </router-link>
                     </li>
+                    <li class="nav-item" v-if="!loggedIn">
+                        <router-link v-if="!$root.isAdmin && $root.hasRoute('signup')" class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
+                        <a v-else class="nav-link link-signup" :href="appUrl + '/signup'">Signup</a>
+                    </li>
                     <li class="nav-item" v-if="loggedIn">
                         <router-link class="nav-link link-dashboard" active-class="active" :to="{name: 'dashboard'}">Cockpit</router-link>
                     </li>
                     <li class="nav-item" v-if="loggedIn">
                         <router-link class="nav-link menulogin link-logout" active-class="active" :to="{name: 'logout'}">Logout</router-link>
                     </li>
-                    <li class="nav-item" v-if="!loggedIn && route != 'room'">
-                        <a class="nav-link menulogin link-login" :href="webmailURL">Login</a>
-                    </li>
-                    <li class="nav-item" v-if="!loggedIn && route == 'room'">
-                        <a class="nav-link menulogin link-login" :href="app_url + '/login'">Login</a>
+                    <li class="nav-item" v-if="!loggedIn">
+                        <a class="nav-link menulogin link-login" :href="appUrl + '/login'">Login</a>
                     </li>
                 </ul>
                 <div v-if="mode == 'footer'" class="footer">

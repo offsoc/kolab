@@ -85,12 +85,12 @@ class LogonTest extends TestCaseDusk
                 ->assertVisible('@links a.link-wallet')
                 ->assertVisible('@links a.link-webmail')
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'dashboard', 'logout']);
                 });
             } else {
                 $browser->assertMissing('#footer-menu .navbar-nav');

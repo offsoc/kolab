@@ -77,7 +77,7 @@ class LogonTest extends TestCaseDusk
             // Checks if we're really on Dashboard page
             $browser->on(new Dashboard())
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout']);
                 })
                 ->assertUser('jeroen@jeroen.jeroen');
 

@@ -213,12 +213,12 @@ class RoomSetupTest extends TestCaseDusk
                 })
                 ->assertElementsCount('@session div.meet-video', 2)
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'signup', 'login']);
                 });
 
             if ($guest->isDesktop()) {
                 $guest->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'tos', 'login']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'signup', 'login']);
                 });
             }
 
