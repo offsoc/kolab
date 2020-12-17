@@ -462,6 +462,8 @@ class UsersTest extends TestCase
      */
     public function testStore(): void
     {
+        Queue::fake();
+
         $jack = $this->getTestUser('jack@kolab.org');
         $john = $this->getTestUser('john@kolab.org');
         $deleted_priv = $this->getTestUser('deleted@kolab.org');
@@ -579,18 +581,29 @@ class UsersTest extends TestCase
         $wallet = $user->wallet();
         $this->assertSame($john->wallets()->first()->id, $wallet->id);
 
-        // Test acting as account controller (not owner)
-        /*
-        // FIXME: How do we know to which wallet the new user should be assigned to?
+        // Attempt to create a user previously deleted
+        $user->delete();
 
-        $this->deleteTestUser('john2.doe2@kolab.org');
-        $response = $this->actingAs($ned)->post("/api/v4/users", $post);
+        $post['package'] = $package_kolab->id;
+        $post['aliases'] = [];
+        $response = $this->actingAs($john)->post("/api/v4/users", $post);
         $json = $response->json();
 
         $response->assertStatus(200);
 
         $this->assertSame('success', $json['status']);
-        */
+        $this->assertSame("User created successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $user = User::where('email', 'john2.doe2@kolab.org')->first();
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame('John2', $user->getSetting('first_name'));
+        $this->assertSame('Doe2', $user->getSetting('last_name'));
+        $this->assertSame('TestOrg', $user->getSetting('organization'));
+        $this->assertCount(0, $user->aliases()->get());
+        $this->assertUserEntitlements($user, ['groupware', 'mailbox', 'storage', 'storage']);
+
+        // Test acting as account controller (not owner)
 
         $this->markTestIncomplete();
     }
@@ -1081,6 +1094,35 @@ class UsersTest extends TestCase
     {
         $result = UsersController::validateEmail($email, $user);
         $this->assertSame($expected_result, $result);
+    }
+
+    /**
+     * User email validation - tests for $deleted argument
+     *
+     * Note: Technically these include unit tests, but let's keep it here for now.
+     * FIXME: Shall we do a http request for each case?
+     */
+    public function testValidateEmailDeleted(): void
+    {
+        Queue::fake();
+
+        $john = $this->getTestUser('john@kolab.org');
+        $deleted_priv = $this->getTestUser('deleted@kolab.org');
+        $deleted_priv->delete();
+        $deleted_pub = $this->getTestUser('deleted@kolabnow.com');
+        $deleted_pub->delete();
+
+        $result = UsersController::validateEmail('deleted@kolab.org', $john, $deleted);
+        $this->assertSame(null, $result);
+        $this->assertSame($deleted_priv->id, $deleted->id);
+
+        $result = UsersController::validateEmail('deleted@kolabnow.com', $john, $deleted);
+        $this->assertSame('The specified email is not available.', $result);
+        $this->assertSame(null, $deleted);
+
+        $result = UsersController::validateEmail('jack@kolab.org', $john, $deleted);
+        $this->assertSame('The specified email is not available.', $result);
+        $this->assertSame(null, $deleted);
     }
 
     /**

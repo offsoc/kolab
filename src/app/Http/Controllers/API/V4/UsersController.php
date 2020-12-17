@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
 
 class UsersController extends Controller
 {
-    // List of user settings keys available for modification in UI
+    /** @const array List of user setting keys available for modification in UI */
     public const USER_SETTINGS = [
         'billing_address',
         'country',
@@ -28,6 +28,15 @@ class UsersController extends Controller
         'organization',
         'phone',
     ];
+
+    /**
+     * On user create it is filled with a user object to force-delete
+     * before the creation of a new user record is possible.
+     *
+     * @var \App\User|null
+     */
+    protected $deleteBeforeCreate;
+
 
     /**
      * Delete a user.
@@ -270,6 +279,8 @@ class UsersController extends Controller
             return $this->errorResponse(403);
         }
 
+        $this->deleteBeforeCreate = null;
+
         if ($error_response = $this->validateUserRequest($request, null, $settings)) {
             return $error_response;
         }
@@ -285,6 +296,10 @@ class UsersController extends Controller
         }
 
         DB::beginTransaction();
+
+        if ($this->deleteBeforeCreate) {
+            $this->deleteBeforeCreate->forceDelete();
+        }
 
         // Create user record
         $user = User::create([
@@ -554,7 +569,7 @@ class UsersController extends Controller
 
             if (empty($email)) {
                 $errors['email'] = \trans('validation.required', ['attribute' => 'email']);
-            } elseif ($error = self::validateEmail($email, $controller)) {
+            } elseif ($error = self::validateEmail($email, $controller, $this->deleteBeforeCreate)) {
                 $errors['email'] = $error;
             }
         }
@@ -657,13 +672,17 @@ class UsersController extends Controller
     /**
      * Email address validation for use as a user mailbox (login).
      *
-     * @param string    $email Email address
-     * @param \App\User $user  The account owner
+     * @param string     $email   Email address
+     * @param \App\User  $user    The account owner
+     * @param ?\App\User $deleted Filled with an instance of a deleted user with
+     *                            the specified email address, if exists
      *
      * @return ?string Error message on validation error
      */
-    public static function validateEmail(string $email, \App\User $user): ?string
+    public static function validateEmail(string $email, \App\User $user, &$deleted = null): ?string
     {
+        $deleted = null;
+
         if (strpos($email, '@') === false) {
             return \trans('validation.entryinvalid', ['attribute' => 'email']);
         }
@@ -699,9 +718,14 @@ class UsersController extends Controller
         }
 
         // Check if a user with specified address already exists
-        if (User::emailExists($email)) {
-            // TODO: Allow force-delete if this is a deleted user in the same custom domain
-            return \trans('validation.entryexists', ['attribute' => 'email']);
+        if ($existing_user = User::emailExists($email, true)) {
+            // If this is a deleted user in the same custom domain
+            // we'll force delete him before
+            if (!$domain->isPublic() && $existing_user->trashed()) {
+                $deleted = $existing_user;
+            } else {
+                return \trans('validation.entryexists', ['attribute' => 'email']);
+            }
         }
 
         // Check if an alias with specified address already exists.
