@@ -170,24 +170,32 @@ class Room extends Model
      * Create a OpenVidu session (connection) token
      *
      * @return array|null Token data on success, NULL otherwise
+     * @throws \Exception if session does not exist
      */
     public function getSessionToken($role = self::ROLE_PUBLISHER): ?array
     {
-        $response = $this->client()->request(
-            'POST',
-            'tokens',
-            [
-                'json' => [
-                    'session' => $this->session_id,
-                    'role' => $role
-                ]
+        if (!$this->session_id) {
+            throw new \Exception("The room session does not exist");
+        }
+
+        $url = 'sessions/' . $this->session_id . '/connection';
+        $post = [
+            'json' => [
+                'role' => $role
             ]
-        );
+        ];
+
+        $response = $this->client()->request('POST', $url, $post);
 
         if ($response->getStatusCode() == 200) {
             $json = json_decode($response->getBody(), true);
 
-            return $json;
+            return [
+                'session' => $this->session_id,
+                'token' => $json['token'],
+                'role' => $json['role'],
+                'connectionId' => $json['id'],
+            ];
         }
 
         return null;

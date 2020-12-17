@@ -156,7 +156,7 @@ class PaymentsController extends Controller
         // TODO: allow comma as a decimal point?
 
         if ($v->fails()) {
-            return $v->errors();
+            return $v->errors()->toArray();
         }
 
         $amount = (int) ($request->amount * 100);
