@@ -2,13 +2,13 @@
     <div id="meet-component">
         <div id="meet-session-toolbar" class="hidden">
             <div id="meet-session-menu">
-                <button class="btn btn-link link-audio" @click="switchSound" title="Mute audio">
+                <button class="btn btn-link link-audio" @click="switchSound" :disabled="!isPublisher()" title="Mute audio">
                     <svg-icon icon="microphone"></svg-icon>
                 </button>
-                <button class="btn btn-link link-video" @click="switchVideo" title="Mute video">
+                <button class="btn btn-link link-video" @click="switchVideo" :disabled="!isPublisher()" title="Mute video">
                     <svg-icon icon="video"></svg-icon>
                 </button>
-                <button class="btn btn-link link-screen text-danger" @click="switchScreen" :disabled="!canShareScreen" title="Share screen">
+                <button class="btn btn-link link-screen text-danger" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" title="Share screen">
                     <svg-icon icon="desktop"></svg-icon>
                 </button>
                 <button class="btn btn-link link-chat text-danger" @click="switchChat" title="Chat">
@@ -204,7 +204,8 @@
                     screenShare: this.canShareScreen ? 1 : 0,
                     init: init ? 1 : 0,
                     picture: init ? this.makePicture() : '',
-                    requestId: this.requestId()
+                    requestId: this.requestId(),
+                    role: this.camera || this.microphone ? 'PUBLISHER' : 'SUBSCRIBER'
                 }
 
                 $('#setup-password,#setup-nickname').removeClass('is-invalid')
@@ -265,8 +266,11 @@
                     $('#meet-session-menu').find('.link-fullscreen.closed').removeClass('hidden')
                 }
             },
+            isPublisher() {
+                return this.session && this.session.role && this.session.role != 'SUBSCRIBER'
+            },
             isRoomReady() {
-                return ['ready', 324, 325, 326, 327].includes(this.roomState)
+                return ['ready', 322, 324, 325, 326, 327].includes(this.roomState)
             },
             // An event received by the room owner when a participant is asking for a permission to join the room
             joinRequest(data) {

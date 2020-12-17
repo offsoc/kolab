@@ -162,6 +162,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->waitFor('@setup-form')
                 ->assertMissing('@login-form')
                 ->waitUntilMissing('@setup-status-message.loading')
+                ->waitFor('@setup-status-message')
                 ->assertSeeIn('@setup-status-message', "The room is closed. It will be open for others after you join.")
                 ->assertSeeIn('@setup-button', "JOIN")
                 ->type('@setup-nickname-input', 'john')

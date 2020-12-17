@@ -1,5 +1,5 @@
 <template>
-    <div v-if="status != 'ready'" :class="statusClass()">
+    <div v-if="statusLabel()" :class="statusClass()">
         <div v-if="status == 'init'" class="app-loader small">
             <div class="spinner-border" role="status"></div>
         </div>

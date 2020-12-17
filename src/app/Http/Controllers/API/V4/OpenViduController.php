@@ -197,6 +197,7 @@ class OpenViduController extends Controller
 
         $user = Auth::guard()->user();
         $isOwner = $user && $user->id == $room->user_id;
+        $init = !empty(request()->input('init'));
 
         // There's no existing session
         if (!$room->hasSession()) {
@@ -206,7 +207,7 @@ class OpenViduController extends Controller
             }
 
             // The room owner can create the session on request
-            if (empty(request()->input('init'))) {
+            if (!$init) {
                 return $this->errorResponse(422, \trans('meet.session-not-found'), ['code' => 324]);
             }
 
@@ -276,28 +277,41 @@ class OpenViduController extends Controller
             }
         }
 
-        // Create session token for the current user/connection
-        $response = $room->getSessionToken($isOwner ? Room::ROLE_MODERATOR : Room::ROLE_PUBLISHER);
+        // Initialize connection tokens
+        if ($init) {
+            // Choose the connection role
+            if ($isOwner) {
+                $role = Room::ROLE_MODERATOR;
+            } elseif (request()->input('role') === Room::ROLE_PUBLISHER) {
+                $role = Room::ROLE_PUBLISHER;
+            } else {
+                $role = Room::ROLE_SUBSCRIBER;
+            }
 
-        if (empty($response)) {
-            return $this->errorResponse(500, \trans('meet.session-join-error'));
+            // Create session token for the current user/connection
+            $response = $room->getSessionToken($role);
+
+            if (empty($response)) {
+                return $this->errorResponse(500, \trans('meet.session-join-error'));
+            }
+
+            // Create session token for screen sharing connection
+            if ($role != Room::ROLE_SUBSCRIBER && !empty(request()->input('screenShare'))) {
+                $add_token = $room->getSessionToken(Room::ROLE_PUBLISHER);
+
+                $response['shareToken'] = $add_token['token'];
+            }
+
+            $response_code = 200;
+            $response['role'] = $role;
+            $response['owner'] = $isOwner;
+            $response['config'] = $config;
+        } else {
+            $response_code = 422;
+            $response['code'] = 322;
         }
 
-        // Create session token for screen sharing connection
-        if (!empty(request()->input('screenShare'))) {
-            $add_token = $room->getSessionToken(Room::ROLE_PUBLISHER);
-
-            $response['shareToken'] = $add_token['token'];
-        }
-
-        // Tell the UI who's the room owner
-        $response['owner'] = $isOwner;
-
-        // Append the room configuration
-
-        $response['config'] = $config;
-
-        return response()->json($response);
+        return response()->json($response, $response_code);
     }
 
     /**

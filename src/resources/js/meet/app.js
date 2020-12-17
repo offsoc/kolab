@@ -70,7 +70,7 @@ function Meet(container)
     /**
      * Join the room session
      *
-     * @param data Session metadata and event handlers (session, token, shareToken, nickname,
+     * @param data Session metadata and event handlers (session, token, shareToken, nickname, role,
      *             chatElement, menuElement, onDestroy, onJoinRequest)
      */
     function joinRoom(data) {
@@ -191,10 +191,13 @@ function Meet(container)
                 })
 
                 publisher.createVideoElement(wrapper, 'PREPEND')
+
                 sessionData.wrapper = wrapper
 
                 // Publish the stream
-                session.publish(publisher)
+                if (sessionData.role != 'SUBSCRIBER') {
+                    session.publish(publisher)
+                }
             })
             .catch(error => {
                 console.error('There was an error connecting to the session: ', error.message);
@@ -488,7 +491,7 @@ function Meet(container)
         message = message.replace(/\r?\n/, '<br>')
 
         // Display the message
-        let isSelf = data.id == publisher.stream.connection.connectionId
+        let isSelf = data.id == session.connectionId
         let chat = $(sessionData.chatElement).find('.chat')
         let box = chat.find('.message').last()
 

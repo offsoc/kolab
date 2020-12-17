@@ -122,8 +122,31 @@ class OpenViduTest extends TestCase
 
         $john_token = $json['token'];
 
-        // Non-owner, now the session exists
+        // Non-owner, now the session exists, no 'init' argument
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}");
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame(322, $json['code']);
+        $this->assertTrue(empty($json['token']));
+        $this->assertTrue(empty($json['shareToken']));
+
+        // Non-owner, now the session exists, with 'init', but no 'role' argument
+        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(Room::ROLE_SUBSCRIBER, $json['role']);
+        $this->assertSame($session_id, $json['session']);
+        $this->assertTrue(strpos($json['token'], 'wss://') === 0);
+        $this->assertTrue($json['token'] != $john_token);
+        $this->assertTrue(empty($json['shareToken']));
+
+        // Non-owner, now the session exists, with 'init', and with 'role=PUBLISHER'
+        $post = ['role' => Room::ROLE_PUBLISHER, 'init' => 1];
+        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -158,7 +181,9 @@ class OpenViduTest extends TestCase
         $this->assertSame(325, $json['code']);
 
         // Non-owner, password protected room, valid password provided
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", ['password' => 'pass']);
+        // TODO: Test without init=1
+        $post = ['password' => 'pass', 'init' => 'init'];
+        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -166,7 +191,9 @@ class OpenViduTest extends TestCase
         $this->assertSame($session_id, $json['session']);
 
         // Make sure the room owner can access the password protected room w/o password
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}");
+        // TODO: Test without init=1
+        $post = ['init' => 'init'];
+        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(200);
     }
 
@@ -203,7 +230,7 @@ class OpenViduTest extends TestCase
         $this->assertTrue($json['config']['locked']);
 
         // Non-owner, locked room, invalid requestId
-        $post = ['nickname' => 'name', 'requestId' => '-----'];
+        $post = ['nickname' => 'name', 'requestId' => '-----', 'init' => 1];
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(422);
 
@@ -211,7 +238,7 @@ class OpenViduTest extends TestCase
         $this->assertSame(326, $json['code']);
 
         // Non-owner, locked room, invalid requestId
-        $post = ['nickname' => 'name', 'picture' => '-----'];
+        $post = ['nickname' => 'name', 'init' => 1];
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(422);
 
@@ -294,6 +321,8 @@ class OpenViduTest extends TestCase
         $this->assertSame('success', $json['status']);
 
         // Non-owner, locked room, join request accepted
+        $post['init'] = 1;
+        $post['role'] = Room::ROLE_PUBLISHER;
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(200);
         $json = $response->json();
@@ -319,7 +348,8 @@ class OpenViduTest extends TestCase
         $room = Room::where('name', 'john')->first();
 
         // Guest, request with screenShare token
-        $response = $this->post("api/v4/openvidu/rooms/{$room->name}", ['screenShare' => 1]);
+        $post = ['role' => Room::ROLE_PUBLISHER, 'screenShare' => 1, 'init' => 1];
+        $response = $this->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         $json = $response->json();

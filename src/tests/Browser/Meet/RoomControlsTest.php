@@ -153,7 +153,7 @@ class RoomControlsTest extends TestCaseDusk
             $guest->assertToolbar([
                     'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
                     'video' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
-                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
+                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
                     'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                     'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
