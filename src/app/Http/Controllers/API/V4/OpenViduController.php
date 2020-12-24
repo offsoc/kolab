@@ -280,16 +280,12 @@ class OpenViduController extends Controller
         // Initialize connection tokens
         if ($init) {
             // Choose the connection role
-            if ($isOwner) {
-                $role = Room::ROLE_MODERATOR;
-            } elseif (request()->input('role') === Room::ROLE_PUBLISHER) {
-                $role = Room::ROLE_PUBLISHER;
-            } else {
-                $role = Room::ROLE_SUBSCRIBER;
-            }
+            $canPublish = !empty(request()->input('canPublish'));
+            $reqRole = $canPublish ? Room::ROLE_PUBLISHER : Room::ROLE_SUBSCRIBER;
+            $role = $isOwner ? Room::ROLE_MODERATOR : $reqRole;
 
             // Create session token for the current user/connection
-            $response = $room->getSessionToken($role);
+            $response = $room->getSessionToken($role, ['canPublish' => $canPublish]);
 
             if (empty($response)) {
                 return $this->errorResponse(500, \trans('meet.session-join-error'));
@@ -306,6 +302,7 @@ class OpenViduController extends Controller
             $response['role'] = $role;
             $response['owner'] = $isOwner;
             $response['config'] = $config;
+            $response['canPublish'] = $canPublish;
         } else {
             $response_code = 422;
             $response['code'] = 322;

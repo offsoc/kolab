@@ -116,7 +116,7 @@ class RoomControlsTest extends TestCaseDusk
                 ->assertSeeIn('@setup-button', "JOIN")
                 // Join the room, disable cam/mic
                 ->select('@setup-mic-select', '')
-                ->select('@setup-cam-select', '')
+                //->select('@setup-cam-select', '')
                 ->click('@setup-button')
                 ->waitFor('@session');
 
@@ -130,48 +130,47 @@ class RoomControlsTest extends TestCaseDusk
                     'security' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                     'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                 ])
-                ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
+                ->whenAvailable('div.meet-video.self', function (Browser $browser) {
                     $browser->assertVisible('video')
                         ->assertAudioMuted('video', true)
-                        ->assertSeeIn('.nickname', 'john')
+                        ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertMissing('.controls button.link-audio')
                         ->assertMissing('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
-                ->whenAvailable('div.meet-video:not(.publisher)', function (Browser $browser) {
-                    $browser->assertMissing('video')
-                        ->assertVisible('.nickname')
+                ->whenAvailable('div.meet-video:not(.self)', function (Browser $browser) {
+                    $browser->assertVisible('video')
+                        ->assertVisible('.meet-nickname')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
                         ->assertVisible('.status .status-audio')
-                        ->assertVisible('.status .status-video');
+                        ->assertMissing('.status .status-video');
                 })
                 ->assertElementsCount('@session div.meet-video', 2);
 
             // Assert current UI state
             $guest->assertToolbar([
-                    'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
-                    'video' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
-                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
+                    'video' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                     'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                 ])
-                ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
+                ->whenAvailable('div.meet-video:not(.self)', function (Browser $browser) {
                     $browser->assertVisible('video')
-                        //->assertAudioMuted('video', true)
-                        ->assertVisible('.controls button.link-fullscreen')
-                        ->assertMissing('.controls button.link-audio')
-                        ->assertVisible('.status .status-audio')
-                        ->assertVisible('.status .status-video');
-                })
-                ->whenAvailable('div.meet-video:not(.publisher)', function (Browser $browser) {
-                    $browser->assertVisible('video')
-                        ->assertSeeIn('.nickname', 'john')
+                        ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
                         ->assertMissing('.status .status-audio')
+                        ->assertMissing('.status .status-video');
+                })
+                ->whenAvailable('div.meet-video.self', function (Browser $browser) {
+                    $browser->assertVisible('video')
+                        ->assertVisible('.controls button.link-fullscreen')
+                        ->assertMissing('.controls button.link-audio')
+                        ->assertVisible('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
                 ->assertElementsCount('@session div.meet-video', 2);
@@ -179,44 +178,44 @@ class RoomControlsTest extends TestCaseDusk
             // Test nickname change propagation
 
             // Use script() because type() does not work with this contenteditable widget
-            $guest->setNickname('div.meet-video.publisher', 'guest');
-            $owner->waitFor('div.meet-video:not(.publisher) .nickname')
-                ->assertSeeIn('div.meet-video:not(.publisher) .nickname', 'guest');
+            $guest->setNickname('div.meet-video.self', 'guest');
+            $owner->waitFor('div.meet-video:not(.self) .meet-nickname')
+                ->assertSeeIn('div.meet-video:not(.self) .meet-nickname', 'guest');
 
             // Test muting audio
             $owner->click('@menu button.link-audio')
                 ->assertToolbarButtonState('audio', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
-                ->assertVisible('div.meet-video.publisher .status .status-audio');
+                ->assertVisible('div.meet-video.self .status .status-audio');
 
             // FIXME: It looks that we can't just check the <video> element state
             //        We might consider using OpenVidu API to make sure
-            $guest->waitFor('div.meet-video:not(.publisher) .status .status-audio');
+            $guest->waitFor('div.meet-video:not(.self) .status .status-audio');
 
             // Test unmuting audio
             $owner->click('@menu button.link-audio')
                 ->assertToolbarButtonState('audio', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
-                ->assertMissing('div.meet-video.publisher .status .status-audio');
+                ->assertMissing('div.meet-video.self .status .status-audio');
 
-            $guest->waitUntilMissing('div.meet-video:not(.publisher) .status .status-audio');
+            $guest->waitUntilMissing('div.meet-video:not(.self) .status .status-audio');
 
             // Test muting video
             $owner->click('@menu button.link-video')
                 ->assertToolbarButtonState('video', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
-                ->assertVisible('div.meet-video.publisher .status .status-video');
+                ->assertVisible('div.meet-video.self .status .status-video');
 
             // FIXME: It looks that we can't just check the <video> element state
             //        We might consider using OpenVidu API to make sure
-            $guest->waitFor('div.meet-video:not(.publisher) .status .status-video');
+            $guest->waitFor('div.meet-video:not(.self) .status .status-video');
 
             // Test unmuting video
             $owner->click('@menu button.link-video')
                 ->assertToolbarButtonState('video', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
-                ->assertMissing('div.meet-video.publisher .status .status-video');
+                ->assertMissing('div.meet-video.self .status .status-video');
 
-            $guest->waitUntilMissing('div.meet-video:not(.publisher) .status .status-video');
+            $guest->waitUntilMissing('div.meet-video:not(.self) .status .status-video');
 
             // Test muting other user
-            $guest->with('div.meet-video:not(.publisher)', function (Browser $browser) {
+            $guest->with('div.meet-video:not(.self)', function (Browser $browser) {
                 $browser->click('.controls button.link-audio')
                     ->assertAudioMuted('video', true)
                     ->assertVisible('.controls button.link-audio.text-danger')
@@ -254,7 +253,7 @@ class RoomControlsTest extends TestCaseDusk
                 ->assertSeeIn('@setup-button', "JOIN")
                 // Join the room, disable cam/mic
                 ->select('@setup-mic-select', '')
-                ->select('@setup-cam-select', '')
+                // ->select('@setup-cam-select', '')
                 ->click('@setup-button')
                 ->waitFor('@session');
 
@@ -310,7 +309,7 @@ class RoomControlsTest extends TestCaseDusk
 
             // Test nickname change is propagated to chat messages
 
-            $guest->setNickname('div.meet-video.publisher', 'guest')
+            $guest->setNickname('div.meet-video.self', 'guest')
                 ->keys('@chat-input', 'guest2', '{enter}')
                 ->assertElementsCount('@chat-list .message', 2)
                 ->assertSeeIn('@chat-list .message:last-child .nickname', 'guest')

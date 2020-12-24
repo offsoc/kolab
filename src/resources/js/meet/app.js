@@ -37,6 +37,7 @@ function Meet(container)
     let chatCount = 0
     let volumeElement
     let setupProps
+    let subscribersContainer
 
     OV = new OpenVidu()
     screenOV = new OpenVidu()
@@ -70,8 +71,8 @@ function Meet(container)
     /**
      * Join the room session
      *
-     * @param data Session metadata and event handlers (session, token, shareToken, nickname, role,
-     *             chatElement, menuElement, onDestroy, onJoinRequest)
+     * @param data Session metadata and event handlers (session, token, shareToken, nickname,
+     *             canPublish, chatElement, menuElement, onDestroy, onJoinRequest)
      */
     function joinRoom(data) {
         resize();
@@ -80,6 +81,11 @@ function Meet(container)
         data.params = {
             nickname: data.nickname, // user nickname
             // avatar: undefined        // avatar image
+        }
+
+        // Create a container for subscribers
+        if (!subscribersContainer) {
+            subscribersContainer = $('<div id="meet-subscribers">').appendTo(container).get(0)
         }
 
         sessionData = data
@@ -96,25 +102,20 @@ function Meet(container)
             }
 
             // This is the first event executed when a user joins in.
-            // We'll create the video wrapper here, which will be re-used
+            // We'll create the video wrapper here, which can be re-used
             // in 'streamCreated' event handler.
-            // Note: For a user with no cam/mic enabled streamCreated event
+            // Note: For a user with a subscriber role 'streamCreated' event
             // is not being dispatched at all
 
-            // TODO: We may consider placing users with no video enabled
-            // in a separate place, so they do not fill the precious
-            // screen estate
-
+            let metadata = connectionData(event.connection)
             let connectionId = event.connection.connectionId
-            let metadata = JSON.parse(event.connection.data)
             metadata.connId = connectionId
-            let wrapper = videoWrapperCreate(container, metadata)
 
-            connections[connectionId] = {
-                element: wrapper
-            }
+            let element = participantCreate(metadata)
 
-            updateLayout()
+            connections[connectionId] = { element }
+
+            resize()
 
             // Send the current user status to the connecting user
             // otherwise e.g. nickname might be not up to date
@@ -124,18 +125,20 @@ function Meet(container)
         session.on('connectionDestroyed', event => {
             let conn = connections[event.connection.connectionId]
             if (conn) {
+                if ($(conn.element).is('.meet-video')) {
+                    numOfVideos--
+                }
                 $(conn.element).remove()
-                numOfVideos--
-                updateLayout()
                 delete connections[event.connection.connectionId]
             }
+            resize()
         })
 
         // On every new Stream received...
         session.on('streamCreated', event => {
             let connection = event.stream.connection
             let connectionId = connection.connectionId
-            let metadata = JSON.parse(connection.data)
+            let metadata = connectionData(connection)
             let wrapper = connections[connectionId].element
             let props = {
                 // Prepend the video element so it is always before the watermark element
@@ -150,14 +153,14 @@ function Meet(container)
                     tabindex: -1
                 })
 
-                updateLayout()
+                resize()
             })
 /*
             subscriber.on('videoElementDestroyed', event => {
             })
 */
             // Update the wrapper controls/status
-            videoWrapperUpdate(wrapper, event.stream)
+            participantUpdate(wrapper, event.stream)
         })
 /*
         session.on('streamDestroyed', event => {
@@ -169,7 +172,7 @@ function Meet(container)
                 data.onDestroy(event)
             }
 
-            updateLayout()
+            resize()
         })
 
         // Handle signals from all participants
@@ -178,8 +181,9 @@ function Meet(container)
         // Connect with the token
         session.connect(data.token, data.params)
             .then(() => {
-                let params = { publisher: true, audioActive, videoActive }
-                let wrapper = videoWrapperCreate(container, Object.assign({}, data.params, params))
+                let wrapper
+                let params = { self: true, canPublish: data.canPublish, audioActive, videoActive }
+                params = Object.assign({}, data.params, params)
 
                 publisher.on('videoElementCreated', event => {
                     $(event.element).prop({
@@ -187,17 +191,18 @@ function Meet(container)
                             disablePictureInPicture: true, // this does not work in Firefox
                             tabindex: -1
                     })
-                    updateLayout()
+                    resize()
                 })
 
-                publisher.createVideoElement(wrapper, 'PREPEND')
+                wrapper = participantCreate(params)
 
-                sessionData.wrapper = wrapper
-
-                // Publish the stream
-                if (sessionData.role != 'SUBSCRIBER') {
+                if (data.canPublish) {
+                    publisher.createVideoElement(wrapper, 'PREPEND')
                     session.publish(publisher)
                 }
+
+                resize()
+                sessionData.wrapper = wrapper
             })
             .catch(error => {
                 console.error('There was an error connecting to the session: ', error.message);
@@ -427,7 +432,7 @@ function Meet(container)
                 if (conn = connections[connId]) {
                     data = JSON.parse(signal.data)
 
-                    videoWrapperUpdate(conn.element, data)
+                    participantUpdate(conn.element, data)
                     nicknameUpdate(data.nickname, connId)
                 }
                 break
@@ -571,7 +576,7 @@ function Meet(container)
             try {
                 publisher.publishAudio(!audioActive)
                 audioActive = !audioActive
-                videoWrapperUpdate(sessionData.wrapper, { audioActive })
+                participantUpdate(sessionData.wrapper, { audioActive })
                 signalUserUpdate()
             } catch (e) {
                 console.error(e)
@@ -593,7 +598,7 @@ function Meet(container)
             try {
                 publisher.publishVideo(!videoActive)
                 videoActive = !videoActive
-                videoWrapperUpdate(sessionData.wrapper, { videoActive })
+                participantUpdate(sessionData.wrapper, { videoActive })
                 signalUserUpdate()
             } catch (e) {
                 console.error(e)
@@ -649,24 +654,32 @@ function Meet(container)
     }
 
     /**
+     * Create a participant element in the matrix. Depending on the `canPublish`
+     * parameter it will be a video element wrapper inside the matrix or a simple
+     * tag-like element on the subscribers list.
+     *
+     * @param params Connection metadata/params
+     *
+     * @return The element
+     */
+    function participantCreate(params) {
+        if (params.canPublish) {
+            return publisherCreate(params)
+        }
+
+        return subscriberCreate(params)
+    }
+
+    /**
      * Create a <video> element wrapper with controls
      *
-     * @param container The parent element
-     * @param params    Connection metadata/params
+     * @param params Connection metadata/params
      */
-    function videoWrapperCreate(container, params) {
+    function publisherCreate(params) {
         // Create the element
-        let wrapper = $('<div class="meet-video">').html(
-            svgIcon('user', 'fas', 'watermark')
-            + '<div class="dropdown">'
-                + '<a href="#" class="nickname btn btn-link" title="Nickname" aria-haspopup="true" aria-expanded="false" role="button">'
-                    + '<span class="content"></span>'
-                    + '<span class="icon">' + svgIcon('user') + '</span>'
-                + '</a>'
-                + '<div class="dropdown-menu">'
-                    + '<a class="dropdown-item action-dismiss" href="#">Dismiss</a>'
-                + '</div>'
-            + '</div>'
+        let wrapper = $(
+            '<div class="meet-video">'
+            + svgIcon('user', 'fas', 'watermark')
             + '<div class="controls">'
                 + '<button type="button" class="btn btn-link link-audio hidden" title="Mute audio">' + svgIcon('volume-mute') + '</button>'
                 + '<button type="button" class="btn btn-link link-fullscreen closed hidden" title="Full screen">' + svgIcon('expand') + '</button>'
@@ -676,56 +689,23 @@ function Meet(container)
                 + '<span class="bg-danger status-audio hidden">' + svgIcon('microphone') + '</span>'
                 + '<span class="bg-danger status-video hidden">' + svgIcon('video') + '</span>'
             + '</div>'
+            + '</div>'
         )
 
-        if (params.publisher) {
-            // Add events for nickname change
-            let nickname = wrapper.addClass('publisher').find('.nickname')
-            let editable = nickname.find('.content')[0]
-            let editableEnable = () => {
-                editable.contentEditable = true
-                editable.focus()
-            }
-            let editableUpdate = () => {
-                editable.contentEditable = false
-                sessionData.params.nickname = editable.innerText
-                signalUserUpdate()
-                nicknameUpdate(editable.innerText, session.connection.connectionId)
-            }
+        // Append the nickname widget
+        wrapper.find('.controls').before(nicknameWidget(params))
 
-            nickname.on('click', editableEnable)
-
-            $(editable).on('blur', editableUpdate)
-                .on('click', editableEnable)
-                .on('keydown', e => {
-                    // Enter or Esc
-                    if (e.keyCode == 13 || e.keyCode == 27) {
-                        editableUpdate()
-                        return false
-                    }
-                })
-        } else {
+        if (!params.self) {
+            // Enable audio mute button
             wrapper.find('.link-audio').removeClass('hidden')
                 .on('click', e => {
                     let video = wrapper.find('video')[0]
                     video.muted = !video.muted
                     wrapper.find('.link-audio')[video.muted ? 'addClass' : 'removeClass']('text-danger')
                 })
-
-            if (role == 'MODERATOR') {
-                wrapper.addClass('moderated')
-
-                wrapper.find('.nickname').attr({title: 'Options', 'data-toggle': 'dropdown'}).dropdown()
-
-                wrapper.find('.action-dismiss').on('click', e => {
-                    if (sessionData.onDismiss) {
-                        sessionData.onDismiss(params.connId)
-                    }
-                })
-            }
         }
 
-        videoWrapperUpdate(wrapper, params)
+        participantUpdate(wrapper, params)
 
         // Fullscreen control
         if (document.fullscreenEnabled) {
@@ -749,7 +729,10 @@ function Meet(container)
 
         numOfVideos++
 
-        return wrapper[params.publisher ? 'prependTo' : 'appendTo'](container).get(0)
+        // Remove the subscriber element, if exists
+        $('#subscriber-' + params.connId).remove()
+
+        return wrapper[params.self ? 'prependTo' : 'appendTo'](container).get(0)
     }
 
     /**
@@ -758,18 +741,104 @@ function Meet(container)
      * @param wrapper The wrapper element
      * @param params  Connection metadata/params
      */
-    function videoWrapperUpdate(wrapper, params) {
+    function participantUpdate(wrapper, params) {
+        const $element = $(wrapper)
+
         if ('audioActive' in params) {
-            $(wrapper).find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
+            $element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
         }
 
         if ('videoActive' in params) {
-            $(wrapper).find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
+            $element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
         }
 
         if ('nickname' in params) {
-            $(wrapper).find('.nickname > .content').text(params.nickname)
+            $element.find('.meet-nickname > .content').text(params.nickname)
         }
+
+        if (params.self) {
+            $element.addClass('self')
+        }
+
+        if (role == 'MODERATOR') {
+            $element.addClass('moderated')
+        }
+    }
+
+    /**
+     * Create a tag-like element for a subscriber participant
+     *
+     * @param params Connection metadata/params
+     */
+    function subscriberCreate(params) {
+        // Create the element
+        let wrapper = $('<div class="meet-subscriber">').append(nicknameWidget(params))
+
+        participantUpdate(wrapper, params)
+
+        return wrapper[params.self ? 'prependTo' : 'appendTo'](subscribersContainer)
+            .attr('id', 'subscriber-' + params.connId)
+            .get(0)
+    }
+
+    /**
+     * Create a tag-like nickname widget
+     *
+     * @param object params Connection metadata/params
+     */
+    function nicknameWidget(params) {
+        // Create the element
+        let element = $(
+            '<div class="dropdown">'
+                + '<a href="#" class="meet-nickname btn" title="Nickname" aria-haspopup="true" aria-expanded="false" role="button">'
+                    + '<span class="content"></span>'
+                    + '<span class="icon">' + svgIcon('user') + '</span>'
+                + '</a>'
+                + '<div class="dropdown-menu">'
+                    + '<a class="dropdown-item action-dismiss" href="#">Dismiss</a>'
+                + '</div>'
+            + '</div>'
+        )
+
+        let nickname = element.find('.meet-nickname')
+            .addClass('btn btn-outline-' + (params.self ? 'primary' : 'secondary'))
+
+        if (params.self) {
+            // Add events for nickname change
+            let editable = element.find('.content')[0]
+            let editableEnable = () => {
+                editable.contentEditable = true
+                editable.focus()
+            }
+            let editableUpdate = () => {
+                editable.contentEditable = false
+                sessionData.params.nickname = editable.innerText
+                signalUserUpdate()
+                nicknameUpdate(editable.innerText, session.connection.connectionId)
+            }
+
+            nickname.on('click', editableEnable)
+
+            $(editable).on('blur', editableUpdate)
+                .on('keydown', e => {
+                    // Enter or Esc
+                    if (e.keyCode == 13 || e.keyCode == 27) {
+                        editableUpdate()
+                        return false
+                    }
+                })
+        } else if (role == 'MODERATOR') {
+            nickname.attr({title: 'Options', 'data-toggle': 'dropdown'})
+                .dropdown({boundary: container})
+
+            element.find('.action-dismiss').on('click', e => {
+                if (sessionData.onDismiss) {
+                    sessionData.onDismiss(params.connId)
+                }
+            })
+        }
+
+        return element.get(0)
     }
 
     /**
@@ -778,6 +847,11 @@ function Meet(container)
     function resize() {
         containerWidth = container.offsetWidth
         containerHeight = container.offsetHeight
+
+        if (subscribersContainer) {
+            containerHeight -= subscribersContainer.offsetHeight
+        }
+
         updateLayout()
         $(container).parent()[window.screen.width <= 768 ? 'addClass' : 'removeClass']('mobile')
     }
@@ -985,6 +1059,15 @@ function Meet(container)
             publisher.off('streamAudioVolumeChange')
             volumeElement.firstChild.style.height = 0
         }
+    }
+
+    function connectionData(connection) {
+        // Note: we're sending a json from two sources (server-side when
+        // creating a token/connection, and client-side when joining the session)
+        // OpenVidu is unable to merge these two objects into one, for it it is only
+        // two strings, so it puts a "%/%" separator in between, we'll replace it with comma
+        // to get one parseable json object
+        return JSON.parse(connection.data.replace('}%/%{', ','))
     }
 }
 

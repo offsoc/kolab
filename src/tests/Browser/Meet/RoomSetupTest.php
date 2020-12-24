@@ -170,9 +170,9 @@ class RoomSetupTest extends TestCaseDusk
                 ->click('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
-                ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
+                ->whenAvailable('div.meet-video.self', function (Browser $browser) {
                     $browser->assertVisible('video')
-                        ->assertSeeIn('.nickname', 'john')
+                        ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertMissing('.controls button.link-audio')
                         ->assertMissing('.status .status-audio')
@@ -193,21 +193,21 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertSeeIn('@setup-button', "JOIN")
                 // Join the room, disable cam/mic
                 ->select('@setup-mic-select', '')
-                ->select('@setup-cam-select', '')
+                //->select('@setup-cam-select', '')
                 ->click('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
-                ->whenAvailable('div.meet-video.publisher', function (Browser $browser) {
+                ->whenAvailable('div.meet-video.self', function (Browser $browser) {
                     $browser->assertVisible('video')
-                        ->assertVisible('.nickname')
+                        ->assertVisible('.meet-nickname')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertMissing('.controls button.link-audio')
                         ->assertVisible('.status .status-audio')
-                        ->assertVisible('.status .status-video');
+                        ->assertMissing('.status .status-video');
                 })
-                ->whenAvailable('div.meet-video:not(.publisher)', function (Browser $browser) {
+                ->whenAvailable('div.meet-video:not(.self)', function (Browser $browser) {
                     $browser->assertVisible('video')
-                        ->assertSeeIn('.nickname', 'john')
+                        ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
                         ->assertMissing('.status .status-audio')
@@ -225,16 +225,16 @@ class RoomSetupTest extends TestCaseDusk
             }
 
             // Check guest's elements in the owner's window
-            $browser->waitFor('@session div.meet-video:nth-child(2)')
-                ->assertElementsCount('@session div.meet-video', 2)
-                ->whenAvailable('div.meet-video:not(.publisher)', function (Browser $browser) {
-                    $browser->assertMissing('video')
-                        ->assertVisible('.nickname')
+            $browser
+                ->whenAvailable('div.meet-video:not(.self)', function (Browser $browser) {
+                    $browser->assertVisible('video')
+                        ->assertVisible('.meet-nickname')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
                         ->assertVisible('.status .status-audio')
-                        ->assertVisible('.status .status-video');
-                });
+                        ->assertMissing('.status .status-video');
+                })
+                ->assertElementsCount('@session div.meet-video', 2);
 
             // Test leaving the room
 
@@ -243,7 +243,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->waitForLocation('/login');
 
             // Expect the participant removed from other users windows
-            $browser->waitUntilMissing('@session div.meet-video:nth-child(2)');
+            $browser->waitUntilMissing('@session div.meet-video:not(.self)');
 
             // Join the room as guest again
             $guest->visit(new RoomPage('john'))
@@ -258,7 +258,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertSeeIn('@setup-button', "JOIN")
                 // Join the room, disable cam/mic
                 ->select('@setup-mic-select', '')
-                ->select('@setup-cam-select', '')
+                //->select('@setup-cam-select', '')
                 ->click('@setup-button')
                 ->waitFor('@session');
 
@@ -278,6 +278,93 @@ class RoomSetupTest extends TestCaseDusk
             })
                 ->assertMissing('#leave-dialog')
                 ->waitForLocation('/login');
+        });
+    }
+
+    /**
+     * Test two subscribers-only users in a room
+     *
+     * @group openvidu
+     * @depends testTwoUsersInARoom
+     */
+    public function testSubscribers(): void
+    {
+        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+
+        $this->browse(function (Browser $browser, Browser $guest) {
+            // Join the room as the owner
+            $browser->visit(new RoomPage('john'))
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                ->waitFor('@setup-status-message')
+                ->type('@setup-nickname-input', 'john')
+                ->select('@setup-mic-select', '')
+                ->select('@setup-cam-select', '')
+                ->click('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form')
+                ->whenAvailable('@subscribers .meet-subscriber.self', function (Browser $browser) {
+                    $browser->assertSeeIn('.meet-nickname', 'john');
+                })
+                ->assertElementsCount('@session div.meet-video', 0)
+                ->assertElementsCount('@session video', 0)
+                ->assertElementsCount('@session .meet-subscriber', 1)
+                ->assertToolbar([
+                    'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'video' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
+                    'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'security' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                ]);
+
+            // After the owner "opened the room" guest should be able to join
+            // In one browser window act as a guest
+            $guest->visit(new RoomPage('john'))
+                ->waitUntilMissing('@setup-status-message', 10)
+                ->assertSeeIn('@setup-button', "JOIN")
+                // Join the room, disable cam/mic
+                ->select('@setup-mic-select', '')
+                ->select('@setup-cam-select', '')
+                ->click('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form')
+                ->whenAvailable('@subscribers .meet-subscriber.self', function (Browser $browser) {
+                    $browser->assertVisible('.meet-nickname');
+                })
+                ->whenAvailable('@subscribers .meet-subscriber:not(.self)', function (Browser $browser) {
+                    $browser->assertSeeIn('.meet-nickname', 'john');
+                })
+                ->assertElementsCount('@session div.meet-video', 0)
+                ->assertElementsCount('@session video', 0)
+                ->assertElementsCount('@session div.meet-subscriber', 2)
+                ->assertToolbar([
+                    'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'video' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
+                    'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                ]);
+
+            // Check guest's elements in the owner's window
+            $browser
+                ->whenAvailable('@subscribers .meet-subscriber:not(.self)', function (Browser $browser) {
+                    $browser->assertVisible('.meet-nickname');
+                })
+                ->assertElementsCount('@session div.meet-video', 0)
+                ->assertElementsCount('@session video', 0)
+                ->assertElementsCount('@session .meet-subscriber', 2);
+
+            // Test leaving the room
+
+            // Guest is leaving
+            $guest->click('@menu button.link-logout')
+                ->waitForLocation('/login');
+
+            // Expect the participant removed from other users windows
+            $browser->waitUntilMissing('@session .meet-subscriber:not(.self)');
         });
     }
 }

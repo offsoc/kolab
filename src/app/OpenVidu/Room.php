@@ -169,19 +169,34 @@ class Room extends Model
     /**
      * Create a OpenVidu session (connection) token
      *
+     * @param string $role User role
+     * @param array  $data User data to attach to the connection.
+     *                     It will be available client-side for everybody.
+     *
      * @return array|null Token data on success, NULL otherwise
      * @throws \Exception if session does not exist
      */
-    public function getSessionToken($role = self::ROLE_PUBLISHER): ?array
+    public function getSessionToken($role = self::ROLE_PUBLISHER, $data = []): ?array
     {
         if (!$this->session_id) {
             throw new \Exception("The room session does not exist");
         }
 
+        // FIXME: Looks like passing the role in 'data' param is the only way
+        // to make it visible for everyone in a room. So, for example we can
+        // handle/style subscribers/publishers/moderators differently on the
+        // client-side. Is this a security issue?
+        if (!empty($data)) {
+            $data += ['role' => $role];
+        } else {
+            $data = ['role' => $role];
+        }
+
         $url = 'sessions/' . $this->session_id . '/connection';
         $post = [
             'json' => [
-                'role' => $role
+                'role' => $role,
+                'data' => json_encode($data)
             ]
         ];
 

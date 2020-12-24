@@ -205,14 +205,13 @@
                     init: init ? 1 : 0,
                     picture: init ? this.makePicture() : '',
                     requestId: this.requestId(),
-                    role: this.camera || this.microphone ? 'PUBLISHER' : 'SUBSCRIBER'
+                    canPublish: !!this.camera || !!this.microphone
                 }
 
                 $('#setup-password,#setup-nickname').removeClass('is-invalid')
 
                 axios.post('/api/v4/openvidu/rooms/' + this.room, this.post, { ignoreErrors: true })
                     .then(response => {
-                        // Response data contains: session, token and shareToken
                         this.roomState = 'ready'
                         this.session = response.data
 
@@ -221,6 +220,11 @@
                         }
                     })
                     .catch(error => {
+                        if (!error.response) {
+                            console.error(error)
+                            return
+                        }
+
                         const data = error.response.data || {}
 
                         if (data.code) {
@@ -267,7 +271,7 @@
                 }
             },
             isPublisher() {
-                return this.session && this.session.role && this.session.role != 'SUBSCRIBER'
+                return this.session && this.session.canPublish
             },
             isRoomReady() {
                 return ['ready', 322, 324, 325, 326, 327].includes(this.roomState)

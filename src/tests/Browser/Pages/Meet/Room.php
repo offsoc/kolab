@@ -75,6 +75,7 @@ class Room extends Page
             '@menu' => '#meet-session-menu',
 
             '@session' => '#meet-session',
+            '@subscribers' => '#meet-subscribers',
 
             '@chat' => '#meet-chat',
             '@chat-input' => '#meet-chat textarea',
@@ -161,7 +162,7 @@ class Room extends Page
     public function setNickname($browser, $selector, $nickname): void
     {
         // Use script() because type() does not work with this contenteditable widget
-        $selector = $selector . ' .nickname span';
+        $selector = $selector . ' .meet-nickname .content';
         $browser->script(
             "var element = document.querySelector('$selector');"
             . "element.focus();"

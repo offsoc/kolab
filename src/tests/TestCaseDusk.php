@@ -34,6 +34,7 @@ abstract class TestCaseDusk extends BaseTestCase
             '--disable-gpu',
             '--headless',
             '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
             '--ignore-certificate-errors',
             '--incognito',
         ]);

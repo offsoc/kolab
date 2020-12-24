@@ -297,6 +297,7 @@ class UsersController extends Controller
 
         DB::beginTransaction();
 
+        // @phpstan-ignore-next-line
         if ($this->deleteBeforeCreate) {
             $this->deleteBeforeCreate->forceDelete();
         }

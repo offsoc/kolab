@@ -221,20 +221,20 @@ class RoomSecurityTest extends TestCaseDusk
             // Guest automatically anters the room
             $guest->waitFor('@session', 12)
                 // make sure he has no access to the Options menu
-                ->waitFor('@session .meet-video:not(.publisher)')
-                ->assertSeeIn('@session .meet-video:not(.publisher) a.nickname', 'John')
+                ->waitFor('@session .meet-video:not(.self)')
+                ->assertSeeIn('@session .meet-video:not(.self) .meet-nickname', 'John')
                 // TODO: Assert title and icon
-                ->click('@session .meet-video:not(.publisher) a.nickname')
+                ->click('@session .meet-video:not(.self) .meet-nickname')
                 ->pause(100)
                 ->assertMissing('.dropdown-menu');
 
             // Test dismissing the participant
-            $owner->click('@session .meet-video:not(.publisher) a.nickname')
-                ->waitFor('@session .meet-video:not(.publisher) .dropdown-menu')
-                ->assertSeeIn('@session .meet-video:not(.publisher) .dropdown-menu > .action-dismiss', 'Dismiss')
-                ->click('@session .meet-video:not(.publisher) .dropdown-menu > .action-dismiss')
+            $owner->click('@session .meet-video:not(.self) .meet-nickname')
+                ->waitFor('@session .meet-video:not(.self) .dropdown-menu')
+                ->assertSeeIn('@session .meet-video:not(.self) .dropdown-menu > .action-dismiss', 'Dismiss')
+                ->click('@session .meet-video:not(.self) .dropdown-menu > .action-dismiss')
                 ->waitUntilMissing('.dropdown-menu')
-                ->waitUntilMissing('@session .meet-video:not(.publisher)');
+                ->waitUntilMissing('@session .meet-video:not(.self)');
 
             // Expect a "end of session" dialog on the participant side
             $guest->with(new Dialog('#leave-dialog'), function (Browser $browser) {

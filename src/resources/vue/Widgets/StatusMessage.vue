@@ -18,8 +18,8 @@
 
     export default {
         props: {
-            status: { type: String, default: () => 'init' },
-            statusLabels: { type: Object, default: () => defaultLabels }
+            status: { type: [String, Number], default: 'init' },
+            statusLabels: { type: Object, default: defaultLabels }
         },
         methods: {
             statusClass() {

@@ -116,6 +116,7 @@ class OpenViduTest extends TestCase
 
         $this->assertSame(Room::ROLE_MODERATOR, $json['role']);
         $this->assertSame($session_id, $json['session']);
+        $this->assertFalse($json['canPublish']);
         $this->assertTrue(is_string($session_id) && !empty($session_id));
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
         $this->assertTrue(!array_key_exists('shareToken', $json));
@@ -132,20 +133,21 @@ class OpenViduTest extends TestCase
         $this->assertTrue(empty($json['token']));
         $this->assertTrue(empty($json['shareToken']));
 
-        // Non-owner, now the session exists, with 'init', but no 'role' argument
+        // Non-owner, now the session exists, with 'init', but no 'canPublish' argument
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
         $response->assertStatus(200);
 
         $json = $response->json();
 
         $this->assertSame(Room::ROLE_SUBSCRIBER, $json['role']);
+        $this->assertFalse($json['canPublish']);
         $this->assertSame($session_id, $json['session']);
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
         $this->assertTrue($json['token'] != $john_token);
         $this->assertTrue(empty($json['shareToken']));
 
         // Non-owner, now the session exists, with 'init', and with 'role=PUBLISHER'
-        $post = ['role' => Room::ROLE_PUBLISHER, 'init' => 1];
+        $post = ['canPublish' => true, 'init' => 1];
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
@@ -153,6 +155,7 @@ class OpenViduTest extends TestCase
 
         $this->assertSame(Room::ROLE_PUBLISHER, $json['role']);
         $this->assertSame($session_id, $json['session']);
+        $this->assertTrue($json['canPublish']);
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
         $this->assertTrue($json['token'] != $john_token);
         $this->assertTrue(!array_key_exists('shareToken', $json));
@@ -322,12 +325,13 @@ class OpenViduTest extends TestCase
 
         // Non-owner, locked room, join request accepted
         $post['init'] = 1;
-        $post['role'] = Room::ROLE_PUBLISHER;
+        $post['canPublish'] = true;
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(200);
         $json = $response->json();
 
         $this->assertSame(Room::ROLE_PUBLISHER, $json['role']);
+        $this->assertTrue($json['canPublish']);
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
 
         // TODO: Test a scenario where both password and lock are enabled
@@ -348,13 +352,14 @@ class OpenViduTest extends TestCase
         $room = Room::where('name', 'john')->first();
 
         // Guest, request with screenShare token
-        $post = ['role' => Room::ROLE_PUBLISHER, 'screenShare' => 1, 'init' => 1];
+        $post = ['canPublish' => true, 'screenShare' => 1, 'init' => 1];
         $response = $this->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
 
         $this->assertSame(Room::ROLE_PUBLISHER, $json['role']);
+        $this->assertTrue($json['canPublish']);
         $this->assertSame($room->session_id, $json['session']);
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
         $this->assertTrue(strpos($json['shareToken'], 'wss://') === 0);
