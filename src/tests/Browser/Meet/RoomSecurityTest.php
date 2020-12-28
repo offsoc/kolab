@@ -170,7 +170,8 @@ class RoomSecurityTest extends TestCaseDusk
             $guest->visit(new RoomPage('john'))
                 ->waitFor('@setup-form')
                 ->waitUntilMissing('@setup-status-message.loading')
-                ->assertSeeIn('@setup-button:not([disabled]).btn-success', 'JOIN NOW')
+                ->assertButtonEnabled('@setup-button')
+                ->assertSeeIn('@setup-button.btn-success', 'JOIN NOW')
                 // try without the nickname
                 ->click('@setup-button')
                 ->waitFor('@setup-nickname-input.is-invalid')
@@ -179,12 +180,13 @@ class RoomSecurityTest extends TestCaseDusk
                     "The room is locked. Please, enter your name and try again."
                 )
                 ->assertMissing('@setup-password-input')
-                ->assertSeeIn('@setup-button:not([disabled]).btn-success', 'JOIN NOW')
+                ->assertButtonEnabled('@setup-button')
+                ->assertSeeIn('@setup-button.btn-success', 'JOIN NOW')
                 ->type('@setup-nickname-input', 'Guest<p>')
                 ->click('@setup-button')
                 ->assertMissing('@setup-nickname-input.is-invalid')
-                ->waitFor('@setup-button[disabled]')
-                ->assertSeeIn('@setup-status-message', "Waiting for permission to join the room.");
+                ->waitForText("Waiting for permission to join the room.")
+                ->assertButtonDisabled('@setup-button');
 
             // Test denying the request (this will also test custom toasts)
             $owner
@@ -208,8 +210,8 @@ class RoomSecurityTest extends TestCaseDusk
                 ->waitUntilMissing('@setup-status-message.loading')
                 ->type('@setup-nickname-input', 'guest')
                 ->click('@setup-button')
-                ->waitFor('@setup-button[disabled]')
-                ->assertSeeIn('@setup-status-message', "Waiting for permission to join the room.");
+                ->waitForText("Waiting for permission to join the room.")
+                ->assertButtonDisabled('@setup-button');
 
             $owner
                 ->whenAvailable(new Toast(Toast::TYPE_CUSTOM), function ($browser) {

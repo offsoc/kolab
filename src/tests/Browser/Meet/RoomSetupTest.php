@@ -56,7 +56,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertMissing('@login-form')
                 ->assertVisible('@setup-form')
                 ->assertSeeIn('@setup-status-message', "The room does not exist.")
-                ->assertVisible('@setup-button[disabled]');
+                ->assertButtonDisabled('@setup-button');
         });
     }
 
@@ -166,7 +166,10 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertSeeIn('@setup-status-message', "The room is closed. It will be open for others after you join.")
                 ->assertSeeIn('@setup-button', "JOIN")
                 ->type('@setup-nickname-input', 'john')
-                // Join the room
+                // Join the room (click the button twice, to make sure it does not
+                // produce redundant participants/subscribers in the room)
+                ->click('@setup-button')
+                ->pause(10)
                 ->click('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')

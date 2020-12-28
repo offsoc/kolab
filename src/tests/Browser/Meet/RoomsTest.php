@@ -89,7 +89,7 @@ class RoomsTest extends TestCaseDusk
             $browser->click('@links a.link-chat')
                 ->waitFor('#meet-rooms')
                 ->waitFor('.card-text a')
-                ->assertSeeIn('.card-title', 'Video chat')
+                ->assertSeeIn('.card-title', 'Voice & Video Conferencing')
                 ->assertSeeIn('.card-text a', $href)
                 ->assertAttribute('.card-text a', 'href', $href)
                 ->click('.card-text a')

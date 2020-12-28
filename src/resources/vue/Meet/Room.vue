@@ -70,9 +70,8 @@
                                 <input type="password" class="form-control" id="setup-password" v-model="password" placeholder="Password">
                             </div>
                             <div class="mt-3">
-                                <button type="button"
+                                <button type="button" id="join-button"
                                         @click="joinSession"
-                                        :disabled="roomState == 'init' || roomState == 327 || roomState == 404"
                                         :class="'btn w-100 btn-' + (isRoomReady() ? 'success' : 'primary')"
                                 >
                                     <span v-if="isRoomReady()">JOIN NOW</span>
@@ -130,6 +129,8 @@
     import LogonForm from '../Login'
     import SessionSecurityOptions from './SessionSecurityOptions'
 
+    let roomRequest
+
     export default {
         components: {
             LogonForm,
@@ -177,7 +178,7 @@
             this.setupSession()
         },
         beforeDestroy() {
-            clearTimeout(window.roomRequest)
+            clearTimeout(roomRequest)
 
             if (this.meet) {
                 this.meet.leaveRoom()
@@ -198,6 +199,8 @@
                 axios.post('/api/v4/openvidu/rooms/' + this.room + '/connections/' + id + '/dismiss')
             },
             initSession(init) {
+                const button = $('#join-button').prop('disabled', true)
+
                 this.post = {
                     password: this.password,
                     nickname: this.nickname,
@@ -212,6 +215,13 @@
 
                 axios.post('/api/v4/openvidu/rooms/' + this.room, this.post, { ignoreErrors: true })
                     .then(response => {
+                        button.prop('disabled', false)
+
+                        // We already have token, the response is redundant
+                        if (this.roomState == 'ready' && this.session.token) {
+                            return
+                        }
+
                         this.roomState = 'ready'
                         this.session = response.data
 
@@ -233,6 +243,8 @@
                             this.roomState = error.response.status
                         }
 
+                        button.prop('disabled', this.roomState == 'init' || this.roomState == 327 || this.roomState == 404)
+
                         if (data.config) {
                             this.session.config = data.config
                         }
@@ -241,7 +253,12 @@
                             case 323:
                                 // Waiting for the owner to open the room...
                                 // Update room state every 10 seconds
-                                window.roomRequest = setTimeout(() => { this.initSession() }, 10000)
+                                roomRequest = setTimeout(() => { this.initSession() }, 10000)
+                                break;
+
+                            case 324:
+                                // Room is ready for the owner, but the 'init' was not requested yet
+                                clearTimeout(roomRequest)
                                 break;
 
                             case 325:
@@ -261,7 +278,7 @@
                             case 327:
                                 // Waiting for the owner's approval to join
                                 // Update room state every 10 seconds
-                                window.roomRequest = setTimeout(() => { this.initSession(true) }, 10000)
+                                roomRequest = setTimeout(() => { this.initSession(true) }, 10000)
                                 break;
                         }
                     })
@@ -334,7 +351,7 @@
                     return
                 }
 
-                clearTimeout(window.roomRequest)
+                clearTimeout(roomRequest)
 
                 $('#app').addClass('meet')
                 $('#meet-setup').addClass('hidden')

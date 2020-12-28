@@ -28,7 +28,8 @@
                         <a v-else class="nav-link link-signup" :href="appUrl + '/signup'">Signup</a>
                     </li>
                     <li class="nav-item" v-if="loggedIn">
-                        <router-link class="nav-link link-dashboard" active-class="active" :to="{name: 'dashboard'}">Cockpit</router-link>
+                        <router-link v-if="$root.hasRoute('dashboard')" class="nav-link link-dashboard" active-class="active" :to="{name: 'dashboard'}">Cockpit</router-link>
+                        <a v-else class="nav-link link-dashboard" :href="appUrl + '/dashboard'">Cockpit</a>
                     </li>
                     <li class="nav-item" v-if="loggedIn">
                         <router-link class="nav-link menulogin link-logout" active-class="active" :to="{name: 'logout'}">Logout</router-link>

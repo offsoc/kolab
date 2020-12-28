@@ -68,7 +68,7 @@ class Room extends Page
             '@setup-volume' => '#setup-preview .volume',
             '@setup-video' => '#setup-preview video',
             '@setup-status-message' => '#meet-setup div.status-message',
-            '@setup-button' => '#meet-setup form button',
+            '@setup-button' => '#join-button',
 
             '@toolbar' => '#meet-session-toolbar',
 

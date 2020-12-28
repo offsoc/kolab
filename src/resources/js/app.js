@@ -104,6 +104,8 @@ const app = new Vue({
             if (redirect !== false) {
                 if (this.hasRoute('login')) {
                     this.$router.push({ name: 'login' })
+                } else {
+                    location.href = window.config['app.url'] + '/login'
                 }
             }
 
