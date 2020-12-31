@@ -31,6 +31,9 @@ rpm -qv php-mysqlnd >/dev/null 2>&1 || \
     test ! -z "$(php --ini | grep mysql)" || \
     die "Is php-mysqlnd installed?"
 
+test ! -z "$(php --modules | grep swoole)" || \
+    die "Is swoole installed?"
+
 base_dir=$(dirname $(dirname $0))
 
 docker pull docker.io/kolab/centos7:latest
