@@ -137,6 +137,10 @@ class SkusController extends Controller
         $skus = Sku::orderBy('title')->get();
 
         foreach ($skus as $sku) {
+            if (!class_exists($sku->handler_class)) {
+                continue;
+            }
+
             if (!$sku->handler_class::isAvailable($sku, $user)) {
                 continue;
             }
@@ -167,6 +171,10 @@ class SkusController extends Controller
      */
     protected function skuElement($sku): ?array
     {
+        if (!class_exists($sku->handler_class)) {
+            return null;
+        }
+
         $data = array_merge($sku->toArray(), $sku->handler_class::metadata($sku));
 
         // ignore incomplete handlers
