@@ -47,7 +47,7 @@ class EntitlementObserver
 
         while (true) {
             $allegedly_unique = \App\Utils::uuidStr();
-            if (!Entitlement::find($allegedly_unique)) {
+            if (!Entitlement::withTrashed()->find($allegedly_unique)) {
                 $entitlement->{$entitlement->getKeyName()} = $allegedly_unique;
                 break;
             }

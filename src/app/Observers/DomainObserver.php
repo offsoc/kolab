@@ -18,7 +18,7 @@ class DomainObserver
     {
         while (true) {
             $allegedly_unique = \App\Utils::uuidInt();
-            if (!Domain::find($allegedly_unique)) {
+            if (!Domain::withTrashed()->find($allegedly_unique)) {
                 $domain->{$domain->getKeyName()} = $allegedly_unique;
                 break;
             }

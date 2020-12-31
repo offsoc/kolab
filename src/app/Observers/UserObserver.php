@@ -25,7 +25,7 @@ class UserObserver
         if (!$user->id) {
             while (true) {
                 $allegedly_unique = \App\Utils::uuidInt();
-                if (!User::find($allegedly_unique)) {
+                if (!User::withTrashed()->find($allegedly_unique)) {
                     $user->{$user->getKeyName()} = $allegedly_unique;
                     break;
                 }
