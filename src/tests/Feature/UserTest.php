@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Domain;
+use App\Group;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -17,6 +18,7 @@ class UserTest extends TestCase
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
         $this->deleteTestUser('UserAccountC@UserAccount.com');
+        $this->deleteTestGroup('test-group@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
     }
 
@@ -26,6 +28,7 @@ class UserTest extends TestCase
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
         $this->deleteTestUser('UserAccountC@UserAccount.com');
+        $this->deleteTestGroup('test-group@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
 
         parent::tearDown();
@@ -235,7 +238,7 @@ class UserTest extends TestCase
 
         $this->assertCount(0, User::withTrashed()->where('id', $id)->get());
 
-        // Test an account with users
+        // Test an account with users, domain, and group
         $userA = $this->getTestUser('UserAccountA@UserAccount.com');
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
         $userC = $this->getTestUser('UserAccountC@UserAccount.com');
@@ -249,15 +252,20 @@ class UserTest extends TestCase
         $domain->assignPackage($package_domain, $userA);
         $userA->assignPackage($package_kolab, $userB);
         $userA->assignPackage($package_kolab, $userC);
+        $group = $this->getTestGroup('test-group@UserAccount.com');
+        $group->assignToWallet($userA->wallets->first());
 
         $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
         $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
         $entitlementsC = \App\Entitlement::where('entitleable_id', $userC->id);
         $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domain->id);
+        $entitlementsGroup = \App\Entitlement::where('entitleable_id', $group->id);
+
         $this->assertSame(4, $entitlementsA->count());
         $this->assertSame(4, $entitlementsB->count());
         $this->assertSame(4, $entitlementsC->count());
         $this->assertSame(1, $entitlementsDomain->count());
+        $this->assertSame(1, $entitlementsGroup->count());
 
         // Delete non-controller user
         $userC->delete();
@@ -272,12 +280,54 @@ class UserTest extends TestCase
         $this->assertSame(0, $entitlementsA->count());
         $this->assertSame(0, $entitlementsB->count());
         $this->assertSame(0, $entitlementsDomain->count());
+        $this->assertSame(0, $entitlementsGroup->count());
         $this->assertTrue($userA->fresh()->trashed());
         $this->assertTrue($userB->fresh()->trashed());
         $this->assertTrue($domain->fresh()->trashed());
+        $this->assertTrue($group->fresh()->trashed());
         $this->assertFalse($userA->isDeleted());
         $this->assertFalse($userB->isDeleted());
         $this->assertFalse($domain->isDeleted());
+        $this->assertFalse($group->isDeleted());
+
+        $userA->forceDelete();
+
+        $all_entitlements = \App\Entitlement::where('wallet_id', $userA->wallets->first()->id);
+
+        $this->assertSame(0, $all_entitlements->withTrashed()->count());
+        $this->assertCount(0, User::withTrashed()->where('id', $userA->id)->get());
+        $this->assertCount(0, User::withTrashed()->where('id', $userB->id)->get());
+        $this->assertCount(0, User::withTrashed()->where('id', $userC->id)->get());
+        $this->assertCount(0, Domain::withTrashed()->where('id', $domain->id)->get());
+        $this->assertCount(0, Group::withTrashed()->where('id', $group->id)->get());
+    }
+
+    /**
+     * Test user deletion vs. group membership
+     */
+    public function testDeleteAandGroups(): void
+    {
+        Queue::fake();
+
+        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $userA = $this->getTestUser('UserAccountA@UserAccount.com');
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+        $userA->assignPackage($package_kolab, $userB);
+        $group = $this->getTestGroup('test-group@UserAccount.com');
+        $group->members = ['test@gmail.com', $userB->email];
+        $group->assignToWallet($userA->wallets->first());
+        $group->save();
+
+        $userGroups = $userA->groups()->get();
+        $this->assertSame(1, $userGroups->count());
+        $this->assertSame($group->id, $userGroups->first()->id);
+
+        $userB->delete();
+
+        $this->assertSame(['test@gmail.com'], $group->fresh()->members);
+
+        // Twice, one for save() and one for delete() above
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 2);
     }
 
     /**

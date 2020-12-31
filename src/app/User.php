@@ -414,6 +414,23 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Return groups controlled by the current user.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     */
+    public function groups()
+    {
+        $wallets = $this->wallets()->pluck('id')->all();
+
+        $groupIds = \App\Entitlement::whereIn('entitlements.wallet_id', $wallets)
+            ->where('entitlements.entitleable_type', Group::class)
+            ->pluck('entitleable_id')
+            ->all();
+
+        return Group::whereIn('id', $groupIds);
+    }
+
+    /**
      * Check if user has an entitlement for the specified SKU.
      *
      * @param string $title The SKU title
@@ -606,7 +623,7 @@ class User extends Authenticatable implements JWTSubject
             ->distinct()
             ->leftJoin('entitlements', 'entitlements.entitleable_id', '=', 'users.id')
             ->whereIn('entitlements.wallet_id', $wallets)
-            ->where('entitlements.entitleable_type', 'App\User');
+            ->where('entitlements.entitleable_type', User::class);
     }
 
     /**
@@ -622,11 +639,11 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Returns the wallet by which the user is controlled
      *
-     * @return \App\Wallet A wallet object
+     * @return ?\App\Wallet A wallet object
      */
-    public function wallet(): Wallet
+    public function wallet(): ?Wallet
     {
-        $entitlement = $this->entitlement()->first();
+        $entitlement = $this->entitlement()->withTrashed()->first();
 
         // TODO: No entitlement should not happen, but in tests we have
         //       such cases, so we fallback to the user's wallet in this case

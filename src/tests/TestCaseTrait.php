@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Domain;
+use App\Group;
 use App\Transaction;
 use App\User;
 use Carbon\Carbon;
@@ -149,6 +150,22 @@ trait TestCaseTrait
         $domain->forceDelete();
     }
 
+    protected function deleteTestGroup($email)
+    {
+        Queue::fake();
+
+        $group = Group::withTrashed()->where('email', $email)->first();
+
+        if (!$group) {
+            return;
+        }
+
+        $job = new \App\Jobs\Group\DeleteJob($group->id);
+        $job->handle();
+
+        $group->forceDelete();
+    }
+
     protected function deleteTestUser($email)
     {
         Queue::fake();
@@ -174,6 +191,17 @@ trait TestCaseTrait
         // Disable jobs (i.e. skip LDAP oprations)
         Queue::fake();
         return Domain::firstOrCreate(['namespace' => $name], $attrib);
+    }
+
+    /**
+     * Get Group object by email, create it if needed.
+     * Skip LDAP jobs.
+     */
+    protected function getTestGroup($email, $attrib = [])
+    {
+        // Disable jobs (i.e. skip LDAP oprations)
+        Queue::fake();
+        return Group::firstOrCreate(['email' => $email], $attrib);
     }
 
     /**

@@ -31,6 +31,8 @@ class SignupTest extends TestCase
 
         $this->deleteTestDomain('external.com');
         $this->deleteTestDomain('signup-domain.com');
+
+        $this->deleteTestGroup('group-test@kolabnow.com');
     }
 
     /**
@@ -44,6 +46,8 @@ class SignupTest extends TestCase
 
         $this->deleteTestDomain('external.com');
         $this->deleteTestDomain('signup-domain.com');
+
+        $this->deleteTestGroup('group-test@kolabnow.com');
 
         parent::tearDown();
     }
@@ -685,5 +689,22 @@ class SignupTest extends TestCase
         $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain, $external]);
 
         $this->assertSame($expected_result, $result);
+    }
+
+    /**
+     * Signup login/domain validation, more cases
+     *
+     * Note: Technically these include unit tests, but let's keep it here for now.
+     */
+    public function testValidateLoginMore(): void
+    {
+        $group = $this->getTestGroup('group-test@kolabnow.com');
+        $login = 'group-test';
+        $domain = 'kolabnow.com';
+        $external = false;
+
+        $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain, $external]);
+
+        $this->assertSame(['login' => 'The specified login is not available.'], $result);
     }
 }

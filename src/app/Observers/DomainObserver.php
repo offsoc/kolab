@@ -68,6 +68,10 @@ class DomainObserver
      */
     public function deleted(Domain $domain)
     {
+        if ($domain->isForceDeleting()) {
+            return;
+        }
+
         \App\Jobs\Domain\DeleteJob::dispatch($domain->id);
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
 use App\Domain;
+use App\Group;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\Sku;
@@ -30,10 +31,10 @@ class UsersController extends Controller
     ];
 
     /**
-     * On user create it is filled with a user object to force-delete
+     * On user create it is filled with a user or group object to force-delete
      * before the creation of a new user record is possible.
      *
-     * @var \App\User|null
+     * @var \App\User|\App\Group|null
      */
     protected $deleteBeforeCreate;
 
@@ -673,10 +674,10 @@ class UsersController extends Controller
     /**
      * Email address validation for use as a user mailbox (login).
      *
-     * @param string     $email   Email address
-     * @param \App\User  $user    The account owner
-     * @param ?\App\User $deleted Filled with an instance of a deleted user with
-     *                            the specified email address, if exists
+     * @param string                    $email   Email address
+     * @param \App\User                 $user    The account owner
+     * @param null|\App\User|\App\Group $deleted Filled with an instance of a deleted user or group
+     *                                           with the specified email address, if exists
      *
      * @return ?string Error message on validation error
      */
@@ -732,6 +733,17 @@ class UsersController extends Controller
         // Check if an alias with specified address already exists.
         if (User::aliasExists($email)) {
             return \trans('validation.entryexists', ['attribute' => 'email']);
+        }
+
+        // Check if a group with specified address already exists
+        if ($existing_group = Group::emailExists($email, true)) {
+            // If this is a deleted group in the same custom domain
+            // we'll force delete it before
+            if (!$domain->isPublic() && $existing_group->trashed()) {
+                $deleted = $existing_group;
+            } else {
+                return \trans('validation.entryexists', ['attribute' => 'email']);
+            }
         }
 
         return null;
@@ -796,6 +808,11 @@ class UsersController extends Controller
             if ($domain->isPublic()) {
                 return \trans('validation.entryexists', ['attribute' => 'alias']);
             }
+        }
+
+        // Check if a group with specified address already exists
+        if (Group::emailExists($email)) {
+            return \trans('validation.entryexists', ['attribute' => 'alias']);
         }
 
         return null;

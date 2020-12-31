@@ -32,6 +32,8 @@ class UsersTest extends TestCase
         $this->deleteTestUser('deleted@kolab.org');
         $this->deleteTestUser('deleted@kolabnow.com');
         $this->deleteTestDomain('userscontroller.com');
+        $this->deleteTestGroup('group-test@kolabnow.com');
+        $this->deleteTestGroup('group-test@kolab.org');
 
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
@@ -56,6 +58,8 @@ class UsersTest extends TestCase
         $this->deleteTestUser('deleted@kolab.org');
         $this->deleteTestUser('deleted@kolabnow.com');
         $this->deleteTestDomain('userscontroller.com');
+        $this->deleteTestGroup('group-test@kolabnow.com');
+        $this->deleteTestGroup('group-test@kolab.org');
 
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
@@ -1126,6 +1130,45 @@ class UsersTest extends TestCase
     }
 
     /**
+     * User email validation - tests for an address being a group email address
+     *
+     * Note: Technically these include unit tests, but let's keep it here for now.
+     * FIXME: Shall we do a http request for each case?
+     */
+    public function testValidateEmailGroup(): void
+    {
+        Queue::fake();
+
+        $john = $this->getTestUser('john@kolab.org');
+        $pub_group = $this->getTestGroup('group-test@kolabnow.com');
+        $priv_group = $this->getTestGroup('group-test@kolab.org');
+
+        // A group in a public domain, existing
+        $result = UsersController::validateEmail($pub_group->email, $john, $deleted);
+        $this->assertSame('The specified email is not available.', $result);
+        $this->assertNull($deleted);
+
+        $pub_group->delete();
+
+        // A group in a public domain, deleted
+        $result = UsersController::validateEmail($pub_group->email, $john, $deleted);
+        $this->assertSame('The specified email is not available.', $result);
+        $this->assertNull($deleted);
+
+        // A group in a private domain, existing
+        $result = UsersController::validateEmail($priv_group->email, $john, $deleted);
+        $this->assertSame('The specified email is not available.', $result);
+        $this->assertNull($deleted);
+
+        $priv_group->delete();
+
+        // A group in a private domain, deleted
+        $result = UsersController::validateEmail($priv_group->email, $john, $deleted);
+        $this->assertSame(null, $result);
+        $this->assertSame($priv_group->id, $deleted->id);
+    }
+
+    /**
      * List of alias validation cases for testValidateAlias()
      *
      * @return array Arguments for testValidateAlias()
@@ -1204,6 +1247,7 @@ class UsersTest extends TestCase
         $deleted_pub = $this->getTestUser('deleted@kolabnow.com');
         $deleted_pub->setAliases(['deleted-alias@kolabnow.com']);
         $deleted_pub->delete();
+        $group = $this->getTestGroup('group-test@kolabnow.com');
 
         // An alias that was a user email before is allowed, but only for custom domains
         $result = UsersController::validateAlias('deleted@kolab.org', $john);
@@ -1216,6 +1260,10 @@ class UsersTest extends TestCase
         $this->assertSame('The specified alias is not available.', $result);
 
         $result = UsersController::validateAlias('deleted-alias@kolabnow.com', $john);
+        $this->assertSame('The specified alias is not available.', $result);
+
+        // A grpoup with the same email address exists
+        $result = UsersController::validateAlias($group->email, $john);
         $this->assertSame('The specified alias is not available.', $result);
     }
 }

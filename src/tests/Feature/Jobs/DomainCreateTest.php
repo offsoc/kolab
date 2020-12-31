@@ -3,7 +3,6 @@
 namespace Tests\Feature\Jobs;
 
 use App\Domain;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 

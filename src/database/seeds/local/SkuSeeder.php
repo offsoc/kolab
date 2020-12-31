@@ -183,5 +183,21 @@ class SkuSeeder extends Seeder
                 ]
             );
         }
+
+        // Check existence because migration might have added this already
+        if (!\App\Sku::where('title', 'group')->first()) {
+            Sku::create(
+                [
+                    'title' => 'group',
+                    'name' => 'Group',
+                    'description' => 'Distribution list',
+                    'cost' => 0,
+                    'units_free' => 0,
+                    'period' => 'monthly',
+                    'handler_class' => 'App\Handlers\Group',
+                    'active' => true,
+                ]
+            );
+        }
     }
 }
