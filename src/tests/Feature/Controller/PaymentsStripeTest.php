@@ -489,8 +489,6 @@ class PaymentsStripeTest extends TestCase
      */
     public function testTopUpAndWebhook(): void
     {
-        $this->markTestIncomplete();
-
         Bus::fake();
 
         $user = $this->getTestUser('john@kolab.org');
@@ -541,6 +539,8 @@ class PaymentsStripeTest extends TestCase
         $client->addResponse($paymentMethod);
         $client->addResponse($setupIntent);
         $client->addResponse($paymentIntent);
+        $client->addResponse($setupIntent);
+        $client->addResponse($paymentMethod);
 
         // Expect a recurring payment as we have a valid mandate at this point
         $result = PaymentsController::topUpWallet($wallet);

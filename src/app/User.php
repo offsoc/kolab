@@ -342,13 +342,6 @@ class User extends Authenticatable implements JWTSubject
             ->where('entitleable_type', User::class);
     }
 
-    public function addEntitlement($entitlement)
-    {
-        if (!$this->entitlements->contains($entitlement)) {
-            return $this->entitlements()->save($entitlement);
-        }
-    }
-
     /**
      * Find whether an email address exists as a user (including deleted users).
      *

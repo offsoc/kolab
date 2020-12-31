@@ -33,7 +33,7 @@ class RoomControlsTest extends TestCaseDusk
     {
         // TODO: This test does not work in headless mode
         $this->markTestIncomplete();
-
+/*
         // Make sure there's no session yet
         $room = Room::where('name', 'john')->first();
         if ($room->session_id) {
@@ -79,6 +79,7 @@ class RoomControlsTest extends TestCaseDusk
                 ->assertVisible('nav')
                 ->assertVisible('@toolbar');
         });
+*/
     }
 
     /**

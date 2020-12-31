@@ -410,40 +410,6 @@ class UserTest extends TestCase
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 4);
 
         $this->assertCount(0, $user->aliases()->get());
-
-        // The test below fail since we removed validation code from the UserAliasObserver
-        $this->markTestIncomplete();
-
-        // Test sanity checks in UserAliasObserver
-        Queue::fake();
-
-        // Existing user
-        $user->setAliases(['john@kolab.org']);
-        $this->assertCount(0, $user->aliases()->get());
-
-        // Existing alias (in another account)
-        $user->setAliases(['john.doe@kolab.org']);
-        $this->assertCount(0, $user->aliases()->get());
-
-        Queue::assertNothingPushed();
-
-        // Existing user (in the same group account)
-        $ned = $this->getTestUser('ned@kolab.org');
-        $ned->setAliases(['john@kolab.org']);
-        $this->assertCount(0, $ned->aliases()->get());
-
-        // Existing alias (in the same group account)
-        $ned = $this->getTestUser('ned@kolab.org');
-        $ned->setAliases(['john.doe@kolab.org']);
-        $this->assertSame('john.doe@kolab.org', $ned->aliases()->first()->alias);
-
-        // Existing alias (in another account, public domain)
-        $user->setAliases(['alias@kolabnow.com']);
-        $ned->setAliases(['alias@kolabnow.com']);
-        $this->assertCount(0, $ned->aliases()->get());
-
-        // cleanup
-        $ned->setAliases([]);
     }
 
     /**
