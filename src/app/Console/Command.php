@@ -27,18 +27,10 @@ class Command extends \Illuminate\Console\Command
      */
     public function getObject($objectClass, $objectIdOrTitle, $objectTitle)
     {
-        if ($this->hasOption('with-deleted') && $this->option('with-deleted')) {
-            $object = $objectClass::withTrashed()->find($objectIdOrTitle);
-        } else {
-            $object = $objectClass::find($objectIdOrTitle);
-        }
+        $object = $objectClass::find($objectIdOrTitle);
 
         if (!$object && !empty($objectTitle)) {
-            if ($this->hasOption('with-deleted') && $this->option('with-deleted')) {
-                $object = $objectClass::withTrashed()->where($objectTitle, $objectIdOrTitle)->first();
-            } else {
-                $object = $objectClass::where($objectTitle, $objectIdOrTitle)->first();
-            }
+            $object = $objectClass::where($objectTitle, $objectIdOrTitle)->first();
         }
 
         return $object;
