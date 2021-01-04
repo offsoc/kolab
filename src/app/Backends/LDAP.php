@@ -256,7 +256,7 @@ class LDAP
             'uniqueMember' => []
         ];
 
-        self::setGroupAttributes($group, $entry);
+        self::setGroupAttributes($ldap, $group, $entry);
 
         $result = $ldap->add_entry($dn, $entry);
 
@@ -595,7 +595,7 @@ class LDAP
 
         $oldEntry = $ldap->get_entry($dn);
 
-        self::setGroupAttributes($group, $entry);
+        self::setGroupAttributes($ldap, $group, $entry);
 
         $result = $ldap->modify_entry($dn, $oldEntry, $entry);
 
@@ -702,11 +702,8 @@ class LDAP
     /**
      * Convert group member addresses in to valid entries.
      */
-    private static function setGroupAttributes(Group $group, &$entry)
+    private static function setGroupAttributes($ldap, Group $group, &$entry)
     {
-        $config = self::getConfig('admin');
-        $ldap = self::initLDAP($config);
-
         $validMembers = [];
 
         $domain = $group->domain();
