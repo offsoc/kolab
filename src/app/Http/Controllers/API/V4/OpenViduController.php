@@ -293,7 +293,7 @@ class OpenViduController extends Controller
 
             // Create session token for screen sharing connection
             if ($role != Room::ROLE_SUBSCRIBER && !empty(request()->input('screenShare'))) {
-                $add_token = $room->getSessionToken(Room::ROLE_PUBLISHER);
+                $add_token = $room->getSessionToken(Room::ROLE_PUBLISHER, ['canPublish' => true]);
 
                 $response['shareToken'] = $add_token['token'];
             }
