@@ -35,6 +35,8 @@ abstract class TestCaseDusk extends BaseTestCase
             '--headless',
             '--use-fake-ui-for-media-stream',
             '--use-fake-device-for-media-stream',
+            '--enable-usermedia-screen-capturing',
+            // '--auto-select-desktop-capture-source="Entire screen"',
             '--ignore-certificate-errors',
             '--incognito',
         ]);

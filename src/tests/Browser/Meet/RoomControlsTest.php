@@ -231,10 +231,16 @@ class RoomControlsTest extends TestCaseDusk
      * Test text chat
      *
      * @group openvidu
-     * @depends testNicknameAndMuting
      */
     public function testChat(): void
     {
+        // Make sure there's no session yet
+        $room = Room::where('name', 'john')->first();
+        if ($room->session_id) {
+            $room->session_id = null;
+            $room->save();
+        }
+
         $this->assignBetaEntitlement('john@kolab.org', 'meet');
 
         $this->browse(function (Browser $owner, Browser $guest) {
@@ -331,8 +337,61 @@ class RoomControlsTest extends TestCaseDusk
      */
     public function testShareScreen(): void
     {
-        // It looks that screen sharing API is not available in headless chrome
-        // Note that other tests already assert that the button is disabled
-        $this->markTestIncomplete();
+        // Make sure there's no session yet
+        $room = Room::where('name', 'john')->first();
+        if ($room->session_id) {
+            $room->session_id = null;
+            $room->save();
+        }
+
+        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+
+        $this->browse(function (Browser $owner, Browser $guest) {
+            // Join the room as an owner
+            $owner->visit(new RoomPage('john'))
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                ->type('@setup-nickname-input', 'john')
+                ->click('@setup-button')
+                ->waitFor('@session');
+
+            // In another browser act as a guest
+            $guest->visit(new RoomPage('john'))
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                // Join the room, disable cam/mic
+                ->select('@setup-mic-select', '')
+                ->select('@setup-cam-select', '')
+                ->click('@setup-button')
+                ->waitFor('@session');
+
+            // Test screen sharing
+            $owner->assertToolbarButtonState('screen', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
+                ->assertElementsCount('@session div.meet-video', 1)
+                ->click('@menu button.link-screen')
+                ->whenAvailable('div.meet-video:not(.self)', function (Browser $browser) {
+                    $browser->assertVisible('video')
+                        ->assertSeeIn('.meet-nickname', 'john')
+                        ->assertVisible('.controls button.link-fullscreen')
+                        ->assertVisible('.controls button.link-audio')
+                        ->assertVisible('.status .status-audio')
+                        ->assertMissing('.status .status-video');
+                })
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@subscribers .meet-subscriber', 1)
+                ->assertToolbarButtonState('screen', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED);
+
+            $guest
+                ->whenAvailable('div.meet-video:nth-child(3)', function (Browser $browser) {
+                    $browser->assertVisible('video')
+                        ->assertSeeIn('.meet-nickname', 'john')
+                        ->assertVisible('.controls button.link-fullscreen')
+                        ->assertVisible('.controls button.link-audio')
+                        ->assertVisible('.status .status-audio')
+                        ->assertMissing('.status .status-video');
+                })
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@subscribers .meet-subscriber', 1);
+        });
     }
 }
