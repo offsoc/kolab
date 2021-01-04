@@ -253,7 +253,7 @@ class LDAP
                 'groupofuniquenames',
                 'kolabgroupofuniquenames'
             ],
-            'uniqueMember' => []
+            'uniquemember' => []
         ];
 
         self::setGroupAttributes($ldap, $group, $entry);
@@ -590,7 +590,7 @@ class LDAP
                 'groupofuniquenames',
                 'kolabgroupofuniquenames'
             ],
-            'uniqueMember' => []
+            'uniquemember' => []
         ];
 
         $oldEntry = $ldap->get_entry($dn);
