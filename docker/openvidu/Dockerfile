@@ -51,8 +51,6 @@ RUN dnf -y install \
 
 CMD [ \
         "/usr/bin/java", \
-        "-Dserver.port=8080", \
-        "-Dserver.ssl.enabled=false", \
         "-jar", \
         "/usr/share/openvidu/openvidu-server.jar" \
     ]
