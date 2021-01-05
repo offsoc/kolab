@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Schema;
 /**
  * This abstract class provides a means to treat objects in our model using CRUD.
  */
-abstract class ObjectUpdateCommand extends ObjectCommand
+abstract class ObjectDeleteCommand extends ObjectCommand
 {
     public function __construct()
     {
-        $this->description = "Update a {$this->objectName}";
+        $this->description = "Delete a {$this->objectName}";
         $this->signature = sprintf(
-            "%s%s:update {%s}",
+            "%s%s:delete {%s}",
             $this->commandPrefix ? $this->commandPrefix . ":" : "",
             $this->objectName,
             $this->objectName
@@ -35,10 +35,6 @@ abstract class ObjectUpdateCommand extends ObjectCommand
         }
 
         $classes = class_uses_recursive($this->objectClass);
-
-        if (in_array(SoftDeletes::class, $classes)) {
-            $this->signature .= " {--with-deleted : Include deleted {$this->objectName}s}";
-        }
 
         parent::__construct();
     }
@@ -93,7 +89,5 @@ abstract class ObjectUpdateCommand extends ObjectCommand
         $object->timestamps = false;
 
         $object->save(['timestamps' => false]);
-
-        $this->cacheRefresh($object);
     }
 }
