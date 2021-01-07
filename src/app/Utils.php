@@ -382,10 +382,7 @@ class Utils
         $env['view'] = 'root';
         $env['jsapp'] = 'user.js';
 
-        if ($path == 'meet' || strpos($path, 'meet/') === 0) {
-            $env['view'] = 'meet';
-            $env['jsapp'] = 'meet.js';
-        } elseif ($req_domain == "admin.$sys_domain") {
+        if ($req_domain == "admin.$sys_domain") {
             $env['jsapp'] = 'admin.js';
         }
 

@@ -12,7 +12,7 @@
                         attendance. Use this URL to invite people to join you.
                     </p>
                     <p>
-                        <a v-if="href" :href="href">{{ href }}</a>
+                        <router-link v-if="href" :to="roomRoute">{{ href }}</router-link>
                     </p>
                     <p>
                         This is a work in progress and more features will be added over time. Current features include:
@@ -60,7 +60,8 @@
         data() {
             return {
                 rooms: [],
-                href: ''
+                href: '',
+                roomRoute: ''
             }
         },
         mounted() {
@@ -77,7 +78,8 @@
 
                     this.rooms = response.data.list
                     if (response.data.count) {
-                        this.href = window.config['app.url'] + '/meet/' + encodeURI(this.rooms[0].name)
+                        this.roomRoute = '/meet/' + encodeURI(this.rooms[0].name)
+                        this.href = window.config['app.url'] + this.roomRoute
                     }
                 })
                 .catch(this.$root.errorHandler)

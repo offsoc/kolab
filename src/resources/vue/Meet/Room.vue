@@ -129,6 +129,36 @@
     import LogonForm from '../Login'
     import SessionSecurityOptions from './SessionSecurityOptions'
 
+// Register additional icons
+import { library } from '@fortawesome/fontawesome-svg-core'
+
+import {
+    faAlignLeft,
+    faCompress,
+    faDesktop,
+    faExpand,
+    faMicrophone,
+    faPowerOff,
+    faUser,
+    faShieldAlt,
+    faVideo,
+    faVolumeMute
+} from '@fortawesome/free-solid-svg-icons'
+
+// Register only these icons we need
+library.add(
+    faAlignLeft,
+    faCompress,
+    faDesktop,
+    faExpand,
+    faMicrophone,
+    faPowerOff,
+    faUser,
+    faShieldAlt,
+    faVideo,
+    faVolumeMute
+)
+
     let roomRequest
 
     export default {
@@ -372,7 +402,7 @@
                             // FIXME: Where exactly the user should land? Currently he'll land
                             //        on dashboard (if he's logged in) or login form (if he's not).
 
-                            window.location = window.config['app.url']
+                            this.$router.push({ name: 'dashboard' })
                         }).modal()
                     }
                 }
@@ -389,7 +419,7 @@
                 const logout = () => {
                     this.meet.leaveRoom()
                     this.meet = null
-                    window.location = window.config['app.url']
+                    this.$router.push({ name: 'dashboard' })
                 }
 
                 if (this.session.owner) {

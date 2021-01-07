@@ -1,5 +1,5 @@
 <template>
-    <div v-if="!$root.isLoading" class="container" dusk="dashboard-component">
+    <div class="container" dusk="dashboard-component">
         <div id="search-box" class="card">
             <div class="card-body">
                 <form @submit.prevent="searchUser" class="row justify-content-center">
@@ -58,20 +58,7 @@
             }
         },
         mounted() {
-            const authInfo = this.$store.state.isLoggedIn ? this.$store.state.authInfo : null
-
-            if (authInfo) {
-                $('#search-box input').focus()
-            } else {
-                this.$root.startLoading()
-                axios.get('/api/auth/info')
-                    .then(response => {
-                        this.$store.state.authInfo = response.data
-                        this.$root.stopLoading()
-                        setTimeout(() => { $('#search-box input').focus() }, 10)
-                    })
-                    .catch(this.$root.errorHandler)
-            }
+            $('#search-box input').focus()
         },
         methods: {
             searchUser() {

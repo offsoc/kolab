@@ -13,6 +13,61 @@ import store from './store'
 
 const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'
 
+let isLoading = 0
+
+// Lock the UI with the 'loading...' element
+const startLoading = () => {
+    isLoading++
+    let loading = $('#app > .app-loader').removeClass('fadeOut')
+    if (!loading.length) {
+        $('#app').append($(loader))
+    }
+}
+
+// Hide "loading" overlay
+const stopLoading = () => {
+    if (isLoading > 0) {
+        $('#app > .app-loader').addClass('fadeOut')
+        isLoading--;
+    }
+}
+
+let loadingRoute
+
+// Note: This has to be before the app is created
+// Note: You cannot use app inside of the function
+window.router.beforeEach((to, from, next) => {
+    // check if the route requires authentication and user is not logged in
+    if (to.matched.some(route => route.meta.requiresAuth) && !store.state.isLoggedIn) {
+        // remember the original request, to use after login
+        store.state.afterLogin = to;
+
+        // redirect to login page
+        next({ name: 'login' })
+
+        return
+    }
+
+    if (to.meta.loading) {
+        startLoading()
+        loadingRoute = to.name
+    }
+
+    next()
+})
+
+window.router.afterEach((to, from) => {
+    if (to.name && loadingRoute === to.name) {
+        stopLoading()
+        loadingRoute = null
+    }
+
+    // When changing a page remove old:
+    // - error page
+    // - modal backdrop
+    $('#error-page,.modal-backdrop.show').remove()
+})
+
 const app = new Vue({
     el: '#app',
     components: {
@@ -23,7 +78,6 @@ const app = new Vue({
     router: window.router,
     data() {
         return {
-            isLoading: true,
             isAdmin: window.isAdmin
         }
     },
@@ -102,11 +156,7 @@ const app = new Vue({
             delete axios.defaults.headers.common.Authorization
 
             if (redirect !== false) {
-                if (this.hasRoute('login')) {
-                    this.$router.push({ name: 'login' })
-                } else {
-                    location.href = window.config['app.url'] + '/login'
-                }
+                this.$router.push({ name: 'login' })
             }
 
             clearTimeout(this.refreshTimeout)
@@ -119,18 +169,10 @@ const app = new Vue({
         removeLoader(elem) {
             $(elem).find('.app-loader').remove()
         },
-        startLoading() {
-            this.isLoading = true
-            // Lock the UI with the 'loading...' element
-            let loading = $('#app > .app-loader').removeClass('fadeOut')
-            if (!loading.length) {
-                $('#app').append($(loader))
-            }
-        },
-        // Hide "loading" overlay
-        stopLoading() {
-            $('#app > .app-loader').addClass('fadeOut')
-            this.isLoading = false
+        startLoading,
+        stopLoading,
+        isLoading() {
+            return isLoading > 0
         },
         errorPage(code, msg) {
             // Until https://github.com/vuejs/vue-router/issues/977 is implemented
@@ -164,9 +206,10 @@ const app = new Vue({
                 // Remember requested route to come back to it after log in
                 if (this.$route.meta.requiresAuth) {
                     store.state.afterLogin = this.$route
+                    this.logoutUser()
+                } else {
+                    this.logoutUser(false)
                 }
-
-                this.logoutUser()
             } else {
                 this.errorPage(error.response.status, error.response.statusText)
             }
@@ -417,13 +460,3 @@ window.axios.interceptors.response.use(
         return Promise.reject(error)
     }
 )
-
-// TODO: Investigate if we can use App component's childMounted() method instead
-window.router.afterEach((to, from) => {
-    // When changing a page remove old:
-    // - error page
-    // - modal backdrop
-    $('#error-page,.modal-backdrop.show').remove()
-
-    app.updateBodyClass()
-})

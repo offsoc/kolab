@@ -13,6 +13,11 @@ import UserProfileComponent from '../vue/User/Profile'
 import UserProfileDeleteComponent from '../vue/User/ProfileDelete'
 import WalletComponent from '../vue/Wallet'
 
+// Here's a list of lazy-loaded components
+// Note: you can pack multiple components into the same chunk, webpackChunkName
+// is also used to get a sensible file name instead of numbers
+const RoomComponent = () => import(/* webpackChunkName: "room" */ '../vue/Meet/Room.vue')
+
 const routes = [
     {
         path: '/dashboard',
@@ -58,6 +63,12 @@ const routes = [
         name: 'profile-delete',
         component: UserProfileDeleteComponent,
         meta: { requiresAuth: true }
+    },
+    {
+        component: RoomComponent,
+        name: 'room',
+        path: '/meet/:room',
+        meta: { loading: true }
     },
     {
         path: '/rooms',

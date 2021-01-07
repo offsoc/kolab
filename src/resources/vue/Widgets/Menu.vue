@@ -23,19 +23,17 @@
                             {{ item.title }}
                         </router-link>
                     </li>
-                    <li class="nav-item" v-if="!loggedIn">
-                        <router-link v-if="!$root.isAdmin && $root.hasRoute('signup')" class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
-                        <a v-else class="nav-link link-signup" :href="appUrl + '/signup'">Signup</a>
+                    <li class="nav-item" v-if="!loggedIn && !$root.isAdmin">
+                        <router-link class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
                     </li>
                     <li class="nav-item" v-if="loggedIn">
-                        <router-link v-if="$root.hasRoute('dashboard')" class="nav-link link-dashboard" active-class="active" :to="{name: 'dashboard'}">Cockpit</router-link>
-                        <a v-else class="nav-link link-dashboard" :href="appUrl + '/dashboard'">Cockpit</a>
+                        <router-link class="nav-link link-dashboard" active-class="active" :to="{name: 'dashboard'}">Cockpit</router-link>
                     </li>
                     <li class="nav-item" v-if="loggedIn">
                         <router-link class="nav-link menulogin link-logout" active-class="active" :to="{name: 'logout'}">Logout</router-link>
                     </li>
                     <li class="nav-item" v-if="!loggedIn">
-                        <a class="nav-link menulogin link-login" :href="appUrl + '/login'">Login</a>
+                        <router-link class="nav-link menulogin link-login" :to="{name: 'login'}">Login</router-link>
                     </li>
                 </ul>
                 <div v-if="mode == 'footer'" class="footer">
@@ -57,8 +55,7 @@
             return {
                 appName: window.config['app.name'],
                 appUrl: window.config['app.url'],
-                themeDir:  '/themes/' + window.config['app.theme'],
-                webmailURL: window.config['app.webmail_url']
+                themeDir: '/themes/' + window.config['app.theme']
             }
         },
         computed: {
