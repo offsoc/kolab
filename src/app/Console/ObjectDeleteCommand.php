@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * This abstract class provides a means to treat objects in our model using CRUD.
  */
-abstract class ObjectDeleteCommand extends ObjectCommand
+abstract class ObjectDeleteCommand extends ScalpelCommand
 {
     public function __construct()
     {
