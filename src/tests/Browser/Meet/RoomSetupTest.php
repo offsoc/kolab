@@ -151,7 +151,7 @@ class RoomSetupTest extends TestCaseDusk
             // In another window join the room as the owner (authenticate)
             $browser->on(new RoomPage('john'))
                 ->assertSeeIn('@setup-button', "I'm the owner")
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->assertMissing('@toolbar')
                 ->assertMissing('@menu')
                 ->assertMissing('@session')
@@ -168,13 +168,13 @@ class RoomSetupTest extends TestCaseDusk
                 ->type('@setup-nickname-input', 'john')
                 // Join the room (click the button twice, to make sure it does not
                 // produce redundant participants/subscribers in the room)
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->pause(10)
                 ->click('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
                 ->whenAvailable('div.meet-video.self', function (Browser $browser) {
-                    $browser->assertVisible('video')
+                    $browser->waitFor('video')
                         ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertMissing('.controls button.link-audio')
@@ -197,11 +197,11 @@ class RoomSetupTest extends TestCaseDusk
                 // Join the room, disable cam/mic
                 ->select('@setup-mic-select', '')
                 //->select('@setup-cam-select', '')
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
                 ->whenAvailable('div.meet-video.self', function (Browser $browser) {
-                    $browser->assertVisible('video')
+                    $browser->waitFor('video')
                         ->assertVisible('.meet-nickname')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertMissing('.controls button.link-audio')
@@ -209,7 +209,7 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertMissing('.status .status-video');
                 })
                 ->whenAvailable('div.meet-video:not(.self)', function (Browser $browser) {
-                    $browser->assertVisible('video')
+                    $browser->waitFor('video')
                         ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
@@ -230,7 +230,7 @@ class RoomSetupTest extends TestCaseDusk
             // Check guest's elements in the owner's window
             $browser
                 ->whenAvailable('div.meet-video:not(.self)', function (Browser $browser) {
-                    $browser->assertVisible('video')
+                    $browser->waitFor('video')
                         ->assertVisible('.meet-nickname')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
@@ -262,7 +262,7 @@ class RoomSetupTest extends TestCaseDusk
                 // Join the room, disable cam/mic
                 ->select('@setup-mic-select', '')
                 //->select('@setup-cam-select', '')
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session');
 
             // Leave the room as the room owner
@@ -303,7 +303,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->type('@setup-nickname-input', 'john')
                 ->select('@setup-mic-select', '')
                 ->select('@setup-cam-select', '')
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
                 ->whenAvailable('@subscribers .meet-subscriber.self', function (Browser $browser) {
@@ -330,7 +330,7 @@ class RoomSetupTest extends TestCaseDusk
                 // Join the room, disable cam/mic
                 ->select('@setup-mic-select', '')
                 ->select('@setup-cam-select', '')
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
                 ->whenAvailable('@subscribers .meet-subscriber.self', function (Browser $browser) {

@@ -56,7 +56,7 @@ class RoomSecurityTest extends TestCaseDusk
                 ->waitFor('@setup-form')
                 ->waitUntilMissing('@setup-status-message.loading')
                 ->assertMissing('@setup-password-input')
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
                 // Enter Security option dialog
                 ->click('@menu button.link-security')
@@ -100,11 +100,11 @@ class RoomSecurityTest extends TestCaseDusk
                 ->assertValue('@setup-password-input', '')
                 ->assertSeeIn('@setup-button', "JOIN")
                 // Try to join w/o password
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->waitFor('#setup-password.is-invalid')
                 // Try to join with a valid password
                 ->type('#setup-password', 'pass')
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session');
 
             // Test removing the password
@@ -149,7 +149,7 @@ class RoomSecurityTest extends TestCaseDusk
                 ->waitFor('@setup-form')
                 ->waitUntilMissing('@setup-status-message.loading')
                 ->type('@setup-nickname-input', 'John')
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
                 // Enter Security option dialog
                 ->click('@menu button.link-security')
@@ -173,7 +173,7 @@ class RoomSecurityTest extends TestCaseDusk
                 ->assertButtonEnabled('@setup-button')
                 ->assertSeeIn('@setup-button.btn-success', 'JOIN NOW')
                 // try without the nickname
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->waitFor('@setup-nickname-input.is-invalid')
                 ->assertSeeIn(
                     '@setup-status-message',
@@ -183,7 +183,7 @@ class RoomSecurityTest extends TestCaseDusk
                 ->assertButtonEnabled('@setup-button')
                 ->assertSeeIn('@setup-button.btn-success', 'JOIN NOW')
                 ->type('@setup-nickname-input', 'Guest<p>')
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->assertMissing('@setup-nickname-input.is-invalid')
                 ->waitForText("Waiting for permission to join the room.")
                 ->assertButtonDisabled('@setup-button');
@@ -209,7 +209,7 @@ class RoomSecurityTest extends TestCaseDusk
                 ->waitFor('@setup-form')
                 ->waitUntilMissing('@setup-status-message.loading')
                 ->type('@setup-nickname-input', 'guest')
-                ->click('@setup-button')
+                ->clickWhenEnabled('@setup-button')
                 ->waitForText("Waiting for permission to join the room.")
                 ->assertButtonDisabled('@setup-button');
 

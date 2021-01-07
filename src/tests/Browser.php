@@ -165,6 +165,14 @@ class Browser extends \Laravel\Dusk\Browser
     }
 
     /**
+     * Wait until a button becomes enabled and click it
+     */
+    public function clickWhenEnabled($selector)
+    {
+        return $this->waitFor($selector . ':not([disabled])')->click($selector);
+    }
+
+    /**
      * Check if in Phone mode
      */
     public static function isPhone()

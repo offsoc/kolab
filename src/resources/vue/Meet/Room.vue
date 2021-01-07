@@ -33,7 +33,7 @@
             <div class="card-body">
                 <div class="card-title">Set up your session</div>
                 <div class="card-text">
-                    <form class="setup-form row">
+                    <form class="setup-form row" @submit.prevent="joinSession">
                         <div id="setup-preview" class="col-sm-6 mb-3 mb-sm-0">
                             <video class="rounded"></video>
                             <div class="volume"><div class="bar"></div></div>
@@ -70,8 +70,7 @@
                                 <input type="password" class="form-control" id="setup-password" v-model="password" placeholder="Password">
                             </div>
                             <div class="mt-3">
-                                <button type="button" id="join-button"
-                                        @click="joinSession"
+                                <button type="submit" id="join-button"
                                         :class="'btn w-100 btn-' + (isRoomReady() ? 'success' : 'primary')"
                                 >
                                     <span v-if="isRoomReady()">JOIN NOW</span>
@@ -370,6 +369,12 @@ library.add(
             },
             // Entering the room
             joinSession() {
+                // The form can be submitted not only via the submit button,
+                // make sure the submit is allowed
+                if ($('#meet-setup [type=submit]').prop('disabled')) {
+                    return;
+                }
+
                 if (this.roomState == 323) {
                     $('#meet-setup').addClass('hidden')
                     $('#meet-auth').removeClass('hidden')
