@@ -9,6 +9,11 @@ use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Create a (mail-enabled) distribution group.
+ *
+ * @see \App\Console\Commands\Scalpel\Group\CreateCommand
+ */
 class CreateCommand extends Command
 {
     /**
