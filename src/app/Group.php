@@ -197,7 +197,10 @@ class Group extends Model
      */
     public function setMembersAttribute(array $members): void
     {
-        $members = array_filter(array_map('strtolower', $members));
+        $members = array_unique(array_filter(array_map('strtolower', $members)));
+
+        sort($members);
+
         $this->attributes['members'] = implode(',', $members);
     }
 
