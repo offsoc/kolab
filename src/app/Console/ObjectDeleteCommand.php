@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * This abstract class provides a means to treat objects in our model using CRUD.
  */
-abstract class ObjectDeleteCommand extends ObjectCommand
+abstract class ObjectDeleteCommand extends ScalpelCommand
 {
     public function __construct()
     {
@@ -69,6 +69,12 @@ abstract class ObjectDeleteCommand extends ObjectCommand
      */
     public function handle()
     {
+        $result = parent::handle();
+
+        if (!$result) {
+            return 1;
+        }
+
         $argument = $this->argument($this->objectName);
 
         $object = $this->getObject($this->objectClass, $argument, $this->objectTitle);
@@ -78,16 +84,6 @@ abstract class ObjectDeleteCommand extends ObjectCommand
             return 1;
         }
 
-        foreach ($this->getProperties() as $property => $value) {
-            if ($property == "deleted_at" && $value == "null") {
-                $value = null;
-            }
-
-            $object->{$property} = $value;
-        }
-
-        $object->timestamps = false;
-
-        $object->save(['timestamps' => false]);
+        $object->delete();
     }
 }

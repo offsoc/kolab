@@ -2,10 +2,12 @@
 
 namespace App\Console\Commands\Scalpel\Discount;
 
-use App\Console\ObjectUpdateCommand;
+use App\Console\ObjectDeleteCommand;
 
-class UpdateCommand extends ObjectUpdateCommand
+class DeleteCommand extends ObjectDeleteCommand
 {
+    protected $dangerous = true;
+
     protected $commandPrefix = 'scalpel';
     protected $objectClass = \App\Discount::class;
     protected $objectName = 'discount';
