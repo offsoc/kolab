@@ -19,6 +19,8 @@ use App\Console\ObjectCreateCommand;
  */
 class CreateCommand extends ObjectCreateCommand
 {
+    protected $hidden = true;
+
     protected $commandPrefix = 'scalpel';
     protected $objectClass = \App\User::class;
     protected $objectName = 'user';
