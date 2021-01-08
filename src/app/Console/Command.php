@@ -5,6 +5,22 @@ namespace App\Console;
 class Command extends \Illuminate\Console\Command
 {
     /**
+     * Annotate this command as being dangerous for any potential unintended consequences.
+     *
+     * Commands are considered dangerous if;
+     *
+     * * observers are deliberately not triggered, meaning that the deletion of an object model that requires the
+     *   associated observer to clean some things up, or charge a wallet or something, are deliberately not triggered,
+     *
+     * * deletion of objects and their relations rely on database foreign keys with obscure cascading,
+     *
+     * * a command will result in the permanent, irrecoverable loss of data.
+     *
+     * @var boolean
+     */
+    protected $dangerous = false;
+
+    /**
      * Find the domain.
      *
      * @param string $domain Domain ID or namespace
@@ -66,6 +82,26 @@ class Command extends \Illuminate\Console\Command
     public function getWallet($wallet)
     {
         return $this->getObject(\App\Wallet::class, $wallet, null);
+    }
+
+    public function handle()
+    {
+        if ($this->dangerous) {
+            $this->warn(
+                "This command is a dangerous scalpel command with potentially significant unintended consequences"
+            );
+
+            $confirmation = $this->confirm("Are you sure you understand what's about to happen?");
+
+            if (!$confirmation) {
+                $this->info("Better safe than sorry.");
+                return false;
+            }
+
+            $this->info("Vámonos!");
+        }
+
+        return true;
     }
 
     /**
