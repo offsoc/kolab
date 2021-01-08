@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\Scalpel\Discount;
+namespace App\Console\Commands\Discount;
 
 use Illuminate\Console\Command;
 
@@ -33,7 +33,7 @@ class MergeCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'scalpel:discount:merge {source} {target} {--description*}';
+    protected $signature = 'discount:merge {source} {target} {--description*}';
 
     /**
      * The console command description.
