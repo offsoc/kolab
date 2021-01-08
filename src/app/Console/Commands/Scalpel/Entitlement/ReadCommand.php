@@ -6,6 +6,8 @@ use App\Console\ObjectReadCommand;
 
 class ReadCommand extends ObjectReadCommand
 {
+    protected $hidden = true;
+
     protected $commandPrefix = 'scalpel';
     protected $objectClass = \App\Entitlement::class;
     protected $objectName = 'entitlement';

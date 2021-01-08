@@ -6,6 +6,8 @@ use App\Console\ObjectUpdateCommand;
 
 class UpdateCommand extends ObjectUpdateCommand
 {
+    protected $hidden = true;
+
     protected $commandPrefix = 'scalpel';
     protected $objectClass = \App\User::class;
     protected $objectName = 'user';

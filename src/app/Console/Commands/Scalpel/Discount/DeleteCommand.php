@@ -7,6 +7,7 @@ use App\Console\ObjectDeleteCommand;
 class DeleteCommand extends ObjectDeleteCommand
 {
     protected $dangerous = true;
+    protected $hidden = true;
 
     protected $commandPrefix = 'scalpel';
     protected $objectClass = \App\Discount::class;
