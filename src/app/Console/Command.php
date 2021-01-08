@@ -2,7 +2,7 @@
 
 namespace App\Console;
 
-class Command extends \Illuminate\Console\Command
+abstract class Command extends \Illuminate\Console\Command
 {
     /**
      * Annotate this command as being dangerous for any potential unintended consequences.
