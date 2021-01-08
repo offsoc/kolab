@@ -84,6 +84,12 @@ abstract class ObjectDeleteCommand extends ScalpelCommand
             return 1;
         }
 
-        $object->delete();
+        if ($this->commandPrefix == 'scalpel') {
+            $this->objectClass::withoutEvents(
+                function () use ($object) {
+                    $object->delete();
+                }
+            );
+        }
     }
 }

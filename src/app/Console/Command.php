@@ -25,7 +25,7 @@ class Command extends \Illuminate\Console\Command
      *
      * @return mixed
      */
-    public function getObject($objectClass, $objectIdOrTitle, $objectTitle)
+    public function getObject($objectClass, $objectIdOrTitle, $objectTitle = null)
     {
         if ($this->hasOption('with-deleted') && $this->option('with-deleted')) {
             $object = $objectClass::withTrashed()->find($objectIdOrTitle);
