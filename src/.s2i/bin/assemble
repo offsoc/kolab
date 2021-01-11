@@ -5,6 +5,7 @@ set -e
 
 function composer_install () {
     echo "--->> Detected composer.json, running install"
+    composer config --global github-protocols https
     php -dmemory_limit=${COMPOSER_MEMORY_LIMIT:--1} /usr/bin/composer install ${COMPOSER_ARGS}
     rm -rf ~/.cache/composer/
 }
