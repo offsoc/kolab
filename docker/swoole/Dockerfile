@@ -25,7 +25,8 @@ RUN dnf -y install \
         php-opcache \
         php-pecl-apcu \
         php-mysqlnd \
-        re2c && \
+        re2c \
+        wget && \
     git clone -b v4.4.x https://github.com/swoole/swoole-src.git/ /swoole-src.git/ && \
         cd /swoole-src.git/ && \
         git clean -d -f -x && \
