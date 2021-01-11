@@ -14,7 +14,7 @@
         },
         {
             "type": "vcs",
-            "url": "https://github.com/kanarip/laravel-swoole"
+            "url": "https://github.com/kanarip/laravel-swoole.git"
         }
     ],
     "require": {
