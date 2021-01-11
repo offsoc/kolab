@@ -18,6 +18,7 @@ RUN dnf -y install \
         make \
         npm \
         openssl-devel \
+        patch \
         php-cli \
         php-common \
         php-devel \
