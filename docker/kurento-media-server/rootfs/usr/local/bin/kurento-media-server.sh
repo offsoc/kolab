@@ -6,4 +6,10 @@ if [ ! -z "${OPENVIDU_COTURN_IP}" ]; then
         /etc/kurento/modules/kurento/WebRtcEndpoint.conf.ini
 fi
 
+if [ ! -z "${KMS_PORT}" ]; then
+    sed -i \
+        -e "s/\"port\": 8888,/\"port\": ${KMS_PORT},/g" \
+        /etc/kurento/kurento.conf.json
+fi
+
 /usr/bin/kurento-media-server

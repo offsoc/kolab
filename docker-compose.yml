@@ -55,6 +55,16 @@ services:
     hostname: kurento-media-server.hosted.com
     image: apheleia/kurento-media-server:6.15.0
     network_mode: host
+  kurento-media-server2:
+    build:
+      context: ./docker/kurento-media-server/
+    container_name: kolab-kurento-media-server2
+    environment:
+      - GST_DEBUG=3,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4
+      - KMS_PORT=8889
+    hostname: kurento-media-server.hosted.com
+    image: apheleia/kurento-media-server:6.15.0
+    network_mode: host
   mariadb:
     container_name: kolab-mariadb
     environment:
@@ -72,6 +82,7 @@ services:
     container_name: kolab-openvidu
     depends_on:
       - kurento-media-server
+      - kurento-media-server2
     environment:
       - APP_DOMAIN=${APP_DOMAIN}
       - CERTIFICATE_TYPE=letsencrypt
@@ -84,7 +95,7 @@ services:
       - OPENVIDU_PUBLICURL=${OPENVIDU_PUBLICURL}
       - KMS_STUN_IP=${OPENVIDU_COTURN_IP}
       - KMS_STUN_PORT=3478
-      - KMS_URIS=["ws://localhost:8888/kurento"]
+      - KMS_URIS=["ws://localhost:8888/kurento", "ws://localhost:8889/kurento"]
       - OPENVIDU_SECRET=${OPENVIDU_API_PASSWORD}
       - OPENVIDU_WEBHOOK=${OPENVIDU_WEBHOOK}
       - OPENVIDU_WEBHOOK_ENDPOINT=${OPENVIDU_WEBHOOK_ENDPOINT}
