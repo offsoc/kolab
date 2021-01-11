@@ -11,6 +11,10 @@
         {
             "type": "vcs",
             "url": "https://git.kolab.org/diffusion/PNL/php-net_ldap3.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/kanarip/laravel-swoole"
         }
     ],
     "require": {
@@ -28,7 +32,7 @@
         "spatie/laravel-translatable": "^4.2",
         "spomky-labs/otphp": "~4.0.0",
         "stripe/stripe-php": "^7.29",
-        "swooletw/laravel-swoole": "^2.6",
+        "swooletw/laravel-swoole": "dev-dev/directory-traversal",
         "tymon/jwt-auth": "^1.0"
     },
     "require-dev": {
