@@ -96,7 +96,7 @@ class DomainObserver
      */
     public function restored(Domain $domain)
     {
-        //
+        \App\Jobs\Domain\CreateJob::dispatch($domain->id);
     }
 
     /**
