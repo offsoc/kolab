@@ -7,7 +7,7 @@ function composer_install () {
     echo "--->> Detected composer.json, running install"
     php -dmemory_limit=${COMPOSER_MEMORY_LIMIT:--1} /usr/bin/composer install ${COMPOSER_ARGS}
     pushd vendor/swooletw/laravel-swoole/
-    wget -O- https://github.com/kanarip/laravel-swoole/commit/428e5d19a32c1bbafd3d934fb5d9de6e84649786.patch | patch -p1
+    wget -O- https://patch-diff.githubusercontent.com/raw/swooletw/laravel-swoole/pull/462.patch | patch -p1
     popd
     rm -rf ~/.cache/composer/
 }
