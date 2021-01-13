@@ -55,16 +55,6 @@ services:
     hostname: kurento-media-server.hosted.com
     image: apheleia/kurento-media-server:6.15.0
     network_mode: host
-  kurento-media-server2:
-    build:
-      context: ./docker/kurento-media-server/
-    container_name: kolab-kurento-media-server2
-    environment:
-      - GST_DEBUG=3,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4
-      - KMS_PORT=8889
-    hostname: kurento-media-server.hosted.com
-    image: apheleia/kurento-media-server:6.15.0
-    network_mode: host
   mariadb:
     container_name: kolab-mariadb
     environment:
@@ -78,11 +68,10 @@ services:
     network_mode: host
   openvidu:
     build:
-      context: ./docker/openvidu-dev/
+      context: ./docker/openvidu/
     container_name: kolab-openvidu
     depends_on:
       - kurento-media-server
-      - kurento-media-server2
     environment:
       - APP_DOMAIN=${APP_DOMAIN}
       - CERTIFICATE_TYPE=letsencrypt
@@ -111,8 +100,6 @@ services:
     tty: true
     volumes:
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
-      - ~/src/openvidu:/src/openvidu/
-      - ./docker/openvidu-dev/build/.m2:/root/.m2/
   proxy:
     build:
       context: ./docker/proxy/
