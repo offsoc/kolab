@@ -92,5 +92,7 @@ abstract class ObjectUpdateCommand extends ObjectCommand
         $object->timestamps = false;
 
         $object->save(['timestamps' => false]);
+
+        $this->cacheRefresh($object);
     }
 }

@@ -56,6 +56,7 @@ abstract class ObjectCreateCommand extends ObjectCommand
         $object = $this->objectClass::create($this->properties);
 
         if ($object) {
+            $this->cacheRefresh($object);
             $this->info($object->{$class->getKeyName()});
         } else {
             $this->error("Object could not be created.");
