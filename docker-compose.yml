@@ -68,7 +68,7 @@ services:
     network_mode: host
   openvidu:
     build:
-      context: ./docker/openvidu/
+      context: ./docker/openvidu-dev/
     container_name: kolab-openvidu
     depends_on:
       - kurento-media-server
@@ -100,6 +100,8 @@ services:
     tty: true
     volumes:
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
+      - ~/src/openvidu:/src/openvidu/
+      - ./docker/openvidu-dev/build/.m2:/root/.m2/
   proxy:
     build:
       context: ./docker/proxy/
