@@ -42,7 +42,10 @@ docker-compose down --remove-orphans
 docker-compose build
 
 pushd ${base_dir}/src/
-cp .env.example .env
+
+if [ ! -f ".env" ]; then
+    cp .env.example .env
+fi
 
 if [ -f ".env.local" ]; then
     # Ensure there's a line ending
