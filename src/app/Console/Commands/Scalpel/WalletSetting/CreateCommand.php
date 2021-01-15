@@ -6,7 +6,7 @@ use App\Console\ObjectCreateCommand;
 
 class CreateCommand extends ObjectCreateCommand
 {
-    protected $cacheKeys = ['wallet_settings_%wallet_id%'];
+    protected $cacheKeys = ['app\wallet_settings_%wallet_id%'];
     protected $commandPrefix = 'scalpel';
     protected $objectClass = \App\WalletSetting::class;
     protected $objectName = 'wallet-setting';
