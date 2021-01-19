@@ -46,7 +46,7 @@ class PaymentMollieTest extends TestCaseDusk
                 'password' => 'simple123',
         ]);
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(function (Browser $browser) use ($user) {
             $browser->visit(new Home())
                 ->submitLogon('payment-test@kolabnow.com', 'simple123', true, ['paymentProvider' => 'mollie'])
                 ->on(new Dashboard())
@@ -66,11 +66,15 @@ class PaymentMollieTest extends TestCaseDusk
                         ->assertSeeIn('#amount + span + .invalid-feedback', 'The amount must be a number.')
                         // Submit valid data
                         ->type('@body #amount', '12.34')
+                        // Note we use double click to assert it does not create redundant requests
+                        ->click('@body #payment-form button')
                         ->click('@body #payment-form button');
                 })
                 ->on(new PaymentMollie())
                 ->assertSeeIn('@title', \config('app.name') . ' Payment')
                 ->assertSeeIn('@amount', 'CHF 12.34');
+
+            $this->assertSame(1, $user->wallets()->first()->payments()->count());
 
             // Looks like the Mollie testing mode is limited.
             // We'll select credit card method and mark the payment as paid
@@ -109,7 +113,7 @@ class PaymentMollieTest extends TestCaseDusk
                 'password' => 'simple123',
         ]);
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(function (Browser $browser) use ($user) {
             $browser->visit(new Home())
                 ->submitLogon('payment-test@kolabnow.com', 'simple123', true, ['paymentProvider' => 'mollie'])
                 ->on(new Dashboard())
@@ -150,6 +154,8 @@ class PaymentMollieTest extends TestCaseDusk
                         // Submit valid data
                         ->type('@body #mandate_amount', '100')
                         ->type('@body #mandate_balance', '0')
+                        // Note we use double click to assert it does not create redundant requests
+                        ->click('@button-action')
                         ->click('@button-action');
                 })
                 ->on(new PaymentMollie())
@@ -171,6 +177,8 @@ class PaymentMollieTest extends TestCaseDusk
                         ->assertMissing('@body .alert')
                         ->click('@button-cancel');
                 });
+
+            $this->assertSame(1, $user->wallets()->first()->payments()->count());
         });
 
         // Test updating (disabled) auto-payment

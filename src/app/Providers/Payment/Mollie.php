@@ -7,6 +7,7 @@ use App\Utils;
 use App\Wallet;
 use Illuminate\Support\Facades\DB;
 use Mollie\Api\Exceptions\ApiException;
+use Mollie\Api\Types;
 
 class Mollie extends \App\Providers\PaymentProvider
 {
@@ -351,6 +352,18 @@ class Mollie extends \App\Providers\PaymentProvider
                         ];
                     }
                 }
+            }
+
+            // In case there were multiple auto-payment setup requests (e.g. caused by a double
+            // form submission) we end up with multiple payment records and mollie_mandate_id
+            // pointing to the one from the last payment not the successful one.
+            // We make sure to use mandate id from the successful "first" payment.
+            if (
+                $payment->type == self::TYPE_MANDATE
+                && $mollie_payment->mandateId
+                && $mollie_payment->sequenceType == Types\SequenceType::SEQUENCETYPE_FIRST
+            ) {
+                $payment->wallet->setSetting('mollie_mandate_id', $mollie_payment->mandateId);
             }
         } elseif ($mollie_payment->isFailed()) {
             // Note: I didn't find a way to get any description of the problem with a payment

@@ -247,6 +247,7 @@
                         })
                 }
 
+                this.formLock = false
                 this.paymentForm = 'init'
                 this.paymentDialogTitle = 'Top up your wallet'
 
@@ -255,9 +256,17 @@
                     }).modal()
             },
             payment() {
+                if (this.formLock) {
+                    return
+                }
+
+                // Lock the form to prevent from double submission
+                this.formLock = true
+                let onFinish = () => { this.formLock = false }
+
                 this.$root.clearFormValidation($('#payment-form'))
 
-                axios.post('/api/v4/payments', {amount: this.amount})
+                axios.post('/api/v4/payments', {amount: this.amount}, { onFinish })
                     .then(response => {
                         if (response.data.redirectUrl) {
                             location.href = response.data.redirectUrl
@@ -267,6 +276,14 @@
                     })
             },
             autoPayment() {
+                if (this.formLock) {
+                    return
+                }
+
+                // Lock the form to prevent from double submission
+                this.formLock = true
+                let onFinish = () => { this.formLock = false }
+
                 const method = this.mandate.id && (this.mandate.isValid || this.mandate.isPending) ? 'put' : 'post'
                 const post = {
                     amount: this.mandate.amount,
@@ -275,7 +292,7 @@
 
                 this.$root.clearFormValidation($('#auto-payment form'))
 
-                axios[method]('/api/v4/payments/mandate', post)
+                axios[method]('/api/v4/payments/mandate', post, { onFinish })
                     .then(response => {
                         if (method == 'post') {
                             this.mandate.id = null
@@ -310,6 +327,7 @@
             autoPaymentForm(event, title) {
                 this.paymentForm = 'auto'
                 this.paymentDialogTitle = title || 'Add auto-payment'
+                this.formLock = false
                 setTimeout(() => { this.dialog.find('#mandate_amount').focus()}, 10)
             },
             receiptDownload() {

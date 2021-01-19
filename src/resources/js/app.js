@@ -381,7 +381,10 @@ window.axios.interceptors.request.use(
 // Add a axios response interceptor for general/validation error handler
 window.axios.interceptors.response.use(
     response => {
-        // Do nothing
+        if (response.config.onFinish) {
+            response.config.onFinish()
+        }
+
         return response
     },
     error => {
@@ -391,6 +394,10 @@ window.axios.interceptors.response.use(
         // Do not display the error in a toast message, pass the error as-is
         if (error.config.ignoreErrors) {
             return Promise.reject(error)
+        }
+
+        if (error.config.onFinish) {
+            error.config.onFinish()
         }
 
         if (error.response && status == 422) {
