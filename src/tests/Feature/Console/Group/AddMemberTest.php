@@ -68,7 +68,7 @@ class AddMemberTest extends TestCase
 
         $this->assertSame(0, $code);
         $this->assertSame('', $output);
-        $this->assertSame(['member@gmail.com', 'member2@gmail.com'], $group->refresh()->members);
+        $this->assertSame(['member2@gmail.com', 'member@gmail.com'], $group->refresh()->members);
 
         // Add a member that already exists
         $code = \Artisan::call("group:add-member {$group->email} member@gmail.com");
@@ -76,6 +76,6 @@ class AddMemberTest extends TestCase
 
         $this->assertSame(1, $code);
         $this->assertSame("member@gmail.com: Already exists in the group.", $output);
-        $this->assertSame(['member@gmail.com', 'member2@gmail.com'], $group->refresh()->members);
+        $this->assertSame(['member2@gmail.com', 'member@gmail.com'], $group->refresh()->members);
     }
 }

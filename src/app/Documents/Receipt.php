@@ -185,9 +185,11 @@ class Receipt
 
             $total += $amount;
 
-            if ($item->type == PaymentProvider::TYPE_REFUND) {
+            $type = $item->type ?? null;
+
+            if ($type == PaymentProvider::TYPE_REFUND) {
                 $description = \trans('documents.receipt-refund');
-            } elseif ($item->type == PaymentProvider::TYPE_CHARGEBACK) {
+            } elseif ($type == PaymentProvider::TYPE_CHARGEBACK) {
                 $description = \trans('documents.receipt-chargeback');
             } else {
                 $description = \trans('documents.receipt-item-desc', ['site' => $appName]);

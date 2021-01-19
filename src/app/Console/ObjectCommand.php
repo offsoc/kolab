@@ -57,7 +57,7 @@ abstract class ObjectCommand extends Command
     /**
      * Reset the cache for specified object using defined cacheKeys.
      *
-     * @param object The object that was updated/created
+     * @param object $object The object that was updated/created
      */
     protected function cacheRefresh($object): void
     {

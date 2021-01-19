@@ -21,10 +21,10 @@ mix.webpackConfig({
         chunkFilename: "js/[name].js"
     },
     optimization: {
-      splitChunks: {
-        // Disable chunking, so we have one chunk.js instead of chunk.js + vendor~chunk.js
-        maxAsyncRequests: 1
-      }
+        splitChunks: {
+            // Disable chunking, so we have one chunk.js instead of chunk.js + vendor~chunk.js
+            maxAsyncRequests: 1
+        }
     },
     resolve: {
         alias: {
