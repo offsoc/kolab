@@ -13,6 +13,8 @@ return [
     |
     */
 
+    'connection-not-found' => 'The connection does not exist.',
+    'connection-dismiss-error' => 'Failed to dismiss the connection.',
     'room-not-found' => 'The room does not exist.',
     'room-setconfig-success' => 'Room configuration updated successfully.',
     'room-unsupported-option-error' => 'Invalid room configuration option.',
@@ -21,7 +23,6 @@ return [
     'session-join-error' => 'Failed to join the session.',
     'session-close-error' => 'Failed to close the session.',
     'session-close-success' => 'The session has been closed successfully.',
-    'session-dismiss-connection-error' => 'Failed to dismiss the connection.',
     'session-password-error' => 'Failed to join the session. Invalid password.',
     'session-request-accept-error' => 'Failed to accept the join request.',
     'session-request-deny-error' => 'Failed to deny the join request.',

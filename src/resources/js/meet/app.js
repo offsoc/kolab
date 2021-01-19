@@ -2,6 +2,13 @@ import anchorme from 'anchorme'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { OpenVidu } from 'openvidu-browser'
 
+class Roles {
+    static get SUBSCRIBER() { return 1 << 0; }
+    static get PUBLISHER() { return 1 << 1; }
+    static get MODERATOR() { return 1 << 2; }
+    static get SCREEN() { return 1 << 3; }
+    static get OWNER() { return 1 << 4; }
+}
 
 function Meet(container)
 {
@@ -14,7 +21,6 @@ function Meet(container)
     let audioSource = ''        // Currently selected microphone
     let videoSource = ''        // Currently selected camera
     let sessionData             // Room session metadata
-    let role                    // Current user role
 
     let screenOV                // OpenVidu object to initialize a screen sharing session
     let screenSession           // Session object where the user will connect for screen sharing
@@ -67,12 +73,11 @@ function Meet(container)
     this.switchVideo = switchVideo
     this.updateSession = updateSession
 
-
     /**
      * Join the room session
      *
-     * @param data Session metadata and event handlers (session, token, shareToken, nickname,
-     *             canPublish, chatElement, menuElement, onDestroy, onJoinRequest)
+     * @param data Session metadata and event handlers (session, token, shareToken, nickname, role,
+     *             chatElement, menuElement, onDestroy, onJoinRequest)
      */
     function joinRoom(data) {
         resize();
@@ -97,7 +102,6 @@ function Meet(container)
         session.on('connectionCreated', event => {
             // Ignore the current user connection
             if (event.connection.role) {
-                role = event.connection.role
                 return
             }
 
@@ -182,7 +186,7 @@ function Meet(container)
         session.connect(data.token, data.params)
             .then(() => {
                 let wrapper
-                let params = { self: true, canPublish: data.canPublish, audioActive, videoActive }
+                let params = { self: true, role: data.role, audioActive, videoActive }
                 params = Object.assign({}, data.params, params)
 
                 publisher.on('videoElementCreated', event => {
@@ -196,7 +200,7 @@ function Meet(container)
 
                 wrapper = participantCreate(params)
 
-                if (data.canPublish) {
+                if (data.role & Roles.PUBLISHER) {
                     publisher.createVideoElement(wrapper, 'PREPEND')
                     session.publish(publisher)
                 }
@@ -654,7 +658,7 @@ function Meet(container)
     }
 
     /**
-     * Create a participant element in the matrix. Depending on the `canPublish`
+     * Create a participant element in the matrix. Depending on the connection role
      * parameter it will be a video element wrapper inside the matrix or a simple
      * tag-like element on the subscribers list.
      *
@@ -663,7 +667,7 @@ function Meet(container)
      * @return The element
      */
     function participantCreate(params) {
-        if (params.canPublish) {
+        if (params.role & Roles.PUBLISHER || params.role & Roles.SCREEN) {
             return publisherCreate(params)
         }
 
@@ -760,7 +764,7 @@ function Meet(container)
             $element.addClass('self')
         }
 
-        if (role == 'MODERATOR') {
+        if (sessionData.role & Roles.MODERATOR) {
             $element.addClass('moderated')
         }
     }
@@ -827,7 +831,7 @@ function Meet(container)
                         return false
                     }
                 })
-        } else if (role == 'MODERATOR') {
+        } else if (sessionData.role & Roles.MODERATOR) {
             nickname.attr({title: 'Options', 'data-toggle': 'dropdown'})
                 .dropdown({boundary: container})
 
@@ -1071,4 +1075,4 @@ function Meet(container)
     }
 }
 
-export default Meet
+export { Meet, Roles }

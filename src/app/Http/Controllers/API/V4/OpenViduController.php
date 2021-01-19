@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
+use App\OpenVidu\Connection;
 use App\OpenVidu\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -115,22 +116,22 @@ class OpenViduController extends Controller
      */
     public function dismissConnection($id, $conn)
     {
-        $room = Room::where('name', $id)->first();
+        $connection = Connection::where('id', $conn)->first();
 
-        // This isn't a room, bye bye
-        if (!$room) {
-            return $this->errorResponse(404, \trans('meet.room-not-found'));
+        // There's no such connection, bye bye
+        if (!$connection || $connection->room->name != $id) {
+            return $this->errorResponse(404, \trans('meet.connection-not-found'));
         }
 
         $user = Auth::guard()->user();
 
-        // Only the room owner can do it
-        if (!$user || $user->id != $room->user_id) {
+        // Only the room owner can do it (for now)
+        if (!$user || $user->id != $connection->room->user_id) {
             return $this->errorResponse(403);
         }
 
-        if (!$room->closeOVConnection($conn)) {
-            return $this->errorResponse(500, \trans('meet.session-dismiss-connection-error'));
+        if (!$connection->dismiss()) {
+            return $this->errorResponse(500, \trans('meet.connection-dismiss-error'));
         }
 
         return response()->json(['status' => 'success']);
@@ -281,28 +282,29 @@ class OpenViduController extends Controller
         if ($init) {
             // Choose the connection role
             $canPublish = !empty(request()->input('canPublish'));
-            $reqRole = $canPublish ? Room::ROLE_PUBLISHER : Room::ROLE_SUBSCRIBER;
-            $role = $isOwner ? Room::ROLE_MODERATOR : $reqRole;
+            $role = $canPublish ? Room::ROLE_PUBLISHER : Room::ROLE_SUBSCRIBER;
+            if ($isOwner) {
+                $role |= Room::ROLE_MODERATOR;
+                $role |= Room::ROLE_OWNER;
+            }
 
             // Create session token for the current user/connection
-            $response = $room->getSessionToken($role, ['canPublish' => $canPublish]);
+            $response = $room->getSessionToken($role);
 
             if (empty($response)) {
                 return $this->errorResponse(500, \trans('meet.session-join-error'));
             }
 
             // Create session token for screen sharing connection
-            if ($role != Room::ROLE_SUBSCRIBER && !empty(request()->input('screenShare'))) {
-                $add_token = $room->getSessionToken(Room::ROLE_PUBLISHER, ['canPublish' => true]);
+            if (($role & Room::ROLE_PUBLISHER) && !empty(request()->input('screenShare'))) {
+                $add_token = $room->getSessionToken(Room::ROLE_SCREEN);
 
                 $response['shareToken'] = $add_token['token'];
             }
 
             $response_code = 200;
             $response['role'] = $role;
-            $response['owner'] = $isOwner;
             $response['config'] = $config;
-            $response['canPublish'] = $canPublish;
         } else {
             $response_code = 422;
             $response['code'] = 322;
@@ -392,6 +394,12 @@ class OpenViduController extends Controller
                     $room->session_id = null;
                     $room->save();
                 }
+
+                // Remove all connections
+                // Note: We could remove connections one-by-one via the 'participantLeft' event
+                // but that could create many INSERTs when the session (with many participants) ends
+                // So, it is better to remove them all in a single INSERT.
+                Connection::where('session_id', $sessionId)->delete();
 
                 break;
         }

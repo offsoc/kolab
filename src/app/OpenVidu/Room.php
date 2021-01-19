@@ -18,12 +18,18 @@ class Room extends Model
 {
     use SettingsTrait;
 
-    public const ROLE_MODERATOR = 'MODERATOR';
-    public const ROLE_PUBLISHER = 'PUBLISHER';
-    public const ROLE_SUBSCRIBER = 'SUBSCRIBER';
+    public const ROLE_SUBSCRIBER = 1 << 0;
+    public const ROLE_PUBLISHER = 1 << 1;
+    public const ROLE_MODERATOR = 1 << 2;
+    public const ROLE_SCREEN = 1 << 3;
+    public const ROLE_OWNER = 1 << 4;
 
     public const REQUEST_ACCEPTED = 'accepted';
     public const REQUEST_DENIED = 'denied';
+
+    private const OV_ROLE_MODERATOR = 'MODERATOR';
+    private const OV_ROLE_PUBLISHER = 'PUBLISHER';
+    private const OV_ROLE_SUBSCRIBER = 'SUBSCRIBER';
 
     protected $fillable = [
         'user_id',
@@ -169,14 +175,12 @@ class Room extends Model
     /**
      * Create a OpenVidu session (connection) token
      *
-     * @param string $role User role
-     * @param array  $data User data to attach to the connection.
-     *                     It will be available client-side for everybody.
+     * @param int $role User role (see self::ROLE_* constants)
      *
      * @return array|null Token data on success, NULL otherwise
      * @throws \Exception if session does not exist
      */
-    public function getSessionToken($role = self::ROLE_PUBLISHER, $data = []): ?array
+    public function getSessionToken($role = self::ROLE_SUBSCRIBER): ?array
     {
         if (!$this->session_id) {
             throw new \Exception("The room session does not exist");
@@ -186,16 +190,12 @@ class Room extends Model
         // to make it visible for everyone in a room. So, for example we can
         // handle/style subscribers/publishers/moderators differently on the
         // client-side. Is this a security issue?
-        if (!empty($data)) {
-            $data += ['role' => $role];
-        } else {
-            $data = ['role' => $role];
-        }
+        $data = ['role' => $role];
 
         $url = 'sessions/' . $this->session_id . '/connection';
         $post = [
             'json' => [
-                'role' => $role,
+                'role' => self::OV_ROLE_PUBLISHER,
                 'data' => json_encode($data)
             ]
         ];
@@ -205,11 +205,26 @@ class Room extends Model
         if ($response->getStatusCode() == 200) {
             $json = json_decode($response->getBody(), true);
 
+            // Extract the 'token' part of the token, it will be used to authenticate the connection.
+            // It will be needed in next iterations e.g. to authenticate moderators that aren't
+            // Kolab4 users (or are just not logged in to Kolab4).
+            // FIXME: we could as well generate our own token for auth purposes
+            parse_str(parse_url($json['token'], PHP_URL_QUERY), $url);
+
+            // Create the connection reference in our database
+            $conn = new Connection();
+            $conn->id = $json['id'];
+            $conn->session_id = $this->session_id;
+            $conn->room_id = $this->id;
+            $conn->role = $role;
+            $conn->metadata = ['token' => $url['token']];
+            $conn->save();
+
             return [
                 'session' => $this->session_id,
                 'token' => $json['token'],
-                'role' => $json['role'],
                 'connectionId' => $json['id'],
+                'role' => $role,
             ];
         }
 
@@ -324,10 +339,10 @@ class Room extends Model
     /**
      * Send a OpenVidu signal to the session participants (connections)
      *
-     * @param string       $name   Signal name (type)
-     * @param array        $data   Signal data array
-     * @param array|string $target List of target connections, Null for all connections.
-     *                             It can be also a participant role.
+     * @param string            $name   Signal name (type)
+     * @param array             $data   Signal data array
+     * @param null|int|string[] $target List of target connections, Null for all connections.
+     *                                  It can be also a participant role.
      *
      * @return bool True on success, False on failure
      * @throws \Exception if session does not exist
@@ -345,26 +360,11 @@ class Room extends Model
         ];
 
         // Get connection IDs by participant role
-        if (is_string($target)) {
-            // TODO: We should probably store this in our database/redis. I foresee a use-case
-            //       for such a connections store on our side, e.g. keeping participant
-            //       metadata, e.g. selected language, extra roles like a "language interpreter", etc.
-
-            $response = $this->client()->request('GET', 'sessions/' . $this->session_id);
-
-            if ($response->getStatusCode() !== 200) {
-                return false;
-            }
-
-            $json = json_decode($response->getBody(), true);
-            $connections = [];
-
-            foreach ($json['connections']['content'] as $connection) {
-                if ($connection['role'] === $target) {
-                    $connections[] = $connection['id'];
-                    break;
-                }
-            }
+        if (is_int($target)) {
+            $connections = Connection::where('session_id', $this->session_id)
+                ->whereRaw("(role & $target)")
+                ->pluck('id')
+                ->all();
 
             if (empty($connections)) {
                 return false;

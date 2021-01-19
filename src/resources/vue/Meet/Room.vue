@@ -20,7 +20,7 @@
                 <button class="btn btn-link link-fullscreen open hidden" @click="switchFullscreen" title="Full screen">
                     <svg-icon icon="compress"></svg-icon>
                 </button>
-                <button class="btn btn-link link-security" v-if="session && session.owner" @click="securityOptions" title="Security options">
+                <button class="btn btn-link link-security" v-if="isRoomOwner()" @click="securityOptions" title="Security options">
                     <svg-icon icon="shield-alt"></svg-icon>
                 </button>
                 <button class="btn btn-link link-logout" @click="logout" title="Leave session">
@@ -123,7 +123,7 @@
 </template>
 
 <script>
-    import Meet from '../../js/meet/app.js'
+    import { Meet, Roles } from '../../js/meet/app.js'
     import StatusMessage from '../Widgets/StatusMessage'
     import LogonForm from '../Login'
     import SessionSecurityOptions from './SessionSecurityOptions'
@@ -317,7 +317,10 @@ library.add(
                 }
             },
             isPublisher() {
-                return this.session && this.session.canPublish
+                return !!this.session.role && (this.session.role & Roles.PUBLISHER) > 0
+            },
+            isRoomOwner() {
+                return !!this.session.role && (this.session.role & Roles.OWNER) > 0
             },
             isRoomReady() {
                 return ['ready', 322, 324, 325, 326, 327].includes(this.roomState)
@@ -402,7 +405,7 @@ library.add(
                 this.session.onDestroy = event => {
                     // TODO: Display different message for each reason: forceDisconnectByUser,
                     //       forceDisconnectByServer, sessionClosedByServer?
-                    if (event.reason != 'disconnect' && event.reason != 'networkDisconnect' && !this.session.owner) {
+                    if (event.reason != 'disconnect' && event.reason != 'networkDisconnect' && !this.isRoomOwner()) {
                         $('#leave-dialog').on('hide.bs.modal', () => {
                             // FIXME: Where exactly the user should land? Currently he'll land
                             //        on dashboard (if he's logged in) or login form (if he's not).
@@ -414,7 +417,7 @@ library.add(
 
                 this.session.onDismiss = connId => { this.dismissParticipant(connId) }
 
-                if (this.session.owner) {
+                if (this.isRoomOwner()) {
                     this.session.onJoinRequest = data => { this.joinRequest(data) }
                 }
 
@@ -427,7 +430,7 @@ library.add(
                     this.$router.push({ name: 'dashboard' })
                 }
 
-                if (this.session.owner) {
+                if (this.isRoomOwner()) {
                     axios.post('/api/v4/openvidu/rooms/' + this.room + '/close').then(logout)
                 } else {
                     logout()

@@ -114,9 +114,8 @@ class OpenViduTest extends TestCase
 
         $session_id = $room->fresh()->session_id;
 
-        $this->assertSame(Room::ROLE_MODERATOR, $json['role']);
+        $this->assertSame(Room::ROLE_SUBSCRIBER | Room::ROLE_MODERATOR | Room::ROLE_OWNER, $json['role']);
         $this->assertSame($session_id, $json['session']);
-        $this->assertFalse($json['canPublish']);
         $this->assertTrue(is_string($session_id) && !empty($session_id));
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
         $this->assertTrue(!array_key_exists('shareToken', $json));
@@ -140,7 +139,6 @@ class OpenViduTest extends TestCase
         $json = $response->json();
 
         $this->assertSame(Room::ROLE_SUBSCRIBER, $json['role']);
-        $this->assertFalse($json['canPublish']);
         $this->assertSame($session_id, $json['session']);
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
         $this->assertTrue($json['token'] != $john_token);
@@ -155,7 +153,6 @@ class OpenViduTest extends TestCase
 
         $this->assertSame(Room::ROLE_PUBLISHER, $json['role']);
         $this->assertSame($session_id, $json['session']);
-        $this->assertTrue($json['canPublish']);
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
         $this->assertTrue($json['token'] != $john_token);
         $this->assertTrue(!array_key_exists('shareToken', $json));
@@ -331,7 +328,6 @@ class OpenViduTest extends TestCase
         $json = $response->json();
 
         $this->assertSame(Room::ROLE_PUBLISHER, $json['role']);
-        $this->assertTrue($json['canPublish']);
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
 
         // TODO: Test a scenario where both password and lock are enabled
@@ -359,7 +355,6 @@ class OpenViduTest extends TestCase
         $json = $response->json();
 
         $this->assertSame(Room::ROLE_PUBLISHER, $json['role']);
-        $this->assertTrue($json['canPublish']);
         $this->assertSame($room->session_id, $json['session']);
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
         $this->assertTrue(strpos($json['shareToken'], 'wss://') === 0);
@@ -460,13 +455,13 @@ class OpenViduTest extends TestCase
 
         // Non-existing connection
         $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/connections/123/dismiss");
-        $response->assertStatus(500);
+        $response->assertStatus(404);
 
         $json = $response->json();
 
         $this->assertCount(2, $json);
         $this->assertSame('error', $json['status']);
-        $this->assertSame('Failed to dismiss the connection.', $json['message']);
+        $this->assertSame('The connection does not exist.', $json['message']);
 
         // Non-owner access
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}/dismiss");
