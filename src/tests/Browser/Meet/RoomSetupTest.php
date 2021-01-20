@@ -370,4 +370,68 @@ class RoomSetupTest extends TestCaseDusk
             $browser->waitUntilMissing('@session .meet-subscriber:not(.self)');
         });
     }
+
+    /**
+     * Test demoting publisher to a subscriber
+     *
+     * @group openvidu
+     * @depends testSubscribers
+     */
+    public function testDemoteToSubscriber(): void
+    {
+        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+
+        $this->browse(function (Browser $browser, Browser $guest) {
+            // Join the room as the owner
+            $browser->visit(new RoomPage('john'))
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                ->waitFor('@setup-status-message')
+                ->type('@setup-nickname-input', 'john')
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form')
+                ->waitFor('@session video');
+
+            // In one browser window act as a guest
+            $guest->visit(new RoomPage('john'))
+                ->waitUntilMissing('@setup-status-message', 10)
+                ->assertSeeIn('@setup-button', "JOIN")
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form')
+                ->waitFor('div.meet-video.self')
+                ->waitFor('div.meet-video:not(.self)')
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@session video', 2)
+                ->assertElementsCount('@session div.meet-subscriber', 0);
+
+            $browser
+                ->waitFor('div.meet-video.self')
+                ->waitFor('div.meet-video:not(.self)')
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@session video', 2)
+                ->assertElementsCount('@session .meet-subscriber', 0)
+                ->click('@session .meet-video:not(.self) .meet-nickname')
+                ->whenAvailable('@session .meet-video:not(.self) .dropdown-menu', function (Browser $browser) {
+                    $browser->assertSeeIn('.action-demote', 'Demote to subscriber')
+                        ->click('.action-demote')
+                        ->waitUntilMissing('.dropdown-menu');
+                })
+                ->waitUntilMissing('@session .meet-video:not(.self)')
+                ->waitFor('@session div.meet-subscriber')
+                ->assertElementsCount('@session div.meet-video', 1)
+                ->assertElementsCount('@session video', 1)
+                ->assertElementsCount('@session div.meet-subscriber', 1);
+
+            $guest
+                ->waitUntilMissing('@session .meet-video.self')
+                ->waitFor('@session div.meet-subscriber')
+                ->assertElementsCount('@session div.meet-video', 1)
+                ->assertElementsCount('@session video', 1)
+                ->assertElementsCount('@session div.meet-subscriber', 1);
+
+            // TODO: Demoting the room owner?
+        });
+    }
 }

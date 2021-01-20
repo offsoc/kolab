@@ -17,7 +17,6 @@ function Meet(container)
     let publisher               // Publisher object which the user will publish
     let audioActive = false     // True if the audio track of the publisher is active
     let videoActive = false     // True if the video track of the publisher is active
-    let numOfVideos = 0         // Keeps track of the number of videos that are being shown
     let audioSource = ''        // Currently selected microphone
     let videoSource = ''        // Currently selected camera
     let sessionData             // Room session metadata
@@ -76,8 +75,9 @@ function Meet(container)
     /**
      * Join the room session
      *
-     * @param data Session metadata and event handlers (session, token, shareToken, nickname, role,
-     *             chatElement, menuElement, onDestroy, onJoinRequest)
+     * @param data Session metadata and event handlers (token, shareToken, nickname, role,
+     *             chatElement, menuElement, onDestroy, onJoinRequest, onDismiss, onConnectionChange,
+     *             onSessionDataUpdate)
      */
     function joinRoom(data) {
         resize();
@@ -113,11 +113,11 @@ function Meet(container)
 
             let metadata = connectionData(event.connection)
             let connectionId = event.connection.connectionId
-            metadata.connId = connectionId
+            metadata.connectionId = connectionId
 
-            let element = participantCreate(metadata)
+            metadata.element = participantCreate(metadata)
 
-            connections[connectionId] = { element }
+            connections[connectionId] = metadata
 
             resize()
 
@@ -129,9 +129,6 @@ function Meet(container)
         session.on('connectionDestroyed', event => {
             let conn = connections[event.connection.connectionId]
             if (conn) {
-                if ($(conn.element).is('.meet-video')) {
-                    numOfVideos--
-                }
                 $(conn.element).remove()
                 delete connections[event.connection.connectionId]
             }
@@ -185,7 +182,6 @@ function Meet(container)
         // Connect with the token
         session.connect(data.token, data.params)
             .then(() => {
-                let wrapper
                 let params = { self: true, role: data.role, audioActive, videoActive }
                 params = Object.assign({}, data.params, params)
 
@@ -198,7 +194,7 @@ function Meet(container)
                     resize()
                 })
 
-                wrapper = participantCreate(params)
+                let wrapper = participantCreate(params)
 
                 if (data.role & Roles.PUBLISHER) {
                     publisher.createVideoElement(wrapper, 'PREPEND')
@@ -206,7 +202,7 @@ function Meet(container)
                 }
 
                 resize()
-                sessionData.wrapper = wrapper
+                sessionData.element = wrapper
             })
             .catch(error => {
                 console.error('There was an error connecting to the session: ', error.message);
@@ -433,6 +429,8 @@ function Meet(container)
 
         switch (signal.type) {
             case 'signal:userChanged':
+                // TODO: Use 'signal:connectionUpdate' for nickname updates
+                // TODO: Use 'streamPropertyChanged' event to handle audio/video mute/unmute state changes
                 if (conn = connections[connId]) {
                     data = JSON.parse(signal.data)
 
@@ -448,10 +446,20 @@ function Meet(container)
                 break
 
             case 'signal:joinRequest':
-                if (sessionData.onJoinRequest) {
+                // accept requests from the server only
+                if (!connId && sessionData.onJoinRequest) {
                     sessionData.onJoinRequest(JSON.parse(signal.data))
                 }
-                break;
+                break
+
+            case 'signal:connectionUpdate':
+                // accept requests from the server only
+                if (!connId) {
+                    data = JSON.parse(signal.data)
+
+                    connectionUpdate(data)
+                }
+                break
         }
     }
 
@@ -580,7 +588,7 @@ function Meet(container)
             try {
                 publisher.publishAudio(!audioActive)
                 audioActive = !audioActive
-                participantUpdate(sessionData.wrapper, { audioActive })
+                participantUpdate(sessionData.element, { audioActive })
                 signalUserUpdate()
             } catch (e) {
                 console.error(e)
@@ -602,7 +610,7 @@ function Meet(container)
             try {
                 publisher.publishVideo(!videoActive)
                 videoActive = !videoActive
-                participantUpdate(sessionData.wrapper, { videoActive })
+                participantUpdate(sessionData.element, { videoActive })
                 signalUserUpdate()
             } catch (e) {
                 console.error(e)
@@ -638,6 +646,68 @@ function Meet(container)
      */
     function isScreenSharingSupported() {
         return !!OV.checkScreenSharingCapabilities();
+    }
+
+    /**
+     * Update participant connection state
+     */
+    function connectionUpdate(data) {
+        let conn = connections[data.connectionId]
+
+        // It's me
+        if (session.connection.connectionId == data.connectionId) {
+            const rolePublisher = data.role && data.role & Roles.PUBLISHER
+            const isPublisher = sessionData.role & Roles.PUBLISHER
+
+            // Inform the vue component, so it can update some UI controls
+            let update = () => {
+                if (sessionData.onSessionDataUpdate) {
+                    sessionData.onSessionDataUpdate(data)
+                }
+            }
+
+            // demoted to a subscriber
+            if ('role' in data && isPublisher && !rolePublisher) {
+                session.unpublish(publisher)
+                // FIXME: There's a reference in OpenVidu to a video element that should not
+                // exist anymore. It causes issues when we try to do publish/unpublish
+                // sequence multiple times in a row. So, we're clearing the reference here.
+                let videos = publisher.stream.streamManager.videos
+                publisher.stream.streamManager.videos = videos.filter(video => video.video.parentNode != null)
+            }
+
+            // merge the changed data into internal session metadata object
+            Object.keys(data).forEach(key => { sessionData[key] = data[key] })
+
+            // TODO: do "it's me" detection based on connection id instead
+            sessionData.self = true
+
+            // update the participant element
+            sessionData.element = participantUpdate(sessionData.element, sessionData)
+
+            // promoted to a publisher
+            if ('role' in data && !isPublisher && rolePublisher) {
+                publisher.createVideoElement(sessionData.element, 'PREPEND')
+                session.publish(publisher).then(() => {
+                    data.audioActive = publisher.stream.audioActive
+                    data.videoActive = publisher.stream.videoActive
+                    update()
+                })
+
+                // TODO: Here the user is asked for media permissions again
+                // should we rather start the stream without asking the user?
+                // Or maybe we want to display the media setup/preview form?
+                // Need to find a way to do this.
+            } else {
+                // Inform the vue component, so it can update some UI controls
+                update()
+            }
+        } else if (conn) {
+            // merge the changed data into internal session metadata object
+            Object.keys(data).forEach(key => { conn[key] = data[key] })
+
+            conn.element = participantUpdate(conn.element, conn)
+        }
     }
 
     /**
@@ -731,12 +801,12 @@ function Meet(container)
             })
         }
 
-        numOfVideos++
-
         // Remove the subscriber element, if exists
-        $('#subscriber-' + params.connId).remove()
+        $('#subscriber-' + params.connectionId).remove()
 
-        return wrapper[params.self ? 'prependTo' : 'appendTo'](container).get(0)
+        return wrapper[params.self ? 'prependTo' : 'appendTo'](container)
+            .data('cid', params.connectionId)
+            .get(0)
     }
 
     /**
@@ -747,6 +817,21 @@ function Meet(container)
      */
     function participantUpdate(wrapper, params) {
         const $element = $(wrapper)
+
+        // Handle publisher-to-subscriber and subscriber-to-publisher change
+        if ('role' in params && !(params.role & Roles.SCREEN)) {
+            const rolePublisher = params.role & Roles.PUBLISHER
+            const isPublisher = $element.is('.meet-video')
+
+            if ((rolePublisher && !isPublisher) || (!rolePublisher && isPublisher)) {
+                $element.remove()
+                const wrapper = participantCreate(params)
+                resize()
+                return wrapper;
+            }
+
+            $element.find('.action-role-publisher input').prop('checked', params.role & Roles.PUBLISHER)
+        }
 
         if ('audioActive' in params) {
             $element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
@@ -767,6 +852,8 @@ function Meet(container)
         if (sessionData.role & Roles.MODERATOR) {
             $element.addClass('moderated')
         }
+
+        return wrapper
     }
 
     /**
@@ -781,7 +868,8 @@ function Meet(container)
         participantUpdate(wrapper, params)
 
         return wrapper[params.self ? 'prependTo' : 'appendTo'](subscribersContainer)
-            .attr('id', 'subscriber-' + params.connId)
+            .attr('id', 'subscriber-' + params.connectionId)
+            .data('cid', params.connectionId)
             .get(0)
     }
 
@@ -800,6 +888,8 @@ function Meet(container)
                 + '</a>'
                 + '<div class="dropdown-menu">'
                     + '<a class="dropdown-item action-dismiss" href="#">Dismiss</a>'
+                    + '<label class="dropdown-item action-role-publisher" href="#"><input type="checkbox"> CAN_HAZ_AUDIO_AND_VIDEO<a>'
+                    // + '<label class="dropdown-item action-role-moderator" href="#"><input type="checkbox"> CAN_MODERATE<a>'
                 + '</div>'
             + '</div>'
         )
@@ -837,7 +927,43 @@ function Meet(container)
 
             element.find('.action-dismiss').on('click', e => {
                 if (sessionData.onDismiss) {
-                    sessionData.onDismiss(params.connId)
+                    sessionData.onDismiss(params.connectionId)
+                }
+            })
+
+            element.find('.action-role-publisher input').on('change', e => {
+                if (sessionData.onConnectionChange) {
+                    const enabled = e.target.checked
+                    let role = params.role
+
+                    if (enabled) {
+                        role |= Roles.PUBLISHER
+                        if (role & Roles.SUBSCRIBER) {
+                            role ^= Roles.SUBSCRIBER
+                        }
+                    } else {
+                        role |= Roles.SUBSCRIBER
+                        if (role & Roles.PUBLISHER) {
+                            role ^= Roles.PUBLISHER
+                        }
+                    }
+
+                    sessionData.onConnectionChange(params.connectionId, { role })
+                }
+            })
+
+            element.find('.action-role-moderator input').on('change', e => {
+                if (sessionData.onConnectionChange) {
+                    const enabled = e.target.checked
+                    let role = params.role
+
+                    if (enabled) {
+                        role |= Roles.MODERATOR
+                    } else if (role & Roles.MODERATOR) {
+                        role ^= Roles.MODERATOR
+                    }
+
+                    sessionData.onConnectionChange(params.connectionId, { role })
                 }
             })
         }
@@ -864,6 +990,7 @@ function Meet(container)
      * Update the room "matrix" layout
      */
     function updateLayout() {
+        let numOfVideos = $(container).find('.meet-video').length
         if (!numOfVideos) {
             return
         }

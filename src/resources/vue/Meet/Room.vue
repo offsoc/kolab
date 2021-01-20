@@ -316,6 +316,9 @@ library.add(
                     $('#meet-session-menu').find('.link-fullscreen.closed').removeClass('hidden')
                 }
             },
+            isModerator() {
+                return this.isRoomOwner() || (!!this.session.role && (this.session.role & Roles.MODERATOR) > 0)
+            },
             isPublisher() {
                 return !!this.session.role && (this.session.role & Roles.PUBLISHER) > 0
             },
@@ -414,12 +417,10 @@ library.add(
                         }).modal()
                     }
                 }
-
                 this.session.onDismiss = connId => { this.dismissParticipant(connId) }
-
-                if (this.isRoomOwner()) {
-                    this.session.onJoinRequest = data => { this.joinRequest(data) }
-                }
+                this.session.onSessionDataUpdate = data => { this.updateSession(data) }
+                this.session.onConnectionChange = (connId, data) => { this.updateParticipant(connId, data) }
+                this.session.onJoinRequest = data => { this.joinRequest(data) }
 
                 this.meet.joinRoom(this.session)
             },
@@ -578,6 +579,34 @@ library.add(
                             })
                     }
                 })
+            },
+            updateParticipant(connId, params) {
+                if (this.isModerator()) {
+                    axios.put('/api/v4/openvidu/rooms/' + this.room + '/connections/' + connId, params)
+                }
+            },
+            updateSession(data) {
+                let params = {}
+
+                if ('role' in data) {
+                    params.role = data.role
+                }
+
+                // merge new params into the object
+                this.session = Object.assign({}, this.session, params)
+
+                // update some buttons state e.g. when switching from publisher to subscriber
+                if (!this.isPublisher()) {
+                    this.setMenuItem('audio', false)
+                    this.setMenuItem('video', false)
+                } else {
+                    if ('videoActive' in data) {
+                        this.setMenuItem('video', data.videoActive)
+                    }
+                    if ('audioActive' in data) {
+                        this.setMenuItem('audio', data.audioActive)
+                    }
+                }
             }
         }
     }

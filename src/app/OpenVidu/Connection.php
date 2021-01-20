@@ -54,4 +54,35 @@ class Connection extends Model
     {
         return $this->belongsTo(Room::class, 'room_id', 'id');
     }
+
+    /**
+     * Connection role mutator
+     *
+     * @throws \Exception
+     */
+    public function setRoleAttribute($role)
+    {
+        $new_role = 0;
+
+        $allowed_values = [
+            Room::ROLE_SUBSCRIBER,
+            Room::ROLE_PUBLISHER,
+            Room::ROLE_MODERATOR,
+            Room::ROLE_SCREEN,
+            Room::ROLE_OWNER,
+        ];
+
+        foreach ($allowed_values as $value) {
+            if ($role & $value) {
+                $new_role |= $value;
+                $role ^= $value;
+            }
+        }
+
+        if ($role > 0) {
+            throw new \Exception("Invalid connection role: {$role}");
+        }
+
+        $this->attributes['role'] = $new_role;
+    }
 }
