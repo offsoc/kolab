@@ -161,14 +161,19 @@ class Room extends Page
      */
     public function setNickname($browser, $selector, $nickname): void
     {
-        // Use script() because type() does not work with this contenteditable widget
-        $selector = $selector . ' .meet-nickname .content';
-        $browser->script(
-            "var element = document.querySelector('$selector');"
-            . "element.focus();"
-            . "element.innerText = '$nickname';"
-            . "element.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 27 }))"
-        );
+        $element = "$selector .meet-nickname .content";
+
+        $browser->click("$selector .meet-nickname")
+            ->waitFor("$selector .dropdown-menu")
+            ->assertSeeIn("$selector .dropdown-menu > .action-nickname", 'Nickname')
+            ->click("$selector .dropdown-menu > .action-nickname")
+            ->waitUntilMissing('.dropdown-menu')
+            // Use script() because type() does not work with this contenteditable widget
+            ->script(
+                "var element = document.querySelector('$element');"
+                . "element.innerText = '$nickname';"
+                . "element.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 27 }))"
+            );
     }
 
     /**
