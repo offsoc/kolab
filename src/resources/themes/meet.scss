@@ -35,6 +35,13 @@
             }
         }
     }
+
+    & + .dropdown-menu {
+        & > label {
+            margin: 0;
+            padding-left: 3.75rem;
+        }
+    }
 }
 
 .meet-video {

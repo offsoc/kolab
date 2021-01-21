@@ -888,8 +888,16 @@ function Meet(container)
                 + '</a>'
                 + '<div class="dropdown-menu">'
                     + '<a class="dropdown-item action-dismiss" href="#">Dismiss</a>'
-                    + '<label class="dropdown-item action-role-publisher" href="#"><input type="checkbox"> CAN_HAZ_AUDIO_AND_VIDEO<a>'
-                    // + '<label class="dropdown-item action-role-moderator" href="#"><input type="checkbox"> CAN_MODERATE<a>'
+                    + '<div class="dropdown-divider"></div>'
+                    + '<h6 class="dropdown-header">Permissions</h6>'
+                    + '<label class="dropdown-item action-role-publisher custom-control custom-switch">'
+                        + '<input type="checkbox" class="custom-control-input">'
+                        + ' <span class="custom-control-label">CAN_HAZ_AUDIO_AND_VIDEO</span>'
+                    + '</label>'
+                    //+ '<label class="dropdown-item action-role-moderator custom-control custom-switch">'
+                    //    + '<input type="checkbox" class="custom-control-input">'
+                    //    + ' <span class="custom-control-label">CAN_MODERATE</span>'
+                    //+ '</label>'
                 + '</div>'
             + '</div>'
         )
@@ -924,6 +932,9 @@ function Meet(container)
         } else if (sessionData.role & Roles.MODERATOR) {
             nickname.attr({title: 'Options', 'data-toggle': 'dropdown'})
                 .dropdown({boundary: container})
+
+            // Don't close the menu on permission change
+            element.find('.dropdown-menu > label').on('click', e => { e.stopPropagation() })
 
             element.find('.action-dismiss').on('click', e => {
                 if (sessionData.onDismiss) {
