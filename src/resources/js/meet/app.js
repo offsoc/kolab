@@ -112,12 +112,10 @@ function Meet(container)
             // is not being dispatched at all
 
             let metadata = connectionData(event.connection)
-            let connectionId = event.connection.connectionId
-            metadata.connectionId = connectionId
 
             metadata.element = participantCreate(metadata)
 
-            connections[connectionId] = metadata
+            connections[metadata.connectionId] = metadata
 
             resize()
 
@@ -137,17 +135,15 @@ function Meet(container)
 
         // On every new Stream received...
         session.on('streamCreated', event => {
-            let connection = event.stream.connection
-            let connectionId = connection.connectionId
-            let metadata = connectionData(connection)
-            let wrapper = connections[connectionId].element
+            let connectionId = event.stream.connection.connectionId
+            let metadata = connections[connectionId]
             let props = {
                 // Prepend the video element so it is always before the watermark element
                 insertMode: 'PREPEND'
             }
 
             // Subscribe to the Stream to receive it
-            let subscriber = session.subscribe(event.stream, wrapper, props);
+            let subscriber = session.subscribe(event.stream, metadata.element, props);
 
             subscriber.on('videoElementCreated', event => {
                 $(event.element).prop({
@@ -156,17 +152,29 @@ function Meet(container)
 
                 resize()
             })
-/*
-            subscriber.on('videoElementDestroyed', event => {
-            })
-*/
+
+            metadata.audioActive = event.stream.audioActive
+            metadata.videoActive = event.stream.videoActive
+
             // Update the wrapper controls/status
-            participantUpdate(wrapper, event.stream)
+            participantUpdate(metadata.element, metadata)
         })
-/*
-        session.on('streamDestroyed', event => {
+
+        // Stream properties changed e.g. audio/video muted/unmuted
+        session.on('streamPropertyChanged', event => {
+            let connectionId = event.target.connection.connectionId
+            let metadata = connections[connectionId]
+
+            if (session.connection.connectionId == connectionId) {
+                metadata = sessionData
+            }
+
+            if (metadata) {
+                metadata[event.changedProperty] = event.newValue
+                participantUpdate(metadata.element, metadata)
+            }
         })
-*/
+
         // Handle session disconnection events
         session.on('sessionDisconnected', event => {
             if (data.onDestroy) {
@@ -182,7 +190,13 @@ function Meet(container)
         // Connect with the token
         session.connect(data.token, data.params)
             .then(() => {
-                let params = { self: true, role: data.role, audioActive, videoActive }
+                let params = {
+                    connectionId: session.connection.connectionId,
+                    role: data.role,
+                    audioActive,
+                    videoActive
+                }
+
                 params = Object.assign({}, data.params, params)
 
                 publisher.on('videoElementCreated', event => {
@@ -429,12 +443,12 @@ function Meet(container)
 
         switch (signal.type) {
             case 'signal:userChanged':
-                // TODO: Use 'signal:connectionUpdate' for nickname updates
-                // TODO: Use 'streamPropertyChanged' event to handle audio/video mute/unmute state changes
+                // TODO: Use 'signal:connectionUpdate' for nickname updates?
                 if (conn = connections[connId]) {
                     data = JSON.parse(signal.data)
 
-                    participantUpdate(conn.element, data)
+                    conn.nickname = data.nickname
+                    participantUpdate(conn.element, conn)
                     nicknameUpdate(data.nickname, connId)
                 }
                 break
@@ -550,14 +564,9 @@ function Meet(container)
      */
     function signalUserUpdate(connection) {
         let data = {
-            audioActive,
-            videoActive,
             nickname: sessionData.params.nickname
         }
 
-        // Note: StreamPropertyChangedEvent might be more standard way
-        // to propagate the audio/video state change to other users.
-        // It looks there's no other way to propagate nickname changes.
         session.signal({
             data: JSON.stringify(data),
             type: 'userChanged',
@@ -566,8 +575,6 @@ function Meet(container)
 
         // The same nickname for screen sharing session
         if (screenSession) {
-            data.audioActive = false
-            data.videoActive = true
             screenSession.signal({
                 data: JSON.stringify(data),
                 type: 'userChanged',
@@ -588,8 +595,6 @@ function Meet(container)
             try {
                 publisher.publishAudio(!audioActive)
                 audioActive = !audioActive
-                participantUpdate(sessionData.element, { audioActive })
-                signalUserUpdate()
             } catch (e) {
                 console.error(e)
             }
@@ -610,8 +615,6 @@ function Meet(container)
             try {
                 publisher.publishVideo(!videoActive)
                 videoActive = !videoActive
-                participantUpdate(sessionData.element, { videoActive })
-                signalUserUpdate()
             } catch (e) {
                 console.error(e)
             }
@@ -678,9 +681,6 @@ function Meet(container)
 
             // merge the changed data into internal session metadata object
             Object.keys(data).forEach(key => { sessionData[key] = data[key] })
-
-            // TODO: do "it's me" detection based on connection id instead
-            sessionData.self = true
 
             // update the participant element
             sessionData.element = participantUpdate(sessionData.element, sessionData)
@@ -750,6 +750,8 @@ function Meet(container)
      * @param params Connection metadata/params
      */
     function publisherCreate(params) {
+        const isSelf = session.connection.connectionId == params.connectionId
+
         // Create the element
         let wrapper = $(
             '<div class="meet-video">'
@@ -769,7 +771,7 @@ function Meet(container)
         // Append the nickname widget
         wrapper.find('.controls').before(nicknameWidget(params))
 
-        if (!params.self) {
+        if (isSelf) {
             // Enable audio mute button
             wrapper.find('.link-audio').removeClass('hidden')
                 .on('click', e => {
@@ -804,7 +806,7 @@ function Meet(container)
         // Remove the subscriber element, if exists
         $('#subscriber-' + params.connectionId).remove()
 
-        return wrapper[params.self ? 'prependTo' : 'appendTo'](container)
+        return wrapper[isSelf ? 'prependTo' : 'appendTo'](container)
             .data('cid', params.connectionId)
             .get(0)
     }
@@ -816,41 +818,50 @@ function Meet(container)
      * @param params  Connection metadata/params
      */
     function participantUpdate(wrapper, params) {
-        const $element = $(wrapper)
+        const element = $(wrapper)
+        const isModerator = sessionData.role & Roles.MODERATOR
+        const isSelf = session.connection.connectionId == params.connectionId
 
         // Handle publisher-to-subscriber and subscriber-to-publisher change
         if ('role' in params && !(params.role & Roles.SCREEN)) {
             const rolePublisher = params.role & Roles.PUBLISHER
-            const isPublisher = $element.is('.meet-video')
+            const isPublisher = element.is('.meet-video')
 
             if ((rolePublisher && !isPublisher) || (!rolePublisher && isPublisher)) {
-                $element.remove()
+                element.remove()
                 const wrapper = participantCreate(params)
                 resize()
                 return wrapper;
             }
 
-            $element.find('.action-role-publisher input').prop('checked', params.role & Roles.PUBLISHER)
+            element.find('.action-role-publisher input').prop('checked', params.role & Roles.PUBLISHER)
         }
 
         if ('audioActive' in params) {
-            $element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
+            element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
         }
 
         if ('videoActive' in params) {
-            $element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
+            element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
         }
 
         if ('nickname' in params) {
-            $element.find('.meet-nickname > .content').text(params.nickname)
+            element.find('.meet-nickname > .content').text(params.nickname)
         }
 
-        if (params.self) {
-            $element.addClass('self')
+        if (isSelf) {
+            element.addClass('self')
         }
 
-        if (sessionData.role & Roles.MODERATOR) {
-            $element.addClass('moderated')
+        if (isModerator) {
+            element.addClass('moderated')
+        }
+
+        element.find('.dropdown-menu')[isSelf || isModerator ? 'removeClass' : 'addClass']('hidden')
+        element.find('.permissions')[isModerator ? 'removeClass' : 'addClass']('hidden')
+
+        if ('role' in params && params.role & Roles.SCREEN) {
+            element.find('.permissions').addClass('hidden')
         }
 
         return wrapper
@@ -862,12 +873,14 @@ function Meet(container)
      * @param params Connection metadata/params
      */
     function subscriberCreate(params) {
+        const isSelf = session.connection.connectionId == params.connectionId
+
         // Create the element
         let wrapper = $('<div class="meet-subscriber">').append(nicknameWidget(params))
 
         participantUpdate(wrapper, params)
 
-        return wrapper[params.self ? 'prependTo' : 'appendTo'](subscribersContainer)
+        return wrapper[isSelf ? 'prependTo' : 'appendTo'](subscribersContainer)
             .attr('id', 'subscriber-' + params.connectionId)
             .data('cid', params.connectionId)
             .get(0)
@@ -879,33 +892,40 @@ function Meet(container)
      * @param object params Connection metadata/params
      */
     function nicknameWidget(params) {
+        const isSelf = session.connection.connectionId == params.connectionId
+
         // Create the element
         let element = $(
             '<div class="dropdown">'
-                + '<a href="#" class="meet-nickname btn" title="Nickname" aria-haspopup="true" aria-expanded="false" role="button">'
+                + '<a href="#" class="meet-nickname btn" aria-haspopup="true" aria-expanded="false" role="button">'
                     + '<span class="content"></span>'
                     + '<span class="icon">' + svgIcon('user') + '</span>'
                 + '</a>'
                 + '<div class="dropdown-menu">'
+                    + '<a class="dropdown-item action-nickname" href="#">Nickname</a>'
                     + '<a class="dropdown-item action-dismiss" href="#">Dismiss</a>'
-                    + '<div class="dropdown-divider"></div>'
-                    + '<h6 class="dropdown-header">Permissions</h6>'
-                    + '<label class="dropdown-item action-role-publisher custom-control custom-switch">'
-                        + '<input type="checkbox" class="custom-control-input">'
-                        + ' <span class="custom-control-label">CAN_HAZ_AUDIO_AND_VIDEO</span>'
-                    + '</label>'
-                    //+ '<label class="dropdown-item action-role-moderator custom-control custom-switch">'
-                    //    + '<input type="checkbox" class="custom-control-input">'
-                    //    + ' <span class="custom-control-label">CAN_MODERATE</span>'
-                    //+ '</label>'
+                    + '<div class="dropdown-divider permissions"></div>'
+                    + '<div class="permissions">'
+                        + '<h6 class="dropdown-header">Permissions</h6>'
+                        + '<label class="dropdown-item action-role-publisher custom-control custom-switch">'
+                            + '<input type="checkbox" class="custom-control-input">'
+                            + ' <span class="custom-control-label">CAN_HAZ_AUDIO_AND_VIDEO</span>'
+                        + '</label>'
+                        //+ '<label class="dropdown-item action-role-moderator custom-control custom-switch">'
+                        //    + '<input type="checkbox" class="custom-control-input">'
+                        //    + ' <span class="custom-control-label">CAN_MODERATE</span>'
+                        //+ '</label>'
+                    + '</div>'
                 + '</div>'
             + '</div>'
         )
 
         let nickname = element.find('.meet-nickname')
-            .addClass('btn btn-outline-' + (params.self ? 'primary' : 'secondary'))
+            .addClass('btn btn-outline-' + (isSelf ? 'primary' : 'secondary'))
+            .attr({title: 'Options', 'data-toggle': 'dropdown'})
+            .dropdown({boundary: container})
 
-        if (params.self) {
+        if (isSelf) {
             // Add events for nickname change
             let editable = element.find('.content')[0]
             let editableEnable = () => {
@@ -919,7 +939,8 @@ function Meet(container)
                 nicknameUpdate(editable.innerText, session.connection.connectionId)
             }
 
-            nickname.on('click', editableEnable)
+            element.find('.action-nickname').on('click', editableEnable)
+            element.find('.action-dismiss').remove()
 
             $(editable).on('blur', editableUpdate)
                 .on('keydown', e => {
@@ -929,53 +950,50 @@ function Meet(container)
                         return false
                     }
                 })
-        } else if (sessionData.role & Roles.MODERATOR) {
-            nickname.attr({title: 'Options', 'data-toggle': 'dropdown'})
-                .dropdown({boundary: container})
-
-            // Don't close the menu on permission change
-            element.find('.dropdown-menu > label').on('click', e => { e.stopPropagation() })
+        } else {
+            element.find('.action-nickname').remove()
 
             element.find('.action-dismiss').on('click', e => {
                 if (sessionData.onDismiss) {
                     sessionData.onDismiss(params.connectionId)
                 }
             })
+        }
 
+        // Don't close the menu on permission change
+        element.find('.dropdown-menu > label').on('click', e => { e.stopPropagation() })
+
+        if (sessionData.onConnectionChange) {
             element.find('.action-role-publisher input').on('change', e => {
-                if (sessionData.onConnectionChange) {
-                    const enabled = e.target.checked
-                    let role = params.role
+                const enabled = e.target.checked
+                let role = params.role
 
-                    if (enabled) {
-                        role |= Roles.PUBLISHER
-                        if (role & Roles.SUBSCRIBER) {
-                            role ^= Roles.SUBSCRIBER
-                        }
-                    } else {
-                        role |= Roles.SUBSCRIBER
-                        if (role & Roles.PUBLISHER) {
-                            role ^= Roles.PUBLISHER
-                        }
+                if (enabled) {
+                    role |= Roles.PUBLISHER
+                    if (role & Roles.SUBSCRIBER) {
+                        role ^= Roles.SUBSCRIBER
                     }
-
-                    sessionData.onConnectionChange(params.connectionId, { role })
+                } else {
+                    role |= Roles.SUBSCRIBER
+                    if (role & Roles.PUBLISHER) {
+                        role ^= Roles.PUBLISHER
+                    }
                 }
+
+                sessionData.onConnectionChange(params.connectionId, { role })
             })
 
             element.find('.action-role-moderator input').on('change', e => {
-                if (sessionData.onConnectionChange) {
-                    const enabled = e.target.checked
-                    let role = params.role
+                const enabled = e.target.checked
+                let role = params.role
 
-                    if (enabled) {
-                        role |= Roles.MODERATOR
-                    } else if (role & Roles.MODERATOR) {
-                        role ^= Roles.MODERATOR
-                    }
-
-                    sessionData.onConnectionChange(params.connectionId, { role })
+                if (enabled) {
+                    role |= Roles.MODERATOR
+                } else if (role & Roles.MODERATOR) {
+                    role ^= Roles.MODERATOR
                 }
+
+                sessionData.onConnectionChange(params.connectionId, { role })
             })
         }
 
@@ -1209,7 +1227,11 @@ function Meet(container)
         // OpenVidu is unable to merge these two objects into one, for it it is only
         // two strings, so it puts a "%/%" separator in between, we'll replace it with comma
         // to get one parseable json object
-        return JSON.parse(connection.data.replace('}%/%{', ','))
+        let data = JSON.parse(connection.data.replace('}%/%{', ','))
+
+        data.connectionId = connection.connectionId
+
+        return data
     }
 }
 

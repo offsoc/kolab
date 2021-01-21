@@ -571,10 +571,11 @@ library.add(
                     if (!enabled) {
                         // TODO: This might need to be a different route. E.g. the room password might have
                         //       changed since user joined the session
+                        //       Also because it creates a redundant connection (token)
                         axios.post('/api/v4/openvidu/rooms/' + this.room, this.post, { ignoreErrors: true })
                             .then(response => {
                                 // Response data contains: session, token and shareToken
-                                this.session.shareToken = response.data.token
+                                this.session.shareToken = response.data.shareToken
                                 this.meet.updateSession(this.session)
                             })
                     }

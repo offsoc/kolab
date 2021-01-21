@@ -37,7 +37,7 @@
     }
 
     & + .dropdown-menu {
-        & > label {
+        .permissions > label {
             margin: 0;
             padding-left: 3.75rem;
         }
