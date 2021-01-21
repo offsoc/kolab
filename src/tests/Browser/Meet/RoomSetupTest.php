@@ -414,8 +414,8 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session .meet-subscriber', 0)
                 ->click('@session .meet-video:not(.self) .meet-nickname')
                 ->whenAvailable('@session .meet-video:not(.self) .dropdown-menu', function (Browser $browser) {
-                    $browser->assertSeeIn('.action-demote', 'Demote to subscriber')
-                        ->click('.action-demote')
+                    $browser->assertSeeIn('.action-role-publisher', 'AUDIO_AND_VIDEO')
+                        ->click('.action-role-publisher')
                         ->waitUntilMissing('.dropdown-menu');
                 })
                 ->waitUntilMissing('@session .meet-video:not(.self)')

@@ -160,9 +160,9 @@ function Meet(container)
             participantUpdate(metadata.element, metadata)
         })
 
-        // Stream properties changed e.g. audio/video muted/unmuted
+        // Stream properties changes e.g. audio/video muted/unmuted
         session.on('streamPropertyChanged', event => {
-            let connectionId = event.target.connection.connectionId
+            let connectionId = event.stream.connection.connectionId
             let metadata = connections[connectionId]
 
             if (session.connection.connectionId == connectionId) {
@@ -771,7 +771,7 @@ function Meet(container)
         // Append the nickname widget
         wrapper.find('.controls').before(nicknameWidget(params))
 
-        if (isSelf) {
+        if (!isSelf) {
             // Enable audio mute button
             wrapper.find('.link-audio').removeClass('hidden')
                 .on('click', e => {
