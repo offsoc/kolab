@@ -406,6 +406,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session video', 2)
                 ->assertElementsCount('@session div.meet-subscriber', 0);
 
+            // Demote the guest to a subscriber
             $browser
                 ->waitFor('div.meet-video.self')
                 ->waitFor('div.meet-video:not(.self)')
@@ -430,6 +431,26 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session div.meet-video', 1)
                 ->assertElementsCount('@session video', 1)
                 ->assertElementsCount('@session div.meet-subscriber', 1);
+
+            // Promote the guest back to a publisher
+            $browser
+                ->click('@session .meet-subscriber .meet-nickname')
+                ->whenAvailable('@session .meet-subscriber .dropdown-menu', function (Browser $browser) {
+                    $browser->assertSeeIn('.action-role-publisher', 'AUDIO_AND_VIDEO')
+                        ->assertNotChecked('.action-role-publisher input')
+                        ->click('.action-role-publisher')
+                        ->waitUntilMissing('.dropdown-menu');
+                })
+                ->waitFor('@session .meet-video:not(.self)')
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@session video', 2)
+                ->assertElementsCount('@session div.meet-subscriber', 0);
+
+            $guest
+                ->waitFor('@session .meet-video.self')
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@session video', 2)
+                ->assertElementsCount('@session div.meet-subscriber', 0);
 
             // TODO: Demoting the room owner?
         });
