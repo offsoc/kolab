@@ -404,7 +404,15 @@ class RoomSetupTest extends TestCaseDusk
                 ->waitFor('div.meet-video:not(.self)')
                 ->assertElementsCount('@session div.meet-video', 2)
                 ->assertElementsCount('@session video', 2)
-                ->assertElementsCount('@session div.meet-subscriber', 0);
+                ->assertElementsCount('@session div.meet-subscriber', 0)
+                // assert there's no moderator-related features for this guess available
+                ->click('@session .meet-video.self .meet-nickname')
+                ->whenAvailable('@session .meet-video.self .dropdown-menu', function (Browser $browser) {
+                    $browser->assertMissing('.permissions');
+                })
+                ->click('@session .meet-video:not(.self) .meet-nickname')
+                ->pause(50)
+                ->assertMissing('.dropdown-menu');
 
             // Demote the guest to a subscriber
             $browser
@@ -415,7 +423,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session .meet-subscriber', 0)
                 ->click('@session .meet-video:not(.self) .meet-nickname')
                 ->whenAvailable('@session .meet-video:not(.self) .dropdown-menu', function (Browser $browser) {
-                    $browser->assertSeeIn('.action-role-publisher', 'AUDIO_AND_VIDEO')
+                    $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
                         ->click('.action-role-publisher')
                         ->waitUntilMissing('.dropdown-menu');
                 })
@@ -436,7 +444,7 @@ class RoomSetupTest extends TestCaseDusk
             $browser
                 ->click('@session .meet-subscriber .meet-nickname')
                 ->whenAvailable('@session .meet-subscriber .dropdown-menu', function (Browser $browser) {
-                    $browser->assertSeeIn('.action-role-publisher', 'AUDIO_AND_VIDEO')
+                    $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
                         ->assertNotChecked('.action-role-publisher input')
                         ->click('.action-role-publisher')
                         ->waitUntilMissing('.dropdown-menu');
@@ -452,7 +460,35 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session video', 2)
                 ->assertElementsCount('@session div.meet-subscriber', 0);
 
-            // TODO: Demoting the room owner?
+            // Demote the owner to a subscriber
+            $browser
+                ->click('@session .meet-video.self .meet-nickname')
+                ->whenAvailable('@session .meet-video.self .dropdown-menu', function (Browser $browser) {
+                    $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
+                        ->assertChecked('.action-role-publisher input')
+                        ->click('.action-role-publisher')
+                        ->waitUntilMissing('.dropdown-menu');
+                })
+                ->waitUntilMissing('@session .meet-video.self')
+                ->waitFor('@session div.meet-subscriber.self')
+                ->assertElementsCount('@session div.meet-video', 1)
+                ->assertElementsCount('@session video', 1)
+                ->assertElementsCount('@session div.meet-subscriber', 1);
+
+            // Promote the owner to a publisher
+            $browser
+                ->click('@session .meet-subscriber.self .meet-nickname')
+                ->whenAvailable('@session .meet-subscriber.self .dropdown-menu', function (Browser $browser) {
+                    $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
+                        ->assertNotChecked('.action-role-publisher input')
+                        ->click('.action-role-publisher')
+                        ->waitUntilMissing('.dropdown-menu');
+                })
+                ->waitUntilMissing('@session .meet-subscriber.self')
+                ->waitFor('@session div.meet-video.self')
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@session video', 2)
+                ->assertElementsCount('@session div.meet-subscriber', 0);
         });
     }
 }
