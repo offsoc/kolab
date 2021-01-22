@@ -83,6 +83,16 @@ class Connection extends Model
             throw new \Exception("Invalid connection role: {$role}");
         }
 
+        // It is either screen sharing connection or publisher/subscriber connection
+        if ($new_role & Room::ROLE_SCREEN) {
+            if ($new_role & Room::ROLE_PUBLISHER) {
+                $new_role ^= Room::ROLE_PUBLISHER;
+            }
+            if ($new_role & Room::ROLE_SUBSCRIBER) {
+                $new_role ^= Room::ROLE_SUBSCRIBER;
+            }
+        }
+
         $this->attributes['role'] = $new_role;
     }
 }

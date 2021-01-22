@@ -737,6 +737,8 @@ function Meet(container)
      * @return The element
      */
     function participantCreate(params) {
+        params.isSelf = params.isSelf || session.connection.connectionId == params.connectionId
+
         if (params.role & Roles.PUBLISHER || params.role & Roles.SCREEN) {
             return publisherCreate(params)
         }
@@ -750,8 +752,6 @@ function Meet(container)
      * @param params Connection metadata/params
      */
     function publisherCreate(params) {
-        const isSelf = session.connection.connectionId == params.connectionId
-
         // Create the element
         let wrapper = $(
             '<div class="meet-video">'
@@ -771,7 +771,7 @@ function Meet(container)
         // Append the nickname widget
         wrapper.find('.controls').before(nicknameWidget(params))
 
-        if (!isSelf) {
+        if (!params.isSelf) {
             // Enable audio mute button
             wrapper.find('.link-audio').removeClass('hidden')
                 .on('click', e => {
@@ -806,8 +806,8 @@ function Meet(container)
         // Remove the subscriber element, if exists
         $('#subscriber-' + params.connectionId).remove()
 
-        return wrapper[isSelf ? 'prependTo' : 'appendTo'](container)
-            .data('cid', params.connectionId)
+        return wrapper[params.isSelf ? 'prependTo' : 'appendTo'](container)
+            .attr('id', 'publisher-' + params.connectionId)
             .get(0)
     }
 
@@ -873,16 +873,13 @@ function Meet(container)
      * @param params Connection metadata/params
      */
     function subscriberCreate(params) {
-        const isSelf = session.connection.connectionId == params.connectionId
-
         // Create the element
         let wrapper = $('<div class="meet-subscriber">').append(nicknameWidget(params))
 
         participantUpdate(wrapper, params)
 
-        return wrapper[isSelf ? 'prependTo' : 'appendTo'](subscribersContainer)
+        return wrapper[params.isSelf ? 'prependTo' : 'appendTo'](subscribersContainer)
             .attr('id', 'subscriber-' + params.connectionId)
-            .data('cid', params.connectionId)
             .get(0)
     }
 
@@ -892,8 +889,6 @@ function Meet(container)
      * @param object params Connection metadata/params
      */
     function nicknameWidget(params) {
-        const isSelf = session.connection.connectionId == params.connectionId
-
         // Create the element
         let element = $(
             '<div class="dropdown">'
@@ -921,11 +916,11 @@ function Meet(container)
         )
 
         let nickname = element.find('.meet-nickname')
-            .addClass('btn btn-outline-' + (isSelf ? 'primary' : 'secondary'))
+            .addClass('btn btn-outline-' + (params.isSelf ? 'primary' : 'secondary'))
             .attr({title: 'Options', 'data-toggle': 'dropdown'})
             .dropdown({boundary: container})
 
-        if (isSelf) {
+        if (params.isSelf) {
             // Add events for nickname change
             let editable = element.find('.content')[0]
             let editableEnable = () => {
@@ -970,9 +965,6 @@ function Meet(container)
 
                 if (enabled) {
                     role |= Roles.PUBLISHER
-                    if (role & Roles.SUBSCRIBER) {
-                        role ^= Roles.SUBSCRIBER
-                    }
                 } else {
                     role |= Roles.SUBSCRIBER
                     if (role & Roles.PUBLISHER) {
