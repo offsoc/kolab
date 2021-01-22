@@ -3,6 +3,7 @@
 namespace Tests\Feature\Controller;
 
 use App\Http\Controllers\API\V4\OpenViduController;
+use App\OpenVidu\Connection;
 use App\OpenVidu\Room;
 use Tests\TestCase;
 
@@ -553,5 +554,67 @@ class OpenViduTest extends TestCase
 
         $room->refresh();
         $this->assertSame(null, $room->getSetting('password'));
+    }
+
+    /**
+     * Test updating a participant (connection)
+     *
+     * @group openvidu
+     */
+    public function testUpdateConnection(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $room = Room::where('name', 'john')->first();
+        $room->session_id = null;
+        $room->save();
+
+        $this->assignBetaEntitlement($john, 'meet');
+
+        // First we create the session
+        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        // And the other user connection
+        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $conn_id = $json['connectionId'];
+        $room->refresh();
+        $conn_data = $room->getOVConnection($conn_id);
+
+        $this->assertSame($conn_id, $conn_data['connectionId']);
+
+        // Non-existing room name
+        $response = $this->actingAs($john)->put("api/v4/openvidu/rooms/non-existing/connections/{$conn_id}", []);
+        $response->assertStatus(404);
+
+        // Non-existing connection
+        $response = $this->actingAs($john)->put("api/v4/openvidu/rooms/{$room->name}/connections/123", []);
+        $response->assertStatus(404);
+
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('The connection does not exist.', $json['message']);
+
+        // Non-owner access
+        $response = $this->actingAs($jack)->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", []);
+        $response->assertStatus(403);
+
+        // Expected success
+        $post = ['role' => Room::ROLE_PUBLISHER | Room::ROLE_MODERATOR];
+        $response = $this->actingAs($john)->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame($post['role'], Connection::find($conn_id)->role);
     }
 }
