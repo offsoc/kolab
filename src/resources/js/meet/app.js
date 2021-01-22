@@ -108,16 +108,12 @@ function Meet(container)
             // This is the first event executed when a user joins in.
             // We'll create the video wrapper here, which can be re-used
             // in 'streamCreated' event handler.
-            // Note: For a user with a subscriber role 'streamCreated' event
-            // is not being dispatched at all
 
             let metadata = connectionData(event.connection)
 
             metadata.element = participantCreate(metadata)
 
             connections[metadata.connectionId] = metadata
-
-            resize()
 
             // Send the current user status to the connecting user
             // otherwise e.g. nickname might be not up to date
@@ -215,7 +211,6 @@ function Meet(container)
                     session.publish(publisher)
                 }
 
-                resize()
                 sessionData.element = wrapper
             })
             .catch(error => {
@@ -737,13 +732,19 @@ function Meet(container)
      * @return The element
      */
     function participantCreate(params) {
+        let element
+
         params.isSelf = params.isSelf || session.connection.connectionId == params.connectionId
 
         if (params.role & Roles.PUBLISHER || params.role & Roles.SCREEN) {
-            return publisherCreate(params)
+            element = publisherCreate(params)
+        } else {
+            element = subscriberCreate(params)
         }
 
-        return subscriberCreate(params)
+        setTimeout(resize, 50);
+
+        return element
     }
 
     /**
@@ -829,9 +830,7 @@ function Meet(container)
 
             if ((rolePublisher && !isPublisher) || (!rolePublisher && isPublisher)) {
                 element.remove()
-                const wrapper = participantCreate(params)
-                resize()
-                return wrapper;
+                return participantCreate(params)
             }
 
             element.find('.action-role-publisher input').prop('checked', params.role & Roles.PUBLISHER)
