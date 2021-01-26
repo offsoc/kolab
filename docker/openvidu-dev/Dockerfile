@@ -2,6 +2,10 @@ FROM fedora:31
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@kolabsys.com>
 
+ENV CERTIFICATE_TYPE=selfsigned
+ENV DOMAIN_OR_PUBLIC_IP=localhost.localdomain
+ENV OPENVIDU_SECRET=MY_SECRET
+
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
         bash-completion \
@@ -9,11 +13,14 @@ RUN dnf -y install \
         coturn \
         curl \
         dhcp-client \
+        git \
         iproute \
         iptraf-ng \
         iputils \
+        java-1.8.0-openjdk \
         less \
         lsof \
+        maven \
         mtr \
         net-tools \
         NetworkManager \
@@ -33,6 +40,5 @@ RUN dnf -y install \
         wget && \
     dnf clean all
 
-COPY rootfs/ /
-
-CMD ["/usr/local/bin/coturn.sh"]
+COPY init.sh /init.sh
+CMD [ "/init.sh" ]

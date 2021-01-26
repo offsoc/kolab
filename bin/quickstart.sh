@@ -38,11 +38,14 @@ base_dir=$(dirname $(dirname $0))
 
 docker pull docker.io/kolab/centos7:latest
 
-docker-compose down
+docker-compose down --remove-orphans
 docker-compose build
 
 pushd ${base_dir}/src/
-cp .env.example .env
+
+if [ ! -f ".env" ]; then
+    cp .env.example .env
+fi
 
 if [ -f ".env.local" ]; then
     # Ensure there's a line ending
@@ -54,7 +57,7 @@ popd
 
 bin/regen-certs
 
-docker-compose up -d coturn kolab mariadb openvidu proxy redis
+docker-compose up -d coturn kolab mariadb openvidu kurento-media-server proxy redis
 
 pushd ${base_dir}/src/
 

@@ -30,6 +30,7 @@ RUN dnf -y install \
         openssh-clients \
         openssh-server \
         procps-ng \
+        redis \
         strace \
         systemd-udev \
         tcpdump \
@@ -39,7 +40,7 @@ RUN dnf -y install \
         wget && \
     dnf clean all && \
     mkdir -p /src/ && \
-    git clone --branch v2.16.0 https://github.com/OpenVidu/openvidu.git /src/openvidu.git && \
+    git clone --branch stable/kolab-2.16.0 https://git.kolab.org/source/openvidu.git /src/openvidu.git && \
         cd /src/openvidu.git/ && \
         mvn clean install -DskipTests && \
         mkdir -p /usr/share/openvidu/ && \
@@ -50,8 +51,6 @@ RUN dnf -y install \
 
 CMD [ \
         "/usr/bin/java", \
-        "-Dserver.port=8080", \
-        "-Dserver.ssl.enabled=false", \
         "-jar", \
         "/usr/share/openvidu/openvidu-server.jar" \
     ]
