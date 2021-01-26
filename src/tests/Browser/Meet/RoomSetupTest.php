@@ -234,6 +234,7 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertVisible('.meet-nickname')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
+                        ->assertMissing('.controls button.link-setup')
                         ->assertVisible('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
@@ -489,6 +490,79 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session div.meet-video', 2)
                 ->assertElementsCount('@session video', 2)
                 ->assertElementsCount('@session div.meet-subscriber', 0);
+        });
+    }
+
+    /**
+     * Test the media setup dialog
+     *
+     * @group openvidu
+     * @depends testDemoteToSubscriber
+     */
+    public function testMediaSetupDialog(): void
+    {
+        // Make sure there's no session yet
+        $room = Room::where('name', 'john')->first();
+        if ($room->session_id) {
+            $room->session_id = null;
+            $room->save();
+        }
+
+        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+
+        $this->browse(function (Browser $browser, $guest) {
+            // Join the room as the owner
+            $browser->visit(new RoomPage('john'))
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                ->waitFor('@setup-status-message')
+                ->type('@setup-nickname-input', 'john')
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form');
+
+            // In one browser window act as a guest
+            $guest->visit(new RoomPage('john'))
+                ->waitUntilMissing('@setup-status-message', 10)
+                ->assertSeeIn('@setup-button', "JOIN")
+                ->select('@setup-mic-select', '')
+                ->select('@setup-cam-select', '')
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form');
+
+            $browser->waitFor('@session video')
+                ->click('.controls button.link-setup')
+                ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Media setup')
+                        ->assertVisible('form video')
+                        ->assertVisible('form > div:nth-child(1) video')
+                        ->assertVisible('form > div:nth-child(1) .volume')
+                        ->assertVisible('form > div:nth-child(2) svg')
+                        ->assertAttribute('form > div:nth-child(2) .input-group-text', 'title', 'Microphone')
+                        ->assertVisible('form > div:nth-child(2) select')
+                        ->assertVisible('form > div:nth-child(3) svg')
+                        ->assertAttribute('form > div:nth-child(3) .input-group-text', 'title', 'Camera')
+                        ->assertVisible('form > div:nth-child(3) select')
+                        ->assertMissing('@button-cancel')
+                        ->assertSeeIn('@button-action', 'Close')
+                        ->click('@button-action');
+                })
+                ->assertMissing('#media-setup-dialog')
+                // Test mute audio and video
+                ->click('.controls button.link-setup')
+                ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
+                    $browser->select('form > div:nth-child(2) select', '')
+                        ->select('form > div:nth-child(3) select', '')
+                        ->click('@button-action');
+                })
+                ->assertMissing('#media-setup-dialog')
+                ->assertVisible('@session .meet-video .status .status-audio')
+                ->assertVisible('@session .meet-video .status .status-video');
+
+            $guest->waitFor('@session video')
+                ->assertVisible('@session .meet-video .status .status-audio')
+                ->assertVisible('@session .meet-video .status .status-video');
         });
     }
 }
