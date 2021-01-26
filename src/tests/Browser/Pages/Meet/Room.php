@@ -64,9 +64,9 @@ class Room extends Page
             '@setup-cam-select' => '#setup-camera',
             '@setup-nickname-input' => '#setup-nickname',
             '@setup-password-input' => '#setup-password',
-            '@setup-preview' => '#setup-preview',
-            '@setup-volume' => '#setup-preview .volume',
-            '@setup-video' => '#setup-preview video',
+            '@setup-preview' => '#meet-setup .media-setup-preview',
+            '@setup-volume' => '#meet-setup .media-setup-preview .volume',
+            '@setup-video' => '#meet-setup .media-setup-preview video',
             '@setup-status-message' => '#meet-setup div.status-message',
             '@setup-button' => '#join-button',
 

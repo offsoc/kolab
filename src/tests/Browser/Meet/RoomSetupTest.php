@@ -449,7 +449,7 @@ class RoomSetupTest extends TestCaseDusk
                         ->click('.action-role-publisher')
                         ->waitUntilMissing('.dropdown-menu');
                 })
-                ->waitFor('@session .meet-video:not(.self)')
+                ->waitFor('@session .meet-video:not(.self) video')
                 ->assertElementsCount('@session div.meet-video', 2)
                 ->assertElementsCount('@session video', 2)
                 ->assertElementsCount('@session div.meet-subscriber', 0);
