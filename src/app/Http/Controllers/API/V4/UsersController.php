@@ -243,17 +243,18 @@ class UsersController extends Controller
             ->where('entitleable_type', Domain::class)
             ->count() > 0;
 
-        // Get user's beta entitlements
-        $betaSKUs = $user->entitlements()->select('skus.title')
+        // Get user's entitlements titles
+        $skus = $user->entitlements()->select('skus.title')
             ->join('skus', 'skus.id', '=', 'entitlements.sku_id')
-            ->where('handler_class', 'like', 'App\\\\Handlers\\\\Beta\\\\%')
             ->get()
             ->pluck('title')
+            ->sort()
             ->unique()
+            ->values()
             ->all();
 
         return [
-            'betaSKUs' => $betaSKUs,
+            'skus' => $skus,
             // TODO: This will change when we enable all users to create domains
             'enableDomains' => $isController && $hasCustomDomain,
             'enableUsers' => $isController,

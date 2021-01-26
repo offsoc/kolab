@@ -90,9 +90,9 @@ const app = new Vue({
         hasRoute(name) {
             return this.$router.resolve({ name: name }).resolved.matched.length > 0
         },
-        hasBeta(name) {
+        hasSKU(name) {
             const authInfo = store.state.authInfo
-            return authInfo.statusInfo.betaSKUs && authInfo.statusInfo.betaSKUs.indexOf(name) != -1
+            return authInfo.statusInfo.skus && authInfo.statusInfo.skus.indexOf(name) != -1
         },
         isController(wallet_id) {
             if (wallet_id && store.state.authInfo) {

@@ -385,7 +385,7 @@ class UsersTest extends TestCase
         $result = UsersController::statusInfo($user);
 
         $this->assertFalse($result['isReady']);
-        $this->assertSame([], $result['betaSKUs']);
+        $this->assertSame([], $result['skus']);
         $this->assertCount(3, $result['process']);
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
@@ -424,7 +424,7 @@ class UsersTest extends TestCase
         $result = UsersController::statusInfo($user);
 
         $this->assertFalse($result['isReady']);
-        $this->assertSame([], $result['betaSKUs']);
+        $this->assertSame([], $result['skus']);
         $this->assertCount(7, $result['process']);
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
@@ -441,24 +441,24 @@ class UsersTest extends TestCase
         $this->assertSame('domain-confirmed', $result['process'][6]['label']);
         $this->assertSame(false, $result['process'][6]['state']);
 
-        // Test betaSKUs property
+        // Test 'skus' property
         $user->assignSku(Sku::where('title', 'beta')->first());
 
         $result = UsersController::statusInfo($user);
 
-        $this->assertSame([], $result['betaSKUs']);
+        $this->assertSame(['beta'], $result['skus']);
 
         $user->assignSku(Sku::where('title', 'meet')->first());
 
         $result = UsersController::statusInfo($user);
 
-        $this->assertSame(['meet'], $result['betaSKUs']);
+        $this->assertSame(['beta', 'meet'], $result['skus']);
 
         $user->assignSku(Sku::where('title', 'meet')->first());
 
         $result = UsersController::statusInfo($user);
 
-        $this->assertSame(['meet'], $result['betaSKUs']);
+        $this->assertSame(['beta', 'meet'], $result['skus']);
     }
 
     /**
@@ -989,7 +989,6 @@ class UsersTest extends TestCase
         $this->assertTrue($result['statusInfo']['enableDomains']);
         $this->assertTrue($result['statusInfo']['enableWallets']);
         $this->assertTrue($result['statusInfo']['enableUsers']);
-        $this->assertSame([], $result['statusInfo']['betaSKUs']);
 
         // Ned is John's wallet controller
         $ned = $this->getTestUser('ned@kolab.org');
@@ -1011,7 +1010,6 @@ class UsersTest extends TestCase
         $this->assertTrue($result['statusInfo']['enableDomains']);
         $this->assertTrue($result['statusInfo']['enableWallets']);
         $this->assertTrue($result['statusInfo']['enableUsers']);
-        $this->assertSame([], $result['statusInfo']['betaSKUs']);
 
         // Test discount in a response
         $discount = Discount::where('code', 'TEST')->first();
@@ -1040,7 +1038,6 @@ class UsersTest extends TestCase
         $this->assertFalse($result['statusInfo']['enableDomains']);
         $this->assertFalse($result['statusInfo']['enableWallets']);
         $this->assertFalse($result['statusInfo']['enableUsers']);
-        $this->assertSame([], $result['statusInfo']['betaSKUs']);
     }
 
     /**

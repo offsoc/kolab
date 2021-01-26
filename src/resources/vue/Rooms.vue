@@ -65,7 +65,7 @@
             }
         },
         mounted() {
-            if (!this.$root.hasBeta('meet')) {
+            if (!this.$root.hasSKU('meet')) {
                 this.$root.errorPage(403)
                 return
             }

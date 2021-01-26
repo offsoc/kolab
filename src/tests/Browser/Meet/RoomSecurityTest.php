@@ -18,8 +18,8 @@ class RoomSecurityTest extends TestCaseDusk
     {
         parent::setUp();
 
-        $this->clearBetaEntitlements();
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->clearMeetEntitlements();
+        $this->assignMeetEntitlement('john@kolab.org');
 
         $room = Room::where('name', 'john')->first();
         $room->setSettings(['password' => null, 'locked' => null]);
@@ -27,7 +27,7 @@ class RoomSecurityTest extends TestCaseDusk
 
     public function tearDown(): void
     {
-        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
         $room = Room::where('name', 'john')->first();
         $room->setSettings(['password' => null, 'locked' => null]);
 

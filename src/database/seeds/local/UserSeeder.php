@@ -129,8 +129,8 @@ class UserSeeder extends Seeder
 
         $john->assignPackage($package_lite, $joe);
 
-        $john->assignSku(Sku::firstOrCreate(['title' => 'beta']));
-        $john->assignSku(Sku::firstOrCreate(['title' => 'meet']));
+        //$john->assignSku(Sku::firstOrCreate(['title' => 'beta']));
+        //$john->assignSku(Sku::firstOrCreate(['title' => 'meet']));
 
         $joe->setAliases(['joe.monster@kolab.org']);
 

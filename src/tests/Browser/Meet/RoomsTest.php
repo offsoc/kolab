@@ -19,7 +19,7 @@ class RoomsTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
-        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
     }
 
     /**
@@ -27,7 +27,7 @@ class RoomsTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
-        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
         parent::tearDown();
     }
 

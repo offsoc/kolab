@@ -14,20 +14,17 @@ use PHPUnit\Framework\Assert;
 trait TestCaseTrait
 {
     /**
-     * Assign beta entitlement to a user.
-     * It will add both requested entitlement as well as the 'beta' entitlement
+     * Assign 'meet' entitlement to a user.
      *
      * @param string|\App\User $user The user
-     * @param string           $sku  The beta SKU title
      */
-    protected function assignBetaEntitlement($user, $sku): void
+    protected function assignMeetEntitlement($user): void
     {
         if (is_string($user)) {
             $user = $this->getTestUser($user);
         }
 
-        $user->assignSku(\App\Sku::where('title', 'beta')->first());
-        $user->assignSku(\App\Sku::where('title', $sku)->first());
+        $user->assignSku(\App\Sku::where('title', 'meet')->first());
     }
 
     protected function assertUserEntitlements($user, $expected)
@@ -49,8 +46,20 @@ trait TestCaseTrait
      */
     protected function clearBetaEntitlements(): void
     {
-        $betas = \App\Sku::where('handler_class', 'like', '%\\Beta%')->pluck('id')->all();
+        $betas = \App\Sku::where('handler_class', 'like', 'App\\Handlers\\Beta\\%')
+            ->orWhere('handler_class', 'App\Handlers\Beta')
+            ->pluck('id')->all();
+
         \App\Entitlement::whereIn('sku_id', $betas)->delete();
+    }
+
+    /**
+     * Removes all 'meet' entitlements from the database
+     */
+    protected function clearMeetEntitlements(): void
+    {
+        $meet_sku = \App\Sku::where('title', 'meet')->first();
+        \App\Entitlement::where('sku_id', $meet_sku->id)->delete();
     }
 
     /**

@@ -16,8 +16,8 @@ class SkusTest extends TestCase
     {
         parent::setUp();
 
-        $betas = Sku::where('handler_class', 'like', '%\\Beta%')->pluck('id')->all();
-        Entitlement::whereIn('sku_id', $betas)->delete();
+        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
     }
 
     /**
@@ -25,8 +25,8 @@ class SkusTest extends TestCase
      */
     public function tearDown(): void
     {
-        $betas = Sku::where('handler_class', 'like', '%\\Beta%')->pluck('id')->all();
-        Entitlement::whereIn('sku_id', $betas)->delete();
+        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
 
         parent::tearDown();
     }
@@ -80,7 +80,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(7, $json);
+        $this->assertCount(8, $json);
 
         $this->assertSkuElement('mailbox', $json[0], [
                 'prio' => 100,
@@ -129,7 +129,16 @@ class SkusTest extends TestCase
                 'forbidden' => ['activesync'],
         ]);
 
-        $this->assertSkuElement('domain-hosting', $json[5], [
+        $this->assertSkuElement('meet', $json[5], [
+                'prio' => 50,
+                'type' => 'user',
+                'handler' => 'meet',
+                'enabled' => false,
+                'readonly' => false,
+                'required' => ['groupware'],
+        ]);
+
+        $this->assertSkuElement('domain-hosting', $json[6], [
                 'prio' => 0,
                 'type' => 'domain',
                 'handler' => 'domainhosting',
@@ -137,7 +146,7 @@ class SkusTest extends TestCase
                 'readonly' => false,
         ]);
 
-        $this->assertSkuElement('group', $json[6], [
+        $this->assertSkuElement('group', $json[7], [
                 'prio' => 0,
                 'type' => 'group',
                 'handler' => 'group',
@@ -164,21 +173,21 @@ class SkusTest extends TestCase
 
         $this->assertCount(7, $json);
 
-        $this->assertSkuElement('beta', $json[5], [
+        $this->assertSkuElement('meet', $json[5], [
+                'prio' => 50,
+                'type' => 'user',
+                'handler' => 'meet',
+                'enabled' => false,
+                'readonly' => false,
+                'required' => ['groupware'],
+        ]);
+
+        $this->assertSkuElement('beta', $json[6], [
                 'prio' => 10,
                 'type' => 'user',
                 'handler' => 'beta',
                 'enabled' => false,
                 'readonly' => false,
-        ]);
-
-        $this->assertSkuElement('meet', $json[6], [
-                'prio' => 0,
-                'type' => 'user',
-                'handler' => 'meet',
-                'enabled' => false,
-                'readonly' => false,
-                'required' => ['beta'],
         ]);
     }
 

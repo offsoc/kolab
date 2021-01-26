@@ -15,12 +15,12 @@ class RoomControlsTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
-        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
     }
 
     public function tearDown(): void
     {
-        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
         parent::tearDown();
     }
 
@@ -41,7 +41,7 @@ class RoomControlsTest extends TestCaseDusk
             $room->save();
         }
 
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org');
 
         $this->browse(function (Browser $browser) {
             // Join the room as an owner (authenticate)
@@ -96,7 +96,7 @@ class RoomControlsTest extends TestCaseDusk
             $room->save();
         }
 
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org');
 
         $this->browse(function (Browser $owner, Browser $guest) {
             // Join the room as an owner (authenticate)
@@ -241,7 +241,7 @@ class RoomControlsTest extends TestCaseDusk
             $room->save();
         }
 
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org');
 
         $this->browse(function (Browser $owner, Browser $guest) {
             // Join the room as an owner
@@ -344,7 +344,7 @@ class RoomControlsTest extends TestCaseDusk
             $room->save();
         }
 
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org');
 
         $this->browse(function (Browser $owner, Browser $guest) {
             // Join the room as an owner

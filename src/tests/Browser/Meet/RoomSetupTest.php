@@ -17,12 +17,12 @@ class RoomSetupTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
-        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
     }
 
     public function tearDown(): void
     {
-        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
         parent::tearDown();
     }
 
@@ -74,7 +74,7 @@ class RoomSetupTest extends TestCaseDusk
             $room->save();
         }
 
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org', 'meet');
 
         $this->browse(function (Browser $browser) {
             $browser->visit(new RoomPage('john'))
@@ -130,7 +130,7 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testTwoUsersInARoom(): void
     {
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org', 'meet');
 
         $this->browse(function (Browser $browser, Browser $guest) {
             // In one browser window act as a guest
@@ -292,7 +292,7 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testSubscribers(): void
     {
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org', 'meet');
 
         $this->browse(function (Browser $browser, Browser $guest) {
             // Join the room as the owner

@@ -15,14 +15,14 @@ class OpenViduTest extends TestCase
     {
         parent::setUp();
 
-        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
         $room = Room::where('name', 'john')->first();
         $room->setSettings(['password' => null, 'locked' => null]);
     }
 
     public function tearDown(): void
     {
-        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
         $room = Room::where('name', 'john')->first();
         $room->setSettings(['password' => null, 'locked' => null]);
 
@@ -78,7 +78,7 @@ class OpenViduTest extends TestCase
         $room->session_id = null;
         $room->save();
 
-        $this->assignBetaEntitlement($john, 'meet');
+        $this->assignMeetEntitlement($john);
 
         // Unauth access, no session yet
         $response = $this->post("api/v4/openvidu/rooms/{$room->name}");
@@ -211,7 +211,7 @@ class OpenViduTest extends TestCase
         $room->save();
         $room->setSettings(['password' => null, 'locked' => 'true']);
 
-        $this->assignBetaEntitlement($john, 'meet');
+        $this->assignMeetEntitlement($john);
 
         // Create the session (also makes sure the owner can access a locked room)
         $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
@@ -341,7 +341,7 @@ class OpenViduTest extends TestCase
      */
     public function testJoinRoomGuest(): void
     {
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org');
 
         // There's no asy way to logout the user in the same test after
         // using actingAs(). That's why this is moved to a separate test
@@ -427,7 +427,7 @@ class OpenViduTest extends TestCase
         $room->session_id = null;
         $room->save();
 
-        $this->assignBetaEntitlement($john, 'meet');
+        $this->assignMeetEntitlement($john);
 
         // First we create the session
         $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);

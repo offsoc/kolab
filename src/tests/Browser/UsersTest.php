@@ -47,8 +47,8 @@ class UsersTest extends TestCaseDusk
         $wallet->discount()->dissociate();
         $wallet->save();
 
-        $betas = Sku::where('handler_class', 'like', '%\\Beta%')->pluck('id')->all();
-        Entitlement::whereIn('sku_id', $betas)->delete();
+        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
     }
 
     /**
@@ -69,8 +69,8 @@ class UsersTest extends TestCaseDusk
         $wallet->discount()->dissociate();
         $wallet->save();
 
-        $betas = Sku::where('handler_class', 'like', '%\\Beta%')->pluck('id')->all();
-        Entitlement::whereIn('sku_id', $betas)->delete();
+        $this->clearBetaEntitlements();
+        $this->clearMeetEntitlements();
 
         parent::tearDown();
     }
@@ -221,7 +221,7 @@ class UsersTest extends TestCaseDusk
                 $browser->assertSeeIn('div.row:nth-child(9) label', 'Subscriptions')
                     ->assertVisible('@skus.row:nth-child(9)')
                     ->with('@skus', function ($browser) {
-                        $browser->assertElementsCount('tbody tr', 5)
+                        $browser->assertElementsCount('tbody tr', 6)
                             // Mailbox SKU
                             ->assertSeeIn('tbody tr:nth-child(1) td.name', 'User Mailbox')
                             ->assertSeeIn('tbody tr:nth-child(1) td.price', '4,44 CHF/month')
@@ -271,6 +271,15 @@ class UsersTest extends TestCaseDusk
                                 'tbody tr:nth-child(5) td.buttons button',
                                 'Two factor authentication for webmail and administration panel'
                             )
+                            // Meet SKU
+                            ->assertSeeIn('tbody tr:nth-child(6) td.name', 'Voice & Video Conferencing (public beta)')
+                            ->assertSeeIn('tbody tr:nth-child(6) td.price', '0,00 CHF/month')
+                            ->assertNotChecked('tbody tr:nth-child(6) td.selection input')
+                            ->assertEnabled('tbody tr:nth-child(6) td.selection input')
+                            ->assertTip(
+                                'tbody tr:nth-child(6) td.buttons button',
+                                'Video conferencing tool'
+                            )
                             ->click('tbody tr:nth-child(4) td.selection input');
                     })
                     ->assertMissing('@skus table + .hint')
@@ -298,6 +307,11 @@ class UsersTest extends TestCaseDusk
                         ->assertDialogOpened('Activesync requires Groupware Features.')
                         ->acceptDialog()
                         ->assertNotChecked('#sku-input-activesync')
+                        // Check 'meet', expect an alert
+                        ->click('#sku-input-meet')
+                        ->assertDialogOpened('Voice & Video Conferencing (public beta) requires Groupware Features.')
+                        ->acceptDialog()
+                        ->assertNotChecked('#sku-input-meet')
                         // Check '2FA', expect 'activesync' unchecked and readonly
                         ->click('#sku-input-2fa')
                         ->assertChecked('#sku-input-2fa')
@@ -554,7 +568,7 @@ class UsersTest extends TestCaseDusk
                     $browser->whenAvailable('@skus', function (Browser $browser) {
                         $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
                         $browser->waitFor('tbody tr')
-                            ->assertElementsCount('tbody tr', 5)
+                            ->assertElementsCount('tbody tr', 6)
                             // Mailbox SKU
                             ->assertSeeIn('tbody tr:nth-child(1) td.price', '3,99 CHF/month¹')
                             // Storage SKU
@@ -606,24 +620,25 @@ class UsersTest extends TestCaseDusk
                 ->on(new UserInfo())
                 ->with('@skus', function ($browser) {
                     $browser->assertElementsCount('tbody tr', 7)
-                        // Beta SKU
-                        ->assertSeeIn('tbody tr:nth-child(6) td.name', 'Beta program')
-                        ->assertSeeIn('tbody tr:nth-child(6) td.price', '0,00 CHF/month')
-                        ->assertChecked('tbody tr:nth-child(6) td.selection input')
+                        // Beta/Meet SKU
+                        ->assertSeeIn('tbody tr:nth-child(6) td.name', 'Voice & Video Conferencing (public beta)')
+                        ->assertSeeIn('tr:nth-child(6) td.price', '0,00 CHF/month')
+                        ->assertNotChecked('tbody tr:nth-child(6) td.selection input')
                         ->assertEnabled('tbody tr:nth-child(6) td.selection input')
                         ->assertTip(
                             'tbody tr:nth-child(6) td.buttons button',
-                            'Access to beta program subscriptions'
+                            'Video conferencing tool'
                         )
-                        // Beta/Meet SKU
-                        ->assertSeeIn('tbody tr:nth-child(7) td.name', 'Video chat')
-                        ->assertSeeIn('tr:nth-child(7) td.price', '0,00 CHF/month')
-                        ->assertNotChecked('tbody tr:nth-child(7) td.selection input')
+                        // Beta SKU
+                        ->assertSeeIn('tbody tr:nth-child(7) td.name', 'Private Beta (invitation only)')
+                        ->assertSeeIn('tbody tr:nth-child(7) td.price', '0,00 CHF/month')
+                        ->assertChecked('tbody tr:nth-child(7) td.selection input')
                         ->assertEnabled('tbody tr:nth-child(7) td.selection input')
                         ->assertTip(
                             'tbody tr:nth-child(7) td.buttons button',
-                            'Video conferencing tool'
+                            'Access to the private beta program subscriptions'
                         )
+/*
                         // Check Meet, Uncheck Beta, expect Meet unchecked
                         ->click('#sku-input-meet')
                         ->click('#sku-input-beta')
@@ -633,8 +648,8 @@ class UsersTest extends TestCaseDusk
                         ->click('#sku-input-meet')
                         ->assertDialogOpened('Video chat requires Beta program.')
                         ->acceptDialog()
-                        // Enable Meet and Beta and submit
-                        ->click('#sku-input-beta')
+*/
+                        // Enable Meet and submit
                         ->click('#sku-input-meet');
                 })
                 ->click('button[type=submit]')
@@ -646,6 +661,7 @@ class UsersTest extends TestCaseDusk
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
                 ->click('#sku-input-beta')
+                ->click('#sku-input-meet')
                 ->click('button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
