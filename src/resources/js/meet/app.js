@@ -41,7 +41,6 @@ function Meet(container)
     let containerHeight
     let chatCount = 0
     let volumeElement
-    let setupProps
     let subscribersContainer
 
     OV = new OpenVidu()
@@ -64,7 +63,8 @@ function Meet(container)
     this.isScreenSharingSupported = isScreenSharingSupported
     this.joinRoom = joinRoom
     this.leaveRoom = leaveRoom
-    this.setup = setup
+    this.setupStart = setupStart
+    this.setupStop = setupStop
     this.setupSetAudioDevice = setupSetAudioDevice
     this.setupSetVideoDevice = setupSetVideoDevice
     this.switchAudio = switchAudio
@@ -77,7 +77,7 @@ function Meet(container)
      *
      * @param data Session metadata and event handlers (token, shareToken, nickname, role,
      *             chatElement, menuElement, onDestroy, onJoinRequest, onDismiss, onConnectionChange,
-     *             onSessionDataUpdate)
+     *             onSessionDataUpdate, onMediaSetup)
      */
     function joinRoom(data) {
         resize();
@@ -256,8 +256,16 @@ function Meet(container)
      *
      * @param props Setup properties (videoElement, volumeElement, onSuccess, onError)
      */
-    function setup(props) {
-        setupProps = props
+    function setupStart(props) {
+        // Note: After changing media permissions in Chrome/Firefox a page refresh is required.
+        // That means that in a scenario where you first blocked access to media devices
+        // and then allowed it we can't ask for devices list again and expect a different
+        // result than before.
+        // That's why we do not bother, and return ealy when we open the media setup dialog.
+        if (publisher) {
+            volumeMeterStart()
+            return
+        }
 
         publisher = OV.initPublisher(undefined, publisherDefaults)
 
@@ -307,6 +315,13 @@ function Meet(container)
     }
 
     /**
+     * Stop the setup "process", cleanup after it.
+     */
+    function setupStop() {
+        volumeMeterStop()
+    }
+
+    /**
      * Change the publisher audio device
      *
      * @param deviceId Device identifier string
@@ -322,9 +337,7 @@ function Meet(container)
             audioActive = true
         } else {
             const mediaStream = publisher.stream.mediaStream
-            const oldTrack = mediaStream.getAudioTracks()[0]
-
-            let properties = Object.assign({}, publisherDefaults, {
+            const properties = Object.assign({}, publisherDefaults, {
                 publishAudio: true,
                 publishVideo: videoActive,
                 audioSource: deviceId,
@@ -333,19 +346,17 @@ function Meet(container)
 
             volumeMeterStop()
 
-            // Note: We're not using publisher.replaceTrack() as it wasn't working for me
-
-            // Stop and remove the old track
-            if (oldTrack) {
-                oldTrack.stop()
-                mediaStream.removeTrack(oldTrack)
-            }
+            // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
+            mediaStream.getAudioTracks().forEach(track => {
+                track.stop()
+                mediaStream.removeTrack(track)
+            })
 
             // TODO: Handle errors
 
             await OV.getUserMedia(properties)
                 .then(async (newMediaStream) => {
-                    publisher.stream.mediaStream = newMediaStream
+                    await replaceTrack(newMediaStream.getAudioTracks()[0])
                     volumeMeterStart()
                     audioActive = true
                     audioSource = deviceId
@@ -369,9 +380,7 @@ function Meet(container)
             videoActive = true
         } else {
             const mediaStream = publisher.stream.mediaStream
-            const oldTrack = mediaStream.getAudioTracks()[0]
-
-            let properties = Object.assign({}, publisherDefaults, {
+            const properties = Object.assign({}, publisherDefaults, {
                 publishAudio: audioActive,
                 publishVideo: true,
                 audioSource: audioSource,
@@ -380,17 +389,17 @@ function Meet(container)
 
             volumeMeterStop()
 
-            // Stop and remove the old track
-            if (oldTrack) {
-                oldTrack.stop()
-                mediaStream.removeTrack(oldTrack)
-            }
+            // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
+            mediaStream.getVideoTracks().forEach(track => {
+                track.stop()
+                mediaStream.removeTrack(track)
+            })
 
             // TODO: Handle errors
 
             await OV.getUserMedia(properties)
                 .then(async (newMediaStream) => {
-                    publisher.stream.mediaStream = newMediaStream
+                    await replaceTrack(newMediaStream.getVideoTracks()[0])
                     volumeMeterStart()
                     videoActive = true
                     videoSource = deviceId
@@ -398,6 +407,53 @@ function Meet(container)
         }
 
         return videoActive
+    }
+
+    /**
+     * A way to switch tracks in a stream.
+     * Note: This is close to what publisher.replaceTrack() does but it does not
+     * require the session.
+     * Note: The old track needs to be removed before OV.getUserMedia() call,
+     * otherwise we get "Concurrent mic process limit" error.
+     */
+    function replaceTrack(track) {
+        const stream = publisher.stream
+
+        const replaceMediaStreamTrack = () => {
+            stream.mediaStream.addTrack(track);
+
+            if (session) {
+                session.sendVideoData(publisher.stream.streamManager, 5, true, 5);
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            if (stream.isLocalStreamPublished) {
+                // Only if the Publisher has been published it is necessary to call the native
+                // Web API RTCRtpSender.replaceTrack()
+                const senders = stream.getRTCPeerConnection().getSenders()
+                let sender
+
+                if (track.kind === 'video') {
+                    sender = senders.find(s => !!s.track && s.track.kind === 'video')
+                } else {
+                    sender = senders.find(s => !!s.track && s.track.kind === 'audio')
+                }
+
+                if (!sender) return
+
+                sender.replaceTrack(track).then(() => {
+                    replaceMediaStreamTrack()
+                    resolve()
+                }).catch(error => {
+                    reject(error)
+                })
+            } else {
+                // Publisher not published. Simply modify local MediaStream tracks
+                replaceMediaStreamTrack()
+                resolve()
+            }
+        })
     }
 
     /**
@@ -758,6 +814,7 @@ function Meet(container)
             '<div class="meet-video">'
             + svgIcon('user', 'fas', 'watermark')
             + '<div class="controls">'
+                + '<button type="button" class="btn btn-link link-setup hidden" title="Media setup">' + svgIcon('cog') + '</button>'
                 + '<button type="button" class="btn btn-link link-audio hidden" title="Mute audio">' + svgIcon('volume-mute') + '</button>'
                 + '<button type="button" class="btn btn-link link-fullscreen closed hidden" title="Full screen">' + svgIcon('expand') + '</button>'
                 + '<button type="button" class="btn btn-link link-fullscreen open hidden" title="Full screen">' + svgIcon('compress') + '</button>'
@@ -772,7 +829,12 @@ function Meet(container)
         // Append the nickname widget
         wrapper.find('.controls').before(nicknameWidget(params))
 
-        if (!params.isSelf) {
+        if (params.isSelf) {
+            if (sessionData.onMediaSetup) {
+                wrapper.find('.link-setup').removeClass('hidden')
+                    .click(() => sessionData.onMediaSetup())
+            }
+        } else {
             // Enable audio mute button
             wrapper.find('.link-audio').removeClass('hidden')
                 .on('click', e => {
