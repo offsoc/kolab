@@ -380,9 +380,9 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testDemoteToSubscriber(): void
     {
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org');
 
-        $this->browse(function (Browser $browser, Browser $guest) {
+        $this->browse(function (Browser $browser, Browser $guest1, Browser $guest2) {
             // Join the room as the owner
             $browser->visit(new RoomPage('john'))
                 ->waitFor('@setup-form')
@@ -395,7 +395,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->waitFor('@session video');
 
             // In one browser window act as a guest
-            $guest->visit(new RoomPage('john'))
+            $guest1->visit(new RoomPage('john'))
                 ->waitUntilMissing('@setup-status-message', 10)
                 ->assertSeeIn('@setup-button', "JOIN")
                 ->clickWhenEnabled('@setup-button')
@@ -434,12 +434,27 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session video', 1)
                 ->assertElementsCount('@session div.meet-subscriber', 1);
 
-            $guest
+            $guest1
                 ->waitUntilMissing('@session .meet-video.self')
                 ->waitFor('@session div.meet-subscriber')
                 ->assertElementsCount('@session div.meet-video', 1)
                 ->assertElementsCount('@session video', 1)
                 ->assertElementsCount('@session div.meet-subscriber', 1);
+
+            // Join as another user to make sure the role change is propagated to new connections
+            $guest2->visit(new RoomPage('john'))
+                ->waitUntilMissing('@setup-status-message', 10)
+                ->assertSeeIn('@setup-button', "JOIN")
+                ->select('@setup-mic-select', '')
+                ->select('@setup-cam-select', '')
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form')
+                ->waitFor('div.meet-subscriber:not(.self)')
+                ->assertElementsCount('@session div.meet-video', 1)
+                ->assertElementsCount('@session video', 1)
+                ->assertElementsCount('@session div.meet-subscriber', 2)
+                ->click('@toolbar .link-logout');
 
             // Promote the guest back to a publisher
             $browser
@@ -455,7 +470,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session video', 2)
                 ->assertElementsCount('@session div.meet-subscriber', 0);
 
-            $guest
+            $guest1
                 ->waitFor('@session .meet-video.self')
                 ->assertElementsCount('@session div.meet-video', 2)
                 ->assertElementsCount('@session video', 2)
@@ -508,7 +523,7 @@ class RoomSetupTest extends TestCaseDusk
             $room->save();
         }
 
-        $this->assignBetaEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org');
 
         $this->browse(function (Browser $browser, $guest) {
             // Join the room as the owner

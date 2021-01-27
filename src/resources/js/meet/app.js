@@ -75,7 +75,7 @@ function Meet(container)
     /**
      * Join the room session
      *
-     * @param data Session metadata and event handlers (token, shareToken, nickname, role,
+     * @param data Session metadata and event handlers (token, shareToken, nickname, role, connections,
      *             chatElement, menuElement, onDestroy, onJoinRequest, onDismiss, onConnectionChange,
      *             onSessionDataUpdate, onMediaSetup)
      */
@@ -110,10 +110,20 @@ function Meet(container)
             // in 'streamCreated' event handler.
 
             let metadata = connectionData(event.connection)
+            const connId = metadata.connectionId
+
+            // The connection metadata here is the initial metadata set on
+            // connection initialization. There's no way to update it via OpenVidu API.
+            // So, we merge the initial connection metadata with up-to-dated one that
+            // we got from our database.
+            if (sessionData.connections && connId in sessionData.connections) {
+                Object.assign(metadata, sessionData.connections[connId])
+                delete sessionData.connections[connId]
+            }
 
             metadata.element = participantCreate(metadata)
 
-            connections[metadata.connectionId] = metadata
+            connections[connId] = metadata
 
             // Send the current user status to the connecting user
             // otherwise e.g. nickname might be not up to date

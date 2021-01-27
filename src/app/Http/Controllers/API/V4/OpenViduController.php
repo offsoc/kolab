@@ -296,6 +296,9 @@ class OpenViduController extends Controller
                 $response['shareToken'] = $add_token['token'];
             }
 
+            // Get up-to-date connections metadata
+            $response['connections'] = $room->getSessionConnections();
+
             $response_code = 200;
             $response['role'] = $role;
             $response['config'] = $config;

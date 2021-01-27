@@ -173,6 +173,31 @@ class Room extends Model
     }
 
     /**
+     * Returns metadata for every connection in a session.
+     *
+     * @return array Connections metadata, indexed by connection identifier
+     * @throws \Exception if session does not exist
+     */
+    public function getSessionConnections(): array
+    {
+        if (!$this->session_id) {
+            throw new \Exception("The room session does not exist");
+        }
+
+        return Connection::where('session_id', $this->session_id)
+            // Ignore screen sharing connection for now
+            ->whereRaw("(role & " . self::ROLE_SCREEN . ") = 0")
+            ->get()
+            ->keyBy('id')
+            ->map(function ($item) {
+                // For now we need only 'role' property, it might change in the future.
+                // Make sure to not return all metadata here as it might contain sensitive data.
+                return ['role' => $item->role];
+            })
+            ->all();
+    }
+
+    /**
      * Create a OpenVidu session (connection) token
      *
      * @param int $role User role (see self::ROLE_* constants)

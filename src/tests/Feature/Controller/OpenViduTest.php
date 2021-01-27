@@ -569,7 +569,7 @@ class OpenViduTest extends TestCase
         $room->session_id = null;
         $room->save();
 
-        $this->assignBetaEntitlement($john, 'meet');
+        $this->assignMeetEntitlement($john);
 
         // First we create the session
         $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
