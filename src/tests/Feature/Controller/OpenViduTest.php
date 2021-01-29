@@ -332,6 +332,7 @@ class OpenViduTest extends TestCase
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
 
         // TODO: Test a scenario where both password and lock are enabled
+        // TODO: Test accepting/denying as a non-owner moderator
     }
 
     /**
@@ -476,6 +477,20 @@ class OpenViduTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertNull($room->getOVConnection($conn_id));
+
+        // Test acting as a moderator
+        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
+        $response->assertStatus(200);
+        $json = $response->json();
+        $conn_id = $json['connectionId'];
+
+        // Note: We're acting as Jack because there's no easy way to unset a 'actingAs' user
+        // throughout the test
+        $response = $this->actingAs($jack)
+            ->withHeaders([OpenViduController::AUTH_HEADER => $this->getModeratorToken($room)])
+            ->post("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}/dismiss");
+
+        $response->assertStatus(200);
     }
 
     /**
@@ -576,6 +591,7 @@ class OpenViduTest extends TestCase
         $response->assertStatus(200);
 
         $json = $response->json();
+        $owner_conn_id = $json['connectionId'];
 
         // And the other user connection
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
@@ -584,6 +600,7 @@ class OpenViduTest extends TestCase
         $json = $response->json();
 
         $conn_id = $json['connectionId'];
+        $auth_token = $json['authToken'];
         $room->refresh();
         $conn_data = $room->getOVConnection($conn_id);
 
@@ -616,5 +633,60 @@ class OpenViduTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame($post['role'], Connection::find($conn_id)->role);
+
+        // Access as moderator
+        // Note: We're acting as Jack because there's no easy way to unset a 'actingAs' user
+        // throughout the test
+        $token = $this->getModeratorToken($room);
+        $post = ['role' => Room::ROLE_PUBLISHER];
+        $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token])
+            ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post);
+        $response->assertStatus(200);
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame($post['role'], Connection::find($conn_id)->role);
+
+        // Assert that it's not possible to add/remove the 'owner' role
+        $post = ['role' => Room::ROLE_PUBLISHER | Room::ROLE_OWNER];
+        $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token])
+            ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post);
+
+        $response->assertStatus(403);
+
+        $post = ['role' => Room::ROLE_PUBLISHER];
+        $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token])
+            ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$owner_conn_id}", $post);
+
+        $response->assertStatus(403);
+
+        // Assert that removing a 'moderator' role from the owner is not possible
+        $post = ['role' => Room::ROLE_PUBLISHER | Room::ROLE_OWNER];
+        $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token])
+            ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$owner_conn_id}", $post);
+
+        $response->assertStatus(200);
+
+        $this->assertSame($post['role'] | Room::ROLE_MODERATOR, Connection::find($owner_conn_id)->role);
+
+        // Assert that non-moderator token does not allow access
+        $post = ['role' => Room::ROLE_SUBSCRIBER];
+        $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $auth_token])
+            ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post);
+
+        $response->assertStatus(403);
+    }
+
+    /**
+     * Create a moderator connection to the room session.
+     *
+     * @param \App\Room $room The room
+     *
+     * @return string The connection authentication token
+     */
+    private function getModeratorToken(Room $room): string
+    {
+        $result = $room->getSessionToken(Room::ROLE_MODERATOR);
+
+        return $result['authToken'];
     }
 }

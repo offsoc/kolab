@@ -721,7 +721,9 @@ function Meet(container)
         // It's me
         if (session.connection.connectionId == data.connectionId) {
             const rolePublisher = data.role && data.role & Roles.PUBLISHER
+            const roleModerator = data.role && data.role & Roles.MODERATOR
             const isPublisher = sessionData.role & Roles.PUBLISHER
+            const isModerator = sessionData.role & Roles.MODERATOR
 
             // Inform the vue component, so it can update some UI controls
             let update = () => {
@@ -745,6 +747,17 @@ function Meet(container)
 
             // update the participant element
             sessionData.element = participantUpdate(sessionData.element, sessionData)
+
+            // promoted/demoted to/from a moderator
+            if ('role' in data) {
+                if ((!isModerator && roleModerator) || (isModerator && !roleModerator)) {
+                    // Update all participants, to enable/disable the popup menu
+                    Object.keys(connections).forEach(key => {
+                        const conn = connections[key]
+                        participantUpdate(conn.element, conn)
+                    })
+                }
+            }
 
             // promoted to a publisher
             if ('role' in data && !isPublisher && rolePublisher) {
@@ -894,18 +907,19 @@ function Meet(container)
         const element = $(wrapper)
         const isModerator = sessionData.role & Roles.MODERATOR
         const isSelf = session.connection.connectionId == params.connectionId
+        const rolePublisher = params.role & Roles.PUBLISHER
+        const roleModerator = params.role & Roles.MODERATOR
+        const roleScreen = params.role & Roles.SCREEN
+        const roleOwner = params.role & Roles.OWNER
 
         // Handle publisher-to-subscriber and subscriber-to-publisher change
-        if ('role' in params && !(params.role & Roles.SCREEN)) {
-            const rolePublisher = params.role & Roles.PUBLISHER
+        if (!roleScreen) {
             const isPublisher = element.is('.meet-video')
 
             if ((rolePublisher && !isPublisher) || (!rolePublisher && isPublisher)) {
                 element.remove()
                 return participantCreate(params)
             }
-
-            element.find('.action-role-publisher input').prop('checked', params.role & Roles.PUBLISHER)
         }
 
         if ('audioActive' in params) {
@@ -928,12 +942,23 @@ function Meet(container)
             element.addClass('moderated')
         }
 
-        element.find('.dropdown-menu')[isSelf || isModerator ? 'removeClass' : 'addClass']('hidden')
-        element.find('.permissions')[isModerator ? 'removeClass' : 'addClass']('hidden')
+        const withPerm = isModerator && !roleScreen && !(roleOwner && !isSelf);
+        const withMenu = isSelf || (isModerator && !roleOwner)
 
-        if ('role' in params && params.role & Roles.SCREEN) {
-            element.find('.permissions').addClass('hidden')
+        let elements = {
+            '.dropdown-menu': withMenu,
+            '.permissions': withPerm,
+            'svg.moderator': roleModerator,
+            'svg.user': !roleModerator
         }
+
+        Object.keys(elements).forEach(key => {
+            element.find(key)[elements[key] ? 'removeClass' : 'addClass']('hidden')
+        })
+
+        element.find('.action-role-publisher input').prop('checked', rolePublisher)
+        element.find('.action-role-moderator input').prop('checked', roleModerator)
+            .prop('disabled', roleOwner)
 
         return wrapper
     }
@@ -965,7 +990,10 @@ function Meet(container)
             '<div class="dropdown">'
                 + '<a href="#" class="meet-nickname btn" aria-haspopup="true" aria-expanded="false" role="button">'
                     + '<span class="content"></span>'
-                    + '<span class="icon">' + svgIcon('user') + '</span>'
+                    + '<span class="icon">'
+                        + svgIcon('user', null, 'user')
+                        + svgIcon('crown', null, 'moderator hidden')
+                    + '</span>'
                 + '</a>'
                 + '<div class="dropdown-menu">'
                     + '<a class="dropdown-item action-nickname" href="#">Nickname</a>'
@@ -977,10 +1005,10 @@ function Meet(container)
                             + '<input type="checkbox" class="custom-control-input">'
                             + ' <span class="custom-control-label">Audio &amp; Video publishing</span>'
                         + '</label>'
-                        //+ '<label class="dropdown-item action-role-moderator custom-control custom-switch">'
-                        //    + '<input type="checkbox" class="custom-control-input">'
-                        //    + ' <span class="custom-control-label">Moderation</span>'
-                        //+ '</label>'
+                        + '<label class="dropdown-item action-role-moderator custom-control custom-switch">'
+                            + '<input type="checkbox" class="custom-control-input">'
+                            + ' <span class="custom-control-label">Moderation</span>'
+                        + '</label>'
                     + '</div>'
                 + '</div>'
             + '</div>'
@@ -1026,13 +1054,23 @@ function Meet(container)
             })
         }
 
+        let connectionRole = () => {
+            if (params.isSelf) {
+                return sessionData.role
+            }
+            if (params.connectionId in connections) {
+                return connections[params.connectionId].role
+            }
+            return 0
+        }
+
         // Don't close the menu on permission change
         element.find('.dropdown-menu > label').on('click', e => { e.stopPropagation() })
 
         if (sessionData.onConnectionChange) {
             element.find('.action-role-publisher input').on('change', e => {
                 const enabled = e.target.checked
-                let role = params.role
+                let role = connectionRole()
 
                 if (enabled) {
                     role |= Roles.PUBLISHER
@@ -1048,7 +1086,7 @@ function Meet(container)
 
             element.find('.action-role-moderator input').on('change', e => {
                 const enabled = e.target.checked
-                let role = params.role
+                let role = connectionRole()
 
                 if (enabled) {
                     role |= Roles.MODERATOR

@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Validator;
 
 class OpenViduController extends Controller
 {
+    public const AUTH_HEADER = 'X-Meet-Auth-Token';
+
     /**
      * Accept the room join request.
      *
@@ -394,6 +396,19 @@ class OpenViduController extends Controller
         foreach (request()->input() as $key => $value) {
             switch ($key) {
                 case 'role':
+                    // The 'owner' role is not assignable
+                    if (
+                        ($value & Room::ROLE_OWNER && !($connection->role & Room::ROLE_OWNER))
+                        || (!($value & Room::ROLE_OWNER) && ($connection->role & Room::ROLE_OWNER))
+                    ) {
+                        return $this->errorResponse(403);
+                    }
+
+                    // The room owner has always a 'moderator' role
+                    if (!($value & Room::ROLE_MODERATOR) && $connection->role & Room::ROLE_OWNER) {
+                        $value |= Room::ROLE_MODERATOR;
+                    }
+
                     $connection->{$key} = $value;
                     break;
             }
@@ -456,7 +471,19 @@ class OpenViduController extends Controller
             return true;
         }
 
-        // TODO: Moderators authentication
+        // Moderator's authentication via the extra request header
+        if ($token = request()->header(self::AUTH_HEADER)) {
+            list($connId, ) = explode(':', base64_decode($token), 2);
+
+            if (
+                ($connection = Connection::find($connId))
+                && $connection->session_id === $room->session_id
+                && $connection->metadata['authToken'] === $token
+                && $connection->role & Room::ROLE_MODERATOR
+            ) {
+                return true;
+            }
+        }
 
         return false;
     }
