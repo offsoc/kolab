@@ -273,6 +273,7 @@ class RoomControlsTest extends TestCaseDusk
                 ->assertElementsCount('@chat-list .message', 0)
                 ->keys('@chat-input', 'test1', '{enter}')
                 ->assertValue('@chat-input', '')
+                ->waitFor('@chat-list .message')
                 ->assertElementsCount('@chat-list .message', 1)
                 ->assertSeeIn('@chat-list .message .nickname', 'john')
                 ->assertSeeIn('@chat-list .message div:last-child', 'test1');
