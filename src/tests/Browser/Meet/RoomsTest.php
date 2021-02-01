@@ -72,7 +72,7 @@ class RoomsTest extends TestCaseDusk
             // Goto user subscriptions, and enable 'meet' subscription
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
-                ->with('@skus', function ($browser) {
+                ->whenAvailable('@skus', function ($browser) {
                     $browser->click('#sku-input-meet');
                 })
                 ->click('button[type=submit]')

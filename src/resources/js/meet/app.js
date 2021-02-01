@@ -17,7 +17,6 @@ function Meet(container)
     let publisher               // Publisher object which the user will publish
     let audioActive = false     // True if the audio track of the publisher is active
     let videoActive = false     // True if the video track of the publisher is active
-    let numOfVideos = 0         // Keeps track of the number of videos that are being shown
     let audioSource = ''        // Currently selected microphone
     let videoSource = ''        // Currently selected camera
     let sessionData             // Room session metadata
@@ -42,7 +41,6 @@ function Meet(container)
     let containerHeight
     let chatCount = 0
     let volumeElement
-    let setupProps
     let subscribersContainer
 
     OV = new OpenVidu()
@@ -65,7 +63,8 @@ function Meet(container)
     this.isScreenSharingSupported = isScreenSharingSupported
     this.joinRoom = joinRoom
     this.leaveRoom = leaveRoom
-    this.setup = setup
+    this.setupStart = setupStart
+    this.setupStop = setupStop
     this.setupSetAudioDevice = setupSetAudioDevice
     this.setupSetVideoDevice = setupSetVideoDevice
     this.switchAudio = switchAudio
@@ -76,8 +75,9 @@ function Meet(container)
     /**
      * Join the room session
      *
-     * @param data Session metadata and event handlers (session, token, shareToken, nickname, role,
-     *             chatElement, menuElement, onDestroy, onJoinRequest)
+     * @param data Session metadata and event handlers (token, shareToken, nickname, role, connections,
+     *             chatElement, menuElement, onDestroy, onJoinRequest, onDismiss, onConnectionChange,
+     *             onSessionDataUpdate, onMediaSetup)
      */
     function joinRoom(data) {
         resize();
@@ -108,18 +108,22 @@ function Meet(container)
             // This is the first event executed when a user joins in.
             // We'll create the video wrapper here, which can be re-used
             // in 'streamCreated' event handler.
-            // Note: For a user with a subscriber role 'streamCreated' event
-            // is not being dispatched at all
 
             let metadata = connectionData(event.connection)
-            let connectionId = event.connection.connectionId
-            metadata.connId = connectionId
+            const connId = metadata.connectionId
 
-            let element = participantCreate(metadata)
+            // The connection metadata here is the initial metadata set on
+            // connection initialization. There's no way to update it via OpenVidu API.
+            // So, we merge the initial connection metadata with up-to-dated one that
+            // we got from our database.
+            if (sessionData.connections && connId in sessionData.connections) {
+                Object.assign(metadata, sessionData.connections[connId])
+                delete sessionData.connections[connId]
+            }
 
-            connections[connectionId] = { element }
+            metadata.element = participantCreate(metadata)
 
-            resize()
+            connections[connId] = metadata
 
             // Send the current user status to the connecting user
             // otherwise e.g. nickname might be not up to date
@@ -129,9 +133,6 @@ function Meet(container)
         session.on('connectionDestroyed', event => {
             let conn = connections[event.connection.connectionId]
             if (conn) {
-                if ($(conn.element).is('.meet-video')) {
-                    numOfVideos--
-                }
                 $(conn.element).remove()
                 delete connections[event.connection.connectionId]
             }
@@ -140,17 +141,15 @@ function Meet(container)
 
         // On every new Stream received...
         session.on('streamCreated', event => {
-            let connection = event.stream.connection
-            let connectionId = connection.connectionId
-            let metadata = connectionData(connection)
-            let wrapper = connections[connectionId].element
+            let connectionId = event.stream.connection.connectionId
+            let metadata = connections[connectionId]
             let props = {
                 // Prepend the video element so it is always before the watermark element
                 insertMode: 'PREPEND'
             }
 
             // Subscribe to the Stream to receive it
-            let subscriber = session.subscribe(event.stream, wrapper, props);
+            let subscriber = session.subscribe(event.stream, metadata.element, props);
 
             subscriber.on('videoElementCreated', event => {
                 $(event.element).prop({
@@ -159,17 +158,29 @@ function Meet(container)
 
                 resize()
             })
-/*
-            subscriber.on('videoElementDestroyed', event => {
-            })
-*/
+
+            metadata.audioActive = event.stream.audioActive
+            metadata.videoActive = event.stream.videoActive
+
             // Update the wrapper controls/status
-            participantUpdate(wrapper, event.stream)
+            participantUpdate(metadata.element, metadata)
         })
-/*
-        session.on('streamDestroyed', event => {
+
+        // Stream properties changes e.g. audio/video muted/unmuted
+        session.on('streamPropertyChanged', event => {
+            let connectionId = event.stream.connection.connectionId
+            let metadata = connections[connectionId]
+
+            if (session.connection.connectionId == connectionId) {
+                metadata = sessionData
+            }
+
+            if (metadata) {
+                metadata[event.changedProperty] = event.newValue
+                participantUpdate(metadata.element, metadata)
+            }
         })
-*/
+
         // Handle session disconnection events
         session.on('sessionDisconnected', event => {
             if (data.onDestroy) {
@@ -185,8 +196,13 @@ function Meet(container)
         // Connect with the token
         session.connect(data.token, data.params)
             .then(() => {
-                let wrapper
-                let params = { self: true, role: data.role, audioActive, videoActive }
+                let params = {
+                    connectionId: session.connection.connectionId,
+                    role: data.role,
+                    audioActive,
+                    videoActive
+                }
+
                 params = Object.assign({}, data.params, params)
 
                 publisher.on('videoElementCreated', event => {
@@ -198,15 +214,14 @@ function Meet(container)
                     resize()
                 })
 
-                wrapper = participantCreate(params)
+                let wrapper = participantCreate(params)
 
                 if (data.role & Roles.PUBLISHER) {
                     publisher.createVideoElement(wrapper, 'PREPEND')
                     session.publish(publisher)
                 }
 
-                resize()
-                sessionData.wrapper = wrapper
+                sessionData.element = wrapper
             })
             .catch(error => {
                 console.error('There was an error connecting to the session: ', error.message);
@@ -251,8 +266,16 @@ function Meet(container)
      *
      * @param props Setup properties (videoElement, volumeElement, onSuccess, onError)
      */
-    function setup(props) {
-        setupProps = props
+    function setupStart(props) {
+        // Note: After changing media permissions in Chrome/Firefox a page refresh is required.
+        // That means that in a scenario where you first blocked access to media devices
+        // and then allowed it we can't ask for devices list again and expect a different
+        // result than before.
+        // That's why we do not bother, and return ealy when we open the media setup dialog.
+        if (publisher) {
+            volumeMeterStart()
+            return
+        }
 
         publisher = OV.initPublisher(undefined, publisherDefaults)
 
@@ -302,6 +325,13 @@ function Meet(container)
     }
 
     /**
+     * Stop the setup "process", cleanup after it.
+     */
+    function setupStop() {
+        volumeMeterStop()
+    }
+
+    /**
      * Change the publisher audio device
      *
      * @param deviceId Device identifier string
@@ -317,9 +347,7 @@ function Meet(container)
             audioActive = true
         } else {
             const mediaStream = publisher.stream.mediaStream
-            const oldTrack = mediaStream.getAudioTracks()[0]
-
-            let properties = Object.assign({}, publisherDefaults, {
+            const properties = Object.assign({}, publisherDefaults, {
                 publishAudio: true,
                 publishVideo: videoActive,
                 audioSource: deviceId,
@@ -328,19 +356,17 @@ function Meet(container)
 
             volumeMeterStop()
 
-            // Note: We're not using publisher.replaceTrack() as it wasn't working for me
-
-            // Stop and remove the old track
-            if (oldTrack) {
-                oldTrack.stop()
-                mediaStream.removeTrack(oldTrack)
-            }
+            // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
+            mediaStream.getAudioTracks().forEach(track => {
+                track.stop()
+                mediaStream.removeTrack(track)
+            })
 
             // TODO: Handle errors
 
             await OV.getUserMedia(properties)
                 .then(async (newMediaStream) => {
-                    publisher.stream.mediaStream = newMediaStream
+                    await replaceTrack(newMediaStream.getAudioTracks()[0])
                     volumeMeterStart()
                     audioActive = true
                     audioSource = deviceId
@@ -364,9 +390,7 @@ function Meet(container)
             videoActive = true
         } else {
             const mediaStream = publisher.stream.mediaStream
-            const oldTrack = mediaStream.getAudioTracks()[0]
-
-            let properties = Object.assign({}, publisherDefaults, {
+            const properties = Object.assign({}, publisherDefaults, {
                 publishAudio: audioActive,
                 publishVideo: true,
                 audioSource: audioSource,
@@ -375,17 +399,17 @@ function Meet(container)
 
             volumeMeterStop()
 
-            // Stop and remove the old track
-            if (oldTrack) {
-                oldTrack.stop()
-                mediaStream.removeTrack(oldTrack)
-            }
+            // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
+            mediaStream.getVideoTracks().forEach(track => {
+                track.stop()
+                mediaStream.removeTrack(track)
+            })
 
             // TODO: Handle errors
 
             await OV.getUserMedia(properties)
                 .then(async (newMediaStream) => {
-                    publisher.stream.mediaStream = newMediaStream
+                    await replaceTrack(newMediaStream.getVideoTracks()[0])
                     volumeMeterStart()
                     videoActive = true
                     videoSource = deviceId
@@ -393,6 +417,53 @@ function Meet(container)
         }
 
         return videoActive
+    }
+
+    /**
+     * A way to switch tracks in a stream.
+     * Note: This is close to what publisher.replaceTrack() does but it does not
+     * require the session.
+     * Note: The old track needs to be removed before OV.getUserMedia() call,
+     * otherwise we get "Concurrent mic process limit" error.
+     */
+    function replaceTrack(track) {
+        const stream = publisher.stream
+
+        const replaceMediaStreamTrack = () => {
+            stream.mediaStream.addTrack(track);
+
+            if (session) {
+                session.sendVideoData(publisher.stream.streamManager, 5, true, 5);
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            if (stream.isLocalStreamPublished) {
+                // Only if the Publisher has been published it is necessary to call the native
+                // Web API RTCRtpSender.replaceTrack()
+                const senders = stream.getRTCPeerConnection().getSenders()
+                let sender
+
+                if (track.kind === 'video') {
+                    sender = senders.find(s => !!s.track && s.track.kind === 'video')
+                } else {
+                    sender = senders.find(s => !!s.track && s.track.kind === 'audio')
+                }
+
+                if (!sender) return
+
+                sender.replaceTrack(track).then(() => {
+                    replaceMediaStreamTrack()
+                    resolve()
+                }).catch(error => {
+                    reject(error)
+                })
+            } else {
+                // Publisher not published. Simply modify local MediaStream tracks
+                replaceMediaStreamTrack()
+                resolve()
+            }
+        })
     }
 
     /**
@@ -433,10 +504,12 @@ function Meet(container)
 
         switch (signal.type) {
             case 'signal:userChanged':
+                // TODO: Use 'signal:connectionUpdate' for nickname updates?
                 if (conn = connections[connId]) {
                     data = JSON.parse(signal.data)
 
-                    participantUpdate(conn.element, data)
+                    conn.nickname = data.nickname
+                    participantUpdate(conn.element, conn)
                     nicknameUpdate(data.nickname, connId)
                 }
                 break
@@ -448,10 +521,20 @@ function Meet(container)
                 break
 
             case 'signal:joinRequest':
-                if (sessionData.onJoinRequest) {
+                // accept requests from the server only
+                if (!connId && sessionData.onJoinRequest) {
                     sessionData.onJoinRequest(JSON.parse(signal.data))
                 }
-                break;
+                break
+
+            case 'signal:connectionUpdate':
+                // accept requests from the server only
+                if (!connId) {
+                    data = JSON.parse(signal.data)
+
+                    connectionUpdate(data)
+                }
+                break
         }
     }
 
@@ -542,14 +625,9 @@ function Meet(container)
      */
     function signalUserUpdate(connection) {
         let data = {
-            audioActive,
-            videoActive,
             nickname: sessionData.params.nickname
         }
 
-        // Note: StreamPropertyChangedEvent might be more standard way
-        // to propagate the audio/video state change to other users.
-        // It looks there's no other way to propagate nickname changes.
         session.signal({
             data: JSON.stringify(data),
             type: 'userChanged',
@@ -558,8 +636,6 @@ function Meet(container)
 
         // The same nickname for screen sharing session
         if (screenSession) {
-            data.audioActive = false
-            data.videoActive = true
             screenSession.signal({
                 data: JSON.stringify(data),
                 type: 'userChanged',
@@ -580,8 +656,6 @@ function Meet(container)
             try {
                 publisher.publishAudio(!audioActive)
                 audioActive = !audioActive
-                participantUpdate(sessionData.wrapper, { audioActive })
-                signalUserUpdate()
             } catch (e) {
                 console.error(e)
             }
@@ -602,8 +676,6 @@ function Meet(container)
             try {
                 publisher.publishVideo(!videoActive)
                 videoActive = !videoActive
-                participantUpdate(sessionData.wrapper, { videoActive })
-                signalUserUpdate()
             } catch (e) {
                 console.error(e)
             }
@@ -641,6 +713,65 @@ function Meet(container)
     }
 
     /**
+     * Update participant connection state
+     */
+    function connectionUpdate(data) {
+        let conn = connections[data.connectionId]
+
+        // It's me
+        if (session.connection.connectionId == data.connectionId) {
+            const rolePublisher = data.role && data.role & Roles.PUBLISHER
+            const isPublisher = sessionData.role & Roles.PUBLISHER
+
+            // Inform the vue component, so it can update some UI controls
+            let update = () => {
+                if (sessionData.onSessionDataUpdate) {
+                    sessionData.onSessionDataUpdate(data)
+                }
+            }
+
+            // demoted to a subscriber
+            if ('role' in data && isPublisher && !rolePublisher) {
+                session.unpublish(publisher)
+                // FIXME: There's a reference in OpenVidu to a video element that should not
+                // exist anymore. It causes issues when we try to do publish/unpublish
+                // sequence multiple times in a row. So, we're clearing the reference here.
+                let videos = publisher.stream.streamManager.videos
+                publisher.stream.streamManager.videos = videos.filter(video => video.video.parentNode != null)
+            }
+
+            // merge the changed data into internal session metadata object
+            Object.keys(data).forEach(key => { sessionData[key] = data[key] })
+
+            // update the participant element
+            sessionData.element = participantUpdate(sessionData.element, sessionData)
+
+            // promoted to a publisher
+            if ('role' in data && !isPublisher && rolePublisher) {
+                publisher.createVideoElement(sessionData.element, 'PREPEND')
+                session.publish(publisher).then(() => {
+                    data.audioActive = publisher.stream.audioActive
+                    data.videoActive = publisher.stream.videoActive
+                    update()
+                })
+
+                // TODO: Here the user is asked for media permissions again
+                // should we rather start the stream without asking the user?
+                // Or maybe we want to display the media setup/preview form?
+                // Need to find a way to do this.
+            } else {
+                // Inform the vue component, so it can update some UI controls
+                update()
+            }
+        } else if (conn) {
+            // merge the changed data into internal session metadata object
+            Object.keys(data).forEach(key => { conn[key] = data[key] })
+
+            conn.element = participantUpdate(conn.element, conn)
+        }
+    }
+
+    /**
      * Update nickname in chat
      *
      * @param nickname     Nickname
@@ -667,11 +798,19 @@ function Meet(container)
      * @return The element
      */
     function participantCreate(params) {
+        let element
+
+        params.isSelf = params.isSelf || session.connection.connectionId == params.connectionId
+
         if (params.role & Roles.PUBLISHER || params.role & Roles.SCREEN) {
-            return publisherCreate(params)
+            element = publisherCreate(params)
+        } else {
+            element = subscriberCreate(params)
         }
 
-        return subscriberCreate(params)
+        setTimeout(resize, 50);
+
+        return element
     }
 
     /**
@@ -685,6 +824,7 @@ function Meet(container)
             '<div class="meet-video">'
             + svgIcon('user', 'fas', 'watermark')
             + '<div class="controls">'
+                + '<button type="button" class="btn btn-link link-setup hidden" title="Media setup">' + svgIcon('cog') + '</button>'
                 + '<button type="button" class="btn btn-link link-audio hidden" title="Mute audio">' + svgIcon('volume-mute') + '</button>'
                 + '<button type="button" class="btn btn-link link-fullscreen closed hidden" title="Full screen">' + svgIcon('expand') + '</button>'
                 + '<button type="button" class="btn btn-link link-fullscreen open hidden" title="Full screen">' + svgIcon('compress') + '</button>'
@@ -699,7 +839,12 @@ function Meet(container)
         // Append the nickname widget
         wrapper.find('.controls').before(nicknameWidget(params))
 
-        if (!params.self) {
+        if (params.isSelf) {
+            if (sessionData.onMediaSetup) {
+                wrapper.find('.link-setup').removeClass('hidden')
+                    .click(() => sessionData.onMediaSetup())
+            }
+        } else {
             // Enable audio mute button
             wrapper.find('.link-audio').removeClass('hidden')
                 .on('click', e => {
@@ -731,12 +876,12 @@ function Meet(container)
             })
         }
 
-        numOfVideos++
-
         // Remove the subscriber element, if exists
-        $('#subscriber-' + params.connId).remove()
+        $('#subscriber-' + params.connectionId).remove()
 
-        return wrapper[params.self ? 'prependTo' : 'appendTo'](container).get(0)
+        return wrapper[params.isSelf ? 'prependTo' : 'appendTo'](container)
+            .attr('id', 'publisher-' + params.connectionId)
+            .get(0)
     }
 
     /**
@@ -746,27 +891,51 @@ function Meet(container)
      * @param params  Connection metadata/params
      */
     function participantUpdate(wrapper, params) {
-        const $element = $(wrapper)
+        const element = $(wrapper)
+        const isModerator = sessionData.role & Roles.MODERATOR
+        const isSelf = session.connection.connectionId == params.connectionId
+
+        // Handle publisher-to-subscriber and subscriber-to-publisher change
+        if ('role' in params && !(params.role & Roles.SCREEN)) {
+            const rolePublisher = params.role & Roles.PUBLISHER
+            const isPublisher = element.is('.meet-video')
+
+            if ((rolePublisher && !isPublisher) || (!rolePublisher && isPublisher)) {
+                element.remove()
+                return participantCreate(params)
+            }
+
+            element.find('.action-role-publisher input').prop('checked', params.role & Roles.PUBLISHER)
+        }
 
         if ('audioActive' in params) {
-            $element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
+            element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
         }
 
         if ('videoActive' in params) {
-            $element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
+            element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
         }
 
         if ('nickname' in params) {
-            $element.find('.meet-nickname > .content').text(params.nickname)
+            element.find('.meet-nickname > .content').text(params.nickname)
         }
 
-        if (params.self) {
-            $element.addClass('self')
+        if (isSelf) {
+            element.addClass('self')
         }
 
-        if (sessionData.role & Roles.MODERATOR) {
-            $element.addClass('moderated')
+        if (isModerator) {
+            element.addClass('moderated')
         }
+
+        element.find('.dropdown-menu')[isSelf || isModerator ? 'removeClass' : 'addClass']('hidden')
+        element.find('.permissions')[isModerator ? 'removeClass' : 'addClass']('hidden')
+
+        if ('role' in params && params.role & Roles.SCREEN) {
+            element.find('.permissions').addClass('hidden')
+        }
+
+        return wrapper
     }
 
     /**
@@ -780,8 +949,8 @@ function Meet(container)
 
         participantUpdate(wrapper, params)
 
-        return wrapper[params.self ? 'prependTo' : 'appendTo'](subscribersContainer)
-            .attr('id', 'subscriber-' + params.connId)
+        return wrapper[params.isSelf ? 'prependTo' : 'appendTo'](subscribersContainer)
+            .attr('id', 'subscriber-' + params.connectionId)
             .get(0)
     }
 
@@ -794,20 +963,35 @@ function Meet(container)
         // Create the element
         let element = $(
             '<div class="dropdown">'
-                + '<a href="#" class="meet-nickname btn" title="Nickname" aria-haspopup="true" aria-expanded="false" role="button">'
+                + '<a href="#" class="meet-nickname btn" aria-haspopup="true" aria-expanded="false" role="button">'
                     + '<span class="content"></span>'
                     + '<span class="icon">' + svgIcon('user') + '</span>'
                 + '</a>'
                 + '<div class="dropdown-menu">'
+                    + '<a class="dropdown-item action-nickname" href="#">Nickname</a>'
                     + '<a class="dropdown-item action-dismiss" href="#">Dismiss</a>'
+                    + '<div class="dropdown-divider permissions"></div>'
+                    + '<div class="permissions">'
+                        + '<h6 class="dropdown-header">Permissions</h6>'
+                        + '<label class="dropdown-item action-role-publisher custom-control custom-switch">'
+                            + '<input type="checkbox" class="custom-control-input">'
+                            + ' <span class="custom-control-label">Audio &amp; Video publishing</span>'
+                        + '</label>'
+                        //+ '<label class="dropdown-item action-role-moderator custom-control custom-switch">'
+                        //    + '<input type="checkbox" class="custom-control-input">'
+                        //    + ' <span class="custom-control-label">Moderation</span>'
+                        //+ '</label>'
+                    + '</div>'
                 + '</div>'
             + '</div>'
         )
 
         let nickname = element.find('.meet-nickname')
-            .addClass('btn btn-outline-' + (params.self ? 'primary' : 'secondary'))
+            .addClass('btn btn-outline-' + (params.isSelf ? 'primary' : 'secondary'))
+            .attr({title: 'Options', 'data-toggle': 'dropdown'})
+            .dropdown({boundary: container})
 
-        if (params.self) {
+        if (params.isSelf) {
             // Add events for nickname change
             let editable = element.find('.content')[0]
             let editableEnable = () => {
@@ -821,7 +1005,8 @@ function Meet(container)
                 nicknameUpdate(editable.innerText, session.connection.connectionId)
             }
 
-            nickname.on('click', editableEnable)
+            element.find('.action-nickname').on('click', editableEnable)
+            element.find('.action-dismiss').remove()
 
             $(editable).on('blur', editableUpdate)
                 .on('keydown', e => {
@@ -831,14 +1016,47 @@ function Meet(container)
                         return false
                     }
                 })
-        } else if (sessionData.role & Roles.MODERATOR) {
-            nickname.attr({title: 'Options', 'data-toggle': 'dropdown'})
-                .dropdown({boundary: container})
+        } else {
+            element.find('.action-nickname').remove()
 
             element.find('.action-dismiss').on('click', e => {
                 if (sessionData.onDismiss) {
-                    sessionData.onDismiss(params.connId)
+                    sessionData.onDismiss(params.connectionId)
                 }
+            })
+        }
+
+        // Don't close the menu on permission change
+        element.find('.dropdown-menu > label').on('click', e => { e.stopPropagation() })
+
+        if (sessionData.onConnectionChange) {
+            element.find('.action-role-publisher input').on('change', e => {
+                const enabled = e.target.checked
+                let role = params.role
+
+                if (enabled) {
+                    role |= Roles.PUBLISHER
+                } else {
+                    role |= Roles.SUBSCRIBER
+                    if (role & Roles.PUBLISHER) {
+                        role ^= Roles.PUBLISHER
+                    }
+                }
+
+                sessionData.onConnectionChange(params.connectionId, { role })
+            })
+
+            element.find('.action-role-moderator input').on('change', e => {
+                const enabled = e.target.checked
+                let role = params.role
+
+                if (enabled) {
+                    role |= Roles.MODERATOR
+                } else if (role & Roles.MODERATOR) {
+                    role ^= Roles.MODERATOR
+                }
+
+                sessionData.onConnectionChange(params.connectionId, { role })
             })
         }
 
@@ -864,6 +1082,7 @@ function Meet(container)
      * Update the room "matrix" layout
      */
     function updateLayout() {
+        let numOfVideos = $(container).find('.meet-video').length
         if (!numOfVideos) {
             return
         }
@@ -1071,7 +1290,11 @@ function Meet(container)
         // OpenVidu is unable to merge these two objects into one, for it it is only
         // two strings, so it puts a "%/%" separator in between, we'll replace it with comma
         // to get one parseable json object
-        return JSON.parse(connection.data.replace('}%/%{', ','))
+        let data = JSON.parse(connection.data.replace('}%/%{', ','))
+
+        data.connectionId = connection.connectionId
+
+        return data
     }
 }
 
