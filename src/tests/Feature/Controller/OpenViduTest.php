@@ -743,7 +743,7 @@ class OpenViduTest extends TestCase
     /**
      * Create a moderator connection to the room session.
      *
-     * @param \App\Room $room The room
+     * @param \App\OpenVidu\Room $room The room
      *
      * @return string The connection authentication token
      */
