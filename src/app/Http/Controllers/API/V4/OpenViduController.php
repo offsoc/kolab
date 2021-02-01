@@ -397,10 +397,9 @@ class OpenViduController extends Controller
             switch ($key) {
                 case 'role':
                     // The 'owner' role is not assignable
-                    if (
-                        ($value & Room::ROLE_OWNER && !($connection->role & Room::ROLE_OWNER))
-                        || (!($value & Room::ROLE_OWNER) && ($connection->role & Room::ROLE_OWNER))
-                    ) {
+                    if ($value & Room::ROLE_OWNER && !($connection->role & Room::ROLE_OWNER)) {
+                        return $this->errorResponse(403);
+                    } elseif (!($value & Room::ROLE_OWNER) && ($connection->role & Room::ROLE_OWNER)) {
                         return $this->errorResponse(403);
                     }
 
