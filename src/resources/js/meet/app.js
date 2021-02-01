@@ -1059,6 +1059,40 @@ function Meet(container)
             })
         }
 
+        // Don't close the menu on permission change
+        element.find('.dropdown-menu > label').on('click', e => { e.stopPropagation() })
+
+        if (sessionData.onConnectionChange) {
+            element.find('.action-role-publisher input').on('change', e => {
+                const enabled = e.target.checked
+                let role = params.role
+
+                if (enabled) {
+                    role |= Roles.PUBLISHER
+                } else {
+                    role |= Roles.SUBSCRIBER
+                    if (role & Roles.PUBLISHER) {
+                        role ^= Roles.PUBLISHER
+                    }
+                }
+
+                sessionData.onConnectionChange(params.connectionId, { role })
+            })
+
+            element.find('.action-role-moderator input').on('change', e => {
+                const enabled = e.target.checked
+                let role = params.role
+
+                if (enabled) {
+                    role |= Roles.MODERATOR
+                } else if (role & Roles.MODERATOR) {
+                    role ^= Roles.MODERATOR
+                }
+
+                sessionData.onConnectionChange(params.connectionId, { role })
+            })
+        }
+
         let connectionRole = () => {
             if (params.isSelf) {
                 return sessionData.role
