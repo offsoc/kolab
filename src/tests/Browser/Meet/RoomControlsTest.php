@@ -178,7 +178,6 @@ class RoomControlsTest extends TestCaseDusk
 
             // Test nickname change propagation
 
-            // Use script() because type() does not work with this contenteditable widget
             $guest->setNickname('div.meet-video.self', 'guest');
             $owner->waitFor('div.meet-video:not(.self) .meet-nickname')
                 ->assertSeeIn('div.meet-video:not(.self) .meet-nickname', 'guest');
@@ -274,6 +273,7 @@ class RoomControlsTest extends TestCaseDusk
                 ->assertElementsCount('@chat-list .message', 0)
                 ->keys('@chat-input', 'test1', '{enter}')
                 ->assertValue('@chat-input', '')
+                ->waitFor('@chat-list .message')
                 ->assertElementsCount('@chat-list .message', 1)
                 ->assertSeeIn('@chat-list .message .nickname', 'john')
                 ->assertSeeIn('@chat-list .message div:last-child', 'test1');

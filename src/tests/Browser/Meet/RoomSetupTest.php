@@ -74,7 +74,7 @@ class RoomSetupTest extends TestCaseDusk
             $room->save();
         }
 
-        $this->assignMeetEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org');
 
         $this->browse(function (Browser $browser) {
             $browser->visit(new RoomPage('john'))
@@ -130,7 +130,7 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testTwoUsersInARoom(): void
     {
-        $this->assignMeetEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org');
 
         $this->browse(function (Browser $browser, Browser $guest) {
             // In one browser window act as a guest
@@ -234,6 +234,7 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertVisible('.meet-nickname')
                         ->assertVisible('.controls button.link-fullscreen')
                         ->assertVisible('.controls button.link-audio')
+                        ->assertMissing('.controls button.link-setup')
                         ->assertVisible('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
@@ -292,7 +293,7 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testSubscribers(): void
     {
-        $this->assignMeetEntitlement('john@kolab.org', 'meet');
+        $this->assignMeetEntitlement('john@kolab.org');
 
         $this->browse(function (Browser $browser, Browser $guest) {
             // Join the room as the owner
@@ -368,6 +369,215 @@ class RoomSetupTest extends TestCaseDusk
 
             // Expect the participant removed from other users windows
             $browser->waitUntilMissing('@session .meet-subscriber:not(.self)');
+        });
+    }
+
+    /**
+     * Test demoting publisher to a subscriber
+     *
+     * @group openvidu
+     * @depends testSubscribers
+     */
+    public function testDemoteToSubscriber(): void
+    {
+        $this->assignMeetEntitlement('john@kolab.org');
+
+        $this->browse(function (Browser $browser, Browser $guest1, Browser $guest2) {
+            // Join the room as the owner
+            $browser->visit(new RoomPage('john'))
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                ->waitFor('@setup-status-message')
+                ->type('@setup-nickname-input', 'john')
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form')
+                ->waitFor('@session video');
+
+            // In one browser window act as a guest
+            $guest1->visit(new RoomPage('john'))
+                ->waitUntilMissing('@setup-status-message', 10)
+                ->assertSeeIn('@setup-button', "JOIN")
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form')
+                ->waitFor('div.meet-video.self')
+                ->waitFor('div.meet-video:not(.self)')
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@session video', 2)
+                ->assertElementsCount('@session div.meet-subscriber', 0)
+                // assert there's no moderator-related features for this guess available
+                ->click('@session .meet-video.self .meet-nickname')
+                ->whenAvailable('@session .meet-video.self .dropdown-menu', function (Browser $browser) {
+                    $browser->assertMissing('.permissions');
+                })
+                ->click('@session .meet-video:not(.self) .meet-nickname')
+                ->pause(50)
+                ->assertMissing('.dropdown-menu');
+
+            // Demote the guest to a subscriber
+            $browser
+                ->waitFor('div.meet-video.self')
+                ->waitFor('div.meet-video:not(.self)')
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@session video', 2)
+                ->assertElementsCount('@session .meet-subscriber', 0)
+                ->click('@session .meet-video:not(.self) .meet-nickname')
+                ->whenAvailable('@session .meet-video:not(.self) .dropdown-menu', function (Browser $browser) {
+                    $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
+                        ->click('.action-role-publisher')
+                        ->waitUntilMissing('.dropdown-menu');
+                })
+                ->waitUntilMissing('@session .meet-video:not(.self)')
+                ->waitFor('@session div.meet-subscriber')
+                ->assertElementsCount('@session div.meet-video', 1)
+                ->assertElementsCount('@session video', 1)
+                ->assertElementsCount('@session div.meet-subscriber', 1);
+
+            $guest1
+                ->waitUntilMissing('@session .meet-video.self')
+                ->waitFor('@session div.meet-subscriber')
+                ->assertElementsCount('@session div.meet-video', 1)
+                ->assertElementsCount('@session video', 1)
+                ->assertElementsCount('@session div.meet-subscriber', 1);
+
+            // Join as another user to make sure the role change is propagated to new connections
+            $guest2->visit(new RoomPage('john'))
+                ->waitUntilMissing('@setup-status-message', 10)
+                ->assertSeeIn('@setup-button', "JOIN")
+                ->select('@setup-mic-select', '')
+                ->select('@setup-cam-select', '')
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form')
+                ->waitFor('div.meet-subscriber:not(.self)')
+                ->assertElementsCount('@session div.meet-video', 1)
+                ->assertElementsCount('@session video', 1)
+                ->assertElementsCount('@session div.meet-subscriber', 2)
+                ->click('@toolbar .link-logout');
+
+            // Promote the guest back to a publisher
+            $browser
+                ->click('@session .meet-subscriber .meet-nickname')
+                ->whenAvailable('@session .meet-subscriber .dropdown-menu', function (Browser $browser) {
+                    $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
+                        ->assertNotChecked('.action-role-publisher input')
+                        ->click('.action-role-publisher')
+                        ->waitUntilMissing('.dropdown-menu');
+                })
+                ->waitFor('@session .meet-video:not(.self) video')
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@session video', 2)
+                ->assertElementsCount('@session div.meet-subscriber', 0);
+
+            $guest1
+                ->waitFor('@session .meet-video.self')
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@session video', 2)
+                ->assertElementsCount('@session div.meet-subscriber', 0);
+
+            // Demote the owner to a subscriber
+            $browser
+                ->click('@session .meet-video.self .meet-nickname')
+                ->whenAvailable('@session .meet-video.self .dropdown-menu', function (Browser $browser) {
+                    $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
+                        ->assertChecked('.action-role-publisher input')
+                        ->click('.action-role-publisher')
+                        ->waitUntilMissing('.dropdown-menu');
+                })
+                ->waitUntilMissing('@session .meet-video.self')
+                ->waitFor('@session div.meet-subscriber.self')
+                ->assertElementsCount('@session div.meet-video', 1)
+                ->assertElementsCount('@session video', 1)
+                ->assertElementsCount('@session div.meet-subscriber', 1);
+
+            // Promote the owner to a publisher
+            $browser
+                ->click('@session .meet-subscriber.self .meet-nickname')
+                ->whenAvailable('@session .meet-subscriber.self .dropdown-menu', function (Browser $browser) {
+                    $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
+                        ->assertNotChecked('.action-role-publisher input')
+                        ->click('.action-role-publisher')
+                        ->waitUntilMissing('.dropdown-menu');
+                })
+                ->waitUntilMissing('@session .meet-subscriber.self')
+                ->waitFor('@session div.meet-video.self')
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertElementsCount('@session video', 2)
+                ->assertElementsCount('@session div.meet-subscriber', 0);
+        });
+    }
+
+    /**
+     * Test the media setup dialog
+     *
+     * @group openvidu
+     * @depends testDemoteToSubscriber
+     */
+    public function testMediaSetupDialog(): void
+    {
+        // Make sure there's no session yet
+        $room = Room::where('name', 'john')->first();
+        if ($room->session_id) {
+            $room->session_id = null;
+            $room->save();
+        }
+
+        $this->assignMeetEntitlement('john@kolab.org');
+
+        $this->browse(function (Browser $browser, $guest) {
+            // Join the room as the owner
+            $browser->visit(new RoomPage('john'))
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                ->waitFor('@setup-status-message')
+                ->type('@setup-nickname-input', 'john')
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form');
+
+            // In one browser window act as a guest
+            $guest->visit(new RoomPage('john'))
+                ->waitUntilMissing('@setup-status-message', 10)
+                ->assertSeeIn('@setup-button', "JOIN")
+                ->select('@setup-mic-select', '')
+                ->select('@setup-cam-select', '')
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                ->assertMissing('@setup-form');
+
+            $browser->waitFor('@session video')
+                ->click('.controls button.link-setup')
+                ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Media setup')
+                        ->assertVisible('form video')
+                        ->assertVisible('form > div:nth-child(1) video')
+                        ->assertVisible('form > div:nth-child(1) .volume')
+                        ->assertVisible('form > div:nth-child(2) svg')
+                        ->assertAttribute('form > div:nth-child(2) .input-group-text', 'title', 'Microphone')
+                        ->assertVisible('form > div:nth-child(2) select')
+                        ->assertVisible('form > div:nth-child(3) svg')
+                        ->assertAttribute('form > div:nth-child(3) .input-group-text', 'title', 'Camera')
+                        ->assertVisible('form > div:nth-child(3) select')
+                        ->assertMissing('@button-cancel')
+                        ->assertSeeIn('@button-action', 'Close')
+                        ->click('@button-action');
+                })
+                ->assertMissing('#media-setup-dialog')
+                // Test mute audio and video
+                ->click('.controls button.link-setup')
+                ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
+                    $browser->select('form > div:nth-child(2) select', '')
+                        ->select('form > div:nth-child(3) select', '')
+                        ->click('@button-action');
+                })
+                ->assertMissing('#media-setup-dialog')
+                ->assertVisible('@session .meet-video .status .status-audio')
+                ->assertVisible('@session .meet-video .status .status-video');
+
+            $guest->waitFor('@session video')
+                ->assertVisible('@session .meet-video .status .status-audio')
+                ->assertVisible('@session .meet-video .status .status-video');
         });
     }
 }

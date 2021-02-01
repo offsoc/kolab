@@ -35,6 +35,13 @@
             }
         }
     }
+
+    & + .dropdown-menu {
+        .permissions > label {
+            margin: 0;
+            padding-left: 3.75rem;
+        }
+    }
 }
 
 .meet-video {
@@ -151,10 +158,6 @@
 
 #meet-setup {
     max-width: 720px;
-
-    .input-group svg {
-        width: 1em;
-    }
 }
 
 #meet-auth {
@@ -271,12 +274,18 @@
     // TODO: mobile mode
 }
 
-#setup-preview {
+.media-setup-form {
+    .input-group svg {
+        width: 1em;
+    }
+}
+
+.media-setup-preview {
     display: flex;
+    position: relative;
 
     video {
         width: 100%;
-        transform: rotateY(180deg);
         background: #000;
     }
 
@@ -292,6 +301,10 @@
             width: 100%;
             position: absolute;
             bottom: 0;
+        }
+
+        #media-setup-dialog & {
+            right: 1em;
         }
     }
 }

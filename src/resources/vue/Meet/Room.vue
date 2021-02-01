@@ -33,8 +33,8 @@
             <div class="card-body">
                 <div class="card-title">Set up your session</div>
                 <div class="card-text">
-                    <form class="setup-form row" @submit.prevent="joinSession">
-                        <div id="setup-preview" class="col-sm-6 mb-3 mb-sm-0">
+                    <form class="media-setup-form row" @submit.prevent="joinSession">
+                        <div class="media-setup-preview col-sm-6 mb-3 mb-sm-0">
                             <video class="rounded"></video>
                             <div class="volume"><div class="bar"></div></div>
                         </div>
@@ -118,6 +118,45 @@
             </div>
         </div>
 
+        <div id="media-setup-dialog" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Media setup</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form class="media-setup-form">
+                            <div class="media-setup-preview"></div>
+                            <div class="input-group mt-2">
+                                <label for="setup-microphone" class="input-group-prepend mb-0">
+                                    <span class="input-group-text" title="Microphone"><svg-icon icon="microphone"></svg-icon></span>
+                                </label>
+                                <select class="custom-select" id="setup-microphone" v-model="microphone" @change="setupMicrophoneChange">
+                                    <option value="">None</option>
+                                    <option v-for="mic in setup.microphones" :value="mic.deviceId" :key="mic.deviceId">{{ mic.label }}</option>
+                                </select>
+                            </div>
+                            <div class="input-group mt-2">
+                                <label for="setup-camera" class="input-group-prepend mb-0">
+                                    <span class="input-group-text" title="Camera"><svg-icon icon="video"></svg-icon></span>
+                                </label>
+                                <select class="custom-select" id="setup-camera" v-model="camera" @change="setupCameraChange">
+                                    <option value="">None</option>
+                                    <option v-for="cam in setup.cameras" :value="cam.deviceId" :key="cam.deviceId">{{ cam.label }}</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary modal-action" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <session-security-options v-if="session.config" :config="session.config" :room="room" @config-update="configUpdate"></session-security-options>
     </div>
 </template>
@@ -128,37 +167,42 @@
     import LogonForm from '../Login'
     import SessionSecurityOptions from './SessionSecurityOptions'
 
-// Register additional icons
-import { library } from '@fortawesome/fontawesome-svg-core'
+    // Register additional icons
+    import { library } from '@fortawesome/fontawesome-svg-core'
 
-import {
-    faAlignLeft,
-    faCompress,
-    faDesktop,
-    faExpand,
-    faMicrophone,
-    faPowerOff,
-    faUser,
-    faShieldAlt,
-    faVideo,
-    faVolumeMute
-} from '@fortawesome/free-solid-svg-icons'
+    import {
+        faAlignLeft,
+        faCog,
+        faCompress,
+        faCrown,
+        faDesktop,
+        faExpand,
+        faMicrophone,
+        faPowerOff,
+        faUser,
+        faShieldAlt,
+        faVideo,
+        faVolumeMute
+    } from '@fortawesome/free-solid-svg-icons'
 
-// Register only these icons we need
-library.add(
-    faAlignLeft,
-    faCompress,
-    faDesktop,
-    faExpand,
-    faMicrophone,
-    faPowerOff,
-    faUser,
-    faShieldAlt,
-    faVideo,
-    faVolumeMute
-)
+    // Register only these icons we need
+    library.add(
+        faAlignLeft,
+        faCog,
+        faCompress,
+        faCrown,
+        faDesktop,
+        faExpand,
+        faMicrophone,
+        faPowerOff,
+        faUser,
+        faShieldAlt,
+        faVideo,
+        faVolumeMute
+    )
 
     let roomRequest
+    const authHeader = 'X-Meet-Auth-Token'
 
     export default {
         components: {
@@ -212,6 +256,8 @@ library.add(
             if (this.meet) {
                 this.meet.leaveRoom()
             }
+
+            delete axios.defaults.headers.common[authHeader]
         },
         methods: {
             authSuccess() {
@@ -256,6 +302,10 @@ library.add(
 
                         if (init) {
                             this.joinSession()
+                        }
+
+                        if (this.session.authToken) {
+                            axios.defaults.headers.common[authHeader] = this.session.authToken
                         }
                     })
                     .catch(error => {
@@ -315,6 +365,9 @@ library.add(
                 if (document.fullscreenEnabled) {
                     $('#meet-session-menu').find('.link-fullscreen.closed').removeClass('hidden')
                 }
+            },
+            isModerator() {
+                return this.isRoomOwner() || (!!this.session.role && (this.session.role & Roles.MODERATOR) > 0)
             },
             isPublisher() {
                 return !!this.session.role && (this.session.role & Roles.PUBLISHER) > 0
@@ -414,12 +467,11 @@ library.add(
                         }).modal()
                     }
                 }
-
                 this.session.onDismiss = connId => { this.dismissParticipant(connId) }
-
-                if (this.isRoomOwner()) {
-                    this.session.onJoinRequest = data => { this.joinRequest(data) }
-                }
+                this.session.onSessionDataUpdate = data => { this.updateSession(data) }
+                this.session.onConnectionChange = (connId, data) => { this.updateParticipant(connId, data) }
+                this.session.onJoinRequest = data => { this.joinRequest(data) }
+                this.session.onMediaSetup = () => { this.setupMedia() }
 
                 this.meet.joinRoom(this.session)
             },
@@ -437,7 +489,7 @@ library.add(
                 }
             },
             makePicture() {
-                const video = $("#setup-preview video")[0];
+                const video = $("#meet-setup video")[0];
 
                 // Skip if video is not "playing"
                 if (!video.videoWidth || !this.camera) {
@@ -494,10 +546,21 @@ library.add(
                     button.prop('disabled', disabled)
                 }
             },
+            setupMedia() {
+                let dialog = $('#media-setup-dialog')
+
+                if (!dialog.find('video').length) {
+                    $('#meet-setup').find('video,div.volume').appendTo(dialog.find('.media-setup-preview'))
+                }
+
+                dialog.on('show.bs.modal', () => { this.meet.setupStart() })
+                    .on('hide.bs.modal', () => { this.meet.setupStop() })
+                    .modal()
+            },
             setupSession() {
-                this.meet.setup({
-                    videoElement: $('#setup-preview video')[0],
-                    volumeElement: $('#setup-preview .volume')[0],
+                this.meet.setupStart({
+                    videoElement: $('#meet-setup video')[0],
+                    volumeElement: $('#meet-setup .volume')[0],
                     onSuccess: setup => {
                         this.setup = setup
                         this.microphone = setup.audioSource
@@ -562,22 +625,54 @@ library.add(
                 this.setMenuItem('video', enabled)
             },
             switchScreen() {
-                this.meet.switchScreen(enabled => {
-                    this.setMenuItem('screen', enabled)
+                const switchScreenAction = () => {
+                    this.meet.switchScreen((enabled, error) => {
+                        this.setMenuItem('screen', enabled)
+                        if (!enabled && !error) {
+                            // Closing a screen sharing connection invalidates the token
+                            delete this.session.shareToken
+                        }
+                    })
+                }
 
-                    // After one screen sharing session ended request a new token
-                    // for the next screen sharing session
-                    if (!enabled) {
-                        // TODO: This might need to be a different route. E.g. the room password might have
-                        //       changed since user joined the session
-                        axios.post('/api/v4/openvidu/rooms/' + this.room, this.post, { ignoreErrors: true })
-                            .then(response => {
-                                // Response data contains: session, token and shareToken
-                                this.session.shareToken = response.data.token
-                                this.meet.updateSession(this.session)
-                            })
+                if (this.session.shareToken || !$('#meet-session-menu').find('.link-screen').is('.text-danger')) {
+                    switchScreenAction()
+                } else {
+                    axios.post('/api/v4/openvidu/rooms/' + this.room + '/connections')
+                        .then(response => {
+                            this.session.shareToken = response.data.token
+                            this.meet.updateSession(this.session)
+                            switchScreenAction()
+                        })
+                }
+            },
+            updateParticipant(connId, params) {
+                if (this.isModerator()) {
+                    axios.put('/api/v4/openvidu/rooms/' + this.room + '/connections/' + connId, params)
+                }
+            },
+            updateSession(data) {
+                let params = {}
+
+                if ('role' in data) {
+                    params.role = data.role
+                }
+
+                // merge new params into the object
+                this.session = Object.assign({}, this.session, params)
+
+                // update some buttons state e.g. when switching from publisher to subscriber
+                if (!this.isPublisher()) {
+                    this.setMenuItem('audio', false)
+                    this.setMenuItem('video', false)
+                } else {
+                    if ('videoActive' in data) {
+                        this.setMenuItem('video', data.videoActive)
                     }
-                })
+                    if ('audioActive' in data) {
+                        this.setMenuItem('audio', data.audioActive)
+                    }
+                }
             }
         }
     }

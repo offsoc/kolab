@@ -173,6 +173,31 @@ class Room extends Model
     }
 
     /**
+     * Returns metadata for every connection in a session.
+     *
+     * @return array Connections metadata, indexed by connection identifier
+     * @throws \Exception if session does not exist
+     */
+    public function getSessionConnections(): array
+    {
+        if (!$this->session_id) {
+            throw new \Exception("The room session does not exist");
+        }
+
+        return Connection::where('session_id', $this->session_id)
+            // Ignore screen sharing connection for now
+            ->whereRaw("(role & " . self::ROLE_SCREEN . ") = 0")
+            ->get()
+            ->keyBy('id')
+            ->map(function ($item) {
+                // For now we need only 'role' property, it might change in the future.
+                // Make sure to not return all metadata here as it might contain sensitive data.
+                return ['role' => $item->role];
+            })
+            ->all();
+    }
+
+    /**
      * Create a OpenVidu session (connection) token
      *
      * @param int $role User role (see self::ROLE_* constants)
@@ -205,6 +230,8 @@ class Room extends Model
         if ($response->getStatusCode() == 200) {
             $json = json_decode($response->getBody(), true);
 
+            $authToken = base64_encode($json['id'] . ':' . \random_bytes(16));
+
             // Extract the 'token' part of the token, it will be used to authenticate the connection.
             // It will be needed in next iterations e.g. to authenticate moderators that aren't
             // Kolab4 users (or are just not logged in to Kolab4).
@@ -217,12 +244,13 @@ class Room extends Model
             $conn->session_id = $this->session_id;
             $conn->room_id = $this->id;
             $conn->role = $role;
-            $conn->metadata = ['token' => $url['token']];
+            $conn->metadata = ['token' => $url['token'], 'authToken' => $authToken];
             $conn->save();
 
             return [
                 'session' => $this->session_id,
                 'token' => $json['token'],
+                'authToken' => $authToken,
                 'connectionId' => $json['id'],
                 'role' => $role,
             ];

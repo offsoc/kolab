@@ -64,9 +64,9 @@ class Room extends Page
             '@setup-cam-select' => '#setup-camera',
             '@setup-nickname-input' => '#setup-nickname',
             '@setup-password-input' => '#setup-password',
-            '@setup-preview' => '#setup-preview',
-            '@setup-volume' => '#setup-preview .volume',
-            '@setup-video' => '#setup-preview video',
+            '@setup-preview' => '#meet-setup .media-setup-preview',
+            '@setup-volume' => '#meet-setup .media-setup-preview .volume',
+            '@setup-video' => '#meet-setup .media-setup-preview video',
             '@setup-status-message' => '#meet-setup div.status-message',
             '@setup-button' => '#join-button',
 
@@ -161,14 +161,19 @@ class Room extends Page
      */
     public function setNickname($browser, $selector, $nickname): void
     {
-        // Use script() because type() does not work with this contenteditable widget
-        $selector = $selector . ' .meet-nickname .content';
-        $browser->script(
-            "var element = document.querySelector('$selector');"
-            . "element.focus();"
-            . "element.innerText = '$nickname';"
-            . "element.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 27 }))"
-        );
+        $element = "$selector .meet-nickname .content";
+
+        $browser->click("$selector .meet-nickname")
+            ->waitFor("$selector .dropdown-menu")
+            ->assertSeeIn("$selector .dropdown-menu > .action-nickname", 'Nickname')
+            ->click("$selector .dropdown-menu > .action-nickname")
+            ->waitUntilMissing('.dropdown-menu')
+            // Use script() because type() does not work with this contenteditable widget
+            ->script(
+                "var element = document.querySelector('$element');"
+                . "element.innerText = '$nickname';"
+                . "element.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 27 }))"
+            );
     }
 
     /**

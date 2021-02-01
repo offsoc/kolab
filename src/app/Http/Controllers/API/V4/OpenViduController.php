@@ -11,8 +11,10 @@ use Illuminate\Support\Facades\Validator;
 
 class OpenViduController extends Controller
 {
+    public const AUTH_HEADER = 'X-Meet-Auth-Token';
+
     /**
-     * Accepting the room join request.
+     * Accept the room join request.
      *
      * @param string $id    Room identifier (name)
      * @param string $reqid Request identifier
@@ -28,10 +30,8 @@ class OpenViduController extends Controller
             return $this->errorResponse(404, \trans('meet.room-not-found'));
         }
 
-        $user = Auth::guard()->user();
-
-        // Only the room owner can do it
-        if (!$user || $user->id != $room->user_id) {
+        // Only the moderator can do it
+        if (!$this->isModerator($room)) {
             return $this->errorResponse(403);
         }
 
@@ -43,7 +43,7 @@ class OpenViduController extends Controller
     }
 
     /**
-     * Denying the room join request.
+     * Deny the room join request.
      *
      * @param string $id    Room identifier (name)
      * @param string $reqid Request identifier
@@ -59,10 +59,8 @@ class OpenViduController extends Controller
             return $this->errorResponse(404, \trans('meet.room-not-found'));
         }
 
-        $user = Auth::guard()->user();
-
-        // Only the room owner can do it
-        if (!$user || $user->id != $room->user_id) {
+        // Only the moderator can do it
+        if (!$this->isModerator($room)) {
             return $this->errorResponse(403);
         }
 
@@ -107,7 +105,38 @@ class OpenViduController extends Controller
     }
 
     /**
-     * Accepting the room join request.
+     * Create a connection for screen sharing.
+     *
+     * @param string $id Room identifier (name)
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createConnection($id)
+    {
+        $room = Room::where('name', $id)->first();
+
+        // This isn't a room, bye bye
+        if (!$room) {
+            return $this->errorResponse(404, \trans('meet.room-not-found'));
+        }
+
+        $connection = $this->getConnectionFromRequest();
+
+        if (
+            !$connection
+            || $connection->session_id != $room->session_id
+            || ($connection->role & Room::ROLE_PUBLISHER) == 0
+        ) {
+            return $this->errorResponse(403);
+        }
+
+        $response = $room->getSessionToken(Room::ROLE_SCREEN);
+
+        return response()->json(['status' => 'success', 'token' => $response['token']]);
+    }
+
+    /**
+     * Dismiss the participant/connection from the session.
      *
      * @param string $id   Room identifier (name)
      * @param string $conn Connection identifier
@@ -123,10 +152,8 @@ class OpenViduController extends Controller
             return $this->errorResponse(404, \trans('meet.connection-not-found'));
         }
 
-        $user = Auth::guard()->user();
-
-        // Only the room owner can do it (for now)
-        if (!$user || $user->id != $connection->room->user_id) {
+        // Only the moderator can do it
+        if (!$this->isModerator($connection->room)) {
             return $this->errorResponse(403);
         }
 
@@ -138,7 +165,7 @@ class OpenViduController extends Controller
     }
 
     /**
-     * Listing of rooms that belong to the current user.
+     * Listing of rooms that belong to the authenticated user.
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -295,12 +322,8 @@ class OpenViduController extends Controller
                 return $this->errorResponse(500, \trans('meet.session-join-error'));
             }
 
-            // Create session token for screen sharing connection
-            if (($role & Room::ROLE_PUBLISHER) && !empty(request()->input('screenShare'))) {
-                $add_token = $room->getSessionToken(Room::ROLE_SCREEN);
-
-                $response['shareToken'] = $add_token['token'];
-            }
+            // Get up-to-date connections metadata
+            $response['connections'] = $room->getSessionConnections();
 
             $response_code = 200;
             $response['role'] = $role;
@@ -373,6 +396,55 @@ class OpenViduController extends Controller
     }
 
     /**
+     * Update the participant/connection parameters (e.g. role).
+     *
+     * @param string $id   Room identifier (name)
+     * @param string $conn Connection identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateConnection($id, $conn)
+    {
+        $connection = Connection::where('id', $conn)->first();
+
+        // There's no such connection, bye bye
+        if (!$connection || $connection->room->name != $id) {
+            return $this->errorResponse(404, \trans('meet.connection-not-found'));
+        }
+
+        // Only the moderator can do it
+        if (!$this->isModerator($connection->room)) {
+            return $this->errorResponse(403);
+        }
+
+        foreach (request()->input() as $key => $value) {
+            switch ($key) {
+                case 'role':
+                    // The 'owner' role is not assignable
+                    if (
+                        ($value & Room::ROLE_OWNER && !($connection->role & Room::ROLE_OWNER))
+                        || (!($value & Room::ROLE_OWNER) && ($connection->role & Room::ROLE_OWNER))
+                    ) {
+                        return $this->errorResponse(403);
+                    }
+
+                    // The room owner has always a 'moderator' role
+                    if (!($value & Room::ROLE_MODERATOR) && $connection->role & Room::ROLE_OWNER) {
+                        $value |= Room::ROLE_MODERATOR;
+                    }
+
+                    $connection->{$key} = $value;
+                    break;
+            }
+        }
+
+        // The connection observer will send a signal to everyone when needed
+        $connection->save();
+
+        return response()->json(['status' => 'success']);
+    }
+
+    /**
      * Webhook as triggered from OpenVidu server
      *
      * @param \Illuminate\Http\Request $request The API request.
@@ -405,5 +477,56 @@ class OpenViduController extends Controller
         }
 
         return response('Success', 200);
+    }
+
+    /**
+     * Check if current user is a moderator for the specified room.
+     *
+     * @param \App\OpenVidu\Room $room The room
+     *
+     * @return bool True if the current user is the room moderator
+     */
+    protected function isModerator(Room $room): bool
+    {
+        $user = Auth::guard()->user();
+
+        // The room owner is a moderator
+        if ($user && $user->id == $room->user_id) {
+            return true;
+        }
+
+        // Moderator's authentication via the extra request header
+        if (
+            ($connection = $this->getConnectionFromRequest())
+            && $connection->session_id === $room->session_id
+            && $connection->role & Room::ROLE_MODERATOR
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the connection object for the token in current request headers.
+     * It will also validate the token.
+     *
+     * @return \App\OpenVidu\Connection|null Connection (if exists and the token is valid)
+     */
+    protected function getConnectionFromRequest()
+    {
+        // Authenticate the user via the extra request header
+        if ($token = request()->header(self::AUTH_HEADER)) {
+            list($connId, ) = explode(':', base64_decode($token), 2);
+
+            if (
+                ($connection = Connection::find($connId))
+                && $connection->metadata['authToken'] === $token
+            ) {
+                return $connection;
+            }
+        }
+
+        return null;
     }
 }
