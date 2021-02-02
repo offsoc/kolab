@@ -105,6 +105,37 @@ class OpenViduController extends Controller
     }
 
     /**
+     * Create a connection for screen sharing.
+     *
+     * @param string $id Room identifier (name)
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createConnection($id)
+    {
+        $room = Room::where('name', $id)->first();
+
+        // This isn't a room, bye bye
+        if (!$room) {
+            return $this->errorResponse(404, \trans('meet.room-not-found'));
+        }
+
+        $connection = $this->getConnectionFromRequest();
+
+        if (
+            !$connection
+            || $connection->session_id != $room->session_id
+            || ($connection->role & Room::ROLE_PUBLISHER) == 0
+        ) {
+            return $this->errorResponse(403);
+        }
+
+        $response = $room->getSessionToken(Room::ROLE_SCREEN);
+
+        return response()->json(['status' => 'success', 'token' => $response['token']]);
+    }
+
+    /**
      * Dismiss the participant/connection from the session.
      *
      * @param string $id   Room identifier (name)
@@ -134,7 +165,7 @@ class OpenViduController extends Controller
     }
 
     /**
-     * Listing of rooms that belong to the current user.
+     * Listing of rooms that belong to the authenticated user.
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -289,13 +320,6 @@ class OpenViduController extends Controller
 
             if (empty($response)) {
                 return $this->errorResponse(500, \trans('meet.session-join-error'));
-            }
-
-            // Create session token for screen sharing connection
-            if (($role & Room::ROLE_PUBLISHER) && !empty(request()->input('screenShare'))) {
-                $add_token = $room->getSessionToken(Room::ROLE_SCREEN);
-
-                $response['shareToken'] = $add_token['token'];
             }
 
             // Get up-to-date connections metadata
@@ -471,19 +495,37 @@ class OpenViduController extends Controller
         }
 
         // Moderator's authentication via the extra request header
+        if (
+            ($connection = $this->getConnectionFromRequest())
+            && $connection->session_id === $room->session_id
+            && $connection->role & Room::ROLE_MODERATOR
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the connection object for the token in current request headers.
+     * It will also validate the token.
+     *
+     * @return \App\OpenVidu\Connection|null Connection (if exists and the token is valid)
+     */
+    protected function getConnectionFromRequest()
+    {
+        // Authenticate the user via the extra request header
         if ($token = request()->header(self::AUTH_HEADER)) {
             list($connId, ) = explode(':', base64_decode($token), 2);
 
             if (
                 ($connection = Connection::find($connId))
-                && $connection->session_id === $room->session_id
                 && $connection->metadata['authToken'] === $token
-                && $connection->role & Room::ROLE_MODERATOR
             ) {
-                return true;
+                return $connection;
             }
         }
 
-        return false;
+        return null;
     }
 }

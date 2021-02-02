@@ -625,23 +625,26 @@
                 this.setMenuItem('video', enabled)
             },
             switchScreen() {
-                this.meet.switchScreen(enabled => {
-                    this.setMenuItem('screen', enabled)
+                const switchScreenAction = () => {
+                    this.meet.switchScreen((enabled, error) => {
+                        this.setMenuItem('screen', enabled)
+                        if (!enabled && !error) {
+                            // Closing a screen sharing connection invalidates the token
+                            delete this.session.shareToken
+                        }
+                    })
+                }
 
-                    // After one screen sharing session ended request a new token
-                    // for the next screen sharing session
-                    if (!enabled) {
-                        // TODO: This might need to be a different route. E.g. the room password might have
-                        //       changed since user joined the session
-                        //       Also because it creates a redundant connection (token)
-                        axios.post('/api/v4/openvidu/rooms/' + this.room, this.post, { ignoreErrors: true })
-                            .then(response => {
-                                // Response data contains: session, token and shareToken
-                                this.session.shareToken = response.data.shareToken
-                                this.meet.updateSession(this.session)
-                            })
-                    }
-                })
+                if (this.session.shareToken || !$('#meet-session-menu').find('.link-screen').is('.text-danger')) {
+                    switchScreenAction()
+                } else {
+                    axios.post('/api/v4/openvidu/rooms/' + this.room + '/connections')
+                        .then(response => {
+                            this.session.shareToken = response.data.token
+                            this.meet.updateSession(this.session)
+                            switchScreenAction()
+                        })
+                }
             },
             updateParticipant(connId, params) {
                 if (this.isModerator()) {

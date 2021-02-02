@@ -101,6 +101,7 @@ Route::group(
     ],
     function () {
         Route::post('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
+        Route::post('openvidu/rooms/{id}/connections', 'API\V4\OpenViduController@createConnection');
         // FIXME: I'm not sure about this one, should we use DELETE request maybe?
         Route::post('openvidu/rooms/{id}/connections/{conn}/dismiss', 'API\V4\OpenViduController@dismissConnection');
         Route::put('openvidu/rooms/{id}/connections/{conn}', 'API\V4\OpenViduController@updateConnection');

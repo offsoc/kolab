@@ -44,7 +44,6 @@ function Meet(container)
     let subscribersContainer
 
     OV = new OpenVidu()
-    screenOV = new OpenVidu()
 
     // If there's anything to do, do it here.
     //OV.setAdvancedConfiguration(config)
@@ -131,11 +130,14 @@ function Meet(container)
         })
 
         session.on('connectionDestroyed', event => {
-            let conn = connections[event.connection.connectionId]
+            let connectionId = event.connection.connectionId
+            let conn = connections[connectionId]
+
             if (conn) {
                 $(conn.element).remove()
-                delete connections[event.connection.connectionId]
+                delete connections[connectionId]
             }
+
             resize()
         })
 
@@ -689,13 +691,16 @@ function Meet(container)
      */
     function switchScreen(callback) {
         if (screenPublisher) {
+            // Note: This is what the original openvidu-call app does.
+            // It is probably better for performance reasons to close the connection,
+            // than to use unpublish() and keep the connection open.
             screenSession.disconnect()
             screenSession = null
             screenPublisher = null
 
             if (callback) {
-                // Note: Disconnecting invalidates the token. The callback should request
-                //       a new token for the next screen sharing session.
+                // Note: Disconnecting invalidates the token, we have to inform the vue component
+                // to update UI state (and be prepared to request a new token).
                 callback(false)
             }
 
@@ -1201,6 +1206,10 @@ function Meet(container)
 
         let gotSession = !!screenSession
 
+        if (!screenOV) {
+            screenOV = new OpenVidu()
+        }
+
         // Init screen sharing session
         if (!gotSession) {
             screenSession = screenOV.initSession();
@@ -1208,6 +1217,13 @@ function Meet(container)
 
         let successFunc = function() {
             screenSession.publish(screenPublisher)
+
+            screenSession.on('sessionDisconnected', event => {
+                callback(false)
+                screenSession = null
+                screenPublisher = null
+            })
+
             if (callback) {
                 callback(true)
             }
@@ -1216,7 +1232,7 @@ function Meet(container)
         let errorFunc = function() {
             screenPublisher = null
             if (callback) {
-                callback(false)
+                callback(false, true)
             }
         }
 
