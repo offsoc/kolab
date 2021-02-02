@@ -174,6 +174,7 @@
         faAlignLeft,
         faCog,
         faCompress,
+        faCrown,
         faDesktop,
         faExpand,
         faMicrophone,
@@ -189,6 +190,7 @@
         faAlignLeft,
         faCog,
         faCompress,
+        faCrown,
         faDesktop,
         faExpand,
         faMicrophone,
@@ -200,6 +202,7 @@
     )
 
     let roomRequest
+    const authHeader = 'X-Meet-Auth-Token'
 
     export default {
         components: {
@@ -253,6 +256,8 @@
             if (this.meet) {
                 this.meet.leaveRoom()
             }
+
+            delete axios.defaults.headers.common[authHeader]
         },
         methods: {
             authSuccess() {
@@ -297,6 +302,10 @@
 
                         if (init) {
                             this.joinSession()
+                        }
+
+                        if (this.session.authToken) {
+                            axios.defaults.headers.common[authHeader] = this.session.authToken
                         }
                     })
                     .catch(error => {

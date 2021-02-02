@@ -293,6 +293,10 @@ table {
     }
 }
 
+#logon-form {
+    flex-basis: auto; // Bootstrap issue? See logon page with width < 992
+}
+
 #logon-form-footer {
     a:not(:first-child) {
         margin-left: 2em;
