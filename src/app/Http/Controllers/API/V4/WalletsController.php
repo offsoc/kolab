@@ -248,7 +248,14 @@ class WalletsController extends Controller
         $result = $result->map(function ($item) use ($isAdmin) {
             $amount = $item->amount;
 
-            if (in_array($item->type, [Transaction::WALLET_PENALTY, Transaction::WALLET_DEBIT])) {
+            $negatives = [
+                Transaction::WALLET_CHARGEBACK,
+                Transaction::WALLET_DEBIT,
+                Transaction::WALLET_PENALTY,
+                Transaction::WALLET_REFUND,
+            ];
+
+            if (in_array($item->type, $negatives)) {
                 $amount *= -1;
             }
 
