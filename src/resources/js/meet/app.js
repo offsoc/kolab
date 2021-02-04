@@ -85,9 +85,22 @@ function Meet(container)
     /**
      * Join the room session
      *
-     * @param data Session metadata and event handlers (token, shareToken, nickname, role, connections,
-     *             chatElement, menuElement, onDestroy, onJoinRequest, onDismiss, onConnectionChange,
-     *             onSessionDataUpdate, onMediaSetup)
+     * @param data Session metadata and event handlers:
+     *      token       - OpenVidu token for the main connection,
+     *      shareToken  - OpenVidu token for screen-sharing connection,
+     *      nickname    - Participant name,
+     *      role        - connection (participant) role(s),
+     *      connections - Optional metadata for other users connections (current state),
+     *      chatElement - DOM element for the chat widget,
+     *      menuElement - DOM element of the room toolbar,
+     *      onSuccess           - Callback for session connection (join) success
+     *      onError             - Callback for session connection (join) error
+     *      onDestroy           - Callback for session disconnection event,
+     *      onDismiss           - Callback for Dismiss action,
+     *      onJoinRequest       - Callback for join request,
+     *      onConnectionChange  - Callback for participant changes, e.g. role update,
+     *      onSessionDataUpdate - Callback for current user connection update,
+     *      onMediaSetup        - Called when user clicks the Media setup button
      */
     function joinRoom(data) {
         resize();
@@ -209,6 +222,10 @@ function Meet(container)
         // Connect with the token
         session.connect(data.token, data.params)
             .then(() => {
+                if (data.onSuccess) {
+                    data.onSuccess()
+                }
+
                 let params = {
                     connectionId: session.connection.connectionId,
                     role: data.role,
@@ -238,6 +255,10 @@ function Meet(container)
             })
             .catch(error => {
                 console.error('There was an error connecting to the session: ', error.message);
+
+                if (data.onError) {
+                    data.onError(error)
+                }
             })
 
         // Prepare the chat

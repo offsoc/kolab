@@ -226,13 +226,14 @@
                 roomState: 'init',
                 roomStateLabels: {
                     init: 'Checking the room...',
-                    404: 'The room does not exist.',
                     323: 'The room is closed. Please, wait for the owner to start the session.',
                     324: 'The room is closed. It will be open for others after you join.',
                     325: 'The room is ready. Please, provide a valid password.',
                     326: 'The room is locked. Please, enter your name and try again.',
                     327: 'Waiting for permission to join the room.',
-                    500: 'Failed to create a session. Server error.'
+                    404: 'The room does not exist.',
+                    429: 'Too many requests. Please, wait.',
+                    500: 'Failed to connect to the room. Server error.'
                 },
                 session: {}
             }
@@ -322,7 +323,7 @@
                             this.roomState = error.response.status
                         }
 
-                        button.prop('disabled', this.roomState == 'init' || this.roomState == 327 || this.roomState == 404)
+                        button.prop('disabled', this.roomState == 'init' || this.roomState == 327 || this.roomState >= 400)
 
                         if (data.config) {
                             this.session.config = data.config
@@ -359,6 +360,17 @@
                                 // Update room state every 10 seconds
                                 roomRequest = setTimeout(() => { this.initSession(true) }, 10000)
                                 break;
+
+                            case 429:
+                                // Rate limited, wait and try again
+                                const waitTime = error.response.headers['retry-after'] || 10
+                                roomRequest = setTimeout(() => { this.initSession(init) }, waitTime * 1000)
+                                break;
+
+                            default:
+                                if (this.roomState >= 400 && this.roomState != 404) {
+                                    this.roomState = 500
+                                }
                         }
                     })
 
@@ -437,24 +449,28 @@
                     return
                 }
 
-                if (this.roomState != 'ready') {
+                if (this.roomState != 'ready' && !this.session.token) {
                     this.initSession(true)
                     return
                 }
 
                 clearTimeout(roomRequest)
 
-                $('#app').addClass('meet')
-                $('#meet-setup').addClass('hidden')
-                $('#meet-session-toolbar,#meet-session-layout').removeClass('hidden')
-
-                if (!this.canShareScreen) {
-                    this.setMenuItem('screen', false, true)
-                }
-
                 this.session.nickname = this.nickname
                 this.session.menuElement = $('#meet-session-menu')[0]
                 this.session.chatElement = $('#meet-chat')[0]
+                this.session.onSuccess = () => {
+                    $('#app').addClass('meet')
+                    $('#meet-setup').addClass('hidden')
+                    $('#meet-session-toolbar,#meet-session-layout').removeClass('hidden')
+
+                    if (!this.canShareScreen) {
+                        this.setMenuItem('screen', false, true)
+                    }
+                }
+                this.session.onError = () => {
+                    this.roomState = 500
+                }
                 this.session.onDestroy = event => {
                     // TODO: Display different message for each reason: forceDisconnectByUser,
                     //       forceDisconnectByServer, sessionClosedByServer?
