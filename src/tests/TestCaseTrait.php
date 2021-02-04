@@ -14,19 +14,8 @@ use PHPUnit\Framework\Assert;
 trait TestCaseTrait
 {
     /**
-     * Assign 'meet' entitlement to a user.
-     *
-     * @param string|\App\User $user The user
+     * Assert user entitlements state
      */
-    protected function assignMeetEntitlement($user): void
-    {
-        if (is_string($user)) {
-            $user = $this->getTestUser($user);
-        }
-
-        $user->assignSku(\App\Sku::where('title', 'meet')->first());
-    }
-
     protected function assertUserEntitlements($user, $expected)
     {
         // Assert the user entitlements
@@ -51,15 +40,6 @@ trait TestCaseTrait
             ->pluck('id')->all();
 
         \App\Entitlement::whereIn('sku_id', $betas)->delete();
-    }
-
-    /**
-     * Removes all 'meet' entitlements from the database
-     */
-    protected function clearMeetEntitlements(): void
-    {
-        $meet_sku = \App\Sku::where('title', 'meet')->first();
-        \App\Entitlement::where('sku_id', $meet_sku->id)->delete();
     }
 
     /**

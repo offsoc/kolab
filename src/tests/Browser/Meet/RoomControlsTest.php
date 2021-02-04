@@ -15,12 +15,12 @@ class RoomControlsTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
-        $this->clearMeetEntitlements();
+        $this->setupTestRoom();
     }
 
     public function tearDown(): void
     {
-        $this->clearMeetEntitlements();
+        $this->resetTestRoom();
         parent::tearDown();
     }
 
@@ -34,15 +34,6 @@ class RoomControlsTest extends TestCaseDusk
         // TODO: This test does not work in headless mode
         $this->markTestIncomplete();
 /*
-        // Make sure there's no session yet
-        $room = Room::where('name', 'john')->first();
-        if ($room->session_id) {
-            $room->session_id = null;
-            $room->save();
-        }
-
-        $this->assignMeetEntitlement('john@kolab.org');
-
         $this->browse(function (Browser $browser) {
             // Join the room as an owner (authenticate)
             $browser->visit(new RoomPage('john'))
@@ -89,15 +80,6 @@ class RoomControlsTest extends TestCaseDusk
      */
     public function testNicknameAndMuting(): void
     {
-        // Make sure there's no session yet
-        $room = Room::where('name', 'john')->first();
-        if ($room->session_id) {
-            $room->session_id = null;
-            $room->save();
-        }
-
-        $this->assignMeetEntitlement('john@kolab.org');
-
         $this->browse(function (Browser $owner, Browser $guest) {
             // Join the room as an owner (authenticate)
             $owner->visit(new RoomPage('john'))
@@ -233,15 +215,6 @@ class RoomControlsTest extends TestCaseDusk
      */
     public function testChat(): void
     {
-        // Make sure there's no session yet
-        $room = Room::where('name', 'john')->first();
-        if ($room->session_id) {
-            $room->session_id = null;
-            $room->save();
-        }
-
-        $this->assignMeetEntitlement('john@kolab.org');
-
         $this->browse(function (Browser $owner, Browser $guest) {
             // Join the room as an owner
             $owner->visit(new RoomPage('john'))
@@ -337,15 +310,6 @@ class RoomControlsTest extends TestCaseDusk
      */
     public function testShareScreen(): void
     {
-        // Make sure there's no session yet
-        $room = Room::where('name', 'john')->first();
-        if ($room->session_id) {
-            $room->session_id = null;
-            $room->save();
-        }
-
-        $this->assignMeetEntitlement('john@kolab.org');
-
         $this->browse(function (Browser $owner, Browser $guest) {
             // Join the room as an owner
             $owner->visit(new RoomPage('john'))

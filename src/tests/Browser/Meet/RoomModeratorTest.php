@@ -17,28 +17,12 @@ class RoomModeratorTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
-        $this->clearMeetEntitlements();
-        $this->assignMeetEntitlement('john@kolab.org');
-
-        $room = Room::where('name', 'john')->first();
-        $room->setSettings(['password' => null, 'locked' => null]);
-        if ($room->session_id) {
-            $room->session_id = null;
-            $room->save();
-        }
+        $this->setupTestRoom();
     }
 
     public function tearDown(): void
     {
-        $this->clearMeetEntitlements();
-
-        $room = Room::where('name', 'john')->first();
-        $room->setSettings(['password' => null, 'locked' => null]);
-        if ($room->session_id) {
-            $room->session_id = null;
-            $room->save();
-        }
-
+        $this->resetTestRoom();
         parent::tearDown();
     }
 

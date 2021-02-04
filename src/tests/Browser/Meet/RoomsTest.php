@@ -60,7 +60,6 @@ class RoomsTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $href = \config('app.url') . '/meet/john';
             $john = $this->getTestUser('john@kolab.org');
-            $john->assignSku(Sku::where('title', 'beta')->first());
 
             // User has no 'meet' entitlement yet
             $browser->visit('/login')

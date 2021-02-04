@@ -17,20 +17,12 @@ class RoomSecurityTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
-
-        $this->clearMeetEntitlements();
-        $this->assignMeetEntitlement('john@kolab.org');
-
-        $room = Room::where('name', 'john')->first();
-        $room->setSettings(['password' => null, 'locked' => null]);
+        $this->setupTestRoom();
     }
 
     public function tearDown(): void
     {
-        $this->clearMeetEntitlements();
-        $room = Room::where('name', 'john')->first();
-        $room->setSettings(['password' => null, 'locked' => null]);
-
+        $this->resetTestRoom();
         parent::tearDown();
     }
 
@@ -42,12 +34,7 @@ class RoomSecurityTest extends TestCaseDusk
     public function testRoomPassword(): void
     {
         $this->browse(function (Browser $owner, Browser $guest) {
-            // Make sure there's no session yet
             $room = Room::where('name', 'john')->first();
-            if ($room->session_id) {
-                $room->session_id = null;
-                $room->save();
-            }
 
             // Join the room as an owner (authenticate)
             $owner->visit(new RoomPage('john'))
@@ -128,19 +115,15 @@ class RoomSecurityTest extends TestCaseDusk
     }
 
     /**
-     * Test locked room
+     * Test locked room (denying the join request)
      *
      * @group openvidu
      */
-    public function testLockedRoom(): void
+    public function testLockedRoomDeny(): void
     {
         $this->browse(function (Browser $owner, Browser $guest) {
             // Make sure there's no session yet
             $room = Room::where('name', 'john')->first();
-            if ($room->session_id) {
-                $room->session_id = null;
-                $room->save();
-            }
 
             // Join the room as an owner (authenticate)
             $owner->visit(new RoomPage('john'))
@@ -203,9 +186,46 @@ class RoomSecurityTest extends TestCaseDusk
                 // wait 10 seconds to make sure the request message does not show up again
                 ->pause(10 * 1000)
                 ->assertMissing('.toast');
+        });
+    }
 
-            // Test accepting the request
-            $guest->refresh()
+    /**
+     * Test locked room (accepting the join request, and dismissing a user)
+     *
+     * @group openvidu
+     */
+    public function testLockedRoomAcceptAndDismiss(): void
+    {
+        $this->browse(function (Browser $owner, Browser $guest) {
+            // Make sure there's no session yet
+            $room = Room::where('name', 'john')->first();
+
+            // Join the room as an owner (authenticate)
+            $owner->visit(new RoomPage('john'))
+                // ->click('@setup-button')
+                // ->submitLogon('john@kolab.org', 'simple123')
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                ->type('@setup-nickname-input', 'John')
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                // Enter Security option dialog
+                ->click('@menu button.link-security')
+                ->with(new Dialog('#security-options-dialog'), function (Browser $browser) use ($room) {
+                    $browser->assertSeeIn('@title', 'Security options')
+                        ->assertSeeIn('#room-lock label', 'Locked room:')
+                        ->assertVisible('#room-lock input[type=checkbox]:not(:checked)')
+                        ->assertVisible('#room-lock + small')
+                        // Test setting the lock
+                        ->click('#room-lock input')
+                        ->assertToast(Toast::TYPE_SUCCESS, "Room configuration updated successfully.")
+                        ->click('@button-action');
+
+                    $this->assertSame('true', $room->fresh()->getSetting('locked'));
+                });
+
+            // In another browser act as a guest
+            $guest->visit(new RoomPage('john'))
                 ->waitFor('@setup-form')
                 ->waitUntilMissing('@setup-status-message.loading')
                 ->type('@setup-nickname-input', 'guest')

@@ -17,12 +17,12 @@ class RoomSetupTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
-        $this->clearMeetEntitlements();
+        $this->setupTestRoom();
     }
 
     public function tearDown(): void
     {
-        $this->clearMeetEntitlements();
+        $this->resetTestRoom();
         parent::tearDown();
     }
 
@@ -67,15 +67,6 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testRoomSetup(): void
     {
-        // Make sure there's no session yet
-        $room = Room::where('name', 'john')->first();
-        if ($room->session_id) {
-            $room->session_id = null;
-            $room->save();
-        }
-
-        $this->assignMeetEntitlement('john@kolab.org');
-
         $this->browse(function (Browser $browser) {
             $browser->visit(new RoomPage('john'))
                 ->within(new Menu(), function ($browser) {
@@ -130,8 +121,6 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testTwoUsersInARoom(): void
     {
-        $this->assignMeetEntitlement('john@kolab.org');
-
         $this->browse(function (Browser $browser, Browser $guest) {
             // In one browser window act as a guest
             $guest->visit(new RoomPage('john'))
@@ -293,8 +282,6 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testSubscribers(): void
     {
-        $this->assignMeetEntitlement('john@kolab.org');
-
         $this->browse(function (Browser $browser, Browser $guest) {
             // Join the room as the owner
             $browser->visit(new RoomPage('john'))
@@ -380,8 +367,6 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testDemoteToSubscriber(): void
     {
-        $this->assignMeetEntitlement('john@kolab.org');
-
         $this->browse(function (Browser $browser, Browser $guest1, Browser $guest2) {
             // Join the room as the owner
             $browser->visit(new RoomPage('john'))
@@ -516,15 +501,6 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testMediaSetupDialog(): void
     {
-        // Make sure there's no session yet
-        $room = Room::where('name', 'john')->first();
-        if ($room->session_id) {
-            $room->session_id = null;
-            $room->save();
-        }
-
-        $this->assignMeetEntitlement('john@kolab.org');
-
         $this->browse(function (Browser $browser, $guest) {
             // Join the room as the owner
             $browser->visit(new RoomPage('john'))

@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 abstract class TestCase extends BaseTestCase
 {
     use TestCaseTrait;
+    use TestCaseMeetTrait;
 
     protected function backdateEntitlements($entitlements, $targetDate)
     {
