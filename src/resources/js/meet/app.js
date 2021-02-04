@@ -820,10 +820,19 @@ function Meet(container)
                     update()
                 })
 
-                // TODO: Here the user is asked for media permissions again
-                // should we rather start the stream without asking the user?
-                // Or maybe we want to display the media setup/preview form?
-                // Need to find a way to do this.
+                // Open the media setup dialog
+                // Note: If user didn't give permission to media before joining the room
+                // he will not be able to use them now. Changing permissions requires
+                // a page refresh.
+                // Note: In Firefox I'm always being asked again for media permissions.
+                // It does not happen in Chrome. In Chrome the cam/mic will be just re-used.
+                // I.e. streaming starts automatically.
+                // It might make sense to not start streaming automatically in any cirmustances,
+                // display the dialog and wait until user closes it, but this would be
+                // a bigger refactoring.
+                if (sessionData.onMediaSetup) {
+                    sessionData.onMediaSetup()
+                }
             } else {
                 // Inform the vue component, so it can update some UI controls
                 update()

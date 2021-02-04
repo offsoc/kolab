@@ -456,6 +456,10 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session div.meet-subscriber', 0);
 
             $guest1
+                ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Media setup')
+                        ->click('@button-action');
+                })
                 ->waitFor('@session .meet-video.self')
                 ->assertElementsCount('@session div.meet-video', 2)
                 ->assertElementsCount('@session video', 2)
@@ -486,6 +490,10 @@ class RoomSetupTest extends TestCaseDusk
                         ->waitUntilMissing('.dropdown-menu');
                 })
                 ->waitUntilMissing('@session .meet-subscriber.self')
+                ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Media setup')
+                        ->click('@button-action');
+                })
                 ->waitFor('@session div.meet-video.self')
                 ->assertElementsCount('@session div.meet-video', 2)
                 ->assertElementsCount('@session video', 2)
