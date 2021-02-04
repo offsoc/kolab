@@ -251,6 +251,7 @@
     .chat {
         flex: 1;
         overflow-y: auto;
+        scrollbar-width: thin;
     }
 
     .message {
@@ -262,6 +263,10 @@
 
         &.self {
             background: lighten($main-color, 30%);
+        }
+
+        &:last-child {
+            margin-bottom: 0;
         }
     }
 

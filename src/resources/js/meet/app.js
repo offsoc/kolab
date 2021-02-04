@@ -42,14 +42,9 @@ function Meet(container)
     let chatCount = 0
     let volumeElement
     let subscribersContainer
+    let scrollStop
 
-    OV = new OpenVidu()
-
-    // If there's anything to do, do it here.
-    //OV.setAdvancedConfiguration(config)
-
-    // Disable all logging except errors
-    // OV.enableProdMode()
+    OV = ovInit()
 
     // Disconnect participant when browser's window close
     window.addEventListener('beforeunload', () => {
@@ -70,6 +65,22 @@ function Meet(container)
     this.switchScreen = switchScreen
     this.switchVideo = switchVideo
     this.updateSession = updateSession
+
+    /**
+     * Initialize OpenVidu instance
+     */
+    function ovInit()
+    {
+        let ov = new OpenVidu()
+
+        // If there's anything to do, do it here.
+        //ov.setAdvancedConfiguration(config)
+
+        // Disable all logging except errors
+        // ov.enableProdMode()
+
+        return ov
+    }
 
     /**
      * Join the room session
@@ -475,6 +486,7 @@ function Meet(container)
         // The UI elements are created in the vue template
         // Here we add a logic for how they work
 
+        const chat = $(sessionData.chatElement).find('.chat').get(0)
         const textarea = $(sessionData.chatElement).find('textarea')
         const button = $(sessionData.menuElement).find('.link-chat')
 
@@ -494,7 +506,16 @@ function Meet(container)
             .on('click', () => {
                 button.find('.badge').text('')
                 chatCount = 0
+                // When opening the chat scroll it to the bottom, or we shouldn't?
+                scrollStop = false
+                chat.scrollTop = chat.scrollHeight
             })
+
+        $(chat).on('scroll', event => {
+            // Detect manual scrollbar moves, disable auto-scrolling until
+            // the scrollbar is positioned on the element bottom again
+            scrollStop = chat.scrollTop + chat.offsetHeight < chat.scrollHeight
+        })
     }
 
     /**
@@ -617,6 +638,11 @@ function Meet(container)
         }
 
         $(sessionData.menuElement).find('.link-chat .badge').text(chatCount ? chatCount : '')
+
+        // Scroll the chat element to the end
+        if (!scrollStop) {
+            chat.get(0).scrollTop = chat.get(0).scrollHeight
+        }
     }
 
     /**
@@ -1207,7 +1233,7 @@ function Meet(container)
         let gotSession = !!screenSession
 
         if (!screenOV) {
-            screenOV = new OpenVidu()
+            screenOV = ovInit()
         }
 
         // Init screen sharing session
