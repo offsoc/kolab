@@ -252,7 +252,7 @@ class RoomControlsTest extends TestCaseDusk
                 ->assertSeeIn('@chat-list .message div:last-child', 'test1');
 
             $guest->waitFor('@menu button.link-chat .badge')
-                ->assertSeeIn('@menu button.link-chat .badge', '1')
+                ->assertTextRegExp('@menu button.link-chat .badge', '/^1$/')
                 ->click('@menu button.link-chat')
                 ->assertToolbarButtonState('chat', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertMissing('@menu button.link-chat .badge')

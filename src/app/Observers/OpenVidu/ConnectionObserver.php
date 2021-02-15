@@ -26,12 +26,19 @@ class ConnectionObserver
             // participant browser to do this.
         }
 
-        // Rised hand state change
-        $newState = $connection->metadata['hand'] ?? null;
-        $oldState = $this->getOriginal($connection, 'metadata')['hand'] ?? null;
+        // Detect metadata changes for specified properties
+        $keys = [
+            'hand' => 'bool',
+            'language' => '',
+        ];
 
-        if ($newState !== $oldState) {
-            $params['hand'] = !empty($newState);
+        foreach ($keys as $key => $type) {
+            $newState = $connection->metadata[$key] ?? null;
+            $oldState = $this->getOriginal($connection, 'metadata')[$key] ?? null;
+
+            if ($newState !== $oldState) {
+                $params[$key] = $type == 'bool' ? !empty($newState) : $newState;
+            }
         }
 
         // Send the signal to all participants

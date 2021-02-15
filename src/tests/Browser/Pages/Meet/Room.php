@@ -12,6 +12,10 @@ class Room extends Page
     public const BUTTON_INACTIVE = 4;
     public const BUTTON_DISABLED = 8;
 
+    public const ICO_MODERATOR = 'moderator';
+    public const ICO_USER = 'user';
+    public const ICO_INTERPRETER = 'interpreter';
+
     protected $roomName;
 
     /**
@@ -151,6 +155,19 @@ class Room extends Page
         );
 
         Assert::assertSame((bool) $result[0], $state);
+    }
+
+    /**
+     * Assert the participant icon type
+     *
+     * @param \Tests\Browser $browser  The browser object
+     * @param string         $selector Element selector
+     * @param string         $type     Participant icon type
+     */
+    public function assertUserIcon($browser, $selector, $type): void
+    {
+        $browser->assertVisible("{$selector} svg.{$type}")
+            ->assertMissing("{$selector} svg:not(.{$type})");
     }
 
     /**

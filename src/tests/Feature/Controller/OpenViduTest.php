@@ -743,6 +743,8 @@ class OpenViduTest extends TestCase
             ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post);
 
         $response->assertStatus(403);
+
+        // TODO: Test updating 'language' and 'hand' properties
     }
 
     /**

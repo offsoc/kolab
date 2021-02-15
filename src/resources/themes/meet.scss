@@ -230,6 +230,12 @@
     &:not(:only-child) {
         max-height: 30%;
     }
+
+    // Language interpreters will be displayed as subscribers, but will have still
+    // the video element that we will hide
+    video {
+        display: none;
+    }
 }
 
 #meet-chat {

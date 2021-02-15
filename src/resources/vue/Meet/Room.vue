@@ -14,6 +14,18 @@
                 <button class="btn btn-link link-hand text-danger" v-if="!isPublisher()" @click="switchHand" title="Raise hand">
                     <svg-icon icon="hand-paper"></svg-icon>
                 </button>
+                <span id="channel-select" :style="'display:' + (channels.length ? '' : 'none')" class="dropdown">
+                    <button class="btn btn-link link-channel" title="Interpreted language channel" aria-haspopup="true" aria-expanded="false" data-toggle="dropdown">
+                        <svg-icon icon="headphones"></svg-icon>
+                        <span class="badge badge-danger" v-if="session.channel">{{ session.channel.toUpperCase() }}</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a :class="'dropdown-item' + (!session.channel ? ' active' : '')" href="#" data-code="" @click="switchChannel">- none -</a>
+                        <a v-for="code in channels" :key="code" href="#" @click="switchChannel" :data-code="code"
+                            :class="'dropdown-item' + (session.channel == code ? ' active' : '')"
+                        >{{ languages[code] }}</a>
+                    </div>
+                </span>
                 <button class="btn btn-link link-chat text-danger" @click="switchChat" title="Chat">
                     <svg-icon icon="align-left"></svg-icon>
                 </button>
@@ -184,6 +196,7 @@
         faDesktop,
         faExpand,
         faHandPaper,
+        faHeadphones,
         faMicrophone,
         faMicrophoneAlt,
         faPowerOff,
@@ -202,6 +215,7 @@
         faDesktop,
         faExpand,
         faHandPaper,
+        faHeadphones,
         faMicrophone,
         faMicrophoneAlt,
         faPowerOff,
@@ -228,6 +242,13 @@
                 },
                 canShareScreen: false,
                 camera: '',
+                channels: [],
+                languages: {
+                    en: 'English',
+                    de: 'German',
+                    fr: 'French',
+                    it: 'Italian'
+                },
                 meet: null,
                 microphone: '',
                 nickname: '',
@@ -467,6 +488,7 @@
                 clearTimeout(roomRequest)
 
                 this.session.nickname = this.nickname
+                this.session.languages = this.languages
                 this.session.menuElement = $('#meet-session-menu')[0]
                 this.session.chatElement = $('#meet-chat')[0]
                 this.session.queueElement = $('#meet-queue')[0]
@@ -612,6 +634,12 @@
                     this.setMenuItem('audio', enabled)
                 })
             },
+            switchChannel(e) {
+                let channel = $(e.target).data('code')
+
+                this.$set(this.session, 'channel', channel)
+                this.meet.switchChannel(channel)
+            },
             switchChat() {
                 let chat = $('#meet-chat')
                 let enabled = chat.is('.open')
@@ -691,31 +719,14 @@
                     })
             },
             updateSession(data) {
-                let params = {}
+                this.session = data
+                this.channels = data.channels || []
 
-                if ('role' in data) {
-                    params.role = data.role
-                }
+                const isPublisher = this.isPublisher()
 
-                // merge new params into the object
-                this.session = Object.assign({}, this.session, params)
-
-                if ('hand' in data) {
-                    this.setMenuItem('hand', data.hand)
-                }
-
-                // update some buttons state e.g. when switching from publisher to subscriber
-                if (!this.isPublisher()) {
-                    this.setMenuItem('audio', false)
-                    this.setMenuItem('video', false)
-                } else {
-                    if ('videoActive' in data) {
-                        this.setMenuItem('video', data.videoActive)
-                    }
-                    if ('audioActive' in data) {
-                        this.setMenuItem('audio', data.audioActive)
-                    }
-                }
+                this.setMenuItem('video', isPublisher ? data.videoActive : false)
+                this.setMenuItem('audio', isPublisher ? data.audioActive : false)
+                this.setMenuItem('hand', data.hand)
             }
         }
     }

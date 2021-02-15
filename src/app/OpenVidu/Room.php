@@ -194,6 +194,7 @@ class Room extends Model
                 return [
                     'role' => $item->role,
                     'hand' => $item->metadata['hand'] ?? 0,
+                    'language' => $item->metadata['language'] ?? null,
                 ];
             })
             // Sort by order in the queue, so UI can re-build the existing queue in order

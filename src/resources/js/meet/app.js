@@ -62,6 +62,7 @@ function Meet(container)
     this.setupSetAudioDevice = setupSetAudioDevice
     this.setupSetVideoDevice = setupSetVideoDevice
     this.switchAudio = switchAudio
+    this.switchChannel = switchChannel
     this.switchScreen = switchScreen
     this.switchVideo = switchVideo
     this.updateSession = updateSession
@@ -91,6 +92,8 @@ function Meet(container)
      *      nickname    - Participant name,
      *      role        - connection (participant) role(s),
      *      connections - Optional metadata for other users connections (current state),
+     *      channel     - Selected interpreted language channel (two-letter language code)
+     *      languages   - Supported languages (code-to-label map)
      *      chatElement - DOM element for the chat widget,
      *      menuElement - DOM element of the room toolbar,
      *      queueElement - DOM element for the Q&A queue (users with a raised hand)
@@ -116,6 +119,9 @@ function Meet(container)
         if (!subscribersContainer) {
             subscribersContainer = $('<div id="meet-subscribers">').appendTo(container).get(0)
         }
+
+        // TODO: Make sure all supported callbacks exist, so we don't have to check
+        //       their existence everywhere anymore
 
         sessionData = data
 
@@ -201,6 +207,8 @@ function Meet(container)
 
             if (session.connection.connectionId == connectionId) {
                 metadata = sessionData
+                metadata.audioActive = audioActive
+                metadata.videoActive = videoActive
             }
 
             if (metadata) {
@@ -259,11 +267,19 @@ function Meet(container)
                 // Here we expect connections in a proper queue order
                 Object.keys(data.connections || {}).forEach(key => {
                     let conn = data.connections[key]
+
                     if (conn.hand) {
                         conn.connectionId = key
                         connectionHandUp(conn)
                     }
                 })
+
+                sessionData.channels = getChannels(data.connections)
+
+                // Inform the vue component, so it can update some UI controls
+                if (sessionData.channels.length && sessionData.onSessionDataUpdate) {
+                    sessionData.onSessionDataUpdate(sessionData)
+                }
             })
             .catch(error => {
                 console.error('There was an error connecting to the session: ', error.message);
@@ -710,6 +726,18 @@ function Meet(container)
     }
 
     /**
+     * Switch interpreted language channel
+     *
+     * @param channel Two-letter language code
+     */
+    function switchChannel(channel) {
+        sessionData.channel = channel
+
+        // Mute/unmute all connections depending on the selected channel
+        participantUpdateAll()
+    }
+
+    /**
      * Mute/Unmute audio for current session publisher
      */
     function switchAudio() {
@@ -785,7 +813,7 @@ function Meet(container)
      */
     function connectionUpdate(data) {
         let conn = connections[data.connectionId]
-
+        let refresh = false
         let handUpdate = conn => {
             if ('hand' in data && data.hand != conn.hand) {
                 if (data.hand) {
@@ -803,13 +831,6 @@ function Meet(container)
             const isPublisher = sessionData.role & Roles.PUBLISHER
             const isModerator = sessionData.role & Roles.MODERATOR
 
-            // Inform the vue component, so it can update some UI controls
-            let update = () => {
-                if (sessionData.onSessionDataUpdate) {
-                    sessionData.onSessionDataUpdate(data)
-                }
-            }
-
             // demoted to a subscriber
             if ('role' in data && isPublisher && !rolePublisher) {
                 session.unpublish(publisher)
@@ -823,20 +844,15 @@ function Meet(container)
             handUpdate(sessionData)
 
             // merge the changed data into internal session metadata object
-            Object.keys(data).forEach(key => { sessionData[key] = data[key] })
+            sessionData = Object.assign({}, sessionData, data, { audioActive, videoActive })
 
             // update the participant element
             sessionData.element = participantUpdate(sessionData.element, sessionData)
 
             // promoted/demoted to/from a moderator
             if ('role' in data) {
-                if ((!isModerator && roleModerator) || (isModerator && !roleModerator)) {
-                    // Update all participants, to enable/disable the popup menu
-                    Object.keys(connections).forEach(key => {
-                        const conn = connections[key]
-                        participantUpdate(conn.element, conn)
-                    })
-                }
+                // Update all participants, to enable/disable the popup menu
+                refresh = (!isModerator && roleModerator) || (isModerator && !roleModerator)
             }
 
             // Inform the vue component, so it can update some UI controls
@@ -846,9 +862,12 @@ function Meet(container)
             if ('role' in data && !isPublisher && rolePublisher) {
                 publisher.createVideoElement(sessionData.element, 'PREPEND')
                 session.publish(publisher).then(() => {
-                    data.audioActive = publisher.stream.audioActive
-                    data.videoActive = publisher.stream.videoActive
-                    update()
+                    sessionData.audioActive = publisher.stream.audioActive
+                    sessionData.videoActive = publisher.stream.videoActive
+
+                    if (sessionData.onSessionDataUpdate) {
+                        sessionData.onSessionDataUpdate(sessionData)
+                    }
                 })
 
                 // Open the media setup dialog
@@ -872,6 +891,24 @@ function Meet(container)
             Object.keys(data).forEach(key => { conn[key] = data[key] })
 
             conn.element = participantUpdate(conn.element, conn)
+        }
+
+        // Update channels list
+        sessionData.channels = getChannels(connections)
+
+        // The channel user was using has been removed (or rather the participant stopped being an interpreter)
+        if (sessionData.channel && !sessionData.channels.includes(sessionData.channel)) {
+            sessionData.channel = null
+            refresh = true
+        }
+
+        if (refresh) {
+            participantUpdateAll()
+        }
+
+        // Inform the vue component, so it can update some UI controls
+        if (sessionData.onSessionDataUpdate) {
+            sessionData.onSessionDataUpdate(sessionData)
         }
     }
 
@@ -928,19 +965,22 @@ function Meet(container)
      * parameter it will be a video element wrapper inside the matrix or a simple
      * tag-like element on the subscribers list.
      *
-     * @param params Connection metadata/params
+     * @param params  Connection metadata/params
+     * @param content Optional content to prepend to the element
      *
      * @return The element
      */
-    function participantCreate(params) {
+    function participantCreate(params, content) {
         let element
 
         params.isSelf = params.isSelf || session.connection.connectionId == params.connectionId
 
-        if (params.role & Roles.PUBLISHER || params.role & Roles.SCREEN) {
-            element = publisherCreate(params)
+        if ((!params.language && params.role & Roles.PUBLISHER) || params.role & Roles.SCREEN) {
+            // publishers and shared screens
+            element = publisherCreate(params, content)
         } else {
-            element = subscriberCreate(params)
+            // subscribers and language interpreters
+            element = subscriberCreate(params, content)
         }
 
         setTimeout(resize, 50);
@@ -951,9 +991,10 @@ function Meet(container)
     /**
      * Create a <video> element wrapper with controls
      *
-     * @param params Connection metadata/params
+     * @param params  Connection metadata/params
+     * @param content Optional content to prepend to the element
      */
-    function publisherCreate(params) {
+    function publisherCreate(params, content) {
         // Create the element
         let wrapper = $(
             '<div class="meet-video">'
@@ -974,6 +1015,10 @@ function Meet(container)
         // Append the nickname widget
         wrapper.find('.controls').before(nicknameWidget(params))
 
+        if (content) {
+            wrapper.prepend(content)
+        }
+
         if (params.isSelf) {
             if (sessionData.onMediaSetup) {
                 wrapper.find('.link-setup').removeClass('hidden')
@@ -989,7 +1034,7 @@ function Meet(container)
                 })
         }
 
-        participantUpdate(wrapper, params)
+        participantUpdate(wrapper, params, true)
 
         // Fullscreen control
         if (document.fullscreenEnabled) {
@@ -1020,12 +1065,12 @@ function Meet(container)
     }
 
     /**
-     * Update the <video> wrapper controls
+     * Update the publisher/subscriber element controls
      *
      * @param wrapper The wrapper element
      * @param params  Connection metadata/params
      */
-    function participantUpdate(wrapper, params) {
+    function participantUpdate(wrapper, params, noupdate) {
         const element = $(wrapper)
         const isModerator = sessionData.role & Roles.MODERATOR
         const isSelf = session.connection.connectionId == params.connectionId
@@ -1033,23 +1078,61 @@ function Meet(container)
         const roleModerator = params.role & Roles.MODERATOR
         const roleScreen = params.role & Roles.SCREEN
         const roleOwner = params.role & Roles.OWNER
+        const roleInterpreter = rolePublisher && !!params.language
 
-        // Handle publisher-to-subscriber and subscriber-to-publisher change
-        if (!roleScreen) {
+        if (!noupdate && !roleScreen) {
             const isPublisher = element.is('.meet-video')
 
-            if ((rolePublisher && !isPublisher) || (!rolePublisher && isPublisher)) {
+            // Publisher-to-interpreter or vice-versa, move element to the subscribers list or vice-versa,
+            // but keep the existing video element
+            if (
+                !isSelf
+                && element.find('video').length
+                && ((roleInterpreter && isPublisher) || (!roleInterpreter && !isPublisher && rolePublisher))
+            ) {
+                wrapper = participantCreate(params, element.find('video'))
+                element.remove()
+                return wrapper
+            }
+
+            // Handle publisher-to-subscriber and subscriber-to-publisher change
+            if (
+                !roleInterpreter
+                && (rolePublisher && !isPublisher) || (!rolePublisher && isPublisher)
+            ) {
                 element.remove()
                 return participantCreate(params)
             }
         }
 
-        if ('audioActive' in params) {
-            element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
+        let muted = false
+        let video = element.find('video')[0]
+
+        // When a channel is selected - mute everyone except the interpreter of the language.
+        // When a channel is not selected - mute language interpreters only
+        if (sessionData.channel) {
+            muted = !(roleInterpreter && params.language == sessionData.channel)
+        } else {
+            muted = roleInterpreter
         }
 
-        if ('videoActive' in params) {
-            element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
+        if (muted && !isSelf) {
+            element.find('.status-audio').removeClass('hidden')
+            element.find('.link-audio').addClass('hidden')
+        } else {
+            element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
+
+            if (!isSelf) {
+                element.find('.link-audio').removeClass('hidden')
+            }
+
+            muted = !params.audioActive || isSelf
+        }
+
+        element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
+
+        if (video) {
+            video.muted = muted
         }
 
         if ('nickname' in params) {
@@ -1067,11 +1150,14 @@ function Meet(container)
         const withPerm = isModerator && !roleScreen && !(roleOwner && !isSelf);
         const withMenu = isSelf || (isModerator && !roleOwner)
 
+        // TODO: This probably could be better done with css
         let elements = {
             '.dropdown-menu': withMenu,
             '.permissions': withPerm,
+            '.interpreting': withPerm && rolePublisher,
             'svg.moderator': roleModerator,
-            'svg.user': !roleModerator
+            'svg.user': !roleModerator && !roleInterpreter,
+            'svg.interpreter': !roleModerator && roleInterpreter
         }
 
         Object.keys(elements).forEach(key => {
@@ -1082,19 +1168,36 @@ function Meet(container)
         element.find('.action-role-moderator input').prop('checked', roleModerator)
             .prop('disabled', roleOwner)
 
+        element.find('.interpreting select').val(roleInterpreter ? params.language : '')
+
         return wrapper
+    }
+
+    /**
+     * Update/refresh state of all participants' elements
+     */
+    function participantUpdateAll() {
+        Object.keys(connections).forEach(key => {
+            const conn = connections[key]
+            participantUpdate(conn.element, conn)
+        })
     }
 
     /**
      * Create a tag-like element for a subscriber participant
      *
-     * @param params Connection metadata/params
+     * @param params  Connection metadata/params
+     * @param content Optional content to prepend to the element
      */
-    function subscriberCreate(params) {
+    function subscriberCreate(params, content) {
         // Create the element
         let wrapper = $('<div class="meet-subscriber">').append(nicknameWidget(params))
 
-        participantUpdate(wrapper, params)
+        if (content) {
+            wrapper.prepend(content)
+        }
+
+        participantUpdate(wrapper, params, true)
 
         return wrapper[params.isSelf ? 'prependTo' : 'appendTo'](subscribersContainer)
             .attr('id', 'subscriber-' + params.connectionId)
@@ -1107,6 +1210,13 @@ function Meet(container)
      * @param object params Connection metadata/params
      */
     function nicknameWidget(params) {
+        let languages = []
+
+        // Append languages selection options
+        Object.keys(sessionData.languages).forEach(code => {
+            languages.push(`<option value="${code}">${sessionData.languages[code]}</option>`)
+        })
+
         // Create the element
         let element = $(
             '<div class="dropdown">'
@@ -1115,6 +1225,7 @@ function Meet(container)
                     + '<span class="icon">'
                         + svgIcon('user', null, 'user')
                         + svgIcon('crown', null, 'moderator hidden')
+                        + svgIcon('headphones', null, 'interpreter hidden')
                     + '</span>'
                 + '</a>'
                 + '<div class="dropdown-menu">'
@@ -1131,6 +1242,14 @@ function Meet(container)
                             + '<input type="checkbox" class="custom-control-input">'
                             + ' <span class="custom-control-label">Moderation</span>'
                         + '</label>'
+                    + '</div>'
+                    + '<div class="dropdown-divider interpreting"></div>'
+                    + '<div class="interpreting">'
+                        + '<h6 class="dropdown-header">Language interpreter</h6>'
+                        + '<div class="ml-4 mr-4"><select class="custom-select">'
+                            + '<option value="">- none -</option>'
+                            + languages.join('')
+                        + '</select></div>'
                     + '</div>'
                 + '</div>'
             + '</div>'
@@ -1218,6 +1337,17 @@ function Meet(container)
 
                 sessionData.onConnectionChange(params.connectionId, { role })
             })
+
+            element.find('.interpreting select')
+                .on('change', e => {
+                    const language = $(e.target).val()
+                    sessionData.onConnectionChange(params.connectionId, { language })
+                    element.find('.meet-nickname').dropdown('hide')
+                })
+                .on('click', e => {
+                    // Prevents from closing the dropdown menu on click
+                    e.stopPropagation()
+                })
         }
 
         return element.get(0)
@@ -1412,7 +1542,7 @@ function Meet(container)
     /**
      * A way to update some session data, after you joined the room
      *
-     * @param data Same input as for joinRoom(), but for now it supports only shareToken
+     * @param data Same input as for joinRoom()
      */
     function updateSession(data) {
         sessionData.shareToken = data.shareToken
@@ -1466,6 +1596,26 @@ function Meet(container)
         data.connectionId = connection.connectionId
 
         return data
+    }
+
+    /**
+     * Get all existing language interpretation channels
+     */
+    function getChannels(connections) {
+        let channels = []
+
+        Object.keys(connections || {}).forEach(key => {
+            let conn = connections[key]
+
+            if (
+                conn.language
+                && !channels.includes(conn.language)
+            ) {
+                channels.push(conn.language)
+            }
+        })
+
+        return channels
     }
 }
 

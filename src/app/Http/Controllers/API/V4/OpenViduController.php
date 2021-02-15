@@ -429,6 +429,22 @@ class OpenViduController extends Controller
 
                     break;
 
+                case 'language':
+                    // Only the moderator can do it
+                    if (!$this->isModerator($connection->room)) {
+                        return $this->errorResponse(403);
+                    }
+
+                    if ($value) {
+                        if (preg_match('/^[a-z]{2}$/', $value)) {
+                            $connection->metadata = ['language' => $value] + $connection->metadata;
+                        }
+                    } else {
+                        $connection->metadata = array_diff_key($connection->metadata, ['language' => 0]);
+                    }
+
+                    break;
+
                 case 'role':
                     // Only the moderator can do it
                     if (!$this->isModerator($connection->room)) {
@@ -450,6 +466,11 @@ class OpenViduController extends Controller
                     // Promotion to publisher? Put the user hand down
                     if ($value & Room::ROLE_PUBLISHER && !($connection->role & Room::ROLE_PUBLISHER)) {
                         $connection->metadata = array_diff_key($connection->metadata, ['hand' => 0]);
+                    }
+
+                    // Non-publisher cannot be a language interpreter
+                    if (!($value & Room::ROLE_PUBLISHER)) {
+                        $connection->metadata = array_diff_key($connection->metadata, ['language' => 0]);
                     }
 
                     $connection->{$key} = $value;
