@@ -37,7 +37,7 @@ trait TestCaseMeetTrait
         $this->clearMeetEntitlements();
 
         $room = Room::where('name', $room_name)->first();
-        $room->setSettings(['password' => null, 'locked' => null]);
+        $room->setSettings(['password' => null, 'locked' => null, 'nomedia' => null]);
 
         if ($room->session_id) {
             $room->session_id = null;

@@ -250,6 +250,7 @@ class OpenViduController extends Controller
 
         $config = [
             'locked' => $room->getSetting('locked') === 'true',
+            'nomedia' => $room->getSetting('nomedia') === 'true',
             'password' => $isOwner ? $password : '',
             'requires_password' => !$isOwner && strlen($password),
         ];
@@ -308,7 +309,7 @@ class OpenViduController extends Controller
         // Initialize connection tokens
         if ($init) {
             // Choose the connection role
-            $canPublish = !empty(request()->input('canPublish'));
+            $canPublish = empty($config['nomedia']) && !empty(request()->input('canPublish'));
             $role = $canPublish ? Room::ROLE_PUBLISHER : Room::ROLE_SUBSCRIBER;
             if ($isOwner) {
                 $role |= Room::ROLE_MODERATOR;
@@ -373,6 +374,10 @@ class OpenViduController extends Controller
                     break;
 
                 case 'locked':
+                    $input[$key] = $value ? 'true' : null;
+                    break;
+
+                case 'nomedia':
                     $input[$key] = $value ? 'true' : null;
                     break;
 

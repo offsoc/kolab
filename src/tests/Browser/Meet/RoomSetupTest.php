@@ -307,7 +307,7 @@ class RoomSetupTest extends TestCaseDusk
                     'hand' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
-                    'security' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'options' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                     'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                 ]);
 

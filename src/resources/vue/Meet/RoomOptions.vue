@@ -1,16 +1,16 @@
 <template>
     <div v-if="config">
-        <div id="security-options-dialog" class="modal" tabindex="-1" role="dialog">
+        <div id="room-options-dialog" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Security options</h5>
+                        <h5 class="modal-title">Room options</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form id="security-options-password">
+                        <form id="room-options-password">
                             <div id="password-input" class="input-group input-group-activable">
                                 <span class="input-group-text label">Password:</span>
                                 <span v-if="config.password" id="password-input-text" class="input-group-text">{{ config.password }}</span>
@@ -28,14 +28,25 @@
                             </small>
                         </form>
                         <hr>
-                        <form id="security-options-lock">
+                        <form id="room-options-lock">
                             <div id="room-lock">
                                 <label for="room-lock-input">Locked room:</label>
                                 <input type="checkbox" id="room-lock-input" name="lock" value="1" :checked="config.locked" @click="lockSave">
                             </div>
                             <small class="form-text text-muted">
-                                When the room is locked participants have to be approved by you
+                                When the room is locked participants have to be approved by a moderator
                                 before they could join the meeting.
+                            </small>
+                        </form>
+                        <hr>
+                        <form id="room-options-nomedia">
+                            <div id="room-nomedia">
+                                <label for="room-lock-input">Subscribers only:</label>
+                                <input type="checkbox" id="room-nomedia-input" name="lock" value="1" :checked="config.nomedia" @click="nomediaSave">
+                            </div>
+                            <small class="form-text text-muted">
+                                Forces all participants to join as subscribers (with camera and microphone turned off).
+                                Moderators will be able to promote them to publishers throughout the session.
                             </small>
                         </form>
                     </div>
@@ -59,7 +70,7 @@
             }
         },
         mounted() {
-            $('#security-options-dialog').on('show.bs.modal', e => {
+            $('#room-options-dialog').on('show.bs.modal', e => {
                 $(e.target).find('.input-group-activable.active').removeClass('active')
             })
         },
@@ -80,6 +91,9 @@
             },
             lockSave(e) {
                 this.configSave('locked', $(e.target).prop('checked') ? 1 : 0)
+            },
+            nomediaSave(e) {
+                this.configSave('nomedia', $(e.target).prop('checked') ? 1 : 0)
             },
             passwordClear() {
                 this.configSave('password', '')

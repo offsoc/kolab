@@ -35,8 +35,8 @@
                 <button class="btn btn-link link-fullscreen open hidden" @click="switchFullscreen" title="Full screen">
                     <svg-icon icon="compress"></svg-icon>
                 </button>
-                <button class="btn btn-link link-security" v-if="isRoomOwner()" @click="securityOptions" title="Security options">
-                    <svg-icon icon="shield-alt"></svg-icon>
+                <button class="btn btn-link link-options" v-if="isRoomOwner()" @click="roomOptions" title="Room options">
+                    <svg-icon icon="cog"></svg-icon>
                 </button>
                 <button class="btn btn-link link-logout" @click="logout" title="Leave session">
                     <svg-icon icon="power-off"></svg-icon>
@@ -175,7 +175,7 @@
             </div>
         </div>
 
-        <session-security-options v-if="session.config" :config="session.config" :room="room" @config-update="configUpdate"></session-security-options>
+        <room-options v-if="session.config" :config="session.config" :room="room" @config-update="configUpdate"></room-options>
     </div>
 </template>
 
@@ -183,7 +183,7 @@
     import { Meet, Roles } from '../../js/meet/app.js'
     import StatusMessage from '../Widgets/StatusMessage'
     import LogonForm from '../Login'
-    import SessionSecurityOptions from './SessionSecurityOptions'
+    import RoomOptions from './RoomOptions'
 
     // Register additional icons
     import { library } from '@fortawesome/fontawesome-svg-core'
@@ -201,7 +201,6 @@
         faMicrophoneAlt,
         faPowerOff,
         faUser,
-        faShieldAlt,
         faVideo,
         faVolumeMute
     } from '@fortawesome/free-solid-svg-icons'
@@ -220,7 +219,6 @@
         faMicrophoneAlt,
         faPowerOff,
         faUser,
-        faShieldAlt,
         faVideo,
         faVolumeMute
     )
@@ -231,7 +229,7 @@
     export default {
         components: {
             LogonForm,
-            SessionSecurityOptions,
+            RoomOptions,
             StatusMessage
         },
         data() {
@@ -601,8 +599,8 @@
 
                 return this.reqId
             },
-            securityOptions() {
-                $('#security-options-dialog').modal()
+            roomOptions() {
+                $('#room-options-dialog').modal()
             },
             setMenuItem(type, state, disabled) {
                 let button = $('#meet-session-menu').find('.link-' + type)

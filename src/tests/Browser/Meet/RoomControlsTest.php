@@ -110,7 +110,7 @@ class RoomControlsTest extends TestCaseDusk
                     'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
-                    'security' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'options' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                     'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
                 ])
                 ->whenAvailable('div.meet-video.self', function (Browser $browser) {

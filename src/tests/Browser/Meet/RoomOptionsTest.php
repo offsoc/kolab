@@ -9,7 +9,7 @@ use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Meet\Room as RoomPage;
 use Tests\TestCaseDusk;
 
-class RoomSecurityTest extends TestCaseDusk
+class RoomOptionsTest extends TestCaseDusk
 {
     /**
      * {@inheritDoc}
@@ -45,10 +45,10 @@ class RoomSecurityTest extends TestCaseDusk
                 ->assertMissing('@setup-password-input')
                 ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
-                // Enter Security option dialog
-                ->click('@menu button.link-security')
-                ->with(new Dialog('#security-options-dialog'), function (Browser $browser) use ($room) {
-                    $browser->assertSeeIn('@title', 'Security options')
+                // Enter room option dialog
+                ->click('@menu button.link-options')
+                ->with(new Dialog('#room-options-dialog'), function (Browser $browser) use ($room) {
+                    $browser->assertSeeIn('@title', 'Room options')
                         ->assertSeeIn('@button-action', 'Close')
                         ->assertElementsCount('.modal-footer button', 1)
                         ->assertSeeIn('#password-input .label', 'Password:')
@@ -95,9 +95,9 @@ class RoomSecurityTest extends TestCaseDusk
                 ->waitFor('@session');
 
             // Test removing the password
-            $owner->click('@menu button.link-security')
-                ->with(new Dialog('#security-options-dialog'), function (Browser $browser) use ($room) {
-                    $browser->assertSeeIn('@title', 'Security options')
+            $owner->click('@menu button.link-options')
+                ->with(new Dialog('#room-options-dialog'), function (Browser $browser) use ($room) {
+                    $browser->assertSeeIn('@title', 'Room options')
                         ->assertSeeIn('#password-input-text:not(.text-muted)', 'pass')
                         ->assertSeeIn('#password-clear-btn.btn-outline-danger', 'Clear password')
                         ->assertElementsCount('#password-input button', 1)
@@ -122,7 +122,6 @@ class RoomSecurityTest extends TestCaseDusk
     public function testLockedRoomDeny(): void
     {
         $this->browse(function (Browser $owner, Browser $guest) {
-            // Make sure there's no session yet
             $room = Room::where('name', 'john')->first();
 
             // Join the room as an owner (authenticate)
@@ -134,10 +133,10 @@ class RoomSecurityTest extends TestCaseDusk
                 ->type('@setup-nickname-input', 'John')
                 ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
-                // Enter Security option dialog
-                ->click('@menu button.link-security')
-                ->with(new Dialog('#security-options-dialog'), function (Browser $browser) use ($room) {
-                    $browser->assertSeeIn('@title', 'Security options')
+                // Enter room option dialog
+                ->click('@menu button.link-options')
+                ->with(new Dialog('#room-options-dialog'), function (Browser $browser) use ($room) {
+                    $browser->assertSeeIn('@title', 'Room options')
                         ->assertSeeIn('#room-lock label', 'Locked room:')
                         ->assertVisible('#room-lock input[type=checkbox]:not(:checked)')
                         ->assertVisible('#room-lock + small')
@@ -197,7 +196,6 @@ class RoomSecurityTest extends TestCaseDusk
     public function testLockedRoomAcceptAndDismiss(): void
     {
         $this->browse(function (Browser $owner, Browser $guest) {
-            // Make sure there's no session yet
             $room = Room::where('name', 'john')->first();
 
             // Join the room as an owner (authenticate)
@@ -209,10 +207,10 @@ class RoomSecurityTest extends TestCaseDusk
                 ->type('@setup-nickname-input', 'John')
                 ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
-                // Enter Security option dialog
-                ->click('@menu button.link-security')
-                ->with(new Dialog('#security-options-dialog'), function (Browser $browser) use ($room) {
-                    $browser->assertSeeIn('@title', 'Security options')
+                // Enter room option dialog
+                ->click('@menu button.link-options')
+                ->with(new Dialog('#room-options-dialog'), function (Browser $browser) use ($room) {
+                    $browser->assertSeeIn('@title', 'Room options')
                         ->assertSeeIn('#room-lock label', 'Locked room:')
                         ->assertVisible('#room-lock input[type=checkbox]:not(:checked)')
                         ->assertVisible('#room-lock + small')
@@ -265,6 +263,64 @@ class RoomSecurityTest extends TestCaseDusk
                         ->assertMissing('@button-cancel')
                         ->assertSeeIn('@button-action', 'Close');
             });
+        });
+    }
+
+    /**
+     * Test nomedia (subscribers only) feature
+     *
+     * @group openvidu
+     */
+    public function testSubscribersOnly(): void
+    {
+        $this->browse(function (Browser $owner, Browser $guest) {
+            $room = Room::where('name', 'john')->first();
+
+            // Join the room as an owner (authenticate)
+            $owner->visit(new RoomPage('john'))
+                // ->click('@setup-button')
+                // ->submitLogon('john@kolab.org', 'simple123')
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                ->type('@setup-nickname-input', 'John')
+                ->clickWhenEnabled('@setup-button')
+                ->waitFor('@session')
+                // Enter room option dialog
+                ->click('@menu button.link-options')
+                ->with(new Dialog('#room-options-dialog'), function (Browser $browser) use ($room) {
+                    $browser->assertSeeIn('@title', 'Room options')
+                        ->assertSeeIn('#room-nomedia label', 'Subscribers only:')
+                        ->assertVisible('#room-nomedia input[type=checkbox]:not(:checked)')
+                        ->assertVisible('#room-nomedia + small')
+                        // Test enabling the option
+                        ->click('#room-nomedia input')
+                        ->assertToast(Toast::TYPE_SUCCESS, "Room configuration updated successfully.")
+                        ->click('@button-action');
+
+                    $this->assertSame('true', $room->fresh()->getSetting('nomedia'));
+                });
+
+            // In another browser act as a guest
+            $guest->visit(new RoomPage('john'))
+                ->waitFor('@setup-form')
+                ->waitUntilMissing('@setup-status-message.loading')
+                ->type('@setup-nickname-input', 'John')
+                ->clickWhenEnabled('@setup-button')
+                // expect the owner to have a video, but the guest to have none
+                ->waitFor('@session .meet-video')
+                ->waitFor('@session .meet-subscriber.self');
+
+            // Unset the option back
+            $owner->click('@menu button.link-options')
+                ->with(new Dialog('#room-options-dialog'), function (Browser $browser) use ($room) {
+                    $browser->assertVisible('#room-nomedia input[type=checkbox]:checked')
+                        // Test enabling the option
+                        ->click('#room-nomedia input')
+                        ->assertToast(Toast::TYPE_SUCCESS, "Room configuration updated successfully.")
+                        ->click('@button-action');
+
+                    $this->assertSame(null, $room->fresh()->getSetting('nomedia'));
+                });
         });
     }
 }
