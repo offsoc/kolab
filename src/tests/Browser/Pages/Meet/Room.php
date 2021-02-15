@@ -76,6 +76,7 @@ class Room extends Page
 
             '@session' => '#meet-session',
             '@subscribers' => '#meet-subscribers',
+            '@queue' => '#meet-queue',
 
             '@chat' => '#meet-chat',
             '@chat-input' => '#meet-chat textarea',

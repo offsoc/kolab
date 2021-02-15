@@ -190,9 +190,15 @@ class Room extends Model
             ->get()
             ->keyBy('id')
             ->map(function ($item) {
-                // For now we need only 'role' property, it might change in the future.
-                // Make sure to not return all metadata here as it might contain sensitive data.
-                return ['role' => $item->role];
+                // Warning: Make sure to not return all metadata here as it might contain sensitive data.
+                return [
+                    'role' => $item->role,
+                    'hand' => $item->metadata['hand'] ?? 0,
+                ];
+            })
+            // Sort by order in the queue, so UI can re-build the existing queue in order
+            ->sort(function ($a, $b) {
+                return $a['hand'] <=> $b['hand'];
             })
             ->all();
     }

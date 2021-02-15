@@ -684,8 +684,13 @@ class OpenViduTest extends TestCase
         $this->assertSame('error', $json['status']);
         $this->assertSame('The connection does not exist.', $json['message']);
 
-        // Non-owner access
+        // Non-owner access (empty post)
         $response = $this->actingAs($jack)->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", []);
+        $response->assertStatus(200);
+
+        // Non-owner access (role update)
+        $post = ['role' => Room::ROLE_PUBLISHER | Room::ROLE_MODERATOR];
+        $response = $this->actingAs($jack)->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post);
         $response->assertStatus(403);
 
         // Expected success

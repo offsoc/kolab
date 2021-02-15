@@ -93,6 +93,7 @@ function Meet(container)
      *      connections - Optional metadata for other users connections (current state),
      *      chatElement - DOM element for the chat widget,
      *      menuElement - DOM element of the room toolbar,
+     *      queueElement - DOM element for the Q&A queue (users with a raised hand)
      *      onSuccess           - Callback for session connection (join) success
      *      onError             - Callback for session connection (join) error
      *      onDestroy           - Callback for session disconnection event,
@@ -141,7 +142,6 @@ function Meet(container)
             // we got from our database.
             if (sessionData.connections && connId in sessionData.connections) {
                 Object.assign(metadata, sessionData.connections[connId])
-                delete sessionData.connections[connId]
             }
 
             metadata.element = participantCreate(metadata)
@@ -158,6 +158,8 @@ function Meet(container)
             let conn = connections[connectionId]
 
             if (conn) {
+                // Remove elements related to the participant
+                connectionHandDown(connectionId)
                 $(conn.element).remove()
                 delete connections[connectionId]
             }
@@ -252,6 +254,16 @@ function Meet(container)
                 }
 
                 sessionData.element = wrapper
+
+                // Create Q&A queue from the existing connections with rised hand.
+                // Here we expect connections in a proper queue order
+                Object.keys(data.connections || {}).forEach(key => {
+                    let conn = data.connections[key]
+                    if (conn.hand) {
+                        conn.connectionId = key
+                        connectionHandUp(conn)
+                    }
+                })
             })
             .catch(error => {
                 console.error('There was an error connecting to the session: ', error.message);
@@ -774,6 +786,16 @@ function Meet(container)
     function connectionUpdate(data) {
         let conn = connections[data.connectionId]
 
+        let handUpdate = conn => {
+            if ('hand' in data && data.hand != conn.hand) {
+                if (data.hand) {
+                    connectionHandUp(conn)
+                } else {
+                    connectionHandDown(data.connectionId)
+                }
+            }
+        }
+
         // It's me
         if (session.connection.connectionId == data.connectionId) {
             const rolePublisher = data.role && data.role & Roles.PUBLISHER
@@ -798,6 +820,8 @@ function Meet(container)
                 publisher.stream.streamManager.videos = videos.filter(video => video.video.parentNode != null)
             }
 
+            handUpdate(sessionData)
+
             // merge the changed data into internal session metadata object
             Object.keys(data).forEach(key => { sessionData[key] = data[key] })
 
@@ -814,6 +838,9 @@ function Meet(container)
                     })
                 }
             }
+
+            // Inform the vue component, so it can update some UI controls
+            update()
 
             // promoted to a publisher
             if ('role' in data && !isPublisher && rolePublisher) {
@@ -837,11 +864,10 @@ function Meet(container)
                 if (sessionData.onMediaSetup) {
                     sessionData.onMediaSetup()
                 }
-            } else {
-                // Inform the vue component, so it can update some UI controls
-                update()
             }
         } else if (conn) {
+            handUpdate(conn)
+
             // merge the changed data into internal session metadata object
             Object.keys(data).forEach(key => { conn[key] = data[key] })
 
@@ -850,7 +876,36 @@ function Meet(container)
     }
 
     /**
-     * Update nickname in chat
+     * Handler for Hand-Up "signal"
+     */
+    function connectionHandUp(connection) {
+        connection.isSelf = session.connection.connectionId == connection.connectionId
+
+        let element = $(nicknameWidget(connection))
+
+        participantUpdate(element, connection)
+
+        element.attr('id', 'qa' + connection.connectionId)
+            .appendTo($(sessionData.queueElement).show())
+
+        setTimeout(() => element.addClass('widdle'), 50)
+    }
+
+    /**
+     * Handler for Hand-Down "signal"
+     */
+    function connectionHandDown(connectionId) {
+        let list = $(sessionData.queueElement)
+
+        list.find('#qa' + connectionId).remove();
+
+        if (!list.find('.meet-nickname').length) {
+            list.hide();
+        }
+    }
+
+    /**
+     * Update participant nickname in the UI
      *
      * @param nickname     Nickname
      * @param connectionId Connection identifier of the user
@@ -863,6 +918,8 @@ function Meet(container)
                     elem.find('.nickname').text(nickname || '')
                 }
             })
+
+            $(sessionData.queueElement).find('#qa' + connectionId + ' .content').text(nickname || '')
         }
     }
 

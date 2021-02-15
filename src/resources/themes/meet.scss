@@ -279,6 +279,45 @@
     // TODO: mobile mode
 }
 
+#meet-queue {
+    display: none;
+    width: 150px;
+
+    .head {
+        text-align: center;
+        font-size: 1.75em;
+        background: $menu-bg-color;
+    }
+
+    .dropdown {
+        margin: 0.2em;
+        display: flex;
+        position: relative;
+        transition: top 10s ease;
+        top: 15em;
+
+        .meet-nickname {
+            width: 100%;
+        }
+
+        &.widdle {
+            top: 0;
+            animation-name: wiggle;
+            animation-duration: 1s;
+            animation-timing-function: ease-in-out;
+            animation-iteration-count: 8;
+        }
+    }
+}
+
+@keyframes wiggle {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(10deg); }
+    50% { transform: rotate(0deg); }
+    75% { transform: rotate(-10deg); }
+    100% { transform: rotate(0deg); }
+}
+
 .media-setup-form {
     .input-group svg {
         width: 1em;

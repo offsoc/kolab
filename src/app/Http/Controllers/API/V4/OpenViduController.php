@@ -412,14 +412,29 @@ class OpenViduController extends Controller
             return $this->errorResponse(404, \trans('meet.connection-not-found'));
         }
 
-        // Only the moderator can do it
-        if (!$this->isModerator($connection->room)) {
-            return $this->errorResponse(403);
-        }
-
         foreach (request()->input() as $key => $value) {
             switch ($key) {
+                case 'hand':
+                    // Only possible on user's own connection(s)
+                    if (!$this->isSelfConnection($connection)) {
+                        return $this->errorResponse(403);
+                    }
+
+                    if ($value) {
+                        // Store current time, so we know the order in the queue
+                        $connection->metadata = ['hand' => time()] + $connection->metadata;
+                    } else {
+                        $connection->metadata = array_diff_key($connection->metadata, ['hand' => 0]);
+                    }
+
+                    break;
+
                 case 'role':
+                    // Only the moderator can do it
+                    if (!$this->isModerator($connection->room)) {
+                        return $this->errorResponse(403);
+                    }
+
                     // The 'owner' role is not assignable
                     if ($value & Room::ROLE_OWNER && !($connection->role & Room::ROLE_OWNER)) {
                         return $this->errorResponse(403);
@@ -430,6 +445,11 @@ class OpenViduController extends Controller
                     // The room owner has always a 'moderator' role
                     if (!($value & Room::ROLE_MODERATOR) && $connection->role & Room::ROLE_OWNER) {
                         $value |= Room::ROLE_MODERATOR;
+                    }
+
+                    // Promotion to publisher? Put the user hand down
+                    if ($value & Room::ROLE_PUBLISHER && !($connection->role & Room::ROLE_PUBLISHER)) {
+                        $connection->metadata = array_diff_key($connection->metadata, ['hand' => 0]);
                     }
 
                     $connection->{$key} = $value;
@@ -504,6 +524,19 @@ class OpenViduController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Check if current user "owns" the specified connection.
+     *
+     * @param \App\OpenVidu\Connection $connection The connection
+     *
+     * @return bool
+     */
+    protected function isSelfConnection(Connection $connection): bool
+    {
+        return ($conn = $this->getConnectionFromRequest())
+            && $conn->id === $connection->id;
     }
 
     /**

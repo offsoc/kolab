@@ -11,6 +11,9 @@
                 <button class="btn btn-link link-screen text-danger" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" title="Share screen">
                     <svg-icon icon="desktop"></svg-icon>
                 </button>
+                <button class="btn btn-link link-hand text-danger" v-if="!isPublisher()" @click="switchHand" title="Raise hand">
+                    <svg-icon icon="hand-paper"></svg-icon>
+                </button>
                 <button class="btn btn-link link-chat text-danger" @click="switchChat" title="Chat">
                     <svg-icon icon="align-left"></svg-icon>
                 </button>
@@ -88,6 +91,9 @@
         </div>
 
         <div id="meet-session-layout" class="d-flex hidden">
+            <div id="meet-queue">
+                <div class="head" title="Q &amp; A"><svg-icon icon="microphone-alt"></svg-icon></div>
+            </div>
             <div id="meet-session"></div>
             <div id="meet-chat">
                 <div class="chat"></div>
@@ -177,7 +183,9 @@
         faCrown,
         faDesktop,
         faExpand,
+        faHandPaper,
         faMicrophone,
+        faMicrophoneAlt,
         faPowerOff,
         faUser,
         faShieldAlt,
@@ -193,7 +201,9 @@
         faCrown,
         faDesktop,
         faExpand,
+        faHandPaper,
         faMicrophone,
+        faMicrophoneAlt,
         faPowerOff,
         faUser,
         faShieldAlt,
@@ -459,6 +469,7 @@
                 this.session.nickname = this.nickname
                 this.session.menuElement = $('#meet-session-menu')[0]
                 this.session.chatElement = $('#meet-chat')[0]
+                this.session.queueElement = $('#meet-queue')[0]
                 this.session.onSuccess = () => {
                     $('#app').addClass('meet')
                     $('#meet-setup').addClass('hidden')
@@ -632,6 +643,10 @@
                     element.requestFullscreen()
                 }
             },
+            switchHand() {
+                let enabled = $('#meet-session-menu').find('.link-hand').is('.text-danger')
+                this.updateSelf({ hand: enabled }, () => { this.setMenuItem('hand', enabled) })
+            },
             switchSound() {
                 const enabled = this.meet.switchAudio()
                 this.setMenuItem('audio', enabled)
@@ -667,6 +682,14 @@
                     axios.put('/api/v4/openvidu/rooms/' + this.room + '/connections/' + connId, params)
                 }
             },
+            updateSelf(params, onSuccess) {
+                axios.put('/api/v4/openvidu/rooms/' + this.room + '/connections/' + this.session.connectionId, params)
+                    .then(response => {
+                        if (onSuccess) {
+                            onSuccess(response)
+                        }
+                    })
+            },
             updateSession(data) {
                 let params = {}
 
@@ -676,6 +699,10 @@
 
                 // merge new params into the object
                 this.session = Object.assign({}, this.session, params)
+
+                if ('hand' in data) {
+                    this.setMenuItem('hand', data.hand)
+                }
 
                 // update some buttons state e.g. when switching from publisher to subscriber
                 if (!this.isPublisher()) {
