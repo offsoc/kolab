@@ -855,9 +855,6 @@ function Meet(container)
                 refresh = (!isModerator && roleModerator) || (isModerator && !roleModerator)
             }
 
-            // Inform the vue component, so it can update some UI controls
-            update()
-
             // promoted to a publisher
             if ('role' in data && !isPublisher && rolePublisher) {
                 publisher.createVideoElement(sessionData.element, 'PREPEND')
