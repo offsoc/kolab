@@ -471,6 +471,10 @@ function Meet(container)
             }
         }
 
+        // Fix a bug in Chrome where you would start hearing yourself after audio device change
+        // https://github.com/OpenVidu/openvidu/issues/449
+        publisher.videoReference.muted = true
+
         return new Promise((resolve, reject) => {
             if (stream.isLocalStreamPublished) {
                 // Only if the Publisher has been published it is necessary to call the native
