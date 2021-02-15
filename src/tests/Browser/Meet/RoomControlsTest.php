@@ -180,6 +180,22 @@ class RoomControlsTest extends TestCaseDusk
 
             $guest->waitUntilMissing('div.meet-video:not(.self) .status .status-audio');
 
+            // Test muting audio with a keyboard shortcut (key 'm')
+            $owner->driver->getKeyboard()->sendKeys('m');
+            $owner->assertToolbarButtonState('audio', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
+                ->assertVisible('div.meet-video.self .status .status-audio');
+
+            $guest->waitFor('div.meet-video:not(.self) .status .status-audio')
+                ->assertAudioMuted('div.meet-video:not(.self) video', true);
+
+            // Test unmuting audio with a keyboard shortcut (key 'm')
+            $owner->driver->getKeyboard()->sendKeys('m');
+            $owner->assertToolbarButtonState('audio', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
+                ->assertMissing('div.meet-video.self .status .status-audio');
+
+            $guest->waitUntilMissing('div.meet-video:not(.self) .status .status-audio')
+                ->assertAudioMuted('div.meet-video:not(.self) video', false);
+
             // Test muting video
             $owner->click('@menu button.link-video')
                 ->assertToolbarButtonState('video', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)

@@ -1284,6 +1284,10 @@ function Meet(container)
                         editableUpdate()
                         return false
                     }
+
+                    // Do not propagate the event, so it does not interfere with our
+                    // keyboard shortcuts
+                    e.stopPropagation()
                 })
         } else {
             element.find('.action-nickname').remove()

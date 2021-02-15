@@ -290,6 +290,8 @@
             }
 
             delete axios.defaults.headers.common[authHeader]
+
+            $(document.body).off('keydown.meet')
         },
         methods: {
             authSuccess() {
@@ -523,6 +525,22 @@
                 this.session.onMediaSetup = () => { this.setupMedia() }
 
                 this.meet.joinRoom(this.session)
+
+                this.keyboardShortcuts()
+            },
+            keyboardShortcuts() {
+                $(document.body).on('keydown.meet', e => {
+                    if ($(e.target).is('select,input,textarea')) {
+                        return
+                    }
+
+                    // Self-Mute with 'm' key
+                    if (e.key == 'm' || e.key == 'M') {
+                        if ($('#meet-session-menu').find('.link-audio:not(:disabled)').length) {
+                            this.switchSound()
+                        }
+                    }
+                })
             },
             logout() {
                 const logout = () => {
