@@ -223,6 +223,7 @@ function Meet(container)
                 data.onDestroy(event)
             }
 
+            session = null
             resize()
         })
 
@@ -300,12 +301,10 @@ function Meet(container)
         if (publisher) {
             volumeMeterStop()
 
-            // FIXME: We have to unpublish streams only if there's no session yet
-            if (!session && audioActive) {
-                publisher.publishAudio(false)
-            }
-            if (!session && videoActive) {
-                publisher.publishVideo(false)
+            // Release any media
+            let mediaStream = publisher.stream.getMediaStream()
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop())
             }
 
             publisher = null
