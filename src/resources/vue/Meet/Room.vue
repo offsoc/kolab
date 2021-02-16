@@ -584,17 +584,23 @@
                 return canvas.toDataURL();
             },
             requestId() {
+                const key = 'kolab-meet-uid'
+
                 if (!this.reqId) {
-                    // FIXME: Shall we use some UUID generator? Or better something that identifies the
-                    //        user/browser so we could deny the join request for a longer time.
-                    //        I'm thinking about e.g. a bad actor knocking again and again and again,
-                    //        we don't want the room owner to be bothered every few seconds.
-                    //        Maybe a solution would be to store the identifier in the browser storage
-                    //        This would not prevent hackers from sending the new identifier on every request,
-                    //        but could make sure that it is kept after page refresh for the avg user.
+                    this.reqId = localStorage.getItem(key)
+                }
+
+                if (!this.reqId) {
+                    // We store the identifier in the browser to make sure that it is the same after
+                    // page refresh for the avg user. This will not prevent hackers from sending
+                    // the new identifier on every request.
+                    // If we're afraid of a room owner being spammed with join requests we might invent
+                    // a way to silently ignore all join requests after the owner pressed some button
+                    // stating "all attendees already joined, lock the room for good!".
 
                     // This will create max. 24-char numeric string
                     this.reqId = (String(Date.now()) + String(Math.random()).substring(2)).substring(0, 24)
+                    localStorage.setItem(key, this.reqId)
                 }
 
                 return this.reqId
