@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Schema;
 
 /**

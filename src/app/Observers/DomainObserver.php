@@ -88,6 +88,32 @@ class DomainObserver
     }
 
     /**
+     * Handle the domain "restoring" event.
+     *
+     * @param \App\Domain $domain The domain.
+     *
+     * @return void
+     */
+    public function restoring(Domain $domain)
+    {
+        // Make sure it's not DELETED/LDAP_READY/SUSPENDED
+        if ($domain->isDeleted()) {
+            $domain->status ^= Domain::STATUS_DELETED;
+        }
+        if ($domain->isLdapReady()) {
+            $domain->status ^= Domain::STATUS_LDAP_READY;
+        }
+        if ($domain->isSuspended()) {
+            $domain->status ^= Domain::STATUS_SUSPENDED;
+        }
+        if ($domain->isConfirmed() && $domain->isVerified()) {
+            $domain->status |= Domain::STATUS_ACTIVE;
+        }
+
+        // Note: $domain->save() is invoked between 'restoring' and 'restored' events
+    }
+
+    /**
      * Handle the domain "restored" event.
      *
      * @param \App\Domain $domain The domain.
@@ -96,7 +122,25 @@ class DomainObserver
      */
     public function restored(Domain $domain)
     {
-        //
+        // Restore domain entitlements
+        // We'll restore only these that were deleted last. So, first we get
+        // the maximum deleted_at timestamp and then use it to select
+        // domain entitlements for restore
+        $deleted_at = \App\Entitlement::withTrashed()
+            ->where('entitleable_id', $domain->id)
+            ->where('entitleable_type', Domain::class)
+            ->max('deleted_at');
+
+        if ($deleted_at) {
+            \App\Entitlement::withTrashed()
+                ->where('entitleable_id', $domain->id)
+                ->where('entitleable_type', Domain::class)
+                ->where('deleted_at', '>=', (new \Carbon\Carbon($deleted_at))->subMinute())
+                ->update(['updated_at' => now(), 'deleted_at' => null]);
+        }
+
+        // Create the domain in LDAP again
+        \App\Jobs\Domain\CreateJob::dispatch($domain->id);
     }
 
     /**

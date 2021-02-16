@@ -20,6 +20,7 @@ class UserTest extends TestCase
         $this->deleteTestUser('UserAccountC@UserAccount.com');
         $this->deleteTestGroup('test-group@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
+        $this->deleteTestDomain('UserAccountAdd.com');
     }
 
     public function tearDown(): void
@@ -30,6 +31,7 @@ class UserTest extends TestCase
         $this->deleteTestUser('UserAccountC@UserAccount.com');
         $this->deleteTestGroup('test-group@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
+        $this->deleteTestDomain('UserAccountAdd.com');
 
         parent::tearDown();
     }
@@ -305,7 +307,7 @@ class UserTest extends TestCase
     /**
      * Test user deletion vs. group membership
      */
-    public function testDeleteAandGroups(): void
+    public function testDeleteAndGroups(): void
     {
         Queue::fake();
 
@@ -408,6 +410,119 @@ class UserTest extends TestCase
 
         $this->assertSame('First Last', $user->name());
         $this->assertSame('First Last', $user->name(true));
+    }
+
+    /**
+     * Test user restoring
+     */
+    public function testRestore(): void
+    {
+        Queue::fake();
+
+        // Test an account with users and domain
+        $userA = $this->getTestUser('UserAccountA@UserAccount.com', [
+                'status' => User::STATUS_LDAP_READY | User::STATUS_IMAP_READY | User::STATUS_SUSPENDED,
+        ]);
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+        $domainA = $this->getTestDomain('UserAccount.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_HOSTED,
+        ]);
+        $domainB = $this->getTestDomain('UserAccountAdd.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_HOSTED,
+        ]);
+        $userA->assignPackage($package_kolab);
+        $domainA->assignPackage($package_domain, $userA);
+        $domainB->assignPackage($package_domain, $userA);
+        $userA->assignPackage($package_kolab, $userB);
+
+        $storage_sku = \App\Sku::where('title', 'storage')->first();
+        $now = \Carbon\Carbon::now();
+        $wallet_id = $userA->wallets->first()->id;
+
+        // add an extra storage entitlement
+        $ent1 = \App\Entitlement::create([
+                'wallet_id' => $wallet_id,
+                'sku_id' => $storage_sku->id,
+                'cost' => 0,
+                'entitleable_id' => $userA->id,
+                'entitleable_type' => User::class,
+        ]);
+
+        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
+        $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domainA->id);
+
+        // First delete the user
+        $userA->delete();
+
+        $this->assertSame(0, $entitlementsA->count());
+        $this->assertSame(0, $entitlementsB->count());
+        $this->assertSame(0, $entitlementsDomain->count());
+        $this->assertTrue($userA->fresh()->trashed());
+        $this->assertTrue($userB->fresh()->trashed());
+        $this->assertTrue($domainA->fresh()->trashed());
+        $this->assertTrue($domainB->fresh()->trashed());
+        $this->assertFalse($userA->isDeleted());
+        $this->assertFalse($userB->isDeleted());
+        $this->assertFalse($domainA->isDeleted());
+
+        // Backdate one storage entitlement (it's not expected to be restored)
+        \App\Entitlement::withTrashed()->where('id', $ent1->id)
+            ->update(['deleted_at' => $now->copy()->subMinutes(2)]);
+
+        // Backdate entitlements to assert that they were restored with proper updated_at timestamp
+        \App\Entitlement::withTrashed()->where('wallet_id', $wallet_id)
+            ->update(['updated_at' => $now->subMinutes(10)]);
+
+        Queue::fake();
+
+        // Then restore it
+        $userA->restore();
+        $userA->refresh();
+
+        $this->assertFalse($userA->trashed());
+        $this->assertFalse($userA->isDeleted());
+        $this->assertFalse($userA->isSuspended());
+        $this->assertFalse($userA->isLdapReady());
+        $this->assertFalse($userA->isImapReady());
+        $this->assertTrue($userA->isActive());
+
+        $this->assertTrue($userB->fresh()->trashed());
+        $this->assertTrue($domainB->fresh()->trashed());
+        $this->assertFalse($domainA->fresh()->trashed());
+
+        // Assert entitlements
+        $this->assertSame(4, $entitlementsA->count()); // mailbox + groupware + 2 x storage
+        $this->assertTrue($ent1->fresh()->trashed());
+        $entitlementsA->get()->each(function ($ent) {
+            $this->assertTrue($ent->updated_at->greaterThan(\Carbon\Carbon::now()->subSeconds(5)));
+        });
+
+        // We expect only CreateJob + UpdateJob pair for both user and domain.
+        // Because how Illuminate/Database/Eloquent/SoftDeletes::restore() method
+        // is implemented we cannot skip the UpdateJob in any way.
+        // I don't want to overwrite this method, the extra job shouldn't do any harm.
+        $this->assertCount(4, Queue::pushedJobs()); // @phpstan-ignore-line
+        Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\User\CreateJob::class,
+            function ($job) use ($userA) {
+                return $userA->id === TestCase::getObjectProperty($job, 'userId');
+            }
+        );
+        Queue::assertPushedWithChain(
+            \App\Jobs\User\CreateJob::class,
+            [
+                \App\Jobs\User\VerifyJob::class,
+            ]
+        );
     }
 
     /**

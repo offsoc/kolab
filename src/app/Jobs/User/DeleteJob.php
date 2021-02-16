@@ -28,6 +28,15 @@ class DeleteJob extends UserJob
         \App\Backends\LDAP::deleteUser($user);
 
         $user->status |= \App\User::STATUS_DELETED;
+
+        if ($user->isLdapReady()) {
+            $user->status ^= \App\User::STATUS_LDAP_READY;
+        }
+
+        if ($user->isImapReady()) {
+            $user->status ^= \App\User::STATUS_IMAP_READY;
+        }
+
         $user->save();
     }
 }

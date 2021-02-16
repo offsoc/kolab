@@ -201,14 +201,12 @@ trait TestCaseTrait
     {
         // Disable jobs (i.e. skip LDAP oprations)
         Queue::fake();
-        $user = User::withTrashed()->where('email', $email)->first();
+        $user = User::firstOrCreate(['email' => $email], $attrib);
 
-        if (!$user) {
-            return User::firstOrCreate(['email' => $email], $attrib);
-        }
-
-        if ($user->deleted_at) {
-            $user->restore();
+        if ($user->trashed()) {
+            // Note: we do not want to use user restore here
+            User::where('id', $user->id)->forceDelete();
+            $user = User::create(['email' => $email] + $attrib);
         }
 
         return $user;
