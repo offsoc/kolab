@@ -3,10 +3,10 @@
         <div id="meet-session-toolbar" class="hidden">
             <div id="meet-session-menu">
                 <button class="btn btn-link link-audio" @click="switchSound" :disabled="!isPublisher()" title="Mute audio">
-                    <svg-icon icon="microphone"></svg-icon>
+                    <svg-icon icon="microphone-slash"></svg-icon>
                 </button>
                 <button class="btn btn-link link-video" @click="switchVideo" :disabled="!isPublisher()" title="Mute video">
-                    <svg-icon icon="video"></svg-icon>
+                    <svg-icon icon="video-slash"></svg-icon>
                 </button>
                 <button class="btn btn-link link-screen text-danger" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" title="Share screen">
                     <svg-icon icon="desktop"></svg-icon>
@@ -27,7 +27,7 @@
                     </div>
                 </span>
                 <button class="btn btn-link link-chat text-danger" @click="switchChat" title="Chat">
-                    <svg-icon icon="align-left"></svg-icon>
+                    <svg-icon icon="comment"></svg-icon>
                 </button>
                 <button class="btn btn-link link-fullscreen closed hidden" @click="switchFullscreen" title="Full screen">
                     <svg-icon icon="expand"></svg-icon>
@@ -189,7 +189,7 @@
     import { library } from '@fortawesome/fontawesome-svg-core'
 
     import {
-        faAlignLeft,
+        faComment,
         faCog,
         faCompress,
         faCrown,
@@ -198,16 +198,18 @@
         faHandPaper,
         faHeadphones,
         faMicrophone,
+        faMicrophoneSlash,
         faMicrophoneAlt,
         faPowerOff,
         faUser,
         faVideo,
+        faVideoSlash,
         faVolumeMute
     } from '@fortawesome/free-solid-svg-icons'
 
     // Register only these icons we need
     library.add(
-        faAlignLeft,
+        faComment,
         faCog,
         faCompress,
         faCrown,
@@ -216,10 +218,12 @@
         faHandPaper,
         faHeadphones,
         faMicrophone,
+        faMicrophoneSlash,
         faMicrophoneAlt,
         faPowerOff,
         faUser,
         faVideo,
+        faVideoSlash,
         faVolumeMute
     )
 
