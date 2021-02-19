@@ -4,15 +4,14 @@
             <div class="plan-selector card-deck">
                 <div v-for="item in plans" :key="item.id" :class="'card bg-light plan-' + item.title">
                     <div class="card-header plan-header">
-                            <div class="plan-ico text-center">
-                        <svg-icon :icon="plan_icons[item.title]"></svg-icon>
+                        <div class="plan-ico text-center">
+                            <svg-icon :icon="plan_icons[item.title]"></svg-icon>
                         </div>
                     </div>
                     <div class="card-body text-center ">
                         <button class="btn btn-primary" :data-title="item.title" @click="selectPlan(item.title)" v-html="item.button"></button>
-
-                    <div class="plan-description text-left mt-3" v-html="item.description"></div>
-                </div>
+                        <div class="plan-description text-left mt-3" v-html="item.description"></div>
+                    </div>
                 </div>
             </div>
         </div>

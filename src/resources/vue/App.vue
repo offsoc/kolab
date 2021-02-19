@@ -4,17 +4,17 @@
 
 <script>
     export default {
+        data() {
+            return {
+                isLoading: true,
+                routerReloading: false
+            }
+        },
         computed: {
             key() {
                 // The 'key' property is used to reload the Page component
                 // whenever a route changes. Normally vue does not do that.
                 return this.$route.name == '404' ? this.$route.path : 'static'
-            }
-        },
-        data() {
-            return {
-                isLoading: true,
-                routerReloading: false
             }
         },
         mounted() {

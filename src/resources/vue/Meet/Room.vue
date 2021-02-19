@@ -23,7 +23,7 @@
                     <div class="dropdown-menu">
                         <a :class="'dropdown-item' + (!session.channel ? ' active' : '')" href="#" data-code="" @click="switchChannel">- none -</a>
                         <a v-for="code in channels" :key="code" href="#" @click="switchChannel" :data-code="code"
-                            :class="'dropdown-item' + (session.channel == code ? ' active' : '')"
+                           :class="'dropdown-item' + (session.channel == code ? ' active' : '')"
                         >{{ languages[code] }}</a>
                     </div>
                 </span>
