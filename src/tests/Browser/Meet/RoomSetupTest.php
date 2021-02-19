@@ -149,7 +149,17 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertVisible('@login-form')
                 ->submitLogon('john@kolab.org', 'simple123')
                 ->waitFor('@setup-form')
-                ->assertMissing('@login-form')
+                ->within(new Menu(), function ($browser) {
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout']);
+                });
+
+            if ($browser->isDesktop()) {
+                $browser->within(new Menu('footer'), function ($browser) {
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'dashboard', 'logout']);
+                });
+            }
+
+            $browser->assertMissing('@login-form')
                 ->waitUntilMissing('@setup-status-message.loading')
                 ->waitFor('@setup-status-message')
                 ->assertSeeIn('@setup-status-message', "The room is closed. It will be open for others after you join.")
@@ -170,14 +180,12 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertMissing('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
-                ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout']);
-                });
+                ->assertMissing('#header-menu');
 
-            if ($browser->isDesktop()) {
-                $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'dashboard', 'logout']);
-                });
+            if (!$browser->isPhone()) {
+                $browser->assertMissing('#footer-menu');
+            } else {
+                $browser->assertVisible('#footer-menu');
             }
 
             // After the owner "opened the room" guest should be able to join
@@ -205,16 +213,7 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertMissing('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
-                ->assertElementsCount('@session div.meet-video', 2)
-                ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'signup', 'login']);
-                });
-
-            if ($guest->isDesktop()) {
-                $guest->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'signup', 'login']);
-                });
-            }
+                ->assertElementsCount('@session div.meet-video', 2);
 
             // Check guest's elements in the owner's window
             $browser
@@ -233,7 +232,8 @@ class RoomSetupTest extends TestCaseDusk
 
             // Guest is leaving
             $guest->click('@menu button.link-logout')
-                ->waitForLocation('/login');
+                ->waitForLocation('/login')
+                ->assertVisible('#header-menu');
 
             // Expect the participant removed from other users windows
             $browser->waitUntilMissing('@session div.meet-video:not(.self)');

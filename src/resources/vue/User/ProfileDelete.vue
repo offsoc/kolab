@@ -14,7 +14,7 @@
                         for a few words about your reasons for leaving our service. Please send your feedback
                         to <a :href="'mailto:' + supportEmail">{{ supportEmail }}</a>.
                     </p>
-                    <p>Also feel free to contact {{ appName }} Support with any questions
+                    <p>Also feel free to contact {{ $root.appName }} Support with any questions
                         or concerns that you may have in this context.</p>
                     <button class="btn btn-secondary button-cancel" @click="$router.go(-1)">Cancel</button>
                     <button class="btn btn-danger button-delete" @click="deleteProfile">
@@ -30,7 +30,6 @@
     export default {
         data() {
             return {
-                appName: window.config['app.name'],
                 supportEmail: window.config['app.support_email']
             }
         },

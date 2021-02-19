@@ -1,6 +1,7 @@
 <template>
     <div id="meet-component">
         <div id="meet-session-toolbar" class="hidden">
+            <span id="meet-session-logo" v-html="$root.logo()"></span>
             <div id="meet-session-menu">
                 <button class="btn btn-link link-audio" @click="switchSound" :disabled="!isPublisher()" title="Mute audio">
                     <svg-icon icon="microphone-slash"></svg-icon>
@@ -286,6 +287,8 @@
         },
         beforeDestroy() {
             clearTimeout(roomRequest)
+
+            $('#app').removeClass('meet')
 
             if (this.meet) {
                 this.meet.leaveRoom()

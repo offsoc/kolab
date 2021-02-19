@@ -56,7 +56,6 @@
         },
         data() {
             return {
-                app_url: window.config['app.url'],
                 email: '',
                 password: '',
                 secondFactor: '',

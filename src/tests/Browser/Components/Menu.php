@@ -53,7 +53,7 @@ class Menu extends BaseComponent
     public function assertMenuItems($browser, array $items, string $active = null)
     {
         // On mobile the links are not visible, show them first (wait for transition)
-        if ($browser->isPhone()) {
+        if (!$browser->isDesktop()) {
             $browser->click('@toggler')->waitFor('.navbar-collapse.show');
         }
 
@@ -68,7 +68,7 @@ class Menu extends BaseComponent
             $browser->assertPresent(".link-{$active}.active");
         }
 
-        if ($browser->isPhone()) {
+        if (!$browser->isDesktop()) {
             $browser->click('@toggler')->waitUntilMissing('.navbar-collapse.show');
         }
     }

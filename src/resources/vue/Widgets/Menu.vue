@@ -1,9 +1,7 @@
 <template>
     <nav :id="mode + '-menu'" class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <router-link class="navbar-brand" to="/">
-                <img :src="appUrl + themeDir + '/images/logo_' + mode + '.png'" :alt="appName">
-            </router-link>
+            <router-link class="navbar-brand" to="/" v-html="$root.logo(mode)"></router-link>
             <button v-if="mode == 'header'" class="navbar-toggler" type="button"
                     data-toggle="collapse" :data-target="'#' + mode + '-menu-navbar'"
                     aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation"
@@ -50,13 +48,6 @@
         props: {
             mode: { type: String, default: 'header' },
             footer: { type: String, default: '' }
-        },
-        data() {
-            return {
-                appName: window.config['app.name'],
-                appUrl: window.config['app.url'],
-                themeDir: '/themes/' + window.config['app.theme']
-            }
         },
         computed: {
             loggedIn() { return this.$store.state.isLoggedIn },

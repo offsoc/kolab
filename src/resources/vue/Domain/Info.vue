@@ -23,7 +23,7 @@
             <div class="card-body">
                 <div class="card-title">Domain configuration</div>
                 <div class="card-text">
-                    <p>In order to let {{ app_name }} receive email traffic for your domain you need to adjust
+                    <p>In order to let {{ $root.appName }} receive email traffic for your domain you need to adjust
                         the DNS settings, more precisely the MX entries, accordingly.</p>
                     <p>Edit your domain's zone file and replace existing MX
                         entries with the following values: <pre>{{ domain.config.join("\n") }}</pre></p>
@@ -47,7 +47,6 @@
             return {
                 domain_id: null,
                 domain: null,
-                app_name: window.config['app.name'],
                 status: {}
             }
         },

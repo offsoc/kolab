@@ -78,7 +78,10 @@ const app = new Vue({
     router: window.router,
     data() {
         return {
-            isAdmin: window.isAdmin
+            isAdmin: window.isAdmin,
+            appName: window.config['app.name'],
+            appUrl: window.config['app.url'],
+            themeDir: '/themes/' + window.config['app.theme']
         }
     },
     methods: {
@@ -160,6 +163,11 @@ const app = new Vue({
             }
 
             clearTimeout(this.refreshTimeout)
+        },
+        logo(mode) {
+            let src = this.appUrl + this.themeDir + '/images/logo_' + (mode || 'header') + '.png'
+
+            return `<img src="${src}" alt="${this.appName}">`
         },
         // Display "loading" overlay inside of the specified element
         addLoader(elem) {
