@@ -78,7 +78,7 @@ class RoomModeratorTest extends TestCaseDusk
                 ->assertMissing('@session div.meet-subscriber:not(.self) svg.user') // owner
                 ->assertVisible('@session div.meet-subscriber:not(.self) svg.moderator') // owner
                 ->click('@session div.meet-subscriber.self .meet-nickname')
-                ->whenAvailable('@session .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session div.meet-subscriber.self .dropdown-menu', function (Browser $browser) {
                     $browser->assertMissing('.permissions');
                 })
                 ->click('@session div.meet-subscriber:not(.self) .meet-nickname')
@@ -101,7 +101,7 @@ class RoomModeratorTest extends TestCaseDusk
                 ->assertMissing('@session div.meet-subscriber.self svg.user') // self
                 ->assertVisible('@session div.meet-subscriber.self svg.moderator') // self
                 ->click('@session div.meet-subscriber.self .meet-nickname')
-                ->whenAvailable('@session .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session div.meet-subscriber.self .dropdown-menu', function (Browser $browser) {
                     $browser->assertChecked('.action-role-moderator input')
                         ->assertDisabled('.action-role-moderator input');
                 })

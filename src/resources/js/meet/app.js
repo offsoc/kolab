@@ -41,6 +41,7 @@ function Meet(container)
     let containerHeight
     let chatCount = 0
     let volumeElement
+    let publishersContainer
     let subscribersContainer
     let scrollStop
 
@@ -107,17 +108,16 @@ function Meet(container)
      *      onMediaSetup        - Called when user clicks the Media setup button
      */
     function joinRoom(data) {
+        // Create a container for subscribers and publishers
+        publishersContainer = $('<div id="meet-publishers">').appendTo(container).get(0)
+        subscribersContainer = $('<div id="meet-subscribers">').appendTo(container).get(0)
+
         resize();
         volumeMeterStop()
 
         data.params = {
             nickname: data.nickname, // user nickname
             // avatar: undefined        // avatar image
-        }
-
-        // Create a container for subscribers
-        if (!subscribersContainer) {
-            subscribersContainer = $('<div id="meet-subscribers">').appendTo(container).get(0)
         }
 
         // TODO: Make sure all supported callbacks exist, so we don't have to check
@@ -185,6 +185,12 @@ function Meet(container)
             // Subscribe to the Stream to receive it
             let subscriber = session.subscribe(event.stream, metadata.element, props);
 
+            Object.assign(metadata, {
+                audioActive: event.stream.audioActive,
+                videoActive: event.stream.videoActive,
+                videoDimensions: event.stream.videoDimensions
+            })
+
             subscriber.on('videoElementCreated', event => {
                 $(event.element).prop({
                     tabindex: -1
@@ -192,9 +198,6 @@ function Meet(container)
 
                 resize()
             })
-
-            metadata.audioActive = event.stream.audioActive
-            metadata.videoActive = event.stream.videoActive
 
             // Update the wrapper controls/status
             participantUpdate(metadata.element, metadata)
@@ -213,7 +216,12 @@ function Meet(container)
 
             if (metadata) {
                 metadata[event.changedProperty] = event.newValue
-                participantUpdate(metadata.element, metadata)
+
+                if (event.changedProperty == 'videoDimensions') {
+                    resize()
+                } else {
+                    participantUpdate(metadata.element, metadata)
+                }
             }
         })
 
@@ -991,6 +999,8 @@ function Meet(container)
      * @param content Optional content to prepend to the element
      */
     function publisherCreate(params, content) {
+        let isScreen = params.role & Roles.SCREEN
+
         // Create the element
         let wrapper = $(
             '<div class="meet-video">'
@@ -1013,6 +1023,10 @@ function Meet(container)
 
         if (content) {
             wrapper.prepend(content)
+        }
+
+        if (isScreen) {
+            wrapper.addClass('screen')
         }
 
         if (params.isSelf) {
@@ -1055,7 +1069,9 @@ function Meet(container)
         // Remove the subscriber element, if exists
         $('#subscriber-' + params.connectionId).remove()
 
-        return wrapper[params.isSelf ? 'prependTo' : 'appendTo'](container)
+        let prio = params.isSelf || (isScreen && !$(publishersContainer).children('.screen').length)
+
+        return wrapper[prio ? 'prependTo' : 'appendTo'](publishersContainer)
             .attr('id', 'publisher-' + params.connectionId)
             .get(0)
     }
@@ -1357,12 +1373,8 @@ function Meet(container)
      * Window onresize event handler (updates room layout)
      */
     function resize() {
-        containerWidth = container.offsetWidth
-        containerHeight = container.offsetHeight
-
-        if (subscribersContainer) {
-            containerHeight -= subscribersContainer.offsetHeight
-        }
+        containerWidth = publishersContainer.offsetWidth
+        containerHeight = publishersContainer.offsetHeight
 
         updateLayout()
         $(container).parent()[window.screen.width <= 768 ? 'addClass' : 'removeClass']('mobile')
@@ -1372,12 +1384,59 @@ function Meet(container)
      * Update the room "matrix" layout
      */
     function updateLayout() {
-        let numOfVideos = $(container).find('.meet-video').length
+        let publishers = $(publishersContainer).find('.meet-video')
+        let numOfVideos = publishers.length
+
         if (!numOfVideos) {
             return
         }
 
-        let css, rows, cols, height
+        let css, rows, cols, height, padding = 0
+
+        // Make the first screen sharing tile big
+        let screenVideo = publishers.filter('.screen').find('video').get(0)
+
+        if (screenVideo) {
+            let element = screenVideo.parentNode
+            let connId = element.id.replace(/^publisher-/, '')
+            let connection = connections[connId]
+
+            // We know the shared screen video dimensions, we can calculate
+            // width/height of the tile in the matrix
+            if (connection && connection.videoDimensions) {
+                let screenWidth = connection.videoDimensions.width
+                let screenHeight = containerHeight
+
+                // TODO: When the shared window is minimized the width/height is set to 1 (or 2)
+                //       - at least on my system. We might need to handle this case nicer. Right now
+                //       it create a 1-2px line on the left of the matrix - not a big issue.
+                // TODO: Make the 0.666 factor bigger for wide screen and small number of participants?
+                let maxWidth = Math.ceil(containerWidth * 0.666)
+
+                if (screenWidth > maxWidth) {
+                    screenWidth = maxWidth
+                }
+
+                // Set the tile position and size
+                $(element).css({
+                    width: screenWidth + 'px',
+                    height: screenHeight + 'px',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0
+                })
+
+                padding = screenWidth + 'px'
+
+                // Now the estate for the rest of participants is what's left on the right side
+                containerWidth -= screenWidth
+                publishers = publishers.not(element)
+                numOfVideos -= 1
+            }
+        }
+
+        // Compensate the shared screen estate with a padding
+        $(publishersContainer).css('padding-left', padding)
 
         const factor = containerWidth / containerHeight
 
@@ -1420,27 +1479,12 @@ function Meet(container)
 
         // console.log('factor=' + factor, 'num=' + numOfVideos, 'cols = '+cols, 'rows=' + rows);
 
-        height = containerHeight / rows
-        css = {
-            width: (100 / cols) + '%',
+        // Update all tiles (except the main shared screen) in the matrix
+        publishers.css({
+            width: (containerWidth / cols) + 'px',
             // Height must be in pixels to make object-fit:cover working
-            height: height + 'px'
-        }
-
-        // Update the matrix
-        $(container).find('.meet-video').css(css)
-        /*
-            .each((idx, elem) => {
-                let video = $(elem).children('video')[0]
-
-                if (video && video.videoWidth && video.videoHeight && video.videoWidth > video.videoHeight) {
-                    // Set max-width to keep the original aspect ratio in cases
-                    // when there's enough room to display the element
-                    let maxWidth = height * video.videoWidth / video.videoHeight
-                    $(elem).css('max-width', maxWidth)
-                }
-            })
-        */
+            height:  (containerHeight / rows) + 'px'
+        })
     }
 
     /**

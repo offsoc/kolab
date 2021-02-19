@@ -65,6 +65,12 @@
         }
     }
 
+    &.screen video {
+        // For shared screen videos we use the original aspect ratio
+        object-fit: scale-down;
+        background: none;
+    }
+
     &.fullscreen {
         video {
             // We don't want the video to be cut in fullscreen
@@ -195,46 +201,55 @@
     overflow: hidden;
 }
 
-#meet-session {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    flex: 1;
-    position: relative; // for #meet-subscribers positioning
+#meet-publishers {
+    height: 100%;
+    position: relative;
 }
 
 #meet-subscribers {
-    display: flex;
-    flex-wrap: wrap;
-    order: 999;
     padding: 0.15em;
-    width: 100%;
     overflow-y: auto;
-
-    &:empty {
-        display: none;
-    }
 
     .meet-subscriber {
         margin: 0.15em;
         max-width: calc(25% - 0.4em);
     }
 
-    // when the subscribers list is the only child this means
-    // there's no publisher videos in the room yet
-    &:only-child {
-        justify-content: center;
-        align-content: center;
-    }
-
-    &:not(:only-child) {
-        max-height: 30%;
-    }
-
     // Language interpreters will be displayed as subscribers, but will have still
     // the video element that we will hide
     video {
         display: none;
+    }
+}
+
+#meet-session {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+
+    & > div {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    #meet-publishers:empty {
+        & + #meet-subscribers {
+            justify-content: center;
+            align-content: center;
+            flex: 1;
+        }
+    }
+
+    #meet-publishers:not(:empty) {
+        & + #meet-subscribers {
+            max-height: 30%;
+        }
     }
 }
 

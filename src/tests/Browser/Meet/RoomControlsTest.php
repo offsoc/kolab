@@ -362,7 +362,7 @@ class RoomControlsTest extends TestCaseDusk
                 ->assertToolbarButtonState('screen', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED);
 
             $guest
-                ->whenAvailable('div.meet-video:nth-child(3)', function (Browser $browser) {
+                ->whenAvailable('div.meet-video.screen', function (Browser $browser) {
                     $browser->waitFor('video')
                         ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
