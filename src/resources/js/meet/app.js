@@ -1012,8 +1012,8 @@ function Meet(container)
                 + '<button type="button" class="btn btn-link link-fullscreen open hidden" title="Full screen">' + svgIcon('compress') + '</button>'
             + '</div>'
             + '<div class="status">'
-                + '<span class="bg-danger status-audio hidden">' + svgIcon('microphone-slash') + '</span>'
-                + '<span class="bg-danger status-video hidden">' + svgIcon('video-slash') + '</span>'
+                + '<span class="bg-warning status-audio hidden">' + svgIcon('microphone-slash') + '</span>'
+                + '<span class="bg-warning status-video hidden">' + svgIcon('video-slash') + '</span>'
             + '</div>'
             + '</div>'
         )

@@ -3,20 +3,20 @@
         <div id="meet-session-toolbar" class="hidden">
             <span id="meet-session-logo" v-html="$root.logo()"></span>
             <div id="meet-session-menu">
-                <button class="btn btn-link link-audio" @click="switchSound" :disabled="!isPublisher()" title="Mute audio">
-                    <svg-icon icon="microphone-slash"></svg-icon>
+                <button class="btn link-audio" :class="{ 'text-primary' : audioActive }" @click="switchSound" :disabled="!isPublisher()" :title="audioActive ? 'Mute audio' : 'Unmute audio'">
+                    <svg-icon :icon="audioActive ? 'microphone' : 'microphone-slash'"></svg-icon>
                 </button>
-                <button class="btn btn-link link-video" @click="switchVideo" :disabled="!isPublisher()" title="Mute video">
-                    <svg-icon icon="video-slash"></svg-icon>
+                <button class="btn link-video" :class="{ 'text-primary' : videoActive }" @click="switchVideo" :disabled="!isPublisher()" :title="videoActive ? 'Mute video' : 'Unmute video'">
+                    <svg-icon :icon="videoActive ? 'video' : 'video-slash'"></svg-icon>
                 </button>
-                <button class="btn btn-link link-screen text-danger" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" title="Share screen">
+                <button class="btn link-screen" :class="{ 'text-danger' : screenShareActive }" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" title="Share screen">
                     <svg-icon icon="desktop"></svg-icon>
                 </button>
-                <button class="btn btn-link link-hand text-danger" v-if="!isPublisher()" @click="switchHand" title="Raise hand">
+                <button class="btn link-hand" :class="{ 'text-primary' : handRaised }"  v-if="!isPublisher()" @click="switchHand" :title="handRaised ? 'Lower hand' : 'Raise hand'">
                     <svg-icon icon="hand-paper"></svg-icon>
                 </button>
                 <span id="channel-select" :style="'display:' + (channels.length ? '' : 'none')" class="dropdown">
-                    <button class="btn btn-link link-channel" title="Interpreted language channel" aria-haspopup="true" aria-expanded="false" data-toggle="dropdown">
+                    <button class="btn link-channel" title="Interpreted language channel" aria-haspopup="true" aria-expanded="false" data-toggle="dropdown">
                         <svg-icon icon="headphones"></svg-icon>
                         <span class="badge badge-danger" v-if="session.channel">{{ session.channel.toUpperCase() }}</span>
                     </button>
@@ -27,19 +27,19 @@
                         >{{ languages[code] }}</a>
                     </div>
                 </span>
-                <button class="btn btn-link link-chat text-danger" @click="switchChat" title="Chat">
+                <button class="btn link-chat" @click="switchChat" title="Chat">
                     <svg-icon icon="comment"></svg-icon>
                 </button>
-                <button class="btn btn-link link-fullscreen closed hidden" @click="switchFullscreen" title="Full screen">
+                <button class="btn link-fullscreen closed hidden" @click="switchFullscreen" title="Full screen">
                     <svg-icon icon="expand"></svg-icon>
                 </button>
-                <button class="btn btn-link link-fullscreen open hidden" @click="switchFullscreen" title="Full screen">
+                <button class="btn link-fullscreen open hidden" @click="switchFullscreen" title="Exit full screen">
                     <svg-icon icon="compress"></svg-icon>
                 </button>
-                <button class="btn btn-link link-options" v-if="isRoomOwner()" @click="roomOptions" title="Room options">
+                <button class="btn link-options" v-if="isRoomOwner()" @click="roomOptions" title="Room options">
                     <svg-icon icon="cog"></svg-icon>
                 </button>
-                <button class="btn btn-link link-logout" @click="logout" title="Leave session">
+                <button class="btn link-logout" @click="logout" title="Leave session">
                     <svg-icon icon="power-off"></svg-icon>
                 </button>
             </div>
@@ -269,7 +269,11 @@
                     429: 'Too many requests. Please, wait.',
                     500: 'Failed to connect to the room. Server error.'
                 },
-                session: {}
+                session: {},
+                audioActive: false,
+                videoActive: false,
+                handRaised: false,
+                screenShareActive: false
             }
         },
         mounted() {
@@ -503,10 +507,6 @@
                     $('#app').addClass('meet')
                     $('#meet-setup').addClass('hidden')
                     $('#meet-session-toolbar,#meet-session-layout').removeClass('hidden')
-
-                    if (!this.canShareScreen) {
-                        this.setMenuItem('screen', false, true)
-                    }
                 }
                 this.session.onError = () => {
                     this.roomState = 500
@@ -615,15 +615,6 @@
             roomOptions() {
                 $('#room-options-dialog').modal()
             },
-            setMenuItem(type, state, disabled) {
-                let button = $('#meet-session-menu').find('.link-' + type)
-
-                button[state ? 'removeClass' : 'addClass']('text-danger')
-
-                if (disabled !== undefined) {
-                    button.prop('disabled', disabled)
-                }
-            },
             setupMedia() {
                 let dialog = $('#media-setup-dialog')
 
@@ -644,23 +635,23 @@
                         this.microphone = setup.audioSource
                         this.camera = setup.videoSource
 
-                        this.setMenuItem('audio', setup.audioActive)
-                        this.setMenuItem('video', setup.videoActive)
+                        this.audioActive = setup.audioActive
+                        this.videoActive = setup.videoActive
                     },
                     onError: error => {
-                        this.setMenuItem('audio', false, true)
-                        this.setMenuItem('video', false, true)
+                        this.audioActive = false
+                        this.videoActive = false
                     }
                 })
             },
             setupCameraChange() {
                 this.meet.setupSetVideoDevice(this.camera).then(enabled => {
-                    this.setMenuItem('video', enabled)
+                    this.videoActive = enabled
                 })
             },
             setupMicrophoneChange() {
                 this.meet.setupSetAudioDevice(this.microphone).then(enabled => {
-                    this.setMenuItem('audio', enabled)
+                    this.audioActive = enabled
                 })
             },
             switchChannel(e) {
@@ -672,8 +663,7 @@
             switchChat() {
                 let chat = $('#meet-chat')
                 let enabled = chat.is('.open')
-
-                this.setMenuItem('chat', !enabled)
+                
                 chat.toggleClass('open')
 
                 if (!enabled) {
@@ -701,21 +691,20 @@
                 }
             },
             switchHand() {
-                let enabled = $('#meet-session-menu').find('.link-hand').is('.text-danger')
-                this.updateSelf({ hand: enabled }, () => { this.setMenuItem('hand', enabled) })
+                this.updateSelf({ hand: !this.handRaised })
             },
             switchSound() {
                 const enabled = this.meet.switchAudio()
-                this.setMenuItem('audio', enabled)
+                this.audioActive = enabled
             },
             switchVideo() {
                 const enabled = this.meet.switchVideo()
-                this.setMenuItem('video', enabled)
+                this.videoActive = enabled
             },
             switchScreen() {
                 const switchScreenAction = () => {
                     this.meet.switchScreen((enabled, error) => {
-                        this.setMenuItem('screen', enabled)
+                        this.screenShareActive = enabled
                         if (!enabled && !error) {
                             // Closing a screen sharing connection invalidates the token
                             delete this.session.shareToken
@@ -723,7 +712,7 @@
                     })
                 }
 
-                if (this.session.shareToken || !$('#meet-session-menu').find('.link-screen').is('.text-danger')) {
+                if (this.session.shareToken || this.screenShareActive) {
                     switchScreenAction()
                 } else {
                     axios.post('/api/v4/openvidu/rooms/' + this.room + '/connections')
@@ -753,9 +742,10 @@
 
                 const isPublisher = this.isPublisher()
 
-                this.setMenuItem('video', isPublisher ? data.videoActive : false)
-                this.setMenuItem('audio', isPublisher ? data.audioActive : false)
-                this.setMenuItem('hand', data.hand)
+                this.videoActive = isPublisher ? data.videoActive : false
+                this.audioActive = isPublisher ? data.audioActive : false
+                
+                this.handRaised = data.hand
             }
         }
     }
