@@ -26,8 +26,20 @@
                         <dt>Room Security</dt>
                         <dd>
                             Increase the room security by setting a password that attendees will need to know
-                            before they can enter, or lock the door so attendees will have to knock, and you (the
-                            moderator) can accept or deny those requests.
+                            before they can enter, or lock the door so attendees will have to knock, and a moderator
+                            can accept or deny those requests.
+                        </dd>
+
+                        <dt>Raise Hand (Q&amp;A)</dt>
+                        <dd>
+                            Silent audience members can raise their hand to facilitate a Question &amp; Answer session
+                            with the panel members.
+                        </dd>
+
+                        <dt>Moderator Delegation</dt>
+                        <dd>
+                            Delegate moderator authority for the session, so that a speaker is not needlessly
+                            interrupted with attendees knocking and other moderator duties.
                         </dd>
 
                         <dt>Eject Attendees</dt>
@@ -38,9 +50,15 @@
 
                         <dt>Silent Audience Members</dt>
                         <dd>
-                            For a webinar-style session, have people that join choose 'None' for both the
-                            microphone and the camera so as to render them silent audience members, to allow more
-                            people in to the room.
+                            For a webinar-style session, configure the room to force all new attendees to be silent
+                            audience members.
+                        </dd>
+
+                        <dt>Language Specific Audio Channels</dt>
+                        <dd>
+                            Designate a participant to interpret the original audio to a target language, for sessions
+                            with multi-lingual attendees. The interpreter is expected to be able to relay the original
+                            audio, and override it.
                         </dd>
                     </dl>
                     <p>
