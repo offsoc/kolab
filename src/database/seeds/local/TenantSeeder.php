@@ -5,6 +5,7 @@ namespace Database\Seeds\Local;
 use App\Tenant;
 use Illuminate\Database\Seeder;
 
+// phpcs:ignore
 class TenantSeeder extends Seeder
 {
     /**
