@@ -160,3 +160,22 @@ Route::group(
         Route::get('stats/chart/{chart}', 'API\V4\Admin\StatsController@chart');
     }
 );
+
+Route::group(
+    [
+        'domain' => 'reseller.' . \config('app.domain'),
+        'middleware' => ['auth:api', 'reseller'],
+        'prefix' => 'v4',
+    ],
+    function () {
+        Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
+        Route::get('domains/{id}/confirm', 'API\V4\Reseller\DomainsController@confirm');
+
+        Route::apiResource('entitlements', API\V4\Reseller\EntitlementsController::class);
+        Route::apiResource('packages', API\V4\Reseller\PackagesController::class);
+        Route::apiResource('skus', API\V4\Reseller\SkusController::class);
+        Route::apiResource('users', API\V4\Reseller\UsersController::class);
+        Route::apiResource('wallets', API\V4\Reseller\WalletsController::class);
+        Route::apiResource('discounts', API\V4\Reseller\DiscountsController::class);
+    }
+);

@@ -39,6 +39,8 @@ class UserObserver
         $user->status |= User::STATUS_NEW | User::STATUS_ACTIVE;
 
         // can't dispatch job here because it'll fail serialization
+
+        $user->tenant_id = (int)\config('app.tenant_id');
     }
 
     /**
