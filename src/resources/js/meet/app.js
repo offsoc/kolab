@@ -1271,7 +1271,7 @@ function Meet(container)
         let nickname = element.find('.meet-nickname')
             .addClass('btn btn-outline-' + (params.isSelf ? 'primary' : 'secondary'))
             .attr({title: 'Options', 'data-toggle': 'dropdown'})
-            .dropdown({boundary: container})
+            .dropdown({boundary: container.parentNode})
 
         if (params.isSelf) {
             // Add events for nickname change

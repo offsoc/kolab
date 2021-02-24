@@ -194,7 +194,7 @@
 }
 
 #meet-session-menu {
-    background: #f6f5f3;
+    background: $menu-bg-color;
     border-radius: 0 2em 2em 0;
     margin: 0.25em 0;
     padding-right: 0.5em;
@@ -307,7 +307,7 @@
     width: 0;
     display: none;
     flex-direction: column;
-    background: $body-bg;
+    background: $menu-bg-color;
     padding-top: 0.25em;
 
     &.open {
@@ -331,6 +331,7 @@
         padding: 0.25em 0.5em;
         border-radius: 1em;
         background: #fff;
+        border: 1px solid #e9e7e2;
         overflow-wrap: break-word;
 
         &.self {
@@ -451,38 +452,62 @@
     }
 }
 
-@include media-breakpoint-down(sm) {
-    #meet-session-logo {
-        display: none;
-    }
-
+@include media-breakpoint-down(xs) {
     #meet-session-menu {
-        background: transparent;
-    }
+        white-space: nowrap;
+        margin: 0;
+        margin-top: 1.25em;
+        border-radius: 0;
+        padding: 0;
+        background: none;
 
-    #app.meet {
-        #footer-menu {
-            display: block !important;
-            height: 2em;
-            padding: 0;
+        button {
+            margin: 0.25em;
+        }
 
-            .navbar-brand {
-                padding: 0;
-                margin: 0;
-            }
-
-            img {
-                width: auto !important;
-                height: 1em;
-            }
+        // .link-screen,
+        .link-fullscreen {
+            display: none;
         }
     }
-}
 
-@include media-breakpoint-down(xs) {
+    #meet-session-logo {
+        background: none;
+        position: absolute;
+        left: 0;
+
+        img {
+            height: 0.8em;
+            padding: 0 0.25em;
+        }
+    }
+
+    #meet-counter {
+        text-align: right;
+        right: 0;
+        padding: 0 0.25em;
+        font-size: 0.9em;
+        background: $menu-bg-color;
+
+        svg {
+            font-size: 1.1em;
+            vertical-align: -0.125em;
+        }
+    }
+
     #meet-setup {
         .card-title {
             text-align: center;
+        }
+    }
+
+    #meet-queue {
+        width: 100px;
+
+        .dropdown {
+            animation: none !important;
+            transition: none;
+            top: 0;
         }
     }
 
