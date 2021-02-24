@@ -180,7 +180,8 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertMissing('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
-                ->assertMissing('#header-menu');
+                ->assertMissing('#header-menu')
+                ->assertSeeIn('@counter', 1);
 
             if (!$browser->isPhone()) {
                 $browser->assertMissing('#footer-menu');
@@ -213,7 +214,8 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertMissing('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
-                ->assertElementsCount('@session div.meet-video', 2);
+                ->assertElementsCount('@session div.meet-video', 2)
+                ->assertSeeIn('@counter', 2);
 
             // Check guest's elements in the owner's window
             $browser
@@ -236,7 +238,8 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertVisible('#header-menu');
 
             // Expect the participant removed from other users windows
-            $browser->waitUntilMissing('@session div.meet-video:not(.self)');
+            $browser->waitUntilMissing('@session div.meet-video:not(.self)')
+                ->assertSeeIn('@counter', 1);
 
             // Join the room as guest again
             $guest->visit(new RoomPage('john'))
@@ -301,14 +304,14 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session video', 0)
                 ->assertElementsCount('@session .meet-subscriber', 1)
                 ->assertToolbar([
-                    'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
-                    'video' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'audio' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_DISABLED,
+                    'video' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_DISABLED,
                     'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
                     'hand' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
-                    'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
-                    'options' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
-                    'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'fullscreen' => RoomPage::BUTTON_ENABLED,
+                    'options' => RoomPage::BUTTON_ENABLED,
+                    'logout' => RoomPage::BUTTON_ENABLED,
                 ]);
 
             // After the owner "opened the room" guest should be able to join
@@ -331,14 +334,15 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session div.meet-video', 0)
                 ->assertElementsCount('@session video', 0)
                 ->assertElementsCount('@session div.meet-subscriber', 2)
+                ->assertSeeIn('@counter', 2)
                 ->assertToolbar([
-                    'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
-                    'video' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
+                    'audio' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_DISABLED,
+                    'video' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_DISABLED,
                     'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_DISABLED,
                     'hand' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
-                    'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
-                    'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'fullscreen' => RoomPage::BUTTON_ENABLED,
+                    'logout' => RoomPage::BUTTON_ENABLED,
                 ]);
 
             // Check guest's elements in the owner's window
@@ -348,7 +352,8 @@ class RoomSetupTest extends TestCaseDusk
                 })
                 ->assertElementsCount('@session div.meet-video', 0)
                 ->assertElementsCount('@session video', 0)
-                ->assertElementsCount('@session .meet-subscriber', 2);
+                ->assertElementsCount('@session .meet-subscriber', 2)
+                ->assertSeeIn('@counter', 2);
 
             // Test leaving the room
 

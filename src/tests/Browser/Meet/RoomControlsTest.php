@@ -105,13 +105,13 @@ class RoomControlsTest extends TestCaseDusk
 
             // Assert current UI state
             $owner->assertToolbar([
-                    'audio' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
-                    'video' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
+                    'video' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
-                    'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
-                    'options' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
-                    'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'fullscreen' => RoomPage::BUTTON_ENABLED,
+                    'options' => RoomPage::BUTTON_ENABLED,
+                    'logout' => RoomPage::BUTTON_ENABLED,
                 ])
                 ->whenAvailable('div.meet-video.self', function (Browser $browser) {
                     $browser->waitFor('video')
@@ -134,12 +134,12 @@ class RoomControlsTest extends TestCaseDusk
 
             // Assert current UI state
             $guest->assertToolbar([
-                    'audio' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
-                    'video' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'audio' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'video' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'screen' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
                     'chat' => RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED,
-                    'fullscreen' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
-                    'logout' => RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED,
+                    'fullscreen' => RoomPage::BUTTON_ENABLED,
+                    'logout' => RoomPage::BUTTON_ENABLED,
                 ])
                 ->whenAvailable('div.meet-video:not(.self)', function (Browser $browser) {
                     $browser->waitFor('video')
@@ -166,7 +166,7 @@ class RoomControlsTest extends TestCaseDusk
 
             // Test muting audio
             $owner->click('@menu button.link-audio')
-                ->assertToolbarButtonState('audio', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
+                ->assertToolbarButtonState('audio', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertVisible('div.meet-video.self .status .status-audio');
 
             // FIXME: It looks that we can't just check the <video> element state
@@ -175,14 +175,14 @@ class RoomControlsTest extends TestCaseDusk
 
             // Test unmuting audio
             $owner->click('@menu button.link-audio')
-                ->assertToolbarButtonState('audio', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
+                ->assertToolbarButtonState('audio', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertMissing('div.meet-video.self .status .status-audio');
 
             $guest->waitUntilMissing('div.meet-video:not(.self) .status .status-audio');
 
             // Test muting audio with a keyboard shortcut (key 'm')
             $owner->driver->getKeyboard()->sendKeys('m');
-            $owner->assertToolbarButtonState('audio', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
+            $owner->assertToolbarButtonState('audio', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertVisible('div.meet-video.self .status .status-audio');
 
             $guest->waitFor('div.meet-video:not(.self) .status .status-audio')
@@ -190,7 +190,7 @@ class RoomControlsTest extends TestCaseDusk
 
             // Test unmuting audio with a keyboard shortcut (key 'm')
             $owner->driver->getKeyboard()->sendKeys('m');
-            $owner->assertToolbarButtonState('audio', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
+            $owner->assertToolbarButtonState('audio', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertMissing('div.meet-video.self .status .status-audio');
 
             $guest->waitUntilMissing('div.meet-video:not(.self) .status .status-audio')
@@ -198,7 +198,7 @@ class RoomControlsTest extends TestCaseDusk
 
             // Test muting video
             $owner->click('@menu button.link-video')
-                ->assertToolbarButtonState('video', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
+                ->assertToolbarButtonState('video', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertVisible('div.meet-video.self .status .status-video');
 
             // FIXME: It looks that we can't just check the <video> element state
@@ -207,7 +207,7 @@ class RoomControlsTest extends TestCaseDusk
 
             // Test unmuting video
             $owner->click('@menu button.link-video')
-                ->assertToolbarButtonState('video', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
+                ->assertToolbarButtonState('video', RoomPage::BUTTON_INACTIVE | RoomPage::BUTTON_ENABLED)
                 ->assertMissing('div.meet-video.self .status .status-video');
 
             $guest->waitUntilMissing('div.meet-video:not(.self) .status .status-video');

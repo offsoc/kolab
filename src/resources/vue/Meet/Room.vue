@@ -1,22 +1,25 @@
 <template>
     <div id="meet-component">
         <div id="meet-session-toolbar" class="hidden">
+            <span id="meet-counter" title="Number of participants"><svg-icon icon="users"></svg-icon> <span></span></span>
             <span id="meet-session-logo" v-html="$root.logo()"></span>
             <div id="meet-session-menu">
-                <button class="btn link-audio" :class="{ 'text-primary' : audioActive }" @click="switchSound" :disabled="!isPublisher()" :title="audioActive ? 'Mute audio' : 'Unmute audio'">
+                <button :class="'btn link-audio' + (audioActive ? '' : ' on')" @click="switchSound" :disabled="!isPublisher()" :title="audioActive ? 'Mute audio' : 'Unmute audio'">
                     <svg-icon :icon="audioActive ? 'microphone' : 'microphone-slash'"></svg-icon>
                 </button>
-                <button class="btn link-video" :class="{ 'text-primary' : videoActive }" @click="switchVideo" :disabled="!isPublisher()" :title="videoActive ? 'Mute video' : 'Unmute video'">
+                <button :class="'btn link-video' + (videoActive ? '' : ' on')" @click="switchVideo" :disabled="!isPublisher()" :title="videoActive ? 'Mute video' : 'Unmute video'">
                     <svg-icon :icon="videoActive ? 'video' : 'video-slash'"></svg-icon>
                 </button>
-                <button class="btn link-screen" :class="{ 'text-danger' : screenShareActive }" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" title="Share screen">
+                <button :class="'btn link-screen' + (screenShareActive ? ' on' : '')" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" title="Share screen">
                     <svg-icon icon="desktop"></svg-icon>
                 </button>
-                <button class="btn link-hand" :class="{ 'text-primary' : handRaised }"  v-if="!isPublisher()" @click="switchHand" :title="handRaised ? 'Lower hand' : 'Raise hand'">
+                <button :class="'btn link-hand' + (handRaised ? ' on' : '')" v-if="!isPublisher()" @click="switchHand" :title="handRaised ? 'Lower hand' : 'Raise hand'">
                     <svg-icon icon="hand-paper"></svg-icon>
                 </button>
                 <span id="channel-select" :style="'display:' + (channels.length ? '' : 'none')" class="dropdown">
-                    <button class="btn link-channel" title="Interpreted language channel" aria-haspopup="true" aria-expanded="false" data-toggle="dropdown">
+                    <button :class="'btn link-channel' + (session.channel ? ' on' : '')" data-toggle="dropdown"
+                            title="Interpreted language channel" aria-haspopup="true" aria-expanded="false"
+                    >
                         <svg-icon icon="headphones"></svg-icon>
                         <span class="badge badge-danger" v-if="session.channel">{{ session.channel.toUpperCase() }}</span>
                     </button>
@@ -27,7 +30,7 @@
                         >{{ languages[code] }}</a>
                     </div>
                 </span>
-                <button class="btn link-chat" @click="switchChat" title="Chat">
+                <button :class="'btn link-chat' + (chatActive ? ' on' : '')" @click="switchChat" title="Chat">
                     <svg-icon icon="comment"></svg-icon>
                 </button>
                 <button class="btn link-fullscreen closed hidden" @click="switchFullscreen" title="Full screen">
@@ -150,19 +153,19 @@
                         <form class="media-setup-form">
                             <div class="media-setup-preview"></div>
                             <div class="input-group mt-2">
-                                <label for="setup-microphone" class="input-group-prepend mb-0">
+                                <label for="setup-mic" class="input-group-prepend mb-0">
                                     <span class="input-group-text" title="Microphone"><svg-icon icon="microphone"></svg-icon></span>
                                 </label>
-                                <select class="custom-select" id="setup-microphone" v-model="microphone" @change="setupMicrophoneChange">
+                                <select class="custom-select" id="setup-mic" v-model="microphone" @change="setupMicrophoneChange">
                                     <option value="">None</option>
                                     <option v-for="mic in setup.microphones" :value="mic.deviceId" :key="mic.deviceId">{{ mic.label }}</option>
                                 </select>
                             </div>
                             <div class="input-group mt-2">
-                                <label for="setup-camera" class="input-group-prepend mb-0">
+                                <label for="setup-cam" class="input-group-prepend mb-0">
                                     <span class="input-group-text" title="Camera"><svg-icon icon="video"></svg-icon></span>
                                 </label>
-                                <select class="custom-select" id="setup-camera" v-model="camera" @change="setupCameraChange">
+                                <select class="custom-select" id="setup-cam" v-model="camera" @change="setupCameraChange">
                                     <option value="">None</option>
                                     <option v-for="cam in setup.cameras" :value="cam.deviceId" :key="cam.deviceId">{{ cam.label }}</option>
                                 </select>
@@ -203,6 +206,7 @@
         faMicrophoneAlt,
         faPowerOff,
         faUser,
+        faUsers,
         faVideo,
         faVideoSlash,
         faVolumeMute
@@ -223,6 +227,7 @@
         faMicrophoneAlt,
         faPowerOff,
         faUser,
+        faUsers,
         faVideo,
         faVideoSlash,
         faVolumeMute
@@ -272,6 +277,7 @@
                 session: {},
                 audioActive: false,
                 videoActive: false,
+                chatActive: false,
                 handRaised: false,
                 screenShareActive: false
             }
@@ -503,6 +509,7 @@
                 this.session.menuElement = $('#meet-session-menu')[0]
                 this.session.chatElement = $('#meet-chat')[0]
                 this.session.queueElement = $('#meet-queue')[0]
+                this.session.counterElement = $('#meet-counter span')[0]
                 this.session.onSuccess = () => {
                     $('#app').addClass('meet')
                     $('#meet-setup').addClass('hidden')
@@ -663,12 +670,14 @@
             switchChat() {
                 let chat = $('#meet-chat')
                 let enabled = chat.is('.open')
-                
+
                 chat.toggleClass('open')
 
                 if (!enabled) {
                     chat.find('textarea').focus()
                 }
+
+                this.chatActive = !enabled
 
                 // Trigger resize, so participant matrix can update its layout
                 window.dispatchEvent(new Event('resize'));
@@ -694,12 +703,10 @@
                 this.updateSelf({ hand: !this.handRaised })
             },
             switchSound() {
-                const enabled = this.meet.switchAudio()
-                this.audioActive = enabled
+                this.audioActive = this.meet.switchAudio()
             },
             switchVideo() {
-                const enabled = this.meet.switchVideo()
-                this.videoActive = enabled
+                this.videoActive = this.meet.switchVideo()
             },
             switchScreen() {
                 const switchScreenAction = () => {
@@ -744,7 +751,6 @@
 
                 this.videoActive = isPublisher ? data.videoActive : false
                 this.audioActive = isPublisher ? data.audioActive : false
-                
                 this.handRaised = data.hand
             }
         }

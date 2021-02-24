@@ -41,7 +41,7 @@
                         <hr>
                         <form id="room-options-nomedia">
                             <div id="room-nomedia">
-                                <label for="room-lock-input">Subscribers only:</label>
+                                <label for="room-nomedia-input">Subscribers only:</label>
                                 <input type="checkbox" id="room-nomedia-input" name="lock" value="1" :checked="config.nomedia" @click="nomediaSave">
                             </div>
                             <small class="form-text text-muted">

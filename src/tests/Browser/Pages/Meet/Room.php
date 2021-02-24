@@ -78,6 +78,8 @@ class Room extends Page
 
             '@menu' => '#meet-session-menu',
 
+            '@counter' => '#meet-counter',
+
             '@session' => '#meet-session',
             '@subscribers' => '#meet-subscribers',
             '@queue' => '#meet-queue',
@@ -121,11 +123,11 @@ class Room extends Page
         $class = '';
 
         if ($state & self::BUTTON_ACTIVE) {
-            $class .= ':not(.text-danger)';
+            $class .= '.on';
         }
 
         if ($state & self::BUTTON_INACTIVE) {
-            $class .= '.text-danger';
+            $class .= ':not(.on)';
         }
 
         if ($state & self::BUTTON_DISABLED) {

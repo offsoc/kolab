@@ -96,6 +96,7 @@ function Meet(container)
      *      channel     - Selected interpreted language channel (two-letter language code)
      *      languages   - Supported languages (code-to-label map)
      *      chatElement - DOM element for the chat widget,
+     *      counterElement - DOM element for the participants counter,
      *      menuElement - DOM element of the room toolbar,
      *      queueElement - DOM element for the Q&A queue (users with a raised hand)
      *      onSuccess           - Callback for session connection (join) success
@@ -1386,6 +1387,10 @@ function Meet(container)
     function updateLayout() {
         let publishers = $(publishersContainer).find('.meet-video')
         let numOfVideos = publishers.length
+
+        if (sessionData && sessionData.counterElement) {
+            sessionData.counterElement.innerHTML = Object.keys(connections).length + 1
+        }
 
         if (!numOfVideos) {
             return
