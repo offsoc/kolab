@@ -264,7 +264,7 @@ class StatsController extends \App\Http\Controllers\Controller
             ->get();
 
         $deleted = DB::table('users')
-            ->selectRaw("concat(year(deleted_at), '-', week(deleted_at, 3)) as period, count(*) as cnt")
+            ->selectRaw("date_format(deleted_at, '%Y-%v') as period, count(*) as cnt")
             ->where('deleted_at', '>=', $start->toDateString())
             ->groupByRaw('1')
             ->get();
