@@ -207,7 +207,7 @@ class StatsController extends \App\Http\Controllers\Controller
 
         return [
             'title' => 'Users - last 8 weeks',
-            // 'type' => 'axis-mixed',
+            'type' => 'bar', // Required to fix https://github.com/frappe/charts/issues/294
             'colors' => [self::COLOR_GREEN, self::COLOR_RED],
             'axisOptions' => [
                 'xIsSeries' => true,
