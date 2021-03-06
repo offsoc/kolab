@@ -58,6 +58,13 @@ abstract class GroupJob extends CommonJob
         $group = \App\Group::withTrashed()->find($this->groupId);
 
         if (!$group) {
+            // The record might not exist yet in case of a db replication environment
+            // This will release the job and delay another attempt for 5 seconds
+            if ($this instanceof Group\CreateJob) {
+                $this->release(5);
+                return null;
+            }
+
             $this->fail(new \Exception("Group {$this->groupId} could not be found in the database."));
         }
 

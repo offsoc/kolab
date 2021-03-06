@@ -15,6 +15,10 @@ class VerifyJob extends DomainJob
     {
         $domain = $this->getDomain();
 
+        if (!$domain) {
+            return;
+        }
+
         $domain->verify();
     }
 }

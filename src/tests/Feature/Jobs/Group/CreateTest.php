@@ -39,5 +39,12 @@ class CreateTest extends TestCase
         $job->handle();
 
         $this->assertTrue($group->fresh()->isLdapReady());
+
+        // Test non-existing group ID
+        $job = new \App\Jobs\Group\CreateJob(123);
+        $job->handle();
+
+        $this->assertTrue($job->isReleased());
+        $this->assertFalse($job->hasFailed());
     }
 }

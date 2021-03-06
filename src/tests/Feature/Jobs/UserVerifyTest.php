@@ -41,6 +41,14 @@ class UserVerifyTest extends TestCase
     {
         Queue::fake();
 
+        // Test non-existing user ID
+        $job = new \App\Jobs\User\VerifyJob(123);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("User 123 could not be found in the database.", $job->failureMessage);
+
+        // Test existing user
         $user = $this->getTestUser('ned@kolab.org');
 
         if ($user->isImapReady()) {

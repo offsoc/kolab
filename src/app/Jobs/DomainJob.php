@@ -58,6 +58,13 @@ abstract class DomainJob extends CommonJob
         $domain = \App\Domain::withTrashed()->find($this->domainId);
 
         if (!$domain) {
+            // The record might not exist yet in case of a db replication environment
+            // This will release the job and delay another attempt for 5 seconds
+            if ($this instanceof Domain\CreateJob) {
+                $this->release(5);
+                return null;
+            }
+
             $this->fail(new \Exception("Domain {$this->domainId} could not be found in the database."));
         }
 

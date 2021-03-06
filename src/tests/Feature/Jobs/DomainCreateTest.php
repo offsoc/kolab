@@ -63,5 +63,12 @@ class DomainCreateTest extends TestCase
                     $domainNamespace === $domain->namespace;
             }
         );
+
+        // Test job releasing on unknown identifier
+        $job = new \App\Jobs\Domain\CreateJob(123);
+        $job->handle();
+
+        $this->assertTrue($job->isReleased());
+        $this->assertFalse($job->hasFailed());
     }
 }

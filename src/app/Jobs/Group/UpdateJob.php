@@ -15,6 +15,10 @@ class UpdateJob extends GroupJob
     {
         $group = $this->getGroup();
 
+        if (!$group) {
+            return;
+        }
+
         if (!$group->isLdapReady()) {
             $this->delete();
             return;

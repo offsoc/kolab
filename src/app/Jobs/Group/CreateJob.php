@@ -15,6 +15,10 @@ class CreateJob extends GroupJob
     {
         $group = $this->getGroup();
 
+        if (!$group) {
+            return;
+        }
+
         if (!$group->isLdapReady()) {
             \App\Backends\LDAP::createGroup($group);
 

@@ -15,6 +15,10 @@ class UpdateJob extends UserJob
     {
         $user = $this->getUser();
 
+        if (!$user) {
+            return;
+        }
+
         if (!$user->isLdapReady()) {
             $this->delete();
             return;

@@ -30,6 +30,13 @@ abstract class CommonJob implements ShouldQueue
     public $failureMessage;
 
     /**
+     * The job released state.
+     *
+     * @var bool
+     */
+    protected $isReleased = false;
+
+    /**
      * The number of tries for this Job.
      *
      * @var int
@@ -69,5 +76,32 @@ abstract class CommonJob implements ShouldQueue
     public function hasFailed(): bool
     {
         return $this->failureMessage !== null;
+    }
+
+    /**
+     * Release the job back into the queue.
+     *
+     * @param int $delay Time in seconds
+     * @return void
+     */
+    public function release($delay = 0)
+    {
+        // We need this for testing purposes
+        $this->isReleased = true;
+
+        // @phpstan-ignore-next-line
+        if ($this->job) {
+            $this->job->release($delay);
+        }
+    }
+
+    /**
+     * Check if the job was released
+     *
+     * @return bool
+     */
+    public function isReleased(): bool
+    {
+        return $this->isReleased;
     }
 }

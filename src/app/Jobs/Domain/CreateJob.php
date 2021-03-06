@@ -15,6 +15,10 @@ class CreateJob extends DomainJob
     {
         $domain = $this->getDomain();
 
+        if (!$domain) {
+            return;
+        }
+
         if (!$domain->isLdapReady()) {
             \App\Backends\LDAP::createDomain($domain);
 

@@ -38,5 +38,12 @@ class UpdateTest extends TestCase
 
         // TODO: Test if group properties (members) actually changed in LDAP
         $this->assertTrue(true);
+
+        // Test non-existing group ID
+        $job = new \App\Jobs\Group\UpdateJob(123);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("Group 123 could not be found in the database.", $job->failureMessage);
     }
 }

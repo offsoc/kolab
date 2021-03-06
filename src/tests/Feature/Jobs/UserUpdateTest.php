@@ -83,5 +83,12 @@ class UserUpdateTest extends TestCase
         $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));
 
         $this->assertTrue(empty($ldap_user['alias']));
+
+        // Test non-existing user ID
+        $job = new \App\Jobs\User\UpdateJob(123);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("User 123 could not be found in the database.", $job->failureMessage);
     }
 }

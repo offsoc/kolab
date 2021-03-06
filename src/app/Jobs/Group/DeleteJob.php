@@ -15,6 +15,10 @@ class DeleteJob extends GroupJob
     {
         $group = $this->getGroup();
 
+        if (!$group) {
+            return;
+        }
+
         // sanity checks
         if ($group->isDeleted()) {
             $this->fail(new \Exception("Group {$this->groupId} is already marked as deleted."));

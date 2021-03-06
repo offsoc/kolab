@@ -49,5 +49,12 @@ class DeleteTest extends TestCase
 
         $this->assertFalse($group->isLdapReady());
         $this->assertTrue($group->isDeleted());
+
+        // Test non-existing group ID
+        $job = new \App\Jobs\Group\DeleteJob(123);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("Group 123 could not be found in the database.", $job->failureMessage);
     }
 }
