@@ -1050,9 +1050,7 @@ function Meet(container)
 
             wrapper.on('fullscreenchange', () => {
                 // const enabled = document.fullscreenElement
-                wrapper.find('.link-fullscreen.closed').toggleClass('hidden')
-                wrapper.find('.link-fullscreen.open').toggleClass('hidden')
-                wrapper.toggleClass('fullscreen')
+                wrapper.find('.link-fullscreen').toggleClass('hidden')
             })
         }
 

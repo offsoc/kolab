@@ -71,7 +71,7 @@
         background: none;
     }
 
-    &.fullscreen {
+    &:fullscreen {
         video {
             // We don't want the video to be cut in fullscreen
             // This will preserve the aspect ratio of the video stream
@@ -230,6 +230,19 @@
             width: 1em;
         }
     }
+
+    #meet-component:fullscreen & {
+        background: transparent;
+
+        button {
+            color: $main-color;
+
+            &.on:not(:disabled) {
+                background: $main-color;
+                color: #000;
+            }
+        }
+    }
 }
 
 #meet-session-logo {
@@ -243,6 +256,10 @@
     img {
         height: 1.25em;
         padding: 0 1em 0 1.5em;
+    }
+
+    #meet-component:fullscreen & {
+        background: transparent;
     }
 }
 
@@ -314,6 +331,10 @@
         }
     }
 
+    #meet-component:fullscreen & {
+        background: transparent;
+    }
+
     .chat {
         flex: 1;
         overflow-y: auto;
@@ -342,8 +363,6 @@
         color: $secondary;
         text-align: right;
     }
-
-    // TODO: mobile mode
 }
 
 #meet-queue {
