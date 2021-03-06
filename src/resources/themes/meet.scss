@@ -295,12 +295,6 @@
             flex: 1;
         }
     }
-
-    #meet-publishers:not(:empty) {
-        & + #meet-subscribers {
-            max-height: 30%;
-        }
-    }
 }
 
 #meet-chat {

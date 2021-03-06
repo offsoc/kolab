@@ -37,8 +37,6 @@ function Meet(container)
     let microphones = []        // List of user audio devices
     let connections = {}        // Connected users in the session
 
-    let containerWidth
-    let containerHeight
     let chatCount = 0
     let volumeElement
     let publishersContainer
@@ -121,8 +119,16 @@ function Meet(container)
             // avatar: undefined        // avatar image
         }
 
-        // TODO: Make sure all supported callbacks exist, so we don't have to check
-        //       their existence everywhere anymore
+        // Make sure all supported callbacks exist, so we don't have to check
+        // their existence everywhere anymore
+        let events = ['Success', 'Error', 'Destroy', 'Dismiss', 'JoinRequest', 'ConnectionChange',
+            'SessionDataUpdate', 'MediaSetup']
+
+        events.map(event => 'on' + event).forEach(event => {
+            if (!data[event]) {
+                data[event] = () => {}
+            }
+        })
 
         sessionData = data
 
@@ -228,10 +234,7 @@ function Meet(container)
 
         // Handle session disconnection events
         session.on('sessionDisconnected', event => {
-            if (data.onDestroy) {
-                data.onDestroy(event)
-            }
-
+            data.onDestroy(event)
             session = null
             resize()
         })
@@ -242,9 +245,7 @@ function Meet(container)
         // Connect with the token
         session.connect(data.token, data.params)
             .then(() => {
-                if (data.onSuccess) {
-                    data.onSuccess()
-                }
+                data.onSuccess()
 
                 let params = {
                     connectionId: session.connection.connectionId,
@@ -287,16 +288,13 @@ function Meet(container)
                 sessionData.channels = getChannels(data.connections)
 
                 // Inform the vue component, so it can update some UI controls
-                if (sessionData.channels.length && sessionData.onSessionDataUpdate) {
+                if (sessionData.channels.length) {
                     sessionData.onSessionDataUpdate(sessionData)
                 }
             })
             .catch(error => {
                 console.error('There was an error connecting to the session: ', error.message);
-
-                if (data.onError) {
-                    data.onError(error)
-                }
+                data.onError(error)
             })
 
         // Prepare the chat
@@ -606,7 +604,7 @@ function Meet(container)
 
             case 'signal:joinRequest':
                 // accept requests from the server only
-                if (!connId && sessionData.onJoinRequest) {
+                if (!connId) {
                     sessionData.onJoinRequest(JSON.parse(signal.data))
                 }
                 break
@@ -870,9 +868,7 @@ function Meet(container)
                     sessionData.audioActive = publisher.stream.audioActive
                     sessionData.videoActive = publisher.stream.videoActive
 
-                    if (sessionData.onSessionDataUpdate) {
-                        sessionData.onSessionDataUpdate(sessionData)
-                    }
+                    sessionData.onSessionDataUpdate(sessionData)
                 })
 
                 // Open the media setup dialog
@@ -885,9 +881,7 @@ function Meet(container)
                 // It might make sense to not start streaming automatically in any cirmustances,
                 // display the dialog and wait until user closes it, but this would be
                 // a bigger refactoring.
-                if (sessionData.onMediaSetup) {
-                    sessionData.onMediaSetup()
-                }
+                sessionData.onMediaSetup()
             }
         } else if (conn) {
             handUpdate(conn)
@@ -912,9 +906,7 @@ function Meet(container)
         }
 
         // Inform the vue component, so it can update some UI controls
-        if (sessionData.onSessionDataUpdate) {
-            sessionData.onSessionDataUpdate(sessionData)
-        }
+        sessionData.onSessionDataUpdate(sessionData)
     }
 
     /**
@@ -1031,10 +1023,7 @@ function Meet(container)
         }
 
         if (params.isSelf) {
-            if (sessionData.onMediaSetup) {
-                wrapper.find('.link-setup').removeClass('hidden')
-                    .click(() => sessionData.onMediaSetup())
-            }
+            wrapper.find('.link-setup').removeClass('hidden').click(() => sessionData.onMediaSetup())
         } else {
             // Enable audio mute button
             wrapper.find('.link-audio').removeClass('hidden')
@@ -1306,9 +1295,7 @@ function Meet(container)
             element.find('.action-nickname').remove()
 
             element.find('.action-dismiss').on('click', e => {
-                if (sessionData.onDismiss) {
-                    sessionData.onDismiss(params.connectionId)
-                }
+                sessionData.onDismiss(params.connectionId)
             })
         }
 
@@ -1325,47 +1312,45 @@ function Meet(container)
         // Don't close the menu on permission change
         element.find('.dropdown-menu > label').on('click', e => { e.stopPropagation() })
 
-        if (sessionData.onConnectionChange) {
-            element.find('.action-role-publisher input').on('change', e => {
-                const enabled = e.target.checked
-                let role = connectionRole()
+        element.find('.action-role-publisher input').on('change', e => {
+            const enabled = e.target.checked
+            let role = connectionRole()
 
-                if (enabled) {
-                    role |= Roles.PUBLISHER
-                } else {
-                    role |= Roles.SUBSCRIBER
-                    if (role & Roles.PUBLISHER) {
-                        role ^= Roles.PUBLISHER
-                    }
+            if (enabled) {
+                role |= Roles.PUBLISHER
+            } else {
+                role |= Roles.SUBSCRIBER
+                if (role & Roles.PUBLISHER) {
+                    role ^= Roles.PUBLISHER
                 }
+            }
 
-                sessionData.onConnectionChange(params.connectionId, { role })
+            sessionData.onConnectionChange(params.connectionId, { role })
+        })
+
+        element.find('.action-role-moderator input').on('change', e => {
+            const enabled = e.target.checked
+            let role = connectionRole()
+
+            if (enabled) {
+                role |= Roles.MODERATOR
+            } else if (role & Roles.MODERATOR) {
+                role ^= Roles.MODERATOR
+            }
+
+            sessionData.onConnectionChange(params.connectionId, { role })
+        })
+
+        element.find('.interpreting select')
+            .on('change', e => {
+                const language = $(e.target).val()
+                sessionData.onConnectionChange(params.connectionId, { language })
+                element.find('.meet-nickname').dropdown('hide')
             })
-
-            element.find('.action-role-moderator input').on('change', e => {
-                const enabled = e.target.checked
-                let role = connectionRole()
-
-                if (enabled) {
-                    role |= Roles.MODERATOR
-                } else if (role & Roles.MODERATOR) {
-                    role ^= Roles.MODERATOR
-                }
-
-                sessionData.onConnectionChange(params.connectionId, { role })
+            .on('click', e => {
+                // Prevents from closing the dropdown menu on click
+                e.stopPropagation()
             })
-
-            element.find('.interpreting select')
-                .on('change', e => {
-                    const language = $(e.target).val()
-                    sessionData.onConnectionChange(params.connectionId, { language })
-                    element.find('.meet-nickname').dropdown('hide')
-                })
-                .on('click', e => {
-                    // Prevents from closing the dropdown menu on click
-                    e.stopPropagation()
-                })
-        }
 
         return element.get(0)
     }
@@ -1374,10 +1359,10 @@ function Meet(container)
      * Window onresize event handler (updates room layout)
      */
     function resize() {
-        containerWidth = publishersContainer.offsetWidth
-        containerHeight = publishersContainer.offsetHeight
+        if (publishersContainer) {
+            updateLayout()
+        }
 
-        updateLayout()
         $(container).parent()[window.screen.width <= 768 ? 'addClass' : 'removeClass']('mobile')
     }
 
@@ -1393,7 +1378,23 @@ function Meet(container)
         }
 
         if (!numOfVideos) {
+            subscribersContainer.style.minHeight = 'auto'
             return
+        }
+
+        let allHeight = container.offsetHeight
+        let scrollHeight = subscribersContainer.scrollHeight
+        let containerWidth = publishersContainer.offsetWidth
+        let containerHeight = publishersContainer.offsetHeight
+        let limit = Math.ceil(allHeight * 0.25) // max subscribers list height
+
+        // Fix subscribers list height
+        if (subscribersContainer.offsetHeight <= scrollHeight) {
+            limit = Math.min(scrollHeight, limit)
+            subscribersContainer.style.minHeight = limit + 'px'
+            containerHeight = allHeight - limit
+        } else {
+            subscribersContainer.style.minHeight = 'auto'
         }
 
         let css, rows, cols, height, padding = 0

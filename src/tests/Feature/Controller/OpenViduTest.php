@@ -18,14 +18,14 @@ class OpenViduTest extends TestCase
 
         $this->clearMeetEntitlements();
         $room = Room::where('name', 'john')->first();
-        $room->setSettings(['password' => null, 'locked' => null]);
+        $room->setSettings(['password' => null, 'locked' => null, 'nomedia' => null]);
     }
 
     public function tearDown(): void
     {
         $this->clearMeetEntitlements();
         $room = Room::where('name', 'john')->first();
-        $room->setSettings(['password' => null, 'locked' => null]);
+        $room->setSettings(['password' => null, 'locked' => null, 'nomedia' => null]);
 
         parent::tearDown();
     }
@@ -192,6 +192,23 @@ class OpenViduTest extends TestCase
         $post = ['init' => 'init'];
         $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(200);
+
+        // Test 'nomedia' room option
+        $room->setSettings(['nomedia' => 'true', 'password' => null]);
+
+        $post = ['init' => 'init', 'canPublish' => true];
+        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+        $this->assertSame(Room::ROLE_PUBLISHER & $json['role'], Room::ROLE_PUBLISHER);
+
+        $post = ['init' => 'init', 'canPublish' => true];
+        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+        $this->assertSame(Room::ROLE_PUBLISHER & $json['role'], 0);
     }
 
     /**

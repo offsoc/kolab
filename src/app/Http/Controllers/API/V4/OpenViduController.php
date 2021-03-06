@@ -309,7 +309,7 @@ class OpenViduController extends Controller
         // Initialize connection tokens
         if ($init) {
             // Choose the connection role
-            $canPublish = empty($config['nomedia']) && !empty(request()->input('canPublish'));
+            $canPublish = !empty(request()->input('canPublish')) && (empty($config['nomedia']) || $isOwner);
             $role = $canPublish ? Room::ROLE_PUBLISHER : Room::ROLE_SUBSCRIBER;
             if ($isOwner) {
                 $role |= Room::ROLE_MODERATOR;
