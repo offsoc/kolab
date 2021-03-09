@@ -1,0 +1,44 @@
+#!/bin/bash
+
+set -x
+
+set -e
+
+pwd
+
+if [ -z "${GIT_URI}" ]; then
+    echo "No GIT_URI specified. Exiting."
+    exit 1
+fi
+
+git clone -b ${GIT_BRANCH:-master} ${GIT_URI}
+
+cd $(basename ${GIT_URI} .git)
+
+if [ ! -z "${APP_SRC}" ]; then
+    cd ${APP_SRC}
+fi
+
+if [ -f "composer.json" ]; then
+    echo "Detected composer.json, running install"
+    php -dmemory_limit=${COMPOSER_MEMORY_LIMIT:--1} /usr/bin/composer install ${COMPOSER_ARGS}
+    rm -rf ~/.cache/composer/
+fi
+
+if [ -z "${LARAVEL_ENV}" ]; then
+    LARAVEL_ENV=prod
+fi
+
+npm install
+
+npm run ${LARAVEL_ENV} && rm -rf ~/.npm/
+
+cd -
+
+# Build libpst
+git clone -b stable/kolab-0.6.76 https://git.kolab.org/source/libpst.git
+cd libpst
+autoreconf -vif
+./configure --enable-libpst-shared --with-boost-python=boost_python39
+make -j5
+sudo make install
