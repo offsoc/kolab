@@ -33,8 +33,9 @@ mix.webpackConfig({
     }
 })
 
-mix.js('resources/js/user.js', 'public/js')
-    .js('resources/js/admin.js', 'public/js')
+mix.js('resources/js/user/app.js', 'public/js/user.js')
+    .js('resources/js/admin/app.js', 'public/js/admin.js')
+    .js('resources/js/reseller/app.js', 'public/js/reseller.js')
 
 glob.sync('resources/themes/*/', {}).forEach(fromDir => {
     const toDir = fromDir.replace('resources/themes/', 'public/themes/')

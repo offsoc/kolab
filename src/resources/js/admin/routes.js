@@ -1,10 +1,10 @@
-import DashboardComponent from '../vue/Admin/Dashboard'
-import DomainComponent from '../vue/Admin/Domain'
-import LoginComponent from '../vue/Login'
-import LogoutComponent from '../vue/Logout'
-import PageComponent from '../vue/Page'
-import StatsComponent from '../vue/Admin/Stats'
-import UserComponent from '../vue/Admin/User'
+import DashboardComponent from '../../vue/Admin/Dashboard'
+import DomainComponent from '../../vue/Admin/Domain'
+import LoginComponent from '../../vue/Login'
+import LogoutComponent from '../../vue/Logout'
+import PageComponent from '../../vue/Page'
+import StatsComponent from '../../vue/Admin/Stats'
+import UserComponent from '../../vue/Admin/User'
 
 const routes = [
     {

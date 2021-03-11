@@ -38,9 +38,9 @@ class UserObserver
         // only users that are not imported get the benefit of the doubt.
         $user->status |= User::STATUS_NEW | User::STATUS_ACTIVE;
 
-        // can't dispatch job here because it'll fail serialization
-
-        $user->tenant_id = (int)\config('app.tenant_id');
+        if (empty($user->tenant_id)) {
+            $user->tenant_id = (int) \config('app.tenant_id');
+        }
     }
 
     /**

@@ -78,7 +78,7 @@ const app = new Vue({
     router: window.router,
     data() {
         return {
-            isAdmin: window.isAdmin,
+            isUser: !window.isAdmin && !window.isReseller,
             appName: window.config['app.name'],
             appUrl: window.config['app.url'],
             themeDir: '/themes/' + window.config['app.theme']

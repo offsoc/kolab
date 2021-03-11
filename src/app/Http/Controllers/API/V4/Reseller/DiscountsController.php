@@ -15,16 +15,15 @@ class DiscountsController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $tenantId = $user->tenant()->id;
-
+        $tenantId = $user->tenant->id;
         $discounts = [];
 
-        Discount::where(
-            [
+        Discount::where([
                 'active' => true,
                 'tenant_id' => $tenantId
             ])
-            ->orderBy('discount')->get()
+            ->orderBy('discount')
+            ->get()
             ->map(function ($discount) use (&$discounts) {
                 $label = $discount->discount . '% - ' . $discount->description;
 
