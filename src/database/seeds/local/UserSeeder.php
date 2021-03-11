@@ -147,6 +147,7 @@ class UserSeeder extends Seeder
         $jeroen->save();
 
         $tenant = \App\Tenant::where('title', 'Sample Tenant')->first();
+
         $reseller = User::create(
             [
                 'email' => 'reseller@reseller.com',
