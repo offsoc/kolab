@@ -28,7 +28,9 @@ class DomainObserver
 
         $domain->status |= Domain::STATUS_NEW;
 
-        $domain->tenant_id = \config('app.tenant_id');
+        if (empty($domain->tenant_id)) {
+            $domain->tenant_id = (int) \config('app.tenant_id');
+        }
     }
 
     /**

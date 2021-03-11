@@ -145,5 +145,17 @@ class UserSeeder extends Seeder
 
         $jeroen->role = 'admin';
         $jeroen->save();
+
+        $tenant = \App\Tenant::where('title', 'Sample Tenant')->first();
+        $reseller = User::create(
+            [
+                'email' => 'reseller@reseller.com',
+                'password' => 'reseller',
+                'tenant_id' => $tenant->id,
+            ]
+        );
+
+        $reseller->role = 'reseller';
+        $reseller->save();
     }
 }

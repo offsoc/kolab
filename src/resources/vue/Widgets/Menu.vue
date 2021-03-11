@@ -23,7 +23,7 @@
                             {{ item.title }}
                         </router-link>
                     </li>
-                    <li class="nav-item" v-if="!loggedIn && !$root.isAdmin">
+                    <li class="nav-item" v-if="!loggedIn && $root.isUser">
                         <router-link class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">Signup</router-link>
                     </li>
                     <li class="nav-item" v-if="loggedIn">
@@ -81,9 +81,12 @@
 
                     // TODO: Different menu for different loggedIn state
 
-                    if (window.isAdmin && !item.admin) {
-                        return
-                    } else if (!window.isAdmin && item.admin === 'only') {
+                    if (
+                        (window.isAdmin && !item.admin)
+                        || (!window.isAdmin && item.admin === 'only')
+                        || (window.isReseller && !item.reseller)
+                        || (!window.isReseller && item.reseller === 'only')
+                    ) {
                         return
                     }
 

@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * The eloquent definition of a Domain.
  *
  * @property string $namespace
+ * @property int    $status
+ * @property int    $tenant_id
+ * @property int    $type
  */
 class Domain extends Model
 {
@@ -48,6 +51,7 @@ class Domain extends Model
     protected $fillable = [
         'namespace',
         'status',
+        'tenant_id',
         'type'
     ];
 
