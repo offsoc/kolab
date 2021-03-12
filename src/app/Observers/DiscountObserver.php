@@ -25,5 +25,9 @@ class DiscountObserver
                 break;
             }
         }
+
+        if (empty($discount->tenant_id)) {
+            $discount->tenant_id = (int) \config('app.tenant_id');
+        }
     }
 }

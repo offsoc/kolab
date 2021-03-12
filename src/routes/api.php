@@ -165,7 +165,7 @@ Route::group(
     [
         'domain' => 'reseller.' . \config('app.domain'),
         'middleware' => ['auth:api', 'reseller'],
-        'prefix' => 'v4',
+        'prefix' => $prefix . 'api/v4',
     ],
     function () {
         Route::apiResource('domains', API\V4\Reseller\DomainsController::class);

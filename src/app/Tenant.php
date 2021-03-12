@@ -18,4 +18,14 @@ class Tenant extends Model
     ];
 
     protected $keyType = 'bigint';
+
+    /**
+     * Discounts assigned to this tenant.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function discounts()
+    {
+        return $this->hasMany('App\Discount');
+    }
 }
