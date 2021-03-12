@@ -50,6 +50,7 @@ class UserStatus extends Command
             'deleted' => User::STATUS_DELETED,
             'ldapReady' => User::STATUS_LDAP_READY,
             'imapReady' => User::STATUS_IMAP_READY,
+            'degraded' => User::STATUS_DEGRADED,
         ];
 
         foreach ($statuses as $text => $bit) {
