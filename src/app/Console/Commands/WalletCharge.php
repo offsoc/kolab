@@ -42,7 +42,7 @@ class WalletCharge extends Command
             // Find specified wallet by ID
             $wallet = Wallet::find($wallet);
 
-            if (!$wallet || !$wallet->owner) {
+            if (!$wallet || !$wallet->owner || $wallet->owner->tenant_id != \config('app.tenant_id')) {
                 return 1;
             }
 
@@ -51,6 +51,7 @@ class WalletCharge extends Command
             // Get all wallets, excluding deleted accounts
             $wallets = Wallet::select('wallets.*')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
+                ->withTenant('users')
                 ->whereNull('users.deleted_at')
                 ->get();
         }
