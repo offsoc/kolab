@@ -58,8 +58,6 @@ class DiscountsTest extends TestCase
         $this->assertSame(0, $json['count']);
 
         // Add some discounts
-        $tenant = Tenant::where('title', 'Sample Tenant')->first();
-
         $discount_test = Discount::create([
                 'description' => 'Test reseller voucher',
                 'code' => 'RESELLER-TEST',

@@ -30,6 +30,7 @@ class Discount extends Model
         'code',
         'description',
         'discount',
+        'tenant_id',
     ];
 
     /** @var array Translatable properties */
