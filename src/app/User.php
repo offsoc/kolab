@@ -60,7 +60,6 @@ class User extends Authenticatable implements JWTSubject
         'password',
         'password_ldap',
         'status',
-        'tenant_id'
     ];
 
     /**

@@ -51,7 +51,6 @@ class Domain extends Model
     protected $fillable = [
         'namespace',
         'status',
-        'tenant_id',
         'type'
     ];
 
