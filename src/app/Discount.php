@@ -7,6 +7,12 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * The eloquent definition of a Discount.
+ *
+ * @property bool   $active
+ * @property string $code
+ * @property string $description
+ * @property int    $discount
+ * @property int    $tenant_id
  */
 class Discount extends Model
 {
@@ -24,6 +30,7 @@ class Discount extends Model
         'code',
         'description',
         'discount',
+        'tenant_id',
     ];
 
     /** @var array Translatable properties */

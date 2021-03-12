@@ -102,4 +102,15 @@ abstract class TestCaseDusk extends BaseTestCase
         // we can also just call visit() with full url
         Browser::$baseUrl = str_replace('//', '//admin.', \config('app.url'));
     }
+
+    /**
+     * Set baseURL to the reseller UI location
+     */
+    protected static function useResellerUrl(): void
+    {
+        // This will set baseURL for all tests in this file
+        // If we wanted to visit both user and admin in one test
+        // we can also just call visit() with full url
+        Browser::$baseUrl = str_replace('//', '//reseller.', \config('app.url'));
+    }
 }
