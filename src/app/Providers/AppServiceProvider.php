@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -56,6 +57,15 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('theme_asset', function ($path) {
             $path = trim($path, '/\'"');
             return "<?php echo secure_asset('themes/' . \$env['app.theme'] . '/' . '$path'); ?>";
+        });
+
+        // Query builder 'withTenant' macro
+        Builder::macro('withTenant', function (string $table = null) {
+            /** @var Builder $this */
+            return $this->where(
+                ($table ? "$table." : '') . 'tenant_id',
+                \config('app.tenant_id')
+            );
         });
     }
 }

@@ -7,6 +7,7 @@ parameters:
         - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$id#'
         - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$created_at#'
         - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Model::toString\(\)#'
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder[^:]*::withTenant\(\)#'
         - '#Call to an undefined method Tests\\Browser::#'
     level: 4
     paths:
