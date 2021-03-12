@@ -59,19 +59,24 @@ class DiscountsTest extends TestCase
 
         // Add some discounts
         $tenant = Tenant::where('title', 'Sample Tenant')->first();
+
         $discount_test = Discount::create([
                 'description' => 'Test reseller voucher',
                 'code' => 'RESELLER-TEST',
                 'discount' => 10,
-                'tenant_id' => $tenant->id,
                 'active' => true,
         ]);
+
         $discount_free = Discount::create([
                 'description' => 'Free account',
                 'discount' => 100,
-                'tenant_id' => $tenant->id,
                 'active' => true,
         ]);
+
+        $discount_test->tenant_id = $tenant->id;
+        $discount_test->save();
+        $discount_free->tenant_id = $tenant->id;
+        $discount_free->save();
 
         $response = $this->actingAs($reseller)->get("api/v4/discounts");
         $response->assertStatus(200);

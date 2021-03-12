@@ -151,10 +151,10 @@ class UserSeeder extends Seeder
             [
                 'email' => 'reseller@reseller.com',
                 'password' => 'reseller',
-                'tenant_id' => $tenant->id,
             ]
         );
 
+        $reseller->tenant_id = $tenant->id;
         $reseller->role = 'reseller';
         $reseller->save();
     }
