@@ -4,11 +4,11 @@ namespace Tests\Feature\Console;
 
 use Tests\TestCase;
 
-class DiscountListTest extends TestCase
+class DiscountsTest extends TestCase
 {
     public function testHandle(): void
     {
-        $this->artisan('discount:list')
+        $this->artisan('discounts')
              ->assertExitCode(0);
 
         $this->markTestIncomplete();
