@@ -185,7 +185,7 @@ abstract class PaymentProvider
                 'object_id' => $wallet->id,
                 'object_type' => Wallet::class,
                 'type' => $transaction_type,
-                'amount' => $refund['amount'],
+                'amount' => $refund['amount'] * -1,
                 'description' => $refund['description'] ?? '',
         ]);
 

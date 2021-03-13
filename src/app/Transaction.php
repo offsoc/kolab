@@ -159,6 +159,8 @@ class Transaction extends Model
             'description' => $this->{'description'},
         ];
 
+        $amount = $this->amount * ($this->amount < 0 ? -1 : 1);
+
         if ($entitlement = $this->entitlement()) {
             $wallet = $entitlement->wallet;
             $cost = $entitlement->cost;
@@ -172,7 +174,7 @@ class Transaction extends Model
         }
 
         $result['wallet'] = $wallet->{'description'} ?: 'Default wallet';
-        $result['amount'] = $wallet->money($this->amount);
+        $result['amount'] = $wallet->money($amount);
 
         return $result;
     }

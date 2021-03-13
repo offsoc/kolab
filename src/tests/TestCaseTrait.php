@@ -80,7 +80,7 @@ trait TestCaseTrait
                 'object_id' => $wallet->id,
                 'object_type' => \App\Wallet::class,
                 'type' => Transaction::WALLET_DEBIT,
-                'amount' => $debit,
+                'amount' => $debit * -1,
                 'description' => 'Payment',
         ]);
         $result[] = $transaction;
@@ -107,12 +107,13 @@ trait TestCaseTrait
         // The page size is 10, so we generate so many to have at least two pages
         $loops = 10;
         while ($loops-- > 0) {
+            $type = $types[count($result) % count($types)];
             $transaction = Transaction::create([
                 'user_email' => 'jeroen.@jeroen.jeroen',
                 'object_id' => $wallet->id,
                 'object_type' => \App\Wallet::class,
-                'type' => $types[count($result) % count($types)],
-                'amount' => 11 * (count($result) + 1),
+                'type' => $type,
+                'amount' => 11 * (count($result) + 1) * ($type == Transaction::WALLET_PENALTY ? -1 : 1),
                 'description' => 'TRANS' . $loops,
             ]);
             $transaction->created_at = $date->next(Carbon::MONDAY);

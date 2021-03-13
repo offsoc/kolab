@@ -246,25 +246,12 @@ class WalletsController extends Controller
         }
 
         $result = $result->map(function ($item) use ($isAdmin) {
-            $amount = $item->amount;
-
-            $negatives = [
-                Transaction::WALLET_CHARGEBACK,
-                Transaction::WALLET_DEBIT,
-                Transaction::WALLET_PENALTY,
-                Transaction::WALLET_REFUND,
-            ];
-
-            if (in_array($item->type, $negatives)) {
-                $amount *= -1;
-            }
-
             $entry = [
                 'id' => $item->id,
                 'createdAt' => $item->created_at->format('Y-m-d H:i'),
                 'type' => $item->type,
                 'description' => $item->shortDescription(),
-                'amount' => $amount,
+                'amount' => $item->amount,
                 'hasDetails' => !empty($item->cnt),
             ];
 

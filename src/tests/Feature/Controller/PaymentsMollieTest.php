@@ -717,7 +717,7 @@ class PaymentsMollieTest extends TestCase
         $transactions = $wallet->transactions()->where('type', Transaction::WALLET_REFUND)->get();
 
         $this->assertCount(1, $transactions);
-        $this->assertSame(101, $transactions[0]->amount);
+        $this->assertSame(-101, $transactions[0]->amount);
         $this->assertSame(Transaction::WALLET_REFUND, $transactions[0]->type);
         $this->assertSame("refund desc", $transactions[0]->description);
 
@@ -774,7 +774,7 @@ class PaymentsMollieTest extends TestCase
         $transactions = $wallet->transactions()->where('type', Transaction::WALLET_CHARGEBACK)->get();
 
         $this->assertCount(1, $transactions);
-        $this->assertSame(15, $transactions[0]->amount);
+        $this->assertSame(-15, $transactions[0]->amount);
         $this->assertSame(Transaction::WALLET_CHARGEBACK, $transactions[0]->type);
         $this->assertSame('', $transactions[0]->description);
 

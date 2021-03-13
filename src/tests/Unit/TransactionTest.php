@@ -26,7 +26,7 @@ class TransactionTest extends TestCase
                 'object_id' => $wallet->id,
                 'object_type' => Wallet::class,
                 'type' => Transaction::WALLET_PENALTY,
-                'amount' => 9,
+                'amount' => -10,
                 'description' => "A test penalty"
         ]);
 
@@ -34,7 +34,7 @@ class TransactionTest extends TestCase
                 'object_id' => $wallet->id,
                 'object_type' => Wallet::class,
                 'type' => Transaction::WALLET_DEBIT,
-                'amount' => 10
+                'amount' => -9
         ]);
 
         $transaction = Transaction::create([
@@ -84,10 +84,10 @@ class TransactionTest extends TestCase
 
         $transactions = Transaction::where('amount', '<', 20)->orderBy('amount')->get();
 
-        $this->assertSame(9, $transactions[0]->amount);
+        $this->assertSame(-10, $transactions[0]->amount);
         $this->assertSame(Transaction::WALLET_PENALTY, $transactions[0]->type);
         $this->assertSame(
-            "The balance of Default wallet was reduced by 0,09 CHF; A test penalty",
+            "The balance of Default wallet was reduced by 0,10 CHF; A test penalty",
             $transactions[0]->toString()
         );
         $this->assertSame(
@@ -95,10 +95,10 @@ class TransactionTest extends TestCase
             $transactions[0]->shortDescription()
         );
 
-        $this->assertSame(10, $transactions[1]->amount);
+        $this->assertSame(-9, $transactions[1]->amount);
         $this->assertSame(Transaction::WALLET_DEBIT, $transactions[1]->type);
         $this->assertSame(
-            "0,10 CHF was deducted from the balance of Default wallet",
+            "0,09 CHF was deducted from the balance of Default wallet",
             $transactions[1]->toString()
         );
         $this->assertSame(

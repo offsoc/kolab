@@ -133,7 +133,7 @@ class WalletsTest extends TestCase
             ->where('type', Transaction::WALLET_PENALTY)->first();
 
         $this->assertSame($post['description'], $transaction->description);
-        $this->assertSame(4000, $transaction->amount);
+        $this->assertSame(-4000, $transaction->amount);
         $this->assertSame($admin->email, $transaction->user_email);
     }
 
