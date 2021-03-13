@@ -316,9 +316,14 @@ class WalletsController extends Controller
                 return \trans('app.wallet-notice-today');
             }
 
+            // Once in a while we got e.g. "3 weeks" instead of expected "4 weeks".
+            // It's because $until uses full seconds, but $now is more precise.
+            // We make sure both have the same time set.
+            $now = Carbon::now()->setTimeFrom($until);
+
             $params = [
                 'date' => $until->toDateString(),
-                'days' => Carbon::now()->diffForHumans($until, Carbon::DIFF_ABSOLUTE),
+                'days' => $now->diffForHumans($until, Carbon::DIFF_ABSOLUTE),
             ];
 
             return \trans('app.wallet-notice-date', $params);
