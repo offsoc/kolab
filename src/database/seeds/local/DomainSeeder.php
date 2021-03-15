@@ -63,5 +63,19 @@ class DomainSeeder extends Seeder
                 ]
             );
         }
+
+        // example tenant domain, note that 'tenant_id' is not a fillable.
+        $domain = Domain::create(
+            [
+                'namespace' => 'example-tenant.dev-local',
+                'status' => Domain::STATUS_CONFIRMED + Domain::STATUS_ACTIVE,
+                'type' => Domain::TYPE_PUBLIC
+            ]
+        );
+
+        $tenant = \App\Tenant::where('title', 'Sample Tenant')->first();
+
+        $domain->tenant_id = $tenant->id;
+        $domain->save();
     }
 }
