@@ -74,7 +74,7 @@ class CreateCommand extends Command
             $domain = \App\Domain::create(
                 [
                     'namespace' => $namespace,
-                    'type' => Domain::TYPE_EXTERNAL,
+                    'type' => \App\Domain::TYPE_EXTERNAL,
                 ]
             );
 
