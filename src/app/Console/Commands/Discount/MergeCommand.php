@@ -80,13 +80,13 @@ class MergeCommand extends Command
         }
 
         foreach ($source->wallets as $wallet) {
-            $wallet->discount = $target;
+            $wallet->discount_id = $target->id;
             $wallet->timestamps = false;
             $wallet->save();
         }
 
         if ($this->option('description')) {
-            $target->{'description'} = $this->option('description');
+            $target->description = $this->option('description');
             $target->save();
         }
 
