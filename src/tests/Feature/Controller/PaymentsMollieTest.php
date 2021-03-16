@@ -143,7 +143,7 @@ class PaymentsMollieTest extends TestCase
         $payment = Payment::where('id', $json['id'])->first();
         $this->assertSame(2010, $payment->amount);
         $this->assertSame($wallet->id, $payment->wallet_id);
-        $this->assertSame("Kolab Now Auto-Payment Setup", $payment->description);
+        $this->assertSame(\config('app.name') . " Auto-Payment Setup", $payment->description);
         $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information
@@ -339,6 +339,7 @@ class PaymentsMollieTest extends TestCase
         $response = $this->post("api/v4/payments", []);
         $response->assertStatus(401);
 
+        // Invalid amount
         $user = $this->getTestUser('john@kolab.org');
 
         $post = ['amount' => -1];
@@ -352,7 +353,13 @@ class PaymentsMollieTest extends TestCase
         $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
-        $post = ['amount' => '12.34'];
+        // Invalid currency
+        $post = ['amount' => '12.34', 'currency' => 'FOO', 'methodId' => 'creditcard'];
+        $response = $this->actingAs($user)->post("api/v4/payments", $post);
+        $response->assertStatus(500);
+
+        // Successful payment
+        $post = ['amount' => '12.34', 'currency' => 'CHF', 'methodId' => 'creditcard'];
         $response = $this->actingAs($user)->post("api/v4/payments", $post);
         $response->assertStatus(200);
 
@@ -657,6 +664,8 @@ class PaymentsMollieTest extends TestCase
                 'id' => 'tr_123456',
                 'status' => PaymentProvider::STATUS_PAID,
                 'amount' => 123,
+                'currency_amount' => 123,
+                'currency' => 'CHF',
                 'type' => PaymentProvider::TYPE_ONEOFF,
                 'wallet_id' => $wallet->id,
                 'provider' => 'mollie',
@@ -811,5 +820,101 @@ class PaymentsMollieTest extends TestCase
             ->click('button.form__button');
 
         $this->stopBrowser();
+    }
+
+
+    /**
+     * Test listing a pending payment
+     *
+     * @group mollie
+     */
+    public function testListingPayments(): void
+    {
+        Bus::fake();
+
+        $user = $this->getTestUser('john@kolab.org');
+
+        //Empty response
+        $response = $this->actingAs($user)->get("api/v4/payments/pending");
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame(0, $json['count']);
+        $this->assertSame(1, $json['page']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertCount(0, $json['list']);
+
+        $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
+        $json = $response->json();
+        $this->assertSame(false, $json['hasPending']);
+
+        $wallet = $user->wallets()->first();
+
+        // Successful payment
+        $post = ['amount' => '12.34', 'currency' => 'CHF', 'methodId' => 'creditcard'];
+        $response = $this->actingAs($user)->post("api/v4/payments", $post);
+        $response->assertStatus(200);
+
+        //A response
+        $response = $this->actingAs($user)->get("api/v4/payments/pending");
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame(1, $json['count']);
+        $this->assertSame(1, $json['page']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame(PaymentProvider::STATUS_OPEN, $json['list'][0]['status']);
+
+        $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
+        $json = $response->json();
+        $this->assertSame(true, $json['hasPending']);
+
+        // Set the payment to paid
+        $payments = Payment::where('wallet_id', $wallet->id)->get();
+
+        $this->assertCount(1, $payments);
+        $payment = $payments[0];
+
+        $payment->status = PaymentProvider::STATUS_PAID;
+        $payment->save();
+
+        // They payment should be gone from the pending list now
+        $response = $this->actingAs($user)->get("api/v4/payments/pending");
+        $json = $response->json();
+        $this->assertSame('success', $json['status']);
+        $this->assertSame(0, $json['count']);
+        $this->assertCount(0, $json['list']);
+
+        $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
+        $json = $response->json();
+        $this->assertSame(false, $json['hasPending']);
+    }
+
+    /**
+     * Test listing payment methods
+     *
+     * @group mollie
+     */
+    public function testListingPaymentMethods(): void
+    {
+        Bus::fake();
+
+        $user = $this->getTestUser('john@kolab.org');
+
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_ONEOFF);
+        $response->assertStatus(200);
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('creditcard', $json[0]['id']);
+        $this->assertSame('paypal', $json[1]['id']);
+
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
+        $response->assertStatus(200);
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSame('creditcard', $json[0]['id']);
     }
 }

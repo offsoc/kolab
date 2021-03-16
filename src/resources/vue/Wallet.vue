@@ -5,8 +5,44 @@
                 <div class="card-title">Account balance <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'">{{ $root.price(wallet.balance, wallet.currency) }}</span></div>
                 <div class="card-text">
                     <p v-if="wallet.notice" id="wallet-notice">{{ wallet.notice }}</p>
-                    <p>Add credit to your account or setup an automatic payment by using the button below.</p>
-                    <button type="button" class="btn btn-primary" @click="paymentDialog()">Add credit</button>
+
+                    <div v-if="showPendingPayments" class="alert alert-warning">
+                        You have payments that are still in progress. See the "Pending Payments" tab below.
+                    </div>
+                    <p>
+                        <button type="button" class="btn btn-primary" @click="paymentMethodForm('manual')">Add credit</button>
+                    </p>
+                    <div id="mandate-form" v-if="!mandate.isValid && !mandate.isPending">
+                        <template v-if="mandate.id && !mandate.isValid">
+                            <div class="alert alert-danger">
+                                The setup of automatic payments failed. Restart the process to enable automatic top-ups.
+                            </div>
+                            <button type="button" class="btn btn-danger" @click="autoPaymentDelete">Cancel auto-payment</button>
+                        </template>
+                        <button type="button" class="btn btn-primary" @click="paymentMethodForm('auto')">Set up auto-payment</button>
+                    </div>
+                    <div id="mandate-info" v-else>
+                        <div v-if="mandate.isDisabled" class="disabled-mandate alert alert-danger">
+                            The configured auto-payment has been disabled. Top up your wallet or
+                            raise the auto-payment amount.
+                        </div>
+                        <template v-else>
+                            <p>
+                                Auto-payment is <b>set</b> to fill up your account by <b>{{ mandate.amount }} CHF</b>
+                                every time your account balance gets under <b>{{ mandate.balance }} CHF</b>.
+                            </p>
+                            <p>
+                                Method of payment: {{ mandate.method }}
+                            </p>
+                        </template>
+                        <div v-if="mandate.isPending" class="alert alert-warning">
+                            The setup of the automatic payment is still in progress.
+                        </div>
+                        <p>
+                            <button type="button" class="btn btn-danger" @click="autoPaymentDelete">Cancel auto-payment</button>
+                            <button type="button" class="btn btn-primary" @click="autoPaymentChange">Change auto-payment</button>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -22,9 +58,14 @@
                     History
                 </a>
             </li>
+            <li v-if="showPendingPayments" class="nav-item">
+                <a class="nav-link" id="tab-payments" href="#wallet-payments" role="tab" aria-controls="wallet-payments" aria-selected="false">
+                    Pending Payments
+                </a>
+            </li>
         </ul>
         <div class="tab-content">
-            <div class="tab-pane show active" id="wallet-receipts" role="tabpanel" aria-labelledby="tab-receipts">
+            <div class="tab-pane active" id="wallet-receipts" role="tabpanel" aria-labelledby="tab-receipts">
                 <div class="card-body">
                     <div class="card-text">
                         <p v-if="receipts.length">
@@ -48,9 +89,14 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane show" id="wallet-history" role="tabpanel" aria-labelledby="tab-history">
+            <div class="tab-pane" id="wallet-history" role="tabpanel" aria-labelledby="tab-history">
                 <div class="card-body">
                     <transaction-log v-if="walletId && loadTransactions" class="card-text" :wallet-id="walletId"></transaction-log>
+                </div>
+            </div>
+            <div class="tab-pane" id="wallet-payments" role="tabpanel" aria-labelledby="tab-payments">
+                <div class="card-body">
+                    <payment-log v-if="walletId && loadPayments" class="card-text" :wallet-id="walletId"></payment-log>
                 </div>
             </div>
         </div>
@@ -65,7 +111,26 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div id="payment" v-if="paymentForm == 'init'">
+                        <div id="payment-method" v-if="paymentForm == 'method'">
+                            <form data-validation-prefix="mandate_">
+                                <div id="payment-method-selection">
+                                    <a :id="method.id" v-for="method in paymentMethods" :key="method.id" @click="selectPaymentMethod(method)" href="#" class="card link-profile">
+                                        <svg-icon v-if="method.icon" :icon="[method.icon.prefix, method.icon.name]" />
+                                        <img v-if="method.image" v-bind:src="method.image" />
+                                        <span class="name">{{ method.name }}</span>
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="manual-payment" v-if="paymentForm == 'manual'">
+                            <p v-if="wallet.currency != selectedPaymentMethod.currency">
+                                Here is how it works: You specify the amount by which you want to to up your wallet in {{ wallet.currency }}.
+                                We will then convert this to {{ selectedPaymentMethod.currency }}, and on the next page you will be provided with the bank-details
+                                to transfer the amount in {{ selectedPaymentMethod.currency }}.
+                            </p>
+                            <p v-if="selectedPaymentMethod.id == 'banktransfer'">
+                                Please note that a bank transfer can take several days to complete.
+                            </p>
                             <p>Choose the amount by which you want to top up your wallet.</p>
                             <form id="payment-form" @submit.prevent="payment">
                                 <div class="form-group">
@@ -76,41 +141,10 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="w-100 text-center">
-                                    <button type="submit" class="btn btn-primary">
-                                        <svg-icon :icon="['far', 'credit-card']"></svg-icon> Continue
-                                    </button>
+                                <div v-if="wallet.currency != selectedPaymentMethod.currency && !isNaN(amount)" class="alert alert-warning">
+                                    You will be charged for {{ $root.price(amount * selectedPaymentMethod.exchangeRate * 100, selectedPaymentMethod.currency) }}
                                 </div>
                             </form>
-                            <div class="form-separator"><hr><span>or</span></div>
-                            <div id="mandate-form" v-if="!mandate.isValid && !mandate.isPending">
-                                <p>Add auto-payment, so you never run out.</p>
-                                <div v-if="mandate.id && !mandate.isValid" class="alert alert-danger">
-                                    The setup of automatic payments failed. Restart the process to enable automatic top-ups.
-                                </div>
-                                <div class="w-100 text-center">
-                                    <button type="button" class="btn btn-primary" @click="autoPaymentForm">Set up auto-payment</button>
-                                </div>
-                            </div>
-                            <div id="mandate-info" v-else>
-                                <p>
-                                    Auto-payment is set to fill up your account by <b>{{ mandate.amount }} CHF</b>
-                                    every time your account balance gets under <b>{{ mandate.balance }} CHF</b>.
-                                    You will be charged via {{ mandate.method }}.
-                                </p>
-                                <div v-if="mandate.isPending" class="alert alert-warning">
-                                    The setup of the automatic payment is still in progress.
-                                </div>
-                                <div v-else-if="mandate.isDisabled" class="disabled-mandate alert alert-danger">
-                                    The configured auto-payment has been disabled. Top up your wallet or
-                                    raise the auto-payment amount.
-                                </div>
-                                <p>You can cancel or change the auto-payment at any time.</p>
-                                <div class="form-group d-flex justify-content-around">
-                                    <button type="button" class="btn btn-danger" @click="autoPaymentDelete">Cancel auto-payment</button>
-                                    <button type="button" class="btn btn-primary" @click="autoPaymentChange">Change auto-payment</button>
-                                </div>
-                            </div>
                         </div>
                         <div id="auto-payment" v-if="paymentForm == 'auto'">
                             <form data-validation-prefix="mandate_">
@@ -162,7 +196,13 @@
                                 v-if="paymentForm == 'auto' && !mandate.isValid && !mandate.isPending"
                                 @click="autoPayment"
                         >
-                            <svg-icon :icon="['far', 'credit-card']"></svg-icon> Continue
+                            <svg-icon icon="check"></svg-icon> Continue
+                        </button>
+                        <button type="button" class="btn btn-primary modal-action"
+                                v-if="paymentForm == 'manual'"
+                                @click="payment"
+                        >
+                            <svg-icon icon="check"></svg-icon> Continue
                         </button>
                     </div>
                 </div>
@@ -173,22 +213,29 @@
 
 <script>
     import TransactionLog from './Widgets/TransactionLog'
+    import PaymentLog from './Widgets/PaymentLog'
 
     export default {
         components: {
-            TransactionLog
+            TransactionLog,
+            PaymentLog
         },
         data() {
             return {
                 amount: '',
-                mandate: { amount: 10, balance: 0 },
+                mandate: { amount: 10, balance: 0, method: null },
                 paymentDialogTitle: null,
-                paymentForm: 'init',
+                paymentForm: null,
+                nextForm: null,
                 receipts: [],
                 stripe: null,
                 loadTransactions: false,
+                loadPayments: false,
+                showPendingPayments: false,
                 wallet: {},
-                walletId: null
+                walletId: null,
+                paymentMethods: [],
+                selectedPaymentMethod: null
             }
         },
         mounted() {
@@ -220,17 +267,28 @@
                 })
                 .catch(this.$root.errorHandler)
 
+            this.loadMandate()
+
+            axios.get('/api/v4/payments/has-pending')
+                .then(response => {
+                    this.showPendingPayments = response.data.hasPending
+                })
+
+        },
+        updated() {
             $(this.$el).find('ul.nav-tabs a').on('click', e => {
                 e.preventDefault()
                 $(e.target).tab('show')
                 if ($(e.target).is('#tab-history')) {
                     this.loadTransactions = true
                 }
+                if ($(e.target).is('#tab-payments')) {
+                    this.loadPayments = true
+                }
             })
         },
         methods: {
-            paymentDialog() {
-                const dialog = $('#payment-dialog')
+            loadMandate() {
                 const mandate_form = $('#mandate-form')
 
                 this.$root.removeLoader(mandate_form)
@@ -246,14 +304,19 @@
                             this.$root.removeLoader(mandate_form)
                         })
                 }
-
+            },
+            selectPaymentMethod(method) {
                 this.formLock = false
-                this.paymentForm = 'init'
-                this.paymentDialogTitle = 'Top up your wallet'
 
-                this.dialog = dialog.on('shown.bs.modal', () => {
-                        dialog.find('#amount').focus()
-                    }).modal()
+                this.selectedPaymentMethod = method
+
+                this.paymentForm = this.nextForm
+                this.formLock = false
+
+                setTimeout(() => {
+                    this.dialog.find('#mandate_amount').focus()
+                    this.dialog.find('#amount').focus()
+                }, 10)
             },
             payment() {
                 if (this.formLock) {
@@ -266,7 +329,7 @@
 
                 this.$root.clearFormValidation($('#payment-form'))
 
-                axios.post('/api/v4/payments', {amount: this.amount}, { onFinish })
+                axios.post('/api/v4/payments', {amount: this.amount, methodId: this.selectedPaymentMethod.id, currency: this.selectedPaymentMethod.currency}, { onFinish })
                     .then(response => {
                         if (response.data.redirectUrl) {
                             location.href = response.data.redirectUrl
@@ -285,9 +348,15 @@
                 let onFinish = () => { this.formLock = false }
 
                 const method = this.mandate.id && (this.mandate.isValid || this.mandate.isPending) ? 'put' : 'post'
-                const post = {
+                let post = {
                     amount: this.mandate.amount,
-                    balance: this.mandate.balance
+                    balance: this.mandate.balance,
+                }
+
+                // Modifications can't change the method of payment
+                if (this.selectedPaymentMethod) {
+                    post['methodId'] = this.selectedPaymentMethod.id;
+                    post['currency'] = this.selectedPaymentMethod.currency;
                 }
 
                 this.$root.clearFormValidation($('#auto-payment form'))
@@ -324,10 +393,42 @@
                         }
                     })
             },
-            autoPaymentForm(event, title) {
-                this.paymentForm = 'auto'
-                this.paymentDialogTitle = title || 'Add auto-payment'
+
+            paymentMethodForm(nextForm) {
+                const dialog = $('#payment-dialog')
                 this.formLock = false
+                this.paymentMethods = []
+
+                this.paymentForm = 'method'
+                this.nextForm = nextForm
+                if (nextForm == 'auto') {
+                    this.paymentDialogTitle = 'Add auto-payment'
+                } else {
+                    this.paymentDialogTitle = 'Top up your wallet'
+                }
+
+                const methods = $('#payment-method')
+                this.$root.addLoader(methods, false)
+                axios.get('/api/v4/payments/methods', {params: {type: nextForm == 'manual' ? 'oneoff' : 'recurring'}})
+                    .then(response => {
+                        this.$root.removeLoader(methods)
+                        this.paymentMethods = response.data
+                    })
+                    .catch(this.$root.errorHandler)
+
+                this.dialog = dialog.on('shown.bs.modal', () => {}).modal()
+            },
+            autoPaymentForm(event, title) {
+                const dialog = $('#payment-dialog')
+
+                this.paymentForm = 'auto'
+                this.paymentDialogTitle = title
+                this.formLock = false
+
+                this.dialog = dialog.on('shown.bs.modal', () => {
+                    dialog.find('#mandate_amount').focus()
+                }).modal()
+
                 setTimeout(() => { this.dialog.find('#mandate_amount').focus()}, 10)
             },
             receiptDownload() {

@@ -293,6 +293,27 @@ table {
     }
 }
 
+#payment-method-selection {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    & > a {
+        padding: 1rem;
+        text-align: center;
+        white-space: nowrap;
+        margin: 0.25rem;
+        text-decoration: none;
+        width: 150px;
+    }
+
+    svg {
+        width: 6rem;
+        height: 6rem;
+        margin: auto;
+    }
+}
+
 #logon-form {
     flex-basis: auto; // Bootstrap issue? See logon page with width < 992
 }

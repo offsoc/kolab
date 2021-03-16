@@ -83,6 +83,7 @@ class Stripe extends \App\Providers\PaymentProvider
         $session = StripeAPI\Checkout\Session::create($request);
 
         $payment['amount'] = 0;
+        $payment['currency_amount'] = 0;
         $payment['id'] = $session->setup_intent;
         $payment['type'] = self::TYPE_MANDATE;
 
@@ -181,6 +182,10 @@ class Stripe extends \App\Providers\PaymentProvider
         // Register the user in Stripe, if not yet done
         $customer_id = self::stripeCustomerId($wallet, true);
 
+
+        $amount = $this->exchange($payment['amount'], $wallet->currency, $payment['currency']);
+        $payment['currency_amount'] = $amount;
+
         $request = [
             'customer' => $customer_id,
             'cancel_url' => Utils::serviceUrl('/wallet'), // required
@@ -190,7 +195,7 @@ class Stripe extends \App\Providers\PaymentProvider
             'line_items' => [
                 [
                     'name' => $payment['description'],
-                    'amount' => $payment['amount'],
+                    'amount' => $amount,
                     'currency' => \strtolower($payment['currency']),
                     'quantity' => 1,
                 ]
@@ -227,8 +232,11 @@ class Stripe extends \App\Providers\PaymentProvider
             return null;
         }
 
+        $amount = $this->exchange($payment['amount'], $wallet->currency, $payment['currency']);
+        $payment['currency_amount'] = $amount;
+
         $request = [
-            'amount' => $payment['amount'],
+            'amount' => $amount,
             'currency' => \strtolower($payment['currency']),
             'description' => $payment['description'],
             'receipt_email' => $wallet->owner->email,
@@ -271,6 +279,7 @@ class Stripe extends \App\Providers\PaymentProvider
                 \config('services.stripe.webhook_secret')
             );
         } catch (\Exception $e) {
+            \Log::error("Invalid payload: " . $e->getMessage());
             // Invalid payload
             return 400;
         }
@@ -469,5 +478,81 @@ class Stripe extends \App\Providers\PaymentProvider
         }
 
         return $default;
+    }
+
+    /**
+     * List supported payment methods.
+     *
+     * @param string $type The payment type for which we require a method (oneoff/recurring).
+     *
+     * @return array Array of array with available payment methods:
+     *               - id: id of the method
+     *               - name: User readable name of the payment method
+     *               - minimumAmount: Minimum amount to be charged in cents
+     *               - currency: Currency used for the method
+     *               - exchangeRate: The projected exchange rate (actual rate is determined during payment)
+     *               - icon: An icon (icon name) representing the method
+     */
+    public function providerPaymentMethods($type): array
+    {
+        //TODO get this from the stripe API?
+        $availableMethods = [];
+        switch ($type) {
+            case self::TYPE_ONEOFF:
+                $availableMethods = [
+                    self::METHOD_CREDITCARD => [
+                        'id' => self::METHOD_CREDITCARD,
+                        'name' => "Credit Card",
+                        'minimumAmount' => self::MIN_AMOUNT,
+                        'currency' => 'CHF',
+                        'exchangeRate' => 1.0
+                    ],
+                    self::METHOD_PAYPAL => [
+                        'id' => self::METHOD_PAYPAL,
+                        'name' => "PayPal",
+                        'minimumAmount' => self::MIN_AMOUNT,
+                        'currency' => 'CHF',
+                        'exchangeRate' => 1.0
+                    ]
+                ];
+                break;
+            case self::TYPE_RECURRING:
+                $availableMethods = [
+                    self::METHOD_CREDITCARD => [
+                        'id' => self::METHOD_CREDITCARD,
+                        'name' => "Credit Card",
+                        'minimumAmount' => self::MIN_AMOUNT, // Converted to cents,
+                        'currency' => 'CHF',
+                        'exchangeRate' => 1.0
+                    ]
+                ];
+                break;
+        }
+
+        return $availableMethods;
+    }
+
+    /**
+     * Get a payment.
+     *
+     * @param string $paymentId Payment identifier
+     *
+     * @return array Payment information:
+     *                    - id: Payment identifier
+     *                    - status: Payment status
+     *                    - isCancelable: The payment can be canceled
+     *                    - checkoutUrl: The checkout url to complete the payment or null if none
+     */
+    public function getPayment($paymentId): array
+    {
+        \Log::info("Stripe::getPayment does not yet retrieve a checkoutUrl.");
+
+        $payment = StripeAPI\PaymentIntent::retrieve($paymentId);
+        return [
+            'id' => $payment->id,
+            'status' => $payment->status,
+            'isCancelable' => false,
+            'checkoutUrl' => null
+        ];
     }
 }

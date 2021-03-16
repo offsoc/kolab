@@ -76,10 +76,14 @@ Route::group(
         Route::get('wallets/{id}/receipts/{receipt}', 'API\V4\WalletsController@receiptDownload');
 
         Route::post('payments', 'API\V4\PaymentsController@store');
+        //Route::delete('payments', 'API\V4\PaymentsController@cancel');
         Route::get('payments/mandate', 'API\V4\PaymentsController@mandate');
         Route::post('payments/mandate', 'API\V4\PaymentsController@mandateCreate');
         Route::put('payments/mandate', 'API\V4\PaymentsController@mandateUpdate');
         Route::delete('payments/mandate', 'API\V4\PaymentsController@mandateDelete');
+        Route::get('payments/methods', 'API\V4\PaymentsController@paymentMethods');
+        Route::get('payments/pending', 'API\V4\PaymentsController@payments');
+        Route::get('payments/has-pending', 'API\V4\PaymentsController@hasPayments');
 
         Route::get('openvidu/rooms', 'API\V4\OpenViduController@index');
         Route::post('openvidu/rooms/{id}/close', 'API\V4\OpenViduController@closeRoom');
