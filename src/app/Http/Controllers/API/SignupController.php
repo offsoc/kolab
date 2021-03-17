@@ -243,7 +243,6 @@ class SignupController extends Controller
         $user = User::create([
                 'email' => $login . '@' . $domain_name,
                 'password' => $request->password,
-                'tenant_id' => \config('app.tenant_id', null)
         ]);
 
         if (!empty($discount)) {
