@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4\Reseller;
 
 use App\Domain;
 use App\User;
+use App\UserAlias;
 use App\UserSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -17,37 +18,72 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function index()
     {
+        $reseller = auth()->user();
         $search = trim(request()->input('search'));
         $owner = trim(request()->input('owner'));
         $result = collect([]);
 
         if ($owner) {
-            if ($owner = User::find($owner)) {
-                $result = $owner->users(false)->orderBy('email')->get();
+            $owner = User::where('id', $owner)
+                ->where('tenant_id', $reseller->tenant_id)
+                ->whereNull('role')
+                ->first();
+
+            if ($owner) {
+                $result = $owner->users(false)->whereNull('role')->orderBy('email')->get();
             }
         } elseif (strpos($search, '@')) {
             // Search by email
-            if ($user = User::findByEmail($search, false)) {
-                $result->push($user);
-            } else {
-                // Search by an external email
-                // TODO: This is not optimal (external email should be in users table)
-                $user_ids = UserSetting::where('key', 'external_email')->where('value', $search)
-                    ->get()->pluck('user_id');
+            $result = User::withTrashed()->where('email', $search)
+                ->where('tenant_id', $reseller->tenant_id)
+                ->whereNull('role')
+                ->orderBy('email')
+                ->get();
 
-                // TODO: Sort order
-                $result = User::find($user_ids);
+            if ($result->isEmpty()) {
+                // Search by an alias
+                $user_ids = UserAlias::where('alias', $search)->get()->pluck('user_id');
+
+                // Search by an external email
+                $ext_user_ids = UserSetting::where('key', 'external_email')
+                    ->where('value', $search)
+                    ->get()
+                    ->pluck('user_id');
+
+                $user_ids = $user_ids->merge($ext_user_ids)->unique();
+
+                if (!$user_ids->isEmpty()) {
+                    $result = User::withTrashed()->whereIn('id', $user_ids)
+                        ->where('tenant_id', $reseller->tenant_id)
+                        ->whereNull('role')
+                        ->orderBy('email')
+                        ->get();
+                }
             }
         } elseif (is_numeric($search)) {
             // Search by user ID
-            if ($user = User::find($search)) {
+            $user = User::withTrashed()->where('id', $search)
+                ->where('tenant_id', $reseller->tenant_id)
+                ->whereNull('role')
+                ->first();
+
+            if ($user) {
                 $result->push($user);
             }
         } elseif (!empty($search)) {
             // Search by domain
-            if ($domain = Domain::where('namespace', $search)->first()) {
-                if ($wallet = $domain->wallet()) {
-                    $result->push($wallet->owner);
+            $domain = Domain::withTrashed()->where('namespace', $search)
+                ->where('tenant_id', $reseller->tenant_id)
+                ->first();
+
+            if ($domain) {
+                if (
+                    ($wallet = $domain->wallet())
+                    && ($owner = $wallet->owner()->withTrashed()->first())
+                    && $owner->tenant_id == $reseller->tenant_id
+                    && empty($owner->role)
+                ) {
+                    $result->push($owner);
                 }
             }
         }
@@ -78,9 +114,10 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function update(Request $request, $id)
     {
+        $reseller = auth()->user();
         $user = User::find($id);
 
-        if (empty($user)) {
+        if (empty($user) || $user->tenant_id != $reseller->tenant_id || $user->role == 'admin') {
             return $this->errorResponse(404);
         }
 
