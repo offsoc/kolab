@@ -199,8 +199,7 @@ abstract class PaymentProvider
     protected function exchangeRate(string $sourceCurrency, string $targetCurrency): float
     {
         if (strcasecmp($sourceCurrency, $targetCurrency)) {
-            throw new \Exception("Currency conversion is not yet implemented.");
-            //FIXME Not yet implemented
+            return \App\Utils::exchangeRate($sourceCurrency, $targetCurrency);
         }
         return 1.0;
     }
@@ -235,11 +234,12 @@ abstract class PaymentProvider
         }
 
         // Preserve originally refunded amount
-        $refund['currency_amount'] = $refund['amount'];
+        $refund['currency_amount'] = $refund['amount'] * -1;
 
         // Convert amount to wallet currency
         // TODO We should possibly be using the same exchange rate as for the original payment?
-        $amount = $this->exchange($refund['amount'], $refund['currency'], $wallet->currency);
+        // We're not using PaymentProvider::exchange because we have to take the inverse rate of CHF to EUR (we don't have EUR to CHF directrly)
+        $amount = intval(round($refund['amount'] / $this->exchangeRate($wallet->currency, $refund['currency'])));
 
         $wallet->balance -= $amount;
         $wallet->save();
@@ -312,11 +312,10 @@ abstract class PaymentProvider
                         'id' => self::METHOD_PAYPAL,
                         'icon' => self::$paymentMethodIcons[self::METHOD_PAYPAL]
                     ],
-                    // TODO Enable once we're ready to offer them
-                    // self::METHOD_BANKTRANSFER => [
-                    //     'id' => self::METHOD_BANKTRANSFER,
-                    //     'icon' => self::$paymentMethodIcons[self::METHOD_BANKTRANSFER]
-                    // ]
+                    self::METHOD_BANKTRANSFER => [
+                        'id' => self::METHOD_BANKTRANSFER,
+                        'icon' => self::$paymentMethodIcons[self::METHOD_BANKTRANSFER]
+                    ]
                 ];
             case PaymentProvider::TYPE_RECURRING:
                 return [

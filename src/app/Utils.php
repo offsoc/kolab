@@ -5,6 +5,7 @@ namespace App;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Ramsey\Uuid\Uuid;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Small utility functions for App.
@@ -405,5 +406,25 @@ class Utils
         $env['menu'] = $menu;
 
         return $env;
+    }
+
+
+    /**
+     * Retrieve an exchange rate.
+     *
+     * @param string       $sourceCurrency: Currency from which to convert
+     * @param string       $targetCurrency: Currency to convert to
+     *
+     * @return float Exchange rate
+     */
+    public static function exchangeRate(string $sourceCurrency, string $targetCurrency): float
+    {
+        $rates = include resource_path("exchangerates-$sourceCurrency.php");
+
+        if (!isset($rates[$targetCurrency])) {
+            throw new \Exception("Failed to find exchange rate for " . $targetCurrency);
+        }
+
+        return floatval($rates[$targetCurrency]);
     }
 }

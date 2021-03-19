@@ -374,6 +374,8 @@ class PaymentsMollieTest extends TestCase
         $this->assertCount(1, $payments);
         $payment = $payments[0];
         $this->assertSame(1234, $payment->amount);
+        $this->assertSame(1234, $payment->currency_amount);
+        $this->assertSame('CHF', $payment->currency);
         $this->assertSame(\config('app.name') . ' Payment', $payment->description);
         $this->assertSame('open', $payment->status);
         $this->assertEquals(0, $wallet->balance);
@@ -469,6 +471,51 @@ class PaymentsMollieTest extends TestCase
     }
 
     /**
+     * Test creating a payment and receiving a status via webhook using a foreign currency
+     *
+     * @group mollie
+     */
+    public function testStoreAndWebhookForeignCurrency(): void
+    {
+        Bus::fake();
+
+        $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
+
+        // Successful payment in EUR
+        $post = ['amount' => '12.34', 'currency' => 'EUR', 'methodId' => 'banktransfer'];
+        $response = $this->actingAs($user)->post("api/v4/payments", $post);
+        $response->assertStatus(200);
+
+        $payment = $wallet->payments()
+            ->where('currency', 'EUR')->get()->last();
+
+        $this->assertSame(1234, $payment->amount);
+        $this->assertSame(1117, $payment->currency_amount);
+        $this->assertSame('EUR', $payment->currency);
+        $this->assertEquals(0, $wallet->balance);
+
+        $mollie_response = [
+            "resource" => "payment",
+            "id" => $payment->id,
+            "status" => "paid",
+            // Status is not enough, paidAt is used to distinguish the state
+            "paidAt" => date('c'),
+            "mode" => "test",
+        ];
+
+        $responseStack = $this->mockMollie();
+        $responseStack->append(new Response(200, [], json_encode($mollie_response)));
+
+        $post = ['id' => $payment->id];
+        $response = $this->post("api/webhooks/payment/mollie", $post);
+        $response->assertStatus(200);
+
+        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertEquals(1234, $wallet->fresh()->balance);
+    }
+
+    /**
      * Test automatic payment charges
      *
      * @group mollie
@@ -496,7 +543,9 @@ class PaymentsMollieTest extends TestCase
         $payments = $wallet->payments()->orderBy('amount')->get();
         $this->assertCount(2, $payments);
         $this->assertSame(0, $payments[0]->amount);
+        $this->assertSame(0, $payments[0]->currency_amount);
         $this->assertSame(2010, $payments[1]->amount);
+        $this->assertSame(2010, $payments[1]->currency_amount);
         $payment = $payments[1];
 
         // In mollie we don't have to wait for a webhook, the response to
@@ -734,6 +783,7 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertCount(1, $payments);
         $this->assertSame(-101, $payments[0]->amount);
+        $this->assertSame(-101, $payments[0]->currency_amount);
         $this->assertSame(PaymentProvider::STATUS_PAID, $payments[0]->status);
         $this->assertSame(PaymentProvider::TYPE_REFUND, $payments[0]->type);
         $this->assertSame("mollie", $payments[0]->provider);
@@ -797,6 +847,95 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame('', $payments[0]->description);
 
         Bus::assertNotDispatched(\App\Jobs\PaymentEmail::class);
+
+        $this->unmockMollie();
+    }
+
+    /**
+     * Test refund/chargeback handling by the webhook in a foreign currency
+     *
+     * @group mollie
+     */
+    public function testRefundAndChargebackForeignCurrency(): void
+    {
+        Bus::fake();
+
+        $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
+        $wallet->transactions()->delete();
+
+        $mollie = PaymentProvider::factory('mollie');
+
+        // Create a paid payment
+        $payment = Payment::create([
+                'id' => 'tr_123456',
+                'status' => PaymentProvider::STATUS_PAID,
+                'amount' => 1234,
+                'currency_amount' => 1117,
+                'currency' => 'EUR',
+                'type' => PaymentProvider::TYPE_ONEOFF,
+                'wallet_id' => $wallet->id,
+                'provider' => 'mollie',
+                'description' => 'test',
+        ]);
+
+        // Test handling a refund by the webhook
+
+        $mollie_response1 = [
+            "resource" => "payment",
+            "id" => $payment->id,
+            "status" => "paid",
+            // Status is not enough, paidAt is used to distinguish the state
+            "paidAt" => date('c'),
+            "mode" => "test",
+            "_links" => [
+                "refunds" => [
+                   "href" => "https://api.mollie.com/v2/payments/{$payment->id}/refunds",
+                   "type" => "application/hal+json"
+                ]
+            ]
+        ];
+
+        $mollie_response2 = [
+            "count" => 1,
+            "_links" => [],
+            "_embedded" => [
+                "refunds" => [
+                    [
+                        "resource" => "refund",
+                        "id" => "re_123456",
+                        "status" => \Mollie\Api\Types\RefundStatus::STATUS_REFUNDED,
+                        "paymentId" => $payment->id,
+                        "description" => "refund desc",
+                        "amount" => [
+                            "currency" => "EUR",
+                            "value" => "1.01",
+                        ],
+                    ]
+                ]
+            ]
+        ];
+
+        // We'll trigger the webhook with payment id and use mocking for
+        // requests to the Mollie payments API.
+        $responseStack = $this->mockMollie();
+        $responseStack->append(new Response(200, [], json_encode($mollie_response1)));
+        $responseStack->append(new Response(200, [], json_encode($mollie_response2)));
+
+        $post = ['id' => $payment->id];
+        $response = $this->post("api/webhooks/payment/mollie", $post);
+        $response->assertStatus(200);
+
+        $wallet->refresh();
+
+        $this->assertEquals(-112, $wallet->balance);
+
+        $payments = $wallet->payments()->where('id', 're_123456')->get();
+
+        $this->assertCount(1, $payments);
+        $this->assertSame(-112, $payments[0]->amount);
+        $this->assertSame(-101, $payments[0]->currency_amount);
+        $this->assertSame('EUR', $payments[0]->currency);
 
         $this->unmockMollie();
     }
@@ -906,9 +1045,10 @@ class PaymentsMollieTest extends TestCase
         $response->assertStatus(200);
         $json = $response->json();
 
-        $this->assertCount(2, $json);
+        $this->assertCount(3, $json);
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
+        $this->assertSame('banktransfer', $json[2]['id']);
 
         $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
         $response->assertStatus(200);
