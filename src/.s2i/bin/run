@@ -47,8 +47,6 @@ chown default bootstrap/cache
 ./artisan migrate --force || :
 #./artisan db:seed --force || :
 
-env
-
 if [ -z "${KOLAB_ROLE}" -a ! -z "${HKCCP_APP}" ]; then
     echo "WARNING: Use env KOLAB_ROLE, not HKCCP_APP"
     KOLAB_ROLE=$HKCCP_APP
