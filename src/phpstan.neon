@@ -2,7 +2,6 @@ includes:
     - ./vendor/nunomaduro/larastan/extension.neon
 parameters:
     ignoreErrors:
-        - '#Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable#'
         - '#Access to an undefined property [a-zA-Z\\]+::\$pivot#'
         - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withEnvTenantContext\(\)#'
         - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withObjectTenantContext\(\)#'
