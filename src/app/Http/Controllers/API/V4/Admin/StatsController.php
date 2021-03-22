@@ -277,9 +277,8 @@ class StatsController extends \App\Http\Controllers\Controller
         $all = [];
 
         foreach (array_reverse($labels) as $label) {
-            $diff = $created[$label] - $deleted[$label];
-            $all[] = $count - $created[$label];
-            $count -= $diff;
+            $all[] = $count;
+            $count -= $created[$label] - $deleted[$label];
         }
 
         $all = array_reverse($all);
