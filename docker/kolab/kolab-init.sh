@@ -17,6 +17,7 @@ pushd /root/utils/
 ./07-adjust-base-dns.sh && echo "07 done"
 ./08-disable-amavisd.sh && echo "08 done"
 ./09-enable-debugging.sh && echo "09 done"
+./10-change-port-numbers.sh && echo "10 done"
 ./10-reset-kolab-service-password.sh && echo "10 done"
 ./11-reset-cyrus-admin-password.sh && echo "11 done"
 ./12-create-hosted-kolab-service.sh && echo "12 done"
