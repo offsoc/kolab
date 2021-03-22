@@ -54,6 +54,8 @@ Route::group(
     }
 );
 
+
+
 Route::group(
     [
         'domain' => \config('app.website_domain'),
@@ -61,6 +63,13 @@ Route::group(
         'prefix' => $prefix . 'api/v4'
     ],
     function () {
+        Route::post('companion/register', 'API\V4\CompanionAppsController@register');
+
+        Route::post('auth-attempts/{id}/confirm', 'API\V4\AuthAttemptsController@confirm');
+        Route::post('auth-attempts/{id}/deny', 'API\V4\AuthAttemptsController@deny');
+        Route::get('auth-attempts/{id}/details', 'API\V4\AuthAttemptsController@details');
+        Route::get('auth-attempts', 'API\V4\AuthAttemptsController@index');
+
         Route::apiResource('domains', API\V4\DomainsController::class);
         Route::get('domains/{id}/confirm', 'API\V4\DomainsController@confirm');
         Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
@@ -140,6 +149,7 @@ Route::group(
     function () {
         Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
         Route::post('meet/openvidu', 'API\V4\OpenViduController@webhook');
+        Route::get('nginx', 'API\NGINXController@authenticate');
     }
 );
 

@@ -48,6 +48,9 @@ class UserSeeder extends Seeder
                 'external_email' => 'john.doe.external@gmail.com',
                 'organization' => 'Kolab Developers',
                 'phone' => '+1 509-248-1111',
+                // 'limit_geo' => json_encode(["CH"]),
+                'guam_enabled' => false,
+                '2fa_enabled' => true
             ]
         );
 
