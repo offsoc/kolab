@@ -54,6 +54,8 @@ Route::group(
     }
 );
 
+
+
 Route::group(
     [
         'domain' => \config('app.website_domain'),
@@ -61,6 +63,13 @@ Route::group(
         'prefix' => $prefix . 'api/v4'
     ],
     function () {
+        Route::post('companion/register', 'API\V4\CompanionAppsController@register');
+
+        Route::post('auth-attempts/{id}/confirm', 'API\V4\AuthAttemptsController@confirm');
+        Route::post('auth-attempts/{id}/deny', 'API\V4\AuthAttemptsController@deny');
+        Route::get('auth-attempts/{id}/details', 'API\V4\AuthAttemptsController@details');
+        Route::get('auth-attempts', 'API\V4\AuthAttemptsController@index');
+
         Route::apiResource('domains', API\V4\DomainsController::class);
         Route::get('domains/{id}/confirm', 'API\V4\DomainsController@confirm');
         Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
@@ -147,12 +156,13 @@ if (\config('app.with_services')) {
     Route::group(
         [
             'domain' => 'services.' . \config('app.website_domain'),
-            'prefix' => $prefix . 'api/webhooks/policy'
+            'prefix' => $prefix . 'api/webhooks'
         ],
         function () {
-            Route::post('greylist', 'API\V4\PolicyController@greylist');
-            Route::post('ratelimit', 'API\V4\PolicyController@ratelimit');
-            Route::post('spf', 'API\V4\PolicyController@senderPolicyFramework');
+            Route::get('nginx', 'API\V4\NGINXController@authenticate');
+            Route::post('policy/greylist', 'API\V4\PolicyController@greylist');
+            Route::post('policy/ratelimit', 'API\V4\PolicyController@ratelimit');
+            Route::post('policy/spf', 'API\V4\PolicyController@senderPolicyFramework');
         }
     );
 }
