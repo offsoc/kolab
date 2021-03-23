@@ -787,7 +787,7 @@ class rcube_imap_generic
      */
     public function getHierarchyDelimiter()
     {
-        if ($this->prefs['delimiter']) {
+        if (isset($this->prefs['delimiter'])) {
             return $this->prefs['delimiter'];
         }
 
@@ -1435,6 +1435,7 @@ class rcube_imap_generic
      */
     public function clearFolder($mailbox)
     {
+        $res = false;
         if ($this->countMessages($mailbox) > 0) {
             $res = $this->flag($mailbox, '1:*', 'DELETED');
         }
@@ -1634,10 +1635,11 @@ class rcube_imap_generic
             return $this->data['EXISTS'];
         }
 
-        // Check internal cache
-        $cache = $this->data['STATUS:'.$mailbox];
-        if (!empty($cache) && isset($cache['MESSAGES'])) {
-            return (int) $cache['MESSAGES'];
+        if (isset($this->data["STATUS:".$mailbox])) {
+            $cache = $this->data["STATUS:".$mailbox];
+            if (!empty($cache) && isset($cache['MESSAGES'])) {
+                return (int) $cache['MESSAGES'];
+            }
         }
 
         // Try STATUS (should be faster than SELECT)
