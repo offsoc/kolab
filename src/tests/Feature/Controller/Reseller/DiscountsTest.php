@@ -15,8 +15,6 @@ class DiscountsTest extends TestCase
     {
         parent::setUp();
 
-        $this->deleteTestUser('test@reseller.com');
-
         $tenant = Tenant::where('title', 'Sample Tenant')->first();
         $tenant->discounts()->delete();
 
@@ -29,8 +27,6 @@ class DiscountsTest extends TestCase
     public function tearDown(): void
     {
         \config(['app.tenant_id' => 1]);
-
-        $this->deleteTestUser('test@reseller.com');
 
         $tenant = Tenant::where('title', 'Sample Tenant')->first();
         $tenant->discounts()->delete();
@@ -46,16 +42,8 @@ class DiscountsTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
         $reseller = $this->getTestUser('reseller@reseller.com');
+        $reseller2 = $this->getTestUser('reseller@kolabnow.com');
         $tenant = Tenant::where('title', 'Sample Tenant')->first();
-        $tenant2 = Tenant::where('title', 'Kolab Now')->first();
-        $reseller2 = $this->getTestUser('test@reseller.com');
-        $reseller2->tenant_id = $tenant2->id;
-        $reseller2->role = 'reseller';
-        $reseller2->save();
-
-        $reseller2->tenant_id = $tenant2->id;
-        $reseller2->role = 'reseller';
-        $reseller2->save();
 
         \config(['app.tenant_id' => $tenant->id]);
 

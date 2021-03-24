@@ -1,10 +1,10 @@
 import DashboardComponent from '../../vue/Reseller/Dashboard'
-//import DomainComponent from '../../vue/Reseller/Domain'
+import DomainComponent from '../../vue/Admin/Domain'
 import LoginComponent from '../../vue/Login'
 import LogoutComponent from '../../vue/Logout'
 import PageComponent from '../../vue/Page'
 //import StatsComponent from '../../vue/Reseller/Stats'
-//import UserComponent from '../../vue/Reseller/User'
+import UserComponent from '../../vue/Admin/User'
 
 const routes = [
     {
@@ -17,14 +17,12 @@ const routes = [
         component: DashboardComponent,
         meta: { requiresAuth: true }
     },
-/*
     {
         path: '/domain/:domain',
         name: 'domain',
         component: DomainComponent,
         meta: { requiresAuth: true }
     },
-*/
     {
         path: '/login',
         name: 'login',
@@ -42,13 +40,13 @@ const routes = [
         component: StatsComponent,
         meta: { requiresAuth: true }
     },
+*/
     {
         path: '/user/:user',
         name: 'user',
         component: UserComponent,
         meta: { requiresAuth: true }
     },
-*/
     {
         name: '404',
         path: '*',

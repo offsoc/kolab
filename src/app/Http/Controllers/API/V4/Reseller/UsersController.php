@@ -18,14 +18,13 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function index()
     {
-        $reseller = auth()->user();
         $search = trim(request()->input('search'));
         $owner = trim(request()->input('owner'));
         $result = collect([]);
 
         if ($owner) {
             $owner = User::where('id', $owner)
-                ->where('tenant_id', $reseller->tenant_id)
+                ->withUserTenant()
                 ->whereNull('role')
                 ->first();
 
@@ -35,7 +34,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         } elseif (strpos($search, '@')) {
             // Search by email
             $result = User::withTrashed()->where('email', $search)
-                ->where('tenant_id', $reseller->tenant_id)
+                ->withUserTenant()
                 ->whereNull('role')
                 ->orderBy('email')
                 ->get();
@@ -54,7 +53,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
                 if (!$user_ids->isEmpty()) {
                     $result = User::withTrashed()->whereIn('id', $user_ids)
-                        ->where('tenant_id', $reseller->tenant_id)
+                        ->withUserTenant()
                         ->whereNull('role')
                         ->orderBy('email')
                         ->get();
@@ -63,7 +62,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         } elseif (is_numeric($search)) {
             // Search by user ID
             $user = User::withTrashed()->where('id', $search)
-                ->where('tenant_id', $reseller->tenant_id)
+                ->withUserTenant()
                 ->whereNull('role')
                 ->first();
 
@@ -73,14 +72,13 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         } elseif (!empty($search)) {
             // Search by domain
             $domain = Domain::withTrashed()->where('namespace', $search)
-                ->where('tenant_id', $reseller->tenant_id)
+                ->withUserTenant()
                 ->first();
 
             if ($domain) {
                 if (
                     ($wallet = $domain->wallet())
-                    && ($owner = $wallet->owner()->withTrashed()->first())
-                    && $owner->tenant_id == $reseller->tenant_id
+                    && ($owner = $wallet->owner()->withTrashed()->withUserTenant()->first())
                     && empty($owner->role)
                 ) {
                     $result->push($owner);
@@ -114,10 +112,9 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function update(Request $request, $id)
     {
-        $reseller = auth()->user();
-        $user = User::find($id);
+        $user = User::where('id', $id)->withUserTenant()->first();
 
-        if (empty($user) || $user->tenant_id != $reseller->tenant_id || $user->role == 'admin') {
+        if (empty($user) || $user->role == 'admin') {
             return $this->errorResponse(404);
         }
 

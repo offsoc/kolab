@@ -175,7 +175,9 @@ Route::group(
         Route::apiResource('packages', API\V4\Reseller\PackagesController::class);
         Route::apiResource('skus', API\V4\Reseller\SkusController::class);
         Route::apiResource('users', API\V4\Reseller\UsersController::class);
+        Route::get('users/{id}/skus', 'API\V4\Reseller\SkusController@userSkus');
         Route::apiResource('wallets', API\V4\Reseller\WalletsController::class);
+        Route::get('wallets/{id}/transactions', 'API\V4\Reseller\WalletsController@transactions');
         Route::apiResource('discounts', API\V4\Reseller\DiscountsController::class);
     }
 );

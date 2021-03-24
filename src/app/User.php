@@ -222,7 +222,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function canRead($object): bool
     {
-        if ($this->role == "admin") {
+        if ($this->role == 'admin' || $this->role == 'reseller') {
             return true;
         }
 
