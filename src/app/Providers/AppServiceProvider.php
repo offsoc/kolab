@@ -59,13 +59,30 @@ class AppServiceProvider extends ServiceProvider
             return "<?php echo secure_asset('themes/' . \$env['app.theme'] . '/' . '$path'); ?>";
         });
 
-        // Query builder 'withTenant' macro
-        Builder::macro('withTenant', function (string $table = null) {
+        // Query builder 'withEnvTenant' macro
+        Builder::macro('withEnvTenant', function (string $table = null) {
+            $tenant_id = \config('app.tenant_id');
+
+            if ($tenant_id) {
+                /** @var Builder $this */
+                return $this->where(($table ? "$table." : '') . 'tenant_id', $tenant_id);
+            }
+
             /** @var Builder $this */
-            return $this->where(
-                ($table ? "$table." : '') . 'tenant_id',
-                \config('app.tenant_id')
-            );
+            return $this->whereNull(($table ? "$table." : '') . 'tenant_id');
+        });
+
+        // Query builder 'withUserTenant' macro
+        Builder::macro('withUserTenant', function (string $table = null) {
+            $tenant_id = auth()->user()->tenant_id;
+
+            if ($tenant_id) {
+                /** @var Builder $this */
+                return $this->where(($table ? "$table." : '') . 'tenant_id', $tenant_id);
+            }
+
+            /** @var Builder $this */
+            return $this->whereNull(($table ? "$table." : '') . 'tenant_id');
         });
     }
 }

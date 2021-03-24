@@ -51,7 +51,7 @@ class WalletCharge extends Command
             // Get all wallets, excluding deleted accounts
             $wallets = Wallet::select('wallets.*')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
-                ->withTenant('users')
+                ->withEnvTenant('users')
                 ->whereNull('users.deleted_at')
                 ->get();
         }
