@@ -19,6 +19,7 @@ class UsersTest extends TestCase
         \config(['app.tenant_id' => 1]);
 
         // $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
+        $this->deleteTestUser('test@reseller.com');
         $this->deleteTestUser('test@testsearch.com');
         $this->deleteTestDomain('testsearch.com');
     }
@@ -29,6 +30,7 @@ class UsersTest extends TestCase
     public function tearDown(): void
     {
         // $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
+        $this->deleteTestUser('test@reseller.com');
         $this->deleteTestUser('test@testsearch.com');
         $this->deleteTestDomain('testsearch.com');
 
