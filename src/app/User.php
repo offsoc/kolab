@@ -222,12 +222,24 @@ class User extends Authenticatable implements JWTSubject
      */
     public function canRead($object): bool
     {
-        if ($this->role == 'admin' || $this->role == 'reseller') {
+        if ($this->role == 'admin') {
             return true;
         }
 
         if ($object instanceof User && $this->id == $object->id) {
             return true;
+        }
+
+        if ($this->role == 'reseller') {
+            if ($object instanceof User && $object->role == 'admin') {
+                return false;
+            }
+
+            if ($object instanceof Wallet && !empty($object->owner)) {
+                $object = $object->owner;
+            }
+
+            return isset($object->tenant_id) && $object->tenant_id == $this->tenant_id;
         }
 
         if ($object instanceof Wallet) {
@@ -240,7 +252,7 @@ class User extends Authenticatable implements JWTSubject
 
         $wallet = $object->wallet();
 
-        return $this->wallets->contains($wallet) || $this->accounts->contains($wallet);
+        return $wallet && ($this->wallets->contains($wallet) || $this->accounts->contains($wallet));
     }
 
     /**
@@ -252,10 +264,6 @@ class User extends Authenticatable implements JWTSubject
      */
     public function canUpdate($object): bool
     {
-        if (!method_exists($object, 'wallet')) {
-            return false;
-        }
-
         if ($object instanceof User && $this->id == $object->id) {
             return true;
         }
