@@ -15,6 +15,7 @@ import {
     faDownload,
     faEnvelope,
     faGlobe,
+    faUniversity,
     faExclamationCircle,
     faInfoCircle,
     faLock,
@@ -30,6 +31,10 @@ import {
     faWallet
 } from '@fortawesome/free-solid-svg-icons'
 
+import {
+    faPaypal
+} from '@fortawesome/free-brands-svg-icons'
+
 // Register only these icons we need
 library.add(
     faCheck,
@@ -37,6 +42,8 @@ library.add(
     faCheckSquare,
     faComments,
     faCreditCard,
+    faPaypal,
+    faUniversity,
     faDownload,
     faEnvelope,
     faExclamationCircle,

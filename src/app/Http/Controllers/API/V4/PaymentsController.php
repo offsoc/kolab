@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V4;
 use App\Http\Controllers\Controller;
 use App\Providers\PaymentProvider;
 use App\Wallet;
+use App\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -55,6 +56,7 @@ class PaymentsController extends Controller
         $mandate = [
             'currency' => 'CHF',
             'description' => \config('app.name') . ' Auto-Payment Setup',
+            'methodId' => $request->methodId
         ];
 
         // Normally the auto-payment setup operation is 0, if the balance is below the threshold
@@ -217,8 +219,9 @@ class PaymentsController extends Controller
 
         $request = [
             'type' => PaymentProvider::TYPE_ONEOFF,
-            'currency' => 'CHF',
+            'currency' => $request->currency,
             'amount' => $amount,
+            'methodId' => $request->methodId,
             'description' => \config('app.name') . ' Payment',
         ];
 
@@ -230,6 +233,40 @@ class PaymentsController extends Controller
 
         return response()->json($result);
     }
+
+    /**
+     * Delete a pending payment.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    // TODO currently unused
+    // public function cancel(Request $request)
+    // {
+    //     $current_user = Auth::guard()->user();
+
+    //     // TODO: Wallet selection
+    //     $wallet = $current_user->wallets()->first();
+
+    //     $paymentId = $request->payment;
+
+    //     $user_owns_payment = Payment::where('id', $paymentId)
+    //         ->where('wallet_id', $wallet->id)
+    //         ->exists();
+
+    //     if (!$user_owns_payment) {
+    //         return $this->errorResponse(404);
+    //     }
+
+    //     $provider = PaymentProvider::factory($wallet);
+    //     if ($provider->cancel($wallet, $paymentId)) {
+    //         $result = ['status' => 'success'];
+    //         return response()->json($result);
+    //     }
+
+    //     return $this->errorResponse(404);
+    // }
 
     /**
      * Update payment status (and balance).
@@ -291,6 +328,7 @@ class PaymentsController extends Controller
             'type' => PaymentProvider::TYPE_RECURRING,
             'currency' => 'CHF',
             'amount' => $amount,
+            'methodId' => PaymentProvider::METHOD_CREDITCARD,
             'description' => \config('app.name') . ' Recurring Payment',
         ];
 
@@ -324,5 +362,114 @@ class PaymentsController extends Controller
         }
 
         return $mandate;
+    }
+
+
+    /**
+     * List supported payment methods.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public static function paymentMethods(Request $request)
+    {
+        $user = Auth::guard()->user();
+
+        // TODO: Wallet selection
+        $wallet = $user->wallets()->first();
+
+        $methods = PaymentProvider::paymentMethods($wallet, $request->type);
+
+        \Log::debug("Provider methods" . var_export(json_encode($methods), true));
+
+        return response()->json($methods);
+    }
+
+    /**
+     * Check for pending payments.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public static function hasPayments(Request $request)
+    {
+        $user = Auth::guard()->user();
+
+        // TODO: Wallet selection
+        $wallet = $user->wallets()->first();
+
+        $exists = Payment::where('wallet_id', $wallet->id)
+            ->where('type', PaymentProvider::TYPE_ONEOFF)
+            ->whereIn('status', [
+                PaymentProvider::STATUS_OPEN,
+                PaymentProvider::STATUS_PENDING,
+                PaymentProvider::STATUS_AUTHORIZED])
+            ->exists();
+
+        return response()->json([
+            'status' => 'success',
+            'hasPending' => $exists
+        ]);
+    }
+
+    /**
+     * List pending payments.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public static function payments(Request $request)
+    {
+        $user = Auth::guard()->user();
+
+        // TODO: Wallet selection
+        $wallet = $user->wallets()->first();
+
+        $pageSize = 10;
+        $page = intval(request()->input('page')) ?: 1;
+        $hasMore = false;
+        $result = Payment::where('wallet_id', $wallet->id)
+            ->where('type', PaymentProvider::TYPE_ONEOFF)
+            ->whereIn('status', [
+                PaymentProvider::STATUS_OPEN,
+                PaymentProvider::STATUS_PENDING,
+                PaymentProvider::STATUS_AUTHORIZED])
+            ->orderBy('created_at', 'desc')
+            ->limit($pageSize + 1)
+            ->offset($pageSize * ($page - 1))
+            ->get();
+
+        if (count($result) > $pageSize) {
+            $result->pop();
+            $hasMore = true;
+        }
+
+        $result = $result->map(function ($item) {
+            $provider = PaymentProvider::factory($item->provider);
+            $payment = $provider->getPayment($item->id);
+            $entry = [
+                'id' => $item->id,
+                'createdAt' => $item->created_at->format('Y-m-d H:i'),
+                'type' => $item->type,
+                'description' => $item->description,
+                'amount' => $item->amount,
+                'status' => $item->status,
+                'isCancelable' => $payment['isCancelable'],
+                'checkoutUrl' => $payment['checkoutUrl']
+            ];
+
+            return $entry;
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'list' => $result,
+            'count' => count($result),
+            'hasMore' => $hasMore,
+            'page' => $page,
+        ]);
     }
 }
