@@ -205,6 +205,7 @@ class rcube_imap_generic
             $buffer = fgets($this->fp, $size);
 
             if ($buffer === false) {
+                $this->debug("Reading from server failed, closing socket.");
                 $this->closeSocket();
                 break;
             }
@@ -3049,6 +3050,7 @@ class rcube_imap_generic
                 for ($offset = 0; $offset < $size; $offset += $chunk_size) {
                     $chunk = substr($msg_part, $offset, $chunk_size);
                     if (!$this->putLine($chunk, false)) {
+                        $this->setError(self::ERROR_UNKNOWN, "putLine failed on chunk");
                         return false;
                     }
                 }
@@ -3056,6 +3058,7 @@ class rcube_imap_generic
         }
 
         if (!$this->putLine('')) { // \r\n
+            $this->setError(self::ERROR_UNKNOWN, "putLine '' failed");
             return false;
         }
 
