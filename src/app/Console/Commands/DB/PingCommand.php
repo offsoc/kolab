@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\DB;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class DBPing extends Command
+class PingCommand extends Command
 {
     /**
      * The name and signature of the console command.
