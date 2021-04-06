@@ -22,6 +22,7 @@
         "kolab/net_ldap3": "dev-master",
         "laravel/framework": "6.*",
         "laravel/horizon": "^3",
+        "laravel/passport": "^9",
         "laravel/tinker": "^2.4",
         "mollie/laravel-mollie": "^2.9",
         "morrislaptop/laravel-queue-clear": "^1.2",
@@ -29,8 +30,7 @@
         "spatie/laravel-translatable": "^4.2",
         "spomky-labs/otphp": "~4.0.0",
         "stripe/stripe-php": "^7.29",
-        "swooletw/laravel-swoole": "^2.6",
-        "tymon/jwt-auth": "^1.0"
+        "swooletw/laravel-swoole": "^2.6"
     },
     "require-dev": {
         "beyondcode/laravel-dump-server": "^1.0",

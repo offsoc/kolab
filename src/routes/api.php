@@ -27,6 +27,7 @@ Route::group(
             ['middleware' => 'auth:api'],
             function ($router) {
                 Route::get('info', 'API\AuthController@info');
+                Route::post('info', 'API\AuthController@info');
                 Route::post('logout', 'API\AuthController@logout');
                 Route::post('refresh', 'API\AuthController@refresh');
             }

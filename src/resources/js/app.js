@@ -137,6 +137,7 @@ const app = new Vue({
             }
 
             localStorage.setItem('token', response.access_token)
+            localStorage.setItem('refreshToken', response.refresh_token)
             axios.defaults.headers.common.Authorization = 'Bearer ' + response.access_token
 
             if (response.email) {
@@ -171,6 +172,7 @@ const app = new Vue({
         logoutUser(redirect) {
             store.commit('logoutUser')
             localStorage.setItem('token', '')
+            localStorage.setItem('refreshToken', '')
             delete axios.defaults.headers.common.Authorization
 
             if (redirect !== false) {

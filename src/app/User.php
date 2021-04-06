@@ -11,7 +11,7 @@ use App\Wallet;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Iatstuti\Database\Support\NullableFields;
-use Tymon\JWTAuth\Contracts\JWTSubject;
+use Laravel\Passport\HasApiTokens;
 
 /**
  * The eloquent definition of a User.
@@ -21,12 +21,13 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property string $password
  * @property int    $status
  */
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable
 {
     use NullableFields;
     use UserAliasesTrait;
     use SettingsTrait;
     use SoftDeletes;
+    use HasApiTokens;
 
     // a new user, default on creation
     public const STATUS_NEW        = 1 << 0;
@@ -401,15 +402,7 @@ class User extends Authenticatable implements JWTSubject
         return null;
     }
 
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
 
-    public function getJWTCustomClaims()
-    {
-        return [];
-    }
 
     /**
      * Return groups controlled by the current user.

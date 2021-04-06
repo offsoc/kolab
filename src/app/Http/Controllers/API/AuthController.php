@@ -7,6 +7,8 @@ use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Laravel\Passport\TokenRepository;
+use Laravel\Passport\RefreshTokenRepository;
 
 class AuthController extends Controller
 {
@@ -20,9 +22,8 @@ class AuthController extends Controller
         $user = Auth::guard()->user();
         $response = V4\UsersController::userResponse($user);
 
-        if (!empty(request()->input('refresh_token'))) {
-            // @phpstan-ignore-next-line
-            return $this->respondWithToken(Auth::guard()->refresh(), $response);
+        if (!empty(request()->input('refresh'))) {
+            return $this->refreshAndRespond(request(), $response);
         }
 
         return response()->json($response);
@@ -36,12 +37,21 @@ class AuthController extends Controller
      */
     public static function logonResponse(User $user)
     {
-        // @phpstan-ignore-next-line
-        $token = Auth::guard()->login($user);
+        $proxyRequest = Request::create('/oauth/token', 'POST', [
+            'username' => $user->email,
+            'password' => $user->password,
+            'grant_type' => 'password',
+            'client_id' => config('auth.proxy.client_id'),
+            'client_secret' => config('auth.proxy.client_secret'),
+            'scopes' => '[*]'
+        ]);
+
+        $tokenResponse = app()->handle($proxyRequest);
+
         $response = V4\UsersController::userResponse($user);
         $response['status'] = 'success';
 
-        return self::respondWithToken($token, $response);
+        return self::respondWithToken($tokenResponse, $response);
     }
 
     /**
@@ -66,19 +76,33 @@ class AuthController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        $credentials = $request->only('email', 'password');
+        $proxyRequest = Request::create('/oauth/token', 'POST', [
+            'username' => $request->email,
+            'password' => $request->password,
+            'grant_type' => 'password',
+            'client_id' => config('auth.proxy.client_id'),
+            'client_secret' => config('auth.proxy.client_secret'),
+            'scopes' => '[*]'
+        ]);
 
-        if ($token = Auth::guard()->attempt($credentials)) {
-            $user = Auth::guard()->user();
+        $tokenResponse = app()->handle($proxyRequest);
+
+        if ($tokenResponse->getStatusCode() === 200) {
+            $user = \App\User::where('email', $request->email)->first();
+            if (!$user) {
+                throw new  \Exception("Authentication required.");
+            }
+
             $sf = new \App\Auth\SecondFactor($user);
 
+            // Returns null on success
             if ($response = $sf->requestHandler($request)) {
                 return $response;
             }
 
             $response = V4\UsersController::userResponse($user);
 
-            return $this->respondWithToken($token, $response);
+            return $this->respondWithToken($tokenResponse, $response);
         }
 
         return response()->json(['status' => 'error', 'message' => __('auth.failed')], 401);
@@ -91,8 +115,16 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        Auth::guard()->logout();
+        $tokenId = Auth::user()->token()->id;
 
+        $tokenRepository = app(TokenRepository::class);
+        $refreshTokenRepository = app(RefreshTokenRepository::class);
+
+        // Revoke an access token...
+        $tokenRepository->revokeAccessToken($tokenId);
+
+        // Revoke all of the token's refresh tokens...
+        $refreshTokenRepository->revokeRefreshTokensByAccessTokenId($tokenId);
         return response()->json([
                 'status' => 'success',
                 'message' => __('auth.logoutsuccess')
@@ -104,26 +136,42 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function refresh()
+    public function refresh(Request $request)
     {
-        // @phpstan-ignore-next-line
-        return $this->respondWithToken(Auth::guard()->refresh());
+        return self::refreshAndRespond($request);
+    }
+
+
+    protected static function refreshAndRespond($request, array $response = [])
+    {
+        $proxyRequest = Request::create('/oauth/token', 'POST', [
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $request->refresh_token,
+            'client_id' => config('auth.proxy.client_id'),
+            'client_secret' => config('auth.proxy.client_secret'),
+        ]);
+
+        $tokenResponse = app()->handle($proxyRequest);
+
+        return self::respondWithToken($tokenResponse, $response);
     }
 
     /**
      * Get the token array structure.
      *
-     * @param string $token    Respond with this token.
-     * @param array  $response Additional response data
+     * @param \Illuminate\Http\JsonResponse $tokenResponse The response containing the token.
+     * @param array                         $response      Additional response data
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected static function respondWithToken($token, array $response = [])
+    protected static function respondWithToken($tokenResponse, array $response = [])
     {
-        $response['access_token'] = $token;
+        $data = json_decode($tokenResponse->getContent());
+
+        $response['access_token'] = $data->access_token;
+        $response['refresh_token'] = $data->refresh_token;
         $response['token_type'] = 'bearer';
-        // @phpstan-ignore-next-line
-        $response['expires_in'] = Auth::guard()->factory()->getTTL() * 60;
+        $response['expires_in'] = $data->expires_in;
 
         return response()->json($response);
     }
