@@ -129,6 +129,7 @@ const app = new Vue({
             }
 
             localStorage.setItem('token', response.access_token)
+            localStorage.setItem('refreshToken', response.refresh_token)
             axios.defaults.headers.common.Authorization = 'Bearer ' + response.access_token
 
             if (response.email) {
@@ -154,7 +155,7 @@ const app = new Vue({
             //       while the token is being refreshed
 
             this.refreshTimeout = setTimeout(() => {
-                axios.post('/api/auth/refresh').then(response => {
+                axios.post('/api/auth/refresh', {'refresh_token': response.refresh_token}).then(response => {
                     this.loginUser(response.data, false, true)
                 })
             }, timeout * 1000)
@@ -163,6 +164,7 @@ const app = new Vue({
         logoutUser(redirect) {
             store.commit('logoutUser')
             localStorage.setItem('token', '')
+            localStorage.setItem('refreshToken', '')
             delete axios.defaults.headers.common.Authorization
 
             if (redirect !== false) {

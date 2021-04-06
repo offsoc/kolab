@@ -8,6 +8,28 @@ use Tests\TestCase;
 
 class AuthTest extends TestCase
 {
+    private $expectedExpiry;
+
+    /**
+     * Reset all authentication guards to clear any cache users
+     */
+    protected function resetAuth()
+    {
+        $guards = array_keys(config('auth.guards'));
+
+        foreach ($guards as $guard) {
+            $guard = $this->app['auth']->guard($guard);
+
+            if ($guard instanceof \Illuminate\Auth\SessionGuard) {
+                $guard->logout();
+            }
+        }
+
+        $protectedProperty = new \ReflectionProperty($this->app['auth'], 'guards');
+        $protectedProperty->setAccessible(true);
+        $protectedProperty->setValue($this->app['auth'], []);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -17,6 +39,8 @@ class AuthTest extends TestCase
 
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestDomain('userscontroller.com');
+
+        $this->expectedExpiry = \config('auth.token_expiry_minutes') * 60;
     }
 
     /**
@@ -57,12 +81,13 @@ class AuthTest extends TestCase
         // Note: Details of the content are tested in testUserResponse()
 
         // Test token refresh via the info request
-        // First we log in as we need the token (actingAs() will not work)
+        // First we log in to get the refresh token
         $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
+        $user = $this->getTestUser('john@kolab.org');
         $response = $this->post("api/auth/login", $post);
         $json = $response->json();
-        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $json['access_token']])
-            ->get("api/auth/info?refresh_token=1");
+        $response = $this->actingAs($user)
+            ->post("api/auth/info?refresh=1", ['refresh_token' => $json['refresh_token']]);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -108,7 +133,10 @@ class AuthTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertTrue(!empty($json['access_token']));
-        $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
+        $this->assertTrue(
+            ($this->expectedExpiry - 5) < $json['expires_in'] &&
+            $json['expires_in'] < ($this->expectedExpiry + 5)
+        );
         $this->assertEquals('bearer', $json['token_type']);
         $this->assertEquals($user->id, $json['id']);
         $this->assertEquals($user->email, $json['email']);
@@ -123,7 +151,10 @@ class AuthTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertTrue(!empty($json['access_token']));
-        $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
+        $this->assertTrue(
+            ($this->expectedExpiry - 5) < $json['expires_in'] &&
+            $json['expires_in'] < ($this->expectedExpiry + 5)
+        );
         $this->assertEquals('bearer', $json['token_type']);
 
         // TODO: We have browser tests for 2FA but we should probably also test it here
@@ -146,6 +177,10 @@ class AuthTest extends TestCase
         $response = $this->json('POST', "api/auth/logout", []);
         $response->assertStatus(401);
 
+        // Request with invalid token
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . "foobar"])->post("api/auth/logout");
+        $response->assertStatus(401);
+
         // Request with valid token
         $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->post("api/auth/logout");
         $response->assertStatus(200);
@@ -154,6 +189,7 @@ class AuthTest extends TestCase
 
         $this->assertEquals('success', $json['status']);
         $this->assertEquals('Successfully logged out.', $json['message']);
+        $this->resetAuth();
 
         // Check if it really destroyed the token?
         $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->get("api/auth/info");
@@ -180,15 +216,20 @@ class AuthTest extends TestCase
         $json = $response->json();
         $token = $json['access_token'];
 
+        $user = $this->getTestUser('john@kolab.org');
+
         // Request with a valid token
-        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->post("api/auth/refresh");
+        $response = $this->actingAs($user)->post("api/auth/refresh", ['refresh_token' => $json['refresh_token']]);
         $response->assertStatus(200);
 
         $json = $response->json();
 
         $this->assertTrue(!empty($json['access_token']));
         $this->assertTrue($json['access_token'] != $token);
-        $this->assertEquals(\config('jwt.ttl') * 60, $json['expires_in']);
+        $this->assertTrue(
+            ($this->expectedExpiry - 5) < $json['expires_in'] &&
+            $json['expires_in'] < ($this->expectedExpiry + 5)
+        );
         $this->assertEquals('bearer', $json['token_type']);
         $new_token = $json['access_token'];
 

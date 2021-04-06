@@ -66,10 +66,11 @@ php -dmemory_limit=-1 /bin/composer install
 npm install
 find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan key:generate
-./artisan jwt:secret -f
 ./artisan clear-compiled
 ./artisan cache:clear
 ./artisan horizon:install
+./artisan passport:keys --force
+
 
 if [ ! -z "$(rpm -qv chromium 2>/dev/null)" ]; then
     chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
