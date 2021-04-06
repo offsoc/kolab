@@ -49,6 +49,16 @@
                         <label for="reset_confirm" class="visually-hidden">{{ $t('form.password-confirm') }}</label>
                         <input type="password" class="form-control" id="reset_confirm" :placeholder="$t('form.password-confirm')" required v-model="password_confirmation">
                     </div>
+                    <div class="form-group pt-3">
+                        <label for="secondfactor" class="sr-only">2FA</label>
+                        <div class="input-group">
+                            <span class="input-group-prepend">
+                                <span class="input-group-text"><svg-icon icon="key"></svg-icon></span>
+                            </span>
+                            <input type="text" id="secondfactor" class="form-control rounded-right" placeholder="Second factor code" v-model="secondFactor">
+                        </div>
+                        <small class="form-text text-muted">Second factor code is optional for users with no 2-Factor Authentication setup.</small>
+                    </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
                     <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
                 </form>
@@ -66,6 +76,7 @@
                 short_code: '',
                 password: '',
                 password_confirmation: '',
+                secondFactor: '',
                 fromEmail: window.config['mail.from.address']
             }
         },
@@ -127,7 +138,8 @@
                     code: this.code,
                     short_code: this.short_code,
                     password: this.password,
-                    password_confirmation: this.password_confirmation
+                    password_confirmation: this.password_confirmation,
+                    secondfactor: this.secondFactor
                 }).then(response => {
                     // auto-login and goto dashboard
                     this.$root.loginUser(response.data)

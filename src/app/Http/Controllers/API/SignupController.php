@@ -333,7 +333,7 @@ class SignupController extends Controller
 
         DB::commit();
 
-        return AuthController::logonResponse($user);
+        return AuthController::logonResponse($user, $request->password);
     }
 
     /**

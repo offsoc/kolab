@@ -10,9 +10,11 @@ use App\Traits\UserAliasesTrait;
 use App\Traits\SettingsTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Iatstuti\Database\Support\NullableFields;
-use Tymon\JWTAuth\Contracts\JWTSubject;
+use Laravel\Passport\HasApiTokens;
+use League\OAuth2\Server\Exception\OAuthServerException;
 
 /**
  * The eloquent definition of a User.
@@ -23,13 +25,14 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property int    $status
  * @property int    $tenant_id
  */
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable
 {
     use NullableFields;
     use UserConfigTrait;
     use UserAliasesTrait;
     use SettingsTrait;
     use SoftDeletes;
+    use HasApiTokens;
 
     // a new user, default on creation
     public const STATUS_NEW        = 1 << 0;
@@ -397,7 +400,7 @@ class User extends Authenticatable implements JWTSubject
      * @param string $email    Email address
      * @param bool   $external Search also for an external email
      *
-     * @return \App\User User model object if found
+     * @return \App\User|null User model object if found
      */
     public static function findByEmail(string $email, bool $external = false): ?User
     {
@@ -424,15 +427,7 @@ class User extends Authenticatable implements JWTSubject
         return null;
     }
 
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
 
-    public function getJWTCustomClaims()
-    {
-        return [];
-    }
 
     /**
      * Return groups controlled by the current user.
@@ -795,5 +790,124 @@ class User extends Authenticatable implements JWTSubject
         }
 
         $this->attributes['status'] = $new_status;
+    }
+
+    /**
+     * Validate the user credentials
+     *
+     * @param string $username       The username.
+     * @param string $password       The password in plain text.
+     * @param bool   $updatePassword Store the password if currently empty
+     *
+     * @return bool true on success
+     */
+    public function validateCredentials(string $username, string $password, bool $updatePassword = true): bool
+    {
+        $authenticated = false;
+
+        if ($this->email === \strtolower($username)) {
+            if (!empty($this->password)) {
+                if (Hash::check($password, $this->password)) {
+                    $authenticated = true;
+                }
+            } elseif (!empty($this->password_ldap)) {
+                if (substr($this->password_ldap, 0, 6) == "{SSHA}") {
+                    $salt = substr(base64_decode(substr($this->password_ldap, 6)), 20);
+
+                    $hash = '{SSHA}' . base64_encode(
+                        sha1($password . $salt, true) . $salt
+                    );
+
+                    if ($hash == $this->password_ldap) {
+                        $authenticated = true;
+                    }
+                } elseif (substr($this->password_ldap, 0, 9) == "{SSHA512}") {
+                    $salt = substr(base64_decode(substr($this->password_ldap, 9)), 64);
+
+                    $hash = '{SSHA512}' . base64_encode(
+                        pack('H*', hash('sha512', $password . $salt)) . $salt
+                    );
+
+                    if ($hash == $this->password_ldap) {
+                        $authenticated = true;
+                    }
+                }
+            } else {
+                \Log::error("Incomplete credentials for {$this->email}");
+            }
+        }
+
+        if ($authenticated) {
+            \Log::info("Successful authentication for {$this->email}");
+
+            // TODO: update last login time
+            if ($updatePassword && (empty($this->password) || empty($this->password_ldap))) {
+                $this->password = $password;
+                $this->save();
+            }
+        } else {
+            // TODO: Try actual LDAP?
+            \Log::info("Authentication failed for {$this->email}");
+        }
+
+        return $authenticated;
+    }
+
+    /**
+     * Retrieve and authenticate a user
+     *
+     * @param string $username     The username.
+     * @param string $password     The password in plain text.
+     * @param string $secondFactor The second factor (secondfactor from current request is used as fallback).
+     *
+     * @return array ['user', 'reason', 'errorMessage']
+     */
+    public static function findAndAuthenticate($username, $password, $secondFactor = null): ?array
+    {
+        $user = User::where('email', $username)->first();
+        if (!$user) {
+            return ['reason' => 'notfound', 'errorMessage' => "User not found."];
+        }
+
+        if (!$user->validateCredentials($username, $password)) {
+            return ['reason' => 'credentials', 'errorMessage' => "Invalid password."];
+        }
+
+
+
+        if (!$secondFactor) {
+            // Check the request if there is a second factor provided
+            // as fallback.
+            $secondFactor = request()->secondfactor;
+        }
+
+        try {
+            (new \App\Auth\SecondFactor($user))->validate($secondFactor);
+        } catch (\Exception $e) {
+            return ['reason' => 'secondfactor', 'errorMessage' => $e->getMessage()];
+        }
+
+        return ['user' => $user];
+    }
+
+    /**
+     * Hook for passport
+     *
+     * @throws \Throwable
+     *
+     * @return \App\User User model object if found
+     */
+    public function findAndValidateForPassport($username, $password): User
+    {
+        $result = self::findAndAuthenticate($username, $password);
+
+        if (isset($result['reason'])) {
+            if ($result['reason'] == 'secondfactor') {
+                // This results in a json response of {'error': 'secondfactor', 'error_description': '$errorMessage'}
+                throw new OAuthServerException($result['errorMessage'], 6, 'secondfactor', 401);
+            }
+            throw OAuthServerException::invalidCredentials();
+        }
+        return $result['user'];
     }
 }
