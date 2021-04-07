@@ -84,7 +84,7 @@ class ListInput extends BaseComponent
     public function removeListEntry($browser, int $num)
     {
         $selector = '.input-group:nth-child(' . ($num + 1) . ') a.btn';
-        $browser->click($selector)->assertMissing($selector);
+        $browser->click($selector);
     }
 
     /**

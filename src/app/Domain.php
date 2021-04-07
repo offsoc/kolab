@@ -3,6 +3,8 @@
 namespace App;
 
 use App\Wallet;
+use App\Traits\DomainConfigTrait;
+use App\Traits\SettingsTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -16,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Domain extends Model
 {
+    use DomainConfigTrait;
+    use SettingsTrait;
     use SoftDeletes;
 
     // we've simply never heard of this domain
@@ -363,6 +367,16 @@ class Domain extends Model
         $hash = \md5('hkccp-verify-' . $this->namespace);
 
         return $mod === self::HASH_TEXT ? "$cname=$hash" : $hash;
+    }
+
+    /**
+     * Any (additional) properties of this domain.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function settings()
+    {
+        return $this->hasMany('App\DomainSetting', 'domain_id');
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App;
 use App\Entitlement;
 use App\UserAlias;
 use App\Sku;
+use App\Traits\UserConfigTrait;
 use App\Traits\UserAliasesTrait;
 use App\Traits\SettingsTrait;
 use App\Wallet;
@@ -25,6 +26,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     use NullableFields;
+    use UserConfigTrait;
     use UserAliasesTrait;
     use SettingsTrait;
     use SoftDeletes;

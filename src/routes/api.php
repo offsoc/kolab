@@ -63,6 +63,7 @@ Route::group(
         Route::apiResource('domains', API\V4\DomainsController::class);
         Route::get('domains/{id}/confirm', 'API\V4\DomainsController@confirm');
         Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
+        Route::post('domains/{id}/config', 'API\V4\DomainsController@setConfig');
 
         Route::apiResource('groups', API\V4\GroupsController::class);
         Route::get('groups/{id}/status', 'API\V4\GroupsController@status');
@@ -71,6 +72,7 @@ Route::group(
         Route::apiResource('skus', API\V4\SkusController::class);
 
         Route::apiResource('users', API\V4\UsersController::class);
+        Route::post('users/{id}/config', 'API\V4\UsersController@setConfig');
         Route::get('users/{id}/skus', 'API\V4\SkusController@userSkus');
         Route::get('users/{id}/status', 'API\V4\UsersController@status');
 

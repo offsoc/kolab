@@ -97,6 +97,39 @@ class DomainsController extends Controller
     }
 
     /**
+     * Set the domain configuration.
+     *
+     * @param int $id Domain identifier
+     *
+     * @return \Illuminate\Http\JsonResponse|void
+     */
+    public function setConfig($id)
+    {
+        $domain = Domain::find($id);
+
+        if (empty($domain)) {
+            return $this->errorResponse(404);
+        }
+
+        // Only owner (or admin) has access to the domain
+        if (!Auth::guard()->user()->canRead($domain)) {
+            return $this->errorResponse(403);
+        }
+
+        $errors = $domain->setConfig(request()->input());
+
+        if (!empty($errors)) {
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        return response()->json([
+                'status' => 'success',
+                'message' => \trans('app.domain-setconfig-success'),
+        ]);
+    }
+
+
+    /**
      * Store a newly created resource in storage.
      *
      * @param \Illuminate\Http\Request $request
@@ -133,7 +166,10 @@ class DomainsController extends Controller
 
         // Add DNS/MX configuration for the domain
         $response['dns'] = self::getDNSConfig($domain);
-        $response['config'] = self::getMXConfig($domain->namespace);
+        $response['mx'] = self::getMXConfig($domain->namespace);
+
+        // Domain configuration, e.g. spf whitelist
+        $response['config'] = $domain->getConfig();
 
         // Status info
         $response['statusInfo'] = self::statusInfo($domain);

@@ -53,6 +53,7 @@ class Domain extends Page
             '@domain-info' => '#domain-info',
             '@nav' => 'ul.nav-tabs',
             '@domain-config' => '#domain-config',
+            '@domain-settings' => '#domain-settings',
         ];
     }
 }

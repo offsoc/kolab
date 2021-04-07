@@ -59,6 +59,7 @@ class User extends Page
             '@user-distlists' => '#user-distlists',
             '@user-domains' => '#user-domains',
             '@user-users' => '#user-users',
+            '@user-settings' => '#user-settings',
         ];
     }
 }

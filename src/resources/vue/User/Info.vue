@@ -14,6 +14,21 @@
                 </div>
                 <div class="card-title" v-if="user_id === 'new'">{{ $t('user.new') }}</div>
                 <div class="card-text">
+                    <ul class="nav nav-tabs mt-3" role="tablist">
+                        <li class="nav-item">
+                           <a class="nav-link active" id="tab-general" href="#general" role="tab" aria-controls="general" aria-selected="true" @click="$root.tab">
+                               {{ $t('form.general') }}
+                           </a>
+                        </li>
+                        <li v-if="user_id !== 'new'" class="nav-item">
+                            <a class="nav-link" id="tab-settings" href="#settings" role="tab" aria-controls="settings" aria-selected="false" @click="$root.tab">
+                                {{ $t('form.settings') }}
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane show active" id="general" role="tabpanel" aria-labelledby="tab-general">
+                            <div class="card-body">
                     <form @submit.prevent="submit">
                         <div v-if="user_id !== 'new'" class="form-group row plaintext">
                             <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
@@ -159,6 +174,25 @@
                         </div>
                         <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
                     </form>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
+                            <div class="card-body">
+                                <form @submit.prevent="submitSettings">
+                                    <div class="form-group row checkbox">
+                                        <label for="greylisting" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
+                                        <div class="col-sm-8 pt-2">
+                                            <input type="checkbox" id="greylisting" name="greylisting" value="1" :checked="user.config.greylisting">
+                                            <small id="greylisting-hint" class="form-text text-muted">
+                                                {{ $t('user.greylisting-text') }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -200,7 +234,7 @@
                 discount: 0,
                 discount_description: '',
                 user_id: null,
-                user: { aliases: [] },
+                user: { aliases: [], config: [] },
                 packages: [],
                 package_id: null,
                 skus: [],
@@ -310,6 +344,15 @@
 
                         this.$toast.success(response.data.message)
                         this.$router.push({ name: 'users' })
+                    })
+            },
+            submitSettings() {
+                this.$root.clearFormValidation($('#settings form'))
+                let post = { greylisting: $('#greylisting').prop('checked') ? 1 : 0 }
+
+                axios.post('/api/v4/users/' + this.user_id + '/config', post)
+                    .then(response => {
+                        this.$toast.success(response.data.message)
                     })
             },
             onInputSku(e) {
