@@ -38,8 +38,10 @@ class DomainInfo extends Page
         return [
             '@app' => '#app',
             '@config' => '#domain-config',
-            '@verify' => '#domain-verify',
+            '@nav' => 'ul.nav-tabs',
+            '@settings' => '#settings',
             '@status' => '#status-box',
+            '@verify' => '#domain-verify',
         ];
     }
 }

@@ -111,7 +111,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 5);
+                ->assertElementsCount('@nav a', 6);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -155,6 +155,15 @@ class UserTest extends TestCaseDusk
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no users in this account.');
                 });
+
+            // Assert Settings tab
+            $browser->assertSeeIn('@nav #tab-settings', 'Settings')
+                ->click('@nav #tab-settings')
+                ->whenAvailable('@user-settings form', function (Browser $browser) {
+                    $browser->assertElementsCount('.row', 1)
+                        ->assertSeeIn('.row:first-child label', 'Greylisting')
+                        ->assertSeeIn('.row:first-child .text-success', 'enabled');
+                });
         });
     }
 
@@ -173,6 +182,7 @@ class UserTest extends TestCaseDusk
             $wallet->discount()->associate($discount);
             $wallet->debit(2010);
             $wallet->save();
+            $john->setSetting('greylisting', null);
 
             // Click the managed-by link on Jack's page
             $browser->click('@user-info #manager a')
@@ -207,7 +217,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 5);
+                ->assertElementsCount('@nav a', 6);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -267,6 +277,7 @@ class UserTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $ned = $this->getTestUser('ned@kolab.org');
             $page = new UserPage($ned->id);
+            $ned->setSetting('greylisting', 'false');
 
             $browser->click('@user-users tbody tr:nth-child(4) td:first-child a')
                 ->on($page);
@@ -280,7 +291,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 5);
+                ->assertElementsCount('@nav a', 6);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -327,6 +338,15 @@ class UserTest extends TestCaseDusk
                 ->with('@user-users', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no users in this account.');
+                });
+
+            // Assert Settings tab
+            $browser->assertSeeIn('@nav #tab-settings', 'Settings')
+                ->click('@nav #tab-settings')
+                ->whenAvailable('@user-settings form', function (Browser $browser) {
+                    $browser->assertElementsCount('.row', 1)
+                        ->assertSeeIn('.row:first-child label', 'Greylisting')
+                        ->assertSeeIn('.row:first-child .text-danger', 'disabled');
                 });
         });
     }

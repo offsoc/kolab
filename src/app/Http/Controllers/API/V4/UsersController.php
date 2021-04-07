@@ -88,6 +88,37 @@ class UsersController extends Controller
     }
 
     /**
+     * Set user config.
+     *
+     * @param int $id The user
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setConfig($id)
+    {
+        $user = User::find($id);
+
+        if (empty($user)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canRead($user)) {
+            return $this->errorResponse(403);
+        }
+
+        $errors = $user->setConfig(request()->input());
+
+        if (!empty($errors)) {
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.user-setconfig-success'),
+        ]);
+    }
+
+    /**
      * Display information on the user account specified by $id.
      *
      * @param int $id The account to show information for.
@@ -118,6 +149,8 @@ class UsersController extends Controller
                 'count' => isset($response['skus'][$sku->id]) ? $response['skus'][$sku->id]['count'] + 1 : 1,
             ];
         }
+
+        $response['config'] = $user->getConfig();
 
         return response()->json($response);
     }

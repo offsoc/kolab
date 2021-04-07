@@ -335,38 +335,12 @@ table {
         padding: 0.5rem 0;
     }
 
-    .form-group {
-        margin-bottom: 0.5rem;
-    }
-
     .nav-tabs {
         flex-wrap: nowrap;
-        overflow-x: auto;
 
         .nav-link {
             white-space: nowrap;
             padding: 0.5rem 0.75rem;
-        }
-    }
-
-    .tab-content {
-        margin-top: 0.5rem;
-    }
-
-    .col-form-label {
-        color: #666;
-        font-size: 95%;
-    }
-
-    .form-group.plaintext .col-form-label {
-        padding-bottom: 0;
-    }
-
-    form.read-only.short label {
-        width: 35%;
-
-        & + * {
-            width: 65%;
         }
     }
 
@@ -448,5 +422,11 @@ table {
                 }
             }
         }
+    }
+}
+
+@include media-breakpoint-down(sm) {
+    .tab-pane > .card-body {
+        padding: 0.5rem;
     }
 }

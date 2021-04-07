@@ -5,6 +5,7 @@ namespace App;
 use App\Entitlement;
 use App\UserAlias;
 use App\Sku;
+use App\Traits\UserConfigTrait;
 use App\Traits\UserAliasesTrait;
 use App\Traits\SettingsTrait;
 use App\Wallet;
@@ -26,6 +27,7 @@ class User extends Authenticatable implements JWTSubject
 {
     use Notifiable;
     use NullableFields;
+    use UserConfigTrait;
     use UserAliasesTrait;
     use SettingsTrait;
     use SoftDeletes;

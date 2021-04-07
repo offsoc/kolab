@@ -182,6 +182,10 @@ const app = new Vue({
         isLoading() {
             return isLoading > 0
         },
+        tab(e) {
+            e.preventDefault()
+            $(e.target).tab('show')
+        },
         errorPage(code, msg) {
             // Until https://github.com/vuejs/vue-router/issues/977 is implemented
             // we can't really use router to display error page as it has two side

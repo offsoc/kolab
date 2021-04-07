@@ -39,7 +39,9 @@ class UserInfo extends Page
         return [
             '@app' => '#app',
             '@form' => '#user-info form',
+            '@nav' => 'ul.nav-tabs',
             '@packages' => '#user-packages',
+            '@settings' => '#settings',
             '@skus' => '#user-skus',
             '@status' => '#status-box',
         ];

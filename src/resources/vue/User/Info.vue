@@ -7,151 +7,187 @@
                 <div class="card-title" v-if="user_id !== 'new'">User account</div>
                 <div class="card-title" v-if="user_id === 'new'">New user account</div>
                 <div class="card-text">
-                    <form @submit.prevent="submit">
-                        <div v-if="user_id !== 'new'" class="form-group row plaintext">
-                            <label for="first_name" class="col-sm-4 col-form-label">Status</label>
-                            <div class="col-sm-8">
-                                <span :class="$root.userStatusClass(user) + ' form-control-plaintext'" id="status">{{ $root.userStatusText(user) }}</span>
+                    <ul class="nav nav-tabs mt-3" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="tab-general" href="#general" role="tab" aria-controls="general" aria-selected="true" @click="$root.tab">
+                                General
+                            </a>
+                        </li>
+                        <li v-if="user_id !== 'new'" class="nav-item">
+                            <a class="nav-link" id="tab-settings" href="#settings" role="tab" aria-controls="settings" aria-selected="false" @click="$root.tab">
+                                Settings
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane show active" id="general" role="tabpanel" aria-labelledby="tab-general">
+                            <div class="card-body">
+                                <form @submit.prevent="submit">
+                                    <div v-if="user_id !== 'new'" class="form-group row plaintext">
+                                        <label for="first_name" class="col-sm-4 col-form-label">Status</label>
+                                        <div class="col-sm-8">
+                                            <span :class="$root.userStatusClass(user) + ' form-control-plaintext'" id="status">{{ $root.userStatusText(user) }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="first_name" class="col-sm-4 col-form-label">First name</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control" id="first_name" v-model="user.first_name">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="last_name" class="col-sm-4 col-form-label">Last name</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control" id="last_name" v-model="user.last_name">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="organization" class="col-sm-4 col-form-label">Organization</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control" id="organization" v-model="user.organization">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="email" class="col-sm-4 col-form-label">Email</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control" id="email" :disabled="user_id !== 'new'" required v-model="user.email">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="aliases-input" class="col-sm-4 col-form-label">Email aliases</label>
+                                        <div class="col-sm-8">
+                                            <list-input id="aliases" :list="user.aliases"></list-input>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="password" class="col-sm-4 col-form-label">Password</label>
+                                        <div class="col-sm-8">
+                                            <input type="password" class="form-control" id="password" v-model="user.password" :required="user_id === 'new'">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="password_confirmaton" class="col-sm-4 col-form-label">Confirm password</label>
+                                        <div class="col-sm-8">
+                                            <input type="password" class="form-control" id="password_confirmation" v-model="user.password_confirmation" :required="user_id === 'new'">
+                                        </div>
+                                    </div>
+                                    <div v-if="user_id === 'new'" id="user-packages" class="form-group row">
+                                        <label class="col-sm-4 col-form-label">Package</label>
+                                        <div class="col-sm-8">
+                                            <table class="table table-sm form-list">
+                                                <thead class="thead-light sr-only">
+                                                    <tr>
+                                                        <th scope="col"></th>
+                                                        <th scope="col">Package</th>
+                                                        <th scope="col">Price</th>
+                                                        <th scope="col"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr v-for="pkg in packages" :id="'p' + pkg.id" :key="pkg.id">
+                                                        <td class="selection">
+                                                            <input type="checkbox" @click="selectPackage"
+                                                                   :value="pkg.id"
+                                                                   :checked="pkg.id == package_id"
+                                                                   :id="'pkg-input-' + pkg.id"
+                                                            >
+                                                        </td>
+                                                        <td class="name">
+                                                            <label :for="'pkg-input-' + pkg.id">{{ pkg.name }}</label>
+                                                        </td>
+                                                        <td class="price text-nowrap">
+                                                            {{ $root.priceLabel(pkg.cost, 1, discount) }}
+                                                        </td>
+                                                        <td class="buttons">
+                                                            <button v-if="pkg.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="pkg.description">
+                                                                <svg-icon icon="info-circle"></svg-icon>
+                                                                <span class="sr-only">More information</span>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                            <small v-if="discount > 0" class="hint">
+                                                <hr class="m-0">
+                                                &sup1; applied discount: {{ discount }}% - {{ discount_description }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div v-if="user_id !== 'new'" id="user-skus" class="form-group row">
+                                        <label class="col-sm-4 col-form-label">Subscriptions</label>
+                                        <div class="col-sm-8">
+                                            <table class="table table-sm form-list">
+                                                <thead class="thead-light sr-only">
+                                                    <tr>
+                                                        <th scope="col"></th>
+                                                        <th scope="col">Subscription</th>
+                                                        <th scope="col">Price</th>
+                                                        <th scope="col"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr v-for="sku in skus" :id="'s' + sku.id" :key="sku.id">
+                                                        <td class="selection">
+                                                            <input type="checkbox" @input="onInputSku"
+                                                                   :value="sku.id"
+                                                                   :disabled="sku.readonly"
+                                                                   :checked="sku.enabled"
+                                                                   :id="'sku-input-' + sku.title"
+                                                            >
+                                                        </td>
+                                                        <td class="name">
+                                                            <label :for="'sku-input-' + sku.title">{{ sku.name }}</label>
+                                                            <div v-if="sku.range" class="range-input">
+                                                                <label class="text-nowrap">{{ sku.range.min }} {{ sku.range.unit }}</label>
+                                                                <input
+                                                                    type="range" class="custom-range" @input="rangeUpdate"
+                                                                    :value="sku.value || sku.range.min"
+                                                                    :min="sku.range.min"
+                                                                    :max="sku.range.max"
+                                                                >
+                                                            </div>
+                                                        </td>
+                                                        <td class="price text-nowrap">
+                                                            {{ $root.priceLabel(sku.cost, 1, discount) }}
+                                                        </td>
+                                                        <td class="buttons">
+                                                            <button v-if="sku.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="sku.description">
+                                                                <svg-icon icon="info-circle"></svg-icon>
+                                                                <span class="sr-only">More information</span>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                            <small v-if="discount > 0" class="hint">
+                                                <hr class="m-0">
+                                                &sup1; applied discount: {{ discount }}% - {{ discount_description }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
+                                </form>
                             </div>
                         </div>
-                        <div class="form-group row">
-                            <label for="first_name" class="col-sm-4 col-form-label">First name</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control" id="first_name" v-model="user.first_name">
+                        <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
+                            <div class="card-body">
+                                <form @submit.prevent="submitSettings">
+                                    <div class="form-group row checkbox">
+                                        <label for="greylisting" class="col-sm-4 col-form-label">Greylisting</label>
+                                        <div class="col-sm-8 pt-2">
+                                            <input type="checkbox" id="greylisting" name="greylisting" value="1" :checked="user.config.greylisting">
+                                            <small id="greylisting-hint" class="form-text text-muted">
+                                                Greylisting is a method of defending users against spam. Any incoming mail from an unrecognized sender
+                                                is temporarily rejected. The originating server should try again after a delay.
+                                                This time the email will be accepted. Spammers usually do not reattempt mail delivery.
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
+                                </form>
                             </div>
                         </div>
-                        <div class="form-group row">
-                            <label for="last_name" class="col-sm-4 col-form-label">Last name</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control" id="last_name" v-model="user.last_name">
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <label for="organization" class="col-sm-4 col-form-label">Organization</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control" id="organization" v-model="user.organization">
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <label for="email" class="col-sm-4 col-form-label">Email</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control" id="email" :disabled="user_id !== 'new'" required v-model="user.email">
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <label for="aliases-input" class="col-sm-4 col-form-label">Email aliases</label>
-                            <div class="col-sm-8">
-                                <list-input id="aliases" :list="user.aliases"></list-input>
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <label for="password" class="col-sm-4 col-form-label">Password</label>
-                            <div class="col-sm-8">
-                                <input type="password" class="form-control" id="password" v-model="user.password" :required="user_id === 'new'">
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <label for="password_confirmaton" class="col-sm-4 col-form-label">Confirm password</label>
-                            <div class="col-sm-8">
-                                <input type="password" class="form-control" id="password_confirmation" v-model="user.password_confirmation" :required="user_id === 'new'">
-                            </div>
-                        </div>
-                        <div v-if="user_id === 'new'" id="user-packages" class="form-group row">
-                            <label class="col-sm-4 col-form-label">Package</label>
-                            <div class="col-sm-8">
-                                <table class="table table-sm form-list">
-                                    <thead class="thead-light sr-only">
-                                        <tr>
-                                            <th scope="col"></th>
-                                            <th scope="col">Package</th>
-                                            <th scope="col">Price</th>
-                                            <th scope="col"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="pkg in packages" :id="'p' + pkg.id" :key="pkg.id">
-                                            <td class="selection">
-                                                <input type="checkbox" @click="selectPackage"
-                                                       :value="pkg.id"
-                                                       :checked="pkg.id == package_id"
-                                                       :id="'pkg-input-' + pkg.id"
-                                                >
-                                            </td>
-                                            <td class="name">
-                                                <label :for="'pkg-input-' + pkg.id">{{ pkg.name }}</label>
-                                            </td>
-                                            <td class="price text-nowrap">
-                                                {{ $root.priceLabel(pkg.cost, 1, discount) }}
-                                            </td>
-                                            <td class="buttons">
-                                                <button v-if="pkg.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="pkg.description">
-                                                    <svg-icon icon="info-circle"></svg-icon>
-                                                    <span class="sr-only">More information</span>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <small v-if="discount > 0" class="hint">
-                                    <hr class="m-0">
-                                    &sup1; applied discount: {{ discount }}% - {{ discount_description }}
-                                </small>
-                            </div>
-                        </div>
-                        <div v-if="user_id !== 'new'" id="user-skus" class="form-group row">
-                            <label class="col-sm-4 col-form-label">Subscriptions</label>
-                            <div class="col-sm-8">
-                                <table class="table table-sm form-list">
-                                    <thead class="thead-light sr-only">
-                                        <tr>
-                                            <th scope="col"></th>
-                                            <th scope="col">Subscription</th>
-                                            <th scope="col">Price</th>
-                                            <th scope="col"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="sku in skus" :id="'s' + sku.id" :key="sku.id">
-                                            <td class="selection">
-                                                <input type="checkbox" @input="onInputSku"
-                                                       :value="sku.id"
-                                                       :disabled="sku.readonly"
-                                                       :checked="sku.enabled"
-                                                       :id="'sku-input-' + sku.title"
-                                                >
-                                            </td>
-                                            <td class="name">
-                                                <label :for="'sku-input-' + sku.title">{{ sku.name }}</label>
-                                                <div v-if="sku.range" class="range-input">
-                                                    <label class="text-nowrap">{{ sku.range.min }} {{ sku.range.unit }}</label>
-                                                    <input
-                                                        type="range" class="custom-range" @input="rangeUpdate"
-                                                        :value="sku.value || sku.range.min"
-                                                        :min="sku.range.min"
-                                                        :max="sku.range.max"
-                                                    >
-                                                </div>
-                                            </td>
-                                            <td class="price text-nowrap">
-                                                {{ $root.priceLabel(sku.cost, 1, discount) }}
-                                            </td>
-                                            <td class="buttons">
-                                                <button v-if="sku.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="sku.description">
-                                                    <svg-icon icon="info-circle"></svg-icon>
-                                                    <span class="sr-only">More information</span>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <small v-if="discount > 0" class="hint">
-                                    <hr class="m-0">
-                                    &sup1; applied discount: {{ discount }}% - {{ discount_description }}
-                                </small>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -172,7 +208,7 @@
                 discount: 0,
                 discount_description: '',
                 user_id: null,
-                user: { aliases: [] },
+                user: { aliases: [], config: [] },
                 packages: [],
                 package_id: null,
                 skus: [],
@@ -278,6 +314,15 @@
 
                         this.$toast.success(response.data.message)
                         this.$router.push({ name: 'users' })
+                    })
+            },
+            submitSettings() {
+                this.$root.clearFormValidation($('#settings form'))
+                let post = { greylisting: $('#greylisting').prop('checked') ? 1 : 0 }
+
+                axios.post('/api/v4/users/' + this.user_id + '/config', post)
+                    .then(response => {
+                        this.$toast.success(response.data.message)
                     })
             },
             onInputSku(e) {

@@ -135,6 +135,8 @@ return [
     'entryexists' => 'The specified :attribute is not available.',
     'minamount' => 'Minimum amount for a single payment is :amount.',
     'minamountdebt' => 'The specified amount does not cover the balance on the account.',
+    'spf-entry-invalid' => 'The entry format is invalid. Expected a domain name starting with a dot.',
+    'invalid-config-parameter' => 'The requested configuration parameter is not supported.',
 
     /*
     |--------------------------------------------------------------------------
