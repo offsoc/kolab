@@ -58,6 +58,13 @@ abstract class UserJob extends CommonJob
         $user = \App\User::withTrashed()->find($this->userId);
 
         if (!$user) {
+            // The record might not exist yet in case of a db replication environment
+            // This will release the job and delay another attempt for 5 seconds
+            if ($this instanceof User\CreateJob) {
+                $this->release(5);
+                return null;
+            }
+
             $this->fail(new \Exception("User {$this->userId} could not be found in the database."));
         }
 

@@ -8,9 +8,65 @@ require('./bootstrap')
 
 import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Widgets/Menu'
+import SupportForm from '../vue/Widgets/SupportForm'
 import store from './store'
 
 const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'
+
+let isLoading = 0
+
+// Lock the UI with the 'loading...' element
+const startLoading = () => {
+    isLoading++
+    let loading = $('#app > .app-loader').removeClass('fadeOut')
+    if (!loading.length) {
+        $('#app').append($(loader))
+    }
+}
+
+// Hide "loading" overlay
+const stopLoading = () => {
+    if (isLoading > 0) {
+        $('#app > .app-loader').addClass('fadeOut')
+        isLoading--;
+    }
+}
+
+let loadingRoute
+
+// Note: This has to be before the app is created
+// Note: You cannot use app inside of the function
+window.router.beforeEach((to, from, next) => {
+    // check if the route requires authentication and user is not logged in
+    if (to.matched.some(route => route.meta.requiresAuth) && !store.state.isLoggedIn) {
+        // remember the original request, to use after login
+        store.state.afterLogin = to;
+
+        // redirect to login page
+        next({ name: 'login' })
+
+        return
+    }
+
+    if (to.meta.loading) {
+        startLoading()
+        loadingRoute = to.name
+    }
+
+    next()
+})
+
+window.router.afterEach((to, from) => {
+    if (to.name && loadingRoute === to.name) {
+        stopLoading()
+        loadingRoute = null
+    }
+
+    // When changing a page remove old:
+    // - error page
+    // - modal backdrop
+    $('#error-page,.modal-backdrop.show').remove()
+})
 
 const app = new Vue({
     el: '#app',
@@ -22,8 +78,10 @@ const app = new Vue({
     router: window.router,
     data() {
         return {
-            isLoading: true,
-            isAdmin: window.isAdmin
+            isAdmin: window.isAdmin,
+            appName: window.config['app.name'],
+            appUrl: window.config['app.url'],
+            themeDir: '/themes/' + window.config['app.theme']
         }
     },
     methods: {
@@ -31,6 +89,13 @@ const app = new Vue({
         clearFormValidation(form) {
             $(form).find('.is-invalid').removeClass('is-invalid')
             $(form).find('.invalid-feedback').remove()
+        },
+        hasRoute(name) {
+            return this.$router.resolve({ name: name }).resolved.matched.length > 0
+        },
+        hasSKU(name) {
+            const authInfo = store.state.authInfo
+            return authInfo.statusInfo.skus && authInfo.statusInfo.skus.indexOf(name) != -1
         },
         isController(wallet_id) {
             if (wallet_id && store.state.authInfo) {
@@ -88,33 +153,34 @@ const app = new Vue({
             }, timeout * 1000)
         },
         // Set user state to "not logged in"
-        logoutUser() {
+        logoutUser(redirect) {
             store.commit('logoutUser')
             localStorage.setItem('token', '')
             delete axios.defaults.headers.common.Authorization
-            this.$router.push({ name: 'login' })
+
+            if (redirect !== false) {
+                this.$router.push({ name: 'login' })
+            }
+
             clearTimeout(this.refreshTimeout)
         },
+        logo(mode) {
+            let src = this.appUrl + this.themeDir + '/images/logo_' + (mode || 'header') + '.png'
+
+            return `<img src="${src}" alt="${this.appName}">`
+        },
         // Display "loading" overlay inside of the specified element
-        addLoader(elem) {
-            $(elem).css({position: 'relative'}).append($(loader).addClass('small'))
+        addLoader(elem, small = true) {
+            $(elem).css({position: 'relative'}).append(small ? $(loader).addClass('small') : $(loader))
         },
         // Remove loader element added in addLoader()
         removeLoader(elem) {
             $(elem).find('.app-loader').remove()
         },
-        startLoading() {
-            this.isLoading = true
-            // Lock the UI with the 'loading...' element
-            let loading = $('#app > .app-loader').removeClass('fadeOut')
-            if (!loading.length) {
-                $('#app').append($(loader))
-            }
-        },
-        // Hide "loading" overlay
-        stopLoading() {
-            $('#app > .app-loader').addClass('fadeOut')
-            this.isLoading = false
+        startLoading,
+        stopLoading,
+        isLoading() {
+            return isLoading > 0
         },
         errorPage(code, msg) {
             // Until https://github.com/vuejs/vue-router/issues/977 is implemented
@@ -132,10 +198,12 @@ const app = new Vue({
 
             if (!msg) msg = map[code] || "Unknown Error"
 
-            const error_page = `<div id="error-page"><div class="code">${code}</div><div class="message">${msg}</div></div>`
+            const error_page = `<div id="error-page" class="error-page"><div class="code">${code}</div><div class="message">${msg}</div></div>`
 
             $('#error-page').remove()
             $('#app').append(error_page)
+
+            app.updateBodyClass('error')
         },
         errorHandler(error) {
             this.stopLoading()
@@ -143,7 +211,13 @@ const app = new Vue({
             if (!error.response) {
                 // TODO: probably network connection error
             } else if (error.response.status === 401) {
-                this.logoutUser()
+                // Remember requested route to come back to it after log in
+                if (this.$route.meta.requiresAuth) {
+                    store.state.afterLogin = this.$route
+                    this.logoutUser()
+                } else {
+                    this.logoutUser(false)
+                }
             } else {
                 this.errorPage(error.response.status, error.response.statusText)
             }
@@ -154,7 +228,7 @@ const app = new Vue({
             // TODO: This method does not show the download progress in the browser
             //       but it could be implemented in the UI, axios has 'progress' property
             axios.get(url, { responseType: 'blob' })
-                .then (response => {
+                .then(response => {
                     const link = document.createElement('a')
                     const contentDisposition = response.headers['content-disposition']
                     let filename = 'unknown'
@@ -226,6 +300,38 @@ const app = new Vue({
 
             return 'Active'
         },
+        pageName(path) {
+            let page = this.$route.path
+
+            // check if it is a "menu page", find the page name
+            // otherwise we'll use the real path as page name
+            window.config.menu.every(item => {
+                if (item.location == page && item.page) {
+                    page = item.page
+                    return false
+                }
+            })
+
+            page = page.replace(/^\//, '')
+
+            return page ? page : '404'
+        },
+        supportDialog(container) {
+            let dialog = $('#support-dialog')
+
+            // FIXME: Find a nicer way of doing this
+            if (!dialog.length) {
+                let form = new Vue(SupportForm)
+                form.$mount($('<div>').appendTo(container)[0])
+                form.$root = this
+                form.$toast = this.$toast
+                dialog = $(form.$el)
+            }
+
+            dialog.on('shown.bs.modal', () => {
+                    dialog.find('input').first().focus()
+                }).modal()
+        },
         userStatusClass(user) {
             if (user.isDeleted) {
                 return 'text-muted'
@@ -255,6 +361,12 @@ const app = new Vue({
             }
 
             return 'Active'
+        },
+        updateBodyClass(name) {
+            // Add 'class' attribute to the body, different for each page
+            // so, we can apply page-specific styles
+            let className = 'page-' + (name || this.pageName()).replace(/\/.*$/, '')
+            $(document.body).removeClass().addClass(className)
         }
     }
 })
@@ -277,12 +389,24 @@ window.axios.interceptors.request.use(
 // Add a axios response interceptor for general/validation error handler
 window.axios.interceptors.response.use(
     response => {
-        // Do nothing
+        if (response.config.onFinish) {
+            response.config.onFinish()
+        }
+
         return response
     },
     error => {
         let error_msg
         let status = error.response ? error.response.status : 200
+
+        // Do not display the error in a toast message, pass the error as-is
+        if (error.config.ignoreErrors) {
+            return Promise.reject(error)
+        }
+
+        if (error.config.onFinish) {
+            error.config.onFinish()
+        }
 
         if (error.response && status == 422) {
             error_msg = "Form validation error"

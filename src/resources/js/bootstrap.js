@@ -68,28 +68,6 @@ window.router = new VueRouter({
     }
 })
 
-router.beforeEach((to, from, next) => {
-    // check if the route requires authentication and user is not logged in
-    if (to.matched.some(route => route.meta.requiresAuth) && !store.state.isLoggedIn) {
-        // remember the original request, to use after login
-        store.state.afterLogin = to;
-
-        // redirect to login page
-        next({ name: 'login' })
-
-        return
-    }
-
-    next()
-})
-
-router.afterEach((to, from) => {
-    // When changing a page remove old:
-    // - error page
-    // - modal backdrop
-    $('#error-page,.modal-backdrop.show').remove()
-})
-
 /**
  * We'll load the axios HTTP library which allows us to easily issue requests
  * to our Laravel back-end. This library automatically handles sending the

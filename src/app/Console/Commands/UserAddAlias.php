@@ -55,7 +55,7 @@ class UserAddAlias extends Command
         $controller = $user->wallet()->owner;
 
         // Validate the alias
-        $error = UsersController::validateEmail($alias, $controller, true);
+        $error = UsersController::validateAlias($alias, $controller);
 
         if ($error) {
             if (!$this->option('force')) {

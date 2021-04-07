@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Entitlement;
 use App\Domain;
+use App\Group;
 use App\Transaction;
 use App\User;
 use App\Wallet;
@@ -25,7 +26,7 @@ class UserObserver
         if (!$user->id) {
             while (true) {
                 $allegedly_unique = \App\Utils::uuidInt();
-                if (!User::find($allegedly_unique)) {
+                if (!User::withTrashed()->find($allegedly_unique)) {
                     $user->{$user->getKeyName()} = $allegedly_unique;
                     break;
                 }
@@ -97,7 +98,16 @@ class UserObserver
      */
     public function deleted(User $user)
     {
-        //
+        // Remove the user from existing groups
+        $wallet = $user->wallet();
+        if ($wallet && $wallet->owner) {
+            $wallet->owner->groups()->each(function ($group) use ($user) {
+                if (in_array($user->email, $group->members)) {
+                    $group->members = array_diff($group->members, [$user->email]);
+                    $group->save();
+                }
+            });
+        }
     }
 
     /**
@@ -132,6 +142,7 @@ class UserObserver
         $assignments = Entitlement::whereIn('wallet_id', $wallets)->get();
         $users = [];
         $domains = [];
+        $groups = [];
         $entitlements = [];
 
         foreach ($assignments as $entitlement) {
@@ -139,30 +150,35 @@ class UserObserver
                 $domains[] = $entitlement->entitleable_id;
             } elseif ($entitlement->entitleable_type == User::class && $entitlement->entitleable_id != $user->id) {
                 $users[] = $entitlement->entitleable_id;
+            } elseif ($entitlement->entitleable_type == Group::class) {
+                $groups[] = $entitlement->entitleable_id;
             } else {
-                $entitlements[] = $entitlement->id;
+                $entitlements[] = $entitlement;
             }
         }
-
-        $users = array_unique($users);
-        $domains = array_unique($domains);
 
         // Domains/users/entitlements need to be deleted one by one to make sure
         // events are fired and observers can do the proper cleanup.
         if (!empty($users)) {
-            foreach (User::whereIn('id', $users)->get() as $_user) {
+            foreach (User::whereIn('id', array_unique($users))->get() as $_user) {
                 $_user->delete();
             }
         }
 
         if (!empty($domains)) {
-            foreach (Domain::whereIn('id', $domains)->get() as $_domain) {
+            foreach (Domain::whereIn('id', array_unique($domains))->get() as $_domain) {
                 $_domain->delete();
             }
         }
 
-        if (!empty($entitlements)) {
-            Entitlement::whereIn('id', $entitlements)->delete();
+        if (!empty($groups)) {
+            foreach (Group::whereIn('id', array_unique($groups))->get() as $_group) {
+                $_group->delete();
+            }
+        }
+
+        foreach ($entitlements as $entitlement) {
+            $entitlement->delete();
         }
 
         // FIXME: What do we do with user wallets?
@@ -186,6 +202,7 @@ class UserObserver
         $assignments = Entitlement::withTrashed()->whereIn('wallet_id', $wallets)->get();
         $entitlements = [];
         $domains = [];
+        $groups = [];
         $users = [];
 
         foreach ($assignments as $entitlement) {
@@ -198,11 +215,10 @@ class UserObserver
                 && $entitlement->entitleable_id != $user->id
             ) {
                 $users[] = $entitlement->entitleable_id;
+            } elseif ($entitlement->entitleable_type == Group::class) {
+                $groups[] = $entitlement->entitleable_id;
             }
         }
-
-        $users = array_unique($users);
-        $domains = array_unique($domains);
 
         // Remove the user "direct" entitlements explicitely, if they belong to another
         // user's wallet they will not be removed by the wallets foreign key cascade
@@ -213,14 +229,19 @@ class UserObserver
 
         // Users need to be deleted one by one to make sure observers can do the proper cleanup.
         if (!empty($users)) {
-            foreach (User::withTrashed()->whereIn('id', $users)->get() as $_user) {
+            foreach (User::withTrashed()->whereIn('id', array_unique($users))->get() as $_user) {
                 $_user->forceDelete();
             }
         }
 
         // Domains can be just removed
         if (!empty($domains)) {
-            Domain::withTrashed()->whereIn('id', $domains)->forceDelete();
+            Domain::withTrashed()->whereIn('id', array_unique($domains))->forceDelete();
+        }
+
+        // Groups can be just removed
+        if (!empty($groups)) {
+            Group::withTrashed()->whereIn('id', array_unique($groups))->forceDelete();
         }
 
         // Remove transactions, they also have no foreign key constraint
@@ -231,6 +252,86 @@ class UserObserver
         Transaction::where('object_type', Wallet::class)
             ->whereIn('object_id', $wallets)
             ->delete();
+    }
+
+    /**
+     * Handle the user "restoring" event.
+     *
+     * @param \App\User $user The user
+     *
+     * @return void
+     */
+    public function restoring(User $user)
+    {
+        // Make sure it's not DELETED/LDAP_READY/IMAP_READY/SUSPENDED anymore
+        if ($user->isDeleted()) {
+            $user->status ^= User::STATUS_DELETED;
+        }
+        if ($user->isLdapReady()) {
+            $user->status ^= User::STATUS_LDAP_READY;
+        }
+        if ($user->isImapReady()) {
+            $user->status ^= User::STATUS_IMAP_READY;
+        }
+        if ($user->isSuspended()) {
+            $user->status ^= User::STATUS_SUSPENDED;
+        }
+
+        $user->status |= User::STATUS_ACTIVE;
+
+        // Note: $user->save() is invoked between 'restoring' and 'restored' events
+    }
+
+    /**
+     * Handle the user "restored" event.
+     *
+     * @param \App\User $user The user
+     *
+     * @return void
+     */
+    public function restored(User $user)
+    {
+        $wallets = $user->wallets()->pluck('id')->all();
+
+        // Restore user entitlements
+        // We'll restore only these that were deleted last. So, first we get
+        // the maximum deleted_at timestamp and then use it to select
+        // entitlements for restore
+        $deleted_at = \App\Entitlement::withTrashed()
+            ->where('entitleable_id', $user->id)
+            ->where('entitleable_type', User::class)
+            ->max('deleted_at');
+
+        if ($deleted_at) {
+            $threshold = (new \Carbon\Carbon($deleted_at))->subMinute();
+
+            // We need at least the user domain so it can be created in ldap.
+            // FIXME: What if the domain is owned by someone else?
+            $domain = $user->domain();
+            if ($domain->trashed() && !$domain->isPublic()) {
+                // Note: Domain entitlements will be restored by the DomainObserver
+                $domain->restore();
+            }
+
+            // Restore user entitlements
+            \App\Entitlement::withTrashed()
+                ->where('entitleable_id', $user->id)
+                ->where('entitleable_type', User::class)
+                ->where('deleted_at', '>=', $threshold)
+                ->update(['updated_at' => now(), 'deleted_at' => null]);
+
+            // Note: We're assuming that cost of entitlements was correct
+            // on user deletion, so we don't have to re-calculate it again.
+        }
+
+        // FIXME: Should we reset user aliases? or re-validate them in any way?
+
+        // Create user record in LDAP, then run the verification process
+        $chain = [
+            new \App\Jobs\User\VerifyJob($user->id),
+        ];
+
+        \App\Jobs\User\CreateJob::withChain($chain)->dispatch($user->id);
     }
 
     /**

@@ -1,4 +1,3 @@
-const mix = require('laravel-mix');
 
 /*
  |--------------------------------------------------------------------------
@@ -11,9 +10,21 @@ const mix = require('laravel-mix');
  |
  */
 
+const fs = require('fs');
+const glob = require('glob');
+const mix = require('laravel-mix');
+
 mix.webpackConfig({
     output: {
-        publicPath: process.env.MIX_ASSET_PATH
+        publicPath: process.env.MIX_ASSET_PATH,
+        // Make sure chunks are also put into the public/js/ folder
+        chunkFilename: "js/[name].js"
+    },
+    optimization: {
+        splitChunks: {
+            // Disable chunking, so we have one chunk.js instead of chunk.js + vendor~chunk.js
+            maxAsyncRequests: 1
+        }
     },
     resolve: {
         alias: {
@@ -24,5 +35,16 @@ mix.webpackConfig({
 
 mix.js('resources/js/user.js', 'public/js')
     .js('resources/js/admin.js', 'public/js')
-    .sass('resources/sass/app.scss', 'public/css')
-    .sass('resources/sass/document.scss', 'public/css');
+
+glob.sync('resources/themes/*/', {}).forEach(fromDir => {
+    const toDir = fromDir.replace('resources/themes/', 'public/themes/')
+
+    mix.sass(fromDir + 'app.scss', toDir)
+        .sass(fromDir + 'document.scss', toDir);
+
+    fs.stat(fromDir + 'images', {}, (err, stats) => {
+        if (stats) {
+            mix.copyDirectory(fromDir + 'images', toDir + 'images')
+        }
+    })
+})

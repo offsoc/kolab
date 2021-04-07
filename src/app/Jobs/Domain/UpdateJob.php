@@ -15,6 +15,10 @@ class UpdateJob extends DomainJob
     {
         $domain = $this->getDomain();
 
+        if (!$domain) {
+            return;
+        }
+
         if (!$domain->isLdapReady()) {
             $this->delete();
             return;

@@ -6,6 +6,8 @@ use App\Payment;
 use App\Utils;
 use App\Wallet;
 use Illuminate\Support\Facades\DB;
+use Mollie\Api\Exceptions\ApiException;
+use Mollie\Api\Types;
 
 class Mollie extends \App\Providers\PaymentProvider
 {
@@ -36,9 +38,10 @@ class Mollie extends \App\Providers\PaymentProvider
      *
      * @param \App\Wallet $wallet  The wallet
      * @param array       $payment Payment data:
-     *                             - amount: Value in cents
+     *                             - amount: Value in cents (optional)
      *                             - currency: The operation currency
      *                             - description: Operation desc.
+     *                             - methodId: Payment method
      *
      * @return array Provider payment data:
      *               - id: Operation identifier
@@ -49,10 +52,17 @@ class Mollie extends \App\Providers\PaymentProvider
         // Register the user in Mollie, if not yet done
         $customer_id = self::mollieCustomerId($wallet, true);
 
+        if (!isset($payment['amount'])) {
+            $payment['amount'] = 0;
+        }
+
+        $amount = $this->exchange($payment['amount'], $wallet->currency, $payment['currency']);
+        $payment['currency_amount'] = $amount;
+
         $request = [
             'amount' => [
                 'currency' => $payment['currency'],
-                'value' => '0.00',
+                'value' => sprintf('%.2f', $amount / 100),
             ],
             'customerId' => $customer_id,
             'sequenceType' => 'first',
@@ -60,7 +70,7 @@ class Mollie extends \App\Providers\PaymentProvider
             'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
             'redirectUrl' => Utils::serviceUrl('/wallet'),
             'locale' => 'en_US',
-            // 'method' => 'creditcard',
+            'method' => $payment['methodId']
         ];
 
         // Create the payment in Mollie
@@ -69,6 +79,13 @@ class Mollie extends \App\Providers\PaymentProvider
         if ($response->mandateId) {
             $wallet->setSetting('mollie_mandate_id', $response->mandateId);
         }
+
+        // Store the payment reference in database
+        $payment['status'] = $response->status;
+        $payment['id'] = $response->id;
+        $payment['type'] = self::TYPE_MANDATE;
+
+        $this->storePayment($payment, $wallet->id);
 
         return [
             'id' => $response->id,
@@ -106,6 +123,7 @@ class Mollie extends \App\Providers\PaymentProvider
      * @return array|null Mandate information:
      *                    - id: Mandate identifier
      *                    - method: user-friendly payment method desc.
+     *                    - methodId: Payment method
      *                    - isPending: the process didn't complete yet
      *                    - isValid: the mandate is valid
      */
@@ -122,7 +140,8 @@ class Mollie extends \App\Providers\PaymentProvider
             'id' => $mandate->id,
             'isPending' => $mandate->isPending(),
             'isValid' => $mandate->isValid(),
-            'method' => self::paymentMethod($mandate, 'Unknown method')
+            'method' => self::paymentMethod($mandate, 'Unknown method'),
+            'methodId' => $mandate->method
         ];
 
         return $result;
@@ -147,6 +166,7 @@ class Mollie extends \App\Providers\PaymentProvider
      *                             - currency: The operation currency
      *                             - type: oneoff/recurring
      *                             - description: Operation desc.
+     *                             - methodId: Payment method
      *
      * @return array Provider payment data:
      *               - id: Operation identifier
@@ -161,20 +181,23 @@ class Mollie extends \App\Providers\PaymentProvider
         // Register the user in Mollie, if not yet done
         $customer_id = self::mollieCustomerId($wallet, true);
 
-        // Note: Required fields: description, amount/currency, amount/value
+        $amount = $this->exchange($payment['amount'], $wallet->currency, $payment['currency']);
+        $payment['currency_amount'] = $amount;
 
+        // Note: Required fields: description, amount/currency, amount/value
         $request = [
             'amount' => [
                 'currency' => $payment['currency'],
-                // a number with two decimals is required
-                'value' => sprintf('%.2f', $payment['amount'] / 100),
+                // a number with two decimals is required (note that JPK and ISK don't require decimals,
+                // but we're not using them currently)
+                'value' => sprintf('%.2f', $amount / 100),
             ],
             'customerId' => $customer_id,
             'sequenceType' => $payment['type'],
             'description' => $payment['description'],
             'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
             'locale' => 'en_US',
-            // 'method' => 'creditcard',
+            'method' => $payment['methodId'],
             'redirectUrl' => Utils::serviceUrl('/wallet') // required for non-recurring payments
         ];
 
@@ -197,6 +220,27 @@ class Mollie extends \App\Providers\PaymentProvider
         ];
     }
 
+
+    /**
+     * Cancel a pending payment.
+     *
+     * @param \App\Wallet $wallet  The wallet
+     * @param string      $paymentId Payment Id
+     *
+     * @return bool True on success, False on failure
+     */
+    public function cancel(Wallet $wallet, $paymentId): bool
+    {
+        $response = mollie()->payments()->delete($paymentId);
+
+        $db_payment = Payment::find($paymentId);
+        $db_payment->status = $response->status;
+        $db_payment->save();
+
+        return true;
+    }
+
+
     /**
      * Create a new automatic payment operation.
      *
@@ -218,19 +262,21 @@ class Mollie extends \App\Providers\PaymentProvider
         $customer_id = self::mollieCustomerId($wallet, true);
 
         // Note: Required fields: description, amount/currency, amount/value
+        $amount = $this->exchange($payment['amount'], $wallet->currency, $payment['currency']);
+        $payment['currency_amount'] = $amount;
 
         $request = [
             'amount' => [
                 'currency' => $payment['currency'],
                 // a number with two decimals is required
-                'value' => sprintf('%.2f', $payment['amount'] / 100),
+                'value' => sprintf('%.2f', $amount / 100),
             ],
             'customerId' => $customer_id,
             'sequenceType' => $payment['type'],
             'description' => $payment['description'],
             'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
             'locale' => 'en_US',
-            // 'method' => 'creditcard',
+            'method' => $payment['methodId'],
             'mandateId' => $mandate->id
         ];
 
@@ -293,6 +339,7 @@ class Mollie extends \App\Providers\PaymentProvider
         }
 
         // Get the payment details from Mollie
+        // TODO: Consider https://github.com/mollie/mollie-api-php/issues/502 when it's fixed
         $mollie_payment = mollie()->payments()->get($payment_id);
 
         if (empty($mollie_payment)) {
@@ -300,22 +347,56 @@ class Mollie extends \App\Providers\PaymentProvider
             return 200;
         }
 
+        $refunds = [];
+
         if ($mollie_payment->isPaid()) {
-            if (!$mollie_payment->hasRefunds() && !$mollie_payment->hasChargebacks()) {
-                // The payment is paid and isn't refunded or charged back.
-                // Update the balance, if it wasn't already
-                if ($payment->status != self::STATUS_PAID && $payment->amount > 0) {
-                    $credit = true;
-                    $notify = $payment->type == self::TYPE_RECURRING;
+            // The payment is paid. Update the balance, and notify the user
+            if ($payment->status != self::STATUS_PAID && $payment->amount > 0) {
+                $credit = true;
+                $notify = $payment->type == self::TYPE_RECURRING;
+            }
+
+            // The payment has been (partially) refunded.
+            // Let's process refunds with status "refunded".
+            if ($mollie_payment->hasRefunds()) {
+                foreach ($mollie_payment->refunds() as $refund) {
+                    if ($refund->isTransferred() && $refund->amount->value) {
+                        $refunds[] = [
+                            'id' => $refund->id,
+                            'description' => $refund->description,
+                            'amount' => round(floatval($refund->amount->value) * 100),
+                            'type' => self::TYPE_REFUND,
+                            'currency' => $refund->amount->currency
+                        ];
+                    }
                 }
-            } elseif ($mollie_payment->hasRefunds()) {
-                // The payment has been (partially) refunded.
-                // The status of the payment is still "paid"
-                // TODO: Update balance
-            } elseif ($mollie_payment->hasChargebacks()) {
-                // The payment has been (partially) charged back.
-                // The status of the payment is still "paid"
-                // TODO: Update balance
+            }
+
+            // The payment has been (partially) charged back.
+            // Let's process chargebacks (they have no states as refunds)
+            if ($mollie_payment->hasChargebacks()) {
+                foreach ($mollie_payment->chargebacks() as $chargeback) {
+                    if ($chargeback->amount->value) {
+                        $refunds[] = [
+                            'id' => $chargeback->id,
+                            'amount' => round(floatval($chargeback->amount->value) * 100),
+                            'type' => self::TYPE_CHARGEBACK,
+                            'currency' => $chargeback->amount->currency
+                        ];
+                    }
+                }
+            }
+
+            // In case there were multiple auto-payment setup requests (e.g. caused by a double
+            // form submission) we end up with multiple payment records and mollie_mandate_id
+            // pointing to the one from the last payment not the successful one.
+            // We make sure to use mandate id from the successful "first" payment.
+            if (
+                $payment->type == self::TYPE_MANDATE
+                && $mollie_payment->mandateId
+                && $mollie_payment->sequenceType == Types\SequenceType::SEQUENCETYPE_FIRST
+            ) {
+                $payment->wallet->setSetting('mollie_mandate_id', $mollie_payment->mandateId);
             }
         } elseif ($mollie_payment->isFailed()) {
             // Note: I didn't find a way to get any description of the problem with a payment
@@ -341,6 +422,10 @@ class Mollie extends \App\Providers\PaymentProvider
 
         if (!empty($credit)) {
             self::creditPayment($payment, $mollie_payment);
+        }
+
+        foreach ($refunds as $refund) {
+            $this->storeRefund($payment->wallet, $refund);
         }
 
         DB::commit();
@@ -390,21 +475,21 @@ class Mollie extends \App\Providers\PaymentProvider
 
         // Get the manadate reference we already have
         if ($customer_id && $mandate_id) {
-            $mandate = mollie()->mandates()->getForId($customer_id, $mandate_id);
-            if ($mandate) {// && ($mandate->isValid() || $mandate->isPending())) {
-                return $mandate;
-            }
-        }
+            try {
+                return mollie()->mandates()->getForId($customer_id, $mandate_id);
+            } catch (ApiException $e) {
+                // FIXME: What about 404?
+                if ($e->getCode() == 410) {
+                    // The mandate is gone, remove the reference
+                    $wallet->setSetting('mollie_mandate_id', null);
+                    return null;
+                }
 
-        // Get all mandates from Mollie and find the active one
-        /*
-        foreach ($customer->mandates() as $mandate) {
-            if ($mandate->isValid() || $mandate->isPending()) {
-                $wallet->setSetting('mollie_mandate_id', $mandate->id);
-                return $mandate;
+                // TODO: Maybe we shouldn't always throw? It make sense in the job
+                //       but for example when we're just fetching wallet info...
+                throw $e;
             }
         }
-        */
     }
 
     /**
@@ -436,7 +521,7 @@ class Mollie extends \App\Providers\PaymentProvider
 
         // Mollie supports 3 methods here
         switch ($object->method) {
-            case 'creditcard':
+            case self::METHOD_CREDITCARD:
                 // If the customer started, but never finished the 'first' payment
                 // card details will be empty, and mandate will be 'pending'.
                 if (empty($details->cardNumber)) {
@@ -449,13 +534,89 @@ class Mollie extends \App\Providers\PaymentProvider
                     $details->cardNumber
                 );
 
-            case 'directdebit':
+            case self::METHOD_DIRECTDEBIT:
                 return sprintf('Direct Debit (%s)', $details->customerAccount);
 
-            case 'paypal':
+            case self::METHOD_PAYPAL:
                 return sprintf('PayPal (%s)', $details->consumerAccount);
         }
 
         return $default;
+    }
+
+    /**
+     * List supported payment methods.
+     *
+     * @param string $type The payment type for which we require a method (oneoff/recurring).
+     *
+     * @return array Array of array with available payment methods:
+     *               - id: id of the method
+     *               - name: User readable name of the payment method
+     *               - minimumAmount: Minimum amount to be charged in cents
+     *               - currency: Currency used for the method
+     *               - exchangeRate: The projected exchange rate (actual rate is determined during payment)
+     *               - icon: An icon (icon name) representing the method
+     */
+    public function providerPaymentMethods($type): array
+    {
+
+        $providerMethods = array_merge(
+            // Fallback to EUR methods (later provider methods will override earlier ones)
+            //mollie()->methods()->allActive(
+            //    [
+            //        'sequenceType' => $type,
+            //        'amount' => [
+            //            'value' => '1.00',
+            //            'currency' => 'EUR'
+            //        ]
+            //    ]
+            //),
+            // Prefer CHF methods
+            (array)mollie()->methods()->allActive(
+                [
+                    'sequenceType' => $type,
+                    'amount' => [
+                        'value' => '1.00',
+                        'currency' => 'CHF'
+                    ]
+                ]
+            )
+        );
+
+        $availableMethods = [];
+        foreach ($providerMethods as $method) {
+            $availableMethods[$method->id] = [
+                'id' => $method->id,
+                'name' => $method->description,
+                'minimumAmount' => round(floatval($method->minimumAmount->value) * 100), // Converted to cents
+                'currency' => $method->minimumAmount->currency,
+                'exchangeRate' => $this->exchangeRate('CHF', $method->minimumAmount->currency)
+            ];
+        }
+
+        return $availableMethods;
+    }
+
+    /**
+     * Get a payment.
+     *
+     * @param string $paymentId Payment identifier
+     *
+     * @return array Payment information:
+     *                    - id: Payment identifier
+     *                    - status: Payment status
+     *                    - isCancelable: The payment can be canceled
+     *                    - checkoutUrl: The checkout url to complete the payment or null if none
+     */
+    public function getPayment($paymentId): array
+    {
+        $payment = mollie()->payments()->get($paymentId);
+
+        return [
+            'id' => $payment->id,
+            'status' => $payment->status,
+            'isCancelable' => $payment->isCancelable,
+            'checkoutUrl' => $payment->getCheckoutUrl()
+        ];
     }
 }

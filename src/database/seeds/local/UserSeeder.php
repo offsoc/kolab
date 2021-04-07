@@ -114,7 +114,11 @@ class UserSeeder extends Seeder
         // Ned is also our 2FA test user
         $sku2fa = Sku::firstOrCreate(['title' => '2fa']);
         $ned->assignSku($sku2fa);
-        SecondFactor::seed('ned@kolab.org');
+        try {
+            SecondFactor::seed('ned@kolab.org');
+        } catch (\Exception $e) {
+            // meh
+        }
 
         $joe = User::create(
             [
@@ -124,6 +128,9 @@ class UserSeeder extends Seeder
         );
 
         $john->assignPackage($package_lite, $joe);
+
+        //$john->assignSku(Sku::firstOrCreate(['title' => 'beta']));
+        //$john->assignSku(Sku::firstOrCreate(['title' => 'meet']));
 
         $joe->setAliases(['joe.monster@kolab.org']);
 

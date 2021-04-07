@@ -24,14 +24,6 @@ class EntitlementObserver
      */
     public function creating(Entitlement $entitlement): bool
     {
-        while (true) {
-            $allegedly_unique = \App\Utils::uuidStr();
-            if (!Entitlement::find($allegedly_unique)) {
-                $entitlement->{$entitlement->getKeyName()} = $allegedly_unique;
-                break;
-            }
-        }
-
         // can't dispatch job here because it'll fail serialization
 
         // Make sure the owner is at least a controller on the wallet
@@ -51,6 +43,14 @@ class EntitlementObserver
 
         if (!$result) {
             return false;
+        }
+
+        while (true) {
+            $allegedly_unique = \App\Utils::uuidStr();
+            if (!Entitlement::withTrashed()->find($allegedly_unique)) {
+                $entitlement->{$entitlement->getKeyName()} = $allegedly_unique;
+                break;
+            }
         }
 
         return true;

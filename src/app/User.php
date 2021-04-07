@@ -175,12 +175,6 @@ class User extends Authenticatable implements JWTSubject
         $wallet = $this->wallet();
         $exists = $this->entitlements()->where('sku_id', $sku->id)->count();
 
-        // TODO: Sanity check, this probably should be in preReq() on handlers
-        //       or in EntitlementObserver
-        if ($sku->handler_class::entitleableClass() != User::class) {
-            throw new \Exception("Cannot assign non-user SKU ({$sku->title}) to a user");
-        }
-
         while ($count > 0) {
             \App\Entitlement::create([
                 'wallet_id' => $wallet->id,
@@ -324,6 +318,11 @@ class User extends Authenticatable implements JWTSubject
         return $domains;
     }
 
+    /**
+     * The user entitlement.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
+     */
     public function entitlement()
     {
         return $this->morphOne('App\Entitlement', 'entitleable');
@@ -339,28 +338,19 @@ class User extends Authenticatable implements JWTSubject
      */
     public function entitlements()
     {
-        return $this->hasMany('App\Entitlement', 'entitleable_id', 'id');
-    }
-
-    public function addEntitlement($entitlement)
-    {
-        if (!$this->entitlements->contains($entitlement)) {
-            return $this->entitlements()->save($entitlement);
-        }
+        return $this->hasMany('App\Entitlement', 'entitleable_id', 'id')
+            ->where('entitleable_type', User::class);
     }
 
     /**
-     * Find whether an email address exists (user or alias).
-     * Note: This will also find deleted users.
+     * Find whether an email address exists as a user (including deleted users).
      *
      * @param string $email       Email address
      * @param bool   $return_user Return User instance instead of boolean
-     * @param bool   $is_alias    Set to True if the existing email is an alias
-     * @param bool   $existing    Ignore deleted users
      *
      * @return \App\User|bool True or User model object if found, False otherwise
      */
-    public static function emailExists(string $email, bool $return_user = false, &$is_alias = false, $existing = false)
+    public static function emailExists(string $email, bool $return_user = false)
     {
         if (strpos($email, '@') === false) {
             return false;
@@ -368,28 +358,10 @@ class User extends Authenticatable implements JWTSubject
 
         $email = \strtolower($email);
 
-        if ($existing) {
-            $user = self::where('email', $email)->first();
-        } else {
-            $user = self::withTrashed()->where('email', $email)->first();
-        }
+        $user = self::withTrashed()->where('email', $email)->first();
 
         if ($user) {
             return $return_user ? $user : true;
-        }
-
-        $aliases = UserAlias::where('alias', $email);
-
-        if ($existing) {
-            $aliases = $aliases->join('users', 'user_id', '=', 'users.id')
-                ->whereNull('users.deleted_at');
-        }
-
-        $alias = $aliases->first();
-
-        if ($alias) {
-            $is_alias = true;
-            return $return_user ? self::withTrashed()->find($alias->user_id) : true;
         }
 
         return false;
@@ -439,6 +411,23 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    /**
+     * Return groups controlled by the current user.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     */
+    public function groups()
+    {
+        $wallets = $this->wallets()->pluck('id')->all();
+
+        $groupIds = \App\Entitlement::whereIn('entitlements.wallet_id', $wallets)
+            ->where('entitlements.entitleable_type', Group::class)
+            ->pluck('entitleable_id')
+            ->all();
+
+        return Group::whereIn('id', $groupIds);
     }
 
     /**
@@ -674,7 +663,7 @@ class User extends Authenticatable implements JWTSubject
             ->distinct()
             ->leftJoin('entitlements', 'entitlements.entitleable_id', '=', 'users.id')
             ->whereIn('entitlements.wallet_id', $wallets)
-            ->where('entitlements.entitleable_type', 'App\User');
+            ->where('entitlements.entitleable_type', User::class);
     }
 
     /**
@@ -690,11 +679,11 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Returns the wallet by which the user is controlled
      *
-     * @return \App\Wallet A wallet object
+     * @return ?\App\Wallet A wallet object
      */
-    public function wallet(): Wallet
+    public function wallet(): ?Wallet
     {
-        $entitlement = $this->entitlement()->first();
+        $entitlement = $this->entitlement()->withTrashed()->first();
 
         // TODO: No entitlement should not happen, but in tests we have
         //       such cases, so we fallback to the user's wallet in this case

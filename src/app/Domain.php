@@ -96,6 +96,11 @@ class Domain extends Model
         return $this;
     }
 
+    /**
+     * The domain entitlement.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
+     */
     public function entitlement()
     {
         return $this->morphOne('App\Entitlement', 'entitleable');

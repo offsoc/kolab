@@ -36,6 +36,8 @@ class UserTest extends TestCaseDusk
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
         $wallet->save();
+
+        $this->clearMeetEntitlements();
     }
 
     /**
@@ -54,6 +56,8 @@ class UserTest extends TestCaseDusk
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
         $wallet->save();
+
+        $this->clearMeetEntitlements();
 
         parent::tearDown();
     }

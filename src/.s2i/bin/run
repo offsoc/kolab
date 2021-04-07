@@ -10,6 +10,7 @@ find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 if [ -z ${APP_KEY} ]; then
     echo "----> Run artisan key:generate"
     ./artisan key:generate
+    unset APP_KEY
 fi
 
 if [ -z ${JWT_SECRET} ]; then
@@ -20,8 +21,10 @@ fi
 echo "----> Run artisan clear-compiled"
 ./artisan clear-compiled
 
-echo "----> Run artisan cache:clear"
-./artisan ${ARTISAN_VERBOSITY} cache:clear || true
+if [ "${LARAVEL_ENV}" != "production" -a "${LARAVEL_ENV}" != "prod" ]; then
+    echo "----> Run artisan cache:clear"
+    ./artisan ${ARTISAN_VERBOSITY} cache:clear || true
+fi
 
 # rpm -qv chromium
 # if [ ! -z "$(rpm -qv chromium 2>/dev/null)" ]; then
@@ -44,17 +47,39 @@ chown default bootstrap/cache
 ./artisan migrate --force || :
 #./artisan db:seed --force || :
 
-case ${HKCCP_APP} in
+if [ -z "${KOLAB_ROLE}" -a ! -z "${HKCCP_APP}" ]; then
+    echo "WARNING: Use env KOLAB_ROLE, not HKCCP_APP"
+    KOLAB_ROLE=$HKCCP_APP
+fi
+
+case ${KOLAB_ROLE} in
+    apache|APACHE|httpd|HTTPD)
+        echo "----> Starting httpd"
+        /usr/libexec/s2i/run 2>&1
+    ;;
+
+    horizon|HORIZON)
+        echo "----> Starting horizon"
+        ./artisan horizon
+    ;;
+
+    server|SERVER)
+        echo "----> Running server"
+        exec ./artisan serve
+    ;;
+
+    swoole|SWOOLE )
+        echo "----> Running swoole"
+        exec ./artisan swoole:http start
+    ;;
+
     worker|WORKER )
-        echo "----> Running worker "
-        ./artisan queue:work;;
-    server|SERVER )
-        echo "----> Running server "
-       ./artisan serve;;
-    apache|APACHE|httpd|HTTPD )
-        echo "----> Starting httpd "
-        /usr/libexec/s2i/run 2>&1;;
+        echo "----> Running worker"
+        exec ./artisan queue:work
+    ;;
+
     * )
         echo "----> Sleeping"
-        sleep 10000;;
+        exec sleep 10000
+    ;;
 esac

@@ -72,6 +72,7 @@ class PaymentsStripeTest extends TestCase
         $response->assertStatus(401);
 
         $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
 
         // Test creating a mandate (invalid input)
         $post = [];
@@ -108,6 +109,18 @@ class PaymentsStripeTest extends TestCase
         $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
+        // Test creating a mandate (negative balance, amount too small)
+        Wallet::where('id', $wallet->id)->update(['balance' => -2000]);
+        $post = ['amount' => PaymentProvider::MIN_AMOUNT / 100, 'balance' => 0];
+        $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame("The specified amount does not cover the balance on the account.", $json['errors']['amount']);
+
         // Test creating a mandate (valid input)
         $post = ['amount' => 20.10, 'balance' => 0];
         $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
@@ -117,6 +130,13 @@ class PaymentsStripeTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertRegExp('|^cs_test_|', $json['id']);
+
+        // Assert the proper payment amount has been used
+        // Stripe in 'setup' mode does not allow to set the amount
+        $payment = Payment::where('wallet_id', $wallet->id)->first();
+        $this->assertSame(0, $payment->amount);
+        $this->assertSame(\config('app.name') . " Auto-Payment Setup", $payment->description);
+        $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information
         $response = $this->actingAs($user)->get("api/v4/payments/mandate");
@@ -176,6 +196,8 @@ class PaymentsStripeTest extends TestCase
 
         // Test updating mandate details (invalid input)
         $wallet->setSetting('mandate_disabled', null);
+        $wallet->balance = 1000;
+        $wallet->save();
         $user->refresh();
         $post = [];
         $response = $this->actingAs($user)->put("api/v4/payments/mandate", $post);
@@ -202,7 +224,7 @@ class PaymentsStripeTest extends TestCase
         $client->addResponse($setupIntent);
         $client->addResponse($paymentMethod);
 
-        $post = ['amount' => 30.10, 'balance' => 1];
+        $post = ['amount' => 30.10, 'balance' => 10];
         $response = $this->actingAs($user)->put("api/v4/payments/mandate", $post);
         $response->assertStatus(200);
 
@@ -211,7 +233,7 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame('The auto-payment has been updated.', $json['message']);
         $this->assertEquals(30.10, $wallet->getSetting('mandate_amount'));
-        $this->assertEquals(1, $wallet->getSetting('mandate_balance'));
+        $this->assertEquals(10, $wallet->getSetting('mandate_balance'));
         $this->assertSame('AAA', $json['id']);
         $this->assertFalse($json['isDisabled']);
 
@@ -284,7 +306,14 @@ class PaymentsStripeTest extends TestCase
         $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
-        $post = ['amount' => '12.34'];
+
+        // Invalid currency
+        $post = ['amount' => '12.34', 'currency' => 'FOO', 'methodId' => 'creditcard'];
+        $response = $this->actingAs($user)->post("api/v4/payments", $post);
+        $response->assertStatus(500);
+
+        // Successful payment
+        $post = ['amount' => '12.34', 'currency' => 'CHF', 'methodId' => 'creditcard'];
         $response = $this->actingAs($user)->post("api/v4/payments", $post);
         $response->assertStatus(200);
 
@@ -406,6 +435,7 @@ class PaymentsStripeTest extends TestCase
     {
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
+        Wallet::where('id', $wallet->id)->update(['balance' => -1000]);
 
         // Test creating a mandate (valid input)
         $post = ['amount' => 20.10, 'balance' => 0];
@@ -438,6 +468,8 @@ class PaymentsStripeTest extends TestCase
             'type' => "setup_intent.succeeded"
         ];
 
+        Bus::fake();
+
         // Test payment succeeded event
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
@@ -446,6 +478,13 @@ class PaymentsStripeTest extends TestCase
 
         $this->assertSame(PaymentProvider::STATUS_PAID, $payment->status);
         $this->assertSame($payment->id, $wallet->fresh()->getSetting('stripe_mandate_id'));
+
+        // Expect a WalletCharge job if the balance is negative
+        Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 1);
+        Bus::assertDispatched(\App\Jobs\WalletCharge::class, function ($job) use ($wallet) {
+            $job_wallet = TestCase::getObjectProperty($job, 'wallet');
+            return $job_wallet->id === $wallet->id;
+        });
 
         // TODO: test other setup_intent.* events
     }
@@ -457,8 +496,6 @@ class PaymentsStripeTest extends TestCase
      */
     public function testTopUpAndWebhook(): void
     {
-        $this->markTestIncomplete();
-
         Bus::fake();
 
         $user = $this->getTestUser('john@kolab.org');
@@ -509,6 +546,8 @@ class PaymentsStripeTest extends TestCase
         $client->addResponse($paymentMethod);
         $client->addResponse($setupIntent);
         $client->addResponse($paymentIntent);
+        $client->addResponse($setupIntent);
+        $client->addResponse($paymentMethod);
 
         // Expect a recurring payment as we have a valid mandate at this point
         $result = PaymentsController::topUpWallet($wallet);
@@ -673,5 +712,32 @@ class PaymentsStripeTest extends TestCase
 
         return $this->withHeaders(['Stripe-Signature' => $sig])
             ->json('POST', "api/webhooks/payment/stripe", $post);
+    }
+
+    /**
+     * Test listing payment methods
+     *
+     * @group stripe
+     */
+    public function testListingPaymentMethods(): void
+    {
+        Bus::fake();
+
+        $user = $this->getTestUser('john@kolab.org');
+
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_ONEOFF);
+        $response->assertStatus(200);
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('creditcard', $json[0]['id']);
+        $this->assertSame('paypal', $json[1]['id']);
+
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
+        $response->assertStatus(200);
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSame('creditcard', $json[0]['id']);
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Feature\Backends;
 
 use App\Backends\LDAP;
 use App\Domain;
+use App\Group;
 use App\Entitlement;
 use App\User;
 use Illuminate\Support\Facades\Queue;
@@ -26,6 +27,8 @@ class LDAPTest extends TestCase
 
         $this->deleteTestUser('user-ldap-test@' . \config('app.domain'));
         $this->deleteTestDomain('testldap.com');
+        $this->deleteTestGroup('group@kolab.org');
+        // TODO: Remove group members
     }
 
     /**
@@ -37,6 +40,8 @@ class LDAPTest extends TestCase
 
         $this->deleteTestUser('user-ldap-test@' . \config('app.domain'));
         $this->deleteTestDomain('testldap.com');
+        $this->deleteTestGroup('group@kolab.org');
+        // TODO: Remove group members
 
         parent::tearDown();
     }
@@ -107,6 +112,88 @@ class LDAPTest extends TestCase
         LDAP::deleteDomain($domain);
 
         $this->assertSame(null, LDAP::getDomain($domain->namespace));
+    }
+
+    /**
+     * Test creating/updating/deleting a group record
+     *
+     * @group ldap
+     */
+    public function testGroup(): void
+    {
+        Queue::fake();
+
+        $root_dn = \config('ldap.hosted.root_dn');
+        $group = $this->getTestGroup('group@kolab.org', [
+                'members' => ['member1@testldap.com', 'member2@testldap.com']
+        ]);
+
+        // Create the group
+        LDAP::createGroup($group);
+
+        $ldap_group = LDAP::getGroup($group->email);
+
+        $expected = [
+            'cn' => 'group',
+            'dn' => 'cn=group,ou=Groups,ou=kolab.org,' . $root_dn,
+            'mail' => $group->email,
+            'objectclass' => [
+                'top',
+                'groupofuniquenames',
+                'kolabgroupofuniquenames'
+            ],
+            'uniquemember' => [
+                'uid=member1@testldap.com,ou=People,ou=kolab.org,' . $root_dn,
+                'uid=member2@testldap.com,ou=People,ou=kolab.org,' . $root_dn,
+            ],
+        ];
+
+        foreach ($expected as $attr => $value) {
+            $this->assertEquals($value, isset($ldap_group[$attr]) ? $ldap_group[$attr] : null, "Group $attr attribute");
+        }
+
+        // Update members
+        $group->members = ['member3@testldap.com'];
+        $group->save();
+
+        LDAP::updateGroup($group);
+
+        // TODO: Should we force this to be always an array?
+        $expected['uniquemember'] = 'uid=member3@testldap.com,ou=People,ou=kolab.org,' . $root_dn;
+
+        $ldap_group = LDAP::getGroup($group->email);
+
+        foreach ($expected as $attr => $value) {
+            $this->assertEquals($value, isset($ldap_group[$attr]) ? $ldap_group[$attr] : null, "Group $attr attribute");
+        }
+
+        $this->assertSame(['member3@testldap.com'], $group->fresh()->members);
+
+        // Update members (add non-existing local member, expect it to be aot-removed from the group)
+        $group->members = ['member3@testldap.com', 'member-local@kolab.org'];
+        $group->save();
+
+        LDAP::updateGroup($group);
+
+        // TODO: Should we force this to be always an array?
+        $expected['uniquemember'] = 'uid=member3@testldap.com,ou=People,ou=kolab.org,' . $root_dn;
+
+        $ldap_group = LDAP::getGroup($group->email);
+
+        foreach ($expected as $attr => $value) {
+            $this->assertEquals($value, isset($ldap_group[$attr]) ? $ldap_group[$attr] : null, "Group $attr attribute");
+        }
+
+        $this->assertSame(['member3@testldap.com'], $group->fresh()->members);
+
+        // We called save() twice, so we expect two update obs, this is making sure
+        // that there's no job executed by the LDAP backend
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 2);
+
+        // Delete the domain
+        LDAP::deleteGroup($group);
+
+        $this->assertSame(null, LDAP::getGroup($group->email));
     }
 
     /**

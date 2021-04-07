@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
 use App\Domain;
+use App\Group;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\Sku;
@@ -17,7 +18,7 @@ use Illuminate\Support\Str;
 
 class UsersController extends Controller
 {
-    // List of user settings keys available for modification in UI
+    /** @const array List of user setting keys available for modification in UI */
     public const USER_SETTINGS = [
         'billing_address',
         'country',
@@ -28,6 +29,15 @@ class UsersController extends Controller
         'organization',
         'phone',
     ];
+
+    /**
+     * On user create it is filled with a user or group object to force-delete
+     * before the creation of a new user record is possible.
+     *
+     * @var \App\User|\App\Group|null
+     */
+    protected $deleteBeforeCreate;
+
 
     /**
      * Delete a user.
@@ -135,13 +145,20 @@ class UsersController extends Controller
 
         if (!empty(request()->input('refresh'))) {
             $updated = false;
+            $async = false;
             $last_step = 'none';
 
             foreach ($response['process'] as $idx => $step) {
                 $last_step = $step['label'];
 
                 if (!$step['state']) {
-                    if (!$this->execProcessStep($user, $step['label'])) {
+                    $exec = $this->execProcessStep($user, $step['label']);
+
+                    if (!$exec) {
+                        if ($exec === null) {
+                            $async = true;
+                        }
+
                         break;
                     }
 
@@ -158,6 +175,12 @@ class UsersController extends Controller
 
             $response['status'] = $success ? 'success' : 'error';
             $response['message'] = \trans('app.process-' . $suffix);
+
+            if ($async && !$success) {
+                $response['processState'] = 'waiting';
+                $response['status'] = 'success';
+                $response['message'] = \trans('app.process-async');
+            }
         }
 
         $response = array_merge($response, self::userStatuses($user));
@@ -220,7 +243,18 @@ class UsersController extends Controller
             ->where('entitleable_type', Domain::class)
             ->count() > 0;
 
+        // Get user's entitlements titles
+        $skus = $user->entitlements()->select('skus.title')
+            ->join('skus', 'skus.id', '=', 'entitlements.sku_id')
+            ->get()
+            ->pluck('title')
+            ->sort()
+            ->unique()
+            ->values()
+            ->all();
+
         return [
+            'skus' => $skus,
             // TODO: This will change when we enable all users to create domains
             'enableDomains' => $isController && $hasCustomDomain,
             'enableUsers' => $isController,
@@ -247,6 +281,8 @@ class UsersController extends Controller
             return $this->errorResponse(403);
         }
 
+        $this->deleteBeforeCreate = null;
+
         if ($error_response = $this->validateUserRequest($request, null, $settings)) {
             return $error_response;
         }
@@ -262,6 +298,11 @@ class UsersController extends Controller
         }
 
         DB::beginTransaction();
+
+        // @phpstan-ignore-next-line
+        if ($this->deleteBeforeCreate) {
+            $this->deleteBeforeCreate->forceDelete();
+        }
 
         // Create user record
         $user = User::create([
@@ -342,10 +383,17 @@ class UsersController extends Controller
 
         DB::commit();
 
-        return response()->json([
-                'status' => 'success',
-                'message' => __('app.user-update-success'),
-        ]);
+        $response = [
+            'status' => 'success',
+            'message' => __('app.user-update-success'),
+        ];
+
+        // For self-update refresh the statusInfo in the UI
+        if ($user->id == $current_user->id) {
+            $response['statusInfo'] = self::statusInfo($user);
+        }
+
+        return response()->json($response);
     }
 
     /**
@@ -524,7 +572,7 @@ class UsersController extends Controller
 
             if (empty($email)) {
                 $errors['email'] = \trans('validation.required', ['attribute' => 'email']);
-            } elseif ($error = self::validateEmail($email, $controller, false)) {
+            } elseif ($error = self::validateEmail($email, $controller, $this->deleteBeforeCreate)) {
                 $errors['email'] = $error;
             }
         }
@@ -544,7 +592,7 @@ class UsersController extends Controller
                     // validate new aliases
                     if (
                         !in_array($alias, $existing_aliases)
-                        && ($error = self::validateEmail($alias, $controller, true))
+                        && ($error = self::validateAlias($alias, $controller))
                     ) {
                         if (!isset($errors['aliases'])) {
                             $errors['aliases'] = [];
@@ -577,9 +625,10 @@ class UsersController extends Controller
      * @param \App\User $user User object
      * @param string    $step Step identifier (as in self::statusInfo())
      *
-     * @return bool True if the execution succeeded, False otherwise
+     * @return bool|null True if the execution succeeded, False if not, Null when
+     *                   the job has been sent to the worker (result unknown)
      */
-    public static function execProcessStep(User $user, string $step): bool
+    public static function execProcessStep(User $user, string $step): ?bool
     {
         try {
             if (strpos($step, 'domain-') === 0) {
@@ -601,6 +650,14 @@ class UsersController extends Controller
 
                 case 'user-imap-ready':
                     // User not in IMAP? Verify again
+                    // Do it synchronously if the imap admin credentials are available
+                    // otherwise let the worker do the job
+                    if (!\config('imap.admin_password')) {
+                        \App\Jobs\User\VerifyJob::dispatch($user->id);
+
+                        return null;
+                    }
+
                     $job = new \App\Jobs\User\VerifyJob($user->id);
                     $job->handle();
 
@@ -616,29 +673,27 @@ class UsersController extends Controller
     }
 
     /**
-     * Email address (login or alias) validation
+     * Email address validation for use as a user mailbox (login).
      *
-     * @param string    $email    Email address
-     * @param \App\User $user     The account owner
-     * @param bool      $is_alias The email is an alias
+     * @param string                    $email   Email address
+     * @param \App\User                 $user    The account owner
+     * @param null|\App\User|\App\Group $deleted Filled with an instance of a deleted user or group
+     *                                           with the specified email address, if exists
      *
-     * @return string Error message on validation error
+     * @return ?string Error message on validation error
      */
-    public static function validateEmail(
-        string $email,
-        \App\User $user,
-        bool $is_alias = false
-    ): ?string {
-        $attribute = $is_alias ? 'alias' : 'email';
+    public static function validateEmail(string $email, \App\User $user, &$deleted = null): ?string
+    {
+        $deleted = null;
 
         if (strpos($email, '@') === false) {
-            return \trans('validation.entryinvalid', ['attribute' => $attribute]);
+            return \trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
         list($login, $domain) = explode('@', Str::lower($email));
 
         if (strlen($login) === 0 || strlen($domain) === 0) {
-            return \trans('validation.entryinvalid', ['attribute' => $attribute]);
+            return \trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
         // Check if domain exists
@@ -650,12 +705,12 @@ class UsersController extends Controller
 
         // Validate login part alone
         $v = Validator::make(
-            [$attribute => $login],
-            [$attribute => ['required', new UserEmailLocal(!$domain->isPublic())]]
+            ['email' => $login],
+            ['email' => ['required', new UserEmailLocal(!$domain->isPublic())]]
         );
 
         if ($v->fails()) {
-            return $v->errors()->toArray()[$attribute][0];
+            return $v->errors()->toArray()['email'][0];
         }
 
         // Check if it is one of domains available to the user
@@ -665,19 +720,100 @@ class UsersController extends Controller
             return \trans('validation.entryexists', ['attribute' => 'domain']);
         }
 
-        // Check if a user/alias with specified address already exists
-        // Allow assigning the same alias to a user in the same group account,
-        // but only for non-public domains
-        // Allow an alias in a custom domain to an address that was a user before
-        if ($exists = User::emailExists($email, true, $alias_exists, $is_alias && !$domain->isPublic())) {
-            if (
-                !$is_alias
-                || !$alias_exists
-                || $domain->isPublic()
-                || $exists->wallet()->user_id != $user->id
-            ) {
-                return \trans('validation.entryexists', ['attribute' => $attribute]);
+        // Check if a user with specified address already exists
+        if ($existing_user = User::emailExists($email, true)) {
+            // If this is a deleted user in the same custom domain
+            // we'll force delete him before
+            if (!$domain->isPublic() && $existing_user->trashed()) {
+                $deleted = $existing_user;
+            } else {
+                return \trans('validation.entryexists', ['attribute' => 'email']);
             }
+        }
+
+        // Check if an alias with specified address already exists.
+        if (User::aliasExists($email)) {
+            return \trans('validation.entryexists', ['attribute' => 'email']);
+        }
+
+        // Check if a group with specified address already exists
+        if ($existing_group = Group::emailExists($email, true)) {
+            // If this is a deleted group in the same custom domain
+            // we'll force delete it before
+            if (!$domain->isPublic() && $existing_group->trashed()) {
+                $deleted = $existing_group;
+            } else {
+                return \trans('validation.entryexists', ['attribute' => 'email']);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Email address validation for use as an alias.
+     *
+     * @param string    $email Email address
+     * @param \App\User $user  The account owner
+     *
+     * @return ?string Error message on validation error
+     */
+    public static function validateAlias(string $email, \App\User $user): ?string
+    {
+        if (strpos($email, '@') === false) {
+            return \trans('validation.entryinvalid', ['attribute' => 'alias']);
+        }
+
+        list($login, $domain) = explode('@', Str::lower($email));
+
+        if (strlen($login) === 0 || strlen($domain) === 0) {
+            return \trans('validation.entryinvalid', ['attribute' => 'alias']);
+        }
+
+        // Check if domain exists
+        $domain = Domain::where('namespace', $domain)->first();
+
+        if (empty($domain)) {
+            return \trans('validation.domaininvalid');
+        }
+
+        // Validate login part alone
+        $v = Validator::make(
+            ['alias' => $login],
+            ['alias' => ['required', new UserEmailLocal(!$domain->isPublic())]]
+        );
+
+        if ($v->fails()) {
+            return $v->errors()->toArray()['alias'][0];
+        }
+
+        // Check if it is one of domains available to the user
+        $domains = \collect($user->domains())->pluck('namespace')->all();
+
+        if (!in_array($domain->namespace, $domains)) {
+            return \trans('validation.entryexists', ['attribute' => 'domain']);
+        }
+
+        // Check if a user with specified address already exists
+        if ($existing_user = User::emailExists($email, true)) {
+            // Allow an alias in a custom domain to an address that was a user before
+            if ($domain->isPublic() || !$existing_user->trashed()) {
+                return \trans('validation.entryexists', ['attribute' => 'alias']);
+            }
+        }
+
+        // Check if an alias with specified address already exists
+        if (User::aliasExists($email)) {
+            // Allow assigning the same alias to a user in the same group account,
+            // but only for non-public domains
+            if ($domain->isPublic()) {
+                return \trans('validation.entryexists', ['attribute' => 'alias']);
+            }
+        }
+
+        // Check if a group with specified address already exists
+        if (Group::emailExists($email)) {
+            return \trans('validation.entryexists', ['attribute' => 'alias']);
         }
 
         return null;

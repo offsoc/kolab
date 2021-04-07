@@ -26,6 +26,7 @@ class Signup extends Page
     public function assert($browser)
     {
         $browser->assertPathIs('/signup')
+            ->waitUntilMissing('.app-loader')
             ->assertPresent('@step0')
             ->assertPresent('@step1')
             ->assertPresent('@step2')

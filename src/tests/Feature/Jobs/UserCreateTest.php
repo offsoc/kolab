@@ -72,7 +72,7 @@ class UserCreateTest extends TestCase
         $job = new \App\Jobs\User\CreateJob(123);
         $job->handle();
 
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("User 123 could not be found in the database.", $job->failureMessage);
+        $this->assertTrue($job->isReleased());
+        $this->assertFalse($job->hasFailed());
     }
 }

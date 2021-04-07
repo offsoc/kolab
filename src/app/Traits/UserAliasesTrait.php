@@ -5,6 +5,27 @@ namespace App\Traits;
 trait UserAliasesTrait
 {
     /**
+     * Find whether an email address exists as an alias
+     * (including aliases of deleted users).
+     *
+     * @param string $email Email address
+     *
+     * @return bool True if found, False otherwise
+     */
+    public static function aliasExists(string $email): bool
+    {
+        if (strpos($email, '@') === false) {
+            return false;
+        }
+
+        $email = \strtolower($email);
+
+        $count = \App\UserAlias::where('alias', $email)->count();
+
+        return $count > 0;
+    }
+
+    /**
      * A helper to update user aliases list.
      *
      * Example Usage:

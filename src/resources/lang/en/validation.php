@@ -121,6 +121,7 @@ return [
     '2fainvalid' => 'Second factor code is invalid.',
     'emailinvalid' => 'The specified email address is invalid.',
     'domaininvalid' => 'The specified domain is invalid.',
+    'domainnotavailable' => 'The specified domain is not available.',
     'logininvalid' => 'The specified login is invalid.',
     'loginexists' => 'The specified login is not available.',
     'domainexists' => 'The specified domain is not available.',

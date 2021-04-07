@@ -19,10 +19,11 @@ class Controller extends BaseController
      *
      * @param int    $code    Error code
      * @param string $message Error message
+     * @param array  $data    Additional response data
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function errorResponse(int $code, string $message = null)
+    protected function errorResponse(int $code, string $message = null, array $data = [])
     {
         $errors = [
             400 => "Bad request",
@@ -38,6 +39,10 @@ class Controller extends BaseController
             'status' => 'error',
             'message' => $message ?: (isset($errors[$code]) ? $errors[$code] : "Server error"),
         ];
+
+        if (!empty($data)) {
+            $response = $response + $data;
+        }
 
         return response()->json($response, $code);
     }

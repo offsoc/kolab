@@ -1,0 +1,452 @@
+html,
+body,
+body > .outer-container {
+    height: 100%;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    overflow: hidden;
+
+    & > nav {
+        flex-shrink: 0;
+        z-index: 12;
+    }
+
+    & > div.container {
+        flex-grow: 1;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    & > .filler {
+        flex-grow: 1;
+    }
+
+    & > div.container + .filler {
+        display: none;
+    }
+}
+
+.error-page {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    color: #636b6f;
+    z-index: 10;
+    background: white;
+
+    .code {
+        text-align: right;
+        border-right: 2px solid;
+        font-size: 26px;
+        padding: 0 15px;
+    }
+
+    .message {
+        font-size: 18px;
+        padding: 0 15px;
+    }
+}
+
+.app-loader {
+    background-color: $body-bg;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 8;
+
+    .spinner-border {
+        width: 120px;
+        height: 120px;
+        border-width: 15px;
+        color: #b2aa99;
+    }
+
+    &.small .spinner-border {
+        width: 25px;
+        height: 25px;
+        border-width: 3px;
+    }
+
+    &.fadeOut {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 300ms linear, opacity 300ms linear;
+    }
+}
+
+pre {
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: $menu-bg-color;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+tfoot.table-fake-body {
+    background-color: #f8f8f8;
+    color: grey;
+    text-align: center;
+
+    td {
+        vertical-align: middle;
+        height: 8em;
+        border: 0;
+    }
+
+    tbody:not(:empty) + & {
+        display: none;
+    }
+}
+
+table {
+    td.buttons,
+    td.email,
+    td.price,
+    td.datetime,
+    td.selection {
+        width: 1%;
+        white-space: nowrap;
+    }
+
+    th.price,
+    td.price {
+        width: 1%;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    &.form-list {
+        margin: 0;
+
+        td {
+            border: 0;
+
+            &:first-child {
+                padding-left: 0;
+            }
+
+            &:last-child {
+                padding-right: 0;
+            }
+        }
+
+        button {
+            line-height: 1;
+        }
+    }
+
+    .btn-action {
+        line-height: 1;
+        padding: 0;
+    }
+}
+
+.list-details {
+    min-height: 1em;
+
+    & > ul {
+        margin: 0;
+        padding-left: 1.2em;
+    }
+}
+
+.plan-selector {
+    .plan-header {
+        display: flex;
+    }
+
+    .plan-ico {
+        margin:auto;
+        font-size: 3.8rem;
+        color: #f1a539;
+        border: 3px solid #f1a539;
+        width: 6rem;
+        height: 6rem;
+        border-radius: 50%;
+    }
+}
+
+.status-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .app-loader {
+        width: auto;
+        position: initial;
+
+        .spinner-border {
+            color: $body-color;
+        }
+    }
+
+    svg {
+        font-size: 1.5em;
+    }
+
+    :first-child {
+        margin-right: 0.4em;
+    }
+}
+
+.form-separator {
+    position: relative;
+    margin: 1em 0;
+    display: flex;
+    justify-content: center;
+
+    hr {
+        border-color: #999;
+        margin: 0;
+        position: absolute;
+        top: 0.75em;
+        width: 100%;
+    }
+
+    span {
+        background: #fff;
+        padding: 0 1em;
+        z-index: 1;
+    }
+}
+
+#status-box {
+    background-color: lighten($green, 35);
+
+    .progress {
+        background-color: #fff;
+        height: 10px;
+    }
+
+    .progress-label {
+        font-size: 0.9em;
+    }
+
+    .progress-bar {
+        background-color: $green;
+    }
+
+    &.process-failed {
+        background-color: lighten($orange, 30);
+
+        .progress-bar {
+            background-color: $red;
+        }
+    }
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+.blinker {
+    animation: blinker 750ms step-start infinite;
+}
+
+#dashboard-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    & > a {
+        padding: 1rem;
+        text-align: center;
+        white-space: nowrap;
+        margin: 0.25rem;
+        text-decoration: none;
+        width: 150px;
+
+        &.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .badge {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+        }
+    }
+
+    svg {
+        width: 6rem;
+        height: 6rem;
+        margin: auto;
+    }
+}
+
+#payment-method-selection {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    & > a {
+        padding: 1rem;
+        text-align: center;
+        white-space: nowrap;
+        margin: 0.25rem;
+        text-decoration: none;
+        width: 150px;
+    }
+
+    svg {
+        width: 6rem;
+        height: 6rem;
+        margin: auto;
+    }
+}
+
+#logon-form {
+    flex-basis: auto; // Bootstrap issue? See logon page with width < 992
+}
+
+#logon-form-footer {
+    a:not(:first-child) {
+        margin-left: 2em;
+    }
+}
+
+// Various improvements for mobile
+@include media-breakpoint-down(sm) {
+    .card,
+    .card-footer {
+        border: 0;
+    }
+
+    .card-body {
+        padding: 0.5rem 0;
+    }
+
+    .form-group {
+        margin-bottom: 0.5rem;
+    }
+
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+
+        .nav-link {
+            white-space: nowrap;
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    .tab-content {
+        margin-top: 0.5rem;
+    }
+
+    .col-form-label {
+        color: #666;
+        font-size: 95%;
+    }
+
+    .form-group.plaintext .col-form-label {
+        padding-bottom: 0;
+    }
+
+    form.read-only.short label {
+        width: 35%;
+
+        & + * {
+            width: 65%;
+        }
+    }
+
+    #app > div.container {
+        margin-bottom: 1rem;
+        margin-top: 1rem;
+        max-width: 100%;
+    }
+
+    #header-menu-navbar {
+        padding: 0;
+    }
+
+    #dashboard-nav > a {
+        width: 135px;
+    }
+
+    .table-sm:not(.form-list) {
+        tbody td {
+            padding: 0.75rem 0.5rem;
+
+            svg {
+                vertical-align: -0.175em;
+            }
+
+            & > svg {
+                font-size: 125%;
+                margin-right: 0.25rem;
+            }
+        }
+    }
+
+    .table.transactions {
+        thead {
+            display: none;
+        }
+
+        tbody {
+            tr {
+                position: relative;
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            td {
+                width: auto;
+                border: 0;
+                padding: 0.5rem;
+
+                &.datetime {
+                    width: 50%;
+                    padding-left: 0;
+                }
+
+                &.description {
+                    order: 3;
+                    width: 100%;
+                    border-bottom: 1px solid $border-color;
+                    color: $secondary;
+                    padding: 0 1.5em 0.5rem 0;
+                    margin-top: -0.25em;
+                }
+
+                &.selection {
+                    position: absolute;
+                    right: 0;
+                    border: 0;
+                    top: 1.7em;
+                    padding-right: 0;
+                }
+
+                &.price {
+                    width: 50%;
+                    padding-right: 0;
+                }
+
+                &.email {
+                    display: none;
+                }
+            }
+        }
+    }
+}

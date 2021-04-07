@@ -51,6 +51,8 @@ class PaymentEmailTest extends TestCase
         $payment->id = 'test-payment';
         $payment->wallet_id = $wallet->id;
         $payment->amount = 100;
+        $payment->currency_amount = 100;
+        $payment->currency = 'CHF';
         $payment->status = PaymentProvider::STATUS_PAID;
         $payment->description = 'test';
         $payment->provider = 'stripe';

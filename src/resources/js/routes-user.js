@@ -1,9 +1,10 @@
 import DashboardComponent from '../vue/Dashboard'
 import DomainInfoComponent from '../vue/Domain/Info'
 import DomainListComponent from '../vue/Domain/List'
-import Error404Component from '../vue/404'
 import LoginComponent from '../vue/Login'
 import LogoutComponent from '../vue/Logout'
+import MeetComponent from '../vue/Rooms'
+import PageComponent from '../vue/Page'
 import PasswordResetComponent from '../vue/PasswordReset'
 import SignupComponent from '../vue/Signup'
 import UserInfoComponent from '../vue/User/Info'
@@ -12,11 +13,12 @@ import UserProfileComponent from '../vue/User/Profile'
 import UserProfileDeleteComponent from '../vue/User/ProfileDelete'
 import WalletComponent from '../vue/Wallet'
 
+// Here's a list of lazy-loaded components
+// Note: you can pack multiple components into the same chunk, webpackChunkName
+// is also used to get a sensible file name instead of numbers
+const RoomComponent = () => import(/* webpackChunkName: "room" */ '../vue/Meet/Room.vue')
+
 const routes = [
-    {
-        path: '/',
-        redirect: { name: 'dashboard' }
-    },
     {
         path: '/dashboard',
         name: 'dashboard',
@@ -63,6 +65,18 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
+        component: RoomComponent,
+        name: 'room',
+        path: '/meet/:room',
+        meta: { loading: true }
+    },
+    {
+        path: '/rooms',
+        name: 'rooms',
+        component: MeetComponent,
+        meta: { requiresAuth: true }
+    },
+    {
         path: '/signup/:param?',
         alias: '/signup/voucher/:param',
         name: 'signup',
@@ -89,7 +103,7 @@ const routes = [
     {
         name: '404',
         path: '*',
-        component: Error404Component
+        component: PageComponent
     }
 ]
 

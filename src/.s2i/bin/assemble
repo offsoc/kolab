@@ -1,9 +1,24 @@
 #!/bin/bash
 
+set -x
 set -e
+
+function composer_install () {
+    echo "--->> Detected composer.json, running install"
+    php -dmemory_limit=${COMPOSER_MEMORY_LIMIT:--1} /usr/bin/composer install ${COMPOSER_ARGS}
+    rm -rf ~/.cache/composer/
+}
 
 shopt -s dotglob
 echo "--->> $(rm -vrf vendor/ composer.lock)"
+
+echo "---> Installing application source..."
+rm -fR /tmp/src/.git
+mv /tmp/src/* ./
+
+pushd /opt/app-root/src
+
+fix-permissions ./
 
 if [ -f ".env.local" ]; then
     # Ensure there's a line ending
@@ -12,22 +27,15 @@ if [ -f ".env.local" ]; then
     cat .env.local >> .env
 fi
 
-#env
+if [ -f "composer.json" ]; then
+    echo "--->> Detected composer.json, running install"
+    composer_install
+fi
 
-/usr/libexec/s2i/assemble
-
-#cat >> /opt/app-root/etc/conf.d/99-loglevel.conf << EOF
-#LogLevel warn mod_rewrite.c:trace4
-#EOF
-
-# Won't work due to:
-# Cannot install, php_dir for channel "pecl.php.net" is not writeable by the current user
-#pecl channel-update pecl.php.net
-#pecl install swoole
-
-pushd /opt/app-root/src
+./artisan horizon:install
 
 echo "---->> Run npm run prod"
-npm install cross-env
-npm run prod
+npm install
+npm run ${LARAVEL_ENV:=prod} && rm -rf ~/.npm/
 
+fix-permissions ./

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V4;
 use App\Http\Controllers\Controller;
 use App\Sku;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SkusController extends Controller
 {
@@ -46,18 +47,14 @@ class SkusController extends Controller
     }
 
     /**
-     * Display a listing of the sku.
+     * Get a list of active SKUs.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
         // Note: Order by title for consistent ordering in tests
-        $skus = Sku::select()->orderBy('title')->get();
-
-        // Note: we do not limit the result to active SKUs only.
-        //       It's because we might need users assigned to old SKUs,
-        //       we need to display these old SKUs on the entitlements list
+        $skus = Sku::where('active', true)->orderBy('title')->get();
 
         $response = [];
 
@@ -115,6 +112,56 @@ class SkusController extends Controller
     }
 
     /**
+     * Get a list of SKUs available to the user.
+     *
+     * @param int $id User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function userSkus($id)
+    {
+        $user = \App\User::find($id);
+
+        if (empty($user)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!Auth::guard()->user()->canRead($user)) {
+            return $this->errorResponse(403);
+        }
+
+        $type = request()->input('type');
+        $response = [];
+
+        // Note: Order by title for consistent ordering in tests
+        $skus = Sku::orderBy('title')->get();
+
+        foreach ($skus as $sku) {
+            if (!class_exists($sku->handler_class)) {
+                continue;
+            }
+
+            if (!$sku->handler_class::isAvailable($sku, $user)) {
+                continue;
+            }
+
+            if ($data = $this->skuElement($sku)) {
+                if ($type && $type != $data['type']) {
+                    continue;
+                }
+
+                $response[] = $data;
+            }
+        }
+
+        usort($response, function ($a, $b) {
+            return ($b['prio'] <=> $a['prio']);
+        });
+
+        return response()->json($response);
+    }
+
+    /**
      * Convert SKU information to metadata used by UI to
      * display the form control
      *
@@ -124,59 +171,22 @@ class SkusController extends Controller
      */
     protected function skuElement($sku): ?array
     {
-        $type = $sku->handler_class::entitleableClass();
-
-        // ignore incomplete handlers
-        if (!$type) {
+        if (!class_exists($sku->handler_class)) {
             return null;
         }
 
-        $type = explode('\\', $type);
-        $type = strtolower(end($type));
+        $data = array_merge($sku->toArray(), $sku->handler_class::metadata($sku));
 
-        $handler = explode('\\', $sku->handler_class);
-        $handler = strtolower(end($handler));
-
-        $data = $sku->toArray();
-
-        $data['type'] = $type;
-        $data['handler'] = $handler;
-        $data['readonly'] = false;
-        $data['enabled'] = false;
-        $data['prio'] = $sku->handler_class::priority();
+        // ignore incomplete handlers
+        if (empty($data['type'])) {
+            return null;
+        }
 
         // Use localized value, toArray() does not get them right
         $data['name'] = $sku->name;
         $data['description'] = $sku->description;
 
-        unset($data['handler_class']);
-
-        switch ($handler) {
-            case 'activesync':
-                $data['required'] = ['groupware'];
-                break;
-
-            case 'auth2f':
-                $data['forbidden'] = ['activesync'];
-                break;
-
-            case 'storage':
-                // Quota range input
-                $data['readonly'] = true; // only the checkbox will be disabled, not range
-                $data['enabled'] = true;
-                $data['range'] = [
-                    'min' => $data['units_free'],
-                    'max' => $sku->handler_class::MAX_ITEMS,
-                    'unit' => $sku->handler_class::ITEM_UNIT,
-                ];
-                break;
-
-            case 'mailbox':
-                // Mailbox is always enabled and cannot be unset
-                $data['readonly'] = true;
-                $data['enabled'] = true;
-                break;
-        }
+        unset($data['handler_class'], $data['created_at'], $data['updated_at']);
 
         return $data;
     }

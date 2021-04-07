@@ -15,6 +15,7 @@ return [
 
     'planbutton' => 'Choose :plan',
 
+    'process-async' => 'Setup process has been pushed. Please wait.',
     'process-user-new' => 'Registering a user...',
     'process-user-ldap-ready' => 'Creating a user...',
     'process-user-imap-ready' => 'Creating a mailbox...',
@@ -43,6 +44,9 @@ return [
 
     'search-foundxdomains' => ':x domains have been found.',
     'search-foundxusers' => ':x user accounts have been found.',
+
+    'support-request-success' => 'Support request submitted successfully.',
+    'support-request-error' => 'Failed to submit the support request.',
 
     'wallet-award-success' => 'The bonus has been added to the wallet successfully.',
     'wallet-penalty-success' => 'The penalty has been added to the wallet successfully.',

@@ -6,8 +6,14 @@ use Closure;
 
 class RequestLogger
 {
+    private static $start;
+
     public function handle($request, Closure $next)
     {
+        // FIXME: This is not really a request start, but we can't
+        //        use LARAVEL_START constant when working with swoole
+        self::$start = microtime(true);
+
         return $next($request);
     }
 
@@ -16,8 +22,8 @@ class RequestLogger
         if (\App::environment('local')) {
             $url = $request->fullUrl();
             $method = $request->getMethod();
-            $time = microtime(true) - LARAVEL_START;
             $mem = round(memory_get_peak_usage() / 1024 / 1024, 1);
+            $time = microtime(true) - self::$start;
 
             \Log::debug(sprintf("C: %s %s [%sM]: %.4f sec.", $method, $url, $mem, $time));
         }

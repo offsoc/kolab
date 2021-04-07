@@ -1,6 +1,6 @@
 <template>
     <div class="container d-flex flex-column align-items-center justify-content-center">
-        <div class="card col-sm-8 col-lg-6">
+        <div id="logon-form" class="card col-sm-8 col-lg-6">
             <div class="card-body">
                 <h1 class="card-title text-center mb-3">Please sign in</h1>
                 <div class="card-text">
@@ -42,20 +42,24 @@
                 </div>
             </div>
         </div>
-        <div class="mt-1">
-            <router-link v-if="!$root.isAdmin" :to="{ name: 'password-reset' }" id="forgot-password">Forgot password?</router-link>
+        <div id="logon-form-footer" class="mt-1">
+            <router-link v-if="!$root.isAdmin && $root.hasRoute('password-reset')" :to="{ name: 'password-reset' }" id="forgot-password">Forgot password?</router-link>
+            <a v-if="webmailURL && !$root.isAdmin" :href="webmailURL" id="webmail">Webmail</a>
         </div>
     </div>
 </template>
 
-
 <script>
     export default {
+        props: {
+            dashboard: { type: Boolean, default: true }
+        },
         data() {
             return {
                 email: '',
                 password: '',
-                secondFactor: ''
+                secondFactor: '',
+                webmailURL: window.config['app.webmail_url']
             }
         },
         methods: {
@@ -68,7 +72,8 @@
                     secondfactor: this.secondFactor
                 }).then(response => {
                     // login user and redirect to dashboard
-                    this.$root.loginUser(response.data)
+                    this.$root.loginUser(response.data, this.dashboard)
+                    this.$emit('success')
                 })
             }
         }

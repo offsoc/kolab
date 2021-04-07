@@ -1,0 +1,17 @@
+// Bootstrap
+@import '~bootstrap/scss/bootstrap';
+
+// Bootstrap style fixes
+
+.btn-link,
+.table thead th {
+    border: 0;
+}
+
+small {
+    font-size: 0.875em;
+}
+
+.hidden {
+    display: none !important;
+}

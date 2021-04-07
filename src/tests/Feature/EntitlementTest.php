@@ -36,6 +36,9 @@ class EntitlementTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * Test for Entitlement::costsPerDay()
+     */
     public function testCostsPerDay(): void
     {
         // 444
@@ -56,9 +59,10 @@ class EntitlementTest extends TestCase
     }
 
     /**
-     * Tests for User::AddEntitlement()
+     * Tests for entitlements
+     * @todo This really should be in User or Wallet tests file
      */
-    public function testUserAddEntitlement(): void
+    public function testEntitlements(): void
     {
         $packageDomain = Package::where('title', 'domain-hosting')->first();
         $packageKolab = Package::where('title', 'kolab')->first();
@@ -99,11 +103,9 @@ class EntitlementTest extends TestCase
         $this->assertTrue($wallet->fresh()->balance < 0);
     }
 
-    public function testAddExistingEntitlement(): void
-    {
-        $this->markTestIncomplete();
-    }
-
+    /**
+     * @todo This really should be in User tests file
+     */
     public function testEntitlementFunctions(): void
     {
         $user = $this->getTestUser('entitlement-test@kolabnow.com');
@@ -116,24 +118,20 @@ class EntitlementTest extends TestCase
         $this->assertNotNull($wallet);
 
         $sku = \App\Sku::where('title', 'mailbox')->first();
-        $this->assertNotNull($sku);
 
         $entitlement = Entitlement::where('wallet_id', $wallet->id)
             ->where('sku_id', $sku->id)->first();
 
         $this->assertNotNull($entitlement);
-
-        $eSKU = $entitlement->sku;
-        $this->assertSame($sku->id, $eSKU->id);
-
-        $eWallet = $entitlement->wallet;
-        $this->assertSame($wallet->id, $eWallet->id);
-
-        $eEntitleable = $entitlement->entitleable;
-        $this->assertEquals($user->id, $eEntitleable->id);
-        $this->assertTrue($eEntitleable instanceof \App\User);
+        $this->assertSame($sku->id, $entitlement->sku->id);
+        $this->assertSame($wallet->id, $entitlement->wallet->id);
+        $this->assertEquals($user->id, $entitlement->entitleable->id);
+        $this->assertTrue($entitlement->entitleable instanceof \App\User);
     }
 
+    /**
+     * @todo This really should be in User or Wallet tests file
+     */
     public function testBillDeletedEntitlement(): void
     {
         $user = $this->getTestUser('entitlement-test@kolabnow.com');

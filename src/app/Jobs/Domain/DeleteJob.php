@@ -15,6 +15,10 @@ class DeleteJob extends DomainJob
     {
         $domain = $this->getDomain();
 
+        if (!$domain) {
+            return;
+        }
+
         // sanity checks
         if ($domain->isDeleted()) {
             $this->fail(new \Exception("Domain {$this->domainId} is already marked as deleted."));
@@ -24,6 +28,11 @@ class DeleteJob extends DomainJob
         \App\Backends\LDAP::deleteDomain($domain);
 
         $domain->status |= \App\Domain::STATUS_DELETED;
+
+        if ($domain->isLdapReady()) {
+            $domain->status ^= \App\Domain::STATUS_LDAP_READY;
+        }
+
         $domain->save();
     }
 }

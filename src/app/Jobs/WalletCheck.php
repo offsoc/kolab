@@ -175,7 +175,7 @@ class WalletCheck implements ShouldQueue
 
         $label = "Account suspended";
 
-        $this->sendMail(\App\Mail\NegativeBalanceSuspended::class, false, $label);
+        $this->sendMail(\App\Mail\NegativeBalanceSuspended::class, true, $label);
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_suspended', $now);

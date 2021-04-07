@@ -15,10 +15,10 @@ class VerifyJob extends DomainJob
     {
         $domain = $this->getDomain();
 
-        $domain->verify();
+        if (!$domain) {
+            return;
+        }
 
-        // TODO: What should happen if the domain is not registered yet?
-        //       Should we start a new job with some specified delay?
-        //       Or we just give the user a button to start verification again?
+        $domain->verify();
     }
 }

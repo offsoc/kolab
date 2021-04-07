@@ -34,8 +34,12 @@ class PaymentsMollieTest extends TestCase
         Payment::where('wallet_id', $wallet->id)->delete();
         Wallet::where('id', $wallet->id)->update(['balance' => 0]);
         WalletSetting::where('wallet_id', $wallet->id)->delete();
-        Transaction::where('object_id', $wallet->id)
-            ->where('type', Transaction::WALLET_CREDIT)->delete();
+        $types = [
+            Transaction::WALLET_CREDIT,
+            Transaction::WALLET_REFUND,
+            Transaction::WALLET_CHARGEBACK,
+        ];
+        Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
     }
 
     /**
@@ -48,8 +52,12 @@ class PaymentsMollieTest extends TestCase
         Payment::where('wallet_id', $wallet->id)->delete();
         Wallet::where('id', $wallet->id)->update(['balance' => 0]);
         WalletSetting::where('wallet_id', $wallet->id)->delete();
-        Transaction::where('object_id', $wallet->id)
-            ->where('type', Transaction::WALLET_CREDIT)->delete();
+        $types = [
+            Transaction::WALLET_CREDIT,
+            Transaction::WALLET_REFUND,
+            Transaction::WALLET_CHARGEBACK,
+        ];
+        Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
 
         parent::tearDown();
     }
@@ -72,6 +80,7 @@ class PaymentsMollieTest extends TestCase
         $response->assertStatus(401);
 
         $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
 
         // Test creating a mandate (invalid input)
         $post = [];
@@ -96,7 +105,7 @@ class PaymentsMollieTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertSame('The balance must be a number.', $json['errors']['balance'][0]);
 
-        // Test creating a mandate (invalid input)
+        // Test creating a mandate (amount smaller than the minimum value)
         $post = ['amount' => -100, 'balance' => 0];
         $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
         $response->assertStatus(422);
@@ -108,6 +117,18 @@ class PaymentsMollieTest extends TestCase
         $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
+        // Test creating a mandate (negative balance, amount too small)
+        Wallet::where('id', $wallet->id)->update(['balance' => -2000]);
+        $post = ['amount' => PaymentProvider::MIN_AMOUNT / 100, 'balance' => 0];
+        $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame("The specified amount does not cover the balance on the account.", $json['errors']['amount']);
+
         // Test creating a mandate (valid input)
         $post = ['amount' => 20.10, 'balance' => 0];
         $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
@@ -117,6 +138,13 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertRegExp('|^https://www.mollie.com|', $json['redirectUrl']);
+
+        // Assert the proper payment amount has been used
+        $payment = Payment::where('id', $json['id'])->first();
+        $this->assertSame(2010, $payment->amount);
+        $this->assertSame($wallet->id, $payment->wallet_id);
+        $this->assertSame(\config('app.name') . " Auto-Payment Setup", $payment->description);
+        $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information
         $response = $this->actingAs($user)->get("api/v4/payments/mandate");
@@ -168,6 +196,8 @@ class PaymentsMollieTest extends TestCase
 
         Bus::fake();
         $wallet->setSetting('mandate_disabled', null);
+        $wallet->balance = 1000;
+        $wallet->save();
 
         // Test updating mandate details (invalid input)
         $post = [];
@@ -194,7 +224,7 @@ class PaymentsMollieTest extends TestCase
         // Test updating a mandate (valid input)
         $responseStack->append(new Response(200, [], json_encode($mollie_response)));
 
-        $post = ['amount' => 30.10, 'balance' => 1];
+        $post = ['amount' => 30.10, 'balance' => 10];
         $response = $this->actingAs($user)->put("api/v4/payments/mandate", $post);
         $response->assertStatus(200);
 
@@ -205,10 +235,12 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame($mandate_id, $json['id']);
         $this->assertFalse($json['isDisabled']);
 
-        $wallet = $user->wallets()->first();
+        $wallet->refresh();
 
         $this->assertEquals(30.10, $wallet->getSetting('mandate_amount'));
-        $this->assertEquals(1, $wallet->getSetting('mandate_balance'));
+        $this->assertEquals(10, $wallet->getSetting('mandate_balance'));
+
+        Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 0);
 
         // Test updating a disabled mandate (invalid input)
         $wallet->setSetting('mandate_disabled', 1);
@@ -264,6 +296,34 @@ class PaymentsMollieTest extends TestCase
         $mandate = mollie()->mandates()->getForId($customer_id, $mandate_id);
 
         $this->assertNull($wallet->fresh()->getSetting('mollie_mandate_id'));
+
+        // Test Mollie's "410 Gone" response handling when fetching the mandate info
+        // It is expected to remove the mandate reference
+        $mollie_response = [
+            'status' => 410,
+            'title' => "Gone",
+            'detail' => "You are trying to access an object, which has previously been deleted",
+            '_links' => [
+                'documentation' => [
+                    'href' => "https://docs.mollie.com/errors",
+                    'type' => "text/html"
+                ]
+            ]
+        ];
+
+        $responseStack = $this->mockMollie();
+        $responseStack->append(new Response(410, [], json_encode($mollie_response)));
+
+        $wallet->fresh()->setSetting('mollie_mandate_id', '123');
+
+        $response = $this->actingAs($user)->get("api/v4/payments/mandate");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertFalse(array_key_exists('id', $json));
+        $this->assertFalse(array_key_exists('method', $json));
+        $this->assertNull($wallet->fresh()->getSetting('mollie_mandate_id'));
     }
 
     /**
@@ -279,6 +339,7 @@ class PaymentsMollieTest extends TestCase
         $response = $this->post("api/v4/payments", []);
         $response->assertStatus(401);
 
+        // Invalid amount
         $user = $this->getTestUser('john@kolab.org');
 
         $post = ['amount' => -1];
@@ -292,7 +353,13 @@ class PaymentsMollieTest extends TestCase
         $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
-        $post = ['amount' => '12.34'];
+        // Invalid currency
+        $post = ['amount' => '12.34', 'currency' => 'FOO', 'methodId' => 'creditcard'];
+        $response = $this->actingAs($user)->post("api/v4/payments", $post);
+        $response->assertStatus(500);
+
+        // Successful payment
+        $post = ['amount' => '12.34', 'currency' => 'CHF', 'methodId' => 'creditcard'];
         $response = $this->actingAs($user)->post("api/v4/payments", $post);
         $response->assertStatus(200);
 
@@ -413,19 +480,24 @@ class PaymentsMollieTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
 
-        // Create a valid mandate first
-        $this->createMandate($wallet, ['amount' => 20.10, 'balance' => 10]);
+        // Create a valid mandate first (balance=0, so there's no extra payment yet)
+        $this->createMandate($wallet, ['amount' => 20.10, 'balance' => 0]);
+
+        $wallet->setSetting('mandate_balance', 10);
 
         // Expect a recurring payment as we have a valid mandate at this point
+        // and the balance is below the threshold
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertTrue($result);
 
-        // Check that the payments table contains a new record with proper amount
-        // There should be two records, one for the first payment and another for
-        // the recurring payment
-        $this->assertCount(1, $wallet->payments()->get());
-        $payment = $wallet->payments()->first();
-        $this->assertSame(2010, $payment->amount);
+        // Check that the payments table contains a new record with proper amount.
+        // There should be two records, one for the mandate payment and another for
+        // the top-up payment
+        $payments = $wallet->payments()->orderBy('amount')->get();
+        $this->assertCount(2, $payments);
+        $this->assertSame(0, $payments[0]->amount);
+        $this->assertSame(2010, $payments[1]->amount);
+        $payment = $payments[1];
 
         // In mollie we don't have to wait for a webhook, the response to
         // PaymentIntent already sets the status to 'paid', so we can test
@@ -452,7 +524,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->setSetting('mandate_disabled', 1);
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertFalse($result);
-        $this->assertCount(1, $wallet->payments()->get());
+        $this->assertCount(2, $wallet->payments()->get());
 
         // Expect no payment if balance is ok
         $wallet->setSetting('mandate_disabled', null);
@@ -460,7 +532,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->save();
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertFalse($result);
-        $this->assertCount(1, $wallet->payments()->get());
+        $this->assertCount(2, $wallet->payments()->get());
 
         // Expect no payment if the top-up amount is not enough
         $wallet->setSetting('mandate_disabled', null);
@@ -468,7 +540,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->save();
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertFalse($result);
-        $this->assertCount(1, $wallet->payments()->get());
+        $this->assertCount(2, $wallet->payments()->get());
 
         Bus::assertDispatchedTimes(\App\Jobs\PaymentMandateDisabledEmail::class, 1);
         Bus::assertDispatched(\App\Jobs\PaymentMandateDisabledEmail::class, function ($job) use ($wallet) {
@@ -482,7 +554,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->save();
         $result = PaymentsController::topUpWallet($wallet);
         $this->assertFalse($result);
-        $this->assertCount(1, $wallet->payments()->get());
+        $this->assertCount(2, $wallet->payments()->get());
 
         Bus::assertDispatchedTimes(\App\Jobs\PaymentMandateDisabledEmail::class, 1);
 
@@ -569,7 +641,164 @@ class PaymentsMollieTest extends TestCase
             return $job_payment->id === $payment->id;
         });
 
-        $responseStack = $this->unmockMollie();
+        $this->unmockMollie();
+    }
+
+    /**
+     * Test refund/chargeback handling by the webhook
+     *
+     * @group mollie
+     */
+    public function testRefundAndChargeback(): void
+    {
+        Bus::fake();
+
+        $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
+        $wallet->transactions()->delete();
+
+        $mollie = PaymentProvider::factory('mollie');
+
+        // Create a paid payment
+        $payment = Payment::create([
+                'id' => 'tr_123456',
+                'status' => PaymentProvider::STATUS_PAID,
+                'amount' => 123,
+                'currency_amount' => 123,
+                'currency' => 'CHF',
+                'type' => PaymentProvider::TYPE_ONEOFF,
+                'wallet_id' => $wallet->id,
+                'provider' => 'mollie',
+                'description' => 'test',
+        ]);
+
+        // Test handling a refund by the webhook
+
+        $mollie_response1 = [
+            "resource" => "payment",
+            "id" => $payment->id,
+            "status" => "paid",
+            // Status is not enough, paidAt is used to distinguish the state
+            "paidAt" => date('c'),
+            "mode" => "test",
+            "_links" => [
+                "refunds" => [
+                   "href" => "https://api.mollie.com/v2/payments/{$payment->id}/refunds",
+                   "type" => "application/hal+json"
+                ]
+            ]
+        ];
+
+        $mollie_response2 = [
+            "count" => 1,
+            "_links" => [],
+            "_embedded" => [
+                "refunds" => [
+                    [
+                        "resource" => "refund",
+                        "id" => "re_123456",
+                        "status" => \Mollie\Api\Types\RefundStatus::STATUS_REFUNDED,
+                        "paymentId" => $payment->id,
+                        "description" => "refund desc",
+                        "amount" => [
+                            "currency" => "CHF",
+                            "value" => "1.01",
+                        ],
+                    ]
+                ]
+            ]
+        ];
+
+        // We'll trigger the webhook with payment id and use mocking for
+        // requests to the Mollie payments API.
+        $responseStack = $this->mockMollie();
+        $responseStack->append(new Response(200, [], json_encode($mollie_response1)));
+        $responseStack->append(new Response(200, [], json_encode($mollie_response2)));
+
+        $post = ['id' => $payment->id];
+        $response = $this->post("api/webhooks/payment/mollie", $post);
+        $response->assertStatus(200);
+
+        $wallet->refresh();
+
+        $this->assertEquals(-101, $wallet->balance);
+
+        $transactions = $wallet->transactions()->where('type', Transaction::WALLET_REFUND)->get();
+
+        $this->assertCount(1, $transactions);
+        $this->assertSame(-101, $transactions[0]->amount);
+        $this->assertSame(Transaction::WALLET_REFUND, $transactions[0]->type);
+        $this->assertSame("refund desc", $transactions[0]->description);
+
+        $payments = $wallet->payments()->where('id', 're_123456')->get();
+
+        $this->assertCount(1, $payments);
+        $this->assertSame(-101, $payments[0]->amount);
+        $this->assertSame(PaymentProvider::STATUS_PAID, $payments[0]->status);
+        $this->assertSame(PaymentProvider::TYPE_REFUND, $payments[0]->type);
+        $this->assertSame("mollie", $payments[0]->provider);
+        $this->assertSame("refund desc", $payments[0]->description);
+
+        // Test handling a chargeback by the webhook
+
+        $mollie_response1["_links"] = [
+            "chargebacks" => [
+               "href" => "https://api.mollie.com/v2/payments/{$payment->id}/chargebacks",
+               "type" => "application/hal+json"
+            ]
+        ];
+
+        $mollie_response2 = [
+            "count" => 1,
+            "_links" => [],
+            "_embedded" => [
+                "chargebacks" => [
+                    [
+                        "resource" => "chargeback",
+                        "id" => "chb_123456",
+                        "paymentId" => $payment->id,
+                        "amount" => [
+                            "currency" => "CHF",
+                            "value" => "0.15",
+                        ],
+                    ]
+                ]
+            ]
+        ];
+
+        // We'll trigger the webhook with payment id and use mocking for
+        // requests to the Mollie payments API.
+        $responseStack = $this->mockMollie();
+        $responseStack->append(new Response(200, [], json_encode($mollie_response1)));
+        $responseStack->append(new Response(200, [], json_encode($mollie_response2)));
+
+        $post = ['id' => $payment->id];
+        $response = $this->post("api/webhooks/payment/mollie", $post);
+        $response->assertStatus(200);
+
+        $wallet->refresh();
+
+        $this->assertEquals(-116, $wallet->balance);
+
+        $transactions = $wallet->transactions()->where('type', Transaction::WALLET_CHARGEBACK)->get();
+
+        $this->assertCount(1, $transactions);
+        $this->assertSame(-15, $transactions[0]->amount);
+        $this->assertSame(Transaction::WALLET_CHARGEBACK, $transactions[0]->type);
+        $this->assertSame('', $transactions[0]->description);
+
+        $payments = $wallet->payments()->where('id', 'chb_123456')->get();
+
+        $this->assertCount(1, $payments);
+        $this->assertSame(-15, $payments[0]->amount);
+        $this->assertSame(PaymentProvider::STATUS_PAID, $payments[0]->status);
+        $this->assertSame(PaymentProvider::TYPE_CHARGEBACK, $payments[0]->type);
+        $this->assertSame("mollie", $payments[0]->provider);
+        $this->assertSame('', $payments[0]->description);
+
+        Bus::assertNotDispatched(\App\Jobs\PaymentEmail::class);
+
+        $this->unmockMollie();
     }
 
     /**
@@ -591,5 +820,101 @@ class PaymentsMollieTest extends TestCase
             ->click('button.form__button');
 
         $this->stopBrowser();
+    }
+
+
+    /**
+     * Test listing a pending payment
+     *
+     * @group mollie
+     */
+    public function testListingPayments(): void
+    {
+        Bus::fake();
+
+        $user = $this->getTestUser('john@kolab.org');
+
+        //Empty response
+        $response = $this->actingAs($user)->get("api/v4/payments/pending");
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame(0, $json['count']);
+        $this->assertSame(1, $json['page']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertCount(0, $json['list']);
+
+        $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
+        $json = $response->json();
+        $this->assertSame(false, $json['hasPending']);
+
+        $wallet = $user->wallets()->first();
+
+        // Successful payment
+        $post = ['amount' => '12.34', 'currency' => 'CHF', 'methodId' => 'creditcard'];
+        $response = $this->actingAs($user)->post("api/v4/payments", $post);
+        $response->assertStatus(200);
+
+        //A response
+        $response = $this->actingAs($user)->get("api/v4/payments/pending");
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame(1, $json['count']);
+        $this->assertSame(1, $json['page']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame(PaymentProvider::STATUS_OPEN, $json['list'][0]['status']);
+
+        $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
+        $json = $response->json();
+        $this->assertSame(true, $json['hasPending']);
+
+        // Set the payment to paid
+        $payments = Payment::where('wallet_id', $wallet->id)->get();
+
+        $this->assertCount(1, $payments);
+        $payment = $payments[0];
+
+        $payment->status = PaymentProvider::STATUS_PAID;
+        $payment->save();
+
+        // They payment should be gone from the pending list now
+        $response = $this->actingAs($user)->get("api/v4/payments/pending");
+        $json = $response->json();
+        $this->assertSame('success', $json['status']);
+        $this->assertSame(0, $json['count']);
+        $this->assertCount(0, $json['list']);
+
+        $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
+        $json = $response->json();
+        $this->assertSame(false, $json['hasPending']);
+    }
+
+    /**
+     * Test listing payment methods
+     *
+     * @group mollie
+     */
+    public function testListingPaymentMethods(): void
+    {
+        Bus::fake();
+
+        $user = $this->getTestUser('john@kolab.org');
+
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_ONEOFF);
+        $response->assertStatus(200);
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('creditcard', $json[0]['id']);
+        $this->assertSame('paypal', $json[1]['id']);
+
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
+        $response->assertStatus(200);
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSame('creditcard', $json[0]['id']);
     }
 }

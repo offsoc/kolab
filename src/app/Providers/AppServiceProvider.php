@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -28,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
         \App\Discount::observe(\App\Observers\DiscountObserver::class);
         \App\Domain::observe(\App\Observers\DomainObserver::class);
         \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);
+        \App\Group::observe(\App\Observers\GroupObserver::class);
+        \App\OpenVidu\Connection::observe(\App\Observers\OpenVidu\ConnectionObserver::class);
         \App\Package::observe(\App\Observers\PackageObserver::class);
         \App\PackageSku::observe(\App\Observers\PackageSkuObserver::class);
         \App\Plan::observe(\App\Observers\PlanObserver::class);
@@ -48,5 +51,11 @@ class AppServiceProvider extends ServiceProvider
                 \Log::debug(sprintf('[SQL] %s [%s]', $query->sql, implode(', ', $query->bindings)));
             });
         }
+
+        // Register some template helpers
+        Blade::directive('theme_asset', function ($path) {
+            $path = trim($path, '/\'"');
+            return "<?php echo secure_asset('themes/' . \$env['app.theme'] . '/' . '$path'); ?>";
+        });
     }
 }

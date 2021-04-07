@@ -219,11 +219,10 @@
                         this.discount_description = this.user.wallet.discount_description
                         this.status = response.data.statusInfo
 
-                        axios.get('/api/v4/skus')
+                        axios.get('/api/v4/users/' + this.user_id + '/skus?type=user')
                             .then(response => {
                                 // "merge" SKUs with user entitlement-SKUs
                                 this.skus = response.data
-                                    .filter(sku => sku.type == 'user')
                                     .map(sku => {
                                         if (sku.id in this.user.skus) {
                                             sku.enabled = true
@@ -273,6 +272,10 @@
 
                 axios[method](location, this.user)
                     .then(response => {
+                        if (response.data.statusInfo) {
+                            this.$store.state.authInfo.statusInfo = response.data.statusInfo
+                        }
+
                         this.$toast.success(response.data.message)
                         this.$router.push({ name: 'users' })
                     })

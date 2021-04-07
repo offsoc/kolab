@@ -190,6 +190,8 @@ class WalletsTest extends TestCase
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
         $wallet = $john->wallets()->first();
+        $wallet->balance = -100;
+        $wallet->save();
 
         // Accessing a wallet of someone else
         $response = $this->actingAs($jack)->get("api/v4/wallets/{$wallet->id}");

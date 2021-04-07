@@ -1,0 +1,41 @@
+@import '~frappe-charts/dist/frappe-charts.min.css';
+
+.chart-container {
+    font-family: unset;
+
+    .title {
+        font-size: 12pt;
+        font-weight: bold;
+    }
+}
+
+#stats-container {
+    & > div {
+        border: 1px solid lightgrey;
+        border-radius: 0.5em;
+        padding-top: 0.5em;
+        margin: 0.5em;
+        min-height: 250px;
+        text-align: center;
+
+        & > span {
+            line-height: 240px;
+        }
+    }
+}
+
+@include media-breakpoint-up(lg) {
+    #stats-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: baseline;
+
+        & > div {
+            width: calc(50% - 1em);
+
+            svg {
+                width: 100%;
+            }
+        }
+    }
+}

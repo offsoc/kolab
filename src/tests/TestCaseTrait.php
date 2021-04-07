@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Domain;
+use App\Group;
 use App\Transaction;
 use App\User;
 use Carbon\Carbon;
@@ -13,80 +14,7 @@ use PHPUnit\Framework\Assert;
 trait TestCaseTrait
 {
     /**
-     * A domain that is hosted.
-     *
-     * @var \App\Domain
-     */
-    protected $domainHosted;
-
-    /**
-     * The hosted domain owner.
-     *
-     * @var \App\User
-     */
-    protected $domainOwner;
-
-    /**
-     * Some profile details for an owner of a domain
-     *
-     * @var array
-     */
-    protected $domainOwnerSettings = [
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'organization' => 'Test Domain Owner',
-    ];
-
-    /**
-     * Some users for the hosted domain, ultimately including the owner.
-     *
-     * @var \App\User[]
-     */
-    protected $domainUsers = [];
-
-    /**
-     * A specific user that is a regular user in the hosted domain.
-     */
-    protected $jack;
-
-    /**
-     * A specific user that is a controller on the wallet to which the hosted domain is charged.
-     */
-    protected $jane;
-
-    /**
-     * A specific user that has a second factor configured.
-     */
-    protected $joe;
-
-    /**
-     * One of the domains that is available for public registration.
-     *
-     * @var \App\Domain
-     */
-    protected $publicDomain;
-
-    /**
-     * A newly generated user in a public domain.
-     *
-     * @var \App\User
-     */
-    protected $publicDomainUser;
-
-    /**
-     * A placeholder for a password that can be generated.
-     *
-     * Should be generated with `\App\Utils::generatePassphrase()`.
-     *
-     * @var string
-     */
-    protected $userPassword;
-
-    /**
-     * Assert that the entitlements for the user match the expected list of entitlements.
-     *
-     * @param \App\User $user The user for which the entitlements need to be pulled.
-     * @param array $expected An array of expected \App\SKU titles.
+     * Assert user entitlements state
      */
     protected function assertUserEntitlements($user, $expected)
     {
@@ -103,22 +31,15 @@ trait TestCaseTrait
     }
 
     /**
-     * Backdate entitlements to the desired target date.
-     *
-     * @param \App\Entitlement[] $entitlements
-     * @param \Carbon\Carbon $targetDate
+     * Removes all beta entitlements from the database
      */
-    protected function backdateEntitlements($entitlements, $targetDate)
+    protected function clearBetaEntitlements(): void
     {
-        foreach ($entitlements as $entitlement) {
-            $entitlement->created_at = $targetDate;
-            $entitlement->updated_at = $targetDate;
-            $entitlement->save();
+        $betas = \App\Sku::where('handler_class', 'like', 'App\\Handlers\\Beta\\%')
+            ->orWhere('handler_class', 'App\Handlers\Beta')
+            ->pluck('id')->all();
 
-            $owner = $entitlement->wallet->domainOwner;
-            $owner->created_at = $targetDate;
-            $owner->save();
-        }
+        \App\Entitlement::whereIn('sku_id', $betas)->delete();
     }
 
     /**
@@ -161,7 +82,7 @@ trait TestCaseTrait
                 'object_id' => $wallet->id,
                 'object_type' => \App\Wallet::class,
                 'type' => Transaction::WALLET_DEBIT,
-                'amount' => $debit,
+                'amount' => $debit * -1,
                 'description' => 'Payment',
             ]
         );
@@ -194,17 +115,15 @@ trait TestCaseTrait
         // The page size is 10, so we generate so many to have at least two pages
         $loops = 10;
         while ($loops-- > 0) {
-            $transaction = Transaction::create(
-                [
-                    'user_email' => 'jeroen.@jeroen.jeroen',
-                    'object_id' => $wallet->id,
-                    'object_type' => \App\Wallet::class,
-                    'type' => $types[count($result) % count($types)],
-                    'amount' => 11 * (count($result) + 1),
-                    'description' => 'TRANS' . $loops,
-                ]
-            );
-
+            $type = $types[count($result) % count($types)];
+            $transaction = Transaction::create([
+                'user_email' => 'jeroen.@jeroen.jeroen',
+                'object_id' => $wallet->id,
+                'object_type' => \App\Wallet::class,
+                'type' => $type,
+                'amount' => 11 * (count($result) + 1) * ($type == Transaction::WALLET_PENALTY ? -1 : 1),
+                'description' => 'TRANS' . $loops,
+            ]);
             $transaction->created_at = $date->next(Carbon::MONDAY);
             $transaction->save();
 
@@ -235,11 +154,22 @@ trait TestCaseTrait
         $domain->forceDelete();
     }
 
-    /**
-     * Delete a test user whatever it takes.
-     *
-     * @coversNothing
-     */
+    protected function deleteTestGroup($email)
+    {
+        Queue::fake();
+
+        $group = Group::withTrashed()->where('email', $email)->first();
+
+        if (!$group) {
+            return;
+        }
+
+        $job = new \App\Jobs\Group\DeleteJob($group->id);
+        $job->handle();
+
+        $group->forceDelete();
+    }
+
     protected function deleteTestUser($email)
     {
         Queue::fake();
@@ -282,6 +212,17 @@ trait TestCaseTrait
     }
 
     /**
+     * Get Group object by email, create it if needed.
+     * Skip LDAP jobs.
+     */
+    protected function getTestGroup($email, $attrib = [])
+    {
+        // Disable jobs (i.e. skip LDAP oprations)
+        Queue::fake();
+        return Group::firstOrCreate(['email' => $email], $attrib);
+    }
+
+    /**
      * Get User object by email, create it if needed.
      * Skip LDAP jobs.
      *
@@ -291,14 +232,12 @@ trait TestCaseTrait
     {
         // Disable jobs (i.e. skip LDAP oprations)
         Queue::fake();
-        $user = User::withTrashed()->where('email', $email)->first();
+        $user = User::firstOrCreate(['email' => $email], $attrib);
 
-        if (!$user) {
-            return User::firstOrCreate(['email' => $email], $attrib);
-        }
-
-        if ($user->deleted_at) {
-            $user->restore();
+        if ($user->trashed()) {
+            // Note: we do not want to use user restore here
+            User::where('id', $user->id)->forceDelete();
+            $user = User::create(['email' => $email] + $attrib);
         }
 
         return $user;

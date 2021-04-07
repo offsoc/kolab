@@ -13,6 +13,19 @@ use Tests\Browser\Components\Toast;
 class Browser extends \Laravel\Dusk\Browser
 {
     /**
+     * Assert that the given element attribute contains specified text.
+     */
+    public function assertAttributeRegExp($selector, $attribute, $regexp)
+    {
+        $element = $this->resolver->findOrFail($selector);
+        $value   = (string) $element->getAttribute($attribute);
+
+        Assert::assertRegExp($regexp, $value, "No expected text in [$selector][$attribute]. Found: $value");
+
+        return $this;
+    }
+
+    /**
      * Assert number of (visible) elements
      */
     public function assertElementsCount($selector, $expected_count, $visible = true)
@@ -149,6 +162,14 @@ class Browser extends \Laravel\Dusk\Browser
         $this->script("jQuery('.toast-container > *').remove()");
 
         return $this;
+    }
+
+    /**
+     * Wait until a button becomes enabled and click it
+     */
+    public function clickWhenEnabled($selector)
+    {
+        return $this->waitFor($selector . ':not([disabled])')->click($selector);
     }
 
     /**

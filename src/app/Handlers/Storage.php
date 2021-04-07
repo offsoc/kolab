@@ -7,21 +7,36 @@ class Storage extends \App\Handlers\Base
     public const MAX_ITEMS = 100;
     public const ITEM_UNIT = 'GB';
 
+    /**
+     * The entitleable class for this handler.
+     *
+     * @return string
+     */
     public static function entitleableClass(): string
     {
         return \App\User::class;
     }
 
-    public static function preReq($entitlement, $object): bool
+    /**
+     * SKU handler metadata.
+     *
+     * @param \App\Sku $sku The SKU object
+     *
+     * @return array
+     */
+    public static function metadata(\App\Sku $sku): array
     {
-        if (!$entitlement->sku->active) {
-            \Log::error("Sku not active");
-            return false;
-        }
+        $data = parent::metadata($sku);
 
-        // TODO: The storage can not be modified to below what is already consumed.
+        $data['readonly'] = true; // only the checkbox will be disabled, not range
+        $data['enabled'] = true;
+        $data['range'] = [
+           'min' => $sku->units_free,
+           'max' => self::MAX_ITEMS,
+           'unit' => self::ITEM_UNIT,
+        ];
 
-        return true;
+        return $data;
     }
 
     /**

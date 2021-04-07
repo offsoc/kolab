@@ -1,5 +1,5 @@
 <template>
-    <div v-if="!$root.isLoading" class="container" dusk="dashboard-component">
+    <div class="container" dusk="dashboard-component">
         <div id="search-box" class="card">
             <div class="card-body">
                 <form @submit.prevent="searchUser" class="row justify-content-center">
@@ -37,11 +37,19 @@
                 </table>
             </div>
         </div>
-        <div id="dashboard-nav"></div>
+        <div id="dashboard-nav" class="mt-3">
+            <router-link class="card link-stats" :to="{ name: 'stats' }">
+                <svg-icon icon="chart-line"></svg-icon><span class="name">Stats</span>
+            </router-link>
+        </div>
     </div>
 </template>
 
 <script>
+    import { library } from '@fortawesome/fontawesome-svg-core'
+    import { faChartLine } from '@fortawesome/free-solid-svg-icons'
+    library.add(faChartLine)
+
     export default {
         data() {
             return {
@@ -50,20 +58,7 @@
             }
         },
         mounted() {
-            const authInfo = this.$store.state.isLoggedIn ? this.$store.state.authInfo : null
-
-            if (authInfo) {
-                $('#search-box input').focus()
-            } else {
-                this.$root.startLoading()
-                axios.get('/api/auth/info')
-                    .then(response => {
-                        this.$store.state.authInfo = response.data
-                        this.$root.stopLoading()
-                        setTimeout(() => { $('#search-box input').focus() }, 10)
-                    })
-                    .catch(this.$root.errorHandler)
-            }
+            $('#search-box input').focus()
         },
         methods: {
             searchUser() {

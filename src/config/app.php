@@ -59,6 +59,12 @@ return [
 
     'support_url' => env('SUPPORT_URL', null),
 
+    'support_email' => env('SUPPORT_EMAIL', null),
+
+    'webmail_url' => env('WEBMAIL_URL', null),
+
+    'theme' => env('APP_THEME', 'default'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Domain
@@ -185,6 +191,7 @@ return [
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
+        App\Providers\HorizonServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
     ],
 

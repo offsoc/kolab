@@ -179,7 +179,7 @@ class WalletsController extends Controller
         $result = $wallet->payments()
             ->selectRaw('distinct date_format(updated_at, "%Y-%m") as ident')
             ->where('status', PaymentProvider::STATUS_PAID)
-            ->where('amount', '>', 0)
+            ->where('amount', '<>', 0)
             ->orderBy('ident', 'desc')
             ->get()
             ->whereNotIn('ident', [date('Y-m')]) // exclude current month
@@ -246,18 +246,12 @@ class WalletsController extends Controller
         }
 
         $result = $result->map(function ($item) use ($isAdmin) {
-            $amount = $item->amount;
-
-            if (in_array($item->type, [Transaction::WALLET_PENALTY, Transaction::WALLET_DEBIT])) {
-                $amount *= -1;
-            }
-
             $entry = [
                 'id' => $item->id,
                 'createdAt' => $item->created_at->format('Y-m-d H:i'),
                 'type' => $item->type,
                 'description' => $item->shortDescription(),
-                'amount' => $amount,
+                'amount' => $item->amount,
                 'hasDetails' => !empty($item->cnt),
             ];
 
@@ -309,9 +303,14 @@ class WalletsController extends Controller
                 return \trans('app.wallet-notice-today');
             }
 
+            // Once in a while we got e.g. "3 weeks" instead of expected "4 weeks".
+            // It's because $until uses full seconds, but $now is more precise.
+            // We make sure both have the same time set.
+            $now = Carbon::now()->setTimeFrom($until);
+
             $params = [
                 'date' => $until->toDateString(),
-                'days' => Carbon::now()->diffForHumans($until, Carbon::DIFF_ABSOLUTE),
+                'days' => $now->diffForHumans($until, Carbon::DIFF_ABSOLUTE),
             ];
 
             return \trans('app.wallet-notice-date', $params);

@@ -10,6 +10,7 @@ use Laravel\Dusk\TestCase as BaseTestCase;
 abstract class TestCaseDusk extends BaseTestCase
 {
     use TestCaseTrait;
+    use TestCaseMeetTrait;
 
     /**
      * Prepare for Dusk test execution.
@@ -33,6 +34,12 @@ abstract class TestCaseDusk extends BaseTestCase
             '--lang=en_US',
             '--disable-gpu',
             '--headless',
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            '--enable-usermedia-screen-capturing',
+            // '--auto-select-desktop-capture-source="Entire screen"',
+            '--ignore-certificate-errors',
+            '--incognito',
         ]);
 
         // For file download handling

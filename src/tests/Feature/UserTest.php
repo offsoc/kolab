@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Domain;
+use App\Group;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -17,7 +18,9 @@ class UserTest extends TestCase
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
         $this->deleteTestUser('UserAccountC@UserAccount.com');
+        $this->deleteTestGroup('test-group@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
+        $this->deleteTestDomain('UserAccountAdd.com');
     }
 
     public function tearDown(): void
@@ -26,7 +29,9 @@ class UserTest extends TestCase
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
         $this->deleteTestUser('UserAccountC@UserAccount.com');
+        $this->deleteTestGroup('test-group@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
+        $this->deleteTestDomain('UserAccountAdd.com');
 
         parent::tearDown();
     }
@@ -235,7 +240,7 @@ class UserTest extends TestCase
 
         $this->assertCount(0, User::withTrashed()->where('id', $id)->get());
 
-        // Test an account with users
+        // Test an account with users, domain, and group
         $userA = $this->getTestUser('UserAccountA@UserAccount.com');
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
         $userC = $this->getTestUser('UserAccountC@UserAccount.com');
@@ -249,15 +254,20 @@ class UserTest extends TestCase
         $domain->assignPackage($package_domain, $userA);
         $userA->assignPackage($package_kolab, $userB);
         $userA->assignPackage($package_kolab, $userC);
+        $group = $this->getTestGroup('test-group@UserAccount.com');
+        $group->assignToWallet($userA->wallets->first());
 
         $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
         $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
         $entitlementsC = \App\Entitlement::where('entitleable_id', $userC->id);
         $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domain->id);
+        $entitlementsGroup = \App\Entitlement::where('entitleable_id', $group->id);
+
         $this->assertSame(4, $entitlementsA->count());
         $this->assertSame(4, $entitlementsB->count());
         $this->assertSame(4, $entitlementsC->count());
         $this->assertSame(1, $entitlementsDomain->count());
+        $this->assertSame(1, $entitlementsGroup->count());
 
         // Delete non-controller user
         $userC->delete();
@@ -272,12 +282,65 @@ class UserTest extends TestCase
         $this->assertSame(0, $entitlementsA->count());
         $this->assertSame(0, $entitlementsB->count());
         $this->assertSame(0, $entitlementsDomain->count());
+        $this->assertSame(0, $entitlementsGroup->count());
         $this->assertTrue($userA->fresh()->trashed());
         $this->assertTrue($userB->fresh()->trashed());
         $this->assertTrue($domain->fresh()->trashed());
+        $this->assertTrue($group->fresh()->trashed());
         $this->assertFalse($userA->isDeleted());
         $this->assertFalse($userB->isDeleted());
         $this->assertFalse($domain->isDeleted());
+        $this->assertFalse($group->isDeleted());
+
+        $userA->forceDelete();
+
+        $all_entitlements = \App\Entitlement::where('wallet_id', $userA->wallets->first()->id);
+
+        $this->assertSame(0, $all_entitlements->withTrashed()->count());
+        $this->assertCount(0, User::withTrashed()->where('id', $userA->id)->get());
+        $this->assertCount(0, User::withTrashed()->where('id', $userB->id)->get());
+        $this->assertCount(0, User::withTrashed()->where('id', $userC->id)->get());
+        $this->assertCount(0, Domain::withTrashed()->where('id', $domain->id)->get());
+        $this->assertCount(0, Group::withTrashed()->where('id', $group->id)->get());
+    }
+
+    /**
+     * Test user deletion vs. group membership
+     */
+    public function testDeleteAndGroups(): void
+    {
+        Queue::fake();
+
+        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $userA = $this->getTestUser('UserAccountA@UserAccount.com');
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+        $userA->assignPackage($package_kolab, $userB);
+        $group = $this->getTestGroup('test-group@UserAccount.com');
+        $group->members = ['test@gmail.com', $userB->email];
+        $group->assignToWallet($userA->wallets->first());
+        $group->save();
+
+        $userGroups = $userA->groups()->get();
+        $this->assertSame(1, $userGroups->count());
+        $this->assertSame($group->id, $userGroups->first()->id);
+
+        $userB->delete();
+
+        $this->assertSame(['test@gmail.com'], $group->fresh()->members);
+
+        // Twice, one for save() and one for delete() above
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 2);
+    }
+
+    /**
+     * Tests for User::aliasExists()
+     */
+    public function testAliasExists(): void
+    {
+        $this->assertTrue(User::aliasExists('jack.daniels@kolab.org'));
+
+        $this->assertFalse(User::aliasExists('j.daniels@kolab.org'));
+        $this->assertFalse(User::aliasExists('john@kolab.org'));
     }
 
     /**
@@ -285,7 +348,12 @@ class UserTest extends TestCase
      */
     public function testEmailExists(): void
     {
-        $this->markTestIncomplete();
+        $this->assertFalse(User::emailExists('jack.daniels@kolab.org'));
+        $this->assertFalse(User::emailExists('j.daniels@kolab.org'));
+
+        $this->assertTrue(User::emailExists('john@kolab.org'));
+        $user = User::emailExists('john@kolab.org', true);
+        $this->assertSame('john@kolab.org', $user->email);
     }
 
     /**
@@ -345,6 +413,119 @@ class UserTest extends TestCase
     }
 
     /**
+     * Test user restoring
+     */
+    public function testRestore(): void
+    {
+        Queue::fake();
+
+        // Test an account with users and domain
+        $userA = $this->getTestUser('UserAccountA@UserAccount.com', [
+                'status' => User::STATUS_LDAP_READY | User::STATUS_IMAP_READY | User::STATUS_SUSPENDED,
+        ]);
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+        $domainA = $this->getTestDomain('UserAccount.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_HOSTED,
+        ]);
+        $domainB = $this->getTestDomain('UserAccountAdd.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_HOSTED,
+        ]);
+        $userA->assignPackage($package_kolab);
+        $domainA->assignPackage($package_domain, $userA);
+        $domainB->assignPackage($package_domain, $userA);
+        $userA->assignPackage($package_kolab, $userB);
+
+        $storage_sku = \App\Sku::where('title', 'storage')->first();
+        $now = \Carbon\Carbon::now();
+        $wallet_id = $userA->wallets->first()->id;
+
+        // add an extra storage entitlement
+        $ent1 = \App\Entitlement::create([
+                'wallet_id' => $wallet_id,
+                'sku_id' => $storage_sku->id,
+                'cost' => 0,
+                'entitleable_id' => $userA->id,
+                'entitleable_type' => User::class,
+        ]);
+
+        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
+        $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domainA->id);
+
+        // First delete the user
+        $userA->delete();
+
+        $this->assertSame(0, $entitlementsA->count());
+        $this->assertSame(0, $entitlementsB->count());
+        $this->assertSame(0, $entitlementsDomain->count());
+        $this->assertTrue($userA->fresh()->trashed());
+        $this->assertTrue($userB->fresh()->trashed());
+        $this->assertTrue($domainA->fresh()->trashed());
+        $this->assertTrue($domainB->fresh()->trashed());
+        $this->assertFalse($userA->isDeleted());
+        $this->assertFalse($userB->isDeleted());
+        $this->assertFalse($domainA->isDeleted());
+
+        // Backdate one storage entitlement (it's not expected to be restored)
+        \App\Entitlement::withTrashed()->where('id', $ent1->id)
+            ->update(['deleted_at' => $now->copy()->subMinutes(2)]);
+
+        // Backdate entitlements to assert that they were restored with proper updated_at timestamp
+        \App\Entitlement::withTrashed()->where('wallet_id', $wallet_id)
+            ->update(['updated_at' => $now->subMinutes(10)]);
+
+        Queue::fake();
+
+        // Then restore it
+        $userA->restore();
+        $userA->refresh();
+
+        $this->assertFalse($userA->trashed());
+        $this->assertFalse($userA->isDeleted());
+        $this->assertFalse($userA->isSuspended());
+        $this->assertFalse($userA->isLdapReady());
+        $this->assertFalse($userA->isImapReady());
+        $this->assertTrue($userA->isActive());
+
+        $this->assertTrue($userB->fresh()->trashed());
+        $this->assertTrue($domainB->fresh()->trashed());
+        $this->assertFalse($domainA->fresh()->trashed());
+
+        // Assert entitlements
+        $this->assertSame(4, $entitlementsA->count()); // mailbox + groupware + 2 x storage
+        $this->assertTrue($ent1->fresh()->trashed());
+        $entitlementsA->get()->each(function ($ent) {
+            $this->assertTrue($ent->updated_at->greaterThan(\Carbon\Carbon::now()->subSeconds(5)));
+        });
+
+        // We expect only CreateJob + UpdateJob pair for both user and domain.
+        // Because how Illuminate/Database/Eloquent/SoftDeletes::restore() method
+        // is implemented we cannot skip the UpdateJob in any way.
+        // I don't want to overwrite this method, the extra job shouldn't do any harm.
+        $this->assertCount(4, Queue::pushedJobs()); // @phpstan-ignore-line
+        Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\User\CreateJob::class,
+            function ($job) use ($userA) {
+                return $userA->id === TestCase::getObjectProperty($job, 'userId');
+            }
+        );
+        Queue::assertPushedWithChain(
+            \App\Jobs\User\CreateJob::class,
+            [
+                \App\Jobs\User\VerifyJob::class,
+            ]
+        );
+    }
+
+    /**
      * Tests for UserAliasesTrait::setAliases()
      */
     public function testSetAliases(): void
@@ -394,40 +575,6 @@ class UserTest extends TestCase
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 4);
 
         $this->assertCount(0, $user->aliases()->get());
-
-        // The test below fail since we removed validation code from the UserAliasObserver
-        $this->markTestIncomplete();
-
-        // Test sanity checks in UserAliasObserver
-        Queue::fake();
-
-        // Existing user
-        $user->setAliases(['john@kolab.org']);
-        $this->assertCount(0, $user->aliases()->get());
-
-        // Existing alias (in another account)
-        $user->setAliases(['john.doe@kolab.org']);
-        $this->assertCount(0, $user->aliases()->get());
-
-        Queue::assertNothingPushed();
-
-        // Existing user (in the same group account)
-        $ned = $this->getTestUser('ned@kolab.org');
-        $ned->setAliases(['john@kolab.org']);
-        $this->assertCount(0, $ned->aliases()->get());
-
-        // Existing alias (in the same group account)
-        $ned = $this->getTestUser('ned@kolab.org');
-        $ned->setAliases(['john.doe@kolab.org']);
-        $this->assertSame('john.doe@kolab.org', $ned->aliases()->first()->alias);
-
-        // Existing alias (in another account, public domain)
-        $user->setAliases(['alias@kolabnow.com']);
-        $ned->setAliases(['alias@kolabnow.com']);
-        $this->assertCount(0, $ned->aliases()->get());
-
-        // cleanup
-        $ned->setAliases([]);
     }
 
     /**

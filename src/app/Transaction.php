@@ -28,6 +28,8 @@ class Transaction extends Model
     public const WALLET_CREDIT = 'credit';
     public const WALLET_DEBIT = 'debit';
     public const WALLET_PENALTY = 'penalty';
+    public const WALLET_REFUND = 'refund';
+    public const WALLET_CHARGEBACK = 'chback';
 
     protected $fillable = [
         // actor, if any
@@ -94,6 +96,8 @@ class Transaction extends Model
             case self::WALLET_CREDIT:
             case self::WALLET_DEBIT:
             case self::WALLET_PENALTY:
+            case self::WALLET_REFUND:
+            case self::WALLET_CHARGEBACK:
                 // TODO: This must be a wallet.
                 $this->attributes['type'] = $value;
                 break;
@@ -112,7 +116,9 @@ class Transaction extends Model
     {
         $label = $this->objectTypeToLabelString() . '-' . $this->{'type'} . '-short';
 
-        return \trans("transactions.{$label}", $this->descriptionParams());
+        $result = \trans("transactions.{$label}", $this->descriptionParams());
+
+        return trim($result, ': ');
     }
 
     /**
@@ -153,6 +159,8 @@ class Transaction extends Model
             'description' => $this->{'description'},
         ];
 
+        $amount = $this->amount * ($this->amount < 0 ? -1 : 1);
+
         if ($entitlement = $this->entitlement()) {
             $wallet = $entitlement->wallet;
             $cost = $entitlement->cost;
@@ -166,7 +174,7 @@ class Transaction extends Model
         }
 
         $result['wallet'] = $wallet->{'description'} ?: 'Default wallet';
-        $result['amount'] = $wallet->money($this->amount);
+        $result['amount'] = $wallet->money($amount);
 
         return $result;
     }

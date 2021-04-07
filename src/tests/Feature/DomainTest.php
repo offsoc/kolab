@@ -6,8 +6,6 @@ use App\Domain;
 use App\Entitlement;
 use App\Sku;
 use App\User;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -33,6 +31,8 @@ class DomainTest extends TestCase
         foreach ($this->domains as $domain) {
             $this->deleteTestDomain($domain);
         }
+
+        $this->deleteTestUser('user@gmail.com');
     }
 
     /**
@@ -43,6 +43,8 @@ class DomainTest extends TestCase
         foreach ($this->domains as $domain) {
             $this->deleteTestDomain($domain);
         }
+
+        $this->deleteTestUser('user@gmail.com');
 
         parent::tearDown();
     }
@@ -217,5 +219,82 @@ class DomainTest extends TestCase
         $domain->forceDelete();
 
         $this->assertCount(0, Domain::withTrashed()->where('id', $domain->id)->get());
+    }
+
+    /**
+     * Test domain restoring
+     */
+    public function testRestore(): void
+    {
+        Queue::fake();
+
+        $domain = $this->getTestDomain('gmail.com', [
+                'status' => Domain::STATUS_NEW | Domain::STATUS_SUSPENDED
+                    | Domain::STATUS_LDAP_READY | Domain::STATUS_CONFIRMED,
+                'type' => Domain::TYPE_PUBLIC,
+        ]);
+
+        $user = $this->getTestUser('user@gmail.com');
+        $sku = \App\Sku::where('title', 'domain-hosting')->first();
+        $now = \Carbon\Carbon::now();
+
+        // Assign two entitlements to the domain, so we can assert that only the
+        // ones deleted last will be restored
+        $ent1 = \App\Entitlement::create([
+                'wallet_id' => $user->wallets->first()->id,
+                'sku_id' => $sku->id,
+                'cost' => 0,
+                'entitleable_id' => $domain->id,
+                'entitleable_type' => Domain::class,
+        ]);
+        $ent2 = \App\Entitlement::create([
+                'wallet_id' => $user->wallets->first()->id,
+                'sku_id' => $sku->id,
+                'cost' => 0,
+                'entitleable_id' => $domain->id,
+                'entitleable_type' => Domain::class,
+        ]);
+
+        $domain->delete();
+
+        $this->assertTrue($domain->fresh()->trashed());
+        $this->assertFalse($domain->fresh()->isDeleted());
+        $this->assertTrue($ent1->fresh()->trashed());
+        $this->assertTrue($ent2->fresh()->trashed());
+
+        // Backdate some properties
+        \App\Entitlement::withTrashed()->where('id', $ent2->id)->update(['deleted_at' => $now->subMinutes(2)]);
+        \App\Entitlement::withTrashed()->where('id', $ent1->id)->update(['updated_at' => $now->subMinutes(10)]);
+
+        Queue::fake();
+
+        $domain->restore();
+        $domain->refresh();
+
+        $this->assertFalse($domain->trashed());
+        $this->assertFalse($domain->isDeleted());
+        $this->assertFalse($domain->isSuspended());
+        $this->assertFalse($domain->isLdapReady());
+        $this->assertTrue($domain->isActive());
+        $this->assertTrue($domain->isConfirmed());
+
+        // Assert entitlements
+        $this->assertTrue($ent2->fresh()->trashed());
+        $this->assertFalse($ent1->fresh()->trashed());
+        $this->assertTrue($ent1->updated_at->greaterThan(\Carbon\Carbon::now()->subSeconds(5)));
+
+        // We expect only one CreateJob and one UpdateJob
+        // Because how Illuminate/Database/Eloquent/SoftDeletes::restore() method
+        // is implemented we cannot skip the UpdateJob in any way.
+        // I don't want to overwrite this method, the extra job shouldn't do any harm.
+        $this->assertCount(2, Queue::pushedJobs()); // @phpstan-ignore-line
+        Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\Domain\CreateJob::class,
+            function ($job) use ($domain) {
+                return $domain->id === TestCase::getObjectProperty($job, 'domainId');
+            }
+        );
     }
 }

@@ -80,6 +80,11 @@ class Package extends Model
         return false;
     }
 
+    /**
+     * SKUs of this package.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
     public function skus()
     {
         return $this->belongsToMany(

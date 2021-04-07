@@ -3,7 +3,6 @@
 namespace Tests\Feature\Jobs;
 
 use App\Domain;
-use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class DomainVerifyTest extends TestCase
@@ -48,6 +47,13 @@ class DomainVerifyTest extends TestCase
         $job->handle();
 
         $this->assertTrue($domain->fresh()->isVerified());
+
+        // Test non-existing domain ID
+        $job = new \App\Jobs\Domain\VerifyJob(123);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("Domain 123 could not be found in the database.", $job->failureMessage);
     }
 
     /**

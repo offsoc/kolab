@@ -67,6 +67,7 @@ Route::group(
         Route::apiResource('packages', API\V4\PackagesController::class);
         Route::apiResource('skus', API\V4\SkusController::class);
         Route::apiResource('users', API\V4\UsersController::class);
+        Route::get('users/{id}/skus', 'API\V4\SkusController@userSkus');
         Route::get('users/{id}/status', 'API\V4\UsersController@status');
 
         Route::apiResource('wallets', API\V4\WalletsController::class);
@@ -75,10 +76,52 @@ Route::group(
         Route::get('wallets/{id}/receipts/{receipt}', 'API\V4\WalletsController@receiptDownload');
 
         Route::post('payments', 'API\V4\PaymentsController@store');
+        //Route::delete('payments', 'API\V4\PaymentsController@cancel');
         Route::get('payments/mandate', 'API\V4\PaymentsController@mandate');
         Route::post('payments/mandate', 'API\V4\PaymentsController@mandateCreate');
         Route::put('payments/mandate', 'API\V4\PaymentsController@mandateUpdate');
         Route::delete('payments/mandate', 'API\V4\PaymentsController@mandateDelete');
+        Route::get('payments/methods', 'API\V4\PaymentsController@paymentMethods');
+        Route::get('payments/pending', 'API\V4\PaymentsController@payments');
+        Route::get('payments/has-pending', 'API\V4\PaymentsController@hasPayments');
+
+        Route::get('openvidu/rooms', 'API\V4\OpenViduController@index');
+        Route::post('openvidu/rooms/{id}/close', 'API\V4\OpenViduController@closeRoom');
+        Route::post('openvidu/rooms/{id}/config', 'API\V4\OpenViduController@setRoomConfig');
+
+        // FIXME: I'm not sure about this one, should we use DELETE request maybe?
+        Route::post('openvidu/rooms/{id}/connections/{conn}/dismiss', 'API\V4\OpenViduController@dismissConnection');
+        Route::put('openvidu/rooms/{id}/connections/{conn}', 'API\V4\OpenViduController@updateConnection');
+        Route::post('openvidu/rooms/{id}/request/{reqid}/accept', 'API\V4\OpenViduController@acceptJoinRequest');
+        Route::post('openvidu/rooms/{id}/request/{reqid}/deny', 'API\V4\OpenViduController@denyJoinRequest');
+    }
+);
+
+// Note: In Laravel 7.x we could just use withoutMiddleware() instead of a separate group
+Route::group(
+    [
+        'domain' => \config('app.domain'),
+        'prefix' => $prefix . 'api/v4'
+    ],
+    function () {
+        Route::post('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
+        Route::post('openvidu/rooms/{id}/connections', 'API\V4\OpenViduController@createConnection');
+        // FIXME: I'm not sure about this one, should we use DELETE request maybe?
+        Route::post('openvidu/rooms/{id}/connections/{conn}/dismiss', 'API\V4\OpenViduController@dismissConnection');
+        Route::put('openvidu/rooms/{id}/connections/{conn}', 'API\V4\OpenViduController@updateConnection');
+        Route::post('openvidu/rooms/{id}/request/{reqid}/accept', 'API\V4\OpenViduController@acceptJoinRequest');
+        Route::post('openvidu/rooms/{id}/request/{reqid}/deny', 'API\V4\OpenViduController@denyJoinRequest');
+    }
+);
+
+Route::group(
+    [
+        'domain' => \config('app.domain'),
+        'middleware' => 'api',
+        'prefix' => $prefix . 'api/v4'
+    ],
+    function ($router) {
+        Route::post('support/request', 'API\V4\SupportController@request');
     }
 );
 
@@ -88,8 +131,18 @@ Route::group(
         'prefix' => $prefix . 'api/webhooks'
     ],
     function () {
-        Route::post('greylist', 'API\V4\PolicyController@greylist');
         Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
+        Route::post('meet/openvidu', 'API\V4\OpenViduController@webhook');
+    }
+);
+
+Route::group(
+    [
+        'domain' => 'services.' . \config('app.domain'),
+        'prefix' => $prefix . 'api/webhooks'
+    ],
+    function () {
+        Route::post('greylist', 'API\V4\PolicyController@greylist');
         Route::post('spf', 'API\V4\PolicyController@senderPolicyFramework');
     }
 );
@@ -111,11 +164,14 @@ Route::group(
         Route::apiResource('skus', API\V4\Admin\SkusController::class);
         Route::apiResource('users', API\V4\Admin\UsersController::class);
         Route::post('users/{id}/reset2FA', 'API\V4\Admin\UsersController@reset2FA');
+        Route::get('users/{id}/skus', 'API\V4\Admin\SkusController@userSkus');
         Route::post('users/{id}/suspend', 'API\V4\Admin\UsersController@suspend');
         Route::post('users/{id}/unsuspend', 'API\V4\Admin\UsersController@unsuspend');
         Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
         Route::post('wallets/{id}/one-off', 'API\V4\Admin\WalletsController@oneOff');
         Route::get('wallets/{id}/transactions', 'API\V4\Admin\WalletsController@transactions');
         Route::apiResource('discounts', API\V4\Admin\DiscountsController::class);
+
+        Route::get('stats/chart/{chart}', 'API\V4\Admin\StatsController@chart');
     }
 );

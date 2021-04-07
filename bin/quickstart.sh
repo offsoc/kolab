@@ -31,25 +31,35 @@ rpm -qv php-mysqlnd >/dev/null 2>&1 || \
     test ! -z "$(php --ini | grep mysql)" || \
     die "Is php-mysqlnd installed?"
 
+test ! -z "$(php --modules | grep swoole)" || \
+    die "Is swoole installed?"
+
 base_dir=$(dirname $(dirname $0))
 
-bin/regen-certs
+docker pull docker.io/kolab/centos7:latest
 
-docker pull kolab/centos7:latest
-
-docker-compose down
+docker-compose down --remove-orphans
 docker-compose build
 
-docker-compose up -d kolab mariadb redis
-
 pushd ${base_dir}/src/
-cp .env.example .env
+
+if [ ! -f ".env" ]; then
+    cp .env.example .env
+fi
 
 if [ -f ".env.local" ]; then
     # Ensure there's a line ending
     echo "" >> .env
     cat .env.local >> .env
 fi
+
+popd
+
+bin/regen-certs
+
+docker-compose up -d coturn kolab mariadb openvidu kurento-media-server proxy redis
+
+pushd ${base_dir}/src/
 
 rm -rf vendor/ composer.lock
 php -dmemory_limit=-1 /bin/composer install
@@ -59,6 +69,7 @@ find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan jwt:secret -f
 ./artisan clear-compiled
 ./artisan cache:clear
+./artisan horizon:install
 
 if [ ! -z "$(rpm -qv chromium 2>/dev/null)" ]; then
     chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')

@@ -9,8 +9,8 @@
         <title>{{ config('app.name') }} -- @yield('title')</title>
 
         {{-- TODO: PWA disabled for now: @laravelPWA --}}
-        <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
-        <link href="{{ secure_asset('css/app.css') }}" rel="stylesheet">
+        <link rel="icon" type="image/x-icon" href="@theme_asset(images/favicon.ico)">
+        <link href="@theme_asset(app.css)" rel="stylesheet">
     </head>
     <body>
         <div class="outer-container">
@@ -18,6 +18,6 @@
         </div>
 
         <script>window.config = {!! json_encode($env) !!}</script>
-        <script src="{{ secure_asset('js/' . $env['jsapp']) }}" defer></script>
+        <script src="{{ asset('js/' . $env['jsapp']) }}" defer></script>
     </body>
 </html>

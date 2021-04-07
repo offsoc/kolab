@@ -3,7 +3,6 @@
 namespace App;
 
 use App\SignupCode;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -51,15 +50,7 @@ class VerificationCode extends SignupCode
     public static function generateShortCode(): string
     {
         $code_length = env('VERIFICATION_CODE_LENGTH', self::SHORTCODE_LENGTH);
-        $code_chars  = env('VERIFICATION_CODE_CHARS', self::SHORTCODE_CHARS);
-        $random      = [];
 
-        for ($i = 1; $i <= $code_length; $i++) {
-            $random[] = $code_chars[rand(0, strlen($code_chars) - 1)];
-        }
-
-        shuffle($random);
-
-        return implode('', $random);
+        return \App\Utils::randStr($code_length);
     }
 }

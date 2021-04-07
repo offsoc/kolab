@@ -1,5 +1,18 @@
 version: '3'
 services:
+  coturn:
+    container_name: kolab-coturn
+    environment:
+      - DB_NAME=${OPENVIDU_COTURN_REDIS_DATABASE}
+      - DB_PASSWORD=${OPENVIDU_COTURN_REDIS_PASSWORD}
+      - REDIS_IP=${OPENVIDU_COTURN_REDIS_IP}
+      - TURN_PUBLIC_IP=${OPENVIDU_COTURN_IP}
+      - TURN_LISTEN_PORT=3478
+    hostname: sturn.mgmt.com
+    image: openvidu/openvidu-coturn:1.0.0
+    network_mode: host
+    restart: on-failure
+    tty: true
   kolab:
     build:
       context: ./docker/kolab/
@@ -23,6 +36,7 @@ services:
       - /var/tmp
     tty: true
     volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
       - ./docker/certs/ca.cert:/etc/pki/tls/certs/ca.cert:ro
       - ./docker/certs/ca.cert:/etc/pki/ca-trust/source/anchors/ca.cert:ro
       - ./docker/certs/kolab.hosted.com.cert:/etc/pki/tls/certs/kolab.hosted.com.cert
@@ -30,7 +44,17 @@ services:
       - ./docker/certs/kolab.mgmt.com.cert:/etc/pki/tls/certs/kolab.mgmt.com.cert
       - ./docker/certs/kolab.mgmt.com.key:/etc/pki/tls/certs/kolab.mgmt.com.key
       - ./docker/kolab/utils:/root/utils:ro
+      - ./src/.env:/.dockerenv:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  kurento-media-server:
+    build:
+      context: ./docker/kurento-media-server/
+    container_name: kolab-kurento-media-server
+    environment:
+      - GST_DEBUG=3,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4
+    hostname: kurento-media-server.hosted.com
+    image: apheleia/kurento-media-server:6.15.0
+    network_mode: host
   mariadb:
     container_name: kolab-mariadb
     environment:
@@ -42,6 +66,56 @@ services:
       retries: 30
     image: mariadb
     network_mode: host
+  openvidu:
+    build:
+      context: ./docker/openvidu/
+    container_name: kolab-openvidu
+    depends_on:
+      - kurento-media-server
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN}
+      - CERTIFICATE_TYPE=letsencrypt
+      - COTURN_IP=${OPENVIDU_COTURN_IP}
+      - COTURN_REDIS_DBNAME=${OPENVIDU_COTURN_REDIS_DATABASE}
+      - COTURN_REDIS_PASSWORD=${OPENVIDU_COTURN_REDIS_PASSWORD}
+      - COTURN_REDIS_IP=${OPENVIDU_COTURN_REDIS_IP}
+      - DOMAIN_OR_PUBLIC_IP=${OPENVIDU_PUBLIC_IP}
+      - SERVER_PORT=${OPENVIDU_SERVER_PORT}
+      - KMS_STUN_IP=${OPENVIDU_COTURN_IP}
+      - KMS_STUN_PORT=3478
+      - KMS_URIS=["ws://localhost:8888/kurento", "ws://localhost:8889/kurento"]
+      - OPENVIDU_SECRET=${OPENVIDU_API_PASSWORD}
+      - OPENVIDU_WEBHOOK=${OPENVIDU_WEBHOOK}
+      - OPENVIDU_WEBHOOK_ENDPOINT=${OPENVIDU_WEBHOOK_ENDPOINT}
+      - SERVER_SSL_ENABLED=false
+    hostname: openvidu.hosted.com
+    image: apheleia/openvidu:2.16.0
+    network_mode: host
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+  proxy:
+    build:
+      context: ./docker/proxy/
+    container_name: kolab-proxy
+    hostname: kanarip.internet-box.ch
+    image: kolab-proxy
+    network_mode: host
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - ./docker/certs/:/etc/certs/:ro
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
   redis:
     build:
       context: ./docker/redis/

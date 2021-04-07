@@ -1,0 +1,41 @@
+{
+    "menu": [
+        {
+            "title": "Explore",
+            "location": "https://kolabnow.com/",
+            "admin": true
+        },
+        {
+            "title": "Blog",
+            "location": "https://blogs.kolabnow.com/",
+            "admin": true
+        },
+        {
+            "title": "Support",
+            "location": "/support",
+            "page": "support",
+            "admin": true
+        },
+        {
+            "title": "ToS",
+            "location": "https://kolabnow.com/tos",
+            "footer": true
+        }
+    ],
+    "faq": {
+        "signup": [
+            {
+                "href": "https://kolabnow.com/tos",
+                "title": "What are your terms of service?"
+            },
+            {
+                "href": "https://kb.kolabnow.com/faq/can-i-upgrade-an-individual-account-to-a-group-account",
+                "title": "Can I upgrade an individual account to a group account?"
+            },
+            {
+                "href": "https://kb.kolabnow.com/faq/how-much-storage-comes-with-my-account",
+                "title": "How much storage comes with my account?"
+            }
+        ]
+    }
+}

@@ -3,6 +3,7 @@
 namespace App\Backends;
 
 use App\Domain;
+use App\Group;
 use App\User;
 
 class LDAP
@@ -214,6 +215,64 @@ class LDAP
     }
 
     /**
+     * Create a group in LDAP.
+     *
+     * @param \App\Group $group The group to create.
+     *
+     * @throws \Exception
+     */
+    public static function createGroup(Group $group): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        list($cn, $domainName) = explode('@', $group->email);
+
+        $domain = $group->domain();
+
+        if (empty($domain)) {
+            self::throwException(
+                $ldap,
+                "Failed to create group {$group->email} in LDAP (" . __LINE__ . ")"
+            );
+        }
+
+        $hostedRootDN = \config('ldap.hosted.root_dn');
+
+        $domainBaseDN = "ou={$domain->namespace},{$hostedRootDN}";
+
+        $groupBaseDN = "ou=Groups,{$domainBaseDN}";
+
+        $dn = "cn={$cn},{$groupBaseDN}";
+
+        $entry = [
+            'cn' => $cn,
+            'mail' => $group->email,
+            'objectclass' => [
+                'top',
+                'groupofuniquenames',
+                'kolabgroupofuniquenames'
+            ],
+            'uniquemember' => []
+        ];
+
+        self::setGroupAttributes($ldap, $group, $entry);
+
+        $result = $ldap->add_entry($dn, $entry);
+
+        if (!$result) {
+            self::throwException(
+                $ldap,
+                "Failed to create group {$group->email} in LDAP (" . __LINE__ . ")"
+            );
+        }
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+    }
+
+    /**
      * Create a user in LDAP.
      *
      * Only need to add user if in any of the local domains? Figure that out here for now. Should
@@ -279,7 +338,7 @@ class LDAP
     /**
      * Delete a domain from LDAP.
      *
-     * @param \App\Domain $domain The domain to update.
+     * @param \App\Domain $domain The domain to delete
      *
      * @throws \Exception
      */
@@ -323,9 +382,37 @@ class LDAP
     }
 
     /**
+     * Delete a group from LDAP.
+     *
+     * @param \App\Group $group The group to delete.
+     *
+     * @throws \Exception
+     */
+    public static function deleteGroup(Group $group): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        if (self::getGroupEntry($ldap, $group->email, $dn)) {
+            $result = $ldap->delete_entry($dn);
+
+            if (!$result) {
+                self::throwException(
+                    $ldap,
+                    "Failed to delete group {$group->email} from LDAP (" . __LINE__ . ")"
+                );
+            }
+        }
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+    }
+
+    /**
      * Delete a user from LDAP.
      *
-     * @param \App\User $user The user account to update.
+     * @param \App\User $user The user account to delete.
      *
      * @throws \Exception
      */
@@ -374,6 +461,28 @@ class LDAP
         }
 
         return $domain ?? null;
+    }
+
+    /**
+     * Get a group data from LDAP.
+     *
+     * @param string $email The group email.
+     *
+     * @return array|false|null
+     * @throws \Exception
+     */
+    public static function getGroup(string $email)
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $group = self::getGroupEntry($ldap, $email, $dn);
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+
+        return $group;
     }
 
     /**
@@ -434,6 +543,66 @@ class LDAP
             self::throwException(
                 $ldap,
                 "Failed to update domain {$domain->namespace} in LDAP (" . __LINE__ . ")"
+            );
+        }
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+    }
+
+    /**
+     * Update a group in LDAP.
+     *
+     * @param \App\Group $group The group to update
+     *
+     * @throws \Exception
+     */
+    public static function updateGroup(Group $group): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        list($cn, $domainName) = explode('@', $group->email);
+
+        $domain = $group->domain();
+
+        if (empty($domain)) {
+            self::throwException(
+                $ldap,
+                "Failed to update group {$group->email} in LDAP (" . __LINE__ . ")"
+            );
+        }
+
+        $hostedRootDN = \config('ldap.hosted.root_dn');
+
+        $domainBaseDN = "ou={$domain->namespace},{$hostedRootDN}";
+
+        $groupBaseDN = "ou=Groups,{$domainBaseDN}";
+
+        $dn = "cn={$cn},{$groupBaseDN}";
+
+        $entry = [
+            'cn' => $cn,
+            'mail' => $group->email,
+            'objectclass' => [
+                'top',
+                'groupofuniquenames',
+                'kolabgroupofuniquenames'
+            ],
+            'uniquemember' => []
+        ];
+
+        $oldEntry = $ldap->get_entry($dn);
+
+        self::setGroupAttributes($ldap, $group, $entry);
+
+        $result = $ldap->modify_entry($dn, $oldEntry, $entry);
+
+        if (!is_array($result)) {
+            self::throwException(
+                $ldap,
+                "Failed to update group {$group->email} in LDAP (" . __LINE__ . ")"
             );
         }
 
@@ -531,6 +700,60 @@ class LDAP
     }
 
     /**
+     * Convert group member addresses in to valid entries.
+     */
+    private static function setGroupAttributes($ldap, Group $group, &$entry)
+    {
+        $validMembers = [];
+
+        $domain = $group->domain();
+
+        $hostedRootDN = \config('ldap.hosted.root_dn');
+
+        $domainBaseDN = "ou={$domain->namespace},{$hostedRootDN}";
+
+        foreach ($group->members as $member) {
+            list($local, $domainName) = explode('@', $member);
+
+            $memberDN = "uid={$member},ou=People,{$domainBaseDN}";
+
+            // if the member is in the local domain but doesn't exist, drop it
+            if ($domainName == $domain->namespace) {
+                if (!$ldap->get_entry($memberDN)) {
+                    continue;
+                }
+            }
+
+            // add the member if not in the local domain
+            if (!$ldap->get_entry($memberDN)) {
+                $memberEntry = [
+                    'cn' => $member,
+                    'mail' => $member,
+                    'objectclass' => [
+                        'top',
+                        'inetorgperson',
+                        'organizationalperson',
+                        'person'
+                    ],
+                    'sn' => 'unknown'
+                ];
+
+                $ldap->add_entry($memberDN, $memberEntry);
+            }
+
+            $entry['uniquemember'][] = $memberDN;
+            $validMembers[] = $member;
+        }
+
+        // Update members in sql (some might have been removed),
+        // skip model events to not invoke another update job
+        $group->members = $validMembers;
+        Group::withoutEvents(function () use ($group) {
+            $group->save();
+        });
+    }
+
+    /**
      * Set common user attributes
      */
     private static function setUserAttributes(User $user, array &$entry)
@@ -622,6 +845,33 @@ class LDAP
         ];
 
         return $config;
+    }
+
+    /**
+     * Get group entry from LDAP.
+     *
+     * @param \Net_LDAP3 $ldap  Ldap connection
+     * @param string     $email Group email (mail)
+     * @param string     $dn    Reference to group DN
+     *
+     * @return false|null|array Group entry, False on error, NULL if not found
+     */
+    private static function getGroupEntry($ldap, $email, &$dn = null)
+    {
+        list($_local, $_domain) = explode('@', $email, 2);
+
+        $domain = $ldap->find_domain($_domain);
+
+        if (!$domain) {
+            return $domain;
+        }
+
+        $base_dn = $ldap->domain_root_dn($_domain);
+        $dn = "cn={$_local},ou=Groups,{$base_dn}";
+
+        $entry = $ldap->get_entry($dn);
+
+        return $entry ?: null;
     }
 
     /**

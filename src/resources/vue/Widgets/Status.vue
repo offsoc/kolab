@@ -51,12 +51,17 @@
                 refresh: false,
                 delay: 5000,
                 scope: 'user',
-                state: { isReady: true }
+                state: { isReady: true },
+                waiting: 0,
             }
         },
         watch: {
             // We use property watcher because parent component
             // might set the property with a delay and we need to parse it
+            // FIXME: Problem with this and update-status event is that whenever
+            //        we emit the event a watcher function is executed, causing
+            //        duplicate parseStatusInfo() calls. Fortunaltely this does not
+            //        cause duplicate http requests.
             status: function (val, oldVal) {
                 this.parseStatusInfo(val)
             }
@@ -99,18 +104,26 @@
                     })
 
                     // Unhide the Refresh button, the process is in failure state
-                    this.refresh = info.processState == 'failed'
+                    this.refresh = info.processState == 'failed' && this.waiting == 0
 
                     if (this.refresh || info.step == 'domain-confirmed') {
                         this.className = 'failed'
                     }
+
+                    // A async job has been dispatched, switch to a waiting mode where
+                    // we hide the Refresh button and pull status for about a minute,
+                    // after that we switch to normal mode, i.e. user can Refresh again (if still not ready)
+                    if (info.processState == 'waiting') {
+                        this.waiting = 10
+                        this.delay = 5000
+                    } else if (this.waiting > 0) {
+                        this.waiting -= 1
+                    }
                 }
 
-                // Update status process info every 10 seconds
-                // FIXME: This probably should have some limit, or the interval
-                //        should grow (well, until it could be done with websocket notifications)
+                // Update status process info every 5,6,7,8,9,... seconds
                 clearTimeout(window.infoRequest)
-                if (!this.refresh && (!info || !info.isReady)) {
+                if ((!this.refresh || this.waiting > 0) && (!info || !info.isReady)) {
                     window.infoRequest = setTimeout(() => {
                         delete window.infoRequest
                         // Stop updates after user logged out

@@ -29,7 +29,7 @@ class LogonTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
                 ->with(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'login']);
                 })
                 ->assertMissing('@second-factor-input')
                 ->assertMissing('@forgot-password');
@@ -77,7 +77,7 @@ class LogonTest extends TestCaseDusk
             // Checks if we're really on Dashboard page
             $browser->on(new Dashboard())
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['support', 'contact', 'webmail', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout']);
                 })
                 ->assertUser('jeroen@jeroen.jeroen');
 
@@ -108,7 +108,7 @@ class LogonTest extends TestCaseDusk
 
             // with default menu
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                $browser->assertMenuItems(['explore', 'blog', 'support', 'login']);
             });
 
             // Success toast message
@@ -135,7 +135,7 @@ class LogonTest extends TestCaseDusk
 
             // with default menu
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'webmail']);
+                $browser->assertMenuItems(['explore', 'blog', 'support', 'login']);
             });
 
             // Success toast message

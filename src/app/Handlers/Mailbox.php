@@ -4,37 +4,32 @@ namespace App\Handlers;
 
 class Mailbox extends \App\Handlers\Base
 {
+    /**
+     * The entitleable class for this handler.
+     *
+     * @return string
+     */
     public static function entitleableClass(): string
     {
         return \App\User::class;
     }
 
-    public static function preReq($entitlement, $user): bool
+    /**
+     * SKU handler metadata.
+     *
+     * @param \App\Sku $sku The SKU object
+     *
+     * @return array
+     */
+    public static function metadata(\App\Sku $sku): array
     {
-        if (!$entitlement->sku->active) {
-            \Log::error("Sku not active");
-            return false;
-        }
-/*
-        FIXME: This code prevents from creating initial mailbox SKU
-               on signup of group account, because User::domains()
-               does not return the new domain.
-               Either we make sure to create domain entitlement before mailbox
-               entitlement or make the method here aware of that case or?
+        $data = parent::metadata($sku);
 
-        list($local, $domain) = explode('@', $user->email);
+        // Mailbox is always enabled and cannot be unset
+        $data['readonly'] = true;
+        $data['enabled'] = true;
 
-        $domains = $user->domains();
-
-        foreach ($domains as $_domain) {
-            if ($domain == $_domain->namespace) {
-                return true;
-            }
-        }
-
-        \Log::info("Domain not for user");
-*/
-        return true;
+        return $data;
     }
 
     /**

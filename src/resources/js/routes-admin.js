@@ -1,8 +1,9 @@
 import DashboardComponent from '../vue/Admin/Dashboard'
 import DomainComponent from '../vue/Admin/Domain'
-import Error404Component from '../vue/404'
 import LoginComponent from '../vue/Login'
 import LogoutComponent from '../vue/Logout'
+import PageComponent from '../vue/Page'
+import StatsComponent from '../vue/Admin/Stats'
 import UserComponent from '../vue/Admin/User'
 
 const routes = [
@@ -33,6 +34,12 @@ const routes = [
         component: LogoutComponent
     },
     {
+        path: '/stats',
+        name: 'stats',
+        component: StatsComponent,
+        meta: { requiresAuth: true }
+    },
+    {
         path: '/user/:user',
         name: 'user',
         component: UserComponent,
@@ -41,7 +48,7 @@ const routes = [
     {
         name: '404',
         path: '*',
-        component: Error404Component
+        component: PageComponent
     }
 ]
 

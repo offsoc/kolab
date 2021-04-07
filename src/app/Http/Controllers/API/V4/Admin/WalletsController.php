@@ -91,7 +91,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
                 'object_id' => $wallet->id,
                 'object_type' => Wallet::class,
                 'type' => $type,
-                'amount' => $amount < 0 ? $amount * -1 : $amount,
+                'amount' => $amount,
                 'description' => $request->description
             ]
         );

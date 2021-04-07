@@ -254,7 +254,7 @@ class Wallet extends Model
                 'object_id' => $this->id,
                 'object_type' => \App\Wallet::class,
                 'type' => \App\Transaction::WALLET_DEBIT,
-                'amount' => $amount
+                'amount' => $amount * -1
             ]
         );
 

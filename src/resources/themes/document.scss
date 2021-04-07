@@ -1,0 +1,115 @@
+@font-face {
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: normal;
+    src: url('/fonts/Roboto-Regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 700;
+    src: url('/fonts/Roboto-Bold.ttf') format('truetype');
+}
+
+body {
+    font-family: Roboto, sans-serif;
+    margin: 20pt;
+}
+
+a {
+    text-decoration: none;
+    color: $main-color;
+}
+
+h1 {
+    text-align: center;
+    margin: 30pt;
+    font-size: 20pt;
+}
+
+table {
+    width: 100%;
+
+    &.content {
+        border-spacing: initial;
+
+        th {
+            padding: 5px;
+            background-color: #f4f4f4;
+            border-top: 1px solid #eee;
+        }
+
+        td {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+    }
+
+    &.head {
+        margin-bottom: 1em;
+    }
+
+    td.idents {
+        white-space: nowrap;
+        width: 1%;
+        text-align: right;
+        vertical-align: top;
+        font-size: 10pt;
+    }
+
+    .price {
+        width: 150px;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    td.logo {
+        width: 1%;
+    }
+
+    td.description {
+        width: 98%;
+    }
+
+    tr.total {
+        background-color: #f4f4f4;
+    }
+
+    tr.vat td,
+    tr.subtotal td {
+        border-bottom: 0;
+    }
+}
+
+#footer {
+    font-size: 10pt;
+    color: gray;
+    text-align: center;
+    padding-top: 5pt;
+    position: absolute;
+    margin: 20pt;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    @media print {
+        margin-bottom: 0;
+    }
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.gray {
+    color: gray;
+}
+
+.align-right {
+    text-align: right;
+}
+
+.align-left {
+    text-align: left;
+}
