@@ -41,7 +41,7 @@ class Utils
      */
     public static function countryForIP($ip)
     {
-        if (strpos(':', $ip) === false) {
+        if (strpos($ip, ':') === false) {
             $query = "
                 SELECT country FROM ip4nets
                 WHERE INET_ATON(net_number) <= INET_ATON(?)
@@ -156,6 +156,107 @@ class Utils
     }
 
     /**
+     * Find an object that is the recipient for the specified address.
+     *
+     * @param string $address
+     *
+     * @return array
+     */
+    public static function findObjectsByRecipientAddress($address)
+    {
+        $address = \App\Utils::normalizeAddress($address);
+
+        list($local, $domainName) = explode('@', $address);
+
+        $domain = \App\Domain::where('namespace', $domainName)->first();
+
+        if (!$domain) {
+            return [];
+        }
+
+        $user = \App\User::where('email', $address)->first();
+
+        if ($user) {
+            return [$user];
+        }
+
+        $userAliases = \App\UserAlias::where('alias', $address)->get();
+
+        if (count($userAliases) > 0) {
+            $users = [];
+
+            foreach ($userAliases as $userAlias) {
+                $users[] = $userAlias->user;
+            }
+
+            return $users;
+        }
+
+        $userAliases = \App\UserAlias::where('alias', "catchall@{$domain->namespace}")->get();
+
+        if (count($userAliases) > 0) {
+            $users = [];
+
+            foreach ($userAliases as $userAlias) {
+                $users[] = $userAlias->user;
+            }
+
+            return $users;
+        }
+
+        return [];
+    }
+
+    /**
+     * Generate a passphrase. Not intended for use in production, so limited to environments that are not production.
+     *
+     * @return string
+     */
+    public static function generatePassphrase()
+    {
+        $alphaLow = 'abcdefghijklmnopqrstuvwxyz';
+        $alphaUp = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $num = '0123456789';
+        $stdSpecial = '~`!@#$%^&*()-_+=[{]}\\|\'";:/?.>,<';
+
+        $source = $alphaLow . $alphaUp . $num . $stdSpecial;
+
+        $result = '';
+
+        for ($x = 0; $x < 16; $x++) {
+            $result .= substr($source, rand(0, (strlen($source) - 1)), 1);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Retrieve the network ID and Type from a client address
+     *
+     * @param string $clientAddress The IPv4 or IPv6 address.
+     *
+     * @return array An array of ID and class or null and null.
+     */
+    public static function getNetFromAddress($clientAddress)
+    {
+        if (strpos($clientAddress, ':') === false) {
+            $net = \App\IP4Net::getNet($clientAddress);
+
+            if ($net) {
+                return [$net->id, \App\IP4Net::class];
+            }
+        } else {
+            $net = \App\IP6Net::getNet($clientAddress);
+
+            if ($net) {
+                return [$net->id, \App\IP6Net::class];
+            }
+        }
+
+        return [null, null];
+    }
+
+    /**
      * Calculate the broadcast address provided a net number and a prefix.
      *
      * @param string $net A valid IPv6 network number.
@@ -208,6 +309,32 @@ class Utils
         $lastaddrstr = inet_ntop($lastaddrbin);
 
         return $lastaddrstr;
+    }
+
+    /**
+     * Normalize an email address.
+     *
+     * This means to lowercase and strip components separated with recipient delimiters.
+     *
+     * @param string $address The address to normalize.
+     *
+     * @return string
+     */
+    public static function normalizeAddress($address)
+    {
+        $address = strtolower($address);
+
+        list($local, $domain) = explode('@', $address);
+
+        if (strpos($local, '+') === false) {
+            return "{$local}@{$domain}";
+        }
+
+        $localComponents = explode('+', $local);
+
+        $local = array_pop($localComponents);
+
+        return "{$local}@{$domain}";
     }
 
     /**

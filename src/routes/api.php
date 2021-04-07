@@ -85,10 +85,12 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.domain'),
-        'prefix' => $prefix . 'api/webhooks',
+        'prefix' => $prefix . 'api/webhooks'
     ],
     function () {
+        Route::post('greylist', 'API\V4\PolicyController@greylist');
         Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
+        Route::post('spf', 'API\V4\PolicyController@senderPolicyFramework');
     }
 );
 

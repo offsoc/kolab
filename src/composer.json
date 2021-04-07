@@ -21,6 +21,7 @@
         "kolab/net_ldap3": "dev-master",
         "laravel/framework": "6.*",
         "laravel/tinker": "^2.4",
+        "mlocati/spf-lib": "^3.0",
         "mollie/laravel-mollie": "^2.9",
         "morrislaptop/laravel-queue-clear": "^1.2",
         "silviolleite/laravelpwa": "^2.0",

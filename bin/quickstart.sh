@@ -78,6 +78,8 @@ pushd ${base_dir}/src/
 rm -rf database/database.sqlite
 ./artisan db:ping --wait
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
-./artisan serve
+./artisan data:import
+./artisan swoole:http stop >/dev/null 2>&1 || :
+./artisan swoole:http start
 popd
 
