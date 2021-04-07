@@ -40,22 +40,16 @@ def read_request_input():
 
 
 if __name__ == "__main__":
-    TOKEN = 'abcdef'
-    # URL = 'https://services.kolabnow.com/api/webhooks/greylist'
-    # URL = 'http://127.0.0.1:8000/api/webhooks/greylist'
-    URL = 'https://kanarip.dev.kolab.io/api/webhooks/greylist'
+    URL = 'https://services.kolabnow.com/api/webhooks/greylist'
 
     # Start the work
     while True:
         REQUEST = read_request_input()
 
-        # print("timestamp={0}".format(REQUEST['timestamp']))
-
         try:
             RESPONSE = requests.post(
                 URL,
                 data=REQUEST,
-                headers={'X-Token': TOKEN},
                 verify=True
             )
         # pylint: disable=broad-except
@@ -74,15 +68,11 @@ if __name__ == "__main__":
                 print("action=PREPEND {0}".format(prepend))
 
         if RESPONSE.ok:
-            print(
-                "action={0}\n".format(R['response'])
-            )
+            print("action={0}\n".format(R['response']))
 
             sys.stdout.flush()
         else:
-            print(
-                "action={0} {1}\n".format(R['response'], R['reason'])
-            )
+            print("action={0} {1}\n".format(R['response'], R['reason']))
 
             sys.stdout.flush()
 
