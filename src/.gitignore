@@ -7,6 +7,8 @@ public/hot
 public/js/*.js
 public/storage/
 storage/*.key
+storage/*.log
+storage/*-????-??-??*
 storage/export/
 tests/report/
 vendor

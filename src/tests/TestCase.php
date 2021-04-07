@@ -21,29 +21,6 @@ abstract class TestCase extends BaseTestCase
         $this->withoutMiddleware(ThrottleRequests::class);
     }
 
-    protected function backdateEntitlements($entitlements, $targetDate)
-    {
-        $wallets = [];
-        $ids = [];
-
-        foreach ($entitlements as $entitlement) {
-            $ids[] = $entitlement->id;
-            $wallets[] = $entitlement->wallet_id;
-        }
-
-        \App\Entitlement::whereIn('id', $ids)->update([
-                'created_at' => $targetDate,
-                'updated_at' => $targetDate,
-        ]);
-
-        if (!empty($wallets)) {
-            $wallets = array_unique($wallets);
-            $owners = \App\Wallet::whereIn('id', $wallets)->pluck('user_id')->all();
-
-            \App\User::whereIn('id', $owners)->update(['created_at' => $targetDate]);
-        }
-    }
-
     /**
      * Set baseURL to the admin UI location
      */

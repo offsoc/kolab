@@ -588,6 +588,46 @@ class User extends Authenticatable implements JWTSubject
         return $this;
     }
 
+    public function senderPolicyFrameworkWhitelist($clientName)
+    {
+        $setting = $this->getSetting('spf_whitelist');
+
+        if (!$setting) {
+            return false;
+        }
+
+        $whitelist = json_decode($setting);
+
+        $matchFound = false;
+
+        foreach ($whitelist as $entry) {
+            if (substr($entry, 0, 1) == '/') {
+                $match = preg_match($entry, $clientName);
+
+                if ($match) {
+                    $matchFound = true;
+                }
+
+                continue;
+            }
+
+            if (substr($entry, 0, 1) == '.') {
+                if (substr($clientName, (-1 * strlen($entry))) == $entry) {
+                    $matchFound = true;
+                }
+
+                continue;
+            }
+
+            if ($entry == $clientName) {
+                $matchFound = true;
+                continue;
+            }
+        }
+
+        return $matchFound;
+    }
+
     /**
      * Any (additional) properties of this user.
      *
