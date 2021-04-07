@@ -48,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
         // Log SQL queries in debug mode
         if (\config('app.debug')) {
             DB::listen(function ($query) {
-                \Log::debug(sprintf('[SQL] %s [%s]', $query->sql, implode(', ', $query->bindings)));
+                \Log::debug(sprintf('[SQL] %s [%s]', $query->sql, var_export($query->bindings, true)));
             });
         }
 
