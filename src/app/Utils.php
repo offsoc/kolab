@@ -365,7 +365,6 @@ class Utils
         $countries = include resource_path('countries.php');
         $req_domain = preg_replace('/:[0-9]+$/', '', request()->getHttpHost());
         $sys_domain = \config('app.domain');
-        $path = request()->path();
         $opts = [
             'app.name',
             'app.url',

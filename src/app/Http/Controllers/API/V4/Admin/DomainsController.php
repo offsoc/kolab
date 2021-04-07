@@ -20,7 +20,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
         $result = collect([]);
 
         if ($owner) {
-            if ($owner = User::find($owner)) {
+            if ($owner = User::withEnvTenant()->find($owner)) {
                 foreach ($owner->wallets as $wallet) {
                     $entitlements = $wallet->entitlements()->where('entitleable_type', Domain::class)->get();
 
@@ -33,7 +33,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
                 $result = $result->sortBy('namespace')->values();
             }
         } elseif (!empty($search)) {
-            if ($domain = Domain::where('namespace', $search)->first()) {
+            if ($domain = Domain::withEnvTenant()->where('namespace', $search)->first()) {
                 $result->push($domain);
             }
         }
@@ -64,7 +64,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
      */
     public function suspend(Request $request, $id)
     {
-        $domain = Domain::find($id);
+        $domain = Domain::withEnvTenant()->find($id);
 
         if (empty($domain) || $domain->isPublic()) {
             return $this->errorResponse(404);
@@ -88,7 +88,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
      */
     public function unsuspend(Request $request, $id)
     {
-        $domain = Domain::find($id);
+        $domain = Domain::withEnvTenant()->find($id);
 
         if (empty($domain) || $domain->isPublic()) {
             return $this->errorResponse(404);

@@ -1,10 +1,11 @@
 <?php
 
-namespace Tests\Feature\Controller\Admin;
+namespace Tests\Feature\Controller\Reseller;
 
 use App\Domain;
 use App\Entitlement;
 use App\Sku;
+use App\Tenant;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -16,7 +17,7 @@ class DomainsTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        self::useAdminUrl();
+        self::useResellerUrl();
 
         $this->deleteTestDomain('domainscontroller.com');
     }
@@ -32,15 +33,18 @@ class DomainsTest extends TestCase
     }
 
     /**
-     * Test domains confirming (not implemented)
+     * Test domain confirm request
      */
     public function testConfirm(): void
     {
-        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $domain = $this->getTestDomain('kolab.org');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $domain = $this->getTestDomain('domainscontroller.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_EXTERNAL,
+        ]);
 
-        // This end-point does not exist for admins
-        $response = $this->actingAs($admin)->get("api/v4/domains/{$domain->id}/confirm");
+        // THe end-point exists on the users controller, but not reseller's
+        $response = $this->actingAs($reseller1)->get("api/v4/domains/{$domain->id}/confirm");
         $response->assertStatus(404);
     }
 
@@ -49,24 +53,25 @@ class DomainsTest extends TestCase
      */
     public function testIndex(): void
     {
-        $john = $this->getTestUser('john@kolab.org');
+        $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
 
         // Non-admin user
-        $response = $this->actingAs($john)->get("api/v4/domains");
+        $response = $this->actingAs($user)->get("api/v4/domains");
         $response->assertStatus(403);
 
         // Search with no search criteria
         $response = $this->actingAs($admin)->get("api/v4/domains");
-        $response->assertStatus(200);
+        $response->assertStatus(403);
 
-        $json = $response->json();
-
-        $this->assertSame(0, $json['count']);
-        $this->assertSame([], $json['list']);
+        // Search with no search criteria
+        $response = $this->actingAs($reseller2)->get("api/v4/domains");
+        $response->assertStatus(403);
 
         // Search with no matches expected
-        $response = $this->actingAs($admin)->get("api/v4/domains?search=abcd12.org");
+        $response = $this->actingAs($reseller1)->get("api/v4/domains?search=abcd12.org");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -75,7 +80,7 @@ class DomainsTest extends TestCase
         $this->assertSame([], $json['list']);
 
         // Search by a domain name
-        $response = $this->actingAs($admin)->get("api/v4/domains?search=kolab.org");
+        $response = $this->actingAs($reseller1)->get("api/v4/domains?search=kolab.org");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -85,7 +90,8 @@ class DomainsTest extends TestCase
         $this->assertSame('kolab.org', $json['list'][0]['namespace']);
 
         // Search by owner
-        $response = $this->actingAs($admin)->get("api/v4/domains?owner={$john->id}");
+
+        $response = $this->actingAs($reseller1)->get("api/v4/domains?owner={$user->id}");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -97,13 +103,33 @@ class DomainsTest extends TestCase
         // Search by owner (Ned is a controller on John's wallets,
         // here we expect only domains assigned to Ned's wallet(s))
         $ned = $this->getTestUser('ned@kolab.org');
-        $response = $this->actingAs($admin)->get("api/v4/domains?owner={$ned->id}");
+
+        $response = $this->actingAs($reseller1)->get("api/v4/domains?owner={$ned->id}");
         $response->assertStatus(200);
 
         $json = $response->json();
 
         $this->assertSame(0, $json['count']);
         $this->assertCount(0, $json['list']);
+
+        // Test unauth access to other tenant's domains
+        \config(['app.tenant_id' => 2]);
+
+        $response = $this->actingAs($reseller2)->get("api/v4/domains?search=kolab.org");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(0, $json['count']);
+        $this->assertSame([], $json['list']);
+
+        $response = $this->actingAs($reseller2)->get("api/v4/domains?owner={$user->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(0, $json['count']);
+        $this->assertSame([], $json['list']);
     }
 
     /**
@@ -114,6 +140,8 @@ class DomainsTest extends TestCase
         $sku_domain = Sku::where('title', 'domain-hosting')->first();
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
         $user = $this->getTestUser('test1@domainscontroller.com');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
         $domain = $this->getTestDomain('domainscontroller.com', [
                 'status' => Domain::STATUS_NEW,
                 'type' => Domain::TYPE_EXTERNAL,
@@ -126,11 +154,19 @@ class DomainsTest extends TestCase
                 'entitleable_type' => Domain::class
         ]);
 
-        // Only admins can access it
+        // Unauthorized access (user)
         $response = $this->actingAs($user)->get("api/v4/domains/{$domain->id}");
         $response->assertStatus(403);
 
+        // Unauthorized access (admin)
         $response = $this->actingAs($admin)->get("api/v4/domains/{$domain->id}");
+        $response->assertStatus(403);
+
+        // Unauthorized access (tenant != env-tenant)
+        $response = $this->actingAs($reseller2)->get("api/v4/domains/{$domain->id}");
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($reseller1)->get("api/v4/domains/{$domain->id}");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -140,6 +176,11 @@ class DomainsTest extends TestCase
         $this->assertEquals($domain->status, $json['status']);
         $this->assertEquals($domain->type, $json['type']);
         // Note: Other properties are being tested in the user controller tests
+
+        // Unauthorized access (other domain's tenant)
+        \config(['app.tenant_id' => 2]);
+        $response = $this->actingAs($reseller2)->get("api/v4/domains/{$domain->id}");
+        $response->assertStatus(404);
     }
 
     /**
@@ -147,11 +188,11 @@ class DomainsTest extends TestCase
      */
     public function testStatus(): void
     {
-        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
         $domain = $this->getTestDomain('kolab.org');
 
-        // This end-point does not exist for admins
-        $response = $this->actingAs($admin)->get("/api/v4/domains/{$domain->id}/status");
+        // This end-point does not exist for resellers
+        $response = $this->actingAs($reseller1)->get("/api/v4/domains/{$domain->id}/status");
         $response->assertStatus(404);
     }
 
@@ -162,21 +203,38 @@ class DomainsTest extends TestCase
     {
         Queue::fake(); // disable jobs
 
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
+
+        \config(['app.tenant_id' => 2]);
+
         $domain = $this->getTestDomain('domainscontroller.com', [
             'status' => Domain::STATUS_NEW,
             'type' => Domain::TYPE_EXTERNAL,
         ]);
         $user = $this->getTestUser('test@domainscontroller.com');
-        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
 
-        // Test unauthorized access to admin API
+        // Test unauthorized access to the reseller API (user)
         $response = $this->actingAs($user)->post("/api/v4/domains/{$domain->id}/suspend", []);
         $response->assertStatus(403);
 
         $this->assertFalse($domain->fresh()->isSuspended());
 
-        // Test suspending the user
+        // Test unauthorized access to the reseller API (admin)
         $response = $this->actingAs($admin)->post("/api/v4/domains/{$domain->id}/suspend", []);
+        $response->assertStatus(403);
+
+        $this->assertFalse($domain->fresh()->isSuspended());
+
+        // Test unauthorized access to the reseller API (reseller in another tenant)
+        $response = $this->actingAs($reseller1)->post("/api/v4/domains/{$domain->id}/suspend", []);
+        $response->assertStatus(403);
+
+        $this->assertFalse($domain->fresh()->isSuspended());
+
+        // Test suspending the domain
+        $response = $this->actingAs($reseller2)->post("/api/v4/domains/{$domain->id}/suspend", []);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -186,6 +244,11 @@ class DomainsTest extends TestCase
         $this->assertCount(2, $json);
 
         $this->assertTrue($domain->fresh()->isSuspended());
+
+        // Test authenticated reseller, but domain belongs to another tenant
+        \config(['app.tenant_id' => 1]);
+        $response = $this->actingAs($reseller1)->post("/api/v4/domains/{$domain->id}/suspend", []);
+        $response->assertStatus(404);
     }
 
     /**
@@ -195,21 +258,38 @@ class DomainsTest extends TestCase
     {
         Queue::fake(); // disable jobs
 
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
+
+        \config(['app.tenant_id' => 2]);
+
         $domain = $this->getTestDomain('domainscontroller.com', [
             'status' => Domain::STATUS_NEW | Domain::STATUS_SUSPENDED,
             'type' => Domain::TYPE_EXTERNAL,
         ]);
         $user = $this->getTestUser('test@domainscontroller.com');
-        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
 
-        // Test unauthorized access to admin API
+        // Test unauthorized access to reseller API (user)
         $response = $this->actingAs($user)->post("/api/v4/domains/{$domain->id}/unsuspend", []);
         $response->assertStatus(403);
 
         $this->assertTrue($domain->fresh()->isSuspended());
 
-        // Test suspending the user
+        // Test unauthorized access to reseller API (admin)
         $response = $this->actingAs($admin)->post("/api/v4/domains/{$domain->id}/unsuspend", []);
+        $response->assertStatus(403);
+
+        $this->assertTrue($domain->fresh()->isSuspended());
+
+        // Test unauthorized access to reseller API (another tenant)
+        $response = $this->actingAs($reseller1)->post("/api/v4/domains/{$domain->id}/unsuspend", []);
+        $response->assertStatus(403);
+
+        $this->assertTrue($domain->fresh()->isSuspended());
+
+        // Test suspending the user
+        $response = $this->actingAs($reseller2)->post("/api/v4/domains/{$domain->id}/unsuspend", []);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -219,5 +299,10 @@ class DomainsTest extends TestCase
         $this->assertCount(2, $json);
 
         $this->assertFalse($domain->fresh()->isSuspended());
+
+        // Test unauthorized access to reseller API (another tenant)
+        \config(['app.tenant_id' => 1]);
+        $response = $this->actingAs($reseller1)->post("/api/v4/domains/{$domain->id}/unsuspend", []);
+        $response->assertStatus(404);
     }
 }

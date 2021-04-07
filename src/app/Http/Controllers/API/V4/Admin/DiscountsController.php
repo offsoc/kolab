@@ -16,7 +16,10 @@ class DiscountsController extends Controller
     {
         $discounts = [];
 
-        Discount::where('active', true)->orderBy('discount')->get()
+        Discount::withEnvTenant()
+            ->where('active', true)
+            ->orderBy('discount')
+            ->get()
             ->map(function ($discount) use (&$discounts) {
                 $label = $discount->discount . '% - ' . $discount->description;
 

@@ -117,7 +117,7 @@ class DomainsController extends Controller
      */
     public function show($id)
     {
-        $domain = Domain::findOrFail($id);
+        $domain = Domain::withEnvTenant()->findOrFail($id);
 
         // Only owner (or admin) has access to the domain
         if (!Auth::guard()->user()->canRead($domain)) {
