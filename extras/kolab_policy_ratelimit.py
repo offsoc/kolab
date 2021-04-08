@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """
-An example implementation of a policy service.
+This policy applies rate limitations
 """
 
 import json
@@ -40,7 +40,7 @@ def read_request_input():
 
 
 if __name__ == "__main__":
-    URL = 'https://services.kolabnow.com/api/webhooks/policy/greylist'
+    URL = 'https://services.kolabnow.com/api/webhooks/policy/ratelimit'
 
     # Start the work
     while True:

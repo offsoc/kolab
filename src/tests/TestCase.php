@@ -44,4 +44,14 @@ abstract class TestCase extends BaseTestCase
         \config(['app.url' => str_replace('//', '//reseller.', \config('app.url'))]);
         url()->forceRootUrl(config('app.url'));
     }
+
+    /**
+     * Set baseURL to the services location
+     */
+    protected static function useServicesUrl(): void
+    {
+        // This will set base URL for all tests in a file.
+        \config(['app.url' => str_replace('//', '//services.', \config('app.url'))]);
+        url()->forceRootUrl(config('app.url'));
+    }
 }

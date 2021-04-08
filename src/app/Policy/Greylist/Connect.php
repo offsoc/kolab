@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Greylist;
+namespace App\Policy\Greylist;
 
 use Illuminate\Database\Eloquent\Model;
 

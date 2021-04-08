@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
 use App\Providers\PaymentProvider;
-use App\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -22,7 +21,7 @@ class PolicyController extends Controller
 
         list($local, $domainName) = explode('@', $data['recipient']);
 
-        $request = new \App\Greylist\Request($data);
+        $request = new \App\Policy\Greylist\Request($data);
 
         $shouldDefer = $request->shouldDefer();
 
@@ -41,6 +40,67 @@ class PolicyController extends Controller
         ];
 
         return response()->json($result, 200);
+    }
+
+    /*
+     * Apply a sensible rate limitation to a request.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function ratelimit()
+    {
+        /*
+        $data = [
+            'instance' => 'test.local.instance',
+            'protocol_state' => 'RCPT',
+            'sender' => 'sender@spf-pass.kolab.org',
+            'client_name' => 'mx.kolabnow.com',
+            'client_address' => '212.103.80.148',
+            'recipient' => $this->domainOwner->email
+        ];
+
+        $response = $this->post('/api/webhooks/spf', $data);
+        */
+
+        $data = \request()->input();
+
+        // TODO: normalize sender address
+        $sender = strtolower($data['sender']);
+
+        $alias = \App\UserAlias::where('alias', $sender)->first();
+
+        if (!$alias) {
+            $user = \App\User::where('email', $sender)->first();
+
+            if (!$user) {
+                // what's the situation here?
+            }
+        } else {
+            $user = $alias->user;
+        }
+
+        // TODO time-limit
+        $userRates = \App\Policy\Ratelimit::where('user_id', $user->id);
+
+        // TODO message vs. recipient limit
+        if ($userRates->count() > 10) {
+            // TODO
+        }
+
+        // this is the wallet to which the account is billed
+        $wallet = $user->wallet;
+
+        // TODO: consider $wallet->payments;
+
+        $owner = $wallet->user;
+
+        // TODO time-limit
+        $ownerRates = \App\Policy\Ratelimit::where('owner_id', $owner->id);
+
+        // TODO message vs. recipient limit (w/ user counts)
+        if ($ownerRates->count() > 10) {
+            // TODO
+        }
     }
 
     /*
@@ -69,7 +129,7 @@ class PolicyController extends Controller
         // Compose the cache key we want.
         $cacheKey = "{$netType}_{$netID}_{$senderDomain}";
 
-        $result = \App\SPF\Cache::get($cacheKey);
+        $result = \App\Policy\SPF\Cache::get($cacheKey);
 
         if (!$result) {
             $environment = new \SPFLib\Check\Environment(
@@ -80,7 +140,7 @@ class PolicyController extends Controller
 
             $result = (new \SPFLib\Checker())->check($environment);
 
-            \App\SPF\Cache::set($cacheKey, serialize($result));
+            \App\Policy\SPF\Cache::set($cacheKey, serialize($result));
         } else {
             $result = unserialize($result);
         }

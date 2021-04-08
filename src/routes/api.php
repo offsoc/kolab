@@ -137,9 +137,19 @@ Route::group(
         'prefix' => $prefix . 'api/webhooks'
     ],
     function () {
-        Route::post('greylist', 'API\V4\PolicyController@greylist');
         Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
         Route::post('meet/openvidu', 'API\V4\OpenViduController@webhook');
+    }
+);
+
+Route::group(
+    [
+        'domain' => 'services.' . \config('app.domain'),
+        'prefix' => $prefix . 'api/webhooks/policy'
+    ],
+    function () {
+        Route::post('greylist', 'API\V4\PolicyController@greylist');
+        Route::post('ratelimit', 'API\V4\PolicyController@ratelimit');
         Route::post('spf', 'API\V4\PolicyController@senderPolicyFramework');
     }
 );
