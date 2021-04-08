@@ -6,12 +6,18 @@ use Tests\TestCase;
 
 class SenderPolicyFrameworkTest extends TestCase
 {
-/*
-    TODO:
-    - with cache,
-    - without cache,
-    - with expired cache?
-*/
+    public function setUp()
+    {
+        parent::setUp();
+        $this->useServicesUrl();
+    }
+
+    public function tearDown()
+    {
+        $this->useNormalUrl();
+        parent::tearDown();
+    }
+
     public function testSenderFailv4()
     {
         $data = [
@@ -23,7 +29,7 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
     }
@@ -42,7 +48,7 @@ class SenderPolicyFrameworkTest extends TestCase
 
         $this->assertFalse(strpos(':', $data['client_address']));
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
     }
@@ -58,7 +64,7 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(200);
     }
@@ -74,7 +80,7 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
     }
@@ -90,7 +96,7 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(200);
     }
@@ -106,7 +112,7 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(200);
     }
@@ -122,7 +128,7 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
     }
@@ -138,7 +144,7 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(200);
     }
@@ -154,7 +160,7 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
     }
@@ -170,13 +176,13 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
 
         $this->domainOwner->setSetting('spf_whitelist', json_encode(['the.only.acceptable.helo']));
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
 
@@ -194,13 +200,13 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
 
         $this->domainOwner->setSetting('spf_whitelist', json_encode(['helo.some.relayservice.domain']));
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(200);
 
@@ -219,13 +225,13 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
 
         $this->domainOwner->setSetting('spf_whitelist', json_encode(['/a\.domain/']));
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
 
@@ -243,13 +249,13 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
 
         $this->domainOwner->setSetting('spf_whitelist', json_encode(['/relayservice\.domain/']));
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(200);
 
@@ -267,13 +273,13 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
 
         $this->domainOwner->setSetting('spf_whitelist', json_encode(['.helo.some.relayservice.domain']));
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
 
@@ -291,13 +297,13 @@ class SenderPolicyFrameworkTest extends TestCase
             'recipient' => $this->domainOwner->email
         ];
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(403);
 
         $this->domainOwner->setSetting('spf_whitelist', json_encode(['.some.relayservice.domain']));
 
-        $response = $this->post('/api/webhooks/spf', $data);
+        $response = $this->post('/api/webhooks/policy/spf', $data);
 
         $response->assertStatus(200);
 

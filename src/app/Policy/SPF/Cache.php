@@ -1,6 +1,6 @@
 <?php
 
-namespace App\SPF;
+namespace App\Policy\SPF;
 
 use Illuminate\Support\Facades\Cache as LaravelCache;
 

@@ -41,7 +41,7 @@ def read_request_input():
 
 
 if __name__ == "__main__":
-    URL = 'https://services.kolabnow.com/api/webhooks/spf'
+    URL = 'https://services.kolabnow.com/api/webhooks/policy/spf'
 
     # Start the work
     while True:
