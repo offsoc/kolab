@@ -14,6 +14,76 @@ use PHPUnit\Framework\Assert;
 trait TestCaseTrait
 {
     /**
+     * A domain that is hosted.
+     *
+     * @var \App\Domain
+     */
+    protected $domainHosted;
+
+    /**
+     * The hosted domain owner.
+     *
+     * @var \App\User
+     */
+    protected $domainOwner;
+
+    /**
+     * Some profile details for an owner of a domain
+     *
+     * @var array
+     */
+    protected $domainOwnerSettings = [
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'organization' => 'Test Domain Owner',
+    ];
+
+    /**
+     * Some users for the hosted domain, ultimately including the owner.
+     *
+     * @var \App\User[]
+     */
+    protected $domainUsers = [];
+
+    /**
+     * A specific user that is a regular user in the hosted domain.
+     */
+    protected $jack;
+
+    /**
+     * A specific user that is a controller on the wallet to which the hosted domain is charged.
+     */
+    protected $jane;
+
+    /**
+     * A specific user that has a second factor configured.
+     */
+    protected $joe;
+
+    /**
+     * One of the domains that is available for public registration.
+     *
+     * @var \App\Domain
+     */
+    protected $publicDomain;
+
+    /**
+     * A newly generated user in a public domain.
+     *
+     * @var \App\User
+     */
+    protected $publicDomainUser;
+
+    /**
+     * A placeholder for a password that can be generated.
+     *
+     * Should be generated with `\App\Utils::generatePassphrase()`.
+     *
+     * @var string
+     */
+    protected $userPassword;
+
+    /**
      * Assert user entitlements state
      */
     protected function assertUserEntitlements($user, $expected)
@@ -28,6 +98,19 @@ trait TestCaseTrait
         sort($skus);
 
         Assert::assertSame($expected, $skus);
+    }
+
+    protected function backdateEntitlements($entitlements, $targetDate)
+    {
+        foreach ($entitlements as $entitlement) {
+            $entitlement->created_at = $targetDate;
+            $entitlement->updated_at = $targetDate;
+            $entitlement->save();
+
+            $owner = $entitlement->wallet->owner;
+            $owner->created_at = $targetDate;
+            $owner->save();
+        }
     }
 
     /**
