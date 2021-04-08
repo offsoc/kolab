@@ -34,6 +34,15 @@ class SignupCodeObserver
             }
         }
 
+        $code->headers = collect(request()->headers->all())
+            ->filter(function ($value, $key) {
+                // remove some headers we don't care about
+                return !in_array($key, ['cookie', 'referer', 'x-test-payment-provider', 'origin']);
+            })
+            ->map(function ($value) {
+                return is_array($value) && count($value) == 1 ? $value[0] : $value;
+            });
+
         $code->expires_at = Carbon::now()->addHours($exp_hours);
         $code->ip_address = request()->ip();
 
