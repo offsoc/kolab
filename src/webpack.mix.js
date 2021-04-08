@@ -15,6 +15,7 @@ const glob = require('glob');
 const mix = require('laravel-mix');
 
 mix.webpackConfig({
+/*
     output: {
         publicPath: process.env.MIX_ASSET_PATH,
         // Make sure chunks are also put into the public/js/ folder
@@ -26,6 +27,7 @@ mix.webpackConfig({
             maxAsyncRequests: 1
         }
     },
+*/
     resolve: {
         alias: {
             'jquery$': 'jquery/dist/jquery.slim.js',
@@ -33,8 +35,8 @@ mix.webpackConfig({
     }
 })
 
-mix.js('resources/js/user.js', 'public/js')
-    .js('resources/js/admin.js', 'public/js')
+mix.js('resources/js/user.js', 'public/js').vue()
+    .js('resources/js/admin.js', 'public/js').vue()
 
 glob.sync('resources/themes/*/', {}).forEach(fromDir => {
     const toDir = fromDir.replace('resources/themes/', 'public/themes/')

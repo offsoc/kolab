@@ -14,11 +14,12 @@ require('bootstrap')
  */
 
 import FontAwesomeIcon from './fontawesome'
+import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Toast from '../vue/Widgets/Toast'
 import store from './store'
 
-window.Vue = require('vue')
+window.Vue = Vue
 
 Vue.component('svg-icon', FontAwesomeIcon)
 
