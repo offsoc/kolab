@@ -58,6 +58,6 @@ class SignupVerificationEmail implements ShouldQueue
      */
     public function handle()
     {
-        Mail::to($this->code->data['email'])->send(new SignupVerification($this->code));
+        Mail::to($this->code->email)->send(new SignupVerification($this->code));
     }
 }

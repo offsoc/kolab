@@ -22,11 +22,9 @@ class SignupVerificationEmailTest extends TestCase
         parent::setUp();
 
         $this->code = SignupCode::create([
-                'data' => [
-                    'email' => 'SignupVerificationEmailTest1@' . \config('app.domain'),
-                    'first_name' => "Test",
-                    'last_name' => "Job"
-                ]
+                'email' => 'SignupVerificationEmailTest1@' . \config('app.domain'),
+                'first_name' => "Test",
+                'last_name' => "Job"
         ]);
     }
 
@@ -60,7 +58,7 @@ class SignupVerificationEmailTest extends TestCase
 
         // Assert the mail was sent to the code's email
         Mail::assertSent(SignupVerification::class, function ($mail) {
-            return $mail->hasTo($this->code->data['email']);
+            return $mail->hasTo($this->code->email);
         });
     }
 }
