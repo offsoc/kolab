@@ -140,7 +140,6 @@ Route::group(
     ],
     function () {
         Route::apiResource('domains', API\V4\Admin\DomainsController::class);
-        // Route::get('domains/{id}/confirm', 'API\V4\Admin\DomainsController@confirm');
         Route::post('domains/{id}/suspend', 'API\V4\Admin\DomainsController@suspend');
         Route::post('domains/{id}/unsuspend', 'API\V4\Admin\DomainsController@unsuspend');
 
@@ -169,16 +168,19 @@ Route::group(
     ],
     function () {
         Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
-        // Route::get('domains/{id}/confirm', 'API\V4\Reseller\DomainsController@confirm');
-        Route::post('domains/{id}/suspend', 'API\V4\Admin\DomainsController@suspend');
-        Route::post('domains/{id}/unsuspend', 'API\V4\Admin\DomainsController@unsuspend');
+        Route::post('domains/{id}/suspend', 'API\V4\Reseller\DomainsController@suspend');
+        Route::post('domains/{id}/unsuspend', 'API\V4\Reseller\DomainsController@unsuspend');
 
         Route::apiResource('entitlements', API\V4\Reseller\EntitlementsController::class);
         Route::apiResource('packages', API\V4\Reseller\PackagesController::class);
         Route::apiResource('skus', API\V4\Reseller\SkusController::class);
         Route::apiResource('users', API\V4\Reseller\UsersController::class);
+        Route::post('users/{id}/reset2FA', 'API\V4\Reseller\UsersController@reset2FA');
         Route::get('users/{id}/skus', 'API\V4\Reseller\SkusController@userSkus');
+        Route::post('users/{id}/suspend', 'API\V4\Reseller\UsersController@suspend');
+        Route::post('users/{id}/unsuspend', 'API\V4\Reseller\UsersController@unsuspend');
         Route::apiResource('wallets', API\V4\Reseller\WalletsController::class);
+        Route::post('wallets/{id}/one-off', 'API\V4\Reseller\WalletsController@oneOff');
         Route::get('wallets/{id}/transactions', 'API\V4\Reseller\WalletsController@transactions');
         Route::apiResource('discounts', API\V4\Reseller\DiscountsController::class);
     }

@@ -120,7 +120,7 @@ class SkusController extends Controller
      */
     public function userSkus($id)
     {
-        $user = \App\User::find($id);
+        $user = \App\User::withEnvTenant()->find($id);
 
         if (empty($user)) {
             return $this->errorResponse(404);

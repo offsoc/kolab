@@ -8,6 +8,7 @@ use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,7 +25,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     {
         $wallet = Wallet::find($id);
 
-        if (empty($wallet)) {
+        if (empty($wallet) || !Auth::guard()->user()->canRead($wallet)) {
             return $this->errorResponse(404);
         }
 
@@ -60,7 +61,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     {
         $wallet = Wallet::find($id);
 
-        if (empty($wallet)) {
+        if (empty($wallet) || !Auth::guard()->user()->canRead($wallet)) {
             return $this->errorResponse(404);
         }
 
@@ -119,7 +120,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     {
         $wallet = Wallet::find($id);
 
-        if (empty($wallet)) {
+        if (empty($wallet) || !Auth::guard()->user()->canRead($wallet)) {
             return $this->errorResponse(404);
         }
 
@@ -127,7 +128,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
             if (empty($request->discount)) {
                 $wallet->discount()->dissociate();
                 $wallet->save();
-            } elseif ($discount = Discount::find($request->discount)) {
+            } elseif ($discount = Discount::withEnvTenant()->find($request->discount)) {
                 $wallet->discount()->associate($discount);
                 $wallet->save();
             }

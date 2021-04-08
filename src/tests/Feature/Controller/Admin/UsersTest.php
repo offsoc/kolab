@@ -41,6 +41,24 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test user deleting (DELETE /api/v4/users/<id>)
+     */
+    public function testDestroy(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        // Test unauth access
+        $response = $this->delete("api/v4/users/{$user->id}");
+        $response->assertStatus(401);
+
+        // The end-point does not exist
+        $response = $this->actingAs($admin)->delete("api/v4/users/{$user->id}");
+        $response->assertStatus(404);
+    }
+
+    /**
      * Test users searching (/api/v4/users)
      */
     public function testIndex(): void
@@ -231,6 +249,18 @@ class UsersTest extends TestCase
 
         $sf = new SecondFactor($user);
         $this->assertCount(0, $sf->factors());
+    }
+
+    /**
+     * Test user creation (POST /api/v4/users)
+     */
+    public function testStore(): void
+    {
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        // The end-point does not exist
+        $response = $this->actingAs($admin)->post("/api/v4/users", []);
+        $response->assertStatus(404);
     }
 
     /**

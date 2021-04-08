@@ -154,9 +154,74 @@ class UserTest extends TestCase
         $this->assertFalse($ned->canRead($admin));
     }
 
+    /**
+     * Test User::canUpdate() method
+     */
     public function testCanUpdate(): void
     {
-        $this->markTestIncomplete();
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // Admin
+        $this->assertTrue($admin->canUpdate($admin));
+        $this->assertTrue($admin->canUpdate($john));
+        $this->assertTrue($admin->canUpdate($jack));
+        $this->assertTrue($admin->canUpdate($reseller1));
+        $this->assertTrue($admin->canUpdate($reseller2));
+        $this->assertTrue($admin->canUpdate($domain));
+        $this->assertTrue($admin->canUpdate($domain->wallet()));
+
+        // Reseller - kolabnow
+        $this->assertTrue($reseller1->canUpdate($john));
+        $this->assertTrue($reseller1->canUpdate($jack));
+        $this->assertTrue($reseller1->canUpdate($reseller1));
+        $this->assertTrue($reseller1->canUpdate($domain));
+        $this->assertTrue($reseller1->canUpdate($domain->wallet()));
+        $this->assertFalse($reseller1->canUpdate($reseller2));
+        $this->assertFalse($reseller1->canUpdate($admin));
+
+        // Reseller - different tenant
+        $this->assertTrue($reseller2->canUpdate($reseller2));
+        $this->assertFalse($reseller2->canUpdate($john));
+        $this->assertFalse($reseller2->canUpdate($jack));
+        $this->assertFalse($reseller2->canUpdate($reseller1));
+        $this->assertFalse($reseller2->canUpdate($domain));
+        $this->assertFalse($reseller2->canUpdate($domain->wallet()));
+        $this->assertFalse($reseller2->canUpdate($admin));
+
+        // Normal user - account owner
+        $this->assertTrue($john->canUpdate($john));
+        $this->assertTrue($john->canUpdate($ned));
+        $this->assertTrue($john->canUpdate($jack));
+        $this->assertTrue($john->canUpdate($domain));
+        $this->assertFalse($john->canUpdate($domain->wallet()));
+        $this->assertFalse($john->canUpdate($reseller1));
+        $this->assertFalse($john->canUpdate($reseller2));
+        $this->assertFalse($john->canUpdate($admin));
+
+        // Normal user - a non-owner and non-controller
+        $this->assertTrue($jack->canUpdate($jack));
+        $this->assertFalse($jack->canUpdate($john));
+        $this->assertFalse($jack->canUpdate($domain));
+        $this->assertFalse($jack->canUpdate($domain->wallet()));
+        $this->assertFalse($jack->canUpdate($reseller1));
+        $this->assertFalse($jack->canUpdate($reseller2));
+        $this->assertFalse($jack->canUpdate($admin));
+
+        // Normal user - John's wallet controller
+        $this->assertTrue($ned->canUpdate($ned));
+        $this->assertTrue($ned->canUpdate($john));
+        $this->assertTrue($ned->canUpdate($jack));
+        $this->assertTrue($ned->canUpdate($domain));
+        $this->assertFalse($ned->canUpdate($domain->wallet()));
+        $this->assertFalse($ned->canUpdate($reseller1));
+        $this->assertFalse($ned->canUpdate($reseller2));
+        $this->assertFalse($ned->canUpdate($admin));
     }
 
     /**

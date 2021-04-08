@@ -18,7 +18,7 @@ class AuthenticateAdmin
         $user = auth()->user();
 
         if (!$user) {
-            abort(403, "Unauthorized");
+            abort(401, "Unauthorized");
         }
 
         if ($user->role !== "admin") {

@@ -4,9 +4,8 @@ parameters:
     ignoreErrors:
         - '#Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable#'
         - '#Access to an undefined property [a-zA-Z\\]+::\$pivot#'
-        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$id#'
-        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$created_at#'
-        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Model::toString\(\)#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::#'
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Model::#'
         - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder[^:]*::withEnvTenant\(\)#'
         - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder[^:]*::withUserTenant\(\)#'
         - '#Call to an undefined method Tests\\Browser::#'

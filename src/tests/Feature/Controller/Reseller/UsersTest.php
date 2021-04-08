@@ -3,6 +3,7 @@
 namespace Tests\Feature\Controller\Reseller;
 
 use App\Tenant;
+use App\Sku;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -18,7 +19,7 @@ class UsersTest extends TestCase
         self::useResellerUrl();
         \config(['app.tenant_id' => 1]);
 
-        // $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
+        $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('test@testsearch.com');
         $this->deleteTestDomain('testsearch.com');
     }
@@ -28,13 +29,30 @@ class UsersTest extends TestCase
      */
     public function tearDown(): void
     {
-        // $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
+        $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('test@testsearch.com');
         $this->deleteTestDomain('testsearch.com');
 
         \config(['app.tenant_id' => 1]);
 
         parent::tearDown();
+    }
+
+    /**
+     * Test user deleting (DELETE /api/v4/users/<id>)
+     */
+    public function testDestroy(): void
+    {
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+
+        // Test unauth access
+        $response = $this->delete("api/v4/users/{$user->id}");
+        $response->assertStatus(401);
+
+        // The end-point does not exist
+        $response = $this->actingAs($reseller1)->delete("api/v4/users/{$user->id}");
+        $response->assertStatus(404);
     }
 
     /**
@@ -46,11 +64,14 @@ class UsersTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller = $this->getTestUser('reseller@reseller.com');
-        $reseller2 = $this->getTestUser('reseller@kolabnow.com');
-        $tenant = Tenant::where('title', 'Sample Tenant')->first();
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
 
-        \config(['app.tenant_id' => $tenant->id]);
+        \config(['app.tenant_id' => 2]);
+
+        // Guess access
+        $response = $this->get("api/v4/users");
+        $response->assertStatus(401);
 
         // Normal user
         $response = $this->actingAs($user)->get("api/v4/users");
@@ -61,11 +82,11 @@ class UsersTest extends TestCase
         $response->assertStatus(403);
 
         // Reseller from another tenant
-        $response = $this->actingAs($reseller2)->get("api/v4/users");
+        $response = $this->actingAs($reseller1)->get("api/v4/users");
         $response->assertStatus(403);
 
         // Search with no search criteria
-        $response = $this->actingAs($reseller)->get("api/v4/users");
+        $response = $this->actingAs($reseller2)->get("api/v4/users");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -74,7 +95,7 @@ class UsersTest extends TestCase
         $this->assertSame([], $json['list']);
 
         // Search with no matches expected
-        $response = $this->actingAs($reseller)->get("api/v4/users?search=abcd1234efgh5678");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search=abcd1234efgh5678");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -83,7 +104,7 @@ class UsersTest extends TestCase
         $this->assertSame([], $json['list']);
 
         // Search by domain in another tenant
-        $response = $this->actingAs($reseller)->get("api/v4/users?search=kolab.org");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search=kolab.org");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -92,7 +113,7 @@ class UsersTest extends TestCase
         $this->assertSame([], $json['list']);
 
         // Search by user ID in another tenant
-        $response = $this->actingAs($reseller)->get("api/v4/users?search={$user->id}");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search={$user->id}");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -101,7 +122,7 @@ class UsersTest extends TestCase
         $this->assertSame([], $json['list']);
 
         // Search by email (primary) - existing user in another tenant
-        $response = $this->actingAs($reseller)->get("api/v4/users?search=john@kolab.org");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search=john@kolab.org");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -110,7 +131,7 @@ class UsersTest extends TestCase
         $this->assertSame([], $json['list']);
 
         // Search by owner - existing user in another tenant
-        $response = $this->actingAs($reseller)->get("api/v4/users?owner={$user->id}");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?owner={$user->id}");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -120,10 +141,10 @@ class UsersTest extends TestCase
 
         // Create a domain with some users in the Sample Tenant so we have anything to search for
         $domain = $this->getTestDomain('testsearch.com', ['type' => \App\Domain::TYPE_EXTERNAL]);
-        $domain->tenant_id = $tenant->id;
+        $domain->tenant_id = 2;
         $domain->save();
         $user = $this->getTestUser('test@testsearch.com');
-        $user->tenant_id = $tenant->id;
+        $user->tenant_id = 2;
         $user->save();
         $plan = \App\Plan::where('title', 'group')->first();
         $user->assignPlan($plan, $domain);
@@ -131,7 +152,7 @@ class UsersTest extends TestCase
         $user->setSetting('external_email', 'john.doe.external@gmail.com');
 
         // Search by domain
-        $response = $this->actingAs($reseller)->get("api/v4/users?search=testsearch.com");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search=testsearch.com");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -142,7 +163,7 @@ class UsersTest extends TestCase
         $this->assertSame($user->email, $json['list'][0]['email']);
 
         // Search by user ID
-        $response = $this->actingAs($reseller)->get("api/v4/users?search={$user->id}");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search={$user->id}");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -153,7 +174,7 @@ class UsersTest extends TestCase
         $this->assertSame($user->email, $json['list'][0]['email']);
 
         // Search by email (primary) - existing user in reseller's tenant
-        $response = $this->actingAs($reseller)->get("api/v4/users?search=test@testsearch.com");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search=test@testsearch.com");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -164,7 +185,7 @@ class UsersTest extends TestCase
         $this->assertSame($user->email, $json['list'][0]['email']);
 
         // Search by email (alias)
-        $response = $this->actingAs($reseller)->get("api/v4/users?search=alias@testsearch.com");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search=alias@testsearch.com");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -176,7 +197,7 @@ class UsersTest extends TestCase
 
         // Search by email (external), there are two users with this email, but only one
         // in the reseller's tenant
-        $response = $this->actingAs($reseller)->get("api/v4/users?search=john.doe.external@gmail.com");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search=john.doe.external@gmail.com");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -187,7 +208,7 @@ class UsersTest extends TestCase
         $this->assertSame($user->email, $json['list'][0]['email']);
 
         // Search by owner
-        $response = $this->actingAs($reseller)->get("api/v4/users?owner={$user->id}");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?owner={$user->id}");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -200,7 +221,7 @@ class UsersTest extends TestCase
         // Deleted users/domains
         $user->delete();
 
-        $response = $this->actingAs($reseller)->get("api/v4/users?search=test@testsearch.com");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search=test@testsearch.com");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -211,7 +232,7 @@ class UsersTest extends TestCase
         $this->assertSame($user->email, $json['list'][0]['email']);
         $this->assertTrue($json['list'][0]['isDeleted']);
 
-        $response = $this->actingAs($reseller)->get("api/v4/users?search=alias@testsearch.com");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search=alias@testsearch.com");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -222,7 +243,7 @@ class UsersTest extends TestCase
         $this->assertSame($user->email, $json['list'][0]['email']);
         $this->assertTrue($json['list'][0]['isDeleted']);
 
-        $response = $this->actingAs($reseller)->get("api/v4/users?search=testsearch.com");
+        $response = $this->actingAs($reseller2)->get("api/v4/users?search=testsearch.com");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -235,21 +256,190 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test reseting 2FA (POST /api/v4/users/<user-id>/reset2FA)
+     */
+    public function testReset2FA(): void
+    {
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
+
+        $sku2fa = \App\Sku::firstOrCreate(['title' => '2fa']);
+        $user->assignSku($sku2fa);
+        \App\Auth\SecondFactor::seed('userscontrollertest1@userscontroller.com');
+
+        // Test unauthorized access
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($reseller2)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response->assertStatus(403);
+
+        // Touching admins is forbidden
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$admin->id}/reset2FA", []);
+        $response->assertStatus(404);
+
+        $entitlements = $user->fresh()->entitlements()->where('sku_id', $sku2fa->id)->get();
+        $this->assertCount(1, $entitlements);
+
+        $sf = new \App\Auth\SecondFactor($user);
+        $this->assertCount(1, $sf->factors());
+
+        // Test reseting 2FA
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("2-Factor authentication reset successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $entitlements = $user->fresh()->entitlements()->where('sku_id', $sku2fa->id)->get();
+        $this->assertCount(0, $entitlements);
+
+        $sf = new \App\Auth\SecondFactor($user);
+        $this->assertCount(0, $sf->factors());
+
+        // Other tenant's user
+        \config(['app.tenant_id' => 2]);
+        $response = $this->actingAs($reseller2)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response->assertStatus(404);
+    }
+
+    /**
+     * Test user creation (POST /api/v4/users)
+     */
+    public function testStore(): void
+    {
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+
+        // The end-point does not exist
+        $response = $this->actingAs($reseller1)->post("/api/v4/users", []);
+        $response->assertStatus(404);
+    }
+
+    /**
+     * Test user suspending (POST /api/v4/users/<user-id>/suspend)
+     */
+    public function testSuspend(): void
+    {
+        Queue::fake(); // disable jobs
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
+
+        // Test unauthorized access
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/suspend", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/suspend", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($reseller2)->post("/api/v4/users/{$user->id}/suspend", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$admin->id}/suspend", []);
+        $response->assertStatus(404);
+
+        $this->assertFalse($user->isSuspended());
+
+        // Test suspending the user
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$user->id}/suspend", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User suspended successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $this->assertTrue($user->fresh()->isSuspended());
+
+        // Access to other tenant's users
+        \config(['app.tenant_id' => 2]);
+        $response = $this->actingAs($reseller2)->post("/api/v4/users/{$user->id}/suspend", []);
+        $response->assertStatus(404);
+    }
+
+    /**
+     * Test user un-suspending (POST /api/v4/users/<user-id>/unsuspend)
+     */
+    public function testUnsuspend(): void
+    {
+        Queue::fake(); // disable jobs
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
+
+        // Test unauthorized access to admin API
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/unsuspend", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/unsuspend", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($reseller2)->post("/api/v4/users/{$user->id}/unsuspend", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$admin->id}/unsuspend", []);
+        $response->assertStatus(404);
+
+        $this->assertFalse($user->isSuspended());
+        $user->suspend();
+        $this->assertTrue($user->isSuspended());
+
+        // Test suspending the user
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$user->id}/unsuspend", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User unsuspended successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $this->assertFalse($user->fresh()->isSuspended());
+
+        // Access to other tenant's users
+        \config(['app.tenant_id' => 2]);
+        $response = $this->actingAs($reseller2)->post("/api/v4/users/{$user->id}/unsuspend", []);
+        $response->assertStatus(404);
+    }
+
+    /**
      * Test user update (PUT /api/v4/users/<user-id>)
      */
     public function testUpdate(): void
     {
-        $this->markTestIncomplete();
-/*
         $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
 
-        // Test unauthorized access to admin API
+        // Test unauthorized access
         $response = $this->actingAs($user)->put("/api/v4/users/{$user->id}", []);
         $response->assertStatus(403);
 
-        // Test updatig the user data (empty data)
         $response = $this->actingAs($admin)->put("/api/v4/users/{$user->id}", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($reseller2)->put("/api/v4/users/{$user->id}", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($reseller1)->put("/api/v4/users/{$admin->id}", []);
+        $response->assertStatus(404);
+
+        // Test updatig the user data (empty data)
+        $response = $this->actingAs($reseller1)->put("/api/v4/users/{$user->id}", []);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -260,7 +450,7 @@ class UsersTest extends TestCase
 
         // Test error handling
         $post = ['external_email' => 'aaa'];
-        $response = $this->actingAs($admin)->put("/api/v4/users/{$user->id}", $post);
+        $response = $this->actingAs($reseller1)->put("/api/v4/users/{$user->id}", $post);
         $response->assertStatus(422);
 
         $json = $response->json();
@@ -271,7 +461,7 @@ class UsersTest extends TestCase
 
         // Test real update
         $post = ['external_email' => 'modified@test.com'];
-        $response = $this->actingAs($admin)->put("/api/v4/users/{$user->id}", $post);
+        $response = $this->actingAs($reseller1)->put("/api/v4/users/{$user->id}", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -280,6 +470,10 @@ class UsersTest extends TestCase
         $this->assertSame("User data updated successfully.", $json['message']);
         $this->assertCount(2, $json);
         $this->assertSame('modified@test.com', $user->getSetting('external_email'));
-*/
+
+        // Access to other tenant's users
+        \config(['app.tenant_id' => 2]);
+        $response = $this->actingAs($reseller2)->put("/api/v4/users/{$user->id}", $post);
+        $response->assertStatus(404);
     }
 }

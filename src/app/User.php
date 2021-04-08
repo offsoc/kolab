@@ -268,6 +268,22 @@ class User extends Authenticatable implements JWTSubject
             return true;
         }
 
+        if ($this->role == 'admin') {
+            return true;
+        }
+
+        if ($this->role == 'reseller') {
+            if ($object instanceof User && $object->role == 'admin') {
+                return false;
+            }
+
+            if ($object instanceof Wallet && !empty($object->owner)) {
+                $object = $object->owner;
+            }
+
+            return isset($object->tenant_id) && $object->tenant_id == $this->tenant_id;
+        }
+
         return $this->canDelete($object);
     }
 
