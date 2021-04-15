@@ -80,6 +80,9 @@
                         <button class="btn btn-primary button-submit" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
                     </form>
                 </div>
+                <passport-clients></passport-clients>
+                <passport-authorized-clients></passport-authorized-clients>
+                <passport-personal-access-tokens></passport-personal-access-tokens>
             </div>
         </div>
     </div>
