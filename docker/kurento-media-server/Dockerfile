@@ -84,8 +84,9 @@ RUN rpm -Uvh https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-31
     dnf module -y disable meson && \
     dnf -y update meson && \
     rpm -e --nodeps gstreamer1 gstreamer1-plugins-base && \
-    dnf -y clean all && \
-    mkdir -p /src/ && \
+    dnf -y clean all
+
+RUN mkdir -p /src/ && \
     if [ "${GST_BASE_VERSION}" == "1.8.1-1kurento2" ]; then \
         git clone https://github.com/Kurento/gstreamer.git /src/gstreamer.git && \
             cd /src/gstreamer.git/ && \

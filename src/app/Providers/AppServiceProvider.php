@@ -43,6 +43,8 @@ class AppServiceProvider extends ServiceProvider
         \App\VerificationCode::observe(\App\Observers\VerificationCodeObserver::class);
         \App\Wallet::observe(\App\Observers\WalletObserver::class);
 
+        \App\PowerDNS\Domain::observe(\App\Observers\PowerDNS\DomainObserver::class);
+
         Schema::defaultStringLength(191);
 
         // Log SQL queries in debug mode
