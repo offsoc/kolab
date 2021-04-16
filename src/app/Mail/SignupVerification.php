@@ -41,9 +41,9 @@ class SignupVerification extends Mailable
             sprintf('/signup/%s-%s', $this->code->short_code, $this->code->code)
         );
 
-        $username = $this->code->data['first_name'] ?? '';
-        if (!empty($this->code->data['last_name'])) {
-            $username .= ' ' . $this->code->data['last_name'];
+        $username = $this->code->first_name ?? '';
+        if (!empty($this->code->last_name)) {
+            $username .= ' ' . $this->code->last_name;
         }
         $username = trim($username);
 
@@ -73,11 +73,9 @@ class SignupVerification extends Mailable
         $code = new SignupCode([
                 'code' => Str::random(SignupCode::CODE_LENGTH),
                 'short_code' => SignupCode::generateShortCode(),
-                'data' => [
-                    'email' => 'test@' . \config('app.domain'),
-                    'first_name' => 'Firstname',
-                    'last_name' => 'Lastname',
-                ],
+                'email' => 'test@' . \config('app.domain'),
+                'first_name' => 'Firstname',
+                'last_name' => 'Lastname',
         ]);
 
         $mail = new self($code);

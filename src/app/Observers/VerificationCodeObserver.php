@@ -3,7 +3,6 @@
 namespace App\Observers;
 
 use App\VerificationCode;
-use App\SignupCode;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 

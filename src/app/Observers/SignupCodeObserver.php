@@ -35,5 +35,33 @@ class SignupCodeObserver
         }
 
         $code->expires_at = Carbon::now()->addHours($exp_hours);
+        $code->ip_address = request()->ip();
+
+        if ($code->email) {
+            $parts = explode('@', $code->email);
+
+            $code->local_part = $parts[0];
+            $code->domain_part = $parts[1];
+        }
+    }
+
+    /**
+     * Handle the "updating" event.
+     *
+     * @param SignupCode $code The code being updated.
+     *
+     * @return void
+     */
+    public function updating(SignupCode $code)
+    {
+        if ($code->email) {
+            $parts = explode('@', $code->email);
+
+            $code->local_part = $parts[0];
+            $code->domain_part = $parts[1];
+        } else {
+            $code->local_part = null;
+            $code->domain_part = null;
+        }
     }
 }

@@ -20,11 +20,9 @@ class SignupVerificationTest extends TestCase
         $code = new SignupCode([
                 'code' => 'code',
                 'short_code' => 'short-code',
-                'data' => [
-                    'email' => 'test@email',
-                    'first_name' => 'First',
-                    'last_name' => 'Last',
-                ],
+                'email' => 'test@email',
+                'first_name' => 'First',
+                'last_name' => 'Last',
         ]);
 
         $mail = $this->fakeMail(new SignupVerification($code));

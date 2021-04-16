@@ -203,9 +203,7 @@ class Utils
         }
 
         // Convert the hexadecimal string to a binary string
-        # Using pack() here
-        # Newer PHP version can use hex2bin()
-        $lastaddrbin = pack('H*', $lastAddrHex);
+        $lastaddrbin = hex2bin($lastAddrHex);
 
         // And create an IPv6 address from the binary string
         $lastaddrstr = inet_ntop($lastaddrbin);
