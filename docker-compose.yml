@@ -99,6 +99,23 @@ services:
     tty: true
     volumes:
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
+  pdns-sql:
+    build:
+      context: ./docker/pdns-sql/
+    container_name: kolab-pdns-sql
+    depends_on:
+      - mariadb
+    hostname: pdns-sql
+    image: apheleia/kolab-pdns-sql
+    network_mode: host
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
   proxy:
     build:
       context: ./docker/proxy/
