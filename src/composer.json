@@ -16,6 +16,7 @@
     "require": {
         "php": "^7.1.3",
         "barryvdh/laravel-dompdf": "^0.8.6",
+        "doctrine/dbal": "^2.13",
         "dyrynda/laravel-nullable-fields": "*",
         "fideloper/proxy": "^4.0",
         "kolab/net_ldap3": "dev-master",

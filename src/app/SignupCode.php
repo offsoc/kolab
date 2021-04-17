@@ -72,6 +72,8 @@ class SignupCode extends Model
         'voucher'
     ];
 
+    protected $casts = ['headers' => 'array'];
+
     /**
      * The attributes that should be mutated to dates.
      *

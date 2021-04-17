@@ -85,4 +85,17 @@ class Kernel extends HttpKernel
         \Illuminate\Auth\Middleware\Authorize::class,
         \App\Http\Middleware\AuthenticateAdmin::class,
     ];
+
+    /**
+     * Handle an incoming HTTP request.
+     *
+     * @param \Illuminate\Http\Request $request HTTP Request object
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function handle($request)
+    {
+        // Overwrite the http request object
+        return parent::handle(Request::createFrom($request));
+    }
 }
