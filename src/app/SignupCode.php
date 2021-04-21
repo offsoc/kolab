@@ -12,17 +12,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string         $code        The full code identifier
  * @property \Carbon\Carbon $created_at  The creation timestamp
  * @property \Carbon\Carbon $deleted_at  The deletion timestamp
- * @property string         $domain_part Email domain
- * @property string         $email       Email address
+ * @property ?string        $domain_part Email domain
+ * @property ?string        $email       Email address
  * @property \Carbon\Carbon $expires_at  The code expiration timestamp
- * @property string         $first_name  Firstname
+ * @property ?string        $first_name  Firstname
  * @property string         $ip_address  IP address the request came from
- * @property string         $last_name   Lastname
- * @property string         $local_part  Email local part
- * @property string         $plan        Plan title
+ * @property ?string        $last_name   Lastname
+ * @property ?string        $local_part  Email local part
+ * @property ?string        $plan        Plan title
  * @property string         $short_code  Short validation code
  * @property \Carbon\Carbon $updated_at  The update timestamp
- * @property string         $voucher     Voucher discount code
+ * @property ?string        $voucher     Voucher discount code
  */
 class SignupCode extends Model
 {
