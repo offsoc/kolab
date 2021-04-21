@@ -1380,10 +1380,14 @@ function Meet(container)
             return
         }
 
+        // Note: offsetHeight/offsetWidth return rounded values, but for proper matrix
+        // calculations we need more precision, therefore we use getBoundingClientRect()
+
         let allHeight = container.offsetHeight
         let scrollHeight = subscribersContainer.scrollHeight
-        let containerWidth = publishersContainer.offsetWidth
-        let containerHeight = publishersContainer.offsetHeight
+        let bcr = publishersContainer.getBoundingClientRect()
+        let containerWidth = bcr.width
+        let containerHeight = bcr.height
         let limit = Math.ceil(allHeight * 0.25) // max subscribers list height
 
         // Fix subscribers list height
