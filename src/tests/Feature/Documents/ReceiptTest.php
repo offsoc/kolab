@@ -226,6 +226,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 1111,
+                'currency' => 'CHF',
+                'currency_amount' => 1111,
         ]);
         $payment->updated_at = Carbon::create(2020, 4, 30, 12, 0, 0);
         $payment->save();
@@ -238,6 +240,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 2222,
+                'currency' => 'CHF',
+                'currency_amount' => 2222,
         ]);
         $payment->updated_at = Carbon::create(2020, 6, 1, 0, 0, 0);
         $payment->save();
@@ -250,6 +254,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 0,
+                'currency' => 'CHF',
+                'currency_amount' => 0,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 1, 0, 0, 0);
         $payment->save();
@@ -262,6 +268,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 999,
+                'currency' => 'CHF',
+                'currency_amount' => 999,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 1, 0, 0, 0);
         $payment->save();
@@ -275,6 +283,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 1234,
+                'currency' => 'CHF',
+                'currency_amount' => 1234,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 1, 0, 0, 0);
         $payment->save();
@@ -287,6 +297,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 1,
+                'currency' => 'CHF',
+                'currency_amount' => 1,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 10, 0, 0, 0);
         $payment->save();
@@ -299,6 +311,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 100,
+                'currency' => 'CHF',
+                'currency_amount' => 100,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 21, 23, 59, 0);
         $payment->save();
@@ -311,6 +325,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => -100,
+                'currency' => 'CHF',
+                'currency_amount' => -100,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 30, 23, 59, 0);
         $payment->save();
@@ -323,6 +339,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => -10,
+                'currency' => 'CHF',
+                'currency_amount' => -10,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 31, 23, 59, 0);
         $payment->save();
