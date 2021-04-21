@@ -10,6 +10,7 @@
  |
  */
 
+const { exec } = require('child_process');
 const fs = require('fs');
 const glob = require('glob');
 const mix = require('laravel-mix');
@@ -20,6 +21,10 @@ mix.webpackConfig({
             'jquery$': 'jquery/dist/jquery.slim.js',
         }
     }
+})
+
+mix.before(() => {
+    exec('php resources/build/before.php')
 })
 
 mix.js('resources/js/user.js', 'public/js').vue()
