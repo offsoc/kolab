@@ -308,9 +308,18 @@ class WalletsController extends Controller
             // We make sure both have the same time set.
             $now = Carbon::now()->setTimeFrom($until);
 
+            $diffOptions = [
+                'syntax' => Carbon::DIFF_ABSOLUTE,
+                'parts' => 1,
+            ];
+
+            if ($now->diff($until)->days > 31) {
+                $diffOptions['parts'] = 2;
+            }
+
             $params = [
                 'date' => $until->toDateString(),
-                'days' => $now->diffForHumans($until, Carbon::DIFF_ABSOLUTE),
+                'days' => $now->diffForHumans($until, $diffOptions),
             ];
 
             return \trans('app.wallet-notice-date', $params);
