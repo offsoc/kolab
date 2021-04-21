@@ -4,7 +4,7 @@
             <div class="card-body">
                 <div class="card-title">
                     User Accounts
-                    <router-link class="btn btn-primary float-right create-user" :to="{ path: 'user/new' }" tag="button">
+                    <router-link class="btn btn-success float-right create-user" :to="{ path: 'user/new' }" tag="button">
                         <svg-icon icon="user"></svg-icon> Create user
                     </router-link>
                 </div>
@@ -13,7 +13,6 @@
                         <thead class="thead-light">
                             <tr>
                                 <th scope="col">Primary Email</th>
-                                <th scope="col"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -22,47 +21,14 @@
                                     <svg-icon icon="user" :class="$root.userStatusClass(user)" :title="$root.userStatusText(user)"></svg-icon>
                                     <router-link :to="{ path: 'user/' + user.id }">{{ user.email }}</router-link>
                                 </td>
-                                <td class="buttons">
-                                    <button v-if="$root.isController(user.wallet_id)"
-                                            title="Delete"
-                                            class="btn btn-link text-danger button-delete p-0"
-                                            @click="deleteUser(user.id)"
-                                    >
-                                        <svg-icon icon="trash-alt"></svg-icon><span class="sr-only">Delete</span>
-                                    </button>
-                                </td>
                             </tr>
                         </tbody>
                         <tfoot class="table-fake-body">
                             <tr>
-                                <td colspan="2">There are no users in this account.</td>
+                                <td>There are no users in this account.</td>
                             </tr>
                         </tfoot>
                     </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="delete-warning" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title"></h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Do you really want to delete this user permanently?
-                            This will delete all account data and withdraw the permission to access the email account.
-                            Please note that this action cannot be undone.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger modal-action" @click="deleteUser()">
-                            <svg-icon icon="trash-alt"></svg-icon> Delete
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -86,46 +52,6 @@
                     this.users = response.data
                 })
                 .catch(this.$root.errorHandler)
-        },
-        methods: {
-            deleteUser(id) {
-                let dialog = $('#delete-warning').modal('hide')
-
-                // Delete the user from the confirm dialog
-                if (!id && this.current_user) {
-                    id = this.current_user.id
-                    axios.delete('/api/v4/users/' + id)
-                        .then(response => {
-                            if (response.data.status == 'success') {
-                                this.$toast.success(response.data.message)
-                                $('#user' + id).remove()
-                            }
-                        })
-
-                    return
-                }
-
-                // Deleting self, redirect to /profile/delete page
-                if (id == this.$store.state.authInfo.id) {
-                    this.$router.push({ name: 'profile-delete' })
-                    return
-                }
-
-                // Display the warning
-                if (this.current_user = this.getUser(id)) {
-                    dialog.find('.modal-title').text('Delete ' + this.current_user.email)
-                    dialog.on('shown.bs.modal', () => {
-                        dialog.find('button.modal-cancel').focus()
-                    }).modal()
-                }
-            },
-            getUser(id) {
-                for (let i = 0; i < this.users.length; i++) {
-                    if (this.users[i].id == id) {
-                        return this.users[i]
-                    }
-                }
-            }
         }
     }
 </script>
