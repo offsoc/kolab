@@ -27,4 +27,14 @@ class Tenant extends Model
     {
         return $this->hasMany('App\Discount');
     }
+
+    /**
+     * SignupInvitations assigned to this tenant.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function signupInvitations()
+    {
+        return $this->hasMany('App\SignupInvitation');
+    }
 }

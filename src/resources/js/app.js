@@ -425,7 +425,7 @@ window.axios.interceptors.response.use(
                     }
 
                     if (input.length) {
-                        // Create an error message\
+                        // Create an error message
                         // API responses can use a string, array or object
                         let msg_text = ''
                         if ($.type(msg) !== 'string') {

@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <div id="step0">
+        <div id="step0" v-if="!invitation">
             <div class="plan-selector card-deck">
                 <div v-for="item in plans" :key="item.id" :class="'card bg-light plan-' + item.title">
                     <div class="card-header plan-header">
@@ -16,7 +16,7 @@
             </div>
         </div>
 
-        <div class="card d-none" id="step1">
+        <div class="card d-none" id="step1" v-if="!invitation">
             <div class="card-body">
                 <h4 class="card-title">Sign Up - Step 1/3</h4>
                 <p class="card-text">
@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <div class="card d-none" id="step2">
+        <div class="card d-none" id="step2" v-if="!invitation">
             <div class="card-body">
                 <h4 class="card-title">Sign Up - Step 2/3</h4>
                 <p class="card-text">
@@ -60,20 +60,28 @@
 
         <div class="card d-none" id="step3">
             <div class="card-body">
-                <h4 class="card-title">Sign Up - Step 3/3</h4>
+                <h4 v-if="!invitation" class="card-title">Sign Up - Step 3/3</h4>
                 <p class="card-text">
                     Create your Kolab identity (you can choose additional addresses later).
                 </p>
                 <form @submit.prevent="submitStep3" data-validation-prefix="signup_">
+                    <div class="form-group" v-if="invitation">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="signup_first_name" placeholder="First Name" autofocus v-model="first_name">
+                            <input type="text" class="form-control rounded-right" id="signup_last_name" placeholder="Surname" v-model="last_name">
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label for="signup_login" class="sr-only"></label>
                         <div class="input-group">
                             <input type="text" class="form-control" id="signup_login" required v-model="login" placeholder="Login">
-                            <span class="input-group-append">
+                            <span class="input-group-append input-group-prepend">
                                 <span class="input-group-text">@</span>
                             </span>
                             <input v-if="is_domain" type="text" class="form-control rounded-right" id="signup_domain" required v-model="domain" placeholder="Domain">
-                            <select v-else class="custom-select rounded-right" id="signup_domain" required v-model="domain"></select>
+                            <select v-else class="custom-select rounded-right" id="signup_domain" required v-model="domain">
+                                <option v-for="domain in domains" :key="domain" :value="domain">{{ domain }}</option>
+                            </select>
                         </div>
                     </div>
                     <div class="form-group">
@@ -88,8 +96,10 @@
                         <label for="signup_voucher" class="sr-only">Voucher code</label>
                         <input type="text" class="form-control" id="signup_voucher" placeholder="Voucher code" v-model="voucher">
                     </div>
-                    <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
-                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
+                    <button v-if="!invitation" class="btn btn-secondary" type="button" @click="stepBack">Back</button>
+                    <button class="btn btn-primary" type="submit">
+                        <svg-icon icon="check"></svg-icon> <span v-if="invitation">Sign Up</span><span v-else>Submit</span>
+                    </button>
                 </form>
             </div>
         </div>
@@ -109,8 +119,10 @@
                 password: '',
                 password_confirmation: '',
                 domain: '',
-                plan: null,
+                domains: [],
+                invitation: null,
                 is_domain: false,
+                plan: null,
                 plan_icons: {
                     individual: 'user',
                     group: 'users'
@@ -122,7 +134,25 @@
         mounted() {
             let param = this.$route.params.param;
 
-            if (param) {
+            if (this.$route.name == 'signup-invite') {
+                this.$root.startLoading()
+                axios.get('/api/auth/signup/invitations/' + param)
+                    .then(response => {
+                        this.invitation = response.data
+                        this.login = response.data.login
+                        this.voucher = response.data.voucher
+                        this.first_name = response.data.first_name
+                        this.last_name = response.data.last_name
+                        this.plan = response.data.plan
+                        this.is_domain = response.data.is_domain
+                        this.setDomain(response.data)
+                        this.$root.stopLoading()
+                        this.displayForm(3, true)
+                    })
+                    .catch(error => {
+                        this.$root.errorHandler(error)
+                    })
+            } else if (param) {
                 if (this.$route.path.indexOf('/signup/voucher/') === 0) {
                     // Voucher (discount) code
                     this.voucher = param
@@ -199,13 +229,7 @@
 
                     // Fill the domain selector with available domains
                     if (!this.is_domain) {
-                        let options = []
-                        $('select#signup_domain').html('')
-                        $.each(response.data.domains, (i, v) => {
-                            options.push($('<option>').text(v).attr('value', v))
-                        })
-                        $('select#signup_domain').append(options)
-                        this.domain = window.config['app.domain']
+                        this.setDomain(response.data)
                     }
                 }).catch(error => {
                     if (bylink === true) {
@@ -219,15 +243,25 @@
             submitStep3() {
                 this.$root.clearFormValidation($('#step3 form'))
 
-                axios.post('/api/auth/signup', {
-                    code: this.code,
-                    short_code: this.short_code,
+                let post = {
                     login: this.login,
                     domain: this.domain,
                     password: this.password,
                     password_confirmation: this.password_confirmation,
                     voucher: this.voucher
-                }).then(response => {
+                }
+
+                if (this.invitation) {
+                    post.invitation = this.invitation.id
+                    post.plan = this.plan
+                    post.first_name = this.first_name
+                    post.last_name = this.last_name
+                } else {
+                    post.code = this.code
+                    post.short_code = this.short_code
+                }
+
+                axios.post('/api/auth/signup', post).then(response => {
                     // auto-login and goto dashboard
                     this.$root.loginUser(response.data)
                 })
@@ -258,6 +292,13 @@
                 if (focus) {
                     $('#step' + step).find('input').first().focus()
                 }
+            },
+            setDomain(response) {
+                if (response.domains) {
+                    this.domains = response.domains
+                }
+
+                this.domain = response.domain || window.config['app.domain']
             }
         }
     }

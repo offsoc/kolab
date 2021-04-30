@@ -6,6 +6,7 @@ use App\Http\Controllers\API\SignupController;
 use App\Discount;
 use App\Domain;
 use App\SignupCode;
+use App\SignupInvitation as SI;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -28,11 +29,13 @@ class SignupTest extends TestCase
         $this->deleteTestUser("SignupControllerTest1@$this->domain");
         $this->deleteTestUser("signuplogin@$this->domain");
         $this->deleteTestUser("admin@external.com");
+        $this->deleteTestUser("test-inv@kolabnow.com");
 
         $this->deleteTestDomain('external.com');
         $this->deleteTestDomain('signup-domain.com');
 
         $this->deleteTestGroup('group-test@kolabnow.com');
+        SI::truncate();
     }
 
     /**
@@ -43,11 +46,13 @@ class SignupTest extends TestCase
         $this->deleteTestUser("SignupControllerTest1@$this->domain");
         $this->deleteTestUser("signuplogin@$this->domain");
         $this->deleteTestUser("admin@external.com");
+        $this->deleteTestUser("test-inv@kolabnow.com");
 
         $this->deleteTestDomain('external.com');
         $this->deleteTestDomain('signup-domain.com');
 
         $this->deleteTestGroup('group-test@kolabnow.com');
+        SI::truncate();
 
         parent::tearDown();
     }
@@ -77,10 +82,8 @@ class SignupTest extends TestCase
 
     /**
      * Test fetching plans for signup
-     *
-     * @return void
      */
-    public function testSignupPlans()
+    public function testSignupPlans(): void
     {
         $response = $this->get('/api/auth/signup/plans');
         $json = $response->json();
@@ -96,11 +99,36 @@ class SignupTest extends TestCase
     }
 
     /**
-     * Test signup initialization with invalid input
-     *
-     * @return void
+     * Test fetching invitation
      */
-    public function testSignupInitInvalidInput()
+    public function testSignupInvitations(): void
+    {
+        Queue::fake();
+
+        $invitation = SI::create(['email' => 'email1@ext.com']);
+
+        // Test existing invitation
+        $response = $this->get("/api/auth/signup/invitations/{$invitation->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame($invitation->id, $json['id']);
+
+        // Test non-existing invitation
+        $response = $this->get("/api/auth/signup/invitations/abc");
+        $response->assertStatus(404);
+
+        // Test completed invitation
+        SI::where('id', $invitation->id)->update(['status' => SI::STATUS_COMPLETED]);
+        $response = $this->get("/api/auth/signup/invitations/{$invitation->id}");
+        $response->assertStatus(404);
+    }
+
+    /**
+     * Test signup initialization with invalid input
+     */
+    public function testSignupInitInvalidInput(): void
     {
         // Empty input data
         $data = [];
@@ -167,10 +195,8 @@ class SignupTest extends TestCase
 
     /**
      * Test signup initialization with valid input
-     *
-     * @return array
      */
-    public function testSignupInitValidInput()
+    public function testSignupInitValidInput(): array
     {
         Queue::fake();
 
@@ -243,9 +269,8 @@ class SignupTest extends TestCase
      * Test signup code verification with invalid input
      *
      * @depends testSignupInitValidInput
-     * @return void
      */
-    public function testSignupVerifyInvalidInput(array $result)
+    public function testSignupVerifyInvalidInput(array $result): void
     {
         // Empty data
         $data = [];
@@ -293,10 +318,8 @@ class SignupTest extends TestCase
      * Test signup code verification with valid input
      *
      * @depends testSignupInitValidInput
-     *
-     * @return array
      */
-    public function testSignupVerifyValidInput(array $result)
+    public function testSignupVerifyValidInput(array $result): array
     {
         $code = SignupCode::find($result['code']);
         $data = [
@@ -324,9 +347,8 @@ class SignupTest extends TestCase
      * Test last signup step with invalid input
      *
      * @depends testSignupVerifyValidInput
-     * @return void
      */
-    public function testSignupInvalidInput(array $result)
+    public function testSignupInvalidInput(array $result): void
     {
         // Empty data
         $data = [];
@@ -456,9 +478,8 @@ class SignupTest extends TestCase
      * Test last signup step with valid input (user creation)
      *
      * @depends testSignupVerifyValidInput
-     * @return void
      */
-    public function testSignupValidInput(array $result)
+    public function testSignupValidInput(array $result): void
     {
         $queue = Queue::fake();
 
@@ -520,10 +541,8 @@ class SignupTest extends TestCase
 
     /**
      * Test signup for a group (custom domain) account
-     *
-     * @return void
      */
-    public function testSignupGroupAccount()
+    public function testSignupGroupAccount(): void
     {
         Queue::fake();
 
@@ -639,6 +658,59 @@ class SignupTest extends TestCase
         // TODO: Check SKUs/Plan
 
         // TODO: Check if the access token works
+    }
+
+    /**
+     * Test signup via invitation
+     */
+    public function testSignupViaInvitation(): void
+    {
+        Queue::fake();
+
+        $invitation = SI::create(['email' => 'email1@ext.com']);
+
+        $post = [
+            'invitation' => 'abc',
+            'first_name' => 'Signup',
+            'last_name' => 'User',
+            'login' => 'test-inv',
+            'domain' => 'kolabnow.com',
+            'password' => 'test',
+            'password_confirmation' => 'test',
+        ];
+
+        // Test invalid invitation identifier
+        $response = $this->post('/api/auth/signup', $post);
+        $response->assertStatus(404);
+
+        // Test valid input
+        $post['invitation'] = $invitation->id;
+        $response = $this->post('/api/auth/signup', $post);
+        $result = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertSame('success', $result['status']);
+        $this->assertSame('bearer', $result['token_type']);
+        $this->assertTrue(!empty($result['expires_in']) && is_int($result['expires_in']) && $result['expires_in'] > 0);
+        $this->assertNotEmpty($result['access_token']);
+        $this->assertSame('test-inv@kolabnow.com', $result['email']);
+
+        // Check if the user has been created
+        $user = User::where('email', 'test-inv@kolabnow.com')->first();
+
+        $this->assertNotEmpty($user);
+
+        // Check user settings
+        $this->assertSame($invitation->email, $user->getSetting('external_email'));
+        $this->assertSame($post['first_name'], $user->getSetting('first_name'));
+        $this->assertSame($post['last_name'], $user->getSetting('last_name'));
+
+        $invitation->refresh();
+
+        $this->assertSame($user->id, $invitation->user_id);
+        $this->assertTrue($invitation->isCompleted());
+
+        // TODO: Test POST params validation
     }
 
     /**

@@ -36,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
         \App\PackageSku::observe(\App\Observers\PackageSkuObserver::class);
         \App\Plan::observe(\App\Observers\PlanObserver::class);
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
+        \App\SignupInvitation::observe(\App\Observers\SignupInvitationObserver::class);
         \App\Sku::observe(\App\Observers\SkuObserver::class);
         \App\Transaction::observe(\App\Observers\TransactionObserver::class);
         \App\User::observe(\App\Observers\UserObserver::class);
@@ -83,6 +84,25 @@ class AppServiceProvider extends ServiceProvider
 
             /** @var Builder $this */
             return $this->whereNull(($table ? "$table." : '') . 'tenant_id');
+        });
+
+        // Query builder 'whereLike' mocro
+        Builder::macro('whereLike', function (string $column, string $search, int $mode = 0) {
+            $search = addcslashes($search, '%_');
+
+            switch ($mode) {
+                case 2:
+                    $search .= '%';
+                    break;
+                case 1:
+                    $search = '%' . $search;
+                    break;
+                default:
+                    $search = '%' . $search . '%';
+            }
+
+            /** @var Builder $this */
+            return $this->where($column, 'like', $search);
         });
     }
 }

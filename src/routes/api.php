@@ -45,8 +45,9 @@ Route::group(
         Route::post('password-reset/verify', 'API\PasswordResetController@verify');
         Route::post('password-reset', 'API\PasswordResetController@reset');
 
-        Route::get('signup/plans', 'API\SignupController@plans');
         Route::post('signup/init', 'API\SignupController@init');
+        Route::get('signup/invitations/{id}', 'API\SignupController@invitation');
+        Route::get('signup/plans', 'API\SignupController@plans');
         Route::post('signup/verify', 'API\SignupController@verify');
         Route::post('signup', 'API\SignupController@signup');
     }
@@ -168,7 +169,8 @@ Route::group(
         Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
         Route::post('domains/{id}/suspend', 'API\V4\Reseller\DomainsController@suspend');
         Route::post('domains/{id}/unsuspend', 'API\V4\Reseller\DomainsController@unsuspend');
-
+        Route::apiResource('invitations', API\V4\Reseller\InvitationsController::class);
+        Route::post('invitations/{id}/resend', 'API\V4\Reseller\InvitationsController@resend');
         Route::apiResource('packages', API\V4\Reseller\PackagesController::class);
         Route::apiResource('skus', API\V4\Reseller\SkusController::class);
         Route::apiResource('users', API\V4\Reseller\UsersController::class);

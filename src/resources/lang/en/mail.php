@@ -75,6 +75,11 @@ return [
     'signupcode-body1' => "This is your verification code for the :site registration process:",
     'signupcode-body2' => "You can also click the link below to continue the registration process:",
 
+    'signupinvitation-subject' => ":site Invitation",
+    'signupinvitation-header' => "Hi,",
+    'signupinvitation-body1' => "You have been invited to join :site. Click the link below to sign up.",
+    'signupinvitation-body2' => "",
+
     'suspendeddebtor-subject' => ":site Account Suspended",
     'suspendeddebtor-body' => "You have been behind on paying for your :site account "
         ."for over :days days. Your account has been suspended.",

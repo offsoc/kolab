@@ -5,6 +5,7 @@ namespace Tests\Browser;
 use App\Discount;
 use App\Domain;
 use App\SignupCode;
+use App\SignupInvitation;
 use App\User;
 use Tests\Browser;
 use Tests\Browser\Components\Menu;
@@ -28,11 +29,15 @@ class SignupTest extends TestCaseDusk
         $this->deleteTestDomain('user-domain-signup.com');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         $this->deleteTestUser('signuptestdusk@' . \config('app.domain'));
         $this->deleteTestUser('admin@user-domain-signup.com');
         $this->deleteTestDomain('user-domain-signup.com');
+        SignupInvitation::truncate();
 
         parent::tearDown();
     }
@@ -294,17 +299,22 @@ class SignupTest extends TestCaseDusk
 
             // Here we expect 3 text inputs, Back and Continue buttons
             $browser->with('@step3', function ($step) {
-                $step->assertVisible('#signup_login');
-                $step->assertVisible('#signup_password');
-                $step->assertVisible('#signup_confirm');
-                $step->assertVisible('select#signup_domain');
-                $step->assertVisible('[type=button]');
-                $step->assertVisible('[type=submit]');
-                $step->assertFocused('#signup_login');
-                $step->assertValue('select#signup_domain', \config('app.domain'));
-                $step->assertValue('#signup_login', '');
-                $step->assertValue('#signup_password', '');
-                $step->assertValue('#signup_confirm', '');
+                $step->assertSeeIn('.card-title', 'Sign Up - Step 3/3')
+                    ->assertMissing('#signup_last_name')
+                    ->assertMissing('#signup_first_name')
+                    ->assertVisible('#signup_login')
+                    ->assertVisible('#signup_password')
+                    ->assertVisible('#signup_confirm')
+                    ->assertVisible('select#signup_domain')
+                    ->assertElementsCount('select#signup_domain option', 13, false)
+                    ->assertVisible('[type=button]')
+                    ->assertVisible('[type=submit]')
+                    ->assertSeeIn('[type=submit]', 'Submit')
+                    ->assertFocused('#signup_login')
+                    ->assertValue('select#signup_domain', \config('app.domain'))
+                    ->assertValue('#signup_login', '')
+                    ->assertValue('#signup_password', '')
+                    ->assertValue('#signup_confirm', '');
 
                 // TODO: Test domain selector
             });
@@ -541,5 +551,84 @@ class SignupTest extends TestCaseDusk
         $user = $this->getTestUser('signuptestdusk@' . \config('app.domain'));
         $discount = Discount::where('code', 'TEST')->first();
         $this->assertSame($discount->id, $user->wallets()->first()->discount_id);
+    }
+
+    /**
+     * Test signup via invitation link
+     */
+    public function testSignupInvitation(): void
+    {
+        // Test non-existing invitation
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/signup/invite/TEST')
+                ->onWithoutAssert(new Signup())
+                ->waitFor('#app > #error-page')
+                ->assertErrorPage(404);
+        });
+
+        $invitation = SignupInvitation::create(['email' => 'test@domain.org']);
+
+        $this->browse(function (Browser $browser) use ($invitation) {
+            $browser->visit('/signup/invite/' . $invitation->id)
+                ->onWithoutAssert(new Signup())
+                ->waitUntilMissing('.app-loader')
+                ->with('@step3', function ($step) {
+                    $step->assertMissing('.card-title')
+                        ->assertVisible('#signup_last_name')
+                        ->assertVisible('#signup_first_name')
+                        ->assertVisible('#signup_login')
+                        ->assertVisible('#signup_password')
+                        ->assertVisible('#signup_confirm')
+                        ->assertVisible('select#signup_domain')
+                        ->assertElementsCount('select#signup_domain option', 13, false)
+                        ->assertVisible('[type=submit]')
+                        ->assertMissing('[type=button]') // Back button
+                        ->assertSeeIn('[type=submit]', 'Sign Up')
+                        ->assertFocused('#signup_first_name')
+                        ->assertValue('select#signup_domain', \config('app.domain'))
+                        ->assertValue('#signup_first_name', '')
+                        ->assertValue('#signup_last_name', '')
+                        ->assertValue('#signup_login', '')
+                        ->assertValue('#signup_password', '')
+                        ->assertValue('#signup_confirm', '');
+
+                    // Submit invalid data
+                    $step->type('#signup_login', '*')
+                        ->type('#signup_password', '12345678')
+                        ->type('#signup_confirm', '123456789')
+                        ->click('[type=submit]')
+                        ->waitFor('#signup_login.is-invalid')
+                        ->assertVisible('#signup_domain + .invalid-feedback')
+                        ->assertVisible('#signup_password.is-invalid')
+                        ->assertVisible('#signup_password + .invalid-feedback')
+                        ->assertFocused('#signup_login')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
+
+                    // Submit valid data
+                    $step->type('#signup_confirm', '12345678')
+                        ->type('#signup_login', 'signuptestdusk')
+                        ->type('#signup_first_name', 'First')
+                        ->type('#signup_last_name', 'Last')
+                        ->click('[type=submit]');
+                })
+                // At this point we should be auto-logged-in to dashboard
+                ->waitUntilMissing('@step3')
+                ->waitUntilMissing('.app-loader')
+                ->on(new Dashboard())
+                ->assertUser('signuptestdusk@' . \config('app.domain'))
+                // Logout the user
+                ->within(new Menu(), function ($browser) {
+                    $browser->clickMenuItem('logout');
+                });
+        });
+
+        $invitation->refresh();
+        $user = User::where('email', 'signuptestdusk@' . \config('app.domain'))->first();
+
+        $this->assertTrue($invitation->isCompleted());
+        $this->assertSame($user->id, $invitation->user_id);
+        $this->assertSame('First', $user->getSetting('first_name'));
+        $this->assertSame('Last', $user->getSetting('last_name'));
+        $this->assertSame($invitation->email, $user->getSetting('external_email'));
     }
 }

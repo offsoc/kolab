@@ -77,6 +77,11 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
+        path: '/signup/invite/:param',
+        name: 'signup-invite',
+        component: SignupComponent
+    },
+    {
         path: '/signup/:param?',
         alias: '/signup/voucher/:param',
         name: 'signup',

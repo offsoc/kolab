@@ -1,5 +1,6 @@
 import DashboardComponent from '../../vue/Reseller/Dashboard'
 import DomainComponent from '../../vue/Admin/Domain'
+import InvitationsComponent from '../../vue/Reseller/Invitations'
 import LoginComponent from '../../vue/Login'
 import LogoutComponent from '../../vue/Logout'
 import PageComponent from '../../vue/Page'
@@ -32,6 +33,12 @@ const routes = [
         path: '/logout',
         name: 'logout',
         component: LogoutComponent
+    },
+    {
+        path: '/invitations',
+        name: 'invitations',
+        component: InvitationsComponent,
+        meta: { requiresAuth: true }
     },
 /*
     {

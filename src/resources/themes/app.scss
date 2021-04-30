@@ -115,7 +115,10 @@ tfoot.table-fake-body {
 }
 
 table {
-    td.buttons,
+    th {
+        white-space: nowrap;
+    }
+
     td.email,
     td.price,
     td.datetime,
@@ -124,6 +127,7 @@ table {
         white-space: nowrap;
     }
 
+    td.buttons,
     th.price,
     td.price {
         width: 1%;
@@ -277,6 +281,13 @@ table {
         &.disabled {
             pointer-events: none;
             opacity: 0.6;
+        }
+
+        // Some icons are too big, scale them down
+        &.link-invitations {
+            svg {
+                transform: scale(0.9);
+            }
         }
 
         .badge {
