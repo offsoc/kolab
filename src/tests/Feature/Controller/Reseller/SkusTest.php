@@ -15,6 +15,8 @@ class SkusTest extends TestCase
         parent::setUp();
         self::useResellerUrl();
 
+        \config(['app.tenant_id' => 1]);
+
         $this->clearBetaEntitlements();
         $this->clearMeetEntitlements();
     }
@@ -24,6 +26,8 @@ class SkusTest extends TestCase
      */
     public function tearDown(): void
     {
+        \config(['app.tenant_id' => 1]);
+
         $this->clearBetaEntitlements();
         $this->clearMeetEntitlements();
 

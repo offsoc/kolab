@@ -4,7 +4,7 @@ import InvitationsComponent from '../../vue/Reseller/Invitations'
 import LoginComponent from '../../vue/Login'
 import LogoutComponent from '../../vue/Logout'
 import PageComponent from '../../vue/Page'
-//import StatsComponent from '../../vue/Reseller/Stats'
+import StatsComponent from '../../vue/Reseller/Stats'
 import UserComponent from '../../vue/Admin/User'
 
 const routes = [
@@ -40,14 +40,12 @@ const routes = [
         component: InvitationsComponent,
         meta: { requiresAuth: true }
     },
-/*
     {
         path: '/stats',
         name: 'stats',
         component: StatsComponent,
         meta: { requiresAuth: true }
     },
-*/
     {
         path: '/user/:user',
         name: 'user',

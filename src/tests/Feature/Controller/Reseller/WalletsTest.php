@@ -15,6 +15,7 @@ class WalletsTest extends TestCase
     {
         parent::setUp();
         self::useResellerUrl();
+        \config(['app.tenant_id' => 1]);
     }
 
     /**
@@ -22,6 +23,7 @@ class WalletsTest extends TestCase
      */
     public function tearDown(): void
     {
+        \config(['app.tenant_id' => 1]);
         parent::tearDown();
     }
 

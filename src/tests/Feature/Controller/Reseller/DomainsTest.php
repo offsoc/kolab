@@ -18,6 +18,7 @@ class DomainsTest extends TestCase
     {
         parent::setUp();
         self::useResellerUrl();
+        \config(['app.tenant_id' => 1]);
 
         $this->deleteTestDomain('domainscontroller.com');
     }
@@ -27,6 +28,7 @@ class DomainsTest extends TestCase
      */
     public function tearDown(): void
     {
+        \config(['app.tenant_id' => 1]);
         $this->deleteTestDomain('domainscontroller.com');
 
         parent::tearDown();
@@ -62,11 +64,11 @@ class DomainsTest extends TestCase
         $response = $this->actingAs($user)->get("api/v4/domains");
         $response->assertStatus(403);
 
-        // Search with no search criteria
+        // Admin user
         $response = $this->actingAs($admin)->get("api/v4/domains");
         $response->assertStatus(403);
 
-        // Search with no search criteria
+        // Reseller from a different tenant
         $response = $this->actingAs($reseller2)->get("api/v4/domains");
         $response->assertStatus(403);
 

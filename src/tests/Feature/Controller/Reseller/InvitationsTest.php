@@ -19,6 +19,8 @@ class InvitationsTest extends TestCase
 
         SignupInvitation::truncate();
 
+        \config(['app.tenant_id' => 1]);
+
         self::useResellerUrl();
     }
 
