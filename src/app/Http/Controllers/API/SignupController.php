@@ -95,13 +95,11 @@ class SignupController extends Controller
 
         // Generate the verification code
         $code = SignupCode::create([
-                'data' => [
-                    'email' => $request->email,
-                    'first_name' => $request->first_name,
-                    'last_name' => $request->last_name,
-                    'plan' => $request->plan,
-                    'voucher' => $request->voucher,
-                ]
+                'email' => $request->email,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'plan' => $request->plan,
+                'voucher' => $request->voucher,
         ]);
 
         // Send email/sms message
@@ -185,10 +183,10 @@ class SignupController extends Controller
         // domains list for selection and "plan type" flag
         return response()->json([
                 'status' => 'success',
-                'email' => $code->data['email'],
-                'first_name' => $code->data['first_name'],
-                'last_name' => $code->data['last_name'],
-                'voucher' => $code->data['voucher'],
+                'email' => $code->email,
+                'first_name' => $code->first_name,
+                'last_name' => $code->last_name,
+                'voucher' => $code->voucher,
                 'is_domain' => $has_domain,
                 'domains' => $has_domain ? [] : Domain::getPublicDomains(),
         ]);
@@ -346,8 +344,8 @@ class SignupController extends Controller
     {
         if (!$this->plan) {
             // Get the plan if specified and exists...
-            if ($this->code && $this->code->data['plan']) {
-                $plan = Plan::where('title', $this->code->data['plan'])->first();
+            if ($this->code && $this->code->plan) {
+                $plan = Plan::where('title', $this->code->plan)->first();
             }
 
             // ...otherwise use the default plan

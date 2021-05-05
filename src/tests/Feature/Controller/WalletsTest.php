@@ -68,10 +68,23 @@ class WalletsTest extends TestCase
         $wallet->owner->created_at = Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1);
         $wallet->owner->save();
 
+        // test "1 month"
         $wallet->balance = 999;
         $notice = $method->invoke($controller, $wallet);
 
         $this->assertRegExp('/\((1 month|4 weeks)\)/', $notice);
+
+        // test "2 months"
+        $wallet->balance = 999 * 2.6;
+        $notice = $method->invoke($controller, $wallet);
+
+        $this->assertRegExp('/\(2 months 2 weeks\)/', $notice);
+
+        // test "almost 2 years"
+        $wallet->balance = 999 * 23.5;
+        $notice = $method->invoke($controller, $wallet);
+
+        $this->assertRegExp('/\(1 year 11 months\)/', $notice);
 
         // Old entitlements, 100% discount
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));
@@ -165,6 +178,8 @@ class WalletsTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 1111,
+                'currency' => 'CHF',
+                'currency_amount' => 1111,
         ]);
         $payment->updated_at = $date;
         $payment->save();

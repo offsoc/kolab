@@ -2,7 +2,16 @@
     <div class="container">
         <div class="card" id="user-profile">
             <div class="card-body">
-                <div class="card-title">Your profile</div>
+                <div class="card-title">
+                    Your profile
+                    <router-link
+                        v-if="$root.isController(wallet_id)"
+                        class="btn btn-outline-danger button-delete float-right"
+                        to="/profile/delete" tag="button"
+                    >
+                        <svg-icon icon="trash-alt"></svg-icon> Delete account
+                    </router-link>
+                </div>
                 <div class="card-text">
                     <form @submit.prevent="submit">
                         <div class="form-group row plaintext">
@@ -69,11 +78,6 @@
                             </div>
                         </div>
                         <button class="btn btn-primary button-submit" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
-                        <router-link
-                            v-if="$root.isController(wallet_id)"
-                            class="btn btn-danger button-delete"
-                            to="/profile/delete" tag="button"
-                        ><svg-icon icon="trash-alt"></svg-icon> Delete account</router-link>
                     </form>
                 </div>
             </div>

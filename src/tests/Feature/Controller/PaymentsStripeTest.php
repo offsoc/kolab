@@ -135,7 +135,7 @@ class PaymentsStripeTest extends TestCase
         // Stripe in 'setup' mode does not allow to set the amount
         $payment = Payment::where('wallet_id', $wallet->id)->first();
         $this->assertSame(0, $payment->amount);
-        $this->assertSame("Kolab Now Auto-Payment Setup", $payment->description);
+        $this->assertSame(\config('app.name') . " Auto-Payment Setup", $payment->description);
         $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information
@@ -306,7 +306,14 @@ class PaymentsStripeTest extends TestCase
         $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
-        $post = ['amount' => '12.34'];
+
+        // Invalid currency
+        $post = ['amount' => '12.34', 'currency' => 'FOO', 'methodId' => 'creditcard'];
+        $response = $this->actingAs($user)->post("api/v4/payments", $post);
+        $response->assertStatus(500);
+
+        // Successful payment
+        $post = ['amount' => '12.34', 'currency' => 'CHF', 'methodId' => 'creditcard'];
         $response = $this->actingAs($user)->post("api/v4/payments", $post);
         $response->assertStatus(200);
 
@@ -705,5 +712,32 @@ class PaymentsStripeTest extends TestCase
 
         return $this->withHeaders(['Stripe-Signature' => $sig])
             ->json('POST', "api/webhooks/payment/stripe", $post);
+    }
+
+    /**
+     * Test listing payment methods
+     *
+     * @group stripe
+     */
+    public function testListingPaymentMethods(): void
+    {
+        Bus::fake();
+
+        $user = $this->getTestUser('john@kolab.org');
+
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_ONEOFF);
+        $response->assertStatus(200);
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('creditcard', $json[0]['id']);
+        $this->assertSame('paypal', $json[1]['id']);
+
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
+        $response->assertStatus(200);
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSame('creditcard', $json[0]['id']);
     }
 }

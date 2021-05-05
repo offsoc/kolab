@@ -10,22 +10,12 @@
  |
  */
 
+const { exec } = require('child_process');
 const fs = require('fs');
 const glob = require('glob');
 const mix = require('laravel-mix');
 
 mix.webpackConfig({
-    output: {
-        publicPath: process.env.MIX_ASSET_PATH,
-        // Make sure chunks are also put into the public/js/ folder
-        chunkFilename: "js/[name].js"
-    },
-    optimization: {
-        splitChunks: {
-            // Disable chunking, so we have one chunk.js instead of chunk.js + vendor~chunk.js
-            maxAsyncRequests: 1
-        }
-    },
     resolve: {
         alias: {
             'jquery$': 'jquery/dist/jquery.slim.js',
@@ -33,9 +23,13 @@ mix.webpackConfig({
     }
 })
 
-mix.js('resources/js/user/app.js', 'public/js/user.js')
-    .js('resources/js/admin/app.js', 'public/js/admin.js')
-    .js('resources/js/reseller/app.js', 'public/js/reseller.js')
+mix.js('resources/js/user/app.js', 'public/js/user.js').vue()
+    .js('resources/js/admin/app.js', 'public/js/admin.js').vue()
+    .js('resources/js/reseller/app.js', 'public/js/reseller.js').vue()
+
+mix.before(() => {
+    exec('php resources/build/before.php')
+})
 
 glob.sync('resources/themes/*/', {}).forEach(fromDir => {
     const toDir = fromDir.replace('resources/themes/', 'public/themes/')

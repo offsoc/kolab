@@ -170,8 +170,8 @@ const app = new Vue({
             return `<img src="${src}" alt="${this.appName}">`
         },
         // Display "loading" overlay inside of the specified element
-        addLoader(elem) {
-            $(elem).css({position: 'relative'}).append($(loader).addClass('small'))
+        addLoader(elem, small = true) {
+            $(elem).css({position: 'relative'}).append(small ? $(loader).addClass('small') : $(loader))
         },
         // Remove loader element added in addLoader()
         removeLoader(elem) {

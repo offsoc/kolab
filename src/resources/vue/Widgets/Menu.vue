@@ -35,7 +35,7 @@
                     </li>
                 </ul>
                 <div v-if="mode == 'footer'" class="footer">
-                    <div id="footer-copyright">@ Apheleia IT AG, 2020</div>
+                    <div id="footer-copyright">@ Apheleia IT AG, {{ buildYear }}</div>
                     <div v-if="footer" id="footer-company">{{ footer }}</div>
                 </div>
             </div>
@@ -44,7 +44,14 @@
 </template>
 
 <script>
+    import buildDate from '../../js/ts.js'
+
     export default {
+        data() {
+            return {
+                buildYear: buildDate.getFullYear()
+            }
+        },
         props: {
             mode: { type: String, default: 'header' },
             footer: { type: String, default: '' }

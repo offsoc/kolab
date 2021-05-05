@@ -30,8 +30,9 @@ class Controller extends BaseController
             401 => "Unauthorized",
             403 => "Access denied",
             404 => "Not found",
-            422 => "Input validation error",
             405 => "Method not allowed",
+            422 => "Input validation error",
+            429 => "Too many requests",
             500 => "Internal server error",
         ];
 

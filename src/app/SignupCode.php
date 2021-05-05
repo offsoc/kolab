@@ -4,17 +4,30 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * The eloquent definition of a SignupCode.
  *
- * @property string         $code
- * @property array          $data
- * @property \Carbon\Carbon $expires_at
- * @property string         $short_code
+ * @property string         $code        The full code identifier
+ * @property \Carbon\Carbon $created_at  The creation timestamp
+ * @property \Carbon\Carbon $deleted_at  The deletion timestamp
+ * @property ?string        $domain_part Email domain
+ * @property ?string        $email       Email address
+ * @property \Carbon\Carbon $expires_at  The code expiration timestamp
+ * @property ?string        $first_name  Firstname
+ * @property string         $ip_address  IP address the request came from
+ * @property ?string        $last_name   Lastname
+ * @property ?string        $local_part  Email local part
+ * @property ?string        $plan        Plan title
+ * @property string         $short_code  Short validation code
+ * @property \Carbon\Carbon $updated_at  The update timestamp
+ * @property ?string        $voucher     Voucher discount code
  */
 class SignupCode extends Model
 {
+    use SoftDeletes;
+
     public const SHORTCODE_LENGTH  = 5;
     public const CODE_LENGTH       = 32;
 
@@ -44,25 +57,22 @@ class SignupCode extends Model
     protected $keyType = 'string';
 
     /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = ['code', 'short_code', 'data', 'expires_at'];
+    protected $fillable = [
+        'code',
+        'email',
+        'expires_at',
+        'first_name',
+        'last_name',
+        'plan',
+        'short_code',
+        'voucher'
+    ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = ['data' => 'array'];
+    protected $casts = ['headers' => 'array'];
 
     /**
      * The attributes that should be mutated to dates.

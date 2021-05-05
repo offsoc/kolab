@@ -86,4 +86,17 @@ class Kernel extends HttpKernel
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
         \Illuminate\Auth\Middleware\Authorize::class,
     ];
+
+    /**
+     * Handle an incoming HTTP request.
+     *
+     * @param \Illuminate\Http\Request $request HTTP Request object
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function handle($request)
+    {
+        // Overwrite the http request object
+        return parent::handle(Request::createFrom($request));
+    }
 }

@@ -226,10 +226,10 @@ class SignupTest extends TestCase
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
-                && $code->data['plan'] === $data['plan']
-                && $code->data['email'] === $data['email']
-                && $code->data['first_name'] === $data['first_name']
-                && $code->data['last_name'] === $data['last_name'];
+                && $code->plan === $data['plan']
+                && $code->email === $data['email']
+                && $code->first_name === $data['first_name']
+                && $code->last_name === $data['last_name'];
         });
 
         // Try the same with voucher
@@ -248,11 +248,11 @@ class SignupTest extends TestCase
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
-                && $code->data['plan'] === $data['plan']
-                && $code->data['email'] === $data['email']
-                && $code->data['voucher'] === $data['voucher']
-                && $code->data['first_name'] === $data['first_name']
-                && $code->data['last_name'] === $data['last_name'];
+                && $code->plan === $data['plan']
+                && $code->email === $data['email']
+                && $code->voucher === $data['voucher']
+                && $code->first_name === $data['first_name']
+                && $code->last_name === $data['last_name'];
         });
 
         return [
@@ -570,10 +570,10 @@ class SignupTest extends TestCase
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
-                && $code->data['plan'] === $data['plan']
-                && $code->data['email'] === $data['email']
-                && $code->data['first_name'] === $data['first_name']
-                && $code->data['last_name'] === $data['last_name'];
+                && $code->plan === $data['plan']
+                && $code->email === $data['email']
+                && $code->first_name === $data['first_name']
+                && $code->last_name === $data['last_name'];
         });
 
         // Verify the code

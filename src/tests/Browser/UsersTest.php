@@ -119,10 +119,6 @@ class UsersTest extends TestCaseDusk
                         ->assertSeeIn('tbody tr:nth-child(2) a', 'joe@kolab.org')
                         ->assertSeeIn('tbody tr:nth-child(3) a', 'john@kolab.org')
                         ->assertSeeIn('tbody tr:nth-child(4) a', 'ned@kolab.org')
-                        ->assertVisible('tbody tr:nth-child(1) button.button-delete')
-                        ->assertVisible('tbody tr:nth-child(2) button.button-delete')
-                        ->assertVisible('tbody tr:nth-child(3) button.button-delete')
-                        ->assertVisible('tbody tr:nth-child(4) button.button-delete')
                         ->assertMissing('tfoot');
                 });
         });
@@ -473,13 +469,11 @@ class UsersTest extends TestCaseDusk
         $john->assignPackage($package_kolab, $julia);
 
         // Test deleting non-controller user
-        $this->browse(function (Browser $browser) {
-            $browser->visit(new UserList())
-                ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 5)
-                        ->assertSeeIn('tbody tr:nth-child(4) a', 'julia.roberts@kolab.org')
-                        ->click('tbody tr:nth-child(4) button.button-delete');
-                })
+        $this->browse(function (Browser $browser) use ($julia) {
+            $browser->visit('/user/' . $julia->id)
+                ->on(new UserInfo())
+                ->assertSeeIn('button.button-delete', 'Delete user')
+                ->click('button.button-delete')
                 ->with(new Dialog('#delete-warning'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Delete julia.roberts@kolab.org')
                         ->assertFocused('@button-cancel')
@@ -487,13 +481,14 @@ class UsersTest extends TestCaseDusk
                         ->assertSeeIn('@button-action', 'Delete')
                         ->click('@button-cancel');
                 })
-                ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->click('tbody tr:nth-child(4) button.button-delete');
-                })
+                ->waitUntilMissing('#delete-warning')
+                ->click('button.button-delete')
                 ->with(new Dialog('#delete-warning'), function (Browser $browser) {
                     $browser->click('@button-action');
                 })
+                ->waitUntilMissing('#delete-warning')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User deleted successfully.')
+                ->on(new UserList())
                 ->with('@table', function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
@@ -504,17 +499,9 @@ class UsersTest extends TestCaseDusk
 
             $julia = User::where('email', 'julia.roberts@kolab.org')->first();
             $this->assertTrue(empty($julia));
-
-            // Test clicking Delete on the controller record redirects to /profile/delete
-            $browser
-                ->with('@table', function (Browser $browser) {
-                    $browser->click('tbody tr:nth-child(3) button.button-delete');
-                })
-                ->waitForLocation('/profile/delete');
         });
 
         // Test that non-controller user cannot see/delete himself on the users list
-        // Note: Access to /profile/delete page is tested in UserProfileTest.php
         $this->browse(function (Browser $browser) {
             $browser->visit('/logout')
                 ->on(new Home())
@@ -526,15 +513,14 @@ class UsersTest extends TestCaseDusk
                 });
         });
 
-        // Test that controller user (Ned) can see/delete all the users ???
+        // Test that controller user (Ned) can see all the users
         $this->browse(function (Browser $browser) {
             $browser->visit('/logout')
                 ->on(new Home())
                 ->submitLogon('ned@kolab.org', 'simple123', true)
                 ->visit(new UserList())
                 ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 4)
-                        ->assertElementsCount('tbody button.button-delete', 4);
+                    $browser->assertElementsCount('tbody tr', 4);
                 });
 
                 // TODO: Test the delete action in details

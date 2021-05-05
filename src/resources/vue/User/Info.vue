@@ -4,7 +4,14 @@
 
         <div class="card" id="user-info">
             <div class="card-body">
-                <div class="card-title" v-if="user_id !== 'new'">User account</div>
+                <div class="card-title" v-if="user_id !== 'new'">User account
+                    <button
+                        class="btn btn-outline-danger button-delete float-right"
+                        v-on:click="showDeleteConfirmation()" tag="button"
+                    >
+                        <svg-icon icon="trash-alt"></svg-icon> Delete user
+                    </button>
+                </div>
                 <div class="card-title" v-if="user_id === 'new'">New user account</div>
                 <div class="card-text">
                     <form @submit.prevent="submit">
@@ -152,6 +159,29 @@
                         </div>
                         <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
                     </form>
+                </div>
+            </div>
+        </div>
+        <div id="delete-warning" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Do you really want to delete this user permanently?
+                            This will delete all account data and withdraw the permission to access the email account.
+                            Please note that this action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger modal-action" @click="deleteUser()">
+                            <svg-icon icon="trash-alt"></svg-icon> Delete
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -367,6 +397,29 @@
             },
             statusUpdate(user) {
                 this.user = Object.assign({}, this.user, user)
+            },
+            deleteUser() {
+                // Delete the user from the confirm dialog
+                axios.delete('/api/v4/users/' + this.user_id)
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                           this.$toast.success(response.data.message)
+                           this.$router.push({ name: 'users' })
+                        }
+                    })
+            },
+            showDeleteConfirmation() {
+                // Deleting self, redirect to /profile/delete page
+                if (this.user_id == this.$store.state.authInfo.id) {
+                    this.$router.push({ name: 'profile-delete' })
+                } else {
+                    // Display the warning
+                    let dialog = $('#delete-warning')
+                    dialog.find('.modal-title').text('Delete ' + this.user.email)
+                    dialog.on('shown.bs.modal', () => {
+                        dialog.find('button.modal-cancel').focus()
+                    }).modal()
+                }
             }
         }
     }

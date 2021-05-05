@@ -34,6 +34,43 @@ class SignupCodeObserver
             }
         }
 
+        $code->headers = collect(request()->headers->all())
+            ->filter(function ($value, $key) {
+                // remove some headers we don't care about
+                return !in_array($key, ['cookie', 'referer', 'x-test-payment-provider', 'origin']);
+            })
+            ->map(function ($value) {
+                return is_array($value) && count($value) == 1 ? $value[0] : $value;
+            });
+
         $code->expires_at = Carbon::now()->addHours($exp_hours);
+        $code->ip_address = request()->ip();
+
+        if ($code->email) {
+            $parts = explode('@', $code->email);
+
+            $code->local_part = $parts[0];
+            $code->domain_part = $parts[1];
+        }
+    }
+
+    /**
+     * Handle the "updating" event.
+     *
+     * @param SignupCode $code The code being updated.
+     *
+     * @return void
+     */
+    public function updating(SignupCode $code)
+    {
+        if ($code->email) {
+            $parts = explode('@', $code->email);
+
+            $code->local_part = $parts[0];
+            $code->domain_part = $parts[1];
+        } else {
+            $code->local_part = null;
+            $code->domain_part = null;
+        }
     }
 }

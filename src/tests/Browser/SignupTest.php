@@ -77,13 +77,11 @@ class SignupTest extends TestCaseDusk
         // Test valid code
         $this->browse(function (Browser $browser) {
             $code = SignupCode::create([
-                    'data' => [
-                        'email' => 'User@example.org',
-                        'first_name' => 'User',
-                        'last_name' => 'Name',
-                        'plan' => 'individual',
-                        'voucher' => '',
-                    ]
+                    'email' => 'User@example.org',
+                    'first_name' => 'User',
+                    'last_name' => 'Name',
+                    'plan' => 'individual',
+                    'voucher' => '',
             ]);
 
             $browser->visit('/signup/' . $code->short_code . '-' . $code->code)
