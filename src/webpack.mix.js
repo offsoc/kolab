@@ -11,7 +11,6 @@
  */
 
 const { spawn } = require('child_process');
-const fs = require('fs');
 const glob = require('glob');
 const mix = require('laravel-mix');
 
@@ -35,10 +34,4 @@ glob.sync('resources/themes/*/', {}).forEach(fromDir => {
 
     mix.sass(fromDir + 'app.scss', toDir)
         .sass(fromDir + 'document.scss', toDir);
-
-    fs.stat(fromDir + 'images', {}, (err, stats) => {
-        if (stats) {
-            mix.copyDirectory(fromDir + 'images', toDir + 'images')
-        }
-    })
 })
