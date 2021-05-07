@@ -38,6 +38,8 @@ return [
     'distlist-update-success' => 'Distribution list updated successfully.',
     'distlist-create-success' => 'Distribution list created successfully.',
     'distlist-delete-success' => 'Distribution list deleted successfully.',
+    'distlist-suspend-success' => 'Distribution list suspended successfully.',
+    'distlist-unsuspend-success' => 'Distribution list unsuspended successfully.',
 
     'domain-verify-success' => 'Domain verified successfully.',
     'domain-verify-error' => 'Domain ownership verification failed.',
@@ -52,6 +54,7 @@ return [
     'user-reset-2fa-success' => '2-Factor authentication reset successfully.',
 
     'search-foundxdomains' => ':x domains have been found.',
+    'search-foundxgroups' => ':x distribution lists have been found.',
     'search-foundxusers' => ':x user accounts have been found.',
 
     'support-request-success' => 'Support request submitted successfully.',

@@ -4,18 +4,18 @@ namespace Tests\Browser\Pages\Admin;
 
 use Laravel\Dusk\Page;
 
-class User extends Page
+class Distlist extends Page
 {
-    protected $userid;
+    protected $listid;
 
     /**
      * Object constructor.
      *
-     * @param int $userid User Id
+     * @param int $listid Distribution list Id
      */
-    public function __construct($userid)
+    public function __construct($listid)
     {
-        $this->userid = $userid;
+        $this->listid = $listid;
     }
 
     /**
@@ -25,7 +25,7 @@ class User extends Page
      */
     public function url(): string
     {
-        return '/user/' . $this->userid;
+        return '/distlist/' . $this->listid;
     }
 
     /**
@@ -38,8 +38,7 @@ class User extends Page
     public function assert($browser): void
     {
         $browser->waitForLocation($this->url())
-            ->waitUntilMissing('@app .app-loader')
-            ->waitFor('@user-info');
+            ->waitFor('@distlist-info');
     }
 
     /**
@@ -51,14 +50,8 @@ class User extends Page
     {
         return [
             '@app' => '#app',
-            '@user-info' => '#user-info',
-            '@nav' => 'ul.nav-tabs',
-            '@user-finances' => '#user-finances',
-            '@user-aliases' => '#user-aliases',
-            '@user-subscriptions' => '#user-subscriptions',
-            '@user-distlists' => '#user-distlists',
-            '@user-domains' => '#user-domains',
-            '@user-users' => '#user-users',
+            '@distlist-info' => '#distlist-info',
+            '@distlist-config' => '#distlist-config',
         ];
     }
 }

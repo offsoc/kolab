@@ -153,6 +153,11 @@ Route::group(
         Route::post('domains/{id}/unsuspend', 'API\V4\Admin\DomainsController@unsuspend');
 
         Route::apiResource('entitlements', API\V4\Admin\EntitlementsController::class);
+
+        Route::apiResource('groups', API\V4\Admin\GroupsController::class);
+        Route::post('groups/{id}/suspend', 'API\V4\Admin\GroupsController@suspend');
+        Route::post('groups/{id}/unsuspend', 'API\V4\Admin\GroupsController@unsuspend');
+
         Route::apiResource('packages', API\V4\Admin\PackagesController::class);
         Route::apiResource('skus', API\V4\Admin\SkusController::class);
         Route::apiResource('users', API\V4\Admin\UsersController::class);

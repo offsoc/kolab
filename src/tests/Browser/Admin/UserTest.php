@@ -39,7 +39,7 @@ class UserTest extends TestCaseDusk
         $wallet->save();
 
         Entitlement::where('cost', '>=', 5000)->delete();
-
+        $this->deleteTestGroup('group-test@kolab.org');
         $this->clearMeetEntitlements();
     }
 
@@ -61,7 +61,7 @@ class UserTest extends TestCaseDusk
         $wallet->save();
 
         Entitlement::where('cost', '>=', 5000)->delete();
-
+        $this->deleteTestGroup('group-test@kolab.org');
         $this->clearMeetEntitlements();
 
         parent::tearDown();
@@ -116,7 +116,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 5);
+                ->assertElementsCount('@nav a', 6);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -160,6 +160,14 @@ class UserTest extends TestCaseDusk
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no users in this account.');
                 });
+
+            // Assert Distribution lists tab
+            $browser->assertSeeIn('@nav #tab-distlists', 'Distribution lists (0)')
+                ->click('@nav #tab-distlists')
+                ->with('@user-distlists', function (Browser $browser) {
+                    $browser->assertElementsCount('table tbody tr', 0)
+                        ->assertSeeIn('table tfoot tr td', 'There are no distribution lists in this account.');
+                });
         });
     }
 
@@ -178,6 +186,8 @@ class UserTest extends TestCaseDusk
             $wallet->discount()->associate($discount);
             $wallet->debit(2010);
             $wallet->save();
+            $group = $this->getTestGroup('group-test@kolab.org');
+            $group->assignToWallet($john->wallets->first());
 
             // Click the managed-by link on Jack's page
             $browser->click('@user-info #manager a')
@@ -212,7 +222,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 5);
+                ->assertElementsCount('@nav a', 6);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -248,6 +258,16 @@ class UserTest extends TestCaseDusk
                     $browser->assertElementsCount('tbody tr', 1)
                         ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'kolab.org')
                         ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-success')
+                        ->assertMissing('tfoot');
+                });
+
+            // Assert Distribution lists tab
+            $browser->assertSeeIn('@nav #tab-distlists', 'Distribution lists (1)')
+                ->click('@nav #tab-distlists')
+                ->with('@user-distlists table', function (Browser $browser) {
+                    $browser->assertElementsCount('tbody tr', 1)
+                        ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'group-test@kolab.org')
+                        ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-danger')
                         ->assertMissing('tfoot');
                 });
 
@@ -305,7 +325,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 5);
+                ->assertElementsCount('@nav a', 6);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -354,6 +374,14 @@ class UserTest extends TestCaseDusk
                 ->with('@user-users', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no users in this account.');
+                });
+
+            // We don't expect John's distribution lists here
+            $browser->assertSeeIn('@nav #tab-distlists', 'Distribution lists (0)')
+                ->click('@nav #tab-distlists')
+                ->with('@user-distlists', function (Browser $browser) {
+                    $browser->assertElementsCount('table tbody tr', 0)
+                        ->assertSeeIn('table tfoot tr td', 'There are no distribution lists in this account.');
                 });
         });
     }
