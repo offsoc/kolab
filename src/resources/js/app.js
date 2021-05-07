@@ -248,19 +248,15 @@ const app = new Vue({
         price(price, currency) {
             return ((price || 0) / 100).toLocaleString('de-DE', { style: 'currency', currency: currency || 'CHF' })
         },
-        priceLabel(cost, units = 1, discount) {
+        priceLabel(cost, discount) {
             let index = ''
-
-            if (units < 0) {
-                units = 1
-            }
 
             if (discount) {
                 cost = Math.floor(cost * ((100 - discount) / 100))
                 index = '\u00B9'
             }
 
-            return this.price(cost * units) + '/month' + index
+            return this.price(cost) + '/month' + index
         },
         clickRecord(event) {
             if (!/^(a|button|svg|path)$/i.test(event.target.nodeName)) {

@@ -454,18 +454,18 @@
                         .then(response => {
                             // "merge" SKUs with user entitlement-SKUs
                             response.data.forEach(sku => {
-                                if (sku.id in this.user.skus) {
-                                    let count = this.user.skus[sku.id].count
+                                const userSku = this.user.skus[sku.id]
+                                if (userSku) {
+                                    let cost = userSku.costs.reduce((sum, current) => sum + current)
                                     let item = {
                                         id: sku.id,
                                         name: sku.name,
-                                        cost: sku.cost,
-                                        units: count - sku.units_free,
-                                        price: this.$root.priceLabel(sku.cost, count - sku.units_free, this.discount)
+                                        cost: cost,
+                                        price: this.$root.priceLabel(cost, this.discount)
                                     }
 
                                     if (sku.range) {
-                                        item.name += ' ' + count + ' ' + sku.range.unit
+                                        item.name += ' ' + userSku.count + ' ' + sku.range.unit
                                     }
 
                                     this.skus.push(item)
@@ -587,7 +587,7 @@
                                 this.discount_description = this.wallet.discount_description
 
                                 this.skus.forEach(sku => {
-                                    sku.price = this.$root.priceLabel(sku.cost, sku.units, this.discount)
+                                    sku.price = this.$root.priceLabel(sku.cost, this.discount)
                                 })
                             }
                         }

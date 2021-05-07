@@ -4,6 +4,7 @@ namespace Tests\Browser\Admin;
 
 use App\Auth\SecondFactor;
 use App\Discount;
+use App\Entitlement;
 use App\Sku;
 use App\User;
 use Tests\Browser;
@@ -37,6 +38,8 @@ class UserTest extends TestCaseDusk
         $wallet->discount()->dissociate();
         $wallet->save();
 
+        Entitlement::where('cost', '>=', 5000)->delete();
+
         $this->clearMeetEntitlements();
     }
 
@@ -56,6 +59,8 @@ class UserTest extends TestCaseDusk
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
         $wallet->save();
+
+        Entitlement::where('cost', '>=', 5000)->delete();
 
         $this->clearMeetEntitlements();
 
@@ -266,6 +271,26 @@ class UserTest extends TestCaseDusk
         // Now we go to Ned's info page, he's a controller on John's wallet
         $this->browse(function (Browser $browser) {
             $ned = $this->getTestUser('ned@kolab.org');
+            $beta_sku = Sku::where('title', 'beta')->first();
+            $storage_sku = Sku::where('title', 'storage')->first();
+            $wallet = $ned->wallet();
+
+            // Add an extra storage and beta entitlement with different prices
+            Entitlement::create([
+                    'wallet_id' => $wallet->id,
+                    'sku_id' => $beta_sku->id,
+                    'cost' => 5010,
+                    'entitleable_id' => $ned->id,
+                    'entitleable_type' => User::class
+            ]);
+            Entitlement::create([
+                    'wallet_id' => $wallet->id,
+                    'sku_id' => $storage_sku->id,
+                    'cost' => 5000,
+                    'entitleable_id' => $ned->id,
+                    'entitleable_type' => User::class
+            ]);
+
             $page = new UserPage($ned->id);
 
             $browser->click('@user-users tbody tr:nth-child(4) td:first-child a')
@@ -294,20 +319,22 @@ class UserTest extends TestCaseDusk
                 });
 
             // Assert Subscriptions tab, we expect John's discount here
-            $browser->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (5)')
+            $browser->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (6)')
                 ->click('@nav #tab-subscriptions')
                 ->with('@user-subscriptions', function (Browser $browser) {
-                    $browser->assertElementsCount('table tbody tr', 5)
+                    $browser->assertElementsCount('table tbody tr', 6)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'User Mailbox')
                         ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '3,99 CHF/month¹')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 2 GB')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 3 GB')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '45,00 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:first-child', 'Groupware Features')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,99 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(4) td:first-child', 'Activesync')
                         ->assertSeeIn('table tbody tr:nth-child(4) td:last-child', '0,90 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(5) td:first-child', '2-Factor Authentication')
                         ->assertSeeIn('table tbody tr:nth-child(5) td:last-child', '0,00 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(6) td:first-child', 'Private Beta (invitation only)')
+                        ->assertSeeIn('table tbody tr:nth-child(6) td:last-child', '45,09 CHF/month¹')
                         ->assertMissing('table tfoot')
                         ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher')
                         ->assertSeeIn('#reset2fa', 'Reset 2-Factor Auth');

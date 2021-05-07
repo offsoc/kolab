@@ -113,10 +113,11 @@ class UsersController extends Controller
         $response['skus'] = [];
         foreach ($user->entitlements as $ent) {
             $sku = $ent->sku;
-            $response['skus'][$sku->id] = [
-//                'cost' => $ent->cost,
-                'count' => isset($response['skus'][$sku->id]) ? $response['skus'][$sku->id]['count'] + 1 : 1,
-            ];
+            if (!isset($response['skus'][$sku->id])) {
+                $response['skus'][$sku->id] = ['costs' => [], 'count' => 0];
+            }
+            $response['skus'][$sku->id]['count']++;
+            $response['skus'][$sku->id]['costs'][] = $ent->cost;
         }
 
         return response()->json($response);

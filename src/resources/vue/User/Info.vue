@@ -88,7 +88,7 @@
                                                 <label :for="'pkg-input-' + pkg.id">{{ pkg.name }}</label>
                                             </td>
                                             <td class="price text-nowrap">
-                                                {{ $root.priceLabel(pkg.cost, 1, discount) }}
+                                                {{ $root.priceLabel(pkg.cost, discount) }}
                                             </td>
                                             <td class="buttons">
                                                 <button v-if="pkg.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="pkg.description">
@@ -140,7 +140,7 @@
                                                 </div>
                                             </td>
                                             <td class="price text-nowrap">
-                                                {{ $root.priceLabel(sku.cost, 1, discount) }}
+                                                {{ $root.priceLabel(sku.cost, discount) }}
                                             </td>
                                             <td class="buttons">
                                                 <button v-if="sku.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="sku.description">
@@ -254,9 +254,13 @@
                                 // "merge" SKUs with user entitlement-SKUs
                                 this.skus = response.data
                                     .map(sku => {
-                                        if (sku.id in this.user.skus) {
+                                        const userSku = this.user.skus[sku.id]
+                                        if (userSku) {
                                             sku.enabled = true
-                                            sku.value = this.user.skus[sku.id].count
+                                            sku.skuCost = sku.cost
+                                            sku.cost = userSku.costs.reduce((sum, current) => sum + current)
+                                            sku.value = userSku.count
+                                            sku.costs = userSku.costs
                                         } else if (!sku.readonly) {
                                             sku.enabled = false
                                         }
@@ -380,13 +384,28 @@
                 let record = input.parents('tr').first()
                 let sku_id = record.find('input[type=checkbox]').val()
                 let sku = this.findSku(sku_id)
-                let cost = sku.cost
+                let existing = sku.costs ? sku.costs.length : 0
+                let cost
+
+                // Calculate cost, considering both existing entitlement cost and sku cost
+                if (existing) {
+                    cost = sku.costs
+                        .sort((a, b) => a - b) // sort by cost ascending (free units first)
+                        .slice(0, value)
+                        .reduce((sum, current) => sum + current)
+
+                    if (value > existing) {
+                        cost += sku.skuCost * (value - existing)
+                    }
+                } else {
+                    cost = sku.cost * (value - sku.units_free)
+                }
 
                 // Update the label
                 input.prev().text(value + ' ' + sku.range.unit)
 
                 // Update the price
-                record.find('.price').text(this.$root.priceLabel(cost, value - sku.units_free, this.discount))
+                record.find('.price').text(this.$root.priceLabel(cost, this.discount))
             },
             findSku(id) {
                 for (let i = 0; i < this.skus.length; i++) {

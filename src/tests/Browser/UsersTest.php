@@ -42,6 +42,7 @@ class UsersTest extends TestCaseDusk
             ->where('alias', 'john.test@kolab.org')->delete();
 
         Entitlement::where('entitleable_id', $john->id)->whereIn('cost', [25, 100])->delete();
+        Entitlement::where('cost', '>=', 5000)->delete();
 
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
@@ -64,6 +65,7 @@ class UsersTest extends TestCaseDusk
             ->where('alias', 'john.test@kolab.org')->delete();
 
         Entitlement::where('entitleable_id', $john->id)->whereIn('cost', [25, 100])->delete();
+        Entitlement::where('cost', '>=', 5000)->delete();
 
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
@@ -548,7 +550,7 @@ class UsersTest extends TestCaseDusk
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->visit(new UserList())
                 ->waitFor('@table tr:nth-child(2)')
-                ->click('@table tr:nth-child(2) a')
+                ->click('@table tr:nth-child(2) a') // joe@kolab.org
                 ->on(new UserInfo())
                 ->with('@form', function (Browser $browser) {
                     $browser->whenAvailable('@skus', function (Browser $browser) {
@@ -562,7 +564,7 @@ class UsersTest extends TestCaseDusk
                             ->with($quota_input, function (Browser $browser) {
                                 $browser->setQuotaValue(100);
                             })
-                            ->assertSeeIn('tr:nth-child(2) td.price', '21,56 CHF/month¹')
+                            ->assertSeeIn('tr:nth-child(2) td.price', '22,05 CHF/month¹')
                             // groupware SKU
                             ->assertSeeIn('tbody tr:nth-child(3) td.price', '4,99 CHF/month¹')
                             // ActiveSync SKU
@@ -586,6 +588,51 @@ class UsersTest extends TestCaseDusk
                             ->assertSeeIn('tbody tr:nth-child(2) .price', '3,99 CHF/month¹'); // Lite
                     })
                     ->assertSeeIn('@packages table + .hint', '¹ applied discount: 10% - Test voucher');
+                });
+        });
+
+        // Test using entitlement cost instead of the SKU cost
+        $this->browse(function (Browser $browser) use ($wallet) {
+            $joe = User::where('email', 'joe@kolab.org')->first();
+            $beta_sku = Sku::where('title', 'beta')->first();
+            $storage_sku = Sku::where('title', 'storage')->first();
+
+            // Add an extra storage and beta entitlement with different prices
+            Entitlement::create([
+                    'wallet_id' => $wallet->id,
+                    'sku_id' => $beta_sku->id,
+                    'cost' => 5010,
+                    'entitleable_id' => $joe->id,
+                    'entitleable_type' => User::class
+            ]);
+            Entitlement::create([
+                    'wallet_id' => $wallet->id,
+                    'sku_id' => $storage_sku->id,
+                    'cost' => 5000,
+                    'entitleable_id' => $joe->id,
+                    'entitleable_type' => User::class
+            ]);
+
+            $browser->visit('/user/' . $joe->id)
+                ->on(new UserInfo())
+                ->with('@form', function (Browser $browser) {
+                    $browser->whenAvailable('@skus', function (Browser $browser) {
+                        $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
+                        $browser->waitFor('tbody tr')
+                            // Beta SKU
+                            ->assertSeeIn('tbody tr:nth-child(7) td.price', '45,09 CHF/month¹')
+                            // Storage SKU
+                            ->assertSeeIn('tr:nth-child(2) td.price', '45,00 CHF/month¹')
+                            ->with($quota_input, function (Browser $browser) {
+                                $browser->setQuotaValue(4);
+                            })
+                            ->assertSeeIn('tr:nth-child(2) td.price', '45,22 CHF/month¹')
+                            ->with($quota_input, function (Browser $browser) {
+                                $browser->setQuotaValue(2);
+                            })
+                            ->assertSeeIn('tr:nth-child(2) td.price', '0,00 CHF/month¹');
+                    })
+                    ->assertSeeIn('@skus table + .hint', '¹ applied discount: 10% - Test voucher');
                 });
         });
     }
