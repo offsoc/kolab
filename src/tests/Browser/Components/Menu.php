@@ -108,6 +108,7 @@ class Menu extends BaseComponent
             '@list' => ".navbar-nav",
             '@brand' =>  ".navbar-brand",
             '@toggler' => ".navbar-toggler",
+            '@lang' =>  ".nav-link.link-lang",
         ];
     }
 }

@@ -3,6 +3,10 @@
     padding: 0;
     line-height: 85px;
 
+    .navbar {
+        padding-right: 0;
+    }
+
     .navbar-brand {
         padding: 0;
         outline: 0;
@@ -39,6 +43,11 @@
     background-color: $main-color;
     height: 100px;
     overflow: hidden;
+    padding: 0;
+
+    .navbar {
+        padding-right: 0;
+    }
 
     .navbar-brand {
         margin: 0;
@@ -53,6 +62,20 @@
         color: #fff;
         font-size: 0.75rem;
         padding: 0 0.5rem;
+    }
+}
+
+#language-selector {
+    margin: 2em 0;
+
+    .dropdown-toggle {
+        padding-left: 20px;
+        line-height: 30px;
+        font-weight: lighter;
+    }
+
+    .dropdown-item {
+        line-height: initial;
     }
 }
 
@@ -106,12 +129,24 @@
     #footer-menu {
         height: 80px;
 
+        .navbar {
+            padding-left: 0;
+        }
+
         .navbar-nav {
             display: none;
         }
 
         .container {
             flex-wrap: nowrap;
+        }
+    }
+
+    #language-selector {
+        margin: 0;
+
+        .dropdown-toggle:after {
+            display: none;
         }
     }
 }

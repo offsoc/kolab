@@ -10,7 +10,7 @@
  |
  */
 
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const glob = require('glob');
 const mix = require('laravel-mix');
@@ -24,7 +24,7 @@ mix.webpackConfig({
 })
 
 mix.before(() => {
-    exec('php resources/build/before.php')
+    spawn('php', ['resources/build/before.php'], { stdio: 'inherit' })
 })
 
 mix.js('resources/js/user.js', 'public/js').vue()

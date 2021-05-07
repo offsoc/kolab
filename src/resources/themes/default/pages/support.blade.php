@@ -14,7 +14,7 @@
             </p>
             </div>
             <div class="card-footer text-center">
-                <a href="/support/contact" class="btn btn-info">Contact Support</a>
+                <a href="/support/contact" class="btn btn-info">@lang('theme::support.btn')</a>
             </div>
         </div>
     </div>

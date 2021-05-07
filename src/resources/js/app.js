@@ -10,6 +10,7 @@ import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Widgets/Menu'
 import SupportForm from '../vue/Widgets/SupportForm'
 import store from './store'
+import { loadLangAsync, i18n } from './locale'
 
 const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'
 
@@ -69,11 +70,11 @@ window.router.afterEach((to, from) => {
 })
 
 const app = new Vue({
-    el: '#app',
     components: {
         AppComponent,
         MenuComponent,
     },
+    i18n,
     store,
     router: window.router,
     data() {
@@ -400,6 +401,9 @@ const app = new Vue({
         }
     }
 })
+
+// Fetch the locale file and the start the app
+loadLangAsync().then(() => app.$mount('#app'))
 
 // Add a axios request interceptor
 window.axios.interceptors.request.use(

@@ -36,7 +36,7 @@ class RoomSetupTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new RoomPage('unknown'))
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
+                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
@@ -70,7 +70,7 @@ class RoomSetupTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new RoomPage('john'))
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
+                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
@@ -150,7 +150,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->submitLogon('john@kolab.org', 'simple123')
                 ->waitFor('@setup-form')
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout', 'lang']);
                 });
 
             if ($browser->isDesktop()) {

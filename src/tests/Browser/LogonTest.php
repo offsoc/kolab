@@ -13,7 +13,6 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class LogonTest extends TestCaseDusk
 {
-
     /**
      * Test menu on logon page
      */
@@ -22,7 +21,7 @@ class LogonTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login'])
+                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang'])
                         ->assertSeeIn('#footer-copyright', '@ Apheleia IT AG, ' . date('Y'));
                 });
 
@@ -36,6 +35,53 @@ class LogonTest extends TestCaseDusk
 
             $browser->assertSeeLink('Forgot password?')
                 ->assertSeeLink('Webmail');
+        });
+    }
+
+    /**
+     * Test language menu, and language change
+     */
+    public function testLocales(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new Home())
+                // ->plainCookie('language', '')
+                ->within(new Menu(), function ($browser) {
+                    $browser->assertSeeIn('@lang', 'EN')
+                        ->click('@lang');
+                })
+                // Switch English -> German
+                ->whenAvailable('nav .dropdown-menu', function (Browser $browser) {
+                    $browser->assertElementsCount('a', 2)
+                        ->assertSeeIn('a:nth-child(1)', 'EN - English')
+                        ->assertSeeIn('a:nth-child(2)', 'DE - German')
+                        ->click('a:nth-child(2)');
+                })
+                ->waitUntilMissing('nav .dropdown-menu')
+                ->within(new Menu(), function ($browser) {
+                    $browser->assertSeeIn('@lang', 'DE');
+                })
+                ->waitForTextIn('#header-menu .link-login', 'EINLOGGEN')
+                ->assertSeeIn('#footer-menu .link-login', 'Einloggen')
+                ->assertSeeIn('@logon-button', 'Anmelden')
+                // refresh the page to see if it uses the lang previously set
+                ->refresh()
+                ->waitForTextIn('#header-menu .link-login', 'EINLOGGEN')
+                ->assertSeeIn('#footer-menu .link-login', 'Einloggen')
+                ->assertSeeIn('@logon-button', 'Anmelden')
+                ->within(new Menu(), function ($browser) {
+                    $browser->assertSeeIn('@lang', 'DE')
+                        ->click('@lang');
+                })
+                // Switch German -> English
+                ->whenAvailable('nav .dropdown-menu', function (Browser $browser) {
+                    $browser->click('a:nth-child(1)');
+                })
+                ->waitUntilMissing('nav .dropdown-menu')
+                ->within(new Menu(), function ($browser) {
+                    $browser->assertSeeIn('@lang', 'EN');
+                })
+                ->waitForTextIn('#header-menu .link-login', 'LOGIN');
         });
     }
 
@@ -86,7 +132,7 @@ class LogonTest extends TestCaseDusk
                 ->assertVisible('@links a.link-wallet')
                 ->assertVisible('@links a.link-webmail')
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout']);
+                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
@@ -138,7 +184,7 @@ class LogonTest extends TestCaseDusk
 
             // with default menu
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang']);
             });
 
             // Success toast message
@@ -165,7 +211,7 @@ class LogonTest extends TestCaseDusk
 
             // with default menu
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login']);
+                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang']);
             });
 
             // Success toast message

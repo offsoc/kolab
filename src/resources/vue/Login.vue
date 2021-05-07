@@ -2,40 +2,40 @@
     <div class="container d-flex flex-column align-items-center justify-content-center">
         <div id="logon-form" class="card col-sm-8 col-lg-6">
             <div class="card-body">
-                <h1 class="card-title text-center mb-3">Please sign in</h1>
+                <h1 class="card-title text-center mb-3">{{ $t('login.header') }}</h1>
                 <div class="card-text">
                     <form class="form-signin" @submit.prevent="submitLogin">
                         <div class="form-group">
-                            <label for="inputEmail" class="sr-only">Email address</label>
+                            <label for="inputEmail" class="sr-only">{{ $t('login.email') }}</label>
                             <div class="input-group">
                                 <span class="input-group-prepend">
                                     <span class="input-group-text"><svg-icon icon="user"></svg-icon></span>
                                 </span>
-                                <input type="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus v-model="email">
+                                <input type="email" id="inputEmail" class="form-control" :placeholder="$t('login.email')" required autofocus v-model="email">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="inputPassword" class="sr-only">Password</label>
+                            <label for="inputPassword" class="sr-only">{{ $t('login.password') }}</label>
                             <div class="input-group">
                                 <span class="input-group-prepend">
                                     <span class="input-group-text"><svg-icon icon="lock"></svg-icon></span>
                                 </span>
-                                <input type="password" id="inputPassword" class="form-control" placeholder="Password" required v-model="password">
+                                <input type="password" id="inputPassword" class="form-control" :placeholder="$t('login.password')" required v-model="password">
                             </div>
                         </div>
                         <div class="form-group pt-3" v-if="!$root.isAdmin">
-                            <label for="secondfactor" class="sr-only">2FA</label>
+                            <label for="secondfactor" class="sr-only">{{ $t('login.2fa') }}</label>
                             <div class="input-group">
                                 <span class="input-group-prepend">
                                     <span class="input-group-text"><svg-icon icon="key"></svg-icon></span>
                                 </span>
-                                <input type="text" id="secondfactor" class="form-control rounded-right" placeholder="Second factor code" v-model="secondFactor">
+                                <input type="text" id="secondfactor" class="form-control rounded-right" :placeholder="$t('login.2fa')" v-model="secondFactor">
                             </div>
-                            <small class="form-text text-muted">Second factor code is optional for users with no 2-Factor Authentication setup.</small>
+                            <small class="form-text text-muted">{{ $t('login.2fa_desc') }}</small>
                         </div>
                         <div class="text-center">
                             <button class="btn btn-primary" type="submit">
-                                <svg-icon icon="sign-in-alt"></svg-icon> Sign in
+                                <svg-icon icon="sign-in-alt"></svg-icon> {{ $t('login.sign_in') }}
                             </button>
                         </div>
                     </form>
@@ -43,8 +43,8 @@
             </div>
         </div>
         <div id="logon-form-footer" class="mt-1">
-            <router-link v-if="!$root.isAdmin && $root.hasRoute('password-reset')" :to="{ name: 'password-reset' }" id="forgot-password">Forgot password?</router-link>
-            <a v-if="webmailURL && !$root.isAdmin" :href="webmailURL" id="webmail">Webmail</a>
+            <router-link v-if="!$root.isAdmin && $root.hasRoute('password-reset')" :to="{ name: 'password-reset' }" id="forgot-password">{{ $t('login.forgot_password') }}</router-link>
+            <a v-if="webmailURL && !$root.isAdmin" :href="webmailURL" id="webmail">{{ $t('login.webmail') }}</a>
         </div>
     </div>
 </template>
