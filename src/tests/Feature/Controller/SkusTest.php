@@ -49,7 +49,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(8, $json);
+        $this->assertCount(9, $json);
 
         $this->assertSame(100, $json[0]['prio']);
         $this->assertSame($sku->id, $json[0]['id']);
@@ -171,7 +171,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(7, $json);
+        $this->assertCount(8, $json);
 
         $this->assertSkuElement('meet', $json[5], [
                 'prio' => 50,

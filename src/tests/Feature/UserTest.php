@@ -320,6 +320,8 @@ class UserTest extends TestCase
         $group->assignToWallet($userA->wallets->first());
         $group->save();
 
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+
         $userGroups = $userA->groups()->get();
         $this->assertSame(1, $userGroups->count());
         $this->assertSame($group->id, $userGroups->first()->id);
