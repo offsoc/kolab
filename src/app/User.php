@@ -193,7 +193,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Check if current user can delete another object.
      *
-     * @param \App\User|\App\Domain $object A user|domain object
+     * @param mixed $object A user|domain|wallet|group object
      *
      * @return bool True if he can, False otherwise
      */
@@ -214,7 +214,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Check if current user can read data of another object.
      *
-     * @param \App\User|\App\Domain|\App\Wallet $object A user|domain|wallet object
+     * @param mixed $object A user|domain|wallet|group object
      *
      * @return bool True if he can, False otherwise
      */
@@ -256,7 +256,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Check if current user can update data of another object.
      *
-     * @param \App\User|\App\Domain $object A user|domain object
+     * @param mixed $object A user|domain|wallet|group object
      *
      * @return bool True if he can, False otherwise
      */
