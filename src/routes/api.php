@@ -181,6 +181,11 @@ Route::group(
         Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
         Route::post('domains/{id}/suspend', 'API\V4\Reseller\DomainsController@suspend');
         Route::post('domains/{id}/unsuspend', 'API\V4\Reseller\DomainsController@unsuspend');
+
+        Route::apiResource('groups', API\V4\Reseller\GroupsController::class);
+        Route::post('groups/{id}/suspend', 'API\V4\Reseller\GroupsController@suspend');
+        Route::post('groups/{id}/unsuspend', 'API\V4\Reseller\GroupsController@unsuspend');
+
         Route::apiResource('invitations', API\V4\Reseller\InvitationsController::class);
         Route::post('invitations/{id}/resend', 'API\V4\Reseller\InvitationsController@resend');
         Route::apiResource('packages', API\V4\Reseller\PackagesController::class);
