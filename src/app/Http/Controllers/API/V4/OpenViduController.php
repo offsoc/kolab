@@ -217,7 +217,7 @@ class OpenViduController extends Controller
             return $this->errorResponse(404, \trans('meet.room-not-found'));
         }
 
-        // Check if there's still a valid beta entitlement for the room owner
+        // Check if there's still a valid meet entitlement for the room owner
         $sku = \App\Sku::where('title', 'meet')->first();
         if ($sku && !$room->owner->entitlements()->where('sku_id', $sku->id)->first()) {
             return $this->errorResponse(404, \trans('meet.room-not-found'));

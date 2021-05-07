@@ -716,16 +716,15 @@ class LDAP
             list($local, $domainName) = explode('@', $member);
 
             $memberDN = "uid={$member},ou=People,{$domainBaseDN}";
+            $memberEntry = $ldap->get_entry($memberDN);
 
             // if the member is in the local domain but doesn't exist, drop it
-            if ($domainName == $domain->namespace) {
-                if (!$ldap->get_entry($memberDN)) {
-                    continue;
-                }
+            if ($domainName == $domain->namespace && !$memberEntry) {
+                continue;
             }
 
             // add the member if not in the local domain
-            if (!$ldap->get_entry($memberDN)) {
+            if (!$memberEntry) {
                 $memberEntry = [
                     'cn' => $member,
                     'mail' => $member,

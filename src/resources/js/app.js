@@ -38,7 +38,7 @@ let loadingRoute
 // Note: You cannot use app inside of the function
 window.router.beforeEach((to, from, next) => {
     // check if the route requires authentication and user is not logged in
-    if (to.matched.some(route => route.meta.requiresAuth) && !store.state.isLoggedIn) {
+    if (to.meta.requiresAuth && !store.state.isLoggedIn) {
         // remember the original request, to use after login
         store.state.afterLogin = to;
 
@@ -89,6 +89,11 @@ const app = new Vue({
         clearFormValidation(form) {
             $(form).find('.is-invalid').removeClass('is-invalid')
             $(form).find('.invalid-feedback').remove()
+        },
+        hasPermission(type) {
+            const authInfo = store.state.authInfo
+            const key = 'enable' + type.charAt(0).toUpperCase() + type.slice(1)
+            return !!(authInfo && authInfo.statusInfo[key])
         },
         hasRoute(name) {
             return this.$router.resolve({ name: name }).resolved.matched.length > 0
@@ -296,6 +301,36 @@ const app = new Vue({
 
             return 'Active'
         },
+        distlistStatusClass(list) {
+            if (list.isDeleted) {
+                return 'text-muted'
+            }
+
+            if (list.isSuspended) {
+                return 'text-warning'
+            }
+
+            if (!list.isLdapReady) {
+                return 'text-danger'
+            }
+
+            return 'text-success'
+        },
+        distlistStatusText(list) {
+            if (list.isDeleted) {
+                return 'Deleted'
+            }
+
+            if (list.isSuspended) {
+                return 'Suspended'
+            }
+
+            if (!list.isLdapReady) {
+                return 'Not Ready'
+            }
+
+            return 'Active'
+        },
         pageName(path) {
             let page = this.$route.path
 
@@ -361,8 +396,7 @@ const app = new Vue({
         updateBodyClass(name) {
             // Add 'class' attribute to the body, different for each page
             // so, we can apply page-specific styles
-            let className = 'page-' + (name || this.pageName()).replace(/\/.*$/, '')
-            $(document.body).removeClass().addClass(className)
+            document.body.className = 'page-' + (name || this.pageName()).replace(/\/.*$/, '')
         }
     }
 })
@@ -437,11 +471,19 @@ window.axios.interceptors.response.use(
 
                         if (input.is('.list-input')) {
                             // List input widget
-                            input.children(':not(:first-child)').each((index, element) => {
-                                if (msg[index]) {
-                                    $(element).find('input').addClass('is-invalid')
-                                }
-                            })
+                            let controls = input.children(':not(:first-child)')
+
+                            if (!controls.length && typeof msg == 'string') {
+                                // this is an empty list (the main input only)
+                                // and the error message is not an array
+                                input.find('.main-input').addClass('is-invalid')
+                            } else {
+                                controls.each((index, element) => {
+                                    if (msg[index]) {
+                                        $(element).find('input').addClass('is-invalid')
+                                    }
+                                })
+                            }
 
                             input.addClass('is-invalid').next('.invalid-feedback').remove()
                             input.after(feedback)

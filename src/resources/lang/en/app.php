@@ -19,6 +19,8 @@ return [
     'process-user-new' => 'Registering a user...',
     'process-user-ldap-ready' => 'Creating a user...',
     'process-user-imap-ready' => 'Creating a mailbox...',
+    'process-distlist-new' => 'Registering a distribution list...',
+    'process-distlist-ldap-ready' => 'Creating a distribution list...',
     'process-domain-new' => 'Registering a custom domain...',
     'process-domain-ldap-ready' => 'Creating a custom domain...',
     'process-domain-verified' => 'Verifying a custom domain...',
@@ -29,6 +31,13 @@ return [
     'process-error-domain-ldap-ready' => 'Failed to create a domain.',
     'process-error-domain-verified' => 'Failed to verify a domain.',
     'process-error-domain-confirmed' => 'Failed to verify an ownership of a domain.',
+    'process-distlist-new' => 'Registering a distribution list...',
+    'process-distlist-ldap-ready' => 'Creating a distribution list...',
+    'process-error-distlist-ldap-ready' => 'Failed to create a distribution list.',
+
+    'distlist-update-success' => 'Distribution list updated successfully.',
+    'distlist-create-success' => 'Distribution list created successfully.',
+    'distlist-delete-success' => 'Distribution list deleted successfully.',
 
     'domain-verify-success' => 'Domain verified successfully.',
     'domain-verify-error' => 'Domain ownership verification failed.',

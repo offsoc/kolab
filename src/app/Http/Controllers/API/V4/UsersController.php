@@ -11,7 +11,6 @@ use App\Sku;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -258,6 +257,8 @@ class UsersController extends Controller
             'skus' => $skus,
             // TODO: This will change when we enable all users to create domains
             'enableDomains' => $isController && $hasCustomDomain,
+            // TODO: Make 'enableDistlists' working for wallet controllers that aren't account owners
+            'enableDistlists' => $isController && $hasCustomDomain && in_array('distlist', $skus),
             'enableUsers' => $isController,
             'enableWallets' => $isController,
             'process' => $process,
@@ -395,16 +396,6 @@ class UsersController extends Controller
         }
 
         return response()->json($response);
-    }
-
-    /**
-     * Get the guard to be used during authentication.
-     *
-     * @return \Illuminate\Contracts\Auth\Guard
-     */
-    public function guard()
-    {
-        return Auth::guard();
     }
 
     /**

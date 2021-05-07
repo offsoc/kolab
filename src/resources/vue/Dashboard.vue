@@ -10,7 +10,10 @@
                 <svg-icon icon="globe"></svg-icon><span class="name">Domains</span>
             </router-link>
             <router-link v-if="status.enableUsers" class="card link-users" :to="{ name: 'users' }">
-                <svg-icon icon="users"></svg-icon><span class="name">User accounts</span>
+                <svg-icon icon="user-friends"></svg-icon><span class="name">User accounts</span>
+            </router-link>
+            <router-link v-if="status.enableDistlists" class="card link-distlists" :to="{ name: 'distlists' }">
+                <svg-icon icon="users"></svg-icon><span class="name">Distribution lists</span>
             </router-link>
             <router-link v-if="status.enableWallets" class="card link-wallet" :to="{ name: 'wallet' }">
                 <svg-icon icon="wallet"></svg-icon><span class="name">Wallet</span>

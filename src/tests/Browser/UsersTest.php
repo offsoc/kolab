@@ -652,8 +652,8 @@ class UsersTest extends TestCaseDusk
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
                 ->with('@skus', function ($browser) {
-                    $browser->assertElementsCount('tbody tr', 7)
-                        // Beta/Meet SKU
+                    $browser->assertElementsCount('tbody tr', 8)
+                        // Meet SKU
                         ->assertSeeIn('tbody tr:nth-child(6) td.name', 'Voice & Video Conferencing (public beta)')
                         ->assertSeeIn('tr:nth-child(6) td.price', '0,00 CHF/month')
                         ->assertNotChecked('tbody tr:nth-child(6) td.selection input')
@@ -671,35 +671,46 @@ class UsersTest extends TestCaseDusk
                             'tbody tr:nth-child(7) td.buttons button',
                             'Access to the private beta program subscriptions'
                         )
-/*
-                        // Check Meet, Uncheck Beta, expect Meet unchecked
-                        ->click('#sku-input-meet')
+                        // Distlist SKU
+                        ->assertSeeIn('tbody tr:nth-child(8) td.name', 'Distribution lists')
+                        ->assertSeeIn('tr:nth-child(8) td.price', '0,00 CHF/month')
+                        ->assertNotChecked('tbody tr:nth-child(8) td.selection input')
+                        ->assertEnabled('tbody tr:nth-child(8) td.selection input')
+                        ->assertTip(
+                            'tbody tr:nth-child(8) td.buttons button',
+                            'Access to mail distribution lists'
+                        )
+                        // Check Distlist, Uncheck Beta, expect Distlist unchecked
+                        ->click('#sku-input-distlist')
                         ->click('#sku-input-beta')
                         ->assertNotChecked('#sku-input-beta')
-                        ->assertNotChecked('#sku-input-meet')
-                        // Click Meet expect an alert
-                        ->click('#sku-input-meet')
-                        ->assertDialogOpened('Video chat requires Beta program.')
+                        ->assertNotChecked('#sku-input-distlist')
+                        // Click Distlist expect an alert
+                        ->click('#sku-input-distlist')
+                        ->assertDialogOpened('Distribution lists requires Private Beta (invitation only).')
                         ->acceptDialog()
-*/
-                        // Enable Meet and submit
-                        ->click('#sku-input-meet');
+                        // Enable Beta and Distlist and submit
+                        ->click('#sku-input-beta')
+                        ->click('#sku-input-distlist');
                 })
                 ->click('button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
-            $expected = ['beta', 'groupware', 'mailbox', 'meet', 'storage', 'storage'];
+            $expected = ['beta', 'distlist', 'groupware', 'mailbox', 'storage', 'storage'];
             $this->assertUserEntitlements($john, $expected);
 
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
                 ->click('#sku-input-beta')
-                ->click('#sku-input-meet')
                 ->click('button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
             $expected = ['groupware', 'mailbox', 'storage', 'storage'];
             $this->assertUserEntitlements($john, $expected);
         });
+
+        // TODO: Test that the Distlist SKU is not available for users that aren't a group account owners
+        // TODO: Test that entitlements change has immediate effect on the available items in dashboard
+        //       i.e. does not require a page reload nor re-login.
     }
 }

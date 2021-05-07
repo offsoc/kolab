@@ -135,6 +135,9 @@ return [
     'entryexists' => 'The specified :attribute is not available.',
     'minamount' => 'Minimum amount for a single payment is :amount.',
     'minamountdebt' => 'The specified amount does not cover the balance on the account.',
+    'notalocaluser' => 'The specified email address does not exist.',
+    'memberislist' => 'A recipient cannot be the same as the list address.',
+    'listmembersrequired' => 'At least one recipient is required.',
 
     /*
     |--------------------------------------------------------------------------

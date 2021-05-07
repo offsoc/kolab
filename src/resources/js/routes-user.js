@@ -1,4 +1,6 @@
 import DashboardComponent from '../vue/Dashboard'
+import DistlistInfoComponent from '../vue/Distlist/Info'
+import DistlistListComponent from '../vue/Distlist/List'
 import DomainInfoComponent from '../vue/Domain/Info'
 import DomainListComponent from '../vue/Domain/List'
 import LoginComponent from '../vue/Login'
@@ -23,6 +25,18 @@ const routes = [
         path: '/dashboard',
         name: 'dashboard',
         component: DashboardComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/distlist/:list',
+        name: 'distlist',
+        component: DistlistInfoComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/distlists',
+        name: 'distlists',
+        component: DistlistListComponent,
         meta: { requiresAuth: true }
     },
     {

@@ -281,35 +281,22 @@ class User extends Authenticatable implements JWTSubject
      */
     public function domains()
     {
-        $dbdomains = Domain::whereRaw(
-            sprintf(
-                '(type & %s) AND (status & %s)',
-                Domain::TYPE_PUBLIC,
-                Domain::STATUS_ACTIVE
-            )
-        )->get();
-
-        $domains = [];
-
-        foreach ($dbdomains as $dbdomain) {
-            $domains[] = $dbdomain;
-        }
+        $domains = Domain::whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
+            ->whereRaw(sprintf('(status & %s)', Domain::STATUS_ACTIVE))
+            ->get()
+            ->all();
 
         foreach ($this->wallets as $wallet) {
             $entitlements = $wallet->entitlements()->where('entitleable_type', Domain::class)->get();
             foreach ($entitlements as $entitlement) {
-                $domain = $entitlement->entitleable;
-                \Log::info("Found domain for {$this->email}: {$domain->namespace} (owned)");
-                $domains[] = $domain;
+                $domains[] = $entitlement->entitleable;
             }
         }
 
         foreach ($this->accounts as $wallet) {
             $entitlements = $wallet->entitlements()->where('entitleable_type', Domain::class)->get();
             foreach ($entitlements as $entitlement) {
-                $domain = $entitlement->entitleable;
-                \Log::info("Found domain {$this->email}: {$domain->namespace} (charged)");
-                $domains[] = $domain;
+                $domains[] = $entitlement->entitleable;
             }
         }
 
@@ -414,18 +401,24 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Return groups controlled by the current user.
      *
+     * @param bool $with_accounts Include groups assigned to wallets
+     *                            the current user controls but not owns.
+     *
      * @return \Illuminate\Database\Eloquent\Builder Query builder
      */
-    public function groups()
+    public function groups($with_accounts = true)
     {
         $wallets = $this->wallets()->pluck('id')->all();
 
-        $groupIds = \App\Entitlement::whereIn('entitlements.wallet_id', $wallets)
-            ->where('entitlements.entitleable_type', Group::class)
-            ->pluck('entitleable_id')
-            ->all();
+        if ($with_accounts) {
+            $wallets = array_merge($wallets, $this->accounts()->pluck('wallet_id')->all());
+        }
 
-        return Group::whereIn('id', $groupIds);
+        return Group::select(['groups.*', 'entitlements.wallet_id'])
+            ->distinct()
+            ->join('entitlements', 'entitlements.entitleable_id', '=', 'groups.id')
+            ->whereIn('entitlements.wallet_id', $wallets)
+            ->where('entitlements.entitleable_type', Group::class);
     }
 
     /**

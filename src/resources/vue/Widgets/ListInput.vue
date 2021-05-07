@@ -46,16 +46,22 @@
                 if (value) {
                     this.list.push(value)
                     this.input.value = ''
+                    this.input.classList.remove('is-invalid')
+
                     if (focus !== false) {
                         this.input.focus()
+                    }
+
+                    if (this.list.length == 1) {
+                        this.$el.classList.remove('is-invalid')
                     }
                 }
             },
             deleteItem(index) {
                 this.$delete(this.list, index)
 
-                if (this.list.length == 1) {
-                    $(this.$el).removeClass('is-invalid')
+                if (!this.list.length) {
+                    this.$el.classList.remove('is-invalid')
                 }
             },
             keyDown(e) {

@@ -1181,7 +1181,6 @@ class UsersTest extends TestCase
         $domain = reset($public_domains);
 
         $john = $this->getTestUser('john@kolab.org');
-        $jack = $this->getTestUser('jack@kolab.org');
         $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
 
         return [

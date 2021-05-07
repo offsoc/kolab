@@ -4,6 +4,7 @@
             <p id="status-body" class="flex-grow-1">
                 <span v-if="scope == 'dashboard'">We are preparing your account.</span>
                 <span v-else-if="scope == 'domain'">We are preparing the domain.</span>
+                <span v-else-if="scope == 'distlist'">We are preparing the distribution list.</span>
                 <span v-else>We are preparing the user account.</span>
                 <br>
                 Some features may be missing or readonly at the moment.<br>
@@ -17,6 +18,7 @@
             <p id="status-body" class="flex-grow-1">
                 <span v-if="scope == 'dashboard'">Your account is almost ready.</span>
                 <span v-else-if="scope == 'domain'">The domain is almost ready.</span>
+                <span v-else-if="scope == 'distlist'">The distribution list is almost ready.</span>
                 <span v-else>The user account is almost ready.</span>
                 <br>
                 Verify your domain to finish the setup process.
@@ -186,6 +188,9 @@
                         break
                     case 'domain':
                         url = '/api/v4/domains/' + this.$route.params.domain + '/status'
+                        break
+                    case 'distlist':
+                        url = '/api/v4/groups/' + this.$route.params.list + '/status'
                         break
                     default:
                         url = '/api/v4/users/' + this.$route.params.user + '/status'

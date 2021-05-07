@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Group;
 
 use App\Console\Command;
+use App\Http\Controllers\API\V4\GroupsController;
 
 class AddMemberCommand extends Command
 {
@@ -41,7 +42,9 @@ class AddMemberCommand extends Command
             return 1;
         }
 
-        if ($error = CreateCommand::validateMemberEmail($member)) {
+        $owner = $group->wallet()->owner;
+
+        if ($error = GroupsController::validateMemberEmail($member, $owner)) {
             $this->error("{$member}: $error");
             return 1;
         }
