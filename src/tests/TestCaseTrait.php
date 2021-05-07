@@ -35,9 +35,12 @@ trait TestCaseTrait
      */
     protected function clearBetaEntitlements(): void
     {
-        $betas = \App\Sku::where('handler_class', 'like', 'App\\Handlers\\Beta\\%')
-            ->orWhere('handler_class', 'App\Handlers\Beta')
-            ->pluck('id')->all();
+        $beta_handlers = [
+            'App\Handlers\Beta',
+            'App\Handlers\Distlist',
+        ];
+
+        $betas = \App\Sku::whereIn('handler_class', $beta_handlers)->pluck('id')->all();
 
         \App\Entitlement::whereIn('sku_id', $betas)->delete();
     }

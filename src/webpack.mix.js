@@ -10,8 +10,7 @@
  |
  */
 
-const { exec } = require('child_process');
-const fs = require('fs');
+const { spawn } = require('child_process');
 const glob = require('glob');
 const mix = require('laravel-mix');
 
@@ -28,7 +27,7 @@ mix.js('resources/js/user/app.js', 'public/js/user.js').vue()
     .js('resources/js/reseller/app.js', 'public/js/reseller.js').vue()
 
 mix.before(() => {
-    exec('php resources/build/before.php')
+    spawn('php', ['resources/build/before.php'], { stdio: 'inherit' })
 })
 
 glob.sync('resources/themes/*/', {}).forEach(fromDir => {
@@ -36,10 +35,4 @@ glob.sync('resources/themes/*/', {}).forEach(fromDir => {
 
     mix.sass(fromDir + 'app.scss', toDir)
         .sass(fromDir + 'document.scss', toDir);
-
-    fs.stat(fromDir + 'images', {}, (err, stats) => {
-        if (stats) {
-            mix.copyDirectory(fromDir + 'images', toDir + 'images')
-        }
-    })
 })

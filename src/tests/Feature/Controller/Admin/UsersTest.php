@@ -20,6 +20,7 @@ class UsersTest extends TestCase
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('test@testsearch.com');
         $this->deleteTestDomain('testsearch.com');
+        $this->deleteTestGroup('group-test@kolab.org');
 
         $jack = $this->getTestUser('jack@kolab.org');
         $jack->setSetting('external_email', null);
@@ -65,6 +66,8 @@ class UsersTest extends TestCase
     {
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $group = $this->getTestGroup('group-test@kolab.org');
+        $group->assignToWallet($user->wallets->first());
 
         // Non-admin user
         $response = $this->actingAs($user)->get("api/v4/users");
@@ -168,6 +171,17 @@ class UsersTest extends TestCase
 
         $this->assertSame(0, $json['count']);
         $this->assertCount(0, $json['list']);
+
+        // Search by distribution list email
+        $response = $this->actingAs($admin)->get("api/v4/users?search=group-test@kolab.org");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($user->id, $json['list'][0]['id']);
+        $this->assertSame($user->email, $json['list'][0]['email']);
 
         // Deleted users/domains
         $domain = $this->getTestDomain('testsearch.com', ['type' => \App\Domain::TYPE_EXTERNAL]);

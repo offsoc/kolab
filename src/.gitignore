@@ -21,4 +21,4 @@ npm-debug.log
 yarn-error.log
 composer.lock
 resources/countries.php
-resources/js/ts.js
+resources/build/js/

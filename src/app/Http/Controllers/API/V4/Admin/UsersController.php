@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Domain;
+use App\Group;
 use App\Sku;
 use App\User;
 use App\UserAlias;
@@ -63,6 +64,11 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
                     ->pluck('user_id');
 
                 $user_ids = $user_ids->merge($ext_user_ids)->unique();
+
+                // Search by a distribution list email
+                if ($group = Group::withTrashed()->where('email', $search)->first()) {
+                    $user_ids = $user_ids->merge([$group->wallet()->user_id])->unique();
+                }
 
                 if (!$user_ids->isEmpty()) {
                     $result = User::withTrashed()->whereIn('id', $user_ids)

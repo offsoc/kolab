@@ -388,20 +388,8 @@ class Utils
         $env['paymentProvider'] = \config('services.payment_provider');
         $env['stripePK'] = \config('services.stripe.public_key');
 
-        $theme_file = resource_path("themes/{$env['app.theme']}/theme.json");
-        $menu = [];
-
-        if (file_exists($theme_file)) {
-            $theme = json_decode(file_get_contents($theme_file), true);
-
-            if (json_last_error() != JSON_ERROR_NONE) {
-                \Log::error("Failed to parse $theme_file: " . json_last_error_msg());
-            } elseif (!empty($theme['menu'])) {
-                $menu = $theme['menu'];
-            }
-        }
-
-        $env['menu'] = $menu;
+        $env['languages'] = \App\Http\Controllers\ContentController::locales();
+        $env['menu'] = \App\Http\Controllers\ContentController::menu();
 
         return $env;
     }

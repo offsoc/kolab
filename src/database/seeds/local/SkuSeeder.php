@@ -199,5 +199,19 @@ class SkuSeeder extends Seeder
                 ]
             );
         }
+
+        // Check existence because migration might have added this already
+        if (!\App\Sku::where('title', 'distlist')->first()) {
+            \App\Sku::create([
+                'title' => 'distlist',
+                'name' => 'Distribution lists',
+                'description' => 'Access to mail distribution lists',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Distlist',
+                'active' => true,
+            ]);
+        }
     }
 }

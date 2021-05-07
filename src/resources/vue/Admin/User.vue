@@ -108,6 +108,11 @@
                     Users ({{ users.length }})
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-distlists" href="#user-distlists" role="tab" aria-controls="user-distlists" aria-selected="false">
+                    Distribution lists ({{ distlists.length }})
+                </a>
+            </li>
         </ul>
         <div class="tab-content">
             <div class="tab-pane show active" id="user-finances" role="tabpanel" aria-labelledby="tab-finances">
@@ -259,6 +264,32 @@
                     </div>
                 </div>
             </div>
+            <div class="tab-pane" id="user-distlists" role="tabpanel" aria-labelledby="tab-distlists">
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-sm table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th scope="col">Email address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="list in distlists" :key="list.id" @click="$root.clickRecord">
+                                    <td>
+                                        <svg-icon icon="users" :class="$root.distlistStatusClass(list)" :title="$root.distlistStatusText(list)"></svg-icon>
+                                        <router-link :to="{ path: '/distlist/' + list.id }">{{ list.email }}</router-link>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-fake-body">
+                                <tr>
+                                    <td>There are no distribution lists in this account.</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="discount-dialog" class="modal" tabindex="-1" role="dialog">
@@ -399,6 +430,7 @@
                 has2FA: false,
                 wallet: {},
                 walletReload: false,
+                distlists: [],
                 domains: [],
                 skus: [],
                 sku2FA: null,
@@ -454,18 +486,18 @@
                         .then(response => {
                             // "merge" SKUs with user entitlement-SKUs
                             response.data.forEach(sku => {
-                                if (sku.id in this.user.skus) {
-                                    let count = this.user.skus[sku.id].count
+                                const userSku = this.user.skus[sku.id]
+                                if (userSku) {
+                                    let cost = userSku.costs.reduce((sum, current) => sum + current)
                                     let item = {
                                         id: sku.id,
                                         name: sku.name,
-                                        cost: sku.cost,
-                                        units: count - sku.units_free,
-                                        price: this.$root.priceLabel(sku.cost, count - sku.units_free, this.discount)
+                                        cost: cost,
+                                        price: this.$root.priceLabel(cost, this.discount)
                                     }
 
                                     if (sku.range) {
-                                        item.name += ' ' + count + ' ' + sku.range.unit
+                                        item.name += ' ' + userSku.count + ' ' + sku.range.unit
                                     }
 
                                     this.skus.push(item)
@@ -489,6 +521,12 @@
                     axios.get('/api/v4/domains?owner=' + user_id)
                         .then(response => {
                             this.domains = response.data.list
+                        })
+
+                    // Fetch distribution lists
+                    axios.get('/api/v4/groups?owner=' + user_id)
+                        .then(response => {
+                            this.distlists = response.data.list
                         })
                 })
                 .catch(this.$root.errorHandler)
@@ -587,7 +625,7 @@
                                 this.discount_description = this.wallet.discount_description
 
                                 this.skus.forEach(sku => {
-                                    sku.price = this.$root.priceLabel(sku.cost, sku.units, this.discount)
+                                    sku.price = this.$root.priceLabel(sku.cost, this.discount)
                                 })
                             }
                         }

@@ -19,6 +19,8 @@ return [
     'process-user-new' => 'Registering a user...',
     'process-user-ldap-ready' => 'Creating a user...',
     'process-user-imap-ready' => 'Creating a mailbox...',
+    'process-distlist-new' => 'Registering a distribution list...',
+    'process-distlist-ldap-ready' => 'Creating a distribution list...',
     'process-domain-new' => 'Registering a custom domain...',
     'process-domain-ldap-ready' => 'Creating a custom domain...',
     'process-domain-verified' => 'Verifying a custom domain...',
@@ -29,6 +31,15 @@ return [
     'process-error-domain-ldap-ready' => 'Failed to create a domain.',
     'process-error-domain-verified' => 'Failed to verify a domain.',
     'process-error-domain-confirmed' => 'Failed to verify an ownership of a domain.',
+    'process-distlist-new' => 'Registering a distribution list...',
+    'process-distlist-ldap-ready' => 'Creating a distribution list...',
+    'process-error-distlist-ldap-ready' => 'Failed to create a distribution list.',
+
+    'distlist-update-success' => 'Distribution list updated successfully.',
+    'distlist-create-success' => 'Distribution list created successfully.',
+    'distlist-delete-success' => 'Distribution list deleted successfully.',
+    'distlist-suspend-success' => 'Distribution list suspended successfully.',
+    'distlist-unsuspend-success' => 'Distribution list unsuspended successfully.',
 
     'domain-verify-success' => 'Domain verified successfully.',
     'domain-verify-error' => 'Domain ownership verification failed.',
@@ -43,6 +54,7 @@ return [
     'user-reset-2fa-success' => '2-Factor authentication reset successfully.',
 
     'search-foundxdomains' => ':x domains have been found.',
+    'search-foundxgroups' => ':x distribution lists have been found.',
     'search-foundxusers' => ':x user accounts have been found.',
 
     'signup-invitations-created' => 'The invitation has been created.|:count invitations has been created.',

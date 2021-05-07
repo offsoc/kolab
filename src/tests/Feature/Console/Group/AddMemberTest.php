@@ -45,7 +45,9 @@ class AddMemberTest extends TestCase
         $this->assertSame(1, $code);
         $this->assertSame("Group test@group.com does not exist.", $output);
 
+        $john = $this->getTestUser('john@kolab.org');
         $group = Group::create(['email' => 'group-test@kolabnow.com']);
+        $group->assignToWallet($john->wallet());
 
         // Existing group, invalid member
         $code = \Artisan::call("group:add-member {$group->email} member");

@@ -10,6 +10,7 @@ import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Widgets/Menu'
 import SupportForm from '../vue/Widgets/SupportForm'
 import store from './store'
+import { loadLangAsync, i18n } from './locale'
 
 const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'
 
@@ -38,7 +39,7 @@ let loadingRoute
 // Note: You cannot use app inside of the function
 window.router.beforeEach((to, from, next) => {
     // check if the route requires authentication and user is not logged in
-    if (to.matched.some(route => route.meta.requiresAuth) && !store.state.isLoggedIn) {
+    if (to.meta.requiresAuth && !store.state.isLoggedIn) {
         // remember the original request, to use after login
         store.state.afterLogin = to;
 
@@ -69,11 +70,11 @@ window.router.afterEach((to, from) => {
 })
 
 const app = new Vue({
-    el: '#app',
     components: {
         AppComponent,
         MenuComponent,
     },
+    i18n,
     store,
     router: window.router,
     data() {
@@ -89,6 +90,11 @@ const app = new Vue({
         clearFormValidation(form) {
             $(form).find('.is-invalid').removeClass('is-invalid')
             $(form).find('.invalid-feedback').remove()
+        },
+        hasPermission(type) {
+            const authInfo = store.state.authInfo
+            const key = 'enable' + type.charAt(0).toUpperCase() + type.slice(1)
+            return !!(authInfo && authInfo.statusInfo[key])
         },
         hasRoute(name) {
             return this.$router.resolve({ name: name }).resolved.matched.length > 0
@@ -248,19 +254,15 @@ const app = new Vue({
         price(price, currency) {
             return ((price || 0) / 100).toLocaleString('de-DE', { style: 'currency', currency: currency || 'CHF' })
         },
-        priceLabel(cost, units = 1, discount) {
+        priceLabel(cost, discount) {
             let index = ''
-
-            if (units < 0) {
-                units = 1
-            }
 
             if (discount) {
                 cost = Math.floor(cost * ((100 - discount) / 100))
                 index = '\u00B9'
             }
 
-            return this.price(cost * units) + '/month' + index
+            return this.price(cost) + '/month' + index
         },
         clickRecord(event) {
             if (!/^(a|button|svg|path)$/i.test(event.target.nodeName)) {
@@ -295,6 +297,36 @@ const app = new Vue({
             }
 
             if (!domain.isVerified || !domain.isLdapReady || !domain.isConfirmed) {
+                return 'Not Ready'
+            }
+
+            return 'Active'
+        },
+        distlistStatusClass(list) {
+            if (list.isDeleted) {
+                return 'text-muted'
+            }
+
+            if (list.isSuspended) {
+                return 'text-warning'
+            }
+
+            if (!list.isLdapReady) {
+                return 'text-danger'
+            }
+
+            return 'text-success'
+        },
+        distlistStatusText(list) {
+            if (list.isDeleted) {
+                return 'Deleted'
+            }
+
+            if (list.isSuspended) {
+                return 'Suspended'
+            }
+
+            if (!list.isLdapReady) {
                 return 'Not Ready'
             }
 
@@ -365,11 +397,13 @@ const app = new Vue({
         updateBodyClass(name) {
             // Add 'class' attribute to the body, different for each page
             // so, we can apply page-specific styles
-            let className = 'page-' + (name || this.pageName()).replace(/\/.*$/, '')
-            $(document.body).removeClass().addClass(className)
+            document.body.className = 'page-' + (name || this.pageName()).replace(/\/.*$/, '')
         }
     }
 })
+
+// Fetch the locale file and the start the app
+loadLangAsync().then(() => app.$mount('#app'))
 
 // Add a axios request interceptor
 window.axios.interceptors.request.use(
@@ -441,11 +475,19 @@ window.axios.interceptors.response.use(
 
                         if (input.is('.list-input')) {
                             // List input widget
-                            input.children(':not(:first-child)').each((index, element) => {
-                                if (msg[index]) {
-                                    $(element).find('input').addClass('is-invalid')
-                                }
-                            })
+                            let controls = input.children(':not(:first-child)')
+
+                            if (!controls.length && typeof msg == 'string') {
+                                // this is an empty list (the main input only)
+                                // and the error message is not an array
+                                input.find('.main-input').addClass('is-invalid')
+                            } else {
+                                controls.each((index, element) => {
+                                    if (msg[index]) {
+                                        $(element).find('input').addClass('is-invalid')
+                                    }
+                                })
+                            }
 
                             input.addClass('is-invalid').next('.invalid-feedback').remove()
                             input.after(feedback)

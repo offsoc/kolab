@@ -27,6 +27,7 @@ import {
     faTrashAlt,
     faUser,
     faUserCog,
+    faUserFriends,
     faUsers,
     faWallet
 } from '@fortawesome/free-solid-svg-icons'
@@ -59,6 +60,7 @@ library.add(
     faTrashAlt,
     faUser,
     faUserCog,
+    faUserFriends,
     faUsers,
     faWallet
 )

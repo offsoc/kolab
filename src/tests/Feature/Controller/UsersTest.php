@@ -283,9 +283,13 @@ class UsersTest extends TestCase
         $this->assertCount(5, $json['skus']);
 
         $this->assertSame(2, $json['skus'][$storage_sku->id]['count']);
+        $this->assertSame([0,0], $json['skus'][$storage_sku->id]['costs']);
         $this->assertSame(1, $json['skus'][$groupware_sku->id]['count']);
+        $this->assertSame([555], $json['skus'][$groupware_sku->id]['costs']);
         $this->assertSame(1, $json['skus'][$mailbox_sku->id]['count']);
+        $this->assertSame([444], $json['skus'][$mailbox_sku->id]['costs']);
         $this->assertSame(1, $json['skus'][$secondfactor_sku->id]['count']);
+        $this->assertSame([0], $json['skus'][$secondfactor_sku->id]['costs']);
     }
 
     /**
@@ -1177,7 +1181,6 @@ class UsersTest extends TestCase
         $domain = reset($public_domains);
 
         $john = $this->getTestUser('john@kolab.org');
-        $jack = $this->getTestUser('jack@kolab.org');
         $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
 
         return [

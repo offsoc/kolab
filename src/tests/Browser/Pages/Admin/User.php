@@ -56,6 +56,7 @@ class User extends Page
             '@user-finances' => '#user-finances',
             '@user-aliases' => '#user-aliases',
             '@user-subscriptions' => '#user-subscriptions',
+            '@user-distlists' => '#user-distlists',
             '@user-domains' => '#user-domains',
             '@user-users' => '#user-users',
         ];

@@ -42,6 +42,7 @@ class Home extends Page
             '@email-input' => '#inputEmail',
             '@password-input' => '#inputPassword',
             '@second-factor-input' => '#secondfactor',
+            '@logon-button' => '#logon-form button.btn-primary'
         ];
     }
 

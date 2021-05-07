@@ -4,8 +4,8 @@
             <div class="card-body">
                 <div class="card-title">{{ domain.namespace }}</div>
                 <div class="card-text">
-                    <form>
-                        <div class="form-group row mb-0">
+                    <form class="read-only short">
+                        <div class="form-group row">
                             <label for="domainid" class="col-sm-4 col-form-label">ID <span class="text-muted">(Created at)</span></label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="domainid">
@@ -13,7 +13,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row mb-0">
+                        <div class="form-group row">
                             <label for="first_name" class="col-sm-4 col-form-label">Status</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="status">

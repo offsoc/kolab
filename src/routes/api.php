@@ -64,8 +64,12 @@ Route::group(
         Route::get('domains/{id}/confirm', 'API\V4\DomainsController@confirm');
         Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
 
+        Route::apiResource('groups', API\V4\GroupsController::class);
+        Route::get('groups/{id}/status', 'API\V4\GroupsController@status');
+
         Route::apiResource('packages', API\V4\PackagesController::class);
         Route::apiResource('skus', API\V4\SkusController::class);
+
         Route::apiResource('users', API\V4\UsersController::class);
         Route::get('users/{id}/skus', 'API\V4\SkusController@userSkus');
         Route::get('users/{id}/status', 'API\V4\UsersController@status');
@@ -146,6 +150,10 @@ Route::group(
         Route::apiResource('domains', API\V4\Admin\DomainsController::class);
         Route::post('domains/{id}/suspend', 'API\V4\Admin\DomainsController@suspend');
         Route::post('domains/{id}/unsuspend', 'API\V4\Admin\DomainsController@unsuspend');
+
+        Route::apiResource('groups', API\V4\Admin\GroupsController::class);
+        Route::post('groups/{id}/suspend', 'API\V4\Admin\GroupsController@suspend');
+        Route::post('groups/{id}/unsuspend', 'API\V4\Admin\GroupsController@unsuspend');
 
         Route::apiResource('packages', API\V4\Admin\PackagesController::class);
         Route::apiResource('skus', API\V4\Admin\SkusController::class);
