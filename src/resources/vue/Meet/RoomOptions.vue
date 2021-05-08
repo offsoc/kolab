@@ -65,10 +65,6 @@
             config: { type: Object, default: () => null },
             room: { type: String, default: () => null }
         },
-        data() {
-            return {
-            }
-        },
         mounted() {
             $('#room-options-dialog').on('show.bs.modal', e => {
                 $(e.target).find('.input-group-activable.active').removeClass('active')
@@ -100,7 +96,7 @@
             },
             passwordSave() {
                 this.configSave('password', $('#password-input input').val(), () => {
-                        $('#password-input').removeClass('active')
+                    $('#password-input').removeClass('active')
                 })
             },
             passwordSet() {

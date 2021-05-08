@@ -4,6 +4,10 @@ module.exports = {
     // 'eslint:recommended',
     'plugin:vue/recommended'
   ],
+  parserOptions: {
+    parser: "@babel/eslint-parser",
+    requireConfigFile: false
+  },
   rules: {
     "vue/attributes-order": "off",
     "vue/html-indent": ["error", 4],

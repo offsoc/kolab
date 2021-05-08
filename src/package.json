@@ -11,6 +11,7 @@
     "lint": "eslint --ext .js,.vue resources && stylelint \"resources/sass/*.scss\" \"resources/vue/*.vue\""
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.13.14",
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
     "@fortawesome/free-brands-svg-icons": "^5.15.3",
     "@fortawesome/free-regular-svg-icons": "^5.15.3",
@@ -20,8 +21,8 @@
     "axios": "^0.21.1",
     "bootstrap": "^4.6.0",
     "cross-env": "^7.0.3",
-    "eslint": "^6.8.0",
-    "eslint-plugin-vue": "^6.2.2",
+    "eslint": "^7.26.0",
+    "eslint-plugin-vue": "^7.9.0",
     "frappe-charts": "^1.5.8",
     "jquery": "^3.6.0",
     "laravel-mix": "^6.0.12",

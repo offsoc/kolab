@@ -407,15 +407,15 @@
     import TransactionLog from '../Widgets/TransactionLog'
 
     export default {
+        components: {
+            TransactionLog
+        },
         beforeRouteUpdate (to, from, next) {
             // An event called when the route that renders this component has changed,
             // but this component is reused in the new route.
             // Required to handle links from /user/XXX to /user/YYY
             next()
             this.$parent.routerReload()
-        },
-        components: {
-            TransactionLog
         },
         data() {
             return {
