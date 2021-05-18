@@ -35,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Package::observe(\App\Observers\PackageObserver::class);
         \App\PackageSku::observe(\App\Observers\PackageSkuObserver::class);
         \App\Plan::observe(\App\Observers\PlanObserver::class);
+        \App\PlanPackage::observe(\App\Observers\PlanPackageObserver::class);
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
         \App\SignupInvitation::observe(\App\Observers\SignupInvitationObserver::class);
         \App\Sku::observe(\App\Observers\SkuObserver::class);

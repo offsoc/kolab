@@ -64,6 +64,7 @@ class Group extends Model
             'wallet_id' => $wallet->id,
             'sku_id' => $sku->id,
             'cost' => $exists >= $sku->units_free ? $sku->cost : 0,
+            'fee' => $exists >= $sku->units_free ? $sku->fee : 0,
             'entitleable_id' => $this->id,
             'entitleable_type' => Group::class
         ]);

@@ -261,6 +261,8 @@ abstract class PaymentProvider
         $refund['status'] = self::STATUS_PAID;
         $refund['amount'] = -1 * $amount;
 
+        // FIXME: Refunds/chargebacks are out of the reseller comissioning for now
+
         $this->storePayment($refund, $wallet->id);
     }
 

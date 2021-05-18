@@ -13,7 +13,16 @@ use Spatie\Translatable\HasTranslations;
  * A "Family Plan" as such may exist of "2 or more Kolab packages",
  * and apply a discount for the third and further Kolab packages.
  *
+ * @property string         $description
+ * @property int            $discount_qty
+ * @property int            $discount_rate
+ * @property string         $id
+ * @property string         $name
  * @property \App\Package[] $packages
+ * @property datetime       $promo_from
+ * @property datetime       $promo_to
+ * @property ?int           $tenant_id
+ * @property string         $title
  */
 class Plan extends Model
 {
@@ -104,5 +113,15 @@ class Plan extends Model
         }
 
         return false;
+    }
+
+    /**
+     * The tenant for this plan.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function tenant()
+    {
+        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 }

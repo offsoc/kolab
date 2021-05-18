@@ -465,6 +465,51 @@ class UserTest extends TestCase
     }
 
     /**
+     * Test handling negative balance on user deletion
+     */
+    public function testDeleteWithNegativeBalance(): void
+    {
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+        $wallet = $user->wallets()->first();
+        $wallet->balance = -1000;
+        $wallet->save();
+        $reseller_wallet = $user->tenant->wallet();
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+        \App\Transaction::where('object_id', $reseller_wallet->id)->where('object_type', \App\Wallet::class)->delete();
+
+        $user->delete();
+
+        $reseller_transactions = \App\Transaction::where('object_id', $reseller_wallet->id)
+            ->where('object_type', \App\Wallet::class)->get();
+
+        $this->assertSame(-1000, $reseller_wallet->fresh()->balance);
+        $this->assertCount(1, $reseller_transactions);
+        $trans = $reseller_transactions[0];
+        $this->assertSame("Deleted user {$user->email}", $trans->description);
+        $this->assertSame(-1000, $trans->amount);
+        $this->assertSame(\App\Transaction::WALLET_DEBIT, $trans->type);
+    }
+
+    /**
+     * Test handling positive balance on user deletion
+     */
+    public function testDeleteWithPositiveBalance(): void
+    {
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+        $wallet = $user->wallets()->first();
+        $wallet->balance = 1000;
+        $wallet->save();
+        $reseller_wallet = $user->tenant->wallet();
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+
+        $user->delete();
+
+        $this->assertSame(0, $reseller_wallet->fresh()->balance);
+    }
+
+    /**
      * Tests for User::aliasExists()
      */
     public function testAliasExists(): void

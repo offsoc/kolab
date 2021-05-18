@@ -126,6 +126,7 @@ class User extends Authenticatable implements JWTSubject
                         'wallet_id' => $wallet_id,
                         'sku_id' => $sku->id,
                         'cost' => $sku->pivot->cost(),
+                        'fee' => $sku->pivot->fee(),
                         'entitleable_id' => $user->id,
                         'entitleable_type' => User::class
                     ]
@@ -179,6 +180,7 @@ class User extends Authenticatable implements JWTSubject
                 'wallet_id' => $wallet->id,
                 'sku_id' => $sku->id,
                 'cost' => $exists >= $sku->units_free ? $sku->cost : 0,
+                'fee' => $exists >= $sku->units_free ? $sku->fee : 0,
                 'entitleable_id' => $this->id,
                 'entitleable_type' => User::class
             ]);

@@ -89,6 +89,7 @@ class Domain extends Model
                         'wallet_id' => $wallet_id,
                         'sku_id' => $sku->id,
                         'cost' => $sku->pivot->cost(),
+                        'fee' => $sku->pivot->fee(),
                         'entitleable_id' => $this->id,
                         'entitleable_type' => Domain::class
                     ]

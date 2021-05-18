@@ -108,6 +108,18 @@ class UserObserver
                 }
             });
         }
+
+        // Debit the reseller's wallet with the user negative balance
+        $balance = 0;
+        foreach ($user->wallets as $wallet) {
+            // Note: here we assume all user wallets are using the same currency.
+            //       It might get changed in the future
+            $balance += $wallet->balance;
+        }
+
+        if ($balance < 0 && $user->tenant && ($wallet = $user->tenant->wallet())) {
+            $wallet->debit($balance * -1, "Deleted user {$user->email}");
+        }
     }
 
     /**

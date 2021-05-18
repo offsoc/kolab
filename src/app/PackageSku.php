@@ -35,30 +35,50 @@ class PackageSku extends Pivot
      */
     public function cost()
     {
-        $costs = 0;
-
         $units = $this->qty - $this->sku->units_free;
 
         if ($units < 0) {
-            \Log::debug(
-                "Package {$this->package_id} is misconfigured for more free units than qty."
-            );
-
             $units = 0;
         }
 
+        // FIXME: Why package_skus.cost value is not used anywhere?
+
         $ppu = $this->sku->cost * ((100 - $this->package->discount_rate) / 100);
 
-        $costs += $units * $ppu;
-
-        return $costs;
+        return $units * $ppu;
     }
 
+    /**
+     * Under this package, what fee this SKU has?
+     *
+     * @return int The fee for this SKU under this package in cents.
+     */
+    public function fee()
+    {
+        $units = $this->qty - $this->sku->units_free;
+
+        if ($units < 0) {
+            $units = 0;
+        }
+
+        return $this->sku->fee * $units;
+    }
+
+    /**
+     * The package for this relation.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function package()
     {
         return $this->belongsTo('App\Package');
     }
 
+    /**
+     * The SKU for this relation.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function sku()
     {
         return $this->belongsTo('App\Sku');

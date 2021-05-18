@@ -60,6 +60,7 @@ class DomainSetWallet extends Command
                 'wallet_id' => $wallet->id,
                 'sku_id' => $sku->id,
                 'cost' => 0,
+                'fee' => 0,
                 'entitleable_id' => $domain->id,
                 'entitleable_type' => Domain::class,
             ]

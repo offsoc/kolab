@@ -94,11 +94,14 @@ class WalletsTest extends TestCase
         $reseller1 = $this->getTestUser('reseller@kolabnow.com');
         $reseller2 = $this->getTestUser('reseller@reseller.com');
         $wallet = $user->wallets()->first();
+        $reseller1_wallet = $reseller1->wallets()->first();
         $balance = $wallet->balance;
+        $reseller1_balance = $reseller1_wallet->balance;
 
         Transaction::where('object_id', $wallet->id)
             ->whereIn('type', [Transaction::WALLET_AWARD, Transaction::WALLET_PENALTY])
             ->delete();
+        Transaction::where('object_id', $reseller1_wallet->id)->delete();
 
         // Non-admin user
         $response = $this->actingAs($user)->post("api/v4/wallets/{$wallet->id}/one-off", []);
@@ -125,7 +128,7 @@ class WalletsTest extends TestCase
         $this->assertCount(2, $json);
         $this->assertCount(2, $json['errors']);
 
-        // Admin user - a valid bonus
+        // A valid bonus
         $post = ['amount' => '50', 'description' => 'A bonus'];
         $response = $this->actingAs($reseller1)->post("api/v4/wallets/{$wallet->id}/one-off", $post);
         $response->assertStatus(200);
@@ -136,6 +139,7 @@ class WalletsTest extends TestCase
         $this->assertSame('The bonus has been added to the wallet successfully.', $json['message']);
         $this->assertSame($balance += 5000, $json['balance']);
         $this->assertSame($balance, $wallet->fresh()->balance);
+        $this->assertSame($reseller1_balance -= 5000, $reseller1_wallet->fresh()->balance);
 
         $transaction = Transaction::where('object_id', $wallet->id)
             ->where('type', Transaction::WALLET_AWARD)->first();
@@ -144,7 +148,14 @@ class WalletsTest extends TestCase
         $this->assertSame(5000, $transaction->amount);
         $this->assertSame($reseller1->email, $transaction->user_email);
 
-        // Admin user - a valid penalty
+        $transaction = Transaction::where('object_id', $reseller1_wallet->id)
+            ->where('type', Transaction::WALLET_DEBIT)->first();
+
+        $this->assertSame("Awarded user {$user->email}", $transaction->description);
+        $this->assertSame(-5000, $transaction->amount);
+        $this->assertSame($reseller1->email, $transaction->user_email);
+
+        // A valid penalty
         $post = ['amount' => '-40', 'description' => 'A penalty'];
         $response = $this->actingAs($reseller1)->post("api/v4/wallets/{$wallet->id}/one-off", $post);
         $response->assertStatus(200);
@@ -155,12 +166,20 @@ class WalletsTest extends TestCase
         $this->assertSame('The penalty has been added to the wallet successfully.', $json['message']);
         $this->assertSame($balance -= 4000, $json['balance']);
         $this->assertSame($balance, $wallet->fresh()->balance);
+        $this->assertSame($reseller1_balance += 4000, $reseller1_wallet->fresh()->balance);
 
         $transaction = Transaction::where('object_id', $wallet->id)
             ->where('type', Transaction::WALLET_PENALTY)->first();
 
         $this->assertSame($post['description'], $transaction->description);
         $this->assertSame(-4000, $transaction->amount);
+        $this->assertSame($reseller1->email, $transaction->user_email);
+
+        $transaction = Transaction::where('object_id', $reseller1_wallet->id)
+            ->where('type', Transaction::WALLET_CREDIT)->first();
+
+        $this->assertSame("Penalized user {$user->email}", $transaction->description);
+        $this->assertSame(4000, $transaction->amount);
         $this->assertSame($reseller1->email, $transaction->user_email);
 
         // Reseller from a different tenant

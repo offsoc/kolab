@@ -60,8 +60,9 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     public function oneOff(Request $request, $id)
     {
         $wallet = Wallet::find($id);
+        $user = Auth::guard()->user();
 
-        if (empty($wallet) || !Auth::guard()->user()->canRead($wallet)) {
+        if (empty($wallet) || !$user->canRead($wallet)) {
             return $this->errorResponse(404);
         }
 
@@ -96,6 +97,14 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
                 'description' => $request->description
             ]
         );
+
+        if ($user->role == 'reseller') {
+            if ($user->tenant && ($tenant_wallet = $user->tenant->wallet())) {
+                $desc = ($amount > 0 ? 'Awarded' : 'Penalized') . " user {$wallet->owner->email}";
+                $method = $amount > 0 ? 'debit' : 'credit';
+                $tenant_wallet->{$method}(abs($amount), $desc);
+            }
+        }
 
         DB::commit();
 

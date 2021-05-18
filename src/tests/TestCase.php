@@ -11,14 +11,24 @@ abstract class TestCase extends BaseTestCase
 
     protected function backdateEntitlements($entitlements, $targetDate)
     {
-        foreach ($entitlements as $entitlement) {
-            $entitlement->created_at = $targetDate;
-            $entitlement->updated_at = $targetDate;
-            $entitlement->save();
+        $wallets = [];
+        $ids = [];
 
-            $owner = $entitlement->wallet->owner;
-            $owner->created_at = $targetDate;
-            $owner->save();
+        foreach ($entitlements as $entitlement) {
+            $ids[] = $entitlement->id;
+            $wallets[] = $entitlement->wallet_id;
+        }
+
+        \App\Entitlement::whereIn('id', $ids)->update([
+                'created_at' => $targetDate,
+                'updated_at' => $targetDate,
+        ]);
+
+        if (!empty($wallets)) {
+            $wallets = array_unique($wallets);
+            $owners = \App\Wallet::whereIn('id', $wallets)->pluck('user_id')->all();
+
+            \App\User::whereIn('id', $owners)->update(['created_at' => $targetDate]);
         }
     }
 

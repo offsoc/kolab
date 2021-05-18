@@ -14,16 +14,16 @@ class TenantSeeder extends Seeder
      */
     public function run()
     {
-        Tenant::create(
-            [
-                'title' => 'Kolab Now'
-            ]
-        );
+        if (!Tenant::find(1)) {
+            Tenant::create([
+                    'title' => 'Kolab Now'
+            ]);
+        }
 
-        Tenant::create(
-            [
-                'title' => 'Sample Tenant'
-            ]
-        );
+        if (!Tenant::find(2)) {
+            Tenant::create([
+                    'title' => 'Sample Tenant'
+            ]);
+        }
     }
 }

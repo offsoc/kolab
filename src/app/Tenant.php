@@ -37,4 +37,16 @@ class Tenant extends Model
     {
         return $this->hasMany('App\SignupInvitation');
     }
+
+    /*
+     * Returns the wallet of the tanant (reseller's wallet).
+     *
+     * @return ?\App\Wallet A wallet object
+     */
+    public function wallet(): ?Wallet
+    {
+        $user = \App\User::where('role', 'reseller')->where('tenant_id', $this->id)->first();
+
+        return $user ? $user->wallets->first() : null;
+    }
 }

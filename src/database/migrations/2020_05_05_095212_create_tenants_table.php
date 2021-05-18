@@ -23,14 +23,34 @@ class CreateTenantsTable extends Migration
             }
         );
 
-        Schema::table(
-            'users',
-            function (Blueprint $table) {
-                $table->bigInteger('tenant_id')->unsigned()->nullable();
+        \App\Tenant::create(['title' => 'Kolab Now']);
 
-                $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('set null');
+        foreach (['users', 'discounts', 'domains', 'plans', 'packages', 'skus'] as $table_name) {
+            Schema::table(
+                $table_name,
+                function (Blueprint $table) {
+                    $table->bigInteger('tenant_id')->unsigned()->nullable();
+                    $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('set null');
+                }
+            );
+
+            if ($tenant_id = \config('app.tenant_id')) {
+                DB::statement("UPDATE `{$table_name}` SET `tenant_id` = {$tenant_id}");
             }
-        );
+        }
+
+        // Add fee column
+        foreach (['entitlements', 'skus'] as $table) {
+            Schema::table(
+                $table,
+                function (Blueprint $table) {
+                    $table->integer('fee')->nullable();
+                }
+            );
+        }
+
+        // FIXME: Should we also have package_skus.fee ?
+        //        We have package_skus.cost, but I think it is not used anywhere.
     }
 
     /**
@@ -40,13 +60,24 @@ class CreateTenantsTable extends Migration
      */
     public function down()
     {
-        Schema::table(
-            'users',
-            function (Blueprint $table) {
-                $table->dropForeign(['tenant_id']);
-                $table->dropColumn('tenant_id');
-            }
-        );
+        foreach (['users', 'discounts', 'domains', 'plans', 'packages', 'skus'] as $table_name) {
+            Schema::table(
+                $table_name,
+                function (Blueprint $table) {
+                    $table->dropForeign(['tenant_id']);
+                    $table->dropColumn('tenant_id');
+                }
+            );
+        }
+
+        foreach (['entitlements', 'skus'] as $table) {
+            Schema::table(
+                $table,
+                function (Blueprint $table) {
+                    $table->dropColumn('fee');
+                }
+            );
+        }
 
         Schema::dropIfExists('tenants');
     }

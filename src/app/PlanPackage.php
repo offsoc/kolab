@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property int          $qty_max
  * @property int          $qty_min
  * @property \App\Package $package
+ * @property \App\Plan    $plan
  */
 class PlanPackage extends Pivot
 {
@@ -54,8 +55,23 @@ class PlanPackage extends Pivot
         return $costs;
     }
 
+    /**
+     * The package in this relation.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function package()
     {
         return $this->belongsTo('App\Package');
+    }
+
+    /**
+     * The plan in this relation.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function plan()
+    {
+        return $this->belongsTo('App\Plan');
     }
 }
