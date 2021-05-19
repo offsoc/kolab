@@ -13,7 +13,7 @@
                 <tr v-for="payment in payments" :id="'log' + payment.id" :key="payment.id">
                     <td class="datetime">{{ payment.createdAt }}</td>
                     <td class="description">{{ payment.description }}</td>
-                    <td><a v-if="payment.checkoutUrl" v-bind:href="payment.checkoutUrl">Details</a></td>
+                    <td><a v-if="payment.checkoutUrl" :href="payment.checkoutUrl">Details</a></td>
                     <td class="price text-success">{{ amount(payment) }}</td>
                 </tr>
             </tbody>

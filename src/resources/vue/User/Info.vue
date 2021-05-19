@@ -7,7 +7,7 @@
                 <div class="card-title" v-if="user_id !== 'new'">User account
                     <button
                         class="btn btn-outline-danger button-delete float-right"
-                        v-on:click="showDeleteConfirmation()" tag="button"
+                        @click="showDeleteConfirmation()" type="button"
                     >
                         <svg-icon icon="trash-alt"></svg-icon> Delete user
                     </button>

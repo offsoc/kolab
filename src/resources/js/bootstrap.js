@@ -21,7 +21,7 @@ import store from './store'
 
 window.Vue = Vue
 
-Vue.component('svg-icon', FontAwesomeIcon)
+Vue.component('SvgIcon', FontAwesomeIcon)
 
 const vTooltip = (el, binding) => {
     const t = []

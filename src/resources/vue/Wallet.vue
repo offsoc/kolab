@@ -116,7 +116,7 @@
                                 <div id="payment-method-selection">
                                     <a :id="method.id" v-for="method in paymentMethods" :key="method.id" @click="selectPaymentMethod(method)" href="#" class="card link-profile">
                                         <svg-icon v-if="method.icon" :icon="[method.icon.prefix, method.icon.name]" />
-                                        <img v-if="method.image" v-bind:src="method.image" />
+                                        <img v-if="method.image" :src="method.image" />
                                         <span class="name">{{ method.name }}</span>
                                     </a>
                                 </div>
