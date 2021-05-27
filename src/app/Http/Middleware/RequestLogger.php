@@ -19,7 +19,7 @@ class RequestLogger
 
     public function terminate($request, $response)
     {
-        if (\App::environment('local')) {
+        if (\App::environment(['local', 'testing'])) {
             $url = $request->fullUrl();
             $method = $request->getMethod();
             $mem = round(memory_get_peak_usage() / 1024 / 1024, 1);
