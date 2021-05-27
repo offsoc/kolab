@@ -117,15 +117,24 @@ class WalletChargeTest extends TestCase
         $this->backdateEntitlements($user->entitlements, \Carbon\Carbon::now()->subWeeks(5));
         \App\Wallet::where('balance', '<', '0')->update(['balance' => 0]);
 
+        $user2 = $this->getTestUser('wallet-charge@kolabnow.com');
+        $wallet2 = $user2->wallets()->first();
+        $wallet2->balance = -100;
+        $wallet2->save();
+
         Queue::fake();
 
         // Non-existing wallet ID
         $this->artisan('wallet:charge')->assertExitCode(0);
 
-        Queue::assertPushed(\App\Jobs\WalletCheck::class, 1);
+        Queue::assertPushed(\App\Jobs\WalletCheck::class, 2);
         Queue::assertPushed(\App\Jobs\WalletCheck::class, function ($job) use ($wallet) {
             $job_wallet = TestCase::getObjectProperty($job, 'wallet');
             return $job_wallet->id === $wallet->id;
+        });
+        Queue::assertPushed(\App\Jobs\WalletCheck::class, function ($job) use ($wallet2) {
+            $job_wallet = TestCase::getObjectProperty($job, 'wallet');
+            return $job_wallet->id === $wallet2->id;
         });
 
         Queue::assertPushed(\App\Jobs\WalletCharge::class, 1);

@@ -52,7 +52,7 @@ class WalletCharge extends Command
             $wallets = Wallet::select('wallets.*')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
                 ->whereNull('users.deleted_at')
-                ->get();
+                ->cursor();
         }
 
         foreach ($wallets as $wallet) {
