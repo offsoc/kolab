@@ -123,12 +123,18 @@ class DomainTest extends TestCase
         $public_domains = Domain::getPublicDomains();
         $this->assertNotContains('public-active.com', $public_domains);
 
-        $domain = Domain::where('namespace', 'public-active.com')->first();
         $domain->type = Domain::TYPE_PUBLIC;
         $domain->save();
 
         $public_domains = Domain::getPublicDomains();
         $this->assertContains('public-active.com', $public_domains);
+
+        // Domains of other tenants should not be returned
+        $domain->tenant_id = 2;
+        $domain->save();
+
+        $public_domains = Domain::getPublicDomains();
+        $this->assertNotContains('public-active.com', $public_domains);
     }
 
     /**

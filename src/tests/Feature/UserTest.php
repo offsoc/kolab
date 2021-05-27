@@ -297,26 +297,32 @@ class UserTest extends TestCase
     public function testDomains(): void
     {
         $user = $this->getTestUser('john@kolab.org');
-        $domains = [];
+        $domain = $this->getTestDomain('useraccount.com', [
+                'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
+                'type' => Domain::TYPE_PUBLIC,
+        ]);
 
-        foreach ($user->domains() as $domain) {
-            $domains[] = $domain->namespace;
-        }
+        $domains = collect($user->domains())->pluck('namespace')->all();
 
-        $this->assertContains(\config('app.domain'), $domains);
+        $this->assertContains($domain->namespace, $domains);
         $this->assertContains('kolab.org', $domains);
 
         // Jack is not the wallet controller, so for him the list should not
         // include John's domains, kolab.org specifically
         $user = $this->getTestUser('jack@kolab.org');
-        $domains = [];
 
-        foreach ($user->domains() as $domain) {
-            $domains[] = $domain->namespace;
-        }
+        $domains = collect($user->domains())->pluck('namespace')->all();
 
-        $this->assertContains(\config('app.domain'), $domains);
+        $this->assertContains($domain->namespace, $domains);
         $this->assertNotContains('kolab.org', $domains);
+
+        // Public domains of other tenants should not be returned
+        $domain->tenant_id = 2;
+        $domain->save();
+
+        $domains = collect($user->domains())->pluck('namespace')->all();
+
+        $this->assertNotContains($domain->namespace, $domains);
     }
 
     public function testUserQuota(): void

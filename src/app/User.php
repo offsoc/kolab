@@ -303,12 +303,19 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * List the domains to which this user is entitled.
+     * Note: Active public domains are also returned (for the user tenant).
      *
-     * @return Domain[]
+     * @return Domain[] List of Domain objects
      */
-    public function domains()
+    public function domains(): array
     {
-        $domains = Domain::whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
+        if ($this->tenant_id) {
+            $domains = Domain::where('tenant_id', $this->tenant_id);
+        } else {
+            $domains = Domain::withEnvTenant();
+        }
+
+        $domains = $domains->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
             ->whereRaw(sprintf('(status & %s)', Domain::STATUS_ACTIVE))
             ->get()
             ->all();

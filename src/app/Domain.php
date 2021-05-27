@@ -111,13 +111,13 @@ class Domain extends Model
     }
 
     /**
-     * Return list of public+active domain names
+     * Return list of public+active domain names (for current tenant)
      */
     public static function getPublicDomains(): array
     {
-        $where = sprintf('(type & %s)', Domain::TYPE_PUBLIC);
-
-        return self::whereRaw($where)->get(['namespace'])->pluck('namespace')->toArray();
+        return self::withEnvTenant()
+            ->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
+            ->get(['namespace'])->pluck('namespace')->toArray();
     }
 
     /**
