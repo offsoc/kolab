@@ -31,25 +31,25 @@ const routes = [
         path: '/distlist/:list',
         name: 'distlist',
         component: DistlistInfoComponent,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, perm: 'distlists' }
     },
     {
         path: '/distlists',
         name: 'distlists',
         component: DistlistListComponent,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, perm: 'distlists' }
     },
     {
         path: '/domain/:domain',
         name: 'domain',
         component: DomainInfoComponent,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, perm: 'domains' }
     },
     {
         path: '/domains',
         name: 'domains',
         component: DomainListComponent,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, perm: 'domains' }
     },
     {
         path: '/login',
@@ -100,19 +100,19 @@ const routes = [
         path: '/user/:user',
         name: 'user',
         component: UserInfoComponent,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, perm: 'users' }
     },
     {
         path: '/users',
         name: 'users',
         component: UserListComponent,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, perm: 'users' }
     },
     {
         path: '/wallet',
         name: 'wallet',
         component: WalletComponent,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, perm: 'wallets' }
     },
     {
         name: '404',

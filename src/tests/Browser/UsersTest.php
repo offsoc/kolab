@@ -508,11 +508,8 @@ class UsersTest extends TestCaseDusk
             $browser->visit('/logout')
                 ->on(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)
-                ->visit(new UserList())
-                ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 0)
-                        ->assertSeeIn('tfoot td', 'There are no users in this account.');
-                });
+                ->visit('/users')
+                ->assertErrorPage(403);
         });
 
         // Test that controller user (Ned) can see all the users

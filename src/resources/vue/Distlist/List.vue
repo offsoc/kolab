@@ -43,13 +43,6 @@
             }
         },
         created() {
-            // TODO: Find a way to do this in some more global way. Note that it cannot
-            //       be done in the vue-router, but maybe the app component?
-            if (!this.$root.hasPermission('distlists')) {
-                this.$root.errorPage(404)
-                return
-            }
-
             this.$root.startLoading()
 
             axios.get('/api/v4/groups')

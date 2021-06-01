@@ -257,4 +257,20 @@ class WalletTest extends TestCaseDusk
                 });
         });
     }
+
+    /**
+     * Test that non-controller user has no access to wallet
+     */
+    public function testAccessDenied(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/logout')
+                ->on(new Home())
+                ->submitLogon('jack@kolab.org', 'simple123', true)
+                ->on(new Dashboard())
+                ->assertMissing('@links .link-wallet')
+                ->visit('/wallet')
+                ->assertErrorPage(403, "Only account owners can access a wallet.");
+        });
+    }
 }

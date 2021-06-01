@@ -56,11 +56,6 @@
             }
         },
         created() {
-            if (!this.$root.hasPermission('distlists')) {
-                this.$root.errorPage(404)
-                return
-            }
-
             this.list_id = this.$route.params.list
 
             if (this.list_id != 'new') {

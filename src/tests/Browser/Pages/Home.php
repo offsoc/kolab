@@ -64,7 +64,8 @@ class Home extends Page
         $wait_for_dashboard = false,
         $config = []
     ) {
-        $browser->type('@email-input', $username)
+        $browser->clearToasts()
+            ->type('@email-input', $username)
             ->type('@password-input', $password);
 
         if ($username == 'ned@kolab.org') {
