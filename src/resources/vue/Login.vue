@@ -6,21 +6,21 @@
                 <div class="card-text">
                     <form class="form-signin" @submit.prevent="submitLogin">
                         <div class="form-group">
-                            <label for="inputEmail" class="sr-only">{{ $t('login.email') }}</label>
+                            <label for="inputEmail" class="sr-only">{{ $t('form.email') }}</label>
                             <div class="input-group">
                                 <span class="input-group-prepend">
                                     <span class="input-group-text"><svg-icon icon="user"></svg-icon></span>
                                 </span>
-                                <input type="email" id="inputEmail" class="form-control" :placeholder="$t('login.email')" required autofocus v-model="email">
+                                <input type="email" id="inputEmail" class="form-control" :placeholder="$t('form.email')" required autofocus v-model="email">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="inputPassword" class="sr-only">{{ $t('login.password') }}</label>
+                            <label for="inputPassword" class="sr-only">{{ $t('form.password') }}</label>
                             <div class="input-group">
                                 <span class="input-group-prepend">
                                     <span class="input-group-text"><svg-icon icon="lock"></svg-icon></span>
                                 </span>
-                                <input type="password" id="inputPassword" class="form-control" :placeholder="$t('login.password')" required v-model="password">
+                                <input type="password" id="inputPassword" class="form-control" :placeholder="$t('form.password')" required v-model="password">
                             </div>
                         </div>
                         <div class="form-group pt-3" v-if="$root.isUser">

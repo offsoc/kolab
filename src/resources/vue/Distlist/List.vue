@@ -3,16 +3,16 @@
         <div class="card" id="distlist-list">
             <div class="card-body">
                 <div class="card-title">
-                    Distribution lists
+                    {{ $tc('distlist.list-title', 2) }}
                     <router-link class="btn btn-success float-right create-list" :to="{ path: 'distlist/new' }" tag="button">
-                        <svg-icon icon="users"></svg-icon> Create list
+                        <svg-icon icon="users"></svg-icon> {{ $t('distlist.create') }}
                     </router-link>
                 </div>
                 <div class="card-text">
                     <table class="table table-sm table-hover">
                         <thead class="thead-light">
                             <tr>
-                                <th scope="col">Email</th>
+                                <th scope="col">{{ $t('distlist.email') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -25,7 +25,7 @@
                         </tbody>
                         <tfoot class="table-fake-body">
                             <tr>
-                                <td>There are no distribution lists in this account.</td>
+                                <td>{{ $t('distlist.list-empty') }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -43,13 +43,6 @@
             }
         },
         created() {
-            // TODO: Find a way to do this in some more global way. Note that it cannot
-            //       be done in the vue-router, but maybe the app component?
-            if (!this.$root.hasPermission('distlists')) {
-                this.$root.errorPage(404)
-                return
-            }
-
             this.$root.startLoading()
 
             axios.get('/api/v4/groups')

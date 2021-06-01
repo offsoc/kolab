@@ -76,9 +76,9 @@ class Browser extends \Laravel\Dusk\Browser
     /**
      * Assert specified error page is displayed.
      */
-    public function assertErrorPage(int $error_code)
+    public function assertErrorPage(int $error_code, string $hint = '')
     {
-        $this->with(new Error($error_code), function ($browser) {
+        $this->with(new Error($error_code, $hint), function ($browser) {
             // empty, assertions will be made by the Error component itself
         });
 

@@ -2,35 +2,34 @@
     <div class="container">
         <div class="card" id="step1">
             <div class="card-body">
-                <h4 class="card-title">Password Reset - Step 1/3</h4>
+                <h4 class="card-title">{{ $t('password.reset') }} - {{ $t('nav.step', { i: 1, n: 3 }) }}</h4>
                 <p class="card-text">
-                    Enter your email address to reset your password.
-                    <span v-if="fromEmail">You may need to check your spam folder or unblock {{ fromEmail }}.</span>
+                    {{ $t('password.reset-step1') }}
+                    <span v-if="fromEmail">{{ $t('password.reset-step1-hint', { email: fromEmail }) }}</span>
                 </p>
                 <form @submit.prevent="submitStep1" data-validation-prefix="reset_">
                     <div class="form-group">
-                        <label for="reset_email" class="sr-only">Email Address</label>
-                        <input type="text" class="form-control" id="reset_email" placeholder="Email Address" required v-model="email">
+                        <label for="reset_email" class="sr-only">{{ $t('form.email') }}</label>
+                        <input type="text" class="form-control" id="reset_email" :placeholder="$t('form.email')" required v-model="email">
                     </div>
-                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Continue</button>
+                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('button.continue') }}</button>
                 </form>
             </div>
         </div>
 
         <div class="card d-none" id="step2">
             <div class="card-body">
-                <h4 class="card-title">Password Reset - Step 2/3</h4>
+                <h4 class="card-title">{{ $t('password.reset') }} - {{ $t('nav.step', { i: 2, n: 3 }) }}</h4>
                 <p class="card-text">
-                    We sent out a confirmation code to your external email address.
-                    Enter the code we sent you, or click the link in the message.
+                    {{ $t('password.reset-step2') }}
                 </p>
                 <form @submit.prevent="submitStep2" data-validation-prefix="reset_">
                     <div class="form-group">
-                        <label for="reset_short_code" class="sr-only">Confirmation Code</label>
-                        <input type="text" class="form-control" id="reset_short_code" placeholder="Confirmation Code" required v-model="short_code">
+                        <label for="reset_short_code" class="sr-only">{{ $t('form.code') }}</label>
+                        <input type="text" class="form-control" id="reset_short_code" :placeholder="$t('form.code')" required v-model="short_code">
                     </div>
-                    <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
-                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Continue</button>
+                    <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('button.back') }}</button>
+                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('button.continue') }}</button>
                     <input type="hidden" id="reset_code" v-model="code" />
                 </form>
             </div>
@@ -38,20 +37,20 @@
 
         <div class="card d-none" id="step3">
             <div class="card-body">
-                <h4 class="card-title">Password Reset - Step 3/3</h4>
+                <h4 class="card-title">{{ $t('password.reset') }} - {{ $t('nav.step', { i: 3, n: 3 }) }}</h4>
                 <p class="card-text">
                 </p>
                 <form @submit.prevent="submitStep3" data-validation-prefix="reset_">
                     <div class="form-group">
-                        <label for="reset_password" class="sr-only">Password</label>
-                        <input type="password" class="form-control" id="reset_password" placeholder="Password" required v-model="password">
+                        <label for="reset_password" class="sr-only">{{ $t('form.password') }}</label>
+                        <input type="password" class="form-control" id="reset_password" :placeholder="$t('form.password')" required v-model="password">
                     </div>
                     <div class="form-group">
-                        <label for="reset_confirm" class="sr-only">Confirm Password</label>
-                        <input type="password" class="form-control" id="reset_confirm" placeholder="Confirm Password" required v-model="password_confirmation">
+                        <label for="reset_confirm" class="sr-only">{{ $t('form.password-confirm') }}</label>
+                        <input type="password" class="form-control" id="reset_confirm" :placeholder="$t('form.password-confirm')" required v-model="password_confirmation">
                     </div>
-                    <button class="btn btn-secondary" type="button" @click="stepBack">Back</button>
-                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
+                    <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('button.back') }}</button>
+                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('button.submit') }}</button>
                 </form>
             </div>
         </div>

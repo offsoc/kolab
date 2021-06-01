@@ -53,7 +53,7 @@ class WalletCharge extends Command
                 ->join('users', 'users.id', '=', 'wallets.user_id')
                 ->withEnvTenant('users')
                 ->whereNull('users.deleted_at')
-                ->get();
+                ->cursor();
         }
 
         foreach ($wallets as $wallet) {

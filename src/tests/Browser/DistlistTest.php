@@ -76,7 +76,7 @@ class DistlistTest extends TestCaseDusk
         // Test that Distribution lists page is not accessible without the 'distlist' entitlement
         $this->browse(function (Browser $browser) {
             $browser->visit('/distlists')
-                ->assertErrorPage(404);
+                ->assertErrorPage(403);
         });
 
         // Create a single group, add beta+distlist entitlements
@@ -111,7 +111,7 @@ class DistlistTest extends TestCaseDusk
         // Test that the page is not available accessible without the 'distlist' entitlement
         $this->browse(function (Browser $browser) {
             $browser->visit('/distlist/new')
-                ->assertErrorPage(404);
+                ->assertErrorPage(403);
         });
 
         // Add beta+distlist entitlements

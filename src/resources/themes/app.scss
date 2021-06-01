@@ -35,8 +35,10 @@ body > .outer-container {
     top: 0;
     height: 100%;
     width: 100%;
+    align-content: center;
     align-items: center;
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     color: #636b6f;
     z-index: 10;
@@ -52,6 +54,12 @@ body > .outer-container {
     .message {
         font-size: 18px;
         padding: 0 15px;
+    }
+
+    .hint {
+        margin-top: 3em;
+        text-align: center;
+        width: 100%;
     }
 }
 

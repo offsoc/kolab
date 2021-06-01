@@ -188,7 +188,7 @@ const app = new Vue({
         isLoading() {
             return isLoading > 0
         },
-        errorPage(code, msg) {
+        errorPage(code, msg, hint) {
             // Until https://github.com/vuejs/vue-router/issues/977 is implemented
             // we can't really use router to display error page as it has two side
             // effects: it changes the URL and adds the error page to browser history.
@@ -203,8 +203,11 @@ const app = new Vue({
             }
 
             if (!msg) msg = map[code] || "Unknown Error"
+            if (!hint) hint = ''
 
-            const error_page = `<div id="error-page" class="error-page"><div class="code">${code}</div><div class="message">${msg}</div></div>`
+            const error_page = '<div id="error-page" class="error-page">'
+                + `<div class="code">${code}</div><div class="message">${msg}</div><div class="hint">${hint}</div>`
+                + '</div>'
 
             $('#error-page').remove()
             $('#app').append(error_page)

@@ -164,7 +164,6 @@ class UserProfileTest extends TestCaseDusk
                 ->on(new Home())
                 ->submitLogon('profile-delete@kolabnow.com', 'simple123', true)
                 ->on(new Dashboard())
-                ->clearToasts()
                 ->assertSeeIn('@links .link-profile', 'Your profile')
                 ->click('@links .link-profile')
                 ->on(new UserProfile())

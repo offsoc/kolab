@@ -1,5 +1,5 @@
 <template>
-    <router-view v-if="!isLoading && !routerReloading" :key="key" @hook:mounted="childMounted"></router-view>
+    <router-view v-if="!isLoading && !routerReloading && key" :key="key" @hook:mounted="childMounted"></router-view>
 </template>
 
 <script>
@@ -12,6 +12,14 @@
         },
         computed: {
             key() {
+                // Display 403 error page if the current user has no permission to a specified page
+                // Note that it's the only place I found that allows us to do this.
+                if (this.$route.meta.perm && !this.checkPermission(this.$route.meta.perm)) {
+                    // Returning false here will block the page component from execution,
+                    // as we're using the key in v-if condition on the router-view above
+                    return false
+                }
+
                 // The 'key' property is used to reload the Page component
                 // whenever a route changes. Normally vue does not do that.
                 return this.$route.name == '404' ? this.$route.path : 'static'
@@ -41,6 +49,17 @@
             }
         },
         methods: {
+            checkPermission(type) {
+                if (this.$root.hasPermission(type)) {
+                    return true
+                }
+
+                const hint = type == 'wallets' ? "Only account owners can access a wallet." : ''
+
+                this.$root.errorPage(403, null, hint)
+
+                return false
+            },
             childMounted() {
                 this.$root.updateBodyClass()
                 this.getFAQ()

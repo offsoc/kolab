@@ -8,6 +8,7 @@ use PHPUnit\Framework\Assert as PHPUnit;
 class Error extends BaseComponent
 {
     protected $code;
+    protected $hint;
     protected $message;
     protected $messages_map = [
         400 => "Bad request",
@@ -18,9 +19,10 @@ class Error extends BaseComponent
         500 => "Internal server error",
     ];
 
-    public function __construct($code)
+    public function __construct($code, $hint = '')
     {
         $this->code = $code;
+        $this->hint = $hint;
         $this->message = $this->messages_map[$code];
     }
 
@@ -46,6 +48,12 @@ class Error extends BaseComponent
         $browser->waitFor($this->selector())
             ->assertSeeIn('@code', $this->code);
 
+        if ($this->hint) {
+            $browser->assertSeeIn('@hint', $this->hint);
+        } else {
+            $browser->assertMissing('@hint');
+        }
+
         $message = $browser->text('@message');
         PHPUnit::assertSame(strtolower($message), strtolower($this->message));
     }
@@ -62,6 +70,7 @@ class Error extends BaseComponent
         return [
             '@code' => "$selector .code",
             '@message' =>  "$selector .message",
+            '@hint' =>  "$selector .hint",
         ];
     }
 }
