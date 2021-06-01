@@ -45,6 +45,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
 
         $result['provider'] = $provider->name();
         $result['providerLink'] = $provider->customerLink($wallet);
+        $result['notice'] = $this->getWalletNotice($wallet); // for resellers
 
         return response()->json($result);
     }

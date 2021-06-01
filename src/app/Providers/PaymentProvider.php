@@ -387,4 +387,22 @@ abstract class PaymentProvider
 
         return $methods;
     }
+
+    /**
+     * Returns the full URL for the wallet page, used when returning from an external payment page.
+     * Depending on the request origin it will return a URL for the User or Reseller UI.
+     *
+     * @return string The redirect URL
+     */
+    public static function redirectUrl(): string
+    {
+        $url = \App\Utils::serviceUrl('/wallet');
+        $domain = preg_replace('/:[0-9]+$/', '', request()->getHttpHost());
+
+        if (strpos($domain, 'reseller') === 0) {
+            $url = preg_replace('|^(https?://)([^/]+)|', '\\1' . $domain, $url);
+        }
+
+        return $url;
+    }
 }

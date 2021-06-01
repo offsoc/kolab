@@ -7,6 +7,7 @@ import LogoutComponent from '../../vue/Logout'
 import PageComponent from '../../vue/Page'
 import StatsComponent from '../../vue/Reseller/Stats'
 import UserComponent from '../../vue/Admin/User'
+import WalletComponent from '../../vue/Wallet'
 
 const routes = [
     {
@@ -57,6 +58,12 @@ const routes = [
         path: '/user/:user',
         name: 'user',
         component: UserComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/wallet',
+        name: 'wallet',
+        component: WalletComponent,
         meta: { requiresAuth: true }
     },
     {

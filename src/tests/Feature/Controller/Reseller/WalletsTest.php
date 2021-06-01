@@ -77,6 +77,7 @@ class WalletsTest extends TestCase
         $this->assertTrue(!empty($json['provider']));
         $this->assertTrue(empty($json['providerLink']));
         $this->assertTrue(!empty($json['mandate']));
+        $this->assertTrue(!empty($json['notice']));
 
         // Reseller from a different tenant
         \config(['app.tenant_id' => 2]);

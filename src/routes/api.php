@@ -189,6 +189,16 @@ Route::group(
         Route::apiResource('invitations', API\V4\Reseller\InvitationsController::class);
         Route::post('invitations/{id}/resend', 'API\V4\Reseller\InvitationsController@resend');
         Route::apiResource('packages', API\V4\Reseller\PackagesController::class);
+
+        Route::post('payments', 'API\V4\Reseller\PaymentsController@store');
+        Route::get('payments/mandate', 'API\V4\Reseller\PaymentsController@mandate');
+        Route::post('payments/mandate', 'API\V4\Reseller\PaymentsController@mandateCreate');
+        Route::put('payments/mandate', 'API\V4\Reseller\PaymentsController@mandateUpdate');
+        Route::delete('payments/mandate', 'API\V4\Reseller\PaymentsController@mandateDelete');
+        Route::get('payments/methods', 'API\V4\Reseller\PaymentsController@paymentMethods');
+        Route::get('payments/pending', 'API\V4\Reseller\PaymentsController@payments');
+        Route::get('payments/has-pending', 'API\V4\Reseller\PaymentsController@hasPayments');
+
         Route::apiResource('skus', API\V4\Reseller\SkusController::class);
         Route::apiResource('users', API\V4\Reseller\UsersController::class);
         Route::post('users/{id}/reset2FA', 'API\V4\Reseller\UsersController@reset2FA');
@@ -197,6 +207,8 @@ Route::group(
         Route::post('users/{id}/unsuspend', 'API\V4\Reseller\UsersController@unsuspend');
         Route::apiResource('wallets', API\V4\Reseller\WalletsController::class);
         Route::post('wallets/{id}/one-off', 'API\V4\Reseller\WalletsController@oneOff');
+        Route::get('wallets/{id}/receipts', 'API\V4\Reseller\WalletsController@receipts');
+        Route::get('wallets/{id}/receipts/{receipt}', 'API\V4\Reseller\WalletsController@receiptDownload');
         Route::get('wallets/{id}/transactions', 'API\V4\Reseller\WalletsController@transactions');
         Route::apiResource('discounts', API\V4\Reseller\DiscountsController::class);
 
