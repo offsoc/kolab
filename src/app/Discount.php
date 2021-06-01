@@ -60,6 +60,16 @@ class Discount extends Model
     }
 
     /**
+     * The tenant for this discount.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function tenant()
+    {
+        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
+    }
+
+    /**
      * List of wallets with this discount assigned.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany

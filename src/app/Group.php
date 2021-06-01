@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * The eloquent definition of a Group.
  *
- * @property int    $id      The group identifier
- * @property string $email   An email address
- * @property string $members A comma-separated list of email addresses
- * @property int    $status  The group status
+ * @property int    $id        The group identifier
+ * @property string $email     An email address
+ * @property string $members   A comma-separated list of email addresses
+ * @property int    $status    The group status
+ * @property int    $tenant_id Tenant identifier
  */
 class Group extends Model
 {
@@ -249,6 +250,16 @@ class Group extends Model
 
         $this->status |= Group::STATUS_SUSPENDED;
         $this->save();
+    }
+
+    /**
+     * The tenant for this group.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function tenant()
+    {
+        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**

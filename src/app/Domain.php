@@ -381,6 +381,16 @@ class Domain extends Model
     }
 
     /**
+     * The tenant for this domain.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function tenant()
+    {
+        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
+    }
+
+    /**
      * Unsuspend this domain.
      *
      * The domain is unsuspended through either of the following courses of actions;
