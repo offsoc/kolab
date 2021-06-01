@@ -6,14 +6,14 @@
         <span v-if="status == 'init'">{{ statusLabel() }}</span>
 
         <svg-icon v-if="status != 'init' && statusLabel()" :icon="Number(status) >= 400 ? 'exclamation-circle' : 'info-circle'"></svg-icon>
-        <span v-if="status != 'init' && statusLabel()">{{ statusLabel() }}</span>
+        <span v-if="status != 'init' && statusLabel()">{{ $t(statusLabel()) }}</span>
     </div>
 </template>
 
 <script>
     const defaultLabels = {
-        init: 'Loading...',
-        404: 'Resource not found.'
+        init: 'msg.loading',
+        404: 'msg.notfound'
     }
 
     export default {

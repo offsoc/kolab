@@ -42,6 +42,7 @@ function Meet(container)
     let publishersContainer
     let subscribersContainer
     let scrollStop
+    let $t
 
     OV = ovInit()
 
@@ -105,6 +106,7 @@ function Meet(container)
      *      onConnectionChange  - Callback for participant changes, e.g. role update,
      *      onSessionDataUpdate - Callback for current user connection update,
      *      onMediaSetup        - Called when user clicks the Media setup button
+     *      translate           - Translation function
      */
     function joinRoom(data) {
         // Create a container for subscribers and publishers
@@ -118,6 +120,8 @@ function Meet(container)
             nickname: data.nickname, // user nickname
             // avatar: undefined        // avatar image
         }
+
+        $t = data.translate
 
         // Make sure all supported callbacks exist, so we don't have to check
         // their existence everywhere anymore
@@ -999,10 +1003,10 @@ function Meet(container)
             '<div class="meet-video">'
             + svgIcon('user', 'fas', 'watermark')
             + '<div class="controls">'
-                + '<button type="button" class="btn btn-link link-setup hidden" title="Media setup">' + svgIcon('cog') + '</button>'
-                + '<button type="button" class="btn btn-link link-audio hidden" title="Mute audio">' + svgIcon('volume-mute') + '</button>'
-                + '<button type="button" class="btn btn-link link-fullscreen closed hidden" title="Full screen">' + svgIcon('expand') + '</button>'
-                + '<button type="button" class="btn btn-link link-fullscreen open hidden" title="Full screen">' + svgIcon('compress') + '</button>'
+                + '<button type="button" class="btn btn-link link-setup hidden" title="' + $t('meet.media-setup') + '">' + svgIcon('cog') + '</button>'
+                + '<button type="button" class="btn btn-link link-audio hidden" title="' + $t('meet.menu-audio-mute') + '">' + svgIcon('volume-mute') + '</button>'
+                + '<button type="button" class="btn btn-link link-fullscreen closed hidden" title="' + $t('meet.menu-fullscreen') + '">' + svgIcon('expand') + '</button>'
+                + '<button type="button" class="btn btn-link link-fullscreen open hidden" title="' + $t('meet.menu-fullscreen') + '">' + svgIcon('compress') + '</button>'
             + '</div>'
             + '<div class="status">'
                 + '<span class="bg-warning status-audio hidden">' + svgIcon('microphone-slash') + '</span>'
@@ -1214,7 +1218,7 @@ function Meet(container)
 
         // Append languages selection options
         Object.keys(sessionData.languages).forEach(code => {
-            languages.push(`<option value="${code}">${sessionData.languages[code]}</option>`)
+            languages.push(`<option value="${code}">${$t(sessionData.languages[code])}</option>`)
         })
 
         // Create the element
@@ -1233,21 +1237,21 @@ function Meet(container)
                     + '<a class="dropdown-item action-dismiss" href="#">Dismiss</a>'
                     + '<div class="dropdown-divider permissions"></div>'
                     + '<div class="permissions">'
-                        + '<h6 class="dropdown-header">Permissions</h6>'
+                        + '<h6 class="dropdown-header">' + $t('meet.perm') + '</h6>'
                         + '<label class="dropdown-item action-role-publisher custom-control custom-switch">'
                             + '<input type="checkbox" class="custom-control-input">'
-                            + ' <span class="custom-control-label">Audio &amp; Video publishing</span>'
+                            + ' <span class="custom-control-label">' + $t('meet.perm-av') + '</span>'
                         + '</label>'
                         + '<label class="dropdown-item action-role-moderator custom-control custom-switch">'
                             + '<input type="checkbox" class="custom-control-input">'
-                            + ' <span class="custom-control-label">Moderation</span>'
+                            + ' <span class="custom-control-label">' + $t('meet.perm-mod') + '</span>'
                         + '</label>'
                     + '</div>'
                     + '<div class="dropdown-divider interpreting"></div>'
                     + '<div class="interpreting">'
-                        + '<h6 class="dropdown-header">Language interpreter</h6>'
+                        + '<h6 class="dropdown-header">' + $t('meet.lang-int') + '</h6>'
                         + '<div class="ml-4 mr-4"><select class="custom-select">'
-                            + '<option value="">- none -</option>'
+                            + '<option value="">- ' + $t('form.none') + ' -</option>'
                             + languages.join('')
                         + '</select></div>'
                     + '</div>'
@@ -1257,7 +1261,7 @@ function Meet(container)
 
         let nickname = element.find('.meet-nickname')
             .addClass('btn btn-outline-' + (params.isSelf ? 'primary' : 'secondary'))
-            .attr({title: 'Options', 'data-toggle': 'dropdown'})
+            .attr({title: $t('meet.menu-options'), 'data-toggle': 'dropdown'})
             .dropdown({boundary: container.parentNode})
 
         if (params.isSelf) {

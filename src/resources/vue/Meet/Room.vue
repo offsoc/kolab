@@ -1,48 +1,48 @@
 <template>
     <div id="meet-component">
         <div id="meet-session-toolbar" class="hidden">
-            <span id="meet-counter" title="Number of participants"><svg-icon icon="users"></svg-icon> <span></span></span>
+            <span id="meet-counter" :title="$t('meet.partcnt')"><svg-icon icon="users"></svg-icon> <span></span></span>
             <span id="meet-session-logo" v-html="$root.logo()"></span>
             <div id="meet-session-menu">
-                <button :class="'btn link-audio' + (audioActive ? '' : ' on')" @click="switchSound" :disabled="!isPublisher()" :title="audioActive ? 'Mute audio' : 'Unmute audio'">
+                <button :class="'btn link-audio' + (audioActive ? '' : ' on')" @click="switchSound" :disabled="!isPublisher()" :title="$t('meet.menu-audio-' + (audioActive ? 'mute' : 'unmute'))">
                     <svg-icon :icon="audioActive ? 'microphone' : 'microphone-slash'"></svg-icon>
                 </button>
-                <button :class="'btn link-video' + (videoActive ? '' : ' on')" @click="switchVideo" :disabled="!isPublisher()" :title="videoActive ? 'Mute video' : 'Unmute video'">
+                <button :class="'btn link-video' + (videoActive ? '' : ' on')" @click="switchVideo" :disabled="!isPublisher()" :title="$t('meet.menu-video-' + (videoActive ? 'mute' : 'unmute'))">
                     <svg-icon :icon="videoActive ? 'video' : 'video-slash'"></svg-icon>
                 </button>
-                <button :class="'btn link-screen' + (screenShareActive ? ' on' : '')" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" title="Share screen">
+                <button :class="'btn link-screen' + (screenShareActive ? ' on' : '')" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" :title="$t('meet.menu-screen')">
                     <svg-icon icon="desktop"></svg-icon>
                 </button>
-                <button :class="'btn link-hand' + (handRaised ? ' on' : '')" v-if="!isPublisher()" @click="switchHand" :title="handRaised ? 'Lower hand' : 'Raise hand'">
+                <button :class="'btn link-hand' + (handRaised ? ' on' : '')" v-if="!isPublisher()" @click="switchHand" :title="$t('meet.menu-hand-' + (handRaised ? 'lower' : 'raise'))">
                     <svg-icon icon="hand-paper"></svg-icon>
                 </button>
                 <span id="channel-select" :style="'display:' + (channels.length ? '' : 'none')" class="dropdown">
                     <button :class="'btn link-channel' + (session.channel ? ' on' : '')" data-toggle="dropdown"
-                            title="Interpreted language channel" aria-haspopup="true" aria-expanded="false"
+                            :title="$t('meet.menu-channel')" aria-haspopup="true" aria-expanded="false"
                     >
                         <svg-icon icon="headphones"></svg-icon>
                         <span class="badge badge-danger" v-if="session.channel">{{ session.channel.toUpperCase() }}</span>
                     </button>
                     <div class="dropdown-menu">
-                        <a :class="'dropdown-item' + (!session.channel ? ' active' : '')" href="#" data-code="" @click="switchChannel">- none -</a>
+                        <a :class="'dropdown-item' + (!session.channel ? ' active' : '')" href="#" data-code="" @click="switchChannel">- {{ $t('form.none') }} -</a>
                         <a v-for="code in channels" :key="code" href="#" @click="switchChannel" :data-code="code"
                            :class="'dropdown-item' + (session.channel == code ? ' active' : '')"
-                        >{{ languages[code] }}</a>
+                        >{{ $t('lang.' + code) }}</a>
                     </div>
                 </span>
-                <button :class="'btn link-chat' + (chatActive ? ' on' : '')" @click="switchChat" title="Chat">
+                <button :class="'btn link-chat' + (chatActive ? ' on' : '')" @click="switchChat" :title="$t('meet.menu-chat')">
                     <svg-icon icon="comment"></svg-icon>
                 </button>
-                <button class="btn link-fullscreen closed hidden" @click="switchFullscreen" title="Full screen">
+                <button class="btn link-fullscreen closed hidden" @click="switchFullscreen" :title="$t('meet.menu-fullscreen')">
                     <svg-icon icon="expand"></svg-icon>
                 </button>
-                <button class="btn link-fullscreen open hidden" @click="switchFullscreen" title="Exit full screen">
+                <button class="btn link-fullscreen open hidden" @click="switchFullscreen" :title="$t('meet.menu-fullscreen-exit')">
                     <svg-icon icon="compress"></svg-icon>
                 </button>
-                <button class="btn link-options" v-if="isRoomOwner()" @click="roomOptions" title="Room options">
+                <button class="btn link-options" v-if="isRoomOwner()" @click="roomOptions" :title="$t('meet.options')">
                     <svg-icon icon="cog"></svg-icon>
                 </button>
-                <button class="btn link-logout" @click="logout" title="Leave session">
+                <button class="btn link-logout" @click="logout" :title="$t('meet.menu-leave')">
                     <svg-icon icon="power-off"></svg-icon>
                 </button>
             </div>
@@ -50,7 +50,7 @@
 
         <div id="meet-setup" class="card container mt-2 mt-md-5 mb-5">
             <div class="card-body">
-                <div class="card-title">Set up your session</div>
+                <div class="card-title">{{ $t('meet.setup-title') }}</div>
                 <div class="card-text">
                     <form class="media-setup-form row" @submit.prevent="joinSession">
                         <div class="media-setup-preview col-sm-6 mb-3 mb-sm-0">
@@ -60,41 +60,41 @@
                         <div class="col-sm-6 align-self-center">
                             <div class="input-group">
                                 <label for="setup-microphone" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" title="Microphone"><svg-icon icon="microphone"></svg-icon></span>
+                                    <span class="input-group-text" :title="$t('meet.mic')"><svg-icon icon="microphone"></svg-icon></span>
                                 </label>
                                 <select class="custom-select" id="setup-microphone" v-model="microphone" @change="setupMicrophoneChange">
-                                    <option value="">None</option>
+                                    <option value="">{{ $t('form.none') }}</option>
                                     <option v-for="mic in setup.microphones" :value="mic.deviceId" :key="mic.deviceId">{{ mic.label }}</option>
                                 </select>
                             </div>
                             <div class="input-group mt-2">
                                 <label for="setup-camera" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" title="Camera"><svg-icon icon="video"></svg-icon></span>
+                                    <span class="input-group-text" :title="$t('meet.cam')"><svg-icon icon="video"></svg-icon></span>
                                 </label>
                                 <select class="custom-select" id="setup-camera" v-model="camera" @change="setupCameraChange">
-                                    <option value="">None</option>
+                                    <option value="">{{ $t('form.none') }}</option>
                                     <option v-for="cam in setup.cameras" :value="cam.deviceId" :key="cam.deviceId">{{ cam.label }}</option>
                                 </select>
                             </div>
                             <div class="input-group mt-2">
                                 <label for="setup-nickname" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" title="Nickname"><svg-icon icon="user"></svg-icon></span>
+                                    <span class="input-group-text" :title="$t('meet.nick')"><svg-icon icon="user"></svg-icon></span>
                                 </label>
-                                <input class="form-control" type="text" id="setup-nickname" v-model="nickname" placeholder="Your name">
+                                <input class="form-control" type="text" id="setup-nickname" v-model="nickname" :placeholder="$t('meet.nick-placeholder')">
                             </div>
                             <div class="input-group mt-2" v-if="session.config && session.config.requires_password">
                                 <label for="setup-password" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" title="Password"><svg-icon icon="key"></svg-icon></span>
+                                    <span class="input-group-text" :title="$t('form.password')"><svg-icon icon="key"></svg-icon></span>
                                 </label>
-                                <input type="password" class="form-control" id="setup-password" v-model="password" placeholder="Password">
+                                <input type="password" class="form-control" id="setup-password" v-model="password" :placeholder="$t('form.password')">
                             </div>
                             <div class="mt-3">
                                 <button type="submit" id="join-button"
                                         :class="'btn w-100 btn-' + (isRoomReady() ? 'success' : 'primary')"
                                 >
-                                    <span v-if="isRoomReady()">JOIN NOW</span>
-                                    <span v-else-if="roomState == 323">I'm the owner</span>
-                                    <span v-else>JOIN</span>
+                                    <span v-if="isRoomReady()">{{ $t('meet.joinnow') }}</span>
+                                    <span v-else-if="roomState == 323">{{ $t('meet.imaowner') }}</span>
+                                    <span v-else>{{ $t('meet.join') }}</span>
                                 </button>
                             </div>
                         </div>
@@ -108,7 +108,7 @@
 
         <div id="meet-session-layout" class="d-flex hidden">
             <div id="meet-queue">
-                <div class="head" title="Q &amp; A"><svg-icon icon="microphone-alt"></svg-icon></div>
+                <div class="head" :title="$t('meet.qa')"><svg-icon icon="microphone-alt"></svg-icon></div>
             </div>
             <div id="meet-session"></div>
             <div id="meet-chat">
@@ -125,16 +125,16 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Room closed</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <h5 class="modal-title">{{ $t('meet.leave-title') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('button.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>The session has been closed by the room owner.</p>
+                        <p>{{ $t('meet.leave-body') }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-danger modal-action" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-danger modal-action" data-dismiss="modal">{{ $t('button.close') }}</button>
                     </div>
                 </div>
             </div>
@@ -144,8 +144,8 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Media setup</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <h5 class="modal-title">{{ $t('meet.media-title') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('button.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -154,26 +154,26 @@
                             <div class="media-setup-preview"></div>
                             <div class="input-group mt-2">
                                 <label for="setup-mic" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" title="Microphone"><svg-icon icon="microphone"></svg-icon></span>
+                                    <span class="input-group-text" :title="$t('meet.mic')"><svg-icon icon="microphone"></svg-icon></span>
                                 </label>
                                 <select class="custom-select" id="setup-mic" v-model="microphone" @change="setupMicrophoneChange">
-                                    <option value="">None</option>
+                                    <option value="">{{ $t('form.none') }}</option>
                                     <option v-for="mic in setup.microphones" :value="mic.deviceId" :key="mic.deviceId">{{ mic.label }}</option>
                                 </select>
                             </div>
                             <div class="input-group mt-2">
                                 <label for="setup-cam" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" title="Camera"><svg-icon icon="video"></svg-icon></span>
+                                    <span class="input-group-text" :title="$t('meet.cam')"><svg-icon icon="video"></svg-icon></span>
                                 </label>
                                 <select class="custom-select" id="setup-cam" v-model="camera" @change="setupCameraChange">
-                                    <option value="">None</option>
+                                    <option value="">{{ $t('form.none') }}</option>
                                     <option v-for="cam in setup.cameras" :value="cam.deviceId" :key="cam.deviceId">{{ cam.label }}</option>
                                 </select>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-action" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-secondary modal-action" data-dismiss="modal">{{ $t('button.close') }}</button>
                     </div>
                 </div>
             </div>
@@ -252,10 +252,10 @@
                 camera: '',
                 channels: [],
                 languages: {
-                    en: 'English',
-                    de: 'German',
-                    fr: 'French',
-                    it: 'Italian'
+                    en: 'lang.en',
+                    de: 'lang.de',
+                    fr: 'lang.fr',
+                    it: 'lang.it'
                 },
                 meet: null,
                 microphone: '',
@@ -264,15 +264,15 @@
                 room: null,
                 roomState: 'init',
                 roomStateLabels: {
-                    init: 'Checking the room...',
-                    323: 'The room is closed. Please, wait for the owner to start the session.',
-                    324: 'The room is closed. It will be open for others after you join.',
-                    325: 'The room is ready. Please, provide a valid password.',
-                    326: 'The room is locked. Please, enter your name and try again.',
-                    327: 'Waiting for permission to join the room.',
-                    404: 'The room does not exist.',
-                    429: 'Too many requests. Please, wait.',
-                    500: 'Failed to connect to the room. Server error.'
+                    'init': 'meet.status-init',
+                    323: 'meet.status-323',
+                    324: 'meet.status-324',
+                    325: 'meet.status-325',
+                    326: 'meet.status-326',
+                    327: 'meet.status-327',
+                    404: 'meet.status-404',
+                    429: 'meet.status-429',
+                    500: 'meet.status-500'
                 },
                 session: {},
                 audioActive: false,
@@ -454,21 +454,21 @@
                     + `<div class="content">`
                         + `<p class="mb-2"></p>`
                         + `<div class="text-right">`
-                            + `<button type="button" class="btn btn-sm btn-success accept">Accept</button>`
-                            + `<button type="button" class="btn btn-sm btn-danger deny ml-2">Deny</button>`
+                            + `<button type="button" class="btn btn-sm btn-success accept">${this.$t('button.accept')}</button>`
+                            + `<button type="button" class="btn btn-sm btn-danger deny ml-2">${this.$t('button.deny')}</button>`
                 )
 
                 this.$toast.message({
                     className: 'join-request',
                     icon: 'user',
                     timeout: 0,
-                    title: 'Join request',
+                    title: this.$t('meet.join-request'),
                     // titleClassName: '',
                     body: body.html(),
                     onShow: element => {
                         const id = data.requestId
 
-                        $(element).find('p').text((data.nickname || '') + ' requested to join.')
+                        $(element).find('p').text(this.$t('meet.join-requested', { user: data.nickname || '' }))
 
                         // add id attribute, so we can identify it
                         $(element).attr('id', 'i' + id)
@@ -510,6 +510,7 @@
                 this.session.chatElement = $('#meet-chat')[0]
                 this.session.queueElement = $('#meet-queue')[0]
                 this.session.counterElement = $('#meet-counter span')[0]
+                this.session.translate = (label, args) => this.$t(label, args)
                 this.session.onSuccess = () => {
                     $('#app').addClass('meet')
                     $('#meet-setup').addClass('hidden')

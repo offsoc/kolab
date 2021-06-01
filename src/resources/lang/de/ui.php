@@ -2,17 +2,9 @@
 
 return [
 
-    'buttons' => [
+    'button' => [
         'cancel' => "Stornieren",
         'save' => "Speichern",
-    ],
-
-    'menu' => [
-        'cockpit' => "Cockpit",
-        'login' => "Einloggen",
-        'logout' => "Ausloggen",
-        'signup' => "Signup",
-        'toggle' => "Navigation umschalten",
     ],
 
     'lang' => [
@@ -25,6 +17,14 @@ return [
         'forgot_password' => "Passwort vergessen?",
         'sign_in' => "Anmelden",
         'webmail' => "Webmail",
+    ],
+
+    'menu' => [
+        'cockpit' => "Cockpit",
+        'login' => "Einloggen",
+        'logout' => "Ausloggen",
+        'signup' => "Signup",
+        'toggle' => "Navigation umschalten",
     ],
 
 ];

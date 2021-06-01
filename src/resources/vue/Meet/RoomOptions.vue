@@ -4,54 +4,51 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Room options</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <h5 class="modal-title">{{ $t('meet.options') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('button.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
                         <form id="room-options-password">
                             <div id="password-input" class="input-group input-group-activable">
-                                <span class="input-group-text label">Password:</span>
+                                <span class="input-group-text label">{{ $t('meet.password') }}:</span>
                                 <span v-if="config.password" id="password-input-text" class="input-group-text">{{ config.password }}</span>
-                                <span v-else id="password-input-text" class="input-group-text text-muted">none</span>
+                                <span v-else id="password-input-text" class="input-group-text text-muted">{{ $t('meet.password-none') }}</span>
                                 <input type="text" :value="config.password" name="password" class="form-control rounded-left activable">
                                 <div class="input-group-append">
-                                    <button type="button" @click="passwordSave" id="password-save-btn" class="btn btn-outline-primary activable rounded-right">Save</button>
-                                    <button type="button" v-if="config.password" id="password-clear-btn" @click="passwordClear" class="btn btn-outline-danger rounded">Clear password</button>
-                                    <button type="button" v-else @click="passwordSet" id="password-set-btn" class="btn btn-outline-primary rounded">Set password</button>
+                                    <button type="button" @click="passwordSave" id="password-save-btn" class="btn btn-outline-primary activable rounded-right">{{ $t('button.save') }}</button>
+                                    <button type="button" v-if="config.password" id="password-clear-btn" @click="passwordClear" class="btn btn-outline-danger rounded">{{ $t('meet.password-clear') }}</button>
+                                    <button type="button" v-else @click="passwordSet" id="password-set-btn" class="btn btn-outline-primary rounded">{{ $t('meet.password-set') }}</button>
                                 </div>
                             </div>
                             <small class="form-text text-muted">
-                                You can add a password to your meeting. Participants will have to provide
-                                the password before they are allowed to join the meeting.
+                                {{ $t('meet.password-text') }}
                             </small>
                         </form>
                         <hr>
                         <form id="room-options-lock">
                             <div id="room-lock">
-                                <label for="room-lock-input">Locked room:</label>
+                                <label for="room-lock-input">{{ $t('meet.lock') }}:</label>
                                 <input type="checkbox" id="room-lock-input" name="lock" value="1" :checked="config.locked" @click="lockSave">
                             </div>
                             <small class="form-text text-muted">
-                                When the room is locked participants have to be approved by a moderator
-                                before they could join the meeting.
+                                {{ $t('meet.lock-text') }}
                             </small>
                         </form>
                         <hr>
                         <form id="room-options-nomedia">
                             <div id="room-nomedia">
-                                <label for="room-nomedia-input">Subscribers only:</label>
+                                <label for="room-nomedia-input">{{ $t('meet.nomedia') }}:</label>
                                 <input type="checkbox" id="room-nomedia-input" name="lock" value="1" :checked="config.nomedia" @click="nomediaSave">
                             </div>
                             <small class="form-text text-muted">
-                                Forces all participants to join as subscribers (with camera and microphone turned off).
-                                Moderators will be able to promote them to publishers throughout the session.
+                                {{ $t('meet.nomedia-text') }}
                             </small>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-action" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-secondary modal-action" data-dismiss="modal">{{ $t('button.close') }}</button>
                     </div>
                 </div>
             </div>

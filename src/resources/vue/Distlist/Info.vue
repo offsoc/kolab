@@ -5,33 +5,33 @@
         <div class="card" id="distlist-info">
             <div class="card-body">
                 <div class="card-title" v-if="list_id !== 'new'">
-                    Distribution list
+                    {{ $tc('distlist.list-title', 1) }}
                     <button class="btn btn-outline-danger button-delete float-right" @click="deleteList()" tag="button">
-                        <svg-icon icon="trash-alt"></svg-icon> Delete list
+                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('distlist.delete') }}
                     </button>
                 </div>
-                <div class="card-title" v-if="list_id === 'new'">New distribution list</div>
+                <div class="card-title" v-if="list_id === 'new'">{{ $t('distlist.new') }}</div>
                 <div class="card-text">
                     <form @submit.prevent="submit">
                         <div v-if="list_id !== 'new'" class="form-group row plaintext">
-                            <label for="status" class="col-sm-4 col-form-label">Status</label>
+                            <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span :class="$root.distlistStatusClass(list) + ' form-control-plaintext'" id="status">{{ $root.distlistStatusText(list) }}</span>
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="email" class="col-sm-4 col-form-label">Email</label>
+                            <label for="email" class="col-sm-4 col-form-label">{{ $t('form.email') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="email" :disabled="list_id !== 'new'" required v-model="list.email">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="members-input" class="col-sm-4 col-form-label">Recipients</label>
+                            <label for="members-input" class="col-sm-4 col-form-label">{{ $t('distlist.recipients') }}</label>
                             <div class="col-sm-8">
                                 <list-input id="members" :list="list.members"></list-input>
                             </div>
                         </div>
-                        <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
+                        <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('button.submit') }}</button>
                     </form>
                 </div>
             </div>
