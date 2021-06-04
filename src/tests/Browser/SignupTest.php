@@ -297,6 +297,8 @@ class SignupTest extends TestCaseDusk
 
             // Here we expect 3 text inputs, Back and Continue buttons
             $browser->with('@step3', function ($step) {
+                $domains_count = count(Domain::getPublicDomains());
+
                 $step->assertSeeIn('.card-title', 'Sign Up - Step 3/3')
                     ->assertMissing('#signup_last_name')
                     ->assertMissing('#signup_first_name')
@@ -304,7 +306,7 @@ class SignupTest extends TestCaseDusk
                     ->assertVisible('#signup_password')
                     ->assertVisible('#signup_confirm')
                     ->assertVisible('select#signup_domain')
-                    ->assertElementsCount('select#signup_domain option', 13, false)
+                    ->assertElementsCount('select#signup_domain option', $domains_count, false)
                     ->assertVisible('[type=button]')
                     ->assertVisible('[type=submit]')
                     ->assertSeeIn('[type=submit]', 'Submit')
@@ -571,6 +573,8 @@ class SignupTest extends TestCaseDusk
                 ->onWithoutAssert(new Signup())
                 ->waitUntilMissing('.app-loader')
                 ->with('@step3', function ($step) {
+                    $domains_count = count(Domain::getPublicDomains());
+
                     $step->assertMissing('.card-title')
                         ->assertVisible('#signup_last_name')
                         ->assertVisible('#signup_first_name')
@@ -578,7 +582,7 @@ class SignupTest extends TestCaseDusk
                         ->assertVisible('#signup_password')
                         ->assertVisible('#signup_confirm')
                         ->assertVisible('select#signup_domain')
-                        ->assertElementsCount('select#signup_domain option', 13, false)
+                        ->assertElementsCount('select#signup_domain option', $domains_count, false)
                         ->assertVisible('[type=submit]')
                         ->assertMissing('[type=button]') // Back button
                         ->assertSeeIn('[type=submit]', 'Sign Up')

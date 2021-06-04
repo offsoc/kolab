@@ -3,11 +3,23 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 
 abstract class TestCase extends BaseTestCase
 {
     use TestCaseTrait;
     use TestCaseMeetTrait;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        // Disable throttling
+        $this->withoutMiddleware(ThrottleRequests::class);
+    }
 
     protected function backdateEntitlements($entitlements, $targetDate)
     {

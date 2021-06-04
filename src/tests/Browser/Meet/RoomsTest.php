@@ -90,7 +90,7 @@ class RoomsTest extends TestCaseDusk
                 ->waitFor('.card-text a')
                 ->assertSeeIn('.card-title', 'Voice & Video Conferencing')
                 ->assertSeeIn('.card-text a', $href)
-                ->assertAttribute('.card-text a', 'href', $href)
+                ->assertAttribute('.card-text a', 'href', '/meet/john')
                 ->click('.card-text a')
                 ->on(new RoomPage('john'))
                 // check that entering the room skips the logon form
