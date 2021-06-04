@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class UserVerify extends Command
 {
@@ -21,23 +21,13 @@ class UserVerify extends Command
     protected $description = 'Verify the state of a user account';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $user = \App\User::where('email', $this->argument('user'))->first();
+        $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
             return 1;

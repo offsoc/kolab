@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Job;
 
+use App\Console\Command;
 use App\User;
-use Illuminate\Console\Command;
 
 class UserCreate extends Command
 {
@@ -28,7 +28,7 @@ class UserCreate extends Command
      */
     public function handle()
     {
-        $user = User::where('email', $this->argument('user'))->first();
+        $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
             return 1;

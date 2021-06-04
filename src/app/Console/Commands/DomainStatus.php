@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Command;
 use App\Domain;
-use Illuminate\Console\Command;
 
 class DomainStatus extends Command
 {
@@ -22,23 +22,13 @@ class DomainStatus extends Command
     protected $description = 'Display the status of a domain';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $domain = Domain::where('namespace', $this->argument('domain'))->first();
+        $domain = $this->getDomain($this->argument('domain'));
 
         if (!$domain) {
             return 1;

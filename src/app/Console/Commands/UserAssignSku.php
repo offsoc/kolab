@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class UserAssignSku extends Command
 {
@@ -27,18 +27,14 @@ class UserAssignSku extends Command
      */
     public function handle()
     {
-        $user = \App\User::where('email', $this->argument('user'))->first();
+        $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
             $this->error("Unable to find the user {$this->argument('user')}.");
             return 1;
         }
 
-        $sku = \App\Sku::find($this->argument('sku'));
-
-        if (!$sku) {
-            $sku = \App\Sku::where('title', $this->argument('sku'))->first();
-        }
+        $sku = $this->getObject(\App\Sku::class, $this->argument('sku'), 'title');
 
         if (!$sku) {
             $this->error("Unable to find the SKU {$this->argument('sku')}.");

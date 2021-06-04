@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Command;
 use App\Http\Controllers\API\V4\PaymentsController;
-use Illuminate\Console\Command;
 
 class WalletMandate extends Command
 {
@@ -22,23 +22,13 @@ class WalletMandate extends Command
     protected $description = 'Show expected charges to wallets';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $wallet = \App\Wallet::find($this->argument('wallet'));
+        $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
             return 1;

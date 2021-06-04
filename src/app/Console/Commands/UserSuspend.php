@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\User;
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class UserSuspend extends Command
 {
@@ -22,23 +22,13 @@ class UserSuspend extends Command
     protected $description = 'Suspend a user';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $user = User::where('email', $this->argument('user'))->first();
+        $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
             return 1;

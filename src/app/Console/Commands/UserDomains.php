@@ -2,10 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Domain;
-use App\User;
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
+use App\Console\Command;
 
 class UserDomains extends Command
 {
@@ -24,23 +21,13 @@ class UserDomains extends Command
     protected $description = 'Command description';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $user = User::where('email', $this->argument('userid'))->first();
+        $user = $this->getUser($this->argument('userid'));
 
         if (!$user) {
             return 1;

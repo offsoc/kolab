@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class DomainRestore extends Command
@@ -28,7 +28,7 @@ class DomainRestore extends Command
      */
     public function handle()
     {
-        $domain = \App\Domain::withTrashed()->where('namespace', $this->argument('domain'))->first();
+        $domain = $this->getDomain($this->argument('domain'), true);
 
         if (!$domain) {
             $this->error("Domain not found.");

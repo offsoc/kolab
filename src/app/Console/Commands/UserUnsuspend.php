@@ -2,8 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\User;
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class UserUnsuspend extends Command
 {
@@ -22,23 +21,13 @@ class UserUnsuspend extends Command
     protected $description = 'Remove a user suspension';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $user = User::where('email', $this->argument('user'))->first();
+        $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
             return 1;

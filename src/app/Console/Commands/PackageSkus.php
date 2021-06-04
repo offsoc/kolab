@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Command;
 use App\Package;
-use Illuminate\Console\Command;
 
 class PackageSkus extends Command
 {
@@ -22,23 +22,13 @@ class PackageSkus extends Command
     protected $description = "List SKUs for packages.";
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $packages = Package::all();
+        $packages = Package::withEnvTenant()->get();
 
         foreach ($packages as $package) {
             $this->info(sprintf("Package: %s", $package->title));

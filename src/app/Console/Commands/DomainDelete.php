@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class DomainDelete extends Command
 {
@@ -21,23 +21,13 @@ class DomainDelete extends Command
     protected $description = 'Delete a domain';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $domain = \App\Domain::where('id', $this->argument('domain'))->first();
+        $domain = $this->getDomain($this->argument('domain'));
 
         if (!$domain) {
             return 1;

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class DomainListUsers extends Command
 {
@@ -37,7 +37,7 @@ class DomainListUsers extends Command
      */
     public function handle()
     {
-        $domain = \App\Domain::where('namespace', $this->argument('domain'))->first();
+        $domain = $this->getDomain($this->argument('domain'));
 
         if (!$domain) {
             return 1;
