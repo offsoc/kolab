@@ -33,7 +33,7 @@ class WalletTransactions extends Command
             return 1;
         }
 
-        foreach ($wallet->transactions()->orderBy('created_at')->get() as $transaction) {
+        $wallet->transactions()->orderBy('created_at')->each(function ($transaction) {
             $this->info(
                 sprintf(
                     "%s: %s %s",
@@ -57,6 +57,6 @@ class WalletTransactions extends Command
                     );
                 }
             }
-        }
+        });
     }
 }
