@@ -26,6 +26,13 @@ class RequestLogger
             $time = microtime(true) - self::$start;
 
             \Log::debug(sprintf("C: %s %s [%sM]: %.4f sec.", $method, $url, $mem, $time));
+        } else {
+            $threshold = \config('logging.slow_log');
+            if ($threshold && ($time = microtime(true) - self::$start) > $threshold) {
+                $url = $request->fullUrl();
+                $method = $request->getMethod();
+                \Log::warning(sprintf("[STATS] %s %s: %.4f sec.", $method, $url, $time));
+            }
         }
     }
 }

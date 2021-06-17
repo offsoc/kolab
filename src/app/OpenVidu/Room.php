@@ -58,7 +58,15 @@ class Room extends Model
                     'auth' => [
                         \config('openvidu.api_username'),
                         \config('openvidu.api_password')
-                    ]
+                    ],
+                    'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                        $threshold = \config('logging.slow_log');
+                        if ($threshold && ($sec = $stats->getTransferTime()) > $threshold) {
+                            $url = $stats->getEffectiveUri();
+                            $method = $stats->getRequest()->getMethod();
+                            \Log::warning(sprintf("[STATS] %s %s: %.4f sec.", $method, $url, $sec));
+                        }
+                    },
                 ]
             );
         }

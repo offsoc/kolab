@@ -91,4 +91,6 @@ return [
         ],
     ],
 
+    'slow_log' => (float) env('LOG_SLOW_REQUESTS', 5),
+
 ];
