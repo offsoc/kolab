@@ -40,7 +40,8 @@
 }
 
 #footer-menu {
-    background-color: $main-color;
+    color: $menu-footer-color;
+    background-color: $menu-footer-bg-color;
     height: 100px;
     overflow: hidden;
     padding: 0;
@@ -59,7 +60,6 @@
 
     .footer {
         text-align: right;
-        color: #fff;
         font-size: 0.75rem;
         padding: 0 0.5rem;
     }
