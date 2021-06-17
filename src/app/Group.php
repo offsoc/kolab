@@ -273,7 +273,7 @@ class Group extends Model
     public function wallet(): ?Wallet
     {
         // Note: Not all domains have a entitlement/wallet
-        $entitlement = $this->entitlement()->withTrashed()->first();
+        $entitlement = $this->entitlement()->withTrashed()->orderBy('created_at', 'desc')->first();
 
         return $entitlement ? $entitlement->wallet : null;
     }

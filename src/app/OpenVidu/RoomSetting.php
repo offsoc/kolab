@@ -21,16 +21,12 @@ class RoomSetting extends Model
     protected $table = 'openvidu_room_settings';
 
     /**
-     * The user to which this setting belongs.
+     * The room to which this setting belongs.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function room()
     {
-        return $this->belongsTo(
-            '\App\OpenVidu\Room',
-            'room_id', /* local */
-            'id' /* remote */
-        );
+        return $this->belongsTo('\App\OpenVidu\Room', 'room_id', 'id');
     }
 }

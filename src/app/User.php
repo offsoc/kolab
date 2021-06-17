@@ -634,7 +634,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function wallet(): ?Wallet
     {
-        $entitlement = $this->entitlement()->withTrashed()->first();
+        $entitlement = $this->entitlement()->withTrashed()->orderBy('created_at', 'desc')->first();
 
         // TODO: No entitlement should not happen, but in tests we have
         //       such cases, so we fallback to the user's wallet in this case

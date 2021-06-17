@@ -25,10 +25,6 @@ class WalletSetting extends Model
      */
     public function wallet()
     {
-        return $this->belongsTo(
-            '\App\Wallet',
-            'wallet_id', /* local */
-            'id' /* remote */
-        );
+        return $this->belongsTo('\App\Wallet', 'wallet_id', 'id');
     }
 }
