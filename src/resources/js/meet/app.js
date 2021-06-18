@@ -10,6 +10,11 @@ class Roles {
     static get OWNER() { return 1 << 4; }
 }
 
+// Disable jsnlog's error handlers added in OpenVidu 2.18
+// https://github.com/OpenVidu/openvidu/issues/631
+window.onerror = () => { return false }
+window.onunhandledrejection = () => { return false }
+
 function Meet(container)
 {
     let OV                      // OpenVidu object to initialize a session
@@ -164,10 +169,6 @@ function Meet(container)
             metadata.element = participantCreate(metadata)
 
             connections[connId] = metadata
-
-            // Send the current user status to the connecting user
-            // otherwise e.g. nickname might be not up to date
-            signalUserUpdate(event.connection)
         })
 
         session.on('connectionDestroyed', event => {
@@ -212,6 +213,10 @@ function Meet(container)
 
             // Update the wrapper controls/status
             participantUpdate(metadata.element, metadata)
+
+            // Send the current user status to the connecting user
+            // otherwise e.g. nickname might be not up to date
+            signalUserUpdate(event.stream.connection)
         })
 
         // Stream properties changes e.g. audio/video muted/unmuted

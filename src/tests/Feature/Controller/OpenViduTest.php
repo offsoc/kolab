@@ -494,7 +494,8 @@ class OpenViduTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertTrue(strpos($json['token'], 'wss://') === 0);
-        $this->assertTrue(strpos($json['token'], 'role=PUBLISHER') !== false);
+        // OpenVidu 2.18 does not send 'role' param in the token uri
+        // $this->assertTrue(strpos($json['token'], 'role=PUBLISHER') !== false);
     }
 
     /**

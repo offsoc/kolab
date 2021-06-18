@@ -40,12 +40,12 @@ RUN dnf -y install \
         wget && \
     dnf clean all && \
     mkdir -p /src/ && \
-    git clone --branch stable/kolab-2.16.0 https://git.kolab.org/source/openvidu.git /src/openvidu.git && \
+    git clone --branch stable/kolab-2.18.0 https://git.kolab.org/source/openvidu.git /src/openvidu.git && \
         cd /src/openvidu.git/ && \
         mvn clean install -DskipTests && \
         mkdir -p /usr/share/openvidu/ && \
         mv -v \
-            /src/openvidu.git/openvidu-server/target/openvidu-server-2.16.0.jar \
+            /src/openvidu.git/openvidu-server/target/openvidu-server-2.18.0.jar \
             /usr/share/openvidu/openvidu-server.jar && \
         rm -rvf /src/ /root/.m2/
 
