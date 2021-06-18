@@ -1,13 +1,13 @@
-FROM fedora:31
+FROM fedora:34
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
 
 LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
-      io.k8s.display-name="Swoole 4.4.x" \
+      io.k8s.display-name="Swoole 4.5.x" \
       io.openshift.expose-services="8000:http" \
       io.openshift.tags="builder,php,swoole"
 
-ENV SWOOLE_VERSION=4.4.x \
+ENV SWOOLE_VERSION=4.5.x \
     HOME=/opt/app-root/src
 
 RUN dnf -y install \
@@ -28,7 +28,7 @@ RUN dnf -y install \
         php-mysqlnd \
         re2c \
         wget && \
-    git clone -b v4.4.x https://github.com/swoole/swoole-src.git/ /swoole-src.git/ && \
+    git clone -b v${SWOOLE_VERSION} https://github.com/swoole/swoole-src.git/ /swoole-src.git/ && \
         cd /swoole-src.git/ && \
         git clean -d -f -x && \
         phpize --clean && \
