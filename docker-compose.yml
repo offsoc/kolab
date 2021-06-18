@@ -89,7 +89,7 @@ services:
       - OPENVIDU_WEBHOOK_ENDPOINT=${OPENVIDU_WEBHOOK_ENDPOINT}
       - SERVER_SSL_ENABLED=false
     hostname: openvidu.hosted.com
-    image: apheleia/openvidu:2.16.0
+    image: apheleia/openvidu:2.18.0
     network_mode: host
     tmpfs:
       - /run
@@ -125,6 +125,10 @@ services:
     network_mode: host
     volumes:
       - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+  swoole:
+    build:
+      context: ./docker/swoole/
+    container_name: kolab-swoole
   worker:
     build:
       context: ./docker/worker/
