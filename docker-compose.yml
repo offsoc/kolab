@@ -129,6 +129,7 @@ services:
     build:
       context: ./docker/swoole/
     container_name: kolab-swoole
+    image: apheleia/swoole:4.6.x
   worker:
     build:
       context: ./docker/worker/
