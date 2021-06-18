@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class WalletExpected extends Command
 {
@@ -21,16 +21,6 @@ class WalletExpected extends Command
     protected $description = 'Show expected charges to wallets (for user)';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
@@ -38,8 +28,7 @@ class WalletExpected extends Command
     public function handle()
     {
         if ($this->option('user')) {
-            $user = \App\User::where('email', $this->option('user'))
-                ->orWhere('id', $this->option('user'))->first();
+            $user = $this->getUser($this->option('user'));
 
             if (!$user) {
                 return 1;
@@ -47,7 +36,10 @@ class WalletExpected extends Command
 
             $wallets = $user->wallets;
         } else {
-            $wallets = \App\Wallet::all();
+            $wallets = \App\Wallet::select('wallets.*')
+                ->join('users', 'users.id', '=', 'wallets.user_id')
+                ->withEnvTenant('users')
+                ->all();
         }
 
         foreach ($wallets as $wallet) {

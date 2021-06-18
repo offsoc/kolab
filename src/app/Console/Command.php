@@ -2,18 +2,37 @@
 
 namespace App\Console;
 
-class Command extends \Illuminate\Console\Command
+use Illuminate\Support\Facades\DB;
+
+abstract class Command extends \Illuminate\Console\Command
 {
+    /**
+     * Annotate this command as being dangerous for any potential unintended consequences.
+     *
+     * Commands are considered dangerous if;
+     *
+     * * observers are deliberately not triggered, meaning that the deletion of an object model that requires the
+     *   associated observer to clean some things up, or charge a wallet or something, are deliberately not triggered,
+     *
+     * * deletion of objects and their relations rely on database foreign keys with obscure cascading,
+     *
+     * * a command will result in the permanent, irrecoverable loss of data.
+     *
+     * @var boolean
+     */
+    protected $dangerous = false;
+
     /**
      * Find the domain.
      *
-     * @param string $domain Domain ID or namespace
+     * @param string $domain      Domain ID or namespace
+     * @param bool   $withDeleted Include deleted
      *
      * @return \App\Domain|null
      */
-    public function getDomain($domain)
+    public function getDomain($domain, $withDeleted = false)
     {
-        return $this->getObject(\App\Domain::class, $domain, 'namespace');
+        return $this->getObject(\App\Domain::class, $domain, 'namespace', $withDeleted);
     }
 
     /**
@@ -22,38 +41,86 @@ class Command extends \Illuminate\Console\Command
      * @param string $objectClass      The name of the class
      * @param string $objectIdOrTitle  The name of a database field to match.
      * @param string|null $objectTitle An additional database field to match.
+     * @param bool        $withDeleted Act as if --with-deleted was used
      *
      * @return mixed
      */
-    public function getObject($objectClass, $objectIdOrTitle, $objectTitle)
+    public function getObject($objectClass, $objectIdOrTitle, $objectTitle = null, $withDeleted = false)
     {
-        if ($this->hasOption('with-deleted') && $this->option('with-deleted')) {
-            $object = $objectClass::withTrashed()->find($objectIdOrTitle);
-        } else {
-            $object = $objectClass::find($objectIdOrTitle);
+        if (!$withDeleted) {
+            $withDeleted = $this->hasOption('with-deleted') && $this->option('with-deleted');
         }
 
+        $object = $this->getObjectModel($objectClass, $withDeleted)->find($objectIdOrTitle);
+
         if (!$object && !empty($objectTitle)) {
-            if ($this->hasOption('with-deleted') && $this->option('with-deleted')) {
-                $object = $objectClass::withTrashed()->where($objectTitle, $objectIdOrTitle)->first();
-            } else {
-                $object = $objectClass::where($objectTitle, $objectIdOrTitle)->first();
-            }
+            $object = $this->getObjectModel($objectClass, $withDeleted)
+                ->where($objectTitle, $objectIdOrTitle)->first();
         }
 
         return $object;
     }
 
     /**
+     * Returns a preconfigured Model object for a specified class.
+     *
+     * @param string $objectClass The name of the class
+     * @param bool   $withDeleted Include withTrashed() query
+     *
+     * @return mixed
+     */
+    protected function getObjectModel($objectClass, $withDeleted = false)
+    {
+        if ($withDeleted) {
+            $model = $objectClass::withTrashed();
+        } else {
+            $model = new $objectClass();
+        }
+
+        $modelsWithTenant = [
+            \App\Discount::class,
+            \App\Domain::class,
+            \App\Group::class,
+            \App\Package::class,
+            \App\Plan::class,
+            \App\Sku::class,
+            \App\User::class,
+        ];
+
+        $modelsWithOwner = [
+            \App\Wallet::class,
+        ];
+
+        $tenant_id = \config('app.tenant_id');
+
+        // Add tenant filter
+        if (in_array($objectClass, $modelsWithTenant)) {
+            $model = $model->withEnvTenant();
+        } elseif (in_array($objectClass, $modelsWithOwner)) {
+            $model = $model->whereExists(function ($query) use ($tenant_id) {
+                $query->select(DB::raw(1))
+                    ->from('users')
+                    ->whereRaw('wallets.user_id = users.id')
+                    ->whereRaw('users.tenant_id ' . ($tenant_id ? "= $tenant_id" : 'is null'));
+            });
+        }
+
+        // TODO: tenant check for Entitlement, Transaction, etc.
+
+        return $model;
+    }
+
+    /**
      * Find the user.
      *
-     * @param string $user User ID or email
+     * @param string $user        User ID or email
+     * @param bool   $withDeleted Include deleted
      *
      * @return \App\User|null
      */
-    public function getUser($user)
+    public function getUser($user, $withDeleted = false)
     {
-        return $this->getObject(\App\User::class, $user, 'email');
+        return $this->getObject(\App\User::class, $user, 'email', $withDeleted);
     }
 
     /**
@@ -66,6 +133,26 @@ class Command extends \Illuminate\Console\Command
     public function getWallet($wallet)
     {
         return $this->getObject(\App\Wallet::class, $wallet, null);
+    }
+
+    public function handle()
+    {
+        if ($this->dangerous) {
+            $this->warn(
+                "This command is a dangerous scalpel command with potentially significant unintended consequences"
+            );
+
+            $confirmation = $this->confirm("Are you sure you understand what's about to happen?");
+
+            if (!$confirmation) {
+                $this->info("Better safe than sorry.");
+                return false;
+            }
+
+            $this->info("Vámonos!");
+        }
+
+        return true;
     }
 
     /**

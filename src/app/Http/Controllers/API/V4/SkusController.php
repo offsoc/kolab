@@ -120,7 +120,7 @@ class SkusController extends Controller
      */
     public function userSkus($id)
     {
-        $user = \App\User::find($id);
+        $user = \App\User::withEnvTenant()->find($id);
 
         if (empty($user)) {
             return $this->errorResponse(404);
@@ -186,7 +186,7 @@ class SkusController extends Controller
         $data['name'] = $sku->name;
         $data['description'] = $sku->description;
 
-        unset($data['handler_class'], $data['created_at'], $data['updated_at']);
+        unset($data['handler_class'], $data['created_at'], $data['updated_at'], $data['fee'], $data['tenant_id']);
 
         return $data;
     }

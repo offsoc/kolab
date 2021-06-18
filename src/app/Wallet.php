@@ -76,6 +76,7 @@ class Wallet extends Model
             return 0;
         }
 
+        $profit = 0;
         $charges = 0;
         $discount = $this->getDiscountRate();
 
@@ -101,8 +102,10 @@ class Wallet extends Model
                 $diff = $entitlement->updated_at->diffInMonths(Carbon::now());
 
                 $cost = (int) ($entitlement->cost * $discount * $diff);
+                $fee = (int) ($entitlement->fee * $diff);
 
                 $charges += $cost;
+                $profit += $cost - $fee;
 
                 // if we're in dry-run, you know...
                 if (!$apply) {
@@ -126,7 +129,17 @@ class Wallet extends Model
         }
 
         if ($apply) {
-            $this->debit($charges, $entitlementTransactions);
+            $this->debit($charges, '', $entitlementTransactions);
+
+            // Credit/debit the reseller
+            if ($profit != 0 && $this->owner->tenant) {
+                // FIXME: Should we have a simpler way to skip this for non-reseller tenant(s)
+                if ($wallet = $this->owner->tenant->wallet()) {
+                    $desc = "Charged user {$this->owner->email}";
+                    $method = $profit > 0 ? 'credit' : 'debit';
+                    $wallet->{$method}(abs($profit), $desc);
+                }
+            }
         }
 
         DB::commit();
@@ -234,12 +247,13 @@ class Wallet extends Model
     /**
      * Deduct an amount of pecunia from this wallet's balance.
      *
-     * @param int   $amount The amount of pecunia to deduct (in cents).
-     * @param array $eTIDs  List of transaction IDs for the individual entitlements that make up
-     *                      this debit record, if any.
+     * @param int    $amount      The amount of pecunia to deduct (in cents).
+     * @param string $description The transaction description
+     * @param array  $eTIDs       List of transaction IDs for the individual entitlements
+     *                            that make up this debit record, if any.
      * @return Wallet Self
      */
-    public function debit(int $amount, array $eTIDs = []): Wallet
+    public function debit(int $amount, string $description = '', array $eTIDs = []): Wallet
     {
         if ($amount == 0) {
             return $this;
@@ -254,11 +268,14 @@ class Wallet extends Model
                 'object_id' => $this->id,
                 'object_type' => \App\Wallet::class,
                 'type' => \App\Transaction::WALLET_DEBIT,
-                'amount' => $amount * -1
+                'amount' => $amount * -1,
+                'description' => $description
             ]
         );
 
-        \App\Transaction::whereIn('id', $eTIDs)->update(['transaction_id' => $transaction->id]);
+        if (!empty($eTIDs)) {
+            \App\Transaction::whereIn('id', $eTIDs)->update(['transaction_id' => $transaction->id]);
+        }
 
         return $this;
     }

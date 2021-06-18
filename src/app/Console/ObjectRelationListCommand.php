@@ -67,19 +67,16 @@ abstract class ObjectRelationListCommand extends ObjectCommand
             return 1;
         }
 
-        if ($result instanceof \Illuminate\Database\Eloquent\Collection) {
-            $result->each(
-                function ($entry) {
-                    $this->info($this->toString($entry));
-                }
-            );
-        } elseif ($result instanceof \Illuminate\Database\Eloquent\Relations\Relation) {
-            $result->each(
-                function ($entry) {
-                    $this->info($this->toString($entry));
-                }
-            );
-        } elseif (is_array($result)) {
+        // Convert query builder into a collection
+        if ($result instanceof \Illuminate\Database\Eloquent\Relations\Relation) {
+            $result = $result->get();
+        }
+
+        // Print the result
+        if (
+            ($result instanceof \Illuminate\Database\Eloquent\Collection)
+            || is_array($result)
+        ) {
             foreach ($result as $entry) {
                 $this->info($this->toString($entry));
             }

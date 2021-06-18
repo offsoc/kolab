@@ -14,6 +14,18 @@ use Illuminate\Support\Facades\Validator;
 class UsersController extends \App\Http\Controllers\API\V4\UsersController
 {
     /**
+     * Delete a user.
+     *
+     * @param int $id User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function destroy($id)
+    {
+        return $this->errorResponse(404);
+    }
+
+    /**
      * Searching of user accounts.
      *
      * @return \Illuminate\Http\JsonResponse
@@ -25,13 +37,21 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         $result = collect([]);
 
         if ($owner) {
-            if ($owner = User::find($owner)) {
-                $result = $owner->users(false)->orderBy('email')->get();
+            $owner = User::where('id', $owner)
+                ->withEnvTenant()
+                ->whereNull('role')
+                ->first();
+
+            if ($owner) {
+                $result = $owner->users(false)->whereNull('role')->orderBy('email')->get();
             }
         } elseif (strpos($search, '@')) {
             // Search by email
             $result = User::withTrashed()->where('email', $search)
-                ->orderBy('email')->get();
+                ->withEnvTenant()
+                ->whereNull('role')
+                ->orderBy('email')
+                ->get();
 
             if ($result->isEmpty()) {
                 // Search by an alias
@@ -39,7 +59,9 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
                 // Search by an external email
                 $ext_user_ids = UserSetting::where('key', 'external_email')
-                    ->where('value', $search)->get()->pluck('user_id');
+                    ->where('value', $search)
+                    ->get()
+                    ->pluck('user_id');
 
                 $user_ids = $user_ids->merge($ext_user_ids)->unique();
 
@@ -50,19 +72,35 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
                 if (!$user_ids->isEmpty()) {
                     $result = User::withTrashed()->whereIn('id', $user_ids)
-                        ->orderBy('email')->get();
+                        ->withEnvTenant()
+                        ->whereNull('role')
+                        ->orderBy('email')
+                        ->get();
                 }
             }
         } elseif (is_numeric($search)) {
             // Search by user ID
-            if ($user = User::withTrashed()->find($search)) {
+            $user = User::withTrashed()->where('id', $search)
+                ->withEnvTenant()
+                ->whereNull('role')
+                ->first();
+
+            if ($user) {
                 $result->push($user);
             }
         } elseif (!empty($search)) {
             // Search by domain
-            if ($domain = Domain::withTrashed()->where('namespace', $search)->first()) {
-                if ($wallet = $domain->wallet()) {
-                    $result->push($wallet->owner()->withTrashed()->first());
+            $domain = Domain::withTrashed()->where('namespace', $search)
+                ->withEnvTenant()
+                ->first();
+
+            if ($domain) {
+                if (
+                    ($wallet = $domain->wallet())
+                    && ($owner = $wallet->owner()->withTrashed()->withEnvTenant()->first())
+                    && empty($owner->role)
+                ) {
+                    $result->push($owner);
                 }
             }
         }
@@ -93,9 +131,9 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function reset2FA(Request $request, $id)
     {
-        $user = User::find($id);
+        $user = User::withEnvTenant()->find($id);
 
-        if (empty($user)) {
+        if (empty($user) || !$this->guard()->user()->canUpdate($user)) {
             return $this->errorResponse(404);
         }
 
@@ -114,6 +152,18 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
     }
 
     /**
+     * Create a new user record.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function store(Request $request)
+    {
+        return $this->errorResponse(404);
+    }
+
+    /**
      * Suspend the user
      *
      * @param \Illuminate\Http\Request $request The API request.
@@ -123,9 +173,9 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function suspend(Request $request, $id)
     {
-        $user = User::find($id);
+        $user = User::withEnvTenant()->find($id);
 
-        if (empty($user)) {
+        if (empty($user) || !$this->guard()->user()->canUpdate($user)) {
             return $this->errorResponse(404);
         }
 
@@ -147,9 +197,9 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function unsuspend(Request $request, $id)
     {
-        $user = User::find($id);
+        $user = User::withEnvTenant()->find($id);
 
-        if (empty($user)) {
+        if (empty($user) || !$this->guard()->user()->canUpdate($user)) {
             return $this->errorResponse(404);
         }
 
@@ -171,9 +221,9 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function update(Request $request, $id)
     {
-        $user = User::find($id);
+        $user = User::withEnvTenant()->find($id);
 
-        if (empty($user)) {
+        if (empty($user) || !$this->guard()->user()->canUpdate($user)) {
             return $this->errorResponse(404);
         }
 

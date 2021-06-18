@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Command;
 use App\User;
-use Illuminate\Console\Command;
 
 class UserStatus extends Command
 {
@@ -22,23 +22,13 @@ class UserStatus extends Command
     protected $description = 'Display the status of a user';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $user = User::where('email', $this->argument('user'))->first();
+        $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
             return 1;

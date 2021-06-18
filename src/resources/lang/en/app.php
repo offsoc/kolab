@@ -57,6 +57,12 @@ return [
     'search-foundxgroups' => ':x distribution lists have been found.',
     'search-foundxusers' => ':x user accounts have been found.',
 
+    'signup-invitations-created' => 'The invitation has been created.|:count invitations has been created.',
+    'signup-invitations-csv-empty' => 'Failed to find any valid email addresses in the uploaded file.',
+    'signup-invitations-csv-invalid-email' => 'Found an invalid email address (:email) on line :line.',
+    'signup-invitation-delete-success' => 'Invitation deleted successfully.',
+    'signup-invitation-resend-success' => 'Invitation added to the sending queue successfully.',
+
     'support-request-success' => 'Support request submitted successfully.',
     'support-request-error' => 'Failed to submit the support request.',
 

@@ -23,7 +23,7 @@
                                 <input type="password" id="inputPassword" class="form-control" :placeholder="$t('form.password')" required v-model="password">
                             </div>
                         </div>
-                        <div class="form-group pt-3" v-if="!$root.isAdmin">
+                        <div class="form-group pt-3" v-if="$root.isUser">
                             <label for="secondfactor" class="sr-only">{{ $t('login.2fa') }}</label>
                             <div class="input-group">
                                 <span class="input-group-prepend">
@@ -43,8 +43,8 @@
             </div>
         </div>
         <div id="logon-form-footer" class="mt-1">
-            <router-link v-if="!$root.isAdmin && $root.hasRoute('password-reset')" :to="{ name: 'password-reset' }" id="forgot-password">{{ $t('login.forgot_password') }}</router-link>
-            <a v-if="webmailURL && !$root.isAdmin" :href="webmailURL" id="webmail">{{ $t('login.webmail') }}</a>
+            <router-link v-if="$root.isUser && $root.hasRoute('password-reset')" :to="{ name: 'password-reset' }" id="forgot-password">{{ $t('login.forgot_password') }}</router-link>
+            <a v-if="webmailURL && $root.isUser" :href="webmailURL" id="webmail">{{ $t('login.webmail') }}</a>
         </div>
     </div>
 </template>

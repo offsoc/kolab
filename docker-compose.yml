@@ -59,6 +59,7 @@ services:
     container_name: kolab-mariadb
     environment:
       MYSQL_ROOT_PASSWORD: Welcome2KolabSystems
+      TZ: "+02:00"
     healthcheck:
       interval: 10s
       test: test -e /var/run/mysqld/mysqld.sock

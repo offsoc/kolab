@@ -20,6 +20,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property int    $id
  * @property string $password
  * @property int    $status
+ * @property int    $tenant_id
  */
 class User extends Authenticatable implements JWTSubject
 {
@@ -56,7 +57,7 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'password_ldap',
-        'status'
+        'status',
     ];
 
     /**
@@ -125,6 +126,7 @@ class User extends Authenticatable implements JWTSubject
                         'wallet_id' => $wallet_id,
                         'sku_id' => $sku->id,
                         'cost' => $sku->pivot->cost(),
+                        'fee' => $sku->pivot->fee(),
                         'entitleable_id' => $user->id,
                         'entitleable_type' => User::class
                     ]
@@ -178,6 +180,7 @@ class User extends Authenticatable implements JWTSubject
                 'wallet_id' => $wallet->id,
                 'sku_id' => $sku->id,
                 'cost' => $exists >= $sku->units_free ? $sku->cost : 0,
+                'fee' => $exists >= $sku->units_free ? $sku->fee : 0,
                 'entitleable_id' => $this->id,
                 'entitleable_type' => User::class
             ]);
@@ -192,7 +195,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Check if current user can delete another object.
      *
-     * @param \App\User|\App\Domain $object A user|domain object
+     * @param mixed $object A user|domain|wallet|group object
      *
      * @return bool True if he can, False otherwise
      */
@@ -213,18 +216,30 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Check if current user can read data of another object.
      *
-     * @param \App\User|\App\Domain|\App\Wallet $object A user|domain|wallet object
+     * @param mixed $object A user|domain|wallet|group object
      *
      * @return bool True if he can, False otherwise
      */
     public function canRead($object): bool
     {
-        if ($this->role == "admin") {
+        if ($this->role == 'admin') {
             return true;
         }
 
         if ($object instanceof User && $this->id == $object->id) {
             return true;
+        }
+
+        if ($this->role == 'reseller') {
+            if ($object instanceof User && $object->role == 'admin') {
+                return false;
+            }
+
+            if ($object instanceof Wallet && !empty($object->owner)) {
+                $object = $object->owner;
+            }
+
+            return isset($object->tenant_id) && $object->tenant_id == $this->tenant_id;
         }
 
         if ($object instanceof Wallet) {
@@ -237,24 +252,36 @@ class User extends Authenticatable implements JWTSubject
 
         $wallet = $object->wallet();
 
-        return $this->wallets->contains($wallet) || $this->accounts->contains($wallet);
+        return $wallet && ($this->wallets->contains($wallet) || $this->accounts->contains($wallet));
     }
 
     /**
      * Check if current user can update data of another object.
      *
-     * @param \App\User|\App\Domain $object A user|domain object
+     * @param mixed $object A user|domain|wallet|group object
      *
      * @return bool True if he can, False otherwise
      */
     public function canUpdate($object): bool
     {
-        if (!method_exists($object, 'wallet')) {
-            return false;
-        }
-
         if ($object instanceof User && $this->id == $object->id) {
             return true;
+        }
+
+        if ($this->role == 'admin') {
+            return true;
+        }
+
+        if ($this->role == 'reseller') {
+            if ($object instanceof User && $object->role == 'admin') {
+                return false;
+            }
+
+            if ($object instanceof Wallet && !empty($object->owner)) {
+                $object = $object->owner;
+            }
+
+            return isset($object->tenant_id) && $object->tenant_id == $this->tenant_id;
         }
 
         return $this->canDelete($object);
@@ -276,12 +303,19 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * List the domains to which this user is entitled.
+     * Note: Active public domains are also returned (for the user tenant).
      *
-     * @return Domain[]
+     * @return Domain[] List of Domain objects
      */
-    public function domains()
+    public function domains(): array
     {
-        $domains = Domain::whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
+        if ($this->tenant_id) {
+            $domains = Domain::where('tenant_id', $this->tenant_id);
+        } else {
+            $domains = Domain::withEnvTenant();
+        }
+
+        $domains = $domains->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
             ->whereRaw(sprintf('(status & %s)', Domain::STATUS_ACTIVE))
             ->get()
             ->all();
@@ -577,6 +611,16 @@ class User extends Authenticatable implements JWTSubject
 
         $this->status |= User::STATUS_SUSPENDED;
         $this->save();
+    }
+
+    /**
+     * The tenant for this user account.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function tenant()
+    {
+        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**

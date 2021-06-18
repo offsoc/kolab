@@ -21,7 +21,7 @@
                             {{ item.title }}
                         </router-link>
                     </li>
-                    <li class="nav-item" v-if="!loggedIn && !$root.isAdmin">
+                    <li class="nav-item" v-if="!loggedIn && $root.isUser">
                         <router-link class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">{{ $t('menu.signup') }}</router-link>
                     </li>
                     <li class="nav-item" v-if="loggedIn">

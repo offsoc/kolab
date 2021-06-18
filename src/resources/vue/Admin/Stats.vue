@@ -9,11 +9,12 @@
     export default {
         data() {
             return {
-                charts: {}
+                charts: {},
+                chartTypes: ['users', 'users-all', 'income', 'discounts']
             }
         },
         mounted() {
-            ['users', 'users-all', 'income', 'discounts'].forEach(chart => this.loadChart(chart))
+            this.chartTypes.forEach(chart => this.loadChart(chart))
         },
         methods: {
             drawChart(name, data) {

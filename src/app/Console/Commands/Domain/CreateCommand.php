@@ -1,20 +1,18 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Domain;
 
-use App\Domain;
-use App\Entitlement;
-use Illuminate\Console\Command;
+use App\Console\Command;
 use Illuminate\Support\Facades\Queue;
 
-class DomainAdd extends Command
+class CreateCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'domain:add {domain} {--force}';
+    protected $signature = 'domain:create {domain} {--force}';
 
     /**
      * The console command description.
@@ -33,24 +31,21 @@ class DomainAdd extends Command
         $namespace = \strtolower($this->argument('domain'));
 
         // must use withTrashed(), because unique constraint
-        $domain = Domain::withTrashed()->where('namespace', $namespace)->first();
+        $domain = \App\Domain::withTrashed()->where('namespace', $namespace)->first();
 
         if ($domain && !$this->option('force')) {
             $this->error("Domain {$namespace} already exists.");
             return 1;
         }
 
-        Queue::fake(); // ignore LDAP for now
-
         if ($domain) {
             if ($domain->deleted_at) {
-                // revive domain
-                $domain->deleted_at = null;
-                $domain->status = 0;
+                // set the status back to new
+                $domain->status = \App\Domain::STATUS_NEW;
                 $domain->save();
 
                 // remove existing entitlement
-                $entitlement = Entitlement::withTrashed()->where(
+                $entitlement = \App\Entitlement::withTrashed()->where(
                     [
                         'entitleable_id' => $domain->id,
                         'entitleable_type' => \App\Domain::class
@@ -60,17 +55,36 @@ class DomainAdd extends Command
                 if ($entitlement) {
                     $entitlement->forceDelete();
                 }
+
+                // restore the domain to allow for the observer to handle the create job
+                $domain->restore();
+
+                $this->info(
+                    sprintf(
+                        "Domain %s with ID %d revived. Remember to assign it to a wallet with 'domain:set-wallet'",
+                        $domain->namespace,
+                        $domain->id
+                    )
+                );
             } else {
                 $this->error("Domain {$namespace} not marked as deleted... examine more closely");
                 return 1;
             }
         } else {
-            $domain = Domain::create([
+            $domain = \App\Domain::create(
+                [
                     'namespace' => $namespace,
-                    'type' => Domain::TYPE_EXTERNAL,
-            ]);
-        }
+                    'type' => \App\Domain::TYPE_EXTERNAL,
+                ]
+            );
 
-        $this->info($domain->id);
+            $this->info(
+                sprintf(
+                    "Domain %s created with ID %d. Remember to assign it to a wallet with 'domain:set-wallet'",
+                    $domain->namespace,
+                    $domain->id
+                )
+            );
+        }
     }
 }

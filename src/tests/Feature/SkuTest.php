@@ -91,4 +91,19 @@ class SkuTest extends TestCase
             $entitlement->entitleable_type
         );
     }
+
+    public function testSkuTenant(): void
+    {
+        $sku = Sku::where('title', 'storage')->first();
+
+        $tenant = $sku->tenant()->first();
+
+        $this->assertInstanceof(\App\Tenant::class, $tenant);
+        $this->assertSame(1, $tenant->id);
+
+        $tenant = $sku->tenant;
+
+        $this->assertInstanceof(\App\Tenant::class, $tenant);
+        $this->assertSame(1, $tenant->id);
+    }
 }

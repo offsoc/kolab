@@ -3,23 +3,27 @@
         {
             "label": "explore",
             "location": "https://kolabnow.com/",
-            "admin": true
+            "admin": true,
+            "reseller": true
         },
         {
             "label": "blog",
             "location": "https://blogs.kolabnow.com/",
-            "admin": true
+            "admin": true,
+            "reseller": true
         },
         {
             "label": "support",
             "location": "/support",
             "page": "support",
-            "admin": true
+            "admin": true,
+            "reseller": true
         },
         {
             "label": "tos",
             "location": "https://kolabnow.com/tos",
-            "footer": true
+            "footer": true,
+            "reseller": true
         }
     ],
     "faq": {

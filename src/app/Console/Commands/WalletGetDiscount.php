@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class WalletGetDiscount extends Command
 {
@@ -21,23 +21,13 @@ class WalletGetDiscount extends Command
     protected $description = 'Display the existing discount to a wallet, if any.';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $wallet = \App\Wallet::find($this->argument('wallet'));
+        $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
             return 1;

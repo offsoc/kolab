@@ -84,14 +84,144 @@ class UserTest extends TestCase
         $this->markTestIncomplete();
     }
 
+    /**
+     * Test User::canRead() method
+     */
     public function testCanRead(): void
     {
-        $this->markTestIncomplete();
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // Admin
+        $this->assertTrue($admin->canRead($admin));
+        $this->assertTrue($admin->canRead($john));
+        $this->assertTrue($admin->canRead($jack));
+        $this->assertTrue($admin->canRead($reseller1));
+        $this->assertTrue($admin->canRead($reseller2));
+        $this->assertTrue($admin->canRead($domain));
+        $this->assertTrue($admin->canRead($domain->wallet()));
+
+        // Reseller - kolabnow
+        $this->assertTrue($reseller1->canRead($john));
+        $this->assertTrue($reseller1->canRead($jack));
+        $this->assertTrue($reseller1->canRead($reseller1));
+        $this->assertTrue($reseller1->canRead($domain));
+        $this->assertTrue($reseller1->canRead($domain->wallet()));
+        $this->assertFalse($reseller1->canRead($reseller2));
+        $this->assertFalse($reseller1->canRead($admin));
+
+        // Reseller - different tenant
+        $this->assertTrue($reseller2->canRead($reseller2));
+        $this->assertFalse($reseller2->canRead($john));
+        $this->assertFalse($reseller2->canRead($jack));
+        $this->assertFalse($reseller2->canRead($reseller1));
+        $this->assertFalse($reseller2->canRead($domain));
+        $this->assertFalse($reseller2->canRead($domain->wallet()));
+        $this->assertFalse($reseller2->canRead($admin));
+
+        // Normal user - account owner
+        $this->assertTrue($john->canRead($john));
+        $this->assertTrue($john->canRead($ned));
+        $this->assertTrue($john->canRead($jack));
+        $this->assertTrue($john->canRead($domain));
+        $this->assertTrue($john->canRead($domain->wallet()));
+        $this->assertFalse($john->canRead($reseller1));
+        $this->assertFalse($john->canRead($reseller2));
+        $this->assertFalse($john->canRead($admin));
+
+        // Normal user - a non-owner and non-controller
+        $this->assertTrue($jack->canRead($jack));
+        $this->assertFalse($jack->canRead($john));
+        $this->assertFalse($jack->canRead($domain));
+        $this->assertFalse($jack->canRead($domain->wallet()));
+        $this->assertFalse($jack->canRead($reseller1));
+        $this->assertFalse($jack->canRead($reseller2));
+        $this->assertFalse($jack->canRead($admin));
+
+        // Normal user - John's wallet controller
+        $this->assertTrue($ned->canRead($ned));
+        $this->assertTrue($ned->canRead($john));
+        $this->assertTrue($ned->canRead($jack));
+        $this->assertTrue($ned->canRead($domain));
+        $this->assertTrue($ned->canRead($domain->wallet()));
+        $this->assertFalse($ned->canRead($reseller1));
+        $this->assertFalse($ned->canRead($reseller2));
+        $this->assertFalse($ned->canRead($admin));
     }
 
+    /**
+     * Test User::canUpdate() method
+     */
     public function testCanUpdate(): void
     {
-        $this->markTestIncomplete();
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // Admin
+        $this->assertTrue($admin->canUpdate($admin));
+        $this->assertTrue($admin->canUpdate($john));
+        $this->assertTrue($admin->canUpdate($jack));
+        $this->assertTrue($admin->canUpdate($reseller1));
+        $this->assertTrue($admin->canUpdate($reseller2));
+        $this->assertTrue($admin->canUpdate($domain));
+        $this->assertTrue($admin->canUpdate($domain->wallet()));
+
+        // Reseller - kolabnow
+        $this->assertTrue($reseller1->canUpdate($john));
+        $this->assertTrue($reseller1->canUpdate($jack));
+        $this->assertTrue($reseller1->canUpdate($reseller1));
+        $this->assertTrue($reseller1->canUpdate($domain));
+        $this->assertTrue($reseller1->canUpdate($domain->wallet()));
+        $this->assertFalse($reseller1->canUpdate($reseller2));
+        $this->assertFalse($reseller1->canUpdate($admin));
+
+        // Reseller - different tenant
+        $this->assertTrue($reseller2->canUpdate($reseller2));
+        $this->assertFalse($reseller2->canUpdate($john));
+        $this->assertFalse($reseller2->canUpdate($jack));
+        $this->assertFalse($reseller2->canUpdate($reseller1));
+        $this->assertFalse($reseller2->canUpdate($domain));
+        $this->assertFalse($reseller2->canUpdate($domain->wallet()));
+        $this->assertFalse($reseller2->canUpdate($admin));
+
+        // Normal user - account owner
+        $this->assertTrue($john->canUpdate($john));
+        $this->assertTrue($john->canUpdate($ned));
+        $this->assertTrue($john->canUpdate($jack));
+        $this->assertTrue($john->canUpdate($domain));
+        $this->assertFalse($john->canUpdate($domain->wallet()));
+        $this->assertFalse($john->canUpdate($reseller1));
+        $this->assertFalse($john->canUpdate($reseller2));
+        $this->assertFalse($john->canUpdate($admin));
+
+        // Normal user - a non-owner and non-controller
+        $this->assertTrue($jack->canUpdate($jack));
+        $this->assertFalse($jack->canUpdate($john));
+        $this->assertFalse($jack->canUpdate($domain));
+        $this->assertFalse($jack->canUpdate($domain->wallet()));
+        $this->assertFalse($jack->canUpdate($reseller1));
+        $this->assertFalse($jack->canUpdate($reseller2));
+        $this->assertFalse($jack->canUpdate($admin));
+
+        // Normal user - John's wallet controller
+        $this->assertTrue($ned->canUpdate($ned));
+        $this->assertTrue($ned->canUpdate($john));
+        $this->assertTrue($ned->canUpdate($jack));
+        $this->assertTrue($ned->canUpdate($domain));
+        $this->assertFalse($ned->canUpdate($domain->wallet()));
+        $this->assertFalse($ned->canUpdate($reseller1));
+        $this->assertFalse($ned->canUpdate($reseller2));
+        $this->assertFalse($ned->canUpdate($admin));
     }
 
     /**
@@ -167,26 +297,32 @@ class UserTest extends TestCase
     public function testDomains(): void
     {
         $user = $this->getTestUser('john@kolab.org');
-        $domains = [];
+        $domain = $this->getTestDomain('useraccount.com', [
+                'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
+                'type' => Domain::TYPE_PUBLIC,
+        ]);
 
-        foreach ($user->domains() as $domain) {
-            $domains[] = $domain->namespace;
-        }
+        $domains = collect($user->domains())->pluck('namespace')->all();
 
-        $this->assertContains(\config('app.domain'), $domains);
+        $this->assertContains($domain->namespace, $domains);
         $this->assertContains('kolab.org', $domains);
 
         // Jack is not the wallet controller, so for him the list should not
         // include John's domains, kolab.org specifically
         $user = $this->getTestUser('jack@kolab.org');
-        $domains = [];
 
-        foreach ($user->domains() as $domain) {
-            $domains[] = $domain->namespace;
-        }
+        $domains = collect($user->domains())->pluck('namespace')->all();
 
-        $this->assertContains(\config('app.domain'), $domains);
+        $this->assertContains($domain->namespace, $domains);
         $this->assertNotContains('kolab.org', $domains);
+
+        // Public domains of other tenants should not be returned
+        $domain->tenant_id = 2;
+        $domain->save();
+
+        $domains = collect($user->domains())->pluck('namespace')->all();
+
+        $this->assertNotContains($domain->namespace, $domains);
     }
 
     public function testUserQuota(): void
@@ -332,6 +468,51 @@ class UserTest extends TestCase
 
         // Twice, one for save() and one for delete() above
         Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 2);
+    }
+
+    /**
+     * Test handling negative balance on user deletion
+     */
+    public function testDeleteWithNegativeBalance(): void
+    {
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+        $wallet = $user->wallets()->first();
+        $wallet->balance = -1000;
+        $wallet->save();
+        $reseller_wallet = $user->tenant->wallet();
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+        \App\Transaction::where('object_id', $reseller_wallet->id)->where('object_type', \App\Wallet::class)->delete();
+
+        $user->delete();
+
+        $reseller_transactions = \App\Transaction::where('object_id', $reseller_wallet->id)
+            ->where('object_type', \App\Wallet::class)->get();
+
+        $this->assertSame(-1000, $reseller_wallet->fresh()->balance);
+        $this->assertCount(1, $reseller_transactions);
+        $trans = $reseller_transactions[0];
+        $this->assertSame("Deleted user {$user->email}", $trans->description);
+        $this->assertSame(-1000, $trans->amount);
+        $this->assertSame(\App\Transaction::WALLET_DEBIT, $trans->type);
+    }
+
+    /**
+     * Test handling positive balance on user deletion
+     */
+    public function testDeleteWithPositiveBalance(): void
+    {
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+        $wallet = $user->wallets()->first();
+        $wallet->balance = 1000;
+        $wallet->save();
+        $reseller_wallet = $user->tenant->wallet();
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+
+        $user->delete();
+
+        $this->assertSame(0, $reseller_wallet->fresh()->balance);
     }
 
     /**

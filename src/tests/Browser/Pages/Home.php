@@ -49,11 +49,11 @@ class Home extends Page
     /**
      * Submit logon form.
      *
-     * @param \Laravel\Dusk\Browser $browser  The browser object
-     * @param string                $username User name
-     * @param string                $password User password
-     * @param bool                  $wait_for_dashboard
-     * @param array                 $config   Client-site config
+     * @param \Tests\Browser $browser  The browser object
+     * @param string         $username User name
+     * @param string         $password User password
+     * @param bool           $wait_for_dashboard
+     * @param array          $config   Client-site config
      *
      * @return void
      */

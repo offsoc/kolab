@@ -11,10 +11,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * Owned by a {@link \App\User}, billed to a {@link \App\Wallet}.
  *
- * @property \App\User $owner                   The owner of this entitlement (subject).
- * @property \App\Sku $sku                      The SKU to which this entitlement applies.
- * @property \App\Wallet $wallet                The wallet to which this entitlement is charged.
- * @property \App\Domain|\App\User $entitleable The entitled object (receiver of the entitlement).
+ * @property int                   $cost
+ * @property ?string               $description
+ * @property \App\Domain|\App\User $entitleable      The entitled object (receiver of the entitlement).
+ * @property int                   $entitleable_id
+ * @property string                $entitleable_type
+ * @property int                   $fee
+ * @property string                $id
+ * @property \App\User             $owner            The owner of this entitlement (subject).
+ * @property \App\Sku              $sku              The SKU to which this entitlement applies.
+ * @property string                $sku_id
+ * @property \App\Wallet           $wallet           The wallet to which this entitlement is charged.
+ * @property string                $wallet_id
  */
 class Entitlement extends Model
 {
@@ -45,11 +53,13 @@ class Entitlement extends Model
         'entitleable_id',
         'entitleable_type',
         'cost',
-        'description'
+        'description',
+        'fee',
     ];
 
     protected $casts = [
         'cost' => 'integer',
+        'fee' => 'integer'
     ];
 
     /**

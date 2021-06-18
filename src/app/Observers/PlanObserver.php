@@ -27,5 +27,7 @@ class PlanObserver
                 break;
             }
         }
+
+        $plan->tenant_id = \config('app.tenant_id');
     }
 }

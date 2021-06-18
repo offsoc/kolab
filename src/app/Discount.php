@@ -7,6 +7,12 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * The eloquent definition of a Discount.
+ *
+ * @property bool   $active
+ * @property string $code
+ * @property string $description
+ * @property int    $discount
+ * @property int    $tenant_id
  */
 class Discount extends Model
 {
@@ -51,6 +57,16 @@ class Discount extends Model
         }
 
         $this->attributes['discount'] = $discount;
+    }
+
+    /**
+     * The tenant for this discount.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function tenant()
+    {
+        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**

@@ -4,8 +4,12 @@ parameters:
     ignoreErrors:
         - '#Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable#'
         - '#Access to an undefined property [a-zA-Z\\]+::\$pivot#'
+        - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withEnvTenant\(\)#'
+        - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withUserTenant\(\)#'
         - '#Call to an undefined method Tests\\Browser::#'
     level: 4
+    parallel:
+        processTimeout: 300.0
     paths:
         - app/
         - tests/

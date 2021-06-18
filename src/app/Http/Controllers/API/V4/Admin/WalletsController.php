@@ -8,6 +8,7 @@ use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,7 +25,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     {
         $wallet = Wallet::find($id);
 
-        if (empty($wallet)) {
+        if (empty($wallet) || !Auth::guard()->user()->canRead($wallet)) {
             return $this->errorResponse(404);
         }
 
@@ -44,6 +45,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
 
         $result['provider'] = $provider->name();
         $result['providerLink'] = $provider->customerLink($wallet);
+        $result['notice'] = $this->getWalletNotice($wallet); // for resellers
 
         return response()->json($result);
     }
@@ -59,8 +61,9 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     public function oneOff(Request $request, $id)
     {
         $wallet = Wallet::find($id);
+        $user = Auth::guard()->user();
 
-        if (empty($wallet)) {
+        if (empty($wallet) || !$user->canRead($wallet)) {
             return $this->errorResponse(404);
         }
 
@@ -96,6 +99,14 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
             ]
         );
 
+        if ($user->role == 'reseller') {
+            if ($user->tenant && ($tenant_wallet = $user->tenant->wallet())) {
+                $desc = ($amount > 0 ? 'Awarded' : 'Penalized') . " user {$wallet->owner->email}";
+                $method = $amount > 0 ? 'debit' : 'credit';
+                $tenant_wallet->{$method}(abs($amount), $desc);
+            }
+        }
+
         DB::commit();
 
         $response = [
@@ -119,7 +130,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     {
         $wallet = Wallet::find($id);
 
-        if (empty($wallet)) {
+        if (empty($wallet) || !Auth::guard()->user()->canRead($wallet)) {
             return $this->errorResponse(404);
         }
 
@@ -127,7 +138,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
             if (empty($request->discount)) {
                 $wallet->discount()->dissociate();
                 $wallet->save();
-            } elseif ($discount = Discount::find($request->discount)) {
+            } elseif ($discount = Discount::withEnvTenant()->find($request->discount)) {
                 $wallet->discount()->associate($discount);
                 $wallet->save();
             }

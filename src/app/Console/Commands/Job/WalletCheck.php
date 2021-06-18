@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Job;
 
+use App\Console\Command;
 use App\Wallet;
-use Illuminate\Console\Command;
 
 class WalletCheck extends Command
 {
@@ -28,7 +28,7 @@ class WalletCheck extends Command
      */
     public function handle()
     {
-        $wallet = Wallet::find($this->argument('wallet'));
+        $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
             return 1;

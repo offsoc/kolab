@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class UserForceDelete extends Command
@@ -28,7 +28,7 @@ class UserForceDelete extends Command
      */
     public function handle()
     {
-        $user = \App\User::withTrashed()->where('email', $this->argument('user'))->first();
+        $user = $this->getUser($this->argument('user'), true);
 
         if (!$user) {
             return 1;

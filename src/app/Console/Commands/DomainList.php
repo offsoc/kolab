@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Command;
 use App\Domain;
-use Illuminate\Console\Command;
 
 class DomainList extends Command
 {
@@ -22,16 +22,6 @@ class DomainList extends Command
     protected $description = 'List domains';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
@@ -44,7 +34,7 @@ class DomainList extends Command
             $domains = Domain::orderBy('namespace');
         }
 
-        $domains->each(
+        $domains->withEnvTenant()->each(
             function ($domain) {
                 $msg = $domain->namespace;
 

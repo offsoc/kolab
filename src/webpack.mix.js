@@ -22,12 +22,13 @@ mix.webpackConfig({
     }
 })
 
+mix.js('resources/js/user/app.js', 'public/js/user.js').vue()
+    .js('resources/js/admin/app.js', 'public/js/admin.js').vue()
+    .js('resources/js/reseller/app.js', 'public/js/reseller.js').vue()
+
 mix.before(() => {
     spawn('php', ['resources/build/before.php'], { stdio: 'inherit' })
 })
-
-mix.js('resources/js/user.js', 'public/js').vue()
-    .js('resources/js/admin.js', 'public/js').vue()
 
 glob.sync('resources/themes/*/', {}).forEach(fromDir => {
     const toDir = fromDir.replace('resources/themes/', 'public/themes/')

@@ -123,7 +123,6 @@ class EntitlementObserver
             return;
         }
 
-        $cost = 0;
         $now = Carbon::now();
 
         // get the discount rate applied to the wallet.
@@ -131,7 +130,8 @@ class EntitlementObserver
 
         // just in case this had not been billed yet, ever
         $diffInMonths = $entitlement->updated_at->diffInMonths($now);
-        $cost += (int) ($entitlement->cost * $discount * $diffInMonths);
+        $cost = (int) ($entitlement->cost * $discount * $diffInMonths);
+        $fee = (int) ($entitlement->fee * $diffInMonths);
 
         // this moves the hypothetical updated at forward to however many months past the original
         $updatedAt = $entitlement->updated_at->copy()->addMonthsWithoutOverflow($diffInMonths);
@@ -153,8 +153,18 @@ class EntitlementObserver
         }
 
         $pricePerDay = $entitlement->cost / $daysInMonth;
+        $feePerDay = $entitlement->fee / $daysInMonth;
 
         $cost += (int) (round($pricePerDay * $discount * $diffInDays, 0));
+        $fee += (int) (round($feePerDay * $diffInDays, 0));
+
+        $profit = $cost - $fee;
+
+        if ($profit != 0 && $owner->tenant && ($wallet = $owner->tenant->wallet())) {
+            $desc = "Charged user {$owner->email}";
+            $method = $profit > 0 ? 'credit' : 'debit';
+            $wallet->{$method}(abs($profit), $desc);
+        }
 
         if ($cost == 0) {
             return;

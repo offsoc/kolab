@@ -363,7 +363,6 @@ class Utils
         $countries = include resource_path('countries.php');
         $req_domain = preg_replace('/:[0-9]+$/', '', request()->getHttpHost());
         $sys_domain = \config('app.domain');
-        $path = request()->path();
         $opts = [
             'app.name',
             'app.url',
@@ -382,6 +381,8 @@ class Utils
 
         if ($req_domain == "admin.$sys_domain") {
             $env['jsapp'] = 'admin.js';
+        } elseif ($req_domain == "reseller.$sys_domain") {
+            $env['jsapp'] = 'reseller.js';
         }
 
         $env['paymentProvider'] = \config('services.payment_provider');

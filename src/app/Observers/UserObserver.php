@@ -38,7 +38,7 @@ class UserObserver
         // only users that are not imported get the benefit of the doubt.
         $user->status |= User::STATUS_NEW | User::STATUS_ACTIVE;
 
-        // can't dispatch job here because it'll fail serialization
+        $user->tenant_id = \config('app.tenant_id');
     }
 
     /**
@@ -107,6 +107,18 @@ class UserObserver
                     $group->save();
                 }
             });
+        }
+
+        // Debit the reseller's wallet with the user negative balance
+        $balance = 0;
+        foreach ($user->wallets as $wallet) {
+            // Note: here we assume all user wallets are using the same currency.
+            //       It might get changed in the future
+            $balance += $wallet->balance;
+        }
+
+        if ($balance < 0 && $user->tenant && ($wallet = $user->tenant->wallet())) {
+            $wallet->debit($balance * -1, "Deleted user {$user->email}");
         }
     }
 

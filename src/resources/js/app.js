@@ -79,7 +79,7 @@ const app = new Vue({
     router: window.router,
     data() {
         return {
-            isAdmin: window.isAdmin,
+            isUser: !window.isAdmin && !window.isReseller,
             appName: window.config['app.name'],
             appUrl: window.config['app.url'],
             themeDir: '/themes/' + window.config['app.theme']
@@ -462,7 +462,7 @@ window.axios.interceptors.response.use(
                     }
 
                     if (input.length) {
-                        // Create an error message\
+                        // Create an error message
                         // API responses can use a string, array or object
                         let msg_text = ''
                         if ($.type(msg) !== 'string') {

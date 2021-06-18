@@ -21,29 +21,24 @@ class WalletBalances extends Command
     protected $description = 'Show the balance on wallets';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        \App\Wallet::all()->each(
+        $wallets = \App\Wallet::select('wallets.*')
+            ->join('users', 'users.id', '=', 'wallets.user_id')
+            ->withEnvTenant('users')
+            ->all();
+
+        $wallets->each(
             function ($wallet) {
                 if ($wallet->balance == 0) {
                     return;
                 }
 
-                $user = \App\User::where('id', $wallet->user_id)->first();
+                $user = $wallet->owner;
 
                 if (!$user) {
                     return;

@@ -6,6 +6,7 @@ use App\Providers\PaymentProvider;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StatsController extends \App\Http\Controllers\Controller
@@ -17,6 +18,14 @@ class StatsController extends \App\Http\Controllers\Controller
     public const COLOR_BLUE = '#4da3ff';        // '#007bff'
     public const COLOR_BLUE_DARK = '#0056b3';
     public const COLOR_ORANGE = '#f1a539';
+
+    /** @var array List of enabled charts */
+    protected $charts = [
+        'discounts',
+        'income',
+        'users',
+        'users-all',
+    ];
 
     /**
      * Fetch chart data
@@ -33,7 +42,7 @@ class StatsController extends \App\Http\Controllers\Controller
 
         $method = 'chart' . implode('', array_map('ucfirst', explode('-', $chart)));
 
-        if (!method_exists($this, $method)) {
+        if (!in_array($chart, $this->charts) || !method_exists($this, $method)) {
             return $this->errorResponse(404);
         }
 
@@ -53,9 +62,14 @@ class StatsController extends \App\Http\Controllers\Controller
             ->join('users', 'users.id', '=', 'wallets.user_id')
             ->where('discount', '>', 0)
             ->whereNull('users.deleted_at')
-            ->groupBy('discounts.discount')
-            ->pluck('cnt', 'discount')
-            ->all();
+            ->groupBy('discounts.discount');
+
+        $addTenantScope = function ($builder, $tenantId) {
+            return $builder->where('users.tenant_id', $tenantId);
+        };
+
+        $discounts = $this->applyTenantScope($discounts, $addTenantScope)
+            ->pluck('cnt', 'discount')->all();
 
         $labels = array_keys($discounts);
         $discounts = array_values($discounts);
@@ -119,7 +133,20 @@ class StatsController extends \App\Http\Controllers\Controller
             ->where('updated_at', '>=', $start->toDateString())
             ->where('status', PaymentProvider::STATUS_PAID)
             ->whereIn('type', [PaymentProvider::TYPE_ONEOFF, PaymentProvider::TYPE_RECURRING])
-            ->groupByRaw('1')
+            ->groupByRaw('1');
+
+        $addTenantScope = function ($builder, $tenantId) {
+            $where = '`wallet_id` IN ('
+                    . 'select `id` from `wallets` '
+                    . 'join `users` on (`wallets`.`user_id` = `users`.`id`) '
+                    . 'where `payments`.`wallet_id` = `wallets`.`id` '
+                    . 'and `users`.`tenant_id` = ' . intval($tenantId)
+                . ')';
+
+            return $builder->whereRaw($where);
+        };
+
+        $payments = $this->applyTenantScope($payments, $addTenantScope)
             ->pluck('amount', 'period')
             ->map(function ($amount) {
                 return $amount / 100;
@@ -185,14 +212,15 @@ class StatsController extends \App\Http\Controllers\Controller
         $created = DB::table('users')
             ->selectRaw("date_format(created_at, '%Y-%v') as period, count(*) as cnt")
             ->where('created_at', '>=', $start->toDateString())
-            ->groupByRaw('1')
-            ->get();
+            ->groupByRaw('1');
 
         $deleted = DB::table('users')
             ->selectRaw("date_format(deleted_at, '%Y-%v') as period, count(*) as cnt")
             ->where('deleted_at', '>=', $start->toDateString())
-            ->groupByRaw('1')
-            ->get();
+            ->groupByRaw('1');
+
+        $created = $this->applyTenantScope($created)->get();
+        $deleted = $this->applyTenantScope($deleted)->get();
 
         $empty = array_fill_keys($labels, 0);
         $created = array_values(array_merge($empty, $created->pluck('cnt', 'period')->all()));
@@ -260,16 +288,16 @@ class StatsController extends \App\Http\Controllers\Controller
         $created = DB::table('users')
             ->selectRaw("date_format(created_at, '%Y-%v') as period, count(*) as cnt")
             ->where('created_at', '>=', $start->toDateString())
-            ->groupByRaw('1')
-            ->get();
+            ->groupByRaw('1');
 
         $deleted = DB::table('users')
             ->selectRaw("date_format(deleted_at, '%Y-%v') as period, count(*) as cnt")
             ->where('deleted_at', '>=', $start->toDateString())
-            ->groupByRaw('1')
-            ->get();
+            ->groupByRaw('1');
 
-        $count = DB::table('users')->whereNull('deleted_at')->count();
+        $created = $this->applyTenantScope($created)->get();
+        $deleted = $this->applyTenantScope($deleted)->get();
+        $count = $this->applyTenantScope(DB::table('users')->whereNull('deleted_at'))->count();
 
         $empty = array_fill_keys($labels, 0);
         $created = array_merge($empty, $created->pluck('cnt', 'period')->all());
@@ -312,5 +340,30 @@ class StatsController extends \App\Http\Controllers\Controller
                 ]
             ]
         ];
+    }
+
+    /**
+     * Add tenant scope to the queries when needed
+     *
+     * @param \Illuminate\Database\Query\Builder $query    The query
+     * @param callable                           $addQuery Additional tenant-scope query-modifier
+     *
+     * @return \Illuminate\Database\Query\Builder
+     */
+    protected function applyTenantScope($query, $addQuery = null)
+    {
+        $user = Auth::guard()->user();
+
+        if ($user->role == 'reseller') {
+            if ($addQuery) {
+                $query = $addQuery($query, \config('app.tenant_id'));
+            } else {
+                $query = $query->withEnvTenant();
+            }
+        }
+
+        // TODO: Tenant selector for admins
+
+        return $query;
     }
 }

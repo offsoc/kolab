@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class WalletTransactions extends Command
 {
@@ -21,29 +21,19 @@ class WalletTransactions extends Command
     protected $description = 'List the transactions against a wallet.';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $wallet = \App\Wallet::where('id', $this->argument('wallet'))->first();
+        $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
             return 1;
         }
 
-        foreach ($wallet->transactions()->orderBy('created_at')->get() as $transaction) {
+        $wallet->transactions()->orderBy('created_at')->each(function ($transaction) {
             $this->info(
                 sprintf(
                     "%s: %s %s",
@@ -67,6 +57,6 @@ class WalletTransactions extends Command
                     );
                 }
             }
-        }
+        });
     }
 }

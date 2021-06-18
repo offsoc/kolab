@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Job;
 
+use App\Console\Command;
 use App\Domain;
-use Illuminate\Console\Command;
 
 class DomainUpdate extends Command
 {
@@ -28,7 +28,7 @@ class DomainUpdate extends Command
      */
     public function handle()
     {
-        $domain = Domain::where('namespace', $this->argument('domain'))->first();
+        $domain = $this->getDomain($this->argument('domain'));
 
         if (!$domain) {
             return 1;

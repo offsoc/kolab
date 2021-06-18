@@ -3,6 +3,8 @@
 namespace Tests\Feature\Controller\Admin;
 
 use App\Domain;
+use App\Entitlement;
+use App\Sku;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -27,6 +29,19 @@ class DomainsTest extends TestCase
         $this->deleteTestDomain('domainscontroller.com');
 
         parent::tearDown();
+    }
+
+    /**
+     * Test domains confirming (not implemented)
+     */
+    public function testConfirm(): void
+    {
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // This end-point does not exist for admins
+        $response = $this->actingAs($admin)->get("api/v4/domains/{$domain->id}/confirm");
+        $response->assertStatus(404);
     }
 
     /**
@@ -89,6 +104,55 @@ class DomainsTest extends TestCase
 
         $this->assertSame(0, $json['count']);
         $this->assertCount(0, $json['list']);
+    }
+
+    /**
+     * Test fetching domain info
+     */
+    public function testShow(): void
+    {
+        $sku_domain = Sku::where('title', 'domain-hosting')->first();
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $user = $this->getTestUser('test1@domainscontroller.com');
+        $domain = $this->getTestDomain('domainscontroller.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_EXTERNAL,
+        ]);
+
+        Entitlement::create([
+                'wallet_id' => $user->wallets()->first()->id,
+                'sku_id' => $sku_domain->id,
+                'entitleable_id' => $domain->id,
+                'entitleable_type' => Domain::class
+        ]);
+
+        // Only admins can access it
+        $response = $this->actingAs($user)->get("api/v4/domains/{$domain->id}");
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($admin)->get("api/v4/domains/{$domain->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertEquals($domain->id, $json['id']);
+        $this->assertEquals($domain->namespace, $json['namespace']);
+        $this->assertEquals($domain->status, $json['status']);
+        $this->assertEquals($domain->type, $json['type']);
+        // Note: Other properties are being tested in the user controller tests
+    }
+
+    /**
+     * Test fetching domain status (GET /api/v4/domains/<domain-id>/status)
+     */
+    public function testStatus(): void
+    {
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // This end-point does not exist for admins
+        $response = $this->actingAs($admin)->get("/api/v4/domains/{$domain->id}/status");
+        $response->assertStatus(404);
     }
 
     /**

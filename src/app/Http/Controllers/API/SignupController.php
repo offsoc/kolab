@@ -12,6 +12,7 @@ use App\Rules\ExternalEmail;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\SignupCode;
+use App\SignupInvitation;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -112,6 +113,33 @@ class SignupController extends Controller
     }
 
     /**
+     * Returns signup invitation information.
+     *
+     * @param string $id Signup invitation identifier
+     *
+     * @return \Illuminate\Http\JsonResponse|void
+     */
+    public function invitation($id)
+    {
+        $invitation = SignupInvitation::withEnvTenant()->find($id);
+
+        if (empty($invitation) || $invitation->isCompleted()) {
+            return $this->errorResponse(404);
+        }
+
+        $has_domain = $this->getPlan()->hasDomain();
+
+        $result = [
+            'id' => $id,
+            'is_domain' => $has_domain,
+            'domains' => $has_domain ? [] : Domain::getPublicDomains(),
+        ];
+
+        return response()->json($result);
+    }
+
+
+    /**
      * Validation of the verification code.
      *
      * @param \Illuminate\Http\Request $request HTTP request
@@ -188,10 +216,50 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        // Validate verification codes (again)
-        $v = $this->verify($request);
-        if ($v->status() !== 200) {
-            return $v;
+        // Signup via invitation
+        if ($request->invitation) {
+            $invitation = SignupInvitation::withEnvTenant()->find($request->invitation);
+
+            if (empty($invitation) || $invitation->isCompleted()) {
+                return $this->errorResponse(404);
+            }
+
+            // Check required fields
+            $v = Validator::make(
+                $request->all(),
+                [
+                    'first_name' => 'max:128',
+                    'last_name' => 'max:128',
+                    'voucher' => 'max:32',
+                ]
+            );
+
+            $errors = $v->fails() ? $v->errors()->toArray() : [];
+
+            if (!empty($errors)) {
+                return response()->json(['status' => 'error', 'errors' => $errors], 422);
+            }
+
+            $settings = [
+                'external_email' => $invitation->email,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+            ];
+        } else {
+            // Validate verification codes (again)
+            $v = $this->verify($request);
+            if ($v->status() !== 200) {
+                return $v;
+            }
+
+            // Get user name/email from the verification code database
+            $code_data = $v->getData();
+
+            $settings = [
+                'external_email' => $code_data->email,
+                'first_name' => $code_data->first_name,
+                'last_name' => $code_data->last_name,
+            ];
         }
 
         // Find the voucher discount
@@ -216,10 +284,6 @@ class SignupController extends Controller
         if ($errors = self::validateLogin($login, $domain_name, $is_domain)) {
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
-
-        // Get user name/email from the verification code database
-        $code_data  = $v->getData();
-        $user_email = $code_data->email;
 
         // We allow only ASCII, so we can safely lower-case the email address
         $login = Str::lower($login);
@@ -252,14 +316,19 @@ class SignupController extends Controller
         $user->assignPlan($plan, $domain);
 
         // Save the external email and plan in user settings
-        $user->setSettings([
-                'external_email' => $user_email,
-                'first_name' => $code_data->first_name,
-                'last_name' => $code_data->last_name,
-        ]);
+        $user->setSettings($settings);
+
+        // Update the invitation
+        if (!empty($invitation)) {
+            $invitation->status = SignupInvitation::STATUS_COMPLETED;
+            $invitation->user_id = $user->id;
+            $invitation->save();
+        }
 
         // Remove the verification code
-        $this->code->delete();
+        if ($this->code) {
+            $this->code->delete();
+        }
 
         DB::commit();
 

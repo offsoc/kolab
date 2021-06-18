@@ -25,5 +25,7 @@ class DiscountObserver
                 break;
             }
         }
+
+        $discount->tenant_id = \config('app.tenant_id');
     }
 }

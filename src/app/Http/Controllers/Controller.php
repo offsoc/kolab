@@ -24,7 +24,7 @@ class Controller extends BaseController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function errorResponse(int $code, string $message = null, array $data = [])
+    public static function errorResponse(int $code, string $message = null, array $data = [])
     {
         $errors = [
             400 => "Bad request",

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class UserDiscount extends Command
 {
@@ -21,23 +21,13 @@ class UserDiscount extends Command
     protected $description = "Apply a discount to all of the user's wallets";
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $user = \App\User::where('email', $this->argument('user'))->first();
+        $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
             return 1;
@@ -48,7 +38,7 @@ class UserDiscount extends Command
         if ($this->argument('discount') === '0') {
             $discount = null;
         } else {
-            $discount = \App\Discount::find($this->argument('discount'));
+            $discount = $this->getObject(\App\Discount::class, $this->argument('discount'));
 
             if (!$discount) {
                 return 1;

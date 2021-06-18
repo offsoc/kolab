@@ -7,6 +7,11 @@ use App\Group;
 use App\Http\Controllers\API\V4\GroupsController;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Create a (mail-enabled) distribution group.
+ *
+ * @see \App\Console\Commands\Scalpel\Group\CreateCommand
+ */
 class CreateCommand extends Command
 {
     /**

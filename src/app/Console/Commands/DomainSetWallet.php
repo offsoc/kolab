@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Command;
 use App\Entitlement;
 use App\Domain;
 use App\Sku;
 use App\Wallet;
-use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Queue;
 
 class DomainSetWallet extends Command
@@ -32,14 +32,14 @@ class DomainSetWallet extends Command
      */
     public function handle()
     {
-        $domain = Domain::where('namespace', $this->argument('domain'))->first();
+        $domain = $this->getDomain($this->argument('domain'));
 
         if (!$domain) {
             $this->error("Domain not found.");
             return 1;
         }
 
-        $wallet = Wallet::find($this->argument('wallet'));
+        $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
             $this->error("Wallet not found.");
@@ -60,6 +60,7 @@ class DomainSetWallet extends Command
                 'wallet_id' => $wallet->id,
                 'sku_id' => $sku->id,
                 'cost' => 0,
+                'fee' => 0,
                 'entitleable_id' => $domain->id,
                 'entitleable_type' => Domain::class,
             ]

@@ -27,5 +27,7 @@ class PackageObserver
                 break;
             }
         }
+
+        $package->tenant_id = \config('app.tenant_id');
     }
 }

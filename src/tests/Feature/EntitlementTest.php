@@ -82,7 +82,6 @@ class EntitlementTest extends TestCase
         );
 
         $domain->assignPackage($packageDomain, $owner);
-
         $owner->assignPackage($packageKolab);
         $owner->assignPackage($packageKolab, $user);
 
@@ -127,58 +126,5 @@ class EntitlementTest extends TestCase
         $this->assertSame($wallet->id, $entitlement->wallet->id);
         $this->assertEquals($user->id, $entitlement->entitleable->id);
         $this->assertTrue($entitlement->entitleable instanceof \App\User);
-    }
-
-    /**
-     * @todo This really should be in User or Wallet tests file
-     */
-    public function testBillDeletedEntitlement(): void
-    {
-        $user = $this->getTestUser('entitlement-test@kolabnow.com');
-        $package = \App\Package::where('title', 'kolab')->first();
-
-        $storage = \App\Sku::where('title', 'storage')->first();
-
-        $user->assignPackage($package);
-        // some additional SKUs so we have something to delete.
-        $user->assignSku($storage, 4);
-
-        // the mailbox, the groupware, the 2 original storage and the additional 4
-        $this->assertCount(8, $user->fresh()->entitlements);
-
-        $wallet = $user->wallets()->first();
-
-        $backdate = Carbon::now()->subWeeks(7);
-        $this->backdateEntitlements($user->entitlements, $backdate);
-
-        $charge = $wallet->chargeEntitlements();
-
-        $this->assertSame(-1099, $wallet->balance);
-
-        $balance = $wallet->balance;
-        $discount = \App\Discount::where('discount', 30)->first();
-        $wallet->discount()->associate($discount);
-        $wallet->save();
-
-        $user->removeSku($storage, 4);
-
-        // we expect the wallet to have been charged for ~3 weeks of use of
-        // 4 deleted storage entitlements, it should also take discount into account
-        $backdate->addMonthsWithoutOverflow(1);
-        $diffInDays = $backdate->diffInDays(Carbon::now());
-
-        // entitlements-num * cost * discount * days-in-month
-        $max = intval(4 * 25 * 0.7 * $diffInDays / 28);
-        $min = intval(4 * 25 * 0.7 * $diffInDays / 31);
-
-        $wallet->refresh();
-        $this->assertTrue($wallet->balance >= $balance - $max);
-        $this->assertTrue($wallet->balance <= $balance - $min);
-
-        $transactions = \App\Transaction::where('object_id', $wallet->id)
-            ->where('object_type', \App\Wallet::class)->get();
-
-        // one round of the monthly invoicing, four sku deletions getting invoiced
-        $this->assertCount(5, $transactions);
     }
 }

@@ -76,6 +76,10 @@ class WalletsTest extends TestCase
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
         $wallet = $user->wallets()->first();
         $balance = $wallet->balance;
+        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $wallet = $user->wallets()->first();
+        $reseller_wallet = $reseller->wallets()->first();
+        $reseller_balance = $reseller_wallet->balance;
 
         Transaction::where('object_id', $wallet->id)
             ->whereIn('type', [Transaction::WALLET_AWARD, Transaction::WALLET_PENALTY])
@@ -109,6 +113,7 @@ class WalletsTest extends TestCase
         $this->assertSame('The bonus has been added to the wallet successfully.', $json['message']);
         $this->assertSame($balance += 5000, $json['balance']);
         $this->assertSame($balance, $wallet->fresh()->balance);
+        $this->assertSame($reseller_balance, $reseller_wallet->fresh()->balance);
 
         $transaction = Transaction::where('object_id', $wallet->id)
             ->where('type', Transaction::WALLET_AWARD)->first();
@@ -128,6 +133,7 @@ class WalletsTest extends TestCase
         $this->assertSame('The penalty has been added to the wallet successfully.', $json['message']);
         $this->assertSame($balance -= 4000, $json['balance']);
         $this->assertSame($balance, $wallet->fresh()->balance);
+        $this->assertSame($reseller_balance, $reseller_wallet->fresh()->balance);
 
         $transaction = Transaction::where('object_id', $wallet->id)
             ->where('type', Transaction::WALLET_PENALTY)->first();

@@ -106,4 +106,19 @@ class PlanTest extends TestCase
 
         $this->assertTrue($plan->cost() == $package_costs);
     }
+
+    public function testTenant(): void
+    {
+        $plan = Plan::where('title', 'individual')->first();
+
+        $tenant = $plan->tenant()->first();
+
+        $this->assertInstanceof(\App\Tenant::class, $tenant);
+        $this->assertSame(1, $tenant->id);
+
+        $tenant = $plan->tenant;
+
+        $this->assertInstanceof(\App\Tenant::class, $tenant);
+        $this->assertSame(1, $tenant->id);
+    }
 }

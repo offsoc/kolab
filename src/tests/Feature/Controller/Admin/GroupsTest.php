@@ -94,6 +94,47 @@ class GroupsTest extends TestCase
     }
 
     /**
+     * Test fetching group info
+     */
+    public function testShow(): void
+    {
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $user = $this->getTestUser('test1@domainscontroller.com');
+        $group = $this->getTestGroup('group-test@kolab.org');
+        $group->assignToWallet($user->wallets->first());
+
+        // Only admins can access it
+        $response = $this->actingAs($user)->get("api/v4/groups/{$group->id}");
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($admin)->get("api/v4/groups/{$group->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertEquals($group->id, $json['id']);
+        $this->assertEquals($group->email, $json['email']);
+        $this->assertEquals($group->status, $json['status']);
+    }
+
+    /**
+     * Test fetching domain status (GET /api/v4/domains/<domain-id>/status)
+     */
+    public function testStatus(): void
+    {
+        Queue::fake(); // disable jobs
+
+        $user = $this->getTestUser('john@kolab.org');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $group = $this->getTestGroup('group-test@kolab.org');
+        $group->assignToWallet($user->wallets->first());
+
+        // This end-point does not exist for admins
+        $response = $this->actingAs($admin)->get("/api/v4/groups/{$group->id}/status");
+        $response->assertStatus(404);
+    }
+
+    /**
      * Test group creating (POST /api/v4/groups)
      */
     public function testStore(): void

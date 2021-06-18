@@ -2,9 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Sku;
-use App\User;
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class UserEntitlements extends Command
 {
@@ -23,23 +21,13 @@ class UserEntitlements extends Command
     protected $description = "List a user's entitlements.";
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $user = User::where('email', $this->argument('userid'))->first();
+        $user = $this->getUser($this->argument('userid'));
 
         if (!$user) {
             return 1;
@@ -58,7 +46,7 @@ class UserEntitlements extends Command
         }
 
         foreach ($skus_counted as $id => $qty) {
-            $sku = Sku::find($id);
+            $sku = \App\Sku::find($id);
             $this->info("SKU: {$sku->title} ({$qty})");
         }
     }

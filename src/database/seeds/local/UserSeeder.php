@@ -145,5 +145,30 @@ class UserSeeder extends Seeder
 
         $jeroen->role = 'admin';
         $jeroen->save();
+
+        $tenant1 = \App\Tenant::where('title', 'Kolab Now')->first();
+        $tenant2 = \App\Tenant::where('title', 'Sample Tenant')->first();
+
+        $reseller1 = User::create(
+            [
+                'email' => 'reseller@kolabnow.com',
+                'password' => 'reseller',
+            ]
+        );
+
+        $reseller1->tenant_id = $tenant1->id;
+        $reseller1->role = 'reseller';
+        $reseller1->save();
+
+        $reseller2 = User::create(
+            [
+                'email' => 'reseller@reseller.com',
+                'password' => 'reseller',
+            ]
+        );
+
+        $reseller2->tenant_id = $tenant2->id;
+        $reseller2->role = 'reseller';
+        $reseller2->save();
     }
 }

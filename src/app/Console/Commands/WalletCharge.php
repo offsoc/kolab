@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Command;
 use App\Wallet;
-use Illuminate\Console\Command;
 
 class WalletCharge extends Command
 {
@@ -22,16 +22,6 @@ class WalletCharge extends Command
     protected $description = 'Charge wallets';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
@@ -40,7 +30,7 @@ class WalletCharge extends Command
     {
         if ($wallet = $this->argument('wallet')) {
             // Find specified wallet by ID
-            $wallet = Wallet::find($wallet);
+            $wallet = $this->getWallet($wallet);
 
             if (!$wallet || !$wallet->owner) {
                 return 1;
@@ -51,6 +41,7 @@ class WalletCharge extends Command
             // Get all wallets, excluding deleted accounts
             $wallets = Wallet::select('wallets.*')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
+                ->withEnvTenant('users')
                 ->whereNull('users.deleted_at')
                 ->cursor();
         }

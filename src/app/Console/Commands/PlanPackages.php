@@ -38,7 +38,7 @@ class PlanPackages extends Command
      */
     public function handle()
     {
-        $plans = Plan::all();
+        $plans = Plan::withEnvTenant()->get();
 
         foreach ($plans as $plan) {
             $this->info(sprintf("Plan: %s", $plan->title));

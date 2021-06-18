@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Command;
 use App\Http\Controllers\API\V4\UsersController;
-use Illuminate\Console\Command;
 
 class UserAddAlias extends Command
 {
@@ -22,23 +22,13 @@ class UserAddAlias extends Command
     protected $description = 'Add an email alias to a user (forcefully)';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $user = \App\User::where('email', $this->argument('user'))->first();
+        $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
             return 1;

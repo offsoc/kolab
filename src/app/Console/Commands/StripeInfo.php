@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Command;
 use App\Providers\PaymentProvider;
 use App\User;
-use Illuminate\Console\Command;
 use Stripe as StripeAPI;
 
 class StripeInfo extends Command
@@ -31,7 +31,7 @@ class StripeInfo extends Command
     public function handle()
     {
         if ($this->argument('user')) {
-            $user = User::where('email', $this->argument('user'))->first();
+            $user = $this->getUser($this->argument('user'));
 
             if (!$user) {
                 return 1;

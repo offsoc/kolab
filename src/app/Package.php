@@ -21,6 +21,13 @@ use Spatie\Translatable\HasTranslations;
  * * Free package: mailbox + quota.
  *
  * Selecting a package will therefore create a set of entitlments from SKUs.
+ *
+ * @property string  $description
+ * @property int     $discount_rate
+ * @property string  $id
+ * @property string  $name
+ * @property ?int    $tenant_id
+ * @property string  $title
  */
 class Package extends Model
 {
@@ -69,7 +76,10 @@ class Package extends Model
         return $costs;
     }
 
-    public function isDomain()
+    /**
+     * Checks whether the package contains a domain SKU.
+     */
+    public function isDomain(): bool
     {
         foreach ($this->skus as $sku) {
             if ($sku->handler_class::entitleableClass() == \App\Domain::class) {
@@ -93,5 +103,15 @@ class Package extends Model
         )->using('App\PackageSku')->withPivot(
             ['qty']
         );
+    }
+
+    /**
+     * The tenant for this package.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function tenant()
+    {
+        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 }

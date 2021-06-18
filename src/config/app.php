@@ -65,6 +65,8 @@ return [
 
     'theme' => env('APP_THEME', 'default'),
 
+    'tenant_id' => env('APP_TENANT_ID', null),
+
     /*
     |--------------------------------------------------------------------------
     | Application Domain

@@ -1,24 +1,24 @@
-import DashboardComponent from '../vue/Dashboard'
-import DistlistInfoComponent from '../vue/Distlist/Info'
-import DistlistListComponent from '../vue/Distlist/List'
-import DomainInfoComponent from '../vue/Domain/Info'
-import DomainListComponent from '../vue/Domain/List'
-import LoginComponent from '../vue/Login'
-import LogoutComponent from '../vue/Logout'
-import MeetComponent from '../vue/Rooms'
-import PageComponent from '../vue/Page'
-import PasswordResetComponent from '../vue/PasswordReset'
-import SignupComponent from '../vue/Signup'
-import UserInfoComponent from '../vue/User/Info'
-import UserListComponent from '../vue/User/List'
-import UserProfileComponent from '../vue/User/Profile'
-import UserProfileDeleteComponent from '../vue/User/ProfileDelete'
-import WalletComponent from '../vue/Wallet'
+import DashboardComponent from '../../vue/Dashboard'
+import DistlistInfoComponent from '../../vue/Distlist/Info'
+import DistlistListComponent from '../../vue/Distlist/List'
+import DomainInfoComponent from '../../vue/Domain/Info'
+import DomainListComponent from '../../vue/Domain/List'
+import LoginComponent from '../../vue/Login'
+import LogoutComponent from '../../vue/Logout'
+import MeetComponent from '../../vue/Rooms'
+import PageComponent from '../../vue/Page'
+import PasswordResetComponent from '../../vue/PasswordReset'
+import SignupComponent from '../../vue/Signup'
+import UserInfoComponent from '../../vue/User/Info'
+import UserListComponent from '../../vue/User/List'
+import UserProfileComponent from '../../vue/User/Profile'
+import UserProfileDeleteComponent from '../../vue/User/ProfileDelete'
+import WalletComponent from '../../vue/Wallet'
 
 // Here's a list of lazy-loaded components
 // Note: you can pack multiple components into the same chunk, webpackChunkName
 // is also used to get a sensible file name instead of numbers
-const RoomComponent = () => import(/* webpackChunkName: "room" */ '../vue/Meet/Room.vue')
+const RoomComponent = () => import(/* webpackChunkName: "room" */ '../../vue/Meet/Room.vue')
 
 const routes = [
     {
@@ -89,6 +89,11 @@ const routes = [
         name: 'rooms',
         component: MeetComponent,
         meta: { requiresAuth: true }
+    },
+    {
+        path: '/signup/invite/:param',
+        name: 'signup-invite',
+        component: SignupComponent
     },
     {
         path: '/signup/:param?',

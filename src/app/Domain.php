@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * The eloquent definition of a Domain.
  *
  * @property string $namespace
+ * @property int    $status
+ * @property int    $tenant_id
+ * @property int    $type
  */
 class Domain extends Model
 {
@@ -86,6 +89,7 @@ class Domain extends Model
                         'wallet_id' => $wallet_id,
                         'sku_id' => $sku->id,
                         'cost' => $sku->pivot->cost(),
+                        'fee' => $sku->pivot->fee(),
                         'entitleable_id' => $this->id,
                         'entitleable_type' => Domain::class
                     ]
@@ -107,13 +111,13 @@ class Domain extends Model
     }
 
     /**
-     * Return list of public+active domain names
+     * Return list of public+active domain names (for current tenant)
      */
     public static function getPublicDomains(): array
     {
-        $where = sprintf('(type & %s)', Domain::TYPE_PUBLIC);
-
-        return self::whereRaw($where)->get(['namespace'])->pluck('namespace')->toArray();
+        return self::withEnvTenant()
+            ->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
+            ->get(['namespace'])->pluck('namespace')->toArray();
     }
 
     /**
@@ -374,6 +378,16 @@ class Domain extends Model
 
         $this->status |= Domain::STATUS_SUSPENDED;
         $this->save();
+    }
+
+    /**
+     * The tenant for this domain.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function tenant()
+    {
+        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**
