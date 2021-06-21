@@ -89,7 +89,7 @@ class RoomQATest extends TestCaseDusk
                 ->type('@setup-nickname-input', 'Guest2')
                 ->clickWhenEnabled('@setup-button')
                 ->waitFor('@queue .dropdown')
-                ->assertSeeIn('@queue .dropdown', 'John')
+                ->waitForTextIn('@queue .dropdown', 'John')
                 ->assertElementsCount('@queue .dropdown', 1)
                 ->assertMissing('@menu button.link-hand');
 

@@ -22,8 +22,8 @@ class SupportTest extends TestCaseDusk
                 })
                 ->waitFor('#support')
                 ->assertSeeIn('.card-title', 'Contact Support')
-                ->assertSeeIn('a.btn-info', 'Contact Support')
-                ->click('a.btn-info')
+                ->assertSeeIn('a.btn-primary', 'Contact Support')
+                ->click('a.btn-primary')
                 ->with(new Dialog('#support-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Contact Support')
                         ->assertFocused('#support-user')
@@ -39,7 +39,7 @@ class SupportTest extends TestCaseDusk
                         ->click('@button-cancel');
                 })
                 ->assertMissing('#support-dialog')
-                ->click('a.btn-info')
+                ->click('a.btn-primary')
                 ->with(new Dialog('#support-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Contact Support')
                         ->assertFocused('#support-user')
