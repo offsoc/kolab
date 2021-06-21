@@ -3,28 +3,28 @@
         <table class="table table-sm m-0 payments">
             <thead class="thead-light">
                 <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">Description</th>
+                    <th scope="col">{{ $t('form.date') }}</th>
+                    <th scope="col">{{ $t('form.description') }}</th>
                     <th scope="col"></th>
-                    <th scope="col" class="price">Amount</th>
+                    <th scope="col" class="price">{{ $t('form.amount') }}</th>
                 </tr>
             </thead>
             <tbody>
                 <tr v-for="payment in payments" :id="'log' + payment.id" :key="payment.id">
                     <td class="datetime">{{ payment.createdAt }}</td>
                     <td class="description">{{ payment.description }}</td>
-                    <td><a v-if="payment.checkoutUrl" :href="payment.checkoutUrl">Details</a></td>
+                    <td><a v-if="payment.checkoutUrl" :href="payment.checkoutUrl">{{ $t('form.details') }}</a></td>
                     <td class="price text-success">{{ amount(payment) }}</td>
                 </tr>
             </tbody>
             <tfoot class="table-fake-body">
                 <tr>
-                    <td colspan="4">There are no pending payments for this account.</td>
+                    <td colspan="4">{{ $t('wallet.pending-payments-none') }}</td>
                 </tr>
             </tfoot>
         </table>
         <div class="text-center p-3" id="payments-loader" v-if="hasMore">
-            <button class="btn btn-secondary" @click="loadLog(true)">Load more</button>
+            <button class="btn btn-secondary" @click="loadLog(true)">{{ $t('nav.more') }}</button>
         </div>
     </div>
 </template>

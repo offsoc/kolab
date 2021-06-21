@@ -3,11 +3,11 @@
         <table class="table table-sm m-0 transactions">
             <thead class="thead-light">
                 <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col" v-if="isAdmin">User</th>
+                    <th scope="col">{{ $t('form.date') }}</th>
+                    <th scope="col" v-if="isAdmin">{{ $t('form.user') }}</th>
                     <th scope="col"></th>
-                    <th scope="col">Description</th>
-                    <th scope="col" class="price">Amount</th>
+                    <th scope="col">{{ $t('form.description') }}</th>
+                    <th scope="col" class="price">{{ $t('form.amount') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,12 +28,12 @@
             </tbody>
             <tfoot class="table-fake-body">
                 <tr>
-                    <td :colspan="isAdmin ? 5 : 4">There are no transactions for this account.</td>
+                    <td :colspan="isAdmin ? 5 : 4">{{ $t('wallet.transactions-none') }}</td>
                 </tr>
             </tfoot>
         </table>
         <div class="text-center p-3" id="transactions-loader" v-if="hasMore">
-            <button class="btn btn-secondary" @click="loadLog(true)">Load more</button>
+            <button class="btn btn-secondary" @click="loadLog(true)">{{ $t('nav.more') }}</button>
         </div>
     </div>
 </template>

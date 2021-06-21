@@ -3,7 +3,7 @@
         <user-search></user-search>
         <div id="dashboard-nav" class="mt-3">
             <router-link class="card link-stats" :to="{ name: 'stats' }">
-                <svg-icon icon="chart-line"></svg-icon><span class="name">Stats</span>
+                <svg-icon icon="chart-line"></svg-icon><span class="name">{{ $t('dashboard.stats') }}</span>
             </router-link>
         </div>
     </div>

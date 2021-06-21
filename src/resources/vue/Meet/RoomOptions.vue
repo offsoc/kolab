@@ -5,7 +5,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('meet.options') }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('button.close')">
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -17,7 +17,7 @@
                                 <span v-else id="password-input-text" class="input-group-text text-muted">{{ $t('meet.password-none') }}</span>
                                 <input type="text" :value="config.password" name="password" class="form-control rounded-left activable">
                                 <div class="input-group-append">
-                                    <button type="button" @click="passwordSave" id="password-save-btn" class="btn btn-outline-primary activable rounded-right">{{ $t('button.save') }}</button>
+                                    <button type="button" @click="passwordSave" id="password-save-btn" class="btn btn-outline-primary activable rounded-right">{{ $t('btn.save') }}</button>
                                     <button type="button" v-if="config.password" id="password-clear-btn" @click="passwordClear" class="btn btn-outline-danger rounded">{{ $t('meet.password-clear') }}</button>
                                     <button type="button" v-else @click="passwordSet" id="password-set-btn" class="btn btn-outline-primary rounded">{{ $t('meet.password-set') }}</button>
                                 </div>
@@ -48,7 +48,7 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-action" data-dismiss="modal">{{ $t('button.close') }}</button>
+                        <button type="button" class="btn btn-secondary modal-action" data-dismiss="modal">{{ $t('btn.close') }}</button>
                     </div>
                 </div>
             </div>

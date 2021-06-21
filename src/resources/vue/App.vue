@@ -54,7 +54,7 @@
                     return true
                 }
 
-                const hint = type == 'wallets' ? "Only account owners can access a wallet." : ''
+                const hint = type == 'wallets' ? this.$t('wallet.noperm') : ''
 
                 this.$root.errorPage(403, null, hint)
 
@@ -76,7 +76,7 @@
                         const result = response.data.faq
                         $('#faq').remove()
                         if (result && result.length) {
-                            let faq = $('<div id="faq" class="faq mt-3"><h5>FAQ</h5><ul class="pl-4"></ul></div>')
+                            let faq = $('<div id="faq" class="faq mt-3"><h5>' + this.$t('app.faq') + '</h5><ul class="pl-4"></ul></div>')
                             let list = []
 
                             result.forEach(item => {

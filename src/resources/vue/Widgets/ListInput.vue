@@ -5,7 +5,7 @@
             <div class="input-group-append">
                 <a href="#" class="btn btn-outline-secondary" @click.prevent="addItem">
                     <svg-icon icon="plus"></svg-icon>
-                    <span class="sr-only">Add</span>
+                    <span class="sr-only">{{ $t('btn.add') }}</span>
                 </a>
             </div>
         </div>
@@ -14,7 +14,7 @@
             <div class="input-group-append">
                 <a href="#" class="btn btn-outline-secondary" @click.prevent="deleteItem(index)">
                     <svg-icon icon="trash-alt"></svg-icon>
-                    <span class="sr-only">Delete</span>
+                    <span class="sr-only">{{ $t('btn.delete') }}</span>
                 </a>
             </div>
         </div>

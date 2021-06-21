@@ -6,7 +6,9 @@
                 <div class="card-text">
                     <form class="read-only short">
                         <div class="form-group row">
-                            <label for="domainid" class="col-sm-4 col-form-label">ID <span class="text-muted">(Created at)</span></label>
+                            <label for="domainid" class="col-sm-4 col-form-label">
+                                {{ $t('form.id') }} <span class="text-muted">({{ $t('form.created') }})</span>
+                            </label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="domainid">
                                     {{ domain.id }} <span class="text-muted">({{ domain.created_at }})</span>
@@ -14,7 +16,7 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="first_name" class="col-sm-4 col-form-label">Status</label>
+                            <label for="first_name" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="status">
                                     <span :class="$root.domainStatusClass(domain)">{{ $root.domainStatusText(domain) }}</span>
@@ -23,8 +25,12 @@
                         </div>
                     </form>
                     <div class="mt-2">
-                        <button v-if="!domain.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendDomain">Suspend</button>
-                        <button v-if="domain.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendDomain">Unsuspend</button>
+                        <button v-if="!domain.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendDomain">
+                            {{ $t('btn.suspend') }}
+                        </button>
+                        <button v-if="domain.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendDomain">
+                            {{ $t('btn.unsuspend') }}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -32,7 +38,7 @@
         <ul class="nav nav-tabs mt-3" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active" id="tab-config" href="#domain-config" role="tab" aria-controls="domain-config" aria-selected="true">
-                    Configuration
+                    {{ $t('form.config') }}
                 </a>
             </li>
         </ul>
@@ -40,9 +46,9 @@
             <div class="tab-pane show active" id="domain-config" role="tabpanel" aria-labelledby="tab-config">
                 <div class="card-body">
                     <div class="card-text">
-                        <p>Domain DNS verification sample:</p>
+                        <p>{{ $t('domain.dns-verify') }}</p>
                         <p><pre id="dns-verify">{{ domain.dns.join("\n") }}</pre></p>
-                        <p>Domain DNS configuration sample:</p>
+                        <p>{{ $t('domain.dns-config') }}</p>
                         <p><pre id="dns-config">{{ domain.config.join("\n") }}</pre></p>
                     </div>
                 </div>

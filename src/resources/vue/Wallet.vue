@@ -2,45 +2,39 @@
     <div class="container" dusk="wallet-component">
         <div v-if="wallet.id" id="wallet" class="card">
             <div class="card-body">
-                <div class="card-title">Account balance <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'">{{ $root.price(wallet.balance, wallet.currency) }}</span></div>
+                <div class="card-title">{{ $t('wallet.title') }} <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'">{{ $root.price(wallet.balance, wallet.currency) }}</span></div>
                 <div class="card-text">
                     <p v-if="wallet.notice" id="wallet-notice">{{ wallet.notice }}</p>
 
                     <div v-if="showPendingPayments" class="alert alert-warning">
-                        You have payments that are still in progress. See the "Pending Payments" tab below.
+                        {{ $t('wallet.pending-payments-warning') }}
                     </div>
                     <p>
-                        <button type="button" class="btn btn-primary" @click="paymentMethodForm('manual')">Add credit</button>
+                        <button type="button" class="btn btn-primary" @click="paymentMethodForm('manual')">{{ $t('wallet.add-credit') }}</button>
                     </p>
                     <div id="mandate-form" v-if="!mandate.isValid && !mandate.isPending">
                         <template v-if="mandate.id && !mandate.isValid">
                             <div class="alert alert-danger">
-                                The setup of automatic payments failed. Restart the process to enable automatic top-ups.
+                                {{ $t('wallet.auto-payment-failed') }}
                             </div>
-                            <button type="button" class="btn btn-danger" @click="autoPaymentDelete">Cancel auto-payment</button>
+                            <button type="button" class="btn btn-danger" @click="autoPaymentDelete">{{ $t('wallet.auto-payment-cancel') }}</button>
                         </template>
-                        <button type="button" class="btn btn-primary" @click="paymentMethodForm('auto')">Set up auto-payment</button>
+                        <button type="button" class="btn btn-primary" @click="paymentMethodForm('auto')">{{ $t('wallet.auto-payment-setup') }}</button>
                     </div>
                     <div id="mandate-info" v-else>
                         <div v-if="mandate.isDisabled" class="disabled-mandate alert alert-danger">
-                            The configured auto-payment has been disabled. Top up your wallet or
-                            raise the auto-payment amount.
+                            {{ $t('wallet.auto-payment-disabled') }}
                         </div>
                         <template v-else>
-                            <p>
-                                Auto-payment is <b>set</b> to fill up your account by <b>{{ mandate.amount }} CHF</b>
-                                every time your account balance gets under <b>{{ mandate.balance }} CHF</b>.
-                            </p>
-                            <p>
-                                Method of payment: {{ mandate.method }}
-                            </p>
+                            <p v-html="$t('wallet.auto-payment-info', { amount: mandate.amount, balance: mandate.balance })"></p>
+                            <p>{{ $t('wallet.payment-method', { method: mandate.method }) }}</p>
                         </template>
                         <div v-if="mandate.isPending" class="alert alert-warning">
-                            The setup of the automatic payment is still in progress.
+                            {{ $t('wallet.auto-payment-inprogress') }}
                         </div>
                         <p>
-                            <button type="button" class="btn btn-danger" @click="autoPaymentDelete">Cancel auto-payment</button>
-                            <button type="button" class="btn btn-primary" @click="autoPaymentChange">Change auto-payment</button>
+                            <button type="button" class="btn btn-danger" @click="autoPaymentDelete">{{ $t('wallet.auto-payment-cancel') }}</button>
+                            <button type="button" class="btn btn-primary" @click="autoPaymentChange">{{ $t('wallet.auto-payment-change') }}</button>
                         </p>
                     </div>
                 </div>
@@ -50,17 +44,17 @@
         <ul class="nav nav-tabs mt-3" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active" id="tab-receipts" href="#wallet-receipts" role="tab" aria-controls="wallet-receipts" aria-selected="true">
-                    Receipts
+                    {{ $t('wallet.receipts') }}
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="tab-history" href="#wallet-history" role="tab" aria-controls="wallet-history" aria-selected="false">
-                    History
+                    {{ $t('wallet.history') }}
                 </a>
             </li>
             <li v-if="showPendingPayments" class="nav-item">
                 <a class="nav-link" id="tab-payments" href="#wallet-payments" role="tab" aria-controls="wallet-payments" aria-selected="false">
-                    Pending Payments
+                    {{ $t('wallet.pending-payments') }}
                 </a>
             </li>
         </ul>
@@ -69,8 +63,7 @@
                 <div class="card-body">
                     <div class="card-text">
                         <p v-if="receipts.length">
-                            Here you can download receipts (in PDF format) for payments in specified period.
-                            Select the period and press the Download button.
+                            {{ $t('wallet.receipts-hint') }}
                         </p>
                         <div v-if="receipts.length" class="input-group">
                             <select id="receipt-id" class="form-control">
@@ -78,13 +71,12 @@
                             </select>
                             <div class="input-group-append">
                                 <button type="button" class="btn btn-secondary" @click="receiptDownload">
-                                    <svg-icon icon="download"></svg-icon> Download
+                                    <svg-icon icon="download"></svg-icon> {{ $t('btn.download') }}
                                 </button>
                             </div>
                         </div>
                         <p v-if="!receipts.length">
-                            There are no receipts for payments in this account. Please, note that you can download
-                            receipts after the month ends.
+                            {{ $t('wallet.receipts-none') }}
                         </p>
                     </div>
                 </div>
@@ -106,7 +98,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ paymentDialogTitle }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -124,14 +116,14 @@
                         </div>
                         <div id="manual-payment" v-if="paymentForm == 'manual'">
                             <p v-if="wallet.currency != selectedPaymentMethod.currency">
-                                Here is how it works: You specify the amount by which you want to to up your wallet in {{ wallet.currency }}.
-                                We will then convert this to {{ selectedPaymentMethod.currency }}, and on the next page you will be provided with the bank-details
-                                to transfer the amount in {{ selectedPaymentMethod.currency }}.
+                                {{ $t('wallet.currency-conv', { wc: wallet.currency, pc: selectedPaymentMethod.currency }) }}
                             </p>
                             <p v-if="selectedPaymentMethod.id == 'banktransfer'">
-                                Please note that a bank transfer can take several days to complete.
+                                {{ $t('wallet.banktransfer-hint') }}
                             </p>
-                            <p>Choose the amount by which you want to top up your wallet.</p>
+                            <p>
+                                {{ $t('wallet.payment-amount-hint') }}
+                            </p>
                             <form id="payment-form" @submit.prevent="payment">
                                 <div class="form-group">
                                     <div class="input-group">
@@ -142,19 +134,17 @@
                                     </div>
                                 </div>
                                 <div v-if="wallet.currency != selectedPaymentMethod.currency && !isNaN(amount)" class="alert alert-warning">
-                                    You will be charged for {{ $root.price(amount * selectedPaymentMethod.exchangeRate * 100, selectedPaymentMethod.currency) }}
+                                    {{ $t('wallet.payment-warning', { price: $root.price(amount * selectedPaymentMethod.exchangeRate * 100, selectedPaymentMethod.currency) }) }}
                                 </div>
                             </form>
                         </div>
                         <div id="auto-payment" v-if="paymentForm == 'auto'">
                             <form data-validation-prefix="mandate_">
                                 <p>
-                                    Here is how it works: Every time your account runs low,
-                                    we will charge your preferred payment method for an amount you choose.
-                                    You can cancel or change the auto-payment option at any time.
+                                    {{ $t('wallet.auto-payment-hint') }}
                                 </p>
                                 <div class="form-group row">
-                                    <label for="mandate_amount" class="col-sm-6 col-form-label">Fill up by</label>
+                                    <label for="mandate_amount" class="col-sm-6 col-form-label">{{ $t('wallet.fill-up') }}</label>
                                     <div class="input-group col-sm-6">
                                         <input type="text" class="form-control" id="mandate_amount" v-model="mandate.amount" required>
                                         <span class="input-group-append">
@@ -163,7 +153,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <label for="mandate_balance" class="col-sm-6 col-form-label">when account balance is below</label>
+                                    <label for="mandate_balance" class="col-sm-6 col-form-label">{{ $t('wallet.when-below') }}</label>
                                     <div class="col-sm-6">
                                         <div class="input-group">
                                             <input type="text" class="form-control" id="mandate_balance" v-model="mandate.balance" required>
@@ -174,35 +164,33 @@
                                     </div>
                                 </div>
                                 <p v-if="!mandate.isValid">
-                                    Next, you will be redirected to the checkout page, where you can provide
-                                    your credit card details.
+                                    {{ $t('wallet.auto-payment-next') }}
                                 </p>
                                 <div v-if="mandate.isValid && mandate.isDisabled" class="disabled-mandate alert alert-danger">
-                                    The auto-payment is disabled. Immediately after you submit new settings we'll
-                                    enable it and attempt to top up your wallet.
+                                    {{ $t('wallet.auto-payment-disabled-next') }}
                                 </div>
                             </form>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-primary modal-action"
                                 v-if="paymentForm == 'auto' && (mandate.isValid || mandate.isPending)"
                                 @click="autoPayment"
                         >
-                            <svg-icon icon="check"></svg-icon> Submit
+                            <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
                         </button>
                         <button type="button" class="btn btn-primary modal-action"
                                 v-if="paymentForm == 'auto' && !mandate.isValid && !mandate.isPending"
                                 @click="autoPayment"
                         >
-                            <svg-icon icon="check"></svg-icon> Continue
+                            <svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}
                         </button>
                         <button type="button" class="btn btn-primary modal-action"
                                 v-if="paymentForm == 'manual'"
                                 @click="payment"
                         >
-                            <svg-icon icon="check"></svg-icon> Continue
+                            <svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}
                         </button>
                     </div>
                 </div>
@@ -382,7 +370,7 @@
                     })
             },
             autoPaymentChange(event) {
-                this.autoPaymentForm(event, 'Update auto-payment')
+                this.autoPaymentForm(event, this.$t('wallet.auto-payment-update'))
             },
             autoPaymentDelete() {
                 axios.delete('/api/v4/payments/mandate')
@@ -402,9 +390,9 @@
                 this.paymentForm = 'method'
                 this.nextForm = nextForm
                 if (nextForm == 'auto') {
-                    this.paymentDialogTitle = 'Add auto-payment'
+                    this.paymentDialogTitle = this.$t('wallet.auto-payment-setup')
                 } else {
-                    this.paymentDialogTitle = 'Top up your wallet'
+                    this.paymentDialogTitle = this.$t('wallet.top-up')
                 }
 
                 const methods = $('#payment-method')

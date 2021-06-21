@@ -2,12 +2,12 @@
     <div class="container">
         <div class="card" id="domain-list">
             <div class="card-body">
-                <div class="card-title">Domains</div>
+                <div class="card-title">{{ $t('user.domains') }}</div>
                 <div class="card-text">
                     <table class="table table-sm table-hover">
                         <thead class="thead-light">
                             <tr>
-                                <th scope="col">Name</th>
+                                <th scope="col">{{ $t('domain.namespace') }}</th>
                                 <th scope="col"></th>
                             </tr>
                         </thead>
@@ -22,7 +22,7 @@
                         </tbody>
                         <tfoot class="table-fake-body">
                             <tr>
-                                <td colspan="2">There are no domains in this account.</td>
+                                <td colspan="2">{{ $t('user.domains-none') }}</td>
                             </tr>
                         </tfoot>
                     </table>

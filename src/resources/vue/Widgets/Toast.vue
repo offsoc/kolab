@@ -4,10 +4,12 @@
 
 <script>
     import ToastMessage from './ToastMessage.vue'
+    import { i18n } from '../../js/locale'
 
     export default {
         methods: {
             addToast(data) {
+                ToastMessage.i18n = i18n
                 const msg = Vue.extend(ToastMessage)
                 const instance = new msg({ propsData: { data: data } })
                 instance.$mount()

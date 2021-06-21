@@ -4,21 +4,13 @@
             <div class="card-body">
                 <div class="card-title">Delete this account?</div>
                 <div class="card-text">
-                    <p>This will delete the account as well as all domains, users and aliases associated with this account.
-                        <strong>This operation is irreversible</strong>.</p>
-                    <p>As you will not be able to recover anything after this point, please make sure
-                        that you have migrated all data before proceeding.</p>
-                    <p v-if="supportEmail">
-                        As we always strive to improve, we would like to ask for 2 minutes of your time.
-                        The best tool for improvement is feedback from users, and we would like to ask
-                        for a few words about your reasons for leaving our service. Please send your feedback
-                        to <a :href="'mailto:' + supportEmail">{{ supportEmail }}</a>.
-                    </p>
-                    <p>Also feel free to contact {{ $root.appName }} Support with any questions
-                        or concerns that you may have in this context.</p>
-                    <button class="btn btn-secondary button-cancel" @click="$router.go(-1)">Cancel</button>
+                    <p>{{ $t('user.profile-delete-text1') }} <strong>{{ $t('user.profile-delete-warning') }}</strong>.</p>
+                    <p>{{ $t('user.profile-delete-text2') }}</p>
+                    <p v-if="supportEmail" v-html="$t('user.profile-delete-support', { href: 'mailto:' + supportEmail, email: supportEmail })"></p>
+                    <p>{{ $t('user.profile-delete-contact', { app: $root.appName }) }}</p>
+                    <button class="btn btn-secondary button-cancel" @click="$router.go(-1)">{{ $t('btn.cancel') }}</button>
                     <button class="btn btn-danger button-delete" @click="deleteProfile">
-                        <svg-icon icon="trash-alt"></svg-icon> Delete account
+                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('user.profile-delete') }}
                     </button>
                 </div>
             </div>

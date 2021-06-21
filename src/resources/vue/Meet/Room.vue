@@ -126,7 +126,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('meet.leave-title') }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('button.close')">
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -134,7 +134,7 @@
                         <p>{{ $t('meet.leave-body') }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-danger modal-action" data-dismiss="modal">{{ $t('button.close') }}</button>
+                        <button type="button" class="btn btn-danger modal-action" data-dismiss="modal">{{ $t('btn.close') }}</button>
                     </div>
                 </div>
             </div>
@@ -145,7 +145,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('meet.media-title') }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('button.close')">
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -173,7 +173,7 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-action" data-dismiss="modal">{{ $t('button.close') }}</button>
+                        <button type="button" class="btn btn-secondary modal-action" data-dismiss="modal">{{ $t('btn.close') }}</button>
                     </div>
                 </div>
             </div>
@@ -454,8 +454,8 @@
                     + `<div class="content">`
                         + `<p class="mb-2"></p>`
                         + `<div class="text-right">`
-                            + `<button type="button" class="btn btn-sm btn-success accept">${this.$t('button.accept')}</button>`
-                            + `<button type="button" class="btn btn-sm btn-danger deny ml-2">${this.$t('button.deny')}</button>`
+                            + `<button type="button" class="btn btn-sm btn-success accept">${this.$t('btn.accept')}</button>`
+                            + `<button type="button" class="btn btn-sm btn-danger deny ml-2">${this.$t('btn.deny')}</button>`
                 )
 
                 this.$toast.message({

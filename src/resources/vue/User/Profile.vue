@@ -3,61 +3,61 @@
         <div class="card" id="user-profile">
             <div class="card-body">
                 <div class="card-title">
-                    Your profile
+                    {{ $t('user.profile-title') }}
                     <router-link
                         v-if="$root.isController(wallet_id)"
                         class="btn btn-outline-danger button-delete float-right"
                         to="/profile/delete" tag="button"
                     >
-                        <svg-icon icon="trash-alt"></svg-icon> Delete account
+                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('user.profile-delete') }}
                     </router-link>
                 </div>
                 <div class="card-text">
                     <form @submit.prevent="submit">
                         <div class="form-group row plaintext">
-                            <label class="col-sm-4 col-form-label">Customer No.</label>
+                            <label class="col-sm-4 col-form-label">{{ $t('user.custno') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="userid">{{ user_id }}</span>
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="first_name" class="col-sm-4 col-form-label">First name</label>
+                            <label for="first_name" class="col-sm-4 col-form-label">{{ $t('form.firstname') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="first_name" v-model="profile.first_name">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="last_name" class="col-sm-4 col-form-label">Last name</label>
+                            <label for="last_name" class="col-sm-4 col-form-label">{{ $t('form.lastname') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="last_name" v-model="profile.last_name">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="organization" class="col-sm-4 col-form-label">Organization</label>
+                            <label for="organization" class="col-sm-4 col-form-label">{{ $t('user.org') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="organization" v-model="profile.organization">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="phone" class="col-sm-4 col-form-label">Phone</label>
+                            <label for="phone" class="col-sm-4 col-form-label">{{ $t('form.phone') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="phone" v-model="profile.phone">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="external_email" class="col-sm-4 col-form-label">External email</label>
+                            <label for="external_email" class="col-sm-4 col-form-label">{{ $t('user.ext-email') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="external_email" v-model="profile.external_email">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="billing_address" class="col-sm-4 col-form-label">Address</label>
+                            <label for="billing_address" class="col-sm-4 col-form-label">{{ $t('user.address') }}</label>
                             <div class="col-sm-8">
                                 <textarea class="form-control" id="billing_address" rows="3" v-model="profile.billing_address"></textarea>
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="country" class="col-sm-4 col-form-label">Country</label>
+                            <label for="country" class="col-sm-4 col-form-label">{{ $t('user.country') }}</label>
                             <div class="col-sm-8">
                                 <select class="form-control custom-select" id="country" v-model="profile.country">
                                     <option value="">-</option>
@@ -66,18 +66,18 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="password" class="col-sm-4 col-form-label">Password</label>
+                            <label for="password" class="col-sm-4 col-form-label">{{ $t('form.password') }}</label>
                             <div class="col-sm-8">
                                 <input type="password" class="form-control" id="password" v-model="profile.password">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="password_confirmaton" class="col-sm-4 col-form-label">Confirm password</label>
+                            <label for="password_confirmaton" class="col-sm-4 col-form-label">{{ $t('form.password-confirm') }}</label>
                             <div class="col-sm-8">
                                 <input type="password" class="form-control" id="password_confirmation" v-model="profile.password_confirmation">
                             </div>
                         </div>
-                        <button class="btn btn-primary button-submit" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
+                        <button class="btn btn-primary button-submit" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
                     </form>
                 </div>
             </div>

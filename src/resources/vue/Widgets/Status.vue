@@ -2,34 +2,35 @@
     <div v-if="!state.isReady" id="status-box" :class="'p-4 mb-3 rounded process-' + className">
         <div v-if="state.step != 'domain-confirmed'" class="d-flex align-items-start">
             <p id="status-body" class="flex-grow-1">
-                <span v-if="scope == 'dashboard'">We are preparing your account.</span>
-                <span v-else-if="scope == 'domain'">We are preparing the domain.</span>
-                <span v-else-if="scope == 'distlist'">We are preparing the distribution list.</span>
-                <span v-else>We are preparing the user account.</span>
+                <span v-if="scope == 'dashboard'">{{ $t('status.prepare-account') }}</span>
+                <span v-else-if="scope == 'domain'">{{ $t('status.prepare-domain') }}</span>
+                <span v-else-if="scope == 'distlist'">{{ $t('status.prepare-distlist') }}</span>
+                <span v-else>{{ $t('status.prepare-user') }}</span>
                 <br>
-                Some features may be missing or readonly at the moment.<br>
-                <span id="refresh-text" v-if="refresh">The process never ends? Press the "Refresh" button, please.</span>
+                {{ $t('status.prepare-hint') }}
+                <br>
+                <span id="refresh-text" v-if="refresh">{{ $t('status.prepare-refresh') }}</span>
             </p>
             <button v-if="refresh" id="status-refresh" href="#" class="btn btn-secondary" @click="statusRefresh">
-                <svg-icon icon="sync-alt"></svg-icon> Refresh
+                <svg-icon icon="sync-alt"></svg-icon> {{ $t('btn.refresh') }}
             </button>
         </div>
         <div v-else class="d-flex align-items-start">
             <p id="status-body" class="flex-grow-1">
-                <span v-if="scope == 'dashboard'">Your account is almost ready.</span>
-                <span v-else-if="scope == 'domain'">The domain is almost ready.</span>
-                <span v-else-if="scope == 'distlist'">The distribution list is almost ready.</span>
-                <span v-else>The user account is almost ready.</span>
+                <span v-if="scope == 'dashboard'">{{ $t('status.ready-account') }}</span>
+                <span v-else-if="scope == 'domain'">{{ $t('status.ready-domain') }}</span>
+                <span v-else-if="scope == 'distlist'">{{ $t('status.ready-distlist') }}</span>
+                <span v-else>{{ $t('status.ready-user') }}</span>
                 <br>
-                Verify your domain to finish the setup process.
+                {{ $t('status.verify') }}
             </p>
             <div v-if="scope == 'domain'">
                 <button id="status-verify" class="btn btn-secondary text-nowrap" @click="confirmDomain">
-                    <svg-icon icon="sync-alt"></svg-icon> Verify
+                    <svg-icon icon="sync-alt"></svg-icon> {{ $t('btn.verify') }}
                 </button>
             </div>
             <div v-else-if="state.link && scope != 'domain'">
-                <router-link id="status-link" class="btn btn-secondary" :to="{ path: state.link }">Verify domain</router-link>
+                <router-link id="status-link" class="btn btn-secondary" :to="{ path: state.link }">{{ $t('status.verify-domain') }}</router-link>
             </div>
         </div>
 
@@ -37,7 +38,7 @@
             <div class="progress">
                 <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
-            <span class="progress-label">{{ state.title || 'Initializing...' }}</span>
+            <span class="progress-label">{{ state.title || $t('msg.initializing') }}</span>
         </div>
     </div>
 </template>

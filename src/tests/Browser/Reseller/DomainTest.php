@@ -69,7 +69,7 @@ class DomainTest extends TestCaseDusk
                 ->assertSeeIn('@domain-info .card-title', 'kolab.org')
                 ->with('@domain-info form', function (Browser $browser) use ($domain) {
                     $browser->assertElementsCount('.row', 2)
-                        ->assertSeeIn('.row:nth-child(1) label', 'ID (Created at)')
+                        ->assertSeeIn('.row:nth-child(1) label', 'ID (Created)')
                         ->assertSeeIn('.row:nth-child(1) #domainid', "{$domain->id} ({$domain->created_at})")
                         ->assertSeeIn('.row:nth-child(2) label', 'Status')
                         ->assertSeeIn('.row:nth-child(2) #status span.text-success', 'Active');

@@ -4,32 +4,29 @@
 
         <div v-if="domain && !domain.isConfirmed" class="card" id="domain-verify">
             <div class="card-body">
-                <div class="card-title">Domain verification</div>
+                <div class="card-title">{{ $t('domain.verify') }}</div>
                 <div class="card-text">
-                    <p>In order to confirm that you're the actual holder of the domain,
-                        we need to run a verification process before finally activating it for email delivery.</p>
-                    <p>The domain <b>must have one of the following entries</b> in DNS:
+                    <p>{{ $t('domain.verify-intro') }}</p>
+                    <p>
+                        <span v-html="$t('domain.verify-dns')"></span>
                         <ul>
-                            <li>TXT entry with value: <code>{{ domain.hash_text }}</code></li>
-                            <li>or CNAME entry: <code>{{ domain.hash_cname }}.{{ domain.namespace }}. IN CNAME {{ domain.hash_code }}.{{ domain.namespace }}.</code></li>
+                            <li>{{ $t('domain.verify-dns-txt') }} <code>{{ domain.hash_text }}</code></li>
+                            <li>{{ $t('domain.verify-dns-cname') }} <code>{{ domain.hash_cname }}.{{ domain.namespace }}. IN CNAME {{ domain.hash_code }}.{{ domain.namespace }}.</code></li>
                         </ul>
-                        When this is done press the button below to start the verification.</p>
-                    <p>Here's a sample zone file for your domain: <pre>{{ domain.dns.join("\n") }}</pre></p>
-                    <button class="btn btn-primary" type="button" @click="confirm"><svg-icon icon="sync-alt"></svg-icon> Verify</button>
+                        <span>{{ $t('domain.verify-outro') }}</span>
+                    </p>
+                    <p>{{ $t('domain.verify-sample') }} <pre>{{ domain.dns.join("\n") }}</pre></p>
+                    <button class="btn btn-primary" type="button" @click="confirm"><svg-icon icon="sync-alt"></svg-icon> {{ $t('btn.verify') }}</button>
                 </div>
             </div>
         </div>
         <div v-if="domain && domain.isConfirmed" class="card" id="domain-config">
             <div class="card-body">
-                <div class="card-title">Domain configuration</div>
+                <div class="card-title">{{ $t('domain.config') }}</div>
                 <div class="card-text">
-                    <p>In order to let {{ $root.appName }} receive email traffic for your domain you need to adjust
-                        the DNS settings, more precisely the MX entries, accordingly.</p>
-                    <p>Edit your domain's zone file and replace existing MX
-                        entries with the following values: <pre>{{ domain.config.join("\n") }}</pre></p>
-                    <p>If you don't know how to set DNS entries for your domain,
-                        please contact the registration service where you registered
-                        the domain or your web hosting provider.</p>
+                    <p>{{ $t('domain.config-intro', { app: $root.appName }) }}</p>
+                    <p>{{ $t('domain.config-sample') }} <pre>{{ domain.config.join("\n") }}</pre></p>
+                    <p>{{ $t('domain.config-hint') }}</p>
                 </div>
             </div>
         </div>

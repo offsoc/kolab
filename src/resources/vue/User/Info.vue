@@ -4,61 +4,61 @@
 
         <div class="card" id="user-info">
             <div class="card-body">
-                <div class="card-title" v-if="user_id !== 'new'">User account
+                <div class="card-title" v-if="user_id !== 'new'">{{ $t('user.title') }}
                     <button
                         class="btn btn-outline-danger button-delete float-right"
                         @click="showDeleteConfirmation()" type="button"
                     >
-                        <svg-icon icon="trash-alt"></svg-icon> Delete user
+                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('user.delete') }}
                     </button>
                 </div>
-                <div class="card-title" v-if="user_id === 'new'">New user account</div>
+                <div class="card-title" v-if="user_id === 'new'">{{ $t('user.new') }}</div>
                 <div class="card-text">
                     <form @submit.prevent="submit">
                         <div v-if="user_id !== 'new'" class="form-group row plaintext">
-                            <label for="status" class="col-sm-4 col-form-label">Status</label>
+                            <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span :class="$root.userStatusClass(user) + ' form-control-plaintext'" id="status">{{ $root.userStatusText(user) }}</span>
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="first_name" class="col-sm-4 col-form-label">First name</label>
+                            <label for="first_name" class="col-sm-4 col-form-label">{{ $t('form.firstname') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="first_name" v-model="user.first_name">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="last_name" class="col-sm-4 col-form-label">Last name</label>
+                            <label for="last_name" class="col-sm-4 col-form-label">{{ $t('form.lastname') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="last_name" v-model="user.last_name">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="organization" class="col-sm-4 col-form-label">Organization</label>
+                            <label for="organization" class="col-sm-4 col-form-label">{{ $t('user.org') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="organization" v-model="user.organization">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="email" class="col-sm-4 col-form-label">Email</label>
+                            <label for="email" class="col-sm-4 col-form-label">{{ $t('form.email') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="email" :disabled="user_id !== 'new'" required v-model="user.email">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="aliases-input" class="col-sm-4 col-form-label">Email aliases</label>
+                            <label for="aliases-input" class="col-sm-4 col-form-label">{{ $t('user.aliases-email') }}</label>
                             <div class="col-sm-8">
                                 <list-input id="aliases" :list="user.aliases"></list-input>
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="password" class="col-sm-4 col-form-label">Password</label>
+                            <label for="password" class="col-sm-4 col-form-label">{{ $t('form.password') }}</label>
                             <div class="col-sm-8">
                                 <input type="password" class="form-control" id="password" v-model="user.password" :required="user_id === 'new'">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="password_confirmaton" class="col-sm-4 col-form-label">Confirm password</label>
+                            <label for="password_confirmaton" class="col-sm-4 col-form-label">{{ $t('form.password-confirm') }}</label>
                             <div class="col-sm-8">
                                 <input type="password" class="form-control" id="password_confirmation" v-model="user.password_confirmation" :required="user_id === 'new'">
                             </div>
@@ -70,8 +70,8 @@
                                     <thead class="thead-light sr-only">
                                         <tr>
                                             <th scope="col"></th>
-                                            <th scope="col">Package</th>
-                                            <th scope="col">Price</th>
+                                            <th scope="col">{{ $t('user.package') }}</th>
+                                            <th scope="col">{{ $t('user.price') }}</th>
                                             <th scope="col"></th>
                                         </tr>
                                     </thead>
@@ -93,7 +93,7 @@
                                             <td class="buttons">
                                                 <button v-if="pkg.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="pkg.description">
                                                     <svg-icon icon="info-circle"></svg-icon>
-                                                    <span class="sr-only">More information</span>
+                                                    <span class="sr-only">{{ $t('btn.moreinfo') }}</span>
                                                 </button>
                                             </td>
                                         </tr>
@@ -101,19 +101,19 @@
                                 </table>
                                 <small v-if="discount > 0" class="hint">
                                     <hr class="m-0">
-                                    &sup1; applied discount: {{ discount }}% - {{ discount_description }}
+                                    &sup1; {{ $t('user.discount-hint') }}: {{ discount }}% - {{ discount_description }}
                                 </small>
                             </div>
                         </div>
                         <div v-if="user_id !== 'new'" id="user-skus" class="form-group row">
-                            <label class="col-sm-4 col-form-label">Subscriptions</label>
+                            <label class="col-sm-4 col-form-label">{{ $t('user.subscriptions') }}</label>
                             <div class="col-sm-8">
                                 <table class="table table-sm form-list">
                                     <thead class="thead-light sr-only">
                                         <tr>
                                             <th scope="col"></th>
-                                            <th scope="col">Subscription</th>
-                                            <th scope="col">Price</th>
+                                            <th scope="col">{{ $t('user.subscription') }}</th>
+                                            <th scope="col">{{ $t('user.price') }}</th>
                                             <th scope="col"></th>
                                         </tr>
                                     </thead>
@@ -145,7 +145,7 @@
                                             <td class="buttons">
                                                 <button v-if="sku.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip.click="sku.description">
                                                     <svg-icon icon="info-circle"></svg-icon>
-                                                    <span class="sr-only">More information</span>
+                                                    <span class="sr-only">{{ $t('btn.moreinfo') }}</span>
                                                 </button>
                                             </td>
                                         </tr>
@@ -153,11 +153,11 @@
                                 </table>
                                 <small v-if="discount > 0" class="hint">
                                     <hr class="m-0">
-                                    &sup1; applied discount: {{ discount }}% - {{ discount_description }}
+                                    &sup1; {{ $t('user.discount-hint') }}: {{ discount }}% - {{ discount_description }}
                                 </small>
                             </div>
                         </div>
-                        <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
+                        <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
                     </form>
                 </div>
             </div>
@@ -167,19 +167,17 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title"></h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>Do you really want to delete this user permanently?
-                            This will delete all account data and withdraw the permission to access the email account.
-                            Please note that this action cannot be undone.</p>
+                        <p>{{ $t('user.delete-text') }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-danger modal-action" @click="deleteUser()">
-                            <svg-icon icon="trash-alt"></svg-icon> Delete
+                            <svg-icon icon="trash-alt"></svg-icon> {{ $t('btn.delete') }}
                         </button>
                     </div>
                 </div>
@@ -346,7 +344,7 @@
 
                     if (required.length) {
                         input.checked = false
-                        return alert(sku.name + ' requires ' + required.join(', ') + '.')
+                        return alert(this.$t('user.skureq', { sku: sku.name, list: required.join(', ') }))
                     }
                 } else {
                     // Uncheck all dependent SKUs, e.g. when unchecking Groupware we also uncheck Activesync
@@ -434,7 +432,7 @@
                 } else {
                     // Display the warning
                     let dialog = $('#delete-warning')
-                    dialog.find('.modal-title').text('Delete ' + this.user.email)
+                    dialog.find('.modal-title').text(this.$t('user.delete-email', { email: this.user.email }))
                     dialog.on('shown.bs.modal', () => {
                         dialog.find('button.modal-cancel').focus()
                     }).modal()

@@ -3,39 +3,39 @@
         <div class="modal-dialog" role="document">
             <form class="modal-content" @submit.prevent="submit">
                 <div class="modal-header">
-                    <h5 class="modal-title">Contact Support</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <h5 class="modal-title">{{ $t('support.title') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
                     <div class="form">
                         <div class="form-group">
-                            <label>Customer number or email address you have with us</label>
-                            <input id="support-user" type="text" class="form-control" placeholder="e.g. 12345678 or john@kolab.org" v-model="user" />
-                            <small class="form-text text-muted">Leave blank if you are not a customer yet</small>
+                            <label for="support-user">{{ $t('support.id') }}</label>
+                            <input id="support-user" type="text" class="form-control" :placeholder="$t('support.id-pl')" v-model="user" />
+                            <small class="form-text text-muted">{{ $t('support.id-hint') }}</small>
                         </div>
                         <div class="form-group">
-                            <label>Name</label>
-                            <input id="support-name" type="text" class="form-control" placeholder="how we should call you in our reply" v-model="name" />
+                            <label for="support-name">{{ $t('support.name') }}</label>
+                            <input id="support-name" type="text" class="form-control" :placeholder="$t('support.name-pl')" v-model="name" />
                         </div>
                         <div class="form-group">
-                            <label>Working email address</label>
-                            <input id="support-email" type="email" class="form-control" placeholder="make sure we can reach you at this address" v-model="email" required />
+                            <label for="support-email">{{ $t('support.email') }}</label>
+                            <input id="support-email" type="email" class="form-control" :placeholder="$t('support.email-pl')" v-model="email" required />
                         </div>
                         <div class="form-group">
-                            <label>Issue Summary</label>
-                            <input id="support-summary" type="text" class="form-control" placeholder="one sentence that summarizes your issue" v-model="summary" required />
+                            <label for="support-summary">{{ $t('support.summary') }}</label>
+                            <input id="support-summary" type="text" class="form-control" :placeholder="$t('support.summary-pl')" v-model="summary" required />
                         </div>
                         <div class="form-group">
-                            <label>Issue Explanation</label>
+                            <label for="support-body">{{ $t('support.expl') }}</label>
                             <textarea id="support-body" class="form-control" rows="5" v-model="body" required></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary modal-action"><svg-icon icon="check"></svg-icon> Submit</button>
+                    <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary modal-action"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
                 </div>
             </form>
         </div>

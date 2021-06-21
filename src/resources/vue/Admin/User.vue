@@ -6,7 +6,7 @@
                 <div class="card-text">
                     <form class="read-only short">
                         <div v-if="user.wallet.user_id != user.id" class="form-group row plaintext">
-                            <label for="manager" class="col-sm-4 col-form-label">Managed by</label>
+                            <label for="manager" class="col-sm-4 col-form-label">{{ $t('user.managed-by') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="manager">
                                     <router-link :to="{ path: '/user/' + user.wallet.user_id }">{{ user.wallet.user_email }}</router-link>
@@ -14,7 +14,7 @@
                             </div>
                         </div>
                         <div class="form-group row plaintext">
-                            <label for="userid" class="col-sm-4 col-form-label">ID <span class="text-muted">(Created at)</span></label>
+                            <label for="userid" class="col-sm-4 col-form-label">ID <span class="text-muted">({{ $t('form.created') }})</span></label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="userid">
                                     {{ user.id }} <span class="text-muted">({{ user.created_at }})</span>
@@ -22,7 +22,7 @@
                             </div>
                         </div>
                         <div class="form-group row plaintext">
-                            <label for="status" class="col-sm-4 col-form-label">Status</label>
+                            <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="status">
                                     <span :class="$root.userStatusClass(user)">{{ $root.userStatusText(user) }}</span>
@@ -30,54 +30,58 @@
                             </div>
                         </div>
                         <div class="form-group row plaintext" v-if="user.first_name">
-                            <label for="first_name" class="col-sm-4 col-form-label">First name</label>
+                            <label for="first_name" class="col-sm-4 col-form-label">{{ $t('form.firstname') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="first_name">{{ user.first_name }}</span>
                             </div>
                         </div>
                         <div class="form-group row plaintext" v-if="user.last_name">
-                            <label for="last_name" class="col-sm-4 col-form-label">Last name</label>
+                            <label for="last_name" class="col-sm-4 col-form-label">{{ $t('form.lastname') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="last_name">{{ user.last_name }}</span>
                             </div>
                         </div>
                         <div class="form-group row plaintext" v-if="user.organization">
-                            <label for="organization" class="col-sm-4 col-form-label">Organization</label>
+                            <label for="organization" class="col-sm-4 col-form-label">{{ $t('user.org') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="organization">{{ user.organization }}</span>
                             </div>
                         </div>
                         <div class="form-group row plaintext" v-if="user.phone">
-                            <label for="phone" class="col-sm-4 col-form-label">Phone</label>
+                            <label for="phone" class="col-sm-4 col-form-label">{{ $t('form.phone') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="phone">{{ user.phone }}</span>
                             </div>
                         </div>
                         <div class="form-group row plaintext">
-                            <label for="external_email" class="col-sm-4 col-form-label">External email</label>
+                            <label for="external_email" class="col-sm-4 col-form-label">{{ $t('user.ext-email') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="external_email">
                                     <a v-if="user.external_email" :href="'mailto:' + user.external_email">{{ user.external_email }}</a>
-                                    <button type="button" class="btn btn-secondary btn-sm" @click="emailEdit">Edit</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" @click="emailEdit">{{ $t('btn.edit') }}</button>
                                 </span>
                             </div>
                         </div>
                         <div class="form-group row plaintext" v-if="user.billing_address">
-                            <label for="billing_address" class="col-sm-4 col-form-label">Address</label>
+                            <label for="billing_address" class="col-sm-4 col-form-label">{{ $t('user.address') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" style="white-space:pre" id="billing_address">{{ user.billing_address }}</span>
                             </div>
                         </div>
                         <div class="form-group row plaintext">
-                            <label for="country" class="col-sm-4 col-form-label">Country</label>
+                            <label for="country" class="col-sm-4 col-form-label">{{ $t('user.country') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="country">{{ user.country }}</span>
                             </div>
                         </div>
                     </form>
                     <div class="mt-2">
-                        <button v-if="!user.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendUser">Suspend</button>
-                        <button v-if="user.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendUser">Unsuspend</button>
+                        <button v-if="!user.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendUser">
+                            {{ $t('btn.suspend') }}
+                        </button>
+                        <button v-if="user.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendUser">
+                            {{ $t('btn.unsuspend') }}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -85,74 +89,80 @@
         <ul class="nav nav-tabs mt-3" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active" id="tab-finances" href="#user-finances" role="tab" aria-controls="user-finances" aria-selected="true">
-                    Finances
+                    {{ $t('user.finances') }}
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="tab-aliases" href="#user-aliases" role="tab" aria-controls="user-aliases" aria-selected="false">
-                    Aliases ({{ user.aliases.length }})
+                    {{ $t('user.aliases') }} ({{ user.aliases.length }})
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="tab-subscriptions" href="#user-subscriptions" role="tab" aria-controls="user-subscriptions" aria-selected="false">
-                    Subscriptions ({{ skus.length }})
+                    {{ $t('user.subscriptions') }} ({{ skus.length }})
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="tab-domains" href="#user-domains" role="tab" aria-controls="user-domains" aria-selected="false">
-                    Domains ({{ domains.length }})
+                    {{ $t('user.domains') }} ({{ domains.length }})
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="tab-users" href="#user-users" role="tab" aria-controls="user-users" aria-selected="false">
-                    Users ({{ users.length }})
+                    {{ $t('user.users') }} ({{ users.length }})
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="tab-distlists" href="#user-distlists" role="tab" aria-controls="user-distlists" aria-selected="false">
-                    Distribution lists ({{ distlists.length }})
+                    {{ $t('user.distlists') }} ({{ distlists.length }})
                 </a>
             </li>
         </ul>
         <div class="tab-content">
             <div class="tab-pane show active" id="user-finances" role="tabpanel" aria-labelledby="tab-finances">
                 <div class="card-body">
-                    <h2 class="card-title">Account balance <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(wallet.balance) }}</strong></span></h2>
+                    <h2 class="card-title">
+                        {{ $t('wallet.title') }}
+                        <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(wallet.balance) }}</strong></span>
+                    </h2>
                     <div class="card-text">
                         <form class="read-only short">
                             <div class="form-group row">
-                                <label class="col-sm-4 col-form-label">Discount</label>
+                                <label class="col-sm-4 col-form-label">{{ $t('user.discount') }}</label>
                                 <div class="col-sm-8">
                                     <span class="form-control-plaintext" id="discount">
                                         <span>{{ wallet.discount ? (wallet.discount + '% - ' + wallet.discount_description) : 'none' }}</span>
-                                        <button type="button" class="btn btn-secondary btn-sm" @click="discountEdit">Edit</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" @click="discountEdit">{{ $t('btn.edit') }}</button>
                                     </span>
                                 </div>
                             </div>
                             <div class="form-group row" v-if="wallet.mandate && wallet.mandate.id">
-                                <label class="col-sm-4 col-form-label">Auto-payment</label>
+                                <label class="col-sm-4 col-form-label">{{ $t('user.auto-payment') }}</label>
                                 <div class="col-sm-8">
-                                    <span id="autopayment" :class="'form-control-plaintext' + (wallet.mandateState ? ' text-danger' : '')">
-                                        Fill up by <b>{{ wallet.mandate.amount }} CHF</b>
-                                        when under <b>{{ wallet.mandate.balance }} CHF</b>
-                                        using {{ wallet.mandate.method }}
+                                    <span id="autopayment" :class="'form-control-plaintext' + (wallet.mandateState ? ' text-danger' : '')"
+                                          v-html="$t('user.auto-payment-text', {
+                                              amount: wallet.mandate.amount,
+                                              balance: wallet.mandate.balance,
+                                              method: wallet.mandate.method
+                                          })"
+                                    >
                                         <span v-if="wallet.mandateState">({{ wallet.mandateState }})</span>.
                                     </span>
                                 </div>
                             </div>
                             <div class="form-group row" v-if="wallet.providerLink">
-                                <label class="col-sm-4 col-form-label">{{ capitalize(wallet.provider) }} ID</label>
+                                <label class="col-sm-4 col-form-label">{{ capitalize(wallet.provider) }} {{ $t('form.id') }}</label>
                                 <div class="col-sm-8">
                                     <span class="form-control-plaintext" v-html="wallet.providerLink"></span>
                                 </div>
                             </div>
                         </form>
                         <div class="mt-2">
-                            <button id="button-award" class="btn btn-success" type="button" @click="awardDialog">Add bonus</button>
-                            <button id="button-penalty" class="btn btn-danger" type="button" @click="penalizeDialog">Add penalty</button>
+                            <button id="button-award" class="btn btn-success" type="button" @click="awardDialog">{{ $t('user.add-bonus') }}</button>
+                            <button id="button-penalty" class="btn btn-danger" type="button" @click="penalizeDialog">{{ $t('user.add-penalty') }}</button>
                         </div>
                     </div>
-                    <h2 class="card-title mt-4">Transactions</h2>
+                    <h2 class="card-title mt-4">{{ $t('wallet.transactions') }}</h2>
                     <transaction-log v-if="wallet.id && !walletReload" class="card-text" :wallet-id="wallet.id" :is-admin="true"></transaction-log>
                 </div>
             </div>
@@ -162,7 +172,7 @@
                         <table class="table table-sm table-hover">
                             <thead class="thead-light">
                                 <tr>
-                                    <th scope="col">Email address</th>
+                                    <th scope="col">{{ $t('form.email') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -172,7 +182,7 @@
                             </tbody>
                             <tfoot class="table-fake-body">
                                 <tr>
-                                    <td>This user has no email aliases.</td>
+                                    <td>{{ $t('user.aliases-none') }}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -185,8 +195,8 @@
                         <table class="table table-sm table-hover mb-0">
                             <thead class="thead-light">
                                 <tr>
-                                    <th scope="col">Subscription</th>
-                                    <th scope="col">Price</th>
+                                    <th scope="col">{{ $t('user.subscription') }}</th>
+                                    <th scope="col">{{ $t('user.price') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -197,16 +207,18 @@
                             </tbody>
                             <tfoot class="table-fake-body">
                                 <tr>
-                                    <td colspan="2">This user has no subscriptions.</td>
+                                    <td colspan="2">{{ $t('user.subscriptions-none') }}</td>
                                 </tr>
                             </tfoot>
                         </table>
                         <small v-if="discount > 0" class="hint">
                             <hr class="m-0">
-                            &sup1; applied discount: {{ discount }}% - {{ discount_description }}
+                            &sup1; {{ $t('user.discount-hint') }}: {{ discount }}% - {{ discount_description }}
                         </small>
                         <div class="mt-2">
-                            <button type="button" class="btn btn-danger" id="reset2fa" v-if="has2FA" @click="reset2FADialog">Reset 2-Factor Auth</button>
+                            <button type="button" class="btn btn-danger" id="reset2fa" v-if="has2FA" @click="reset2FADialog">
+                                {{ $t('user.reset-2fa') }}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -217,7 +229,7 @@
                         <table class="table table-sm table-hover">
                             <thead class="thead-light">
                                 <tr>
-                                    <th scope="col">Name</th>
+                                    <th scope="col">{{ $t('domain.namespace') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -230,7 +242,7 @@
                             </tbody>
                             <tfoot class="table-fake-body">
                                 <tr>
-                                    <td>There are no domains in this account.</td>
+                                    <td>{{ $t('user.domains-none') }}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -243,7 +255,7 @@
                         <table class="table table-sm table-hover">
                             <thead class="thead-light">
                                 <tr>
-                                    <th scope="col">Primary Email</th>
+                                    <th scope="col">{{ $t('form.primary-email') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -257,7 +269,7 @@
                             </tbody>
                             <tfoot class="table-fake-body">
                                 <tr>
-                                    <td>There are no users in this account.</td>
+                                    <td>{{ $t('user.users-none') }}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -270,7 +282,7 @@
                         <table class="table table-sm table-hover">
                             <thead class="thead-light">
                                 <tr>
-                                    <th scope="col">Email address</th>
+                                    <th scope="col">{{ $t('form.email') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -283,7 +295,7 @@
                             </tbody>
                             <tfoot class="table-fake-body">
                                 <tr>
-                                    <td>There are no distribution lists in this account.</td>
+                                    <td>{{ $t('user.distlists-none') }}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -296,23 +308,23 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Account discount</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <h5 class="modal-title">{{ $t('user.discount-title') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
                         <p class="form-group">
                             <select v-model="wallet.discount_id" class="custom-select">
-                                <option value="">- none -</option>
+                                <option value="">- {{ $t('form.none') }} -</option>
                                 <option v-for="item in discounts" :value="item.id" :key="item.id">{{ item.label }}</option>
                             </select>
                         </p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-primary modal-action" @click="submitDiscount()">
-                            <svg-icon icon="check"></svg-icon> Submit
+                            <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
                         </button>
                     </div>
                 </div>
@@ -323,8 +335,8 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">External email</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <h5 class="modal-title">{{ $t('user.ext-email') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -334,9 +346,9 @@
                         </p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-primary modal-action" @click="submitEmail()">
-                            <svg-icon icon="check"></svg-icon> Submit
+                            <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
                         </button>
                     </div>
                 </div>
@@ -347,15 +359,15 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">{{ oneoff_negative ? 'Add a penalty to the wallet' : 'Add a bonus to the wallet' }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <h5 class="modal-title">{{ $t(oneoff_negative ? 'user.add-penalty-title' : 'user.add-bonus-title') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
                         <form data-validation-prefix="oneoff_">
                             <div class="form-group">
-                                <label for="oneoff_amount" class="col-form-label">Amount</label>
+                                <label for="oneoff_amount" class="col-form-label">{{ $t('form.amount') }}</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="oneoff_amount" v-model="oneoff_amount" required>
                                     <span class="input-group-append">
@@ -364,15 +376,15 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="oneoff_description" class="col-form-label">Description</label>
+                                <label for="oneoff_description" class="col-form-label">{{ $t('form.description') }}</label>
                                 <input class="form-control" id="oneoff_description" v-model="oneoff_description" required>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-primary modal-action" @click="submitOneOff()">
-                            <svg-icon icon="check"></svg-icon> Submit
+                            <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
                         </button>
                     </div>
                 </div>
@@ -383,19 +395,18 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">2-Factor Authentication Reset</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <h5 class="modal-title">{{ $t('user.reset-2fa-title') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>This will remove 2-Factor Authentication entitlement as well
-                            as the user-configured factors.</p>
-                        <p>Please, make sure to confirm the user identity properly.</p>
+                        <p>{{ $t('user.2fa-hint1') }}</p>
+                        <p>{{ $t('user.2fa-hint2') }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger modal-action" @click="reset2FA()">Reset</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
+                        <button type="button" class="btn btn-danger modal-action" @click="reset2FA()">{{ $t('btn.reset') }}</button>
                     </div>
                 </div>
             </div>

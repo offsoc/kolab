@@ -116,14 +116,14 @@ class PaymentStripeTest extends TestCaseDusk
                 ->assertMissing('@body #mandate-form .alert')
                 ->click('@main #mandate-form button')
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
-                    $browser->assertSeeIn('@title', 'Add auto-payment')
+                    $browser->assertSeeIn('@title', 'Set up auto-payment')
                         ->waitFor('#payment-method-selection #creditcard')
                         ->assertMissing('#payment-method-selection #paypal')
                         ->assertMissing('#payment-method-selection #banktransfer')
                         ->click('#creditcard');
                 })
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
-                    $browser->assertSeeIn('@title', 'Add auto-payment')
+                    $browser->assertSeeIn('@title', 'Set up auto-payment')
                         ->assertSeeIn('@body label[for="mandate_amount"]', 'Fill up by')
                         ->assertValue('@body #mandate_amount', PaymentProvider::MIN_AMOUNT / 100)
                         ->assertSeeIn('@body label[for="mandate_balance"]', 'when account balance is below') // phpcs:ignore

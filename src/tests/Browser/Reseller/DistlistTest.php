@@ -80,7 +80,7 @@ class DistlistTest extends TestCaseDusk
                 ->assertSeeIn('@distlist-info .card-title', $group->email)
                 ->with('@distlist-info form', function (Browser $browser) use ($group) {
                     $browser->assertElementsCount('.row', 3)
-                        ->assertSeeIn('.row:nth-child(1) label', 'ID (Created at)')
+                        ->assertSeeIn('.row:nth-child(1) label', 'ID (Created)')
                         ->assertSeeIn('.row:nth-child(1) #distlistid', "{$group->id} ({$group->created_at})")
                         ->assertSeeIn('.row:nth-child(2) label', 'Status')
                         ->assertSeeIn('.row:nth-child(2) #status.text-danger', 'Not Ready')

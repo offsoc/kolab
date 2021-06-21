@@ -1,6 +1,5 @@
 <template>
-    <div id="stats-container" class="container">
-    </div>
+    <div id="stats-container" class="container"></div>
 </template>
 
 <script>
@@ -39,7 +38,7 @@
                     .catch(error => {
                         console.error(error)
                         this.$root.removeLoader(chart)
-                        chart.append($('<span>').text('Failed to load data.'))
+                        chart.append($('<span>').text(this.$t('msg.loading-failed')))
                     })
             }
         }

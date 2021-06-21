@@ -27,7 +27,7 @@ class Invitations extends Page
     {
         $browser->assertPathIs($this->url())
             ->waitUntilMissing('@app .app-loader')
-            ->assertSeeIn('#invitations .card-title', 'Signup Invitations');
+            ->assertSeeIn('#invitations .card-title', 'Signup invitations');
     }
 
     /**

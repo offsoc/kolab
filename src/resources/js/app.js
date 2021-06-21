@@ -193,16 +193,8 @@ const app = new Vue({
             // we can't really use router to display error page as it has two side
             // effects: it changes the URL and adds the error page to browser history.
             // For now we'll be replacing current view with error page "manually".
-            const map = {
-                400: "Bad request",
-                401: "Unauthorized",
-                403: "Access denied",
-                404: "Not found",
-                405: "Method not allowed",
-                500: "Internal server error"
-            }
 
-            if (!msg) msg = map[code] || "Unknown Error"
+            if (!msg) msg = this.$te('error.' + code) ? this.$t('error.' + code) : this.$t('error.unknown')
             if (!hint) hint = ''
 
             const error_page = '<div id="error-page" class="error-page">'
@@ -255,6 +247,7 @@ const app = new Vue({
                 })
         },
         price(price, currency) {
+            // TODO: Set locale argument according to the currently used locale
             return ((price || 0) / 100).toLocaleString('de-DE', { style: 'currency', currency: currency || 'CHF' })
         },
         priceLabel(cost, discount) {
@@ -292,18 +285,18 @@ const app = new Vue({
         },
         domainStatusText(domain) {
             if (domain.isDeleted) {
-                return 'Deleted'
+                return this.$t('status.deleted')
             }
 
             if (domain.isSuspended) {
-                return 'Suspended'
+                return this.$t('status.suspended')
             }
 
             if (!domain.isVerified || !domain.isLdapReady || !domain.isConfirmed) {
-                return 'Not Ready'
+                return this.$t('status.notready')
             }
 
-            return 'Active'
+            return this.$t('status.active')
         },
         distlistStatusClass(list) {
             if (list.isDeleted) {
@@ -322,18 +315,18 @@ const app = new Vue({
         },
         distlistStatusText(list) {
             if (list.isDeleted) {
-                return 'Deleted'
+                return this.$t('status.deleted')
             }
 
             if (list.isSuspended) {
-                return 'Suspended'
+                return this.$t('status.suspended')
             }
 
             if (!list.isLdapReady) {
-                return 'Not Ready'
+                return this.$t('status.notready')
             }
 
-            return 'Active'
+            return this.$t('status.active')
         },
         pageName(path) {
             let page = this.$route.path
@@ -356,6 +349,7 @@ const app = new Vue({
 
             // FIXME: Find a nicer way of doing this
             if (!dialog.length) {
+                SupportForm.i18n = i18n
                 let form = new Vue(SupportForm)
                 form.$mount($('<div>').appendTo(container)[0])
                 form.$root = this
@@ -384,18 +378,18 @@ const app = new Vue({
         },
         userStatusText(user) {
             if (user.isDeleted) {
-                return 'Deleted'
+                return this.$t('status.deleted')
             }
 
             if (user.isSuspended) {
-                return 'Suspended'
+                return this.$t('status.suspended')
             }
 
             if (!user.isImapReady || !user.isLdapReady) {
-                return 'Not Ready'
+                return this.$t('status.notready')
             }
 
-            return 'Active'
+            return this.$t('status.active')
         },
         updateBodyClass(name) {
             // Add 'class' attribute to the body, different for each page
@@ -514,7 +508,7 @@ window.axios.interceptors.response.use(
             error_msg = error.request ? error.request.statusText : error.message
         }
 
-        app.$toast.error(error_msg || "Server Error")
+        app.$toast.error(error_msg || app.$t('error.server'))
 
         // Pass the error as-is
         return Promise.reject(error)

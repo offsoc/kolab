@@ -31,7 +31,7 @@
                                 <list-input id="members" :list="list.members"></list-input>
                             </div>
                         </div>
-                        <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('button.submit') }}</button>
+                        <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
                     </form>
                 </div>
             </div>

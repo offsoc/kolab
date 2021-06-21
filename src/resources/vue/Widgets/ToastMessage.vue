@@ -6,8 +6,8 @@
             <svg-icon icon="exclamation-circle" v-else-if="data.type == 'error'"></svg-icon>
             <svg-icon icon="exclamation-circle" v-else-if="data.type == 'warning'"></svg-icon>
             <svg-icon :icon="data.icon" v-else-if="data.type == 'custom' && data.icon"></svg-icon>
-            <strong>{{ data.title || title() }}</strong>
-            <button type="button" class="close" data-dismiss="toast" aria-label="Close">
+            <strong>{{ data.title || $t('msg.' + data.type) }}</strong>
+            <button type="button" class="close" data-dismiss="toast" :aria-label="$t('btn.close')">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
@@ -51,19 +51,6 @@
                     case 'custom':
                         return this.data.titleClassName || ''
                 }
-            },
-            title() {
-                const type = this.data.type
-                switch (type) {
-                    case 'info':
-                        return 'Information';
-                    case 'error':
-                    case 'warning':
-                    case 'success':
-                        return type.charAt(0).toUpperCase() + type.slice(1)
-                }
-
-                return ''
             },
             toastClassName() {
                 return 'toast hide toast-' + this.data.type

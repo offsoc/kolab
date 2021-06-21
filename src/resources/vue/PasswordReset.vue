@@ -12,7 +12,7 @@
                         <label for="reset_email" class="sr-only">{{ $t('form.email') }}</label>
                         <input type="text" class="form-control" id="reset_email" :placeholder="$t('form.email')" required v-model="email">
                     </div>
-                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('button.continue') }}</button>
+                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}</button>
                 </form>
             </div>
         </div>
@@ -28,8 +28,8 @@
                         <label for="reset_short_code" class="sr-only">{{ $t('form.code') }}</label>
                         <input type="text" class="form-control" id="reset_short_code" :placeholder="$t('form.code')" required v-model="short_code">
                     </div>
-                    <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('button.back') }}</button>
-                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('button.continue') }}</button>
+                    <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
+                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}</button>
                     <input type="hidden" id="reset_code" v-model="code" />
                 </form>
             </div>
@@ -49,8 +49,8 @@
                         <label for="reset_confirm" class="sr-only">{{ $t('form.password-confirm') }}</label>
                         <input type="password" class="form-control" id="reset_confirm" :placeholder="$t('form.password-confirm')" required v-model="password_confirmation">
                     </div>
-                    <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('button.back') }}</button>
-                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('button.submit') }}</button>
+                    <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
+                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
                 </form>
             </div>
         </div>

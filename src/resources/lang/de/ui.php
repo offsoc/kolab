@@ -2,7 +2,7 @@
 
 return [
 
-    'button' => [
+    'btn' => [
         'cancel' => "Stornieren",
         'save' => "Speichern",
     ],

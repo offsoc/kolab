@@ -27,7 +27,7 @@ class UserList extends Page
     {
         $browser->assertPathIs($this->url())
             ->waitUntilMissing('@app .app-loader')
-            ->assertSeeIn('#user-list .card-title', 'User Accounts');
+            ->assertSeeIn('#user-list .card-title', 'User accounts');
     }
 
     /**

@@ -6,7 +6,9 @@
                 <div class="card-text">
                     <form class="read-only short">
                         <div class="form-group row">
-                            <label for="distlistid" class="col-sm-4 col-form-label">ID <span class="text-muted">(Created at)</span></label>
+                            <label for="distlistid" class="col-sm-4 col-form-label">
+                                {{ $t('form.id') }} <span class="text-muted">({{ $t('form.created') }})</span>
+                            </label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="distlistid">
                                     {{ list.id }} <span class="text-muted">({{ list.created_at }})</span>
@@ -14,13 +16,13 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="status" class="col-sm-4 col-form-label">Status</label>
+                            <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span :class="$root.distlistStatusClass(list) + ' form-control-plaintext'" id="status">{{ $root.distlistStatusText(list) }}</span>
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="members-input" class="col-sm-4 col-form-label">Recipients</label>
+                            <label for="members-input" class="col-sm-4 col-form-label">{{ $t('distlist.recipients') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="members">
                                     <span v-for="member in list.members" :key="member">{{ member }}<br></span>
@@ -29,8 +31,12 @@
                         </div>
                     </form>
                     <div class="mt-2">
-                        <button v-if="!list.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendList">Suspend</button>
-                        <button v-if="list.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendList">Unsuspend</button>
+                        <button v-if="!list.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendList">
+                            {{ $t('btn.suspend') }}
+                        </button>
+                        <button v-if="list.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendList">
+                            {{ $t('btn.unsuspend') }}
+                        </button>
                     </div>
                 </div>
             </div>

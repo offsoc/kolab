@@ -3,19 +3,19 @@
         <div class="card-body">
             <form @submit.prevent="searchUser" class="row justify-content-center">
                 <div class="input-group col-sm-8">
-                    <input class="form-control" type="text" placeholder="User ID, email or domain" v-model="search">
+                    <input class="form-control" type="text" :placeholder="$t('user.search-pl')" v-model="search">
                     <div class="input-group-append">
-                        <button type="submit" class="btn btn-primary"><svg-icon icon="search"></svg-icon> Search</button>
+                        <button type="submit" class="btn btn-primary"><svg-icon icon="search"></svg-icon> {{ $t('btn.search') }}</button>
                     </div>
                 </div>
             </form>
             <table v-if="users.length" class="table table-sm table-hover mt-4">
                 <thead class="thead-light">
                     <tr>
-                        <th scope="col">Primary Email</th>
-                        <th scope="col">ID</th>
-                        <th scope="col" class="d-none d-md-table-cell">Created</th>
-                        <th scope="col" class="d-none d-md-table-cell">Deleted</th>
+                        <th scope="col">{{ $t('form.primary-email') }}</th>
+                        <th scope="col">{{ $t('form.id') }}</th>
+                        <th scope="col" class="d-none d-md-table-cell">{{ $t('form.created') }}</th>
+                        <th scope="col" class="d-none d-md-table-cell">{{ $t('form.deleted') }}</th>
                     </tr>
                 </thead>
                 <tbody>

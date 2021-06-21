@@ -80,11 +80,14 @@ class WalletsTest extends TestCase
 
         $this->assertRegExp('/\(2 months 2 weeks\)/', $notice);
 
+        // Change locale to make sure the text is localized by Carbon
+        \app()->setLocale('de');
+
         // test "almost 2 years"
         $wallet->balance = 999 * 23.5;
         $notice = $method->invoke($controller, $wallet);
 
-        $this->assertRegExp('/\(1 year 11 months\)/', $notice);
+        $this->assertRegExp('/\(1 Jahr 11 Monate\)/', $notice);
 
         // Old entitlements, 100% discount
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));

@@ -97,15 +97,15 @@ class UserTest extends TestCaseDusk
                     $browser->assertElementsCount('.row', 7)
                         ->assertSeeIn('.row:nth-child(1) label', 'Managed by')
                         ->assertSeeIn('.row:nth-child(1) #manager a', 'john@kolab.org')
-                        ->assertSeeIn('.row:nth-child(2) label', 'ID (Created at)')
+                        ->assertSeeIn('.row:nth-child(2) label', 'ID (Created)')
                         ->assertSeeIn('.row:nth-child(2) #userid', "{$jack->id} ({$jack->created_at})")
                         ->assertSeeIn('.row:nth-child(3) label', 'Status')
                         ->assertSeeIn('.row:nth-child(3) #status span.text-success', 'Active')
-                        ->assertSeeIn('.row:nth-child(4) label', 'First name')
+                        ->assertSeeIn('.row:nth-child(4) label', 'First Name')
                         ->assertSeeIn('.row:nth-child(4) #first_name', 'Jack')
-                        ->assertSeeIn('.row:nth-child(5) label', 'Last name')
+                        ->assertSeeIn('.row:nth-child(5) label', 'Last Name')
                         ->assertSeeIn('.row:nth-child(5) #last_name', 'Daniels')
-                        ->assertSeeIn('.row:nth-child(6) label', 'External email')
+                        ->assertSeeIn('.row:nth-child(6) label', 'External Email')
                         ->assertMissing('.row:nth-child(6) #external_email a')
                         ->assertSeeIn('.row:nth-child(7) label', 'Country')
                         ->assertSeeIn('.row:nth-child(7) #country', 'United States');
@@ -196,19 +196,19 @@ class UserTest extends TestCaseDusk
                     $ext_email = $john->getSetting('external_email');
 
                     $browser->assertElementsCount('.row', 9)
-                        ->assertSeeIn('.row:nth-child(1) label', 'ID (Created at)')
+                        ->assertSeeIn('.row:nth-child(1) label', 'ID (Created)')
                         ->assertSeeIn('.row:nth-child(1) #userid', "{$john->id} ({$john->created_at})")
                         ->assertSeeIn('.row:nth-child(2) label', 'Status')
                         ->assertSeeIn('.row:nth-child(2) #status span.text-success', 'Active')
-                        ->assertSeeIn('.row:nth-child(3) label', 'First name')
+                        ->assertSeeIn('.row:nth-child(3) label', 'First Name')
                         ->assertSeeIn('.row:nth-child(3) #first_name', 'John')
-                        ->assertSeeIn('.row:nth-child(4) label', 'Last name')
+                        ->assertSeeIn('.row:nth-child(4) label', 'Last Name')
                         ->assertSeeIn('.row:nth-child(4) #last_name', 'Doe')
                         ->assertSeeIn('.row:nth-child(5) label', 'Organization')
                         ->assertSeeIn('.row:nth-child(5) #organization', 'Kolab Developers')
                         ->assertSeeIn('.row:nth-child(6) label', 'Phone')
                         ->assertSeeIn('.row:nth-child(6) #phone', $john->getSetting('phone'))
-                        ->assertSeeIn('.row:nth-child(7) label', 'External email')
+                        ->assertSeeIn('.row:nth-child(7) label', 'External Email')
                         ->assertSeeIn('.row:nth-child(7) #external_email a', $ext_email)
                         ->assertAttribute('.row:nth-child(7) #external_email a', 'href', "mailto:$ext_email")
                         ->assertSeeIn('.row:nth-child(8) label', 'Address')
@@ -296,7 +296,7 @@ class UserTest extends TestCaseDusk
             // Assert main info box content
             $browser->assertSeeIn('@user-info .card-title', $ned->email)
                 ->with('@user-info form', function (Browser $browser) use ($ned) {
-                    $browser->assertSeeIn('.row:nth-child(2) label', 'ID (Created at)')
+                    $browser->assertSeeIn('.row:nth-child(2) label', 'ID (Created)')
                         ->assertSeeIn('.row:nth-child(2) #userid', "{$ned->id} ({$ned->created_at})");
                 });
 
@@ -376,7 +376,7 @@ class UserTest extends TestCaseDusk
                 ->click('@user-info #external_email button')
                 // Test dialog content, and closing it with Cancel button
                 ->with(new Dialog('#email-dialog'), function (Browser $browser) {
-                    $browser->assertSeeIn('@title', 'External email')
+                    $browser->assertSeeIn('@title', 'External Email')
                         ->assertFocused('@body input')
                         ->assertValue('@body input', 'john.doe.external@gmail.com')
                         ->assertSeeIn('@button-cancel', 'Cancel')
