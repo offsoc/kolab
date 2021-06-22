@@ -122,13 +122,11 @@ class Entitlement extends Model
      */
     public function entitleableTitle(): ?string
     {
-        if ($this->entitleable instanceof \App\User) {
-            return $this->entitleable->email;
-        }
-
         if ($this->entitleable instanceof \App\Domain) {
             return $this->entitleable->namespace;
         }
+
+        return $this->entitleable->email;
     }
 
     /**

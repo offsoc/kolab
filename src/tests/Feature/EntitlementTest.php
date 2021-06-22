@@ -21,6 +21,7 @@ class EntitlementTest extends TestCase
 
         $this->deleteTestUser('entitlement-test@kolabnow.com');
         $this->deleteTestUser('entitled-user@custom-domain.com');
+        $this->deleteTestGroup('test-group@custom-domain.com');
         $this->deleteTestDomain('custom-domain.com');
     }
 
@@ -31,6 +32,7 @@ class EntitlementTest extends TestCase
     {
         $this->deleteTestUser('entitlement-test@kolabnow.com');
         $this->deleteTestUser('entitled-user@custom-domain.com');
+        $this->deleteTestGroup('test-group@custom-domain.com');
         $this->deleteTestDomain('custom-domain.com');
 
         parent::tearDown();
@@ -126,5 +128,48 @@ class EntitlementTest extends TestCase
         $this->assertSame($wallet->id, $entitlement->wallet->id);
         $this->assertEquals($user->id, $entitlement->entitleable->id);
         $this->assertTrue($entitlement->entitleable instanceof \App\User);
+    }
+
+    /**
+     * Test Entitlement::entitlementTitle()
+     */
+    public function testEntitlementTitle(): void
+    {
+        $packageDomain = Package::where('title', 'domain-hosting')->first();
+        $packageKolab = Package::where('title', 'kolab')->first();
+        $user = $this->getTestUser('entitled-user@custom-domain.com');
+        $group = $this->getTestGroup('test-group@custom-domain.com');
+
+        $domain = $this->getTestDomain(
+            'custom-domain.com',
+            [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_EXTERNAL,
+            ]
+        );
+
+        $wallet = $user->wallets->first();
+        $domain->assignPackage($packageDomain, $user);
+        $user->assignPackage($packageKolab);
+        $group->assignToWallet($wallet);
+
+        $sku_mailbox = \App\Sku::where('title', 'mailbox')->first();
+        $sku_group = \App\Sku::where('title', 'group')->first();
+        $sku_domain = \App\Sku::where('title', 'domain-hosting')->first();
+
+        $entitlement = Entitlement::where('wallet_id', $wallet->id)
+            ->where('sku_id', $sku_mailbox->id)->first();
+
+        $this->assertSame($user->email, $entitlement->entitleableTitle());
+
+        $entitlement = Entitlement::where('wallet_id', $wallet->id)
+            ->where('sku_id', $sku_group->id)->first();
+
+        $this->assertSame($group->email, $entitlement->entitleableTitle());
+
+        $entitlement = Entitlement::where('wallet_id', $wallet->id)
+            ->where('sku_id', $sku_domain->id)->first();
+
+        $this->assertSame($domain->namespace, $entitlement->entitleableTitle());
     }
 }
