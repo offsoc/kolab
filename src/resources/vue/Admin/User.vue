@@ -122,6 +122,11 @@
                     {{ $t('form.settings') }}
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-settings" href="#user-settings" role="tab" aria-controls="user-settings" aria-selected="false">
+                    Settings
+                </a>
+            </li>
         </ul>
         <div class="tab-content">
             <div class="tab-pane show active" id="user-finances" role="tabpanel" aria-labelledby="tab-finances">
