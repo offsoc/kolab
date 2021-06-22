@@ -84,7 +84,7 @@ class Request
             // purge all entries to avoid a unique constraint violation.
             $this->findConnectsCollection()->delete();
 
-            $entry = \App\Greylist\Connect::create(
+            $entry = Connect::create(
                 [
                     'sender_local' => $this->senderLocal,
                     'sender_domain' => $this->senderDomain,
@@ -104,7 +104,7 @@ class Request
         $enabled = false;
 
         if ($recipient) {
-            $setting = \App\Greylist\Setting::where(
+            $setting = Setting::where(
                 [
                     'object_id' => $this->recipientID,
                     'object_type' => $this->recipientType,
@@ -113,7 +113,7 @@ class Request
             )->first();
 
             if (!$setting) {
-                $setting = \App\Greylist\Setting::where(
+                $setting = Setting::where(
                     [
                         'object_id' => $recipient->domain()->id,
                         'object_type' => \App\Domain::class,
@@ -138,7 +138,7 @@ class Request
         }
 
         // the following block is to maintain statistics and state ...
-        $entries = \App\Greylist\Connect::where(
+        $entries = Connect::where(
             [
                 'sender_domain' => $this->senderDomain,
                 'net_id' => $this->netID,
@@ -148,7 +148,7 @@ class Request
             ->whereDate('updated_at', '>=', $this->timestamp->copy()->subDays(7));
 
         // determine if the sender domain is a whitelist from this network
-        $this->whitelist = \App\Greylist\Whitelist::where(
+        $this->whitelist = Whitelist::where(
             [
                 'sender_domain' => $this->senderDomain,
                 'net_id' => $this->netID,
@@ -174,7 +174,7 @@ class Request
             }
         } else {
             if ($entries->count() >= 5) {
-                $this->whitelist = \App\Greylist\Whitelist::create(
+                $this->whitelist = Whitelist::create(
                     [
                         'sender_domain' => $this->senderDomain,
                         'net_id' => $this->netID,
@@ -203,7 +203,7 @@ class Request
 
         // determine if the sender, net and recipient combination has existed before, for each recipient
         // any one recipient matching should supersede the other recipients not having matched
-        $connect = \App\Greylist\Connect::where(
+        $connect = Connect::where(
             [
                 'sender_local' => $this->senderLocal,
                 'sender_domain' => $this->senderDomain,
@@ -218,7 +218,7 @@ class Request
             ->first();
 
         if (!$connect) {
-            $connect = \App\Greylist\Connect::create(
+            $connect = Connect::create(
                 [
                     'sender_local' => $this->senderLocal,
                     'sender_domain' => $this->senderDomain,
@@ -249,7 +249,7 @@ class Request
 
     private function findConnectsCollection()
     {
-        $collection = \App\Greylist\Connect::where(
+        $collection = Connect::where(
             [
                 'sender_local' => $this->senderLocal,
                 'sender_domain' => $this->senderDomain,

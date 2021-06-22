@@ -113,7 +113,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 6);
+                ->assertElementsCount('@nav a', 7);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -219,7 +219,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 6);
+                ->assertElementsCount('@nav a', 7);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -302,7 +302,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 6);
+                ->assertElementsCount('@nav a', 7);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');

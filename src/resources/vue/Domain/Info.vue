@@ -43,7 +43,7 @@
                             <div v-if="domain.isConfirmed" class="card-body" id="domain-config">
                                 <div class="card-text">
                                     <p>{{ $t('domain.config-intro', { app: $root.appName }) }}</p>
-                                    <p>{{ $t('domain.config-sample') }} <pre>{{ domain.config.join("\n") }}</pre></p>
+                                    <p>{{ $t('domain.config-sample') }} <pre>{{ domain.mx.join("\n") }}</pre></p>
                                     <p>{{ $t('domain.config-hint') }}</p>
                                 </div>
                             </div>

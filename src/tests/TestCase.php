@@ -11,17 +11,6 @@ abstract class TestCase extends BaseTestCase
     use TestCaseMeetTrait;
 
     /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        // Disable throttling
-        $this->withoutMiddleware(ThrottleRequests::class);
-    }
-
-    /**
      * Set baseURL to the admin UI location
      */
     protected static function useAdminUrl(): void

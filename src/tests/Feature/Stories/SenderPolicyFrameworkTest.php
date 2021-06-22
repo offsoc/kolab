@@ -6,16 +6,12 @@ use Tests\TestCase;
 
 class SenderPolicyFrameworkTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
-        $this->useServicesUrl();
-    }
 
-    public function tearDown()
-    {
-        $this->useNormalUrl();
-        parent::tearDown();
+        $this->setUpTest();
+        $this->useServicesUrl();
     }
 
     public function testSenderFailv4()

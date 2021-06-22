@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Stories;
 
+use App\Policy\Greylist;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -13,6 +14,8 @@ class GreylistTest extends TestCase
     {
         parent::setUp();
 
+        $this->setUpTest();
+        $this->useServicesUrl();
         $this->instance = $this->generateInstanceId();
         $this->clientAddress = '212.103.80.148';
 
@@ -34,7 +37,7 @@ class GreylistTest extends TestCase
 
     public function testWithTimestamp()
     {
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -53,7 +56,7 @@ class GreylistTest extends TestCase
 
     public function testNoNet()
     {
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -67,7 +70,7 @@ class GreylistTest extends TestCase
 
     public function testIp6Net()
     {
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -83,12 +86,12 @@ class GreylistTest extends TestCase
 
     public function testWhitelistNew()
     {
-        $whitelist = \App\Greylist\Whitelist::where('sender_domain', 'sender.domain')->first();
+        $whitelist = Greylist\Whitelist::where('sender_domain', 'sender.domain')->first();
 
         $this->assertNull($whitelist);
 
         for ($i = 0; $i < 5; $i++) {
-            $request = new \App\Greylist\Request(
+            $request = new Greylist\Request(
                 [
                     'sender' => "someone{$i}@sender.domain",
                     'recipient' => $this->domainOwner->email,
@@ -101,11 +104,11 @@ class GreylistTest extends TestCase
             $this->assertTrue($request->shouldDefer());
         }
 
-        $whitelist = \App\Greylist\Whitelist::where('sender_domain', 'sender.domain')->first();
+        $whitelist = Greylist\Whitelist::where('sender_domain', 'sender.domain')->first();
 
         $this->assertNotNull($whitelist);
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => "someone5@sender.domain",
                 'recipient' => $this->domainOwner->email,
@@ -122,12 +125,12 @@ class GreylistTest extends TestCase
 
     public function testWhitelistStale()
     {
-        $whitelist = \App\Greylist\Whitelist::where('sender_domain', 'sender.domain')->first();
+        $whitelist = Greylist\Whitelist::where('sender_domain', 'sender.domain')->first();
 
         $this->assertNull($whitelist);
 
         for ($i = 0; $i < 5; $i++) {
-            $request = new \App\Greylist\Request(
+            $request = new Greylist\Request(
                 [
                     'sender' => "someone{$i}@sender.domain",
                     'recipient' => $this->domainOwner->email,
@@ -140,11 +143,11 @@ class GreylistTest extends TestCase
             $this->assertTrue($request->shouldDefer());
         }
 
-        $whitelist = \App\Greylist\Whitelist::where('sender_domain', 'sender.domain')->first();
+        $whitelist = Greylist\Whitelist::where('sender_domain', 'sender.domain')->first();
 
         $this->assertNotNull($whitelist);
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => "someone5@sender.domain",
                 'recipient' => $this->domainOwner->email,
@@ -173,14 +176,14 @@ class GreylistTest extends TestCase
             'client_name' => 'some.mx'
         ];
 
-        $response = $this->post('/api/webhooks/greylist', $data);
+        $response = $this->post('/api/webhooks/policy/greylist', $data);
 
         $response->assertStatus(403);
     }
 
     public function testRetry()
     {
-        $connect = \App\Greylist\Connect::create(
+        $connect = Greylist\Connect::create(
             [
                 'sender_local' => 'someone',
                 'sender_domain' => 'sender.domain',
@@ -196,7 +199,7 @@ class GreylistTest extends TestCase
         $connect->created_at = \Carbon\Carbon::now()->subMinutes(6);
         $connect->save();
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -209,7 +212,7 @@ class GreylistTest extends TestCase
 
     public function testDomainDisabled()
     {
-        $setting = \App\Greylist\Setting::create(
+        $setting = Greylist\Setting::create(
             [
                 'object_id' => $this->domainHosted->id,
                 'object_type' => \App\Domain::class,
@@ -218,7 +221,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -231,7 +234,7 @@ class GreylistTest extends TestCase
 
     public function testDomainEnabled()
     {
-        $connect = \App\Greylist\Connect::create(
+        $connect = Greylist\Connect::create(
             [
                 'sender_local' => 'someone',
                 'sender_domain' => 'sender.domain',
@@ -244,7 +247,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $setting = \App\Greylist\Setting::create(
+        $setting = Greylist\Setting::create(
             [
                 'object_id' => $this->domainHosted->id,
                 'object_type' => \App\Domain::class,
@@ -253,7 +256,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -271,7 +274,7 @@ class GreylistTest extends TestCase
 
     public function testDomainDisabledUserDisabled()
     {
-        $connect = \App\Greylist\Connect::create(
+        $connect = Greylist\Connect::create(
             [
                 'sender_local' => 'someone',
                 'sender_domain' => 'sender.domain',
@@ -284,7 +287,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $settingDomain = \App\Greylist\Setting::create(
+        $settingDomain = Greylist\Setting::create(
             [
                 'object_id' => $this->domainHosted->id,
                 'object_type' => \App\Domain::class,
@@ -293,7 +296,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $settingUser = \App\Greylist\Setting::create(
+        $settingUser = Greylist\Setting::create(
             [
                 'object_id' => $this->domainOwner->id,
                 'object_type' => \App\User::class,
@@ -302,7 +305,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -315,7 +318,7 @@ class GreylistTest extends TestCase
 
     public function testDomainDisabledUserEnabled()
     {
-        $connect = \App\Greylist\Connect::create(
+        $connect = Greylist\Connect::create(
             [
                 'sender_local' => 'someone',
                 'sender_domain' => 'sender.domain',
@@ -328,7 +331,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $settingDomain = \App\Greylist\Setting::create(
+        $settingDomain = Greylist\Setting::create(
             [
                 'object_id' => $this->domainHosted->id,
                 'object_type' => \App\Domain::class,
@@ -337,7 +340,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $settingUser = \App\Greylist\Setting::create(
+        $settingUser = Greylist\Setting::create(
             [
                 'object_id' => $this->domainOwner->id,
                 'object_type' => \App\User::class,
@@ -346,7 +349,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -364,7 +367,7 @@ class GreylistTest extends TestCase
 
     public function testInvalidDomain()
     {
-        $connect = \App\Greylist\Connect::create(
+        $connect = Greylist\Connect::create(
             [
                 'sender_local' => 'someone',
                 'sender_domain' => 'sender.domain',
@@ -377,7 +380,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => 'not.someone@that.exists',
@@ -390,7 +393,7 @@ class GreylistTest extends TestCase
 
     public function testInvalidUser()
     {
-        $connect = \App\Greylist\Connect::create(
+        $connect = Greylist\Connect::create(
             [
                 'sender_local' => 'someone',
                 'sender_domain' => 'sender.domain',
@@ -403,7 +406,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => 'not.someone@that.exists',
@@ -416,7 +419,7 @@ class GreylistTest extends TestCase
 
     public function testUserDisabled()
     {
-        $connect = \App\Greylist\Connect::create(
+        $connect = Greylist\Connect::create(
             [
                 'sender_local' => 'someone',
                 'sender_domain' => 'sender.domain',
@@ -429,7 +432,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $setting = \App\Greylist\Setting::create(
+        $setting = Greylist\Setting::create(
             [
                 'object_id' => $this->domainOwner->id,
                 'object_type' => \App\User::class,
@@ -438,7 +441,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -451,7 +454,7 @@ class GreylistTest extends TestCase
 
     public function testUserEnabled()
     {
-        $connect = \App\Greylist\Connect::create(
+        $connect = Greylist\Connect::create(
             [
                 'sender_local' => 'someone',
                 'sender_domain' => 'sender.domain',
@@ -464,7 +467,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $setting = \App\Greylist\Setting::create(
+        $setting = Greylist\Setting::create(
             [
                 'object_id' => $this->domainOwner->id,
                 'object_type' => \App\User::class,
@@ -473,7 +476,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -491,7 +494,7 @@ class GreylistTest extends TestCase
 
     public function testMultipleUsersAllDisabled()
     {
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -500,7 +503,7 @@ class GreylistTest extends TestCase
         );
 
         foreach ($this->domainUsers as $user) {
-            \App\Greylist\Connect::create(
+            Greylist\Connect::create(
                 [
                     'sender_local' => 'someone',
                     'sender_domain' => 'sender.domain',
@@ -513,7 +516,7 @@ class GreylistTest extends TestCase
                 ]
             );
 
-            \App\Greylist\Setting::create(
+            Greylist\Setting::create(
                 [
                     'object_id' => $user->id,
                     'object_type' => \App\User::class,
@@ -526,7 +529,7 @@ class GreylistTest extends TestCase
                 continue;
             }
 
-            $request = new \App\Greylist\Request(
+            $request = new Greylist\Request(
                 [
                     'sender' => 'someone@sender.domain',
                     'recipient' => $user->email,
@@ -540,7 +543,7 @@ class GreylistTest extends TestCase
 
     public function testMultipleUsersAnyEnabled()
     {
-        $request = new \App\Greylist\Request(
+        $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
                 'recipient' => $this->domainOwner->email,
@@ -549,7 +552,7 @@ class GreylistTest extends TestCase
         );
 
         foreach ($this->domainUsers as $user) {
-            \App\Greylist\Connect::create(
+            Greylist\Connect::create(
                 [
                     'sender_local' => 'someone',
                     'sender_domain' => 'sender.domain',
@@ -562,7 +565,7 @@ class GreylistTest extends TestCase
                 ]
             );
 
-            \App\Greylist\Setting::create(
+            Greylist\Setting::create(
                 [
                     'object_id' => $user->id,
                     'object_type' => \App\User::class,
@@ -575,7 +578,7 @@ class GreylistTest extends TestCase
                 continue;
             }
 
-            $request = new \App\Greylist\Request(
+            $request = new Greylist\Request(
                 [
                     'sender' => 'someone@sender.domain',
                     'recipient' => $user->email,

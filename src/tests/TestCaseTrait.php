@@ -375,6 +375,12 @@ trait TestCaseTrait
     {
         parent::setUp();
 
+        // Disable throttling
+        $this->withoutMiddleware(ThrottleRequests::class);
+    }
+
+    protected function setUpTest()
+    {
         $this->userPassword = \App\Utils::generatePassphrase();
 
         $this->domainHosted = $this->getTestDomain(
@@ -449,10 +455,17 @@ trait TestCaseTrait
             $this->deleteTestUser($user->email);
         }
 
-        $this->deleteTestUser($this->domainOwner->email);
-        $this->deleteTestDomain($this->domainHosted->namespace);
+        if ($this->domainOwner) {
+            $this->deleteTestUser($this->domainOwner->email);
+        }
 
-        $this->deleteTestUser($this->publicDomainUser->email);
+        if ($this->domainHosted) {
+            $this->deleteTestDomain($this->domainHosted->namespace);
+        }
+
+        if ($this->publicDomainUser) {
+            $this->deleteTestUser($this->publicDomainUser->email);
+        }
 
         parent::tearDown();
     }

@@ -116,7 +116,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 6);
+                ->assertElementsCount('@nav a', 7);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -167,6 +167,7 @@ class UserTest extends TestCaseDusk
                 ->with('@user-distlists', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no distribution lists in this account.');
+                });
 
             // Assert Settings tab
             $browser->assertSeeIn('@nav #tab-settings', 'Settings')
@@ -231,7 +232,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 6);
+                ->assertElementsCount('@nav a', 7);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -335,7 +336,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 6);
+                ->assertElementsCount('@nav a', 7);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -392,6 +393,7 @@ class UserTest extends TestCaseDusk
                 ->with('@user-distlists', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no distribution lists in this account.');
+                });
 
             // Assert Settings tab
             $browser->assertSeeIn('@nav #tab-settings', 'Settings')
