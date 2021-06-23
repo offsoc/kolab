@@ -4,6 +4,11 @@ namespace Tests\Feature\Stories;
 
 use Tests\TestCase;
 
+/**
+ * @group slow
+ * @group data
+ * @group spf
+ */
 class SenderPolicyFrameworkTest extends TestCase
 {
     public function setUp(): void

@@ -6,6 +6,11 @@ use App\Policy\Greylist;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
+/**
+ * @group slow
+ * @group data
+ * @group greylist
+ */
 class GreylistTest extends TestCase
 {
     private $requests = [];
