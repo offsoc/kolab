@@ -101,4 +101,18 @@ class UtilsTest extends TestCase
         $this->assertTrue(strlen($result) === 36);
         $this->assertTrue(preg_match('/[^a-f0-9-]/i', $result) === 0);
     }
+
+    /**
+     * Test for Utils::exchangeRate()
+     */
+    public function testExchangeRate(): void
+    {
+        $this->assertSame(1.0, Utils::exchangeRate("DUMMY", "dummy"));
+        $this->assertEqualsWithDelta(0.90503424978382, Utils::exchangeRate("CHF", "EUR"), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(1.1049305595217682, Utils::exchangeRate("EUR", "CHF"), PHP_FLOAT_EPSILON);
+        $this->expectException(\Exception::class);
+        $this->assertSame(1.0, Utils::exchangeRate("CHF", "FOO"));
+        $this->expectException(\Exception::class);
+        $this->assertSame(1.0, Utils::exchangeRate("FOO", "CHF"));
+    }
 }

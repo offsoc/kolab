@@ -46,4 +46,9 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
+
+    'openexchangerates' => [
+        'api_key' => env('OPENEXCHANGERATES_API_KEY', null),
+    ]
+
 ];

@@ -562,17 +562,17 @@ class Mollie extends \App\Providers\PaymentProvider
 
         $providerMethods = array_merge(
             // Fallback to EUR methods (later provider methods will override earlier ones)
-            //mollie()->methods()->allActive(
-            //    [
-            //        'sequenceType' => $type,
-            //        'amount' => [
-            //            'value' => '1.00',
-            //            'currency' => 'EUR'
-            //        ]
-            //    ]
-            //),
+            (array) mollie()->methods()->allActive(
+                [
+                    'sequenceType' => $type,
+                    'amount' => [
+                        'value' => '1.00',
+                        'currency' => 'EUR'
+                    ]
+                ]
+            ),
             // Prefer CHF methods
-            (array)mollie()->methods()->allActive(
+            (array) mollie()->methods()->allActive(
                 [
                     'sequenceType' => $type,
                     'amount' => [

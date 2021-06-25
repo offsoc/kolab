@@ -189,23 +189,6 @@ abstract class PaymentProvider
     }
 
     /**
-     * Retrieve an exchange rate.
-     *
-     * @param string $sourceCurrency Currency from which to convert
-     * @param string $targetCurrency Currency to convert to
-     *
-     * @return float Exchange rate
-     */
-    protected function exchangeRate(string $sourceCurrency, string $targetCurrency): float
-    {
-        if (strcasecmp($sourceCurrency, $targetCurrency)) {
-            throw new \Exception("Currency conversion is not yet implemented.");
-            //FIXME Not yet implemented
-        }
-        return 1.0;
-    }
-
-    /**
      * Convert a value from $sourceCurrency to $targetCurrency
      *
      * @param int    $amount         Amount in cents of $sourceCurrency
@@ -216,7 +199,7 @@ abstract class PaymentProvider
      */
     protected function exchange(int $amount, string $sourceCurrency, string $targetCurrency): int
     {
-        return intval(round($amount * $this->exchangeRate($sourceCurrency, $targetCurrency)));
+        return intval(round($amount * \App\Utils::exchangeRate($sourceCurrency, $targetCurrency)));
     }
 
     /**
@@ -235,7 +218,7 @@ abstract class PaymentProvider
         }
 
         // Preserve originally refunded amount
-        $refund['currency_amount'] = $refund['amount'];
+        $refund['currency_amount'] = $refund['amount'] * -1;
 
         // Convert amount to wallet currency
         // TODO We should possibly be using the same exchange rate as for the original payment?
@@ -303,34 +286,19 @@ abstract class PaymentProvider
      */
     protected static function paymentMethodsWhitelist($type): array
     {
+        $methods = [];
         switch ($type) {
             case self::TYPE_ONEOFF:
-                return [
-                    self::METHOD_CREDITCARD => [
-                        'id' => self::METHOD_CREDITCARD,
-                        'icon' => self::$paymentMethodIcons[self::METHOD_CREDITCARD]
-                    ],
-                    self::METHOD_PAYPAL => [
-                        'id' => self::METHOD_PAYPAL,
-                        'icon' => self::$paymentMethodIcons[self::METHOD_PAYPAL]
-                    ],
-                    // TODO Enable once we're ready to offer them
-                    // self::METHOD_BANKTRANSFER => [
-                    //     'id' => self::METHOD_BANKTRANSFER,
-                    //     'icon' => self::$paymentMethodIcons[self::METHOD_BANKTRANSFER]
-                    // ]
-                ];
+                $methods = explode(',', \config('app.payment.methods_oneoff'));
+                break;
             case PaymentProvider::TYPE_RECURRING:
-                return [
-                    self::METHOD_CREDITCARD => [
-                        'id' => self::METHOD_CREDITCARD,
-                        'icon' => self::$paymentMethodIcons[self::METHOD_CREDITCARD]
-                    ]
-                ];
+                $methods = explode(',', \config('app.payment.methods_recurring'));
+                break;
+            default:
+                \Log::error("Unknown payment type: " . $type);
         }
-
-        \Log::error("Unknown payment type: " . $type);
-        return [];
+        $methods = array_map('strtolower', array_map('trim', $methods));
+        return $methods;
     }
 
     /**
@@ -346,9 +314,11 @@ abstract class PaymentProvider
 
         // Use only whitelisted methods, and apply values from whitelist (overriding the backend)
         $whitelistMethods = self::paymentMethodsWhitelist($type);
-        foreach ($whitelistMethods as $id => $whitelistMethod) {
+        foreach ($whitelistMethods as $id) {
             if (array_key_exists($id, $availableMethods)) {
-                $methods[] = array_merge($availableMethods[$id], $whitelistMethod);
+                $method = $availableMethods[$id];
+                $method['icon'] = self::$paymentMethodIcons[$id];
+                $methods[] = $method;
             }
         }
 
@@ -382,6 +352,8 @@ abstract class PaymentProvider
 
         $provider = PaymentProvider::factory($providerName);
         $methods = self::applyMethodWhitelist($type, $provider->providerPaymentMethods($type));
+
+        \Log::debug("Loaded payment methods" . var_export($methods, true));
 
         Cache::put($cacheKey, $methods, now()->addHours(1));
 

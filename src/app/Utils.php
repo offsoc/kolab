@@ -5,6 +5,7 @@ namespace App;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Ramsey\Uuid\Uuid;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Small utility functions for App.
@@ -392,5 +393,38 @@ class Utils
         $env['menu'] = \App\Http\Controllers\ContentController::menu();
 
         return $env;
+    }
+
+    /**
+     * Retrieve an exchange rate.
+     *
+     * @param string       $sourceCurrency: Currency from which to convert
+     * @param string       $targetCurrency: Currency to convert to
+     *
+     * @return float Exchange rate
+     */
+    public static function exchangeRate(string $sourceCurrency, string $targetCurrency): float
+    {
+        if (strcasecmp($sourceCurrency, $targetCurrency) == 0) {
+            return 1.0;
+        }
+
+        $currencyFile = resource_path("exchangerates-$sourceCurrency.php");
+
+        //Attempt to find the reverse exchange rate, if we don't have the file for the source currency
+        if (!file_exists($currencyFile)) {
+            $rates = include resource_path("exchangerates-$targetCurrency.php");
+            if (!isset($rates[$sourceCurrency])) {
+                throw new \Exception("Failed to find the reverse exchange rate for " . $sourceCurrency);
+            }
+            return 1.0 / floatval($rates[$sourceCurrency]);
+        }
+
+        $rates = include $currencyFile;
+        if (!isset($rates[$targetCurrency])) {
+            throw new \Exception("Failed to find exchange rate for " . $targetCurrency);
+        }
+
+        return floatval($rates[$targetCurrency]);
     }
 }
