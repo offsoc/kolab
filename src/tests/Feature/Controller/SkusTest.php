@@ -18,6 +18,7 @@ class SkusTest extends TestCase
 
         $this->clearBetaEntitlements();
         $this->clearMeetEntitlements();
+        Sku::where('title', 'test')->delete();
     }
 
     /**
@@ -27,6 +28,7 @@ class SkusTest extends TestCase
     {
         $this->clearBetaEntitlements();
         $this->clearMeetEntitlements();
+        Sku::where('title', 'test')->delete();
 
         parent::tearDown();
     }
@@ -43,6 +45,18 @@ class SkusTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $sku = Sku::where('title', 'mailbox')->first();
+
+        // Create an sku for another tenant, to make sure it is not included in the result
+        $nsku = Sku::create([
+                'title' => 'test',
+                'name' => 'Test',
+                'description' => '',
+                'active' => true,
+                'cost' => 100,
+                'handler_class' => 'App\Handlers\Mailbox',
+        ]);
+        $nsku->tenant_id = 2;
+        $nsku->save();
 
         $response = $this->actingAs($user)->get("api/v4/skus");
         $response->assertStatus(200);
@@ -74,6 +88,18 @@ class SkusTest extends TestCase
         // Unauth access not allowed
         $response = $this->get("api/v4/users/{$user->id}/skus");
         $response->assertStatus(401);
+
+        // Create an sku for another tenant, to make sure it is not included in the result
+        $nsku = Sku::create([
+                'title' => 'test',
+                'name' => 'Test',
+                'description' => '',
+                'active' => true,
+                'cost' => 100,
+                'handler_class' => 'App\Handlers\Mailbox',
+        ]);
+        $nsku->tenant_id = 2;
+        $nsku->save();
 
         $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus");
         $response->assertStatus(200);

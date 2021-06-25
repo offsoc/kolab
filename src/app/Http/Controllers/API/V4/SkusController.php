@@ -54,7 +54,7 @@ class SkusController extends Controller
     public function index()
     {
         // Note: Order by title for consistent ordering in tests
-        $skus = Sku::where('active', true)->orderBy('title')->get();
+        $skus = Sku::withEnvTenant()->where('active', true)->orderBy('title')->get();
 
         $response = [];
 
@@ -134,7 +134,7 @@ class SkusController extends Controller
         $response = [];
 
         // Note: Order by title for consistent ordering in tests
-        $skus = Sku::orderBy('title')->get();
+        $skus = Sku::withEnvTenant()->orderBy('title')->get();
 
         foreach ($skus as $sku) {
             if (!class_exists($sku->handler_class)) {
