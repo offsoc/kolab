@@ -4,14 +4,14 @@ namespace App\Console\Commands\Data\Import;
 
 use App\Console\Command;
 
-class ExchangerateCommand extends Command
+class OpenExchangeRatesCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'data:import:exchangerates {sourceCurrency}';
+    protected $signature = 'data:import:open-exchange-rates';
 
     /**
      * The console command description.
@@ -27,7 +27,8 @@ class ExchangerateCommand extends Command
      */
     public function handle()
     {
-        $sourceCurrency = strtoupper($this->argument('sourceCurrency'));
+        $sourceCurrency = 'CHF';
+
         $rates = \App\Backends\OpenExchangeRates::retrieveRates($sourceCurrency);
 
         //
