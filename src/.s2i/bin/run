@@ -44,8 +44,9 @@ chown default bootstrap/cache
 
 ./artisan db:ping --wait || exit 1
 
-./artisan migrate --force || :
-#./artisan db:seed --force || :
+if [ ! -z "${OPENEXCHANGERATES_API_KEY}" ]; then
+    ./artisan data:import:open-exchange-rates
+fi
 
 if [ -z "${KOLAB_ROLE}" -a ! -z "${HKCCP_APP}" ]; then
     echo "WARNING: Use env KOLAB_ROLE, not HKCCP_APP"
@@ -59,6 +60,7 @@ case ${KOLAB_ROLE} in
     ;;
 
     horizon|HORIZON)
+        ./artisan migrate --force || :
         echo "----> Starting horizon"
         ./artisan horizon
     ;;
@@ -74,6 +76,7 @@ case ${KOLAB_ROLE} in
     ;;
 
     worker|WORKER )
+        ./artisan migrate --force || :
         echo "----> Running worker"
         exec ./artisan queue:work
     ;;
