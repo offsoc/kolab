@@ -13,10 +13,15 @@ services:
   openvidu:
     build:
       context: ./docker/openvidu-dev/
+    privileged: true
+    container_name: kolab-openvidu
     depends_on:
       - kurento-media-server
       - kurento-media-server2
+    environment:
+      - KMS_URIS=["ws://localhost:8888/kurento"]
+        #- KMS_URIS=["ws://localhost:8888/kurento", "ws://localhost:8889/kurento"]
     volumes:
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
-      - ~/src/openvidu:/src/openvidu/
+      - ~/src/openvidu:/src/openvidu/:ro
       - ./docker/openvidu-dev/build/.m2:/root/.m2/

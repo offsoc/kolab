@@ -1,4 +1,4 @@
-FROM fedora:31
+FROM fedora:34
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@kolabsys.com>
 
