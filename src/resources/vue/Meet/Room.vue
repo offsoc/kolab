@@ -264,7 +264,7 @@
                 room: null,
                 roomState: 'init',
                 roomStateLabels: {
-                    'init': 'meet.status-init',
+                    init: 'meet.status-init',
                     323: 'meet.status-323',
                     324: 'meet.status-324',
                     325: 'meet.status-325',

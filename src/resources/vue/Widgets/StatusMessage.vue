@@ -3,7 +3,7 @@
         <div v-if="status == 'init'" class="app-loader small">
             <div class="spinner-border" role="status"></div>
         </div>
-        <span v-if="status == 'init'">{{ statusLabel() }}</span>
+        <span v-if="status == 'init'">{{ $t(statusLabel()) }}</span>
 
         <svg-icon v-if="status != 'init' && statusLabel()" :icon="Number(status) >= 400 ? 'exclamation-circle' : 'info-circle'"></svg-icon>
         <span v-if="status != 'init' && statusLabel()">{{ $t(statusLabel()) }}</span>
