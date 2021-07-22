@@ -166,7 +166,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title"></h5>
+                        <h5 class="modal-title">{{ $t('user.delete-email', { email: user.email }) }}</h5>
                         <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -420,8 +420,8 @@
                 axios.delete('/api/v4/users/' + this.user_id)
                     .then(response => {
                         if (response.data.status == 'success') {
-                           this.$toast.success(response.data.message)
-                           this.$router.push({ name: 'users' })
+                            this.$toast.success(response.data.message)
+                            this.$router.push({ name: 'users' })
                         }
                     })
             },
@@ -432,7 +432,6 @@
                 } else {
                     // Display the warning
                     let dialog = $('#delete-warning')
-                    dialog.find('.modal-title').text(this.$t('user.delete-email', { email: this.user.email }))
                     dialog.on('shown.bs.modal', () => {
                         dialog.find('button.modal-cancel').focus()
                     }).modal()

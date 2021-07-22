@@ -67,6 +67,7 @@ window.router.afterEach((to, from) => {
     // - error page
     // - modal backdrop
     $('#error-page,.modal-backdrop.show').remove()
+    $('body').css('padding', 0) // remove padding added by unclosed modal
 })
 
 const app = new Vue({
