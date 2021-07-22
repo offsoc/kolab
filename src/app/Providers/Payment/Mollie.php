@@ -559,7 +559,6 @@ class Mollie extends \App\Providers\PaymentProvider
      */
     public function providerPaymentMethods($type): array
     {
-
         $providerMethods = array_merge(
             // Fallback to EUR methods (later provider methods will override earlier ones)
             (array) mollie()->methods()->allActive(
@@ -590,7 +589,7 @@ class Mollie extends \App\Providers\PaymentProvider
                 'name' => $method->description,
                 'minimumAmount' => round(floatval($method->minimumAmount->value) * 100), // Converted to cents
                 'currency' => $method->minimumAmount->currency,
-                'exchangeRate' => $this->exchangeRate('CHF', $method->minimumAmount->currency)
+                'exchangeRate' => \App\Utils::exchangeRate('CHF', $method->minimumAmount->currency)
             ];
         }
 
