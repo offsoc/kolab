@@ -119,11 +119,11 @@ class DomainTest extends TestCase
 
         $hash_code = $domain->hash();
 
-        $this->assertRegExp('/^[a-f0-9]{32}$/', $hash_code);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{32}$/', $hash_code);
 
         $hash_text = $domain->hash(Domain::HASH_TEXT);
 
-        $this->assertRegExp('/^kolab-verify=[a-f0-9]{32}$/', $hash_text);
+        $this->assertMatchesRegularExpression('/^kolab-verify=[a-f0-9]{32}$/', $hash_text);
 
         $this->assertSame($hash_code, str_replace('kolab-verify=', '', $hash_text));
 

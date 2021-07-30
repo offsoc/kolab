@@ -19,8 +19,9 @@ class Browser extends \Laravel\Dusk\Browser
     {
         $element = $this->resolver->findOrFail($selector);
         $value   = (string) $element->getAttribute($attribute);
+        $error   = "No expected text in [$selector][$attribute]. Found: $value";
 
-        Assert::assertRegExp($regexp, $value, "No expected text in [$selector][$attribute]. Found: $value");
+        Assert::assertMatchesRegularExpression($regexp, $value, $error);
 
         return $this;
     }
@@ -149,7 +150,7 @@ class Browser extends \Laravel\Dusk\Browser
     {
         $element = $this->resolver->findOrFail($selector);
 
-        Assert::assertRegExp($regexp, $element->getText(), "No expected text in [$selector]");
+        Assert::assertMatchesRegularExpression($regexp, $element->getText(), "No expected text in [$selector]");
 
         return $this;
     }

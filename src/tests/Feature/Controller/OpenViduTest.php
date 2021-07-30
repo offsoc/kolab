@@ -63,7 +63,7 @@ class OpenViduTest extends TestCase
 
         $this->assertSame(1, $json['count']);
         $this->assertCount(1, $json['list']);
-        $this->assertRegExp('/^[0-9a-z-]{11}$/', $json['list'][0]['name']);
+        $this->assertMatchesRegularExpression('/^[0-9a-z-]{11}$/', $json['list'][0]['name']);
     }
 
     /**

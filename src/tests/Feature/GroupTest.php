@@ -110,7 +110,7 @@ class GroupTest extends TestCase
         $group = Group::create(['email' => 'GROUP-test@kolabnow.com']);
 
         $this->assertSame('group-test@kolabnow.com', $group->email);
-        $this->assertRegExp('/^[0-9]{1,20}$/', $group->id);
+        $this->assertMatchesRegularExpression('/^[0-9]{1,20}$/', $group->id);
         $this->assertSame([], $group->members);
         $this->assertTrue($group->isNew());
         $this->assertTrue($group->isActive());

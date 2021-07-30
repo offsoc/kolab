@@ -136,8 +136,6 @@ class UserSeeder extends Seeder
 
         $joe->setAliases(['joe.monster@kolab.org']);
 
-        // factory(User::class, 10)->create();
-
         $jeroen = User::create(
             [
                 'email' => 'jeroen@jeroen.jeroen',

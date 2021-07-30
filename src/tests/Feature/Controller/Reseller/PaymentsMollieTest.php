@@ -82,7 +82,7 @@ class PaymentsMollieTest extends TestCase
         $json = $response->json();
 
         $this->assertSame('success', $json['status']);
-        $this->assertRegExp('|^https://www.mollie.com|', $json['redirectUrl']);
+        $this->assertMatchesRegularExpression('|^https://www.mollie.com|', $json['redirectUrl']);
 
         // Assert the proper payment amount has been used
         $payment = Payment::where('id', $json['id'])->first();
@@ -201,7 +201,7 @@ class PaymentsMollieTest extends TestCase
         $json = $response->json();
 
         $this->assertSame('success', $json['status']);
-        $this->assertRegExp('|^https://www.mollie.com|', $json['redirectUrl']);
+        $this->assertMatchesRegularExpression('|^https://www.mollie.com|', $json['redirectUrl']);
     }
 
     /**

@@ -129,7 +129,7 @@ class PaymentsStripeTest extends TestCase
         $json = $response->json();
 
         $this->assertSame('success', $json['status']);
-        $this->assertRegExp('|^cs_test_|', $json['id']);
+        $this->assertMatchesRegularExpression('|^cs_test_|', $json['id']);
 
         // Assert the proper payment amount has been used
         // Stripe in 'setup' mode does not allow to set the amount
@@ -320,7 +320,7 @@ class PaymentsStripeTest extends TestCase
         $json = $response->json();
 
         $this->assertSame('success', $json['status']);
-        $this->assertRegExp('|^cs_test_|', $json['id']);
+        $this->assertMatchesRegularExpression('|^cs_test_|', $json['id']);
 
         $wallet = $user->wallets()->first();
         $payments = Payment::where('wallet_id', $wallet->id)->get();

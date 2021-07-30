@@ -110,8 +110,8 @@ class WalletCheckTest extends TestCase
 
         $wallet->refresh();
         $today_regexp = '/' . Carbon::now()->toDateString() . ' [0-9]{2}:[0-9]{2}:[0-9]{2}/';
-        $this->assertRegExp($today_regexp, $wallet->getSetting('balance_negative_since'));
-        $this->assertRegExp($today_regexp, $wallet->getSetting('balance_warning_initial'));
+        $this->assertMatchesRegularExpression($today_regexp, $wallet->getSetting('balance_negative_since'));
+        $this->assertMatchesRegularExpression($today_regexp, $wallet->getSetting('balance_warning_initial'));
     }
 
     /**
