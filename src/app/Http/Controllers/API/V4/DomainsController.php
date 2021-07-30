@@ -157,7 +157,7 @@ class DomainsController extends Controller
      */
     public function status($id)
     {
-        $domain = Domain::find($id);
+        $domain = Domain::withEnvTenant()->findOrFail($id);
 
         if (!$this->checkTenant($domain)) {
             return $this->errorResponse(404);
