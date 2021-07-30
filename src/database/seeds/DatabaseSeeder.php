@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     {
         // Define seeders order
         $seeders = [
+            'IP4NetSeeder',
             'TenantSeeder',
             'DiscountSeeder',
             'DomainSeeder',
