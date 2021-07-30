@@ -38,7 +38,7 @@ class NegativeBalanceSuspendedTest extends TestCase
         $walletLink = sprintf('<a href="%s">%s</a>', $walletUrl, $walletUrl);
         $supportUrl = \config('app.support_url');
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
-        $appName = \config('app.name');
+        $appName = $user->tenant->title;
 
         $this->assertMailSubject("$appName Account Suspended", $mail['message']);
 
