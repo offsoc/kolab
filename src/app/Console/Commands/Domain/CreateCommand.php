@@ -3,7 +3,6 @@
 namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
-use Illuminate\Support\Facades\Queue;
 
 class CreateCommand extends Command
 {
