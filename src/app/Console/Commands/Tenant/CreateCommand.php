@@ -42,9 +42,8 @@ class CreateCommand extends Command
         $tenant = \App\Tenant::create(['title' => $this->option('title') ?: $user->name()]);
 
         // Clone plans, packages, skus for the tenant
-        $sku_map = [];
-        \App\Sku::withEnvTenantContext()->where('active', true)->get()
-            ->each(function ($sku) use ($sku_map, $tenant) {
+        $sku_map = \App\Sku::withEnvTenantContext()->where('active', true)->get()
+            ->mapWithKeys(function ($sku) use ($tenant) {
                 $sku_new = \App\Sku::create([
                         'title' => $sku->title,
                         'name' => $sku->getTranslations('name'),
@@ -60,12 +59,12 @@ class CreateCommand extends Command
                 $sku_new->tenant_id = $tenant->id;
                 $sku_new->save();
 
-                $sku_map[$sku->id] = $sku_new->id;
-            });
+                return [$sku->id => $sku_new->id];
+            })
+            ->all();
 
-        $plan_map = [];
-        \App\Plan::withEnvTenantContext()->get()
-            ->each(function ($plan) use ($plan_map, $tenant) {
+        $plan_map = \App\Plan::withEnvTenantContext()->get()
+            ->mapWithKeys(function ($plan) use ($tenant) {
                 $plan_new = \App\Plan::create([
                         'title' => $plan->title,
                         'name' => $plan->getTranslations('name'),
@@ -81,12 +80,12 @@ class CreateCommand extends Command
                 $plan_new->tenant_id = $tenant->id;
                 $plan_new->save();
 
-                $plan_map[$plan->id] = $plan_new->id;
-            });
+                return [$plan->id => $plan_new->id];
+            })
+            ->all();
 
-        $package_map = [];
-        \App\Package::withEnvTenantContext()->get()
-            ->each(function ($package) use ($package_map, $tenant) {
+        $package_map = \App\Package::withEnvTenantContext()->get()
+            ->mapWithKeys(function ($package) use ($tenant) {
                 $package_new = \App\Package::create([
                         'title' => $package->title,
                         'name' => $package->getTranslations('name'),
@@ -97,8 +96,9 @@ class CreateCommand extends Command
                 $package_new->tenant_id = $tenant->id;
                 $package_new->save();
 
-                $package_map[$package->id] = $package_new->id;
-            });
+                return [$package->id => $package_new->id];
+            })
+            ->all();
 
         DB::table('package_skus')->whereIn('package_id', array_keys($package_map))->get()
             ->each(function ($item) use ($package_map, $sku_map) {

@@ -50,7 +50,7 @@ class ListUsers extends Command
             ->map($fn)
             ->unique();
 
-        // TODO: This wereIn() might not scale
+        // TODO: This whereIn() might not scale
         \App\User::whereIn('id', $users)->orderBy('email')->get()
             ->pluck('email')
             ->each(function ($email, $key) {
