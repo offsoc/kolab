@@ -74,7 +74,7 @@ class RoomControlsTest extends TestCaseDusk
     }
 
     /**
-     * Test nickname and muting audio/video
+     * Test nickname and audio/video muting/volume controls
      *
      * @group openvidu
      */
@@ -221,6 +221,40 @@ class RoomControlsTest extends TestCaseDusk
                     ->assertAudioMuted('video', false)
                     ->assertVisible('.controls button.link-audio:not(.text-danger)');
             });
+
+            // Test volume control
+            $guest->mouseover('@menu')
+                ->with('div.meet-video:not(.self)', function (Browser $browser) {
+                    $browser->waitUntilMissing('.volume')
+                        ->mouseover('.controls button.link-audio')
+                        ->waitFor('.volume')
+                        ->assertValue('.volume input', '1')
+                        ->keys('.volume input', ['{arrow_down}'])
+                        ->keys('.volume input', ['{arrow_down}'])
+                        ->keys('.volume input', ['{arrow_down}'])
+                        ->keys('.volume input', ['{arrow_down}'])
+                        ->keys('.volume input', ['{arrow_down}'])
+                        ->keys('.volume input', ['{arrow_down}'])
+                        ->keys('.volume input', ['{arrow_down}'])
+                        ->keys('.volume input', ['{arrow_down}'])
+                        ->keys('.volume input', ['{arrow_down}'])
+                        ->keys('.volume input', ['{arrow_down}'])
+                        ->assertValue('.volume input', '0')
+                        ->assertAudioMuted('video', true)
+                        ->assertVisible('.controls button.link-audio.text-danger')
+                        ->click('.controls button.link-audio')
+                        ->assertAudioMuted('video', false)
+                        ->assertValue('.volume input', '1')
+                        ->click('.controls button.link-audio')
+                        ->assertAudioMuted('video', true)
+                        ->assertValue('.volume input', '0')
+                        ->keys('.volume input', ['{arrow_up}'])
+                        ->assertValue('.volume input', '0.1')
+                        ->assertAudioMuted('video', false)
+                        ->assertVisible('.controls button.link-audio:not(.text-danger)')
+                        ->mouseover('.meet-nickname')
+                        ->waitUntilMissing('.volume');
+                });
         });
     }
 

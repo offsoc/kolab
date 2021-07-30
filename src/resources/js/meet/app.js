@@ -1009,6 +1009,7 @@ function Meet(container)
             + svgIcon('user', 'fas', 'watermark')
             + '<div class="controls">'
                 + '<button type="button" class="btn btn-link link-setup hidden" title="' + $t('meet.media-setup') + '">' + svgIcon('cog') + '</button>'
+                + '<div class="volume hidden"><input type="range" min="0" max="1" step="0.1" /></div>'
                 + '<button type="button" class="btn btn-link link-audio hidden" title="' + $t('meet.menu-audio-mute') + '">' + svgIcon('volume-mute') + '</button>'
                 + '<button type="button" class="btn btn-link link-fullscreen closed hidden" title="' + $t('meet.menu-fullscreen') + '">' + svgIcon('expand') + '</button>'
                 + '<button type="button" class="btn btn-link link-fullscreen open hidden" title="' + $t('meet.menu-fullscreen') + '">' + svgIcon('compress') + '</button>'
@@ -1034,12 +1035,52 @@ function Meet(container)
         if (params.isSelf) {
             wrapper.find('.link-setup').removeClass('hidden').click(() => sessionData.onMediaSetup())
         } else {
-            // Enable audio mute button
-            wrapper.find('.link-audio').removeClass('hidden')
+            let volumeInput = wrapper.find('.volume input')
+            let audioButton = wrapper.find('.link-audio')
+            let inVolume = false
+            let hideVolumeTimeout
+            let hideVolume = () => {
+                if (inVolume) {
+                    hideVolumeTimeout = setTimeout(hideVolume, 1000)
+                } else {
+                    volumeInput.parent().addClass('hidden')
+                }
+            }
+
+            // Enable and set up the audio mute button
+            audioButton.removeClass('hidden')
                 .on('click', e => {
                     let video = wrapper.find('video')[0]
+
                     video.muted = !video.muted
-                    wrapper.find('.link-audio')[video.muted ? 'addClass' : 'removeClass']('text-danger')
+                    video.volume = video.muted ? 0 : 1
+
+                    audioButton[video.muted ? 'addClass' : 'removeClass']('text-danger')
+                    volumeInput.val(video.volume)
+                })
+                // Show the volume slider when mouse is over the audio mute/unmute button
+                .on('mouseenter', () => {
+                    let video = wrapper.find('video')[0]
+
+                    clearTimeout(hideVolumeTimeout)
+                    volumeInput.parent().removeClass('hidden')
+                    volumeInput.val(video.volume)
+                })
+                .on('mouseleave', () => {
+                    hideVolumeTimeout = setTimeout(hideVolume, 1000)
+                })
+
+            // Set up the audio volume control
+            volumeInput
+                .on('mouseenter', () => { inVolume = true })
+                .on('mouseleave', () => { inVolume = false })
+                .on('change input', () => {
+                    let video = wrapper.find('video')[0]
+                    let volume = volumeInput.val()
+
+                    video.volume = volume
+                    video.muted = volume == 0
+                    audioButton[video.muted ? 'addClass' : 'removeClass']('text-danger')
                 })
         }
 

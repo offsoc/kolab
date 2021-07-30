@@ -1,3 +1,19 @@
+@mixin range-track() {
+    background-color: $link-color !important;
+    height: 0.2em;
+    border: 0;
+    border-radius: 0.1em;
+}
+
+@mixin range-thumb() {
+    appearance: none;
+    background-color: $link-color;
+    width: 0.75em;
+    height: 0.75em;
+    border: none;
+    border-radius: 0.5em;
+}
+
 .meet-nickname {
     padding: 0;
     line-height: 2em;
@@ -140,6 +156,39 @@
     &:not(.moderated):not(.self) .meet-nickname {
         .icon {
             display: none;
+        }
+    }
+
+    .volume {
+        position: absolute;
+        bottom: 2.15em;
+        right: 2em;
+        border-radius: 1em;
+        background: rgba(#000, 0.7);
+        width: 2em;
+        height: 4em;
+        overflow: hidden; // for Edge
+
+        input {
+            appearance: none;
+            cursor: pointer;
+            width: 3em;
+            height: 2em;
+            margin-top: 3.5em;
+            transform-origin: 0 0;
+            transform: rotate(-90deg);
+            background: transparent;
+            outline: 0;
+
+            &::-ms-track { @include range-track; }
+            &::-moz-range-track { @include range-track; }
+            &::-webkit-slider-runnable-track { @include range-track; }
+
+            &::-ms-thumb { @include range-thumb; }
+            &::-moz-range-thumb { @include range-thumb; }
+            &::-webkit-slider-thumb { @include range-thumb; margin-top: -0.25em; }
+
+            &::-ms-tooltip { display: none; }
         }
     }
 }
