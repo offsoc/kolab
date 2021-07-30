@@ -63,6 +63,7 @@ Route::group(
         Route::apiResource('domains', API\V4\DomainsController::class);
         Route::get('domains/{id}/confirm', 'API\V4\DomainsController@confirm');
         Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
+        Route::post('domains/{id}/config', 'API\V4\DomainsController@setConfig');
 
         Route::apiResource('groups', API\V4\GroupsController::class);
         Route::get('groups/{id}/status', 'API\V4\GroupsController@status');
@@ -71,6 +72,7 @@ Route::group(
         Route::apiResource('skus', API\V4\SkusController::class);
 
         Route::apiResource('users', API\V4\UsersController::class);
+        Route::post('users/{id}/config', 'API\V4\UsersController@setConfig');
         Route::get('users/{id}/skus', 'API\V4\SkusController@userSkus');
         Route::get('users/{id}/status', 'API\V4\UsersController@status');
 
@@ -132,11 +134,23 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.domain'),
-        'prefix' => $prefix . 'api/webhooks',
+        'prefix' => $prefix . 'api/webhooks'
     ],
     function () {
         Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
         Route::post('meet/openvidu', 'API\V4\OpenViduController@webhook');
+    }
+);
+
+Route::group(
+    [
+        'domain' => 'services.' . \config('app.domain'),
+        'prefix' => $prefix . 'api/webhooks/policy'
+    ],
+    function () {
+        Route::post('greylist', 'API\V4\PolicyController@greylist');
+        Route::post('ratelimit', 'API\V4\PolicyController@ratelimit');
+        Route::post('spf', 'API\V4\PolicyController@senderPolicyFramework');
     }
 );
 

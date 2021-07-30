@@ -213,7 +213,7 @@ class StatusTest extends TestCaseDusk
             $browser->click('@status #status-verify')
                 ->assertToast(Toast::TYPE_SUCCESS, 'Domain verified successfully.')
                 ->waitUntilMissing('@status')
-                ->assertMissing('@verify')
+                ->waitUntilMissing('@verify')
                 ->assertVisible('@config');
         });
     }

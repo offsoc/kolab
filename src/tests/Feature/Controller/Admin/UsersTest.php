@@ -234,7 +234,7 @@ class UsersTest extends TestCase
         $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
 
-        $sku2fa = Sku::firstOrCreate(['title' => '2fa']);
+        $sku2fa = Sku::withEnvTenantContext()->where(['title' => '2fa'])->first();
         $user->assignSku($sku2fa);
         SecondFactor::seed('userscontrollertest1@userscontroller.com');
 

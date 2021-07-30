@@ -5,6 +5,7 @@ namespace App;
 use App\Entitlement;
 use App\UserAlias;
 use App\Sku;
+use App\Traits\UserConfigTrait;
 use App\Traits\UserAliasesTrait;
 use App\Traits\SettingsTrait;
 use App\Wallet;
@@ -25,6 +26,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     use NullableFields;
+    use UserConfigTrait;
     use UserAliasesTrait;
     use SettingsTrait;
     use SoftDeletes;
@@ -586,6 +588,46 @@ class User extends Authenticatable implements JWTSubject
         }
 
         return $this;
+    }
+
+    public function senderPolicyFrameworkWhitelist($clientName)
+    {
+        $setting = $this->getSetting('spf_whitelist');
+
+        if (!$setting) {
+            return false;
+        }
+
+        $whitelist = json_decode($setting);
+
+        $matchFound = false;
+
+        foreach ($whitelist as $entry) {
+            if (substr($entry, 0, 1) == '/') {
+                $match = preg_match($entry, $clientName);
+
+                if ($match) {
+                    $matchFound = true;
+                }
+
+                continue;
+            }
+
+            if (substr($entry, 0, 1) == '.') {
+                if (substr($clientName, (-1 * strlen($entry))) == $entry) {
+                    $matchFound = true;
+                }
+
+                continue;
+            }
+
+            if ($entry == $clientName) {
+                $matchFound = true;
+                continue;
+            }
+        }
+
+        return $matchFound;
     }
 
     /**

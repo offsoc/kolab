@@ -37,8 +37,13 @@
         </div>
         <ul class="nav nav-tabs mt-3" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" id="tab-config" href="#domain-config" role="tab" aria-controls="domain-config" aria-selected="true">
+                <a class="nav-link active" id="tab-config" href="#domain-config" role="tab" aria-controls="domain-config" aria-selected="true" @click="$root.tab">
                     {{ $t('form.config') }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-settings" href="#domain-settings" role="tab" aria-controls="domain-settings" aria-selected="false" @click="$root.tab">
+                    {{ $t('form.settings') }}
                 </a>
             </li>
         </ul>
@@ -49,7 +54,23 @@
                         <p>{{ $t('domain.dns-verify') }}</p>
                         <p><pre id="dns-verify">{{ domain.dns.join("\n") }}</pre></p>
                         <p>{{ $t('domain.dns-config') }}</p>
-                        <p><pre id="dns-config">{{ domain.config.join("\n") }}</pre></p>
+                        <p><pre id="dns-config">{{ domain.mx.join("\n") }}</pre></p>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="domain-settings" role="tabpanel" aria-labelledby="tab-settings">
+                <div class="card-body">
+                    <div class="card-text">
+                        <form class="read-only short">
+                            <div class="form-group row plaintext">
+                                <label for="spf_whitelist" class="col-sm-4 col-form-label">{{ $t('domain.spf-whitelist') }}</label>
+                                <div class="col-sm-8">
+                                    <span class="form-control-plaintext" id="spf_whitelist">
+                                        {{ domain.config && domain.config.spf_whitelist.length ? domain.config.spf_whitelist.join(', ') : 'none' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

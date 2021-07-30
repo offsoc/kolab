@@ -28,6 +28,9 @@ class DomainsTest extends TestCase
         $this->deleteTestUser('test1@domainscontroller.com');
         $this->deleteTestDomain('domainscontroller.com');
 
+        $domain = $this->getTestDomain('kolab.org');
+        $domain->settings()->whereIn('key', ['spf_whitelist'])->delete();
+
         parent::tearDown();
     }
 
@@ -125,6 +128,81 @@ class DomainsTest extends TestCase
     }
 
     /**
+     * Test domain config update (POST /api/v4/domains/<domain>/config)
+     */
+    public function testSetConfig(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $domain = $this->getTestDomain('kolab.org');
+        $domain->setSetting('spf_whitelist', null);
+
+        // Test unknown domain id
+        $post = ['spf_whitelist' => []];
+        $response = $this->actingAs($john)->post("/api/v4/domains/123/config", $post);
+        $json = $response->json();
+
+        $response->assertStatus(404);
+
+        // Test access by user not being a wallet controller
+        $post = ['spf_whitelist' => []];
+        $response = $this->actingAs($jack)->post("/api/v4/domains/{$domain->id}/config", $post);
+        $json = $response->json();
+
+        $response->assertStatus(403);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Access denied", $json['message']);
+        $this->assertCount(2, $json);
+
+        // Test some invalid data
+        $post = ['grey' => 1];
+        $response = $this->actingAs($john)->post("/api/v4/domains/{$domain->id}/config", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame('The requested configuration parameter is not supported.', $json['errors']['grey']);
+
+        $this->assertNull($domain->fresh()->getSetting('spf_whitelist'));
+
+        // Test some valid data
+        $post = ['spf_whitelist' => ['.test.domain.com']];
+        $response = $this->actingAs($john)->post("/api/v4/domains/{$domain->id}/config", $post);
+
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('Domain settings updated successfully.', $json['message']);
+
+        $expected = \json_encode($post['spf_whitelist']);
+        $this->assertSame($expected, $domain->fresh()->getSetting('spf_whitelist'));
+
+        // Test input validation
+        $post = ['spf_whitelist' => ['aaa']];
+        $response = $this->actingAs($john)->post("/api/v4/domains/{$domain->id}/config", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame(
+            'The entry format is invalid. Expected a domain name starting with a dot.',
+            $json['errors']['spf_whitelist'][0]
+        );
+
+        $this->assertSame($expected, $domain->fresh()->getSetting('spf_whitelist'));
+    }
+
+    /**
      * Test fetching domain info
      */
     public function testShow(): void
@@ -155,8 +233,9 @@ class DomainsTest extends TestCase
         $this->assertSame($domain->hash(Domain::HASH_TEXT), $json['hash_text']);
         $this->assertSame($domain->hash(Domain::HASH_CNAME), $json['hash_cname']);
         $this->assertSame($domain->hash(Domain::HASH_CODE), $json['hash_code']);
-        $this->assertCount(4, $json['config']);
-        $this->assertTrue(strpos(implode("\n", $json['config']), $domain->namespace) !== false);
+        $this->assertSame([], $json['config']['spf_whitelist']);
+        $this->assertCount(4, $json['mx']);
+        $this->assertTrue(strpos(implode("\n", $json['mx']), $domain->namespace) !== false);
         $this->assertCount(8, $json['dns']);
         $this->assertTrue(strpos(implode("\n", $json['dns']), $domain->namespace) !== false);
         $this->assertTrue(strpos(implode("\n", $json['dns']), $domain->hash()) !== false);

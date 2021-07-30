@@ -22,7 +22,7 @@ class HorizonTest extends TestCase
 
         $response = $this->get('horizon/dashboard');
 
-        $response->assertStatus(404);
+        $response->assertStatus(200);
     }
     */
 }

@@ -55,10 +55,13 @@
                     if (this.list.length == 1) {
                         this.$el.classList.remove('is-invalid')
                     }
+
+                    this.$emit('change', this.$el)
                 }
             },
             deleteItem(index) {
                 this.$delete(this.list, index)
+                this.$emit('change', this.$el)
 
                 if (!this.list.length) {
                     this.$el.classList.remove('is-invalid')

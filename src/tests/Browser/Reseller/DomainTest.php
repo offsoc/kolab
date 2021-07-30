@@ -77,7 +77,7 @@ class DomainTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 1);
+                ->assertElementsCount('@nav a', 2);
 
             // Assert Configuration tab
             $browser->assertSeeIn('@nav #tab-config', 'Configuration')

@@ -117,6 +117,11 @@
                     {{ $t('user.distlists') }} ({{ distlists.length }})
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-settings" href="#user-settings" role="tab" aria-controls="user-settings" aria-selected="false">
+                    Settings
+                </a>
+            </li>
         </ul>
         <div class="tab-content">
             <div class="tab-pane show active" id="user-finances" role="tabpanel" aria-labelledby="tab-finances">
@@ -302,6 +307,23 @@
                     </div>
                 </div>
             </div>
+            <div class="tab-pane" id="user-settings" role="tabpanel" aria-labelledby="tab-settings">
+                <div class="card-body">
+                    <div class="card-text">
+                        <form class="read-only short">
+                            <div class="form-group row plaintext">
+                                <label for="greylisting" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
+                                <div class="col-sm-8">
+                                    <span class="form-control-plaintext" id="greylisting">
+                                        <span v-if="user.config.greylisting" class="text-success">{{ $t('form.enabled') }}</span>
+                                        <span v-else class="text-danger">{{ $t('form.disabled') }}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="discount-dialog" class="modal" tabindex="-1" role="dialog">
@@ -448,6 +470,7 @@
                 users: [],
                 user: {
                     aliases: [],
+                    config: {},
                     wallet: {},
                     skus: {},
                 }
@@ -543,10 +566,7 @@
                 .catch(this.$root.errorHandler)
         },
         mounted() {
-            $(this.$el).find('ul.nav-tabs a').on('click', e => {
-                e.preventDefault()
-                $(e.target).tab('show')
-            })
+            $(this.$el).find('ul.nav-tabs a').on('click', this.$root.tab)
         },
         methods: {
             capitalize(str) {

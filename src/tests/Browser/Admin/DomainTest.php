@@ -28,6 +28,9 @@ class DomainTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
+        $domain = $this->getTestDomain('kolab.org');
+        $domain->setSetting('spf_whitelist', null);
+
         parent::tearDown();
     }
 
@@ -54,6 +57,8 @@ class DomainTest extends TestCaseDusk
             $john = $this->getTestUser('john@kolab.org');
             $user_page = new UserPage($john->id);
 
+            $domain->setSetting('spf_whitelist', null);
+
             // Goto the domain page
             $browser->visit(new Home())
                 ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true)
@@ -76,13 +81,32 @@ class DomainTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 1);
+                ->assertElementsCount('@nav a', 2);
 
             // Assert Configuration tab
             $browser->assertSeeIn('@nav #tab-config', 'Configuration')
                 ->with('@domain-config', function (Browser $browser) {
                     $browser->assertSeeIn('pre#dns-verify', 'kolab-verify.kolab.org.')
                         ->assertSeeIn('pre#dns-config', 'kolab.org.');
+                });
+
+            // Assert Settings tab
+            $browser->assertSeeIn('@nav #tab-settings', 'Settings')
+                ->click('@nav #tab-settings')
+                ->with('@domain-settings form', function (Browser $browser) {
+                    $browser->assertElementsCount('.row', 1)
+                        ->assertSeeIn('.row:first-child label', 'SPF Whitelist')
+                        ->assertSeeIn('.row:first-child .form-control-plaintext', 'none');
+                });
+
+            // Assert non-empty SPF whitelist
+            $domain->setSetting('spf_whitelist', json_encode(['.test1.com', '.test2.com']));
+
+            $browser->refresh()
+                ->waitFor('@nav #tab-settings')
+                ->click('@nav #tab-settings')
+                ->with('@domain-settings form', function (Browser $browser) {
+                    $browser->assertSeeIn('.row:first-child .form-control-plaintext', '.test1.com, .test2.com');
                 });
         });
     }

@@ -185,6 +185,8 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
             $response['skus'][$sku->id]['costs'][] = $ent->cost;
         }
 
+        $response['config'] = $user->getConfig();
+
         return response()->json($response);
     }
 

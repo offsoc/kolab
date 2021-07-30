@@ -5,6 +5,7 @@ namespace Tests\Browser;
 use App\Domain;
 use App\User;
 use Tests\Browser;
+use Tests\Browser\Components\ListInput;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\DomainInfo;
@@ -59,6 +60,8 @@ class DomainTest extends TestCaseDusk
                 $domain->save();
             }
 
+            $domain->setSetting('spf_whitelist', \json_encode(['.test.com']));
+
             $browser->visit('/domain/' . $domain->id)
                 ->on(new DomainInfo())
                 ->whenAvailable('@verify', function ($browser) use ($domain) {
@@ -79,6 +82,47 @@ class DomainTest extends TestCaseDusk
                 ->on(new DomainInfo())
                 ->assertMissing('@verify')
                 ->assertPresent('@config');
+        });
+    }
+
+    /**
+     * Test domain settings
+     */
+    public function testDomainSettings(): void
+    {
+        $this->browse(function ($browser) {
+            $domain = Domain::where('namespace', 'kolab.org')->first();
+            $domain->setSetting('spf_whitelist', \json_encode(['.test.com']));
+
+            $browser->visit('/domain/' . $domain->id)
+                ->on(new DomainInfo())
+                ->assertElementsCount('@nav a', 2)
+                ->assertSeeIn('@nav #tab-general', 'Domain configuration')
+                ->assertSeeIn('@nav #tab-settings', 'Settings')
+                ->click('@nav #tab-settings')
+                ->with('#settings form', function (Browser $browser) {
+                    // Test whitelist widget
+                    $widget = new ListInput('#spf_whitelist');
+
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'SPF Whitelist')
+                        ->assertVisible('div.row:nth-child(1) .list-input')
+                        ->with($widget, function (Browser $browser) {
+                            $browser->assertListInputValue(['.test.com'])
+                                ->assertValue('@input', '')
+                                ->addListEntry('invalid domain');
+                        })
+                        ->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        ->with($widget, function (Browser $browser) {
+                            $err = 'The entry format is invalid. Expected a domain name starting with a dot.';
+                            $browser->assertFormError(2, $err, false)
+                                ->removeListEntry(2)
+                                ->removeListEntry(1)
+                                ->addListEntry('.new.domain.tld');
+                        })
+                        ->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'Domain settings updated successfully.');
+                });
         });
     }
 

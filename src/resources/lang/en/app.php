@@ -45,6 +45,7 @@ return [
     'domain-verify-error' => 'Domain ownership verification failed.',
     'domain-suspend-success' => 'Domain suspended successfully.',
     'domain-unsuspend-success' => 'Domain unsuspended successfully.',
+    'domain-setconfig-success' => 'Domain settings updated successfully.',
 
     'user-update-success' => 'User data updated successfully.',
     'user-create-success' => 'User created successfully.',
@@ -52,6 +53,7 @@ return [
     'user-suspend-success' => 'User suspended successfully.',
     'user-unsuspend-success' => 'User unsuspended successfully.',
     'user-reset-2fa-success' => '2-Factor authentication reset successfully.',
+    'user-setconfig-success' => 'User settings updated successfully.',
 
     'search-foundxdomains' => ':x domains have been found.',
     'search-foundxgroups' => ':x distribution lists have been found.',

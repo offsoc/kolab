@@ -32,7 +32,7 @@ class SecondFactorTest extends TestCase
     public function testEntitlementDelete(): void
     {
         // Create the user, and assign 2FA to him, and add Roundcube setup
-        $sku_2fa = Sku::where('title', '2fa')->first();
+        $sku_2fa = Sku::withEnvTenantContext()->where('title', '2fa')->first();
         $user = $this->getTestUser('entitlement-test@kolabnow.com');
         $user->assignSku($sku_2fa);
         SecondFactor::seed('entitlement-test@kolabnow.com');

@@ -41,7 +41,8 @@ class SignupCodeObserver
             })
             ->map(function ($value) {
                 return is_array($value) && count($value) == 1 ? $value[0] : $value;
-            });
+            })
+            ->all();
 
         $code->expires_at = Carbon::now()->addHours($exp_hours);
         $code->ip_address = request()->ip();

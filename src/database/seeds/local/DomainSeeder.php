@@ -25,7 +25,8 @@ class DomainSeeder extends Seeder
             "groupoffice.ch",
             "journalistmail.ch",
             "legalprivilege.ch",
-            "libertymail.co"
+            "libertymail.co",
+            "libertymail.net"
         ];
 
         foreach ($domains as $domain) {

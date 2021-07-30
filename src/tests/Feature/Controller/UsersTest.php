@@ -66,6 +66,7 @@ class UsersTest extends TestCase
         $wallet->discount()->dissociate();
         $wallet->settings()->whereIn('key', ['mollie_id', 'stripe_id'])->delete();
         $wallet->save();
+        $user->settings()->whereIn('key', ['greylisting'])->delete();
         $user->status |= User::STATUS_IMAP_READY;
         $user->save();
 
@@ -244,6 +245,7 @@ class UsersTest extends TestCase
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue(is_array($json['aliases']));
+        $this->assertTrue($json['config']['greylisting']);
         $this->assertSame([], $json['skus']);
         // Values below are tested by Unit tests
         $this->assertArrayHasKey('isDeleted', $json);
@@ -463,6 +465,75 @@ class UsersTest extends TestCase
         $result = UsersController::statusInfo($user);
 
         $this->assertSame(['beta', 'meet'], $result['skus']);
+    }
+
+    /**
+     * Test user config update (POST /api/v4/users/<user>/config)
+     */
+    public function testSetConfig(): void
+    {
+        $jack = $this->getTestUser('jack@kolab.org');
+        $john = $this->getTestUser('john@kolab.org');
+
+        $john->setSetting('greylisting', null);
+
+        // Test unknown user id
+        $post = ['greylisting' => 1];
+        $response = $this->actingAs($john)->post("/api/v4/users/123/config", $post);
+        $json = $response->json();
+
+        $response->assertStatus(404);
+
+        // Test access by user not being a wallet controller
+        $post = ['greylisting' => 1];
+        $response = $this->actingAs($jack)->post("/api/v4/users/{$john->id}/config", $post);
+        $json = $response->json();
+
+        $response->assertStatus(403);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Access denied", $json['message']);
+        $this->assertCount(2, $json);
+
+        // Test some invalid data
+        $post = ['grey' => 1];
+        $response = $this->actingAs($john)->post("/api/v4/users/{$john->id}/config", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame('The requested configuration parameter is not supported.', $json['errors']['grey']);
+
+        $this->assertNull($john->fresh()->getSetting('greylisting'));
+
+        // Test some valid data
+        $post = ['greylisting' => 1];
+        $response = $this->actingAs($john)->post("/api/v4/users/{$john->id}/config", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('User settings updated successfully.', $json['message']);
+
+        $this->assertSame('true', $john->fresh()->getSetting('greylisting'));
+
+        // Test some valid data
+        $post = ['greylisting' => 0];
+        $response = $this->actingAs($john)->post("/api/v4/users/{$john->id}/config", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('User settings updated successfully.', $json['message']);
+
+        $this->assertSame('false', $john->fresh()->getSetting('greylisting'));
     }
 
     /**

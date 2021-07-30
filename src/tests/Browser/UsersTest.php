@@ -334,6 +334,33 @@ class UsersTest extends TestCaseDusk
     }
 
     /**
+     * Test user settings tab
+     *
+     * @depends testInfo
+     */
+    public function testUserSettings(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $john->setSetting('greylisting', null);
+
+        $this->browse(function (Browser $browser) {
+            $browser->on(new UserInfo())
+                ->assertElementsCount('@nav a', 2)
+                ->assertSeeIn('@nav #tab-general', 'General')
+                ->assertSeeIn('@nav #tab-settings', 'Settings')
+                ->click('@nav #tab-settings')
+                ->with('#settings form', function (Browser $browser) {
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
+                        ->click('div.row:nth-child(1) input[type=checkbox]:checked')
+                        ->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
+                });
+        });
+
+        $this->assertSame('false', $john->fresh()->getSetting('greylisting'));
+    }
+
+    /**
      * Test user adding page
      *
      * @depends testList

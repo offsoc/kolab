@@ -75,3 +75,48 @@ form.read-only {
         margin-bottom: 0;
     }
 }
+
+// Various improvements for mobile
+@include media-breakpoint-down(sm) {
+    .form-group {
+        margin-bottom: 0.5rem;
+    }
+
+    .form-group.plaintext .col-form-label {
+        padding-bottom: 0;
+    }
+
+    form.read-only.short label {
+        width: 35%;
+
+        & + * {
+            width: 65%;
+        }
+    }
+}
+
+@include media-breakpoint-down(xs) {
+    .col-form-label {
+        color: #666;
+        font-size: 95%;
+    }
+
+    .form-group.checkbox {
+        position: relative;
+
+        & > div {
+            position: initial;
+            padding-top: 0 !important;
+
+            input {
+                position: absolute;
+                top: 0.5rem;
+                right: 1rem;
+            }
+        }
+
+        label {
+            padding-right: 2.5rem;
+        }
+    }
+}
