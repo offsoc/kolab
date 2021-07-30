@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\SignupInvitation as SI;
+use App\Tenant;
 use App\Utils;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -37,13 +38,15 @@ class SignupInvitation extends Mailable
      */
     public function build()
     {
-        $href = Utils::serviceUrl('/signup/invite/' . $this->invitation->id);
+        $appName = Tenant::getConfig($this->invitation->tenant_id, 'app.name');
+
+        $href = Utils::serviceUrl('/signup/invite/' . $this->invitation->id, $this->invitation->tenant_id);
 
         $this->view('emails.html.signup_invitation')
             ->text('emails.plain.signup_invitation')
-            ->subject(__('mail.signupinvitation-subject', ['site' => \config('app.name')]))
+            ->subject(\trans('mail.signupinvitation-subject', ['site' => $appName]))
             ->with([
-                    'site' => \config('app.name'),
+                    'site' => $appName,
                     'href' => $href,
             ]);
 

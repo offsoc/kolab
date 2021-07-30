@@ -126,7 +126,7 @@ class WalletsController extends Controller
         $wallet = Wallet::find($id);
 
         if (empty($wallet) || !$this->checkTenant($wallet->owner)) {
-            return $this->errorResponse(404);
+            abort(404);
         }
 
         // Only owner (or admin) has access to the wallet

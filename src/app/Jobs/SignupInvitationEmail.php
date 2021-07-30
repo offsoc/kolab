@@ -7,7 +7,6 @@ use App\Mail\SignupInvitation as SignupInvitationMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -50,7 +49,11 @@ class SignupInvitationEmail implements ShouldQueue
      */
     public function handle()
     {
-        Mail::to($this->invitation->email)->send(new SignupInvitationMail($this->invitation));
+        \App\Mail\Helper::sendMail(
+            new SignupInvitationMail($this->invitation),
+            $this->invitation->tenant_id,
+            ['to' => $this->invitation->email]
+        );
 
         // Update invitation status
         $this->invitation->status = SignupInvitation::STATUS_SENT;

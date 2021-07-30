@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Tenant;
 use App\User;
 use App\Utils;
 use Illuminate\Bus\Queueable;
@@ -36,13 +37,15 @@ class SuspendedDebtor extends Mailable
      */
     public function build()
     {
-        $user = $this->account;
+        $appName = Tenant::getConfig($this->account->tenant_id, 'app.name');
+        $supportUrl = Tenant::getConfig($this->account->tenant_id, 'app.support_url');
+        $cancelUrl = Tenant::getConfig($this->account->tenant_id, 'app.kb.account_delete');
 
-        $subject = \trans('mail.suspendeddebtor-subject', ['site' => \config('app.name')]);
+        $subject = \trans('mail.suspendeddebtor-subject', ['site' => $appName]);
 
         $moreInfoHtml = null;
         $moreInfoText = null;
-        if ($moreInfoUrl = \config('app.kb.account_suspended')) {
+        if ($moreInfoUrl = Tenant::getConfig($this->account->tenant_id, 'app.kb.account_suspended')) {
             $moreInfoHtml = \trans('mail.more-info-html', ['href' => $moreInfoUrl]);
             $moreInfoText = \trans('mail.more-info-text', ['href' => $moreInfoUrl]);
         }
@@ -51,12 +54,12 @@ class SuspendedDebtor extends Mailable
             ->text('emails.plain.suspended_debtor')
             ->subject($subject)
             ->with([
-                    'site' => \config('app.name'),
+                    'site' => $appName,
                     'subject' => $subject,
-                    'username' => $user->name(true),
-                    'cancelUrl' => \config('app.kb.account_delete'),
-                    'supportUrl' => \config('app.support_url'),
-                    'walletUrl' => Utils::serviceUrl('/wallet'),
+                    'username' => $this->account->name(true),
+                    'cancelUrl' => $cancelUrl,
+                    'supportUrl' => $supportUrl,
+                    'walletUrl' => Utils::serviceUrl('/wallet', $this->account->tenant_id),
                     'moreInfoHtml' => $moreInfoHtml,
                     'moreInfoText' => $moreInfoText,
                     'days' => 14 // TODO: Configurable

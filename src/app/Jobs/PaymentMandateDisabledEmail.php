@@ -8,7 +8,6 @@ use App\Wallet;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -69,27 +68,13 @@ class PaymentMandateDisabledEmail implements ShouldQueue
         list($to, $cc) = \App\Mail\Helper::userEmails($this->controller);
 
         if (!empty($to)) {
-            try {
-                Mail::to($to)->cc($cc)->send($mail);
+            $params = [
+                'to' => $to,
+                'cc' => $cc,
+                'add' => " for {$this->wallet->id}",
+            ];
 
-                $msg = sprintf(
-                    "[PaymentMandateDisabled] Sent mail for %s (%s)",
-                    $this->wallet->id,
-                    empty($cc) ? $to : implode(', ', array_merge([$to], $cc))
-                );
-
-                \Log::info($msg);
-            } catch (\Exception $e) {
-                $msg = sprintf(
-                    "[PaymentMandateDisabled] Failed to send mail for wallet %s (%s): %s",
-                    $this->wallet->id,
-                    empty($cc) ? $to : implode(', ', array_merge([$to], $cc)),
-                    $e->getMessage()
-                );
-
-                \Log::error($msg);
-                throw $e;
-            }
+            \App\Mail\Helper::sendMail($mail, $this->controller->tenant_id, $params);
         }
 
         /*

@@ -2,7 +2,9 @@
 
 namespace App\Mail;
 
+use App\Tenant;
 use Illuminate\Mail\Mailable;
+use Illuminate\Support\Facades\Mail;
 
 class Helper
 {
@@ -29,6 +31,73 @@ class Helper
 
         // HTML output
         return $mail->build()->render(); // @phpstan-ignore-line
+    }
+
+    /**
+     * Sends an email
+     *
+     * @param Mailable $mail     Email content generator
+     * @param int|null $tenantId Tenant identifier
+     * @param array    $params   Email parameters: to, cc
+     *
+     * @throws \Exception
+     */
+    public static function sendMail(Mailable $mail, $tenantId = null, array $params = []): void
+    {
+        $class = explode("\\", get_class($mail));
+        $class = end($class);
+
+        $getRecipients = function () use ($params) {
+            $recipients = [];
+
+            // For now we do not support addresses + names, only addresses
+            foreach (['to', 'cc'] as $idx) {
+                if (!empty($params[$idx])) {
+                    if (is_array($params[$idx])) {
+                        $recipients = array_merge($recipients, $params[$idx]);
+                    } else {
+                        $recipients[] = $params[$idx];
+                    }
+                }
+            }
+
+            return implode(', ', $recipients);
+        };
+
+        try {
+            if (!empty($params['to'])) {
+                $mail->to($params['to']);
+            }
+
+            if (!empty($params['cc'])) {
+                $mail->cc($params['cc']);
+            }
+
+            $fromAddress = Tenant::getConfig($tenantId, 'mail.from.address');
+            $fromName = Tenant::getConfig($tenantId, 'mail.from.name');
+            $replytoAddress = Tenant::getConfig($tenantId, 'mail.reply_to.address');
+            $replytoName = Tenant::getConfig($tenantId, 'mail.reply_to.name');
+
+            if ($fromAddress) {
+                $mail->from($fromAddress, $fromName);
+            }
+
+            if ($replytoAddress) {
+                $mail->replyTo($replytoAddress, $replytoName);
+            }
+
+            Mail::send($mail);
+
+            $msg = sprintf("[%s] Sent mail to %s%s", $class, $getRecipients(), $params['add'] ?? '');
+
+            \Log::info($msg);
+        } catch (\Exception $e) {
+            $format = "[%s] Failed to send mail to %s%s: %s";
+            $msg = sprintf($format, $class, $getRecipients(), $params['add'] ?? '', $e->getMessage());
+
+            \Log::error($msg);
+            throw $e;
+        }
     }
 
     /**

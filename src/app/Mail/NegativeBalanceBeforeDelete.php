@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Jobs\WalletCheck;
+use App\Tenant;
 use App\User;
 use App\Utils;
 use App\Wallet;
@@ -44,18 +45,20 @@ class NegativeBalanceBeforeDelete extends Mailable
     public function build()
     {
         $threshold = WalletCheck::threshold($this->wallet, WalletCheck::THRESHOLD_DELETE);
+        $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
+        $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
 
-        $subject = \trans('mail.negativebalancebeforedelete-subject', ['site' => \config('app.name')]);
+        $subject = \trans('mail.negativebalancebeforedelete-subject', ['site' => $appName]);
 
         $this->view('emails.html.negative_balance_before_delete')
             ->text('emails.plain.negative_balance_before_delete')
             ->subject($subject)
             ->with([
-                    'site' => \config('app.name'),
+                    'site' => $appName,
                     'subject' => $subject,
                     'username' => $this->user->name(true),
-                    'supportUrl' => \config('app.support_url'),
-                    'walletUrl' => Utils::serviceUrl('/wallet'),
+                    'supportUrl' => $supportUrl,
+                    'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
                     'date' => $threshold->toDateString(),
             ]);
 

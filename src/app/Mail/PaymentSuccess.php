@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Payment;
+use App\Tenant;
 use App\User;
 use App\Utils;
 use Illuminate\Bus\Queueable;
@@ -42,19 +43,20 @@ class PaymentSuccess extends Mailable
      */
     public function build()
     {
-        $user = $this->user;
+        $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
+        $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
 
-        $subject = \trans('mail.paymentsuccess-subject', ['site' => \config('app.name')]);
+        $subject = \trans('mail.paymentsuccess-subject', ['site' => $appName]);
 
         $this->view('emails.html.payment_success')
             ->text('emails.plain.payment_success')
             ->subject($subject)
             ->with([
-                    'site' => \config('app.name'),
+                    'site' => $appName,
                     'subject' => $subject,
-                    'username' => $user->name(true),
-                    'walletUrl' => Utils::serviceUrl('/wallet'),
-                    'supportUrl' => \config('app.support_url'),
+                    'username' => $this->user->name(true),
+                    'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
+                    'supportUrl' => $supportUrl,
             ]);
 
         return $this;

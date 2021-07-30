@@ -10,7 +10,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
 
 class WalletCheck implements ShouldQueue
 {
@@ -121,9 +120,7 @@ class WalletCheck implements ShouldQueue
 
         // TODO: Should we check if the account is already suspended?
 
-        $label = "Notification sent for";
-
-        $this->sendMail(\App\Mail\NegativeBalance::class, false, $label);
+        $this->sendMail(\App\Mail\NegativeBalance::class, false);
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_initial', $now);
@@ -140,9 +137,7 @@ class WalletCheck implements ShouldQueue
 
         // TODO: Should we check if the account is already suspended?
 
-        $label = "Reminder sent for";
-
-        $this->sendMail(\App\Mail\NegativeBalanceReminder::class, false, $label);
+        $this->sendMail(\App\Mail\NegativeBalanceReminder::class, false);
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_reminder', $now);
@@ -173,9 +168,7 @@ class WalletCheck implements ShouldQueue
             }
         }
 
-        $label = "Account suspended";
-
-        $this->sendMail(\App\Mail\NegativeBalanceSuspended::class, true, $label);
+        $this->sendMail(\App\Mail\NegativeBalanceSuspended::class, true);
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_suspended', $now);
@@ -195,9 +188,7 @@ class WalletCheck implements ShouldQueue
             return;
         }
 
-        $label = "Last warning sent for";
-
-        $this->sendMail(\App\Mail\NegativeBalanceBeforeDelete::class, true, $label);
+        $this->sendMail(\App\Mail\NegativeBalanceBeforeDelete::class, true);
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_before_delete', $now);
@@ -232,9 +223,8 @@ class WalletCheck implements ShouldQueue
      *
      * @param string  $class         Mailable class name
      * @param bool    $with_external Use users's external email
-     * @param ?string $log_label     Log label
      */
-    protected function sendMail($class, $with_external = false, $log_label = null): void
+    protected function sendMail($class, $with_external = false): void
     {
         // TODO: Send the email to all wallet controllers?
 
@@ -243,30 +233,13 @@ class WalletCheck implements ShouldQueue
         list($to, $cc) = \App\Mail\Helper::userEmails($this->wallet->owner, $with_external);
 
         if (!empty($to) || !empty($cc)) {
-            try {
-                Mail::to($to)->cc($cc)->send($mail);
+            $params = [
+                'to' => $to,
+                'cc' => $cc,
+                'add' => " for {$this->wallet->id}",
+            ];
 
-                if ($log_label) {
-                    $msg = sprintf(
-                        "[WalletCheck] %s %s (%s)",
-                        $log_label,
-                        $this->wallet->id,
-                        empty($cc) ? $to : implode(', ', array_merge([$to], $cc)),
-                    );
-
-                    \Log::info($msg);
-                }
-            } catch (\Exception $e) {
-                $msg = sprintf(
-                    "[WalletCheck] Failed to send mail for %s (%s): %s",
-                    $this->wallet->id,
-                    empty($cc) ? $to : implode(', ', array_merge([$to], $cc)),
-                    $e->getMessage()
-                );
-
-                \Log::error($msg);
-                throw $e;
-            }
+            \App\Mail\Helper::sendMail($mail, $this->wallet->owner->tenant_id, $params);
         }
     }
 

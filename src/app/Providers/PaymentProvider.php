@@ -49,9 +49,11 @@ abstract class PaymentProvider
     private static function providerName($provider_or_wallet = null): string
     {
         if ($provider_or_wallet instanceof Wallet) {
-            if ($provider_or_wallet->getSetting('stripe_id')) {
+            $settings = $provider_or_wallet->getSettings(['stripe_id', 'mollie_id']);
+
+            if ($settings['stripe_id']) {
                 $provider = self::PROVIDER_STRIPE;
-            } elseif ($provider_or_wallet->getSetting('mollie_id')) {
+            } elseif ($settings['mollie_id']) {
                 $provider = self::PROVIDER_MOLLIE;
             }
         } else {

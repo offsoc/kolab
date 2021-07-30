@@ -294,12 +294,14 @@ class PaymentsController extends Controller
      */
     public static function topUpWallet(Wallet $wallet): bool
     {
-        if ((bool) $wallet->getSetting('mandate_disabled')) {
+        $settings = $wallet->getSettings(['mandate_disabled', 'mandate_balance', 'mandate_amount']);
+
+        if (!empty($settings['mandate_disabled'])) {
             return false;
         }
 
-        $min_balance = (int) (floatval($wallet->getSetting('mandate_balance')) * 100);
-        $amount = (int) (floatval($wallet->getSetting('mandate_amount')) * 100);
+        $min_balance = (int) (floatval($settings['mandate_balance']) * 100);
+        $amount = (int) (floatval($settings['mandate_amount']) * 100);
 
         // The wallet balance is greater than the auto-payment threshold
         if ($wallet->balance >= $min_balance) {
@@ -346,16 +348,17 @@ class PaymentsController extends Controller
     public static function walletMandate(Wallet $wallet): array
     {
         $provider = PaymentProvider::factory($wallet);
+        $settings = $wallet->getSettings(['mandate_disabled', 'mandate_balance', 'mandate_amount']);
 
         // Get the Mandate info
         $mandate = (array) $provider->getMandate($wallet);
 
         $mandate['amount'] = (int) (PaymentProvider::MIN_AMOUNT / 100);
         $mandate['balance'] = 0;
-        $mandate['isDisabled'] = !empty($mandate['id']) && $wallet->getSetting('mandate_disabled');
+        $mandate['isDisabled'] = !empty($mandate['id']) && $settings['mandate_disabled'];
 
         foreach (['amount', 'balance'] as $key) {
-            if (($value = $wallet->getSetting("mandate_{$key}")) !== null) {
+            if (($value = $settings["mandate_{$key}"]) !== null) {
                 $mandate[$key] = $value;
             }
         }

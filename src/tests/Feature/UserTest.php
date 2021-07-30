@@ -776,7 +776,7 @@ class UserTest extends TestCase
     }
 
     /**
-     * Tests for UserSettingsTrait::setSettings() and getSetting()
+     * Tests for UserSettingsTrait::setSettings() and getSetting() and getSettings()
      */
     public function testUserSettings(): void
     {
@@ -858,6 +858,16 @@ class UserTest extends TestCase
 
         $all_settings = $user->settings()->orderBy('key')->get();
         $this->assertCount(3, $all_settings);
+
+        // Test getSettings() method
+        $this->assertSame(
+            [
+                'first_name' => 'Firstname2',
+                'last_name' => 'Lastname2',
+                'unknown' => null,
+            ],
+            $user->getSettings(['first_name', 'last_name', 'unknown'])
+        );
     }
 
     /**

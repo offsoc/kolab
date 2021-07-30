@@ -2,8 +2,6 @@
 
 namespace App\Traits;
 
-use Illuminate\Support\Facades\Cache;
-
 trait SettingsTrait
 {
     /**
@@ -16,21 +14,39 @@ trait SettingsTrait
      * $locale = $user->getSetting('locale');
      * ```
      *
-     * @param string $key Setting name
+     * @param string $key     Setting name
+     * @param mixed  $default Default value, to be used if not found
      *
      * @return string|null Setting value
      */
-    public function getSetting(string $key)
+    public function getSetting(string $key, $default = null)
     {
-        $settings = $this->getCache();
+        $setting = $this->settings()->where('key', $key)->first();
 
-        if (!array_key_exists($key, $settings)) {
-            return null;
+        return $setting ? $setting->value : $default;
+    }
+
+    /**
+     * Obtain the values for many settings in one go (for better performance).
+     *
+     * @param array $keys Setting names
+     *
+     * @return array Setting key=value hash, includes also requested but non-existing settings
+     */
+    public function getSettings(array $keys): array
+    {
+        $settings = [];
+
+        foreach ($keys as $key) {
+            $settings[$key] = null;
         }
 
-        $value = $settings[$key];
+        $this->settings()->whereIn('key', $keys)->get()
+            ->each(function ($setting) use (&$settings) {
+                $settings[$setting->key] = $setting->value;
+            });
 
-        return empty($value) ? null : $value;
+        return $settings;
     }
 
     /**
@@ -70,7 +86,6 @@ trait SettingsTrait
     public function setSetting(string $key, $value): void
     {
         $this->storeSetting($key, $value);
-        $this->setCache();
     }
 
     /**
@@ -92,10 +107,16 @@ trait SettingsTrait
         foreach ($data as $key => $value) {
             $this->storeSetting($key, $value);
         }
-
-        $this->setCache();
     }
 
+    /**
+     * Create or update a setting.
+     *
+     * @param string      $key   Setting name
+     * @param string|null $value The new value for the setting.
+     *
+     * @return void
+     */
     private function storeSetting(string $key, $value): void
     {
         if ($value === null || $value === '') {
@@ -109,36 +130,5 @@ trait SettingsTrait
                 ['value' => $value]
             );
         }
-    }
-
-    private function getCache()
-    {
-        $model = \strtolower(get_class($this));
-
-        if (Cache::has("{$model}_settings_{$this->id}")) {
-            return Cache::get("{$model}_settings_{$this->id}");
-        }
-
-        return $this->setCache();
-    }
-
-    private function setCache()
-    {
-        $model = \strtolower(get_class($this));
-
-        if (Cache::has("{$model}_settings_{$this->id}")) {
-            Cache::forget("{$model}_settings_{$this->id}");
-        }
-
-        $cached = [];
-        foreach ($this->settings()->get() as $entry) {
-            if ($entry->value !== null && $entry->value !== '') {
-                $cached[$entry->key] = $entry->value;
-            }
-        }
-
-        Cache::forever("{$model}_settings_{$this->id}", $cached);
-
-        return $this->getCache();
     }
 }

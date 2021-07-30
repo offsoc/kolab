@@ -409,8 +409,8 @@ class RoomSetupTest extends TestCaseDusk
 
             // Demote the guest to a subscriber
             $browser
-                ->waitFor('div.meet-video.self')
-                ->waitFor('div.meet-video:not(.self)')
+                ->waitFor('div.meet-video.self video')
+                ->waitFor('div.meet-video:not(.self) video')
                 ->assertElementsCount('@session div.meet-video', 2)
                 ->assertElementsCount('@session video', 2)
                 ->assertElementsCount('@session .meet-subscriber', 0)

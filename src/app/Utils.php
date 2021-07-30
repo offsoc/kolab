@@ -471,17 +471,19 @@ class Utils
     /**
      * Create self URL
      *
-     * @param string $route Route/Path
+     * @param string   $route    Route/Path
+     * @param int|null $tenantId Current tenant
+     *
      * @todo Move this to App\Http\Controllers\Controller
      *
      * @return string Full URL
      */
-    public static function serviceUrl(string $route): string
+    public static function serviceUrl(string $route, $tenantId = null): string
     {
-        $url = \config('app.public_url');
+        $url = \App\Tenant::getConfig($tenantId, 'app.public_url');
 
         if (!$url) {
-            $url = \config('app.url');
+            $url = \App\Tenant::getConfig($tenantId, 'app.url');
         }
 
         return rtrim(trim($url, '/') . '/' . ltrim($route, '/'), '/');

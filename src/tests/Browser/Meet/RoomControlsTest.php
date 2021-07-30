@@ -167,7 +167,7 @@ class RoomControlsTest extends TestCaseDusk
             // Test muting audio
             $owner->click('@menu button.link-audio')
                 ->assertToolbarButtonState('audio', RoomPage::BUTTON_ACTIVE | RoomPage::BUTTON_ENABLED)
-                ->assertVisible('div.meet-video.self .status .status-audio');
+                ->waitFor('div.meet-video.self .status .status-audio');
 
             // FIXME: It looks that we can't just check the <video> element state
             //        We might consider using OpenVidu API to make sure

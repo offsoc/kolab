@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Tenant;
 use App\User;
 use App\Utils;
 use App\VerificationCode;
@@ -38,15 +39,19 @@ class PasswordReset extends Mailable
      */
     public function build()
     {
+        $appName = Tenant::getConfig($this->code->user->tenant_id, 'app.name');
+        $supportUrl = Tenant::getConfig($this->code->user->tenant_id, 'app.support_url');
+
         $href = Utils::serviceUrl(
-            sprintf('/password-reset/%s-%s', $this->code->short_code, $this->code->code)
+            sprintf('/password-reset/%s-%s', $this->code->short_code, $this->code->code),
+            $this->code->user->tenant_id
         );
 
         $this->view('emails.html.password_reset')
             ->text('emails.plain.password_reset')
-            ->subject(__('mail.passwordreset-subject', ['site' => \config('app.name')]))
+            ->subject(\trans('mail.passwordreset-subject', ['site' => $appName]))
             ->with([
-                    'site' => \config('app.name'),
+                    'site' => $appName,
                     'code' => $this->code->code,
                     'short_code' => $this->code->short_code,
                     'link' => sprintf('<a href="%s">%s</a>', $href, $href),

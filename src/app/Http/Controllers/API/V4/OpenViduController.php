@@ -245,11 +245,12 @@ class OpenViduController extends Controller
             }
         }
 
-        $password = (string) $room->getSetting('password');
+        $settings = $room->getSettings(['locked', 'nomedia', 'password']);
+        $password = (string) $settings['password'];
 
         $config = [
-            'locked' => $room->getSetting('locked') === 'true',
-            'nomedia' => $room->getSetting('nomedia') === 'true',
+            'locked' => $settings['locked'] === 'true',
+            'nomedia' => $settings['nomedia'] === 'true',
             'password' => $isOwner ? $password : '',
             'requires_password' => !$isOwner && strlen($password),
         ];

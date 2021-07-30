@@ -49,7 +49,7 @@ class SignupVerification extends Mailable
 
         $this->view('emails.html.signup_code')
             ->text('emails.plain.signup_code')
-            ->subject(__('mail.signupcode-subject', ['site' => \config('app.name')]))
+            ->subject(\trans('mail.signupcode-subject', ['site' => \config('app.name')]))
             ->with([
                     'site' => \config('app.name'),
                     'username' => $username ?: 'User',

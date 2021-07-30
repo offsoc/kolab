@@ -229,10 +229,9 @@ class Receipt
     {
         $user = $this->wallet->owner;
         $name = $user->name();
-        $organization = $user->getSetting('organization');
-        $address = $user->getSetting('billing_address');
+        $settings = $user->getSettings(['organization', 'billing_address']);
 
-        $customer = trim(($organization ?: $name) . "\n$address");
+        $customer = trim(($settings['organization'] ?: $name) . "\n" . $settings['billing_address']);
         $customer = str_replace("\n", '<br>', htmlentities($customer));
 
         return [

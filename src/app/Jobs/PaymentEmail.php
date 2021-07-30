@@ -8,7 +8,6 @@ use App\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -82,28 +81,13 @@ class PaymentEmail implements ShouldQueue
         list($to, $cc) = \App\Mail\Helper::userEmails($this->controller);
 
         if (!empty($to)) {
-            try {
-                Mail::to($to)->cc($cc)->send($mail);
+            $params = [
+                'to' => $to,
+                'cc' => $cc,
+                'add' => " for {$wallet->id}",
+            ];
 
-                $msg = sprintf(
-                    "[Payment] %s mail sent for %s (%s)",
-                    $label,
-                    $wallet->id,
-                    empty($cc) ? $to : implode(', ', array_merge([$to], $cc))
-                );
-
-                \Log::info($msg);
-            } catch (\Exception $e) {
-                $msg = sprintf(
-                    "[Payment] Failed to send mail for wallet %s (%s): %s",
-                    $wallet->id,
-                    empty($cc) ? $to : implode(', ', array_merge([$to], $cc)),
-                    $e->getMessage()
-                );
-
-                \Log::error($msg);
-                throw $e;
-            }
+            \App\Mail\Helper::sendMail($mail, $this->controller->tenant_id, $params);
         }
 
         /*

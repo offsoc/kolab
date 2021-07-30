@@ -545,13 +545,12 @@ class User extends Authenticatable implements JWTSubject
      */
     public function name(bool $fallback = false): string
     {
-        $firstname = $this->getSetting('first_name');
-        $lastname = $this->getSetting('last_name');
+        $settings = $this->getSettings(['first_name', 'last_name']);
 
-        $name = trim($firstname . ' ' . $lastname);
+        $name = trim($settings['first_name'] . ' ' . $settings['last_name']);
 
         if (empty($name) && $fallback) {
-            return \config('app.name') . ' User';
+            return trim(\trans('app.siteuser', ['site' => \App\Tenant::getConfig($this->tenant_id, 'app.name')]));
         }
 
         return $name;

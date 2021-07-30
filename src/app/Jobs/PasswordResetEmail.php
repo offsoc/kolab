@@ -7,7 +7,6 @@ use App\VerificationCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -59,6 +58,10 @@ class PasswordResetEmail implements ShouldQueue
     {
         $email = $this->code->user->getSetting('external_email');
 
-        Mail::to($email)->send(new PasswordReset($this->code));
+        \App\Mail\Helper::sendMail(
+            new PasswordReset($this->code),
+            $this->code->user->tenant_id,
+            ['to' => $email]
+        );
     }
 }

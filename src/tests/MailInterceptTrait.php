@@ -26,7 +26,7 @@ trait MailInterceptTrait
 
         Mail::send($mail);
 
-        $message = $this->interceptedMail()->first();
+        $message = $this->interceptedMail()->last();
 
         // SwiftMailer does not have methods to get the bodies, we'll parse the message
         list($plain, $html) = $this->extractMailBody($message->toString());

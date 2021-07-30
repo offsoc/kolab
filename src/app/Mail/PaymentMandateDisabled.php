@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Tenant;
 use App\User;
 use App\Utils;
 use App\Wallet;
@@ -42,19 +43,20 @@ class PaymentMandateDisabled extends Mailable
      */
     public function build()
     {
-        $user = $this->user;
+        $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
+        $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
 
-        $subject = \trans('mail.paymentmandatedisabled-subject', ['site' => \config('app.name')]);
+        $subject = \trans('mail.paymentmandatedisabled-subject', ['site' => $appName]);
 
         $this->view('emails.html.payment_mandate_disabled')
             ->text('emails.plain.payment_mandate_disabled')
             ->subject($subject)
             ->with([
-                    'site' => \config('app.name'),
+                    'site' => $appName,
                     'subject' => $subject,
-                    'username' => $user->name(true),
-                    'walletUrl' => Utils::serviceUrl('/wallet'),
-                    'supportUrl' => \config('app.support_url'),
+                    'username' => $this->user->name(true),
+                    'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
+                    'supportUrl' => $supportUrl,
             ]);
 
         return $this;

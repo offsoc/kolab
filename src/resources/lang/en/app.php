@@ -68,6 +68,8 @@ return [
     'support-request-success' => 'Support request submitted successfully.',
     'support-request-error' => 'Failed to submit the support request.',
 
+    'siteuser' => ':site User',
+
     'wallet-award-success' => 'The bonus has been added to the wallet successfully.',
     'wallet-penalty-success' => 'The penalty has been added to the wallet successfully.',
     'wallet-update-success' => 'User wallet updated successfully.',

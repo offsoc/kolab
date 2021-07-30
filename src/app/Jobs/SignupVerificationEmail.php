@@ -7,7 +7,6 @@ use App\SignupCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -58,6 +57,10 @@ class SignupVerificationEmail implements ShouldQueue
      */
     public function handle()
     {
-        Mail::to($this->code->email)->send(new SignupVerification($this->code));
+        \App\Mail\Helper::sendMail(
+            new SignupVerification($this->code),
+            null,
+            ['to' => $this->code->email]
+        );
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Tenant;
 use App\User;
 use App\Utils;
 use App\Wallet;
@@ -42,17 +43,20 @@ class NegativeBalance extends Mailable
      */
     public function build()
     {
-        $subject = \trans('mail.negativebalance-subject', ['site' => \config('app.name')]);
+        $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
+        $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
+
+        $subject = \trans('mail.negativebalance-subject', ['site' => $appName]);
 
         $this->view('emails.html.negative_balance')
             ->text('emails.plain.negative_balance')
             ->subject($subject)
             ->with([
-                    'site' => \config('app.name'),
+                    'site' => $appName,
                     'subject' => $subject,
                     'username' => $this->user->name(true),
-                    'supportUrl' => \config('app.support_url'),
-                    'walletUrl' => Utils::serviceUrl('/wallet'),
+                    'supportUrl' => $supportUrl,
+                    'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
             ]);
 
         return $this;

@@ -757,8 +757,10 @@ class LDAP
      */
     private static function setUserAttributes(User $user, array &$entry)
     {
-        $firstName = $user->getSetting('first_name');
-        $lastName = $user->getSetting('last_name');
+        $settings = $user->getSettings(['first_name', 'last_name', 'organization']);
+
+        $firstName = $settings['first_name'];
+        $lastName = $settings['last_name'];
 
         $cn = "unknown";
         $displayname = "";
@@ -788,7 +790,7 @@ class LDAP
         $entry['sn'] = $lastName;
         $entry['userpassword'] = $user->password_ldap;
         $entry['inetuserstatus'] = $user->status;
-        $entry['o'] = $user->getSetting('organization');
+        $entry['o'] = $settings['organization'];
         $entry['mailquota'] = 0;
         $entry['alias'] = $user->aliases->pluck('alias')->toArray();
 

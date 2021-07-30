@@ -470,13 +470,12 @@ class Mollie extends \App\Providers\PaymentProvider
      */
     protected static function mollieMandate(Wallet $wallet)
     {
-        $customer_id = $wallet->getSetting('mollie_id');
-        $mandate_id = $wallet->getSetting('mollie_mandate_id');
+        $settings = $wallet->getSettings(['mollie_id', 'mollie_mandate_id']);
 
         // Get the manadate reference we already have
-        if ($customer_id && $mandate_id) {
+        if ($settings['mollie_id'] && $settings['mollie_mandate_id']) {
             try {
-                return mollie()->mandates()->getForId($customer_id, $mandate_id);
+                return mollie()->mandates()->getForId($settings['mollie_id'], $settings['mollie_mandate_id']);
             } catch (ApiException $e) {
                 // FIXME: What about 404?
                 if ($e->getCode() == 410) {

@@ -89,20 +89,7 @@ class AppServiceProvider extends ServiceProvider
         Builder::macro(
             'withObjectTenantContext',
             function (object $object, string $table = null) {
-                // backend artisan cli
-                if (app()->runningInConsole()) {
-                    /** @var Builder $this */
-                    return $this->where(($table ? "$table." : "") . "tenant_id", $object->tenant_id);
-                }
-
-                $subject = auth()->user();
-
-                if ($subject->role == "admin") {
-                    /** @var Builder $this */
-                    return $this->where(($table ? "$table." : "") . "tenant_id", $object->tenant_id);
-                }
-
-                $tenantId = $subject->tenant_id;
+                $tenantId = $object->tenant_id;
 
                 if ($tenantId) {
                     /** @var Builder $this */
