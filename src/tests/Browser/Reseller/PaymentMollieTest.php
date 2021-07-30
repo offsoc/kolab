@@ -29,7 +29,7 @@ class PaymentMollieTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
-        $user = $this->getTestUser('reseller@kolabnow.com');
+        $user = $this->getTestUser('reseller@' . \config('app.domain'));
         $wallet = $user->wallets()->first();
         $wallet->payments()->delete();
         $wallet->balance = 0;
@@ -46,14 +46,14 @@ class PaymentMollieTest extends TestCaseDusk
     public function testPayment(): void
     {
         $this->browse(function (Browser $browser) {
-            $user = $this->getTestUser('reseller@kolabnow.com');
+            $user = $this->getTestUser('reseller@' . \config('app.domain'));
             $wallet = $user->wallets()->first();
             $wallet->payments()->delete();
             $wallet->balance = 0;
             $wallet->save();
 
             $browser->visit(new Home())
-                ->submitLogon($user->email, 'reseller', true, ['paymentProvider' => 'mollie'])
+                ->submitLogon($user->email, \App\Utils::generatePassphrase(), true, ['paymentProvider' => 'mollie'])
                 ->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
@@ -63,7 +63,7 @@ class PaymentMollieTest extends TestCaseDusk
                     $browser->assertSeeIn('@title', 'Top up your wallet')
                         ->waitFor('#payment-method-selection #creditcard')
                         ->waitFor('#payment-method-selection #paypal')
-                        ->assertMissing('#payment-method-selection #banktransfer')
+                        ->waitFor('#payment-method-selection #banktransfer')
                         ->click('#creditcard');
                 })
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {

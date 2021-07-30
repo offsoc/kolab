@@ -566,7 +566,7 @@
 
                 if (!this.discounts.length) {
                     // Fetch discounts
-                    axios.get('/api/v4/discounts')
+                    axios.get('/api/v4/users/' + this.user.id + '/discounts')
                         .then(response => {
                             this.discounts = response.data.list
                         })

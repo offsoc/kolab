@@ -218,8 +218,7 @@ class OpenViduController extends Controller
         }
 
         // Check if there's still a valid meet entitlement for the room owner
-        $sku = \App\Sku::where('title', 'meet')->first();
-        if ($sku && !$room->owner->entitlements()->where('sku_id', $sku->id)->first()) {
+        if (!$room->owner->hasSku('meet')) {
             return $this->errorResponse(404, \trans('meet.room-not-found'));
         }
 

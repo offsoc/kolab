@@ -25,19 +25,19 @@ class DiscountsTest extends TestCase
     }
 
     /**
-     * Test listing discounts (/api/v4/discounts)
+     * Test listing discounts (GET /api/v4/users/{user}/discounts)
      */
-    public function testIndex(): void
+    public function testuserDiscounts(): void
     {
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
 
         // Non-admin user
-        $response = $this->actingAs($user)->get("api/v4/discounts");
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/discounts");
         $response->assertStatus(403);
 
         // Admin user
-        $response = $this->actingAs($admin)->get("api/v4/discounts");
+        $response = $this->actingAs($admin)->get("api/v4/users/{$user->id}/discounts");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -57,5 +57,21 @@ class DiscountsTest extends TestCase
         $this->assertSame($discount_free->code, $json['list'][2]['code']);
         $this->assertSame($discount_free->description, $json['list'][2]['description']);
         $this->assertSame('100% - Free Account', $json['list'][2]['label']);
+
+        // A user in another tenant
+        $user = $this->getTestUser('user@sample-tenant.dev-local');
+        $response = $this->actingAs($admin)->get("api/v4/users/{$user->id}/discounts");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $discount = Discount::withObjectTenantContext($user)->where('discount', 10)->first();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertSame($discount->id, $json['list'][0]['id']);
+        $this->assertSame($discount->discount, $json['list'][0]['discount']);
+        $this->assertSame($discount->code, $json['list'][0]['code']);
+        $this->assertSame($discount->description, $json['list'][0]['description']);
+        $this->assertSame('10% - ' . $discount->description, $json['list'][0]['label']);
     }
 }

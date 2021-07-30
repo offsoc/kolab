@@ -159,6 +159,38 @@ class Utils
         fclose($fp);
     }
 
+
+    /**
+     * Generate a passphrase. Not intended for use in production, so limited to environments that are not production.
+     *
+     * @return string
+     */
+    public static function generatePassphrase()
+    {
+        if (\config('app.env') == 'production') {
+            throw new \Exception("Thou shall not pass!");
+        }
+
+        if (\config('app.passphrase')) {
+            return \config('app.passphrase');
+        }
+
+        $alphaLow = 'abcdefghijklmnopqrstuvwxyz';
+        $alphaUp = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $num = '0123456789';
+        $stdSpecial = '~`!@#$%^&*()-_+=[{]}\\|\'";:/?.>,<';
+
+        $source = $alphaLow . $alphaUp . $num . $stdSpecial;
+
+        $result = '';
+
+        for ($x = 0; $x < 16; $x++) {
+            $result .= substr($source, rand(0, (strlen($source) - 1)), 1);
+        }
+
+        return $result;
+    }
+
     /**
      * Calculate the broadcast address provided a net number and a prefix.
      *

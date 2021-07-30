@@ -30,7 +30,7 @@ class TenantTest extends TestCase
     public function testWallet(): void
     {
         $tenant = Tenant::find(1);
-        $user = \App\User::where('email', 'reseller@kolabnow.com')->first();
+        $user = \App\User::where('email', 'reseller@' . \config('app.domain'))->first();
 
         $wallet = $tenant->wallet();
 

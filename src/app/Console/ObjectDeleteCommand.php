@@ -36,6 +36,10 @@ abstract class ObjectDeleteCommand extends ObjectCommand
 
         $classes = class_uses_recursive($this->objectClass);
 
+        if (in_array(SoftDeletes::class, $classes)) {
+            $this->signature .= " {--with-deleted : Consider deleted {$this->objectName}s}";
+        }
+
         parent::__construct();
     }
 
@@ -87,9 +91,19 @@ abstract class ObjectDeleteCommand extends ObjectCommand
         if ($this->commandPrefix == 'scalpel') {
             $this->objectClass::withoutEvents(
                 function () use ($object) {
-                    $object->delete();
+                    if ($object->deleted_at) {
+                        $object->forceDelete();
+                    } else {
+                        $object->delete();
+                    }
                 }
             );
+        } else {
+            if ($object->deleted_at) {
+                $object->forceDelete();
+            } else {
+                $object->delete();
+            }
         }
     }
 }

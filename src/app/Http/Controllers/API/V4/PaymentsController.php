@@ -7,7 +7,6 @@ use App\Providers\PaymentProvider;
 use App\Wallet;
 use App\Payment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class PaymentsController extends Controller
@@ -19,7 +18,7 @@ class PaymentsController extends Controller
      */
     public function mandate()
     {
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         // TODO: Wallet selection
         $wallet = $user->wallets()->first();
@@ -38,10 +37,10 @@ class PaymentsController extends Controller
      */
     public function mandateCreate(Request $request)
     {
-        $current_user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         // TODO: Wallet selection
-        $wallet = $current_user->wallets()->first();
+        $wallet = $user->wallets()->first();
 
         // Input validation
         if ($errors = self::mandateValidate($request, $wallet)) {
@@ -81,7 +80,7 @@ class PaymentsController extends Controller
      */
     public function mandateDelete()
     {
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         // TODO: Wallet selection
         $wallet = $user->wallets()->first();
@@ -107,10 +106,10 @@ class PaymentsController extends Controller
      */
     public function mandateUpdate(Request $request)
     {
-        $current_user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         // TODO: Wallet selection
-        $wallet = $current_user->wallets()->first();
+        $wallet = $user->wallets()->first();
 
         // Input validation
         if ($errors = self::mandateValidate($request, $wallet)) {
@@ -190,10 +189,10 @@ class PaymentsController extends Controller
      */
     public function store(Request $request)
     {
-        $current_user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         // TODO: Wallet selection
-        $wallet = $current_user->wallets()->first();
+        $wallet = $user->wallets()->first();
 
         $rules = [
             'amount' => 'required|numeric',
@@ -244,10 +243,10 @@ class PaymentsController extends Controller
     // TODO currently unused
     // public function cancel(Request $request)
     // {
-    //     $current_user = Auth::guard()->user();
+    //     $user = $this->guard()->user();
 
     //     // TODO: Wallet selection
-    //     $wallet = $current_user->wallets()->first();
+    //     $wallet = $user->wallets()->first();
 
     //     $paymentId = $request->payment;
 
@@ -372,9 +371,9 @@ class PaymentsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
-    public static function paymentMethods(Request $request)
+    public function paymentMethods(Request $request)
     {
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         // TODO: Wallet selection
         $wallet = $user->wallets()->first();
@@ -393,9 +392,9 @@ class PaymentsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
-    public static function hasPayments(Request $request)
+    public function hasPayments(Request $request)
     {
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         // TODO: Wallet selection
         $wallet = $user->wallets()->first();
@@ -421,9 +420,9 @@ class PaymentsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
-    public static function payments(Request $request)
+    public function payments(Request $request)
     {
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         // TODO: Wallet selection
         $wallet = $user->wallets()->first();

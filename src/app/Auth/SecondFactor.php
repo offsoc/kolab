@@ -2,8 +2,6 @@
 
 namespace App\Auth;
 
-use App\Sku;
-use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Kolab2FA\Storage\Base;
@@ -93,17 +91,11 @@ class SecondFactor extends Base
     public function factors(): array
     {
         // First check if the user has the 2FA SKU
-        $sku_2fa = Sku::where('title', '2fa')->first();
+        if ($this->user->hasSku('2fa')) {
+            $factors = (array) $this->enumerate();
+            $factors = array_unique($factors);
 
-        if ($sku_2fa) {
-            $has_2fa = $this->user->entitlements()->where('sku_id', $sku_2fa->id)->first();
-
-            if ($has_2fa) {
-                $factors = (array) $this->enumerate();
-                $factors = array_unique($factors);
-
-                return $factors;
-            }
+            return $factors;
         }
 
         return [];
@@ -186,7 +178,7 @@ class SecondFactor extends Base
      */
     public static function code(string $email): string
     {
-        $sf = new self(User::where('email', $email)->first());
+        $sf = new self(\App\User::where('email', $email)->first());
         $driver = $sf->getDriver('totp:8132a46b1f741f88de25f47e');
 
         return (string) $driver->get_code();

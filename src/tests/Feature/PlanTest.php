@@ -95,13 +95,13 @@ class PlanTest extends TestCase
         }
 
         $this->assertTrue(
-            $package_costs == 999,
-            "The total costs of all packages for this plan is not 9.99"
+            $package_costs == 990,
+            "The total costs of all packages for this plan is not 9.90"
         );
 
         $this->assertTrue(
-            $plan->cost() == 999,
-            "The total costs for this plan is not 9.99"
+            $plan->cost() == 990,
+            "The total costs for this plan is not 9.90"
         );
 
         $this->assertTrue($plan->cost() == $package_costs);
@@ -109,16 +109,16 @@ class PlanTest extends TestCase
 
     public function testTenant(): void
     {
-        $plan = Plan::where('title', 'individual')->first();
+        $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
 
         $tenant = $plan->tenant()->first();
 
         $this->assertInstanceof(\App\Tenant::class, $tenant);
-        $this->assertSame(1, $tenant->id);
+        $this->assertSame((int) \config('app.tenant_id'), $tenant->id);
 
         $tenant = $plan->tenant;
 
         $this->assertInstanceof(\App\Tenant::class, $tenant);
-        $this->assertSame(1, $tenant->id);
+        $this->assertSame((int) \config('app.tenant_id'), $tenant->id);
     }
 }

@@ -7,7 +7,7 @@ class OpenExchangeRates
     /**
      * Import exchange rates from openexchangerates.org
      *
-     * @param string Base currency
+     * @param string $baseCurrency Base currency
      *
      * @return array exchange rates
      */

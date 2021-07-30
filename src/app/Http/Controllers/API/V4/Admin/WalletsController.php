@@ -8,7 +8,6 @@ use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -25,7 +24,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     {
         $wallet = Wallet::find($id);
 
-        if (empty($wallet) || !Auth::guard()->user()->canRead($wallet)) {
+        if (empty($wallet) || !$this->checkTenant($wallet->owner)) {
             return $this->errorResponse(404);
         }
 
@@ -61,9 +60,9 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     public function oneOff(Request $request, $id)
     {
         $wallet = Wallet::find($id);
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
-        if (empty($wallet) || !$user->canRead($wallet)) {
+        if (empty($wallet) || !$this->checkTenant($wallet->owner)) {
             return $this->errorResponse(404);
         }
 
@@ -130,7 +129,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     {
         $wallet = Wallet::find($id);
 
-        if (empty($wallet) || !Auth::guard()->user()->canRead($wallet)) {
+        if (empty($wallet) || !$this->checkTenant($wallet->owner)) {
             return $this->errorResponse(404);
         }
 
@@ -138,7 +137,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
             if (empty($request->discount)) {
                 $wallet->discount()->dissociate();
                 $wallet->save();
-            } elseif ($discount = Discount::withEnvTenant()->find($request->discount)) {
+            } elseif ($discount = Discount::withObjectTenantContext($wallet->owner)->find($request->discount)) {
                 $wallet->discount()->associate($discount);
                 $wallet->save();
             }

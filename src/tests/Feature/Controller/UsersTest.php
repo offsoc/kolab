@@ -275,19 +275,19 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $storage_sku = Sku::where('title', 'storage')->first();
-        $groupware_sku = Sku::where('title', 'groupware')->first();
-        $mailbox_sku = Sku::where('title', 'mailbox')->first();
-        $secondfactor_sku = Sku::where('title', '2fa')->first();
+        $storage_sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $groupware_sku = Sku::withEnvTenantContext()->where('title', 'groupware')->first();
+        $mailbox_sku = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $secondfactor_sku = Sku::withEnvTenantContext()->where('title', '2fa')->first();
 
         $this->assertCount(5, $json['skus']);
 
-        $this->assertSame(2, $json['skus'][$storage_sku->id]['count']);
-        $this->assertSame([0,0], $json['skus'][$storage_sku->id]['costs']);
+        $this->assertSame(5, $json['skus'][$storage_sku->id]['count']);
+        $this->assertSame([0,0,0,0,0], $json['skus'][$storage_sku->id]['costs']);
         $this->assertSame(1, $json['skus'][$groupware_sku->id]['count']);
-        $this->assertSame([555], $json['skus'][$groupware_sku->id]['costs']);
+        $this->assertSame([490], $json['skus'][$groupware_sku->id]['costs']);
         $this->assertSame(1, $json['skus'][$mailbox_sku->id]['count']);
-        $this->assertSame([444], $json['skus'][$mailbox_sku->id]['costs']);
+        $this->assertSame([500], $json['skus'][$mailbox_sku->id]['costs']);
         $this->assertSame(1, $json['skus'][$secondfactor_sku->id]['count']);
         $this->assertSame([0], $json['skus'][$secondfactor_sku->id]['costs']);
     }
@@ -446,19 +446,19 @@ class UsersTest extends TestCase
         $this->assertSame(false, $result['process'][6]['state']);
 
         // Test 'skus' property
-        $user->assignSku(Sku::where('title', 'beta')->first());
+        $user->assignSku(Sku::withEnvTenantContext()->where('title', 'beta')->first());
 
         $result = UsersController::statusInfo($user);
 
         $this->assertSame(['beta'], $result['skus']);
 
-        $user->assignSku(Sku::where('title', 'meet')->first());
+        $user->assignSku(Sku::withEnvTenantContext()->where('title', 'meet')->first());
 
         $result = UsersController::statusInfo($user);
 
         $this->assertSame(['beta', 'meet'], $result['skus']);
 
-        $user->assignSku(Sku::where('title', 'meet')->first());
+        $user->assignSku(Sku::withEnvTenantContext()->where('title', 'meet')->first());
 
         $result = UsersController::statusInfo($user);
 
@@ -529,8 +529,8 @@ class UsersTest extends TestCase
         $this->assertCount(2, $json);
         $this->assertSame('The specified email is not available.', $json['errors']['email']);
 
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
-        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
 
         $post = [
             'password' => 'simple',
@@ -584,7 +584,8 @@ class UsersTest extends TestCase
         $this->assertSame('deleted@kolab.org', $aliases[0]->alias);
         $this->assertSame('useralias1@kolab.org', $aliases[1]->alias);
         // Assert the new user entitlements
-        $this->assertUserEntitlements($user, ['groupware', 'mailbox', 'storage', 'storage']);
+        $this->assertUserEntitlements($user, ['groupware', 'mailbox',
+            'storage', 'storage', 'storage', 'storage', 'storage']);
         // Assert the wallet to which the new user should be assigned to
         $wallet = $user->wallet();
         $this->assertSame($john->wallets()->first()->id, $wallet->id);
@@ -609,7 +610,8 @@ class UsersTest extends TestCase
         $this->assertSame('Doe2', $user->getSetting('last_name'));
         $this->assertSame('TestOrg', $user->getSetting('organization'));
         $this->assertCount(0, $user->aliases()->get());
-        $this->assertUserEntitlements($user, ['groupware', 'mailbox', 'storage', 'storage']);
+        $this->assertUserEntitlements($user, ['groupware', 'mailbox',
+            'storage', 'storage', 'storage', 'storage', 'storage']);
 
         // Test acting as account controller (not owner)
 
@@ -760,12 +762,12 @@ class UsersTest extends TestCase
         // Create entitlements and additional user for following tests
         $owner = $this->getTestUser('UsersControllerTest1@userscontroller.com');
         $user = $this->getTestUser('UsersControllerTest2@userscontroller.com');
-        $package_domain = Package::where('title', 'domain-hosting')->first();
-        $package_kolab = Package::where('title', 'kolab')->first();
-        $package_lite = Package::where('title', 'lite')->first();
-        $sku_mailbox = Sku::where('title', 'mailbox')->first();
-        $sku_storage = Sku::where('title', 'storage')->first();
-        $sku_groupware = Sku::where('title', 'groupware')->first();
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_lite = Package::withEnvTenantContext()->where('title', 'lite')->first();
+        $sku_mailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $sku_storage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $sku_groupware = Sku::withEnvTenantContext()->where('title', 'groupware')->first();
 
         $domain = $this->getTestDomain(
             'userscontroller.com',
@@ -788,7 +790,7 @@ class UsersTest extends TestCase
         $post = [
             'skus' => [
                 $sku_mailbox->id => 1,
-                $sku_storage->id => 3,
+                $sku_storage->id => 6,
                 $sku_groupware->id => 1,
             ],
         ];
@@ -805,10 +807,10 @@ class UsersTest extends TestCase
 
         $this->assertUserEntitlements(
             $user,
-            ['groupware', 'mailbox', 'storage', 'storage', 'storage']
+            ['groupware', 'mailbox', 'storage', 'storage', 'storage', 'storage', 'storage', 'storage']
         );
 
-        $this->assertSame([0, 0, 25], $storage_cost);
+        $this->assertSame([0, 0, 0, 0, 0, 25], $storage_cost);
         $this->assertTrue(empty($json['statusInfo']));
     }
 
@@ -819,11 +821,11 @@ class UsersTest extends TestCase
     {
         $jane = $this->getTestUser('jane@kolabnow.com');
 
-        $kolab = \App\Package::where('title', 'kolab')->first();
-        $storage = \App\Sku::where('title', 'storage')->first();
-        $activesync = \App\Sku::where('title', 'activesync')->first();
-        $groupware = \App\Sku::where('title', 'groupware')->first();
-        $mailbox = \App\Sku::where('title', 'mailbox')->first();
+        $kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $storage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $activesync = Sku::withEnvTenantContext()->where('title', 'activesync')->first();
+        $groupware = Sku::withEnvTenantContext()->where('title', 'groupware')->first();
+        $mailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
 
         // standard package, 1 mailbox, 1 groupware, 2 storage
         $jane->assignPackage($kolab);
@@ -833,7 +835,7 @@ class UsersTest extends TestCase
             'skus' => [
                 $mailbox->id => 1,
                 $groupware->id => 1,
-                $storage->id => 4,
+                $storage->id => 7,
                 $activesync->id => 1
             ]
         ];
@@ -850,6 +852,9 @@ class UsersTest extends TestCase
                 'storage',
                 'storage',
                 'storage',
+                'storage',
+                'storage',
+                'storage',
                 'storage'
             ]
         );
@@ -859,7 +864,7 @@ class UsersTest extends TestCase
             'skus' => [
                 $mailbox->id => 1,
                 $groupware->id => 1,
-                $storage->id => 6,
+                $storage->id => 9,
                 $activesync->id => 0
             ]
         ];
@@ -877,6 +882,9 @@ class UsersTest extends TestCase
                 'storage',
                 'storage',
                 'storage',
+                'storage',
+                'storage',
+                'storage',
                 'storage'
             ]
         );
@@ -886,7 +894,7 @@ class UsersTest extends TestCase
             'skus' => [
                 $mailbox->id => 2,
                 $groupware->id => 1,
-                $storage->id => 6,
+                $storage->id => 9,
                 $activesync->id => 0
             ]
         ];
@@ -899,6 +907,9 @@ class UsersTest extends TestCase
             [
                 'groupware',
                 'mailbox',
+                'storage',
+                'storage',
+                'storage',
                 'storage',
                 'storage',
                 'storage',
@@ -913,7 +924,7 @@ class UsersTest extends TestCase
             'skus' => [
                 $mailbox->id => 0,
                 $groupware->id => 1,
-                $storage->id => 6,
+                $storage->id => 9,
                 $activesync->id => 0
             ]
         ];
@@ -926,6 +937,9 @@ class UsersTest extends TestCase
             [
                 'groupware',
                 'mailbox',
+                'storage',
+                'storage',
+                'storage',
                 'storage',
                 'storage',
                 'storage',
@@ -953,6 +967,9 @@ class UsersTest extends TestCase
             [
                 'groupware',
                 'mailbox',
+                'storage',
+                'storage',
+                'storage',
                 'storage',
                 'storage'
             ]

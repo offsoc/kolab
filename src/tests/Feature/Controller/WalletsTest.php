@@ -31,7 +31,6 @@ class WalletsTest extends TestCase
         parent::tearDown();
     }
 
-
     /**
      * Test for getWalletNotice() method
      */
@@ -69,13 +68,13 @@ class WalletsTest extends TestCase
         $wallet->owner->save();
 
         // test "1 month"
-        $wallet->balance = 999;
+        $wallet->balance = 990;
         $notice = $method->invoke($controller, $wallet);
 
         $this->assertRegExp('/\((1 month|4 weeks)\)/', $notice);
 
         // test "2 months"
-        $wallet->balance = 999 * 2.6;
+        $wallet->balance = 990 * 2.6;
         $notice = $method->invoke($controller, $wallet);
 
         $this->assertRegExp('/\(2 months 2 weeks\)/', $notice);
@@ -84,7 +83,7 @@ class WalletsTest extends TestCase
         \app()->setLocale('de');
 
         // test "almost 2 years"
-        $wallet->balance = 999 * 23.5;
+        $wallet->balance = 990 * 23.5;
         $notice = $method->invoke($controller, $wallet);
 
         $this->assertRegExp('/\(1 Jahr 11 Monate\)/', $notice);

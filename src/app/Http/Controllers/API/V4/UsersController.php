@@ -47,7 +47,7 @@ class UsersController extends Controller
      */
     public function destroy($id)
     {
-        $user = User::find($id);
+        $user = User::withEnvTenantContext()->find($id);
 
         if (empty($user)) {
             return $this->errorResponse(404);
@@ -95,7 +95,7 @@ class UsersController extends Controller
      */
     public function show($id)
     {
-        $user = User::find($id);
+        $user = User::withEnvTenantContext()->find($id);
 
         if (empty($user)) {
             return $this->errorResponse(404);
@@ -131,7 +131,7 @@ class UsersController extends Controller
      */
     public function status($id)
     {
-        $user = User::find($id);
+        $user = User::withEnvTenantContext()->find($id);
 
         if (empty($user)) {
             return $this->errorResponse(404);
@@ -289,7 +289,7 @@ class UsersController extends Controller
             return $error_response;
         }
 
-        if (empty($request->package) || !($package = \App\Package::find($request->package))) {
+        if (empty($request->package) || !($package = \App\Package::withEnvTenantContext()->find($request->package))) {
             $errors = ['package' => \trans('validation.packagerequired')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
@@ -340,7 +340,7 @@ class UsersController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user = User::find($id);
+        $user = User::withEnvTenantContext()->find($id);
 
         if (empty($user)) {
             return $this->errorResponse(404);
@@ -411,7 +411,7 @@ class UsersController extends Controller
         }
 
         // list of skus, [id=>obj]
-        $skus = Sku::all()->mapWithKeys(
+        $skus = Sku::withEnvTenantContext()->get()->mapWithKeys(
             function ($sku) {
                 return [$sku->id => $sku];
             }
@@ -689,7 +689,7 @@ class UsersController extends Controller
         }
 
         // Check if domain exists
-        $domain = Domain::where('namespace', $domain)->first();
+        $domain = Domain::withEnvTenantContext()->where('namespace', $domain)->first();
 
         if (empty($domain)) {
             return \trans('validation.domaininvalid');
@@ -763,7 +763,7 @@ class UsersController extends Controller
         }
 
         // Check if domain exists
-        $domain = Domain::where('namespace', $domain)->first();
+        $domain = Domain::withEnvTenantContext()->where('namespace', $domain)->first();
 
         if (empty($domain)) {
             return \trans('validation.domaininvalid');

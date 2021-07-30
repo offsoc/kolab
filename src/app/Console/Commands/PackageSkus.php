@@ -28,7 +28,7 @@ class PackageSkus extends Command
      */
     public function handle()
     {
-        $packages = Package::withEnvTenant()->get();
+        $packages = Package::withEnvTenantContext()->get();
 
         foreach ($packages as $package) {
             $this->info(sprintf("Package: %s", $package->title));

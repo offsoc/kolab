@@ -89,7 +89,7 @@ class UserTest extends TestCaseDusk
             $page = new UserPage($jack->id);
 
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', 'jeroen', true)
+                ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($page)
                 ->on($page);
@@ -136,11 +136,11 @@ class UserTest extends TestCaseDusk
                 ->with('@user-subscriptions', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 3)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'User Mailbox')
-                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,44 CHF')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 2 GB')
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '5,00 CHF')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 5 GB')
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:first-child', 'Groupware Features')
-                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '5,55 CHF')
+                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,90 CHF')
                         ->assertMissing('table tfoot')
                         ->assertMissing('#reset2fa');
                 });
@@ -242,11 +242,11 @@ class UserTest extends TestCaseDusk
                 ->with('@user-subscriptions', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 3)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'User Mailbox')
-                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '3,99 CHF/month¹')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 2 GB')
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,50 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 5 GB')
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:first-child', 'Groupware Features')
-                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,99 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,41 CHF/month¹')
                         ->assertMissing('table tfoot')
                         ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher');
                 });
@@ -291,8 +291,8 @@ class UserTest extends TestCaseDusk
         // Now we go to Ned's info page, he's a controller on John's wallet
         $this->browse(function (Browser $browser) {
             $ned = $this->getTestUser('ned@kolab.org');
-            $beta_sku = Sku::where('title', 'beta')->first();
-            $storage_sku = Sku::where('title', 'storage')->first();
+            $beta_sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
+            $storage_sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
             $wallet = $ned->wallet();
 
             // Add an extra storage and beta entitlement with different prices
@@ -344,13 +344,13 @@ class UserTest extends TestCaseDusk
                 ->with('@user-subscriptions', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 6)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'User Mailbox')
-                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '3,99 CHF/month¹')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 3 GB')
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,50 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 6 GB')
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '45,00 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:first-child', 'Groupware Features')
-                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,99 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,41 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(4) td:first-child', 'Activesync')
-                        ->assertSeeIn('table tbody tr:nth-child(4) td:last-child', '0,90 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(4) td:last-child', '0,00 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(5) td:first-child', '2-Factor Authentication')
                         ->assertSeeIn('table tbody tr:nth-child(5) td:last-child', '0,00 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(6) td:first-child', 'Private Beta (invitation only)')
@@ -472,7 +472,7 @@ class UserTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $this->deleteTestUser('userstest1@kolabnow.com');
             $user = $this->getTestUser('userstest1@kolabnow.com');
-            $sku2fa = Sku::firstOrCreate(['title' => '2fa']);
+            $sku2fa = Sku::withEnvTenantContext()->where('title', '2fa')->first();
             $user->assignSku($sku2fa);
             SecondFactor::seed('userstest1@kolabnow.com');
 

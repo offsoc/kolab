@@ -30,7 +30,7 @@ class StatsTest extends TestCase
     {
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
 
         // Unauth access
         $response = $this->get("api/v4/stats/chart/discounts");

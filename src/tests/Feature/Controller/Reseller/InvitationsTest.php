@@ -19,8 +19,6 @@ class InvitationsTest extends TestCase
 
         SignupInvitation::truncate();
 
-        \config(['app.tenant_id' => 1]);
-
         self::useResellerUrl();
     }
 
@@ -30,8 +28,6 @@ class InvitationsTest extends TestCase
     public function tearDown(): void
     {
         SignupInvitation::truncate();
-
-        \config(['app.tenant_id' => 1]);
 
         parent::tearDown();
     }
@@ -45,13 +41,12 @@ class InvitationsTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller = $this->getTestUser('reseller@reseller.com');
-        $reseller2 = $this->getTestUser('reseller@kolabnow.com');
-        $tenant = Tenant::where('title', 'Sample Tenant')->first();
-
-        \config(['app.tenant_id' => $tenant->id]);
+        $reseller = $this->getTestUser('reseller@sample-tenant.dev-local');
+        $reseller2 = $this->getTestUser('reseller@' . \config('app.domain'));
 
         $inv = SignupInvitation::create(['email' => 'email1@ext.com']);
+        $inv->tenant_id = $reseller->tenant_id;
+        $inv->save();
 
         // Non-admin user
         $response = $this->actingAs($user)->delete("api/v4/invitations/{$inv->id}");
@@ -63,7 +58,7 @@ class InvitationsTest extends TestCase
 
         // Reseller user, but different tenant
         $response = $this->actingAs($reseller2)->delete("api/v4/invitations/{$inv->id}");
-        $response->assertStatus(403);
+        $response->assertStatus(404);
 
         // Reseller - non-existing invitation identifier
         $response = $this->actingAs($reseller)->delete("api/v4/invitations/abd");
@@ -89,11 +84,9 @@ class InvitationsTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller = $this->getTestUser('reseller@reseller.com');
-        $reseller2 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $tenant = Tenant::where('title', 'Sample Tenant')->first();
-
-        \config(['app.tenant_id' => $tenant->id]);
 
         // Non-admin user
         $response = $this->actingAs($user)->get("api/v4/invitations");
@@ -101,10 +94,6 @@ class InvitationsTest extends TestCase
 
         // Admin user
         $response = $this->actingAs($admin)->get("api/v4/invitations");
-        $response->assertStatus(403);
-
-        // Reseller user, but different tenant
-        $response = $this->actingAs($reseller2)->get("api/v4/invitations");
         $response->assertStatus(403);
 
         // Reseller (empty list)
@@ -134,13 +123,16 @@ class InvitationsTest extends TestCase
         $i13 = SignupInvitation::create(['email' => 'email13@ext.com']);
 
         SignupInvitation::query()->update(['created_at' => now()->subDays('1')]);
+
         SignupInvitation::where('id', $i1->id)
             ->update(['created_at' => now()->subHours('2'), 'status' => SignupInvitation::STATUS_FAILED]);
+
         SignupInvitation::where('id', $i2->id)
             ->update(['created_at' => now()->subHours('3'), 'status' => SignupInvitation::STATUS_SENT]);
+
         SignupInvitation::where('id', $i11->id)->update(['created_at' => now()->subDays('3')]);
-        SignupInvitation::where('id', $i12->id)->update(['tenant_id' => 1]);
-        SignupInvitation::where('id', $i13->id)->update(['tenant_id' => 1]);
+        SignupInvitation::where('id', $i12->id)->update(['tenant_id' => $reseller2->tenant_id]);
+        SignupInvitation::where('id', $i13->id)->update(['tenant_id' => $reseller2->tenant_id]);
 
         $response = $this->actingAs($reseller)->get("api/v4/invitations");
         $response->assertStatus(200);
@@ -192,6 +184,14 @@ class InvitationsTest extends TestCase
         $this->assertSame(1, $json['page']);
         $this->assertFalse($json['hasMore']);
         $this->assertSame($i1->id, $json['list'][0]['id']);
+
+        // Reseller user, but different tenant
+        $response = $this->actingAs($reseller2)->get("api/v4/invitations");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(2, $json['count']);
     }
 
     /**
@@ -203,13 +203,14 @@ class InvitationsTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller = $this->getTestUser('reseller@reseller.com');
-        $reseller2 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@sample-tenant.dev-local');
+        $reseller2 = $this->getTestUser('reseller@' . \config('app.domain'));
         $tenant = Tenant::where('title', 'Sample Tenant')->first();
 
-        \config(['app.tenant_id' => $tenant->id]);
-
         $inv = SignupInvitation::create(['email' => 'email1@ext.com']);
+        $inv->tenant_id = $reseller->tenant_id;
+        $inv->save();
+
         SignupInvitation::where('id', $inv->id)->update(['status' => SignupInvitation::STATUS_FAILED]);
 
         // Non-admin user
@@ -222,7 +223,7 @@ class InvitationsTest extends TestCase
 
         // Reseller user, but different tenant
         $response = $this->actingAs($reseller2)->post("api/v4/invitations/{$inv->id}/resend");
-        $response->assertStatus(403);
+        $response->assertStatus(404);
 
         // Reseller - non-existing invitation identifier
         $response = $this->actingAs($reseller)->post("api/v4/invitations/abd/resend");
@@ -248,11 +249,9 @@ class InvitationsTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller = $this->getTestUser('reseller@reseller.com');
-        $reseller2 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@sample-tenant.dev-local');
+        $reseller2 = $this->getTestUser('reseller@' . \config('app.domain'));
         $tenant = Tenant::where('title', 'Sample Tenant')->first();
-
-        \config(['app.tenant_id' => $tenant->id]);
 
         // Non-admin user
         $response = $this->actingAs($user)->post("api/v4/invitations", []);
@@ -260,10 +259,6 @@ class InvitationsTest extends TestCase
 
         // Admin user
         $response = $this->actingAs($admin)->post("api/v4/invitations", []);
-        $response->assertStatus(403);
-
-        // Reseller user, but different tenant
-        $response = $this->actingAs($reseller2)->post("api/v4/invitations", []);
         $response->assertStatus(403);
 
         // Reseller (empty post)
@@ -298,6 +293,10 @@ class InvitationsTest extends TestCase
         $this->assertSame("The invitation has been created.", $json['message']);
         $this->assertSame(1, $json['count']);
         $this->assertSame(1, SignupInvitation::count());
+
+        $invitation = SignupInvitation::first();
+        $this->assertSame($reseller->tenant_id, $invitation->tenant_id);
+        $this->assertSame($post['email'], $invitation->email);
 
         // Test file input (empty file)
         $tmpfile = tmpfile();
@@ -346,5 +345,13 @@ class InvitationsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame("2 invitations has been created.", $json['message']);
         $this->assertSame(2, $json['count']);
+
+        // Reseller user, but different tenant
+        $post = ['email' => 'test-reseller2@external.org'];
+        $response = $this->actingAs($reseller2)->post("api/v4/invitations", $post);
+        $response->assertStatus(200);
+
+        $invitation = SignupInvitation::where('email', $post['email'])->first();
+        $this->assertSame($reseller2->tenant_id, $invitation->tenant_id);
     }
 }

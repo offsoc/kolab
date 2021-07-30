@@ -23,19 +23,21 @@ class CreateTenantsTable extends Migration
             }
         );
 
-        \App\Tenant::create(['title' => 'Kolab Now']);
+        $tenantId = \config('app.tenant_id');
 
-        foreach (['users', 'discounts', 'domains', 'plans', 'packages', 'skus'] as $table_name) {
+        $tenant = \App\Tenant::create(['id' => $tenantId, 'title' => 'Kolab Now']);
+
+        foreach (['users', 'discounts', 'domains', 'plans', 'packages', 'skus'] as $tableName) {
             Schema::table(
-                $table_name,
+                $tableName,
                 function (Blueprint $table) {
                     $table->bigInteger('tenant_id')->unsigned()->nullable();
                     $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('set null');
                 }
             );
 
-            if ($tenant_id = \config('app.tenant_id')) {
-                DB::statement("UPDATE `{$table_name}` SET `tenant_id` = {$tenant_id}");
+            if ($tenantId) {
+                DB::statement("UPDATE `{$tableName}` SET `tenant_id` = {$tenantId}");
             }
         }
 
@@ -48,9 +50,6 @@ class CreateTenantsTable extends Migration
                 }
             );
         }
-
-        // FIXME: Should we also have package_skus.fee ?
-        //        We have package_skus.cost, but I think it is not used anywhere.
     }
 
     /**
@@ -60,9 +59,9 @@ class CreateTenantsTable extends Migration
      */
     public function down()
     {
-        foreach (['users', 'discounts', 'domains', 'plans', 'packages', 'skus'] as $table_name) {
+        foreach (['users', 'discounts', 'domains', 'plans', 'packages', 'skus'] as $tableName) {
             Schema::table(
-                $table_name,
+                $tableName,
                 function (Blueprint $table) {
                     $table->dropForeign(['tenant_id']);
                     $table->dropColumn('tenant_id');

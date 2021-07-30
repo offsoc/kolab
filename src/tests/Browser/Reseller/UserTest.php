@@ -86,7 +86,7 @@ class UserTest extends TestCaseDusk
             $page = new UserPage($jack->id);
 
             $browser->visit(new Home())
-                ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($page)
                 ->on($page);
@@ -133,11 +133,11 @@ class UserTest extends TestCaseDusk
                 ->with('@user-subscriptions', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 3)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'User Mailbox')
-                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,44 CHF')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 2 GB')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF')
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '5,00 CHF/month')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 5 GB')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:first-child', 'Groupware Features')
-                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '5,55 CHF')
+                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,90 CHF/month')
                         ->assertMissing('table tfoot')
                         ->assertMissing('#reset2fa');
                 });
@@ -239,11 +239,11 @@ class UserTest extends TestCaseDusk
                 ->with('@user-subscriptions', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 3)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'User Mailbox')
-                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '3,99 CHF/month¹')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 2 GB')
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,50 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 5 GB')
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:first-child', 'Groupware Features')
-                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,99 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,41 CHF/month¹')
                         ->assertMissing('table tfoot')
                         ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher');
                 });
@@ -321,13 +321,13 @@ class UserTest extends TestCaseDusk
                 ->with('@user-subscriptions', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 5)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'User Mailbox')
-                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '3,99 CHF/month¹')
-                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 2 GB')
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,50 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Storage Quota 5 GB')
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:first-child', 'Groupware Features')
-                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,99 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,41 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(4) td:first-child', 'Activesync')
-                        ->assertSeeIn('table tbody tr:nth-child(4) td:last-child', '0,90 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(4) td:last-child', '0,00 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(5) td:first-child', '2-Factor Authentication')
                         ->assertSeeIn('table tbody tr:nth-child(5) td:last-child', '0,00 CHF/month¹')
                         ->assertMissing('table tfoot')

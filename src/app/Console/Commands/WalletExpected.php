@@ -38,7 +38,7 @@ class WalletExpected extends Command
         } else {
             $wallets = \App\Wallet::select('wallets.*')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
-                ->withEnvTenant('users')
+                ->withEnvTenantContext('users')
                 ->all();
         }
 

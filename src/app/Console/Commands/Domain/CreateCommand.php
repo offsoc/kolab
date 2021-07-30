@@ -19,7 +19,7 @@ class CreateCommand extends Command
      *
      * @var string
      */
-    protected $description = "Create a domain.";
+    protected $description = "Create a domain";
 
     /**
      * Execute the console command.

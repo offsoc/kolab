@@ -76,7 +76,7 @@ class WalletsTest extends TestCase
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
         $wallet = $user->wallets()->first();
         $balance = $wallet->balance;
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
         $wallet = $user->wallets()->first();
         $reseller_wallet = $reseller->wallets()->first();
         $reseller_balance = $reseller_wallet->balance;

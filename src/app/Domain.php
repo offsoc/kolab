@@ -115,7 +115,7 @@ class Domain extends Model
      */
     public static function getPublicDomains(): array
     {
-        return self::withEnvTenant()
+        return self::withEnvTenantContext()
             ->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
             ->get(['namespace'])->pluck('namespace')->toArray();
     }
@@ -417,6 +417,43 @@ class Domain extends Model
         }
 
         $this->save();
+    }
+
+    /**
+     * List the users of a domain, so long as the domain is not a public registration domain.
+     *
+     * @return array
+     */
+    public function users(): array
+    {
+        if ($this->isPublic()) {
+            return [];
+        }
+
+        $wallet = $this->wallet();
+
+        if (!$wallet) {
+            return [];
+        }
+
+        $mailboxSKU = \App\Sku::withObjectTenantContext($this)->where('title', 'mailbox')->first();
+
+        if (!$mailboxSKU) {
+            \Log::error("No mailbox SKU available.");
+            return [];
+        }
+
+        $entitlements = $wallet->entitlements()
+            ->where('entitleable_type', \App\User::class)
+            ->where('sku_id', $mailboxSKU->id)->get();
+
+        $users = [];
+
+        foreach ($entitlements as $entitlement) {
+            $users[] = $entitlement->entitleable;
+        }
+
+        return $users;
     }
 
     /**

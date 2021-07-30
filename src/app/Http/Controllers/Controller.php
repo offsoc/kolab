@@ -50,6 +50,29 @@ class Controller extends BaseController
     }
 
     /**
+     * Check if current user has access to the specified object
+     * by being an admin or existing in the same tenant context.
+     *
+     * @param ?object $object Model object
+     *
+     * @return bool
+     */
+    protected function checkTenant(object $object = null): bool
+    {
+        if (empty($object)) {
+            return false;
+        }
+
+        $user = $this->guard()->user();
+
+        if ($user->role == 'admin') {
+            return true;
+        }
+
+        return $object->tenant_id == $user->tenant_id;
+    }
+
+    /**
      * Get the guard to be used during authentication.
      *
      * @return \Illuminate\Contracts\Auth\Guard

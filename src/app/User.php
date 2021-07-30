@@ -312,7 +312,7 @@ class User extends Authenticatable implements JWTSubject
         if ($this->tenant_id) {
             $domains = Domain::where('tenant_id', $this->tenant_id);
         } else {
-            $domains = Domain::withEnvTenant();
+            $domains = Domain::withEnvTenantContext();
         }
 
         $domains = $domains->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
@@ -462,9 +462,9 @@ class User extends Authenticatable implements JWTSubject
      *
      * @return bool True if specified SKU entitlement exists
      */
-    public function hasSku($title): bool
+    public function hasSku(string $title): bool
     {
-        $sku = Sku::where('title', $title)->first();
+        $sku = Sku::withObjectTenantContext($this)->where('title', $title)->first();
 
         if (!$sku) {
             return false;

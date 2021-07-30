@@ -8,26 +8,32 @@ use App\Http\Controllers\Controller;
 class DiscountsController extends Controller
 {
     /**
-     * Returns (active) discounts defined in the system.
+     * Returns (active) discounts defined in the system for the user context.
+     *
+     * @param int $id User identifier
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
-    public function index()
+    public function userDiscounts($id)
     {
-        $discounts = [];
+        $user = \App\User::find($id);
 
-        Discount::withEnvTenant()
+        if (!$this->checkTenant($user)) {
+            return $this->errorResponse(404);
+        }
+
+        $discounts = Discount::withObjectTenantContext($user)
             ->where('active', true)
             ->orderBy('discount')
             ->get()
-            ->map(function ($discount) use (&$discounts) {
+            ->map(function ($discount) {
                 $label = $discount->discount . '% - ' . $discount->description;
 
                 if ($discount->code) {
                     $label .= " [{$discount->code}]";
                 }
 
-                $discounts[] = [
+                return [
                     'id' => $discount->id,
                     'discount' => $discount->discount,
                     'code' => $discount->code,

@@ -47,7 +47,7 @@ class DashboardTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', 'jeroen', true)
+                ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertFocused('@search input')
                 ->assertMissing('@search table');
@@ -105,7 +105,7 @@ class DashboardTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', 'jeroen', true)
+                ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertFocused('@search input')
                 ->assertMissing('@search table');

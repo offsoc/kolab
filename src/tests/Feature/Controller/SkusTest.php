@@ -44,7 +44,7 @@ class SkusTest extends TestCase
         $response->assertStatus(401);
 
         $user = $this->getTestUser('john@kolab.org');
-        $sku = Sku::where('title', 'mailbox')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
 
         // Create an sku for another tenant, to make sure it is not included in the result
         $nsku = Sku::create([
@@ -123,7 +123,7 @@ class SkusTest extends TestCase
                 'enabled' => true,
                 'readonly' => true,
                 'range' => [
-                    'min' => 2,
+                    'min' => 5,
                     'max' => 100,
                     'unit' => 'GB',
                 ]
@@ -190,7 +190,7 @@ class SkusTest extends TestCase
         $this->assertSame('domain', $json[0]['type']);
 
         // Test inclusion of beta SKUs
-        $sku = Sku::where('title', 'beta')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
         $user->assignSku($sku);
         $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus?type=user");
         $response->assertStatus(200);
@@ -226,7 +226,7 @@ class SkusTest extends TestCase
      */
     protected function assertSkuElement($sku_title, $result, $other = []): void
     {
-        $sku = Sku::where('title', $sku_title)->first();
+        $sku = Sku::withEnvTenantContext()->where('title', $sku_title)->first();
 
         $this->assertSame($sku->id, $result['id']);
         $this->assertSame($sku->title, $result['title']);

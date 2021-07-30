@@ -92,8 +92,8 @@ class UserTest extends TestCase
         $john = $this->getTestUser('john@kolab.org');
         $ned = $this->getTestUser('ned@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
-        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
         $domain = $this->getTestDomain('kolab.org');
 
@@ -162,8 +162,8 @@ class UserTest extends TestCase
         $john = $this->getTestUser('john@kolab.org');
         $ned = $this->getTestUser('ned@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
-        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
         $domain = $this->getTestDomain('kolab.org');
 
@@ -297,6 +297,7 @@ class UserTest extends TestCase
     public function testDomains(): void
     {
         $user = $this->getTestUser('john@kolab.org');
+
         $domain = $this->getTestDomain('useraccount.com', [
                 'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
                 'type' => Domain::TYPE_PUBLIC,
@@ -317,12 +318,26 @@ class UserTest extends TestCase
         $this->assertNotContains('kolab.org', $domains);
 
         // Public domains of other tenants should not be returned
-        $domain->tenant_id = 2;
+        $tenant = \App\Tenant::where('id', '!=', \config('app.tenant_id'))->first();
+        $domain->tenant_id = $tenant->id;
         $domain->save();
 
         $domains = collect($user->domains())->pluck('namespace')->all();
 
         $this->assertNotContains($domain->namespace, $domains);
+    }
+
+    /**
+     * Test User::hasSku() method
+     */
+    public function testHasSku(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+
+        $this->assertTrue($john->hasSku('mailbox'));
+        $this->assertTrue($john->hasSku('storage'));
+        $this->assertFalse($john->hasSku('beta'));
+        $this->assertFalse($john->hasSku('unknown'));
     }
 
     public function testUserQuota(): void
@@ -332,7 +347,7 @@ class UserTest extends TestCase
         //       other entitlements() related cases.
 
         $user = $this->getTestUser('john@kolab.org');
-        $storage_sku = \App\Sku::where('title', 'storage')->first();
+        $storage_sku = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
         $count = 0;
 
@@ -342,7 +357,7 @@ class UserTest extends TestCase
             }
         }
 
-        $this->assertTrue($count == 2);
+        $this->assertTrue($count == 5);
     }
 
     /**
@@ -353,12 +368,12 @@ class UserTest extends TestCase
         Queue::fake();
 
         $user = $this->getTestUser('user-test@' . \config('app.domain'));
-        $package = \App\Package::where('title', 'kolab')->first();
+        $package = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $user->assignPackage($package);
 
         $id = $user->id;
 
-        $this->assertCount(4, $user->entitlements()->get());
+        $this->assertCount(7, $user->entitlements()->get());
 
         $user->delete();
 
@@ -380,8 +395,8 @@ class UserTest extends TestCase
         $userA = $this->getTestUser('UserAccountA@UserAccount.com');
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
         $userC = $this->getTestUser('UserAccountC@UserAccount.com');
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
-        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $domain = $this->getTestDomain('UserAccount.com', [
                 'status' => Domain::STATUS_NEW,
                 'type' => Domain::TYPE_HOSTED,
@@ -399,9 +414,9 @@ class UserTest extends TestCase
         $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domain->id);
         $entitlementsGroup = \App\Entitlement::where('entitleable_id', $group->id);
 
-        $this->assertSame(4, $entitlementsA->count());
-        $this->assertSame(4, $entitlementsB->count());
-        $this->assertSame(4, $entitlementsC->count());
+        $this->assertSame(7, $entitlementsA->count());
+        $this->assertSame(7, $entitlementsB->count());
+        $this->assertSame(7, $entitlementsC->count());
         $this->assertSame(1, $entitlementsDomain->count());
         $this->assertSame(1, $entitlementsGroup->count());
 
@@ -447,7 +462,7 @@ class UserTest extends TestCase
     {
         Queue::fake();
 
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $userA = $this->getTestUser('UserAccountA@UserAccount.com');
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
         $userA->assignPackage($package_kolab, $userB);
@@ -607,8 +622,8 @@ class UserTest extends TestCase
                 'status' => User::STATUS_LDAP_READY | User::STATUS_IMAP_READY | User::STATUS_SUSPENDED,
         ]);
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
-        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $domainA = $this->getTestDomain('UserAccount.com', [
                 'status' => Domain::STATUS_NEW,
                 'type' => Domain::TYPE_HOSTED,
@@ -622,7 +637,7 @@ class UserTest extends TestCase
         $domainB->assignPackage($package_domain, $userA);
         $userA->assignPackage($package_kolab, $userB);
 
-        $storage_sku = \App\Sku::where('title', 'storage')->first();
+        $storage_sku = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
         $now = \Carbon\Carbon::now();
         $wallet_id = $userA->wallets->first()->id;
 
@@ -679,7 +694,7 @@ class UserTest extends TestCase
         $this->assertFalse($domainA->fresh()->trashed());
 
         // Assert entitlements
-        $this->assertSame(4, $entitlementsA->count()); // mailbox + groupware + 2 x storage
+        $this->assertSame(7, $entitlementsA->count()); // mailbox + groupware + 5 x storage
         $this->assertTrue($ent1->fresh()->trashed());
         $entitlementsA->get()->each(function ($ent) {
             $this->assertTrue($ent->updated_at->greaterThan(\Carbon\Carbon::now()->subSeconds(5)));

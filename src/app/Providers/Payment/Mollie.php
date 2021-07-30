@@ -583,6 +583,7 @@ class Mollie extends \App\Providers\PaymentProvider
         );
 
         $availableMethods = [];
+
         foreach ($providerMethods as $method) {
             $availableMethods[$method->id] = [
                 'id' => $method->id,

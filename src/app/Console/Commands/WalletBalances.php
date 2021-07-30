@@ -29,7 +29,7 @@ class WalletBalances extends Command
     {
         $wallets = \App\Wallet::select('wallets.*')
             ->join('users', 'users.id', '=', 'wallets.user_id')
-            ->withEnvTenant('users')
+            ->withEnvTenantContext('users')
             ->all();
 
         $wallets->each(

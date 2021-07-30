@@ -28,7 +28,7 @@ class InvitationsController extends Controller
      */
     public function destroy($id)
     {
-        $invitation = SignupInvitation::withUserTenant()->find($id);
+        $invitation = SignupInvitation::withSubjectTenantContext()->find($id);
 
         if (empty($invitation)) {
             return $this->errorResponse(404);
@@ -66,7 +66,7 @@ class InvitationsController extends Controller
         $page = intval(request()->input('page')) ?: 1;
         $hasMore = false;
 
-        $result = SignupInvitation::withUserTenant()
+        $result = SignupInvitation::withSubjectTenantContext()
             ->latest()
             ->limit($pageSize + 1)
             ->offset($pageSize * ($page - 1));
@@ -108,7 +108,7 @@ class InvitationsController extends Controller
      */
     public function resend($id)
     {
-        $invitation = SignupInvitation::withUserTenant()->find($id);
+        $invitation = SignupInvitation::withSubjectTenantContext()->find($id);
 
         if (empty($invitation)) {
             return $this->errorResponse(404);
@@ -138,6 +138,9 @@ class InvitationsController extends Controller
     {
         $errors = [];
         $invitations = [];
+
+        $envTenantId = \config('app.tenant_id');
+        $subjectTenantId = auth()->user()->tenant_id;
 
         if (!empty($request->file) && is_object($request->file)) {
             // Expected a text/csv file with multiple email addresses
@@ -194,8 +197,14 @@ class InvitationsController extends Controller
 
         $count = 0;
         foreach ($invitations as $idx => $invitation) {
-            SignupInvitation::create($invitation);
+            $inv = SignupInvitation::create($invitation);
             $count++;
+
+            // Set the invitation tenant to the reseller tenant
+            if ($envTenantId != $subjectTenantId) {
+                $inv->tenant_id = $subjectTenantId;
+                $inv->save();
+            }
         }
 
         return response()->json([

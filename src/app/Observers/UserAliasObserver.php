@@ -30,6 +30,13 @@ class UserAliasObserver
             return false;
         }
 
+        if ($alias->user) {
+            if ($alias->user->tenant_id != $domain->tenant_id) {
+                \Log::error("Reseller for user '{$alias->user->email}' and domain '{$domain->namespace}' differ.");
+                return false;
+            }
+        }
+
         return true;
     }
 

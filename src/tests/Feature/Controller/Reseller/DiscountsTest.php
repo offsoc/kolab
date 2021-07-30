@@ -14,10 +14,6 @@ class DiscountsTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-
-        $tenant = Tenant::where('title', 'Sample Tenant')->first();
-        $tenant->discounts()->delete();
-
         self::useResellerUrl();
     }
 
@@ -26,82 +22,71 @@ class DiscountsTest extends TestCase
      */
     public function tearDown(): void
     {
-        \config(['app.tenant_id' => 1]);
-
-        $tenant = Tenant::where('title', 'Sample Tenant')->first();
-        $tenant->discounts()->delete();
-
         parent::tearDown();
     }
 
     /**
-     * Test listing discounts (/api/v4/discounts)
+     * Test listing discounts (GET /api/v4/users/{id}/discounts)
      */
-    public function testIndex(): void
+    public function testUserDiscounts(): void
     {
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller = $this->getTestUser('reseller@reseller.com');
-        $reseller2 = $this->getTestUser('reseller@kolabnow.com');
-        $tenant = Tenant::where('title', 'Sample Tenant')->first();
-
-        \config(['app.tenant_id' => $tenant->id]);
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
 
         // Non-admin user
-        $response = $this->actingAs($user)->get("api/v4/discounts");
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/discounts");
         $response->assertStatus(403);
 
         // Admin user
-        $response = $this->actingAs($admin)->get("api/v4/discounts");
+        $response = $this->actingAs($admin)->get("api/v4/users/{$user->id}/discounts");
         $response->assertStatus(403);
 
         // Reseller user, but different tenant
-        $response = $this->actingAs($reseller2)->get("api/v4/discounts");
-        $response->assertStatus(403);
+        $response = $this->actingAs($reseller2)->get("api/v4/users/{$user->id}/discounts");
+        $response->assertStatus(404);
 
-        // Reseller (empty list)
-        $response = $this->actingAs($reseller)->get("api/v4/discounts");
+        // Reseller
+        $response = $this->actingAs($reseller1)->get("api/v4/users/{$user->id}/discounts");
         $response->assertStatus(200);
 
         $json = $response->json();
 
-        $this->assertSame(0, $json['count']);
+        $discount_test = Discount::where('code', 'TEST')->first();
+        $discount_free = Discount::where('discount', 100)->first();
 
-        // Add some discounts
-        $discount_test = Discount::create([
-                'description' => 'Test reseller voucher',
-                'code' => 'RESELLER-TEST',
-                'discount' => 10,
-                'active' => true,
-        ]);
-
-        $discount_free = Discount::create([
-                'description' => 'Free account',
-                'discount' => 100,
-                'active' => true,
-        ]);
-
-        $discount_test->tenant_id = $tenant->id;
-        $discount_test->save();
-        $discount_free->tenant_id = $tenant->id;
-        $discount_free->save();
-
-        $response = $this->actingAs($reseller)->get("api/v4/discounts");
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertSame(2, $json['count']);
+        $this->assertSame(3, $json['count']);
         $this->assertSame($discount_test->id, $json['list'][0]['id']);
         $this->assertSame($discount_test->discount, $json['list'][0]['discount']);
         $this->assertSame($discount_test->code, $json['list'][0]['code']);
         $this->assertSame($discount_test->description, $json['list'][0]['description']);
-        $this->assertSame('10% - Test reseller voucher [RESELLER-TEST]', $json['list'][0]['label']);
+        $this->assertSame('10% - Test voucher [TEST]', $json['list'][0]['label']);
 
-        $this->assertSame($discount_free->id, $json['list'][1]['id']);
-        $this->assertSame($discount_free->discount, $json['list'][1]['discount']);
-        $this->assertSame($discount_free->code, $json['list'][1]['code']);
-        $this->assertSame($discount_free->description, $json['list'][1]['description']);
-        $this->assertSame('100% - Free account', $json['list'][1]['label']);
+        $this->assertSame($discount_free->id, $json['list'][2]['id']);
+        $this->assertSame($discount_free->discount, $json['list'][2]['discount']);
+        $this->assertSame($discount_free->code, $json['list'][2]['code']);
+        $this->assertSame($discount_free->description, $json['list'][2]['description']);
+        $this->assertSame('100% - Free Account', $json['list'][2]['label']);
+
+        // A user in another tenant's user
+        $user = $this->getTestUser('user@sample-tenant.dev-local');
+
+        $response = $this->actingAs($reseller1)->get("api/v4/users/{$user->id}/discounts");
+        $response->assertStatus(404);
+
+        $response = $this->actingAs($reseller2)->get("api/v4/users/{$user->id}/discounts");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $discount = Discount::withObjectTenantContext($user)->where('discount', 10)->first();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertSame($discount->id, $json['list'][0]['id']);
+        $this->assertSame($discount->discount, $json['list'][0]['discount']);
+        $this->assertSame($discount->code, $json['list'][0]['code']);
+        $this->assertSame($discount->description, $json['list'][0]['description']);
+        $this->assertSame('10% - ' . $discount->description, $json['list'][0]['label']);
     }
 }

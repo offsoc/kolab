@@ -15,10 +15,14 @@ class HorizonTest extends TestCase
         $response->assertStatus(200);
     }
 
+    /*
     public function testRegularAccess()
     {
+        $this->useRegularUrl();
+
         $response = $this->get('horizon/dashboard');
 
         $response->assertStatus(404);
     }
+    */
 }

@@ -36,8 +36,8 @@ class GroupsTest extends TestCase
     {
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
-        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $group = $this->getTestGroup('group-test@kolab.org');
         $group->assignToWallet($user->wallets->first());
 
@@ -47,10 +47,6 @@ class GroupsTest extends TestCase
 
         // Admin user
         $response = $this->actingAs($admin)->get("api/v4/groups");
-        $response->assertStatus(403);
-
-        // Reseller from a different tenant
-        $response = $this->actingAs($reseller2)->get("api/v4/groups");
         $response->assertStatus(403);
 
         // Search with no search criteria
@@ -102,9 +98,6 @@ class GroupsTest extends TestCase
         $this->assertSame(0, $json['count']);
         $this->assertCount(0, $json['list']);
 
-        // Test unauth access to other tenant's groups
-        \config(['app.tenant_id' => 2]);
-
         $response = $this->actingAs($reseller2)->get("api/v4/groups?search=kolab.org");
         $response->assertStatus(200);
 
@@ -129,8 +122,8 @@ class GroupsTest extends TestCase
     {
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
         $user = $this->getTestUser('test1@domainscontroller.com');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
-        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $group = $this->getTestGroup('group-test@kolab.org');
         $group->assignToWallet($user->wallets->first());
 
@@ -142,7 +135,7 @@ class GroupsTest extends TestCase
         $response->assertStatus(403);
 
         $response = $this->actingAs($reseller2)->get("api/v4/groups/{$group->id}");
-        $response->assertStatus(403);
+        $response->assertStatus(404);
 
         $response = $this->actingAs($reseller1)->get("api/v4/groups/{$group->id}");
         $response->assertStatus(200);
@@ -163,7 +156,7 @@ class GroupsTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
         $group = $this->getTestGroup('group-test@kolab.org');
         $group->assignToWallet($user->wallets->first());
 
@@ -179,7 +172,7 @@ class GroupsTest extends TestCase
     {
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
 
         // Test unauthorized access to reseller API
         $response = $this->actingAs($user)->post("/api/v4/groups", []);
@@ -202,8 +195,8 @@ class GroupsTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
-        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $group = $this->getTestGroup('group-test@kolab.org');
         $group->assignToWallet($user->wallets->first());
 
@@ -233,9 +226,6 @@ class GroupsTest extends TestCase
 
         $this->assertTrue($group->fresh()->isSuspended());
 
-        // Test unauth access to other tenant's groups
-        \config(['app.tenant_id' => 2]);
-
         $response = $this->actingAs($reseller2)->post("/api/v4/groups/{$group->id}/suspend", []);
         $response->assertStatus(404);
     }
@@ -249,8 +239,8 @@ class GroupsTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
-        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $group = $this->getTestGroup('group-test@kolab.org');
         $group->assignToWallet($user->wallets->first());
         $group->status |= Group::STATUS_SUSPENDED;
@@ -281,9 +271,6 @@ class GroupsTest extends TestCase
         $this->assertCount(2, $json);
 
         $this->assertFalse($group->fresh()->isSuspended());
-
-        // Test unauth access to other tenant's groups
-        \config(['app.tenant_id' => 2]);
 
         $response = $this->actingAs($reseller2)->post("/api/v4/groups/{$group->id}/unsuspend", []);
         $response->assertStatus(404);

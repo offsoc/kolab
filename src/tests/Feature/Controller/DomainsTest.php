@@ -36,7 +36,7 @@ class DomainsTest extends TestCase
      */
     public function testConfirm(): void
     {
-        $sku_domain = Sku::where('title', 'domain-hosting')->first();
+        $sku_domain = Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $john = $this->getTestUser('john@kolab.org');
         $ned = $this->getTestUser('ned@kolab.org');
         $user = $this->getTestUser('test1@domainscontroller.com');
@@ -129,7 +129,7 @@ class DomainsTest extends TestCase
      */
     public function testShow(): void
     {
-        $sku_domain = Sku::where('title', 'domain-hosting')->first();
+        $sku_domain = Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $user = $this->getTestUser('test1@domainscontroller.com');
         $domain = $this->getTestDomain('domainscontroller.com', [
                 'status' => Domain::STATUS_NEW,

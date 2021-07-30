@@ -37,7 +37,7 @@ class StatsTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-stats', 'Stats')
                 ->click('@links .link-stats')

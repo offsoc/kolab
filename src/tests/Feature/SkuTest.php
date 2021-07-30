@@ -32,10 +32,7 @@ class SkuTest extends TestCase
 
         $wallet = $user->wallets()->first();
 
-        $package = Package::where('title', 'lite')->first();
-
-        $sku_mailbox = Sku::where('title', 'mailbox')->first();
-        $sku_storage = Sku::where('title', 'storage')->first();
+        $package = Package::withEnvTenantContext()->where('title', 'lite')->first();
 
         $user = $user->assignPackage($package);
 
@@ -48,17 +45,17 @@ class SkuTest extends TestCase
 
     public function testSkuEntitlements(): void
     {
-        $this->assertCount(4, Sku::where('title', 'mailbox')->first()->entitlements);
+        $this->assertCount(5, Sku::withEnvTenantContext()->where('title', 'mailbox')->first()->entitlements);
     }
 
     public function testSkuPackages(): void
     {
-        $this->assertCount(2, Sku::where('title', 'mailbox')->first()->packages);
+        $this->assertCount(2, Sku::withEnvTenantContext()->where('title', 'mailbox')->first()->packages);
     }
 
     public function testSkuHandlerDomainHosting(): void
     {
-        $sku = Sku::where('title', 'domain-hosting')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
 
         $entitlement = $sku->entitlements->first();
 
@@ -70,7 +67,7 @@ class SkuTest extends TestCase
 
     public function testSkuHandlerMailbox(): void
     {
-        $sku = Sku::where('title', 'mailbox')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
 
         $entitlement = $sku->entitlements->first();
 
@@ -82,7 +79,7 @@ class SkuTest extends TestCase
 
     public function testSkuHandlerStorage(): void
     {
-        $sku = Sku::where('title', 'storage')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
         $entitlement = $sku->entitlements->first();
 
@@ -94,16 +91,14 @@ class SkuTest extends TestCase
 
     public function testSkuTenant(): void
     {
-        $sku = Sku::where('title', 'storage')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
         $tenant = $sku->tenant()->first();
 
         $this->assertInstanceof(\App\Tenant::class, $tenant);
-        $this->assertSame(1, $tenant->id);
 
         $tenant = $sku->tenant;
 
         $this->assertInstanceof(\App\Tenant::class, $tenant);
-        $this->assertSame(1, $tenant->id);
     }
 }

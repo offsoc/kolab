@@ -63,54 +63,96 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Register some template helpers
-        Blade::directive('theme_asset', function ($path) {
-            $path = trim($path, '/\'"');
-            return "<?php echo secure_asset('themes/' . \$env['app.theme'] . '/' . '$path'); ?>";
-        });
-
-        // Query builder 'withEnvTenant' macro
-        Builder::macro('withEnvTenant', function (string $table = null) {
-            $tenant_id = \config('app.tenant_id');
-
-            if ($tenant_id) {
-                /** @var Builder $this */
-                return $this->where(($table ? "$table." : '') . 'tenant_id', $tenant_id);
+        Blade::directive(
+            'theme_asset',
+            function ($path) {
+                $path = trim($path, '/\'"');
+                return "<?php echo secure_asset('themes/' . \$env['app.theme'] . '/' . '$path'); ?>";
             }
+        );
 
-            /** @var Builder $this */
-            return $this->whereNull(($table ? "$table." : '') . 'tenant_id');
-        });
+        Builder::macro(
+            'withEnvTenantContext',
+            function (string $table = null) {
+                $tenantId = \config('app.tenant_id');
 
-        // Query builder 'withUserTenant' macro
-        Builder::macro('withUserTenant', function (string $table = null) {
-            $tenant_id = auth()->user()->tenant_id;
+                if ($tenantId) {
+                    /** @var Builder $this */
+                    return $this->where(($table ? "$table." : "") . "tenant_id", $tenantId);
+                }
 
-            if ($tenant_id) {
                 /** @var Builder $this */
-                return $this->where(($table ? "$table." : '') . 'tenant_id', $tenant_id);
+                return $this->whereNull(($table ? "$table." : "") . "tenant_id");
             }
+        );
 
-            /** @var Builder $this */
-            return $this->whereNull(($table ? "$table." : '') . 'tenant_id');
-        });
+        Builder::macro(
+            'withObjectTenantContext',
+            function (object $object, string $table = null) {
+                // backend artisan cli
+                if (app()->runningInConsole()) {
+                    /** @var Builder $this */
+                    return $this->where(($table ? "$table." : "") . "tenant_id", $object->tenant_id);
+                }
+
+                $subject = auth()->user();
+
+                if ($subject->role == "admin") {
+                    /** @var Builder $this */
+                    return $this->where(($table ? "$table." : "") . "tenant_id", $object->tenant_id);
+                }
+
+                $tenantId = $subject->tenant_id;
+
+                if ($tenantId) {
+                    /** @var Builder $this */
+                    return $this->where(($table ? "$table." : "") . "tenant_id", $tenantId);
+                }
+
+                /** @var Builder $this */
+                return $this->whereNull(($table ? "$table." : "") . "tenant_id");
+            }
+        );
+
+        Builder::macro(
+            'withSubjectTenantContext',
+            function (string $table = null) {
+                if ($user = auth()->user()) {
+                    $tenantId = $user->tenant_id;
+                } else {
+                    $tenantId = \config('app.tenant_id');
+                }
+
+                if ($tenantId) {
+                    /** @var Builder $this */
+                    return $this->where(($table ? "$table." : "") . "tenant_id", $tenantId);
+                }
+
+                /** @var Builder $this */
+                return $this->whereNull(($table ? "$table." : "") . "tenant_id");
+            }
+        );
 
         // Query builder 'whereLike' mocro
-        Builder::macro('whereLike', function (string $column, string $search, int $mode = 0) {
-            $search = addcslashes($search, '%_');
+        Builder::macro(
+            'whereLike',
+            function (string $column, string $search, int $mode = 0) {
+                $search = addcslashes($search, '%_');
 
-            switch ($mode) {
-                case 2:
-                    $search .= '%';
-                    break;
-                case 1:
-                    $search = '%' . $search;
-                    break;
-                default:
-                    $search = '%' . $search . '%';
+                switch ($mode) {
+                    case 2:
+                        $search .= '%';
+                        break;
+                    case 1:
+                        $search = '%' . $search;
+                        break;
+                    default:
+                        $search = '%' . $search . '%';
+                }
+
+                /** @var Builder $this */
+                return $this->where($column, 'like', $search);
             }
-
-            /** @var Builder $this */
-            return $this->where($column, 'like', $search);
-        });
+        );
     }
 }

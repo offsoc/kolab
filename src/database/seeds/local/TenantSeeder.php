@@ -14,16 +14,24 @@ class TenantSeeder extends Seeder
      */
     public function run()
     {
-        if (!Tenant::find(1)) {
-            Tenant::create([
-                    'title' => 'Kolab Now'
-            ]);
-        }
+        if (\config('app.tenant_id')) {
+            $tenant = Tenant::where(['title' => 'Kolab Now'])->first();
 
-        if (!Tenant::find(2)) {
-            Tenant::create([
-                    'title' => 'Sample Tenant'
-            ]);
+            if (!$tenant) {
+                Tenant::create(['title' => 'Kolab Now']);
+            }
+
+            $tenant = Tenant::where(['title' => 'Sample Tenant'])->first();
+
+            if (!$tenant) {
+                $tenant = Tenant::create(['title' => 'Sample Tenant']);
+            }
+
+            $tenant = Tenant::where(['title' => 'kanarip.ch'])->first();
+
+            if (!$tenant) {
+                $tenant = Tenant::create(['title' => 'kanarip.ch']);
+            }
         }
     }
 }

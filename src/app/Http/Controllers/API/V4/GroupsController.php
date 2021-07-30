@@ -32,9 +32,9 @@ class GroupsController extends Controller
      */
     public function destroy($id)
     {
-        $group = Group::withEnvTenant()->find($id);
+        $group = Group::find($id);
 
-        if (empty($group)) {
+        if (!$this->checkTenant($group)) {
             return $this->errorResponse(404);
         }
 
@@ -96,9 +96,9 @@ class GroupsController extends Controller
      */
     public function show($id)
     {
-        $group = Group::withEnvTenant()->find($id);
+        $group = Group::find($id);
 
-        if (empty($group)) {
+        if (!$this->checkTenant($group)) {
             return $this->errorResponse(404);
         }
 
@@ -123,9 +123,9 @@ class GroupsController extends Controller
      */
     public function status($id)
     {
-        $group = Group::withEnvTenant()->find($id);
+        $group = Group::find($id);
 
-        if (empty($group)) {
+        if (!$this->checkTenant($group)) {
             return $this->errorResponse(404);
         }
 
@@ -308,9 +308,9 @@ class GroupsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $group = Group::withEnvTenant()->find($id);
+        $group = Group::find($id);
 
-        if (empty($group)) {
+        if (!$this->checkTenant($group)) {
             return $this->errorResponse(404);
         }
 

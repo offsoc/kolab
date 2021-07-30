@@ -43,12 +43,12 @@ class EntitlementTest extends TestCase
      */
     public function testCostsPerDay(): void
     {
-        // 444
-        // 28 days: 15.86
-        // 31 days: 14.32
+        // 500
+        // 28 days: 17.86
+        // 31 days: 16.13
         $user = $this->getTestUser('entitlement-test@kolabnow.com');
-        $package = Package::where('title', 'kolab')->first();
-        $mailbox = Sku::where('title', 'mailbox')->first();
+        $package = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $mailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
 
         $user->assignPackage($package);
 
@@ -56,8 +56,8 @@ class EntitlementTest extends TestCase
 
         $costsPerDay = $entitlement->costsPerDay();
 
-        $this->assertTrue($costsPerDay < 15.86);
-        $this->assertTrue($costsPerDay > 14.32);
+        $this->assertTrue($costsPerDay < 17.86);
+        $this->assertTrue($costsPerDay > 16.31);
     }
 
     /**
@@ -66,11 +66,11 @@ class EntitlementTest extends TestCase
      */
     public function testEntitlements(): void
     {
-        $packageDomain = Package::where('title', 'domain-hosting')->first();
-        $packageKolab = Package::where('title', 'kolab')->first();
+        $packageDomain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $packageKolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
 
-        $skuDomain = Sku::where('title', 'domain-hosting')->first();
-        $skuMailbox = Sku::where('title', 'mailbox')->first();
+        $skuDomain = Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $skuMailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
 
         $owner = $this->getTestUser('entitlement-test@kolabnow.com');
         $user = $this->getTestUser('entitled-user@custom-domain.com');
@@ -89,10 +89,10 @@ class EntitlementTest extends TestCase
 
         $wallet = $owner->wallets->first();
 
-        $this->assertCount(4, $owner->entitlements()->get());
+        $this->assertCount(7, $owner->entitlements()->get());
         $this->assertCount(1, $skuDomain->entitlements()->where('wallet_id', $wallet->id)->get());
         $this->assertCount(2, $skuMailbox->entitlements()->where('wallet_id', $wallet->id)->get());
-        $this->assertCount(9, $wallet->entitlements);
+        $this->assertCount(15, $wallet->entitlements);
 
         $this->backdateEntitlements(
             $owner->entitlements,
@@ -111,14 +111,14 @@ class EntitlementTest extends TestCase
     {
         $user = $this->getTestUser('entitlement-test@kolabnow.com');
 
-        $package = \App\Package::where('title', 'kolab')->first();
+        $package = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
 
         $user->assignPackage($package);
 
         $wallet = $user->wallets()->first();
         $this->assertNotNull($wallet);
 
-        $sku = \App\Sku::where('title', 'mailbox')->first();
+        $sku = \App\Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
 
         $entitlement = Entitlement::where('wallet_id', $wallet->id)
             ->where('sku_id', $sku->id)->first();
@@ -135,8 +135,8 @@ class EntitlementTest extends TestCase
      */
     public function testEntitlementTitle(): void
     {
-        $packageDomain = Package::where('title', 'domain-hosting')->first();
-        $packageKolab = Package::where('title', 'kolab')->first();
+        $packageDomain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $packageKolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $user = $this->getTestUser('entitled-user@custom-domain.com');
         $group = $this->getTestGroup('test-group@custom-domain.com');
 
@@ -153,9 +153,9 @@ class EntitlementTest extends TestCase
         $user->assignPackage($packageKolab);
         $group->assignToWallet($wallet);
 
-        $sku_mailbox = \App\Sku::where('title', 'mailbox')->first();
-        $sku_group = \App\Sku::where('title', 'group')->first();
-        $sku_domain = \App\Sku::where('title', 'domain-hosting')->first();
+        $sku_mailbox = \App\Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $sku_group = \App\Sku::withEnvTenantContext()->where('title', 'group')->first();
+        $sku_domain = \App\Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
 
         $entitlement = Entitlement::where('wallet_id', $wallet->id)
             ->where('sku_id', $sku_mailbox->id)->first();

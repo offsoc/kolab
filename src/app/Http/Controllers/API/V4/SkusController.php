@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API\V4;
 use App\Http\Controllers\Controller;
 use App\Sku;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class SkusController extends Controller
 {
@@ -54,7 +53,7 @@ class SkusController extends Controller
     public function index()
     {
         // Note: Order by title for consistent ordering in tests
-        $skus = Sku::withEnvTenant()->where('active', true)->orderBy('title')->get();
+        $skus = Sku::withSubjectTenantContext()->where('active', true)->orderBy('title')->get();
 
         $response = [];
 
@@ -120,13 +119,13 @@ class SkusController extends Controller
      */
     public function userSkus($id)
     {
-        $user = \App\User::withEnvTenant()->find($id);
+        $user = \App\User::find($id);
 
-        if (empty($user)) {
+        if (!$this->checkTenant($user)) {
             return $this->errorResponse(404);
         }
 
-        if (!Auth::guard()->user()->canRead($user)) {
+        if (!$this->guard()->user()->canRead($user)) {
             return $this->errorResponse(403);
         }
 
@@ -134,7 +133,7 @@ class SkusController extends Controller
         $response = [];
 
         // Note: Order by title for consistent ordering in tests
-        $skus = Sku::withEnvTenant()->orderBy('title')->get();
+        $skus = Sku::withObjectTenantContext($user)->orderBy('title')->get();
 
         foreach ($skus as $sku) {
             if (!class_exists($sku->handler_class)) {

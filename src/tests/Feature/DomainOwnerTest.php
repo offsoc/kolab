@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Package;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -42,11 +41,13 @@ class DomainOwnerTest extends TestCase
             ]
         );
 
-        $package = Package::where('title', 'kolab')->first();
+        $package = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $mailbox_sku = \App\Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
 
         $john->assignPackage($package, $jane);
 
         // assert jane has a mailbox entitlement
-        $this->assertTrue($jane->entitlements->count() == 4);
+        $this->assertCount(7, $jane->entitlements);
+        $this->assertCount(1, $jane->entitlements()->where('sku_id', $mailbox_sku->id)->get());
     }
 }

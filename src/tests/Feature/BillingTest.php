@@ -27,10 +27,10 @@ class BillingTest extends TestCase
         $this->deleteTestUser('jane@kolabnow.com');
         $this->deleteTestUser('jack@kolabnow.com');
 
-        \App\Package::where('title', 'kolab-kube')->delete();
+        \App\Package::withEnvTenantContext()->where('title', 'kolab-kube')->delete();
 
         $this->user = $this->getTestUser('jane@kolabnow.com');
-        $this->package = \App\Package::where('title', 'kolab')->first();
+        $this->package = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $this->user->assignPackage($this->package);
 
         $this->wallet = $this->user->wallets->first();
@@ -43,7 +43,7 @@ class BillingTest extends TestCase
         $this->deleteTestUser('jane@kolabnow.com');
         $this->deleteTestUser('jack@kolabnow.com');
 
-        \App\Package::where('title', 'kolab-kube')->delete();
+        \App\Package::withEnvTenantContext()->where('title', 'kolab-kube')->delete();
 
         parent::tearDown();
     }
@@ -53,7 +53,7 @@ class BillingTest extends TestCase
      */
     public function testTouchAndGo(): void
     {
-        $this->assertCount(4, $this->wallet->entitlements);
+        $this->assertCount(7, $this->wallet->entitlements);
 
         $this->assertEquals(0, $this->wallet->expectedCharges());
 
@@ -61,7 +61,7 @@ class BillingTest extends TestCase
 
         $this->assertCount(0, $this->wallet->fresh()->entitlements->where('deleted_at', null));
 
-        $this->assertCount(4, $this->wallet->entitlements);
+        $this->assertCount(7, $this->wallet->entitlements);
     }
 
     /**
@@ -87,7 +87,7 @@ class BillingTest extends TestCase
             Carbon::now()->subMonthsWithoutOverflow(1)
         );
 
-        $this->assertEquals(999, $this->wallet->expectedCharges());
+        $this->assertEquals(990, $this->wallet->expectedCharges());
     }
 
     /**
@@ -100,7 +100,7 @@ class BillingTest extends TestCase
             Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
         );
 
-        $this->assertEquals(999, $this->wallet->expectedCharges());
+        $this->assertEquals(990, $this->wallet->expectedCharges());
     }
 
     /**
@@ -114,9 +114,9 @@ class BillingTest extends TestCase
             Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
         );
 
-        $this->assertEquals(999, $this->wallet->expectedCharges());
+        $this->assertEquals(990, $this->wallet->expectedCharges());
 
-        $sku = \App\Sku::where(['title' => 'storage'])->first();
+        $sku = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
         $entitlement = \App\Entitlement::create(
             [
@@ -133,7 +133,7 @@ class BillingTest extends TestCase
             Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
         );
 
-        $this->assertEquals(1024, $this->wallet->expectedCharges());
+        $this->assertEquals(1015, $this->wallet->expectedCharges());
     }
 
     /**
@@ -144,9 +144,9 @@ class BillingTest extends TestCase
     {
         $this->backdateEntitlements($this->wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
-        $this->assertEquals(999, $this->wallet->expectedCharges());
+        $this->assertEquals(990, $this->wallet->expectedCharges());
 
-        $sku = \App\Sku::where(['title' => 'storage'])->first();
+        $sku = \App\Sku::withEnvTenantContext()->where(['title' => 'storage'])->first();
 
         $entitlement = \App\Entitlement::create(
             [
@@ -160,7 +160,7 @@ class BillingTest extends TestCase
 
         $this->backdateEntitlements([$entitlement], Carbon::now()->subDays(14));
 
-        $this->assertEquals(999, $this->wallet->expectedCharges());
+        $this->assertEquals(990, $this->wallet->expectedCharges());
     }
 
     public function testFifthWeek(): void
@@ -170,11 +170,11 @@ class BillingTest extends TestCase
 
         $this->backdateEntitlements($this->wallet->entitlements, $targetDateA);
 
-        $this->assertEquals(999, $this->wallet->expectedCharges());
+        $this->assertEquals(990, $this->wallet->expectedCharges());
 
         $this->wallet->chargeEntitlements();
 
-        $this->assertEquals(-999, $this->wallet->balance);
+        $this->assertEquals(-990, $this->wallet->balance);
 
         foreach ($this->wallet->entitlements()->get() as $entitlement) {
             $this->assertTrue($entitlement->created_at->isSameSecond($targetDateA));
@@ -186,11 +186,11 @@ class BillingTest extends TestCase
     {
         $this->backdateEntitlements($this->wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(2));
 
-        $this->assertCount(4, $this->wallet->entitlements);
+        $this->assertCount(7, $this->wallet->entitlements);
 
-        $this->assertEquals(1998, $this->wallet->expectedCharges());
+        $this->assertEquals(1980, $this->wallet->expectedCharges());
 
-        $sku = \App\Sku::where(['title' => 'storage'])->first();
+        $sku = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
         $entitlement = \App\Entitlement::create(
             [
@@ -204,7 +204,7 @@ class BillingTest extends TestCase
 
         $this->backdateEntitlements([$entitlement], Carbon::now()->subMonthsWithoutOverflow(1));
 
-        $this->assertEquals(2023, $this->wallet->expectedCharges());
+        $this->assertEquals(2005, $this->wallet->expectedCharges());
     }
 
     public function testWithDiscountRate(): void
@@ -219,16 +219,16 @@ class BillingTest extends TestCase
         );
 
         $skus = [
-            \App\Sku::firstOrCreate(['title' => 'mailbox']),
-            \App\Sku::firstOrCreate(['title' => 'storage']),
-            \App\Sku::firstOrCreate(['title' => 'groupware'])
+            \App\Sku::withEnvTenantContext()->where('title', 'mailbox')->first(),
+            \App\Sku::withEnvTenantContext()->where('title', 'storage')->first(),
+            \App\Sku::withEnvTenantContext()->where('title', 'groupware')->first()
         ];
 
         $package->skus()->saveMany($skus);
 
         $package->skus()->updateExistingPivot(
-            \App\Sku::firstOrCreate(['title' => 'storage']),
-            ['qty' => 2],
+            \App\Sku::withEnvTenantContext()->where('title', 'storage')->first(),
+            ['qty' => 5],
             false
         );
 
@@ -242,7 +242,7 @@ class BillingTest extends TestCase
 
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
-        $this->assertEquals(500, $wallet->expectedCharges());
+        $this->assertEquals(495, $wallet->expectedCharges());
     }
 
     /**
@@ -250,13 +250,13 @@ class BillingTest extends TestCase
      */
     public function testWithWalletDiscount(): void
     {
-        $discount = \App\Discount::where('code', 'TEST')->first();
+        $discount = \App\Discount::withEnvTenantContext()->where('code', 'TEST')->first();
 
         $wallet = $this->user->wallets()->first();
         $wallet->discount()->associate($discount);
 
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
-        $this->assertEquals(898, $wallet->expectedCharges());
+        $this->assertEquals(891, $wallet->expectedCharges());
     }
 }

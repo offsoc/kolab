@@ -77,7 +77,7 @@ class QuotaInput extends BaseComponent
         // Use keyboard because ->value() does not work here
         $browser->click('@input')->keys('@input', '{home}');
 
-        $num = $value - 2;
+        $num = $value - 5;
         while ($num > 0) {
             $browser->keys('@input', '{arrow_right}');
             $num--;

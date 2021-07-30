@@ -52,7 +52,16 @@ class ListUsersTest extends TestCase
         $code = \Artisan::call('sku:list-users mailbox');
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
-        $this->assertSame("jack@kolab.org\njoe@kolab.org\njohn@kolab.org\nned@kolab.org", $output);
+
+        $expected = [
+            "jack@kolab.org",
+            "joe@kolab.org",
+            "john@kolab.org",
+            "ned@kolab.org",
+            "reseller@" . \config('app.domain')
+        ];
+
+        $this->assertSame(implode("\n", $expected), $output);
 
         $code = \Artisan::call('sku:list-users domain-hosting');
         $output = trim(\Artisan::output());

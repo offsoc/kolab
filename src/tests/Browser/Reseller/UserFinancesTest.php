@@ -47,7 +47,7 @@ class UserFinancesTest extends TestCaseDusk
             $page = new UserPage($jack->id);
 
             $browser->visit(new Home())
-                ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($page)
                 ->on($page)
@@ -184,9 +184,9 @@ class UserFinancesTest extends TestCaseDusk
                 ->assertSeeIn('#discount span', '10% - Test voucher')
                 ->click('@nav #tab-subscriptions')
                 ->with('@user-subscriptions', function (Browser $browser) {
-                    $browser->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '3,99 CHF/month¹')
+                    $browser->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,50 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month¹')
-                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,99 CHF/month¹')
+                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,41 CHF/month¹')
                         ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher');
                 })
                 // Change back to 'none'
@@ -201,9 +201,9 @@ class UserFinancesTest extends TestCaseDusk
                 ->assertSeeIn('#discount span', 'none')
                 ->click('@nav #tab-subscriptions')
                 ->with('@user-subscriptions', function (Browser $browser) {
-                    $browser->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,44 CHF/month')
+                    $browser->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '5,00 CHF/month')
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month')
-                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '5,55 CHF/month')
+                        ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,90 CHF/month')
                         ->assertMissing('table + .hint');
                 });
         });
@@ -271,7 +271,7 @@ class UserFinancesTest extends TestCaseDusk
                         ->assertSeeIn('tbody tr:first-child td.price', '12,34 CHF');
 
                     if (!$browser->isPhone()) {
-                        $browser->assertSeeIn('tbody tr:first-child td.email', 'reseller@kolabnow.com');
+                        $browser->assertSeeIn('tbody tr:first-child td.email', 'reseller@' . \config('app.domain'));
                     }
                 });
 

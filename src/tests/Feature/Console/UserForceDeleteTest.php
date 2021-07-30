@@ -44,14 +44,14 @@ class UserForceDeleteTest extends TestCase
                 'status' => \App\Domain::STATUS_NEW,
                 'type' => \App\Domain::TYPE_HOSTED,
         ]);
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
-        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $user->assignPackage($package_kolab);
         $domain->assignPackage($package_domain, $user);
         $wallet = $user->wallets()->first();
         $entitlements = $wallet->entitlements->pluck('id')->all();
 
-        $this->assertCount(5, $entitlements);
+        $this->assertCount(8, $entitlements);
 
         // Non-deleted user
         $this->artisan('user:force-delete user@force-delete.com')

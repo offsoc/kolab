@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Providers\PaymentProvider;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * API\WalletsController
@@ -58,12 +57,12 @@ class WalletsController extends Controller
     {
         $wallet = Wallet::find($id);
 
-        if (empty($wallet)) {
+        if (empty($wallet) || !$this->checkTenant($wallet->owner)) {
             return $this->errorResponse(404);
         }
 
         // Only owner (or admin) has access to the wallet
-        if (!Auth::guard()->user()->canRead($wallet)) {
+        if (!$this->guard()->user()->canRead($wallet)) {
             return $this->errorResponse(403);
         }
 
@@ -126,8 +125,12 @@ class WalletsController extends Controller
     {
         $wallet = Wallet::find($id);
 
+        if (empty($wallet) || !$this->checkTenant($wallet->owner)) {
+            return $this->errorResponse(404);
+        }
+
         // Only owner (or admin) has access to the wallet
-        if (!Auth::guard()->user()->canRead($wallet)) {
+        if (!$this->guard()->user()->canRead($wallet)) {
             abort(403);
         }
 
@@ -171,8 +174,12 @@ class WalletsController extends Controller
     {
         $wallet = Wallet::find($id);
 
+        if (empty($wallet) || !$this->checkTenant($wallet->owner)) {
+            return $this->errorResponse(404);
+        }
+
         // Only owner (or admin) has access to the wallet
-        if (!Auth::guard()->user()->canRead($wallet)) {
+        if (!$this->guard()->user()->canRead($wallet)) {
             return $this->errorResponse(403);
         }
 
@@ -205,8 +212,12 @@ class WalletsController extends Controller
     {
         $wallet = Wallet::find($id);
 
+        if (empty($wallet) || !$this->checkTenant($wallet->owner)) {
+            return $this->errorResponse(404);
+        }
+
         // Only owner (or admin) has access to the wallet
-        if (!Auth::guard()->user()->canRead($wallet)) {
+        if (!$this->guard()->user()->canRead($wallet)) {
             return $this->errorResponse(403);
         }
 

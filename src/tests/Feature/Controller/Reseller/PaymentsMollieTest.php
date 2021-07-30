@@ -29,7 +29,7 @@ class PaymentsMollieTest extends TestCase
         // All tests in this file use Mollie
         \config(['services.payment_provider' => 'mollie']);
 
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
         $wallet = $reseller->wallets()->first();
         Payment::where('wallet_id', $wallet->id)->delete();
         Wallet::where('id', $wallet->id)->update(['balance' => 0]);
@@ -42,7 +42,7 @@ class PaymentsMollieTest extends TestCase
      */
     public function tearDown(): void
     {
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
         $wallet = $reseller->wallets()->first();
         Payment::where('wallet_id', $wallet->id)->delete();
         Wallet::where('id', $wallet->id)->update(['balance' => 0]);
@@ -69,7 +69,7 @@ class PaymentsMollieTest extends TestCase
         $response = $this->delete("api/v4/payments/mandate");
         $response->assertStatus(401);
 
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
         $wallet = $reseller->wallets()->first();
         $wallet->balance = -10;
         $wallet->save();
@@ -191,7 +191,7 @@ class PaymentsMollieTest extends TestCase
         $response = $this->post("api/v4/payments", []);
         $response->assertStatus(401);
 
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
 
         // Successful payment
         $post = ['amount' => '12.34', 'currency' => 'CHF', 'methodId' => 'creditcard'];
@@ -213,7 +213,7 @@ class PaymentsMollieTest extends TestCase
     {
         Bus::fake();
 
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
 
         // Empty response
         $response = $this->actingAs($reseller)->get("api/v4/payments/pending");
@@ -244,14 +244,15 @@ class PaymentsMollieTest extends TestCase
     {
         Bus::fake();
 
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
 
         $response = $this->actingAs($reseller)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_ONEOFF);
         $response->assertStatus(200);
         $json = $response->json();
 
-        $this->assertCount(2, $json);
+        $this->assertCount(3, $json);
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
+        $this->assertSame('banktransfer', $json[2]['id']);
     }
 }

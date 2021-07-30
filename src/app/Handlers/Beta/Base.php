@@ -19,14 +19,7 @@ class Base extends \App\Handlers\Base
         // 2) active and a 'beta' entitlement must exist.
 
         if ($sku->active) {
-            $beta = \App\Sku::where('title', 'beta')->first();
-            if (!$beta) {
-                return false;
-            }
-
-            if ($user->entitlements()->where('sku_id', $beta->id)->first()) {
-                return true;
-            }
+            return $user->hasSku('beta');
         } else {
             if ($user->entitlements()->where('sku_id', $sku->id)->first()) {
                 return true;

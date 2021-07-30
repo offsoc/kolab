@@ -54,7 +54,7 @@ class PackagesController extends Controller
     {
         // TODO: Packages should have an 'active' flag too, I guess
         $response = [];
-        $packages = Package::select()->orderBy('title')->get();
+        $packages = Package::withSubjectTenantContext()->select()->orderBy('title')->get();
 
         foreach ($packages as $package) {
             $response[] = [

@@ -15,7 +15,6 @@ class WalletsTest extends TestCase
     {
         parent::setUp();
         self::useResellerUrl();
-        \config(['app.tenant_id' => 1]);
     }
 
     /**
@@ -23,7 +22,6 @@ class WalletsTest extends TestCase
      */
     public function tearDown(): void
     {
-        \config(['app.tenant_id' => 1]);
         parent::tearDown();
     }
 
@@ -38,8 +36,8 @@ class WalletsTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
-        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $wallet = $user->wallets()->first();
         $wallet->discount_id = null;
         $wallet->save();
@@ -60,7 +58,7 @@ class WalletsTest extends TestCase
 
         // Reseller from a different tenant
         $response = $this->actingAs($reseller2)->get("api/v4/wallets/{$wallet->id}");
-        $response->assertStatus(403);
+        $response->assertStatus(404);
 
         // Reseller
         $response = $this->actingAs($reseller1)->get("api/v4/wallets/{$wallet->id}");
@@ -80,9 +78,14 @@ class WalletsTest extends TestCase
         $this->assertTrue(!empty($json['notice']));
 
         // Reseller from a different tenant
-        \config(['app.tenant_id' => 2]);
-        $response = $this->actingAs($reseller2)->get("api/v4/wallets/{$wallet->id}");
-        $response->assertStatus(404);
+        $user2 = $this->getTestUser('user@sample-tenant.dev-local');
+        $wallet2 = $user2->wallets()->first();
+        $response = $this->actingAs($reseller2)->get("api/v4/wallets/{$wallet2->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame($wallet2->id, $json['id']);
     }
 
     /**
@@ -92,8 +95,8 @@ class WalletsTest extends TestCase
     {
         $user = $this->getTestUser('john@kolab.org');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
-        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $wallet = $user->wallets()->first();
         $reseller1_wallet = $reseller1->wallets()->first();
         $balance = $wallet->balance;
@@ -114,7 +117,7 @@ class WalletsTest extends TestCase
 
         // Reseller from a different tenant
         $response = $this->actingAs($reseller2)->post("api/v4/wallets/{$wallet->id}/one-off", []);
-        $response->assertStatus(403);
+        $response->assertStatus(404);
 
         // Admin user - invalid input
         $post = ['amount' => 'aaaa'];
@@ -182,11 +185,6 @@ class WalletsTest extends TestCase
         $this->assertSame("Penalized user {$user->email}", $transaction->description);
         $this->assertSame(4000, $transaction->amount);
         $this->assertSame($reseller1->email, $transaction->user_email);
-
-        // Reseller from a different tenant
-        \config(['app.tenant_id' => 2]);
-        $response = $this->actingAs($reseller2)->post("api/v4/wallets/{$wallet->id}/one-off", []);
-        $response->assertStatus(404);
     }
 
     /**
@@ -202,8 +200,8 @@ class WalletsTest extends TestCase
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
         $wallet = $user->wallets()->first();
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
-        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
 
         // Non-admin
         $response = $this->actingAs($user)->get("api/v4/wallets/{$wallet->id}/transactions");
@@ -215,7 +213,7 @@ class WalletsTest extends TestCase
 
         // Reseller from a different tenant
         $response = $this->actingAs($reseller2)->get("api/v4/wallets/{$wallet->id}/transactions");
-        $response->assertStatus(403);
+        $response->assertStatus(404);
 
         // Create some sample transactions
         $transactions = $this->createTestTransactions($wallet);
@@ -245,10 +243,12 @@ class WalletsTest extends TestCase
         // FIXME: Should we hide this for resellers?
         $this->assertSame('jeroen@jeroen.jeroen', $json['list'][1]['user']);
 
-        // Reseller from a different tenant
-        \config(['app.tenant_id' => 2]);
-        $response = $this->actingAs($reseller2)->get("api/v4/wallets/{$wallet->id}/transactions");
-        $response->assertStatus(403);
+        // Test another tenant
+        $user2 = $this->getTestUser('user@sample-tenant.dev-local');
+        $wallet2 = $user2->wallets()->first();
+
+        $response = $this->actingAs($reseller2)->get("api/v4/wallets/{$wallet2->id}/transactions");
+        $response->assertStatus(200);
     }
 
     /**
@@ -257,8 +257,8 @@ class WalletsTest extends TestCase
     public function testUpdate(): void
     {
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $reseller1 = $this->getTestUser('reseller@kolabnow.com');
-        $reseller2 = $this->getTestUser('reseller@reseller.com');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
         $discount = Discount::where('code', 'TEST')->first();
@@ -273,9 +273,9 @@ class WalletsTest extends TestCase
 
         // Reseller from another tenant
         $response = $this->actingAs($reseller2)->put("api/v4/wallets/{$wallet->id}", []);
-        $response->assertStatus(403);
+        $response->assertStatus(404);
 
-        // Admin user - setting a discount
+        // Setting a discount
         $post = ['discount' => $discount->id];
         $response = $this->actingAs($reseller1)->put("api/v4/wallets/{$wallet->id}", $post);
         $response->assertStatus(200);
@@ -290,7 +290,7 @@ class WalletsTest extends TestCase
         $this->assertSame($discount->description, $json['discount_description']);
         $this->assertSame($discount->id, $wallet->fresh()->discount->id);
 
-        // Admin user - removing a discount
+        // Removing a discount
         $post = ['discount' => null];
         $response = $this->actingAs($reseller1)->put("api/v4/wallets/{$wallet->id}", $post);
         $response->assertStatus(200);
@@ -303,10 +303,5 @@ class WalletsTest extends TestCase
         $this->assertSame(null, $json['discount_id']);
         $this->assertTrue(empty($json['discount_description']));
         $this->assertSame(null, $wallet->fresh()->discount);
-
-        // Reseller from a different tenant
-        \config(['app.tenant_id' => 2]);
-        $response = $this->actingAs($reseller2)->put("api/v4/wallets/{$wallet->id}", []);
-        $response->assertStatus(404);
     }
 }

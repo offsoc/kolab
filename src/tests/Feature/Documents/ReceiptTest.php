@@ -267,9 +267,9 @@ class ReceiptTest extends TestCase
                 'description' => 'Payment not yet paid',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
-                'amount' => 999,
+                'amount' => 990,
                 'currency' => 'CHF',
-                'currency_amount' => 999,
+                'currency_amount' => 990,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 1, 0, 0, 0);
         $payment->save();

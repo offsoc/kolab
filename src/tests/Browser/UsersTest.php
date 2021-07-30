@@ -41,8 +41,12 @@ class UsersTest extends TestCaseDusk
         UserAlias::where('user_id', $john->id)
             ->where('alias', 'john.test@kolab.org')->delete();
 
-        Entitlement::where('entitleable_id', $john->id)->whereIn('cost', [25, 100])->delete();
+        $activesync_sku = Sku::withEnvTenantContext()->where('title', 'activesync')->first();
+        $storage_sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+
+        Entitlement::where('entitleable_id', $john->id)->where('sku_id', $activesync_sku->id)->delete();
         Entitlement::where('cost', '>=', 5000)->delete();
+        Entitlement::where('cost', '=', 25)->where('sku_id', $storage_sku->id)->delete();
 
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
@@ -64,8 +68,12 @@ class UsersTest extends TestCaseDusk
         UserAlias::where('user_id', $john->id)
             ->where('alias', 'john.test@kolab.org')->delete();
 
-        Entitlement::where('entitleable_id', $john->id)->whereIn('cost', [25, 100])->delete();
+        $activesync_sku = Sku::withEnvTenantContext()->where('title', 'activesync')->first();
+        $storage_sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+
+        Entitlement::where('entitleable_id', $john->id)->where('sku_id', $activesync_sku->id)->delete();
         Entitlement::where('cost', '>=', 5000)->delete();
+        Entitlement::where('cost', '=', 25)->where('sku_id', $storage_sku->id)->delete();
 
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
@@ -222,7 +230,7 @@ class UsersTest extends TestCaseDusk
                         $browser->assertElementsCount('tbody tr', 6)
                             // Mailbox SKU
                             ->assertSeeIn('tbody tr:nth-child(1) td.name', 'User Mailbox')
-                            ->assertSeeIn('tbody tr:nth-child(1) td.price', '4,44 CHF/month')
+                            ->assertSeeIn('tbody tr:nth-child(1) td.price', '5,00 CHF/month')
                             ->assertChecked('tbody tr:nth-child(1) td.selection input')
                             ->assertDisabled('tbody tr:nth-child(1) td.selection input')
                             ->assertTip(
@@ -239,12 +247,12 @@ class UsersTest extends TestCaseDusk
                                 'Some wiggle room'
                             )
                             ->with(new QuotaInput('tbody tr:nth-child(2) .range-input'), function ($browser) {
-                                $browser->assertQuotaValue(2)->setQuotaValue(3);
+                                $browser->assertQuotaValue(5)->setQuotaValue(6);
                             })
                             ->assertSeeIn('tr:nth-child(2) td.price', '0,25 CHF/month')
                             // groupware SKU
                             ->assertSeeIn('tbody tr:nth-child(3) td.name', 'Groupware Features')
-                            ->assertSeeIn('tbody tr:nth-child(3) td.price', '5,55 CHF/month')
+                            ->assertSeeIn('tbody tr:nth-child(3) td.price', '4,90 CHF/month')
                             ->assertChecked('tbody tr:nth-child(3) td.selection input')
                             ->assertEnabled('tbody tr:nth-child(3) td.selection input')
                             ->assertTip(
@@ -253,7 +261,7 @@ class UsersTest extends TestCaseDusk
                             )
                             // ActiveSync SKU
                             ->assertSeeIn('tbody tr:nth-child(4) td.name', 'Activesync')
-                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '1,00 CHF/month')
+                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '0,00 CHF/month')
                             ->assertNotChecked('tbody tr:nth-child(4) td.selection input')
                             ->assertEnabled('tbody tr:nth-child(4) td.selection input')
                             ->assertTip(
@@ -288,7 +296,8 @@ class UsersTest extends TestCaseDusk
                 ->click('@table tr:nth-child(3) a')
                 ->on(new UserInfo());
 
-            $expected = ['activesync', 'groupware', 'mailbox', 'storage', 'storage', 'storage'];
+            $expected = ['activesync', 'groupware', 'mailbox',
+                'storage', 'storage', 'storage', 'storage', 'storage', 'storage'];
             $this->assertUserEntitlements($john, $expected);
 
             // Test subscriptions interaction
@@ -365,8 +374,8 @@ class UsersTest extends TestCaseDusk
                             $browser->assertElementsCount('tbody tr', 2)
                                 ->assertSeeIn('tbody tr:nth-child(1)', 'Groupware Account')
                                 ->assertSeeIn('tbody tr:nth-child(2)', 'Lite Account')
-                                ->assertSeeIn('tbody tr:nth-child(1) .price', '9,99 CHF/month')
-                                ->assertSeeIn('tbody tr:nth-child(2) .price', '4,44 CHF/month')
+                                ->assertSeeIn('tbody tr:nth-child(1) .price', '9,90 CHF/month')
+                                ->assertSeeIn('tbody tr:nth-child(2) .price', '5,00 CHF/month')
                                 ->assertChecked('tbody tr:nth-child(1) input')
                                 ->click('tbody tr:nth-child(2) input')
                                 ->assertNotChecked('tbody tr:nth-child(1) input')
@@ -427,7 +436,7 @@ class UsersTest extends TestCaseDusk
             $julia = User::where('email', 'julia.roberts@kolab.org')->first();
             $alias = UserAlias::where('user_id', $julia->id)->where('alias', 'julia.roberts2@kolab.org')->first();
             $this->assertTrue(!empty($alias));
-            $this->assertUserEntitlements($julia, ['mailbox', 'storage', 'storage']);
+            $this->assertUserEntitlements($julia, ['mailbox', 'storage', 'storage', 'storage', 'storage', 'storage']);
             $this->assertSame('Julia', $julia->getSetting('first_name'));
             $this->assertSame('Roberts', $julia->getSetting('last_name'));
             $this->assertSame('Test Org', $julia->getSetting('organization'));
@@ -555,17 +564,17 @@ class UsersTest extends TestCaseDusk
                         $browser->waitFor('tbody tr')
                             ->assertElementsCount('tbody tr', 6)
                             // Mailbox SKU
-                            ->assertSeeIn('tbody tr:nth-child(1) td.price', '3,99 CHF/month¹')
+                            ->assertSeeIn('tbody tr:nth-child(1) td.price', '4,50 CHF/month¹')
                             // Storage SKU
                             ->assertSeeIn('tr:nth-child(2) td.price', '0,00 CHF/month¹')
                             ->with($quota_input, function (Browser $browser) {
                                 $browser->setQuotaValue(100);
                             })
-                            ->assertSeeIn('tr:nth-child(2) td.price', '22,05 CHF/month¹')
+                            ->assertSeeIn('tr:nth-child(2) td.price', '21,37 CHF/month¹')
                             // groupware SKU
-                            ->assertSeeIn('tbody tr:nth-child(3) td.price', '4,99 CHF/month¹')
+                            ->assertSeeIn('tbody tr:nth-child(3) td.price', '4,41 CHF/month¹')
                             // ActiveSync SKU
-                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '0,90 CHF/month¹')
+                            ->assertSeeIn('tbody tr:nth-child(4) td.price', '0,00 CHF/month¹')
                             // 2FA SKU
                             ->assertSeeIn('tbody tr:nth-child(5) td.price', '0,00 CHF/month¹');
                     })
@@ -581,8 +590,8 @@ class UsersTest extends TestCaseDusk
                 ->with('@form', function (Browser $browser) {
                     $browser->whenAvailable('@packages', function (Browser $browser) {
                         $browser->assertElementsCount('tbody tr', 2)
-                            ->assertSeeIn('tbody tr:nth-child(1) .price', '8,99 CHF/month¹') // Groupware
-                            ->assertSeeIn('tbody tr:nth-child(2) .price', '3,99 CHF/month¹'); // Lite
+                            ->assertSeeIn('tbody tr:nth-child(1) .price', '8,91 CHF/month¹') // Groupware
+                            ->assertSeeIn('tbody tr:nth-child(2) .price', '4,50 CHF/month¹'); // Lite
                     })
                     ->assertSeeIn('@packages table + .hint', '¹ applied discount: 10% - Test voucher');
                 });
@@ -591,8 +600,8 @@ class UsersTest extends TestCaseDusk
         // Test using entitlement cost instead of the SKU cost
         $this->browse(function (Browser $browser) use ($wallet) {
             $joe = User::where('email', 'joe@kolab.org')->first();
-            $beta_sku = Sku::where('title', 'beta')->first();
-            $storage_sku = Sku::where('title', 'storage')->first();
+            $beta_sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
+            $storage_sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
             // Add an extra storage and beta entitlement with different prices
             Entitlement::create([
@@ -621,11 +630,11 @@ class UsersTest extends TestCaseDusk
                             // Storage SKU
                             ->assertSeeIn('tr:nth-child(2) td.price', '45,00 CHF/month¹')
                             ->with($quota_input, function (Browser $browser) {
-                                $browser->setQuotaValue(4);
+                                $browser->setQuotaValue(7);
                             })
                             ->assertSeeIn('tr:nth-child(2) td.price', '45,22 CHF/month¹')
                             ->with($quota_input, function (Browser $browser) {
-                                $browser->setQuotaValue(2);
+                                $browser->setQuotaValue(5);
                             })
                             ->assertSeeIn('tr:nth-child(2) td.price', '0,00 CHF/month¹');
                     })
@@ -643,7 +652,7 @@ class UsersTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $john = User::where('email', 'john@kolab.org')->first();
-            $sku = Sku::where('title', 'beta')->first();
+            $sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
             $john->assignSku($sku);
 
             $browser->visit('/user/' . $john->id)
@@ -693,7 +702,14 @@ class UsersTest extends TestCaseDusk
                 ->click('button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
-            $expected = ['beta', 'distlist', 'groupware', 'mailbox', 'storage', 'storage'];
+            $expected = [
+                'beta',
+                'distlist',
+                'groupware',
+                'mailbox',
+                'storage', 'storage', 'storage', 'storage', 'storage'
+            ];
+
             $this->assertUserEntitlements($john, $expected);
 
             $browser->visit('/user/' . $john->id)
@@ -702,7 +718,12 @@ class UsersTest extends TestCaseDusk
                 ->click('button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
-            $expected = ['groupware', 'mailbox', 'storage', 'storage'];
+            $expected = [
+                'groupware',
+                'mailbox',
+                'storage', 'storage', 'storage', 'storage', 'storage'
+            ];
+
             $this->assertUserEntitlements($john, $expected);
         });
 

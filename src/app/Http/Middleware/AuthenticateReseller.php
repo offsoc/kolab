@@ -25,10 +25,6 @@ class AuthenticateReseller
             abort(403, "Unauthorized");
         }
 
-        if ($user->tenant_id != \config('app.tenant_id')) {
-            abort(403, "Unauthorized");
-        }
-
         return $next($request);
     }
 }

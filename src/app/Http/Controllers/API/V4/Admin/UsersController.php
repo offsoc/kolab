@@ -8,6 +8,7 @@ use App\Sku;
 use App\User;
 use App\UserAlias;
 use App\UserSetting;
+use App\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -37,19 +38,14 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         $result = collect([]);
 
         if ($owner) {
-            $owner = User::where('id', $owner)
-                ->withEnvTenant()
-                ->whereNull('role')
-                ->first();
+            $owner = User::find($owner);
 
             if ($owner) {
-                $result = $owner->users(false)->whereNull('role')->orderBy('email')->get();
+                $result = $owner->users(false)->orderBy('email')->get();
             }
         } elseif (strpos($search, '@')) {
             // Search by email
             $result = User::withTrashed()->where('email', $search)
-                ->withEnvTenant()
-                ->whereNull('role')
                 ->orderBy('email')
                 ->get();
 
@@ -72,8 +68,6 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
                 if (!$user_ids->isEmpty()) {
                     $result = User::withTrashed()->whereIn('id', $user_ids)
-                        ->withEnvTenant()
-                        ->whereNull('role')
                         ->orderBy('email')
                         ->get();
                 }
@@ -81,36 +75,39 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         } elseif (is_numeric($search)) {
             // Search by user ID
             $user = User::withTrashed()->where('id', $search)
-                ->withEnvTenant()
-                ->whereNull('role')
                 ->first();
 
             if ($user) {
                 $result->push($user);
             }
-        } elseif (!empty($search)) {
+        } elseif (strpos($search, '.') !== false) {
             // Search by domain
             $domain = Domain::withTrashed()->where('namespace', $search)
-                ->withEnvTenant()
                 ->first();
 
             if ($domain) {
-                if (
-                    ($wallet = $domain->wallet())
-                    && ($owner = $wallet->owner()->withTrashed()->withEnvTenant()->first())
-                    && empty($owner->role)
-                ) {
+                if (($wallet = $domain->wallet()) && ($owner = $wallet->owner()->withTrashed()->first())) {
+                    $result->push($owner);
+                }
+            }
+        } elseif (!empty($search)) {
+            $wallet = Wallet::find($search);
+
+            if ($wallet) {
+                if ($owner = $wallet->owner()->withTrashed()->first()) {
                     $result->push($owner);
                 }
             }
         }
 
         // Process the result
-        $result = $result->map(function ($user) {
-            $data = $user->toArray();
-            $data = array_merge($data, self::userStatuses($user));
-            return $data;
-        });
+        $result = $result->map(
+            function ($user) {
+                $data = $user->toArray();
+                $data = array_merge($data, self::userStatuses($user));
+                return $data;
+            }
+        );
 
         $result = [
             'list' => $result,
@@ -131,13 +128,17 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function reset2FA(Request $request, $id)
     {
-        $user = User::withEnvTenant()->find($id);
+        $user = User::find($id);
 
-        if (empty($user) || !$this->guard()->user()->canUpdate($user)) {
+        if (!$this->checkTenant($user)) {
             return $this->errorResponse(404);
         }
 
-        $sku = Sku::where('title', '2fa')->first();
+        if (!$this->guard()->user()->canUpdate($user)) {
+            return $this->errorResponse(403);
+        }
+
+        $sku = Sku::withObjectTenantContext($user)->where('title', '2fa')->first();
 
         // Note: we do select first, so the observer can delete
         //       2FA preferences from Roundcube database, so don't
@@ -149,6 +150,42 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
                 'status' => 'success',
                 'message' => __('app.user-reset-2fa-success'),
         ]);
+    }
+
+    /**
+     * Display information on the user account specified by $id.
+     *
+     * @param int $id The account to show information for.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show($id)
+    {
+        $user = User::find($id);
+
+        if (!$this->checkTenant($user)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canRead($user)) {
+            return $this->errorResponse(403);
+        }
+
+        $response = $this->userResponse($user);
+
+        // Simplified Entitlement/SKU information,
+        // TODO: I agree this format may need to be extended in future
+        $response['skus'] = [];
+        foreach ($user->entitlements as $ent) {
+            $sku = $ent->sku;
+            if (!isset($response['skus'][$sku->id])) {
+                $response['skus'][$sku->id] = ['costs' => [], 'count' => 0];
+            }
+            $response['skus'][$sku->id]['count']++;
+            $response['skus'][$sku->id]['costs'][] = $ent->cost;
+        }
+
+        return response()->json($response);
     }
 
     /**
@@ -173,10 +210,14 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function suspend(Request $request, $id)
     {
-        $user = User::withEnvTenant()->find($id);
+        $user = User::find($id);
 
-        if (empty($user) || !$this->guard()->user()->canUpdate($user)) {
+        if (!$this->checkTenant($user)) {
             return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canUpdate($user)) {
+            return $this->errorResponse(403);
         }
 
         $user->suspend();
@@ -197,10 +238,14 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function unsuspend(Request $request, $id)
     {
-        $user = User::withEnvTenant()->find($id);
+        $user = User::find($id);
 
-        if (empty($user) || !$this->guard()->user()->canUpdate($user)) {
+        if (!$this->checkTenant($user)) {
             return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canUpdate($user)) {
+            return $this->errorResponse(403);
         }
 
         $user->unsuspend();
@@ -221,10 +266,14 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      */
     public function update(Request $request, $id)
     {
-        $user = User::withEnvTenant()->find($id);
+        $user = User::find($id);
 
-        if (empty($user) || !$this->guard()->user()->canUpdate($user)) {
+        if (!$this->checkTenant($user)) {
             return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canUpdate($user)) {
+            return $this->errorResponse(403);
         }
 
         // For now admins can change only user external email address

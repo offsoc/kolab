@@ -76,12 +76,12 @@ class WalletTest extends TestCase
      */
     public function testBalanceLastsUntil(): void
     {
-        // Monthly cost of all entitlements: 999
-        // 28 days: 35.68 per day
-        // 31 days: 32.22 per day
+        // Monthly cost of all entitlements: 990
+        // 28 days: 35.36 per day
+        // 31 days: 31.93 per day
 
         $user = $this->getTestUser('jane@kolabnow.com');
-        $package = Package::where('title', 'kolab')->first();
+        $package = Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $user->assignPackage($package);
         $wallet = $user->wallets()->first();
 
@@ -100,19 +100,19 @@ class WalletTest extends TestCase
         $this->assertSame(null, $until);
 
         // User/entitlements created today, balance=-9,99 CHF (monthly cost)
-        $wallet->balance = 999;
+        $wallet->balance = 990;
         $until = $wallet->balanceLastsUntil();
 
         $daysInLastMonth = \App\Utils::daysInLastMonth();
 
-        $this->assertSame(
-            Carbon::now()->addMonthsWithoutOverflow(1)->addDays($daysInLastMonth)->toDateString(),
-            $until->toDateString()
-        );
+        $delta = Carbon::now()->addMonthsWithoutOverflow(1)->addDays($daysInLastMonth)->diff($until)->days;
+
+        $this->assertTrue($delta <= 1);
+        $this->assertTrue($delta >= -1);
 
         // Old entitlements, 100% discount
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));
-        $discount = \App\Discount::where('discount', 100)->first();
+        $discount = \App\Discount::withEnvTenantContext()->where('discount', 100)->first();
         $wallet->discount()->associate($discount);
 
         $until = $wallet->refresh()->balanceLastsUntil();
@@ -133,13 +133,13 @@ class WalletTest extends TestCase
      */
     public function testCostsPerDay(): void
     {
-        // 999
-        // 28 days: 35.68
-        // 31 days: 32.22
+        // 990
+        // 28 days: 35.36
+        // 31 days: 31.93
         $user = $this->getTestUser('jane@kolabnow.com');
 
-        $package = Package::where('title', 'kolab')->first();
-        $mailbox = Sku::where('title', 'mailbox')->first();
+        $package = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $mailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
 
         $user->assignPackage($package);
 
@@ -147,8 +147,8 @@ class WalletTest extends TestCase
 
         $costsPerDay = $wallet->costsPerDay();
 
-        $this->assertTrue($costsPerDay < 35.68);
-        $this->assertTrue($costsPerDay > 32.22);
+        $this->assertTrue($costsPerDay < 35.38);
+        $this->assertTrue($costsPerDay > 31.93);
     }
 
     /**
@@ -291,17 +291,17 @@ class WalletTest extends TestCase
     {
         $user = $this->getTestUser('jane@kolabnow.com');
         $wallet = $user->wallets()->first();
-        $discount = \App\Discount::where('discount', 30)->first();
+        $discount = \App\Discount::withEnvTenantContext()->where('discount', 30)->first();
         $wallet->discount()->associate($discount);
         $wallet->save();
 
         // Add 40% fee to all SKUs
         Sku::select()->update(['fee' => DB::raw("`cost` * 0.4")]);
 
-        $package = Package::where('title', 'kolab')->first();
-        $storage = Sku::where('title', 'storage')->first();
+        $package = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $storage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
         $user->assignPackage($package);
-        $user->assignSku($storage, 2);
+        $user->assignSku($storage, 5);
         $user->refresh();
 
         // Reset reseller's wallet balance and transactions
@@ -314,7 +314,7 @@ class WalletTest extends TestCase
         // Test normal charging of entitlements
         // ------------------------------------
 
-        // Backdate and chanrge entitlements, we're expecting one month to be charged
+        // Backdate and charge entitlements, we're expecting one month to be charged
         // Set fake NOW date to make simpler asserting results that depend on number of days in current/last month
         Carbon::setTestNow(Carbon::create(2021, 5, 21, 12));
         $backdate = Carbon::now()->subWeeks(7);
@@ -323,26 +323,28 @@ class WalletTest extends TestCase
         $wallet->refresh();
         $reseller_wallet->refresh();
 
+        // TODO: Update these comments with what is actually being used to calculate these numbers
         // 388 + 310 + 17 + 17 = 732
-        $this->assertSame(-732, $wallet->balance);
+        $this->assertSame(-778, $wallet->balance);
         // 388 - 555 x 40% + 310 - 444 x 40% + 34 - 50 x 40% = 312
-        $this->assertSame(312, $reseller_wallet->balance);
+        $this->assertSame(332, $reseller_wallet->balance);
 
         $transactions = Transaction::where('object_id', $wallet->id)
             ->where('object_type', \App\Wallet::class)->get();
+
         $reseller_transactions = Transaction::where('object_id', $reseller_wallet->id)
             ->where('object_type', \App\Wallet::class)->get();
 
         $this->assertCount(1, $reseller_transactions);
         $trans = $reseller_transactions[0];
         $this->assertSame("Charged user jane@kolabnow.com", $trans->description);
-        $this->assertSame(312, $trans->amount);
+        $this->assertSame(332, $trans->amount);
         $this->assertSame(Transaction::WALLET_CREDIT, $trans->type);
 
         $this->assertCount(1, $transactions);
         $trans = $transactions[0];
         $this->assertSame('', $trans->description);
-        $this->assertSame(-732, $trans->amount);
+        $this->assertSame(-778, $trans->amount);
         $this->assertSame(Transaction::WALLET_DEBIT, $trans->type);
 
         // TODO: Test entitlement transaction records
@@ -351,8 +353,12 @@ class WalletTest extends TestCase
         // Test charging on entitlement delete
         // -----------------------------------
 
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+
         $transactions = Transaction::where('object_id', $wallet->id)
             ->where('object_type', \App\Wallet::class)->delete();
+
         $reseller_transactions = Transaction::where('object_id', $reseller_wallet->id)
             ->where('object_type', \App\Wallet::class)->delete();
 
@@ -364,12 +370,13 @@ class WalletTest extends TestCase
         $reseller_wallet->refresh();
 
         // 2 x round(25 / 31 * 19 * 0.7) = 22
-        $this->assertSame(-(732 + 22), $wallet->balance);
+        $this->assertSame(-(778 + 22), $wallet->balance);
         // 22 - 2 x round(25 * 0.4 / 31 * 19) = 10
-        $this->assertSame(312 + 10, $reseller_wallet->balance);
+        $this->assertSame(10, $reseller_wallet->balance);
 
         $transactions = Transaction::where('object_id', $wallet->id)
             ->where('object_type', \App\Wallet::class)->get();
+
         $reseller_transactions = Transaction::where('object_id', $reseller_wallet->id)
             ->where('object_type', \App\Wallet::class)->get();
 
@@ -378,6 +385,7 @@ class WalletTest extends TestCase
         $this->assertSame("Charged user jane@kolabnow.com", $trans->description);
         $this->assertSame(5, $trans->amount);
         $this->assertSame(Transaction::WALLET_CREDIT, $trans->type);
+
         $trans = $reseller_transactions[1];
         $this->assertSame("Charged user jane@kolabnow.com", $trans->description);
         $this->assertSame(5, $trans->amount);

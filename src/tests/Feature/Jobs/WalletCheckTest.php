@@ -304,11 +304,11 @@ class WalletCheckTest extends TestCase
         $wallet->save();
         $now = Carbon::now();
 
-        $package = \App\Package::where('title', 'kolab')->first();
+        $package = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $user->assignPackage($package);
 
         $this->assertFalse($user->isDeleted());
-        $this->assertCount(4, $user->entitlements()->get());
+        $this->assertCount(7, $user->entitlements()->get());
 
         // Balance turned negative 7+14+21+1 days ago, expect mail sent
         $days = 7 + 14 + 21 + 1;

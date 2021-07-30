@@ -19,7 +19,7 @@ class SkuSeeder extends Seeder
                 'title' => 'mailbox',
                 'name' => 'User Mailbox',
                 'description' => 'Just a mailbox',
-                'cost' => 444,
+                'cost' => 500,
                 'units_free' => 0,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Mailbox',
@@ -82,7 +82,7 @@ class SkuSeeder extends Seeder
                 'name' => 'Storage Quota',
                 'description' => 'Some wiggle room',
                 'cost' => 25,
-                'units_free' => 2,
+                'units_free' => 5,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Storage',
                 'active' => true,
@@ -94,7 +94,7 @@ class SkuSeeder extends Seeder
                 'title' => 'groupware',
                 'name' => 'Groupware Features',
                 'description' => 'Groupware functions like Calendar, Tasks, Notes, etc.',
-                'cost' => 555,
+                'cost' => 490,
                 'units_free' => 0,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Groupware',
@@ -144,7 +144,7 @@ class SkuSeeder extends Seeder
                 'title' => 'activesync',
                 'name' => 'Activesync',
                 'description' => 'Mobile synchronization',
-                'cost' => 100,
+                'cost' => 0,
                 'units_free' => 0,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Activesync',
@@ -153,7 +153,9 @@ class SkuSeeder extends Seeder
         );
 
         // Check existence because migration might have added this already
-        if (!\App\Sku::where('title', 'beta')->first()) {
+        $sku = \App\Sku::where(['title' => 'beta', 'tenant_id' => \config('app.tenant_id')])->first();
+
+        if (!$sku) {
             Sku::create(
                 [
                     'title' => 'beta',
@@ -169,7 +171,9 @@ class SkuSeeder extends Seeder
         }
 
         // Check existence because migration might have added this already
-        if (!\App\Sku::where('title', 'meet')->first()) {
+        $sku = \App\Sku::where(['title' => 'meet', 'tenant_id' => \config('app.tenant_id')])->first();
+
+        if (!$sku) {
             Sku::create(
                 [
                     'title' => 'meet',
@@ -185,7 +189,9 @@ class SkuSeeder extends Seeder
         }
 
         // Check existence because migration might have added this already
-        if (!\App\Sku::where('title', 'group')->first()) {
+        $sku = \App\Sku::where(['title' => 'group', 'tenant_id' => \config('app.tenant_id')])->first();
+
+        if (!$sku) {
             Sku::create(
                 [
                     'title' => 'group',
@@ -201,17 +207,126 @@ class SkuSeeder extends Seeder
         }
 
         // Check existence because migration might have added this already
-        if (!\App\Sku::where('title', 'distlist')->first()) {
-            \App\Sku::create([
-                'title' => 'distlist',
-                'name' => 'Distribution lists',
-                'description' => 'Access to mail distribution lists',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Distlist',
-                'active' => true,
-            ]);
+        $sku = \App\Sku::where(['title' => 'distlist', 'tenant_id' => \config('app.tenant_id')])->first();
+
+        if (!$sku) {
+            \App\Sku::create(
+                [
+                    'title' => 'distlist',
+                    'name' => 'Distribution lists',
+                    'description' => 'Access to mail distribution lists',
+                    'cost' => 0,
+                    'units_free' => 0,
+                    'period' => 'monthly',
+                    'handler_class' => 'App\Handlers\Distlist',
+                    'active' => true,
+                ]
+            );
+        }
+
+        // for tenants that are not the configured tenant id
+        $tenants = \App\Tenant::where('id', '!=', \config('app.tenant_id'))->get();
+
+        foreach ($tenants as $tenant) {
+            $sku = Sku::create(
+                [
+                    'title' => 'mailbox',
+                    'name' => 'User Mailbox',
+                    'description' => 'Just a mailbox',
+                    'cost' => 500,
+                    'fee' => 333,
+                    'units_free' => 0,
+                    'period' => 'monthly',
+                    'handler_class' => 'App\Handlers\Mailbox',
+                    'active' => true,
+                ]
+            );
+
+            $sku->tenant_id = $tenant->id;
+            $sku->save();
+
+            $sku = Sku::create(
+                [
+                    'title' => 'storage',
+                    'name' => 'Storage Quota',
+                    'description' => 'Some wiggle room',
+                    'cost' => 25,
+                    'fee' => 16,
+                    'units_free' => 5,
+                    'period' => 'monthly',
+                    'handler_class' => 'App\Handlers\Storage',
+                    'active' => true,
+                ]
+            );
+
+            $sku->tenant_id = $tenant->id;
+            $sku->save();
+
+            $sku = Sku::create(
+                [
+                    'title' => 'domain-hosting',
+                    'name' => 'External Domain',
+                    'description' => 'Host a domain that is externally registered',
+                    'cost' => 100,
+                    'fee' => 66,
+                    'units_free' => 1,
+                    'period' => 'monthly',
+                    'handler_class' => 'App\Handlers\DomainHosting',
+                    'active' => true,
+                ]
+            );
+
+            $sku->tenant_id = $tenant->id;
+            $sku->save();
+
+            $sku = Sku::create(
+                [
+                    'title' => 'groupware',
+                    'name' => 'Groupware Features',
+                    'description' => 'Groupware functions like Calendar, Tasks, Notes, etc.',
+                    'cost' => 490,
+                    'fee' => 327,
+                    'units_free' => 0,
+                    'period' => 'monthly',
+                    'handler_class' => 'App\Handlers\Groupware',
+                    'active' => true,
+                ]
+            );
+
+            $sku->tenant_id = $tenant->id;
+            $sku->save();
+
+            $sku = Sku::create(
+                [
+                    'title' => '2fa',
+                    'name' => '2-Factor Authentication',
+                    'description' => 'Two factor authentication for webmail and administration panel',
+                    'cost' => 0,
+                    'units_free' => 0,
+                    'period' => 'monthly',
+                    'handler_class' => 'App\Handlers\Auth2F',
+                    'active' => true,
+                ]
+            );
+
+            $sku->tenant_id = $tenant->id;
+            $sku->save();
+
+            $sku = Sku::create(
+                [
+                    'title' => 'activesync',
+                    'name' => 'Activesync',
+                    'description' => 'Mobile synchronization',
+                    'cost' => 0,
+                    'units_free' => 0,
+                    'period' => 'monthly',
+                    'handler_class' => 'App\Handlers\Activesync',
+                    'active' => true,
+                ]
+            );
+
+            $sku->tenant_id = $tenant->id;
+            $sku->save();
         }
     }
 }

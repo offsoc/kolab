@@ -69,7 +69,7 @@ class DistlistTest extends TestCaseDusk
 
             // Goto the distlist page
             $browser->visit(new Home())
-                ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($user_page)
                 ->on($user_page)

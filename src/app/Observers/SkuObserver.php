@@ -24,7 +24,5 @@ class SkuObserver
         }
 
         $sku->tenant_id = \config('app.tenant_id');
-
-        // TODO: We should make sure that tenant_id + title is unique
     }
 }

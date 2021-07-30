@@ -55,7 +55,7 @@ class DomainRestoreTest extends TestCase
         $wallet = $user->wallets()->first();
         $entitlements = $wallet->entitlements->pluck('id')->all();
 
-        $this->assertCount(5, $entitlements);
+        $this->assertCount(8, $entitlements);
 
         // Non-deleted domain
         $code = \Artisan::call("domain:restore force-delete.com");

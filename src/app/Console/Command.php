@@ -7,6 +7,13 @@ use Illuminate\Support\Facades\DB;
 abstract class Command extends \Illuminate\Console\Command
 {
     /**
+     * This needs to be here to be used.
+     *
+     * @var null
+     */
+    protected $commandPrefix = null;
+
+    /**
      * Annotate this command as being dangerous for any potential unintended consequences.
      *
      * Commands are considered dangerous if;
@@ -77,6 +84,10 @@ abstract class Command extends \Illuminate\Console\Command
             $model = new $objectClass();
         }
 
+        if ($this->commandPrefix == 'scalpel') {
+            return $model;
+        }
+
         $modelsWithTenant = [
             \App\Discount::class,
             \App\Domain::class,
@@ -91,21 +102,19 @@ abstract class Command extends \Illuminate\Console\Command
             \App\Wallet::class,
         ];
 
-        $tenant_id = \config('app.tenant_id');
+        $tenantId = \config('app.tenant_id');
 
         // Add tenant filter
         if (in_array($objectClass, $modelsWithTenant)) {
-            $model = $model->withEnvTenant();
+            $model = $model->withEnvTenantContext();
         } elseif (in_array($objectClass, $modelsWithOwner)) {
-            $model = $model->whereExists(function ($query) use ($tenant_id) {
+            $model = $model->whereExists(function ($query) use ($tenantId) {
                 $query->select(DB::raw(1))
                     ->from('users')
                     ->whereRaw('wallets.user_id = users.id')
-                    ->whereRaw('users.tenant_id ' . ($tenant_id ? "= $tenant_id" : 'is null'));
+                    ->whereRaw('users.tenant_id ' . ($tenantId ? "= $tenantId" : 'is null'));
             });
         }
-
-        // TODO: tenant check for Entitlement, Transaction, etc.
 
         return $model;
     }

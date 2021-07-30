@@ -34,7 +34,7 @@ class DomainList extends Command
             $domains = Domain::orderBy('namespace');
         }
 
-        $domains->withEnvTenant()->each(
+        $domains->withEnvTenantContext()->each(
             function ($domain) {
                 $msg = $domain->namespace;
 

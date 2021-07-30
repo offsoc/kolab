@@ -52,7 +52,7 @@ class TransactionTest extends TestCase
                 'description' => "A test award"
         ]);
 
-        $sku = Sku::where('title', 'mailbox')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
         $entitlement = Entitlement::where('sku_id', $sku->id)->first();
         $transaction = Transaction::create([
                 'user_email' => 'test@test.com',
@@ -62,7 +62,7 @@ class TransactionTest extends TestCase
                 'amount' => 13
         ]);
 
-        $sku = Sku::where('title', 'domain-hosting')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $entitlement = Entitlement::where('sku_id', $sku->id)->first();
         $transaction = Transaction::create([
                 'user_email' => 'test@test.com',
@@ -72,7 +72,7 @@ class TransactionTest extends TestCase
                 'amount' => 14
         ]);
 
-        $sku = Sku::where('title', 'storage')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
         $entitlement = Entitlement::where('sku_id', $sku->id)->first();
         $transaction = Transaction::create([
                 'user_email' => 'test@test.com',

@@ -155,9 +155,9 @@ Route::group(
         Route::post('groups/{id}/suspend', 'API\V4\Admin\GroupsController@suspend');
         Route::post('groups/{id}/unsuspend', 'API\V4\Admin\GroupsController@unsuspend');
 
-        Route::apiResource('packages', API\V4\Admin\PackagesController::class);
         Route::apiResource('skus', API\V4\Admin\SkusController::class);
         Route::apiResource('users', API\V4\Admin\UsersController::class);
+        Route::get('users/{id}/discounts', 'API\V4\Reseller\DiscountsController@userDiscounts');
         Route::post('users/{id}/reset2FA', 'API\V4\Admin\UsersController@reset2FA');
         Route::get('users/{id}/skus', 'API\V4\Admin\SkusController@userSkus');
         Route::post('users/{id}/suspend', 'API\V4\Admin\UsersController@suspend');
@@ -165,7 +165,6 @@ Route::group(
         Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
         Route::post('wallets/{id}/one-off', 'API\V4\Admin\WalletsController@oneOff');
         Route::get('wallets/{id}/transactions', 'API\V4\Admin\WalletsController@transactions');
-        Route::apiResource('discounts', API\V4\Admin\DiscountsController::class);
 
         Route::get('stats/chart/{chart}', 'API\V4\Admin\StatsController@chart');
     }
@@ -188,7 +187,6 @@ Route::group(
 
         Route::apiResource('invitations', API\V4\Reseller\InvitationsController::class);
         Route::post('invitations/{id}/resend', 'API\V4\Reseller\InvitationsController@resend');
-        Route::apiResource('packages', API\V4\Reseller\PackagesController::class);
 
         Route::post('payments', 'API\V4\Reseller\PaymentsController@store');
         Route::get('payments/mandate', 'API\V4\Reseller\PaymentsController@mandate');
@@ -201,6 +199,7 @@ Route::group(
 
         Route::apiResource('skus', API\V4\Reseller\SkusController::class);
         Route::apiResource('users', API\V4\Reseller\UsersController::class);
+        Route::get('users/{id}/discounts', 'API\V4\Reseller\DiscountsController@userDiscounts');
         Route::post('users/{id}/reset2FA', 'API\V4\Reseller\UsersController@reset2FA');
         Route::get('users/{id}/skus', 'API\V4\Reseller\SkusController@userSkus');
         Route::post('users/{id}/suspend', 'API\V4\Reseller\UsersController@suspend');
@@ -210,7 +209,6 @@ Route::group(
         Route::get('wallets/{id}/receipts', 'API\V4\Reseller\WalletsController@receipts');
         Route::get('wallets/{id}/receipts/{receipt}', 'API\V4\Reseller\WalletsController@receiptDownload');
         Route::get('wallets/{id}/transactions', 'API\V4\Reseller\WalletsController@transactions');
-        Route::apiResource('discounts', API\V4\Reseller\DiscountsController::class);
 
         Route::get('stats/chart/{chart}', 'API\V4\Reseller\StatsController@chart');
     }

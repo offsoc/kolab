@@ -251,7 +251,7 @@ class LDAPTest extends TestCase
         $user->save();
         $aliases = ['t1-' . $user->email, 't2-' . $user->email];
         $user->setAliases($aliases);
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $user->assignPackage($package_kolab);
 
         LDAP::updateUser($user->fresh());
@@ -263,7 +263,7 @@ class LDAPTest extends TestCase
         $expected['cn'] = 'Firstname Lastname';
         $expected['sn'] = 'Lastname';
         $expected['inetuserstatus'] = $user->status;
-        $expected['mailquota'] = 2097152;
+        $expected['mailquota'] = 5242880;
         $expected['nsroledn'] = null;
 
         $ldap_user = LDAP::getUser($user->email);
@@ -273,8 +273,8 @@ class LDAPTest extends TestCase
         }
 
         // Update entitlements
-        $sku_activesync = \App\Sku::where('title', 'activesync')->first();
-        $sku_groupware = \App\Sku::where('title', 'groupware')->first();
+        $sku_activesync = \App\Sku::withEnvTenantContext()->where('title', 'activesync')->first();
+        $sku_groupware = \App\Sku::withEnvTenantContext()->where('title', 'groupware')->first();
         $user->assignSku($sku_activesync, 1);
         Entitlement::where(['sku_id' => $sku_groupware->id, 'entitleable_id' => $user->id])->delete();
 

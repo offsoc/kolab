@@ -20,7 +20,7 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
         $result = collect([]);
 
         if ($owner) {
-            if ($owner = User::withEnvTenant()->find($owner)) {
+            if ($owner = User::find($owner)) {
                 foreach ($owner->wallets as $wallet) {
                     $wallet->entitlements()->where('entitleable_type', Group::class)->get()
                         ->each(function ($entitlement) use ($result) {
@@ -31,7 +31,7 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
                 $result = $result->sortBy('namespace')->values();
             }
         } elseif (!empty($search)) {
-            if ($group = Group::withEnvTenant()->where('email', $search)->first()) {
+            if ($group = Group::where('email', $search)->first()) {
                 $result->push($group);
             }
         }
@@ -78,9 +78,9 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
      */
     public function suspend(Request $request, $id)
     {
-        $group = Group::withEnvTenant()->find($id);
+        $group = Group::find($id);
 
-        if (empty($group)) {
+        if (!$this->checkTenant($group)) {
             return $this->errorResponse(404);
         }
 
@@ -102,9 +102,9 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
      */
     public function unsuspend(Request $request, $id)
     {
-        $group = Group::withEnvTenant()->find($id);
+        $group = Group::find($id);
 
-        if (empty($group)) {
+        if (!$this->checkTenant($group)) {
             return $this->errorResponse(404);
         }
 

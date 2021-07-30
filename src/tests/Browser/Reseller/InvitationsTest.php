@@ -45,7 +45,7 @@ class InvitationsTest extends TestCaseDusk
             $date_regexp = '/^20[0-9]{2}-/';
 
             $browser->visit(new Home())
-                ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-invitations', 'Invitations')
                 ->click('@links .link-invitations')
@@ -129,7 +129,7 @@ class InvitationsTest extends TestCaseDusk
 
             // Test deleting
             $browser->visit(new Invitations())
-                // ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                // ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->assertElementsCount('@table tbody tr', 2)
                 ->click('@table tbody tr:first-child button.button-delete')
                 ->assertToast(Toast::TYPE_SUCCESS, "Invitation deleted successfully.")
@@ -172,7 +172,7 @@ class InvitationsTest extends TestCaseDusk
 
             // Test paging (load more) feature
             $browser->visit(new Invitations())
-                // ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                // ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->assertElementsCount('@table tbody tr', 10)
                 ->assertSeeIn('#more-loader button', 'Load more')
                 ->with('@table tbody', function ($browser) use ($i1, $i2, $i3) {

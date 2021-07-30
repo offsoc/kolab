@@ -43,14 +43,15 @@ class SignupController extends Controller
         $plans = [];
 
         // Use reverse order just to have individual on left, group on right ;)
-        Plan::select()->orderByDesc('title')->get()->map(function ($plan) use (&$plans) {
-            $plans[] = [
-                'title' => $plan->title,
-                'name' => $plan->name,
-                'button' => __('app.planbutton', ['plan' => $plan->name]),
-                'description' => $plan->description,
-            ];
-        });
+        Plan::withEnvTenantContext()->orderByDesc('title')->get()
+            ->map(function ($plan) use (&$plans) {
+                $plans[] = [
+                    'title' => $plan->title,
+                    'name' => $plan->name,
+                    'button' => __('app.planbutton', ['plan' => $plan->name]),
+                    'description' => $plan->description,
+                ];
+            });
 
         return response()->json(['status' => 'success', 'plans' => $plans]);
     }
@@ -121,7 +122,7 @@ class SignupController extends Controller
      */
     public function invitation($id)
     {
-        $invitation = SignupInvitation::withEnvTenant()->find($id);
+        $invitation = SignupInvitation::withEnvTenantContext()->find($id);
 
         if (empty($invitation) || $invitation->isCompleted()) {
             return $this->errorResponse(404);
@@ -218,7 +219,7 @@ class SignupController extends Controller
 
         // Signup via invitation
         if ($request->invitation) {
-            $invitation = SignupInvitation::withEnvTenant()->find($request->invitation);
+            $invitation = SignupInvitation::withEnvTenantContext()->find($request->invitation);
 
             if (empty($invitation) || $invitation->isCompleted()) {
                 return $this->errorResponse(404);
@@ -345,13 +346,13 @@ class SignupController extends Controller
         if (!$this->plan) {
             // Get the plan if specified and exists...
             if ($this->code && $this->code->plan) {
-                $plan = Plan::where('title', $this->code->plan)->first();
+                $plan = Plan::withEnvTenantContext()->where('title', $this->code->plan)->first();
             }
 
             // ...otherwise use the default plan
             if (empty($plan)) {
                 // TODO: Get default plan title from config
-                $plan = Plan::where('title', 'individual')->first();
+                $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
             }
 
             $this->plan = $plan;

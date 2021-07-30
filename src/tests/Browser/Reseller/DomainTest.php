@@ -51,13 +51,13 @@ class DomainTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $domain = $this->getTestDomain('kolab.org');
             $domain_page = new DomainPage($domain->id);
-            $reseller = $this->getTestUser('reseller@kolabnow.com');
+            $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
             $user = $this->getTestUser('john@kolab.org');
             $user_page = new UserPage($user->id);
 
             // Goto the domain page
             $browser->visit(new Home())
-                ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($user_page)
                 ->on($user_page)

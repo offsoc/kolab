@@ -58,7 +58,7 @@ class Group extends Model
             throw new \Exception("Group already assigned to a wallet");
         }
 
-        $sku = \App\Sku::where('title', 'group')->first();
+        $sku = \App\Sku::withObjectTenantContext($this)->where('title', 'group')->first();
         $exists = $wallet->entitlements()->where('sku_id', $sku->id)->count();
 
         \App\Entitlement::create([

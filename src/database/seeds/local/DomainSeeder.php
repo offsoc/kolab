@@ -33,7 +33,7 @@ class DomainSeeder extends Seeder
                 [
                     'namespace' => $domain,
                     'status' => Domain::STATUS_CONFIRMED + Domain::STATUS_ACTIVE,
-                    'type' => Domain::TYPE_PUBLIC
+                    'type' => Domain::TYPE_PUBLIC,
                 ]
             );
         }
@@ -43,7 +43,7 @@ class DomainSeeder extends Seeder
                 [
                     'namespace' => \config('app.domain'),
                     'status' => DOMAIN::STATUS_CONFIRMED + Domain::STATUS_ACTIVE,
-                    'type' => Domain::TYPE_PUBLIC
+                    'type' => Domain::TYPE_PUBLIC,
                 ]
             );
         }
@@ -59,23 +59,27 @@ class DomainSeeder extends Seeder
                 [
                     'namespace' => $domain,
                     'status' => Domain::STATUS_CONFIRMED + Domain::STATUS_ACTIVE,
-                    'type' => Domain::TYPE_EXTERNAL
+                    'type' => Domain::TYPE_EXTERNAL,
                 ]
             );
         }
 
-        // example tenant domain, note that 'tenant_id' is not a fillable.
-        $domain = Domain::create(
-            [
-                'namespace' => 'example-tenant.dev-local',
-                'status' => Domain::STATUS_CONFIRMED + Domain::STATUS_ACTIVE,
-                'type' => Domain::TYPE_PUBLIC
-            ]
-        );
+        // We're running in reseller mode, add a sample discount
+        $tenants = \App\Tenant::where('id', '!=', \config('app.tenant_id'))->get();
 
-        $tenant = \App\Tenant::where('title', 'Sample Tenant')->first();
+        foreach ($tenants as $tenant) {
+            $domainNamespace = strtolower(str_replace(' ', '-', $tenant->title)) . '.dev-local';
 
-        $domain->tenant_id = $tenant->id;
-        $domain->save();
+            $domain = Domain::create(
+                [
+                    'namespace' => $domainNamespace,
+                    'status' => Domain::STATUS_CONFIRMED + Domain::STATUS_ACTIVE,
+                    'type' => Domain::TYPE_PUBLIC,
+                ]
+            );
+
+            $domain->tenant_id = $tenant->id;
+            $domain->save();
+        }
     }
 }

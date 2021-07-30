@@ -15,6 +15,8 @@ class SkusTest extends TestCase
         parent::setUp();
         self::useAdminUrl();
 
+        Sku::where('title', 'test')->delete();
+
         $this->clearBetaEntitlements();
         $this->clearMeetEntitlements();
     }
@@ -24,6 +26,8 @@ class SkusTest extends TestCase
      */
     public function tearDown(): void
     {
+        Sku::where('title', 'test')->delete();
+
         $this->clearBetaEntitlements();
         $this->clearMeetEntitlements();
 
@@ -37,7 +41,7 @@ class SkusTest extends TestCase
     {
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
         $user = $this->getTestUser('john@kolab.org');
-        $sku = Sku::where('title', 'mailbox')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
 
         // Unauth access not allowed
         $response = $this->get("api/v4/skus");

@@ -13,6 +13,8 @@ class DomainTest extends TestCase
     {
         parent::setUp();
 
+        $this->deleteTestDomain('test.domain');
+
         $this->domain = $this->getTestDomain(
             'test.domain',
             [

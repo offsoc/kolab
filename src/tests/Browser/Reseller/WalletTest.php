@@ -29,7 +29,7 @@ class WalletTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
         $wallet = $reseller->wallets()->first();
         $wallet->balance = 0;
         $wallet->save();
@@ -55,13 +55,13 @@ class WalletTest extends TestCaseDusk
      */
     public function testDashboard(): void
     {
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
         Wallet::where('user_id', $reseller->id)->update(['balance' => 125]);
 
         // Positive balance
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-wallet .name', 'Wallet')
                 ->assertSeeIn('@links .link-wallet .badge-success', '1,25 CHF');
@@ -84,7 +84,7 @@ class WalletTest extends TestCaseDusk
      */
     public function testWallet(): void
     {
-        $reseller = $this->getTestUser('reseller@kolabnow.com');
+        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
         Wallet::where('user_id', $reseller->id)->update(['balance' => -1234]);
 
         $this->browse(function (Browser $browser) {
@@ -103,7 +103,7 @@ class WalletTest extends TestCaseDusk
      */
     public function testReceipts(): void
     {
-        $user = $this->getTestUser('reseller@kolabnow.com');
+        $user = $this->getTestUser('reseller@' . \config('app.domain'));
         $wallet = $user->wallets()->first();
         $wallet->payments()->delete();
 
@@ -196,7 +196,7 @@ class WalletTest extends TestCaseDusk
      */
     public function testHistory(): void
     {
-        $user = $this->getTestUser('reseller@kolabnow.com');
+        $user = $this->getTestUser('reseller@' . \config('app.domain'));
         $wallet = $user->wallets()->first();
         $wallet->transactions()->delete();
 

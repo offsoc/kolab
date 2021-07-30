@@ -47,7 +47,7 @@ class DashboardTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertFocused('@search input')
                 ->assertMissing('@search table');
@@ -105,7 +105,7 @@ class DashboardTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('reseller@kolabnow.com', 'reseller', true)
+                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertFocused('@search input')
                 ->assertMissing('@search table');

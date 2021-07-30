@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Backends\LDAP;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class DomainsController extends Controller
 {
@@ -18,7 +17,7 @@ class DomainsController extends Controller
      */
     public function index()
     {
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
         $list = [];
 
         foreach ($user->domains() as $domain) {
@@ -51,10 +50,13 @@ class DomainsController extends Controller
      */
     public function confirm($id)
     {
-        $domain = Domain::findOrFail($id);
+        $domain = Domain::find($id);
 
-        // Only owner (or admin) has access to the domain
-        if (!Auth::guard()->user()->canRead($domain)) {
+        if (!$this->checkTenant($domain)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canRead($domain)) {
             return $this->errorResponse(403);
         }
 
@@ -117,10 +119,13 @@ class DomainsController extends Controller
      */
     public function show($id)
     {
-        $domain = Domain::withEnvTenant()->findOrFail($id);
+        $domain = Domain::find($id);
 
-        // Only owner (or admin) has access to the domain
-        if (!Auth::guard()->user()->canRead($domain)) {
+        if (!$this->checkTenant($domain)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canRead($domain)) {
             return $this->errorResponse(403);
         }
 
@@ -152,10 +157,13 @@ class DomainsController extends Controller
      */
     public function status($id)
     {
-        $domain = Domain::withEnvTenant()->findOrFail($id);
+        $domain = Domain::find($id);
 
-        // Only owner (or admin) has access to the domain
-        if (!Auth::guard()->user()->canRead($domain)) {
+        if (!$this->checkTenant($domain)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canRead($domain)) {
             return $this->errorResponse(403);
         }
 

@@ -72,7 +72,7 @@ class LogonTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', 'jeroen', true);
+                ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true);
 
             // Checks if we're really on Dashboard page
             $browser->on(new Dashboard())
@@ -123,7 +123,7 @@ class LogonTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', 'jeroen', true);
+                ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true);
 
             // Checks if we're really on Dashboard page
             $browser->on(new Dashboard());

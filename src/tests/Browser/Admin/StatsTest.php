@@ -26,7 +26,7 @@ class StatsTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', 'jeroen', true)
+                ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-stats', 'Stats')
                 ->click('@links .link-stats')

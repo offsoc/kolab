@@ -56,7 +56,7 @@ class DomainTest extends TestCaseDusk
 
             // Goto the domain page
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', 'jeroen', true)
+                ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($user_page)
                 ->on($user_page)

@@ -358,11 +358,9 @@ class StatsController extends \App\Http\Controllers\Controller
             if ($addQuery) {
                 $query = $addQuery($query, \config('app.tenant_id'));
             } else {
-                $query = $query->withEnvTenant();
+                $query = $query->withEnvTenantContext();
             }
         }
-
-        // TODO: Tenant selector for admins
 
         return $query;
     }

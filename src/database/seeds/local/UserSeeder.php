@@ -34,7 +34,7 @@ class UserSeeder extends Seeder
         $john = User::create(
             [
                 'email' => 'john@kolab.org',
-                'password' => 'simple123',
+                'password' => \App\Utils::generatePassphrase()
             ]
         );
 
@@ -55,17 +55,17 @@ class UserSeeder extends Seeder
 
         $wallet = $john->wallets->first();
 
-        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
-        $package_lite = \App\Package::where('title', 'lite')->first();
+        $packageDomain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $packageKolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $packageLite = \App\Package::withEnvTenantContext()->where('title', 'lite')->first();
 
-        $domain->assignPackage($package_domain, $john);
-        $john->assignPackage($package_kolab);
+        $domain->assignPackage($packageDomain, $john);
+        $john->assignPackage($packageKolab);
 
         $jack = User::create(
             [
                 'email' => 'jack@kolab.org',
-                'password' => 'simple123',
+                'password' => \App\Utils::generatePassphrase()
             ]
         );
 
@@ -80,7 +80,7 @@ class UserSeeder extends Seeder
 
         $jack->setAliases(['jack.daniels@kolab.org']);
 
-        $john->assignPackage($package_kolab, $jack);
+        $john->assignPackage($packageKolab, $jack);
 
         foreach ($john->entitlements as $entitlement) {
             $entitlement->created_at = Carbon::now()->subMonthsWithoutOverflow(1);
@@ -91,7 +91,7 @@ class UserSeeder extends Seeder
         $ned = User::create(
             [
                 'email' => 'ned@kolab.org',
-                'password' => 'simple123',
+                'password' => \App\Utils::generatePassphrase()
             ]
         );
 
@@ -104,16 +104,18 @@ class UserSeeder extends Seeder
             ]
         );
 
-        $john->assignPackage($package_kolab, $ned);
+        $john->assignPackage($packageKolab, $ned);
 
-        $ned->assignSku(\App\Sku::where('title', 'activesync')->first(), 1);
+        $ned->assignSku(\App\Sku::withEnvTenantContext()->where('title', 'activesync')->first(), 1);
 
         // Ned is a controller on Jack's wallet
         $john->wallets()->first()->addController($ned);
 
         // Ned is also our 2FA test user
-        $sku2fa = Sku::firstOrCreate(['title' => '2fa']);
+        $sku2fa = Sku::withEnvTenantContext()->where('title', '2fa')->first();
+
         $ned->assignSku($sku2fa);
+
         try {
             SecondFactor::seed('ned@kolab.org');
         } catch (\Exception $e) {
@@ -123,11 +125,11 @@ class UserSeeder extends Seeder
         $joe = User::create(
             [
                 'email' => 'joe@kolab.org',
-                'password' => 'simple123',
+                'password' => \App\Utils::generatePassphrase()
             ]
         );
 
-        $john->assignPackage($package_lite, $joe);
+        $john->assignPackage($packageLite, $joe);
 
         //$john->assignSku(Sku::firstOrCreate(['title' => 'beta']));
         //$john->assignSku(Sku::firstOrCreate(['title' => 'meet']));
@@ -139,36 +141,64 @@ class UserSeeder extends Seeder
         $jeroen = User::create(
             [
                 'email' => 'jeroen@jeroen.jeroen',
-                'password' => 'jeroen',
+                'password' => \App\Utils::generatePassphrase()
             ]
         );
 
         $jeroen->role = 'admin';
         $jeroen->save();
 
-        $tenant1 = \App\Tenant::where('title', 'Kolab Now')->first();
-        $tenant2 = \App\Tenant::where('title', 'Sample Tenant')->first();
-
-        $reseller1 = User::create(
+        $reseller = User::create(
             [
-                'email' => 'reseller@kolabnow.com',
-                'password' => 'reseller',
+                'email' => 'reseller@' . \config('app.domain'),
+                'password' => \App\Utils::generatePassphrase()
             ]
         );
 
-        $reseller1->tenant_id = $tenant1->id;
-        $reseller1->role = 'reseller';
-        $reseller1->save();
+        $reseller->role = 'reseller';
+        $reseller->save();
 
-        $reseller2 = User::create(
-            [
-                'email' => 'reseller@reseller.com',
-                'password' => 'reseller',
-            ]
-        );
+        $reseller->assignPackage($packageKolab);
 
-        $reseller2->tenant_id = $tenant2->id;
-        $reseller2->role = 'reseller';
-        $reseller2->save();
+        // for tenants that are not the configured tenant id
+        $tenants = \App\Tenant::where('id', '!=', \config('app.tenant_id'))->get();
+
+        foreach ($tenants as $tenant) {
+            $domain = Domain::where('tenant_id', $tenant->id)->first();
+
+            $packageKolab = \App\Package::where(
+                [
+                    'title' => 'kolab',
+                    'tenant_id' => $tenant->id
+                ]
+            )->first();
+
+            if ($domain) {
+                $reseller = User::create(
+                    [
+                        'email' => 'reseller@' . $domain->namespace,
+                        'password' => \App\Utils::generatePassphrase()
+                    ]
+                );
+
+                $reseller->role = 'reseller';
+                $reseller->tenant_id = $tenant->id;
+                $reseller->save();
+
+                $reseller->assignPackage($packageKolab);
+
+                $user = User::create(
+                    [
+                        'email' => 'user@' . $domain->namespace,
+                        'password' => \App\Utils::generatePassphrase()
+                    ]
+                );
+
+                $user->tenant_id = $tenant->id;
+                $user->save();
+
+                $user->assignPackage($packageKolab);
+            }
+        }
     }
 }
