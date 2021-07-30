@@ -70,19 +70,29 @@ class DashboardTest extends TestCaseDusk
                     $browser->assertElementsCount('tbody tr', 2)
                         ->with('tbody tr:first-child', function (Browser $browser) use ($jack) {
                             $browser->assertSeeIn('td:nth-child(1) a', $jack->email)
-                                ->assertSeeIn('td:nth-child(2) a', $jack->id)
-                                ->assertVisible('td:nth-child(3)')
-                                ->assertTextRegExp('td:nth-child(3)', '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/')
-                                ->assertVisible('td:nth-child(4)')
-                                ->assertText('td:nth-child(4)', '');
+                                ->assertSeeIn('td:nth-child(2) a', $jack->id);
+
+                            if ($browser->isPhone()) {
+                                $browser->assertMissing('td:nth-child(3)');
+                            } else {
+                                $browser->assertVisible('td:nth-child(3)')
+                                    ->assertTextRegExp('td:nth-child(3)', '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/')
+                                    ->assertVisible('td:nth-child(4)')
+                                    ->assertText('td:nth-child(4)', '');
+                            }
                         })
                         ->with('tbody tr:last-child', function (Browser $browser) use ($john) {
                             $browser->assertSeeIn('td:nth-child(1) a', $john->email)
-                                ->assertSeeIn('td:nth-child(2) a', $john->id)
-                                ->assertVisible('td:nth-child(3)')
-                                ->assertTextRegExp('td:nth-child(3)', '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/')
-                                ->assertVisible('td:nth-child(4)')
-                                ->assertText('td:nth-child(4)', '');
+                                ->assertSeeIn('td:nth-child(2) a', $john->id);
+
+                            if ($browser->isPhone()) {
+                                $browser->assertMissing('td:nth-child(3)');
+                            } else {
+                                $browser->assertVisible('td:nth-child(3)')
+                                    ->assertTextRegExp('td:nth-child(3)', '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/')
+                                    ->assertVisible('td:nth-child(4)')
+                                    ->assertText('td:nth-child(4)', '');
+                            }
                         });
                 });
 
@@ -128,11 +138,16 @@ class DashboardTest extends TestCaseDusk
                         ->assertVisible('tbody tr:first-child.text-secondary')
                         ->with('tbody tr:first-child', function (Browser $browser) use ($user) {
                             $browser->assertSeeIn('td:nth-child(1) span', $user->email)
-                                ->assertSeeIn('td:nth-child(2) span', $user->id)
-                                ->assertVisible('td:nth-child(3)')
-                                ->assertTextRegExp('td:nth-child(3)', '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/')
-                                ->assertVisible('td:nth-child(4)')
-                                ->assertTextRegExp('td:nth-child(4)', '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/');
+                                ->assertSeeIn('td:nth-child(2) span', $user->id);
+
+                            if ($browser->isPhone()) {
+                                $browser->assertMissing('td:nth-child(3)');
+                            } else {
+                                $browser->assertVisible('td:nth-child(3)')
+                                    ->assertTextRegExp('td:nth-child(3)', '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/')
+                                    ->assertVisible('td:nth-child(4)')
+                                    ->assertTextRegExp('td:nth-child(4)', '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/');
+                            }
                         });
                 });
         });

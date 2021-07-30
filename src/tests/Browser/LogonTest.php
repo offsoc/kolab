@@ -44,6 +44,10 @@ class LogonTest extends TestCaseDusk
     public function testLocales(): void
     {
         $this->browse(function (Browser $browser) {
+            if (!$browser->isDesktop()) {
+                $this->markTestIncomplete();
+            }
+
             $browser->visit(new Home())
                 // ->plainCookie('language', '')
                 ->within(new Menu(), function ($browser) {
