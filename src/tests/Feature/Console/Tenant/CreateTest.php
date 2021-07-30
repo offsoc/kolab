@@ -62,7 +62,7 @@ class CreateTest extends TestCase
         $code = \Artisan::call("tenant:create {$user->email} --title=\"Test Tenant\"");
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
-        $this->assertRegExp("/^Created tenant [0-9]+./", $output);
+        $this->assertMatchesRegularExpression("/^Created tenant [0-9]+./", $output);
 
         preg_match("/^Created tenant ([0-9]+)./", $output, $matches);
         $this->tenantId = $matches[1];

@@ -43,7 +43,7 @@ class CreateCommand extends Command
 
         // Clone plans, packages, skus for the tenant
         $sku_map = [];
-        \App\Sku::withEnvTenant()->where('active', true)->get()
+        \App\Sku::withEnvTenantContext()->where('active', true)->get()
             ->each(function ($sku) use ($sku_map, $tenant) {
                 $sku_new = \App\Sku::create([
                         'title' => $sku->title,
@@ -64,7 +64,7 @@ class CreateCommand extends Command
             });
 
         $plan_map = [];
-        \App\Plan::withEnvTenant()->get()
+        \App\Plan::withEnvTenantContext()->get()
             ->each(function ($plan) use ($plan_map, $tenant) {
                 $plan_new = \App\Plan::create([
                         'title' => $plan->title,
@@ -85,7 +85,7 @@ class CreateCommand extends Command
             });
 
         $package_map = [];
-        \App\Package::withEnvTenant()->get()
+        \App\Package::withEnvTenantContext()->get()
             ->each(function ($package) use ($package_map, $tenant) {
                 $package_new = \App\Package::create([
                         'title' => $package->title,
