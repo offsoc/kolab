@@ -59,7 +59,6 @@
         },
         "classmap": [
             "database/seeds",
-            "database/factories",
             "include"
         ]
     },
