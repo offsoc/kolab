@@ -147,7 +147,7 @@ class SenderPolicyFrameworkTest extends TestCase
 
         $response = $this->post('/api/webhooks/policy/spf', $data);
 
-        $response->assertStatus(200);
+        $response->assertStatus(403);
     }
 
     public function testSenderTemperror()
@@ -163,7 +163,7 @@ class SenderPolicyFrameworkTest extends TestCase
 
         $response = $this->post('/api/webhooks/policy/spf', $data);
 
-        $response->assertStatus(403);
+        $response->assertStatus(200);
     }
 
     public function testSenderRelayPolicyHeloExactNegative()
