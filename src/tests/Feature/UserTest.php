@@ -597,7 +597,7 @@ class UserTest extends TestCase
         $user = $this->getTestUser('user-test@' . \config('app.domain'));
 
         $this->assertSame('', $user->name());
-        $this->assertSame(\config('app.name') . ' User', $user->name(true));
+        $this->assertSame($user->tenant->title . ' User', $user->name(true));
 
         $user->setSetting('first_name', 'First');
 
