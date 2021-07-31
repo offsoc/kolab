@@ -33,6 +33,7 @@ if [ -f "composer.json" ]; then
 fi
 
 ./artisan horizon:install
+./artisan data:import:open-exchange-rates
 
 echo "---->> Run npm run prod"
 npm install
