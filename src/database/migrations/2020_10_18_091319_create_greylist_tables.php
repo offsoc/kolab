@@ -98,6 +98,8 @@ class CreateGreylistTables extends Migration
         Schema::create(
             'greylist_whitelist',
             function (Blueprint $table) {
+                $table->charset = 'latin1';
+                $table->collation = 'latin1_general_ci';
                 $table->bigIncrements('id');
                 $table->string('sender_local', 128)->nullable();
                 $table->string('sender_domain', 256);
