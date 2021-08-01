@@ -143,7 +143,7 @@ class PolicyController extends Controller
         $senderLocal = 'unknown';
         $senderDomain = 'unknown';
 
-        if (strpos('@', $data['sender']) !== false) {
+        if (strpos($data['sender'], '@') !== false) {
             list($senderLocal, $senderDomain) = explode('@', $data['sender']);
         }
 
