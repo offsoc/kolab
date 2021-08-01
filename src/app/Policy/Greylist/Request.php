@@ -13,8 +13,8 @@ class Request
     protected $recipientID = null;
     protected $recipientType = null;
     protected $sender;
-    protected $senderLocal;
-    protected $senderDomain;
+    protected $senderLocal = 'unknown';
+    protected $senderDomain = 'unknown';
     protected $timestamp;
     protected $whitelist;
     protected $request = [];
@@ -76,7 +76,9 @@ class Request
 
         $this->sender = $this->senderFromRequest();
 
-        list($this->senderLocal, $this->senderDomain) = explode('@', $this->sender);
+        if (strpos($this->sender, '@') !== false) {
+            list($this->senderLocal, $this->senderDomain) = explode('@', $this->sender);
+        }
 
         $entry = $this->findConnectsCollectionRecent()->orderBy('updated_at')->first();
 
