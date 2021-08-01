@@ -80,6 +80,10 @@ class Request
             list($this->senderLocal, $this->senderDomain) = explode('@', $this->sender);
         }
 
+        if (strlen($this->senderLocal) > 255) {
+            $this->senderLocal = substr($this->senderLocal, 0, 255);
+        }
+
         $entry = $this->findConnectsCollectionRecent()->orderBy('updated_at')->first();
 
         if (!$entry) {
