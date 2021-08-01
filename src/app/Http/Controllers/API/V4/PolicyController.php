@@ -145,6 +145,14 @@ class PolicyController extends Controller
 
         if (strpos($data['sender'], '@') !== false) {
             list($senderLocal, $senderDomain) = explode('@', $data['sender']);
+
+            if (strlen($senderLocal) >= 255) {
+                $senderLocal = substr($senderLocal, 0, 255);
+            }
+        }
+
+        if ($data['sender'] === null) {
+            $data['sender'] = '';
         }
 
         // Compose the cache key we want.
