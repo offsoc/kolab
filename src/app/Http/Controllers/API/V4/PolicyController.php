@@ -113,18 +113,38 @@ class PolicyController extends Controller
     {
         $data = \request()->input();
 
-        list($netID, $netType) = \App\Utils::getNetFromAddress($data['client_address']);
-        list($senderLocal, $senderDomain) = explode('@', $data['sender']);
+        if (!array_key_exists('client_address', $data)) {
+            \Log::error("SPF: Request without client_address: " . json_encode($data));
 
-        // This network can not be recognized.
-        if (!$netID) {
             return response()->json(
                 [
                     'response' => 'DEFER_IF_PERMIT',
-                    'reason' => 'Temporary error. Please try again later.'
+                    'reason' => 'Temporary error. Please try again later (' . __LINE__ . ')'
                 ],
                 403
             );
+        }
+
+        list($netID, $netType) = \App\Utils::getNetFromAddress($data['client_address']);
+
+        // This network can not be recognized.
+        if (!$netID) {
+            \Log::error("SPF: Request without recognizable network: " . json_encode($data));
+
+            return response()->json(
+                [
+                    'response' => 'DEFER_IF_PERMIT',
+                    'reason' => 'Temporary error. Please try again later (' . __LINE__ . ')'
+                ],
+                403
+            );
+        }
+
+        $senderLocal = 'unknown';
+        $senderDomain = 'unknown';
+
+        if (strpos('@', $data['sender']) !== false) {
+            list($senderLocal, $senderDomain) = explode('@', $data['sender']);
         }
 
         // Compose the cache key we want.
