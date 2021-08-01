@@ -335,6 +335,10 @@ class Utils
     {
         $address = strtolower($address);
 
+        if (strpos($address, '@') === false) {
+            return $address;
+        }
+
         list($local, $domain) = explode('@', $address);
 
         if (strpos($local, '+') === false) {
