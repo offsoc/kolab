@@ -219,10 +219,9 @@ class Request
             [
                 'sender_local' => $this->senderLocal,
                 'sender_domain' => $this->senderDomain,
+                'recipient_hash' => $this->recipientHash,
                 'net_id' => $this->netID,
                 'net_type' => $this->netType,
-                'recipient_id' => $this->recipientID,
-                'recipient_type' => $this->recipientType,
             ]
         )
             ->whereDate('updated_at', '>=', $this->timestamp->copy()->subMonthsWithoutOverflow(1))
@@ -305,7 +304,7 @@ class Request
             $recipient = null;
         }
 
-        $this->recipientHash = hash('sha256', $this->request['recipient']);
+        $this->recipientHash = hash('sha256', \App\Utils::normalizeAddress($this->request['recipient']));
 
         return $recipient;
     }
