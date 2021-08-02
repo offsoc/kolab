@@ -119,20 +119,26 @@ class Request
             )->first();
 
             if (!$setting) {
-                $setting = Setting::where(
-                    [
-                        'object_id' => $recipient->domain()->id,
-                        'object_type' => \App\Domain::class,
-                        'key' => 'greylist_enabled'
-                    ]
-                )->first();
+                $domain = $recipient->domain();
 
-                if (!$setting) {
-                    $enabled = true;
-                } else {
-                    if ($setting->{'value'} !== 'false') {
+                if ($domain) {
+                    $setting = Setting::where(
+                        [
+                            'object_id' => $recipient->domain()->id,
+                            'object_type' => \App\Domain::class,
+                            'key' => 'greylist_enabled'
+                        ]
+                    )->first();
+
+                    if (!$setting) {
                         $enabled = true;
+                    } else {
+                        if ($setting->{'value'} !== 'false') {
+                            $enabled = true;
+                        }
                     }
+                } else {
+                    $enabled = true;
                 }
             } else {
                 if ($setting->{'value'} !== 'false') {
@@ -277,6 +283,8 @@ class Request
 
     private function recipientFromRequest()
     {
+        $recipient = null;
+
         $recipients = \App\Utils::findObjectsByRecipientAddress($this->request['recipient']);
 
         if (sizeof($recipients) > 1) {
@@ -286,9 +294,13 @@ class Request
         }
 
         if (count($recipients) >= 1) {
-            $recipient = $recipients[0];
-            $this->recipientID = $recipient->id;
-            $this->recipientType = get_class($recipient);
+            foreach ($recipients as $recipient) {
+                if ($recipient) {
+                    $this->recipientID = $recipient->id;
+                    $this->recipientType = get_class($recipient);
+                    break;
+                }
+            }
         } else {
             $recipient = null;
         }
