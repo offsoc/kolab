@@ -33,7 +33,10 @@ if [ -f "composer.json" ]; then
 fi
 
 ./artisan horizon:install
-./artisan data:import:open-exchange-rates
+
+if [ ! -z "${OPENEXCHANGERATES_API_KEY}" ]; then
+    ./artisan data:import:open-exchange-rates
+fi
 
 echo "---->> Run npm run prod"
 npm install
