@@ -458,6 +458,19 @@ class GreylistTest extends TestCase
         );
 
         $this->assertFalse($request->shouldDefer());
+
+
+        // Ensure we also find the setting by alias
+        $aliases = $this->domainOwner->aliases()->orderBy('alias')->get();
+        $request = new Greylist\Request(
+            [
+                'sender' => 'someone@sender.domain',
+                'recipient' => $aliases[0]->alias,
+                'client_address' => $this->clientAddress
+            ]
+        );
+
+        $this->assertFalse($request->shouldDefer());
     }
 
     public function testUserEnabled()

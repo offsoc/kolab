@@ -389,11 +389,20 @@ trait TestCaseTrait
             ]
         );
 
+        $this->getTestDomain(
+            'test2.domain2',
+            [
+                'type' => \App\Domain::TYPE_EXTERNAL,
+                'status' => \App\Domain::STATUS_ACTIVE | \App\Domain::STATUS_CONFIRMED | \App\Domain::STATUS_VERIFIED
+            ]
+        );
+
         $packageKolab = \App\Package::where('title', 'kolab')->first();
 
         $this->domainOwner = $this->getTestUser('john@test.domain', ['password' => $this->userPassword]);
         $this->domainOwner->assignPackage($packageKolab);
         $this->domainOwner->setSettings($this->domainOwnerSettings);
+        $this->domainOwner->setAliases(['alias1@test2.domain2']);
 
         // separate for regular user
         $this->jack = $this->getTestUser('jack@test.domain', ['password' => $this->userPassword]);
