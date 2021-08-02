@@ -347,7 +347,7 @@ class Utils
 
         $localComponents = explode('+', $local);
 
-        $local = array_pop($localComponents);
+        $local = array_shift($localComponents);
 
         return "{$local}@{$domain}";
     }
