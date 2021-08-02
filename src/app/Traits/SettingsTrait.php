@@ -95,7 +95,7 @@ trait SettingsTrait
      *
      * ```php
      * $user = User::firstOrCreate(['email' => 'some@other.erg']);
-     * $user->setSettings(['locale', 'en', 'country' => 'GB']);
+     * $user->setSettings(['locale' => 'en', 'country' => 'GB']);
      * ```
      *
      * @param array $data An associative array of key value pairs.
