@@ -236,6 +236,7 @@ class Request
                     'sender_domain' => $this->senderDomain,
                     'net_id' => $this->netID,
                     'net_type' => $this->netType,
+                    'recipient_hash' => $this->recipientHash,
                     'recipient_id' => $this->recipientID,
                     'recipient_type' => $this->recipientType,
                     'connect_count' => 0,
@@ -265,10 +266,9 @@ class Request
             [
                 'sender_local' => $this->senderLocal,
                 'sender_domain' => $this->senderDomain,
+                'recipient_hash' => $this->recipientHash,
                 'net_id' => $this->netID,
                 'net_type' => $this->netType,
-                'recipient_id' => $this->recipientID,
-                'recipient_type' => $this->recipientType
             ]
         );
 
@@ -289,7 +289,7 @@ class Request
 
         if (sizeof($recipients) > 1) {
             \Log::warning(
-                "Only taking the first recipient from the request in to account for {$this->request['recipient']}"
+                "Only taking the first recipient from the request for {$this->request['recipient']}"
             );
         }
 
