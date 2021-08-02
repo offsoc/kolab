@@ -201,6 +201,7 @@ Route::group(
 
         Route::apiResource('invitations', API\V4\Reseller\InvitationsController::class);
         Route::post('invitations/{id}/resend', 'API\V4\Reseller\InvitationsController@resend');
+        Route::apiResource('packages', API\V4\Reseller\PackagesController::class);
 
         Route::post('payments', 'API\V4\Reseller\PaymentsController@store');
         Route::get('payments/mandate', 'API\V4\Reseller\PaymentsController@mandate');

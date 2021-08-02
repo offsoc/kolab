@@ -3,7 +3,7 @@
         <user-search></user-search>
         <div id="dashboard-nav" class="mt-3">
             <router-link v-if="status.enableWallets" class="card link-wallet" :to="{ name: 'wallet' }">
-                <svg-icon icon="wallet"></svg-icon><span class="name">{{ $t('dashboard.wallet') }}</span>
+                <svg-icon icon="wallet"></svg-icon><span class="name">Wallet</span>
                 <span :class="'badge badge-' + (balance < 0 ? 'danger' : 'success')">{{ $root.price(balance) }}</span>
             </router-link>
             <router-link class="card link-invitations" :to="{ name: 'invitations' }">

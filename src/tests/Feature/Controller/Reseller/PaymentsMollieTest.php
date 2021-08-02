@@ -250,9 +250,8 @@ class PaymentsMollieTest extends TestCase
         $response->assertStatus(200);
         $json = $response->json();
 
-        $this->assertCount(3, $json);
+        $this->assertCount(2, $json);
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
-        $this->assertSame('banktransfer', $json[2]['id']);
     }
 }
