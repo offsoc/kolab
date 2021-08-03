@@ -13,7 +13,7 @@ trait UserConfigTrait
 
         // TODO: Should we store the default value somewhere in config?
 
-        $config['greylist_enabled'] = $this->getSetting('greylist_enabled') !== 'false';
+        $config['greylisting'] = $this->getSetting('greylist_enabled') !== 'false';
 
         return $config;
     }
@@ -30,7 +30,7 @@ trait UserConfigTrait
         $errors = [];
 
         foreach ($config as $key => $value) {
-            if ($key == 'greylist_enabled') {
+            if ($key == 'greylisting') {
                 $this->setSetting('greylist_enabled', $value ? 'true' : 'false');
             } else {
                 $errors[$key] = \trans('validation.invalid-config-parameter');

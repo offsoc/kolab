@@ -197,7 +197,7 @@ class UserTest extends TestCaseDusk
             $wallet->save();
             $group = $this->getTestGroup('group-test@kolab.org');
             $group->assignToWallet($john->wallets->first());
-            $john->setSetting('greylisting', null);
+            $john->setSetting('greylist_enabled', null);
 
             // Click the managed-by link on Jack's page
             $browser->click('@user-info #manager a')
@@ -322,7 +322,7 @@ class UserTest extends TestCaseDusk
             ]);
 
             $page = new UserPage($ned->id);
-            $ned->setSetting('greylisting', 'false');
+            $ned->setSetting('greylist_enabled', 'false');
 
             $browser->click('@user-users tbody tr:nth-child(4) td:first-child a')
                 ->on($page);

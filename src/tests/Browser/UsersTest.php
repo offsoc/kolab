@@ -341,7 +341,7 @@ class UsersTest extends TestCaseDusk
     public function testUserSettings(): void
     {
         $john = $this->getTestUser('john@kolab.org');
-        $john->setSetting('greylisting', null);
+        $john->setSetting('greylist_enabled', null);
 
         $this->browse(function (Browser $browser) {
             $browser->on(new UserInfo())
@@ -357,7 +357,7 @@ class UsersTest extends TestCaseDusk
                 });
         });
 
-        $this->assertSame('false', $john->fresh()->getSetting('greylisting'));
+        $this->assertSame('false', $john->fresh()->getSetting('greylist_enabled'));
     }
 
     /**

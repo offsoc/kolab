@@ -66,7 +66,7 @@ class UsersTest extends TestCase
         $wallet->discount()->dissociate();
         $wallet->settings()->whereIn('key', ['mollie_id', 'stripe_id'])->delete();
         $wallet->save();
-        $user->settings()->whereIn('key', ['greylisting'])->delete();
+        $user->settings()->whereIn('key', ['greylist_enabled'])->delete();
         $user->status |= User::STATUS_IMAP_READY;
         $user->save();
 
@@ -475,7 +475,7 @@ class UsersTest extends TestCase
         $jack = $this->getTestUser('jack@kolab.org');
         $john = $this->getTestUser('john@kolab.org');
 
-        $john->setSetting('greylisting', null);
+        $john->setSetting('greylist_enabled', null);
 
         // Test unknown user id
         $post = ['greylisting' => 1];
@@ -507,7 +507,7 @@ class UsersTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertSame('The requested configuration parameter is not supported.', $json['errors']['grey']);
 
-        $this->assertNull($john->fresh()->getSetting('greylisting'));
+        $this->assertNull($john->fresh()->getSetting('greylist_enabled'));
 
         // Test some valid data
         $post = ['greylisting' => 1];
@@ -520,7 +520,7 @@ class UsersTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame('User settings updated successfully.', $json['message']);
 
-        $this->assertSame('true', $john->fresh()->getSetting('greylisting'));
+        $this->assertSame('true', $john->fresh()->getSetting('greylist_enabled'));
 
         // Test some valid data
         $post = ['greylisting' => 0];
@@ -533,7 +533,7 @@ class UsersTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame('User settings updated successfully.', $json['message']);
 
-        $this->assertSame('false', $john->fresh()->getSetting('greylisting'));
+        $this->assertSame('false', $john->fresh()->getSetting('greylist_enabled'));
     }
 
     /**
