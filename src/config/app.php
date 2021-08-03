@@ -78,6 +78,8 @@ return [
     */
     'domain' => env('APP_DOMAIN', 'domain.tld'),
 
+    'website_domain' => env('APP_WEBSITE_DOMAIN', env('APP_DOMAIN', 'domain.tld')),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
@@ -275,4 +277,8 @@ return [
         'methods_oneoff' => env('PAYMENT_METHODS_ONEOFF', "creditcard,paypal,banktransfer"),
         'methods_recurring' => env('PAYMENT_METHODS_RECURRING', "creditcard"),
     ],
+
+    'with_admin' => (bool) env('APP_WITH_ADMIN', false),
+    'with_reseller' => (bool) env('APP_WITH_RESELLER', false),
+    'with_services' => (bool) env('APP_WITH_SERVICES', false),
 ];

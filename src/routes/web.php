@@ -5,7 +5,7 @@
 // This way we don't have to define any "deep link" routes here.
 Route::group(
     [
-        //'domain' => \config('app.domain'),
+        //'domain' => \config('app.website_domain'),
     ],
     function () {
         Route::get('content/page/{page}', 'ContentController@pageContent')
