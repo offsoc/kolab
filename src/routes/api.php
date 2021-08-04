@@ -156,7 +156,7 @@ Route::group(
 if (\config('app.with_services')) {
     Route::group(
         [
-            'domain' => 'services.' . \config('app.domain'),
+            'domain' => 'services.' . \config('app.website_domain'),
             'prefix' => $prefix . 'api/webhooks/policy'
         ],
         function () {
@@ -170,7 +170,7 @@ if (\config('app.with_services')) {
 if (\config('app.with_admin')) {
     Route::group(
         [
-            'domain' => 'admin.' . \config('app.domain'),
+            'domain' => 'admin.' . \config('app.website_domain'),
             'middleware' => ['auth:api', 'admin'],
             'prefix' => $prefix . 'api/v4',
         ],
@@ -202,7 +202,7 @@ if (\config('app.with_admin')) {
 if (\config('app.with_reseller')) {
     Route::group(
         [
-            'domain' => 'reseller.' . \config('app.domain'),
+            'domain' => 'reseller.' . \config('app.website_domain'),
             'middleware' => ['auth:api', 'reseller'],
             'prefix' => $prefix . 'api/v4',
         ],
