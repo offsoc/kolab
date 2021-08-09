@@ -43,12 +43,9 @@ class StatsTest extends TestCaseDusk
                 ->click('@links .link-stats')
                 ->on(new Stats())
                 ->assertElementsCount('@container > div', 3)
-                ->waitFor('@container #chart-users svg')
-                ->assertSeeIn('@container #chart-users svg .title', 'Users - last 8 weeks')
-                ->waitFor('@container #chart-users-all svg')
-                ->assertSeeIn('@container #chart-users-all svg .title', 'All Users - last year')
-                ->waitFor('@container #chart-discounts svg')
-                ->assertSeeIn('@container #chart-discounts svg .title', 'Discounts');
+                ->waitForTextIn('@container #chart-users svg .title', 'Users - last 8 weeks')
+                ->waitForTextIn('@container #chart-users-all svg .title', 'All Users - last year')
+                ->waitForTextIn('@container #chart-discounts svg .title', 'Discounts');
         });
     }
 }
