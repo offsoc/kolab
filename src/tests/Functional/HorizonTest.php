@@ -8,6 +8,10 @@ class HorizonTest extends TestCase
 {
     public function testAdminAccess()
     {
+        if (!file_exists('public/vendor/horizon/mix-manifest.json')) {
+            $this->markTestSkipped();
+        }
+
         $this->useAdminUrl();
 
         $response = $this->get('horizon/dashboard');
