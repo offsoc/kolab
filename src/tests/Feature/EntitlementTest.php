@@ -45,7 +45,7 @@ class EntitlementTest extends TestCase
     {
         // 500
         // 28 days: 17.86
-        // 31 days: 16.13
+        // 31 days: 16.129
         $user = $this->getTestUser('entitlement-test@kolabnow.com');
         $package = Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $mailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
@@ -57,7 +57,7 @@ class EntitlementTest extends TestCase
         $costsPerDay = $entitlement->costsPerDay();
 
         $this->assertTrue($costsPerDay < 17.86);
-        $this->assertTrue($costsPerDay > 16.31);
+        $this->assertTrue($costsPerDay > 16.12);
     }
 
     /**
