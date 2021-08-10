@@ -71,6 +71,7 @@ class NGINXController extends Controller
 
         if (!$result) {
             $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+            // Avoid setting a passowrd failure reason if previously accepted the location.
             if (!$attempt->isAccepted()) {
                 $attempt->reason = \App\AuthAttempt::REASON_PASSWORD;
                 $attempt->save();
@@ -81,26 +82,24 @@ class NGINXController extends Controller
         }
 
         // validate country of origin against restrictions, otherwise bye bye
-        /* $countryCodes = json_decode($user->getSetting('limit_geo', "[]")); */
+        $countryCodes = json_decode($user->getSetting('limit_geo', "[]"));
 
-        /* \Log::debug("Countries for {$user->email}: " . var_export($countryCodes, true)); */
+        \Log::debug("Countries for {$user->email}: " . var_export($countryCodes, true));
 
-        /* // TODO: Consider "new geographical area notification". */
-
-        /* if (!empty($countryCodes)) { */
-        /*     // fake the country is NL, and the limitation is CH */
-        /*     if ($clientIP == '127.0.0.1' && $login == "piet@kolab.org") { */
-        /*         $country = "NL"; */
-        /*     } else { */
-        /*         // TODO: GeoIP reliance */
-        /*         $country = "CH"; */
-        /*     } */
-
-        /*     if (!in_array($country, $countryCodes)) { */
-        /*         // TODO: Log, notify user. */
-        /*         return $this->byebye($request, "Country code mismatch"); */
-        /*     } */
-        /* } */
+        if (!empty($countryCodes)) {
+            $country = \App\Utils::countryForIP($clientIP);
+            if (!in_array($country, $countryCodes)) {
+                \Log::info(
+                    "Failed authentication attempt due to country code mismatch ({$country}) for user: {$login}"
+                );
+                $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+                $attempt->deny();
+                $attempt->reason = \App\AuthAttempt::REASON_GEOLOCATION;
+                $attempt->save();
+                $attempt->notify();
+                return $this->byebye($request, "Country code mismatch");
+            }
+        }
 
         // TODO: Apply some sort of limit for Auth-Login-Attempt -- docs say it is the number of
         // attempts over the same authAttempt.

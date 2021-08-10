@@ -17,6 +17,8 @@ class AuthAttempt extends Model
 
     // Password mismatch
     public const REASON_PASSWORD   = 'password';
+    // Geolocation not in whitelist
+    public const REASON_GEOLOCATION   = 'geolocation';
 
     protected $nullable = [
         'reason',
