@@ -192,3 +192,11 @@ services:
     volumes:
       - ./src:/home/worker/src.orig:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  meet:
+    build:
+      context: ./docker/meet/
+    privileged: true
+    container_name: kolab-meet
+    volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+      - ./meet/server:/src/meet/:ro
