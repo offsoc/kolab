@@ -22,8 +22,6 @@ RUN dnf -y install \
         NetworkManager-tui \
         network-scripts \
         nmap-ncat \
-        openssh-clients \
-        openssh-server \
         procps-ng \
         redis \
         strace \
