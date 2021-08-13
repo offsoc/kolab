@@ -17,7 +17,7 @@ const Logger = require('./lib/Logger');
 const Room = require('./lib/Room');
 const Peer = require('./lib/Peer');
 const base64 = require('base-64');
-const helmet = require('helmet');
+// const helmet = require('helmet');
 const userRoles = require('./userRoles');
 const {
 	loginHelper,
@@ -248,22 +248,22 @@ function setupLTI(ltiConfig)
 	passport.use('lti', ltiStrategy);
 }
 
-function setupSAML()
-{
-	samlStrategy = new SAMLStrategy(
-		config.auth.saml,
-		function(profile, done)
-		{
-			return done(null,
-				{
-					id        : profile.uid,
-					_userinfo : profile
-				});
-		}
-	);
+// function setupSAML()
+// {
+// 	samlStrategy = new SAMLStrategy(
+// 		config.auth.saml,
+// 		function(profile, done)
+// 		{
+// 			return done(null,
+// 				{
+// 					id        : profile.uid,
+// 					_userinfo : profile
+// 				});
+// 		}
+// 	);
 
-	passport.use('saml', samlStrategy);
-}
+// 	passport.use('saml', samlStrategy);
+// }
 
 function setupLocal()
 {
@@ -293,61 +293,61 @@ function setupLocal()
 	passport.use('local', localStrategy);
 }
 
-function setupOIDC(oidcIssuer)
-{
+// function setupOIDC(oidcIssuer)
+// {
 
-	oidcClient = new oidcIssuer.Client(config.auth.oidc.clientOptions);
+// 	oidcClient = new oidcIssuer.Client(config.auth.oidc.clientOptions);
 
-	// ... any authorization request parameters go here
-	// client_id defaults to client.client_id
-	// redirect_uri defaults to client.redirect_uris[0]
-	// response type defaults to client.response_types[0], then 'code'
-	// scope defaults to 'openid'
+// 	// ... any authorization request parameters go here
+// 	// client_id defaults to client.client_id
+// 	// redirect_uri defaults to client.redirect_uris[0]
+// 	// response type defaults to client.response_types[0], then 'code'
+// 	// scope defaults to 'openid'
 
-	/* eslint-disable camelcase */
-	const params = (({
-		client_id,
-		redirect_uri,
-		scope
-	}) => ({
-		client_id,
-		redirect_uri,
-		scope
-	}))(config.auth.oidc.clientOptions);
-	/* eslint-enable camelcase */
+// 	/* eslint-disable camelcase */
+// 	const params = (({
+// 		client_id,
+// 		redirect_uri,
+// 		scope
+// 	}) => ({
+// 		client_id,
+// 		redirect_uri,
+// 		scope
+// 	}))(config.auth.oidc.clientOptions);
+// 	/* eslint-enable camelcase */
 
-	// optional, defaults to false, when true req is passed as a first
-	// argument to verify fn
-	const passReqToCallback = false;
+// 	// optional, defaults to false, when true req is passed as a first
+// 	// argument to verify fn
+// 	const passReqToCallback = false;
 
-	// optional, defaults to false, when true the code_challenge_method will be
-	// resolved from the issuer configuration, instead of true you may provide
-	// any of the supported values directly, i.e. "S256" (recommended) or "plain"
-	const usePKCE = false;
+// 	// optional, defaults to false, when true the code_challenge_method will be
+// 	// resolved from the issuer configuration, instead of true you may provide
+// 	// any of the supported values directly, i.e. "S256" (recommended) or "plain"
+// 	const usePKCE = false;
 
-	oidcStrategy = new Strategy(
-		{ client: oidcClient, params, passReqToCallback, usePKCE },
-		(tokenset, userinfo, done) =>
-		{
-			if (userinfo && tokenset)
-			{
-				// eslint-disable-next-line camelcase
-				userinfo._tokenset_claims = tokenset.claims();
-			}
+// 	oidcStrategy = new Strategy(
+// 		{ client: oidcClient, params, passReqToCallback, usePKCE },
+// 		(tokenset, userinfo, done) =>
+// 		{
+// 			if (userinfo && tokenset)
+// 			{
+// 				// eslint-disable-next-line camelcase
+// 				userinfo._tokenset_claims = tokenset.claims();
+// 			}
 
-			const user =
-			{
-				id        : tokenset.claims.sub,
-				provider  : tokenset.claims.iss,
-				_userinfo : userinfo
-			};
+// 			const user =
+// 			{
+// 				id        : tokenset.claims.sub,
+// 				provider  : tokenset.claims.iss,
+// 				_userinfo : userinfo
+// 			};
 
-			return done(null, user);
-		}
-	);
+// 			return done(null, user);
+// 		}
+// 	);
 
-	passport.use('oidc', oidcStrategy);
-}
+// 	passport.use('oidc', oidcStrategy);
+// }
 
 async function setupAuth()
 {
@@ -359,41 +359,41 @@ async function setupAuth()
 	) setupLTI(config.auth.lti);
 
 	// OIDC
-	if (
-		typeof (config.auth) !== 'undefined' &&
-		(
-			(
-				typeof (config.auth.strategy) !== 'undefined' &&
-				config.auth.strategy === 'oidc'
-			)
-			// it is default strategy
-			|| typeof (config.auth.strategy) === 'undefined'
-		) &&
-		typeof (config.auth.oidc) !== 'undefined' &&
-		typeof (config.auth.oidc.issuerURL) !== 'undefined' &&
-		typeof (config.auth.oidc.clientOptions) !== 'undefined'
-	)
-	{
-		const oidcIssuer = await Issuer.discover(config.auth.oidc.issuerURL);
+	// if (
+	// 	typeof (config.auth) !== 'undefined' &&
+	// 	(
+	// 		(
+	// 			typeof (config.auth.strategy) !== 'undefined' &&
+	// 			config.auth.strategy === 'oidc'
+	// 		)
+	// 		// it is default strategy
+	// 		|| typeof (config.auth.strategy) === 'undefined'
+	// 	) &&
+	// 	typeof (config.auth.oidc) !== 'undefined' &&
+	// 	typeof (config.auth.oidc.issuerURL) !== 'undefined' &&
+	// 	typeof (config.auth.oidc.clientOptions) !== 'undefined'
+	// )
+	// {
+	// 	const oidcIssuer = await Issuer.discover(config.auth.oidc.issuerURL);
 
-		// Setup authentication
-		setupOIDC(oidcIssuer);
+	// 	// Setup authentication
+	// 	setupOIDC(oidcIssuer);
 
-	}
+	// }
 
 	// SAML
-	if (
-		typeof (config.auth) !== 'undefined' &&
-		typeof (config.auth.strategy) !== 'undefined' &&
-		config.auth.strategy === 'saml' &&
-		typeof (config.auth.saml) !== 'undefined' &&
-		typeof (config.auth.saml.entryPoint) !== 'undefined' &&
-		typeof (config.auth.saml.issuer) !== 'undefined' &&
-		typeof (config.auth.saml.cert) !== 'undefined'
-	)
-	{
-		setupSAML();
-	}
+	// if (
+	// 	typeof (config.auth) !== 'undefined' &&
+	// 	typeof (config.auth.strategy) !== 'undefined' &&
+	// 	config.auth.strategy === 'saml' &&
+	// 	typeof (config.auth.saml) !== 'undefined' &&
+	// 	typeof (config.auth.saml.entryPoint) !== 'undefined' &&
+	// 	typeof (config.auth.saml.issuer) !== 'undefined' &&
+	// 	typeof (config.auth.saml.cert) !== 'undefined'
+	// )
+	// {
+	// 	setupSAML();
+	// }
 
 	// Local
 	if (
@@ -555,61 +555,66 @@ async function runHttpsServer()
 {
 	app.use(compression());
 
-	app.use('/.well-known/acme-challenge', express.static('public/.well-known/acme-challenge'));
+	// app.use('/.well-known/acme-challenge', express.static('public/.well-known/acme-challenge'));
 
-	app.all('*', async (req, res, next) =>
-	{
-		if (req.secure || config.httpOnly)
-		{
-			let ltiURL;
+    app.get('/ping', function (req, res, next) {
+        res.send('PONG')
+    })
 
-			try
-			{
-				ltiURL = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
-			}
-			catch (error)
-			{
-				logger.error('Error parsing LTI url: %o', error);
-			}
+	// app.all('*', async (req, res, next) =>
+	// {
+        // logger.error('Something is happening');
+	// 	if (req.secure || config.httpOnly)
+	// 	{
+	// 		let ltiURL;
 
-			if (
-				req.isAuthenticated &&
-				req.user &&
-				req.user.displayName &&
-				!ltiURL.searchParams.get('displayName') &&
-				!isPathAlreadyTaken(req.url)
-			)
-			{
+	// 		try
+	// 		{
+	// 			ltiURL = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
+	// 		}
+	// 		catch (error)
+	// 		{
+	// 			logger.error('Error parsing LTI url: %o', error);
+	// 		}
 
-				ltiURL.searchParams.append('displayName', req.user.displayName);
+	// 		if (
+	// 			req.isAuthenticated &&
+	// 			req.user &&
+	// 			req.user.displayName &&
+	// 			!ltiURL.searchParams.get('displayName') &&
+	// 			!isPathAlreadyTaken(req.url)
+	// 		)
+	// 		{
 
-				res.redirect(ltiURL);
-			}
-			else
-			{
-				const specialChars = "<>@!^*()[]{}:;|'\"\\,~`";
+	// 			ltiURL.searchParams.append('displayName', req.user.displayName);
 
-				for (let i = 0; i < specialChars.length; i++)
-				{
-					if (req.url.substring(1).indexOf(specialChars[i]) > -1)
-					{
-						req.url = `/${encodeURIComponent(encodeURI(req.url.substring(1)))}`;
-						res.redirect(`${req.url}`);
-					}
-				}
+	// 			res.redirect(ltiURL);
+	// 		}
+	// 		else
+	// 		{
+	// 			const specialChars = "<>@!^*()[]{}:;|'\"\\,~`";
 
-				return next();
-			}
-		}
-		else
-			res.redirect(`https://${req.hostname}${req.url}`);
+	// 			for (let i = 0; i < specialChars.length; i++)
+	// 			{
+	// 				if (req.url.substring(1).indexOf(specialChars[i]) > -1)
+	// 				{
+	// 					req.url = `/${encodeURIComponent(encodeURI(req.url.substring(1)))}`;
+	// 					res.redirect(`${req.url}`);
+	// 				}
+	// 			}
 
-	});
+	// 			return next();
+	// 		}
+	// 	}
+	// 	else
+	// 		res.redirect(`https://${req.hostname}${req.url}`);
+
+	// });
 
 	// Serve all files in the public folder as static files.
-	app.use(express.static('public'));
+	// app.use(express.static('public'));
 
-	app.use((req, res) => res.sendFile(`${__dirname}/public/index.html`));
+	// app.use((req, res) => res.sendFile(`${__dirname}/public/index.html`));
 
 	if (config.httpOnly === true)
 	{
@@ -630,6 +635,7 @@ async function runHttpsServer()
 			redirectListener.listen(config.listeningRedirectPort);
 	}
 
+    console.info("Listening on {config.listeningPort} {config.listeningHost}")
 	// https or http
 	if (config.listeningHost)
 		mainListener.listen(config.listeningPort, config.listeningHost);
@@ -637,26 +643,26 @@ async function runHttpsServer()
 		mainListener.listen(config.listeningPort);
 }
 
-function isPathAlreadyTaken(actualUrl)
-{
-	const alreadyTakenPath =
-		[
-			'/config/',
-			'/static/',
-			'/images/',
-			'/sounds/',
-			'/favicon.',
-			'/auth/'
-		];
+// function isPathAlreadyTaken(actualUrl)
+// {
+// 	const alreadyTakenPath =
+// 		[
+// 			'/config/',
+// 			'/static/',
+// 			'/images/',
+// 			'/sounds/',
+// 			'/favicon.',
+// 			'/auth/'
+// 		];
 
-	alreadyTakenPath.forEach((path) =>
-	{
-		if (actualUrl.toString().startsWith(path))
-			return true;
-	});
+// 	alreadyTakenPath.forEach((path) =>
+// 	{
+// 		if (actualUrl.toString().startsWith(path))
+// 			return true;
+// 	});
 
-	return false;
-}
+// 	return false;
+// }
 
 /**
  * Create a WebSocketServer to allow WebSocket connections from browsers.
