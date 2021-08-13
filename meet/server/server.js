@@ -17,7 +17,7 @@ const Logger = require('./lib/Logger');
 const Room = require('./lib/Room');
 const Peer = require('./lib/Peer');
 const base64 = require('base-64');
-// const helmet = require('helmet');
+const helmet = require('helmet');
 const userRoles = require('./userRoles');
 const {
 	loginHelper,
@@ -25,10 +25,10 @@ const {
 } = require('./httpHelper');
 // auth
 const passport = require('passport');
-const LTIStrategy = require('passport-lti');
-const imsLti = require('ims-lti');
-const SAMLStrategy = require('passport-saml').Strategy;
-const LocalStrategy = require('passport-local').Strategy;
+// const LTIStrategy = require('passport-lti');
+// const imsLti = require('ims-lti');
+// const SAMLStrategy = require('passport-saml').Strategy;
+// const LocalStrategy = require('passport-local').Strategy;
 const redis = require('redis');
 const redisClient = redis.createClient(config.redisOptions);
 const { Issuer, Strategy } = require('openid-client');
@@ -113,22 +113,22 @@ if (config.trustProxy)
 
 app.use(session);
 
-passport.serializeUser((user, done) =>
-{
-	done(null, user);
-});
+// passport.serializeUser((user, done) =>
+// {
+// 	done(null, user);
+// });
 
-passport.deserializeUser((user, done) =>
-{
-	done(null, user);
-});
+// passport.deserializeUser((user, done) =>
+// {
+// 	done(null, user);
+// });
 
 let mainListener;
 let io;
-let oidcClient;
-let oidcStrategy;
-let samlStrategy;
-let localStrategy;
+// let oidcClient;
+// let oidcStrategy;
+// let samlStrategy;
+// let localStrategy;
 
 async function run()
 {
@@ -143,14 +143,14 @@ async function run()
 			await promExporter(rooms, peers, config.prometheus);
 		}
 
-		if (typeof (config.auth) === 'undefined')
-		{
-			logger.warn('Auth is not configured properly!');
-		}
-		else
-		{
-			await setupAuth();
-		}
+		// if (typeof (config.auth) === 'undefined')
+		// {
+		// 	logger.warn('Auth is not configured properly!');
+		// }
+		// else
+		// {
+		// 	await setupAuth();
+		// }
 
 		// Run a mediasoup Worker.
 		await runMediasoupWorkers();
@@ -198,55 +198,55 @@ function statusLog()
 	}
 }
 
-function setupLTI(ltiConfig)
-{
+// function setupLTI(ltiConfig)
+// {
 
-	// Add redis nonce store
-	ltiConfig.nonceStore = new imsLti.Stores.RedisStore(ltiConfig.consumerKey, redisClient);
-	ltiConfig.passReqToCallback = true;
+// 	// Add redis nonce store
+// 	ltiConfig.nonceStore = new imsLti.Stores.RedisStore(ltiConfig.consumerKey, redisClient);
+// 	ltiConfig.passReqToCallback = true;
 
-	const ltiStrategy = new LTIStrategy(
-		ltiConfig,
-		(req, lti, done) =>
-		{
-			// LTI launch parameters
-			if (lti)
-			{
-				const user = {};
+// 	const ltiStrategy = new LTIStrategy(
+// 		ltiConfig,
+// 		(req, lti, done) =>
+// 		{
+// 			// LTI launch parameters
+// 			if (lti)
+// 			{
+// 				const user = {};
 
-				if (lti.user_id && lti.custom_room)
-				{
-					user.id = lti.user_id;
-					user._userinfo = { 'lti': lti };
-				}
+// 				if (lti.user_id && lti.custom_room)
+// 				{
+// 					user.id = lti.user_id;
+// 					user._userinfo = { 'lti': lti };
+// 				}
 
-				if (lti.custom_room)
-				{
-					user.room = lti.custom_room;
-				}
-				else
-				{
-					user.room = '';
-				}
-				if (lti.lis_person_name_full)
-				{
-					user.displayName = lti.lis_person_name_full;
-				}
+// 				if (lti.custom_room)
+// 				{
+// 					user.room = lti.custom_room;
+// 				}
+// 				else
+// 				{
+// 					user.room = '';
+// 				}
+// 				if (lti.lis_person_name_full)
+// 				{
+// 					user.displayName = lti.lis_person_name_full;
+// 				}
 
-				// Perform local authentication if necessary
-				return done(null, user);
+// 				// Perform local authentication if necessary
+// 				return done(null, user);
 
-			}
-			else
-			{
-				return done('LTI error');
-			}
+// 			}
+// 			else
+// 			{
+// 				return done('LTI error');
+// 			}
 
-		}
-	);
+// 		}
+// 	);
 
-	passport.use('lti', ltiStrategy);
-}
+// 	passport.use('lti', ltiStrategy);
+// }
 
 // function setupSAML()
 // {
@@ -265,33 +265,33 @@ function setupLTI(ltiConfig)
 // 	passport.use('saml', samlStrategy);
 // }
 
-function setupLocal()
-{
-	localStrategy = new LocalStrategy(
-		function(username, plaintextPassword, done)
-		{
-			const found = config.auth.local.users.find((element) =>
-			{
-				// TODO use encrypted password
-				return element.username === username &&
-					bcrypt.compareSync(plaintextPassword, element.passwordHash);
-			});
+// function setupLocal()
+// {
+// 	localStrategy = new LocalStrategy(
+// 		function(username, plaintextPassword, done)
+// 		{
+// 			const found = config.auth.local.users.find((element) =>
+// 			{
+// 				// TODO use encrypted password
+// 				return element.username === username &&
+// 					bcrypt.compareSync(plaintextPassword, element.passwordHash);
+// 			});
 
-			if (found === undefined)
-				return done(null, null);
-			else
-			{
-				const userinfo = { ...found };
+// 			if (found === undefined)
+// 				return done(null, null);
+// 			else
+// 			{
+// 				const userinfo = { ...found };
 
-				delete userinfo.password;
+// 				delete userinfo.password;
 
-				return done(null, { id: found.id, _userinfo: userinfo });
-			}
-		}
-	);
+// 				return done(null, { id: found.id, _userinfo: userinfo });
+// 			}
+// 		}
+// 	);
 
-	passport.use('local', localStrategy);
-}
+// 	passport.use('local', localStrategy);
+// }
 
 // function setupOIDC(oidcIssuer)
 // {
@@ -349,207 +349,207 @@ function setupLocal()
 // 	passport.use('oidc', oidcStrategy);
 // }
 
-async function setupAuth()
-{
-	// LTI
-	if (
-		typeof (config.auth.lti) !== 'undefined' &&
-		typeof (config.auth.lti.consumerKey) !== 'undefined' &&
-		typeof (config.auth.lti.consumerSecret) !== 'undefined'
-	) setupLTI(config.auth.lti);
+// async function setupAuth()
+// {
+// 	// LTI
+// 	if (
+// 		typeof (config.auth.lti) !== 'undefined' &&
+// 		typeof (config.auth.lti.consumerKey) !== 'undefined' &&
+// 		typeof (config.auth.lti.consumerSecret) !== 'undefined'
+// 	) setupLTI(config.auth.lti);
 
-	// OIDC
-	// if (
-	// 	typeof (config.auth) !== 'undefined' &&
-	// 	(
-	// 		(
-	// 			typeof (config.auth.strategy) !== 'undefined' &&
-	// 			config.auth.strategy === 'oidc'
-	// 		)
-	// 		// it is default strategy
-	// 		|| typeof (config.auth.strategy) === 'undefined'
-	// 	) &&
-	// 	typeof (config.auth.oidc) !== 'undefined' &&
-	// 	typeof (config.auth.oidc.issuerURL) !== 'undefined' &&
-	// 	typeof (config.auth.oidc.clientOptions) !== 'undefined'
-	// )
-	// {
-	// 	const oidcIssuer = await Issuer.discover(config.auth.oidc.issuerURL);
+// 	// OIDC
+// 	// if (
+// 	// 	typeof (config.auth) !== 'undefined' &&
+// 	// 	(
+// 	// 		(
+// 	// 			typeof (config.auth.strategy) !== 'undefined' &&
+// 	// 			config.auth.strategy === 'oidc'
+// 	// 		)
+// 	// 		// it is default strategy
+// 	// 		|| typeof (config.auth.strategy) === 'undefined'
+// 	// 	) &&
+// 	// 	typeof (config.auth.oidc) !== 'undefined' &&
+// 	// 	typeof (config.auth.oidc.issuerURL) !== 'undefined' &&
+// 	// 	typeof (config.auth.oidc.clientOptions) !== 'undefined'
+// 	// )
+// 	// {
+// 	// 	const oidcIssuer = await Issuer.discover(config.auth.oidc.issuerURL);
 
-	// 	// Setup authentication
-	// 	setupOIDC(oidcIssuer);
+// 	// 	// Setup authentication
+// 	// 	setupOIDC(oidcIssuer);
 
-	// }
+// 	// }
 
-	// SAML
-	// if (
-	// 	typeof (config.auth) !== 'undefined' &&
-	// 	typeof (config.auth.strategy) !== 'undefined' &&
-	// 	config.auth.strategy === 'saml' &&
-	// 	typeof (config.auth.saml) !== 'undefined' &&
-	// 	typeof (config.auth.saml.entryPoint) !== 'undefined' &&
-	// 	typeof (config.auth.saml.issuer) !== 'undefined' &&
-	// 	typeof (config.auth.saml.cert) !== 'undefined'
-	// )
-	// {
-	// 	setupSAML();
-	// }
+// 	// SAML
+// 	// if (
+// 	// 	typeof (config.auth) !== 'undefined' &&
+// 	// 	typeof (config.auth.strategy) !== 'undefined' &&
+// 	// 	config.auth.strategy === 'saml' &&
+// 	// 	typeof (config.auth.saml) !== 'undefined' &&
+// 	// 	typeof (config.auth.saml.entryPoint) !== 'undefined' &&
+// 	// 	typeof (config.auth.saml.issuer) !== 'undefined' &&
+// 	// 	typeof (config.auth.saml.cert) !== 'undefined'
+// 	// )
+// 	// {
+// 	// 	setupSAML();
+// 	// }
 
-	// Local
-	if (
-		typeof (config.auth) !== 'undefined' &&
-		typeof (config.auth.strategy) !== 'undefined' &&
-		config.auth.strategy === 'local' &&
-		typeof (config.auth.local) !== 'undefined' &&
-		typeof (config.auth.local.users) !== 'undefined'
-	)
-	{
-		setupLocal();
-	}
+// 	// Local
+// 	if (
+// 		typeof (config.auth) !== 'undefined' &&
+// 		typeof (config.auth.strategy) !== 'undefined' &&
+// 		config.auth.strategy === 'local' &&
+// 		typeof (config.auth.local) !== 'undefined' &&
+// 		typeof (config.auth.local.users) !== 'undefined'
+// 	)
+// 	{
+// 		setupLocal();
+// 	}
 
-	app.use(passport.initialize());
-	app.use(passport.session());
+// 	app.use(passport.initialize());
+// 	app.use(passport.session());
 
-	// Auth strategy (by default oidc)
-	const authStrategy = (config.auth && config.auth.strategy) ? config.auth.strategy : 'oidc';
+// 	// Auth strategy (by default oidc)
+// 	const authStrategy = (config.auth && config.auth.strategy) ? config.auth.strategy : 'oidc';
 
-	// loginparams
-	app.get('/auth/login', (req, res, next) =>
-	{
-		const state = {
-			peerId : req.query.peerId,
-			roomId : req.query.roomId
-		};
+// 	// loginparams
+// 	app.get('/auth/login', (req, res, next) =>
+// 	{
+// 		const state = {
+// 			peerId : req.query.peerId,
+// 			roomId : req.query.roomId
+// 		};
 
-		if (authStrategy== 'saml' || authStrategy=='local')
-		{
-			req.session.authState=state;
-		}
+// 		if (authStrategy== 'saml' || authStrategy=='local')
+// 		{
+// 			req.session.authState=state;
+// 		}
 
-		if (authStrategy === 'local' && !(req.user && req.password))
-		{
-			res.redirect('/login_dialog');
-		}
-		else
-		{
-			passport.authenticate(authStrategy, {
-				state : base64.encode(JSON.stringify(state))
-			}
-			)(req, res, next);
-		}
-	});
+// 		if (authStrategy === 'local' && !(req.user && req.password))
+// 		{
+// 			res.redirect('/login_dialog');
+// 		}
+// 		else
+// 		{
+// 			passport.authenticate(authStrategy, {
+// 				state : base64.encode(JSON.stringify(state))
+// 			}
+// 			)(req, res, next);
+// 		}
+// 	});
 
-	// lti launch
-	app.post('/auth/lti',
-		passport.authenticate('lti', { failureRedirect: '/' }),
-		(req, res) =>
-		{
-			res.redirect(`/${req.user.room}`);
-		}
-	);
+// 	// lti launch
+// 	app.post('/auth/lti',
+// 		passport.authenticate('lti', { failureRedirect: '/' }),
+// 		(req, res) =>
+// 		{
+// 			res.redirect(`/${req.user.room}`);
+// 		}
+// 	);
 
-	// logout
-	app.get('/auth/logout', (req, res) =>
-	{
-		const { peerId } = req.session;
+// 	// logout
+// 	app.get('/auth/logout', (req, res) =>
+// 	{
+// 		const { peerId } = req.session;
 
-		const peer = peers.get(peerId);
+// 		const peer = peers.get(peerId);
 
-		if (peer)
-		{
-			for (const role of peer.roles)
-			{
-				if (role.id !== userRoles.NORMAL.id)
-					peer.removeRole(role);
-			}
-		}
+// 		if (peer)
+// 		{
+// 			for (const role of peer.roles)
+// 			{
+// 				if (role.id !== userRoles.NORMAL.id)
+// 					peer.removeRole(role);
+// 			}
+// 		}
 
-		req.logout();
-		req.session.destroy(() => res.send(logoutHelper()));
-	});
-	// SAML metadata
-	app.get('/auth/metadata', (req, res) =>
-	{
-		if (config.auth && config.auth.saml &&
-			config.auth.saml.decryptionCert &&
-			config.auth.saml.signingCert)
-		{
-			const metadata = samlStrategy.generateServiceProviderMetadata(
-				config.auth.saml.decryptionCert,
-				config.auth.saml.signingCert
-			);
+// 		req.logout();
+// 		req.session.destroy(() => res.send(logoutHelper()));
+// 	});
+// 	// SAML metadata
+// 	app.get('/auth/metadata', (req, res) =>
+// 	{
+// 		if (config.auth && config.auth.saml &&
+// 			config.auth.saml.decryptionCert &&
+// 			config.auth.saml.signingCert)
+// 		{
+// 			const metadata = samlStrategy.generateServiceProviderMetadata(
+// 				config.auth.saml.decryptionCert,
+// 				config.auth.saml.signingCert
+// 			);
 
-			if (metadata)
-			{
-				res.set('Content-Type', 'text/xml');
-				res.send(metadata);
-			}
-			else
-			{
-				res.status('Error generating SAML metadata', 500);
-			}
-		}
-		else
-			res.status('Missing SAML decryptionCert or signingKey from config', 500);
-	});
+// 			if (metadata)
+// 			{
+// 				res.set('Content-Type', 'text/xml');
+// 				res.send(metadata);
+// 			}
+// 			else
+// 			{
+// 				res.status('Error generating SAML metadata', 500);
+// 			}
+// 		}
+// 		else
+// 			res.status('Missing SAML decryptionCert or signingKey from config', 500);
+// 	});
 
-	// callback
-	app.all(
-		'/auth/callback',
-		passport.authenticate(authStrategy, { failureRedirect: '/auth/login', failureFlash: true }),
-		async (req, res, next) =>
-		{
-			try
-			{
-				let state;
+// 	// callback
+// 	app.all(
+// 		'/auth/callback',
+// 		passport.authenticate(authStrategy, { failureRedirect: '/auth/login', failureFlash: true }),
+// 		async (req, res, next) =>
+// 		{
+// 			try
+// 			{
+// 				let state;
 
-				if (authStrategy == 'saml' || authStrategy == 'local')
-					state=req.session.authState;
-				else
-				{
-					if (req.method === 'GET')
-						state = JSON.parse(base64.decode(req.query.state));
-					if (req.method === 'POST')
-						state = JSON.parse(base64.decode(req.body.state));
-				}
-				const { peerId, roomId } = state;
+// 				if (authStrategy == 'saml' || authStrategy == 'local')
+// 					state=req.session.authState;
+// 				else
+// 				{
+// 					if (req.method === 'GET')
+// 						state = JSON.parse(base64.decode(req.query.state));
+// 					if (req.method === 'POST')
+// 						state = JSON.parse(base64.decode(req.body.state));
+// 				}
+// 				const { peerId, roomId } = state;
 
-				req.session.peerId = peerId;
-				req.session.roomId = roomId;
+// 				req.session.peerId = peerId;
+// 				req.session.roomId = roomId;
 
-				let peer = peers.get(peerId);
-				const room = rooms.get(roomId);
+// 				let peer = peers.get(peerId);
+// 				const room = rooms.get(roomId);
 
-				if (!peer) // User has no socket session yet, make temporary
-					peer = new Peer({ id: peerId, roomId });
+// 				if (!peer) // User has no socket session yet, make temporary
+// 					peer = new Peer({ id: peerId, roomId });
 
-				if (peer.roomId !== roomId) // The peer is mischievous
-					throw new Error('peer authenticated with wrong room');
+// 				if (peer.roomId !== roomId) // The peer is mischievous
+// 					throw new Error('peer authenticated with wrong room');
 
-				if (typeof config.userMapping === 'function')
-				{
-					await config.userMapping({
-						peer,
-						room,
-						roomId,
-						userinfo : req.user._userinfo
-					});
-				}
+// 				if (typeof config.userMapping === 'function')
+// 				{
+// 					await config.userMapping({
+// 						peer,
+// 						room,
+// 						roomId,
+// 						userinfo : req.user._userinfo
+// 					});
+// 				}
 
-				peer.authenticated = true;
+// 				peer.authenticated = true;
 
-				res.send(loginHelper({
-					displayName : peer.displayName,
-					picture     : peer.picture
-				}));
-			}
-			catch (error)
-			{
-				return next(error);
-			}
-		}
-	);
-}
+// 				res.send(loginHelper({
+// 					displayName : peer.displayName,
+// 					picture     : peer.picture
+// 				}));
+// 			}
+// 			catch (error)
+// 			{
+// 				return next(error);
+// 			}
+// 		}
+// 	);
+// }
 
 async function runHttpsServer()
 {
@@ -558,7 +558,61 @@ async function runHttpsServer()
 	// app.use('/.well-known/acme-challenge', express.static('public/.well-known/acme-challenge'));
 
     app.get('/ping', function (req, res, next) {
-        res.send('PONG')
+        res.send('PONG3')
+    })
+
+    app.get('/api/sessions', function (req, res, next) {
+        //TODO json.stringify
+        res.json({
+					id : "testId"
+				})
+    })
+
+    //Check if the room exists
+    app.get('/api/sessions/:session_id', function (req, res, next) {
+        console.warn("Checking for room")
+        let room = rooms.get(req.params.session_id);
+        if (!room) {
+            console.warn("doesn't exist")
+			res.status(404).send()
+        } else {
+            console.warn("exist")
+            res.status(200).send()
+        }
+    })
+
+    // Create room and return id
+    app.post('/api/sessions', async function (req, res, next) {
+        console.warn("Creating new room", req.body.mediaMode, req.body.recordingMode)
+        //FIXME we're truncating because of kolab4 database layout (should be fixed instnead)
+        const roomId = uuidv4().substring(0, 16)
+        const room = await getOrCreateRoom({ roomId });
+
+        res.json({
+					id : roomId
+				})
+    })
+
+    // Create connection in room (just wait for websocket instead?
+    // $post = [
+    //     'json' => [
+    //         'role' => self::OV_ROLE_PUBLISHER,
+    //         'data' => json_encode(['role' => $role])
+    //     ]
+    // ];
+    app.post('/api/sessions/:session_id/connection', function (req, res, next) {
+        console.warn("Creating connection in session", req.params.session_id)
+        roomId = req.params.session_id
+        //TODO already create a peer?
+        //FIXME we're truncating because of kolab4 database layout (should be fixed instnead)
+        const peerId = uuidv4().substring(0, 16)
+        hostname = "localhost" //TODO from config
+        port = "12443" //TODO from config
+        res.json({
+            id : peerId,
+            //When the below get's passed to the socket.io client we end up with something like wss://localhost:12443/socket.io/?peerId=peer1&roomId=room1&EIO=3&transport=websocket,
+            token : `wss://${hostname}:${port}/?peerId=${peerId}&roomId=${roomId}`
+        })
     })
 
 	// app.all('*', async (req, res, next) =>

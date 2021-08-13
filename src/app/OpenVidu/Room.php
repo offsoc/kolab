@@ -247,26 +247,24 @@ class Room extends Model
 
             $authToken = base64_encode($json['id'] . ':' . \random_bytes(16));
 
-            // Extract the 'token' part of the token, it will be used to authenticate the connection.
-            // It will be needed in next iterations e.g. to authenticate moderators that aren't
-            // Kolab4 users (or are just not logged in to Kolab4).
-            // FIXME: we could as well generate our own token for auth purposes
-            parse_str(parse_url($json['token'], PHP_URL_QUERY), $url);
+            //This is actually the url to the websocket (includes the connectionId below)
+            $connectionToken = $json['token'];
+            $connectionId = $json['id'];
 
             // Create the connection reference in our database
             $conn = new Connection();
-            $conn->id = $json['id'];
+            $conn->id = $connectionId;
             $conn->session_id = $this->session_id;
             $conn->room_id = $this->id;
             $conn->role = $role;
-            $conn->metadata = ['token' => $url['token'], 'authToken' => $authToken];
+            $conn->metadata = ['token' => $connectionToken, 'authToken' => $authToken];
             $conn->save();
 
             return [
                 'session' => $this->session_id,
-                'token' => $json['token'],
+                'token' => $connectionToken,
                 'authToken' => $authToken,
-                'connectionId' => $json['id'],
+                'connectionId' => $connectionId,
                 'role' => $role,
             ];
         }
