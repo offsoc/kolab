@@ -5,7 +5,7 @@
                 <div class="card-title">{{ $t('user.domains') }}</div>
                 <div class="card-text">
                     <table class="table table-sm table-hover">
-                        <thead class="thead-light">
+                        <thead>
                             <tr>
                                 <th scope="col">{{ $t('domain.namespace') }}</th>
                                 <th scope="col"></th>

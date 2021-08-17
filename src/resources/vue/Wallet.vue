@@ -26,7 +26,7 @@
                             {{ $t('wallet.auto-payment-disabled') }}
                         </div>
                         <template v-else>
-                            <p v-html="$t('wallet.auto-payment-info', { amount: mandate.amount, balance: mandate.balance })"></p>
+                            <p v-html="$t('wallet.auto-payment-info', { amount: mandate.amount + ' ' + wallet.currency, balance: mandate.balance + ' ' + wallet.currency})"></p>
                             <p>{{ $t('wallet.payment-method', { method: mandate.method }) }}</p>
                         </template>
                         <div v-if="mandate.isPending" class="alert alert-warning">
@@ -69,11 +69,9 @@
                             <select id="receipt-id" class="form-control">
                                 <option v-for="(receipt, index) in receipts" :key="index" :value="receipt">{{ receipt }}</option>
                             </select>
-                            <div class="input-group-append">
-                                <button type="button" class="btn btn-secondary" @click="receiptDownload">
-                                    <svg-icon icon="download"></svg-icon> {{ $t('btn.download') }}
-                                </button>
-                            </div>
+                            <button type="button" class="btn btn-secondary" @click="receiptDownload">
+                                <svg-icon icon="download"></svg-icon> {{ $t('btn.download') }}
+                            </button>
                         </div>
                         <p v-if="!receipts.length">
                             {{ $t('wallet.receipts-none') }}
@@ -98,9 +96,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ paymentDialogTitle }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
                     </div>
                     <div class="modal-body">
                         <div id="payment-method" v-if="paymentForm == 'method'">
@@ -125,15 +121,11 @@
                                 {{ $t('wallet.payment-amount-hint') }}
                             </p>
                             <form id="payment-form" @submit.prevent="payment">
-                                <div class="form-group">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" id="amount" v-model="amount" required>
-                                        <span class="input-group-append">
-                                            <span class="input-group-text">{{ wallet.currency }}</span>
-                                        </span>
-                                    </div>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="amount" v-model="amount" required>
+                                    <span class="input-group-text">{{ wallet.currency }}</span>
                                 </div>
-                                <div v-if="wallet.currency != selectedPaymentMethod.currency && !isNaN(amount)" class="alert alert-warning">
+                                <div v-if="wallet.currency != selectedPaymentMethod.currency && !isNaN(amount)" class="alert alert-warning m-0 mt-3">
                                     {{ $t('wallet.payment-warning', { price: $root.price(amount * selectedPaymentMethod.exchangeRate * 100, selectedPaymentMethod.currency) }) }}
                                 </div>
                             </form>
@@ -143,37 +135,35 @@
                                 <p>
                                     {{ $t('wallet.auto-payment-hint') }}
                                 </p>
-                                <div class="form-group row">
+                                <div class="row mb-3">
                                     <label for="mandate_amount" class="col-sm-6 col-form-label">{{ $t('wallet.fill-up') }}</label>
-                                    <div class="input-group col-sm-6">
-                                        <input type="text" class="form-control" id="mandate_amount" v-model="mandate.amount" required>
-                                        <span class="input-group-append">
+                                    <div class="col-sm-6">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="mandate_amount" v-model="mandate.amount" required>
                                             <span class="input-group-text">{{ wallet.currency }}</span>
-                                        </span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-group row">
+                                <div class="row mb-3">
                                     <label for="mandate_balance" class="col-sm-6 col-form-label">{{ $t('wallet.when-below') }}</label>
                                     <div class="col-sm-6">
                                         <div class="input-group">
                                             <input type="text" class="form-control" id="mandate_balance" v-model="mandate.balance" required>
-                                            <span class="input-group-append">
-                                                <span class="input-group-text">{{ wallet.currency }}</span>
-                                            </span>
+                                            <span class="input-group-text">{{ wallet.currency }}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <p v-if="!mandate.isValid">
                                     {{ $t('wallet.auto-payment-next') }}
                                 </p>
-                                <div v-if="mandate.isValid && mandate.isDisabled" class="disabled-mandate alert alert-danger">
+                                <div v-if="mandate.isValid && mandate.isDisabled" class="disabled-mandate alert alert-danger m-0">
                                     {{ $t('wallet.auto-payment-disabled-next') }}
                                 </div>
                             </form>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-primary modal-action"
                                 v-if="paymentForm == 'auto' && (mandate.isValid || mandate.isPending)"
                                 @click="autoPayment"
@@ -200,6 +190,7 @@
 </template>
 
 <script>
+    import { Modal } from 'bootstrap'
     import TransactionLog from './Widgets/TransactionLog'
     import PaymentLog from './Widgets/PaymentLog'
 
@@ -261,16 +252,14 @@
                 .then(response => {
                     this.showPendingPayments = response.data.hasPending
                 })
-
         },
         updated() {
             $(this.$el).find('ul.nav-tabs a').on('click', e => {
-                e.preventDefault()
-                $(e.target).tab('show')
+                this.$root.tab(e)
+
                 if ($(e.target).is('#tab-history')) {
                     this.loadTransactions = true
-                }
-                if ($(e.target).is('#tab-payments')) {
+                } else if ($(e.target).is('#tab-payments')) {
                     this.loadPayments = true
                 }
             })
@@ -295,16 +284,10 @@
             },
             selectPaymentMethod(method) {
                 this.formLock = false
-
                 this.selectedPaymentMethod = method
-
                 this.paymentForm = this.nextForm
-                this.formLock = false
 
-                setTimeout(() => {
-                    this.dialog.find('#mandate_amount').focus()
-                    this.dialog.find('#amount').focus()
-                }, 10)
+                setTimeout(() => { $('#payment-dialog').find('#amount,#mandate_amount').focus() }, 10)
             },
             payment() {
                 if (this.formLock) {
@@ -362,7 +345,7 @@
                         } else {
                             // an update
                             if (response.data.status == 'success') {
-                                this.dialog.modal('hide');
+                                this.dialog.hide();
                                 this.mandate = response.data
                                 this.$toast.success(response.data.message)
                             }
@@ -381,43 +364,34 @@
                         }
                     })
             },
-
             paymentMethodForm(nextForm) {
-                const dialog = $('#payment-dialog')
                 this.formLock = false
                 this.paymentMethods = []
-
                 this.paymentForm = 'method'
                 this.nextForm = nextForm
-                if (nextForm == 'auto') {
-                    this.paymentDialogTitle = this.$t('wallet.auto-payment-setup')
-                } else {
-                    this.paymentDialogTitle = this.$t('wallet.top-up')
-                }
+                this.paymentDialogTitle = this.$t(nextForm == 'auto' ? 'wallet.auto-payment-setup' : 'wallet.top-up')
 
-                const methods = $('#payment-method')
-                this.$root.addLoader(methods, false)
-                axios.get('/api/v4/payments/methods', {params: {type: nextForm == 'manual' ? 'oneoff' : 'recurring'}})
-                    .then(response => {
-                        this.$root.removeLoader(methods)
-                        this.paymentMethods = response.data
-                    })
-                    .catch(this.$root.errorHandler)
+                this.dialog = new Modal('#payment-dialog')
+                this.dialog.show()
 
-                this.dialog = dialog.on('shown.bs.modal', () => {}).modal()
+                this.$nextTick().then(() => {
+                    const form = $('#payment-method')
+                    this.$root.addLoader(form, false, {'min-height': '10em'})
+
+                    axios.get('/api/v4/payments/methods', {params: {type: nextForm == 'manual' ? 'oneoff' : 'recurring'}})
+                        .then(response => {
+                            this.$root.removeLoader(form)
+                            this.paymentMethods = response.data
+                        })
+                })
             },
             autoPaymentForm(event, title) {
-                const dialog = $('#payment-dialog')
-
                 this.paymentForm = 'auto'
                 this.paymentDialogTitle = title
                 this.formLock = false
 
-                this.dialog = dialog.on('shown.bs.modal', () => {
-                    dialog.find('#mandate_amount').focus()
-                }).modal()
-
-                setTimeout(() => { this.dialog.find('#mandate_amount').focus()}, 10)
+                this.dialog = new Modal('#payment-dialog')
+                this.dialog.show()
             },
             receiptDownload() {
                 const receipt = $('#receipt-id').val()

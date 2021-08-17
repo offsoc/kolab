@@ -106,7 +106,7 @@ class PaymentsStripeTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
+        $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
         // Test creating a mandate (negative balance, amount too small)
@@ -135,7 +135,7 @@ class PaymentsStripeTest extends TestCase
         // Stripe in 'setup' mode does not allow to set the amount
         $payment = Payment::where('wallet_id', $wallet->id)->first();
         $this->assertSame(0, $payment->amount);
-        $this->assertSame(\config('app.name') . " Auto-Payment Setup", $payment->description);
+        $this->assertSame($user->tenant->title . " Auto-Payment Setup", $payment->description);
         $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information
@@ -294,6 +294,7 @@ class PaymentsStripeTest extends TestCase
         $response->assertStatus(401);
 
         $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
 
         $post = ['amount' => -1];
         $response = $this->actingAs($user)->post("api/v4/payments", $post);
@@ -303,9 +304,8 @@ class PaymentsStripeTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
+        $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
-
 
         // Invalid currency
         $post = ['amount' => '12.34', 'currency' => 'FOO', 'methodId' => 'creditcard'];
@@ -322,13 +322,12 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertMatchesRegularExpression('|^cs_test_|', $json['id']);
 
-        $wallet = $user->wallets()->first();
         $payments = Payment::where('wallet_id', $wallet->id)->get();
 
         $this->assertCount(1, $payments);
         $payment = $payments[0];
         $this->assertSame(1234, $payment->amount);
-        $this->assertSame(\config('app.name') . ' Payment', $payment->description);
+        $this->assertSame($user->tenant->title . ' Payment', $payment->description);
         $this->assertSame('open', $payment->status);
         $this->assertEquals(0, $wallet->balance);
 
@@ -538,7 +537,7 @@ class PaymentsStripeTest extends TestCase
                 "created" => 123456789,
                 "amount" => 2010,
                 "currency" => "chf",
-                "description" => "Kolab Recurring Payment"
+                "description" => $user->tenant->title . " Recurring Payment"
         ]);
 
         $client = $this->mockStripe();
@@ -559,7 +558,7 @@ class PaymentsStripeTest extends TestCase
         $this->assertCount(1, $wallet->payments()->get());
         $payment = $wallet->payments()->first();
         $this->assertSame(2010, $payment->amount);
-        $this->assertSame(\config('app.name') . " Recurring Payment", $payment->description);
+        $this->assertSame($user->tenant->title . " Recurring Payment", $payment->description);
         $this->assertSame("pi_XX", $payment->id);
 
         // Expect no payment if the mandate is disabled

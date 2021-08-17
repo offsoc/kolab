@@ -256,13 +256,14 @@ class WalletsController extends Controller
             }
         }
 
-        $result = $result->map(function ($item) use ($isAdmin) {
+        $result = $result->map(function ($item) use ($isAdmin, $wallet) {
             $entry = [
                 'id' => $item->id,
                 'createdAt' => $item->created_at->format('Y-m-d H:i'),
                 'type' => $item->type,
                 'description' => $item->shortDescription(),
                 'amount' => $item->amount,
+                'currency' => $wallet->currency,
                 'hasDetails' => !empty($item->cnt),
             ];
 

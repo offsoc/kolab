@@ -9,7 +9,6 @@
         mixins: [Stats],
         data() {
             return {
-//                charts: {},
                 chartTypes: ['users', 'users-all', 'discounts']
             }
         }

@@ -254,7 +254,8 @@ abstract class PaymentProvider
     /**
      * List supported payment methods from this provider
      *
-     * @param string $type The payment type for which we require a method (oneoff/recurring).
+     * @param string $type     The payment type for which we require a method (oneoff/recurring).
+     * @param string $currency Currency code
      *
      * @return array Array of array with available payment methods:
      *               - id: id of the method
@@ -264,7 +265,7 @@ abstract class PaymentProvider
      *               - exchangeRate: The projected exchange rate (actual rate is determined during payment)
      *               - icon: An icon (icon name) representing the method
      */
-    abstract public function providerPaymentMethods($type): array;
+    abstract public function providerPaymentMethods(string $type, string $currency): array;
 
     /**
      * Get a payment.
@@ -345,7 +346,7 @@ abstract class PaymentProvider
     {
         $providerName = self::providerName($wallet);
 
-        $cacheKey = "methods-" . $providerName . '-' . $type;
+        $cacheKey = "methods-{$providerName}-{$type}-{$wallet->currency}";
 
         if ($methods = Cache::get($cacheKey)) {
             \Log::debug("Using payment method cache" . var_export($methods, true));
@@ -353,7 +354,8 @@ abstract class PaymentProvider
         }
 
         $provider = PaymentProvider::factory($providerName);
-        $methods = self::applyMethodWhitelist($type, $provider->providerPaymentMethods($type));
+        $methods = $provider->providerPaymentMethods($type, $wallet->currency);
+        $methods = self::applyMethodWhitelist($type, $methods);
 
         \Log::debug("Loaded payment methods" . var_export($methods, true));
 

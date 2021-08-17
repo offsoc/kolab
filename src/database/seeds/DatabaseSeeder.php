@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             'SkuSeeder',
             'PackageSeeder',
             'PlanSeeder',
+            'PowerDNSSeeder',
             'UserSeeder',
             'OpenViduRoomSeeder',
             'OauthClientSeeder',

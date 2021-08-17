@@ -146,7 +146,7 @@ class UsersTest extends TestCaseDusk
                 ->click('@table tr:nth-child(3) a')
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'User account')
-                ->with('@form', function (Browser $browser) {
+                ->with('@general', function (Browser $browser) {
                     // Assert form content
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Status')
                         ->assertSeeIn('div.row:nth-child(1) #status', 'Active')
@@ -181,7 +181,7 @@ class UsersTest extends TestCaseDusk
                 ->click('@table tr:nth-child(3) a')
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'User account')
-                ->with('@form', function (Browser $browser) {
+                ->with('@general', function (Browser $browser) {
                     // Test error handling (password)
                     $browser->type('#password', 'aaaaaa')
                         ->vueClear('#password_confirmation')
@@ -223,7 +223,7 @@ class UsersTest extends TestCaseDusk
             $this->assertTrue(!empty($alias));
 
             // Test subscriptions
-            $browser->with('@form', function (Browser $browser) {
+            $browser->with('@general', function (Browser $browser) {
                 $browser->assertSeeIn('div.row:nth-child(9) label', 'Subscriptions')
                     ->assertVisible('@skus.row:nth-child(9)')
                     ->with('@skus', function ($browser) {
@@ -301,7 +301,7 @@ class UsersTest extends TestCaseDusk
             $this->assertUserEntitlements($john, $expected);
 
             // Test subscriptions interaction
-            $browser->with('@form', function (Browser $browser) {
+            $browser->with('@general', function (Browser $browser) {
                 $browser->with('@skus', function ($browser) {
                     // Uncheck 'groupware', expect activesync unchecked
                     $browser->click('#sku-input-groupware')
@@ -343,8 +343,9 @@ class UsersTest extends TestCaseDusk
         $john = $this->getTestUser('john@kolab.org');
         $john->setSetting('greylist_enabled', null);
 
-        $this->browse(function (Browser $browser) {
-            $browser->on(new UserInfo())
+        $this->browse(function (Browser $browser) use ($john) {
+            $browser->visit('/user/' . $john->id)
+                ->on(new UserInfo())
                 ->assertElementsCount('@nav a', 2)
                 ->assertSeeIn('@nav #tab-general', 'General')
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
@@ -373,7 +374,7 @@ class UsersTest extends TestCaseDusk
                 ->click('button.create-user')
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'New user account')
-                ->with('@form', function (Browser $browser) {
+                ->with('@general', function (Browser $browser) {
                     // Assert form content
                     $browser->assertFocused('div.row:nth-child(1) input')
                         ->assertSeeIn('div.row:nth-child(1) label', 'First Name')
@@ -428,7 +429,7 @@ class UsersTest extends TestCaseDusk
                 });
 
             // Test form error handling (aliases)
-            $browser->with('@form', function (Browser $browser) {
+            $browser->with('@general', function (Browser $browser) {
                 $browser->type('#email', 'julia.roberts@kolab.org')
                     ->type('#password_confirmation', 'simple123')
                     ->with(new ListInput('#aliases'), function (Browser $browser) {
@@ -442,7 +443,7 @@ class UsersTest extends TestCaseDusk
             });
 
             // Successful account creation
-            $browser->with('@form', function (Browser $browser) {
+            $browser->with('@general', function (Browser $browser) {
                 $browser->type('#first_name', 'Julia')
                     ->type('#last_name', 'Roberts')
                     ->type('#organization', 'Test Org')
@@ -462,6 +463,7 @@ class UsersTest extends TestCaseDusk
 
             $julia = User::where('email', 'julia.roberts@kolab.org')->first();
             $alias = UserAlias::where('user_id', $julia->id)->where('alias', 'julia.roberts2@kolab.org')->first();
+
             $this->assertTrue(!empty($alias));
             $this->assertUserEntitlements($julia, ['mailbox', 'storage', 'storage', 'storage', 'storage', 'storage']);
             $this->assertSame('Julia', $julia->getSetting('first_name'));
@@ -469,26 +471,33 @@ class UsersTest extends TestCaseDusk
             $this->assertSame('Test Org', $julia->getSetting('organization'));
 
             // Some additional tests for the list input widget
-            $browser->click('tbody tr:nth-child(4) a')
+            $browser->click('@table tbody tr:nth-child(4) a')
                 ->on(new UserInfo())
                 ->with(new ListInput('#aliases'), function (Browser $browser) {
                     $browser->assertListInputValue(['julia.roberts2@kolab.org'])
                         ->addListEntry('invalid address')
-                        ->type('.input-group:nth-child(2) input', '@kolab.org');
+                        ->type('.input-group:nth-child(2) input', '@kolab.org')
+                        ->keys('.input-group:nth-child(2) input', '{enter}');
                 })
-                ->click('button[type=submit]')
+                // TODO: Investigate why this click does not work, for now we
+                // submit the form with Enter key above
+                //->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
                 ->with(new ListInput('#aliases'), function (Browser $browser) {
                     $browser->assertVisible('.input-group:nth-child(2) input.is-invalid')
                         ->assertVisible('.input-group:nth-child(3) input.is-invalid')
                         ->type('.input-group:nth-child(2) input', 'julia.roberts3@kolab.org')
-                        ->type('.input-group:nth-child(3) input', 'julia.roberts4@kolab.org');
+                        ->type('.input-group:nth-child(3) input', 'julia.roberts4@kolab.org')
+                        ->keys('.input-group:nth-child(3) input', '{enter}');
                 })
-                ->click('button[type=submit]')
+                // TODO: Investigate why this click does not work, for now we
+                // submit the form with Enter key above
+                //->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
             $julia = User::where('email', 'julia.roberts@kolab.org')->first();
             $aliases = $julia->aliases()->orderBy('alias')->get()->pluck('alias')->all();
+
             $this->assertSame(['julia.roberts3@kolab.org', 'julia.roberts4@kolab.org'], $aliases);
         });
     }
@@ -585,7 +594,7 @@ class UsersTest extends TestCaseDusk
                 ->waitFor('@table tr:nth-child(2)')
                 ->click('@table tr:nth-child(2) a') // joe@kolab.org
                 ->on(new UserInfo())
-                ->with('@form', function (Browser $browser) {
+                ->with('@general', function (Browser $browser) {
                     $browser->whenAvailable('@skus', function (Browser $browser) {
                         $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
                         $browser->waitFor('tbody tr')
@@ -614,7 +623,7 @@ class UsersTest extends TestCaseDusk
             $browser->visit(new UserList())
                 ->click('button.create-user')
                 ->on(new UserInfo())
-                ->with('@form', function (Browser $browser) {
+                ->with('@general', function (Browser $browser) {
                     $browser->whenAvailable('@packages', function (Browser $browser) {
                         $browser->assertElementsCount('tbody tr', 2)
                             ->assertSeeIn('tbody tr:nth-child(1) .price', '8,91 CHF/month¹') // Groupware
@@ -648,7 +657,7 @@ class UsersTest extends TestCaseDusk
 
             $browser->visit('/user/' . $joe->id)
                 ->on(new UserInfo())
-                ->with('@form', function (Browser $browser) {
+                ->with('@general', function (Browser $browser) {
                     $browser->whenAvailable('@skus', function (Browser $browser) {
                         $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
                         $browser->waitFor('tbody tr')
@@ -726,7 +735,7 @@ class UsersTest extends TestCaseDusk
                         ->click('#sku-input-beta')
                         ->click('#sku-input-distlist');
                 })
-                ->click('button[type=submit]')
+                ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
             $expected = [
@@ -741,8 +750,9 @@ class UsersTest extends TestCaseDusk
 
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
+                ->waitFor('#sku-input-beta')
                 ->click('#sku-input-beta')
-                ->click('button[type=submit]')
+                ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
             $expected = [

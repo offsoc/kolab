@@ -160,7 +160,7 @@ class Browser extends \Laravel\Dusk\Browser
      */
     public function clearToasts()
     {
-        $this->script("jQuery('.toast-container > *').remove()");
+        $this->script("\$('.toast-container > *').remove()");
 
         return $this;
     }

@@ -1,16 +1,18 @@
 <template>
     <div class="container">
         <div id="step0" v-if="!invitation">
-            <div class="plan-selector card-deck">
-                <div v-for="item in plans" :key="item.id" :class="'card bg-light plan-' + item.title">
-                    <div class="card-header plan-header">
-                        <div class="plan-ico text-center">
-                            <svg-icon :icon="plan_icons[item.title]"></svg-icon>
+            <div class="plan-selector row row-cols-sm-2 g-3">
+                <div v-for="item in plans" :key="item.id">
+                    <div :class="'card bg-light plan-' + item.title">
+                        <div class="card-header plan-header">
+                            <div class="plan-ico text-center">
+                                <svg-icon :icon="plan_icons[item.title]"></svg-icon>
+                            </div>
                         </div>
-                    </div>
-                    <div class="card-body text-center ">
-                        <button class="btn btn-primary" :data-title="item.title" @click="selectPlan(item.title)" v-html="item.button"></button>
-                        <div class="plan-description text-left mt-3" v-html="item.description"></div>
+                        <div class="card-body text-center">
+                            <button class="btn btn-primary" :data-title="item.title" @click="selectPlan(item.title)" v-html="item.button"></button>
+                            <div class="plan-description text-start mt-3" v-html="item.description"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -23,14 +25,14 @@
                     {{ $t('signup.step1') }}
                 </p>
                 <form @submit.prevent="submitStep1" data-validation-prefix="signup_">
-                    <div class="form-group">
+                    <div class="mb-3">
                         <div class="input-group">
                             <input type="text" class="form-control" id="signup_first_name" :placeholder="$t('form.firstname')" autofocus v-model="first_name">
-                            <input type="text" class="form-control rounded-right" id="signup_last_name" :placeholder="$t('form.surname')" v-model="last_name">
+                            <input type="text" class="form-control rounded-end" id="signup_last_name" :placeholder="$t('form.surname')" v-model="last_name">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="signup_email" class="sr-only">{{ $t('signup.email') }}</label>
+                    <div class="mb-3">
+                        <label for="signup_email" class="visually-hidden">{{ $t('signup.email') }}</label>
                         <input type="text" class="form-control" id="signup_email" :placeholder="$t('signup.email')" required v-model="email">
                     </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
@@ -46,8 +48,8 @@
                     {{ $t('signup.step2') }}
                 </p>
                 <form @submit.prevent="submitStep2" data-validation-prefix="signup_">
-                    <div class="form-group">
-                        <label for="signup_short_code" class="sr-only">{{ $t('form.code') }}</label>
+                    <div class="mb-3">
+                        <label for="signup_short_code" class="visually-hidden">{{ $t('form.code') }}</label>
                         <input type="text" class="form-control" id="signup_short_code" :placeholder="$t('form.code')" required v-model="short_code">
                     </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
@@ -64,35 +66,33 @@
                     {{ $t('signup.step3') }}
                 </p>
                 <form @submit.prevent="submitStep3" data-validation-prefix="signup_">
-                    <div class="form-group" v-if="invitation">
+                    <div class="mb-3" v-if="invitation">
                         <div class="input-group">
                             <input type="text" class="form-control" id="signup_first_name" :placeholder="$t('form.firstname')" autofocus v-model="first_name">
-                            <input type="text" class="form-control rounded-right" id="signup_last_name" :placeholder="$t('form.surname')" v-model="last_name">
+                            <input type="text" class="form-control rounded-end" id="signup_last_name" :placeholder="$t('form.surname')" v-model="last_name">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="signup_login" class="sr-only"></label>
+                    <div class="mb-3">
+                        <label for="signup_login" class="visually-hidden"></label>
                         <div class="input-group">
                             <input type="text" class="form-control" id="signup_login" required v-model="login" :placeholder="$t('signup.login')">
-                            <span class="input-group-append input-group-prepend">
-                                <span class="input-group-text">@</span>
-                            </span>
-                            <input v-if="is_domain" type="text" class="form-control rounded-right" id="signup_domain" required v-model="domain" :placeholder="$t('form.domain')">
-                            <select v-else class="custom-select rounded-right" id="signup_domain" required v-model="domain">
-                                <option v-for="domain in domains" :key="domain" :value="domain">{{ domain }}</option>
+                            <span class="input-group-text">@</span>
+                            <input v-if="is_domain" type="text" class="form-control rounded-end" id="signup_domain" required v-model="domain" :placeholder="$t('form.domain')">
+                            <select v-else class="form-select rounded-end" id="signup_domain" required v-model="domain">
+                                <option v-for="d in domains" :key="d" :value="d">{{ domain }}</option>
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="signup_password" class="sr-only">{{ $t('form.password') }}</label>
+                    <div class="mb-3">
+                        <label for="signup_password" class="visually-hidden">{{ $t('form.password') }}</label>
                         <input type="password" class="form-control" id="signup_password" :placeholder="$t('form.password')" required v-model="password">
                     </div>
-                    <div class="form-group">
-                        <label for="signup_confirm" class="sr-only">{{ $t('form.password-confirm') }}</label>
+                    <div class="mb-3">
+                        <label for="signup_confirm" class="visually-hidden">{{ $t('form.password-confirm') }}</label>
                         <input type="password" class="form-control" id="signup_confirm" :placeholder="$t('form.password-confirm')" required v-model="password_confirmation">
                     </div>
-                    <div class="form-group pt-2 pb-2">
-                        <label for="signup_voucher" class="sr-only">{{ $t('signup.voucher') }}</label>
+                    <div class="mb-3 pt-2">
+                        <label for="signup_voucher" class="visually-hidden">{{ $t('signup.voucher') }}</label>
                         <input type="text" class="form-control" id="signup_voucher" :placeholder="$t('signup.voucher')" v-model="voucher">
                     </div>
                     <button v-if="!invitation" class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>

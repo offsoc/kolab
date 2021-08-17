@@ -483,7 +483,8 @@ class Stripe extends \App\Providers\PaymentProvider
     /**
      * List supported payment methods.
      *
-     * @param string $type The payment type for which we require a method (oneoff/recurring).
+     * @param string $type     The payment type for which we require a method (oneoff/recurring).
+     * @param string $currency Currency code
      *
      * @return array Array of array with available payment methods:
      *               - id: id of the method
@@ -493,7 +494,7 @@ class Stripe extends \App\Providers\PaymentProvider
      *               - exchangeRate: The projected exchange rate (actual rate is determined during payment)
      *               - icon: An icon (icon name) representing the method
      */
-    public function providerPaymentMethods($type): array
+    public function providerPaymentMethods(string $type, string $currency): array
     {
         //TODO get this from the stripe API?
         $availableMethods = [];
@@ -504,14 +505,14 @@ class Stripe extends \App\Providers\PaymentProvider
                         'id' => self::METHOD_CREDITCARD,
                         'name' => "Credit Card",
                         'minimumAmount' => self::MIN_AMOUNT,
-                        'currency' => 'CHF',
+                        'currency' => $currency,
                         'exchangeRate' => 1.0
                     ],
                     self::METHOD_PAYPAL => [
                         'id' => self::METHOD_PAYPAL,
                         'name' => "PayPal",
                         'minimumAmount' => self::MIN_AMOUNT,
-                        'currency' => 'CHF',
+                        'currency' => $currency,
                         'exchangeRate' => 1.0
                     ]
                 ];
@@ -522,7 +523,7 @@ class Stripe extends \App\Providers\PaymentProvider
                         'id' => self::METHOD_CREDITCARD,
                         'name' => "Credit Card",
                         'minimumAmount' => self::MIN_AMOUNT, // Converted to cents,
-                        'currency' => 'CHF',
+                        'currency' => $currency,
                         'exchangeRate' => 1.0
                     ]
                 ];

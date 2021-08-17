@@ -17,7 +17,7 @@
                     <svg-icon icon="hand-paper"></svg-icon>
                 </button>
                 <span id="channel-select" :style="'display:' + (channels.length ? '' : 'none')" class="dropdown">
-                    <button :class="'btn link-channel' + (session.channel ? ' on' : '')" data-toggle="dropdown"
+                    <button :class="'btn link-channel' + (session.channel ? ' on' : '')" data-bs-toggle="dropdown"
                             :title="$t('meet.menu-channel')" aria-haspopup="true" aria-expanded="false"
                     >
                         <svg-icon icon="headphones"></svg-icon>
@@ -58,33 +58,33 @@
                             <div class="volume"><div class="bar"></div></div>
                         </div>
                         <div class="col-sm-6 align-self-center">
-                            <div class="input-group">
-                                <label for="setup-microphone" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" :title="$t('meet.mic')"><svg-icon icon="microphone"></svg-icon></span>
+                            <div class="input-group mb-2">
+                                <label for="setup-microphone" class="input-group-text mb-0" :title="$t('meet.mic')">
+                                    <svg-icon icon="microphone"></svg-icon>
                                 </label>
-                                <select class="custom-select" id="setup-microphone" v-model="microphone" @change="setupMicrophoneChange">
+                                <select class="form-select" id="setup-microphone" v-model="microphone" @change="setupMicrophoneChange">
                                     <option value="">{{ $t('form.none') }}</option>
                                     <option v-for="mic in setup.microphones" :value="mic.deviceId" :key="mic.deviceId">{{ mic.label }}</option>
                                 </select>
                             </div>
-                            <div class="input-group mt-2">
-                                <label for="setup-camera" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" :title="$t('meet.cam')"><svg-icon icon="video"></svg-icon></span>
+                            <div class="input-group mb-2">
+                                <label for="setup-camera" class="input-group-text mb-0" :title="$t('meet.cam')">
+                                    <svg-icon icon="video"></svg-icon>
                                 </label>
-                                <select class="custom-select" id="setup-camera" v-model="camera" @change="setupCameraChange">
+                                <select class="form-select" id="setup-camera" v-model="camera" @change="setupCameraChange">
                                     <option value="">{{ $t('form.none') }}</option>
                                     <option v-for="cam in setup.cameras" :value="cam.deviceId" :key="cam.deviceId">{{ cam.label }}</option>
                                 </select>
                             </div>
-                            <div class="input-group mt-2">
-                                <label for="setup-nickname" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" :title="$t('meet.nick')"><svg-icon icon="user"></svg-icon></span>
+                            <div class="input-group mb-2">
+                                <label for="setup-nickname" class="input-group-text mb-0" :title="$t('meet.nick')">
+                                    <svg-icon icon="user"></svg-icon>
                                 </label>
                                 <input class="form-control" type="text" id="setup-nickname" v-model="nickname" :placeholder="$t('meet.nick-placeholder')">
                             </div>
                             <div class="input-group mt-2" v-if="session.config && session.config.requires_password">
-                                <label for="setup-password" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" :title="$t('form.password')"><svg-icon icon="key"></svg-icon></span>
+                                <label for="setup-password" class="input-group-text mb-0" :title="$t('form.password')">
+                                    <svg-icon icon="key"></svg-icon>
                                 </label>
                                 <input type="password" class="form-control" id="setup-password" v-model="password" :placeholder="$t('form.password')">
                             </div>
@@ -126,15 +126,13 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('meet.leave-title') }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
                     </div>
                     <div class="modal-body">
                         <p>{{ $t('meet.leave-body') }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-danger modal-action" data-dismiss="modal">{{ $t('btn.close') }}</button>
+                        <button type="button" class="btn btn-danger modal-action" data-bs-dismiss="modal">{{ $t('btn.close') }}</button>
                     </div>
                 </div>
             </div>
@@ -145,27 +143,25 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('meet.media-title') }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
                     </div>
                     <div class="modal-body">
                         <form class="media-setup-form">
                             <div class="media-setup-preview"></div>
                             <div class="input-group mt-2">
-                                <label for="setup-mic" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" :title="$t('meet.mic')"><svg-icon icon="microphone"></svg-icon></span>
+                                <label for="setup-mic" class="input-group-text mb-0" :title="$t('meet.mic')">
+                                    <svg-icon icon="microphone"></svg-icon>
                                 </label>
-                                <select class="custom-select" id="setup-mic" v-model="microphone" @change="setupMicrophoneChange">
+                                <select class="form-select" id="setup-mic" v-model="microphone" @change="setupMicrophoneChange">
                                     <option value="">{{ $t('form.none') }}</option>
                                     <option v-for="mic in setup.microphones" :value="mic.deviceId" :key="mic.deviceId">{{ mic.label }}</option>
                                 </select>
                             </div>
                             <div class="input-group mt-2">
-                                <label for="setup-cam" class="input-group-prepend mb-0">
-                                    <span class="input-group-text" :title="$t('meet.cam')"><svg-icon icon="video"></svg-icon></span>
+                                <label for="setup-cam" class="input-group-text mb-0" :title="$t('meet.cam')">
+                                    <svg-icon icon="video"></svg-icon>
                                 </label>
-                                <select class="custom-select" id="setup-cam" v-model="camera" @change="setupCameraChange">
+                                <select class="form-select" id="setup-cam" v-model="camera" @change="setupCameraChange">
                                     <option value="">{{ $t('form.none') }}</option>
                                     <option v-for="cam in setup.cameras" :value="cam.deviceId" :key="cam.deviceId">{{ cam.label }}</option>
                                 </select>
@@ -173,7 +169,7 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-action" data-dismiss="modal">{{ $t('btn.close') }}</button>
+                        <button type="button" class="btn btn-secondary modal-action" data-bs-dismiss="modal">{{ $t('btn.close') }}</button>
                     </div>
                 </div>
             </div>
@@ -184,6 +180,7 @@
 </template>
 
 <script>
+    import { Modal } from 'bootstrap'
     import { Meet, Roles } from '../../js/meet/app.js'
     import StatusMessage from '../Widgets/StatusMessage'
     import LogonForm from '../Login'
@@ -294,6 +291,18 @@
 
             // Setup the room UI
             this.setupSession()
+
+            // Configure dialog events
+            $('#leave-dialog')[0].addEventListener('hide.bs.modal', () => {
+                // FIXME: Where exactly the user should land? Currently he'll land
+                //        on dashboard (if he's logged in) or login form (if he's not).
+
+                this.$router.push({ name: 'dashboard' })
+            })
+
+            const dialog = $('#media-setup-dialog')[0]
+            dialog.addEventListener('show.bs.modal', () => { this.meet.setupStart() })
+            dialog.addEventListener('hide.bs.modal', () => { this.meet.setupStop() })
         },
         beforeDestroy() {
             clearTimeout(roomRequest)
@@ -453,9 +462,9 @@
                     + `<div class="picture"><img src="${data.picture}"></div>`
                     + `<div class="content">`
                         + `<p class="mb-2"></p>`
-                        + `<div class="text-right">`
+                        + `<div class="text-end">`
                             + `<button type="button" class="btn btn-sm btn-success accept">${this.$t('btn.accept')}</button>`
-                            + `<button type="button" class="btn btn-sm btn-danger deny ml-2">${this.$t('btn.deny')}</button>`
+                            + `<button type="button" class="btn btn-sm btn-danger deny ms-2">${this.$t('btn.deny')}</button>`
                 )
 
                 this.$toast.message({
@@ -523,12 +532,7 @@
                     // TODO: Display different message for each reason: forceDisconnectByUser,
                     //       forceDisconnectByServer, sessionClosedByServer?
                     if (event.reason != 'disconnect' && event.reason != 'networkDisconnect' && !this.isRoomOwner()) {
-                        $('#leave-dialog').on('hide.bs.modal', () => {
-                            // FIXME: Where exactly the user should land? Currently he'll land
-                            //        on dashboard (if he's logged in) or login form (if he's not).
-
-                            this.$router.push({ name: 'dashboard' })
-                        }).modal()
+                        new Modal('#leave-dialog').show()
                     }
                 }
                 this.session.onDismiss = connId => { this.dismissParticipant(connId) }
@@ -621,18 +625,16 @@
                 return this.reqId
             },
             roomOptions() {
-                $('#room-options-dialog').modal()
+                new Modal('#room-options-dialog').show()
             },
             setupMedia() {
-                let dialog = $('#media-setup-dialog')
+                const dialog = $('#media-setup-dialog')[0]
 
-                if (!dialog.find('video').length) {
-                    $('#meet-setup').find('video,div.volume').appendTo(dialog.find('.media-setup-preview'))
+                if (!$('video', dialog).length) {
+                    $('#meet-setup').find('video,div.volume').appendTo($('.media-setup-preview', dialog))
                 }
 
-                dialog.on('show.bs.modal', () => { this.meet.setupStart() })
-                    .on('hide.bs.modal', () => { this.meet.setupStop() })
-                    .modal()
+                new Modal(dialog).show()
             },
             setupSession() {
                 this.meet.setupStart({

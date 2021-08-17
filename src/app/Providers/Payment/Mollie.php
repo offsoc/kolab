@@ -547,6 +547,7 @@ class Mollie extends \App\Providers\PaymentProvider
      * List supported payment methods.
      *
      * @param string $type The payment type for which we require a method (oneoff/recurring).
+     * @param string $currency Currency code
      *
      * @return array Array of array with available payment methods:
      *               - id: id of the method
@@ -556,11 +557,22 @@ class Mollie extends \App\Providers\PaymentProvider
      *               - exchangeRate: The projected exchange rate (actual rate is determined during payment)
      *               - icon: An icon (icon name) representing the method
      */
-    public function providerPaymentMethods($type): array
+    public function providerPaymentMethods(string $type, string $currency): array
     {
-        $providerMethods = array_merge(
-            // Fallback to EUR methods (later provider methods will override earlier ones)
-            (array) mollie()->methods()->allActive(
+        // Prefer methods in the system currency
+        $providerMethods = (array) mollie()->methods()->allActive(
+            [
+                'sequenceType' => $type,
+                'amount' => [
+                    'value' => '1.00',
+                    'currency' => $currency
+                ]
+            ]
+        );
+
+        // Get EUR methods (e.g. bank transfers are in EUR only)
+        if ($currency != 'EUR') {
+            $eurMethods = (array) mollie()->methods()->allActive(
                 [
                     'sequenceType' => $type,
                     'amount' => [
@@ -568,18 +580,11 @@ class Mollie extends \App\Providers\PaymentProvider
                         'currency' => 'EUR'
                     ]
                 ]
-            ),
-            // Prefer CHF methods
-            (array) mollie()->methods()->allActive(
-                [
-                    'sequenceType' => $type,
-                    'amount' => [
-                        'value' => '1.00',
-                        'currency' => 'CHF'
-                    ]
-                ]
-            )
-        );
+            );
+
+            // Later provider methods will override earlier ones
+            $providerMethods = array_merge($eurMethods, $providerMethods);
+        }
 
         $availableMethods = [];
 
@@ -589,7 +594,7 @@ class Mollie extends \App\Providers\PaymentProvider
                 'name' => $method->description,
                 'minimumAmount' => round(floatval($method->minimumAmount->value) * 100), // Converted to cents
                 'currency' => $method->minimumAmount->currency,
-                'exchangeRate' => \App\Utils::exchangeRate('CHF', $method->minimumAmount->currency)
+                'exchangeRate' => \App\Utils::exchangeRate($currency, $method->minimumAmount->currency)
             ];
         }
 

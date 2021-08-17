@@ -7,9 +7,7 @@
             <svg-icon icon="exclamation-circle" v-else-if="data.type == 'warning'"></svg-icon>
             <svg-icon :icon="data.icon" v-else-if="data.type == 'custom' && data.icon"></svg-icon>
             <strong>{{ data.title || $t('msg.' + data.type) }}</strong>
-            <button type="button" class="close" data-dismiss="toast" :aria-label="$t('btn.close')">
-                <span aria-hidden="true">&times;</span>
-            </button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" :aria-label="$t('btn.close')"></button>
         </div>
         <div v-if="data.body" v-html="data.body" class="toast-body"></div>
         <div v-else class="toast-body">{{ data.msg }}</div>
@@ -17,27 +15,29 @@
 </template>
 
 <script>
+    import { Toast } from 'bootstrap'
+
     export default {
         props: {
             data: { type: Object, default: () => {} }
         },
         mounted() {
-            $(this.$el)
-                .on('hidden.bs.toast', () => {
-                    (this.$el).remove()
-                    this.$destroy()
-                })
-                .on('shown.bs.toast', () => {
-                    if (this.data.onShow) {
-                        this.data.onShow(this.$el)
-                    }
-                })
-                .toast({
+            this.$el.addEventListener('hidden.bs.toast', () => {
+                (this.$el).remove()
+                this.$destroy()
+            })
+
+            this.$el.addEventListener('shown.bs.toast', () => {
+                if (this.data.onShow) {
+                    this.data.onShow(this.$el)
+                }
+            })
+
+            new Toast(this.$el, {
                     animation: true,
                     autohide: this.data.timeout > 0,
                     delay: this.data.timeout
-                })
-                .toast('show')
+            }).show()
         },
         methods: {
             className() {

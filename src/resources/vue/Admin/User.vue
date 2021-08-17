@@ -5,7 +5,7 @@
                 <h1 class="card-title">{{ user.email }}</h1>
                 <div class="card-text">
                     <form class="read-only short">
-                        <div v-if="user.wallet.user_id != user.id" class="form-group row plaintext">
+                        <div v-if="user.wallet.user_id != user.id" class="row plaintext">
                             <label for="manager" class="col-sm-4 col-form-label">{{ $t('user.managed-by') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="manager">
@@ -13,7 +13,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row plaintext">
+                        <div class="row plaintext">
                             <label for="userid" class="col-sm-4 col-form-label">ID <span class="text-muted">({{ $t('form.created') }})</span></label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="userid">
@@ -21,7 +21,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row plaintext">
+                        <div class="row plaintext">
                             <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="status">
@@ -29,31 +29,31 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row plaintext" v-if="user.first_name">
+                        <div class="row plaintext" v-if="user.first_name">
                             <label for="first_name" class="col-sm-4 col-form-label">{{ $t('form.firstname') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="first_name">{{ user.first_name }}</span>
                             </div>
                         </div>
-                        <div class="form-group row plaintext" v-if="user.last_name">
+                        <div class="row plaintext" v-if="user.last_name">
                             <label for="last_name" class="col-sm-4 col-form-label">{{ $t('form.lastname') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="last_name">{{ user.last_name }}</span>
                             </div>
                         </div>
-                        <div class="form-group row plaintext" v-if="user.organization">
+                        <div class="row plaintext" v-if="user.organization">
                             <label for="organization" class="col-sm-4 col-form-label">{{ $t('user.org') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="organization">{{ user.organization }}</span>
                             </div>
                         </div>
-                        <div class="form-group row plaintext" v-if="user.phone">
+                        <div class="row plaintext" v-if="user.phone">
                             <label for="phone" class="col-sm-4 col-form-label">{{ $t('form.phone') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="phone">{{ user.phone }}</span>
                             </div>
                         </div>
-                        <div class="form-group row plaintext">
+                        <div class="row plaintext">
                             <label for="external_email" class="col-sm-4 col-form-label">{{ $t('user.ext-email') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="external_email">
@@ -62,13 +62,13 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row plaintext" v-if="user.billing_address">
+                        <div class="row plaintext" v-if="user.billing_address">
                             <label for="billing_address" class="col-sm-4 col-form-label">{{ $t('user.address') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" style="white-space:pre" id="billing_address">{{ user.billing_address }}</span>
                             </div>
                         </div>
-                        <div class="form-group row plaintext">
+                        <div class="row plaintext">
                             <label for="country" class="col-sm-4 col-form-label">{{ $t('user.country') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="country">{{ user.country }}</span>
@@ -128,11 +128,11 @@
                 <div class="card-body">
                     <h2 class="card-title">
                         {{ $t('wallet.title') }}
-                        <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(wallet.balance) }}</strong></span>
+                        <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(wallet.balance, wallet.currency) }}</strong></span>
                     </h2>
                     <div class="card-text">
                         <form class="read-only short">
-                            <div class="form-group row">
+                            <div class="row">
                                 <label class="col-sm-4 col-form-label">{{ $t('user.discount') }}</label>
                                 <div class="col-sm-8">
                                     <span class="form-control-plaintext" id="discount">
@@ -141,13 +141,13 @@
                                     </span>
                                 </div>
                             </div>
-                            <div class="form-group row" v-if="wallet.mandate && wallet.mandate.id">
+                            <div class="row" v-if="wallet.mandate && wallet.mandate.id">
                                 <label class="col-sm-4 col-form-label">{{ $t('user.auto-payment') }}</label>
                                 <div class="col-sm-8">
                                     <span id="autopayment" :class="'form-control-plaintext' + (wallet.mandateState ? ' text-danger' : '')"
                                           v-html="$t('user.auto-payment-text', {
-                                              amount: wallet.mandate.amount,
-                                              balance: wallet.mandate.balance,
+                                              amount: wallet.mandate.amount + ' ' + wallet.currency,
+                                              balance: wallet.mandate.balance + ' ' + wallet.currency,
                                               method: wallet.mandate.method
                                           })"
                                     >
@@ -155,7 +155,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <div class="form-group row" v-if="wallet.providerLink">
+                            <div class="row" v-if="wallet.providerLink">
                                 <label class="col-sm-4 col-form-label">{{ capitalize(wallet.provider) }} {{ $t('form.id') }}</label>
                                 <div class="col-sm-8">
                                     <span class="form-control-plaintext" v-html="wallet.providerLink"></span>
@@ -174,8 +174,8 @@
             <div class="tab-pane" id="user-aliases" role="tabpanel" aria-labelledby="tab-aliases">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover">
-                            <thead class="thead-light">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
                                 <tr>
                                     <th scope="col">{{ $t('form.email') }}</th>
                                 </tr>
@@ -198,7 +198,7 @@
                 <div class="card-body">
                     <div class="card-text">
                         <table class="table table-sm table-hover mb-0">
-                            <thead class="thead-light">
+                            <thead>
                                 <tr>
                                     <th scope="col">{{ $t('user.subscription') }}</th>
                                     <th scope="col">{{ $t('user.price') }}</th>
@@ -231,8 +231,8 @@
             <div class="tab-pane" id="user-domains" role="tabpanel" aria-labelledby="tab-domains">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover">
-                            <thead class="thead-light">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
                                 <tr>
                                     <th scope="col">{{ $t('domain.namespace') }}</th>
                                 </tr>
@@ -257,8 +257,8 @@
             <div class="tab-pane" id="user-users" role="tabpanel" aria-labelledby="tab-users">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover">
-                            <thead class="thead-light">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
                                 <tr>
                                     <th scope="col">{{ $t('form.primary-email') }}</th>
                                 </tr>
@@ -284,8 +284,8 @@
             <div class="tab-pane" id="user-distlists" role="tabpanel" aria-labelledby="tab-distlists">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover">
-                            <thead class="thead-light">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
                                 <tr>
                                     <th scope="col">{{ $t('form.email') }}</th>
                                 </tr>
@@ -311,7 +311,7 @@
                 <div class="card-body">
                     <div class="card-text">
                         <form class="read-only short">
-                            <div class="form-group row plaintext">
+                            <div class="row plaintext">
                                 <label for="greylisting" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
                                 <div class="col-sm-8">
                                     <span class="form-control-plaintext" id="greylisting">
@@ -331,20 +331,18 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('user.discount-title') }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="form-group">
-                            <select v-model="wallet.discount_id" class="custom-select">
+                        <p>
+                            <select v-model="wallet.discount_id" class="form-select">
                                 <option value="">- {{ $t('form.none') }} -</option>
                                 <option v-for="item in discounts" :value="item.id" :key="item.id">{{ item.label }}</option>
                             </select>
                         </p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-primary modal-action" @click="submitDiscount()">
                             <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
                         </button>
@@ -358,17 +356,15 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('user.ext-email') }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="form-group">
+                        <p>
                             <input v-model="external_email" name="external_email" class="form-control">
                         </p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-primary modal-action" @click="submitEmail()">
                             <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
                         </button>
@@ -382,29 +378,25 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t(oneoff_negative ? 'user.add-penalty-title' : 'user.add-bonus-title') }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
                     </div>
                     <div class="modal-body">
                         <form data-validation-prefix="oneoff_">
-                            <div class="form-group">
+                            <div class="row mb-3">
                                 <label for="oneoff_amount" class="col-form-label">{{ $t('form.amount') }}</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="oneoff_amount" v-model="oneoff_amount" required>
-                                    <span class="input-group-append">
-                                        <span class="input-group-text">{{ oneoff_currency }}</span>
-                                    </span>
+                                    <span class="input-group-text">{{ wallet.currency }}</span>
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <div class="row">
                                 <label for="oneoff_description" class="col-form-label">{{ $t('form.description') }}</label>
                                 <input class="form-control" id="oneoff_description" v-model="oneoff_description" required>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-primary modal-action" @click="submitOneOff()">
                             <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
                         </button>
@@ -418,16 +410,14 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('user.reset-2fa-title') }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
                     </div>
                     <div class="modal-body">
                         <p>{{ $t('user.2fa-hint1') }}</p>
                         <p>{{ $t('user.2fa-hint2') }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-danger modal-action" @click="reset2FA()">{{ $t('btn.reset') }}</button>
                     </div>
                 </div>
@@ -437,6 +427,7 @@
 </template>
 
 <script>
+    import { Modal } from 'bootstrap'
     import TransactionLog from '../Widgets/TransactionLog'
 
     export default {
@@ -453,7 +444,6 @@
         data() {
             return {
                 oneoff_amount: '',
-                oneoff_currency: 'CHF',
                 oneoff_description: '',
                 oneoff_negative: false,
                 discount: 0,
@@ -576,13 +566,19 @@
                 this.oneOffDialog(false)
             },
             discountEdit() {
-                $('#discount-dialog')
-                    .on('shown.bs.modal', e => {
-                        $(e.target).find('select').focus()
+                if (!this.discount_dialog) {
+                    const dialog = $('#discount-dialog')[0]
+
+                    dialog.addEventListener('shown.bs.modal', e => {
+                        $(dialog).find('select').focus()
                         // Note: Vue v-model is strict, convert null to a string
                         this.wallet.discount_id = this.wallet_discount_id || ''
                     })
-                    .modal()
+
+                    this.discount_dialog = new Modal(dialog)
+                }
+
+                this.discount_dialog.show()
 
                 if (!this.discounts.length) {
                     // Fetch discounts
@@ -596,11 +592,17 @@
                 this.external_email = this.user.external_email
                 this.$root.clearFormValidation($('#email-dialog'))
 
-                $('#email-dialog')
-                    .on('shown.bs.modal', e => {
-                        $(e.target).find('input').focus()
+                if (!this.email_dialog) {
+                    const dialog = $('#email-dialog')[0]
+
+                    dialog.addEventListener('shown.bs.modal', e => {
+                        $(dialog).find('input').focus()
                     })
-                    .modal()
+
+                    this.email_dialog = new Modal(dialog)
+                }
+
+                this.email_dialog.show()
             },
             setMandateState() {
                 let mandate = this.wallet.mandate
@@ -614,10 +616,19 @@
             },
             oneOffDialog(negative) {
                 this.oneoff_negative = negative
-                this.dialog = $('#oneoff-dialog').on('shown.bs.modal', event => {
-                    this.$root.clearFormValidation(event.target)
-                    $(event.target).find('#oneoff_amount').focus()
-                }).modal()
+
+                if (!this.oneoff_dialog) {
+                    const dialog = $('#oneoff-dialog')[0]
+
+                    dialog.addEventListener('shown.bs.modal', () => {
+                        this.$root.clearFormValidation(dialog)
+                        $(dialog).find('#oneoff_amount').focus()
+                    })
+
+                    this.oneoff_dialog = new Modal(dialog)
+                }
+
+                this.oneoff_dialog.show()
             },
             penalizeDialog() {
                 this.oneOffDialog(true)
@@ -628,7 +639,7 @@
                 this.$nextTick(() => { this.walletReload = false })
             },
             reset2FA() {
-                $('#reset-2fa-dialog').modal('hide')
+                new Modal('#reset-2fa-dialog').hide()
                 axios.post('/api/v4/users/' + this.user.id + '/reset2FA')
                     .then(response => {
                         if (response.data.status == 'success') {
@@ -639,10 +650,10 @@
                     })
             },
             reset2FADialog() {
-                $('#reset-2fa-dialog').modal()
+                new Modal('#reset-2fa-dialog').show()
             },
             submitDiscount() {
-                $('#discount-dialog').modal('hide')
+                this.discount_dialog.hide()
 
                 axios.put('/api/v4/wallets/' + this.user.wallets[0].id, { discount: this.wallet.discount_id })
                     .then(response => {
@@ -666,7 +677,7 @@
                 axios.put('/api/v4/users/' + this.user.id, { external_email: this.external_email })
                     .then(response => {
                         if (response.data.status == 'success') {
-                            $('#email-dialog').modal('hide')
+                            this.email_dialog.hide()
                             this.$toast.success(response.data.message)
                             this.user.external_email = this.external_email
                             this.external_email = null // required because of Vue
@@ -684,16 +695,12 @@
                     post.amount *= -1
                 }
 
-                // TODO: We maybe should use system currency not wallet currency,
-                //       or have a selector so the operator does not have to calculate
-                //       exchange rates
-
-                this.$root.clearFormValidation(this.dialog)
+                this.$root.clearFormValidation('#oneoff-dialog')
 
                 axios.post('/api/v4/wallets/' + wallet_id + '/one-off', post)
                     .then(response => {
                         if (response.data.status == 'success') {
-                            this.dialog.modal('hide')
+                            this.oneoff_dialog.hide()
                             this.$toast.success(response.data.message)
                             this.wallet = Object.assign({}, this.wallet, {balance: response.data.balance})
                             this.oneoff_amount = ''

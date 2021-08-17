@@ -1,18 +1,22 @@
 /**
- * We'll load jQuery and the Bootstrap jQuery plugin which provides support
- * for JavaScript based Bootstrap features such as modals and tabs. This
- * code may be modified to fit the specific needs of your application.
+ * Import Cash (jQuery replacement)
  */
 
-window.Popper = require('popper.js').default
-window.$ = window.jQuery = require('jquery')
+import $ from 'cash-dom'
+window.$ = $
 
-require('bootstrap')
+$.fn.focus = function() {
+    if (this.length && this[0].focus) {
+        this[0].focus()
+    }
+    return this
+}
 
 /**
- * We'll load Vue, VueRouter and global components
+ * Load Vue, VueRouter and global components
  */
 
+import { Tooltip } from 'bootstrap'
 import FontAwesomeIcon from './fontawesome'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
@@ -24,26 +28,26 @@ window.Vue = Vue
 Vue.component('SvgIcon', FontAwesomeIcon)
 
 const vTooltip = (el, binding) => {
-    const t = []
+    let t = []
 
     if (binding.modifiers.focus) t.push('focus')
     if (binding.modifiers.hover) t.push('hover')
     if (binding.modifiers.click) t.push('click')
-    if (!t.length) t.push('hover')
+    if (!t.length) t.push('click')
 
-    $(el).tooltip({
+    el.tooltip = new Tooltip(el, {
         title: binding.value,
         placement: binding.arg || 'top',
         trigger: t.join(' '),
-        html: !!binding.modifiers.html,
-    });
+        html: !!binding.modifiers.html
+    })
 }
 
 Vue.directive('tooltip', {
     bind: vTooltip,
     update: vTooltip,
     unbind (el) {
-        $(el).tooltip('dispose')
+        el.tooltip.dispose()
     }
 })
 
@@ -70,7 +74,7 @@ window.router = new VueRouter({
 })
 
 /**
- * We'll load the axios HTTP library which allows us to easily issue requests
+ * Load the axios HTTP library which allows us to easily issue requests
  * to our Laravel back-end. This library automatically handles sending the
  * CSRF token as a header based on the value of the "XSRF" token cookie.
  */

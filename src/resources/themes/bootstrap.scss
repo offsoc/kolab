@@ -1,15 +1,13 @@
-// Bootstrap
 @import '~bootstrap/scss/bootstrap';
 
-// Bootstrap style fixes
+// Bootstrap style fixes and additions
 
-.btn-link,
-.table thead th {
-    border: 0;
+a {
+    text-decoration: none;
 }
 
-small {
-    font-size: 0.875em;
+.table > :not(:last-child) > :last-child > * {
+    border-bottom-color: #ccc;
 }
 
 .hidden {

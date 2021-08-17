@@ -25,6 +25,8 @@ class WalletObserver
                 break;
             }
         }
+
+        $wallet->currency = \config('app.currency');
     }
 
     /**

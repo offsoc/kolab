@@ -2,7 +2,7 @@
     <div class="container">
         <div class="card" id="user-delete">
             <div class="card-body">
-                <div class="card-title">Delete this account?</div>
+                <div class="card-title">{{ $t('user.delete-account') }}</div>
                 <div class="card-text">
                     <p>{{ $t('user.profile-delete-text1') }} <strong>{{ $t('user.profile-delete-warning') }}</strong>.</p>
                     <p>{{ $t('user.profile-delete-text2') }}</p>

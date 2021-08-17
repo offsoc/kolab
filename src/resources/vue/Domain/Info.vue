@@ -51,11 +51,11 @@
                         <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
                             <div class="card-body">
                                 <form @submit.prevent="submitSettings">
-                                    <div class="form-group row">
+                                    <div class="row mb-3">
                                         <label for="spf_whitelist" class="col-sm-4 col-form-label">{{ $t('domain.spf-whitelist') }}</label>
                                         <div class="col-sm-8">
                                             <list-input id="spf_whitelist" name="spf_whitelist" :list="spf_whitelist"></list-input>
-                                            <small id="spf-hint" class="form-text text-muted">
+                                            <small id="spf-hint" class="text-muted d-block mt-2">
                                                 {{ $t('domain.spf-whitelist-text') }}
                                                 <span class="d-block" v-html="$t('domain.spf-whitelist-ex')"></span>
                                             </small>

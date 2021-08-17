@@ -78,7 +78,7 @@ class PaymentStripeTest extends TestCaseDusk
                         ->click('@button-action');
                 })
                 ->on(new PaymentStripe())
-                ->assertSeeIn('@title', \config('app.name') . ' Payment')
+                ->assertSeeIn('@title', $user->tenant->title . ' Payment')
                 ->assertSeeIn('@amount', 'CHF 12.34')
                 ->assertValue('@email-input', $user->email)
                 ->submitValidCreditCard();

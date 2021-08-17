@@ -57,7 +57,7 @@ popd
 
 bin/regen-certs
 
-docker-compose up -d coturn kolab mariadb meet proxy redis
+docker-compose up -d coturn kolab mariadb meet pdns-sql proxy redis
 
 pushd ${base_dir}/src/
 

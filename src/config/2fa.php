@@ -9,6 +9,4 @@ return [
         'issuer' => env('APP_NAME', 'Laravel'),
     ],
 
-    'dsn' => env('MFA_DSN'),
-
 ];

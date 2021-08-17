@@ -78,7 +78,7 @@ class PaymentMollieTest extends TestCaseDusk
                         ->click('@button-action');
                 })
                 ->on(new PaymentMollie())
-                ->assertSeeIn('@title', \config('app.name') . ' Payment')
+                ->assertSeeIn('@title', $user->tenant->title . ' Payment')
                 ->assertSeeIn('@amount', 'CHF 12.34');
 
             $this->assertSame(1, $user->wallets()->first()->payments()->count());
@@ -168,7 +168,7 @@ class PaymentMollieTest extends TestCaseDusk
                         ->click('@button-action');
                 })
                 ->on(new PaymentMollie())
-                ->assertSeeIn('@title', \config('app.name') . ' Auto-Payment Setup')
+                ->assertSeeIn('@title', $user->tenant->title . ' Auto-Payment Setup')
                 ->assertMissing('@amount')
                 ->submitValidCreditCard()
                 ->waitForLocation('/wallet')

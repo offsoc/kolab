@@ -114,7 +114,7 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
+        $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
         // Test creating a mandate (negative balance, amount too small)
@@ -143,7 +143,7 @@ class PaymentsMollieTest extends TestCase
         $payment = Payment::where('id', $json['id'])->first();
         $this->assertSame(2010, $payment->amount);
         $this->assertSame($wallet->id, $payment->wallet_id);
-        $this->assertSame(\config('app.name') . " Auto-Payment Setup", $payment->description);
+        $this->assertSame($user->tenant->title . " Auto-Payment Setup", $payment->description);
         $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information
@@ -339,9 +339,10 @@ class PaymentsMollieTest extends TestCase
         $response = $this->post("api/v4/payments", []);
         $response->assertStatus(401);
 
-        // Invalid amount
         $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets()->first();
 
+        // Invalid amount
         $post = ['amount' => -1];
         $response = $this->actingAs($user)->post("api/v4/payments", $post);
         $response->assertStatus(422);
@@ -350,7 +351,7 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
+        $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
         // Invalid currency
@@ -368,7 +369,6 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertMatchesRegularExpression('|^https://www.mollie.com|', $json['redirectUrl']);
 
-        $wallet = $user->wallets()->first();
         $payments = Payment::where('wallet_id', $wallet->id)->get();
 
         $this->assertCount(1, $payments);
@@ -376,7 +376,7 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame(1234, $payment->amount);
         $this->assertSame(1234, $payment->currency_amount);
         $this->assertSame('CHF', $payment->currency);
-        $this->assertSame(\config('app.name') . ' Payment', $payment->description);
+        $this->assertSame($user->tenant->title . ' Payment', $payment->description);
         $this->assertSame('open', $payment->status);
         $this->assertEquals(0, $wallet->balance);
 
@@ -1006,6 +1006,9 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame(false, $json['hasMore']);
         $this->assertCount(1, $json['list']);
         $this->assertSame(PaymentProvider::STATUS_OPEN, $json['list'][0]['status']);
+        $this->assertSame('CHF', $json['list'][0]['currency']);
+        $this->assertSame(PaymentProvider::TYPE_ONEOFF, $json['list'][0]['type']);
+        $this->assertSame(1234, $json['list'][0]['amount']);
 
         $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
         $json = $response->json();
@@ -1051,6 +1054,9 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
         $this->assertSame('banktransfer', $json[2]['id']);
+        $this->assertSame('CHF', $json[0]['currency']);
+        $this->assertSame('CHF', $json[1]['currency']);
+        $this->assertSame('EUR', $json[2]['currency']);
 
         $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
         $response->assertStatus(200);
@@ -1058,5 +1064,6 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertCount(1, $json);
         $this->assertSame('creditcard', $json[0]['id']);
+        $this->assertSame('CHF', $json[0]['currency']);
     }
 }

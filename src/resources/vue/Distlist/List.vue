@@ -4,13 +4,13 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ $tc('distlist.list-title', 2) }}
-                    <router-link class="btn btn-success float-right create-list" :to="{ path: 'distlist/new' }" tag="button">
+                    <router-link class="btn btn-success float-end create-list" :to="{ path: 'distlist/new' }" tag="button">
                         <svg-icon icon="users"></svg-icon> {{ $t('distlist.create') }}
                     </router-link>
                 </div>
                 <div class="card-text">
                     <table class="table table-sm table-hover">
-                        <thead class="thead-light">
+                        <thead>
                             <tr>
                                 <th scope="col">{{ $t('distlist.email') }}</th>
                             </tr>

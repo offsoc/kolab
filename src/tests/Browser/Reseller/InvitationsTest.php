@@ -94,12 +94,11 @@ class InvitationsTest extends TestCaseDusk
                         ->assertMissing('@body input#email.is-invalid')
                         // Submit an empty file
                         ->attach('@body input#file', __DIR__ . '/../../data/empty.csv')
-                        ->assertSeeIn('@body input#file + label', 'empty.csv')
                         ->click('@button-action')
                         ->assertToast(Toast::TYPE_ERROR, "Form validation error")
                         // ->waitFor('input#file.is-invalid')
                         ->assertSeeIn(
-                            '@body input#file.is-invalid + label + .invalid-feedback',
+                            '@body input#file.is-invalid + .invalid-feedback',
                             "Failed to find any valid email addresses in the uploaded file."
                         )
                         // Submit non-empty file

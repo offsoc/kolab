@@ -1,7 +1,7 @@
 <template>
     <div>
         <table class="table table-sm m-0 transactions">
-            <thead class="thead-light">
+            <thead>
                 <tr>
                     <th scope="col">{{ $t('form.date') }}</th>
                     <th scope="col" v-if="isAdmin">{{ $t('form.user') }}</th>
@@ -103,7 +103,7 @@
                     })
             },
             amount(transaction) {
-                return this.$root.price(transaction.amount)
+                return this.$root.price(transaction.amount, transaction.currency)
             },
             className(transaction) {
                 return transaction.amount < 0 ? 'text-danger' : 'text-success';

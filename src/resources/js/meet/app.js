@@ -1,4 +1,5 @@
 import anchorme from 'anchorme'
+import { Dropdown } from 'bootstrap'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { OpenVidu } from 'openvidu-browser'
 
@@ -1033,7 +1034,7 @@ function Meet(container)
         }
 
         if (params.isSelf) {
-            wrapper.find('.link-setup').removeClass('hidden').click(() => sessionData.onMediaSetup())
+            wrapper.find('.link-setup').removeClass('hidden').on('click', () => sessionData.onMediaSetup())
         } else {
             let volumeInput = wrapper.find('.volume input')
             let audioButton = wrapper.find('.link-audio')
@@ -1284,19 +1285,19 @@ function Meet(container)
                     + '<div class="dropdown-divider permissions"></div>'
                     + '<div class="permissions">'
                         + '<h6 class="dropdown-header">' + $t('meet.perm') + '</h6>'
-                        + '<label class="dropdown-item action-role-publisher custom-control custom-switch">'
-                            + '<input type="checkbox" class="custom-control-input">'
-                            + ' <span class="custom-control-label">' + $t('meet.perm-av') + '</span>'
+                        + '<label class="dropdown-item action-role-publisher form-check form-switch">'
+                            + '<input type="checkbox" class="form-check-input">'
+                            + ' <span class="form-check-label">' + $t('meet.perm-av') + '</span>'
                         + '</label>'
-                        + '<label class="dropdown-item action-role-moderator custom-control custom-switch">'
-                            + '<input type="checkbox" class="custom-control-input">'
-                            + ' <span class="custom-control-label">' + $t('meet.perm-mod') + '</span>'
+                        + '<label class="dropdown-item action-role-moderator form-check form-switch">'
+                            + '<input type="checkbox" class="form-check-input">'
+                            + ' <span class="form-check-label">' + $t('meet.perm-mod') + '</span>'
                         + '</label>'
                     + '</div>'
                     + '<div class="dropdown-divider interpreting"></div>'
                     + '<div class="interpreting">'
                         + '<h6 class="dropdown-header">' + $t('meet.lang-int') + '</h6>'
-                        + '<div class="ml-4 mr-4"><select class="custom-select">'
+                        + '<div class="ps-3 pe-3"><select class="form-select">'
                             + '<option value="">- ' + $t('form.none') + ' -</option>'
                             + languages.join('')
                         + '</select></div>'
@@ -1307,8 +1308,9 @@ function Meet(container)
 
         let nickname = element.find('.meet-nickname')
             .addClass('btn btn-outline-' + (params.isSelf ? 'primary' : 'secondary'))
-            .attr({title: $t('meet.menu-options'), 'data-toggle': 'dropdown'})
-            .dropdown({boundary: container.parentNode})
+            .attr({title: $t('meet.menu-options'), 'data-bs-toggle': 'dropdown'})
+
+        const dropdown = new Dropdown(nickname[0], {boundary: container.parentNode})
 
         if (params.isSelf) {
             // Add events for nickname change
@@ -1393,7 +1395,7 @@ function Meet(container)
             .on('change', e => {
                 const language = $(e.target).val()
                 sessionData.onConnectionChange(params.connectionId, { language })
-                element.find('.meet-nickname').dropdown('hide')
+                dropdown.hide()
             })
             .on('click', e => {
                 // Prevents from closing the dropdown menu on click

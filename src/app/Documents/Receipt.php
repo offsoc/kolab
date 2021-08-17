@@ -50,7 +50,7 @@ class Receipt
     {
         $wallet = new Wallet();
         $wallet->id = \App\Utils::uuidStr();
-        $wallet->owner = new User(['id' => 123456789]); // @phpstan-ignore-line
+        $wallet->owner = new User(['id' => 123456789]);
 
         $receipt = new self($wallet, date('Y'), date('n'));
 

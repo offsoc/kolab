@@ -9,19 +9,17 @@
                     <div class="mb-2 d-flex">
                         <form @submit.prevent="searchInvitations" id="search-form" class="input-group" style="flex:1">
                             <input class="form-control" type="text" :placeholder="$t('invitation.search')" v-model="search">
-                            <div class="input-group-append">
-                                <button type="submit" class="btn btn-primary"><svg-icon icon="search"></svg-icon> {{ $t('btn.search') }}</button>
-                            </div>
+                            <button type="submit" class="btn btn-primary"><svg-icon icon="search"></svg-icon> {{ $t('btn.search') }}</button>
                         </form>
                         <div>
-                            <button class="btn btn-success create-invite ml-1" @click="inviteUserDialog">
+                            <button class="btn btn-success create-invite ms-1" @click="inviteUserDialog">
                                 <svg-icon icon="envelope-open-text"></svg-icon> {{ $t('invitation.create') }}
                             </button>
                         </div>
                     </div>
 
                     <table id="invitations-list" class="table table-sm table-hover">
-                        <thead class="thead-light">
+                        <thead>
                             <tr>
                                 <th scope="col">{{ $t('user.ext-email') }}</th>
                                 <th scope="col">{{ $t('form.created') }}</th>
@@ -38,11 +36,11 @@
                                     {{ inv.created }}
                                 </td>
                                 <td class="buttons">
-                                    <button class="btn text-danger button-delete p-0 ml-1" @click="deleteInvite(inv.id)">
+                                    <button class="btn text-danger button-delete p-0 ms-1" @click="deleteInvite(inv.id)">
                                         <svg-icon icon="trash-alt"></svg-icon>
                                         <span class="btn-label">{{ $t('btn.delete') }}</span>
                                     </button>
-                                    <button class="btn button-resend p-0 ml-1" :disabled="inv.isNew || inv.isCompleted" @click="resendInvite(inv.id)">
+                                    <button class="btn button-resend p-0 ms-1" :disabled="inv.isNew || inv.isCompleted" @click="resendInvite(inv.id)">
                                         <svg-icon icon="redo"></svg-icon>
                                         <span class="btn-label">{{ $t('btn.resend') }}</span>
                                     </button>
@@ -67,9 +65,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('invitation.create-title') }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" :aria-label="$t('btn.close')">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
                     </div>
                     <div class="modal-body">
                         <form>
@@ -79,14 +75,13 @@
                             </div>
                             <div class="form-separator"><hr><span>{{ $t('form.or') }}</span></div>
                             <p>{{ $t('invitation.create-csv') }}</p>
-                            <div class="custom-file">
-                                <input id="file" type="file" class="custom-file-input" name="csv" @change="fileChange">
-                                <label class="custom-file-label" for="file">{{ $t('btn.file') }}</label>
+                            <div>
+                                <input id="file" type="file" class="form-control" name="csv">
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-dismiss="modal">{{ $t('btn.cancel') }}</button>
+                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
                         <button type="button" class="btn btn-primary modal-action" @click="inviteUser()">
                             <svg-icon icon="paper-plane"></svg-icon> {{ $t('invitation.send') }}
                         </button>
@@ -98,6 +93,7 @@
 </template>
 
 <script>
+    import { Modal } from 'bootstrap'
     import { library } from '@fortawesome/fontawesome-svg-core'
     import { faEnvelopeOpenText, faPaperPlane, faRedo } from '@fortawesome/free-solid-svg-icons'
 
@@ -115,6 +111,10 @@
         mounted() {
             this.$root.startLoading()
             this.loadInvitations(null, () => this.$root.stopLoading())
+
+            $('#invite-create')[0].addEventListener('shown.bs.modal', event => {
+                $('input', event.target).first().focus()
+            })
         },
         methods: {
             deleteInvite(id) {
@@ -160,7 +160,7 @@
                 axios.post('/api/v4/invitations', post, params)
                     .then(response => {
                         if (response.data.status == 'success') {
-                            dialog.modal('hide')
+                            this.dialog.hide()
                             this.$toast.success(response.data.message)
                             if (response.data.count) {
                                 this.loadInvitations({ reset: true })
@@ -169,16 +169,15 @@
                     })
             },
             inviteUserDialog() {
-                let dialog = $('#invite-create')
-                let form = dialog.find('form')
+                const dialog = $('#invite-create')[0]
+                const form = $('form', dialog)
 
                 form.get(0).reset()
                 this.fileChange({ target: form.find('#file')[0] }) // resets file input label
                 this.$root.clearFormValidation(form)
 
-                dialog.on('shown.bs.modal', () => {
-                    dialog.find('input').get(0).focus()
-                }).modal()
+                this.dialog = new Modal(dialog)
+                this.dialog.show()
             },
             loadInvitations(params, callback) {
                 let loader

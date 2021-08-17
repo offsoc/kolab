@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * A payment operation on a wallet.
  *
- * @property int         $amount      Amount of money in cents of CHF
+ * @property int         $amount      Amount of money in cents of system currency
  * @property string      $description Payment description
  * @property string      $id          Mollie's Payment ID
  * @property \App\Wallet $wallet      The wallet

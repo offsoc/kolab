@@ -6,7 +6,6 @@ use App\Providers\PaymentProvider;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StatsController extends \App\Http\Controllers\Controller
@@ -128,34 +127,48 @@ class StatsController extends \App\Http\Controllers\Controller
         $labels = array_reverse($labels);
         $start->startOfWeek(Carbon::MONDAY);
 
-        $payments = DB::table('payments')
-            ->selectRaw("date_format(updated_at, '%Y-%v') as period, sum(amount) as amount")
+        // FIXME: We're using wallets.currency instead of payments.currency and payments.currency_amount
+        //       as I believe this way we have more precise amounts for this use-case (and default currency)
+
+        $query = DB::table('payments')
+            ->selectRaw("date_format(updated_at, '%Y-%v') as period, sum(amount) as amount, wallets.currency")
+            ->join('wallets', 'wallets.id', '=', 'wallet_id')
             ->where('updated_at', '>=', $start->toDateString())
             ->where('status', PaymentProvider::STATUS_PAID)
             ->whereIn('type', [PaymentProvider::TYPE_ONEOFF, PaymentProvider::TYPE_RECURRING])
-            ->groupByRaw('1');
+            ->groupByRaw('period, wallets.currency');
 
         $addTenantScope = function ($builder, $tenantId) {
-            $where = '`wallet_id` IN ('
-                    . 'select `id` from `wallets` '
-                    . 'join `users` on (`wallets`.`user_id` = `users`.`id`) '
-                    . 'where `payments`.`wallet_id` = `wallets`.`id` '
-                    . 'and `users`.`tenant_id` = ' . intval($tenantId)
-                . ')';
+            $where = sprintf(
+                '`wallets`.`user_id` IN (select `id` from `users` where `tenant_id` = %d)',
+                $tenantId
+            );
 
             return $builder->whereRaw($where);
         };
 
-        $payments = $this->applyTenantScope($payments, $addTenantScope)
-            ->pluck('amount', 'period')
-            ->map(function ($amount) {
-                return $amount / 100;
+        $currency = $this->currency();
+        $payments = [];
+
+        $this->applyTenantScope($query, $addTenantScope)
+            ->get()
+            ->each(function ($record) use (&$payments, $currency) {
+                $amount = $record->amount;
+                if ($record->currency != $currency) {
+                    $amount = intval(round($amount * \App\Utils::exchangeRate($record->currency, $currency)));
+                }
+
+                if (isset($payments[$record->period])) {
+                    $payments[$record->period] += $amount / 100;
+                } else {
+                    $payments[$record->period] = $amount / 100;
+                }
             });
 
         // TODO: exclude refunds/chargebacks
 
         $empty = array_fill_keys($labels, 0);
-        $payments = array_values(array_merge($empty, $payments->all()));
+        $payments = array_values(array_merge($empty, $payments));
 
         // $payments = [1000, 1200.25, 3000, 1897.50, 2000, 1900, 2134, 3330];
 
@@ -164,7 +177,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // See https://frappe.io/charts/docs for format/options description
 
         return [
-            'title' => 'Income in CHF - last 8 weeks',
+            'title' => "Income in {$currency} - last 8 weeks",
             'type' => 'bar',
             'colors' => [self::COLOR_BLUE],
             'axisOptions' => [
@@ -352,16 +365,26 @@ class StatsController extends \App\Http\Controllers\Controller
      */
     protected function applyTenantScope($query, $addQuery = null)
     {
-        $user = Auth::guard()->user();
-
-        if ($user->role == 'reseller') {
-            if ($addQuery) {
-                $query = $addQuery($query, \config('app.tenant_id'));
-            } else {
-                $query = $query->withEnvTenantContext();
-            }
-        }
+        // TODO: Per-tenant stats for admins
 
         return $query;
+    }
+
+    /**
+     * Get the currency for stats
+     *
+     * @return string Currency code
+     */
+    protected function currency()
+    {
+        $user = $this->guard()->user();
+
+        // For resellers return their wallet currency
+        if ($user->role == 'reseller') {
+            $currency = $user->wallet()->currency;
+        }
+
+        // System currency for others
+        return \config('app.currency');
     }
 }
