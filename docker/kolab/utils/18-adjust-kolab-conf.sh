@@ -16,6 +16,7 @@ hosted_root_dn = ${hosted_root_dn}" \
     -e "/^\[kolab_wap\]/ a\
 api_url = http://127.0.0.1/kolab-webadmin/api" \
     -e 's/^auth_attributes.*$/auth_attributes = mail, uid/g' \
+    -e 's|^uri = imaps.*$|uri = imaps://127.0.0.1:11993|g' \
     /etc/kolab/kolab.conf
 
 service kolabd restart

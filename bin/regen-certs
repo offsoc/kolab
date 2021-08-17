@@ -32,7 +32,7 @@ fi
 
 export $(cat ${base_dir}/src/.env | xargs) >/dev/null 2>&1
 
-for name in kolab.mgmt.com kolab.hosted.com {{admin,meet}.,}${APP_DOMAIN}; do
+for name in kolab.mgmt.com kolab.hosted.com imap.hosted.com {{admin,meet}.,}${APP_DOMAIN}; do
     openssl genrsa -out ${cert_dir}/${name}.key 4096
 
     openssl req \
