@@ -21,6 +21,9 @@ services:
       - mariadb
     extra_hosts:
       - "kolab.mgmt.com:127.0.0.1"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_ROOT_PASSWORD=Welcome2KolabSystems
     healthcheck:
       interval: 10s
       test: test -f /tmp/kolab-init.done
