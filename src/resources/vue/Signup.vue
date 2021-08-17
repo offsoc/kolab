@@ -79,7 +79,7 @@
                             <span class="input-group-text">@</span>
                             <input v-if="is_domain" type="text" class="form-control rounded-end" id="signup_domain" required v-model="domain" :placeholder="$t('form.domain')">
                             <select v-else class="form-select rounded-end" id="signup_domain" required v-model="domain">
-                                <option v-for="domain in domains" :key="domain" :value="domain">{{ domain }}</option>
+                                <option v-for="d in domains" :key="d" :value="d">{{ domain }}</option>
                             </select>
                         </div>
                     </div>
