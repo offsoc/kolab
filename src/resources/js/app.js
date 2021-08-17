@@ -10,9 +10,10 @@ import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Widgets/Menu'
 import SupportForm from '../vue/Widgets/SupportForm'
 import store from './store'
+import { Tab } from 'bootstrap'
 import { loadLangAsync, i18n } from './locale'
 
-const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="sr-only">Loading</span></div></div>'
+const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="visually-hidden">Loading</span></div></div>'
 
 let isLoading = 0
 
@@ -177,8 +178,14 @@ const app = new Vue({
             return `<img src="${src}" alt="${this.appName}">`
         },
         // Display "loading" overlay inside of the specified element
-        addLoader(elem, small = true) {
-            $(elem).css({position: 'relative'}).append(small ? $(loader).addClass('small') : $(loader))
+        addLoader(elem, small = true, style = null) {
+            if (style) {
+                $(elem).css(style)
+            } else {
+                $(elem).css('position', 'relative')
+            }
+
+            $(elem).append(small ? $(loader).addClass('small') : $(loader))
         },
         // Remove loader element added in addLoader()
         removeLoader(elem) {
@@ -191,7 +198,7 @@ const app = new Vue({
         },
         tab(e) {
             e.preventDefault()
-            $(e.target).tab('show')
+            new Tab(e.target).show()
         },
         errorPage(code, msg, hint) {
             // Until https://github.com/vuejs/vue-router/issues/977 is implemented
@@ -267,10 +274,7 @@ const app = new Vue({
         },
         clickRecord(event) {
             if (!/^(a|button|svg|path)$/i.test(event.target.nodeName)) {
-                let link = $(event.target).closest('tr').find('a')[0]
-                if (link) {
-                    link.click()
-                }
+                $(event.target).closest('tr').find('a').trigger('click')
             }
         },
         domainStatusClass(domain) {
@@ -350,21 +354,19 @@ const app = new Vue({
             return page ? page : '404'
         },
         supportDialog(container) {
-            let dialog = $('#support-dialog')
+            let dialog = $('#support-dialog')[0]
 
-            // FIXME: Find a nicer way of doing this
-            if (!dialog.length) {
+            if (!dialog) {
+                // FIXME: Find a nicer way of doing this
                 SupportForm.i18n = i18n
                 let form = new Vue(SupportForm)
                 form.$mount($('<div>').appendTo(container)[0])
                 form.$root = this
                 form.$toast = this.$toast
-                dialog = $(form.$el)
+                dialog = form.$el
             }
 
-            dialog.on('shown.bs.modal', () => {
-                    dialog.find('input').first().focus()
-                }).modal()
+            dialog.__vue__.showDialog()
         },
         userStatusClass(user) {
             if (user.isDeleted) {
@@ -464,7 +466,7 @@ window.axios.interceptors.response.use(
                         // Create an error message
                         // API responses can use a string, array or object
                         let msg_text = ''
-                        if ($.type(msg) !== 'string') {
+                        if (typeof(msg) !== 'string') {
                             $.each(msg, (index, str) => {
                                 msg_text += str + ' '
                             })

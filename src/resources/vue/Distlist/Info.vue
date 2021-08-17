@@ -6,26 +6,26 @@
             <div class="card-body">
                 <div class="card-title" v-if="list_id !== 'new'">
                     {{ $tc('distlist.list-title', 1) }}
-                    <button class="btn btn-outline-danger button-delete float-right" @click="deleteList()" tag="button">
+                    <button class="btn btn-outline-danger button-delete float-end" @click="deleteList()" tag="button">
                         <svg-icon icon="trash-alt"></svg-icon> {{ $t('distlist.delete') }}
                     </button>
                 </div>
                 <div class="card-title" v-if="list_id === 'new'">{{ $t('distlist.new') }}</div>
                 <div class="card-text">
                     <form @submit.prevent="submit">
-                        <div v-if="list_id !== 'new'" class="form-group row plaintext">
+                        <div v-if="list_id !== 'new'" class="row plaintext mb-3">
                             <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span :class="$root.distlistStatusClass(list) + ' form-control-plaintext'" id="status">{{ $root.distlistStatusText(list) }}</span>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row mb-3">
                             <label for="email" class="col-sm-4 col-form-label">{{ $t('form.email') }}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" id="email" :disabled="list_id !== 'new'" required v-model="list.email">
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row mb-3">
                             <label for="members-input" class="col-sm-4 col-form-label">{{ $t('distlist.recipients') }}</label>
                             <div class="col-sm-8">
                                 <list-input id="members" :list="list.members"></list-input>

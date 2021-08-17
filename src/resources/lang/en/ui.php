@@ -336,6 +336,7 @@ return [
         'create' => "Create user",
         'custno' => "Customer No.",
         'delete' => "Delete user",
+        'delete-account' => "Delete this account?",
         'delete-email' => "Delete {email}",
         'delete-text' => "Do you really want to delete this user permanently?"
             . " This will delete all account data and withdraw the permission to access the email account."

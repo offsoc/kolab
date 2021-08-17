@@ -168,7 +168,7 @@ class RoomSetupTest extends TestCaseDusk
                 // Join the room (click the button twice, to make sure it does not
                 // produce redundant participants/subscribers in the room)
                 ->clickWhenEnabled('@setup-button')
-                ->pause(10)
+                ->pause(5)
                 ->click('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')

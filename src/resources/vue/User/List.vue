@@ -4,13 +4,13 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ $t('user.list-title') }}
-                    <router-link class="btn btn-success float-right create-user" :to="{ path: 'user/new' }" tag="button">
+                    <router-link class="btn btn-success float-end create-user" :to="{ path: 'user/new' }" tag="button">
                         <svg-icon icon="user"></svg-icon> {{ $t('user.create') }}
                     </router-link>
                 </div>
                 <div class="card-text">
                     <table class="table table-sm table-hover">
-                        <thead class="thead-light">
+                        <thead>
                             <tr>
                                 <th scope="col">{{ $t('form.primary-email') }}</th>
                             </tr>

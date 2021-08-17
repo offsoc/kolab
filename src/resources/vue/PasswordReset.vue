@@ -8,8 +8,8 @@
                     <span v-if="fromEmail">{{ $t('password.reset-step1-hint', { email: fromEmail }) }}</span>
                 </p>
                 <form @submit.prevent="submitStep1" data-validation-prefix="reset_">
-                    <div class="form-group">
-                        <label for="reset_email" class="sr-only">{{ $t('form.email') }}</label>
+                    <div class="mb-3">
+                        <label for="reset_email" class="visually-hidden">{{ $t('form.email') }}</label>
                         <input type="text" class="form-control" id="reset_email" :placeholder="$t('form.email')" required v-model="email">
                     </div>
                     <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}</button>
@@ -24,8 +24,8 @@
                     {{ $t('password.reset-step2') }}
                 </p>
                 <form @submit.prevent="submitStep2" data-validation-prefix="reset_">
-                    <div class="form-group">
-                        <label for="reset_short_code" class="sr-only">{{ $t('form.code') }}</label>
+                    <div class="mb-3">
+                        <label for="reset_short_code" class="visually-hidden">{{ $t('form.code') }}</label>
                         <input type="text" class="form-control" id="reset_short_code" :placeholder="$t('form.code')" required v-model="short_code">
                     </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
@@ -41,12 +41,12 @@
                 <p class="card-text">
                 </p>
                 <form @submit.prevent="submitStep3" data-validation-prefix="reset_">
-                    <div class="form-group">
-                        <label for="reset_password" class="sr-only">{{ $t('form.password') }}</label>
+                    <div class="mb-3">
+                        <label for="reset_password" class="visually-hidden">{{ $t('form.password') }}</label>
                         <input type="password" class="form-control" id="reset_password" :placeholder="$t('form.password')" required v-model="password">
                     </div>
-                    <div class="form-group">
-                        <label for="reset_confirm" class="sr-only">{{ $t('form.password-confirm') }}</label>
+                    <div class="mb-3">
+                        <label for="reset_confirm" class="visually-hidden">{{ $t('form.password-confirm') }}</label>
                         <input type="password" class="form-control" id="reset_confirm" :placeholder="$t('form.password-confirm')" required v-model="password_confirmation">
                     </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>

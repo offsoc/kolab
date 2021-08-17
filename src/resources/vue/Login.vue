@@ -1,37 +1,31 @@
 <template>
     <div class="container d-flex flex-column align-items-center justify-content-center">
         <div id="logon-form" class="card col-sm-8 col-lg-6">
-            <div class="card-body">
+            <div class="card-body p-4">
                 <h1 class="card-title text-center mb-3">{{ $t('login.header') }}</h1>
-                <div class="card-text">
+                <div class="card-text m-2 mb-0">
                     <form class="form-signin" @submit.prevent="submitLogin">
-                        <div class="form-group">
-                            <label for="inputEmail" class="sr-only">{{ $t('form.email') }}</label>
+                        <div class="row mb-3">
+                            <label for="inputEmail" class="visually-hidden">{{ $t('form.email') }}</label>
                             <div class="input-group">
-                                <span class="input-group-prepend">
-                                    <span class="input-group-text"><svg-icon icon="user"></svg-icon></span>
-                                </span>
+                                <span class="input-group-text"><svg-icon icon="user"></svg-icon></span>
                                 <input type="email" id="inputEmail" class="form-control" :placeholder="$t('form.email')" required autofocus v-model="email">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="inputPassword" class="sr-only">{{ $t('form.password') }}</label>
+                        <div class="row mb-4">
+                            <label for="inputPassword" class="visually-hidden">{{ $t('form.password') }}</label>
                             <div class="input-group">
-                                <span class="input-group-prepend">
-                                    <span class="input-group-text"><svg-icon icon="lock"></svg-icon></span>
-                                </span>
+                                <span class="input-group-text"><svg-icon icon="lock"></svg-icon></span>
                                 <input type="password" id="inputPassword" class="form-control" :placeholder="$t('form.password')" required v-model="password">
                             </div>
                         </div>
-                        <div class="form-group pt-3" v-if="$root.isUser">
-                            <label for="secondfactor" class="sr-only">{{ $t('login.2fa') }}</label>
+                        <div class="row mb-3" v-if="$root.isUser">
+                            <label for="secondfactor" class="visually-hidden">{{ $t('login.2fa') }}</label>
                             <div class="input-group">
-                                <span class="input-group-prepend">
-                                    <span class="input-group-text"><svg-icon icon="key"></svg-icon></span>
-                                </span>
-                                <input type="text" id="secondfactor" class="form-control rounded-right" :placeholder="$t('login.2fa')" v-model="secondFactor">
+                                <span class="input-group-text"><svg-icon icon="key"></svg-icon></span>
+                                <input type="text" id="secondfactor" class="form-control" :placeholder="$t('login.2fa')" v-model="secondFactor">
                             </div>
-                            <small class="form-text text-muted">{{ $t('login.2fa_desc') }}</small>
+                            <small class="text-muted mt-2">{{ $t('login.2fa_desc') }}</small>
                         </div>
                         <div class="text-center">
                             <button class="btn btn-primary" type="submit">

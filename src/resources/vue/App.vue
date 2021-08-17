@@ -77,21 +77,24 @@
                         $('#faq').remove()
                         if (result && result.length) {
                             let faq = $('<div id="faq" class="faq mt-3"><h5>' + this.$t('app.faq') + '</h5><ul class="pl-4"></ul></div>')
-                            let list = []
+                            let list = $([])
 
                             result.forEach(item => {
-                                list.push($('<li>').append($('<a>').attr('href', item.href).text(item.title)))
+                                let li = $('<li>').append($('<a>').attr('href', item.href).text(item.title))
 
                                 // Handle internal links with the vue-router
                                 if (item.href.charAt(0) == '/') {
-                                    list[list.length-1].find('a').on('click', event => {
+                                    li.find('a').on('click', event => {
                                         event.preventDefault()
                                         this.$router.push(item.href)
                                     })
                                 }
+
+                                list = list.add(li)
                             })
 
                             faq.find('ul').append(list)
+
                             $(this.$el).append(faq)
                         }
                     })

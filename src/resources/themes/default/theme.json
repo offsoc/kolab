@@ -39,6 +39,10 @@
             {
                 "href": "https://kb.kolabnow.com/faq/how-much-storage-comes-with-my-account",
                 "label": "storage"
+            },
+            {
+                "href": "/support",
+                "label": "support"
             }
         ]
     }

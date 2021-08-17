@@ -4,13 +4,11 @@
             <form @submit.prevent="searchUser" class="row justify-content-center">
                 <div class="input-group col-sm-8">
                     <input class="form-control" type="text" :placeholder="$t('user.search-pl')" v-model="search">
-                    <div class="input-group-append">
-                        <button type="submit" class="btn btn-primary"><svg-icon icon="search"></svg-icon> {{ $t('btn.search') }}</button>
-                    </div>
+                    <button type="submit" class="btn btn-primary"><svg-icon icon="search"></svg-icon> {{ $t('btn.search') }}</button>
                 </div>
             </form>
             <table v-if="users.length" class="table table-sm table-hover mt-4">
-                <thead class="thead-light">
+                <thead>
                     <tr>
                         <th scope="col">{{ $t('form.primary-email') }}</th>
                         <th scope="col">{{ $t('form.id') }}</th>
@@ -47,7 +45,7 @@
             }
         },
         mounted() {
-            $('#search-box input').focus()
+            $('#search-box input', this.$el).focus()
         },
         methods: {
             searchUser() {

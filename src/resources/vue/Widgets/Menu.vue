@@ -1,15 +1,15 @@
 <template>
-    <nav :id="mode + '-menu'" class="navbar navbar-expand-lg navbar-light">
-        <div class="container">
+    <nav :id="mode + '-menu'" :class="'navbar navbar-light navbar-expand-' + (mode == 'header' ? 'lg' : 'sm')">
+        <div class="container p-0">
             <router-link class="navbar-brand" to="/" v-html="$root.logo(mode)"></router-link>
             <button v-if="mode == 'header'" class="navbar-toggler" type="button"
-                    data-toggle="collapse" :data-target="'#' + mode + '-menu-navbar'"
-                    aria-controls="navbar" aria-expanded="false" :aria-label="$t('menu.toggle')"
+                    data-bs-toggle="collapse" data-bs-target="#header-menu-navbar"
+                    aria-controls="header-menu-navbar" aria-expanded="false" :aria-label="$t('menu.toggle')"
             >
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div :id="mode + '-menu-navbar'" :class="'navbar' + (mode == 'header' ? ' collapse navbar-collapse' : '')">
-                <ul class="navbar-nav">
+            <div :id="mode + '-menu-navbar'" :class="mode == 'header' ? 'collapse navbar-collapse justify-content-end' : ''">
+                <ul class="navbar-nav justify-content-end">
                     <li class="nav-item" v-for="item in menu" :key="item.index">
                         <a v-if="item.href" :class="'nav-link link-' + item.index" :href="item.href">{{ item.title }}</a>
                         <router-link v-if="item.to"
@@ -34,8 +34,8 @@
                         <router-link class="nav-link menulogin link-login" :to="{name: 'login'}">{{ $t('menu.login') }}</router-link>
                     </li>
                     <li v-if="languages.length > 1 && mode == 'header'" id="language-selector" class="nav-item dropdown">
-                        <a href="#" class="nav-link link-lang dropdown-toggle" role="button" data-toggle="dropdown">{{ getLang().toUpperCase() }}</a>
-                        <div class="dropdown-menu dropdown-menu-right">
+                        <a href="#" class="nav-link link-lang dropdown-toggle" role="button" data-bs-toggle="dropdown">{{ getLang().toUpperCase() }}</a>
+                        <div class="dropdown-menu dropdown-menu-right mb-2">
                             <a class="dropdown-item" href="#" v-for="lang in languages" :key="lang" @click="setLang(lang)">
                                 {{ lang.toUpperCase() }} - {{ $t('lang.' + lang) }}
                             </a>

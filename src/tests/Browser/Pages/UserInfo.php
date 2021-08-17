@@ -42,6 +42,7 @@ class UserInfo extends Page
             '@nav' => 'ul.nav-tabs',
             '@packages' => '#user-packages',
             '@settings' => '#settings',
+            '@general' => '#general',
             '@skus' => '#user-skus',
             '@status' => '#status-box',
         ];

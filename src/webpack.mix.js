@@ -14,14 +14,6 @@ const { spawn } = require('child_process');
 const glob = require('glob');
 const mix = require('laravel-mix');
 
-mix.webpackConfig({
-    resolve: {
-        alias: {
-            'jquery$': 'jquery/dist/jquery.slim.js',
-        }
-    }
-})
-
 mix.js('resources/js/user/app.js', 'public/js/user.js').vue()
     .js('resources/js/admin/app.js', 'public/js/admin.js').vue()
     .js('resources/js/reseller/app.js', 'public/js/reseller.js').vue()

@@ -113,10 +113,10 @@ class SignupTest extends TestCaseDusk
                 $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang'], 'signup');
             });
 
-            $browser->waitFor('@step0 .plan-selector > .card');
+            $browser->waitFor('@step0 .plan-selector .card');
 
             // Assert first plan box and press the button
-            $browser->with('@step0 .plan-selector > .plan-individual', function ($step) {
+            $browser->with('@step0 .plan-selector .plan-individual', function ($step) {
                 $step->assertVisible('button')
                     ->assertSeeIn('button', 'Individual Account')
                     ->assertVisible('.plan-description')
@@ -139,7 +139,7 @@ class SignupTest extends TestCaseDusk
                     ->assertMissing('@step3');
 
             // Choose the group account plan
-            $browser->click('@step0 .plan-selector > .plan-group button')
+            $browser->click('@step0 .plan-selector .plan-group button')
                 ->waitForLocation('/signup/group')
                 ->assertVisible('@step1')
                 ->assertMissing('@step0')

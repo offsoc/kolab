@@ -33,12 +33,15 @@
 
     label {
         margin-right: 0.5em;
+        min-width: 4em;
+        text-align: right;
+        line-height: 1.7;
     }
 }
 
 .input-group-activable {
     &.active {
-        :not(.input-group-append):not(.activable) {
+        :not(.activable) {
             display: none;
         }
     }
@@ -70,19 +73,32 @@
     margin-top: -0.25rem;
 }
 
-form.read-only {
-    .row {
-        margin-bottom: 0;
-    }
-}
-
 // Various improvements for mobile
 @include media-breakpoint-down(sm) {
-    .form-group {
-        margin-bottom: 0.5rem;
+    .row.mb-3 {
+        margin-bottom: 0.5rem !important;
     }
 
-    .form-group.plaintext .col-form-label {
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+
+        .nav-link {
+            white-space: nowrap;
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    .tab-content {
+        margin-top: 0.5rem;
+    }
+
+    .col-form-label {
+        color: #666;
+        font-size: 95%;
+    }
+
+    .row.plaintext .col-form-label {
         padding-bottom: 0;
     }
 
@@ -93,19 +109,11 @@ form.read-only {
             width: 65%;
         }
     }
-}
 
-@include media-breakpoint-down(xs) {
-    .col-form-label {
-        color: #666;
-        font-size: 95%;
-    }
-
-    .form-group.checkbox {
+    .row.checkbox {
         position: relative;
 
         & > div {
-            position: initial;
             padding-top: 0 !important;
 
             input {

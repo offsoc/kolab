@@ -5,7 +5,7 @@
                 <div class="card-title">{{ domain.namespace }}</div>
                 <div class="card-text">
                     <form class="read-only short">
-                        <div class="form-group row">
+                        <div class="row plaintext">
                             <label for="domainid" class="col-sm-4 col-form-label">
                                 {{ $t('form.id') }} <span class="text-muted">({{ $t('form.created') }})</span>
                             </label>
@@ -15,7 +15,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row plaintext">
                             <label for="first_name" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="status">
@@ -62,7 +62,7 @@
                 <div class="card-body">
                     <div class="card-text">
                         <form class="read-only short">
-                            <div class="form-group row plaintext">
+                            <div class="row plaintext">
                                 <label for="spf_whitelist" class="col-sm-4 col-form-label">{{ $t('domain.spf-whitelist') }}</label>
                                 <div class="col-sm-8">
                                     <span class="form-control-plaintext" id="spf_whitelist">

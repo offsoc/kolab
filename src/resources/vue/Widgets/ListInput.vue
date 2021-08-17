@@ -2,21 +2,17 @@
     <div class="list-input" :id="id">
         <div class="input-group">
             <input :id="id + '-input'" type="text" class="form-control main-input" @keydown="keyDown">
-            <div class="input-group-append">
-                <a href="#" class="btn btn-outline-secondary" @click.prevent="addItem">
-                    <svg-icon icon="plus"></svg-icon>
-                    <span class="sr-only">{{ $t('btn.add') }}</span>
-                </a>
-            </div>
+            <a href="#" class="btn btn-outline-secondary" @click.prevent="addItem">
+                <svg-icon icon="plus"></svg-icon>
+                <span class="visually-hidden">{{ $t('btn.add') }}</span>
+            </a>
         </div>
         <div class="input-group" v-for="(item, index) in list" :key="index">
             <input type="text" class="form-control" v-model="list[index]">
-            <div class="input-group-append">
-                <a href="#" class="btn btn-outline-secondary" @click.prevent="deleteItem(index)">
-                    <svg-icon icon="trash-alt"></svg-icon>
-                    <span class="sr-only">{{ $t('btn.delete') }}</span>
-                </a>
-            </div>
+            <a href="#" class="btn btn-outline-secondary" @click.prevent="deleteItem(index)">
+                <svg-icon icon="trash-alt"></svg-icon>
+                <span class="visually-hidden">{{ $t('btn.delete') }}</span>
+            </a>
         </div>
     </div>
 </template>

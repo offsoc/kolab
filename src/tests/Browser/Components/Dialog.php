@@ -45,7 +45,7 @@ class Dialog extends BaseComponent
     public function elements()
     {
         return [
-            '@title' => '.modal-header .modal-title',
+            '@title' => '.modal-title',
             '@body' => '.modal-body',
             '@button-action' => '.modal-footer button.modal-action',
             '@button-cancel' => '.modal-footer button.modal-cancel',

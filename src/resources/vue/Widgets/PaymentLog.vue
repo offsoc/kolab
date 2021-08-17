@@ -1,7 +1,7 @@
 <template>
     <div>
         <table class="table table-sm m-0 payments">
-            <thead class="thead-light">
+            <thead>
                 <tr>
                     <th scope="col">{{ $t('form.date') }}</th>
                     <th scope="col">{{ $t('form.description') }}</th>

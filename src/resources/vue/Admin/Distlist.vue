@@ -5,7 +5,7 @@
                 <div class="card-title">{{ list.email }}</div>
                 <div class="card-text">
                     <form class="read-only short">
-                        <div class="form-group row">
+                        <div class="row plaintext">
                             <label for="distlistid" class="col-sm-4 col-form-label">
                                 {{ $t('form.id') }} <span class="text-muted">({{ $t('form.created') }})</span>
                             </label>
@@ -15,13 +15,13 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row plaintext">
                             <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span :class="$root.distlistStatusClass(list) + ' form-control-plaintext'" id="status">{{ $root.distlistStatusText(list) }}</span>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row plaintext">
                             <label for="members-input" class="col-sm-4 col-form-label">{{ $t('distlist.recipients') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="members">
