@@ -87,6 +87,10 @@ class UserObserver
         ];
 
         \App\Jobs\User\CreateJob::withChain($chain)->dispatch($user->id);
+
+        if (\App\Tenant::getConfig($user->tenant_id, 'pgp.enable')) {
+            \App\Jobs\PGP\KeyCreateJob::dispatch($user->id, $user->email);
+        }
     }
 
     /**

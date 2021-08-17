@@ -48,6 +48,11 @@ return [
             'root' => storage_path('app'),
         ],
 
+        'pgp' => [
+            'driver' => 'local',
+            'root' => storage_path('app/keys'),
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

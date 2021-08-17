@@ -96,6 +96,10 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
         ],
+
+        'roundcube' => [
+            'url' => env('DB_ROUNDCUBE_URL', env('MFA_DSN')),
+        ],
     ],
 
     /*

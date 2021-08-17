@@ -50,6 +50,7 @@ class Tenant extends Model
         // - mail.from.address and mail.from.name
         // - mail.reply_to.address and mail.reply_to.name
         // - app.kb.account_delete and app.kb.account_suspended
+        // - pgp.enable
 
         if ($key == 'app.name') {
             return $tenant ? $tenant->title : \config($key);

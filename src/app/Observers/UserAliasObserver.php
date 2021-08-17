@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Domain;
+use App\Tenant;
 use App\User;
 use App\UserAlias;
 
@@ -51,6 +52,10 @@ class UserAliasObserver
     {
         if ($alias->user) {
             \App\Jobs\User\UpdateJob::dispatch($alias->user_id);
+
+            if (Tenant::getConfig($alias->user->tenant_id, 'pgp.enable')) {
+                \App\Jobs\PGP\KeyCreateJob::dispatch($alias->user_id, $alias->alias);
+            }
         }
     }
 
@@ -79,6 +84,10 @@ class UserAliasObserver
     {
         if ($alias->user) {
             \App\Jobs\User\UpdateJob::dispatch($alias->user_id);
+
+            if (Tenant::getConfig($alias->user->tenant_id, 'pgp.enable')) {
+                \App\Jobs\PGP\KeyUnregisterJob::dispatch($alias->alias);
+            }
         }
     }
 }

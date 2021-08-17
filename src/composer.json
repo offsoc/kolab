@@ -27,6 +27,7 @@
         "mlocati/spf-lib": "^3.0",
         "mollie/laravel-mollie": "^2.9",
         "morrislaptop/laravel-queue-clear": "^1.2",
+        "pear/crypt_gpg": "dev-master",
         "silviolleite/laravelpwa": "^2.0",
         "spatie/laravel-translatable": "^4.2",
         "spomky-labs/otphp": "~4.0.0",

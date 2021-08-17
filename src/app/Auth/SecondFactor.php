@@ -3,7 +3,6 @@
 namespace App\Auth;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Kolab2FA\Storage\Base;
 
 /**
@@ -307,16 +306,6 @@ class SecondFactor extends Base
      */
     public static function dbh()
     {
-        $dsn = \config('2fa.dsn');
-
-        if (empty($dsn)) {
-            \Log::warning("2-FACTOR database not configured");
-
-            return DB::connection(\config('database.default'));
-        }
-
-        \Config::set('database.connections.2fa', ['url' => $dsn]);
-
-        return DB::connection('2fa');
+        return \App\Backends\Roundcube::dbh();
     }
 }

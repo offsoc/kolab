@@ -25,6 +25,7 @@ class UserTest extends TestCase
 
     public function tearDown(): void
     {
+        \App\TenantSetting::truncate();
         $this->deleteTestUser('user-test@' . \config('app.domain'));
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
@@ -247,15 +248,14 @@ class UserTest extends TestCase
      */
     public function testCreateJobs(): void
     {
-        // Fake the queue, assert that no jobs were pushed...
         Queue::fake();
-        Queue::assertNothingPushed();
 
         $user = User::create([
                 'email' => 'user-test@' . \config('app.domain')
         ]);
 
         Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 0);
 
         Queue::assertPushed(
             \App\Jobs\User\CreateJob::class,
@@ -289,6 +289,33 @@ class UserTest extends TestCase
                 && $userId === $user->id;
         });
 */
+    }
+
+    /**
+     * Verify user creation process invokes the PGP keys creation job (if configured)
+     */
+    public function testCreatePGPJob(): void
+    {
+        Queue::fake();
+
+        \App\Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', 1);
+
+        $user = User::create([
+                'email' => 'user-test@' . \config('app.domain')
+        ]);
+
+        Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 1);
+
+        Queue::assertPushed(
+            \App\Jobs\PGP\KeyCreateJob::class,
+            function ($job) use ($user) {
+                $userEmail = TestCase::getObjectProperty($job, 'userEmail');
+                $userId = TestCase::getObjectProperty($job, 'userId');
+
+                return $userEmail === $user->email
+                    && $userId === $user->id;
+            }
+        );
     }
 
     /**
@@ -576,6 +603,8 @@ class UserTest extends TestCase
         $this->assertInstanceOf(User::class, $result);
         $this->assertSame($user->id, $result->id);
 
+        Queue::fake();
+
         // A case where two users have the same alias
         $ned = $this->getTestUser('ned@kolab.org');
         $ned->setAliases(['joe.monster@kolab.org']);
@@ -739,10 +768,15 @@ class UserTest extends TestCase
 
         $this->assertCount(0, $user->aliases->all());
 
+        $user->tenant->setSetting('pgp.enable', 1);
+
         // Add an alias
         $user->setAliases(['UserAlias1@UserAccount.com']);
 
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 1);
+
+        $user->tenant->setSetting('pgp.enable', 0);
 
         $aliases = $user->aliases()->get();
         $this->assertCount(1, $aliases);
@@ -752,16 +786,22 @@ class UserTest extends TestCase
         $user->setAliases(['UserAlias1@UserAccount.com', 'UserAlias2@UserAccount.com']);
 
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 2);
+        Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 1);
 
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
         $this->assertSame('useralias1@useraccount.com', $aliases[0]->alias);
         $this->assertSame('useralias2@useraccount.com', $aliases[1]->alias);
 
+        $user->tenant->setSetting('pgp.enable', 1);
+
         // Remove an alias
         $user->setAliases(['UserAlias1@UserAccount.com']);
 
+        $user->tenant->setSetting('pgp.enable', 0);
+
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 3);
+        Queue::assertPushed(\App\Jobs\PGP\KeyUnregisterJob::class, 1);
 
         $aliases = $user->aliases()->get();
         $this->assertCount(1, $aliases);
