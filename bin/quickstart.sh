@@ -57,7 +57,7 @@ popd
 
 bin/regen-certs
 
-docker-compose up -d coturn kolab mariadb openvidu kurento-media-server proxy redis
+docker-compose up -d coturn kolab mariadb openvidu kurento-media-server pdns-sql proxy redis
 
 pushd ${base_dir}/src/
 

@@ -70,6 +70,29 @@ services:
       retries: 30
     image: mariadb
     network_mode: host
+  nginx:
+    build:
+      context: ./docker/nginx/
+      args:
+        NGINX_AUTH_WEBHOOK: ${APP_DOMAIN}/api/webhooks/nginx
+    container_name: kolab-nginx
+    depends_on:
+      kolab:
+        condition: service_healthy
+    hostname: nginx.hosted.com
+    image: kolab-nginx
+    network_mode: host
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+      - ./docker/certs/imap.hosted.com.cert:/etc/pki/tls/certs/imap.hosted.com.cert
+      - ./docker/certs/imap.hosted.com.key:/etc/pki/tls/private/imap.hosted.com.key
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
   openvidu:
     build:
       context: ./docker/openvidu/
@@ -103,17 +126,14 @@ services:
     tty: true
     volumes:
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
-  nginx:
+  pdns-sql:
     build:
-      context: ./docker/nginx/
-      args:
-        NGINX_AUTH_WEBHOOK: ${APP_DOMAIN}/api/webhooks/nginx
-    container_name: kolab-nginx
+      context: ./docker/pdns-sql/
+    container_name: kolab-pdns-sql
     depends_on:
-      kolab:
-        condition: service_healthy
-    hostname: nginx.hosted.com
-    image: kolab-nginx
+      - mariadb
+    hostname: pdns-sql
+    image: apheleia/kolab-pdns-sql
     network_mode: host
     tmpfs:
       - /run
@@ -122,9 +142,6 @@ services:
       - /var/tmp
     tty: true
     volumes:
-      - /etc/letsencrypt/:/etc/letsencrypt/:ro
-      - ./docker/certs/imap.hosted.com.cert:/etc/pki/tls/certs/imap.hosted.com.cert
-      - ./docker/certs/imap.hosted.com.key:/etc/pki/tls/private/imap.hosted.com.key
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
   proxy:
     build:
