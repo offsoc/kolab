@@ -281,6 +281,7 @@ class WalletsTest extends TestCase
         foreach ($pages[0] as $idx => $transaction) {
             $this->assertSame($transaction->id, $json['list'][$idx]['id']);
             $this->assertSame($transaction->type, $json['list'][$idx]['type']);
+            $this->assertSame(\config('app.currency'), $json['list'][$idx]['currency']);
             $this->assertSame($transaction->shortDescription(), $json['list'][$idx]['description']);
             $this->assertFalse($json['list'][$idx]['hasDetails']);
             $this->assertFalse(array_key_exists('user', $json['list'][$idx]));

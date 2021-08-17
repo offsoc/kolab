@@ -83,7 +83,7 @@ class PaymentMollieTest extends TestCaseDusk
                         ->click('@button-action');
                 })
                 ->on(new PaymentMollie())
-                ->assertSeeIn('@title', \config('app.name') . ' Payment')
+                ->assertSeeIn('@title', $user->tenant->title . ' Payment')
                 ->assertSeeIn('@amount', 'CHF 12.34');
 
             $this->assertSame(1, $wallet->payments()->count());

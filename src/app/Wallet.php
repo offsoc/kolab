@@ -14,7 +14,12 @@ use Illuminate\Support\Facades\DB;
  *
  * A wallet is owned by an {@link \App\User}.
  *
- * @property integer $balance
+ * @property int        $balance     Current balance in cents
+ * @property string     $currency    Currency code
+ * @property ?string    $description Description
+ * @property string     $id          Unique identifier
+ * @property ?\App\User $owner       Owner (can be null when owner is deleted)
+ * @property int        $user_id     Owner's identifier
  */
 class Wallet extends Model
 {
@@ -26,19 +31,39 @@ class Wallet extends Model
 
     public $timestamps = false;
 
+    /**
+     * The attributes' default values.
+     *
+     * @var array
+     */
     protected $attributes = [
         'balance' => 0,
-        'currency' => 'CHF'
     ];
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
-        'currency'
+        'currency',
+        'description'
     ];
 
+    /**
+     * The attributes that can be not set.
+     *
+     * @var array
+     */
     protected $nullable = [
         'description',
     ];
 
+    /**
+     * The types of attributes to which its values will be cast
+     *
+     * @var array
+     */
     protected $casts = [
         'balance' => 'integer',
     ];
@@ -345,15 +370,10 @@ class Wallet extends Model
     {
         $amount = round($amount / 100, 2);
 
-        // Prefer intl extension's number formatter
-        if (class_exists('NumberFormatter')) {
-            $nf = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-            $result = $nf->formatCurrency($amount, $this->currency);
-            // Replace non-breaking space
-            return str_replace("\xC2\xA0", " ", $result);
-        }
-
-        return sprintf('%.2f %s', $amount, $this->currency);
+        $nf = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+        $result = $nf->formatCurrency($amount, $this->currency);
+        // Replace non-breaking space
+        return str_replace("\xC2\xA0", " ", $result);
     }
 
     /**

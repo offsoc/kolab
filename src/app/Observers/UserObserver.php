@@ -56,7 +56,7 @@ class UserObserver
     {
         $settings = [
             'country' => \App\Utils::countryForRequest(),
-            'currency' => 'CHF',
+            'currency' => \config('app.currency'),
             /*
             'first_name' => '',
             'last_name' => '',

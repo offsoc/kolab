@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
 use App\Providers\PaymentProvider;
+use App\Tenant;
 use App\Wallet;
 use App\Payment;
 use Illuminate\Http\Request;
@@ -53,8 +54,8 @@ class PaymentsController extends Controller
         ]);
 
         $mandate = [
-            'currency' => 'CHF',
-            'description' => \config('app.name') . ' Auto-Payment Setup',
+            'currency' => $wallet->currency,
+            'description' => Tenant::getConfig($user->tenant_id, 'app.name') . ' Auto-Payment Setup',
             'methodId' => $request->methodId
         ];
 
@@ -173,7 +174,7 @@ class PaymentsController extends Controller
         }
 
         if ($amount < PaymentProvider::MIN_AMOUNT) {
-            $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
+            $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
             return ['amount' => \trans('validation.minamount', ['amount' => $min])];
         }
 
@@ -211,7 +212,7 @@ class PaymentsController extends Controller
 
         // Validate the minimum value
         if ($amount < PaymentProvider::MIN_AMOUNT) {
-            $min = intval(PaymentProvider::MIN_AMOUNT / 100) . ' CHF';
+            $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
             $errors = ['amount' => \trans('validation.minamount', ['amount' => $min])];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
@@ -221,7 +222,7 @@ class PaymentsController extends Controller
             'currency' => $request->currency,
             'amount' => $amount,
             'methodId' => $request->methodId,
-            'description' => \config('app.name') . ' Payment',
+            'description' => Tenant::getConfig($user->tenant_id, 'app.name') . ' Payment',
         ];
 
         $provider = PaymentProvider::factory($wallet);
@@ -327,10 +328,10 @@ class PaymentsController extends Controller
 
         $request = [
             'type' => PaymentProvider::TYPE_RECURRING,
-            'currency' => 'CHF',
+            'currency' => $wallet->currency,
             'amount' => $amount,
             'methodId' => PaymentProvider::METHOD_CREDITCARD,
-            'description' => \config('app.name') . ' Recurring Payment',
+            'description' => Tenant::getConfig($wallet->owner->tenant_id, 'app.name') . ' Recurring Payment',
         ];
 
         $result = $provider->payment($wallet, $request);
@@ -449,7 +450,7 @@ class PaymentsController extends Controller
             $hasMore = true;
         }
 
-        $result = $result->map(function ($item) {
+        $result = $result->map(function ($item) use ($wallet) {
             $provider = PaymentProvider::factory($item->provider);
             $payment = $provider->getPayment($item->id);
             $entry = [
@@ -458,6 +459,8 @@ class PaymentsController extends Controller
                 'type' => $item->type,
                 'description' => $item->description,
                 'amount' => $item->amount,
+                'currency' => $wallet->currency,
+                // note: $item->currency/$item->currency_amount might be different
                 'status' => $item->status,
                 'isCancelable' => $payment['isCancelable'],
                 'checkoutUrl' => $payment['checkoutUrl']

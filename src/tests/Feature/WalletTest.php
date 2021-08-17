@@ -159,6 +159,8 @@ class WalletTest extends TestCase
         $user = $this->getTestUser('UserWallet1@UserWallet.com');
 
         $this->assertCount(1, $user->wallets);
+        $this->assertSame(\config('app.currency'), $user->wallets[0]->currency);
+        $this->assertSame(0, $user->wallets[0]->balance);
     }
 
     /**
@@ -179,6 +181,9 @@ class WalletTest extends TestCase
                 $this->assertEquals(0, $wallet->balance);
             }
         );
+
+        // For now all wallets use system currency
+        $this->assertFalse($user->wallets()->where('currency', 'USD')->exists());
     }
 
     /**
@@ -228,6 +233,9 @@ class WalletTest extends TestCase
             new Wallet(['currency' => 'USD'])
         );
 
+        // For now additional wallets with a different currency is not allowed
+        $this->assertFalse($user->wallets()->where('currency', 'USD')->exists());
+/*
         $user->wallets()->each(
             function ($wallet) {
                 if ($wallet->currency == 'USD') {
@@ -235,6 +243,7 @@ class WalletTest extends TestCase
                 }
             }
         );
+*/
     }
 
     /**

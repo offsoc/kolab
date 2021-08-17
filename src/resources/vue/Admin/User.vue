@@ -128,7 +128,7 @@
                 <div class="card-body">
                     <h2 class="card-title">
                         {{ $t('wallet.title') }}
-                        <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(wallet.balance) }}</strong></span>
+                        <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'"><strong>{{ $root.price(wallet.balance, wallet.currency) }}</strong></span>
                     </h2>
                     <div class="card-text">
                         <form class="read-only short">
@@ -146,8 +146,8 @@
                                 <div class="col-sm-8">
                                     <span id="autopayment" :class="'form-control-plaintext' + (wallet.mandateState ? ' text-danger' : '')"
                                           v-html="$t('user.auto-payment-text', {
-                                              amount: wallet.mandate.amount,
-                                              balance: wallet.mandate.balance,
+                                              amount: wallet.mandate.amount + ' ' + wallet.currency,
+                                              balance: wallet.mandate.balance + ' ' + wallet.currency,
                                               method: wallet.mandate.method
                                           })"
                                     >
@@ -393,7 +393,7 @@
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="oneoff_amount" v-model="oneoff_amount" required>
                                     <span class="input-group-append">
-                                        <span class="input-group-text">{{ oneoff_currency }}</span>
+                                        <span class="input-group-text">{{ wallet.currency }}</span>
                                     </span>
                                 </div>
                             </div>
@@ -453,7 +453,6 @@
         data() {
             return {
                 oneoff_amount: '',
-                oneoff_currency: 'CHF',
                 oneoff_description: '',
                 oneoff_negative: false,
                 discount: 0,
@@ -683,10 +682,6 @@
                 if (this.oneoff_negative && /^\d+(\.?\d+)?$/.test(post.amount)) {
                     post.amount *= -1
                 }
-
-                // TODO: We maybe should use system currency not wallet currency,
-                //       or have a selector so the operator does not have to calculate
-                //       exchange rates
 
                 this.$root.clearFormValidation(this.dialog)
 

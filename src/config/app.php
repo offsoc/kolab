@@ -69,6 +69,8 @@ return [
 
     'tenant_id' => env('APP_TENANT_ID', null),
 
+    'currency' => \strtoupper(env('APP_CURRENCY', 'CHF')),
+
     /*
     |--------------------------------------------------------------------------
     | Application Domain

@@ -24,9 +24,8 @@ class StatsController extends \App\Http\Controllers\API\V4\Admin\StatsController
      */
     protected function applyTenantScope($query, $addQuery = null)
     {
-        $user = Auth::guard()->user();
-
         if ($addQuery) {
+            $user = Auth::guard()->user();
             $query = $addQuery($query, $user->tenant_id);
         } else {
             $query = $query->withSubjectTenantContext();

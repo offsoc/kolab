@@ -26,7 +26,7 @@
                             {{ $t('wallet.auto-payment-disabled') }}
                         </div>
                         <template v-else>
-                            <p v-html="$t('wallet.auto-payment-info', { amount: mandate.amount, balance: mandate.balance })"></p>
+                            <p v-html="$t('wallet.auto-payment-info', { amount: mandate.amount + ' ' + wallet.currency, balance: mandate.balance + ' ' + wallet.currency})"></p>
                             <p>{{ $t('wallet.payment-method', { method: mandate.method }) }}</p>
                         </template>
                         <div v-if="mandate.isPending" class="alert alert-warning">

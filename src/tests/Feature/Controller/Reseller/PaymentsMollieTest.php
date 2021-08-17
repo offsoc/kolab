@@ -89,7 +89,7 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertSame(2010, $payment->amount);
         $this->assertSame($wallet->id, $payment->wallet_id);
-        $this->assertSame(\config('app.name') . " Auto-Payment Setup", $payment->description);
+        $this->assertSame($reseller->tenant->title . " Auto-Payment Setup", $payment->description);
         $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information

@@ -27,23 +27,20 @@ class OpenExchangeRatesCommand extends Command
      */
     public function handle()
     {
-        $sourceCurrency = 'CHF';
+        foreach (['CHF', 'EUR'] as $sourceCurrency) {
+            $rates = \App\Backends\OpenExchangeRates::retrieveRates($sourceCurrency);
 
-        $rates = \App\Backends\OpenExchangeRates::retrieveRates($sourceCurrency);
+            $file = resource_path("exchangerates-$sourceCurrency.php");
 
-        //
-        // export
-        //
-        $file = resource_path("exchangerates-$sourceCurrency.php");
+            $out = "<?php return [\n";
 
-        $out = "<?php return [\n";
+            foreach ($rates as $countryCode => $rate) {
+                $out .= sprintf("  '%s' => '%s',\n", $countryCode, $rate);
+            }
 
-        foreach ($rates as $countryCode => $rate) {
-            $out .= sprintf("  '%s' => '%s',\n", $countryCode, $rate);
+            $out .= "];\n";
+
+            file_put_contents($file, $out);
         }
-
-        $out .= "];\n";
-
-        file_put_contents($file, $out);
     }
 }

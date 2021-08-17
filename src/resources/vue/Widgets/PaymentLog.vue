@@ -69,7 +69,7 @@
                     })
             },
             amount(payment) {
-                return this.$root.price(payment.amount)
+                return this.$root.price(payment.amount, payment.currency)
             }
         }
     }

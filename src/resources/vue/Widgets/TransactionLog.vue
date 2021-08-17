@@ -103,7 +103,7 @@
                     })
             },
             amount(transaction) {
-                return this.$root.price(transaction.amount)
+                return this.$root.price(transaction.amount, transaction.currency)
             },
             className(transaction) {
                 return transaction.amount < 0 ? 'text-danger' : 'text-success';
