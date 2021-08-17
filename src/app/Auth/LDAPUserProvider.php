@@ -49,53 +49,6 @@ class LDAPUserProvider extends EloquentUserProvider implements UserProvider
      */
     public function validateCredentials(Authenticatable $user, array $credentials): bool
     {
-        $authenticated = false;
-
-        if ($user->email === \strtolower($credentials['email'])) {
-            if (!empty($user->password)) {
-                if (Hash::check($credentials['password'], $user->password)) {
-                    $authenticated = true;
-                }
-            } elseif (!empty($user->password_ldap)) {
-                if (substr($user->password_ldap, 0, 6) == "{SSHA}") {
-                    $salt = substr(base64_decode(substr($user->password_ldap, 6)), 20);
-
-                    $hash = '{SSHA}' . base64_encode(
-                        sha1($credentials['password'] . $salt, true) . $salt
-                    );
-
-                    if ($hash == $user->password_ldap) {
-                        $authenticated = true;
-                    }
-                } elseif (substr($user->password_ldap, 0, 9) == "{SSHA512}") {
-                    $salt = substr(base64_decode(substr($user->password_ldap, 9)), 64);
-
-                    $hash = '{SSHA512}' . base64_encode(
-                        pack('H*', hash('sha512', $credentials['password'] . $salt)) . $salt
-                    );
-
-                    if ($hash == $user->password_ldap) {
-                        $authenticated = true;
-                    }
-                }
-            } else {
-                \Log::error("Incomplete credentials for {$user->email}");
-            }
-        }
-
-        if ($authenticated) {
-            \Log::info("Successful authentication for {$user->email}");
-
-            // TODO: update last login time
-            if (empty($user->password) || empty($user->password_ldap)) {
-                $user->password = $credentials['password'];
-                $user->save();
-            }
-        } else {
-            // TODO: Try actual LDAP?
-            \Log::info("Authentication failed for {$user->email}");
-        }
-
-        return $authenticated;
+        return $user->validateCredentials($credentials['email'], $credentials['password']);
     }
 }

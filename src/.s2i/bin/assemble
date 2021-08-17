@@ -38,6 +38,14 @@ if [ ! -z "${OPENEXCHANGERATES_API_KEY}" ]; then
     ./artisan data:import:open-exchange-rates
 fi
 
+if [ ! -z "${OAUTH_PRIVATE_KEY}" ]; then
+    echo "${OAUTH_PRIVATE_KEY}" > ./storage/oauth-private.key
+fi
+
+if [ ! -z "${OAUTH_PUBLIC_KEY}" ]; then
+    echo "${OAUTH_PUBLIC_KEY}" > ./storage/oauth-public.key
+fi
+
 echo "---->> Run npm run prod"
 npm install
 npm run ${LARAVEL_ENV:=prod} && rm -rf ~/.npm/

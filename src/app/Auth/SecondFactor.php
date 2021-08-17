@@ -32,40 +32,50 @@ class SecondFactor extends Base
     /**
      * Validate 2-factor authentication code
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param string $secondfactor The 2-factor authentication code.
      *
-     * @return \Illuminate\Http\JsonResponse|null
+     * @throws \Exception on validation failure
      */
-    public function requestHandler($request)
+    public function validate($secondfactor): void
     {
         // get list of configured authentication factors
         $factors = $this->factors();
 
         // do nothing if no factors configured
         if (empty($factors)) {
-            return null;
+            return;
         }
 
-        if (empty($request->secondfactor) || !is_string($request->secondfactor)) {
-            $errors = ['secondfactor' => \trans('validation.2fareq')];
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        if (empty($secondfactor) || !is_string($secondfactor)) {
+            throw new \Exception(\trans('validation.2fareq'));
         }
 
         // try to verify each configured factor
         foreach ($factors as $factor) {
             // verify the submitted code
-            // if (strpos($factor, 'dummy:') === 0 && (\app('env') != 'production') {
-            //    if ($request->secondfactor === 'dummy') {
-            //        return null;
-            //    }
-            // } else
-            if ($this->verify($factor, $request->secondfactor)) {
-                return null;
+            if ($this->verify($factor, $secondfactor)) {
+                return;
             }
         }
+        throw new \Exception(\trans('validation.2fainvalid'));
+    }
 
-        $errors = ['secondfactor' => \trans('validation.2fainvalid')];
-        return response()->json(['status' => 'error', 'errors' => $errors], 422);
+    /**
+     * Validate 2-factor authentication code
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse|null
+     */
+    public function requestHandler(\Illuminate\Http\Request $request)
+    {
+        try {
+            $this->validate($request->secondfactor);
+        } catch (\Exception $e) {
+            $errors = ['secondfactor' => $e->getMessage()];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+        return null;
     }
 
     /**
