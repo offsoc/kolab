@@ -19,7 +19,7 @@ class OauthClientSeeder extends Seeder
         $client = Passport::client()->forceFill([
             'user_id' => null,
             'name' => "Kolab Password Grant Client",
-            'secret' => \config('passport.personal_access_client.secret'),
+            'secret' => \config('auth.proxy.client_secret'),
             'provider' => 'users',
             'redirect' => 'https://' . \config('app.website_domain'),
             'personal_access_client' => 0,
@@ -27,7 +27,7 @@ class OauthClientSeeder extends Seeder
             'revoked' => false,
         ]);
 
-        $client->id = \config('passport.personal_access_client.id');
+        $client->id = \config('auth.proxy.client_id');
 
         $client->save();
     }

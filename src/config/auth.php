@@ -114,9 +114,8 @@ return [
      */
 
     'proxy' => [
-        // not used anymore: changed over to stock passport config in config/passport.php
-        'client_id' => env('PASSPORT_PERSONAL_ACCESS_CLIENT_ID'),
-        'client_secret' => env('PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET'),
+        'client_id' => env('PASSPORT_PROXY_OAUTH_CLIENT_ID'),
+        'client_secret' => env('PASSPORT_PROXY_OAUTH_CLIENT_SECRET'),
     ],
 
     'token_expiry_minutes' => env('OAUTH_TOKEN_EXPIRY', 60),
