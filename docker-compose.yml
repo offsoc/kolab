@@ -109,9 +109,6 @@ services:
       args:
         NGINX_AUTH_WEBHOOK: ${APP_DOMAIN}/api/webhooks/nginx
     container_name: kolab-nginx
-    depends_on:
-      kolab:
-        condition: service_healthy
     hostname: nginx.hosted.com
     image: kolab-nginx
     network_mode: host
