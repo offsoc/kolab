@@ -90,6 +90,31 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
                     $result->push($owner);
                 }
             }
+        // A mollie customer ID
+        } elseif (substr($search, 0, 4) == 'cst_') {
+            $setting = \App\WalletSetting::where(
+                [
+                    'key' => 'mollie_id',
+                    'value' => $search
+                ]
+            )->first();
+
+            if ($setting) {
+                if ($wallet = $setting->wallet) {
+                    if ($owner = $wallet->owner()->withTrashed()->first()) {
+                        $result->push($owner);
+                    }
+                }
+            }
+        // A mollie transaction ID
+        } elseif (substr($search, 0, 3) == 'tr_') {
+            $payment = \App\Payment::find($search);
+
+            if ($payment) {
+                if ($owner = $payment->wallet->owner()->withTrashed()->first()) {
+                    $result->push($owner);
+                }
+            }
         } elseif (!empty($search)) {
             $wallet = Wallet::find($search);
 
