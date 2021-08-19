@@ -43,11 +43,6 @@ return [
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
 
-        '2fa' => [
-            'driver' => 'mysql',
-            'url' => env('MFA_DSN')
-        ],
-
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
@@ -99,6 +94,8 @@ return [
 
         'roundcube' => [
             'url' => env('DB_ROUNDCUBE_URL', env('MFA_DSN')),
+            'charset' => 'utf8',
+            'collation' => 'utf8_unicode_ci',
         ],
     ],
 

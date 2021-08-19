@@ -660,9 +660,9 @@ class OpenViduTest extends TestCase
      *
      * @group openvidu
      */
+    /*
     public function testUpdateConnection(): void
     {
-    /*
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
         $room = Room::where('name', 'john')->first();
@@ -718,56 +718,56 @@ class OpenViduTest extends TestCase
         $post = ['role' => Room::ROLE_PUBLISHER | Room::ROLE_MODERATOR];
         $response = $this->actingAs($john)->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post);
         $response->assertStatus(200);
+    */
 
-        $json = $response->json();
+    /*     $json = $response->json(); */
 
-        $this->assertSame('success', $json['status']);
-        $this->assertSame($post['role'], Connection::find($conn_id)->role);
+    /*     $this->assertSame('success', $json['status']); */
+    /*     $this->assertSame($post['role'], Connection::find($conn_id)->role); */
 
-        // Access as moderator
-        // Note: We're acting as Jack because there's no easy way to unset a 'actingAs' user
-        // throughout the test
-        $token = $this->getModeratorToken($room);
-        $post = ['role' => Room::ROLE_PUBLISHER];
-        $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token])
-            ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post);
-        $response->assertStatus(200);
+    /*     // Access as moderator */
+    /*     // Note: We're acting as Jack because there's no easy way to unset a 'actingAs' user */
+    /*     // throughout the test */
+    /*     $token = $this->getModeratorToken($room); */
+    /*     $post = ['role' => Room::ROLE_PUBLISHER]; */
+    /*     $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token]) */
+    /*         ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post); */
+    /*     $response->assertStatus(200); */
 
-        $this->assertSame('success', $json['status']);
-        $this->assertSame($post['role'], Connection::find($conn_id)->role);
+    /*     $this->assertSame('success', $json['status']); */
+    /*     $this->assertSame($post['role'], Connection::find($conn_id)->role); */
 
-        // Assert that it's not possible to add/remove the 'owner' role
-        $post = ['role' => Room::ROLE_PUBLISHER | Room::ROLE_OWNER];
-        $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token])
-            ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post);
+    /*     // Assert that it's not possible to add/remove the 'owner' role */
+    /*     $post = ['role' => Room::ROLE_PUBLISHER | Room::ROLE_OWNER]; */
+    /*     $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token]) */
+    /*         ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post); */
 
-        $response->assertStatus(403);
+    /*     $response->assertStatus(403); */
 
-        $post = ['role' => Room::ROLE_PUBLISHER];
-        $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token])
-            ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$owner_conn_id}", $post);
+    /*     $post = ['role' => Room::ROLE_PUBLISHER]; */
+    /*     $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token]) */
+    /*         ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$owner_conn_id}", $post); */
 
-        $response->assertStatus(403);
+    /*     $response->assertStatus(403); */
 
-        // Assert that removing a 'moderator' role from the owner is not possible
-        $post = ['role' => Room::ROLE_PUBLISHER | Room::ROLE_OWNER];
-        $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token])
-            ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$owner_conn_id}", $post);
+    /*     // Assert that removing a 'moderator' role from the owner is not possible */
+    /*     $post = ['role' => Room::ROLE_PUBLISHER | Room::ROLE_OWNER]; */
+    /*     $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $token]) */
+    /*         ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$owner_conn_id}", $post); */
 
-        $response->assertStatus(200);
+    /*     $response->assertStatus(200); */
 
-        $this->assertSame($post['role'] | Room::ROLE_MODERATOR, Connection::find($owner_conn_id)->role);
+    /*     $this->assertSame($post['role'] | Room::ROLE_MODERATOR, Connection::find($owner_conn_id)->role); */
 
-        // Assert that non-moderator token does not allow access
-        $post = ['role' => Room::ROLE_SUBSCRIBER];
-        $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $auth_token])
-            ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post);
+    /*     // Assert that non-moderator token does not allow access */
+    /*     $post = ['role' => Room::ROLE_SUBSCRIBER]; */
+    /*     $response = $this->actingAs($jack)->withHeaders([OpenViduController::AUTH_HEADER => $auth_token]) */
+    /*         ->put("api/v4/openvidu/rooms/{$room->name}/connections/{$conn_id}", $post); */
 
-        $response->assertStatus(403);
+    /*     $response->assertStatus(403); */
 
         // TODO: Test updating 'language' and 'hand' properties
-    */
-    }
+    /* } */
 
     /**
      * Create a moderator connection to the room session.

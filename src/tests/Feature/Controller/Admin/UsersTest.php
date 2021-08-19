@@ -189,6 +189,24 @@ class UsersTest extends TestCase
         $plan = \App\Plan::where('title', 'group')->first();
         $user->assignPlan($plan, $domain);
         $user->setAliases(['alias@testsearch.com']);
+
+        $wallet = $user->wallets()->first();
+        $wallet->setSetting('mollie_id', 'cst_nonsense');
+
+        \App\Payment::create(
+            [
+                'id' => 'tr_nonsense',
+                'wallet_id' => $wallet->id,
+                'status' => 'paid',
+                'amount' => 1337,
+                'description' => 'nonsense transaction for testing',
+                'provider' => 'self',
+                'type' => 'oneoff',
+                'currency' => 'CHF',
+                'currency_amount' => 1337
+            ]
+        );
+
         Queue::fake();
         $user->delete();
 
@@ -215,6 +233,39 @@ class UsersTest extends TestCase
         $this->assertTrue($json['list'][0]['isDeleted']);
 
         $response = $this->actingAs($admin)->get("api/v4/users?search=testsearch.com");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($user->id, $json['list'][0]['id']);
+        $this->assertSame($user->email, $json['list'][0]['email']);
+        $this->assertTrue($json['list'][0]['isDeleted']);
+
+        $response = $this->actingAs($admin)->get("api/v4/users?search={$wallet->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($user->id, $json['list'][0]['id']);
+        $this->assertSame($user->email, $json['list'][0]['email']);
+        $this->assertTrue($json['list'][0]['isDeleted']);
+
+        $response = $this->actingAs($admin)->get("api/v4/users?search=tr_nonsense");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($user->id, $json['list'][0]['id']);
+        $this->assertSame($user->email, $json['list'][0]['email']);
+        $this->assertTrue($json['list'][0]['isDeleted']);
+
+        $response = $this->actingAs($admin)->get("api/v4/users?search=cst_nonsense");
         $response->assertStatus(200);
 
         $json = $response->json();
