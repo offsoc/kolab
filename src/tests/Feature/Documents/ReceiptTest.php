@@ -188,7 +188,7 @@ class ReceiptTest extends TestCase
         $pdf = $receipt->PdfOutput();
 
         $this->assertStringStartsWith("%PDF-1.", $pdf);
-        $this->assertTrue(strlen($pdf) > 5000);
+        $this->assertTrue(strlen($pdf) > 2000);
 
         // TODO: Test the content somehow
     }
