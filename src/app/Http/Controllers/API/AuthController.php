@@ -156,7 +156,7 @@ class AuthController extends Controller
         $data = json_decode($tokenResponse->getContent());
 
         if ($tokenResponse->getStatusCode() != 200) {
-            if (isset($data->error) && $data->error == 'secondfactor') {
+            if (isset($data->error) && $data->error == 'secondfactor' && isset($data->error_description)) {
                 $errors = ['secondfactor' => $data->error_description];
                 return response()->json(['status' => 'error', 'errors' => $errors], 422);
             }
