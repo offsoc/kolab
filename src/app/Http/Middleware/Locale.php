@@ -19,8 +19,12 @@ class Locale
     {
         $langDir = resource_path('lang');
         $enabledLanguages = \App\Http\Controllers\ContentController::locales();
-        $default = config('app.locale');
         $lang = null;
+
+        // setLocale() will modify the app.locale config entry, so any subsequent
+        // request under Swoole would use the changed locale, causing "locale leak"
+        // to other users' requests, unless we use env() instead of config() here.
+        $default = \env('APP_LOCALE', 'en');
 
         // Try to get the language from the cookie
         if (
@@ -52,7 +56,11 @@ class Locale
             }
         }
 
-        if ($lang != $default) {
+        if (!$lang) {
+            $lang = $default;
+        }
+
+        if (!app()->isLocale($lang)) {
             app()->setLocale($lang);
         }
 
