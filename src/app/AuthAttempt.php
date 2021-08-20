@@ -4,6 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use Iatstuti\Database\Support\NullableFields;
+use App\Traits\UuidStrKeyTrait;
 use Carbon\Carbon;
 
 /**
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 class AuthAttempt extends Model
 {
     use NullableFields;
+    use UuidStrKeyTrait;
 
     // No specific reason
     public const REASON_NONE = '';
@@ -42,9 +44,6 @@ class AuthAttempt extends Model
         'expires_at' => 'datetime',
         'last_seen' => 'datetime'
     ];
-
-    public $incrementing = false;
-    protected $keyType = 'string';
 
     /**
     * Prepare a date for array / JSON serialization.

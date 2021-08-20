@@ -4,6 +4,7 @@ namespace App;
 
 use App\User;
 use App\Traits\SettingsTrait;
+use App\Traits\UuidStrKeyTrait;
 use Carbon\Carbon;
 use Iatstuti\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
@@ -25,9 +26,7 @@ class Wallet extends Model
 {
     use NullableFields;
     use SettingsTrait;
-
-    public $incrementing = false;
-    protected $keyType = 'string';
+    use UuidStrKeyTrait;
 
     public $timestamps = false;
 

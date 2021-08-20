@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\UuidIntKeyTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Group extends Model
 {
+    use UuidIntKeyTrait;
     use SoftDeletes;
 
     // we've simply never heard of this domain
@@ -29,10 +31,6 @@ class Group extends Model
     public const STATUS_DELETED    = 1 << 3;
     // domain has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 4;
-
-    public $incrementing = false;
-
-    protected $keyType = 'bigint';
 
     protected $fillable = [
         'email',

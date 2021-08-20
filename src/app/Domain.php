@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Wallet;
+use App\Traits\UuidIntKeyTrait;
 use App\Traits\DomainConfigTrait;
 use App\Traits\SettingsTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Domain extends Model
 {
+    use UuidIntKeyTrait;
     use DomainConfigTrait;
     use SettingsTrait;
     use SoftDeletes;
@@ -47,10 +49,6 @@ class Domain extends Model
     public const HASH_CODE = 1;
     public const HASH_TEXT = 2;
     public const HASH_CNAME = 3;
-
-    public $incrementing = false;
-
-    protected $keyType = 'bigint';
 
     protected $fillable = [
         'namespace',

@@ -15,14 +15,6 @@ class TransactionObserver
      */
     public function creating(Transaction $transaction): void
     {
-        while (true) {
-            $allegedly_unique = \App\Utils::uuidStr();
-            if (!Transaction::find($allegedly_unique)) {
-                $transaction->{$transaction->getKeyName()} = $allegedly_unique;
-                break;
-            }
-        }
-
         if (!isset($transaction->user_email)) {
             $transaction->user_email = \App\Utils::userEmailOrNull();
         }

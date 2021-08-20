@@ -5,6 +5,7 @@ namespace App;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\UuidStrKeyTrait;
 
 /**
  * The eloquent definition of an Entitlement.
@@ -27,20 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Entitlement extends Model
 {
     use SoftDeletes;
-
-    /**
-     * This table does not use auto-increment.
-     *
-     * @var boolean
-     */
-    public $incrementing = false;
-
-    /**
-     * The key type is actually a string.
-     *
-     * @var string
-     */
-    protected $keyType = 'string';
+    use UuidStrKeyTrait;
 
     /**
      * The fillable columns for this Entitlement

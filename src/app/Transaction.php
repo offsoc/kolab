@@ -4,6 +4,7 @@ namespace App;
 
 use App\Entitlement;
 use App\Wallet;
+use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -20,6 +21,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Transaction extends Model
 {
+    use UuidStrKeyTrait;
+
     public const ENTITLEMENT_BILLED = 'billed';
     public const ENTITLEMENT_CREATED = 'created';
     public const ENTITLEMENT_DELETED = 'deleted';
@@ -55,12 +58,6 @@ class Transaction extends Model
     protected $casts = [
         'amount' => 'integer',
     ];
-
-    /** @var boolean This model uses an automatically incrementing integer primary key? */
-    public $incrementing = false;
-
-    /** @var string The type of the primary key */
-    protected $keyType = 'string';
 
 
     /**

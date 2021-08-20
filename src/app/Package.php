@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
@@ -32,9 +33,7 @@ use Spatie\Translatable\HasTranslations;
 class Package extends Model
 {
     use HasTranslations;
-
-    public $incrementing = false;
-    protected $keyType = 'string';
+    use UuidStrKeyTrait;
 
     public $timestamps = false;
 

@@ -16,14 +16,6 @@ class DomainObserver
      */
     public function creating(Domain $domain): void
     {
-        while (true) {
-            $allegedly_unique = \App\Utils::uuidInt();
-            if (!Domain::withTrashed()->find($allegedly_unique)) {
-                $domain->{$domain->getKeyName()} = $allegedly_unique;
-                break;
-            }
-        }
-
         $domain->namespace = \strtolower($domain->namespace);
 
         $domain->status |= Domain::STATUS_NEW;

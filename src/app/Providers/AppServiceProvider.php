@@ -44,7 +44,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        \App\AuthAttempt::observe(\App\Observers\AuthAttemptObserver::class);
         \App\Discount::observe(\App\Observers\DiscountObserver::class);
         \App\Domain::observe(\App\Observers\DomainObserver::class);
         \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);

@@ -23,16 +23,6 @@ class UserObserver
      */
     public function creating(User $user)
     {
-        if (!$user->id) {
-            while (true) {
-                $allegedly_unique = \App\Utils::uuidInt();
-                if (!User::withTrashed()->find($allegedly_unique)) {
-                    $user->{$user->getKeyName()} = $allegedly_unique;
-                    break;
-                }
-            }
-        }
-
         $user->email = \strtolower($user->email);
 
         // only users that are not imported get the benefit of the doubt.

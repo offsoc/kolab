@@ -18,14 +18,6 @@ class DiscountObserver
      */
     public function creating(Discount $discount): void
     {
-        while (true) {
-            $allegedly_unique = \App\Utils::uuidStr();
-            if (!Discount::find($allegedly_unique)) {
-                $discount->{$discount->getKeyName()} = $allegedly_unique;
-                break;
-            }
-        }
-
         $discount->tenant_id = \config('app.tenant_id');
     }
 }

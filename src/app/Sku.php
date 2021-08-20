@@ -4,6 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
+use App\Traits\UuidStrKeyTrait;
 
 /**
  * The eloquent definition of a Stock Keeping Unit (SKU).
@@ -23,9 +24,7 @@ use Spatie\Translatable\HasTranslations;
 class Sku extends Model
 {
     use HasTranslations;
-
-    public $incrementing = false;
-    protected $keyType = 'string';
+    use UuidStrKeyTrait;
 
     protected $casts = [
         'units_free' => 'integer'

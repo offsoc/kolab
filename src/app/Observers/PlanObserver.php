@@ -20,14 +20,6 @@ class PlanObserver
      */
     public function creating(Plan $plan)
     {
-        while (true) {
-            $allegedly_unique = \App\Utils::uuidStr();
-            if (!Plan::find($allegedly_unique)) {
-                $plan->{$plan->getKeyName()} = $allegedly_unique;
-                break;
-            }
-        }
-
         $plan->tenant_id = \config('app.tenant_id');
     }
 }

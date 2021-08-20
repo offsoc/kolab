@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
@@ -27,9 +28,8 @@ use Spatie\Translatable\HasTranslations;
 class Plan extends Model
 {
     use HasTranslations;
+    use UuidStrKeyTrait;
 
-    public $incrementing = false;
-    protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
