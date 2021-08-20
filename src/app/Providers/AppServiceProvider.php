@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,7 +18,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        Passport::ignoreMigrations();
+    }
+
+    /**
+     * Serialize a bindings array to a string.
+     *
+     * @return string
+     */
+    private static function serializeSQLBindings(array $array): string
+    {
+        $serialized = array_map(function ($entry) {
+            if ($entry instanceof \DateTime) {
+                return $entry->format('Y-m-d h:i:s');
+            }
+            return $entry;
+        }, $array);
+        return implode(', ', $serialized);
     }
 
     /**
@@ -58,7 +75,7 @@ class AppServiceProvider extends ServiceProvider
                     sprintf(
                         '[SQL] %s [%s]: %.4f sec.',
                         $query->sql,
-                        implode(', ', $query->bindings),
+                        self::serializeSQLBindings($query->bindings),
                         $query->time / 1000
                     )
                 );

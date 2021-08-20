@@ -138,6 +138,6 @@ class PasswordResetController extends Controller
         // Remove the verification code
         $this->code->delete();
 
-        return AuthController::logonResponse($user);
+        return AuthController::logonResponse($user, $request->password);
     }
 }

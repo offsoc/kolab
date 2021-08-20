@@ -40,6 +40,31 @@ class UserTest extends TestCase
     }
 
     /**
+     * Test User password validation
+     */
+    public function testPasswordValidation(): void
+    {
+        $user = new User(['email' => 'user@email.com']);
+        $user->password = 'test';
+
+        $this->assertSame(true, $user->validateCredentials('user@email.com', 'test'));
+        $this->assertSame(false, $user->validateCredentials('user@email.com', 'wrong'));
+        $this->assertSame(true, $user->validateCredentials('User@Email.Com', 'test'));
+        $this->assertSame(false, $user->validateCredentials('wrong', 'test'));
+
+        // Ensure the fallback to the ldap_password works if the current password is empty
+        $ssh512 = "{SSHA512}7iaw3Ur350mqGo7jwQrpkj9hiYB3Lkc/iBml1JQODbJ"
+            . "6wYX4oOHV+E+IvIh/1nsUNzLDBMxfqa2Ob1f1ACio/w==";
+        $ldapUser = new User(['email' => 'user2@email.com']);
+        $ldapUser->setRawAttributes(['password' => '', 'password_ldap' => $ssh512, 'email' => 'user2@email.com']);
+        $this->assertSame($ldapUser->password, '');
+        $this->assertSame($ldapUser->password_ldap, $ssh512);
+
+        $this->assertSame(true, $ldapUser->validateCredentials('user2@email.com', 'test', false));
+        $ldapUser->delete();
+    }
+
+    /**
      * Test basic User funtionality
      */
     public function testStatus(): void
