@@ -43,6 +43,9 @@ class AuthAttempt extends Model
         'last_seen' => 'datetime'
     ];
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     /**
     * Prepare a date for array / JSON serialization.
     *

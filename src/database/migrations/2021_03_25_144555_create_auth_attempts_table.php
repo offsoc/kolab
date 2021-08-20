@@ -15,7 +15,7 @@ class CreateAuthAttemptsTable extends Migration
     public function up()
     {
         Schema::create('auth_attempts', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->uuid('id')->primary();
             $table->bigInteger('user_id');
             $table->string('ip', 36);
             $table->string('status', 36)->default('NEW');
