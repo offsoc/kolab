@@ -9,16 +9,21 @@ use Carbon\Carbon;
 /**
  * The eloquent definition of an AuthAttempt.
  *
- * A AuthAttempt is any a authAttempt from any application/client.
+ * An AuthAttempt represents an authenticaton attempt from an application/client.
  */
 class AuthAttempt extends Model
 {
     use NullableFields;
 
+    // No specific reason
+    public const REASON_NONE = '';
     // Password mismatch
-    public const REASON_PASSWORD   = 'password';
-    // Geolocation not in whitelist
-    public const REASON_GEOLOCATION   = 'geolocation';
+    public const REASON_PASSWORD = 'password';
+    // Geolocation whitelist mismatch
+    public const REASON_GEOLOCATION = 'geolocation';
+
+    private const STATUS_ACCEPTED  = 'ACCEPTED';
+    private const STATUS_DENIED  = 'DENIED';
 
     protected $nullable = [
         'reason',
@@ -38,6 +43,9 @@ class AuthAttempt extends Model
         'last_seen' => 'datetime'
     ];
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     /**
     * Prepare a date for array / JSON serialization.
     *
@@ -46,7 +54,7 @@ class AuthAttempt extends Model
     * @param  \DateTimeInterface  $date
     * @return string
     */
-    protected function serializeDate(\DateTimeInterface $date)
+    protected function serializeDate(\DateTimeInterface $date): string
     {
         return Carbon::instance($date)->toIso8601ZuluString('microseconds');
     }
@@ -56,9 +64,9 @@ class AuthAttempt extends Model
     *
     * @return bool
     */
-    public function isAccepted()
+    public function isAccepted(): bool
     {
-        if ($this->status == 'ACCEPTED' && Carbon::now() < $this->expires_at) {
+        if ($this->status == self::STATUS_ACCEPTED && Carbon::now() < $this->expires_at) {
             return true;
         }
         return false;
@@ -69,28 +77,30 @@ class AuthAttempt extends Model
     *
     * @return bool
     */
-    public function isDenied()
+    public function isDenied(): bool
     {
-        return ($this->status == 'DENIED');
+        return ($this->status == self::STATUS_DENIED);
     }
 
     /**
     * Accept the authentication attempt.
     */
-    public function accept()
+    public function accept($reason = AuthAttempt::REASON_NONE)
     {
         $this->expires_at = Carbon::now()->addHours(8);
-        $this->status = "ACCEPTED";
-        $this->reason = '';
+        $this->status = self::STATUS_ACCEPTED;
+        $this->reason = $reason;
+        $this->save();
     }
 
     /**
     * Deny the authentication attempt.
     */
-    public function deny()
+    public function deny($reason = AuthAttempt::REASON_NONE)
     {
-        $this->status = "DENIED";
-        $this->reason = '';
+        $this->status = self::STATUS_DENIED;
+        $this->reason = $reason;
+        $this->save();
     }
 
     /**
@@ -98,7 +108,7 @@ class AuthAttempt extends Model
     *
     * @return bool false if there was no means to notify
     */
-    public function notify()
+    public function notify(): bool
     {
         return \App\CompanionApp::notifyUser($this->user_id, ['token' => $this->id]);
     }
@@ -119,30 +129,34 @@ class AuthAttempt extends Model
         $confirmationTimeout = 120;
         $timeout = Carbon::now()->addSeconds($confirmationTimeout);
 
-        $authAttempt = $this;
         do {
-            if ($authAttempt->isDenied()) {
-                \Log::debug("The authentication attempt was denied {$authAttempt->id}");
+            if ($this->isDenied()) {
+                \Log::debug("The authentication attempt was denied {$this->id}");
                 return false;
             }
 
-            if ($authAttempt->isAccepted()) {
-                \Log::debug("The authentication attempt was accepted {$authAttempt->id}");
+            if ($this->isAccepted()) {
+                \Log::debug("The authentication attempt was accepted {$this->id}");
                 return true;
             }
 
             if ($timeout < Carbon::now()) {
-                \Log::debug("The authentication attempt timed-out: {$authAttempt->id}");
+                \Log::debug("The authentication attempt timed-out: {$this->id}");
                 return false;
             }
 
             sleep(2);
-            $authAttempt = $authAttempt->fresh();
+            $this->refresh();
         } while (true);
     }
 
     /**
-    * Record an authentication attempt
+    * Record a new authentication attempt or update an existing one.
+    *
+    * @param \App\User $user     The user attempting to authenticate.
+    * @param string    $clientIP The ip the authentication attempt is coming from.
+    *
+    * @return \App\AuthAttempt
     */
     public static function recordAuthAttempt(\App\User $user, $clientIP)
     {
@@ -163,9 +177,9 @@ class AuthAttempt extends Model
     /**
     * Trigger a notification if necessary and wait for confirmation.
     *
-    * @return bool
+    * @return bool Returns true if the attempt is accepted on confirmation
     */
-    public function waitFor2FA()
+    public function waitFor2FA(): bool
     {
         if ($this->isAccepted()) {
             return true;
@@ -178,8 +192,6 @@ class AuthAttempt extends Model
             return false;
         }
 
-        // Ensure the authAttempt is now accepted
-        $freshAttempt = $this->fresh();
-        return $freshAttempt->isAccepted();
+        return $this->isAccepted();
     }
 }

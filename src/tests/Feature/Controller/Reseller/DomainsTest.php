@@ -195,7 +195,7 @@ class DomainsTest extends TestCase
         $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
         $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
 
-        \config(['app.tenant_id' => 2]);
+        \config(['app.tenant_id' => $reseller2->tenant_id]);
 
         $domain = $this->getTestDomain('domainscontroller.com', [
             'status' => Domain::STATUS_NEW,
@@ -245,7 +245,7 @@ class DomainsTest extends TestCase
         $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
         $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
 
-        \config(['app.tenant_id' => 2]);
+        \config(['app.tenant_id' => $reseller2->tenant_id]);
 
         $domain = $this->getTestDomain('domainscontroller.com', [
             'status' => Domain::STATUS_NEW | Domain::STATUS_SUSPENDED,

@@ -56,9 +56,10 @@ class LogonTest extends TestCaseDusk
                 })
                 // Switch English -> German
                 ->whenAvailable('nav .dropdown-menu', function (Browser $browser) {
-                    $browser->assertElementsCount('a', 2)
+                    $browser->assertElementsCount('a', 3)
                         ->assertSeeIn('a:nth-child(1)', 'EN - English')
                         ->assertSeeIn('a:nth-child(2)', 'DE - German')
+                        ->assertSeeIn('a:nth-child(3)', 'FR - French')
                         ->click('a:nth-child(2)');
                 })
                 ->waitUntilMissing('nav .dropdown-menu')
@@ -79,7 +80,8 @@ class LogonTest extends TestCaseDusk
                 })
                 // Switch German -> English
                 ->whenAvailable('nav .dropdown-menu', function (Browser $browser) {
-                    $browser->click('a:nth-child(1)');
+                    $browser->assertSeeIn('a:nth-child(1)', 'Englisch')
+                        ->click('a:nth-child(1)');
                 })
                 ->waitUntilMissing('nav .dropdown-menu')
                 ->within(new Menu(), function ($browser) {

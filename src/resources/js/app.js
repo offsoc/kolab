@@ -272,7 +272,7 @@ const app = new Vue({
                 index = '\u00B9'
             }
 
-            return this.price(cost) + '/month' + index
+            return this.price(cost) + '/' + this.$t('wallet.month') + index
         },
         clickRecord(event) {
             if (!/^(a|button|svg|path)$/i.test(event.target.nodeName)) {

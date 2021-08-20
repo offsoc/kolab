@@ -157,12 +157,13 @@ if (\config('app.with_services')) {
     Route::group(
         [
             'domain' => 'services.' . \config('app.website_domain'),
-            'prefix' => $prefix . 'api/webhooks/policy'
+            'prefix' => $prefix . 'api/webhooks'
         ],
         function () {
-            Route::post('greylist', 'API\V4\PolicyController@greylist');
-            Route::post('ratelimit', 'API\V4\PolicyController@ratelimit');
-            Route::post('spf', 'API\V4\PolicyController@senderPolicyFramework');
+            Route::get('nginx', 'API\V4\NGINXController@authenticate');
+            Route::post('policy/greylist', 'API\V4\PolicyController@greylist');
+            Route::post('policy/ratelimit', 'API\V4\PolicyController@ratelimit');
+            Route::post('policy/spf', 'API\V4\PolicyController@senderPolicyFramework');
         }
     );
 }

@@ -15,8 +15,8 @@ class CreateAuthAttemptsTable extends Migration
     public function up()
     {
         Schema::create('auth_attempts', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->bigInteger('user_id')->index();
+            $table->uuid('id')->primary();
+            $table->bigInteger('user_id');
             $table->string('ip', 36);
             $table->string('status', 36)->default('NEW');
             $table->string('reason', 36)->nullable();
@@ -24,7 +24,8 @@ class CreateAuthAttemptsTable extends Migration
             $table->datetime('last_seen')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'ip']);
+            $table->index('updated_at');
+            $table->unique(['user_id', 'ip']);
 
             $table->foreign('user_id')
                 ->references('id')->on('users')

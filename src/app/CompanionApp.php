@@ -22,53 +22,54 @@ class CompanionApp extends Model
     /**
     * Send a notification via firebase.
     *
+    * @param array $deviceIds A list of device id's to send the notification to
+    * @param array $data The data to include in the notification.
+    *
+    * @throws \Exception on notification failure
     * @return bool true if a notification has been sent
     */
-    private static function pushFirebaseNotification($deviceIds, $data)
+    private static function pushFirebaseNotification($deviceIds, $data): bool
     {
         \Log::debug("sending notification to " . var_export($deviceIds, true));
-        $url = \config('firebase.api_url');
         $apiKey = \config('firebase.api_key');
 
-        $fields = [
-            'registration_ids' => $deviceIds,
-            'data' => $data
-        ];
-
-        $headers = array(
-            'Content-Type:application/json',
-            "Authorization:key={$apiKey}"
+        $client = new \GuzzleHttp\Client(
+            [
+                'verify' => \config('firebase.api_verify_tls')
+            ]
+        );
+        $response = $client->request(
+            'POST',
+            \config('firebase.api_url'),
+            [
+                'headers' => [
+                        'Authorization' => "key={$apiKey}",
+                ],
+                'json' => [
+                    'registration_ids' => $deviceIds,
+                    'data' => $data
+                ]
+            ]
         );
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
-        $result = curl_exec($ch);
-        if ($result === false) {
-            throw new \Exception('FCM Send Error: ' . curl_error($ch));
+
+        if ($response->getStatusCode() != 200) {
+            throw new \Exception('FCM Send Error: ' . $response->getStatusCode());
         }
-        curl_close($ch);
-        return $result;
+        return true;
     }
 
     /**
     * Send a notification to a user.
     *
+    * @throws \Exception on notification failure
     * @return bool true if a notification has been sent
     */
-    public static function notifyUser($userId, $data)
+    public static function notifyUser($userId, $data): bool
     {
         $notificationTokens = \App\CompanionApp::where('user_id', $userId)
             ->where('mfa_enabled', true)
-            ->get()
-            ->map(function ($app) {
-                return $app->notification_token;
-            })
+            ->pluck('notification_token')
             ->all();
 
         if (empty($notificationTokens)) {

@@ -86,7 +86,7 @@ class ContentController extends Controller
             return preg_split('/\s*,\s*/', strtolower(trim($locales)));
         }
 
-        return ['en', 'de'];
+        return ['en', 'de', 'fr'];
     }
 
     /**

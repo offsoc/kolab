@@ -401,6 +401,7 @@ return [
             . " We will then convert this to {pc}, and on the next page you will be provided with the bank-details to transfer the amount in {pc}.",
         'fill-up' => "Fill up by",
         'history' => "History",
+        'month' => "month",
         'noperm' => "Only account owners can access a wallet.",
         'payment-amount-hint' => "Choose the amount by which you want to top up your wallet.",
         'payment-method' => "Method of payment: {method}",

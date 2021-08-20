@@ -43,8 +43,8 @@ class AuthController extends Controller
             'username' => $user->email,
             'password' => $password,
             'grant_type' => 'password',
-            'client_id' => config('auth.proxy.client_id'),
-            'client_secret' => config('auth.proxy.client_secret'),
+            'client_id' => \config('auth.proxy.client_id'),
+            'client_secret' => \config('auth.proxy.client_secret'),
             'scopes' => '[*]',
             'secondfactor' => $secondFactor
         ]);
@@ -53,6 +53,7 @@ class AuthController extends Controller
 
         $response = V4\UsersController::userResponse($user);
         $response['status'] = 'success';
+
         return self::respondWithToken($tokenResponse, $response);
     }
 
@@ -79,9 +80,11 @@ class AuthController extends Controller
         }
 
         $user = \App\User::where('email', $request->email)->first();
+
         if (!$user) {
             return response()->json(['status' => 'error', 'message' => __('auth.failed')], 401);
         }
+
         return self::logonResponse($user, $request->password, $request->secondfactor);
     }
 
@@ -131,8 +134,8 @@ class AuthController extends Controller
         $proxyRequest = Request::create('/oauth/token', 'POST', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $request->refresh_token,
-            'client_id' => config('auth.proxy.client_id'),
-            'client_secret' => config('auth.proxy.client_secret'),
+            'client_id' => \config('auth.proxy.client_id'),
+            'client_secret' => \config('auth.proxy.client_secret'),
         ]);
 
         $tokenResponse = app()->handle($proxyRequest);
@@ -153,8 +156,8 @@ class AuthController extends Controller
         $data = json_decode($tokenResponse->getContent());
 
         if ($tokenResponse->getStatusCode() != 200) {
-            if (isset($data->error) && $data->error == 'secondfactor') {
-                $errors = ['secondfactor' => $data['error_description']];
+            if (isset($data->error) && $data->error == 'secondfactor' && isset($data->error_description)) {
+                $errors = ['secondfactor' => $data->error_description];
                 return response()->json(['status' => 'error', 'errors' => $errors], 422);
             }
 

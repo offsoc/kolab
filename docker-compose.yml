@@ -74,11 +74,8 @@ services:
     build:
       context: ./docker/nginx/
       args:
-        NGINX_AUTH_WEBHOOK: ${APP_DOMAIN}/api/webhooks/nginx
+        APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
     container_name: kolab-nginx
-    depends_on:
-      kolab:
-        condition: service_healthy
     hostname: nginx.hosted.com
     image: kolab-nginx
     network_mode: host
@@ -89,10 +86,8 @@ services:
       - /var/tmp
     tty: true
     volumes:
-      - /etc/letsencrypt/:/etc/letsencrypt/:ro
       - ./docker/certs/imap.hosted.com.cert:/etc/pki/tls/certs/imap.hosted.com.cert
       - ./docker/certs/imap.hosted.com.key:/etc/pki/tls/private/imap.hosted.com.key
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
   # openvidu:
   #   build:
   #     context: ./docker/openvidu/

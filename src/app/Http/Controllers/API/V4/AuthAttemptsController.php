@@ -6,57 +6,80 @@ use App\AuthAttempt;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class AuthAttemptsController extends Controller
 {
 
+    /**
+     * Confirm the authentication attempt.
+     *
+     * @param string $id Id of AuthAttempt attempt
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function confirm($id)
     {
-        $authAttempt = AuthAttempt::findOrFail($id);
+        $authAttempt = AuthAttempt::find($id);
+        if (!$authAttempt) {
+            return $this->errorResponse(404);
+        }
 
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
         if ($user->id != $authAttempt->user_id) {
             return $this->errorResponse(403);
         }
 
         \Log::debug("Confirm on {$authAttempt->id}");
         $authAttempt->accept();
-        $authAttempt->save();
-        return response("", 200);
+        return response()->json([], 200);
     }
 
+    /**
+     * Deny the authentication attempt.
+     *
+     * @param string $id Id of AuthAttempt attempt
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deny($id)
     {
-        $authAttempt = AuthAttempt::findOrFail($id);
+        $authAttempt = AuthAttempt::find($id);
+        if (!$authAttempt) {
+            return $this->errorResponse(404);
+        }
 
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
         if ($user->id != $authAttempt->user_id) {
             return $this->errorResponse(403);
         }
 
         \Log::debug("Deny on {$authAttempt->id}");
         $authAttempt->deny();
-        $authAttempt->save();
-        return response("", 200);
+        return response()->json([], 200);
     }
 
+    /**
+     * Return details of authentication attempt.
+     *
+     * @param string $id Id of AuthAttempt attempt
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function details($id)
     {
-        $authAttempt = AuthAttempt::findOrFail($id);
-        $user = Auth::guard()->user();
+        $authAttempt = AuthAttempt::find($id);
+        if (!$authAttempt) {
+            return $this->errorResponse(404);
+        }
 
-        \Log::debug("Getting details {$authAttempt->user_id} {$user->id}");
+        $user = $this->guard()->user();
         if ($user->id != $authAttempt->user_id) {
             return $this->errorResponse(403);
         }
 
-        \Log::debug("Details on {$authAttempt->id}");
         return response()->json([
             'status' => 'success',
             'username' => $user->email,
-            'ip' => $authAttempt->ip,
-            'timestamp' => $authAttempt->updated_at,
             'country' => \App\Utils::countryForIP($authAttempt->ip),
             'entry' => $authAttempt->toArray()
         ]);
@@ -71,7 +94,7 @@ class AuthAttemptsController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         $pageSize = 10;
         $page = intval($request->input('page')) ?: 1;

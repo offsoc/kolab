@@ -23,8 +23,13 @@ class NGINXTest extends TestCase
                 '2fa_enabled' => false
             ]
         );
+
+        $this->useServicesUrl();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
 
@@ -48,14 +53,15 @@ class NGINXTest extends TestCase
     {
         $john = $this->getTestUser('john@kolab.org');
 
-        $response = $this->actingAs($john)->get("api/webhooks/nginx");
+        $response = $this->get("api/webhooks/nginx");
         $response->assertStatus(200);
-        $response->assertHeader('auth-status', 'NO');
+        $response->assertHeader('auth-status', 'authentication failure');
 
+        $pass = \App\Utils::generatePassphrase();
         $headers = [
             'Auth-Login-Attempt' => '1',
             'Auth-Method' => 'plain',
-            'Auth-Pass' => 'simple123',
+            'Auth-Pass' => $pass,
             'Auth-Protocol' => 'imap',
             'Auth-Ssl' => 'on',
             'Auth-User' => 'john@kolab.org',
@@ -70,18 +76,62 @@ class NGINXTest extends TestCase
         ];
 
         // Pass
-        $response = $this->actingAs($john)->withHeaders($headers)->get("api/webhooks/nginx");
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
-        $response->assertHeader('auth-port', '11993');
+        $response->assertHeader('auth-port', '12143');
 
         // Invalid Password
         $modifiedHeaders = $headers;
         $modifiedHeaders['Auth-Pass'] = "Invalid";
-        $response = $this->actingAs($john)->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
         $response->assertStatus(200);
-        $response->assertHeader('auth-status', 'NO');
+        $response->assertHeader('auth-status', 'authentication failure');
 
+        // Empty Password
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Auth-Pass'] = "";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'authentication failure');
+
+        // Empty User
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Auth-User'] = "";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'authentication failure');
+
+        // Invalid User
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Auth-User'] = "foo@kolab.org";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'authentication failure');
+
+        // Empty Ip
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Client-Ip'] = "";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'authentication failure');
+
+        // SMTP Auth Protocol
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Auth-Protocol'] = "smtp";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'OK');
+        $response->assertHeader('auth-server', '127.0.0.1');
+        $response->assertHeader('auth-port', '10465');
+        $response->assertHeader('auth-pass', $pass);
+
+        // Empty Auth Protocol
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Auth-Protocol'] = "";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'authentication failure');
 
         // Guam
         $john->setSettings(
@@ -90,10 +140,11 @@ class NGINXTest extends TestCase
             ]
         );
 
-        $response = $this->actingAs($john)->withHeaders($headers)->get("api/webhooks/nginx");
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
-        $response->assertHeader('auth-port', '9993');
+        $response->assertHeader('auth-server', '127.0.0.1');
+        $response->assertHeader('auth-port', '9143');
 
         // 2-FA without device
         $john->setSettings(
@@ -103,16 +154,15 @@ class NGINXTest extends TestCase
         );
         \App\CompanionApp::where('user_id', $john->id)->delete();
 
-        $response = $this->actingAs($john)->withHeaders($headers)->get("api/webhooks/nginx");
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
-        $response->assertHeader('auth-status', 'NO');
+        $response->assertHeader('auth-status', 'authentication failure');
 
         // 2-FA with accepted auth attempt
         $authAttempt = \App\AuthAttempt::recordAuthAttempt($john, "127.0.0.1");
         $authAttempt->accept();
-        $authAttempt->save();
 
-        $response = $this->actingAs($john)->withHeaders($headers)->get("api/webhooks/nginx");
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
     }
