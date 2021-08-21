@@ -7,8 +7,8 @@ LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
       io.openshift.expose-services="8000:http" \
       io.openshift.tags="builder,php,swoole"
 
-ENV SWOOLE_VERSION=4.6.x \
-    HOME=/opt/app-root/src
+ARG SWOOLE_VERSION=4.6.x
+ENV HOME=/opt/app-root/src
 
 RUN dnf -y install \
         composer \
