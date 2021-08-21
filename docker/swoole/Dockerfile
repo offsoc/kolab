@@ -3,7 +3,7 @@ FROM fedora:34
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
 
 LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
-      io.k8s.display-name="Swoole 4.6.x" \
+      io.k8s.display-name="Swoole ${SWOOLE_VERSION}" \
       io.openshift.expose-services="8000:http" \
       io.openshift.tags="builder,php,swoole"
 
