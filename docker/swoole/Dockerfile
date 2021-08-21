@@ -2,13 +2,13 @@ FROM fedora:34
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
 
+ARG SWOOLE_VERSION=4.6.x
+ENV HOME=/opt/app-root/src
+
 LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
       io.k8s.display-name="Swoole ${SWOOLE_VERSION}" \
       io.openshift.expose-services="8000:http" \
       io.openshift.tags="builder,php,swoole"
-
-ARG SWOOLE_VERSION=4.6.x
-ENV HOME=/opt/app-root/src
 
 RUN dnf -y install \
         composer \
