@@ -192,6 +192,7 @@ services:
       context: ./docker/meet/
     network_mode: host
     container_name: kolab-meet
+    image: kolab-meet
     volumes:
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
       - ./meet/server:/src/meet/:ro

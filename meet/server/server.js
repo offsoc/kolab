@@ -603,9 +603,27 @@ async function runHttpsServer()
     app.post('/api/sessions/:session_id/connection', function (req, res, next) {
         console.warn("Creating connection in session", req.params.session_id)
         roomId = req.params.session_id
-        //TODO already create a peer?
         //FIXME we're truncating because of kolab4 database layout (should be fixed instnead)
         const peerId = uuidv4().substring(0, 16)
+
+
+        //TODO create room already?
+
+        peer = new Peer({ id: peerId, roomId });
+        peers.set(peerId, peer);
+
+        peer.on('close', () => {
+            peers.delete(peerId);
+            statusLog();
+        });
+
+        peer.displayName = "Display Name";
+        // peer.picture = picture;
+        peer.email = "email@test.com";
+        peer.authenticated = true;
+        peer.addRole(userRoles.MODERATOR);
+        peer.addRole(userRoles.AUTHENTICATED);
+
         hostname = "localhost" //TODO from config
         port = "12443" //TODO from config
         res.json({
@@ -755,56 +773,23 @@ async function runWebSocketServer()
 			const room = await getOrCreateRoom({ roomId });
 
 			let peer = peers.get(peerId);
-			let returning = false;
-/*
-			if (peer && !token)
-			{ // Don't allow hijacking sessions
+
+			if (!peer) {
+                logger.warn("Peer does not exist %s", peerId);
 				socket.disconnect(true);
 				return;
 			}
-			else if (token && room.verifyPeer({ id: peerId, token }))
-			{ // Returning user, remove if old peer exists
-				if (peer)
-					peer.close();
 
-				returning = true;
-			}
-*/
-			peer = new Peer({ id: peerId, roomId, socket });
+			let returning = false;
 
-			peers.set(peerId, peer);
-
-			peer.on('close', () =>
-			{
-				peers.delete(peerId);
-
-				statusLog();
-			});
-
-			if (
-				Boolean(socket.handshake.session.passport) &&
-				Boolean(socket.handshake.session.passport.user)
-			)
-			{
-				const {
-					id,
-					displayName,
-					picture,
-					email,
-					_userinfo
-				} = socket.handshake.session.passport.user;
-
-				peer.authId = id;
-				peer.displayName = displayName;
-				peer.picture = picture;
-				peer.email = email;
-				peer.authenticated = true;
-
-				if (typeof config.userMapping === 'function')
-				{
-					await config.userMapping({ peer, room, roomId, userinfo: _userinfo });
-				}
-			}
+            peer.socket = socket;
+            //FIXME figure out to which extent we need to handle returning users
+			// Returning user, remove if old peer exists
+            // TODO maintain metadata?
+            // if (peer) {
+            //     peer.close();
+            //     returning = true;
+            // }
 
 			room.handlePeer({ peer, returning });
 
@@ -864,8 +849,6 @@ async function getOrCreateRoom({ roomId })
 	if (!room)
 	{
 		logger.info('creating a new Room [roomId:"%s"]', roomId);
-
-		// const mediasoupWorker = getMediasoupWorker();
 
 		room = await Room.create({ mediasoupWorkers, roomId, peers });
 

@@ -350,24 +350,6 @@ class Room extends EventEmitter
 		this.emit('close');
 	}
 
-	verifyPeer({ id, token })
-	{
-		try
-		{
-			const decoded = jwt.verify(token, this._uuid);
-
-			logger.info('verifyPeer() [decoded:"%o"]', decoded);
-
-			return decoded.id === id;
-		}
-		catch (err)
-		{
-			logger.warn('verifyPeer() | invalid token');
-		}
-
-		return false;
-	}
-
 	handlePeer({ peer, returning })
 	{
 		logger.info('handlePeer() [peer:"%s", roles:"%s", returning:"%s"]', peer.id, peer.roles, returning);

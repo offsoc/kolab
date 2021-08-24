@@ -6,7 +6,7 @@ const logger = new Logger('Peer');
 
 class Peer extends EventEmitter
 {
-	constructor({ id, roomId, socket })
+	constructor({ id, roomId })
 	{
 		logger.info('constructor() [id:"%s"]', id);
 		super();
@@ -15,9 +15,7 @@ class Peer extends EventEmitter
 
 		this._roomId = roomId;
 
-		this._authId = null;
-
-		this._socket = socket;
+		this._socket = null;
 
 		this._closed = false;
 
@@ -52,8 +50,6 @@ class Peer extends EventEmitter
 		this._producers = new Map();
 
 		this._consumers = new Map();
-
-		this._handlePeer();
 	}
 
 	close()
@@ -73,22 +69,6 @@ class Peer extends EventEmitter
 			this.socket.disconnect(true);
 
 		this.emit('close');
-	}
-
-	_handlePeer()
-	{
-		if (this.socket)
-		{
-			this.socket.on('disconnect', () =>
-			{
-				if (this.closed)
-					return;
-
-				logger.debug('"disconnect" event [id:%s]', this.id);
-
-				this.close();
-			});
-		}
 	}
 
 	get id()
@@ -111,16 +91,6 @@ class Peer extends EventEmitter
 		this._roomId = roomId;
 	}
 
-	get authId()
-	{
-		return this._authId;
-	}
-
-	set authId(authId)
-	{
-		this._authId = authId;
-	}
-
 	get socket()
 	{
 		return this._socket;
@@ -129,6 +99,19 @@ class Peer extends EventEmitter
 	set socket(socket)
 	{
 		this._socket = socket;
+
+		if (this.socket)
+		{
+			this.socket.on('disconnect', () =>
+			{
+				if (this.closed)
+					return;
+
+				logger.debug('"disconnect" event [id:%s]', this.id);
+
+				this.close();
+			});
+		}
 	}
 
 	get closed()
