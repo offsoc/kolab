@@ -181,7 +181,7 @@
 
 <script>
     import { Modal } from 'bootstrap'
-    import { Meet, Roles } from '../../js/meet/app.js'
+    import { Room as Meet, Roles } from '../../js/meet/room.js'
     import StatusMessage from '../Widgets/StatusMessage'
     import LogonForm from '../Login'
     import RoomOptions from './RoomOptions'

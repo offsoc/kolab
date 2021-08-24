@@ -584,7 +584,7 @@ async function runHttpsServer()
     // Create room and return id
     app.post('/api/sessions', async function (req, res, next) {
         console.warn("Creating new room", req.body.mediaMode, req.body.recordingMode)
-        //FIXME we're truncating because of kolab4 database layout (should be fixed instnead)
+        //FIXME we're truncating because of kolab4 database layout (should be fixed instead)
         const roomId = uuidv4().substring(0, 16)
         const room = await getOrCreateRoom({ roomId });
 
@@ -611,7 +611,7 @@ async function runHttpsServer()
         res.json({
             id : peerId,
             //When the below get's passed to the socket.io client we end up with something like wss://localhost:12443/socket.io/?peerId=peer1&roomId=room1&EIO=3&transport=websocket,
-            token : `wss://${hostname}:${port}/?peerId=${peerId}&roomId=${roomId}`
+            token : `ws://${hostname}:${port}/?peerId=${peerId}&roomId=${roomId}`
         })
     })
 
@@ -689,7 +689,7 @@ async function runHttpsServer()
 			redirectListener.listen(config.listeningRedirectPort);
 	}
 
-    console.info("Listening on {config.listeningPort} {config.listeningHost}")
+    console.info(`Listening on ${config.listeningPort} ${config.listeningHost}`)
 	// https or http
 	if (config.listeningHost)
 		mainListener.listen(config.listeningPort, config.listeningHost);
@@ -732,6 +732,8 @@ async function runWebSocketServer()
 	// Handle connections from clients.
 	io.on('connection', (socket) =>
 	{
+		logger.info("websocket connection")
+
 		const { roomId, peerId } = socket.handshake.query;
 
 		if (!roomId || !peerId)
@@ -754,11 +756,10 @@ async function runWebSocketServer()
 
 			let peer = peers.get(peerId);
 			let returning = false;
-
+/*
 			if (peer && !token)
 			{ // Don't allow hijacking sessions
 				socket.disconnect(true);
-
 				return;
 			}
 			else if (token && room.verifyPeer({ id: peerId, token }))
@@ -768,7 +769,7 @@ async function runWebSocketServer()
 
 				returning = true;
 			}
-
+*/
 			peer = new Peer({ id: peerId, roomId, socket });
 
 			peers.set(peerId, peer);

@@ -386,6 +386,7 @@ class Room extends EventEmitter
 		// Has a role that is allowed to bypass room lock
 		else if (this._hasAccess(peer, BYPASS_ROOM_LOCK))
 			this._peerJoining(peer);
+/*
 		else if (
 			'maxUsersPerRoom' in config &&
 			(
@@ -404,6 +405,7 @@ class Room extends EventEmitter
 				this._peerJoining(peer) :
 				this._handleGuest(peer);
 		}
+*/
 	}
 
 	_handleOverRoomLimit(peer)
@@ -818,6 +820,8 @@ class Room extends EventEmitter
 	{
 		const router =
 			this._mediasoupRouters.get(peer.routerId);
+
+console.log(request.method);
 
 		switch (request.method)
 		{
@@ -1907,6 +1911,8 @@ class Room extends EventEmitter
 
 	_hasPermission(peer, permission)
 	{
+        return true;
+
 		const hasPermission = peer.roles.some((role) =>
 			roomPermissions[permission].some((roomRole) => role.id === roomRole.id)
 		);
@@ -1926,6 +1932,8 @@ class Room extends EventEmitter
 
 	_hasAccess(peer, access)
 	{
+        return true;
+
 		return peer.roles.some((role) =>
 			roomAccess[access].some((roomRole) => role.id === roomRole.id)
 		);
@@ -1960,12 +1968,13 @@ class Room extends EventEmitter
 			.filter(
 				(peer) =>
 					peer.joined === joined &&
-					peer !== excludePeer &&
+					peer !== excludePeer /* &&
 					peer.roles.some(
 						(role) =>
 							roomPermissions[permission].some((roomRole) =>
 								role.id === roomRole.id)
 					)
+*/
 			);
 	}
 

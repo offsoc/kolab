@@ -144,6 +144,8 @@ class Room extends Model
             $this->session_id = null;
             $this->save();
             return null;
+
+            // TODO: Log an error/warning
         }
 
         $session = json_decode($response->getBody(), true);
@@ -268,6 +270,8 @@ class Room extends Model
                 'role' => $role,
             ];
         }
+
+        // TODO: Log an error/warning on non-200 response
 
         return null;
     }
