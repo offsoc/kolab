@@ -38,7 +38,7 @@ function Socket(url, options)
     socket.on("notification", async notification => {
         console.log("WebSocket notification: " + notification.method, notification.data)
 
-        this.trigger('notification', notification, cb)
+        this.trigger('notification', notification)
     })
 
     this.close = () => {

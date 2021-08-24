@@ -133,10 +133,10 @@ function Client()
 
         // Start publishing webcam/mic
         if (videoSource) {
-            setCamera()
+            setCamera(videoSource)
         }
         if (audioSource) {
-            setMic()
+            setMic(audioSource)
         }
     }
 
@@ -339,10 +339,10 @@ function Client()
 
         const { aspectRatio, frameRate, resolution } = Config.videoOptions
 
-        const track = await media.getUserMedia({
+        const track = await media.getTrack({
             video: {
                 deviceId: { ideal: deviceId },
-                ...VIDEO_CONSTRAINS[resolution],
+                ...VIDEO_CONSTRAINTS[resolution],
                 frameRate
             }
         })
@@ -391,7 +391,7 @@ function Client()
             opusMaxPlaybackRate
         } = Config.audioOptions
 
-        const track = await media.getUserMedia({
+        const track = await media.getTrack({
             audio: {
                 sampleRate,
                 channelCount,
