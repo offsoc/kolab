@@ -17,6 +17,8 @@ function Client()
     let sendTransport
     let recvTransport
     let turnServers = []
+    let audioSource
+    let videoSource
 
     const VIDEO_CONSTRAINTS = {
         'low': {
@@ -52,92 +54,12 @@ function Client()
     /**
      * Start a session
      */
-    this.startSession = async (token, videoSource, audioSource) => {
+    this.startSession = (token, vSource, aSource) => {
+        // Initialize the socket, 'roomReady' request handler will do the rest of the job
         socket = initSocket(token)
 
-        const routerRtpCapabilities = await socket.getRtpCapabilities()
-
-        routerRtpCapabilities.headerExtensions = routerRtpCapabilities.headerExtensions
-            .filter(ext => ext.uri !== 'urn:3gpp:video-orientation')
-
-        await device.load({ routerRtpCapabilities })
-
-        // Setup 'producer' transport
-        if (videoSource || audioSource) {
-            const transportInfo = await socket.sendRequest('createWebRtcTransport', {
-                forceTcp: false,
-                producing: true,
-                consuming: false
-            })
-
-            const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
-
-            sendTransport = device.createSendTransport({
-                id,
-                iceParameters,
-                iceCandidates,
-                dtlsParameters,
-                iceServers: turnServers,
-                iceTransportPolicy: undefined, // TODO: device.flag === 'firefox' && turnServers ? 'relay' : undefined,
-                proprietaryConstraints: { optional: [{ googDscp: true }] }
-            })
-
-            sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
-                socket.sendRequest('connectWebRtcTransport',
-                    { transportId: sendTransport.id, dtlsParameters })
-                    .then(callback)
-                    .catch(errback)
-            })
-
-            sendTransport.on('produce', async ({ kind, rtpParameters, appData }, callback, errback) => {
-                try {
-                    const { id } = await socket.sendRequest('produce', {
-                        transportId: sendTransport.id,
-                        kind,
-                        rtpParameters,
-                        appData
-                    })
-                    callback({ id })
-                } catch (error) {
-                    errback(error)
-                }
-            })
-        }
-
-        // Setup 'consumer' transport
-
-        const transportInfo = await socket.sendRequest('createWebRtcTransport', {
-                forceTcp: false,
-                producing: false,
-                consuming: true
-        })
-
-        const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
-
-        recvTransport = device.createRecvTransport({
-                id,
-                iceParameters,
-                iceCandidates,
-                dtlsParameters,
-                iceServers: turnServers,
-                iceTransportPolicy: undefined, // TODO: device.flag === 'firefox' && turnServers ? 'relay' : undefined
-        })
-
-        recvTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
-            socket.sendRequest('connectWebRtcTransport', { transportId: recvTransport.id, dtlsParameters })
-                .then(callback)
-                .catch(errback)
-        })
-
-        // TODO: Send the "join" request, get room data, participants, etc.?
-
-        // Start publishing webcam/mic
-        if (videoSource) {
-            setCamera(videoSource)
-        }
-        if (audioSource) {
-            setMic(audioSource)
-        }
+        videoSource = vSource
+        audioSource = aSource
     }
 
     /**
@@ -290,6 +212,7 @@ function Client()
             switch (notification.method) {
                 case 'roomReady':
                     turnServers = notification.data.turnServers
+                    joinRoom()
                     return
 
                 case 'newPeer':
@@ -332,6 +255,97 @@ function Client()
         return socket
     }
 
+    const joinRoom = async () => {
+        const routerRtpCapabilities = await socket.getRtpCapabilities()
+
+        routerRtpCapabilities.headerExtensions = routerRtpCapabilities.headerExtensions
+            .filter(ext => ext.uri !== 'urn:3gpp:video-orientation')
+
+        await device.load({ routerRtpCapabilities })
+
+        // Setup 'producer' transport
+        if (videoSource || audioSource) {
+            const transportInfo = await socket.sendRequest('createWebRtcTransport', {
+                forceTcp: false,
+                producing: true,
+                consuming: false
+            })
+
+            const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
+
+            sendTransport = device.createSendTransport({
+                id,
+                iceParameters,
+                iceCandidates,
+                dtlsParameters,
+                iceServers: turnServers,
+                iceTransportPolicy: undefined, // TODO: device.flag === 'firefox' && turnServers ? 'relay' : undefined,
+                proprietaryConstraints: { optional: [{ googDscp: true }] }
+            })
+
+            sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
+                socket.sendRequest('connectWebRtcTransport',
+                    { transportId: sendTransport.id, dtlsParameters })
+                    .then(callback)
+                    .catch(errback)
+            })
+
+            sendTransport.on('produce', async ({ kind, rtpParameters, appData }, callback, errback) => {
+                try {
+                    const { id } = await socket.sendRequest('produce', {
+                        transportId: sendTransport.id,
+                        kind,
+                        rtpParameters,
+                        appData
+                    })
+                    callback({ id })
+                } catch (error) {
+                    errback(error)
+                }
+            })
+        }
+
+        // Setup 'consumer' transport
+
+        const transportInfo = await socket.sendRequest('createWebRtcTransport', {
+                forceTcp: false,
+                producing: false,
+                consuming: true
+        })
+
+        const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
+
+        recvTransport = device.createRecvTransport({
+                id,
+                iceParameters,
+                iceCandidates,
+                dtlsParameters,
+                iceServers: turnServers,
+                iceTransportPolicy: undefined, // TODO: device.flag === 'firefox' && turnServers ? 'relay' : undefined
+        })
+
+        recvTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
+            socket.sendRequest('connectWebRtcTransport', { transportId: recvTransport.id, dtlsParameters })
+                .then(callback)
+                .catch(errback)
+        })
+
+        // Send the "join" request, get room data, participants, etc.
+        const { peers } = await socket.sendRequest('join', {
+                displayName: 'test', // TODO
+                rtpCapabilities: device.rtpCapabilities
+        })
+
+        // Start publishing webcam/mic
+        if (videoSource) {
+            setCamera(videoSource)
+        }
+
+        if (audioSource) {
+            setMic(audioSource)
+        }
+    }
+
     const setCamera = async (deviceId) => {
         if (!device.canProduce('video')) {
             throw new Error('cannot produce video')
@@ -365,9 +379,9 @@ function Client()
         })
 
         trigger('addProducer', {
-                id: webProducer.id,
+                id: camProducer.id,
                 source: 'webcam',
-                track: webProducer.track
+                track: camProducer.track
         })
     }
 

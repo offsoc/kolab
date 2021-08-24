@@ -74,9 +74,9 @@ function Socket(url, options)
             socket.emit(
                 'request',
                 { method, data },
-                withTimeout((err, response) => {
-                    if (err) {
-                        reject(err)
+                withTimeout((error, response) => {
+                    if (error) {
+                        reject(error)
                     } else {
                         resolve(response)
                     }
@@ -85,16 +85,14 @@ function Socket(url, options)
         })
     }
 
-    const withTimeout = (onSuccess, onTimeout) => {
+    const withTimeout = (callback) => {
         let called = false
 
         const timer = setTimeout(
             () => {
                 if (called) return
                 called = true
-                if (onTimeout) {
-                    onTimeout()
-                }
+                callback(new Error('Request timed out'))
             },
             Config.requestTimeout
         )
@@ -103,7 +101,7 @@ function Socket(url, options)
             if (called) return
             called = true
             clearTimeout(timer)
-            onSuccess.apply(this, args)
+            callback(...args)
         }
     }
 }

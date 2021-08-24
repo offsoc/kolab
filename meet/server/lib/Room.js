@@ -506,6 +506,7 @@ class Room extends EventEmitter
 
 	_handleAudioLevelObserver()
 	{
+/*
 		// Set audioLevelObserver events.
 		this._audioLevelObserver.on('volumes', (volumes) =>
 		{
@@ -523,7 +524,6 @@ class Room extends EventEmitter
 					});
 			}
 		});
-
 		this._audioLevelObserver.on('silence', () =>
 		{
 			// Notify all Peers.
@@ -536,6 +536,7 @@ class Room extends EventEmitter
 				);
 			}
 		});
+*/
 	}
 
 	logStatus()
@@ -690,10 +691,6 @@ class Room extends EventEmitter
 
 		peer.on('displayNameChanged', ({ oldDisplayName }) =>
 		{
-			// Ensure the Peer is joined.
-			if (!peer.joined)
-				return;
-
 			// Spread to others
 			this._notification(peer.socket, 'changeDisplayName', {
 				peerId         : peer.id,
@@ -704,10 +701,6 @@ class Room extends EventEmitter
 
 		peer.on('pictureChanged', () =>
 		{
-			// Ensure the Peer is joined.
-			if (!peer.joined)
-				return;
-
 			// Spread to others
 			this._notification(peer.socket, 'changePicture', {
 				peerId  : peer.id,
@@ -717,10 +710,6 @@ class Room extends EventEmitter
 
 		peer.on('gotRole', ({ newRole }) =>
 		{
-			// Ensure the Peer is joined.
-			if (!peer.joined)
-				return;
-
 			// Spread to others
 			this._notification(peer.socket, 'gotRole', {
 				peerId : peer.id,
@@ -741,10 +730,6 @@ class Room extends EventEmitter
 
 		peer.on('lostRole', ({ oldRole }) =>
 		{
-			// Ensure the Peer is joined.
-			if (!peer.joined)
-				return;
-
 			// Spread to others
 			this._notification(peer.socket, 'lostRole', {
 				peerId : peer.id,
@@ -779,9 +764,7 @@ class Room extends EventEmitter
 		if (this._closed)
 			return;
 
-		// If the Peer was joined, notify all Peers.
-		if (peer.joined)
-			this._notification(peer.socket, 'peerClosed', { peerId: peer.id }, true);
+		this._notification(peer.socket, 'peerClosed', { peerId: peer.id }, true);
 
 		// Remove from lastN
 		this._lastN = this._lastN.filter((id) => id !== peer.id);
@@ -828,16 +811,11 @@ console.log(request.method);
 			case 'getRouterRtpCapabilities':
 			{
 				cb(null, router.rtpCapabilities);
-
 				break;
 			}
 
 			case 'join':
 			{
-				// Ensure the Peer is not already joined.
-				if (peer.joined)
-					throw new Error('Peer already joined');
-
 				const {
 					displayName,
 					picture,
@@ -878,9 +856,6 @@ console.log(request.method);
 					lobbyPeers           : lobbyPeers,
 					accessCode           : this._accessCode
 				});
-
-				// Mark the new Peer as joined.
-				peer.joined = true;
 
 				for (const joinedPeer of joinedPeers)
 				{
@@ -1035,10 +1010,6 @@ console.log(request.method);
 				)
 					throw new Error('peer not authorized');
 
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { transportId, kind, rtpParameters } = request.data;
 				const transport = peer.getTransport(transportId);
 
@@ -1067,13 +1038,13 @@ console.log(request.method);
 
 				// Store the Producer into the Peer data Object.
 				peer.addProducer(producer.id, producer);
-
+/*
 				// Set Producer events.
 				producer.on('score', (score) =>
 				{
 					this._notification(peer.socket, 'producerScore', { producerId: producer.id, score });
 				});
-
+*/
 				producer.on('videoorientationchange', (videoOrientation) =>
 				{
 					logger.debug(
@@ -1106,10 +1077,6 @@ console.log(request.method);
 
 			case 'closeProducer':
 			{
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { producerId } = request.data;
 				const producer = peer.getProducer(producerId);
 
@@ -1128,10 +1095,6 @@ console.log(request.method);
 
 			case 'pauseProducer':
 			{
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { producerId } = request.data;
 				const producer = peer.getProducer(producerId);
 
@@ -1147,10 +1110,6 @@ console.log(request.method);
 
 			case 'resumeProducer':
 			{
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { producerId } = request.data;
 				const producer = peer.getProducer(producerId);
 
@@ -1166,10 +1125,6 @@ console.log(request.method);
 
 			case 'pauseConsumer':
 			{
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { consumerId } = request.data;
 				const consumer = peer.getConsumer(consumerId);
 
@@ -1185,10 +1140,6 @@ console.log(request.method);
 
 			case 'resumeConsumer':
 			{
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { consumerId } = request.data;
 				const consumer = peer.getConsumer(consumerId);
 
@@ -1204,10 +1155,6 @@ console.log(request.method);
 
 			case 'setConsumerPreferedLayers':
 			{
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { consumerId, spatialLayer, temporalLayer } = request.data;
 				const consumer = peer.getConsumer(consumerId);
 
@@ -1223,10 +1170,6 @@ console.log(request.method);
 
 			case 'setConsumerPriority':
 			{
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { consumerId, priority } = request.data;
 				const consumer = peer.getConsumer(consumerId);
 
@@ -1242,10 +1185,6 @@ console.log(request.method);
 
 			case 'requestConsumerKeyFrame':
 			{
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { consumerId } = request.data;
 				const consumer = peer.getConsumer(consumerId);
 
@@ -1306,10 +1245,6 @@ console.log(request.method);
 
 			case 'changeDisplayName':
 			{
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { displayName } = request.data;
 
 				peer.displayName = displayName;
@@ -1324,10 +1259,6 @@ console.log(request.method);
 
 			/* case 'changePicture':
 			{
-				// Ensure the Peer is joined.
-				if (!peer.joined)
-					throw new Error('Peer not yet joined');
-
 				const { picture } = request.data;
 
 				peer.picture = picture;
@@ -1945,7 +1876,7 @@ console.log(request.method);
 	getJoinedPeers(excludePeer = undefined)
 	{
 		return Object.values(this._peers)
-			.filter((peer) => peer.joined && peer !== excludePeer);
+			.filter((peer) => peer !== excludePeer);
 	}
 
 	_getAllowedPeers(permission = null, excludePeer = undefined, joined = true)
@@ -1967,7 +1898,6 @@ console.log(request.method);
 		return Object.values(this._peers)
 			.filter(
 				(peer) =>
-					peer.joined === joined &&
 					peer !== excludePeer /* &&
 					peer.roles.some(
 						(role) =>
