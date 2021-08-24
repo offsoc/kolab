@@ -1,6 +1,6 @@
 'use strict'
 
-import { io } from "socket.io-client"
+import io from "socket.io-client"
 import Config from './config.js'
 
 function Socket(url, options)
