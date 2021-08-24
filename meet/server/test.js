@@ -27,11 +27,30 @@ axios
     {
         console.debug('signaling Peer "connect" event');
         _signalingSocket.emit("hello", { a: "b", c: [] });
+
+        axios
+        .post('http://127.0.0.1:12443/api/signal', {
+            session: roomId,
+            type: "sometype",
+            data:  {
+            },
+           //optional
+           // 'to' => [$connections]
+        })
+        .then(res => {
+            console.log(`statusCode: ${res.status}`)
+        });
+
     });
 
     _signalingSocket.on('disconnect', (reason) =>
     {
         console.warn('signaling Peer "disconnect" event [reason:"%s"]', reason);
+    });
+
+    _signalingSocket.on('signal', (reason) =>
+    {
+        console.warn('Received signal "%s"', reason);
     });
 
     _signalingSocket.on("error", (error) => {

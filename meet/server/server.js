@@ -593,6 +593,30 @@ async function runHttpsServer()
 				})
     })
 
+    app.post('/api/signal', async function (req, res, next) {
+        let data = req.body;
+        const roomId = data['session'];
+        const signalType = data['type'];
+        const payload = data['data'];
+        const peers = data['to'];
+
+
+        if (peers) {
+            for (const peerId of peers) {
+                let peer = peers.get(peerId);
+                peer.socket.emit(
+                    'signal', data
+                );
+            }
+        } else {
+            io.to(roomId).emit(
+                'signal', data
+            );
+        }
+
+        res.json({})
+    });
+
     // Create connection in room (just wait for websocket instead?
     // $post = [
     //     'json' => [
