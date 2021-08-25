@@ -48,10 +48,11 @@ module.exports =
 	// bittorrent tracker: please replace this if you want a more private file sharing service inside eduMEET
 	// have a look at https://github.com/webtorrent/bittorrent-tracker for setup your own tracker
 	fileTracker : 'wss://tracker.openwebtorrent.com',  
-	// redis server options
+	// redis server options used for session storage
 	redisOptions : {
         host: '127.0.0.1', //REDIS_IP
         port: '6379', //REDIS_PORT
+        db: '3'
     },
 	// session cookie secret
 	cookieSecret : 'T0P-S3cR3t_cook!e',
