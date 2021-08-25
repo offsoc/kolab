@@ -1,6 +1,8 @@
 version: '3'
 services:
   coturn:
+    build:
+      context: ./docker/coturn/
     container_name: kolab-coturn
     environment:
       - DB_NAME=${OPENVIDU_COTURN_REDIS_DATABASE}
@@ -9,7 +11,7 @@ services:
       - TURN_PUBLIC_IP=${OPENVIDU_COTURN_IP}
       - TURN_LISTEN_PORT=3478
     hostname: sturn.mgmt.com
-    image: openvidu/openvidu-coturn:1.0.0
+    image: kolab-coturn
     network_mode: host
     restart: on-failure
     tty: true
