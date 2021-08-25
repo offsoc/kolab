@@ -26,23 +26,23 @@ const {
 module.exports =
 {
 	// URI and key for requesting geoip-based TURN server closest to the client
-	turnAPIKey    : 'examplekey',
-	turnAPIURI    : 'https://example.com/api/turn',
-	turnAPIparams : {
-		'uri_schema' 	: 'turn',
-		'transport' 		: 'tcp',
-		'ip_ver'    		: 'ipv4',
-		'servercount'	: '2'
-	},
-	turnAPITimeout    : 2 * 1000,
+	// turnAPIKey    : 'examplekey',
+	// turnAPIURI    : 'https://example.com/api/turn',
+	// turnAPIparams : {
+	// 	'uri_schema' 	: 'turn',
+	// 	'transport' 		: 'tcp',
+	// 	'ip_ver'    		: 'ipv4',
+	// 	'servercount'	: '2'
+	// },
+	// turnAPITimeout    : 2 * 1000,
 	// Backup turnservers if REST fails or is not configured
 	backupTurnServers : [
 		{
 			urls : [
-				'turn:turn.example.com:443?transport=tcp'
+				'turn:127.0.0.1:3478?transport=tcp',
 			],
-			username   : 'example',
-			credential : 'example'
+			username   : 'username1',
+			credential : 'password1'
 		}
 	],
 	// bittorrent tracker: please replace this if you want a more private file sharing service inside eduMEET
