@@ -5,6 +5,5 @@ ln -s /root/node_modules /src/meetsrc/node_modules
 cd /src/meetsrc
 npm install
 npm install -g nodemon
-redis-server&
 export DEBUG="*"
 nodemon server.js
