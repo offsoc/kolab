@@ -66,16 +66,18 @@ function Media()
         return stream.getVideoTracks()[0]
     }
 
-    this.createVideoElement = (track, props) => {
+    this.createVideoElement = (tracks, props) => {
         const videoElement = document.createElement('video')
 
-        const stream = new MediaStream();
+        const stream = new MediaStream()
 
-        stream.addTrack(track);
+        tracks.forEach(track => stream.addTrack(track))
 
-        videoElement.srcObject = stream;
+        videoElement.srcObject = stream
 
-        return this.setVideoProps(videoElement)
+        this.setVideoProps(videoElement, props)
+
+        return videoElement
     }
 
     this.setVideoProps = (videoElement, props) => {

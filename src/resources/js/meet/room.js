@@ -39,6 +39,8 @@ function Room(container)
     let microphones = []        // List of user audio devices
     let connections = {}        // Connected users in the session
 
+    let peers = {}
+
     let chatCount = 0
     let volumeElement
     let publishersContainer
@@ -94,17 +96,13 @@ function Room(container)
      *      onMediaSetup        - Called when user clicks the Media setup button
      *      translate           - Translation function
      */
-    async function joinRoom(data) {
+    function joinRoom(data) {
         // Create a container for subscribers and publishers
         publishersContainer = $('<div id="meet-publishers">').appendTo(container).get(0)
         subscribersContainer = $('<div id="meet-subscribers">').appendTo(container).get(0)
 
         resize();
         volumeMeterStop()
-
-        data.params = {
-            nickname: data.nickname, // user nickname
-        }
 
         $t = data.translate
 
@@ -121,177 +119,77 @@ function Room(container)
 
         sessionData = data
 
-        client.on('addConsumer', (consumer) => {
-            console.log('addConsumer', consumer)
+        // Participant added (including self)
+        client.on('addPeer', (event) => {
+            console.log('addPeer', event)
 
-/*
-            // Ignore the current user connection
-            if (event.connection.role) {
-                return
+            event.role = Roles.PUBLISHER // TODO
+
+            event.element = participantCreate(event)
+
+            if (event.videoElement) {
+                $(event.element).prepend(event.videoElement)
             }
 
-            // This is the first event executed when a user joins in.
-            // We'll create the video wrapper here, which can be re-used
-            // in 'streamCreated' event handler.
-
-            let metadata = connectionData(event.connection)
-            const connId = metadata.connectionId
-
-            // The connection metadata here is the initial metadata set on
-            // connection initialization. There's no way to update it via OpenVidu API.
-            // So, we merge the initial connection metadata with up-to-dated one that
-            // we got from our database.
-            if (sessionData.connections && connId in sessionData.connections) {
-                Object.assign(metadata, sessionData.connections[connId])
-            }
-
-            metadata.element = participantCreate(metadata)
-
-            connections[connId] = metadata
-*/
+            peers[event.id] = event
         })
 
-        client.on('removeConsumer', (consumerId) => {
-            console.log('removeConsumer', consumerId)
-/*
-            let conn = connections[consumerId]
+        // Participant removed
+        client.on('removePeer', (peerId) => {
+            console.log('removePeer', peerId)
 
-            if (conn) {
+            let peer = peers[peerId]
+
+            if (peer) {
                 // Remove elements related to the participant
-                connectionHandDown(consumerId)
-                $(conn.element).remove()
-                delete connections[cosumerId]
+                connectionHandDown(peerId)
+                $(peer.element).remove()
+                delete peers[peerId]
             }
 
             resize()
-*/
         })
 
-        client.on('addProducer', (data) => {
-            console.log('addProducer', data)
-        })
+        // Participant properties changed e.g. audio/video muted/unmuted
+        client.on('updatePeer', (event) => {
+            console.log('updatePeer', event)
 
-        // Consumer properties changes e.g. audio/video muted/unmuted
-        client.on('updateConsumer', (data) => {
-            console.log('updateConsumer', data)
-/*
-            let connectionId = event.stream.connection.connectionId
-            let metadata = connections[connectionId]
+            let peer = peers[event.id]
 
-            if (session.connection.connectionId == connectionId) {
-                metadata = sessionData
-                metadata.audioActive = audioActive
-                metadata.videoActive = videoActive
+            if (!peer) {
+                return
             }
 
-            if (metadata) {
-                metadata[event.changedProperty] = event.newValue
-
-                if (event.changedProperty == 'videoDimensions') {
-                    resize()
-                } else {
-                    participantUpdate(metadata.element, metadata)
-                }
+            if (event.videoElement && event.videoElement.parentNode != peer.element) {
+                $(peer.element).prepend(event.videoElement)
+            } else if (!event.videoElement) {
+                $(peer.element).find('video').remove()
             }
-*/
+
+            // TODO: update peer properties
+
+            participantUpdate(peer.element, event)
+
+            peers[event.id] = peer
         })
 
         // Handle signals from the server (and other participants)
         client.on('signal', signalEventHandler)
 
-        // Start the session
-        await client.startSession(data.token, videoSource, audioSource)
-
-/*
-        // On every new Stream received...
-        session.on('streamCreated', event => {
-            let connectionId = event.stream.connection.connectionId
-            let metadata = connections[connectionId]
-            let props = {
-                // Prepend the video element so it is always before the watermark element
-                insertMode: 'PREPEND'
-            }
-
-            // Subscribe to the Stream to receive it
-            let subscriber = session.subscribe(event.stream, metadata.element, props);
-
-            Object.assign(metadata, {
-                audioActive: event.stream.audioActive,
-                videoActive: event.stream.videoActive,
-                videoDimensions: event.stream.videoDimensions
-            })
-
-            subscriber.on('videoElementCreated', event => {
-                resize()
-            })
-
-            // Update the wrapper controls/status
-            participantUpdate(metadata.element, metadata)
-
-            // Send the current user status to the connecting user
-            // otherwise e.g. nickname might be not up to date
-            signalUserUpdate(event.stream.connection)
+        client.on('joinSuccess', () => {
+            data.onSuccess()
         })
-
+/*
         // Handle session disconnection events
-        session.on('sessionDisconnected', event => {
+        client.on('sessionDisconnected', event => {
             data.onDestroy(event)
-            session = null
+            client = null
             resize()
         })
-
-        session.connect(data.token, data.params)
-            .then(() => {
-                data.onSuccess()
-
-                let params = {
-                    connectionId: session.connection.connectionId,
-                    role: data.role,
-                    audioActive,
-                    videoActive
-                }
-
-                params = Object.assign({}, data.params, params)
-
-                publisher.on('videoElementCreated', event => {
-                    $(event.element).prop({
-                            muted: true, // Mute local video to avoid feedback
-                    })
-                    resize()
-                })
-
-                let wrapper = participantCreate(params)
-
-                if (data.role & Roles.PUBLISHER) {
-                    publisher.createVideoElement(wrapper, 'PREPEND')
-                    session.publish(publisher)
-                }
-
-                sessionData.element = wrapper
-
-                // Create Q&A queue from the existing connections with rised hand.
-                // Here we expect connections in a proper queue order
-                Object.keys(data.connections || {}).forEach(key => {
-                    let conn = data.connections[key]
-
-                    if (conn.hand) {
-                        conn.connectionId = key
-                        connectionHandUp(conn)
-                    }
-                })
-
-                sessionData.channels = getChannels(data.connections)
-
-                // Inform the vue component, so it can update some UI controls
-                if (sessionData.channels.length) {
-                    sessionData.onSessionDataUpdate(sessionData)
-                }
-            })
-            .catch(error => {
-                console.error('There was an error connecting to the session: ', error.message);
-                data.onError(error)
-            })
 */
+        // Start the session
+        client.startSession(data.token, { videoSource, audioSource, nickname: data.nickname })
+
         // Prepare the chat
         setupChat()
     }
@@ -402,11 +300,9 @@ function Room(container)
      */
     async function setupSetAudioDevice(deviceId) {
         if (!deviceId) {
-            publisher.publishAudio(false)
             volumeMeterStop()
             audioActive = false
         } else if (deviceId == audioSource) {
-            publisher.publishAudio(true)
             volumeMeterStart()
             audioActive = true
         } else {
@@ -969,7 +865,7 @@ function Room(container)
     function participantCreate(params, content) {
         let element
 
-        params.isSelf = params.isSelf || session.connection.connectionId == params.connectionId
+        params.isSelf = params.isSelf || params.peerId == 'self'
 
         if ((!params.language && params.role & Roles.PUBLISHER) || params.role & Roles.SCREEN) {
             // publishers and shared screens
@@ -1095,12 +991,12 @@ function Room(container)
         }
 
         // Remove the subscriber element, if exists
-        $('#subscriber-' + params.connectionId).remove()
+        $('#subscriber-' + params.peerId).remove()
 
         let prio = params.isSelf || (isScreen && !$(publishersContainer).children('.screen').length)
 
         return wrapper[prio ? 'prependTo' : 'appendTo'](publishersContainer)
-            .attr('id', 'publisher-' + params.connectionId)
+            .attr('id', 'publisher-' + params.peerId)
             .get(0)
     }
 
@@ -1113,7 +1009,7 @@ function Room(container)
     function participantUpdate(wrapper, params, noupdate) {
         const element = $(wrapper)
         const isModerator = sessionData.role & Roles.MODERATOR
-        const isSelf = session.connection.connectionId == params.connectionId
+        const isSelf = params.peerId == 'self'
         const rolePublisher = params.role & Roles.PUBLISHER
         const roleModerator = params.role & Roles.MODERATOR
         const roleScreen = params.role & Roles.SCREEN
@@ -1240,7 +1136,7 @@ function Room(container)
         participantUpdate(wrapper, params, true)
 
         return wrapper[params.isSelf ? 'prependTo' : 'appendTo'](subscribersContainer)
-            .attr('id', 'subscriber-' + params.connectionId)
+            .attr('id', 'subscriber-' + params.peerId)
             .get(0)
     }
 
@@ -1311,8 +1207,9 @@ function Room(container)
             let editableUpdate = () => {
                 editable.contentEditable = false
                 sessionData.params.nickname = editable.innerText
-                signalUserUpdate()
-                nicknameUpdate(editable.innerText, session.connection.connectionId)
+                // TODO
+                // signalUserUpdate()
+                // nicknameUpdate(editable.innerText, 'self')
             }
 
             element.find('.action-nickname').on('click', editableEnable)
@@ -1334,7 +1231,7 @@ function Room(container)
             element.find('.action-nickname').remove()
 
             element.find('.action-dismiss').on('click', e => {
-                sessionData.onDismiss(params.connectionId)
+                sessionData.onDismiss(params.peerId)
             })
         }
 
@@ -1342,8 +1239,8 @@ function Room(container)
             if (params.isSelf) {
                 return sessionData.role
             }
-            if (params.connectionId in connections) {
-                return connections[params.connectionId].role
+            if (params.peerId in connections) {
+                return connections[params.peerId].role
             }
             return 0
         }
@@ -1364,7 +1261,7 @@ function Room(container)
                 }
             }
 
-            sessionData.onConnectionChange(params.connectionId, { role })
+            sessionData.onConnectionChange(params.peerId, { role })
         })
 
         element.find('.action-role-moderator input').on('change', e => {
@@ -1377,13 +1274,13 @@ function Room(container)
                 role ^= Roles.MODERATOR
             }
 
-            sessionData.onConnectionChange(params.connectionId, { role })
+            sessionData.onConnectionChange(params.peerId, { role })
         })
 
         element.find('.interpreting select')
             .on('change', e => {
                 const language = $(e.target).val()
-                sessionData.onConnectionChange(params.connectionId, { language })
+                sessionData.onConnectionChange(params.peerId, { language })
                 dropdown.hide()
             })
             .on('click', e => {
@@ -1682,19 +1579,6 @@ function Room(container)
             volumeElement.firstChild.style.height = 0
         }
 */
-    }
-
-    function connectionData(connection) {
-        // Note: we're sending a json from two sources (server-side when
-        // creating a token/connection, and client-side when joining the session)
-        // OpenVidu is unable to merge these two objects into one, for it it is only
-        // two strings, so it puts a "%/%" separator in between, we'll replace it with comma
-        // to get one parseable json object
-        let data = JSON.parse(connection.data.replace('}%/%{', ','))
-
-        data.connectionId = connection.connectionId
-
-        return data
     }
 
     /**

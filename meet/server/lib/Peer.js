@@ -23,15 +23,13 @@ class Peer extends EventEmitter
 
 		this._joinedTimestamp = null;
 
-		this._inLobby = false;
-
 		this._authenticated = false;
 
 		this._authenticatedTimestamp = null;
 
 		this._roles = [ userRoles.NORMAL ];
 
-		this._displayName = false;
+		this._nickname = false;
 
 		this._picture = null;
 
@@ -138,16 +136,6 @@ class Peer extends EventEmitter
 		return this._joinedTimestamp;
 	}
 
-	get inLobby()
-	{
-		return this._inLobby;
-	}
-
-	set inLobby(inLobby)
-	{
-		this._inLobby = inLobby;
-	}
-
 	get authenticated()
 	{
 		return this._authenticated;
@@ -179,20 +167,18 @@ class Peer extends EventEmitter
 		return this._roles;
 	}
 
-	get displayName()
+	get nickname()
 	{
-		return this._displayName;
+		return this._nickname;
 	}
 
-	set displayName(displayName)
+	set nickname(nickname)
 	{
-		if (displayName !== this._displayName)
+		if (nickname !== this._nickname)
 		{
-			const oldDisplayName = this._displayName;
+			this._nickname = nickname;
 
-			this._displayName = displayName;
-
-			this.emit('displayNameChanged', { oldDisplayName });
+			this.emit('nicknameChanged', {});
 		}
 	}
 
@@ -367,12 +353,12 @@ class Peer extends EventEmitter
 	{
 		const peerInfo =
 		{
-			id                  : this.id,
-			displayName         : this.displayName,
-			picture             : this.picture,
-			roles               : this.roles.map((role) => role.id),
-			raisedHand          : this.raisedHand,
-			raisedHandTimestamp : this.raisedHandTimestamp
+			id: this.id,
+			nickname: this.nickname,
+			picture: this.picture,
+			roles: this.roles.map((role) => role.id),
+			raisedHand: this.raisedHand,
+			raisedHandTimestamp: this.raisedHandTimestamp
 		};
 
 		return peerInfo;

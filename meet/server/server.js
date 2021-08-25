@@ -230,7 +230,7 @@ function statusLog()
 // 				}
 // 				if (lti.lis_person_name_full)
 // 				{
-// 					user.displayName = lti.lis_person_name_full;
+// 					user.nickname = lti.lis_person_name_full;
 // 				}
 
 // 				// Perform local authentication if necessary
@@ -539,8 +539,8 @@ function statusLog()
 // 				peer.authenticated = true;
 
 // 				res.send(loginHelper({
-// 					displayName : peer.displayName,
-// 					picture     : peer.picture
+// 					nickname: peer.nickname,
+// 					picture: peer.picture
 // 				}));
 // 			}
 // 			catch (error)
@@ -641,7 +641,7 @@ async function runHttpsServer()
             statusLog();
         });
 
-        peer.displayName = "Display Name";
+        peer.nickname = "Display Name";
         // peer.picture = picture;
         peer.email = "email@test.com";
         peer.authenticated = true;
@@ -676,13 +676,13 @@ async function runHttpsServer()
 	// 		if (
 	// 			req.isAuthenticated &&
 	// 			req.user &&
-	// 			req.user.displayName &&
-	// 			!ltiURL.searchParams.get('displayName') &&
+	// 			req.user.nickname &&
+	// 			!ltiURL.searchParams.get('nickname') &&
 	// 			!isPathAlreadyTaken(req.url)
 	// 		)
 	// 		{
 
-	// 			ltiURL.searchParams.append('displayName', req.user.displayName);
+	// 			ltiURL.searchParams.append('nickname', req.user.nickname);
 
 	// 			res.redirect(ltiURL);
 	// 		}

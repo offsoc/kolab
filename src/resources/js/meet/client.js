@@ -19,6 +19,8 @@ function Client()
     let turnServers = []
     let audioSource
     let videoSource
+    let nickname = ''
+    let peers = {}
 
     const VIDEO_CONSTRAINTS = {
         'low': {
@@ -54,12 +56,13 @@ function Client()
     /**
      * Start a session
      */
-    this.startSession = (token, vSource, aSource) => {
+    this.startSession = (token, props) => {
         // Initialize the socket, 'roomReady' request handler will do the rest of the job
         socket = initSocket(token)
 
-        videoSource = vSource
-        audioSource = aSource
+        videoSource = props.videoSource
+        audioSource = props.audioSource
+        nickname = props.nickname
     }
 
     /**
@@ -156,6 +159,12 @@ function Client()
                         producerPaused
                     } = request.data
 
+                    let peer = peers[peerId]
+
+                    if (!peer) {
+                        return
+                    }
+
                     const consumer = await recvTransport.consume({
                             id,
                             producerId,
@@ -164,42 +173,36 @@ function Client()
                             appData: { ...appData, peerId }
                     })
 
-                    // Store the consumer
+                    consumer.on('transportclose', () => {
+                        // TODO: What actually else needs to be done here?
+                        delete consumers[consumer.id]
+                    })
+
                     consumers[consumer.id] = consumer
-
-                    consumer.on('transportclose', () => { delete consumers[consumer.id] })
-
-                    const { spatialLayers, temporalLayers } = parseScalabilityMode(
-                        consumer.rtpParameters.encodings[0].scalabilityMode
-                    )
-
-                    const eventData = {
-                        id: consumer.id,
-                        peerId: peerId,
-                        kind: kind,
-                        type: type,
-                        locallyPaused: false,
-                        remotelyPaused: producerPaused,
-                        rtpParameters: consumer.rtpParameters,
-                        source: consumer.appData.source,
-                        spatialLayers: spatialLayers,
-                        temporalLayers: temporalLayers,
-                        /*
-                        preferredSpatialLayer: spatialLayers - 1,
-                        preferredTemporalLayer: temporalLayers - 1,
-                        */
-                        priority: 1,
-                        codec: consumer.rtpParameters.codecs[0].mimeType.split('/')[1],
-                        track: consumer.track
-                    }
-
-                    // TODO: create the video element?
-
-                    trigger('addConsumer', eventData, peerId)
 
                     // We are ready. Answer the request so the server will
                     // resume this Consumer (which was paused for now).
                     cb(null)
+
+                    let tracks = (peer.tracks || []).filter(track => track.kind != kind)
+
+                    tracks.push(consumer.track)
+
+                    if (!peer.videoElement) {
+                        peer.videoElement = media.createVideoElement(tracks, {})
+                    } else {
+                        const stream = new MediaStream()
+
+                        tracks.forEach(track => stream.addTrack(track))
+
+                        peer.videoElement.srcObject = stream
+                    }
+
+                    peer.tracks = tracks
+
+                    peers[peerId] = peer
+
+                    trigger('updatePeer', peer)
 
                     break
 
@@ -216,13 +219,14 @@ function Client()
                     return
 
                 case 'newPeer':
-                    const { id, displayName, picture, roles } = notification.data;
-                    // TODO
+                    peers[notification.data.id] = notification.data
+                    trigger('addPeer', notification.data)
                     return
 
                 case 'peerClosed':
-                    const { peerId } = notification.data;
-                    // TODO
+                    const { peerId } = notification.data
+                    delete peers[peerId]
+                    trigger('removePeer', peerId)
                     return
 
                 case 'consumerClosed': {
@@ -239,7 +243,24 @@ function Client()
 
                     const { peerId } = consumer.appData
 
-                    trigger('removeConsumer', consumerId, peerId)
+                    // TODO: Update peer state, remove track
+
+                    trigger('updatePeer', peers[peerId])
+
+                    return
+                }
+
+                case 'changeNickname': {
+                    const { peerId, nickname } = notification.data
+                    const peer = peers[peerId]
+
+                    if (!peer) {
+                        break
+                    }
+
+                    peer.nickname = nickname
+
+                    trigger('updatePeer', peer)
 
                     return
                 }
@@ -332,18 +353,38 @@ function Client()
 
         // Send the "join" request, get room data, participants, etc.
         const { peers } = await socket.sendRequest('join', {
-                displayName: 'test', // TODO
+                nickname: nickname,
                 rtpCapabilities: device.rtpCapabilities
         })
 
-        // Start publishing webcam/mic
-        if (videoSource) {
-            setCamera(videoSource)
+        trigger('joinSuccess')
+
+        let peer = {
+            id: 'self',
+            audioActive: !!audioSource,
+            videoActive: !!videoSource,
+            nickname: nickname
         }
 
+        // Start publishing webcam
+        if (videoSource) {
+            await setCamera(videoSource)
+            // Create the video element
+            peer.videoElement = media.createVideoElement([ camProducer.track ], { mirror: true })
+        }
+
+        // Start publishing microphone
         if (audioSource) {
             setMic(audioSource)
+            // Note: We're not adding this track to the video element
         }
+
+        trigger('addPeer', peer)
+
+        peers.self = peer
+
+        // TODO: Trigger 'addPeer' for all participants already in the room
+        console.log(peers)
     }
 
     const setCamera = async (deviceId) => {
@@ -376,12 +417,6 @@ function Client()
 
         camProducer.on('trackended', () => {
             // disableWebcam()
-        })
-
-        trigger('addProducer', {
-                id: camProducer.id,
-                source: 'webcam',
-                track: camProducer.track
         })
     }
 
@@ -438,12 +473,6 @@ function Client()
 
         micProducer.on('trackended', () => {
             // disableMic()
-        })
-
-        trigger('addProducer', {
-                id: micProducer.id,
-                source: 'mic',
-                track: micProducer.track
         })
     }
 }

@@ -30,13 +30,13 @@ function Socket(url, options)
     })
 
     socket.on("request", async (request, cb) => {
-        console.log("WebSocket request: " + request.method, request.data)
+        console.log("Recv: " + request.method, request.data)
 
         this.trigger('request', request, cb)
     })
 
     socket.on("notification", async notification => {
-        console.log("WebSocket notification: " + notification.method, notification.data)
+        console.log("Recv: " + notification.method, notification.data)
 
         this.trigger('notification', notification)
     })
@@ -69,7 +69,7 @@ function Socket(url, options)
 
     this.sendRequest = (method, data) => {
         return new Promise((resolve, reject) => {
-            console.log("Websocket send: " + method, data)
+            console.log("Send: " + method, data)
 
             socket.emit(
                 'request',
