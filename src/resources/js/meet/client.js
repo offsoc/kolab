@@ -284,6 +284,8 @@ function Client()
 
         await device.load({ routerRtpCapabilities })
 
+        const iceTransportPolicy = (device.handlerName.toLowerCase().includes('firefox') && turnServers) ? 'relay' : undefined;
+
         // Setup 'producer' transport
         if (videoSource || audioSource) {
             const transportInfo = await socket.sendRequest('createWebRtcTransport', {
@@ -300,7 +302,7 @@ function Client()
                 iceCandidates,
                 dtlsParameters,
                 iceServers: turnServers,
-                iceTransportPolicy: undefined, // TODO: device.flag === 'firefox' && turnServers ? 'relay' : undefined,
+                iceTransportPolicy: iceTransportPolicy,
                 proprietaryConstraints: { optional: [{ googDscp: true }] }
             })
 
@@ -342,7 +344,7 @@ function Client()
                 iceCandidates,
                 dtlsParameters,
                 iceServers: turnServers,
-                iceTransportPolicy: undefined, // TODO: device.flag === 'firefox' && turnServers ? 'relay' : undefined
+                iceTransportPolicy: iceTransportPolicy
         })
 
         recvTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
