@@ -85,7 +85,7 @@ function Media()
         videoElement.controls = false
         videoElement.muted = props.muted || false
         videoElement.disablePictureInPicture = true // this does not work in Firefox
-        videoElement.tabindex = -1
+        videoElement.tabIndex = -1
         videoElement.setAttribute('playsinline', 'true')
 
         if (props.mirror) {

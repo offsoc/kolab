@@ -198,6 +198,9 @@ function Client()
                         peer.videoElement.srcObject = stream
                     }
 
+                    peer.videoActive = true // TODO
+                    peer.audioActive = true // TODO
+
                     peer.tracks = tracks
 
                     peers[peerId] = peer
