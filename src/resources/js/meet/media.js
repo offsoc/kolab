@@ -2,6 +2,15 @@
 
 function Media()
 {
+    let audioActive = false     // True if the audio track is active
+    let videoActive = false     // True if the video track is active
+    let audioSource = ''        // Current audio device identifier
+    let videoSource = ''        // Current video device identifier
+    let cameras = []            // List of user video devices
+    let microphones = []        // List of user audio devices
+    let setupVideoElement       // <video> element for setup process
+    let setupVolumeElement      // Volume indicator element for setup process
+
 
     this.getAudioDevices = async () => {
         let audioDevices = {}
@@ -92,6 +101,164 @@ function Media()
             videoElement.style.transform = 'rotateY(180deg)'
             videoElement.style.webkitTransform = 'rotateY(180deg)'
         }
+    }
+
+    /**
+     * Sets the audio and video devices for the session.
+     * This will ask user for permission to access media devices.
+     *
+     * @param props Setup properties (videoElement, volumeElement, onSuccess, onError)
+     */
+    this.setupStart = (props) => {
+        setupVideoElement = props.videoElement
+        setupVolumeElement = props.volumeElement
+
+        const callback = async (mediaStream) => {
+            let videoStream = mediaStream.getVideoTracks()[0]
+            let audioStream = mediaStream.getAudioTracks()[0]
+
+            audioActive = !!audioStream
+            videoActive = !!videoStream
+
+            this.setVideoProps(setupVideoElement, { mirror: true, muted: true })
+            setupVideoElement.srcObject = mediaStream
+
+            volumeMeterStart()
+
+            microphones = await this.getAudioDevices()
+            cameras = await this.getWebcams()
+
+            Object.keys(cameras).forEach(deviceId => {
+                // device's props: deviceId, kind, label
+                const device = cameras[deviceId]
+                if (videoStream && videoStream.label == device.label) {
+                    videoSource = device.deviceId
+                }
+            })
+
+            Object.keys(microphones).forEach(deviceId => {
+                const device = microphones[deviceId]
+                if (audioStream && audioStream.label == device.label) {
+                    audioSource = device.deviceId
+                }
+            })
+
+            props.onSuccess({
+                microphones,
+                cameras,
+                audioSource,
+                videoSource,
+                audioActive,
+                videoActive
+            })
+        }
+
+        this.getMediaStream(callback, props.onError)
+    }
+
+    /**
+     * Stop the setup "process", cleanup after it.
+     */
+    this.setupStop = () => {
+        volumeMeterStop()
+    }
+
+    this.setupData = () => {
+        return {
+            microphones,
+            cameras,
+            audioSource,
+            videoSource,
+            audioActive,
+            videoActive
+        }
+    }
+
+    /**
+     * Change the publisher audio device
+     *
+     * @param deviceId Device identifier string
+     */
+    this.setupSetAudio = async (deviceId) => {
+        if (!deviceId) {
+            volumeMeterStop()
+            audioActive = false
+            audioSource = ''
+        } else if (deviceId == audioSource) {
+            volumeMeterStart()
+            audioActive = true
+        } else {
+            const mediaStream = setupVideoElement.srcObject
+            const constraints = {
+                audio: {
+                    deviceId: { ideal: deviceId }
+                }
+            }
+
+            volumeMeterStop()
+
+            // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
+            mediaStream.getAudioTracks().forEach(track => {
+                track.stop()
+                mediaStream.removeTrack(track)
+            })
+
+            // TODO: Error handling
+
+            const track = await this.getTrack(constraints)
+
+            mediaStream.addTrack(track)
+            volumeMeterStart()
+            audioActive = true
+            audioSource = deviceId
+        }
+
+        return audioActive
+    }
+
+    /**
+     * Change the publisher video device
+     *
+     * @param deviceId Device identifier string
+     */
+    this.setupSetVideo = async (deviceId) => {
+        if (!deviceId) {
+            videoActive = false
+            videoSource = ''
+        } else if (deviceId == audioSource) {
+            videoActive = true
+        } else {
+            const mediaStream = setupVideoElement.srcObject
+            const constraints = {
+                video: {
+                    deviceId: { ideal: deviceId }
+                }
+            }
+
+            // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
+            mediaStream.getVideoTracks().forEach(track => {
+                track.stop()
+                mediaStream.removeTrack(track)
+            })
+
+            // TODO: Error handling
+
+            const track = await this.getTrack(constraints)
+
+            mediaStream.addTrack(track)
+            videoActive = true
+            videoSource = deviceId
+        }
+
+        return videoActive
+    }
+
+    const volumeMeterStart = () => {
+        // TODO
+    }
+
+    const volumeMeterStop = () => {
+        // TODO
     }
 }
 

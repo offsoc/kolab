@@ -17,10 +17,6 @@ function Room(container)
 {
     let session                 // Session object where the user will connect
     let publisher               // Publisher object which the user will publish
-    let audioActive = false     // True if the audio track of the publisher is active
-    let videoActive = false     // True if the video track of the publisher is active
-    let audioSource = ''        // Currently selected microphone
-    let videoSource = ''        // Currently selected camera
     let sessionData             // Room session metadata
 
     let screenSession           // Session object where the user will connect for screen sharing
@@ -33,16 +29,10 @@ function Room(container)
         frameRate: 30,          // The frame rate of your video
         mirror: true            // Whether to mirror your local video or not
     }
-
 */
-    let cameras = []            // List of user video devices
-    let microphones = []        // List of user audio devices
     let connections = {}        // Connected users in the session
-
     let peers = {}
-
     let chatCount = 0
-    let volumeElement
     let publishersContainer
     let subscribersContainer
     let scrollStop
@@ -102,7 +92,6 @@ function Room(container)
         subscribersContainer = $('<div id="meet-subscribers">').appendTo(container).get(0)
 
         resize();
-        volumeMeterStop()
 
         $t = data.translate
 
@@ -187,6 +176,8 @@ function Room(container)
             resize()
         })
 */
+        const { audioSource, videoSource } = client.media.setupData()
+
         // Start the session
         client.startSession(data.token, { videoSource, audioSource, nickname: data.nickname })
 
@@ -200,8 +191,6 @@ function Room(container)
     function leaveRoom() {
 /*
         if (publisher) {
-            volumeMeterStop()
-
             // Release any media
             let mediaStream = publisher.stream.getMediaStream()
             if (mediaStream) {
@@ -229,68 +218,15 @@ function Room(container)
      *
      * @param props Setup properties (videoElement, volumeElement, onSuccess, onError)
      */
-    async function setupStart(props) {
-/*
-        // Note: After changing media permissions in Chrome/Firefox a page refresh is required.
-        // That means that in a scenario where you first blocked access to media devices
-        // and then allowed it we can't ask for devices list again and expect a different
-        // result than before.
-        // That's why we do not bother, and return early when we open the media setup dialog.
-        if (publisher) {
-            volumeMeterStart()
-            return
-        }
-*/
-        const onSuccess = async (mediaStream) => {
-            let videoStream = mediaStream.getVideoTracks()[0]
-            let audioStream = mediaStream.getAudioTracks()[0]
-
-            audioActive = !!audioStream
-            videoActive = !!videoStream
-
-            // TODO: We have to remember the videoElement and it's state
-
-            client.media.setVideoProps(props.videoElement, { mirror: true, muted: true })
-            props.videoElement.srcObject = mediaStream
-
-            volumeMeterStart()
-
-            microphones = await client.media.getAudioDevices()
-            cameras = await client.media.getWebcams()
-
-            Object.keys(cameras).forEach(deviceId => {
-                // device's props: deviceId, kind, label
-                const device = cameras[deviceId]
-                if (videoStream && videoStream.label == device.label) {
-                    videoSource = device.deviceId
-                }
-            })
-
-            Object.keys(microphones).forEach(deviceId => {
-                const device = microphones[deviceId]
-                if (audioStream && audioStream.label == device.label) {
-                    audioSource = device.deviceId
-                }
-            })
-
-            props.onSuccess({
-                microphones,
-                cameras,
-                audioSource,
-                videoSource,
-                audioActive,
-                videoActive
-            })
-        }
-
-        client.media.getMediaStream(onSuccess, props.onError)
+    function setupStart(props) {
+        client.media.setupStart(props)
     }
 
     /**
      * Stop the setup "process", cleanup after it.
      */
     function setupStop() {
-        volumeMeterStop()
+        client.media.setupStop()
     }
 
     /**
@@ -299,41 +235,7 @@ function Room(container)
      * @param deviceId Device identifier string
      */
     async function setupSetAudioDevice(deviceId) {
-        if (!deviceId) {
-            volumeMeterStop()
-            audioActive = false
-        } else if (deviceId == audioSource) {
-            volumeMeterStart()
-            audioActive = true
-        } else {
-            const mediaStream = publisher.stream.mediaStream
-            const properties = Object.assign({}, publisherDefaults, {
-                publishAudio: true,
-                publishVideo: videoActive,
-                audioSource: deviceId,
-                videoSource: videoSource
-            })
-
-            volumeMeterStop()
-
-            // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
-            mediaStream.getAudioTracks().forEach(track => {
-                track.stop()
-                mediaStream.removeTrack(track)
-            })
-
-            // TODO: Handle errors
-
-            await OV.getUserMedia(properties)
-                .then(async (newMediaStream) => {
-                    await replaceTrack(newMediaStream.getAudioTracks()[0])
-                    volumeMeterStart()
-                    audioActive = true
-                    audioSource = deviceId
-                })
-        }
-
-        return audioActive
+        return await client.media.setupSetAudio(deviceId)
     }
 
     /**
@@ -342,92 +244,7 @@ function Room(container)
      * @param deviceId Device identifier string
      */
     async function setupSetVideoDevice(deviceId) {
-        if (!deviceId) {
-            publisher.publishVideo(false)
-            videoActive = false
-        } else if (deviceId == videoSource) {
-            publisher.publishVideo(true)
-            videoActive = true
-        } else {
-            const mediaStream = publisher.stream.mediaStream
-            const properties = Object.assign({}, publisherDefaults, {
-                publishAudio: audioActive,
-                publishVideo: true,
-                audioSource: audioSource,
-                videoSource: deviceId
-            })
-
-            volumeMeterStop()
-
-            // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
-            mediaStream.getVideoTracks().forEach(track => {
-                track.stop()
-                mediaStream.removeTrack(track)
-            })
-
-            // TODO: Handle errors
-
-            await OV.getUserMedia(properties)
-                .then(async (newMediaStream) => {
-                    await replaceTrack(newMediaStream.getVideoTracks()[0])
-                    volumeMeterStart()
-                    videoActive = true
-                    videoSource = deviceId
-                })
-        }
-
-        return videoActive
-    }
-
-    /**
-     * A way to switch tracks in a stream.
-     * Note: This is close to what publisher.replaceTrack() does but it does not
-     * require the session.
-     * Note: The old track needs to be removed before OV.getUserMedia() call,
-     * otherwise we get "Concurrent mic process limit" error.
-     */
-    function replaceTrack(track) {
-        const stream = publisher.stream
-
-        const replaceMediaStreamTrack = () => {
-            stream.mediaStream.addTrack(track);
-
-            if (session) {
-                session.sendVideoData(publisher.stream.streamManager, 5, true, 5);
-            }
-        }
-
-        // Fix a bug in Chrome where you would start hearing yourself after audio device change
-        // https://github.com/OpenVidu/openvidu/issues/449
-        publisher.videoReference.muted = true
-
-        return new Promise((resolve, reject) => {
-            if (stream.isLocalStreamPublished) {
-                // Only if the Publisher has been published it is necessary to call the native
-                // Web API RTCRtpSender.replaceTrack()
-                const senders = stream.getRTCPeerConnection().getSenders()
-                let sender
-
-                if (track.kind === 'video') {
-                    sender = senders.find(s => !!s.track && s.track.kind === 'video')
-                } else {
-                    sender = senders.find(s => !!s.track && s.track.kind === 'audio')
-                }
-
-                if (!sender) return
-
-                sender.replaceTrack(track).then(() => {
-                    replaceMediaStreamTrack()
-                    resolve()
-                }).catch(error => {
-                    reject(error)
-                })
-            } else {
-                // Publisher not published. Simply modify local MediaStream tracks
-                replaceMediaStreamTrack()
-                resolve()
-            }
-        })
+        return await client.media.setupSetVideo(deviceId)
     }
 
     /**
@@ -643,6 +460,7 @@ function Room(container)
      * Mute/Unmute audio for current session publisher
      */
     async function switchAudio() {
+/*
         if (microphones.length) {
             if (audioActive) {
                 await client.micUnmute()
@@ -652,7 +470,7 @@ function Room(container)
 
             audioActive = !audioActive
         }
-
+*/
         return audioActive
     }
 
@@ -664,6 +482,7 @@ function Room(container)
         //       the button will just not work. Find a way to make it working
         //       after user unlocks his devices. For now he has to refresh
         //       the page and join the room again.
+/*
         if (cameras.length) {
             if (videoActive) {
                 await client.camUnmute()
@@ -673,7 +492,7 @@ function Room(container)
 
             videoActive = !videoActive
         }
-
+*/
         return videoActive
     }
 
@@ -894,7 +713,7 @@ function Room(container)
             '<div class="meet-video">'
             + svgIcon('user', 'fas', 'watermark')
             + '<div class="controls">'
-                + '<button type="button" class="btn btn-link link-setup hidden" title="' + $t('meet.media-setup') + '">' + svgIcon('cog') + '</button>'
+                // TODO + '<button type="button" class="btn btn-link link-setup hidden" title="' + $t('meet.media-setup') + '">' + svgIcon('cog') + '</button>'
                 + '<div class="volume hidden"><input type="range" min="0" max="1" step="0.1" /></div>'
                 + '<button type="button" class="btn btn-link link-audio hidden" title="' + $t('meet.menu-audio-mute') + '">' + svgIcon('volume-mute') + '</button>'
                 + '<button type="button" class="btn btn-link link-fullscreen closed hidden" title="' + $t('meet.menu-fullscreen') + '">' + svgIcon('expand') + '</button>'
@@ -1538,47 +1357,6 @@ function Room(container)
      */
     function updateSession(data) {
         sessionData.shareToken = data.shareToken
-    }
-
-    /**
-     * A handler for volume level change events
-     */
-    function volumeChangeHandler(event) {
-        let value = 100 + Math.min(0, Math.max(-100, event.value.newValue))
-        let color = 'lime'
-        const bar = volumeElement.firstChild
-
-        if (value >= 70) {
-            color = '#ff3300'
-        } else if (value >= 50) {
-            color = '#ff9933'
-        }
-
-        bar.style.height = value + '%'
-        bar.style.background = color
-    }
-
-    /**
-     * Start the volume meter
-     */
-    function volumeMeterStart() {
-/*
-        if (publisher && volumeElement) {
-            publisher.on('streamAudioVolumeChange', volumeChangeHandler)
-        }
-*/
-    }
-
-    /**
-     * Stop the volume meter
-     */
-    function volumeMeterStop() {
-/*
-        if (publisher && volumeElement) {
-            publisher.off('streamAudioVolumeChange')
-            volumeElement.firstChild.style.height = 0
-        }
-*/
     }
 
     /**

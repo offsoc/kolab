@@ -17,10 +17,10 @@ function Client()
     let sendTransport
     let recvTransport
     let turnServers = []
-    let audioSource
-    let videoSource
     let nickname = ''
     let peers = {}
+    let videoSource
+    let audioSource
 
     const VIDEO_CONSTRAINTS = {
         'low': {
@@ -60,9 +60,9 @@ function Client()
         // Initialize the socket, 'roomReady' request handler will do the rest of the job
         socket = initSocket(token)
 
+        nickname = props.nickname
         videoSource = props.videoSource
         audioSource = props.audioSource
-        nickname = props.nickname
     }
 
     /**
@@ -169,9 +169,10 @@ function Client()
                             id,
                             producerId,
                             kind,
-                            rtpParameters,
-                            appData: { ...appData, peerId }
+                            rtpParameters
                     })
+
+                    consumer.peerId = peerId
 
                     consumer.on('transportclose', () => {
                         // TODO: What actually else needs to be done here?
@@ -244,11 +245,12 @@ function Client()
 
                     delete consumers[consumerId]
 
-                    const { peerId } = consumer.appData
+                    let peer = peers[consumer.peerId]
 
-                    // TODO: Update peer state, remove track
-
-                    trigger('updatePeer', peers[peerId])
+                    if (peer) {
+                        // TODO: Update peer state, remove track
+                        trigger('updatePeer', peer)
+                    }
 
                     return
                 }
