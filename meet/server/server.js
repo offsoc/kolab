@@ -20,8 +20,8 @@ const base64 = require('base-64');
 const helmet = require('helmet');
 const userRoles = require('./userRoles');
 const {
-	loginHelper,
-	logoutHelper
+    loginHelper,
+    logoutHelper
 } = require('./httpHelper');
 // auth
 // const passport = require('passport');
@@ -48,7 +48,7 @@ const queue = new AwaitQueue();
 let statusLogger = null;
 
 if ('StatusLogger' in config)
-	statusLogger = new config.StatusLogger();
+    statusLogger = new config.StatusLogger();
 
 // mediasoup Workers.
 // @type {Array<mediasoup.Worker>}
@@ -63,21 +63,21 @@ const peers = new Map();
 // TLS server configuration.
 const tls =
 {
-	cert          : fs.readFileSync(config.tls.cert),
-	key           : fs.readFileSync(config.tls.key),
-	secureOptions : 'tlsv12',
-	ciphers       :
-		[
-			'ECDHE-ECDSA-AES128-GCM-SHA256',
-			'ECDHE-RSA-AES128-GCM-SHA256',
-			'ECDHE-ECDSA-AES256-GCM-SHA384',
-			'ECDHE-RSA-AES256-GCM-SHA384',
-			'ECDHE-ECDSA-CHACHA20-POLY1305',
-			'ECDHE-RSA-CHACHA20-POLY1305',
-			'DHE-RSA-AES128-GCM-SHA256',
-			'DHE-RSA-AES256-GCM-SHA384'
-		].join(':'),
-	honorCipherOrder : true
+    cert          : fs.readFileSync(config.tls.cert),
+    key           : fs.readFileSync(config.tls.key),
+    secureOptions : 'tlsv12',
+    ciphers       :
+        [
+            'ECDHE-ECDSA-AES128-GCM-SHA256',
+            'ECDHE-RSA-AES128-GCM-SHA256',
+            'ECDHE-ECDSA-AES256-GCM-SHA384',
+            'ECDHE-RSA-AES256-GCM-SHA384',
+            'ECDHE-ECDSA-CHACHA20-POLY1305',
+            'ECDHE-RSA-CHACHA20-POLY1305',
+            'DHE-RSA-AES128-GCM-SHA256',
+            'DHE-RSA-AES256-GCM-SHA384'
+        ].join(':'),
+    honorCipherOrder : true
 };
 
 const app = express();
@@ -90,21 +90,21 @@ app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
 
 const session = expressSession({
-	secret            : config.cookieSecret,
-	name              : config.cookieName,
-	resave            : true,
-	saveUninitialized : true,
-	store             : new RedisStore({ client: redisClient }),
-	cookie            : {
-		secure   : true,
-		httpOnly : true,
-		maxAge   : 60 * 60 * 1000 // Expire after 1 hour since last request from user
-	}
+    secret            : config.cookieSecret,
+    name              : config.cookieName,
+    resave            : true,
+    saveUninitialized : true,
+    store             : new RedisStore({ client: redisClient }),
+    cookie            : {
+        secure   : true,
+        httpOnly : true,
+        maxAge   : 60 * 60 * 1000 // Expire after 1 hour since last request from user
+    }
 });
 
 if (config.trustProxy)
 {
-	app.set('trust proxy', config.trustProxy);
+    app.set('trust proxy', config.trustProxy);
 }
 
 app.use(session);
@@ -114,77 +114,77 @@ let io;
 
 async function run()
 {
-	try
-	{
-		// Open the interactive server.
-		await interactiveServer(rooms, peers);
+    try
+    {
+        // Open the interactive server.
+        await interactiveServer(rooms, peers);
 
-		// start Prometheus exporter
-		if (config.prometheus)
-		{
-			await promExporter(rooms, peers, config.prometheus);
-		}
+        // start Prometheus exporter
+        if (config.prometheus)
+        {
+            await promExporter(rooms, peers, config.prometheus);
+        }
 
-		// if (typeof (config.auth) === 'undefined')
-		// {
-		// 	logger.warn('Auth is not configured properly!');
-		// }
-		// else
-		// {
-		// 	await setupAuth();
-		// }
+        // if (typeof (config.auth) === 'undefined')
+        // {
+        //     logger.warn('Auth is not configured properly!');
+        // }
+        // else
+        // {
+        //     await setupAuth();
+        // }
 
-		// Run a mediasoup Worker.
-		await runMediasoupWorkers();
+        // Run a mediasoup Worker.
+        await runMediasoupWorkers();
 
-		// Run HTTPS server.
-		await runHttpsServer();
+        // Run HTTPS server.
+        await runHttpsServer();
 
-		// Run WebSocketServer.
-		await runWebSocketServer();
+        // Run WebSocketServer.
+        await runWebSocketServer();
 
-		// eslint-disable-next-line no-unused-vars
-		const errorHandler = (err, req, res, next) =>
-		{
-			const trackingId = uuidv4();
+        // eslint-disable-next-line no-unused-vars
+        const errorHandler = (err, req, res, next) =>
+        {
+            const trackingId = uuidv4();
 
-			res.status(500).send(
-				`<h1>Internal Server Error</h1>
-				<p>If you report this error, please also report this 
-				<i>tracking ID</i> which makes it possible to locate your session
-				in the logs which are available to the system administrator: 
-				<b>${trackingId}</b></p>`
-			);
-			logger.error(
-				'Express error handler dump with tracking ID: %s, error dump: %o',
-				trackingId, err);
-		};
+            res.status(500).send(
+                `<h1>Internal Server Error</h1>
+                <p>If you report this error, please also report this 
+                <i>tracking ID</i> which makes it possible to locate your session
+                in the logs which are available to the system administrator: 
+                <b>${trackingId}</b></p>`
+            );
+            logger.error(
+                'Express error handler dump with tracking ID: %s, error dump: %o',
+                trackingId, err);
+        };
 
-		// eslint-disable-next-line no-unused-vars
-		app.use(errorHandler);
-	}
-	catch (error)
-	{
-		logger.error('run() [error:"%o"]', error);
-	}
+        // eslint-disable-next-line no-unused-vars
+        app.use(errorHandler);
+    }
+    catch (error)
+    {
+        logger.error('run() [error:"%o"]', error);
+    }
 }
 
 function statusLog()
 {
-	if (statusLogger)
-	{
-		statusLogger.log({
-			rooms : rooms,
-			peers : peers
-		});
-	}
+    if (statusLogger)
+    {
+        statusLogger.log({
+            rooms : rooms,
+            peers : peers
+        });
+    }
 }
 
 async function runHttpsServer()
 {
-	app.use(compression());
+    app.use(compression());
 
-	// app.use('/.well-known/acme-challenge', express.static('public/.well-known/acme-challenge'));
+    // app.use('/.well-known/acme-challenge', express.static('public/.well-known/acme-challenge'));
 
     app.get('/ping', function (req, res, next) {
         res.send('PONG3')
@@ -193,8 +193,8 @@ async function runHttpsServer()
     app.get('/api/sessions', function (req, res, next) {
         //TODO json.stringify
         res.json({
-					id : "testId"
-				})
+                    id : "testId"
+                })
     })
 
     //Check if the room exists
@@ -203,7 +203,7 @@ async function runHttpsServer()
         let room = rooms.get(req.params.session_id);
         if (!room) {
             console.warn("doesn't exist")
-			res.status(404).send()
+            res.status(404).send()
         } else {
             console.warn("exist")
             res.status(200).send()
@@ -218,8 +218,8 @@ async function runHttpsServer()
         const room = await getOrCreateRoom({ roomId });
 
         res.json({
-					id : roomId
-				})
+                    id : roomId
+                })
     })
 
     app.post('/api/signal', async function (req, res, next) {
@@ -286,86 +286,86 @@ async function runHttpsServer()
         })
     })
 
-	// app.all('*', async (req, res, next) =>
-	// {
+    // app.all('*', async (req, res, next) =>
+    // {
         // logger.error('Something is happening');
-	// 	if (req.secure || config.httpOnly)
-	// 	{
-	// 		let ltiURL;
+    //     if (req.secure || config.httpOnly)
+    //     {
+    //         let ltiURL;
 
-	// 		try
-	// 		{
-	// 			ltiURL = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
-	// 		}
-	// 		catch (error)
-	// 		{
-	// 			logger.error('Error parsing LTI url: %o', error);
-	// 		}
+    //         try
+    //         {
+    //             ltiURL = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
+    //         }
+    //         catch (error)
+    //         {
+    //             logger.error('Error parsing LTI url: %o', error);
+    //         }
 
-	// 		if (
-	// 			req.isAuthenticated &&
-	// 			req.user &&
-	// 			req.user.nickname &&
-	// 			!ltiURL.searchParams.get('nickname') &&
-	// 			!isPathAlreadyTaken(req.url)
-	// 		)
-	// 		{
+    //         if (
+    //             req.isAuthenticated &&
+    //             req.user &&
+    //             req.user.nickname &&
+    //             !ltiURL.searchParams.get('nickname') &&
+    //             !isPathAlreadyTaken(req.url)
+    //         )
+    //         {
 
-	// 			ltiURL.searchParams.append('nickname', req.user.nickname);
+    //             ltiURL.searchParams.append('nickname', req.user.nickname);
 
-	// 			res.redirect(ltiURL);
-	// 		}
-	// 		else
-	// 		{
-	// 			const specialChars = "<>@!^*()[]{}:;|'\"\\,~`";
+    //             res.redirect(ltiURL);
+    //         }
+    //         else
+    //         {
+    //             const specialChars = "<>@!^*()[]{}:;|'\"\\,~`";
 
-	// 			for (let i = 0; i < specialChars.length; i++)
-	// 			{
-	// 				if (req.url.substring(1).indexOf(specialChars[i]) > -1)
-	// 				{
-	// 					req.url = `/${encodeURIComponent(encodeURI(req.url.substring(1)))}`;
-	// 					res.redirect(`${req.url}`);
-	// 				}
-	// 			}
+    //             for (let i = 0; i < specialChars.length; i++)
+    //             {
+    //                 if (req.url.substring(1).indexOf(specialChars[i]) > -1)
+    //                 {
+    //                     req.url = `/${encodeURIComponent(encodeURI(req.url.substring(1)))}`;
+    //                     res.redirect(`${req.url}`);
+    //                 }
+    //             }
 
-	// 			return next();
-	// 		}
-	// 	}
-	// 	else
-	// 		res.redirect(`https://${req.hostname}${req.url}`);
+    //             return next();
+    //         }
+    //     }
+    //     else
+    //         res.redirect(`https://${req.hostname}${req.url}`);
 
-	// });
+    // });
 
-	// Serve all files in the public folder as static files.
-	// app.use(express.static('public'));
+    // Serve all files in the public folder as static files.
+    // app.use(express.static('public'));
 
-	// app.use((req, res) => res.sendFile(`${__dirname}/public/index.html`));
+    // app.use((req, res) => res.sendFile(`${__dirname}/public/index.html`));
 
-	if (config.httpOnly === true)
-	{
-		// http
-		mainListener = http.createServer(app);
-	}
-	else
-	{
-		// https
-		mainListener = spdy.createServer(tls, app);
+    if (config.httpOnly === true)
+    {
+        // http
+        mainListener = http.createServer(app);
+    }
+    else
+    {
+        // https
+        mainListener = spdy.createServer(tls, app);
 
-		// http
-		const redirectListener = http.createServer(app);
+        // http
+        const redirectListener = http.createServer(app);
 
-		if (config.listeningHost)
-			redirectListener.listen(config.listeningRedirectPort, config.listeningHost);
-		else
-			redirectListener.listen(config.listeningRedirectPort);
-	}
+        if (config.listeningHost)
+            redirectListener.listen(config.listeningRedirectPort, config.listeningHost);
+        else
+            redirectListener.listen(config.listeningRedirectPort);
+    }
 
     console.info(`Listening on ${config.listeningPort} ${config.listeningHost}`)
-	// https or http
-	if (config.listeningHost)
-		mainListener.listen(config.listeningPort, config.listeningHost);
-	else
-		mainListener.listen(config.listeningPort);
+    // https or http
+    if (config.listeningHost)
+        mainListener.listen(config.listeningPort, config.listeningHost);
+    else
+        mainListener.listen(config.listeningPort);
 }
 
 /**
@@ -373,70 +373,70 @@ async function runHttpsServer()
  */
 async function runWebSocketServer()
 {
-	io = require('socket.io')(mainListener, { cookie: false });
+    io = require('socket.io')(mainListener, { cookie: false });
 
-	io.use(
-		sharedSession(session, sharedCookieParser, { autoSave: true })
-	);
+    io.use(
+        sharedSession(session, sharedCookieParser, { autoSave: true })
+    );
 
-	// Handle connections from clients.
-	io.on('connection', (socket) =>
-	{
-		logger.info("websocket connection")
+    // Handle connections from clients.
+    io.on('connection', (socket) =>
+    {
+        logger.info("websocket connection")
 
-		const { roomId, peerId } = socket.handshake.query;
+        const { roomId, peerId } = socket.handshake.query;
 
-		if (!roomId || !peerId)
-		{
-			logger.warn('connection request without roomId and/or peerId');
+        if (!roomId || !peerId)
+        {
+            logger.warn('connection request without roomId and/or peerId');
 
-			socket.disconnect(true);
+            socket.disconnect(true);
 
-			return;
-		}
+            return;
+        }
 
-		logger.info(
-			'connection request [roomId:"%s", peerId:"%s"]', roomId, peerId);
+        logger.info(
+            'connection request [roomId:"%s", peerId:"%s"]', roomId, peerId);
 
-		queue.push(async () =>
-		{
-			const { token } = socket.handshake.session;
+        queue.push(async () =>
+        {
+            const { token } = socket.handshake.session;
 
-			const room = await getOrCreateRoom({ roomId });
+            const room = await getOrCreateRoom({ roomId });
 
-			let peer = peers.get(peerId);
+            let peer = peers.get(peerId);
 
-			if (!peer) {
+            if (!peer) {
                 logger.warn("Peer does not exist %s", peerId);
-				socket.disconnect(true);
-				return;
-			}
+                socket.disconnect(true);
+                return;
+            }
 
-			let returning = false;
+            let returning = false;
 
             peer.socket = socket;
             //FIXME figure out to which extent we need to handle returning users
-			// Returning user, remove if old peer exists
+            // Returning user, remove if old peer exists
             // TODO maintain metadata?
             // if (peer) {
             //     peer.close();
             //     returning = true;
             // }
 
-			room.handlePeer({ peer, returning });
+            room.handlePeer({ peer, returning });
 
-			statusLog();
-		})
-			.catch((error) =>
-			{
-				logger.error('room creation or room joining failed [error:"%o"]', error);
+            statusLog();
+        })
+            .catch((error) =>
+            {
+                logger.error('room creation or room joining failed [error:"%o"]', error);
 
-				if (socket)
-					socket.disconnect(true);
+                if (socket)
+                    socket.disconnect(true);
 
-				return;
-			});
-	});
+                return;
+            });
+    });
 }
 
 /**
@@ -444,30 +444,30 @@ async function runWebSocketServer()
  */
 async function runMediasoupWorkers()
 {
-	const { numWorkers } = config.mediasoup;
+    const { numWorkers } = config.mediasoup;
 
-	logger.info('running %d mediasoup Workers...', numWorkers);
+    logger.info('running %d mediasoup Workers...', numWorkers);
 
-	for (let i = 0; i < numWorkers; ++i)
-	{
-		const worker = await mediasoup.createWorker(
-			{
-				logLevel   : config.mediasoup.worker.logLevel,
-				logTags    : config.mediasoup.worker.logTags,
-				rtcMinPort : config.mediasoup.worker.rtcMinPort,
-				rtcMaxPort : config.mediasoup.worker.rtcMaxPort
-			});
+    for (let i = 0; i < numWorkers; ++i)
+    {
+        const worker = await mediasoup.createWorker(
+            {
+                logLevel   : config.mediasoup.worker.logLevel,
+                logTags    : config.mediasoup.worker.logTags,
+                rtcMinPort : config.mediasoup.worker.rtcMinPort,
+                rtcMaxPort : config.mediasoup.worker.rtcMaxPort
+            });
 
-		worker.on('died', () =>
-		{
-			logger.error(
-				'mediasoup Worker died, exiting  in 2 seconds... [pid:%d]', worker.pid);
+        worker.on('died', () =>
+        {
+            logger.error(
+                'mediasoup Worker died, exiting  in 2 seconds... [pid:%d]', worker.pid);
 
-			setTimeout(() => process.exit(1), 2000);
-		});
+            setTimeout(() => process.exit(1), 2000);
+        });
 
-		mediasoupWorkers.push(worker);
-	}
+        mediasoupWorkers.push(worker);
+    }
 }
 
 /**
@@ -475,28 +475,28 @@ async function runMediasoupWorkers()
  */
 async function getOrCreateRoom({ roomId })
 {
-	let room = rooms.get(roomId);
+    let room = rooms.get(roomId);
 
-	// If the Room does not exist create a new one.
-	if (!room)
-	{
-		logger.info('creating a new Room [roomId:"%s"]', roomId);
+    // If the Room does not exist create a new one.
+    if (!room)
+    {
+        logger.info('creating a new Room [roomId:"%s"]', roomId);
 
-		room = await Room.create({ mediasoupWorkers, roomId, peers });
+        room = await Room.create({ mediasoupWorkers, roomId, peers });
 
-		rooms.set(roomId, room);
+        rooms.set(roomId, room);
 
-		statusLog();
+        statusLog();
 
-		room.on('close', () =>
-		{
-			rooms.delete(roomId);
+        room.on('close', () =>
+        {
+            rooms.delete(roomId);
 
-			statusLog();
-		});
-	}
+            statusLog();
+        });
+    }
 
-	return room;
+    return room;
 }
 
 run();
