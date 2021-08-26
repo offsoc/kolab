@@ -1,5 +1,4 @@
 const os = require('os');
-// const fs = require('fs');
 
 const userRoles = require('../userRoles');
 
@@ -45,9 +44,6 @@ module.exports =
 			credential : 'password1'
 		}
 	],
-	// bittorrent tracker: please replace this if you want a more private file sharing service inside eduMEET
-	// have a look at https://github.com/webtorrent/bittorrent-tracker for setup your own tracker
-	fileTracker : 'wss://tracker.openwebtorrent.com',  
 	// redis server options used for session storage
 	redisOptions : {
         host: '127.0.0.1', //REDIS_IP
