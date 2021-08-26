@@ -76,6 +76,8 @@ module.exports =
     // listeningRedirectPort disabled
     // use case: loadbalancer backend
     httpOnly              : true,
+    publicDomain          : process.env.PUBLIC_DOMAIN || '127.0.0.1:12443',
+    pathPrefix            : '/meetmedia',
     // WebServer/Express trust proxy config for httpOnly mode
     // You can find more info:
     //  - https://expressjs.com/en/guide/behind-proxies.html

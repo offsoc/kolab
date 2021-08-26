@@ -7,7 +7,10 @@ function Socket(url, options)
 {
     let eventHandlers = {}
 
-    const socket = io(url, { transports: ["websocket"] })
+    const socket = io(url, {
+        path: '/meetmedia/signaling/',
+        transports: ["websocket"]
+    })
 
     socket.on("connect", () => {
         console.log("WebSocket connect: " + socket.id)

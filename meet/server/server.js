@@ -119,15 +119,6 @@ async function run()
             await promExporter(rooms, peers, config.prometheus);
         }
 
-        // if (typeof (config.auth) === 'undefined')
-        // {
-        //     logger.warn('Auth is not configured properly!');
-        // }
-        // else
-        // {
-        //     await setupAuth();
-        // }
-
         // Run a mediasoup Worker.
         await runMediasoupWorkers();
 
@@ -178,13 +169,11 @@ async function runHttpsServer()
 {
     app.use(compression());
 
-    // app.use('/.well-known/acme-challenge', express.static('public/.well-known/acme-challenge'));
-
-    app.get('/ping', function (req, res, next) {
-        res.send('PONG3')
+    app.get(`${config.pathPrefix}/api/ping`, function (req, res, next) {
+        res.send('PONG')
     })
 
-    app.get('/api/sessions', function (req, res, next) {
+    app.get(`${config.pathPrefix}/api/sessions`, function (req, res, next) {
         //TODO json.stringify
         res.json({
                     id : "testId"
@@ -192,7 +181,7 @@ async function runHttpsServer()
     })
 
     //Check if the room exists
-    app.get('/api/sessions/:session_id', function (req, res, next) {
+    app.get(`${config.pathPrefix}/api/sessions/:session_id`, function (req, res, next) {
         console.warn("Checking for room")
         let room = rooms.get(req.params.session_id);
         if (!room) {
@@ -205,7 +194,7 @@ async function runHttpsServer()
     })
 
     // Create room and return id
-    app.post('/api/sessions', async function (req, res, next) {
+    app.post(`${config.pathPrefix}/api/sessions`, async function (req, res, next) {
         console.warn("Creating new room", req.body.mediaMode, req.body.recordingMode)
         //FIXME we're truncating because of kolab4 database layout (should be fixed instead)
         const roomId = uuidv4().substring(0, 16)
@@ -216,7 +205,7 @@ async function runHttpsServer()
                 })
     })
 
-    app.post('/api/signal', async function (req, res, next) {
+    app.post(`${config.pathPrefix}/api/signal`, async function (req, res, next) {
         let data = req.body;
         const roomId = data['session'];
         const signalType = data['type'];
@@ -247,7 +236,7 @@ async function runHttpsServer()
     //         'data' => json_encode(['role' => $role])
     //     ]
     // ];
-    app.post('/api/sessions/:session_id/connection', function (req, res, next) {
+    app.post(`${config.pathPrefix}/api/sessions/:session_id/connection`, function (req, res, next) {
         console.warn("Creating connection in session", req.params.session_id)
         roomId = req.params.session_id
         //FIXME we're truncating because of kolab4 database layout (should be fixed instnead)
@@ -271,12 +260,10 @@ async function runHttpsServer()
         peer.addRole(userRoles.MODERATOR);
         peer.addRole(userRoles.AUTHENTICATED);
 
-        hostname = "localhost" //TODO from config
-        port = "12443" //TODO from config
         res.json({
             id : peerId,
-            //When the below get's passed to the socket.io client we end up with something like wss://localhost:12443/socket.io/?peerId=peer1&roomId=room1&EIO=3&transport=websocket,
-            token : `ws://${hostname}:${port}/?peerId=${peerId}&roomId=${roomId}`
+            //When the below get's passed to the socket.io client we end up with something like (depending on the socket.io path) wss://${publicDomain}/meetmedia/signaling/?peerId=peer1&roomId=room1&EIO=3&transport=websocket,
+            token : `wss://${config.publicDomain}/?peerId=${peerId}&roomId=${roomId}`
         })
     })
 
@@ -367,7 +354,10 @@ async function runHttpsServer()
  */
 async function runWebSocketServer()
 {
-    io = require('socket.io')(mainListener, { cookie: false });
+    io = require('socket.io')(mainListener, {
+        path: `${config.pathPrefix}/signaling`,
+        cookie: false
+    });
 
     io.use(
         sharedSession(session, sharedCookieParser, { autoSave: true })

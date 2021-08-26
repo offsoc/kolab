@@ -156,6 +156,7 @@ services:
       - REDIS_DBNAME=${MEET_REDIS_DATABASE}
       - REDIS_PASSWORD=${MEET_REDIS_PASSWORD}
       - PUBLIC_IP=${MEET_PUBLIC_IP}
+      - PUBLIC_DOMAIN=${MEET_PUBLIC_DOMAIN}
       - TURN_SERVER=${MEET_TURN_SERVER}
     network_mode: host
     container_name: kolab-meet
