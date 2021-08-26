@@ -19,8 +19,6 @@ class DomainObserver
         $domain->namespace = \strtolower($domain->namespace);
 
         $domain->status |= Domain::STATUS_NEW;
-
-        $domain->tenant_id = \config('app.tenant_id');
     }
 
     /**

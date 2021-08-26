@@ -4,6 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
+use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidStrKeyTrait;
 
 /**
@@ -23,6 +24,7 @@ use App\Traits\UuidStrKeyTrait;
  */
 class Sku extends Model
 {
+    use BelongsToTenantTrait;
     use HasTranslations;
     use UuidStrKeyTrait;
 
@@ -70,15 +72,5 @@ class Sku extends Model
             'App\Package',
             'package_skus'
         )->using('App\PackageSku')->withPivot(['cost', 'qty']);
-    }
-
-    /**
-     * The tenant for this SKU.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function tenant()
-    {
-        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 }

@@ -4,6 +4,7 @@ namespace App;
 
 use App\Wallet;
 use App\Traits\UuidIntKeyTrait;
+use App\Traits\BelongsToTenantTrait;
 use App\Traits\DomainConfigTrait;
 use App\Traits\SettingsTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Domain extends Model
 {
     use UuidIntKeyTrait;
+    use BelongsToTenantTrait;
     use DomainConfigTrait;
     use SettingsTrait;
     use SoftDeletes;
@@ -390,16 +392,6 @@ class Domain extends Model
 
         $this->status |= Domain::STATUS_SUSPENDED;
         $this->save();
-    }
-
-    /**
-     * The tenant for this domain.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function tenant()
-    {
-        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**

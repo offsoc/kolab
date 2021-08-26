@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
@@ -32,6 +33,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Package extends Model
 {
+    use BelongsToTenantTrait;
     use HasTranslations;
     use UuidStrKeyTrait;
 
@@ -102,15 +104,5 @@ class Package extends Model
         )->using('App\PackageSku')->withPivot(
             ['qty']
         );
-    }
-
-    /**
-     * The tenant for this package.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function tenant()
-    {
-        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 }

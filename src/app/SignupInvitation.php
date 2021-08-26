@@ -4,6 +4,7 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidStrKeyTrait;
 
 /**
@@ -17,6 +18,7 @@ use App\Traits\UuidStrKeyTrait;
  */
 class SignupInvitation extends Model
 {
+    use BelongsToTenantTrait;
     use UuidStrKeyTrait;
 
     // just created
@@ -74,16 +76,6 @@ class SignupInvitation extends Model
     public function isSent(): bool
     {
         return ($this->status & self::STATUS_SENT) > 0;
-    }
-
-    /**
-     * The tenant for this invitation.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function tenant()
-    {
-        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**

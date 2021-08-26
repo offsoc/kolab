@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidIntKeyTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Group extends Model
 {
+    use BelongsToTenantTrait;
     use UuidIntKeyTrait;
     use SoftDeletes;
 
@@ -248,16 +250,6 @@ class Group extends Model
 
         $this->status |= Group::STATUS_SUSPENDED;
         $this->save();
-    }
-
-    /**
-     * The tenant for this group.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function tenant()
-    {
-        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**

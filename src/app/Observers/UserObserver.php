@@ -27,8 +27,6 @@ class UserObserver
 
         // only users that are not imported get the benefit of the doubt.
         $user->status |= User::STATUS_NEW | User::STATUS_ACTIVE;
-
-        $user->tenant_id = \config('app.tenant_id');
     }
 
     /**

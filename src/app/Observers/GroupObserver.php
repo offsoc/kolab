@@ -17,8 +17,6 @@ class GroupObserver
     public function creating(Group $group): void
     {
         $group->status |= Group::STATUS_NEW | Group::STATUS_ACTIVE;
-
-        $group->tenant_id = \config('app.tenant_id');
     }
 
     /**

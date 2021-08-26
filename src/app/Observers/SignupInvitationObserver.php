@@ -19,8 +19,6 @@ class SignupInvitationObserver
     public function creating(SI $invitation)
     {
         $invitation->status = SI::STATUS_NEW;
-
-        $invitation->tenant_id = \config('app.tenant_id');
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
@@ -27,6 +28,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Plan extends Model
 {
+    use BelongsToTenantTrait;
     use HasTranslations;
     use UuidStrKeyTrait;
 
@@ -113,15 +115,5 @@ class Plan extends Model
         }
 
         return false;
-    }
-
-    /**
-     * The tenant for this plan.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function tenant()
-    {
-        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 }
