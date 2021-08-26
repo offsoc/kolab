@@ -38,17 +38,19 @@ module.exports =
 	backupTurnServers : [
 		{
 			urls : [
-				'turn:127.0.0.1:3478?transport=tcp',
+                process.env.TURN_SERVER || 'turn:127.0.0.1:3478?transport=tcp'
 			],
+            //FIXME we use hardcoded credentials for now
 			username   : 'username1',
 			credential : 'password1'
 		}
 	],
 	// redis server options used for session storage
 	redisOptions : {
-        host: '127.0.0.1', //REDIS_IP
-        port: '6379', //REDIS_PORT
-        db: '3'
+        host: process.env.REDIS_IP || '127.0.0.1',
+        port: process.env.REDIS_PORT || 6379,
+        db: process.env.REDIS_DB || '3',
+        password: process.env.REDIS_PASSWORD
     },
 	// session cookie secret
 	cookieSecret : 'T0P-S3cR3t_cook!e',
@@ -218,8 +220,7 @@ module.exports =
 		{
 			listenIps :
 			[
-				// change 192.0.2.1 IPv4 to your server's IPv4 address!!
-				{ ip: '192.168.1.81', announcedIp: null }
+				{ ip: process.env.PUBLIC_IP || '127.0.0.1', announcedIp: null }
 
 				// Can have multiple listening interfaces
 				// change 2001:DB8::1 IPv6 to your server's IPv6 address!!
