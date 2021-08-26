@@ -50,7 +50,7 @@ module.exports =
         host: process.env.REDIS_IP || '127.0.0.1',
         port: process.env.REDIS_PORT || 6379,
         db: process.env.REDIS_DB || '3',
-        password: process.env.REDIS_PASSWORD
+        ...(process.env.REDIS_PASSWORD ? {password: process.env.REDIS_PASSWORD} : {})
     },
     // session cookie secret
     cookieSecret : 'T0P-S3cR3t_cook!e',
