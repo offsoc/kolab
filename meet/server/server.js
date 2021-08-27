@@ -329,8 +329,6 @@ async function runWebSocketServer()
 
         queue.push(async () =>
         {
-            // const { token } = socket.handshake.session;
-
             const room = await getOrCreateRoom({ roomId });
 
             let peer = peers.get(peerId);
@@ -341,18 +339,7 @@ async function runWebSocketServer()
                 return;
             }
 
-            let returning = false;
-
-            peer.socket = socket;
-            //FIXME figure out to which extent we need to handle returning users
-            // Returning user, remove if old peer exists
-            // TODO maintain metadata?
-            // if (peer) {
-            //     peer.close();
-            //     returning = true;
-            // }
-
-            room.handlePeer({ peer, returning });
+            room.handlePeer({ peer });
 
             statusLog();
         })
