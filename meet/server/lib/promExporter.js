@@ -129,10 +129,10 @@ module.exports = async function(rooms, peers, config)
         };
 
         logger.debug('collect');
-        const mRooms = new prom.Gauge({ name: 'edumeet_rooms', help: '#rooms', registers: [ registry ] });
+        const mRooms = new prom.Gauge({ name: 'kolabmeet_rooms', help: '#rooms', registers: [ registry ] });
 
         mRooms.set(rooms.size);
-        const mPeers = new prom.Gauge({ name: 'edumeet_peers', help: '#peers', labelNames: [ 'room_id' ], registers: [ registry ] });
+        const mPeers = new prom.Gauge({ name: 'kolabmeet_peers', help: '#peers', labelNames: [ 'room_id' ], registers: [ registry ] });
 
         for (const [ roomId, room ] of rooms)
         {

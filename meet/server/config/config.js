@@ -32,7 +32,7 @@ module.exports =
     },
     // session cookie secret
     cookieSecret : 'T0P-S3cR3t_cook!e',
-    cookieName   : 'edumeet.sid',
+    cookieName   : 'kolabmeet.sid',
     // if you use encrypted private key the set the passphrase
     tls          :
     {

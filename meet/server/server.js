@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-process.title = 'edumeet-server';
+process.title = 'kolabmeet-server';
 
 const config = require('./config/config');
 const fs = require('fs');
