@@ -332,7 +332,7 @@ class Room extends EventEmitter
             const { producer, volume } = volumes[0];
 
             // Notify all Peers.
-            for (const peer of this.getJoinedPeers())
+            for (const peer of this.getPeers())
             {
                 this._notification(
                     peer.socket,
@@ -346,7 +346,7 @@ class Room extends EventEmitter
         this._audioLevelObserver.on('silence', () =>
         {
             // Notify all Peers.
-            for (const peer of this.getJoinedPeers())
+            for (const peer of this.getPeers())
             {
                 this._notification(
                     peer.socket,
@@ -588,7 +588,7 @@ console.log(request.method);
                 // Tell the new Peer about already joined Peers.
                 // And also create Consumers for existing Producers.
 
-                const joinedPeers = this.getJoinedPeers(peer);
+                const joinedPeers = this.getPeers(peer);
 
                 const peerInfos = joinedPeers
                     .map((joinedPeer) => (joinedPeer.peerInfo));
@@ -619,7 +619,7 @@ console.log(request.method);
                 }
 
                 // Notify the new Peer to all other Peers.
-                for (const otherPeer of this.getJoinedPeers(peer))
+                for (const otherPeer of this.getPeers(peer))
                 {
                     this._notification(
                         otherPeer.socket,
@@ -796,7 +796,7 @@ console.log(request.method);
                 cb(null, { id: producer.id });
 
                 // Optimization: Create a server-side Consumer for each Peer.
-                for (const otherPeer of this.getJoinedPeers(peer))
+                for (const otherPeer of this.getPeers(peer))
                 {
                     this._createConsumer(
                         {
@@ -1257,9 +1257,9 @@ console.log(request.method);
     }
 
     /**
-     * Get the list of joined peers.
+     * Get the list of peers.
      */
-    getJoinedPeers(excludePeer = undefined)
+    getPeers(excludePeer = undefined)
     {
         return Object.values(this._peers)
             .filter((peer) => peer !== excludePeer);

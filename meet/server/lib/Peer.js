@@ -18,10 +18,6 @@ class Peer extends EventEmitter
 
         this._closed = false;
 
-        this._joined = false;
-
-        this._joinedTimestamp = null;
-
         this._authenticated = false;
 
         this._authenticatedTimestamp = null;
@@ -114,25 +110,6 @@ class Peer extends EventEmitter
     get closed()
     {
         return this._closed;
-    }
-
-    get joined()
-    {
-        return this._joined;
-    }
-
-    set joined(joined)
-    {
-        joined ?
-            this._joinedTimestamp = Date.now() :
-            this._joinedTimestamp = null;
-
-        this._joined = joined;
-    }
-
-    get joinedTimestamp()
-    {
-        return this._joinedTimestamp;
     }
 
     get authenticated()
