@@ -14,7 +14,6 @@ use Tests\TestCase;
 class GreylistTest extends TestCase
 {
     private $clientAddress;
-    private $instance;
     private $requests = [];
     private $net;
 
@@ -24,20 +23,17 @@ class GreylistTest extends TestCase
 
         $this->setUpTest();
         $this->useServicesUrl();
-        $this->instance = $this->generateInstanceId();
         $this->clientAddress = '212.103.80.148';
 
         $this->net = \App\IP4Net::getNet($this->clientAddress);
 
         DB::delete("DELETE FROM greylist_connect WHERE sender_domain = 'sender.domain';");
-        DB::delete("DELETE FROM greylist_settings;");
         DB::delete("DELETE FROM greylist_whitelist WHERE sender_domain = 'sender.domain';");
     }
 
     public function tearDown(): void
     {
         DB::delete("DELETE FROM greylist_connect WHERE sender_domain = 'sender.domain';");
-        DB::delete("DELETE FROM greylist_settings;");
         DB::delete("DELETE FROM greylist_whitelist WHERE sender_domain = 'sender.domain';");
 
         parent::tearDown();
@@ -175,20 +171,6 @@ class GreylistTest extends TestCase
 
     // public function testWhitelistUpdate() {}
 
-    public function testNew()
-    {
-        $data = [
-            'sender' => 'someone@sender.domain',
-            'recipient' => $this->domainOwner->email,
-            'client_address' => $this->clientAddress,
-            'client_name' => 'some.mx'
-        ];
-
-        $response = $this->post('/api/webhooks/policy/greylist', $data);
-
-        $response->assertStatus(403);
-    }
-
     public function testRetry()
     {
         $connect = Greylist\Connect::create(
@@ -218,162 +200,7 @@ class GreylistTest extends TestCase
         $this->assertFalse($request->shouldDefer());
     }
 
-    public function testDomainDisabled()
-    {
-        $setting = Greylist\Setting::create(
-            [
-                'object_id' => $this->domainHosted->id,
-                'object_type' => \App\Domain::class,
-                'key' => 'greylist_enabled',
-                'value' => 'false'
-            ]
-        );
-
-        $request = new Greylist\Request(
-            [
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress
-            ]
-        );
-
-        $this->assertFalse($request->shouldDefer());
-    }
-
-    public function testDomainEnabled()
-    {
-        $connect = Greylist\Connect::create(
-            [
-                'sender_local' => 'someone',
-                'sender_domain' => 'sender.domain',
-                'recipient_hash' => hash('sha256', $this->domainOwner->email),
-                'recipient_id' => $this->domainOwner->id,
-                'recipient_type' => \App\User::class,
-                'connect_count' => 1,
-                'net_id' => \App\IP4Net::getNet('212.103.80.148')->id,
-                'net_type' => \App\IP4Net::class
-            ]
-        );
-
-        $setting = Greylist\Setting::create(
-            [
-                'object_id' => $this->domainHosted->id,
-                'object_type' => \App\Domain::class,
-                'key' => 'greylist_enabled',
-                'value' => 'true'
-            ]
-        );
-
-        $request = new Greylist\Request(
-            [
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress
-            ]
-        );
-
-        $this->assertTrue($request->shouldDefer());
-
-        $connect->created_at = \Carbon\Carbon::now()->subMinutes(6);
-        $connect->save();
-
-        $this->assertFalse($request->shouldDefer());
-    }
-
-    public function testDomainDisabledUserDisabled()
-    {
-        $connect = Greylist\Connect::create(
-            [
-                'sender_local' => 'someone',
-                'sender_domain' => 'sender.domain',
-                'recipient_hash' => hash('sha256', $this->domainOwner->email),
-                'recipient_id' => $this->domainOwner->id,
-                'recipient_type' => \App\User::class,
-                'connect_count' => 1,
-                'net_id' => $this->net->id,
-                'net_type' => \App\IP4Net::class
-            ]
-        );
-
-        $settingDomain = Greylist\Setting::create(
-            [
-                'object_id' => $this->domainHosted->id,
-                'object_type' => \App\Domain::class,
-                'key' => 'greylist_enabled',
-                'value' => 'false'
-            ]
-        );
-
-        $settingUser = Greylist\Setting::create(
-            [
-                'object_id' => $this->domainOwner->id,
-                'object_type' => \App\User::class,
-                'key' => 'greylist_enabled',
-                'value' => 'false'
-            ]
-        );
-
-        $request = new Greylist\Request(
-            [
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress
-            ]
-        );
-
-        $this->assertFalse($request->shouldDefer());
-    }
-
-    public function testDomainDisabledUserEnabled()
-    {
-        $connect = Greylist\Connect::create(
-            [
-                'sender_local' => 'someone',
-                'sender_domain' => 'sender.domain',
-                'recipient_hash' => hash('sha256', $this->domainOwner->email),
-                'recipient_id' => $this->domainOwner->id,
-                'recipient_type' => \App\User::class,
-                'connect_count' => 1,
-                'net_id' => $this->net->id,
-                'net_type' => \App\IP4Net::class
-            ]
-        );
-
-        $settingDomain = Greylist\Setting::create(
-            [
-                'object_id' => $this->domainHosted->id,
-                'object_type' => \App\Domain::class,
-                'key' => 'greylist_enabled',
-                'value' => 'false'
-            ]
-        );
-
-        $settingUser = Greylist\Setting::create(
-            [
-                'object_id' => $this->domainOwner->id,
-                'object_type' => \App\User::class,
-                'key' => 'greylist_enabled',
-                'value' => 'true'
-            ]
-        );
-
-        $request = new Greylist\Request(
-            [
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress
-            ]
-        );
-
-        $this->assertTrue($request->shouldDefer());
-
-        $connect->created_at = \Carbon\Carbon::now()->subMinutes(6);
-        $connect->save();
-
-        $this->assertFalse($request->shouldDefer());
-    }
-
-    public function testInvalidDomain()
+    public function testInvalidRecipient()
     {
         $connect = Greylist\Connect::create(
             [
@@ -382,32 +209,6 @@ class GreylistTest extends TestCase
                 'recipient_hash' => hash('sha256', $this->domainOwner->email),
                 'recipient_id' => 1234,
                 'recipient_type' => \App\Domain::class,
-                'connect_count' => 1,
-                'net_id' => $this->net->id,
-                'net_type' => \App\IP4Net::class
-            ]
-        );
-
-        $request = new Greylist\Request(
-            [
-                'sender' => 'someone@sender.domain',
-                'recipient' => 'not.someone@that.exists',
-                'client_address' => $this->clientAddress
-            ]
-        );
-
-        $this->assertTrue($request->shouldDefer());
-    }
-
-    public function testInvalidUser()
-    {
-        $connect = Greylist\Connect::create(
-            [
-                'sender_local' => 'someone',
-                'sender_domain' => 'sender.domain',
-                'recipient_hash' => hash('sha256', $this->domainOwner->email),
-                'recipient_id' => 1234,
-                'recipient_type' => \App\User::class,
                 'connect_count' => 1,
                 'net_id' => $this->net->id,
                 'net_type' => \App\IP4Net::class
@@ -440,14 +241,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $setting = Greylist\Setting::create(
-            [
-                'object_id' => $this->domainOwner->id,
-                'object_type' => \App\User::class,
-                'key' => 'greylist_enabled',
-                'value' => 'false'
-            ]
-        );
+        $this->domainOwner->setSetting('greylist_enabled', 'false');
 
         $request = new Greylist\Request(
             [
@@ -458,7 +252,6 @@ class GreylistTest extends TestCase
         );
 
         $this->assertFalse($request->shouldDefer());
-
 
         // Ensure we also find the setting by alias
         $aliases = $this->domainOwner->aliases()->orderBy('alias')->get();
@@ -488,14 +281,7 @@ class GreylistTest extends TestCase
             ]
         );
 
-        $setting = Greylist\Setting::create(
-            [
-                'object_id' => $this->domainOwner->id,
-                'object_type' => \App\User::class,
-                'key' => 'greylist_enabled',
-                'value' => 'true'
-            ]
-        );
+        $this->domainOwner->setSetting('greylist_enabled', 'true');
 
         $request = new Greylist\Request(
             [
@@ -537,14 +323,7 @@ class GreylistTest extends TestCase
                 ]
             );
 
-            Greylist\Setting::create(
-                [
-                    'object_id' => $user->id,
-                    'object_type' => \App\User::class,
-                    'key' => 'greylist_enabled',
-                    'value' => 'false'
-                ]
-            );
+            $user->setSetting('greylist_enabled', 'false');
 
             if ($user->email == $this->domainOwner->email) {
                 continue;
@@ -586,14 +365,7 @@ class GreylistTest extends TestCase
                 ]
             );
 
-            Greylist\Setting::create(
-                [
-                    'object_id' => $user->id,
-                    'object_type' => \App\User::class,
-                    'key' => 'greylist_enabled',
-                    'value' => ($user->id == $this->jack->id) ? 'true' : 'false'
-                ]
-            );
+            $user->setSetting('greylist_enabled', ($user->id == $this->jack->id) ? 'true' : 'false');
 
             if ($user->email == $this->domainOwner->email) {
                 continue;
@@ -615,16 +387,48 @@ class GreylistTest extends TestCase
         }
     }
 
-    private function generateInstanceId()
+    public function testControllerNew()
     {
-        $instance = [];
+        $data = [
+            'sender' => 'someone@sender.domain',
+            'recipient' => $this->domainOwner->email,
+            'client_address' => $this->clientAddress,
+            'client_name' => 'some.mx'
+        ];
 
-        for ($x = 0; $x < 3; $x++) {
-            for ($y = 0; $y < 3; $y++) {
-                $instance[] = substr('01234567889', rand(0, 9), 1);
-            }
-        }
+        $response = $this->post('/api/webhooks/policy/greylist', $data);
 
-        return implode('.', $instance);
+        $response->assertStatus(403);
     }
+
+    public function testControllerNotNew()
+    {
+        $connect = Greylist\Connect::create(
+            [
+                'sender_local' => 'someone',
+                'sender_domain' => 'sender.domain',
+                'recipient_hash' => hash('sha256', $this->domainOwner->email),
+                'recipient_id' => $this->domainOwner->id,
+                'recipient_type' => \App\User::class,
+                'connect_count' => 1,
+                'net_id' => $this->net->id,
+                'net_type' => \App\IP4Net::class
+            ]
+        );
+
+        $connect->created_at = \Carbon\Carbon::now()->subMinutes(6);
+        $connect->save();
+
+        $data = [
+            'sender' => 'someone@sender.domain',
+            'recipient' => $this->domainOwner->email,
+            'client_address' => $this->clientAddress,
+            'client_name' => 'some.mx'
+        ];
+
+        $response = $this->post('/api/webhooks/policy/greylist', $data);
+
+        $response->assertStatus(200);
+    }
+
 }

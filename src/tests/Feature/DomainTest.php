@@ -6,6 +6,7 @@ use App\Domain;
 use App\Entitlement;
 use App\Sku;
 use App\User;
+use App\Tenant;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -130,7 +131,8 @@ class DomainTest extends TestCase
         $this->assertContains('public-active.com', $public_domains);
 
         // Domains of other tenants should not be returned
-        $domain->tenant_id = 2;
+        $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
+        $domain->tenant_id = $tenant->id;
         $domain->save();
 
         $public_domains = Domain::getPublicDomains();

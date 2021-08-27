@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Traits\BelongsToTenantTrait;
+use App\Traits\UuidIntKeyTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,6 +19,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Group extends Model
 {
+    use BelongsToTenantTrait;
+    use UuidIntKeyTrait;
     use SoftDeletes;
 
     // we've simply never heard of this domain
@@ -29,10 +33,6 @@ class Group extends Model
     public const STATUS_DELETED    = 1 << 3;
     // domain has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 4;
-
-    public $incrementing = false;
-
-    protected $keyType = 'bigint';
 
     protected $fillable = [
         'email',
@@ -250,16 +250,6 @@ class Group extends Model
 
         $this->status |= Group::STATUS_SUSPENDED;
         $this->save();
-    }
-
-    /**
-     * The tenant for this group.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function tenant()
-    {
-        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**

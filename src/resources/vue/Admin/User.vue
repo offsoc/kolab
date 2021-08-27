@@ -312,10 +312,10 @@
                     <div class="card-text">
                         <form class="read-only short">
                             <div class="row plaintext">
-                                <label for="greylisting" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
+                                <label for="greylist_enabled" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
                                 <div class="col-sm-8">
-                                    <span class="form-control-plaintext" id="greylisting">
-                                        <span v-if="user.config.greylisting" class="text-success">{{ $t('form.enabled') }}</span>
+                                    <span class="form-control-plaintext" id="greylist_enabled">
+                                        <span v-if="user.config.greylist_enabled" class="text-success">{{ $t('form.enabled') }}</span>
                                         <span v-else class="text-danger">{{ $t('form.disabled') }}</span>
                                     </span>
                                 </div>

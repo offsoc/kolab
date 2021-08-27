@@ -20,21 +20,11 @@ class IP6Net extends Model
         'updated_at'
     ];
 
-    public static function getNet($ip, $mask = 128)
+    public static function getNet($ip)
     {
-        $query =  "
-            SELECT id FROM ip6nets
-            WHERE INET6_ATON(net_number) <= INET6_ATON(?)
-            AND INET6_ATON(net_broadcast) >= INET6_ATON(?)
-            ORDER BY INET6_ATON(net_number), net_mask DESC LIMIT 1
-        ";
-
-        $results = DB::select($query, [$ip, $ip]);
-
-        if (sizeof($results) == 0) {
-            return null;
-        }
-
-        return \App\IP6Net::find($results[0]->id);
+        $where = 'INET6_ATON(net_number) <= INET6_ATON(?) and INET6_ATON(net_broadcast) >= INET6_ATON(?)';
+        return IP6Net::whereRaw($where, [$ip, $ip])
+            ->orderByRaw('INET6_ATON(net_number), net_mask DESC')
+            ->first();
     }
 }

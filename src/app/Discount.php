@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Traits\BelongsToTenantTrait;
+use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
@@ -16,10 +18,9 @@ use Spatie\Translatable\HasTranslations;
  */
 class Discount extends Model
 {
+    use BelongsToTenantTrait;
     use HasTranslations;
-
-    public $incrementing = false;
-    protected $keyType = 'string';
+    use UuidStrKeyTrait;
 
     protected $casts = [
         'discount' => 'integer',
@@ -57,16 +58,6 @@ class Discount extends Model
         }
 
         $this->attributes['discount'] = $discount;
-    }
-
-    /**
-     * The tenant for this discount.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function tenant()
-    {
-        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**

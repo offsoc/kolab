@@ -19,8 +19,6 @@ class PolicyController extends Controller
     {
         $data = \request()->input();
 
-        list($local, $domainName) = explode('@', $data['recipient']);
-
         $request = new \App\Policy\Greylist\Request($data);
 
         $shouldDefer = $request->shouldDefer();

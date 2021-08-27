@@ -48,7 +48,7 @@ class CreatePowerDNSTables extends Migration
 
                 $table->index('domain_id');
                 $table->index(['name', 'type']);
-                $table->index('ordername');
+                //$table->index('ordername');
             }
         );
 

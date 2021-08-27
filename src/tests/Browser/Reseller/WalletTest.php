@@ -64,7 +64,7 @@ class WalletTest extends TestCaseDusk
                 ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-wallet .name', 'Wallet')
-                ->assertSeeIn('@links .link-wallet .badge-success', '1,25 CHF');
+                ->assertSeeIn('@links .link-wallet .badge.bg-success', '1,25 CHF');
         });
 
         Wallet::where('user_id', $reseller->id)->update(['balance' => -1234]);
@@ -73,7 +73,7 @@ class WalletTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new Dashboard())
                 ->assertSeeIn('@links .link-wallet .name', 'Wallet')
-                ->assertSeeIn('@links .link-wallet .badge-danger', '-12,34 CHF');
+                ->assertSeeIn('@links .link-wallet .badge.bg-danger', '-12,34 CHF');
         });
     }
 

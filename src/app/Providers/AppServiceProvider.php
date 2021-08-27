@@ -44,19 +44,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        \App\AuthAttempt::observe(\App\Observers\AuthAttemptObserver::class);
-        \App\Discount::observe(\App\Observers\DiscountObserver::class);
         \App\Domain::observe(\App\Observers\DomainObserver::class);
         \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);
         \App\Group::observe(\App\Observers\GroupObserver::class);
         \App\OpenVidu\Connection::observe(\App\Observers\OpenVidu\ConnectionObserver::class);
-        \App\Package::observe(\App\Observers\PackageObserver::class);
         \App\PackageSku::observe(\App\Observers\PackageSkuObserver::class);
-        \App\Plan::observe(\App\Observers\PlanObserver::class);
         \App\PlanPackage::observe(\App\Observers\PlanPackageObserver::class);
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
         \App\SignupInvitation::observe(\App\Observers\SignupInvitationObserver::class);
-        \App\Sku::observe(\App\Observers\SkuObserver::class);
         \App\Transaction::observe(\App\Observers\TransactionObserver::class);
         \App\User::observe(\App\Observers\UserObserver::class);
         \App\UserAlias::observe(\App\Observers\UserAliasObserver::class);

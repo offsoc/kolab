@@ -102,7 +102,7 @@
                                                         <label :for="'pkg-input-' + pkg.id">{{ pkg.name }}</label>
                                                     </td>
                                                     <td class="price text-nowrap">
-                                                        {{ $root.priceLabel(pkg.cost, discount) }}
+                                                        {{ $root.priceLabel(pkg.cost, discount, currency) }}
                                                     </td>
                                                     <td class="buttons">
                                                         <button v-if="pkg.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip="pkg.description">
@@ -154,7 +154,7 @@
                                                         </div>
                                                     </td>
                                                     <td class="price text-nowrap">
-                                                        {{ $root.priceLabel(sku.cost, discount) }}
+                                                        {{ $root.priceLabel(sku.cost, discount, currency) }}
                                                     </td>
                                                     <td class="buttons">
                                                         <button v-if="sku.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip="sku.description">
@@ -177,9 +177,9 @@
                         <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
                             <form @submit.prevent="submitSettings" class="card-body">
                                 <div class="row checkbox mb-3">
-                                    <label for="greylisting" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
+                                    <label for="greylist_enabled" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
                                     <div class="col-sm-8 pt-2">
-                                        <input type="checkbox" id="greylisting" name="greylisting" value="1" class="form-check-input d-block mb-2" :checked="user.config.greylisting">
+                                        <input type="checkbox" id="greylist_enabled" name="greylist_enabled" value="1" class="form-check-input d-block mb-2" :checked="user.config.greylist_enabled">
                                         <small id="greylisting-hint" class="text-muted">
                                             {{ $t('user.greylisting-text') }}
                                         </small>
@@ -226,6 +226,7 @@
         },
         data() {
             return {
+                currency: '',
                 discount: 0,
                 discount_description: '',
                 user_id: null,
@@ -245,9 +246,12 @@
                 wallet = this.$store.state.authInfo.wallets[0]
             }
 
-            if (wallet && wallet.discount) {
-                this.discount = wallet.discount
-                this.discount_description = wallet.discount_description
+            if (wallet) {
+                this.currency = wallet.currency
+                if (wallet.discount) {
+                    this.discount = wallet.discount
+                    this.discount_description = wallet.discount_description
+                }
             }
 
             this.$root.startLoading()
@@ -346,7 +350,7 @@
             },
             submitSettings() {
                 this.$root.clearFormValidation($('#settings form'))
-                let post = { greylisting: $('#greylisting').prop('checked') ? 1 : 0 }
+                let post = { greylist_enabled: $('#greylist_enabled').prop('checked') ? 1 : 0 }
 
                 axios.post('/api/v4/users/' + this.user_id + '/config', post)
                     .then(response => {
@@ -444,7 +448,7 @@
                 input.prev().text(value + ' ' + sku.range.unit)
 
                 // Update the price
-                record.find('.price').text(this.$root.priceLabel(cost, this.discount))
+                record.find('.price').text(this.$root.priceLabel(cost, this.discount, this.currency))
             },
             findSku(id) {
                 for (let i = 0; i < this.skus.length; i++) {

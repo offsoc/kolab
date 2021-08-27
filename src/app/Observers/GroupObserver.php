@@ -16,17 +16,7 @@ class GroupObserver
      */
     public function creating(Group $group): void
     {
-        while (true) {
-            $allegedly_unique = \App\Utils::uuidInt();
-            if (!Group::withTrashed()->find($allegedly_unique)) {
-                $group->{$group->getKeyName()} = $allegedly_unique;
-                break;
-            }
-        }
-
         $group->status |= Group::STATUS_NEW | Group::STATUS_ACTIVE;
-
-        $group->tenant_id = \config('app.tenant_id');
     }
 
     /**

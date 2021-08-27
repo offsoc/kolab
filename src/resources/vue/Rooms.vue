@@ -2,7 +2,7 @@
     <div class="container" dusk="rooms-component">
         <div id="meet-rooms" class="card">
             <div class="card-body">
-                <div class="card-title">{{ $t('meet.title') }} <small><sup class="badge badge-primary">{{ $t('dashboard.beta') }}</sup></small></div>
+                <div class="card-title">{{ $t('meet.title') }} <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small></div>
                 <div class="card-text">
                     <p>{{ $t('meet.welcome') }}</p>
                     <p>{{ $t('meet.url') }}</p>

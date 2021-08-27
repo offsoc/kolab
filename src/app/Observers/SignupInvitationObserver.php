@@ -18,17 +18,7 @@ class SignupInvitationObserver
      */
     public function creating(SI $invitation)
     {
-        while (true) {
-            $allegedly_unique = \App\Utils::uuidStr();
-            if (!SI::find($allegedly_unique)) {
-                $invitation->{$invitation->getKeyName()} = $allegedly_unique;
-                break;
-            }
-        }
-
         $invitation->status = SI::STATUS_NEW;
-
-        $invitation->tenant_id = \config('app.tenant_id');
     }
 
     /**

@@ -355,6 +355,27 @@ class UserTest extends TestCase
     }
 
     /**
+     * Test User::getConfig() and setConfig() methods
+     */
+    public function testConfigTrait(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $john->setSetting('greylist_enabled', null);
+
+        $this->assertSame(['greylist_enabled' => true], $john->getConfig());
+
+        $result = $john->setConfig(['greylist_enabled' => false, 'unknown' => false]);
+
+        $this->assertSame(['greylist_enabled' => false], $john->getConfig());
+        $this->assertSame('false', $john->getSetting('greylist_enabled'));
+
+        $result = $john->setConfig(['greylist_enabled' => true]);
+
+        $this->assertSame(['greylist_enabled' => true], $john->getConfig());
+        $this->assertSame('true', $john->getSetting('greylist_enabled'));
+    }
+
+    /**
      * Test User::hasSku() method
      */
     public function testHasSku(): void

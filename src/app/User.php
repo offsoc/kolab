@@ -5,6 +5,8 @@ namespace App;
 use App\Entitlement;
 use App\UserAlias;
 use App\Sku;
+use App\Traits\UuidIntKeyTrait;
+use App\Traits\BelongsToTenantTrait;
 use App\Traits\UserConfigTrait;
 use App\Traits\UserAliasesTrait;
 use App\Traits\SettingsTrait;
@@ -27,6 +29,8 @@ use League\OAuth2\Server\Exception\OAuthServerException;
  */
 class User extends Authenticatable
 {
+    use UuidIntKeyTrait;
+    use BelongsToTenantTrait;
     use NullableFields;
     use UserConfigTrait;
     use UserAliasesTrait;
@@ -46,11 +50,6 @@ class User extends Authenticatable
     public const STATUS_LDAP_READY = 1 << 4;
     // user mailbox has been created in IMAP
     public const STATUS_IMAP_READY = 1 << 5;
-
-
-    // change the default primary key type
-    public $incrementing = false;
-    protected $keyType = 'bigint';
 
     /**
      * The attributes that are mass assignable.
@@ -647,16 +646,6 @@ class User extends Authenticatable
 
         $this->status |= User::STATUS_SUSPENDED;
         $this->save();
-    }
-
-    /**
-     * The tenant for this user account.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function tenant()
-    {
-        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
     }
 
     /**

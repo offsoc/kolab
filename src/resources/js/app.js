@@ -264,7 +264,7 @@ const app = new Vue({
             // TODO: Set locale argument according to the currently used locale
             return ((price || 0) / 100).toLocaleString('de-DE', { style: 'currency', currency: currency || 'CHF' })
         },
-        priceLabel(cost, discount) {
+        priceLabel(cost, discount, currency) {
             let index = ''
 
             if (discount) {
@@ -272,7 +272,7 @@ const app = new Vue({
                 index = '\u00B9'
             }
 
-            return this.price(cost) + '/' + this.$t('wallet.month') + index
+            return this.price(cost, currency) + '/' + this.$t('wallet.month') + index
         },
         clickRecord(event) {
             if (!/^(a|button|svg|path)$/i.test(event.target.nodeName)) {
