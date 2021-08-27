@@ -177,9 +177,9 @@
                         <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
                             <form @submit.prevent="submitSettings" class="card-body">
                                 <div class="row checkbox mb-3">
-                                    <label for="greylisting" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
+                                    <label for="greylist_enabled" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
                                     <div class="col-sm-8 pt-2">
-                                        <input type="checkbox" id="greylisting" name="greylisting" value="1" class="form-check-input d-block mb-2" :checked="user.config.greylisting">
+                                        <input type="checkbox" id="greylist_enabled" name="greylist_enabled" value="1" class="form-check-input d-block mb-2" :checked="user.config.greylist_enabled">
                                         <small id="greylisting-hint" class="text-muted">
                                             {{ $t('user.greylisting-text') }}
                                         </small>
@@ -350,7 +350,7 @@
             },
             submitSettings() {
                 this.$root.clearFormValidation($('#settings form'))
-                let post = { greylisting: $('#greylisting').prop('checked') ? 1 : 0 }
+                let post = { greylist_enabled: $('#greylist_enabled').prop('checked') ? 1 : 0 }
 
                 axios.post('/api/v4/users/' + this.user_id + '/config', post)
                     .then(response => {

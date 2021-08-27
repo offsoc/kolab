@@ -20,21 +20,11 @@ class IP4Net extends Model
         'updated_at'
     ];
 
-    public static function getNet($ip, $mask = 32)
+    public static function getNet($ip)
     {
-        $query =  "
-            SELECT id FROM ip4nets
-            WHERE INET_ATON(net_number) <= INET_ATON(?)
-            AND INET_ATON(net_broadcast) >= INET_ATON(?)
-            ORDER BY INET_ATON(net_number), net_mask DESC LIMIT 1
-        ";
-
-        $results = DB::select($query, [$ip, $ip]);
-
-        if (sizeof($results) == 0) {
-            return null;
-        }
-
-        return \App\IP4Net::find($results[0]->id);
+        $where = 'INET_ATON(net_number) <= INET_ATON(?) and INET_ATON(net_broadcast) >= INET_ATON(?)';
+        return IP4Net::whereRaw($where, [$ip, $ip])
+            ->orderByRaw('INET_ATON(net_number), net_mask DESC')
+            ->first();
     }
 }

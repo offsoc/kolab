@@ -245,7 +245,7 @@ class UsersTest extends TestCase
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue(is_array($json['aliases']));
-        $this->assertTrue($json['config']['greylisting']);
+        $this->assertTrue($json['config']['greylist_enabled']);
         $this->assertSame([], $json['skus']);
         // Values below are tested by Unit tests
         $this->assertArrayHasKey('isDeleted', $json);
@@ -478,14 +478,14 @@ class UsersTest extends TestCase
         $john->setSetting('greylist_enabled', null);
 
         // Test unknown user id
-        $post = ['greylisting' => 1];
+        $post = ['greylist_enabled' => 1];
         $response = $this->actingAs($john)->post("/api/v4/users/123/config", $post);
         $json = $response->json();
 
         $response->assertStatus(404);
 
         // Test access by user not being a wallet controller
-        $post = ['greylisting' => 1];
+        $post = ['greylist_enabled' => 1];
         $response = $this->actingAs($jack)->post("/api/v4/users/{$john->id}/config", $post);
         $json = $response->json();
 
@@ -510,7 +510,7 @@ class UsersTest extends TestCase
         $this->assertNull($john->fresh()->getSetting('greylist_enabled'));
 
         // Test some valid data
-        $post = ['greylisting' => 1];
+        $post = ['greylist_enabled' => 1];
         $response = $this->actingAs($john)->post("/api/v4/users/{$john->id}/config", $post);
         $response->assertStatus(200);
 
@@ -523,7 +523,7 @@ class UsersTest extends TestCase
         $this->assertSame('true', $john->fresh()->getSetting('greylist_enabled'));
 
         // Test some valid data
-        $post = ['greylisting' => 0];
+        $post = ['greylist_enabled' => 0];
         $response = $this->actingAs($john)->post("/api/v4/users/{$john->id}/config", $post);
         $response->assertStatus(200);
 

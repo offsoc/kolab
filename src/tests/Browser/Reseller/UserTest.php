@@ -288,6 +288,7 @@ class UserTest extends TestCaseDusk
         // Now we go to Ned's info page, he's a controller on John's wallet
         $this->browse(function (Browser $browser) {
             $ned = $this->getTestUser('ned@kolab.org');
+            $ned->setSetting('greylist_enabled', 'false');
             $page = new UserPage($ned->id);
 
             $browser->click('@user-users tbody tr:nth-child(4) td:first-child a')
@@ -357,6 +358,15 @@ class UserTest extends TestCaseDusk
                 ->with('@user-distlists', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no distribution lists in this account.');
+                });
+
+            // Assert Settings tab
+            $browser->assertSeeIn('@nav #tab-settings', 'Settings')
+                ->click('@nav #tab-settings')
+                ->whenAvailable('@user-settings form', function (Browser $browser) {
+                    $browser->assertElementsCount('.row', 1)
+                        ->assertSeeIn('.row:first-child label', 'Greylisting')
+                        ->assertSeeIn('.row:first-child .text-danger', 'disabled');
                 });
         });
     }

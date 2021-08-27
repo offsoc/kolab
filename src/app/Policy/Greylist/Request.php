@@ -64,8 +64,6 @@ class Request
 
     public function shouldDefer()
     {
-        $deferIfPermit = true;
-
         list($this->netID, $this->netType) = \App\Utils::getNetFromAddress($this->request['client_address']);
 
         if (!$this->netID) {
@@ -106,48 +104,13 @@ class Request
             );
         }
 
-        // see if all recipients and their domains are opt-outs
-        $enabled = false;
-
+        // See if the recipient opted-out of the feature
+        $enabled = true;
         if ($recipient) {
-            $setting = Setting::where(
-                [
-                    'object_id' => $this->recipientID,
-                    'object_type' => $this->recipientType,
-                    'key' => 'greylist_enabled'
-                ]
-            )->first();
-
-            if (!$setting) {
-                $domain = $recipient->domain();
-
-                if ($domain) {
-                    $setting = Setting::where(
-                        [
-                            'object_id' => $recipient->domain()->id,
-                            'object_type' => \App\Domain::class,
-                            'key' => 'greylist_enabled'
-                        ]
-                    )->first();
-
-                    if (!$setting) {
-                        $enabled = true;
-                    } else {
-                        if ($setting->{'value'} !== 'false') {
-                            $enabled = true;
-                        }
-                    }
-                } else {
-                    $enabled = true;
-                }
-            } else {
-                if ($setting->{'value'} !== 'false') {
-                    $enabled = true;
-                }
-            }
-        } else {
-            $enabled = true;
+            $enabled = $recipient->getSetting('greylist_enabled') !== 'false';
         }
+
+        // FIXME: Shouldn't we bail-out (return early) if there's no $recipient?
 
         // the following block is to maintain statistics and state ...
         $entries = Connect::where(
@@ -228,8 +191,21 @@ class Request
             ->orderBy('updated_at')
             ->first();
 
-        if (!$connect) {
-            $connect = Connect::create(
+        $deferIfPermit = true;
+
+        if ($connect) {
+            $connect->connect_count += 1;
+
+            // TODO: The period of time for which the greylisting persists is configurable.
+            if ($connect->created_at < $this->timestamp->copy()->subMinutes(5)) {
+                $deferIfPermit = false;
+
+                $connect->greylisting = false;
+            }
+
+            $connect->save();
+        } else {
+            Connect::create(
                 [
                     'sender_local' => $this->senderLocal,
                     'sender_domain' => $this->senderDomain,
@@ -238,23 +214,11 @@ class Request
                     'recipient_hash' => $this->recipientHash,
                     'recipient_id' => $this->recipientID,
                     'recipient_type' => $this->recipientType,
-                    'connect_count' => 0,
                     'created_at' => $this->timestamp,
                     'updated_at' => $this->timestamp
                 ]
             );
         }
-
-        $connect->connect_count += 1;
-
-        // TODO: The period of time for which the greylisting persists is configurable.
-        if ($connect->created_at < $this->timestamp->copy()->subMinutes(5)) {
-            $deferIfPermit = false;
-
-            $connect->greylisting = false;
-        }
-
-        $connect->save();
 
         return $deferIfPermit;
     }
@@ -282,8 +246,6 @@ class Request
 
     private function recipientFromRequest()
     {
-        $recipient = null;
-
         $recipients = \App\Utils::findObjectsByRecipientAddress($this->request['recipient']);
 
         if (sizeof($recipients) > 1) {

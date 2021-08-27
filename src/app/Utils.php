@@ -46,28 +46,12 @@ class Utils
     public static function countryForIP($ip)
     {
         if (strpos($ip, ':') === false) {
-            $query = "
-                SELECT country FROM ip4nets
-                WHERE INET_ATON(net_number) <= INET_ATON(?)
-                AND INET_ATON(net_broadcast) >= INET_ATON(?)
-                ORDER BY INET_ATON(net_number), net_mask DESC LIMIT 1
-            ";
+            $net = \App\IP4Net::getNet($ip);
         } else {
-            $query =  "
-                SELECT id FROM ip6nets
-                WHERE INET6_ATON(net_number) <= INET6_ATON(?)
-                AND INET6_ATON(net_broadcast) >= INET6_ATON(?)
-                ORDER BY INET6_ATON(net_number), net_mask DESC LIMIT 1
-            ";
+            $net = \App\IP6Net::getNet($ip);
         }
 
-        $nets = \Illuminate\Support\Facades\DB::select($query, [$ip, $ip]);
-
-        if (sizeof($nets) > 0) {
-            return $nets[0]->country;
-        }
-
-        return 'CH';
+        return $net && $net->country ? $net->country : 'CH';
     }
 
     /**
