@@ -430,5 +430,4 @@ class GreylistTest extends TestCase
 
         $response->assertStatus(200);
     }
-
 }
