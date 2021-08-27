@@ -182,29 +182,15 @@ class Request
             return false;
         }
 
-        // determine if the sender, net and recipient combination has existed before, for each recipient
-        // any one recipient matching should supersede the other recipients not having matched
-        $connect = Connect::where(
-            [
-                'sender_local' => $this->senderLocal,
-                'sender_domain' => $this->senderDomain,
-                'recipient_hash' => $this->recipientHash,
-                'net_id' => $this->netID,
-                'net_type' => $this->netType,
-            ]
-        )
-            ->whereDate('updated_at', '>=', $this->timestamp->copy()->subMonthsWithoutOverflow(1))
-            ->orderBy('updated_at')
-            ->first();
+        $defer = true;
 
-        $deferIfPermit = true;
-
-        if ($connect) {
+        // Retrieve the entry for the sender/recipient/net combination
+        if ($connect = $this->findConnectsCollection()->first()) {
             $connect->connect_count += 1;
 
             // TODO: The period of time for which the greylisting persists is configurable.
             if ($connect->created_at < $this->timestamp->copy()->subMinutes(5)) {
-                $deferIfPermit = false;
+                $defer = false;
 
                 $connect->greylisting = false;
             }
@@ -226,7 +212,7 @@ class Request
             );
         }
 
-        return $deferIfPermit;
+        return $defer;
     }
 
     private function findConnectsCollection()
