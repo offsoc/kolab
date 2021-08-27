@@ -39,7 +39,7 @@ class TenantTest extends TestCase
         $this->assertSame(\config('app.env'), Tenant::getConfig(null, 'app.env'));
         $this->assertSame(null, Tenant::getConfig(null, 'app.unknown'));
 
-        $tenant = Tenant::whereNotIn('id', [1])->first();
+        $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
         $tenant->setSetting('app.test', 'test');
 
         // Tenant specified
@@ -54,7 +54,7 @@ class TenantTest extends TestCase
      */
     public function testWallet(): void
     {
-        $tenant = Tenant::find(1);
+        $tenant = Tenant::find(\config('app.tenant_id'));
         $user = \App\User::where('email', 'reseller@' . \config('app.domain'))->first();
 
         $wallet = $tenant->wallet();

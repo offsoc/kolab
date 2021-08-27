@@ -5,6 +5,7 @@ namespace Tests\Feature\Controller;
 use App\Entitlement;
 use App\Http\Controllers\API\V4\SkusController;
 use App\Sku;
+use App\Tenant;
 use Tests\TestCase;
 
 class SkusTest extends TestCase
@@ -55,7 +56,8 @@ class SkusTest extends TestCase
                 'cost' => 100,
                 'handler_class' => 'App\Handlers\Mailbox',
         ]);
-        $nsku->tenant_id = 2;
+        $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
+        $nsku->tenant_id = $tenant->id;
         $nsku->save();
 
         $response = $this->actingAs($user)->get("api/v4/skus");
@@ -98,7 +100,8 @@ class SkusTest extends TestCase
                 'cost' => 100,
                 'handler_class' => 'App\Handlers\Mailbox',
         ]);
-        $nsku->tenant_id = 2;
+        $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
+        $nsku->tenant_id = $tenant->id;
         $nsku->save();
 
         $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus");
