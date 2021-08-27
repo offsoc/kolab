@@ -82,26 +82,9 @@ class Request
             $this->senderLocal = substr($this->senderLocal, 0, 255);
         }
 
-        $entry = $this->findConnectsCollectionRecent()->orderBy('updated_at')->first();
-
-        if (!$entry) {
-            // purge all entries to avoid a unique constraint violation.
+        // Purge all old information if we have no recent entries
+        if (!$this->findConnectsCollectionRecent()->exists()) {
             $this->findConnectsCollection()->delete();
-
-            $entry = Connect::create(
-                [
-                    'sender_local' => $this->senderLocal,
-                    'sender_domain' => $this->senderDomain,
-                    'net_id' => $this->netID,
-                    'net_type' => $this->netType,
-                    'recipient_hash' => $this->recipientHash,
-                    'recipient_id' => $this->recipientID,
-                    'recipient_type' => $this->recipientType,
-                    'connect_count' => 1,
-                    'created_at' => $this->timestamp,
-                    'updated_at' => $this->timestamp
-                ]
-            );
         }
 
         // See if the recipient opted-out of the feature
@@ -159,10 +142,10 @@ class Request
                 ]
             )
                 ->whereDate('updated_at', '>=', $cutoffDate)
-                ->limit(5)->count();
+                ->limit(4)->count();
 
-            // Automatically create a whitelist if we have at least 5 messages from the sender
-            if ($count >= 5) {
+            // Automatically create a whitelist if we have at least 5 (4 existing plus this) messages from the sender
+            if ($count >= 4) {
                 $this->whitelist = Whitelist::create(
                     [
                         'sender_domain' => $this->senderDomain,
