@@ -80,11 +80,11 @@ class Interactive
                         this.log('- dt, dumpTransport [id]      : dump mediasoup Transport with given id (or the latest created one)');
                         this.log('- dp, dumpProducer [id]       : dump mediasoup Producer with given id (or the latest created one)');
                         this.log('- dc, dumpConsumer [id]       : dump mediasoup Consumer with given id (or the latest created one)');
+                        this.log('- st, statsTransport [id]     : get stats for mediasoup Transport with given id (or all)');
+                        this.log('- sp, statsProducer [id]      : get stats for mediasoup Producer with given id (or all)');
+                        this.log('- sc, statsConsumer [id]      : get stats for mediasoup Consumer with given id (or all)');
                         this.log('- ddp, dumpDataProducer [id]  : dump mediasoup DataProducer with given id (or the latest created one)');
                         this.log('- ddc, dumpDataConsumer [id]  : dump mediasoup DataConsumer with given id (or the latest created one)');
-                        this.log('- st, statsTransport [id]     : get stats for mediasoup Transport with given id (or the latest created one)');
-                        this.log('- sp, statsProducer [id]      : get stats for mediasoup Producer with given id (or the latest created one)');
-                        this.log('- sc, statsConsumer [id]      : get stats for mediasoup Consumer with given id (or the latest created one)');
                         this.log('- sdp, statsDataProducer [id] : get stats for mediasoup DataProducer with given id (or the latest created one)');
                         this.log('- sdc, statsDataConsumer [id] : get stats for mediasoup DataConsumer with given id (or the latest created one)');
                         this.log('- t,  terminal                : open Node REPL Terminal');
@@ -389,25 +389,21 @@ class Interactive
                     case 'st':
                     case 'statsTransport':
                     {
-                        const id = params[0] || Array.from(transports.keys()).pop();
-                        const transport = transports.get(id);
+                        const list = params[0] ? [transports.get(params[0])] : transports.values();
 
-                        if (!transport)
-                        {
-                            this.error('Transport not found');
+                        for (const transport of list) {
+                            if (!transport) {
+                                this.error('Producer not found');
+                                break;
+                            }
+                            try {
+                                const stats = await transport.getStats();
 
-                            break;
-                        }
-
-                        try
-                        {
-                            const stats = await transport.getStats();
-
-                            this.log(`transport.getStats():\n${JSON.stringify(stats, null, '  ')}`);
-                        }
-                        catch (error)
-                        {
-                            this.error(`transport.getStats() failed: ${error}`);
+                                this.log(`transport.getStats():\n${JSON.stringify(stats, null, '  ')}`);
+                            }
+                            catch (error) {
+                                this.error(`transport.getStats() failed: ${error}`);
+                            }
                         }
 
                         break;
@@ -416,25 +412,22 @@ class Interactive
                     case 'sp':
                     case 'statsProducer':
                     {
-                        const id = params[0] || Array.from(producers.keys()).pop();
-                        const producer = producers.get(id);
+                        const list = params[0] ? [producers.get(params[0])] : producers.values();
 
-                        if (!producer)
-                        {
-                            this.error('Producer not found');
+                        for (const producer of list) {
+                            if (!producer) {
+                                this.error('Producer not found');
+                                break;
+                            }
 
-                            break;
-                        }
+                            try {
+                                const stats = await producer.getStats();
 
-                        try
-                        {
-                            const stats = await producer.getStats();
-
-                            this.log(`producer.getStats():\n${JSON.stringify(stats, null, '  ')}`);
-                        }
-                        catch (error)
-                        {
-                            this.error(`producer.getStats() failed: ${error}`);
+                                this.log(`producer.getStats():\n${JSON.stringify(stats, null, '  ')}`);
+                            }
+                            catch (error) {
+                                this.error(`producer.getStats() failed: ${error}`);
+                            }
                         }
 
                         break;
@@ -443,25 +436,21 @@ class Interactive
                     case 'sc':
                     case 'statsConsumer':
                     {
-                        const id = params[0] || Array.from(consumers.keys()).pop();
-                        const consumer = consumers.get(id);
+                        const list = params[0] ? [consumers.get(params[0])] : consumers.values();
 
-                        if (!consumer)
-                        {
-                            this.error('Consumer not found');
+                        for (const consumer of list) {
+                            if (!consumer) {
+                                this.error('consumerr not found');
+                                break;
+                            }
 
-                            break;
-                        }
-
-                        try
-                        {
-                            const stats = await consumer.getStats();
-
-                            this.log(`consumer.getStats():\n${JSON.stringify(stats, null, '  ')}`);
-                        }
-                        catch (error)
-                        {
-                            this.error(`consumer.getStats() failed: ${error}`);
+                            try {
+                                const stats = await consumer.getStats();
+                                this.log(`consumer.getStats():\n${JSON.stringify(stats, null, '  ')}`);
+                            }
+                            catch (error) {
+                                this.error(`consumer.getStats() failed: ${error}`);
+                            }
                         }
 
                         break;
