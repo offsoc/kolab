@@ -571,7 +571,7 @@ function Meet(container)
         })
 
         // Add an element for the count of unread messages on the chat button
-        button.append('<span class="badge badge-dark blinker">')
+        button.append('<span class="badge bg-dark blinker">')
             .on('click', () => {
                 button.find('.badge').text('')
                 chatCount = 0

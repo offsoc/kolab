@@ -17,11 +17,11 @@
             </router-link>
             <router-link v-if="status.enableWallets" class="card link-wallet" :to="{ name: 'wallet' }">
                 <svg-icon icon="wallet"></svg-icon><span class="name">{{ $t('dashboard.wallet') }}</span>
-                <span v-if="balance < 0" class="badge badge-danger">{{ $root.price(balance, currency) }}</span>
+                <span v-if="balance < 0" class="badge bg-danger">{{ $root.price(balance, currency) }}</span>
             </router-link>
             <router-link v-if="$root.hasSKU('meet')" class="card link-chat" :to="{ name: 'rooms' }">
                 <svg-icon icon="comments"></svg-icon><span class="name">{{ $t('dashboard.chat') }}</span>
-                <span class="badge badge-primary">{{ $t('dashboard.beta') }}</span>
+                <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>
             <a v-if="webmailURL" class="card link-webmail" :href="webmailURL">
                 <svg-icon icon="envelope"></svg-icon><span class="name">{{ $t('dashboard.webmail') }}</span>

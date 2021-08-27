@@ -16,6 +16,7 @@ use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\UserInfo;
 use Tests\Browser\Pages\UserList;
+use Tests\Browser\Pages\Wallet as WalletPage;
 use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
@@ -50,6 +51,7 @@ class UsersTest extends TestCaseDusk
 
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
+        $wallet->currency = 'CHF';
         $wallet->save();
 
         $this->clearBetaEntitlements();
@@ -675,6 +677,68 @@ class UsersTest extends TestCaseDusk
                             ->assertSeeIn('tr:nth-child(2) td.price', '0,00 CHF/month¹');
                     })
                     ->assertSeeIn('@skus table + .hint', '¹ applied discount: 10% - Test voucher');
+                });
+        });
+    }
+
+    /**
+     * Test non-default currency in the UI
+     */
+    public function testCurrency(): void
+    {
+        // Add 10% discount
+        $john = User::where('email', 'john@kolab.org')->first();
+        $wallet = $john->wallet();
+        $wallet->balance = -1000;
+        $wallet->currency = 'EUR';
+        $wallet->save();
+
+        // On Dashboard and the wallet page
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/logout')
+                ->on(new Home())
+                ->submitLogon('john@kolab.org', 'simple123', true)
+                ->on(new Dashboard())
+                ->assertSeeIn('@links .link-wallet .badge', '-10,00 €')
+                ->click('@links .link-wallet')
+                ->on(new WalletPage())
+                ->assertSeeIn('#wallet .card-title', 'Account balance -10,00 €');
+        });
+
+        // SKUs on user edit page
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new UserList())
+                ->waitFor('@table tr:nth-child(2)')
+                ->click('@table tr:nth-child(2) a') // joe@kolab.org
+                ->on(new UserInfo())
+                ->with('@general', function (Browser $browser) {
+                    $browser->whenAvailable('@skus', function (Browser $browser) {
+                        $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
+                        $browser->waitFor('tbody tr')
+                            ->assertElementsCount('tbody tr', 6)
+                            // Mailbox SKU
+                            ->assertSeeIn('tbody tr:nth-child(1) td.price', '5,00 €/month')
+                            // Storage SKU
+                            ->assertSeeIn('tr:nth-child(2) td.price', '0,00 €/month')
+                            ->with($quota_input, function (Browser $browser) {
+                                $browser->setQuotaValue(100);
+                            })
+                            ->assertSeeIn('tr:nth-child(2) td.price', '23,75 €/month');
+                    });
+                });
+        });
+
+        // Packages on new user page
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new UserList())
+                ->click('button.create-user')
+                ->on(new UserInfo())
+                ->with('@general', function (Browser $browser) {
+                    $browser->whenAvailable('@packages', function (Browser $browser) {
+                        $browser->assertElementsCount('tbody tr', 2)
+                            ->assertSeeIn('tbody tr:nth-child(1) .price', '9,90 €/month') // Groupware
+                            ->assertSeeIn('tbody tr:nth-child(2) .price', '5,00 €/month'); // Lite
+                    });
                 });
         });
     }

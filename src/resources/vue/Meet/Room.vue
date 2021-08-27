@@ -21,7 +21,7 @@
                             :title="$t('meet.menu-channel')" aria-haspopup="true" aria-expanded="false"
                     >
                         <svg-icon icon="headphones"></svg-icon>
-                        <span class="badge badge-danger" v-if="session.channel">{{ session.channel.toUpperCase() }}</span>
+                        <span class="badge bg-danger" v-if="session.channel">{{ session.channel.toUpperCase() }}</span>
                     </button>
                     <div class="dropdown-menu">
                         <a :class="'dropdown-item' + (!session.channel ? ' active' : '')" href="#" data-code="" @click="switchChannel">- {{ $t('form.none') }} -</a>

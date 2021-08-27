@@ -102,7 +102,7 @@
                                                         <label :for="'pkg-input-' + pkg.id">{{ pkg.name }}</label>
                                                     </td>
                                                     <td class="price text-nowrap">
-                                                        {{ $root.priceLabel(pkg.cost, discount) }}
+                                                        {{ $root.priceLabel(pkg.cost, discount, currency) }}
                                                     </td>
                                                     <td class="buttons">
                                                         <button v-if="pkg.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip="pkg.description">
@@ -154,7 +154,7 @@
                                                         </div>
                                                     </td>
                                                     <td class="price text-nowrap">
-                                                        {{ $root.priceLabel(sku.cost, discount) }}
+                                                        {{ $root.priceLabel(sku.cost, discount, currency) }}
                                                     </td>
                                                     <td class="buttons">
                                                         <button v-if="sku.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip="sku.description">
@@ -226,6 +226,7 @@
         },
         data() {
             return {
+                currency: '',
                 discount: 0,
                 discount_description: '',
                 user_id: null,
@@ -245,9 +246,12 @@
                 wallet = this.$store.state.authInfo.wallets[0]
             }
 
-            if (wallet && wallet.discount) {
-                this.discount = wallet.discount
-                this.discount_description = wallet.discount_description
+            if (wallet) {
+                this.currency = wallet.currency
+                if (wallet.discount) {
+                    this.discount = wallet.discount
+                    this.discount_description = wallet.discount_description
+                }
             }
 
             this.$root.startLoading()
@@ -444,7 +448,7 @@
                 input.prev().text(value + ' ' + sku.range.unit)
 
                 // Update the price
-                record.find('.price').text(this.$root.priceLabel(cost, this.discount))
+                record.find('.price').text(this.$root.priceLabel(cost, this.discount, this.currency))
             },
             findSku(id) {
                 for (let i = 0; i < this.skus.length; i++) {
