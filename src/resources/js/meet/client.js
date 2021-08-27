@@ -390,8 +390,10 @@ function Client()
 
         peers.self = peer
 
-        // TODO: Trigger 'addPeer' for all participants already in the room
         console.log(peers)
+        for (const participant of peers) {
+            trigger('addPeer', participant)
+        }
     }
 
     const setCamera = async (deviceId) => {
