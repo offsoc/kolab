@@ -83,8 +83,10 @@ class Request
         }
 
         // Purge all old information if we have no recent entries
+        $noEntry = false;
         if (!$this->findConnectsCollectionRecent()->exists()) {
             $this->findConnectsCollection()->delete();
+            $noEntry = true;
         }
 
         // See if the recipient opted-out of the feature
@@ -185,7 +187,7 @@ class Request
         $defer = true;
 
         // Retrieve the entry for the sender/recipient/net combination
-        if ($connect = $this->findConnectsCollection()->first()) {
+        if (!$noEntry && ($connect = $this->findConnectsCollection()->first())) {
             $connect->connect_count += 1;
 
             // TODO: The period of time for which the greylisting persists is configurable.
