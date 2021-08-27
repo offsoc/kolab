@@ -159,12 +159,6 @@ function Client()
                         producerPaused
                     } = request.data
 
-                    let peer = peers[peerId]
-
-                    if (!peer) {
-                        return
-                    }
-
                     const consumer = await recvTransport.consume({
                             id,
                             producerId,
@@ -185,24 +179,17 @@ function Client()
                     // resume this Consumer (which was paused for now).
                     cb(null)
 
+                    let peer = peers[peerId]
+
+                    if (!peer) {
+                        return
+                    }
+
                     let tracks = (peer.tracks || []).filter(track => track.kind != kind)
 
                     tracks.push(consumer.track)
 
-                    if (!peer.videoElement) {
-                        peer.videoElement = media.createVideoElement(tracks, {})
-                    } else {
-                        const stream = new MediaStream()
-
-                        tracks.forEach(track => stream.addTrack(track))
-
-                        peer.videoElement.srcObject = stream
-                    }
-
-                    peer.videoActive = true // TODO
-                    peer.audioActive = true // TODO
-
-                    peer.tracks = tracks
+                    setPeerTracks(peer, tracks)
 
                     peers[peerId] = peer
 
@@ -397,6 +384,25 @@ function Client()
 
         // Trigger addPeer event for all peers already in the room, maintain peers list
         existing.forEach(peer => {
+            let tracks = []
+
+            // We receive newConsumer requests before we add the peer to peers list,
+            // therefore we look here for any consumers that belong to this peer and update
+            // the peer. If we do not do this we have to wait about 20 seconds for repeated
+            // newConsumer requests
+            Object.keys(consumers).forEach(cid => {
+                if (consumers[cid].peerId === peer.id) {
+                    tracks.push(consumers[cid].track)
+                }
+            })
+
+            if (tracks.length) {
+                setPeerTracks(peer, tracks)
+            } else {
+                peer.audioActive = false
+                peer.videoActive = false
+            }
+
             trigger('addPeer', peer)
             peers[peer.id] = peer
         })
@@ -489,6 +495,22 @@ function Client()
         micProducer.on('trackended', () => {
             // disableMic()
         })
+    }
+
+    const setPeerTracks = (peer, tracks) => {
+        if (!peer.videoElement) {
+            peer.videoElement = media.createVideoElement(tracks, {})
+        } else {
+            const stream = new MediaStream()
+            tracks.forEach(track => stream.addTrack(track))
+            peer.videoElement.srcObject = stream
+        }
+
+        peer.videoActive = true // TODO
+        peer.audioActive = true // TODO
+        peer.tracks = tracks
+
+        peers[peer.id] = peer
     }
 }
 
