@@ -270,61 +270,6 @@ async function runHttpsServer()
         })
     })
 
-    // app.all('*', async (req, res, next) =>
-    // {
-        // logger.error('Something is happening');
-    //     if (req.secure || config.httpOnly)
-    //     {
-    //         let ltiURL;
-
-    //         try
-    //         {
-    //             ltiURL = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
-    //         }
-    //         catch (error)
-    //         {
-    //             logger.error('Error parsing LTI url: %o', error);
-    //         }
-
-    //         if (
-    //             req.isAuthenticated &&
-    //             req.user &&
-    //             req.user.nickname &&
-    //             !ltiURL.searchParams.get('nickname') &&
-    //             !isPathAlreadyTaken(req.url)
-    //         )
-    //         {
-
-    //             ltiURL.searchParams.append('nickname', req.user.nickname);
-
-    //             res.redirect(ltiURL);
-    //         }
-    //         else
-    //         {
-    //             const specialChars = "<>@!^*()[]{}:;|'\"\\,~`";
-
-    //             for (let i = 0; i < specialChars.length; i++)
-    //             {
-    //                 if (req.url.substring(1).indexOf(specialChars[i]) > -1)
-    //                 {
-    //                     req.url = `/${encodeURIComponent(encodeURI(req.url.substring(1)))}`;
-    //                     res.redirect(`${req.url}`);
-    //                 }
-    //             }
-
-    //             return next();
-    //         }
-    //     }
-    //     else
-    //         res.redirect(`https://${req.hostname}${req.url}`);
-
-    // });
-
-    // Serve all files in the public folder as static files.
-    // app.use(express.static('public'));
-
-    // app.use((req, res) => res.sendFile(`${__dirname}/public/index.html`));
-
     if (config.httpOnly === true)
     {
         // http
