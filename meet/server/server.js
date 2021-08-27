@@ -242,7 +242,6 @@ async function runHttpsServer()
         //FIXME we're truncating because of kolab4 database layout (should be fixed instnead)
         const peerId = uuidv4().substring(0, 16)
 
-
         //TODO create room already?
 
         peer = new Peer({ id: peerId, roomId });
@@ -260,10 +259,13 @@ async function runHttpsServer()
         peer.addRole(userRoles.MODERATOR);
         peer.addRole(userRoles.AUTHENTICATED);
 
+        const proto = config.publicDomain.indexOf('localhost') === 0 ? 'ws' : 'wss';
+
         res.json({
-            id : peerId,
-            //When the below get's passed to the socket.io client we end up with something like (depending on the socket.io path) wss://${publicDomain}/meetmedia/signaling/?peerId=peer1&roomId=room1&EIO=3&transport=websocket,
-            token : `wss://${config.publicDomain}/?peerId=${peerId}&roomId=${roomId}`
+            id: peerId,
+            // When the below get's passed to the socket.io client we end up with something like (depending on the socket.io path)
+            // wss://${publicDomain}/meetmedia/signaling/?peerId=peer1&roomId=room1&EIO=3&transport=websocket,
+            token: `${proto}://${config.publicDomain}/?peerId=${peerId}&roomId=${roomId}`
         })
     })
 
