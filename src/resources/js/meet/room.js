@@ -378,7 +378,7 @@ function Room(container)
         message = message.replace(/\r?\n/, '<br>')
 
         // Display the message
-        let isSelf = data.id == session.connectionId
+        let isSelf = false // TODO
         let chat = $(sessionData.chatElement).find('.chat')
         let box = chat.find('.message').last()
 
@@ -684,8 +684,6 @@ function Room(container)
     function participantCreate(params, content) {
         let element
 
-        params.isSelf = params.isSelf || params.peerId == 'self'
-
         if ((!params.language && params.role & Roles.PUBLISHER) || params.role & Roles.SCREEN) {
             // publishers and shared screens
             element = publisherCreate(params, content)
@@ -810,12 +808,12 @@ function Room(container)
         }
 
         // Remove the subscriber element, if exists
-        $('#subscriber-' + params.peerId).remove()
+        $('#subscriber-' + params.id).remove()
 
         let prio = params.isSelf || (isScreen && !$(publishersContainer).children('.screen').length)
 
         return wrapper[prio ? 'prependTo' : 'appendTo'](publishersContainer)
-            .attr('id', 'publisher-' + params.peerId)
+            .attr('id', 'publisher-' + params.id)
             .get(0)
     }
 
@@ -828,7 +826,7 @@ function Room(container)
     function participantUpdate(wrapper, params, noupdate) {
         const element = $(wrapper)
         const isModerator = sessionData.role & Roles.MODERATOR
-        const isSelf = params.peerId == 'self'
+        const isSelf = params.isSelf
         const rolePublisher = params.role & Roles.PUBLISHER
         const roleModerator = params.role & Roles.MODERATOR
         const roleScreen = params.role & Roles.SCREEN
@@ -955,7 +953,7 @@ function Room(container)
         participantUpdate(wrapper, params, true)
 
         return wrapper[params.isSelf ? 'prependTo' : 'appendTo'](subscribersContainer)
-            .attr('id', 'subscriber-' + params.peerId)
+            .attr('id', 'subscriber-' + params.id)
             .get(0)
     }
 
@@ -1050,7 +1048,7 @@ function Room(container)
             element.find('.action-nickname').remove()
 
             element.find('.action-dismiss').on('click', e => {
-                sessionData.onDismiss(params.peerId)
+                sessionData.onDismiss(params.id)
             })
         }
 
@@ -1058,7 +1056,7 @@ function Room(container)
             if (params.isSelf) {
                 return sessionData.role
             }
-            if (params.peerId in connections) {
+            if (params.id in connections) {
                 return connections[params.peerId].role
             }
             return 0
@@ -1080,7 +1078,7 @@ function Room(container)
                 }
             }
 
-            sessionData.onConnectionChange(params.peerId, { role })
+            sessionData.onConnectionChange(params.id, { role })
         })
 
         element.find('.action-role-moderator input').on('change', e => {
@@ -1093,13 +1091,13 @@ function Room(container)
                 role ^= Roles.MODERATOR
             }
 
-            sessionData.onConnectionChange(params.peerId, { role })
+            sessionData.onConnectionChange(params.id, { role })
         })
 
         element.find('.interpreting select')
             .on('change', e => {
                 const language = $(e.target).val()
-                sessionData.onConnectionChange(params.peerId, { language })
+                sessionData.onConnectionChange(params.id, { language })
                 dropdown.hide()
             })
             .on('click', e => {

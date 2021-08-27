@@ -18,7 +18,6 @@ const Room = require('./lib/Room');
 const Peer = require('./lib/Peer');
 const base64 = require('base-64');
 const helmet = require('helmet');
-const userRoles = require('./userRoles');
 // auth
 const redis = require('redis');
 const redisClient = redis.createClient(config.redisOptions);
@@ -207,10 +206,10 @@ async function runHttpsServer()
 
     app.post(`${config.pathPrefix}/api/signal`, async function (req, res, next) {
         let data = req.body;
-        const roomId = data['session'];
-        const signalType = data['type'];
-        const payload = data['data'];
-        const peers = data['to'];
+        const roomId = data.session;
+        const signalType = data.type;
+        const payload = data.data;
+        const peers = data.to;
 
 
         if (peers) {
@@ -239,9 +238,10 @@ async function runHttpsServer()
     app.post(`${config.pathPrefix}/api/sessions/:session_id/connection`, function (req, res, next) {
         console.warn("Creating connection in session", req.params.session_id)
         roomId = req.params.session_id
+        let data = req.body;
+
         //FIXME we're truncating because of kolab4 database layout (should be fixed instnead)
         const peerId = uuidv4().substring(0, 16)
-
         //TODO create room already?
 
         peer = new Peer({ id: peerId, roomId });
@@ -256,8 +256,9 @@ async function runHttpsServer()
         // peer.picture = picture;
         peer.email = "email@test.com";
         peer.authenticated = true;
-        peer.addRole(userRoles.MODERATOR);
-        peer.addRole(userRoles.AUTHENTICATED);
+
+        if ('role' in data)
+            peer.setRole(data.role);
 
         const proto = config.publicDomain.indexOf('localhost') === 0 ? 'ws' : 'wss';
 

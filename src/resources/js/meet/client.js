@@ -359,7 +359,7 @@ function Client()
         })
 
         // Send the "join" request, get room data, participants, etc.
-        const { peers } = await socket.sendRequest('join', {
+        const { peers: existing, role, id: peerId } = await socket.sendRequest('join', {
                 nickname: nickname,
                 rtpCapabilities: device.rtpCapabilities
         })
@@ -367,10 +367,12 @@ function Client()
         trigger('joinSuccess')
 
         let peer = {
-            id: 'self',
+            id: peerId,
+            role,
+            isSelf: true,
+            nickname,
             audioActive: !!audioSource,
-            videoActive: !!videoSource,
-            nickname: nickname
+            videoActive: !!videoSource
         }
 
         // Start publishing webcam
@@ -388,12 +390,16 @@ function Client()
 
         trigger('addPeer', peer)
 
+        // Add self to the list
         peers.self = peer
 
-        console.log(peers)
-        for (const participant of peers) {
-            trigger('addPeer', participant)
-        }
+        console.log(existing)
+
+        // Trigger addPeer event for all peers already in the room, maintain peers list
+        existing.forEach(peer => {
+            trigger('addPeer', peer)
+            peers[peer.id] = peer
+        })
     }
 
     const setCamera = async (deviceId) => {

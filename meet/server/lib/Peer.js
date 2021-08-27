@@ -1,5 +1,4 @@
 const EventEmitter = require('events').EventEmitter;
-const userRoles = require('../userRoles');
 const Logger = require('./Logger');
 
 const logger = new Logger('Peer');
@@ -27,7 +26,7 @@ class Peer extends EventEmitter
 
         this._authenticatedTimestamp = null;
 
-        this._roles = [ userRoles.NORMAL ];
+        this._role = 0;
 
         this._nickname = false;
 
@@ -162,9 +161,9 @@ class Peer extends EventEmitter
         return this._authenticatedTimestamp;
     }
 
-    get roles()
+    get role()
     {
-        return this._roles;
+        return this._role;
     }
 
     get nickname()
@@ -263,39 +262,20 @@ class Peer extends EventEmitter
         return this._consumers;
     }
 
-    addRole(newRole)
+    setRole(newRole)
     {
-        if (
-            !this._roles.some((role) => role.id === newRole.id) &&
-            newRole.id !== userRoles.NORMAL.id // Can not add NORMAL
-        )
-        {
-            this._roles.push(newRole);
+        if (this._role != newRole) {
+            this._role = newRole;
 
-            logger.info('addRole() | [newRole:"%s]"', newRole);
+            logger.info('setRole() | [newRole:%s]', newRole);
 
             this.emit('gotRole', { newRole });
         }
     }
 
-    removeRole(oldRole)
-    {
-        if (
-            this._roles.some((role) => role.id === oldRole.id) &&
-            oldRole.id !== userRoles.NORMAL.id // Can not remove NORMAL
-        )
-        {
-            this._roles = this._roles.filter((role) => role.id !== oldRole.id);
-
-            logger.info('removeRole() | [oldRole:"%s]"', oldRole);
-
-            this.emit('lostRole', { oldRole });
-        }
-    }
-
     hasRole(role)
     {
-        return this._roles.some((myRole) => myRole.id === role.id);
+        return !!(this._role & role);
     }
 
     addTransport(id, transport)
@@ -355,10 +335,10 @@ class Peer extends EventEmitter
         {
             id: this.id,
             nickname: this.nickname,
-            picture: this.picture,
-            roles: this.roles.map((role) => role.id),
+            // picture: this.picture,
+            role: this._role,
             raisedHand: this.raisedHand,
-            raisedHandTimestamp: this.raisedHandTimestamp
+            // raisedHandTimestamp: this.raisedHandTimestamp
         };
 
         return peerInfo;

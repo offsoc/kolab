@@ -228,17 +228,10 @@ class Room extends Model
             throw new \Exception("The room session does not exist");
         }
 
-        // FIXME: Looks like passing the role in 'data' param is the only way
-        // to make it visible for everyone in a room. So, for example we can
-        // handle/style subscribers/publishers/moderators differently on the
-        // client-side. Is this a security issue?
-        $data = ['role' => $role];
-
         $url = 'sessions/' . $this->session_id . '/connection';
         $post = [
             'json' => [
-                'role' => self::OV_ROLE_PUBLISHER,
-                'data' => json_encode($data)
+                'role' => $role,
             ]
         ];
 
