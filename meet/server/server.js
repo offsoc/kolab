@@ -2,7 +2,6 @@
 
 process.title = 'edumeet-server';
 
-const bcrypt = require('bcrypt');
 const config = require('./config/config');
 const fs = require('fs');
 const http = require('http');
@@ -16,7 +15,6 @@ const AwaitQueue = require('awaitqueue');
 const Logger = require('./lib/Logger');
 const Room = require('./lib/Room');
 const Peer = require('./lib/Peer');
-const base64 = require('base-64');
 const helmet = require('helmet');
 // auth
 const redis = require('redis');
@@ -168,11 +166,11 @@ async function runHttpsServer()
 {
     app.use(compression());
 
-    app.get(`${config.pathPrefix}/api/ping`, function (req, res, next) {
+    app.get(`${config.pathPrefix}/api/ping`, function (req, res, /*next*/) {
         res.send('PONG')
     })
 
-    app.get(`${config.pathPrefix}/api/sessions`, function (req, res, next) {
+    app.get(`${config.pathPrefix}/api/sessions`, function (req, res, /*next*/) {
         //TODO json.stringify
         res.json({
                     id : "testId"
@@ -180,7 +178,7 @@ async function runHttpsServer()
     })
 
     //Check if the room exists
-    app.get(`${config.pathPrefix}/api/sessions/:session_id`, function (req, res, next) {
+    app.get(`${config.pathPrefix}/api/sessions/:session_id`, function (req, res, /*next*/) {
         console.warn("Checking for room")
         let room = rooms.get(req.params.session_id);
         if (!room) {
@@ -193,22 +191,22 @@ async function runHttpsServer()
     })
 
     // Create room and return id
-    app.post(`${config.pathPrefix}/api/sessions`, async function (req, res, next) {
+    app.post(`${config.pathPrefix}/api/sessions`, async function (req, res, /*next*/) {
         console.warn("Creating new room", req.body.mediaMode, req.body.recordingMode)
         //FIXME we're truncating because of kolab4 database layout (should be fixed instead)
         const roomId = uuidv4().substring(0, 16)
-        const room = await getOrCreateRoom({ roomId });
+        await getOrCreateRoom({ roomId });
 
         res.json({
                     id : roomId
                 })
     })
 
-    app.post(`${config.pathPrefix}/api/signal`, async function (req, res, next) {
+    app.post(`${config.pathPrefix}/api/signal`, async function (req, res, /*next*/) {
         let data = req.body;
         const roomId = data.session;
-        const signalType = data.type;
-        const payload = data.data;
+        // const signalType = data.type;
+        // const payload = data.data;
         const peers = data.to;
 
 
@@ -235,16 +233,16 @@ async function runHttpsServer()
     //         'data' => json_encode(['role' => $role])
     //     ]
     // ];
-    app.post(`${config.pathPrefix}/api/sessions/:session_id/connection`, function (req, res, next) {
+    app.post(`${config.pathPrefix}/api/sessions/:session_id/connection`, function (req, res, /*next*/) {
         console.warn("Creating connection in session", req.params.session_id)
-        roomId = req.params.session_id
+        let roomId = req.params.session_id
         let data = req.body;
 
         //FIXME we're truncating because of kolab4 database layout (should be fixed instnead)
         const peerId = uuidv4().substring(0, 16)
         //TODO create room already?
 
-        peer = new Peer({ id: peerId, roomId });
+        let peer = new Peer({ id: peerId, roomId });
         peers.set(peerId, peer);
 
         peer.on('close', () => {
@@ -331,7 +329,7 @@ async function runWebSocketServer()
 
         queue.push(async () =>
         {
-            const { token } = socket.handshake.session;
+            // const { token } = socket.handshake.session;
 
             const room = await getOrCreateRoom({ roomId });
 

@@ -21,7 +21,7 @@ axios
     const _signalingUrl = `ws://127.0.0.1:12443/?peerId=${peerId}&roomId=${roomId}`;
     console.warn(`${_signalingUrl}`);
 
-    _signalingSocket = io(_signalingUrl, { transports: ["websocket"], rejectUnauthorized: false });
+    let _signalingSocket = io(_signalingUrl, { transports: ["websocket"], rejectUnauthorized: false });
 
     _signalingSocket.on('connect', () =>
     {

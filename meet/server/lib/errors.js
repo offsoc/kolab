@@ -9,6 +9,7 @@ class SocketTimeoutError extends Error
 
         this.name = 'SocketTimeoutError';
 
+        // eslint-disable-next-line no-prototype-builtins
         if (Error.hasOwnProperty('captureStackTrace')) // Just in V8.
             Error.captureStackTrace(this, SocketTimeoutError);
         else

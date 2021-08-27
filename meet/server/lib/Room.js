@@ -661,10 +661,10 @@ console.log(request.method);
                     webRtcTransportOptions
                 );
 
-                transport.on('dtlsstatechange', (dtlsState) =>
-                {
-                    if (dtlsState === 'failed' || dtlsState === 'closed')
+                transport.on('dtlsstatechange', (dtlsState) => {
+                    if (dtlsState === 'failed' || dtlsState === 'closed') {
                         logger.warn('WebRtcTransport "dtlsstatechange" event [dtlsState:%s]', dtlsState);
+                    }
                 });
 
                 // Store the WebRtcTransport into the Peer data Object.
@@ -685,7 +685,9 @@ console.log(request.method);
                 if (maxIncomingBitrate)
                 {
                     try { await transport.setMaxIncomingBitrate(maxIncomingBitrate); }
-                    catch (error) {}
+                    catch (error) {
+                        logger.info("Setting the incoming bitrate failed")
+                    }
                 }
 
                 break;

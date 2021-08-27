@@ -569,8 +569,9 @@ class Interactive
         {
             this._socket.write(`${colors.green(msg)}\n`);
         }
-        catch (error)
-        {}
+        catch (error) {
+            //Do nothing
+        }
     }
 
     error(msg)
@@ -579,8 +580,9 @@ class Interactive
         {
             this._socket.write(`${colors.red.bold('ERROR: ')}${colors.red(msg)}\n`);
         }
-        catch (error)
-        {}
+        catch (error) {
+            //Do nothing
+        }
     }
 }
 
@@ -678,11 +680,14 @@ module.exports = async function(rooms, peers)
         await new Promise((resolve) =>
         {
             try { fs.unlinkSync(SOCKET_PATH); }
-            catch (error) {}
+            catch (error) {
+                //Do nothing
+            }
 
             server.listen(SOCKET_PATH, resolve);
         });
     }
-    catch (error)
-    {}
+    catch (error) {
+        //Do nothing
+    }
 };
