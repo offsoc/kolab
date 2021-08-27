@@ -255,7 +255,6 @@ async function runHttpsServer()
         peer.nickname = "Display Name";
         // peer.picture = picture;
         peer.email = "email@test.com";
-        peer.authenticated = true;
 
         if ('role' in data)
             peer.setRole(data.role);

@@ -18,10 +18,6 @@ class Peer extends EventEmitter
 
         this._closed = false;
 
-        this._authenticated = false;
-
-        this._authenticatedTimestamp = null;
-
         this._role = 0;
 
         this._nickname = false;
@@ -110,32 +106,6 @@ class Peer extends EventEmitter
     get closed()
     {
         return this._closed;
-    }
-
-    get authenticated()
-    {
-        return this._authenticated;
-    }
-
-    set authenticated(authenticated)
-    {
-        if (authenticated !== this._authenticated)
-        {
-            authenticated ?
-                this._authenticatedTimestamp = Date.now() :
-                this._authenticatedTimestamp = null;
-
-            const oldAuthenticated = this._authenticated;
-
-            this._authenticated = authenticated;
-
-            this.emit('authenticationChanged', { oldAuthenticated });
-        }
-    }
-
-    get authenticatedTimestamp()
-    {
-        return this._authenticatedTimestamp;
     }
 
     get role()

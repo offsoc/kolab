@@ -597,7 +597,6 @@ console.log(request.method);
                     id: peer.id,
                     role: peer.role,
                     peers: peerInfos,
-                    //authenticated        : peer.authenticated,
                     //chatHistory          : this._chatHistory,
                     //fileHistory          : this._fileHistory,
                     //lastNHistory         : this._lastN,
