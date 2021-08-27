@@ -113,14 +113,6 @@ class Request
         // FIXME: Shouldn't we bail-out (return early) if there's no $recipient?
 
         // the following block is to maintain statistics and state ...
-        $entries = Connect::where(
-            [
-                'sender_domain' => $this->senderDomain,
-                'net_id' => $this->netID,
-                'net_type' => $this->netType
-            ]
-        )
-            ->whereDate('updated_at', '>=', $this->timestamp->copy()->subDays(7));
 
         // determine if the sender domain is a whitelist from this network
         $this->whitelist = Whitelist::where(
@@ -131,6 +123,8 @@ class Request
             ]
         )->first();
 
+        $cutoffDate = $this->timestamp->copy()->subDays(7);
+
         if ($this->whitelist) {
             if ($this->whitelist->updated_at < $this->timestamp->copy()->subMonthsWithoutOverflow(1)) {
                 $this->whitelist->delete();
@@ -138,17 +132,37 @@ class Request
                 $this->whitelist->updated_at = $this->timestamp;
                 $this->whitelist->save(['timestamps' => false]);
 
-                $entries->update(
+                Connect::where(
                     [
-                        'greylisting' => false,
-                        'updated_at' => $this->timestamp
+                        'sender_domain' => $this->senderDomain,
+                        'net_id' => $this->netID,
+                        'net_type' => $this->netType,
+                        'greylisting' => true
                     ]
-                );
+                )
+                    ->whereDate('updated_at', '>=', $cutoffDate)
+                    ->update(
+                        [
+                            'greylisting' => false,
+                            'updated_at' => $this->timestamp
+                        ]
+                    );
 
                 return false;
             }
         } else {
-            if ($entries->count() >= 5) {
+            $count = Connect::where(
+                [
+                    'sender_domain' => $this->senderDomain,
+                    'net_id' => $this->netID,
+                    'net_type' => $this->netType
+                ]
+            )
+                ->whereDate('updated_at', '>=', $cutoffDate)
+                ->limit(5)->count();
+
+            // Automatically create a whitelist if we have at least 5 messages from the sender
+            if ($count >= 5) {
                 $this->whitelist = Whitelist::create(
                     [
                         'sender_domain' => $this->senderDomain,
@@ -159,12 +173,21 @@ class Request
                     ]
                 );
 
-                $entries->update(
+                Connect::where(
                     [
-                        'greylisting' => false,
-                        'updated_at' => $this->timestamp
+                        'sender_domain' => $this->senderDomain,
+                        'net_id' => $this->netID,
+                        'net_type' => $this->netType,
+                        'greylisting' => true
                     ]
-                );
+                )
+                    ->whereDate('updated_at', '>=', $cutoffDate)
+                    ->update(
+                        [
+                            'greylisting' => false,
+                            'updated_at' => $this->timestamp
+                        ]
+                    );
             }
         }
 
