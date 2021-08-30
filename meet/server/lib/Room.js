@@ -445,7 +445,7 @@ class Room extends EventEmitter
             // Spread to others
             this._notification(peer.socket, 'changeNickname', {
                 peerId: peer.id,
-                nickame: peer.nickname
+                nickname: peer.nickname
             }, true);
         });
 

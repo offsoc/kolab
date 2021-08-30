@@ -112,8 +112,6 @@ function Room(container)
         client.on('addPeer', (event) => {
             console.log('addPeer', event)
 
-            event.role = Roles.PUBLISHER // TODO
-
             event.element = participantCreate(event)
 
             if (event.videoElement) {
@@ -140,7 +138,7 @@ function Room(container)
         })
 
         // Participant properties changed e.g. audio/video muted/unmuted
-        client.on('updatePeer', (event) => {
+        client.on('updatePeer', (event, changed) => {
             console.log('updatePeer', event)
 
             let peer = peers[event.id]
@@ -149,17 +147,21 @@ function Room(container)
                 return
             }
 
-            if (event.videoElement && event.videoElement.parentNode != peer.element) {
-                $(peer.element).prepend(event.videoElement)
+            event.element = peer.element
+
+            if (event.videoElement && event.videoElement.parentNode != event.element) {
+                $(event.element).prepend(event.videoElement)
             } else if (!event.videoElement) {
-                $(peer.element).find('video').remove()
+                $(event.element).find('video').remove()
             }
 
-            // TODO: update peer properties
+            if (changed && changed.includes('nickname')) {
+                 nicknameUpdate(event.nickname, event.id)
+            }
 
-            participantUpdate(peer.element, event)
+            participantUpdate(event.element, event)
 
-            peers[event.id] = peer
+            peers[event.id] = event
         })
 
         client.on('joinSuccess', () => {
@@ -286,9 +288,7 @@ function Room(container)
         })
     }
 
-    /**
-     * Signal events handler
-     */
+/*
     function signalEventHandler(signal) {
         let conn, data
         let connId = signal.from ? signal.from.connectionId : null
@@ -322,6 +322,7 @@ function Room(container)
                 break
         }
     }
+*/
 
     /**
      * Add a message to the chat
@@ -391,33 +392,6 @@ function Room(container)
     }
 
     /**
-     * Send the user properties update signal to other participants
-     *
-     * @param connection Optional connection to which the signal will be sent
-     *                   If not specified the signal is sent to all participants
-     */
-    function signalUserUpdate(connection) {
-        let data = {
-            nickname: sessionData.params.nickname
-        }
-
-        session.signal({
-            data: JSON.stringify(data),
-            type: 'userChanged',
-            to: connection ? [connection] : undefined
-        })
-
-        // The same nickname for screen sharing session
-        if (screenSession) {
-            screenSession.signal({
-                data: JSON.stringify(data),
-                type: 'userChanged',
-                to: connection ? [connection] : undefined
-            })
-        }
-    }
-
-    /**
      * Switch interpreted language channel
      *
      * @param channel Two-letter language code
@@ -483,8 +457,7 @@ function Room(container)
      * Detect if screen sharing is supported by the browser
      */
     function isScreenSharingSupported() {
-        // TODO: Implement detection for screen sharing support in the browser
-        return true;
+        return false // TODO !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)
     }
 
     /**
@@ -614,19 +587,19 @@ function Room(container)
     /**
      * Update participant nickname in the UI
      *
-     * @param nickname     Nickname
-     * @param connectionId Connection identifier of the user
+     * @param nickname Nickname
+     * @param peerId   Connection identifier of the user
      */
-    function nicknameUpdate(nickname, connectionId) {
-        if (connectionId) {
+    function nicknameUpdate(nickname, peerId) {
+        if (peerId) {
             $(sessionData.chatElement).find('.chat').find('.message').each(function() {
                 let elem = $(this)
-                if (elem.data('id') == connectionId) {
+                if (elem.data('id') == peerId) {
                     elem.find('.nickname').text(nickname || '')
                 }
             })
 
-            $(sessionData.queueElement).find('#qa' + connectionId + ' .content').text(nickname || '')
+            $(sessionData.queueElement).find('#qa' + peerId + ' .content').text(nickname || '')
         }
     }
 
@@ -981,11 +954,11 @@ function Room(container)
                 editable.focus()
             }
             let editableUpdate = () => {
-                editable.contentEditable = false
-                sessionData.params.nickname = editable.innerText
-                // TODO
-                // signalUserUpdate()
-                // nicknameUpdate(editable.innerText, 'self')
+                // Skip redundant update on blur, if it was already updated
+                if (editable.contentEditable !== 'false') {
+                    editable.contentEditable = false
+                    client.setNickname(editable.innerText)
+                }
             }
 
             element.find('.action-nickname').on('click', editableEnable)

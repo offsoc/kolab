@@ -137,6 +137,12 @@ function Client()
         socket.sendRequest('chatMessage', { message })
     }
 
+    this.setNickname = (nickname) => {
+        peers.self.nickname = nickname
+        socket.sendRequest('changeNickname', { nickname })
+        trigger('updatePeer', peers.self, ['nickname'])
+    }
+
     /**
      * Register event handlers
      */
@@ -224,7 +230,7 @@ function Client()
             }
         })
 
-        socket.on('notification', async (notification) => {
+        socket.on('notification', (notification) => {
             switch (notification.method) {
                 case 'roomReady':
                     turnServers = notification.data.turnServers
@@ -294,14 +300,14 @@ function Client()
 
                     peer.nickname = nickname
 
-                    trigger('updatePeer', peer)
+                    trigger('updatePeer', peer, ['nickname'])
 
                     return
                 }
 
                 case 'chatMessage': {
                     trigger('chatMessage', notification.data)
-                    return 
+                    return
                 }
 
                 default:
