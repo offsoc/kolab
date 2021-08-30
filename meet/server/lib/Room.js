@@ -14,15 +14,21 @@ const ROUTER_SCALE_SIZE = config.routerScaleSize || 40;
 class Room extends EventEmitter
 {
 
+    /*
+     * Find a router that is on a worker that is least loaded.
+     *
+     * A worker with a router that we are already piping to is preferred.
+     */
     static getLeastLoadedRouter(mediasoupWorkers, peers, mediasoupRouters)
     {
-
         const routerLoads = new Map();
 
         const workerLoads = new Map();
 
         const pipedRoutersIds = new Set();
 
+        // Calculate router loads by adding up peers per router,
+        // and collected piped routers
         for (const peer of peers.values())
         {
             const routerId = peer.routerId;
@@ -45,6 +51,7 @@ class Room extends EventEmitter
             }
         }
 
+        // Calculate worker loads by adding up router loads per worker
         for (const worker of mediasoupWorkers)
         {
             for (const router of worker._routers)
@@ -1193,10 +1200,14 @@ class Room extends EventEmitter
         }
     }
 
+    /*
+     * Pipe producers of peers that are running under another routher to this router.
+     */
     async _pipeProducersToRouter(routerId)
     {
         const router = this._mediasoupRouters.get(routerId);
 
+        // All peers that have a different router
         const peersToPipe =
             Object.values(this._peers)
                 .filter((peer) => peer.routerId !== routerId && peer.routerId !== null);
@@ -1230,7 +1241,8 @@ class Room extends EventEmitter
         return routerId;
     }
 
-    // Returns an array of router ids we need to pipe to
+    // Returns an array of router ids we need to pipe to:
+    // The combined set of routers of all peers, exluding the router of the peer itself.
     _getRoutersToPipeTo(originRouterId)
     {
         return Object.values(this._peers)
