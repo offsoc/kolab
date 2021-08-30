@@ -339,6 +339,8 @@ async function runWebSocketServer()
                 return;
             }
 
+            peer.socket = socket;
+
             room.handlePeer({ peer });
 
             statusLog();
