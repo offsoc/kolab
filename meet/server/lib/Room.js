@@ -3,7 +3,7 @@ const AwaitQueue = require('awaitqueue');
 const axios = require('axios');
 const Logger = require('./Logger');
 const { SocketTimeoutError } = require('./errors');
-const Roles = require('../userRoles');
+const Roles = require('./userRoles');
 
 const config = require('../config/config');
 
