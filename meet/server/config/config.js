@@ -13,7 +13,7 @@ module.exports =
     // },
     // turnAPITimeout    : 2 * 1000,
     // Backup turnservers if REST fails or is not configured
-    backupTurnServers : [
+    backupTurnServers: process.env.TURN_SERVER == 'none' ? [] : [
         {
             urls : [
                 process.env.TURN_SERVER || 'turn:127.0.0.1:3478?transport=tcp'
@@ -34,19 +34,16 @@ module.exports =
     cookieSecret : 'T0P-S3cR3t_cook!e',
     cookieName   : 'kolabmeet.sid',
     // if you use encrypted private key the set the passphrase
-    tls          :
-    {
-        //cert : `${__dirname}/../certs/mediasoup-demo.localhost.cert.pem`,
+    tls: {
         // passphrase: 'key_password'
-        //key  : `${__dirname}/../certs/mediasoup-demo.localhost.key.pem`
-        cert : `/etc/pki/tls/certs/kolab.hosted.com.cert`,
-        key : `/etc/pki/tls/certs/kolab.hosted.com.key`,
+        cert: process.env.SSL_CERT || `/etc/pki/tls/certs/kolab.hosted.com.cert`,
+        key: process.env.SSL_KEY || `/etc/pki/tls/certs/kolab.hosted.com.key`,
     },
     // listening Host or IP 
     // If omitted listens on every IP. ("0.0.0.0" and "::")
-    //listeningHost: 'localhost',
+    listeningHost: process.env.LISTENING_HOST || '0.0.0.0',
     // Listening port for https server.
-    listeningPort         : 12443,
+    listeningPort: process.env.LISTENING_PORT || 12443,
     // Any http request is redirected to https.
     // Listening port for http server.
     listeningRedirectPort : 12080,
@@ -152,20 +149,14 @@ module.exports =
             ]
         },
         // mediasoup WebRtcTransport settings.
-        webRtcTransport :
-        {
-            listenIps :
-            [
+        webRtcTransport: {
+            listenIps: [
                 { ip: process.env.PUBLIC_IP || '127.0.0.1', announcedIp: null }
-
-                // Can have multiple listening interfaces
-                // change 2001:DB8::1 IPv6 to your server's IPv6 address!!
-                // { ip: '2001:DB8::1', announcedIp: null }
             ],
-            initialAvailableOutgoingBitrate : 1000000,
-            minimumAvailableOutgoingBitrate : 600000,
+            initialAvailableOutgoingBitrate: 1000000,
+            minimumAvailableOutgoingBitrate: 600000,
             // Additional options that are not part of WebRtcTransportOptions.
-            maxIncomingBitrate              : 1500000
+            maxIncomingBitrate: 1500000
         }
     }
 

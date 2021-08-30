@@ -444,7 +444,7 @@ class Room extends EventEmitter
                 }
                 catch (error)
                 {
-                    if ('backupTurnServers' in config)
+                    if ('backupTurnServers' in config && config.backupTurnServers.length)
                         turnServers = config.backupTurnServers;
 
                     logger.error('_peerJoining() | error on REST turn [error:"%o"]', error);
