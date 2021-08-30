@@ -210,10 +210,6 @@ class Room extends EventEmitter
         // Joining queue
         this._queue = new AwaitQueue();
 
-        this._chatHistory = [];
-
-        this._fileHistory = [];
-
         this._lastN = [];
 
         this._peers = {};
@@ -246,10 +242,6 @@ class Room extends EventEmitter
             clearTimeout(this._selfDestructTimeout);
 
         this._selfDestructTimeout = null;
-
-        this._chatHistory = null;
-
-        this._fileHistory = null;
 
         // Close the peers.
         for (const peer in this._peers)
@@ -545,9 +537,6 @@ class Room extends EventEmitter
                     id: peer.id,
                     role: peer.role,
                     peers: peerInfos,
-                    //chatHistory          : this._chatHistory,
-                    //fileHistory          : this._fileHistory,
-                    //lastNHistory         : this._lastN,
                 });
 
                 for (const joinedPeer of joinedPeers)
@@ -852,15 +841,14 @@ class Room extends EventEmitter
 
             case 'chatMessage':
             {
-                const { chatMessage } = request.data;
-
-                this._chatHistory.push(chatMessage);
+                const { message } = request.data;
 
                 // Spread to others
                 this._notification(peer.socket, 'chatMessage', {
-                    peerId      : peer.id,
-                    chatMessage : chatMessage
-                }, true);
+                    peerId: peer.id,
+                    nickname: peer.nickname,
+                    message: message
+                }, true, true);
 
                 // Return no error
                 cb();
@@ -890,23 +878,7 @@ class Room extends EventEmitter
 
                 break;
             }
-/*
-            case 'moderator:clearChat':
-            {
-                if (!this._hasPermission(peer, Roles.MODERATOR))
-                    throw new Error('peer not authorized');
 
-                this._chatHistory = [];
-
-                // Spread to others
-                this._notification(peer.socket, 'moderator:clearChat', null, true);
-
-                // Return no error
-                cb();
-
-                break;
-            }
-*/
             case 'raisedHand':
             {
                 const { raisedHand } = request.data;

@@ -133,6 +133,10 @@ function Client()
         return micProducer && !micProducer.paused && !micProducer.closed
     }
 
+    this.chatMessage = (message) => {
+        socket.sendRequest('chatMessage', { message })
+    }
+
     /**
      * Register event handlers
      */
@@ -295,12 +299,15 @@ function Client()
                     return
                 }
 
+                case 'chatMessage': {
+                    trigger('chatMessage', notification.data)
+                    return 
+                }
+
                 default:
                     console.error('Unknow notification method: ' + notification.method)
                     return
             }
-
-            trigger('signal', notification.method, notification.data)
         })
 
         return socket

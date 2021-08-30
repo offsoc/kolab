@@ -162,9 +162,6 @@ function Room(container)
             peers[event.id] = peer
         })
 
-        // Handle signals from the server (and other participants)
-        client.on('signal', signalEventHandler)
-
         client.on('joinSuccess', () => {
             data.onSuccess()
         })
@@ -251,6 +248,9 @@ function Room(container)
      * Setup the chat UI
      */
     function setupChat() {
+        // Handle arriving chat messages
+        client.on('chatMessage', pushChatMessage)
+
         // The UI elements are created in the vue template
         // Here we add a logic for how they work
 
@@ -261,7 +261,7 @@ function Room(container)
         textarea.on('keydown', e => {
             if (e.keyCode == 13 && !e.shiftKey) {
                 if (textarea.val().length) {
-                    signalChat(textarea.val())
+                    client.chatMessage(textarea.val())
                     textarea.val('')
                 }
 
@@ -305,12 +305,6 @@ function Room(container)
                 }
                 break
 
-            case 'signal:chat':
-                data = JSON.parse(signal.data)
-                data.id = connId
-                pushChatMessage(data)
-                break
-
             case 'signal:joinRequest':
                 // accept requests from the server only
                 if (!connId) {
@@ -327,27 +321,6 @@ function Room(container)
                 }
                 break
         }
-    }
-
-    /**
-     * Send the chat message to other participants
-     *
-     * @param message Message string
-     */
-    function signalChat(message) {
-        let data = {
-            nickname: sessionData.params.nickname,
-            message
-        }
-
-        // TODO
-
-        /*
-        session.signal({
-            data: JSON.stringify(data),
-            type: 'chat'
-        })
-        */
     }
 
     /**
@@ -386,11 +359,11 @@ function Room(container)
 
         message.find('a').attr('rel', 'noreferrer')
 
-        if (box.length && box.data('id') == data.id) {
+        if (box.length && box.data('id') == data.peerId) {
             // A message from the same user as the last message, no new box needed
             message.appendTo(box)
         } else {
-            box = $('<div class="message">').data('id', data.id)
+            box = $('<div class="message">').data('id', data.peerId)
                 .append($('<div class="nickname">').text(data.nickname || ''))
                 .append(message)
                 .appendTo(chat)
