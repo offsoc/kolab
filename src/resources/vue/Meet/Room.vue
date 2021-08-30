@@ -654,15 +654,11 @@
                     }
                 })
             },
-            setupCameraChange() {
-                this.meet.setupSetVideoDevice(this.camera).then(enabled => {
-                    this.videoActive = enabled
-                })
+            async setupCameraChange() {
+                this.videoActive = await this.meet.setupSetVideoDevice(this.camera)
             },
-            setupMicrophoneChange() {
-                this.meet.setupSetAudioDevice(this.microphone).then(enabled => {
-                    this.audioActive = enabled
-                })
+            async setupMicrophoneChange() {
+                this.audioActive = await this.meet.setupSetAudioDevice(this.microphone)
             },
             switchChannel(e) {
                 let channel = $(e.target).data('code')
@@ -705,11 +701,11 @@
             switchHand() {
                 this.updateSelf({ hand: !this.handRaised })
             },
-            switchSound() {
-                this.audioActive = this.meet.switchAudio()
+            async switchSound() {
+                this.audioActive = await this.meet.switchAudio()
             },
-            switchVideo() {
-                this.videoActive = this.meet.switchVideo()
+            async switchVideo() {
+                this.videoActive = await this.meet.switchVideo()
             },
             switchScreen() {
                 const switchScreenAction = () => {

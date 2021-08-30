@@ -460,40 +460,26 @@ function Room(container)
      * Mute/Unmute audio for current session publisher
      */
     async function switchAudio() {
-/*
-        if (microphones.length) {
-            if (audioActive) {
-                await client.micUnmute()
-            } else {
-                await client.micMute()
-            }
+        const isActive = client.micStatus()
 
-            audioActive = !audioActive
+        if (isActive) {
+            return await client.micMute()
+        } else {
+            return await client.micUnmute()
         }
-*/
-        return audioActive
     }
 
     /**
      * Mute/Unmute video for current session publisher
      */
     async function switchVideo() {
-        // TODO: If user has no devices or denied access to them in the setup,
-        //       the button will just not work. Find a way to make it working
-        //       after user unlocks his devices. For now he has to refresh
-        //       the page and join the room again.
-/*
-        if (cameras.length) {
-            if (videoActive) {
-                await client.camUnmute()
-            } else {
-                await client.camMute()
-            }
+        const isActive = client.camStatus()
 
-            videoActive = !videoActive
+        if (isActive) {
+            return await client.camMute()
+        } else {
+            return await client.camUnmute()
         }
-*/
-        return videoActive
     }
 
     /**

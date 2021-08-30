@@ -86,33 +86,51 @@ function Client()
     }
 
     this.camMute = async () => {
-        camProducer.pause()
+        if (camProducer) {
+            camProducer.pause()
+            await socket.sendRequest('pauseProducer', { producerId: camProducer.id })
+            trigger('updatePeer', updatePeerState(peers.self))
+        }
 
-        await socket.sendRequest('pauseProducer', { producerId: camProducer.id })
+        return this.camStatus()
     }
 
     this.camUnmute = async () => {
         if (camProducer) {
             camProducer.resume()
+            await socket.sendRequest('resumeProducer', { producerId: camProducer.id })
+            trigger('updatePeer', updatePeerState(peers.self))
         }
 
-        await socket.sendRequest('resumeProducer', { producerId: camProducer.id })
+        return this.camStatus()
+    }
+
+    this.camStatus = () => {
+        return camProducer && !camProducer.paused && !camProducer.closed
     }
 
     this.micMute = async () => {
         if (micProducer) {
             micProducer.pause()
+            await socket.sendRequest('pauseProducer', { producerId: micProducer.id })
+            trigger('updatePeer', updatePeerState(peers.self))
         }
 
-        await socket.sendRequest('pauseProducer', { producerId: micProducer.id })
+        return this.micStatus()
     }
 
     this.micUnmute = async () => {
         if (micProducer) {
             micProducer.resume()
+            await socket.sendRequest('resumeProducer', { producerId: micProducer.id })
+            trigger('updatePeer', updatePeerState(peers.self))
         }
 
-        await socket.sendRequest('resumeProducer', { producerId: micProducer.id })
+        return this.micStatus()
+    }
+
+    this.micStatus = () => {
+        return micProducer && !micProducer.paused && !micProducer.closed
     }
 
     /**
@@ -225,7 +243,7 @@ function Client()
                     const consumer = consumers[consumerId]
 
                     if (!consumer) {
-                        break
+                        return
                     }
 
                     consumer.close()
@@ -242,12 +260,32 @@ function Client()
                     return
                 }
 
+                case 'consumerPaused':
+                case 'consumerResumed': {
+                    const { consumerId } = notification.data
+                    const consumer = consumers[consumerId]
+
+                    if (!consumer) {
+                        return
+                    }
+
+                    consumer[notification.method == 'consumerPaused' : 'pause' : 'resume']()
+
+                    let peer = peers[consumer.peerId]
+
+                    if (peer) {
+                        trigger('updatePeer', updatePeerState(peer))
+                    }
+
+                    return
+                }
+
                 case 'changeNickname': {
                     const { peerId, nickname } = notification.data
                     const peer = peers[peerId]
 
                     if (!peer) {
-                        break
+                        return
                     }
 
                     peer.nickname = nickname
@@ -398,9 +436,6 @@ function Client()
 
             if (tracks.length) {
                 setPeerTracks(peer, tracks)
-            } else {
-                peer.audioActive = false
-                peer.videoActive = false
             }
 
             trigger('addPeer', peer)
@@ -506,11 +541,34 @@ function Client()
             peer.videoElement.srcObject = stream
         }
 
-        peer.videoActive = true // TODO
-        peer.audioActive = true // TODO
+        peer = updatePeerState(peer)
+
         peer.tracks = tracks
 
         peers[peer.id] = peer
+    }
+
+    const updatePeerState = (peer) => {
+        if (peer.isSelf) {
+            peer.videoActive = this.camStatus()
+            peer.audioActive = this.micStatus()
+            peers.self = peer
+        } else {
+            peer.videoActive = false
+            peer.audioActive = false
+
+            Object.keys(consumers).forEach(cid => {
+                const consumer = consumers[cid]
+
+                if (consumer.peerId == peer.id) {
+                    peer[consumer.kind + 'Active'] = !consumer.paused && !consumer.closed && !consumer.producerPaused
+                }
+            })
+
+            peers[peer.id] = peer
+        }
+
+        return peer
     }
 }
 
