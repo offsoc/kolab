@@ -269,7 +269,7 @@ function Client()
                         return
                     }
 
-                    consumer[notification.method == 'consumerPaused' : 'pause' : 'resume']()
+                    consumer[notification.method == 'consumerPaused' ? 'pause' : 'resume']()
 
                     let peer = peers[consumer.peerId]
 
