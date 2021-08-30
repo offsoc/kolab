@@ -18,7 +18,6 @@ const Peer = require('./lib/Peer');
 const helmet = require('helmet');
 // auth
 const redis = require('redis');
-const redisClient = redis.createClient(config.redisOptions);
 const expressSession = require('express-session');
 const RedisStore = require('connect-redis')(expressSession);
 const sharedSession = require('express-socket.io-session');
@@ -85,7 +84,7 @@ const session = expressSession({
     name              : config.cookieName,
     resave            : true,
     saveUninitialized : true,
-    store             : new RedisStore({ client: redisClient }),
+    store             : config.redisOptions.host != 'none' ? new RedisStore({ client: redis.createClient(config.redisOptions) }) : null,
     cookie            : {
         secure   : true,
         httpOnly : true,
@@ -149,6 +148,8 @@ async function run()
     {
         logger.error('run() [error:"%o"]', error);
     }
+
+    app.emit('ready');
 }
 
 function statusLog()
@@ -418,3 +419,5 @@ async function getOrCreateRoom({ roomId })
 }
 
 run();
+
+module.exports = app; // export for testing
