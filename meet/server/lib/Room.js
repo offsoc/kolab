@@ -210,9 +210,6 @@ class Room extends EventEmitter
         // Joining queue
         this._queue = new AwaitQueue();
 
-        // Locked flag.
-        this._locked = false;
-
         this._chatHistory = [];
 
         this._fileHistory = [];
@@ -233,11 +230,6 @@ class Room extends EventEmitter
         this._currentActiveSpeaker = null;
 
         this._handleAudioLevelObserver();
-    }
-
-    isLocked()
-    {
-        return this._locked;
     }
 
     close()
@@ -299,22 +291,6 @@ class Room extends EventEmitter
         }
 
         this._peerJoining(peer);
-    }
-
-    _handleOverRoomLimit(peer)
-    {
-        this._notification(peer.socket, 'overRoomLimit');
-    }
-
-    _handleGuest(peer)
-    {
-        if (config.activateOnHostJoin && !this.checkEmpty())
-            this._peerJoining(peer);
-        else
-        {
-            this._parkPeer(peer);
-            this._notification(peer.socket, 'signInRequired');
-        }
     }
 
     _handleAudioLevelObserver()
@@ -450,7 +426,7 @@ class Room extends EventEmitter
                     logger.error('_peerJoining() | error on REST turn [error:"%o"]', error);
                 }
             }
-            else if ('backupTurnServers' in config)
+            else if ('backupTurnServers' in config && config.backupTurnServers.length)
             {
                 turnServers = config.backupTurnServers;
             }
@@ -478,15 +454,6 @@ class Room extends EventEmitter
             this._notification(peer.socket, 'changeNickname', {
                 peerId: peer.id,
                 nickame: peer.nickname
-            }, true);
-        });
-
-        peer.on('pictureChanged', () =>
-        {
-            // Spread to others
-            this._notification(peer.socket, 'changePicture', {
-                peerId  : peer.id,
-                picture : peer.picture
             }, true);
         });
 
@@ -543,7 +510,7 @@ class Room extends EventEmitter
         const router =
             this._mediasoupRouters.get(peer.routerId);
 
-console.log(request.method);
+        console.log(request.method);
 
         switch (request.method)
         {
@@ -581,7 +548,6 @@ console.log(request.method);
                     //chatHistory          : this._chatHistory,
                     //fileHistory          : this._fileHistory,
                     //lastNHistory         : this._lastN,
-                    //locked               : this._locked,
                 });
 
                 for (const joinedPeer of joinedPeers)
@@ -761,13 +727,7 @@ console.log(request.method);
 
                 // Store the Producer into the Peer data Object.
                 peer.addProducer(producer.id, producer);
-/*
-                // Set Producer events.
-                producer.on('score', (score) =>
-                {
-                    this._notification(peer.socket, 'producerScore', { producerId: producer.id, score });
-                });
-*/
+
                 producer.on('videoorientationchange', (videoOrientation) =>
                 {
                     logger.debug(
@@ -875,67 +835,7 @@ console.log(request.method);
 
                 break;
             }
-/*
-            case 'requestConsumerKeyFrame':
-            {
-                const { consumerId } = request.data;
-                const consumer = peer.getConsumer(consumerId);
 
-                if (!consumer)
-                    throw new Error(`consumer with id "${consumerId}" not found`);
-
-                await consumer.requestKeyFrame();
-
-                cb();
-
-                break;
-            }
-
-            case 'getTransportStats':
-            {
-                const { transportId } = request.data;
-                const transport = peer.getTransport(transportId);
-
-                if (!transport)
-                    throw new Error(`transport with id "${transportId}" not found`);
-
-                const stats = await transport.getStats();
-
-                cb(null, stats);
-
-                break;
-            }
-
-            case 'getProducerStats':
-            {
-                const { producerId } = request.data;
-                const producer = peer.getProducer(producerId);
-
-                if (!producer)
-                    throw new Error(`producer with id "${producerId}" not found`);
-
-                const stats = await producer.getStats();
-
-                cb(null, stats);
-
-                break;
-            }
-
-            case 'getConsumerStats':
-            {
-                const { consumerId } = request.data;
-                const consumer = peer.getConsumer(consumerId);
-
-                if (!consumer)
-                    throw new Error(`consumer with id "${consumerId}" not found`);
-
-                const stats = await consumer.getStats();
-
-                cb(null, stats);
-
-                break;
-            }
-*/
             case 'changeNickname':
             {
                 const { nickname } = request.data;
@@ -949,24 +849,6 @@ console.log(request.method);
 
                 break;
             }
-
-            /* case 'changePicture':
-            {
-                const { picture } = request.data;
-
-                peer.picture = picture;
-
-                // Spread to others
-                this._notification(peer.socket, 'changePicture', {
-                    peerId  : peer.id,
-                    picture : picture
-                }, true);
-
-                // Return no error
-                cb();
-
-                break;
-            } */
 
             case 'chatMessage':
             {
