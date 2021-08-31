@@ -2,26 +2,18 @@
 
 import anchorme from 'anchorme'
 import { Client } from './client.js'
+import { Roles } from './constants.js'
 import { Dropdown } from 'bootstrap'
 import { library } from '@fortawesome/fontawesome-svg-core'
-
-class Roles {
-    static get SUBSCRIBER() { return 1 << 0; }
-    static get PUBLISHER() { return 1 << 1; }
-    static get MODERATOR() { return 1 << 2; }
-    static get SCREEN() { return 1 << 3; }
-    static get OWNER() { return 1 << 4; }
-}
 
 function Room(container)
 {
     let session                 // Session object where the user will connect
-    let publisher               // Publisher object which the user will publish
     let sessionData             // Room session metadata
-
+/*
+    let publisher               // Publisher object which the user will publish
     let screenSession           // Session object where the user will connect for screen sharing
     let screenPublisher         // Publisher object which the user will publish the screen sharing
-/*
     let publisherDefaults = {
         publishAudio: true,     // Whether to start publishing with your audio unmuted or not
         publishVideo: true,     // Whether to start publishing with your video enabled or not
@@ -167,18 +159,26 @@ function Room(container)
         client.on('joinSuccess', () => {
             data.onSuccess()
         })
-/*
+
         // Handle session disconnection events
-        client.on('sessionDisconnected', event => {
+        client.on('closeSession', event => {
+            // Notify the UI
             data.onDestroy(event)
-            client = null
+
+            // Remove all participant elements
+            Object.keys(peers).forEach(peerId => {
+                $(peers[peerId].element).remove()
+                delete peers[peerId]
+            })
+
+            // refresh the matrix
             resize()
         })
-*/
+
         const { audioSource, videoSource } = client.media.setupData()
 
         // Start the session
-        client.startSession(data.token, { videoSource, audioSource, nickname: data.nickname })
+        client.joinSession(data.token, { videoSource, audioSource, nickname: data.nickname })
 
         // Prepare the chat
         setupChat()
@@ -188,27 +188,8 @@ function Room(container)
      * Leave the room (disconnect)
      */
     function leaveRoom() {
-/*
-        if (publisher) {
-            // Release any media
-            let mediaStream = publisher.stream.getMediaStream()
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop())
-            }
-
-            publisher = null
-        }
-
-        if (session) {
-            session.disconnect();
-            session = null
-        }
-
-        if (screenSession) {
-            screenSession.disconnect();
-            screenSession = null
-        }
-*/
+        client.closeSession()
+        peers = {}
     }
 
     /**
@@ -1310,4 +1291,4 @@ function Room(container)
     }
 }
 
-export { Room, Roles }
+export { Room }

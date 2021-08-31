@@ -161,6 +161,11 @@ function Media()
      */
     this.setupStop = () => {
         volumeMeterStop()
+
+        if (setupVideoElement) {
+            const mediaStream = new MediaStream()
+            setupVideoElement.srcObject = mediaStream
+        }
     }
 
     this.setupData = () => {
@@ -180,15 +185,17 @@ function Media()
      * @param deviceId Device identifier string
      */
     this.setupSetAudio = async (deviceId) => {
+        const mediaStream = setupVideoElement.srcObject
+
         if (!deviceId) {
             volumeMeterStop()
+            removeTracksFromStream(mediaStream, 'Audio')
             audioActive = false
             audioSource = ''
         } else if (deviceId == audioSource) {
             volumeMeterStart()
             audioActive = true
         } else {
-            const mediaStream = setupVideoElement.srcObject
             const constraints = {
                 audio: {
                     deviceId: { ideal: deviceId }
@@ -198,10 +205,7 @@ function Media()
             volumeMeterStop()
 
             // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
-            mediaStream.getAudioTracks().forEach(track => {
-                track.stop()
-                mediaStream.removeTrack(track)
-            })
+            removeTracksFromStream(mediaStream, 'Audio')
 
             // TODO: Error handling
 
@@ -222,13 +226,18 @@ function Media()
      * @param deviceId Device identifier string
      */
     this.setupSetVideo = async (deviceId) => {
+        const mediaStream = setupVideoElement.srcObject
+
         if (!deviceId) {
+            removeTracksFromStream(mediaStream, 'Video')
+            // Without the next line the video element will freeze on the last video frame
+            // instead of turning black.
+            setupVideoElement.srcObject = mediaStream
             videoActive = false
             videoSource = ''
         } else if (deviceId == audioSource) {
             videoActive = true
         } else {
-            const mediaStream = setupVideoElement.srcObject
             const constraints = {
                 video: {
                     deviceId: { ideal: deviceId }
@@ -236,10 +245,7 @@ function Media()
             }
 
             // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
-            mediaStream.getVideoTracks().forEach(track => {
-                track.stop()
-                mediaStream.removeTrack(track)
-            })
+            removeTracksFromStream(mediaStream, 'Video')
 
             // TODO: Error handling
 
@@ -251,6 +257,13 @@ function Media()
         }
 
         return videoActive
+    }
+
+    const removeTracksFromStream = (stream, type) => {
+        stream[`get${type}Tracks`]().forEach(track => {
+            track.stop()
+            stream.removeTrack(track)
+        })
     }
 
     const volumeMeterStart = () => {

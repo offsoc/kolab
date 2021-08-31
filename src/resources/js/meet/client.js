@@ -3,6 +3,7 @@
 import { Device, parseScalabilityMode } from 'mediasoup-client'
 import Config from './config.js'
 import { Media } from './media.js'
+import { Roles } from './constants.js'
 import { Socket } from './socket.js'
 
 
@@ -54,9 +55,9 @@ function Client()
 
 
     /**
-     * Start a session
+     * Start a session (join a room)
      */
-    this.startSession = (token, props) => {
+    this.joinSession = (token, props) => {
         // Initialize the socket, 'roomReady' request handler will do the rest of the job
         socket = initSocket(token)
 
@@ -68,10 +69,19 @@ function Client()
     /**
      * Close the session (disconnect)
      */
-    this.closeSession = () => {
+    this.closeSession = async (reason) => {
+        // If room owner, send the request to close the room
+        if (peers.self && peers.self.role & Roles.OWNER) {
+            await socket.sendRequest('moderator:closeRoom')
+        }
+
+        trigger('closeSession', { reason: reason || 'session-closed' })
+
         if (socket) {
             socket.close()
         }
+
+        media.setupStop()
 
         // Close mediasoup Transports.
         if (sendTransport) {
@@ -83,6 +93,24 @@ function Client()
             recvTransport.close()
             recvTransport = null
         }
+
+        // Remove peers' video elements
+        Object.keys(peers).forEach(id => {
+            let peer = peers[id]
+            if (peer.videoElement) {
+                $(peer.videoElement).remove()
+                peer.videoElement = null
+                peer.tracks = null
+            }
+        })
+
+        // Reset state
+        eventHandlers = {}
+        camProducer = null
+        micProducer = null
+        screenProducer = null
+        consumers = {}
+        peers = {}
     }
 
     this.camMute = async () => {
@@ -219,8 +247,6 @@ function Client()
 
                     setPeerTracks(peer, tracks)
 
-                    peers[peerId] = peer
-
                     trigger('updatePeer', peer)
 
                     break
@@ -307,6 +333,11 @@ function Client()
 
                 case 'chatMessage': {
                     trigger('chatMessage', notification.data)
+                    return
+                }
+
+                case 'moderator:closeRoom': {
+                    this.closeSession('session-closed')
                     return
                 }
 
@@ -479,7 +510,7 @@ function Client()
                 source : 'webcam'
             }
         })
-
+/*
         camProducer.on('transportclose', () => {
             camProducer = null
         })
@@ -487,6 +518,7 @@ function Client()
         camProducer.on('trackended', () => {
             // disableWebcam()
         })
+*/
     }
 
     const setMic = async (deviceId) => {
@@ -535,7 +567,7 @@ function Client()
                 source : 'mic'
             }
         })
-
+/*
         micProducer.on('transportclose', () => {
             micProducer = null
         })
@@ -543,6 +575,7 @@ function Client()
         micProducer.on('trackended', () => {
             // disableMic()
         })
+*/
     }
 
     const setPeerTracks = (peer, tracks) => {
@@ -554,18 +587,15 @@ function Client()
             peer.videoElement.srcObject = stream
         }
 
-        peer = updatePeerState(peer)
+        updatePeerState(peer)
 
         peer.tracks = tracks
-
-        peers[peer.id] = peer
     }
 
     const updatePeerState = (peer) => {
         if (peer.isSelf) {
             peer.videoActive = this.camStatus()
             peer.audioActive = this.micStatus()
-            peers.self = peer
         } else {
             peer.videoActive = false
             peer.audioActive = false
@@ -577,8 +607,6 @@ function Client()
                     peer[consumer.kind + 'Active'] = !consumer.paused && !consumer.closed && !consumer.producerPaused
                 }
             })
-
-            peers[peer.id] = peer
         }
 
         return peer

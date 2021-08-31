@@ -506,8 +506,7 @@ class Room extends EventEmitter
 
     async _handleSocketRequest(peer, request, cb)
     {
-        const router =
-            this._mediasoupRouters.get(peer.routerId);
+        const router = this._mediasoupRouters.get(peer.routerId);
 
         console.log(request.method);
 
@@ -650,7 +649,7 @@ class Room extends EventEmitter
 
                 break;
             }
-
+/*
             case 'restartIce':
             {
                 const { transportId } = request.data;
@@ -665,14 +664,14 @@ class Room extends EventEmitter
 
                 break;
             }
-
+*/
             case 'produce':
             {
                 let { appData } = request.data;
 
                 if (
                     !appData.source ||
-                    ![ 'mic', 'webcam', 'screen', 'extravideo' ]
+                    ![ 'mic', 'webcam', 'screen' ]
                         .includes(appData.source)
                 )
                     throw new Error('invalid producer source');
@@ -905,12 +904,12 @@ class Room extends EventEmitter
                 break;
             }
 
-            case 'moderator:closeMeeting':
+            case 'moderator:closeRoom':
             {
-                if (!this._hasPermission(peer, Roles.MODERATOR))
+                if (!this._hasPermission(peer, Roles.OWNER))
                     throw new Error('peer not authorized');
 
-                this._notification(peer.socket, 'moderator:kick', null,    true);
+                this._notification(peer.socket, 'moderator:closeRoom', null, true);
 
                 cb();
 

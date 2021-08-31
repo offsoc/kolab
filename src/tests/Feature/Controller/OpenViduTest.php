@@ -375,59 +375,6 @@ class OpenViduTest extends TestCase
     }
 
     /**
-     * Test closing the room (session)
-     *
-     * @group openvidu
-     * @depends testJoinRoom
-     */
-    /* public function testCloseRoom(): void */
-    /* { */
-    /*     $john = $this->getTestUser('john@kolab.org'); */
-    /*     $jack = $this->getTestUser('jack@kolab.org'); */
-    /*     $room = Room::where('name', 'john')->first(); */
-
-    /*     // Unauth access not allowed */
-    /*     $response = $this->post("api/v4/openvidu/rooms/{$room->name}/close", []); */
-    /*     $response->assertStatus(401); */
-
-    /*     // Non-existing room name */
-    /*     $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/non-existing/close", []); */
-    /*     $response->assertStatus(404); */
-
-    /*     // Non-owner */
-    /*     $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}/close", []); */
-    /*     $response->assertStatus(403); */
-
-    /*     // Room owner */
-    /*     $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/close", []); */
-    /*     $response->assertStatus(200); */
-
-    /*     $json = $response->json(); */
-
-    /*     $this->assertNull($room->fresh()->session_id); */
-    /*     $this->assertSame('success', $json['status']); */
-    /*     $this->assertSame("The session has been closed successfully.", $json['message']); */
-    /*     $this->assertCount(2, $json); */
-
-    /*     // TODO: Test if the session is removed from the OpenVidu server too */
-
-    /*     // Test error handling when it's not possible to delete the session on */
-    /*     // the OpenVidu server (use fake session_id) */
-    /*     $room->session_id = 'aaa'; */
-    /*     $room->save(); */
-
-    /*     $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/close", []); */
-    /*     $response->assertStatus(500); */
-
-    /*     $json = $response->json(); */
-
-    /*     $this->assertSame('aaa', $room->fresh()->session_id); */
-    /*     $this->assertSame('error', $json['status']); */
-    /*     $this->assertSame("Failed to close the session.", $json['message']); */
-    /*     $this->assertCount(2, $json); */
-    /* } */
-
-    /**
      * Test creating an extra connection for screen sharing
      *
      * @group openvidu

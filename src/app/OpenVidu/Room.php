@@ -157,32 +157,6 @@ class Room extends Model
     }
 
     /**
-     * Delete a OpenVidu session
-     *
-     * @return bool
-     */
-    public function deleteSession(): bool
-    {
-        if (!$this->session_id) {
-            return true;
-        }
-
-        $response = $this->client()->request(
-            'DELETE',
-            "sessions/" . $this->session_id,
-        );
-
-        if ($response->getStatusCode() == 204) {
-            $this->session_id = null;
-            $this->save();
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
      * Returns metadata for every connection in a session.
      *
      * @return array Connections metadata, indexed by connection identifier

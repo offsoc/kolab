@@ -181,7 +181,8 @@
 
 <script>
     import { Modal } from 'bootstrap'
-    import { Room as Meet, Roles } from '../../js/meet/room.js'
+    import { Room as Meet } from '../../js/meet/room.js'
+    import { Roles } from '../../js/meet/constants.js'
     import StatusMessage from '../Widgets/StatusMessage'
     import LogonForm from '../Login'
     import RoomOptions from './RoomOptions'
@@ -529,9 +530,8 @@
                     this.roomState = 500
                 }
                 this.session.onDestroy = event => {
-                    // TODO: Display different message for each reason: forceDisconnectByUser,
-                    //       forceDisconnectByServer, sessionClosedByServer?
-                    if (event.reason != 'disconnect' && event.reason != 'networkDisconnect' && !this.isRoomOwner()) {
+                    // TODO: Display different message for every other reason
+                    if (event.reason == 'session-closed' && !this.isRoomOwner()) {
                         new Modal('#leave-dialog').show()
                     }
                 }
@@ -560,17 +560,9 @@
                 })
             },
             logout() {
-                const logout = () => {
-                    this.meet.leaveRoom()
-                    this.meet = null
-                    this.$router.push({ name: 'dashboard' })
-                }
-
-                if (this.isRoomOwner()) {
-                    axios.post('/api/v4/openvidu/rooms/' + this.room + '/close').then(logout)
-                } else {
-                    logout()
-                }
+                this.meet.leaveRoom()
+                this.meet = null
+                this.$router.push({ name: 'dashboard' })
             },
             makePicture() {
                 const video = $("#meet-setup video")[0];

@@ -72,39 +72,6 @@ class OpenViduController extends Controller
     }
 
     /**
-     * Close the room session.
-     *
-     * @param string $id Room identifier (name)
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function closeRoom($id)
-    {
-        $room = Room::where('name', $id)->first();
-
-        // This isn't a room, bye bye
-        if (!$room) {
-            return $this->errorResponse(404, \trans('meet.room-not-found'));
-        }
-
-        $user = Auth::guard()->user();
-
-        // Only the room owner can do it
-        if (!$user || $user->id != $room->user_id) {
-            return $this->errorResponse(403);
-        }
-
-        if (!$room->deleteSession()) {
-            return $this->errorResponse(500, \trans('meet.session-close-error'));
-        }
-
-        return response()->json([
-                'status' => 'success',
-                'message' => __('meet.session-close-success'),
-        ]);
-    }
-
-    /**
      * Create a connection for screen sharing.
      *
      * @param string $id Room identifier (name)
