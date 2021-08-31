@@ -2,8 +2,8 @@ const assert = require('assert');
 let request = require('supertest')
 const io = require("socket.io-client");
 
-// const mediasoupClient = require('mediasoup-client');
-// const { FakeHandler } = require('../node_modules/mediasoup-client/lib/handlers/FakeHandler');
+const mediasoupClient = require('mediasoup-client');
+const { FakeHandler } = require('mediasoup-client/lib/handlers/FakeHandler');
 const fakeParameters = require('./fakeParameters');
 
 let app
@@ -48,11 +48,11 @@ describe('Join room', function() {
         })
     }
 
-    it('create room', function(done) {
-        request
+    it('create room', async () => {
+        return request
             .post(`/meetmedia/api/sessions/${roomId}/connection`)
             .expect(200)
-            .then((res) => {
+            .then(async (res) => {
                 let data = res.body;
                 peerId = data['id'];
                 const signalingUrl = data['token'];
@@ -61,17 +61,18 @@ describe('Join room', function() {
                 console.info(signalingUrl);
 
                 signalingSocket = io(signalingUrl, { path: '/meetmedia/signaling', transports: ["websocket"], rejectUnauthorized: false });
-                signalingSocket.on('notification', (reason) =>
-                {
-                    console.warn('Received notification "%s"', reason);
-                    if (reason['method'] == 'roomReady') {
-                        done();
-                    }
-                });
+                let roomReady = new Promise((resolve, /*reject*/) => {
+                    signalingSocket.on('notification', (reason) => {
+                        if (reason['method'] == 'roomReady') {
+                            resolve();
+                        }
+                    });
+                })
 
                 signalingSocket.connect();
+                await roomReady
             })
-            .catch(err => { console.warn(err); done(err)})
+            .catch(err => { console.warn(err); throw err })
     });
 
     it('getRtpCapabilities', async () => {
@@ -90,62 +91,101 @@ describe('Join room', function() {
         assert.equal(peers.length, 0)
     })
 
-    it('second peer joining', function(done) {
-        request
+    it('second peer joining', async () => {
+        return request
             .post(`/meetmedia/api/sessions/${roomId}/connection`)
             .expect(200)
-            .then((res) => {
+            .then(async (res) => {
                 let data = res.body;
                 const newId = data['id'];
                 const signalingUrl = data['token'];
 
                 let signalingSocket2 = io(signalingUrl, { path: '/meetmedia/signaling', transports: ["websocket"], rejectUnauthorized: false });
-                signalingSocket2.on('notification', async (reason) =>
-                {
-                    console.warn('Received peer2 notification "%s"', reason);
-                    if (reason['method'] == 'roomReady') {
-                        const { peers } = await sendRequest(signalingSocket2, 'join', {
-                                nickname: "nickname",
-                                rtpCapabilities: fakeParameters.generateNativeRtpCapabilities()
-                        })
-                        assert.equals(peers.length, 1)
-                        assert.equals(peers[0].id, peerId)
-                    }
-                });
 
-                signalingSocket.on('notification', (reason) =>
-                {
-                    console.warn('Received peer1 notification "%s"', reason);
-                    if (reason.method == 'newPeer') {
-                        assert(reason.data.id == newId);
-                        done();
-                    }
-                });
+                let roomReady = new Promise((resolve, /*reject*/) => {
+                    signalingSocket2.on('notification', async (reason) => {
+                        if (reason['method'] == 'roomReady') {
+                            resolve(reason);
+                        }
+                    });
+                })
+
+                let newPeer = new Promise((resolve, /*reject*/) => {
+                    signalingSocket.on('notification', (reason) => {
+                        if (reason.method == 'newPeer') {
+                            resolve(reason);
+                        }
+                    });
+                })
 
                 signalingSocket.connect();
+
+
+                let reason = await roomReady;
+                const { peers } = await sendRequest(signalingSocket2, 'join', {
+                    nickname: "nickname",
+                    rtpCapabilities: fakeParameters.generateNativeRtpCapabilities()
+                })
+                assert.equal(peers.length, 1)
+                assert.equal(peers[0].id, peerId)
+
+                reason = await newPeer;
+                assert(reason.data.id == newId);
             })
-            .catch(err => { console.warn(err); done(err)})
+            .catch(err => { console.warn(err); throw err })
     });
 
-    // it('createDevice', async () => {
-    //     let device;
-    //     try{
-    //         device = new mediasoupClient.Device({ handlerFactory: FakeHandler.createFactory(fakeParameters) });
-    //     } catch (error) {
-    //         console.warn(error)
-    //         if (error.name === 'UnsupportedError') {
-    //             console.warn('browser not supported');
-    //         }
-    //     }
-    //     // try {
-    //     //     await device.load(routerRtpCapabilities)
-    //     // } catch (err) {
-    //     //     console.warn("Device loading failed", err);
-    //     // }
-    //     // assert(device.canProduce('video'))
-    //     // console.warn("So can we produce?", device.canProduce('video'))
-    //     // return true;
-    // });
+    let transportInfo;
+
+    it('createWebRtcTransport', async () => {
+        transportInfo = await sendRequest(signalingSocket, 'createWebRtcTransport', {
+            forceTcp: false,
+            producing: true,
+            consuming: false
+        })
+
+        const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
+        console.warn(id);
+    });
+
+    it('createDevice', async () => {
+        let device;
+        try{
+            device = new mediasoupClient.Device({ handlerFactory: FakeHandler.createFactory(fakeParameters) });
+
+            let caps = fakeParameters.generateRouterRtpCapabilities();
+            await device.load({routerRtpCapabilities: caps})
+            assert(device.canProduce('video'))
+
+            console.info(transportInfo)
+            const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
+            //FIXME it doesn't look like this device can actually connect
+            let sendTransport = device.createSendTransport({
+                id,
+                iceParameters,
+                iceCandidates,
+                dtlsParameters,
+                // iceServers: turnServers,
+                // iceTransportPolicy: iceTransportPolicy,
+                proprietaryConstraints: { optional: [{ googDscp: true }] }
+            })
+
+            sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
+                console.warn("on connect");
+                // done();
+                // socket.sendRequest('connectWebRtcTransport',
+                //     { transportId: sendTransport.id, dtlsParameters })
+                //     .then(callback)
+                //     .catch(errback)
+            })
+
+            //TODO we should get it to connected
+            // assert.equal(sendTransport.connectionState, 'new');
+
+        } catch (error) {
+            console.warn(error)
+        }
+    });
 
     after(function () {
         signalingSocket.close();
