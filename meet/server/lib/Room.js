@@ -533,6 +533,57 @@ class Room extends EventEmitter
                 break;
             }
 
+            case 'createPlainTransport':
+            {
+                const { producing, consuming } = request.data;
+
+                const transport = await router.createPlainTransport(
+                    {
+                        // No RTP will be received from the remote side
+                        comedia: false,
+
+                        // FFmpeg and GStreamer don't support RTP/RTCP multiplexing ("a=rtcp-mux" in SDP)
+                        rtcpMux: false,
+                        listenIp: { ip: "127.0.0.1", announcedIp: null },
+
+                        appData : { producing, consuming }
+                    }
+                );
+                // Store the WebRtcTransport into the Peer data Object.
+                peer.addTransport(transport.id, transport);
+
+                cb(
+                    null,
+                    {
+                        id             : transport.id,
+                        ip       : transport.tuple.localIp,
+                        port     : transport.tuple.localPort,
+                        rtcpPort : transport.rtcpTuple ? transport.rtcpTuple.localPort : undefined
+                    });
+
+                break;
+            }
+
+            case 'connectPlainTransport':
+            {
+                const { transportId, ip, port, rtcpPort } = request.data;
+                const transport = peer.getTransport(transportId);
+
+                if (!transport)
+                    throw new Error(`transport with id "${transportId}" not found`);
+
+                await transport.connect({
+                    ip: ip,
+                    port: port,
+                    rtcpPort: rtcpPort,
+                });
+
+
+                cb();
+
+                break;
+            }
+
             case 'createWebRtcTransport':
             {
                 // NOTE: Don't require that the Peer is joined here, so the client can
