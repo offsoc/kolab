@@ -722,6 +722,12 @@ class Room extends EventEmitter
                         producer.id, videoOrientation);
                 });
 
+                // Trace individual packets for debugging
+                // await producer.enableTraceEvent([ "rtp", "pli", "keyframe", "nack" ]);
+                // producer.on("trace", (trace) => {
+                //     console.log(`Trace on ${producer.id}`, trace);
+                // });
+
                 cb(null, { id: producer.id });
 
                 // Optimization: Create a server-side Consumer for each Peer.
