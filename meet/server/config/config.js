@@ -66,7 +66,7 @@ module.exports =
     // a single room. If not set, there is no limit.
     // maxUsersPerRoom    : 20,
     // Room size before spreading to new router
-    routerScaleSize      : 40,
+    routerScaleSize      : process.env.ROUTER_SCALE_SIZE || 40,
     // Socket timout value
     requestTimeout       : 20000,
     // Socket retries when timeout
@@ -74,7 +74,7 @@ module.exports =
     // Mediasoup settings
     mediasoup            :
     {
-        numWorkers : Object.keys(os.cpus()).length,
+        numWorkers : process.env.MEDIASOUP_NUM_WORKERS || Object.keys(os.cpus()).length,
         // mediasoup Worker settings.
         worker     :
         {
