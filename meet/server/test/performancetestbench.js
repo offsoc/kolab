@@ -208,14 +208,12 @@ describe('Testbench', function() {
     it('prepare udp sockets', async () => {
         await new Promise(resolve => recvUdpSocket.bind(22222, '127.0.0.1', resolve));
         await new Promise(resolve => recvRtcpUdpSocket.bind(22223, '127.0.0.1', resolve));
-    }
+    });
 
     it('create peers', async () => {
         for (var i = 0; i < 2; i++) {
             peers.push(await createPeer(roomId, request, recvUdpSocket.address().port, recvRtcpUdpSocket.address().port))
         }
-
-  // // Create a node-sctp receiving Socket.
     });
 
     it('start ffmpg stream', async () => {
