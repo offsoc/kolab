@@ -539,20 +539,21 @@ class Room extends EventEmitter
 
                 const transport = await router.createPlainTransport(
                     {
-                        comedia: true,
+                        //When consuming we manually connect using connectPlainTransport,
+                        //otherwise we let the port autodetection work.
+                        comedia: producing,
                         // FFmpeg and GStreamer don't support RTP/RTCP multiplexing ("a=rtcp-mux" in SDP)
                         rtcpMux: false,
                         listenIp: { ip: "127.0.0.1", announcedIp: null },
                         appData : { producing, consuming }
                     }
                 );
-                // Store the WebRtcTransport into the Peer data Object.
                 peer.addTransport(transport.id, transport);
 
                 cb(
                     null,
                     {
-                        id             : transport.id,
+                        id       : transport.id,
                         ip       : transport.tuple.localIp,
                         port     : transport.tuple.localPort,
                         rtcpPort : transport.rtcpTuple ? transport.rtcpTuple.localPort : undefined

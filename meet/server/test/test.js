@@ -51,6 +51,7 @@ describe('Join room', function() {
     it('create room', async () => {
         return request
             .post(`/meetmedia/api/sessions/${roomId}/connection`)
+            .send({role: 31})
             .expect(200)
             .then(async (res) => {
                 let data = res.body;
@@ -87,7 +88,7 @@ describe('Join room', function() {
                 rtpCapabilities: fakeParameters.generateNativeRtpCapabilities()
         })
         assert.equal(id, peerId)
-        assert.equal(role, 0)
+        assert.equal(role, 31)
         assert.equal(peers.length, 0)
     })
 
