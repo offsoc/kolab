@@ -491,10 +491,10 @@ class Room extends EventEmitter
                 // Tell the new Peer about already joined Peers.
                 // And also create Consumers for existing Producers.
 
-                const joinedPeers = this.getPeers(peer);
+                const otherPeers = this.getPeers(peer);
 
-                const peerInfos = joinedPeers
-                    .map((joinedPeer) => (joinedPeer.peerInfo));
+                const peerInfos = otherPeers
+                    .map((otherPeer) => (otherPeer.peerInfo));
 
                 cb(null, {
                     id: peer.id,
@@ -502,15 +502,15 @@ class Room extends EventEmitter
                     peers: peerInfos,
                 });
 
-                for (const joinedPeer of joinedPeers)
+                for (const otherPeer of otherPeers)
                 {
                     // Create Consumers for existing Producers.
-                    for (const producer of joinedPeer.producers.values())
+                    for (const producer of otherPeer.producers.values())
                     {
                         this._createConsumer(
                             {
                                 consumerPeer : peer,
-                                producerPeer : joinedPeer,
+                                producerPeer : otherPeer,
                                 producer
                             });
                     }
