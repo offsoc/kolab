@@ -548,6 +548,11 @@ class Room extends EventEmitter
                         appData : { producing, consuming }
                     }
                 );
+                // await transport.enableTraceEvent([ "probation", "bwe" ]);
+                // transport.on("trace", (trace) => {
+                //     console.log(trace);
+                // });
+
                 peer.addTransport(transport.id, transport);
 
                 cb(
@@ -1015,6 +1020,12 @@ class Room extends EventEmitter
 
             return;
         }
+
+        // Trace individual packets for debugging
+        // await consumer.enableTraceEvent([ "rtp", "pli", "fir" ]);
+        // consumer.on("trace", (trace) => {
+        //     console.log(`Trace on ${consumer.id}`, trace);
+        // });
 
         // Store the Consumer into the consumerPeer data Object.
         consumerPeer.addConsumer(consumer.id, consumer);
