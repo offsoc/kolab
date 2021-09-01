@@ -103,35 +103,6 @@ class OpenViduController extends Controller
     }
 
     /**
-     * Dismiss the participant/connection from the session.
-     *
-     * @param string $id   Room identifier (name)
-     * @param string $conn Connection identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function dismissConnection($id, $conn)
-    {
-        $connection = Connection::where('id', $conn)->first();
-
-        // There's no such connection, bye bye
-        if (!$connection || $connection->room->name != $id) {
-            return $this->errorResponse(404, \trans('meet.connection-not-found'));
-        }
-
-        // Only the moderator can do it
-        if (!$this->isModerator($connection->room)) {
-            return $this->errorResponse(403);
-        }
-
-        if (!$connection->dismiss()) {
-            return $this->errorResponse(500, \trans('meet.connection-dismiss-error'));
-        }
-
-        return response()->json(['status' => 'success']);
-    }
-
-    /**
      * Listing of rooms that belong to the authenticated user.
      *
      * @return \Illuminate\Http\JsonResponse

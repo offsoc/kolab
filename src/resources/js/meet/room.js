@@ -43,6 +43,7 @@ function Room(container)
     this.isScreenSharingSupported = isScreenSharingSupported
     this.joinRoom = joinRoom
     this.leaveRoom = leaveRoom
+    this.raiseHand = raiseHand
     this.setupStart = setupStart
     this.setupStop = setupStop
     this.setupSetAudioDevice = setupSetAudioDevice
@@ -71,7 +72,6 @@ function Room(container)
      *      onSuccess           - Callback for session connection (join) success
      *      onError             - Callback for session connection (join) error
      *      onDestroy           - Callback for session disconnection event,
-     *      onDismiss           - Callback for Dismiss action,
      *      onJoinRequest       - Callback for join request,
      *      onConnectionChange  - Callback for participant changes, e.g. role update,
      *      onSessionDataUpdate - Callback for current user connection update,
@@ -89,7 +89,7 @@ function Room(container)
 
         // Make sure all supported callbacks exist, so we don't have to check
         // their existence everywhere anymore
-        let events = ['Success', 'Error', 'Destroy', 'Dismiss', 'JoinRequest', 'ConnectionChange',
+        let events = ['Success', 'Error', 'Destroy', 'JoinRequest', 'ConnectionChange',
             'SessionDataUpdate', 'MediaSetup']
 
         events.map(event => 'on' + event).forEach(event => {
@@ -121,7 +121,7 @@ function Room(container)
 
             if (peer) {
                 // Remove elements related to the participant
-                connectionHandDown(peerId)
+                peerHandDown(peer)
                 $(peer.element).remove()
                 delete peers[peerId]
             }
@@ -149,6 +149,14 @@ function Room(container)
 
             if (changed && changed.includes('nickname')) {
                  nicknameUpdate(event.nickname, event.id)
+            }
+
+            if (changed && changed.includes('raisedHand')) {
+                 if (event.raisedHand) {
+                     peerHandUp(event)
+                } else {
+                    peerHandDown(event)
+                }
             }
 
             participantUpdate(event.element, event)
@@ -181,7 +189,7 @@ function Room(container)
         client.joinSession(data.token, { videoSource, audioSource, nickname: data.nickname })
 
         // Prepare the chat
-        setupChat()
+        initChat()
     }
 
     /**
@@ -190,6 +198,15 @@ function Room(container)
     function leaveRoom() {
         client.closeSession()
         peers = {}
+    }
+
+    /**
+     * Raise or lower the hand
+     *
+     * @param status Hand raised or not
+     */
+    async function raiseHand(status) {
+        return await client.raiseHand(status)
     }
 
     /**
@@ -230,7 +247,7 @@ function Room(container)
     /**
      * Setup the chat UI
      */
-    function setupChat() {
+    function initChat() {
         // Handle arriving chat messages
         client.on('chatMessage', pushChatMessage)
 
@@ -275,30 +292,10 @@ function Room(container)
         let connId = signal.from ? signal.from.connectionId : null
 
         switch (signal.type) {
-            case 'signal:userChanged':
-                // TODO: Use 'signal:connectionUpdate' for nickname updates?
-                if (conn = connections[connId]) {
-                    data = JSON.parse(signal.data)
-
-                    conn.nickname = data.nickname
-                    participantUpdate(conn.element, conn)
-                    nicknameUpdate(data.nickname, connId)
-                }
-                break
-
             case 'signal:joinRequest':
                 // accept requests from the server only
                 if (!connId) {
                     sessionData.onJoinRequest(JSON.parse(signal.data))
-                }
-                break
-
-            case 'signal:connectionUpdate':
-                // accept requests from the server only
-                if (!connId) {
-                    data = JSON.parse(signal.data)
-
-                    connectionUpdate(data)
                 }
                 break
         }
@@ -447,15 +444,6 @@ function Room(container)
     function connectionUpdate(data) {
         let conn = connections[data.connectionId]
         let refresh = false
-        let handUpdate = conn => {
-            if ('hand' in data && data.hand != conn.hand) {
-                if (data.hand) {
-                    connectionHandUp(conn)
-                } else {
-                    connectionHandDown(data.connectionId)
-                }
-            }
-        }
 
         // It's me
         if (session.connection.connectionId == data.connectionId) {
@@ -473,8 +461,6 @@ function Room(container)
                 let videos = publisher.stream.streamManager.videos
                 publisher.stream.streamManager.videos = videos.filter(video => video.video.parentNode != null)
             }
-
-            handUpdate(sessionData)
 
             // merge the changed data into internal session metadata object
             sessionData = Object.assign({}, sessionData, data, { audioActive, videoActive })
@@ -511,8 +497,6 @@ function Room(container)
                 sessionData.onMediaSetup()
             }
         } else if (conn) {
-            handUpdate(conn)
-
             // merge the changed data into internal session metadata object
             Object.keys(data).forEach(key => { conn[key] = data[key] })
 
@@ -539,14 +523,12 @@ function Room(container)
     /**
      * Handler for Hand-Up "signal"
      */
-    function connectionHandUp(connection) {
-        connection.isSelf = session.connection.connectionId == connection.connectionId
+    function peerHandUp(peer) {
+        let element = $(nicknameWidget(peer))
 
-        let element = $(nicknameWidget(connection))
+        participantUpdate(element, peer)
 
-        participantUpdate(element, connection)
-
-        element.attr('id', 'qa' + connection.connectionId)
+        element.attr('id', 'qa' + peer.id)
             .appendTo($(sessionData.queueElement).show())
 
         setTimeout(() => element.addClass('widdle'), 50)
@@ -555,10 +537,10 @@ function Room(container)
     /**
      * Handler for Hand-Down "signal"
      */
-    function connectionHandDown(connectionId) {
+    function peerHandDown(peer) {
         let list = $(sessionData.queueElement)
 
-        list.find('#qa' + connectionId).remove();
+        list.find('#qa' + peer.id).remove();
 
         if (!list.find('.meet-nickname').length) {
             list.hide();
@@ -925,7 +907,7 @@ function Room(container)
             .addClass('btn btn-outline-' + (params.isSelf ? 'primary' : 'secondary'))
             .attr({title: $t('meet.menu-options'), 'data-bs-toggle': 'dropdown'})
 
-        const dropdown = new Dropdown(nickname[0], {boundary: container.parentNode})
+        const dropdown = new Dropdown(nickname[0], { boundary: container.parentNode })
 
         if (params.isSelf) {
             // Add events for nickname change
@@ -960,8 +942,8 @@ function Room(container)
         } else {
             element.find('.action-nickname').remove()
 
-            element.find('.action-dismiss').on('click', e => {
-                sessionData.onDismiss(params.id)
+            element.find('.action-dismiss').on('click', () => {
+                client.kickPeer(params.id)
             })
         }
 
@@ -1040,7 +1022,7 @@ function Room(container)
         let numOfVideos = publishers.length
 
         if (sessionData && sessionData.counterElement) {
-            sessionData.counterElement.innerHTML = Object.keys(connections).length + 1
+            sessionData.counterElement.innerHTML = Object.keys(peers).length
         }
 
         if (!numOfVideos) {

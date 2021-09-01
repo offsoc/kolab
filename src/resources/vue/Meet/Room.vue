@@ -329,9 +329,6 @@
             configUpdate(config) {
                 this.session.config = Object.assign({}, this.session.config, config)
             },
-            dismissParticipant(id) {
-                axios.post('/api/v4/openvidu/rooms/' + this.room + '/connections/' + id + '/dismiss')
-            },
             initSession(init) {
                 const button = $('#join-button').prop('disabled', true)
 
@@ -535,9 +532,7 @@
                         new Modal('#leave-dialog').show()
                     }
                 }
-                this.session.onDismiss = connId => { this.dismissParticipant(connId) }
                 this.session.onSessionDataUpdate = data => { this.updateSession(data) }
-                this.session.onConnectionChange = (connId, data) => { this.updateParticipant(connId, data) }
                 this.session.onJoinRequest = data => { this.joinRequest(data) }
                 this.session.onMediaSetup = () => { this.setupMedia() }
 
@@ -690,8 +685,8 @@
                     element.requestFullscreen()
                 }
             },
-            switchHand() {
-                this.updateSelf({ hand: !this.handRaised })
+            async switchHand() {
+                this.handRaised = await this.meet.raiseHand(!this.handRaised)
             },
             async switchSound() {
                 this.audioActive = await this.meet.switchAudio()
@@ -720,19 +715,6 @@
                             switchScreenAction()
                         })
                 }
-            },
-            updateParticipant(connId, params) {
-                if (this.isModerator()) {
-                    axios.put('/api/v4/openvidu/rooms/' + this.room + '/connections/' + connId, params)
-                }
-            },
-            updateSelf(params, onSuccess) {
-                axios.put('/api/v4/openvidu/rooms/' + this.room + '/connections/' + this.session.connectionId, params)
-                    .then(response => {
-                        if (onSuccess) {
-                            onSuccess(response)
-                        }
-                    })
             },
             updateSession(data) {
                 this.session = data

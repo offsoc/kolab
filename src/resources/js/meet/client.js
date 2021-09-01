@@ -75,7 +75,7 @@ function Client()
             await socket.sendRequest('moderator:closeRoom')
         }
 
-        trigger('closeSession', { reason: reason || 'session-closed' })
+        trigger('closeSession', { reason: reason || 'disconnected' })
 
         if (socket) {
             socket.close()
@@ -161,14 +161,30 @@ function Client()
         return micProducer && !micProducer.paused && !micProducer.closed
     }
 
+    this.kickPeer = (peerId) => {
+        socket.sendRequest('moderator:kickPeer', { peerId })
+    }
+
     this.chatMessage = (message) => {
         socket.sendRequest('chatMessage', { message })
     }
 
+    this.raiseHand = async (status) => {
+        if (peers.self.raisedHand != status) {
+            peers.self.raisedHand = status
+            await socket.sendRequest('raisedHand', { raisedHand: status })
+            trigger('updatePeer', peers.self, ['raisedHand'])
+        }
+
+        return status
+    }
+
     this.setNickname = (nickname) => {
-        peers.self.nickname = nickname
-        socket.sendRequest('changeNickname', { nickname })
-        trigger('updatePeer', peers.self, ['nickname'])
+        if (peers.self.nickname != nickname) {
+            peers.self.nickname = nickname
+            socket.sendRequest('changeNickname', { nickname })
+            trigger('updatePeer', peers.self, ['nickname'])
+        }
     }
 
     /**
@@ -327,7 +343,6 @@ function Client()
                     peer.nickname = nickname
 
                     trigger('updatePeer', peer, ['nickname'])
-
                     return
                 }
 
@@ -338,6 +353,25 @@ function Client()
 
                 case 'moderator:closeRoom': {
                     this.closeSession('session-closed')
+                    return
+                }
+
+                case 'moderator:kickPeer': {
+                    this.closeSession('session-closed')
+                    return
+                }
+
+                case 'raisedHand': {
+                    const { peerId, raisedHand } = notification.data
+                    const peer = peers[peerId]
+
+                    if (!peer) {
+                        return
+                    }
+
+                    peer.raisedHand = raisedHand
+
+                    trigger('updatePeer', peer, ['raisedHand'])
                     return
                 }
 

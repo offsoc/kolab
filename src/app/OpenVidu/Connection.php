@@ -30,22 +30,6 @@ class Connection extends Model
     ];
 
     /**
-     * Dismiss (close) the connection.
-     *
-     * @return bool True on success, False on failure
-     */
-    public function dismiss()
-    {
-        if ($this->room->closeOVConnection($this->id)) {
-            $this->delete();
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
      * The room to which this connection belongs.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo

@@ -32,8 +32,6 @@ class Peer extends EventEmitter
 
         this._raisedHand = false;
 
-        this._raisedHandTimestamp = null;
-
         this._transports = new Map();
 
         this._producers = new Map();
@@ -182,16 +180,7 @@ class Peer extends EventEmitter
 
     set raisedHand(raisedHand)
     {
-        raisedHand ?
-            this._raisedHandTimestamp = Date.now() :
-            this._raisedHandTimestamp = null;
-
         this._raisedHand = raisedHand;
-    }
-
-    get raisedHandTimestamp()
-    {
-        return this._raisedHandTimestamp;
     }
 
     get transports()
@@ -213,8 +202,6 @@ class Peer extends EventEmitter
     {
         if (this._role != newRole) {
             this._role = newRole;
-
-            logger.info('setRole() | [newRole:%s]', newRole);
 
             this.emit('gotRole', { newRole });
         }
@@ -283,9 +270,8 @@ class Peer extends EventEmitter
             id: this.id,
             nickname: this.nickname,
             // picture: this.picture,
-            role: this._role,
-            raisedHand: this.raisedHand,
-            // raisedHandTimestamp: this.raisedHandTimestamp
+            role: this.role,
+            raisedHand: this.raisedHand
         };
 
         return peerInfo;

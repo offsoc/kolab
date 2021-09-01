@@ -225,14 +225,6 @@ class Room extends EventEmitter
 
         // Array of mediasoup Router instances.
         this._mediasoupRouters = mediasoupRouters;
-
-        // mediasoup AudioLevelObserver.
-        this._audioLevelObserver = audioLevelObserver;
-
-        // Current active speaker.
-        this._currentActiveSpeaker = null;
-
-        this._handleAudioLevelObserver();
     }
 
     close()
@@ -290,41 +282,6 @@ class Room extends EventEmitter
         }
 
         this._peerJoining(peer);
-    }
-
-    _handleAudioLevelObserver()
-    {
-/*
-        // Set audioLevelObserver events.
-        this._audioLevelObserver.on('volumes', (volumes) =>
-        {
-            const { producer, volume } = volumes[0];
-
-            // Notify all Peers.
-            for (const peer of this.getPeers())
-            {
-                this._notification(
-                    peer.socket,
-                    'activeSpeaker',
-                    {
-                        peerId : producer.appData.peerId,
-                        volume : volume
-                    });
-            }
-        });
-        this._audioLevelObserver.on('silence', () =>
-        {
-            // Notify all Peers.
-            for (const peer of this.getPeers())
-            {
-                this._notification(
-                    peer.socket,
-                    'activeSpeaker',
-                    { peerId: null }
-                );
-            }
-        });
-*/
     }
 
     logStatus()
@@ -669,29 +626,16 @@ class Room extends EventEmitter
             {
                 let { appData } = request.data;
 
-                if (
-                    !appData.source ||
-                    ![ 'mic', 'webcam', 'screen' ]
-                        .includes(appData.source)
-                )
+                if (!appData.source || ![ 'mic', 'webcam', 'screen' ].includes(appData.source))
                     throw new Error('invalid producer source');
 
-                if (
-                    appData.source === 'mic' &&
-                    !this._hasPermission(peer, Roles.PUBLISHER)
-                )
+                if (appData.source === 'mic' && !peer.hasRole(Roles.PUBLISHER))
                     throw new Error('peer not authorized');
 
-                if (
-                    appData.source === 'webcam' &&
-                    !this._hasPermission(peer, Roles.PUBLISHER)
-                )
+                if (appData.source === 'webcam' && !peer.hasRole(Roles.PUBLISHER))
                     throw new Error('peer not authorized');
 
-                if (
-                    appData.source === 'screen' &&
-                    !this._hasPermission(peer, Roles.PUBLISHER)
-                )
+                if (appData.source === 'screen' && !peer.hasRole(Roles.PUBLISHER))
                     throw new Error('peer not authorized');
 
                 const { transportId, kind, rtpParameters } = request.data;
@@ -864,7 +808,7 @@ class Room extends EventEmitter
 
             case 'moderator:setRole':
             {
-                if (!this._hasPermission(peer, Roles.MODERATOR))
+                if (!peer.hasRole(Roles.MODERATOR))
                     throw new Error('peer not authorized');
 
                 const { peerId, role } = request.data;
@@ -893,9 +837,8 @@ class Room extends EventEmitter
 
                 // Spread to others
                 this._notification(peer.socket, 'raisedHand', {
-                    peerId              : peer.id,
-                    raisedHand          : raisedHand,
-                    raisedHandTimestamp : peer.raisedHandTimestamp
+                    peerId: peer.id,
+                    raisedHand: raisedHand,
                 }, true);
 
                 // Return no error
@@ -906,7 +849,7 @@ class Room extends EventEmitter
 
             case 'moderator:closeRoom':
             {
-                if (!this._hasPermission(peer, Roles.OWNER))
+                if (!peer.hasRole(Roles.OWNER))
                     throw new Error('peer not authorized');
 
                 this._notification(peer.socket, 'moderator:closeRoom', null, true);
@@ -918,10 +861,10 @@ class Room extends EventEmitter
 
                 break;
             }
-/*
+
             case 'moderator:kickPeer':
             {
-                if (!this._hasPermission(peer, Roles.MODERATOR))
+                if (!peer.hasRole(Roles.MODERATOR))
                     throw new Error('peer not authorized');
 
                 const { peerId } = request.data;
@@ -931,7 +874,7 @@ class Room extends EventEmitter
                 if (!kickPeer)
                     throw new Error(`peer with id "${peerId}" not found`);
 
-                this._notification(kickPeer.socket, 'moderator:kick');
+                this._notification(kickPeer.socket, 'moderator:kickPeer');
 
                 kickPeer.close();
 
@@ -940,25 +883,6 @@ class Room extends EventEmitter
                 break;
             }
 
-            case 'moderator:lowerHand':
-            {
-                if (!this._hasPermission(peer, Roles.MODERATOR))
-                    throw new Error('peer not authorized');
-
-                const { peerId } = request.data;
-
-                const lowerPeer = this._peers[peerId];
-
-                if (!lowerPeer)
-                    throw new Error(`peer with id "${peerId}" not found`);
-
-                this._notification(lowerPeer.socket, 'moderator:lowerHand');
-
-                cb();
-
-                break;
-            }
-*/
             default:
             {
                 logger.error('unknown request.method "%s"', request.method);
@@ -1091,11 +1015,6 @@ class Room extends EventEmitter
         {
             logger.warn('_createConsumer() | [error:"%o"]', error);
         }
-    }
-
-    _hasPermission(peer, role)
-    {
-        return !!(peer.role & role);
     }
 
     /**
