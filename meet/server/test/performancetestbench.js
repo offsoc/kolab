@@ -3,9 +3,10 @@ process.env.DEBUG = '*'
 const assert = require('assert');
 let request = require('supertest')
 const io = require("socket.io-client");
-const Process = require("child_process");
+const child_process = require("child_process");
 
 let app
+let processes = [];
 
 let rtpParameters = {
     mediaCodecs: [
@@ -34,11 +35,54 @@ let rtpParameters = {
     ],
 }
 
+function startFFMPEGStream(transportInfos, ssrc) {
+    const cmdProgram = "ffmpeg";
+
+    //Build a video stream per producer
+    const streams = transportInfos.map((transportInfo) => `[select=v:f=rtp:ssrc=${ssrc}:payload_type=125]rtp://127.0.0.1:${transportInfo.port}?rtcpport=${transportInfo.rtcpPort}`);
+
+    const cmdArgStr = [
+        "-i /dev/video0", //We are streaming from the webcam (a looping videofile would be an alternative)
+        `-c:v h264`, //The codec
+        "-map 0:v:0",
+        "-f tee", //This option allows us to read the source once, encode once, and then output multiple streams
+        streams.join('|').trim()
+    ].join(" ").trim();
+
+    console.log(`Run command: ${cmdProgram} ${cmdArgStr}`);
+
+    let recProcess = child_process.spawn(cmdProgram, cmdArgStr.split(/\s+/));
+
+    recProcess.on("error", (err) => {
+        console.error("Recording process error:", err);
+    });
+
+    recProcess.on("exit", (code, signal) => {
+        console.log("Recording process exit, code: %d, signal: %s", code, signal);
+
+        recProcess = null;
+    });
+
+    // FFmpeg writes its logs to stderr
+    recProcess.stderr.on("data", (chunk) => {
+        chunk
+        .toString()
+        .split(/\r?\n/g)
+        .filter(Boolean) // Filter out empty strings
+        .forEach((line) => {
+            console.log(line);
+        });
+    });
+
+    return recProcess;
+}
+
 
 before(function (done) {
     process.env.SSL_CERT = "../../docker/certs/kolab.hosted.com.cert"
     process.env.SSL_KEY = "../../docker/certs/kolab.hosted.com.key"
     process.env.REDIS_IP = "none"
+    process.env.MEDIASOUP_NUM_WORKERS = 1
     app = require('../server.js')
     request = request(app);
 
@@ -49,8 +93,7 @@ before(function (done) {
 
 describe('Join room', function() {
     const roomId = "room1";
-    let signalingSocket
-    let peerId
+    let transportInfos = [];
 
     async function sendRequest(socket, method, data = null) {
         return await new Promise((resolve, /*reject*/) => {
@@ -67,7 +110,9 @@ describe('Join room', function() {
     }
 
     it('create room', async () => {
-        return request
+        let signalingSocket
+        let peerId
+        await request
             .post(`/meetmedia/api/sessions/${roomId}/connection`)
             .send({role: 31})
             .expect(200)
@@ -92,15 +137,8 @@ describe('Join room', function() {
                 await roomReady
             })
             .catch(err => { console.warn(err); throw err })
-    });
 
-    it('getRtpCapabilities', async () => {
-        const routerRtpCapabilities = await sendRequest(signalingSocket, 'getRouterRtpCapabilities')
-        assert(Object.keys(routerRtpCapabilities).length != 0)
-    });
-
-
-    it('join', async () => {
+        //Join
         const { id, role, peers } = await sendRequest(signalingSocket, 'join', {
                 nickname: "nickname",
                 rtpCapabilities: rtpParameters
@@ -108,61 +146,15 @@ describe('Join room', function() {
         assert.equal(id, peerId)
         assert.equal(role, 31)
         assert.equal(peers.length, 0)
-    })
 
-    it('second peer joining', async () => {
-        return request
-            .post(`/meetmedia/api/sessions/${roomId}/connection`)
-            .expect(200)
-            .then(async (res) => {
-                let data = res.body;
-                const newId = data['id'];
-                const signalingUrl = data['token'];
-
-                let signalingSocket2 = io(signalingUrl, { path: '/meetmedia/signaling', transports: ["websocket"], rejectUnauthorized: false });
-
-                let roomReady = new Promise((resolve, /*reject*/) => {
-                    signalingSocket2.on('notification', async (reason) => {
-                        if (reason['method'] == 'roomReady') {
-                            resolve(reason);
-                        }
-                    });
-                })
-
-                let newPeer = new Promise((resolve, /*reject*/) => {
-                    signalingSocket.on('notification', (reason) => {
-                        if (reason.method == 'newPeer') {
-                            resolve(reason);
-                        }
-                    });
-                })
-
-                signalingSocket.connect();
-
-
-                let reason = await roomReady;
-                const { peers } = await sendRequest(signalingSocket2, 'join', {
-                    nickname: "nickname",
-                    rtpCapabilities: rtpParameters
-                })
-                assert.equal(peers.length, 1)
-                assert.equal(peers[0].id, peerId)
-
-                reason = await newPeer;
-                assert(reason.data.id == newId);
-            })
-            .catch(err => { console.warn(err); throw err })
-    });
-
-    let transportInfo;
-
-    it('createPlainTransport', async () => {
-        transportInfo = await sendRequest(signalingSocket, 'createPlainTransport', {
+        //Create sending transport
+        let transportInfo = await sendRequest(signalingSocket, 'createPlainTransport', {
             producing: true,
             consuming: false,
         })
 
-        const { id } = await sendRequest(signalingSocket, 'produce', {
+        //Create sending producer
+        await sendRequest(signalingSocket, 'produce', {
             transportId: transportInfo.id,
             kind: 'video',
 
@@ -186,85 +178,144 @@ describe('Join room', function() {
             }
         })
 
+        console.warn(transportInfo);
+        transportInfos.push(transportInfo)
     });
 
-    let recProcess;
+    it('second participant room', async () => {
+        let signalingSocket
+        let peerId
+        await request
+            .post(`/meetmedia/api/sessions/${roomId}/connection`)
+            .send({role: 31})
+            .expect(200)
+            .then(async (res) => {
+                let data = res.body;
+                peerId = data['id'];
+                const signalingUrl = data['token'];
+                assert(signalingUrl.includes(peerId))
+                assert(signalingUrl.includes(roomId))
+                console.info(signalingUrl);
 
-    it('startFFMPEG', async () => {
+                signalingSocket = io(signalingUrl, { path: '/meetmedia/signaling', transports: ["websocket"], rejectUnauthorized: false });
+                let roomReady = new Promise((resolve, /*reject*/) => {
+                    signalingSocket.on('notification', (reason) => {
+                        if (reason['method'] == 'roomReady') {
+                            resolve();
+                        }
+                    });
+                })
+
+                signalingSocket.connect();
+                await roomReady
+            })
+            .catch(err => { console.warn(err); throw err })
+
+        //Join
+        const { id, role, peers } = await sendRequest(signalingSocket, 'join', {
+                nickname: "nickname",
+                rtpCapabilities: rtpParameters
+        })
+        assert.equal(id, peerId)
+        assert.equal(role, 31)
+        assert.equal(peers.length, 1)
+
+        //Create sending transport
+        let transportInfo = await sendRequest(signalingSocket, 'createPlainTransport', {
+            producing: true,
+            consuming: false,
+        })
+
+        //Create sending producer
+        await sendRequest(signalingSocket, 'produce', {
+            transportId: transportInfo.id,
+            kind: 'video',
+
+            rtpParameters: {
+                codecs: [
+                    {
+                        mimeType: "video/H264",
+                        payloadType: 125,
+                        clockRate: 90000,
+                        parameters: {
+                            "level-asymmetry-allowed": 1,
+                            "packetization-mode": 1,
+                            "profile-level-id": "42e01f",
+                        },
+                    },
+                ],
+                encodings: [{ ssrc: 2222 }]
+            },
+            appData: {
+                source: 'webcam'
+            }
+        })
+
+        console.warn(transportInfo);
+        transportInfos.push(transportInfo)
+    });
+
+    it('ffmpeg', async () => {
+        processes.push(startFFMPEGStream(transportInfos, 2222))
+    });
+
+    it('wait', async () => {
         let recResolve;
         const promise = new Promise((res, _rej) => {
             recResolve = res;
         });
-
-        const cmdProgram = "ffmpeg";
-
-        const cmdArgStr = [
-            "-i /dev/video0",
-            "-r 24",
-            "-v info",
-            "-video_size 320x240",
-            `-c:v h264`,
-            "-f",
-            "rtp",
-            "-payload_type 125",
-            "-ssrc 2222",
-            `rtp://127.0.0.1:${transportInfo.port}?rtcpport=${transportInfo.rtcpPort}`,
-        ].join(" ").trim();
-
-        console.log(`Run command: ${cmdProgram} ${cmdArgStr}`);
-
-        recProcess = Process.spawn(cmdProgram, cmdArgStr.split(/\s+/));
-
-        recProcess.on("error", (err) => {
-            console.error("Recording process error:", err);
-        });
-
-        recProcess.on("exit", (code, signal) => {
-            console.log("Recording process exit, code: %d, signal: %s", code, signal);
-
-            recProcess = null;
-            // stopMediasoupRtp();
-
-            if (!signal || signal === "SIGINT") {
-                console.log("Recording stopped");
-            } else {
-                console.warn(
-                    "Recording process didn't exit cleanly, output file might be corrupt"
-                );
-            }
-        });
-
-        // FFmpeg writes its logs to stderr
-        recProcess.stderr.on("data", (chunk) => {
-            chunk
-            .toString()
-            .split(/\r?\n/g)
-            .filter(Boolean) // Filter out empty strings
-            .forEach((line) => {
-                console.log(line);
-                //Stop after 5s of streaming
-                if (line.startsWith("ffmpeg version")) {
-                    setTimeout(() => {
-                        recResolve();
-                    }, 5000);
-                }
-            });
-        });
-
         return promise;
-    });
-
-
-    after(function () {
-        signalingSocket.close();
-        if (recProcess) {
-            recProcess.kill()
-        }
     })
 
+    // it('second peer joining', async () => {
+    //     return request
+    //         .post(`/meetmedia/api/sessions/${roomId}/connection`)
+    //         .expect(200)
+    //         .then(async (res) => {
+    //             let data = res.body;
+    //             const newId = data['id'];
+    //             const signalingUrl = data['token'];
+
+    //             let signalingSocket2 = io(signalingUrl, { path: '/meetmedia/signaling', transports: ["websocket"], rejectUnauthorized: false });
+
+    //             let roomReady = new Promise((resolve, /*reject*/) => {
+    //                 signalingSocket2.on('notification', async (reason) => {
+    //                     if (reason['method'] == 'roomReady') {
+    //                         resolve(reason);
+    //                     }
+    //                 });
+    //             })
+
+    //             let newPeer = new Promise((resolve, /*reject*/) => {
+    //                 signalingSocket.on('notification', (reason) => {
+    //                     if (reason.method == 'newPeer') {
+    //                         resolve(reason);
+    //                     }
+    //                 });
+    //             })
+
+    //             signalingSocket.connect();
+
+
+    //             let reason = await roomReady;
+    //             const { peers } = await sendRequest(signalingSocket2, 'join', {
+    //                 nickname: "nickname",
+    //                 rtpCapabilities: rtpParameters
+    //             })
+    //             assert.equal(peers.length, 1)
+    //             assert.equal(peers[0].id, peerId)
+
+    //             reason = await newPeer;
+    //             assert(reason.data.id == newId);
+    //         })
+    //         .catch(err => { console.warn(err); throw err })
+    // });
 });
 
 after(function () {
+    for (const process of processes) {
+        process.kill()
+    }
     process.exit();
 })
 
