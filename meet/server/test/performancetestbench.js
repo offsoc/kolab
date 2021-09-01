@@ -1,55 +1,44 @@
+process.env.DEBUG = '*'
+
 const assert = require('assert');
 let request = require('supertest')
 const io = require("socket.io-client");
-
-const mediasoupClient = require('mediasoup-client');
-const fakeParameters = require('./fakeParameters');
 const Process = require("child_process");
 
 let app
 
-//TODO use this
-    // const mediaCodecs = config.mediasoup.router.mediaCodecs;
-
-	let rtpParameters = {
-      mediaCodecs: [
+let rtpParameters = {
+    mediaCodecs: [
         {
-          kind: "audio",
-          mimeType: "audio/opus",
-          preferredPayloadType: 111,
-          clockRate: 48000,
-          channels: 2,
-          parameters: {
-            minptime: 10,
-            useinbandfec: 1,
-          },
+            kind: "audio",
+            mimeType: "audio/opus",
+            preferredPayloadType: 111,
+            clockRate: 48000,
+            channels: 2,
+            parameters: {
+                minptime: 10,
+                useinbandfec: 1,
+            },
         },
         {
-          kind: "video",
-          mimeType: "video/VP8",
-          preferredPayloadType: 96,
-          clockRate: 90000,
+            kind: "video",
+            mimeType: "video/H264",
+            preferredPayloadType: 125,
+            clockRate: 90000,
+            parameters: {
+                "level-asymmetry-allowed": 1,
+                "packetization-mode": 1,
+                "profile-level-id": "42e01f",
+            },
         },
-        {
-          kind: "video",
-          mimeType: "video/H264",
-          preferredPayloadType: 125,
-          clockRate: 90000,
-          parameters: {
-            "level-asymmetry-allowed": 1,
-            "packetization-mode": 1,
-            "profile-level-id": "42e01f",
-          },
-        },
-      ],
-    }
+    ],
+}
 
 
 before(function (done) {
     process.env.SSL_CERT = "../../docker/certs/kolab.hosted.com.cert"
     process.env.SSL_KEY = "../../docker/certs/kolab.hosted.com.key"
     process.env.REDIS_IP = "none"
-    process.env.DEBUG = '*'
     app = require('../server.js')
     request = request(app);
 
@@ -173,12 +162,10 @@ describe('Join room', function() {
             consuming: false,
         })
 
-        // const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
-        console.warn(transportInfo);
-
         const { id } = await sendRequest(signalingSocket, 'produce', {
             transportId: transportInfo.id,
             kind: 'video',
+
             rtpParameters: {
                 codecs: [
                     {
@@ -199,8 +186,6 @@ describe('Join room', function() {
             }
         })
 
-        //TODO now we could instruct gstreamer to produce video for the 
-
     });
 
     let recProcess;
@@ -216,14 +201,14 @@ describe('Join room', function() {
         const cmdArgStr = [
             "-i /dev/video0",
             "-r 24",
+            "-v info",
             "-video_size 320x240",
             `-c:v h264`,
             "-f",
             "rtp",
             "-payload_type 125",
             "-ssrc 2222",
-            // `[select=a:f=rtp:ssrc=2222:payload_type=125]rtp://127.0.0.1:${transportInfo.port}`
-            `rtp://127.0.0.1:${transportInfo.port}`,
+            `rtp://127.0.0.1:${transportInfo.port}?rtcpport=${transportInfo.rtcpPort}`,
         ].join(" ").trim();
 
         console.log(`Run command: ${cmdProgram} ${cmdArgStr}`);
@@ -268,7 +253,6 @@ describe('Join room', function() {
 
         return promise;
     });
-
 
 
     after(function () {

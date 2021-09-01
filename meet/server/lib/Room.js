@@ -539,13 +539,10 @@ class Room extends EventEmitter
 
                 const transport = await router.createPlainTransport(
                     {
-                        // No RTP will be received from the remote side
-                        comedia: false,
-
+                        comedia: true,
                         // FFmpeg and GStreamer don't support RTP/RTCP multiplexing ("a=rtcp-mux" in SDP)
                         rtcpMux: false,
                         listenIp: { ip: "127.0.0.1", announcedIp: null },
-
                         appData : { producing, consuming }
                     }
                 );
