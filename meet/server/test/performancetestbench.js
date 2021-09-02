@@ -1,10 +1,10 @@
-process.env.DEBUG = '*'
+process.env.DEBUG = ''
 
 const assert = require('assert');
 let request = require('supertest')
 const io = require("socket.io-client");
 const child_process = require("child_process");
-const  udp = require('dgram');
+const udp = require('dgram');
 
 let recvUdpSocket
 let recvRtcpUdpSocket
@@ -85,21 +85,17 @@ async function sendRequest(socket, method, data = null) {
 
 async function createPeer(roomId, request, receiverPort, receiverRtcpPort) {
     let signalingSocket
-    let peerId
     await request
         .post(`/meetmedia/api/sessions/${roomId}/connection`)
         .send({role: 31})
         .expect(200)
         .then(async (res) => {
             let data = res.body;
-            peerId = data['id'];
             const signalingUrl = data['token'];
-            assert(signalingUrl.includes(peerId))
-            assert(signalingUrl.includes(roomId))
             signalingSocket = io(signalingUrl, { path: '/meetmedia/signaling', transports: ["websocket"], rejectUnauthorized: false });
             let roomReady = new Promise((resolve, /*reject*/) => {
                 signalingSocket.once('notification', (reason) => {
-                    console.warn("Received notification", reason)
+                    // console.warn("Received notification", reason)
                     if (reason['method'] == 'roomReady') {
                         resolve();
                     }
@@ -115,19 +111,17 @@ async function createPeer(roomId, request, receiverPort, receiverRtcpPort) {
     //Necessary later for the server to resume the consumer,
     //once we join with another peer
     signalingSocket.on('request', async (reason, cb) => {
-        console.warn("Received request", reason)
+        // console.warn("Received request", reason)
         if (reason['method'] == 'newConsumer') {
             cb();
         }
     });
 
     //Join
-    const { id, role/*, peers*/ } = await sendRequest(signalingSocket, 'join', {
+    await sendRequest(signalingSocket, 'join', {
             nickname: "nickname",
             rtpCapabilities: rtpParameters
     })
-    assert.equal(id, peerId)
-    assert.equal(role, 31)
 
     //Create sending transport
     const senderTransportInfo = await sendRequest(signalingSocket, 'createPlainTransport', {
