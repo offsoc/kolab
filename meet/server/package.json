@@ -8,7 +8,8 @@
         "connect": "node connect.js",
         "lint": "eslint -c .eslintrc.json --ext .js *.js lib/",
         "lint-fix": "eslint --fix -c .eslintrc.json --ext .js *.js lib/",
-        "test": "mocha test/test*.js"
+        "test": "mocha test/test*.js",
+        "performancetestbench": "mocha -b -t 0 test/performancetestbench.js"
     },
     "dependencies": {
         "awaitqueue": "^1.0.0",
