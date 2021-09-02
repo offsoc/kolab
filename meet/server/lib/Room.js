@@ -14,22 +14,15 @@ const ROUTER_SCALE_SIZE = config.routerScaleSize || 40;
 class Room extends EventEmitter
 {
 
-    /*
-     * Find a router that is on a worker that is least loaded.
-     *
-     * A worker with a router that we are already piping to is preferred.
-     */
-    static getLeastLoadedRouter(mediasoupWorkers, peers, mediasoupRouters)
+    static calculateLoads(mediasoupWorkers, peers, mediasoupRouters)
     {
         const routerLoads = new Map();
-
         const workerLoads = new Map();
-
         const pipedRoutersIds = new Set();
 
         // Calculate router loads by adding up peers per router,
-        // and collected piped routers
-        for (const peer of peers.values())
+        // and collecte piped routers
+        for (const peer of peers)
         {
             const routerId = peer.routerId;
 
@@ -70,6 +63,17 @@ class Room extends EventEmitter
                 }
             }
         }
+        return {routerLoads, workerLoads, pipedRoutersIds};
+    }
+
+    /*
+     * Find a router that is on a worker that is least loaded.
+     *
+     * A worker with a router that we are already piping to is preferred.
+     */
+    static getLeastLoadedRouter(mediasoupWorkers, peers, mediasoupRouters)
+    {
+        const {routerLoads, workerLoads, pipedRoutersIds} = Room.calculateLoads(mediasoupWorkers, peers.values(), mediasoupRouters);
 
         const sortedWorkerLoads = new Map([ ...workerLoads.entries() ].sort(
             (a, b) => a[1] - b[1]));
@@ -224,6 +228,24 @@ class Room extends EventEmitter
         // Array of mediasoup Router instances.
         this._mediasoupRouters = mediasoupRouters;
     }
+
+
+    dumpStats()
+    {
+
+        const peers = this.getPeers();
+        const {routerLoads, workerLoads, pipedRoutersIds} = Room.calculateLoads(this._mediasoupWorkers, peers, this._mediasoupRouters);
+        let stats = {
+            numberOfWorkers: this._mediasoupWorkers.length,
+            numberOfRouters: this._mediasoupRouters.size,
+            numberOfPeers: peers.length,
+            routerLoads: routerLoads,
+            workerLoads: workerLoads,
+            pipedRoutersIds: pipedRoutersIds,
+        };
+        console.log(stats);
+    }
+
 
     close()
     {
@@ -464,6 +486,14 @@ class Room extends EventEmitter
             case 'getRouterRtpCapabilities':
             {
                 cb(null, router.rtpCapabilities);
+                break;
+            }
+
+            case 'dumpStats':
+            {
+                this.dumpStats()
+
+                cb(null);
                 break;
             }
 

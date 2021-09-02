@@ -61,7 +61,7 @@ function startFFMPEGStream(peers, ssrc) {
         .split(/\r?\n/g)
         .filter(Boolean) // Filter out empty strings
         .forEach((line) => {
-            console.log(line);
+            // console.log(line);
         });
     });
 
@@ -181,19 +181,20 @@ before(function (done) {
     process.env.SSL_CERT = "../../docker/certs/kolab.hosted.com.cert"
     process.env.SSL_KEY = "../../docker/certs/kolab.hosted.com.key"
     process.env.REDIS_IP = "none"
-    process.env.MEDIASOUP_NUM_WORKERS = 1
+    process.env.MEDIASOUP_NUM_WORKERS = 3
+    process.env.ROUTER_SCALE_SIZE = 3
     app = require('../server.js')
     request = request(app);
 
 
     recvUdpSocket = udp.createSocket('udp4');
     recvUdpSocket.on('message',function(msg,info){
-        console.warn("Received message", msg, info)
+        // console.warn("Received message", msg, info)
     });
 
     recvRtcpUdpSocket = udp.createSocket('udp4');
     recvRtcpUdpSocket.on('message',function(msg,info){
-        console.warn("Received RTCP message", msg, info)
+        // console.warn("Received RTCP message", msg, info)
     });
 
     app.on("ready", function(){
@@ -211,7 +212,7 @@ describe('Testbench', function() {
     });
 
     it('create peers', async () => {
-        for (var i = 0; i < 2; i++) {
+        for (var i = 0; i < 20; i++) {
             peers.push(await createPeer(roomId, request, recvUdpSocket.address().port, recvRtcpUdpSocket.address().port))
         }
     });
@@ -221,6 +222,9 @@ describe('Testbench', function() {
     });
 
     it('wait forever', async () => {
+        setInterval(function(){
+            sendRequest(peers[0].signalingSocket, 'dumpStats', {})
+        }, 5000)
         const promise = new Promise((res, _rej) => {});
         return promise;
     })
