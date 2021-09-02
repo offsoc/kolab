@@ -7,6 +7,7 @@
         "start": "node server.js",
         "connect": "node connect.js",
         "lint": "eslint -c .eslintrc.json --ext .js *.js lib/",
+        "lint-fix": "eslint --fix -c .eslintrc.json --ext .js *.js lib/",
         "test": "mocha test/test*.js"
     },
     "dependencies": {

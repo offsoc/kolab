@@ -19,6 +19,6 @@
 		}
 	},
     "rules": {
-
+        // "brace-style": ["error", "1tbs"]
     }
 }
