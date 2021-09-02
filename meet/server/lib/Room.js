@@ -217,8 +217,6 @@ class Room extends EventEmitter
         // Joining queue
         this._queue = new AwaitQueue();
 
-        this._lastN = [];
-
         this._peers = {};
 
         this._selfDestructTimeout = null;
@@ -341,9 +339,6 @@ class Room extends EventEmitter
         {
             peer.socket.join(this._roomId);
 
-            // If we don't have this peer, add to end
-            !this._lastN.includes(peer.id) && this._lastN.push(peer.id);
-
             this._peers[peer.id] = peer;
 
             // Assign routerId
@@ -450,9 +445,6 @@ class Room extends EventEmitter
             return;
 
         this._notification(peer.socket, 'peerClosed', { peerId: peer.id }, true);
-
-        // Remove from lastN
-        this._lastN = this._lastN.filter((id) => id !== peer.id);
 
         delete this._peers[peer.id];
 
