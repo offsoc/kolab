@@ -281,7 +281,7 @@ function Client()
         socket.on('notification', (notification) => {
             switch (notification.method) {
                 case 'roomReady':
-                    iceServers = notification.data.turnServers
+                    iceServers = notification.data.iceServers
                     joinRoom()
                     return
 

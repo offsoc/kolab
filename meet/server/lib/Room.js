@@ -365,7 +365,7 @@ class Room extends EventEmitter
 
             this._handlePeer(peer);
 
-            let turnServers;
+            let iceServers;
 
             if ('turnAPIURI' in config)
             {
@@ -382,7 +382,7 @@ class Room extends EventEmitter
                             }
                         });
 
-                    turnServers = [ {
+                    iceServers = [ {
                         urls       : data.uris,
                         username   : data.username,
                         credential : data.password
@@ -391,17 +391,17 @@ class Room extends EventEmitter
                 catch (error)
                 {
                     if ('backupTurnServers' in config && config.backupTurnServers.length)
-                        turnServers = config.backupTurnServers;
+                        iceServers = config.backupTurnServers;
 
                     logger.error('_peerJoining() | error on REST turn [error:"%o"]', error);
                 }
             }
             else if ('backupTurnServers' in config && config.backupTurnServers.length)
             {
-                turnServers = config.backupTurnServers;
+                iceServers = config.backupTurnServers;
             }
 
-            this._notification(peer.socket, 'roomReady', { turnServers });
+            this._notification(peer.socket, 'roomReady', { iceServers });
         })
             .catch((error) =>
             {
