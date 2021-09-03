@@ -8,25 +8,12 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 
 function Room(container)
 {
-    let session                 // Session object where the user will connect
     let sessionData             // Room session metadata
-/*
-    let publisher               // Publisher object which the user will publish
-    let screenSession           // Session object where the user will connect for screen sharing
-    let screenPublisher         // Publisher object which the user will publish the screen sharing
-    let publisherDefaults = {
-        publishAudio: true,     // Whether to start publishing with your audio unmuted or not
-        publishVideo: true,     // Whether to start publishing with your video enabled or not
-        resolution: '640x480',  // The resolution of your video
-        frameRate: 30,          // The frame rate of your video
-        mirror: true            // Whether to mirror your local video or not
-    }
-*/
-    let connections = {}        // Connected users in the session
-    let peers = {}
+    let peers = {}              // Participants in the session (including self)
+    let publishersContainer     // Container element for publishers
+    let subscribersContainer    // Container element for subscribers
+
     let chatCount = 0
-    let publishersContainer
-    let subscribersContainer
     let scrollStop
     let $t
 
@@ -58,13 +45,10 @@ function Room(container)
      * Join the room session
      *
      * @param data Session metadata and event handlers:
-     *      token       - A token for the main connection,
-     *      shareToken  - A token for screen-sharing connection,
-     *      nickname    - Participant name,
-     *      role        - connection (participant) role(s),
-     *      connections - Optional metadata for other users connections (current state),
-     *      channel     - Selected interpreted language channel (two-letter language code)
-     *      languages   - Supported languages (code-to-label map)
+     *      token           - A token for the main connection,
+     *      shareToken      - A token for screen-sharing connection,
+     *      nickname        - Participant name,
+     *      languages       - Supported languages (code-to-label map)
      *      chatElement     - DOM element for the chat widget,
      *      counterElement  - DOM element for the participants counter,
      *      menuElement     - DOM element of the room toolbar,
@@ -73,7 +57,6 @@ function Room(container)
      *      onError             - Callback for session connection (join) error
      *      onDestroy           - Callback for session disconnection event,
      *      onJoinRequest       - Callback for join request,
-     *      onConnectionChange  - Callback for participant changes, e.g. role update,
      *      onSessionDataUpdate - Callback for current user connection update,
      *      onMediaSetup        - Called when user clicks the Media setup button
      *      translate           - Translation function
@@ -89,8 +72,7 @@ function Room(container)
 
         // Make sure all supported callbacks exist, so we don't have to check
         // their existence everywhere anymore
-        let events = ['Success', 'Error', 'Destroy', 'JoinRequest', 'ConnectionChange',
-            'SessionDataUpdate', 'MediaSetup']
+        let events = ['Success', 'Error', 'Destroy', 'JoinRequest', 'SessionDataUpdate', 'MediaSetup']
 
         events.map(event => 'on' + event).forEach(event => {
             if (!data[event]) {
@@ -105,10 +87,6 @@ function Room(container)
             console.log('addPeer', event)
 
             event.element = participantCreate(event)
-
-            if (event.videoElement) {
-                $(event.element).prepend(event.videoElement)
-            }
 
             peers[event.id] = event
         })
@@ -147,25 +125,54 @@ function Room(container)
                 $(event.element).find('video').remove()
             }
 
-            if (changed && changed.includes('nickname')) {
-                 nicknameUpdate(event.nickname, event.id)
-            }
+            if (changed && changed.length) {
+                if (changed && changed.includes('nickname')) {
+                     nicknameUpdate(event.nickname, event.id)
+                }
 
-            if (changed && changed.includes('raisedHand')) {
-                 if (event.raisedHand) {
-                     peerHandUp(event)
-                } else {
-                    peerHandDown(event)
+                if (changed.includes('raisedHand')) {
+                     if (event.raisedHand) {
+                        peerHandUp(event)
+                    } else {
+                        peerHandDown(event)
+                    }
                 }
             }
 
-            participantUpdate(event.element, event)
+            event.element = participantUpdate(event.element, event)
+
+            // It's me, got publisher role
+            if (peer.isSelf && (event.role & Roles.PUBLISHER) && changed && changed.includes('publisherRole')) {
+                // Open the media setup dialog
+                sessionData.onMediaSetup()
+            }
+/*
+            // Update channels list
+            sessionData.channels = getChannels(peers)
+
+            // The channel user was using has been removed (or rather the participant stopped being an interpreter)
+            if (sessionData.channel && !sessionData.channels.includes(sessionData.channel)) {
+                sessionData.channel = null
+                refresh = true
+            }
+*/
+            if (changed && changed.includes('moderatorRole')) {
+                participantUpdateAll()
+            }
+
+            // Inform the vue component, so it can update some UI controls
+            // sessionData.onSessionDataUpdate(sessionData)
 
             peers[event.id] = event
         })
 
         client.on('joinSuccess', () => {
             data.onSuccess()
+            client.media.setupStop()
+        })
+
+        client.on('joinRequest', event => {
+            // TODO data.onJoinRequest(event)
         })
 
         // Handle session disconnection events
@@ -176,8 +183,8 @@ function Room(container)
             // Remove all participant elements
             Object.keys(peers).forEach(peerId => {
                 $(peers[peerId].element).remove()
-                delete peers[peerId]
             })
+            peers = {}
 
             // refresh the matrix
             resize()
@@ -195,8 +202,8 @@ function Room(container)
     /**
      * Leave the room (disconnect)
      */
-    function leaveRoom() {
-        client.closeSession()
+    function leaveRoom(forced) {
+        client.closeSession(forced)
         peers = {}
     }
 
@@ -217,13 +224,26 @@ function Room(container)
      */
     function setupStart(props) {
         client.media.setupStart(props)
+
+        // When setting up devices while the session is ongoing we have to
+        // disable currently selected devices (temporarily) otherwise e.g.
+        // changing a mic or camera to another device will not be possible.
+        if (client.isJoined()) {
+            client.setMic('')
+            client.setCamera('')
+        }
     }
 
     /**
      * Stop the setup "process", cleanup after it.
      */
-    function setupStop() {
+    async function setupStop() {
         client.media.setupStop()
+
+        // Apply device changes to the client
+        const { audioSource, videoSource } = client.media.setupData()
+        await client.setMic(audioSource)
+        await client.setCamera(videoSource)
     }
 
     /**
@@ -285,22 +305,6 @@ function Room(container)
             scrollStop = chat.scrollTop + chat.offsetHeight < chat.scrollHeight
         })
     }
-
-/*
-    function signalEventHandler(signal) {
-        let conn, data
-        let connId = signal.from ? signal.from.connectionId : null
-
-        switch (signal.type) {
-            case 'signal:joinRequest':
-                // accept requests from the server only
-                if (!connId) {
-                    sessionData.onJoinRequest(JSON.parse(signal.data))
-                }
-                break
-        }
-    }
-*/
 
     /**
      * Add a message to the chat
@@ -377,7 +381,7 @@ function Room(container)
     function switchChannel(channel) {
         sessionData.channel = channel
 
-        // Mute/unmute all connections depending on the selected channel
+        // Mute/unmute all peers depending on the selected channel
         participantUpdateAll()
     }
 
@@ -411,24 +415,7 @@ function Room(container)
      * Switch on/off screen sharing
      */
     function switchScreen(callback) {
-        if (screenPublisher) {
-            // Note: This is what the original openvidu-call app does.
-            // It is probably better for performance reasons to close the connection,
-            // than to use unpublish() and keep the connection open.
-            screenSession.disconnect()
-            screenSession = null
-            screenPublisher = null
-
-            if (callback) {
-                // Note: Disconnecting invalidates the token, we have to inform the vue component
-                // to update UI state (and be prepared to request a new token).
-                callback(false)
-            }
-
-            return
-        }
-
-        screenConnect(callback)
+        // TODO
     }
 
     /**
@@ -436,88 +423,6 @@ function Room(container)
      */
     function isScreenSharingSupported() {
         return false // TODO !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)
-    }
-
-    /**
-     * Update participant connection state
-     */
-    function connectionUpdate(data) {
-        let conn = connections[data.connectionId]
-        let refresh = false
-
-        // It's me
-        if (session.connection.connectionId == data.connectionId) {
-            const rolePublisher = data.role && data.role & Roles.PUBLISHER
-            const roleModerator = data.role && data.role & Roles.MODERATOR
-            const isPublisher = sessionData.role & Roles.PUBLISHER
-            const isModerator = sessionData.role & Roles.MODERATOR
-
-            // demoted to a subscriber
-            if ('role' in data && isPublisher && !rolePublisher) {
-                session.unpublish(publisher)
-                // FIXME: There's a reference in OpenVidu to a video element that should not
-                // exist anymore. It causes issues when we try to do publish/unpublish
-                // sequence multiple times in a row. So, we're clearing the reference here.
-                let videos = publisher.stream.streamManager.videos
-                publisher.stream.streamManager.videos = videos.filter(video => video.video.parentNode != null)
-            }
-
-            // merge the changed data into internal session metadata object
-            sessionData = Object.assign({}, sessionData, data, { audioActive, videoActive })
-
-            // update the participant element
-            sessionData.element = participantUpdate(sessionData.element, sessionData)
-
-            // promoted/demoted to/from a moderator
-            if ('role' in data) {
-                // Update all participants, to enable/disable the popup menu
-                refresh = (!isModerator && roleModerator) || (isModerator && !roleModerator)
-            }
-
-            // promoted to a publisher
-            if ('role' in data && !isPublisher && rolePublisher) {
-                publisher.createVideoElement(sessionData.element, 'PREPEND')
-                session.publish(publisher).then(() => {
-                    sessionData.audioActive = publisher.stream.audioActive
-                    sessionData.videoActive = publisher.stream.videoActive
-
-                    sessionData.onSessionDataUpdate(sessionData)
-                })
-
-                // Open the media setup dialog
-                // Note: If user didn't give permission to media before joining the room
-                // he will not be able to use them now. Changing permissions requires
-                // a page refresh.
-                // Note: In Firefox I'm always being asked again for media permissions.
-                // It does not happen in Chrome. In Chrome the cam/mic will be just re-used.
-                // I.e. streaming starts automatically.
-                // It might make sense to not start streaming automatically in any cirmustances,
-                // display the dialog and wait until user closes it, but this would be
-                // a bigger refactoring.
-                sessionData.onMediaSetup()
-            }
-        } else if (conn) {
-            // merge the changed data into internal session metadata object
-            Object.keys(data).forEach(key => { conn[key] = data[key] })
-
-            conn.element = participantUpdate(conn.element, conn)
-        }
-
-        // Update channels list
-        sessionData.channels = getChannels(connections)
-
-        // The channel user was using has been removed (or rather the participant stopped being an interpreter)
-        if (sessionData.channel && !sessionData.channels.includes(sessionData.channel)) {
-            sessionData.channel = null
-            refresh = true
-        }
-
-        if (refresh) {
-            participantUpdateAll()
-        }
-
-        // Inform the vue component, so it can update some UI controls
-        sessionData.onSessionDataUpdate(sessionData)
     }
 
     /**
@@ -567,11 +472,11 @@ function Room(container)
     }
 
     /**
-     * Create a participant element in the matrix. Depending on the connection role
+     * Create a participant element in the matrix. Depending on the peer role
      * parameter it will be a video element wrapper inside the matrix or a simple
      * tag-like element on the subscribers list.
      *
-     * @param params  Connection metadata/params
+     * @param params  Peer metadata/params
      * @param content Optional content to prepend to the element
      *
      * @return The element
@@ -582,6 +487,10 @@ function Room(container)
         if ((!params.language && params.role & Roles.PUBLISHER) || params.role & Roles.SCREEN) {
             // publishers and shared screens
             element = publisherCreate(params, content)
+
+            if (params.videoElement) {
+                $(element).prepend(params.videoElement)
+            }
         } else {
             // subscribers and language interpreters
             element = subscriberCreate(params, content)
@@ -606,7 +515,7 @@ function Room(container)
             '<div class="meet-video">'
             + svgIcon('user', 'fas', 'watermark')
             + '<div class="controls">'
-                // TODO + '<button type="button" class="btn btn-link link-setup hidden" title="' + $t('meet.media-setup') + '">' + svgIcon('cog') + '</button>'
+                + '<button type="button" class="btn btn-link link-setup hidden" title="' + $t('meet.media-setup') + '">' + svgIcon('cog') + '</button>'
                 + '<div class="volume hidden"><input type="range" min="0" max="1" step="0.1" /></div>'
                 + '<button type="button" class="btn btn-link link-audio hidden" title="' + $t('meet.menu-audio-mute') + '">' + svgIcon('volume-mute') + '</button>'
                 + '<button type="button" class="btn btn-link link-fullscreen closed hidden" title="' + $t('meet.menu-fullscreen') + '">' + svgIcon('expand') + '</button>'
@@ -716,11 +625,11 @@ function Room(container)
      * Update the publisher/subscriber element controls
      *
      * @param wrapper The wrapper element
-     * @param params  Connection metadata/params
+     * @param params  Peer metadata/params
      */
     function participantUpdate(wrapper, params, noupdate) {
         const element = $(wrapper)
-        const isModerator = sessionData.role & Roles.MODERATOR
+        const isModerator = params.role & Roles.MODERATOR
         const isSelf = params.isSelf
         const rolePublisher = params.role & Roles.PUBLISHER
         const roleModerator = params.role & Roles.MODERATOR
@@ -825,9 +734,9 @@ function Room(container)
      * Update/refresh state of all participants' elements
      */
     function participantUpdateAll() {
-        Object.keys(connections).forEach(key => {
-            const conn = connections[key]
-            participantUpdate(conn.element, conn)
+        Object.keys(peers).forEach(peerId => {
+            const peer = peers[peerId]
+            participantUpdate(peer.element, peer)
         })
     }
 
@@ -855,7 +764,7 @@ function Room(container)
     /**
      * Create a tag-like nickname widget
      *
-     * @param object params Connection metadata/params
+     * @param object params Peer metadata/params
      */
     function nicknameWidget(params) {
         let languages = []
@@ -891,6 +800,7 @@ function Room(container)
                             + ' <span class="form-check-label">' + $t('meet.perm-mod') + '</span>'
                         + '</label>'
                     + '</div>'
+/* TODO
                     + '<div class="dropdown-divider interpreting"></div>'
                     + '<div class="interpreting">'
                         + '<h6 class="dropdown-header">' + $t('meet.lang-int') + '</h6>'
@@ -899,6 +809,7 @@ function Room(container)
                             + languages.join('')
                         + '</select></div>'
                     + '</div>'
+*/
                 + '</div>'
             + '</div>'
         )
@@ -947,48 +858,17 @@ function Room(container)
             })
         }
 
-        let connectionRole = () => {
-            if (params.isSelf) {
-                return sessionData.role
-            }
-            if (params.id in connections) {
-                return connections[params.peerId].role
-            }
-            return 0
-        }
-
         // Don't close the menu on permission change
         element.find('.dropdown-menu > label').on('click', e => { e.stopPropagation() })
 
         element.find('.action-role-publisher input').on('change', e => {
-            const enabled = e.target.checked
-            let role = connectionRole()
-
-            if (enabled) {
-                role |= Roles.PUBLISHER
-            } else {
-                role |= Roles.SUBSCRIBER
-                if (role & Roles.PUBLISHER) {
-                    role ^= Roles.PUBLISHER
-                }
-            }
-
-            sessionData.onConnectionChange(params.id, { role })
+            client[e.target.checked ? 'addRole' : 'removeRole'](params.id, Roles.PUBLISHER)
         })
 
         element.find('.action-role-moderator input').on('change', e => {
-            const enabled = e.target.checked
-            let role = connectionRole()
-
-            if (enabled) {
-                role |= Roles.MODERATOR
-            } else if (role & Roles.MODERATOR) {
-                role ^= Roles.MODERATOR
-            }
-
-            sessionData.onConnectionChange(params.id, { role })
+            client[e.target.checked ? 'addRole' : 'removeRole'](params.id, Roles.MODERATOR)
         })
-
+/*
         element.find('.interpreting select')
             .on('change', e => {
                 const language = $(e.target).val()
@@ -999,7 +879,7 @@ function Room(container)
                 // Prevents from closing the dropdown menu on click
                 e.stopPropagation()
             })
-
+*/
         return element.get(0)
     }
 
@@ -1054,16 +934,16 @@ function Room(container)
         // Make the first screen sharing tile big
         let screenVideo = publishers.filter('.screen').find('video').get(0)
 
-        if (screenVideo) {
-            let element = screenVideo.parentNode
-            let connId = element.id.replace(/^publisher-/, '')
 /*
-            let connection = connections[connId]
+        if (screenVideo) {
+            const element = screenVideo.parentNode
+            const peerId = element.id.replace(/^publisher-/, '')
+            const peer = peers[peerId]
 
             // We know the shared screen video dimensions, we can calculate
             // width/height of the tile in the matrix
-            if (connection && connection.videoDimensions) {
-                let screenWidth = connection.videoDimensions.width
+            if (peer && peer.videoDimensions) {
+                let screenWidth = peer.videoDimensions.width
                 let screenHeight = containerHeight
 
                 // TODO: When the shared window is minimized the width/height is set to 1 (or 2)
@@ -1092,9 +972,8 @@ function Room(container)
                 publishers = publishers.not(element)
                 numOfVideos -= 1
             }
-*/
         }
-
+*/
         // Compensate the shared screen estate with a padding
         $(publishersContainer).css('padding-left', padding)
 
@@ -1148,75 +1027,6 @@ function Room(container)
     }
 
     /**
-     * Initialize screen sharing session/publisher
-     */
-    function screenConnect(callback) {
-        if (!sessionData.shareToken) {
-            return false
-        }
-
-        let gotSession = !!screenSession
-
-        if (!screenOV) {
-            screenOV = ovInit()
-        }
-
-        // Init screen sharing session
-        if (!gotSession) {
-            screenSession = screenOV.initSession();
-        }
-
-        let successFunc = function() {
-            screenSession.publish(screenPublisher)
-
-            screenSession.on('sessionDisconnected', event => {
-                callback(false)
-                screenSession = null
-                screenPublisher = null
-            })
-
-            if (callback) {
-                callback(true)
-            }
-        }
-
-        let errorFunc = function() {
-            screenPublisher = null
-            if (callback) {
-                callback(false, true)
-            }
-        }
-
-        // Init the publisher
-        let params = {
-            videoSource: 'screen',
-            publishAudio: false
-        }
-
-        screenPublisher = screenOV.initPublisher(null, params)
-
-        screenPublisher.once('accessAllowed', (event) => {
-            if (gotSession) {
-                successFunc()
-            } else {
-                screenSession.connect(sessionData.shareToken, sessionData.params)
-                    .then(() => {
-                        successFunc()
-                    })
-                    .catch(error => {
-                        console.error('There was an error connecting to the session:', error.code, error.message);
-                        errorFunc()
-                    })
-            }
-        })
-
-        screenPublisher.once('accessDenied', () => {
-            console.info('ScreenShare: Access Denied')
-            errorFunc()
-        })
-    }
-
-    /**
      * Create an svg element (string) for a FontAwesome icon
      *
      * @todo Find if there's a "official" way to do this
@@ -1255,17 +1065,14 @@ function Room(container)
     /**
      * Get all existing language interpretation channels
      */
-    function getChannels(connections) {
+    function getChannels(peers) {
         let channels = []
 
-        Object.keys(connections || {}).forEach(key => {
-            let conn = connections[key]
+        Object.keys(peers).forEach(peerId => {
+            let peer = peers[peerId]
 
-            if (
-                conn.language
-                && !channels.includes(conn.language)
-            ) {
-                channels.push(conn.language)
+            if (peer.language && !channels.includes(peer.language)) {
+                channels.push(peer.language)
             }
         })
 

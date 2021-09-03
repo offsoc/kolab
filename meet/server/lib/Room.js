@@ -20,8 +20,7 @@ class Room extends EventEmitter
         const workerLoads = new Map();
         const pipedRoutersIds = new Set();
 
-        // Calculate router loads by adding up peers per router,
-        // and collecte piped routers
+        // Calculate router loads by adding up peers per router, and collected piped routers
         for (const peer of peers)
         {
             const routerId = peer.routerId;
@@ -263,17 +262,15 @@ class Room extends EventEmitter
         this._selfDestructTimeout = null;
 
         // Close the peers.
-        for (const peer in this._peers)
-        {
-            if (!this._peers[peer].closed)
-                this._peers[peer].close();
+        for (const peer of this._peers.values()) {
+            if (!peer.closed)
+                peer.close();
         }
 
         this._peers = null;
 
         // Close the mediasoup Routers.
-        for (const router of this._mediasoupRouters.values())
-        {
+        for (const router of this._mediasoupRouters.values()) {
             router.close();
         }
 
@@ -433,7 +430,7 @@ class Room extends EventEmitter
         peer.on('gotRole', ({ newRole }) =>
         {
             // Spread to others
-            this._notification(peer.socket, 'gotRole', {
+            this._notification(peer.socket, 'changeRole', {
                 peerId: peer.id,
                 role: newRole
             }, true, true);
@@ -524,28 +521,18 @@ class Room extends EventEmitter
                     peers: peerInfos,
                 });
 
-                for (const otherPeer of otherPeers)
-                {
+                for (const otherPeer of otherPeers) {
                     // Create Consumers for existing Producers.
-                    for (const producer of otherPeer.producers.values())
-                    {
-                        this._createConsumer(
-                            {
-                                consumerPeer : peer,
-                                producerPeer : otherPeer,
+                    for (const producer of otherPeer.producers.values()) {
+                        this._createConsumer({
+                                consumerPeer: peer,
+                                producerPeer: otherPeer,
                                 producer
-                            });
+                        });
                     }
-                }
 
-                // Notify the new Peer to all other Peers.
-                for (const otherPeer of this.getPeers(peer))
-                {
-                    this._notification(
-                        otherPeer.socket,
-                        'newPeer',
-                        peer.peerInfo
-                    );
+                    // Notify the new Peer to all other Peers.
+                    this._notification(otherPeer.socket, 'newPeer', peer.peerInfo);
                 }
 
                 logger.debug(
@@ -888,22 +875,25 @@ class Room extends EventEmitter
                 break;
             }
 
-            case 'moderator:setRole':
+            case 'moderator:addRole':
             {
                 if (!peer.hasRole(Roles.MODERATOR))
                     throw new Error('peer not authorized');
 
                 const { peerId, role } = request.data;
 
-                const giveRolePeer = this._peers[peerId];
+                const rolePeer = this._peers[peerId];
 
-                if (!giveRolePeer)
+                if (!rolePeer)
                     throw new Error(`peer with id "${peerId}" not found`);
 
-                // TODO: check if role is valid value
+                if (!rolePeer.isValidRole(role))
+                    throw new Error('invalid role');
 
-                // This will propagate the event automatically
-                giveRolePeer.setRole(role);
+                if (!rolePeer.hasRole(role)) {
+                    // This will propagate the event automatically
+                    rolePeer.setRole(rolePeer.role | role);
+                }
 
                 // Return no error
                 cb();
@@ -911,17 +901,25 @@ class Room extends EventEmitter
                 break;
             }
 
-            case 'raisedHand':
+            case 'moderator:removeRole':
             {
-                const { raisedHand } = request.data;
+                if (!peer.hasRole(Roles.MODERATOR))
+                    throw new Error('peer not authorized');
 
-                peer.raisedHand = raisedHand;
+                const { peerId, role } = request.data;
 
-                // Spread to others
-                this._notification(peer.socket, 'raisedHand', {
-                    peerId: peer.id,
-                    raisedHand: raisedHand,
-                }, true);
+                const rolePeer = this._peers[peerId];
+
+                if (!rolePeer)
+                    throw new Error(`peer with id "${peerId}" not found`);
+
+                if (!rolePeer.isValidRole(role))
+                    throw new Error('invalid role');
+
+                if (rolePeer.hasRole(role)) {
+                    // This will propagate the event automatically
+                    rolePeer.setRole(rolePeer.role ^ role);
+                }
 
                 // Return no error
                 cb();
@@ -940,6 +938,8 @@ class Room extends EventEmitter
 
                 // Close the room
                 this.close();
+
+                // TODO: remove the room?
 
                 break;
             }
@@ -960,6 +960,24 @@ class Room extends EventEmitter
 
                 kickPeer.close();
 
+                cb();
+
+                break;
+            }
+
+            case 'raisedHand':
+            {
+                const { raisedHand } = request.data;
+
+                peer.raisedHand = raisedHand;
+
+                // Spread to others
+                this._notification(peer.socket, 'raisedHand', {
+                    peerId: peer.id,
+                    raisedHand: raisedHand,
+                }, true);
+
+                // Return no error
                 cb();
 
                 break;
@@ -1207,7 +1225,7 @@ class Room extends EventEmitter
     }
 
     /*
-     * Pipe producers of peers that are running under another routher to this router.
+     * Pipe producers of peers that are running under another router to this router.
      */
     async _pipeProducersToRouter(routerId)
     {
@@ -1257,7 +1275,6 @@ class Room extends EventEmitter
                 routerId !== originRouterId && self.indexOf(routerId) === index
             );
     }
-
 }
 
 module.exports = Room;

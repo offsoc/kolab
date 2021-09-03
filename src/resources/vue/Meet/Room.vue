@@ -302,7 +302,7 @@
             })
 
             const dialog = $('#media-setup-dialog')[0]
-            dialog.addEventListener('show.bs.modal', () => { this.meet.setupStart() })
+            dialog.addEventListener('show.bs.modal', () => { this.setupSession() })
             dialog.addEventListener('hide.bs.modal', () => { this.meet.setupStop() })
         },
         beforeDestroy() {
@@ -555,7 +555,7 @@
                 })
             },
             logout() {
-                this.meet.leaveRoom()
+                this.meet.leaveRoom(true)
                 this.meet = null
                 this.$router.push({ name: 'dashboard' })
             },
@@ -625,8 +625,8 @@
             },
             setupSession() {
                 this.meet.setupStart({
-                    videoElement: $('#meet-setup video')[0],
-                    volumeElement: $('#meet-setup .volume')[0],
+                    videoElement: $('#meet-setup video')[0] || $('#media-setup-dialog video')[0],
+                    volumeElement: $('#meet-setup .volume')[0] || $('#media-setup-dialog .volume')[0],
                     onSuccess: setup => {
                         this.setup = setup
                         this.microphone = setup.audioSource

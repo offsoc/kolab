@@ -1,5 +1,6 @@
 const EventEmitter = require('events').EventEmitter;
 const Logger = require('./Logger');
+const Roles = require('./userRoles');
 
 const logger = new Logger('Peer');
 
@@ -23,8 +24,6 @@ class Peer extends EventEmitter
         this._nickname = false;
 
         this._picture = null;
-
-        this._email = null;
 
         this._routerId = null;
 
@@ -143,16 +142,6 @@ class Peer extends EventEmitter
         }
     }
 
-    get email()
-    {
-        return this._email;
-    }
-
-    set email(email)
-    {
-        this._email = email;
-    }
-
     get routerId()
     {
         return this._routerId;
@@ -201,10 +190,32 @@ class Peer extends EventEmitter
     setRole(newRole)
     {
         if (this._role != newRole) {
+            // It is either screen sharing or publisher/subscriber
+            if (newRole & Roles.SCREEN) {
+                if (newRole & Roles.PUBLISHER) {
+                    newRole ^= Roles.PUBLISHER;
+                }
+                if (newRole & Roles.SUBSCRIBER) {
+                    newRole ^= Roles.SUBSCRIBER;
+                }
+            }
+
             this._role = newRole;
 
             this.emit('gotRole', { newRole });
         }
+    }
+
+    isValidRole(newRole)
+    {
+        Object.keys(Roles).forEach(roleId => {
+            const role = Roles[roleId]
+            if (newRole & role) {
+                newRole = newRole ^ role;
+            }
+        })
+
+        return newRole == 0;
     }
 
     hasRole(role)

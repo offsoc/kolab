@@ -5,7 +5,7 @@ export default {
         autoGainControl: false,
         echoCancellation: true,
         noiseSuppression: true,
-        voiceActivatedUnmute: false, // Automatically unmute speaking above noiseThereshold
+        voiceActivatedUnmute: false, // Automatically unmute speaking above noiseThreshold
         noiseThreshold: -60, // default -60 / This is only for voiceActivatedUnmute and audio-indicator
         sampleRate: 96000, // will not eat that much bandwith thanks to opus
         channelCount: 1, // usually mics are mono so this saves bandwidth
@@ -22,7 +22,7 @@ export default {
     videoOptions: {
         resolution: 'medium',
         aspectRatio: 1.777, // 16 : 9
-        frameRate: 15,
+        frameRate: 15, // Note: OpenVidu default was 30
         simulcast: true
     },
 

@@ -162,6 +162,7 @@ function Media()
     this.setupStop = () => {
         volumeMeterStop()
 
+        // Unset the video element tracks
         if (setupVideoElement) {
             const mediaStream = new MediaStream()
             setupVideoElement.srcObject = mediaStream
@@ -189,7 +190,7 @@ function Media()
 
         if (!deviceId) {
             volumeMeterStop()
-            removeTracksFromStream(mediaStream, 'Audio')
+            this.removeTracksFromStream(mediaStream, 'Audio')
             audioActive = false
             audioSource = ''
         } else if (deviceId == audioSource) {
@@ -205,7 +206,7 @@ function Media()
             volumeMeterStop()
 
             // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
-            removeTracksFromStream(mediaStream, 'Audio')
+            this.removeTracksFromStream(mediaStream, 'Audio')
 
             // TODO: Error handling
 
@@ -229,7 +230,7 @@ function Media()
         const mediaStream = setupVideoElement.srcObject
 
         if (!deviceId) {
-            removeTracksFromStream(mediaStream, 'Video')
+            this.removeTracksFromStream(mediaStream, 'Video')
             // Without the next line the video element will freeze on the last video frame
             // instead of turning black.
             setupVideoElement.srcObject = mediaStream
@@ -245,7 +246,7 @@ function Media()
             }
 
             // Stop and remove the old track, otherwise you get "Concurrent mic process limit." error
-            removeTracksFromStream(mediaStream, 'Video')
+            this.removeTracksFromStream(mediaStream, 'Video')
 
             // TODO: Error handling
 
@@ -259,11 +260,13 @@ function Media()
         return videoActive
     }
 
-    const removeTracksFromStream = (stream, type) => {
-        stream[`get${type}Tracks`]().forEach(track => {
-            track.stop()
-            stream.removeTrack(track)
-        })
+    this.removeTracksFromStream = (stream, type) => {
+        if (stream) {
+            stream[`get${type}Tracks`]().forEach(track => {
+                track.stop()
+                stream.removeTrack(track)
+            })
+        }
     }
 
     const volumeMeterStart = () => {

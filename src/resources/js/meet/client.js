@@ -15,11 +15,13 @@ function Client()
     let screenProducer
     let consumers = {}
     let socket
+    let sendTransportInfo
     let sendTransport
     let recvTransport
-    let turnServers = []
+    let iceServers = []
     let nickname = ''
     let peers = {}
+    let joinProps = {}
     let videoSource
     let audioSource
 
@@ -58,12 +60,10 @@ function Client()
      * Start a session (join a room)
      */
     this.joinSession = (token, props) => {
+        // Store the join properties for later
+        joinProps = props
         // Initialize the socket, 'roomReady' request handler will do the rest of the job
         socket = initSocket(token)
-
-        nickname = props.nickname
-        videoSource = props.videoSource
-        audioSource = props.audioSource
     }
 
     /**
@@ -71,7 +71,7 @@ function Client()
      */
     this.closeSession = async (reason) => {
         // If room owner, send the request to close the room
-        if (peers.self && peers.self.role & Roles.OWNER) {
+        if (reason === true && peers.self && peers.self.role & Roles.OWNER) {
             await socket.sendRequest('moderator:closeRoom')
         }
 
@@ -99,8 +99,6 @@ function Client()
             let peer = peers[id]
             if (peer.videoElement) {
                 $(peer.videoElement).remove()
-                peer.videoElement = null
-                peer.tracks = null
             }
         })
 
@@ -111,6 +109,10 @@ function Client()
         screenProducer = null
         consumers = {}
         peers = {}
+    }
+
+    this.isJoined = () => {
+        return 'self' in peers
     }
 
     this.camMute = async () => {
@@ -187,6 +189,14 @@ function Client()
         }
     }
 
+    this.addRole = (peerId, role) => {
+        socket.sendRequest('moderator:addRole', { peerId, role })
+    }
+
+    this.removeRole = (peerId, role) => {
+        socket.sendRequest('moderator:removeRole', { peerId, role })
+    }
+
     /**
      * Register event handlers
      */
@@ -257,11 +267,7 @@ function Client()
                         return
                     }
 
-                    let tracks = (peer.tracks || []).filter(track => track.kind != kind)
-
-                    tracks.push(consumer.track)
-
-                    setPeerTracks(peer, tracks)
+                    addPeerTrack(peer, consumer.track)
 
                     trigger('updatePeer', peer)
 
@@ -275,7 +281,7 @@ function Client()
         socket.on('notification', (notification) => {
             switch (notification.method) {
                 case 'roomReady':
-                    turnServers = notification.data.turnServers
+                    iceServers = notification.data.turnServers
                     joinRoom()
                     return
 
@@ -346,6 +352,52 @@ function Client()
                     return
                 }
 
+                case 'changeRole': {
+                    const { peerId, role } = notification.data
+                    const peer = peers.self.id === peerId ? peers.self : peers[peerId]
+
+                    if (!peer) {
+                        return
+                    }
+
+                    let changes = ['role']
+
+                    const rolePublisher = role & Roles.PUBLISHER
+                    const roleModerator = role & Roles.MODERATOR
+                    const isPublisher = peer.role & Roles.PUBLISHER
+                    const isModerator = peer.role & Roles.MODERATOR
+
+                    if (isPublisher && !rolePublisher) {
+                        // demoted to a subscriber
+                        changes.push('publisherRole')
+
+                        if (peer.isSelf) {
+                            // stop publishing any streams
+                            this.setMic('', true)
+                            this.setCamera('', true)
+                        } else {
+                            // remove the video element
+                            peer.videoElement = null
+                            // TODO: Do we need to remove/stop consumers?
+                        }
+                    } else if (!isPublisher && rolePublisher) {
+                        // promoted to a publisher
+                        changes.push('publisherRole')
+
+                        // create a video element with no tracks
+                        setPeerTracks(peer, [])
+                    }
+
+                    if ((!isModerator && roleModerator) || (isModerator && !roleModerator)) {
+                        changes.push('moderatorRole')
+                    }
+
+                    peer.role = role
+
+                    trigger('updatePeer', peer, changes)
+                    return
+                }
+
                 case 'chatMessage': {
                     trigger('chatMessage', notification.data)
                     return
@@ -377,7 +429,6 @@ function Client()
 
                 default:
                     console.error('Unknow notification method: ' + notification.method)
-                    return
             }
         })
 
@@ -392,78 +443,12 @@ function Client()
 
         await device.load({ routerRtpCapabilities })
 
-        const iceTransportPolicy = (device.handlerName.toLowerCase().includes('firefox') && turnServers) ? 'relay' : undefined;
-
-        // Setup 'producer' transport
-        if (videoSource || audioSource) {
-            const transportInfo = await socket.sendRequest('createWebRtcTransport', {
-                forceTcp: false,
-                producing: true,
-                consuming: false
-            })
-
-            const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
-
-            sendTransport = device.createSendTransport({
-                id,
-                iceParameters,
-                iceCandidates,
-                dtlsParameters,
-                iceServers: turnServers,
-                iceTransportPolicy: iceTransportPolicy,
-                proprietaryConstraints: { optional: [{ googDscp: true }] }
-            })
-
-            sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
-                socket.sendRequest('connectWebRtcTransport',
-                    { transportId: sendTransport.id, dtlsParameters })
-                    .then(callback)
-                    .catch(errback)
-            })
-
-            sendTransport.on('produce', async ({ kind, rtpParameters, appData }, callback, errback) => {
-                try {
-                    const { id } = await socket.sendRequest('produce', {
-                        transportId: sendTransport.id,
-                        kind,
-                        rtpParameters,
-                        appData
-                    })
-                    callback({ id })
-                } catch (error) {
-                    errback(error)
-                }
-            })
-        }
-
-        // Setup 'consumer' transport
-
-        const transportInfo = await socket.sendRequest('createWebRtcTransport', {
-                forceTcp: false,
-                producing: false,
-                consuming: true
-        })
-
-        const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
-
-        recvTransport = device.createRecvTransport({
-                id,
-                iceParameters,
-                iceCandidates,
-                dtlsParameters,
-                iceServers: turnServers,
-                iceTransportPolicy: iceTransportPolicy
-        })
-
-        recvTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
-            socket.sendRequest('connectWebRtcTransport', { transportId: recvTransport.id, dtlsParameters })
-                .then(callback)
-                .catch(errback)
-        })
+        // Setup the consuming transport (for handling streams of other participants)
+        await setRecvTransport()
 
         // Send the "join" request, get room data, participants, etc.
         const { peers: existing, role, id: peerId } = await socket.sendRequest('join', {
-                nickname: nickname,
+                nickname: joinProps.nickname,
                 rtpCapabilities: device.rtpCapabilities
         })
 
@@ -472,31 +457,20 @@ function Client()
         let peer = {
             id: peerId,
             role,
-            isSelf: true,
-            nickname,
-            audioActive: !!audioSource,
-            videoActive: !!videoSource
+            nickname: joinProps.nickname,
+            isSelf: true
         }
-
-        // Start publishing webcam
-        if (videoSource) {
-            await setCamera(videoSource)
-            // Create the video element
-            peer.videoElement = media.createVideoElement([ camProducer.track ], { mirror: true })
-        }
-
-        // Start publishing microphone
-        if (audioSource) {
-            setMic(audioSource)
-            // Note: We're not adding this track to the video element
-        }
-
-        trigger('addPeer', peer)
 
         // Add self to the list
         peers.self = peer
 
-        console.log(existing)
+        // Start publishing webcam and mic (and setup the producing transport)
+        await this.setCamera(joinProps.videoSource, true)
+        await this.setMic(joinProps.audioSource, true)
+
+        updatePeerState(peer)
+
+        trigger('addPeer', peer)
 
         // Trigger addPeer event for all peers already in the room, maintain peers list
         existing.forEach(peer => {
@@ -516,12 +490,34 @@ function Client()
                 setPeerTracks(peer, tracks)
             }
 
-            trigger('addPeer', peer)
             peers[peer.id] = peer
+
+            trigger('addPeer', peer)
         })
     }
 
-    const setCamera = async (deviceId) => {
+    this.setCamera = async (deviceId, noUpdate) => {
+        // Actually selected device, do nothing
+        if (deviceId == videoSource) {
+            return
+        }
+
+        // Remove current device, stop producer
+        if (camProducer && !camProducer.closed) {
+            camProducer.close()
+            await socket.sendRequest('closeProducer', { producerId: camProducer.id })
+            setPeerTracks(peers.self, [])
+        }
+
+        peers.self.videoSource = videoSource = deviceId
+
+        if (!deviceId) {
+            if (!noUpdate) {
+                trigger('updatePeer', updatePeerState(peers.self), ['videoSource'])
+            }
+            return
+        }
+
         if (!device.canProduce('video')) {
             throw new Error('cannot produce video')
         }
@@ -535,6 +531,8 @@ function Client()
                 frameRate
             }
         })
+
+        await setSendTransport()
 
         // TODO: Simulcast support?
 
@@ -553,9 +551,34 @@ function Client()
             // disableWebcam()
         })
 */
+        // Create/Update the video element
+        addPeerTrack(peers.self, track)
+        if (!noUpdate) {
+            trigger('updatePeer', peers.self, ['videoSource'])
+        }
     }
 
-    const setMic = async (deviceId) => {
+    this.setMic = async (deviceId, noUpdate) => {
+        // Actually selected device, do nothing
+        if (deviceId == audioSource) {
+            return
+        }
+
+        // Remove current device, stop producer
+        if (micProducer && !micProducer.closed) {
+            micProducer.close()
+            await socket.sendRequest('closeProducer', { producerId: micProducer.id })
+        }
+
+        peers.self.audioSource = audioSource = deviceId
+
+        if (!deviceId) {
+            if (!noUpdate) {
+                trigger('updatePeer', updatePeerState(peers.self), ['audioSource'])
+            }
+            return
+        }
+
         if (!device.canProduce('audio')) {
             throw new Error('cannot produce audio')
         }
@@ -588,6 +611,8 @@ function Client()
             }
         })
 
+        await setSendTransport()
+
         micProducer = await sendTransport.produce({
             track,
             codecOptions: {
@@ -610,11 +635,15 @@ function Client()
             // disableMic()
         })
 */
+        // Note: We're not adding this track to the video element
+        if (!noUpdate) {
+            trigger('updatePeer', updatePeerState(peers.self), ['audioSource'])
+        }
     }
 
     const setPeerTracks = (peer, tracks) => {
         if (!peer.videoElement) {
-            peer.videoElement = media.createVideoElement(tracks, {})
+            peer.videoElement = media.createVideoElement(tracks, { mirror: peer.isSelf })
         } else {
             const stream = new MediaStream()
             tracks.forEach(track => stream.addTrack(track))
@@ -622,8 +651,25 @@ function Client()
         }
 
         updatePeerState(peer)
+    }
 
-        peer.tracks = tracks
+    const addPeerTrack = (peer, track) => {
+        if (!peer.videoElement) {
+            setPeerTracks(peer, [ track ])
+            return
+        }
+
+        const stream = peer.videoElement.srcObject
+
+        if (track.kind == 'video') {
+            media.removeTracksFromStream(stream, 'Video')
+        } else {
+            media.removeTracksFromStream(stream, 'Audio')
+        }
+
+        stream.addTrack(track)
+
+        updatePeerState(peer)
     }
 
     const updatePeerState = (peer) => {
@@ -644,6 +690,81 @@ function Client()
         }
 
         return peer
+    }
+
+    const setSendTransport = async () => {
+        if (sendTransport && !sendTransport.closed) {
+            return
+        }
+
+        if (!sendTransportInfo) {
+            sendTransportInfo = await socket.sendRequest('createWebRtcTransport', {
+                    forceTcp: false,
+                    producing: true,
+                    consuming: false
+            })
+        }
+
+        const { id, iceParameters, iceCandidates, dtlsParameters } = sendTransportInfo
+
+        const iceTransportPolicy = (device.handlerName.toLowerCase().includes('firefox') && iceServers) ? 'relay' : undefined
+
+        sendTransport = device.createSendTransport({
+            id,
+            iceParameters,
+            iceCandidates,
+            dtlsParameters,
+            iceServers,
+            iceTransportPolicy,
+            proprietaryConstraints: { optional: [{ googDscp: true }] }
+        })
+
+        sendTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
+            socket.sendRequest('connectWebRtcTransport', { transportId: sendTransport.id, dtlsParameters })
+                .then(callback)
+                .catch(errback)
+        })
+
+        sendTransport.on('produce', async ({ kind, rtpParameters, appData }, callback, errback) => {
+            try {
+                const { id } = await socket.sendRequest('produce', {
+                    transportId: sendTransport.id,
+                    kind,
+                    rtpParameters,
+                    appData
+                })
+                callback({ id })
+            } catch (error) {
+                errback(error)
+            }
+        })
+    }
+
+    const setRecvTransport = async () => {
+        const transportInfo = await socket.sendRequest('createWebRtcTransport', {
+                forceTcp: false,
+                producing: false,
+                consuming: true
+        })
+
+        const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
+
+        const iceTransportPolicy = (device.handlerName.toLowerCase().includes('firefox') && iceServers) ? 'relay' : undefined
+
+        recvTransport = device.createRecvTransport({
+                id,
+                iceParameters,
+                iceCandidates,
+                dtlsParameters,
+                iceServers,
+                iceTransportPolicy
+        })
+
+        recvTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
+            socket.sendRequest('connectWebRtcTransport', { transportId: recvTransport.id, dtlsParameters })
+                .then(callback)
+                .catch(errback)
+        })
     }
 }
 
