@@ -299,11 +299,79 @@ function Media()
     }
 
     const volumeMeterStart = () => {
-        // TODO
+        if (!setupVolumeElement) {
+            return
+        }
+
+        const audioContext = new AudioContext()
+        const source = audioContext.createMediaStreamSource(setupVideoElement.srcObject)
+
+        // Create a new volume meter
+        const processor = audioContext.createScriptProcessor(512)
+
+        processor.volume = 0
+        processor.averaging = 0.95
+
+        processor.onaudioprocess = function(event) {
+            let buf = event.inputBuffer.getChannelData(0)
+            let bufLength = buf.length
+            let sum = 0
+
+            // Do a root-mean-square on the samples: sum up the squares...
+            for (let x, i=0; i<bufLength; i++) {
+                x = buf[i]
+                sum += x * x
+            }
+
+            // ... then take the square root of the sum.
+            const rms = Math.sqrt(sum / bufLength)
+
+            // Now smooth this out with the averaging factor applied
+            // to the previous sample - take the max here because we
+            // want "fast attack, slow release."
+            this.volume = Math.max(rms, this.volume * this.averaging)
+        }
+
+        processor.shutdown = function() {
+            this.disconnect()
+            this.onaudioprocess = null
+        }
+
+        // this will have no effect, since we don't copy the input to the output,
+        // but works around a current Chrome bug.
+        processor.connect(audioContext.destination)
+
+        // Connect the volume processor to the source
+        source.connect(processor)
+
+        const update = () => { volumeMeterUpdate(processor.volume  * 100) }
+
+        this.audioContext = audioContext
+        this.volumeInterval = setInterval(update, 25)
     }
 
     const volumeMeterStop = () => {
-        // TODO
+        if (this.audioContext) {
+            clearInterval(this.volumeInterval)
+            this.audioContext.close()
+            this.audioContext = null
+            volumeMeterUpdate(0)
+        }
+    }
+
+    const volumeMeterUpdate = (volume) => {
+        const value = Math.min(100, Math.ceil(volume))
+        const bar = setupVolumeElement.firstChild
+
+        let color = 'lime'
+        if (value >= 70) {
+            color = '#ff3300'
+        } else if (value >= 50) {
+            color = '#ff9933'
+        }
+
+        bar.style.height = value + '%'
+        bar.style.background = color
     }
 }
 
