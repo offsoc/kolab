@@ -209,8 +209,6 @@ class Room extends EventEmitter
 
         this._mediasoupWorkers = mediasoupWorkers;
 
-        this._allPeers = peers;
-
         // Room ID.
         this._roomId = roomId;
 
@@ -220,7 +218,7 @@ class Room extends EventEmitter
         // Joining queue
         this._queue = new AwaitQueue();
 
-        this._peers = {};
+        this._peers = peers;
 
         this._selfDestructTimeout = null;
 
@@ -231,7 +229,6 @@ class Room extends EventEmitter
 
     dumpStats()
     {
-
         const peers = this.getPeers();
         const {routerLoads, workerLoads, pipedRoutersIds} = Room.calculateLoads(this._mediasoupWorkers, peers, this._mediasoupRouters);
         let stats = {
@@ -267,14 +264,12 @@ class Room extends EventEmitter
                 peer.close();
         }
 
-        this._peers = null;
+        this._peers = {};
 
         // Close the mediasoup Routers.
         for (const router of this._mediasoupRouters.values()) {
             router.close();
         }
-
-        this._allPeers = null;
 
         this._mediasoupWorkers = null;
 
@@ -327,8 +322,7 @@ class Room extends EventEmitter
     {
         logger.debug('selfDestructCountdown() started');
 
-        if (this._selfDestructTimeout)
-            clearTimeout(this._selfDestructTimeout);
+        clearTimeout(this._selfDestructTimeout);
 
         this._selfDestructTimeout = setTimeout(() =>
         {
@@ -508,12 +502,9 @@ class Room extends EventEmitter
                 peer.rtpCapabilities = rtpCapabilities;
 
                 // Tell the new Peer about already joined Peers.
-                // And also create Consumers for existing Producers.
-
                 const otherPeers = this.getPeers(peer);
 
-                const peerInfos = otherPeers
-                    .map((otherPeer) => (otherPeer.peerInfo));
+                const peerInfos = otherPeers.map(otherPeer => otherPeer.peerInfo);
 
                 cb(null, {
                     id: peer.id,
@@ -521,8 +512,8 @@ class Room extends EventEmitter
                     peers: peerInfos,
                 });
 
+                // Create Consumers for existing Producers.
                 for (const otherPeer of otherPeers) {
-                    // Create Consumers for existing Producers.
                     for (const producer of otherPeer.producers.values()) {
                         this._createConsumer({
                                 consumerPeer: peer,
@@ -530,10 +521,10 @@ class Room extends EventEmitter
                                 producer
                         });
                     }
-
-                    // Notify the new Peer to all other Peers.
-                    this._notification(otherPeer.socket, 'newPeer', peer.peerInfo);
                 }
+
+                // Notify the new Peer to all other Peers.
+                this._notification(peer.socket, 'newPeer', peer.peerInfo, true);
 
                 logger.debug(
                     'peer joined [peer: "%s", nickname: "%s", picture: "%s"]',
@@ -541,7 +532,7 @@ class Room extends EventEmitter
 
                 break;
             }
-
+/*
             case 'createPlainTransport':
             {
                 const { producing, consuming } = request.data;
@@ -590,12 +581,11 @@ class Room extends EventEmitter
                     rtcpPort: rtcpPort,
                 });
 
-
                 cb();
 
                 break;
             }
-
+*/
             case 'createWebRtcTransport':
             {
                 // NOTE: Don't require that the Peer is joined here, so the client can
@@ -1258,7 +1248,7 @@ class Room extends EventEmitter
     async _getRouterId()
     {
         const routerId = Room.getLeastLoadedRouter(
-            this._mediasoupWorkers, this._allPeers, this._mediasoupRouters);
+            this._mediasoupWorkers, this._peers, this._mediasoupRouters);
 
         await this._pipeProducersToRouter(routerId);
 
