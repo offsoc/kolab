@@ -181,6 +181,7 @@
 
 <script>
     import { Modal } from 'bootstrap'
+    import { Media } from '../../js/meet/media.js'
     import { Room as Meet } from '../../js/meet/room.js'
     import { Roles } from '../../js/meet/constants.js'
     import StatusMessage from '../Widgets/StatusMessage'
@@ -560,34 +561,7 @@
                 this.$router.push({ name: 'dashboard' })
             },
             makePicture() {
-                const video = $("#meet-setup video")[0];
-
-                // Skip if video is not "playing"
-                if (!video.videoWidth || !this.camera) {
-                    return ''
-                }
-
-                // we're going to crop a square from the video and resize it
-                const maxSize = 64
-
-                // Calculate sizing
-                let sh = Math.floor(video.videoHeight / 1.5)
-                let sw = sh
-                let sx = (video.videoWidth - sw) / 2
-                let sy = (video.videoHeight - sh) / 2
-
-                let dh = Math.min(sh, maxSize)
-                let dw = sh < maxSize ? sw : Math.floor(sw * dh/sh)
-
-                const canvas = $("<canvas>")[0];
-                canvas.width = dw;
-                canvas.height = dh;
-
-                // draw the image on the canvas (square cropped and resized)
-                canvas.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, dw, dh);
-
-                // convert it to a usable data URL (png format)
-                return canvas.toDataURL();
+                return (new Media()).makePicture($("#meet-setup video")[0]) || '';
             },
             requestId() {
                 const key = 'kolab-meet-uid'

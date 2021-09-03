@@ -89,6 +89,35 @@ function Media()
         return videoElement
     }
 
+    this.makePicture = (videoElement) => {
+        // Skip if video is not "playing"
+        if (!videoElement.videoWidth) {
+            return
+        }
+
+        // we're going to crop a square from the video and resize it
+        const maxSize = 64
+
+        // Calculate sizing
+        let sh = Math.floor(videoElement.videoHeight / 1.5)
+        let sw = sh
+        let sx = (videoElement.videoWidth - sw) / 2
+        let sy = (videoElement.videoHeight - sh) / 2
+
+        let dh = Math.min(sh, maxSize)
+        let dw = sh < maxSize ? sw : Math.floor(sw * dh/sh)
+
+        const canvas = $("<canvas>")[0]
+        canvas.width = dw
+        canvas.height = dh
+
+        // draw the image on the canvas (square cropped and resized)
+        canvas.getContext('2d').drawImage(videoElement, sx, sy, sw, sh, 0, 0, dw, dh)
+
+        // convert it to a usable data URL (png format)
+        return canvas.toDataURL()
+    }
+
     this.setVideoProps = (videoElement, props) => {
         videoElement.autoplay = true
         videoElement.controls = false
