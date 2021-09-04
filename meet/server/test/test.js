@@ -24,11 +24,11 @@ before(function (done) {
 });
 
 describe('GET /ping', function() {
-  it('responds', function(done) {
-    request
-      .get('/meetmedia/api/ping')
-      .expect(200, done);
-  });
+    it('responds', function(done) {
+        request
+            .get('/meetmedia/api/ping')
+            .expect(200, done);
+    });
 });
 
 describe('Join room', function() {
@@ -41,7 +41,7 @@ describe('Join room', function() {
             socket.emit(
                 'request',
                 {method: method,
-                 data: data},
+                    data: data},
                 (error, response) => {
                     assert(!error)
                     resolve(response)
@@ -75,7 +75,9 @@ describe('Join room', function() {
                 signalingSocket.connect();
                 await roomReady
             })
-            .catch(err => { console.warn(err); throw err })
+            .catch(err => {
+                console.warn(err); throw err 
+            })
     });
 
     it('getRtpCapabilities', async () => {
@@ -135,7 +137,9 @@ describe('Join room', function() {
                 reason = await newPeer;
                 assert(reason.data.id == newId);
             })
-            .catch(err => { console.warn(err); throw err })
+            .catch(err => {
+                console.warn(err); throw err 
+            })
     });
 
     let transportInfo;

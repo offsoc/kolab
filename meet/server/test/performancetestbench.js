@@ -107,7 +107,9 @@ async function createPeer(roomId, request, receiverPort, receiverRtcpPort) {
             signalingSocket.connect();
             await roomReady
         })
-        .catch(err => { console.warn(err); throw err })
+        .catch(err => {
+            console.warn(err); throw err 
+        })
 
 
     //Necessary later for the server to resume the consumer,
