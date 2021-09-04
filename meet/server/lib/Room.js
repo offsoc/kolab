@@ -58,7 +58,7 @@ class Room extends EventEmitter {
      * A worker with a router that we are already piping to is preferred.
      */
     static getLeastLoadedRouter(mediasoupWorkers, peers, mediasoupRouters) {
-        const {routerLoads, workerLoads, pipedRoutersIds} = Room.calculateLoads(mediasoupWorkers, peers.values(), mediasoupRouters);
+        const {workerLoads, pipedRoutersIds} = Room.calculateLoads(mediasoupWorkers, peers.values(), mediasoupRouters);
 
         const sortedWorkerLoads = new Map([ ...workerLoads.entries() ].sort(
             (a, b) => a[1] - b[1]));
@@ -191,6 +191,8 @@ class Room extends EventEmitter {
 
         // Array of mediasoup Router instances.
         this._mediasoupRouters = mediasoupRouters;
+
+        this._audioLevelObserver = audioLevelObserver;
     }
 
 
