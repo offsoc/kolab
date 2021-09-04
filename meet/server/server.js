@@ -225,7 +225,7 @@ async function runHttpsServer() {
     //     ]
     // ];
     app.post(`${config.pathPrefix}/api/sessions/:session_id/connection`, function (req, res, /*next*/) {
-        console.warn("Creating connection in session", req.params.session_id)
+        logger.info("Creating connection in session", req.params.session_id)
         let roomId = req.params.session_id
         let data = req.body;
 

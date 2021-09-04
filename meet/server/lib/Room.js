@@ -410,8 +410,6 @@ class Room extends EventEmitter {
     async _handleSocketRequest(peer, request, cb) {
         const router = this._mediasoupRouters.get(peer.routerId);
 
-        console.log(request.method);
-
         switch (request.method) {
         case 'getRouterRtpCapabilities':
         {

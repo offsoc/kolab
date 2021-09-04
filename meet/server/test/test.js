@@ -61,7 +61,7 @@ describe('Join room', function() {
                 const signalingUrl = data['token'];
                 assert(signalingUrl.includes(peerId))
                 assert(signalingUrl.includes(roomId))
-                console.info(signalingUrl);
+                // console.info(signalingUrl);
 
                 signalingSocket = io(signalingUrl, { path: '/meetmedia/signaling', transports: ["websocket"], rejectUnauthorized: false });
                 let roomReady = new Promise((resolve, /*reject*/) => {
@@ -152,7 +152,6 @@ describe('Join room', function() {
         })
 
         const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
-        console.warn(id);
     });
 
     it('createDevice', async () => {
@@ -164,7 +163,6 @@ describe('Join room', function() {
             await device.load({routerRtpCapabilities: caps})
             assert(device.canProduce('video'))
 
-            console.info(transportInfo)
             const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
             //FIXME it doesn't look like this device can actually connect
             let sendTransport = device.createSendTransport({
@@ -199,8 +197,3 @@ describe('Join room', function() {
     })
 
 });
-
-after(function () {
-    process.exit();
-})
-
