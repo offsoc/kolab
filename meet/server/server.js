@@ -92,8 +92,7 @@ const session = expressSession({
     }
 });
 
-if (config.trustProxy)
-{
+if (config.trustProxy) {
     app.set('trust proxy', config.trustProxy);
 }
 
@@ -102,16 +101,13 @@ app.use(session);
 let mainListener;
 let io;
 
-async function run()
-{
-    try
-    {
+async function run() {
+    try {
         // Open the interactive server.
         await interactiveServer(rooms, peers);
 
         // start Prometheus exporter
-        if (config.prometheus)
-        {
+        if (config.prometheus) {
             await promExporter(rooms, peers, config.prometheus);
         }
 
@@ -125,8 +121,7 @@ async function run()
         await runWebSocketServer();
 
         // eslint-disable-next-line no-unused-vars
-        const errorHandler = (err, req, res, next) =>
-        {
+        const errorHandler = (err, req, res, next) => {
             const trackingId = uuidv4();
 
             res.status(500).send(
@@ -143,19 +138,15 @@ async function run()
 
         // eslint-disable-next-line no-unused-vars
         app.use(errorHandler);
-    }
-    catch (error)
-    {
+    } catch (error) {
         logger.error('run() [error:"%o"]', error);
     }
 
     app.emit('ready');
 }
 
-function statusLog()
-{
-    if (statusLogger)
-    {
+function statusLog() {
+    if (statusLogger) {
         statusLogger.log({
             rooms : rooms,
             peers : peers
@@ -163,8 +154,7 @@ function statusLog()
     }
 }
 
-async function runHttpsServer()
-{
+async function runHttpsServer() {
     app.use(compression());
 
     app.get(`${config.pathPrefix}/api/ping`, function (req, res, /*next*/) {
@@ -174,8 +164,8 @@ async function runHttpsServer()
     app.get(`${config.pathPrefix}/api/sessions`, function (req, res, /*next*/) {
         //TODO json.stringify
         res.json({
-                    id : "testId"
-                })
+            id : "testId"
+        })
     })
 
     //Check if the room exists
@@ -199,8 +189,8 @@ async function runHttpsServer()
         await getOrCreateRoom({ roomId });
 
         res.json({
-                    id : roomId
-                })
+            id : roomId
+        })
     })
 
     app.post(`${config.pathPrefix}/api/signal`, async function (req, res, /*next*/) {
@@ -268,13 +258,10 @@ async function runHttpsServer()
         })
     })
 
-    if (config.httpOnly === true)
-    {
+    if (config.httpOnly === true) {
         // http
         mainListener = http.createServer(app);
-    }
-    else
-    {
+    } else {
         // https
         mainListener = spdy.createServer(tls, app);
 
@@ -298,8 +285,7 @@ async function runHttpsServer()
 /**
  * Create a WebSocketServer to allow WebSocket connections from browsers.
  */
-async function runWebSocketServer()
-{
+async function runWebSocketServer() {
     io = require('socket.io')(mainListener, {
         path: `${config.pathPrefix}/signaling`,
         cookie: false
@@ -310,14 +296,12 @@ async function runWebSocketServer()
     );
 
     // Handle connections from clients.
-    io.on('connection', (socket) =>
-    {
+    io.on('connection', (socket) => {
         logger.info("websocket connection")
 
         const { roomId, peerId } = socket.handshake.query;
 
-        if (!roomId || !peerId)
-        {
+        if (!roomId || !peerId) {
             logger.warn('connection request without roomId and/or peerId');
 
             socket.disconnect(true);
@@ -328,8 +312,7 @@ async function runWebSocketServer()
         logger.info(
             'connection request [roomId:"%s", peerId:"%s"]', roomId, peerId);
 
-        queue.push(async () =>
-        {
+        queue.push(async () => {
             const room = await getOrCreateRoom({ roomId });
 
             let peer = peers.get(peerId);
@@ -346,8 +329,7 @@ async function runWebSocketServer()
 
             statusLog();
         })
-            .catch((error) =>
-            {
+            .catch((error) => {
                 logger.error('room creation or room joining failed [error:"%o"]', error);
 
                 if (socket)
@@ -361,14 +343,12 @@ async function runWebSocketServer()
 /**
  * Launch as many mediasoup Workers as given in the configuration file.
  */
-async function runMediasoupWorkers()
-{
+async function runMediasoupWorkers() {
     const { numWorkers } = config.mediasoup;
 
     logger.info('running %d mediasoup Workers...', numWorkers);
 
-    for (let i = 0; i < numWorkers; ++i)
-    {
+    for (let i = 0; i < numWorkers; ++i) {
         const worker = await mediasoup.createWorker(
             {
                 logLevel   : config.mediasoup.worker.logLevel,
@@ -377,8 +357,7 @@ async function runMediasoupWorkers()
                 rtcMaxPort : config.mediasoup.worker.rtcMaxPort
             });
 
-        worker.on('died', () =>
-        {
+        worker.on('died', () => {
             logger.error(
                 'mediasoup Worker died, exiting  in 2 seconds... [pid:%d]', worker.pid);
 
@@ -392,13 +371,11 @@ async function runMediasoupWorkers()
 /**
  * Get a Room instance (or create one if it does not exist).
  */
-async function getOrCreateRoom({ roomId })
-{
+async function getOrCreateRoom({ roomId }) {
     let room = rooms.get(roomId);
 
     // If the Room does not exist create a new one.
-    if (!room)
-    {
+    if (!room) {
         logger.info('creating a new Room [roomId:"%s"]', roomId);
 
         room = await Room.create({ mediasoupWorkers, roomId, peers });
@@ -407,8 +384,7 @@ async function getOrCreateRoom({ roomId })
 
         statusLog();
 
-        room.on('close', () =>
-        {
+        room.on('close', () => {
             rooms.delete(roomId);
 
             statusLog();

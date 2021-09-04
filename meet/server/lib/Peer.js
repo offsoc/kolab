@@ -4,10 +4,8 @@ const Roles = require('./userRoles');
 
 const logger = new Logger('Peer');
 
-class Peer extends EventEmitter
-{
-    constructor({ id, roomId })
-    {
+class Peer extends EventEmitter {
+    constructor({ id, roomId }) {
         logger.info('constructor() [id:"%s"]', id);
         super();
 
@@ -38,16 +36,14 @@ class Peer extends EventEmitter
         this._consumers = new Map();
     }
 
-    close()
-    {
+    close() {
         logger.info('close()');
 
         this._closed = true;
 
         // Iterate and close all mediasoup Transport associated to this Peer, so all
         // its Producers and Consumers will also be closed.
-        for (const transport of this.transports.values())
-        {
+        for (const transport of this.transports.values()) {
             transport.close();
         }
 
@@ -57,39 +53,31 @@ class Peer extends EventEmitter
         this.emit('close');
     }
 
-    get id()
-    {
+    get id() {
         return this._id;
     }
 
-    set id(id)
-    {
+    set id(id) {
         this._id = id;
     }
 
-    get roomId()
-    {
+    get roomId() {
         return this._roomId;
     }
 
-    set roomId(roomId)
-    {
+    set roomId(roomId) {
         this._roomId = roomId;
     }
 
-    get socket()
-    {
+    get socket() {
         return this._socket;
     }
 
-    set socket(socket)
-    {
+    set socket(socket) {
         this._socket = socket;
 
-        if (this.socket)
-        {
-            this.socket.on('disconnect', () =>
-            {
+        if (this.socket) {
+            this.socket.on('disconnect', () => {
                 if (this.closed)
                     return;
 
@@ -100,40 +88,32 @@ class Peer extends EventEmitter
         }
     }
 
-    get closed()
-    {
+    get closed() {
         return this._closed;
     }
 
-    get role()
-    {
+    get role() {
         return this._role;
     }
 
-    get nickname()
-    {
+    get nickname() {
         return this._nickname;
     }
 
-    set nickname(nickname)
-    {
-        if (nickname !== this._nickname)
-        {
+    set nickname(nickname) {
+        if (nickname !== this._nickname) {
             this._nickname = nickname;
 
             this.emit('nicknameChanged', {});
         }
     }
 
-    get picture()
-    {
+    get picture() {
         return this._picture;
     }
 
-    set picture(picture)
-    {
-        if (picture !== this._picture)
-        {
+    set picture(picture) {
+        if (picture !== this._picture) {
             const oldPicture = this._picture;
 
             this._picture = picture;
@@ -142,53 +122,43 @@ class Peer extends EventEmitter
         }
     }
 
-    get routerId()
-    {
+    get routerId() {
         return this._routerId;
     }
 
-    set routerId(routerId)
-    {
+    set routerId(routerId) {
         this._routerId = routerId;
     }
 
-    get rtpCapabilities()
-    {
+    get rtpCapabilities() {
         return this._rtpCapabilities;
     }
 
-    set rtpCapabilities(rtpCapabilities)
-    {
+    set rtpCapabilities(rtpCapabilities) {
         this._rtpCapabilities = rtpCapabilities;
     }
 
-    get raisedHand()
-    {
+    get raisedHand() {
         return this._raisedHand;
     }
 
-    set raisedHand(raisedHand)
-    {
+    set raisedHand(raisedHand) {
         this._raisedHand = raisedHand;
     }
 
-    get transports()
-    {
+    get transports() {
         return this._transports;
     }
 
-    get producers()
-    {
+    get producers() {
         return this._producers;
     }
 
-    get consumers()
-    {
+    get consumers() {
         return this._consumers;
     }
 
-    setRole(newRole)
-    {
+    setRole(newRole) {
         if (this._role != newRole) {
             // It is either screen sharing or publisher/subscriber
             if (newRole & Roles.SCREEN) {
@@ -206,8 +176,7 @@ class Peer extends EventEmitter
         }
     }
 
-    isValidRole(newRole)
-    {
+    isValidRole(newRole) {
         Object.keys(Roles).forEach(roleId => {
             const role = Roles[roleId]
             if (newRole & role) {
@@ -218,64 +187,52 @@ class Peer extends EventEmitter
         return newRole == 0;
     }
 
-    hasRole(role)
-    {
+    hasRole(role) {
         return !!(this._role & role);
     }
 
-    addTransport(id, transport)
-    {
+    addTransport(id, transport) {
         this.transports.set(id, transport);
     }
 
-    getTransport(id)
-    {
+    getTransport(id) {
         return this.transports.get(id);
     }
 
-    getConsumerTransport()
-    {
+    getConsumerTransport() {
         return Array.from(this.transports.values())
             .find((t) => t.appData.consuming);
     }
 
-    removeTransport(id)
-    {
+    removeTransport(id) {
         this.transports.delete(id);
     }
 
-    addProducer(id, producer)
-    {
+    addProducer(id, producer) {
         this.producers.set(id, producer);
     }
 
-    getProducer(id)
-    {
+    getProducer(id) {
         return this.producers.get(id);
     }
 
-    removeProducer(id)
-    {
+    removeProducer(id) {
         this.producers.delete(id);
     }
 
-    addConsumer(id, consumer)
-    {
+    addConsumer(id, consumer) {
         this.consumers.set(id, consumer);
     }
 
-    getConsumer(id)
-    {
+    getConsumer(id) {
         return this.consumers.get(id);
     }
 
-    removeConsumer(id)
-    {
+    removeConsumer(id) {
         this.consumers.delete(id);
     }
 
-    get peerInfo()
-    {
+    get peerInfo() {
         const peerInfo =
         {
             id: this.id,

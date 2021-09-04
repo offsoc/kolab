@@ -1,10 +1,8 @@
 /**
  * Error produced when a socket request has a timeout.
  */
-class SocketTimeoutError extends Error
-{
-    constructor(message)
-    {
+class SocketTimeoutError extends Error {
+    constructor(message) {
         super(message);
 
         this.name = 'SocketTimeoutError';

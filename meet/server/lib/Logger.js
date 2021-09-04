@@ -2,19 +2,14 @@ const debug = require('debug');
 
 const APP_NAME = 'kolabmeet-server';
 
-class Logger
-{
-    constructor(prefix)
-    {
-        if (prefix)
-        {
+class Logger {
+    constructor(prefix) {
+        if (prefix) {
             this._debug = debug(`${APP_NAME}:${prefix}`);
             this._info = debug(`${APP_NAME}:INFO:${prefix}`);
             this._warn = debug(`${APP_NAME}:WARN:${prefix}`);
             this._error = debug(`${APP_NAME}:ERROR:${prefix}`);
-        }
-        else
-        {
+        } else {
             this._debug = debug(APP_NAME);
             this._info = debug(`${APP_NAME}:INFO`);
             this._warn = debug(`${APP_NAME}:WARN`);
@@ -29,23 +24,19 @@ class Logger
         /* eslint-enable no-console */
     }
 
-    get debug()
-    {
+    get debug() {
         return this._debug;
     }
 
-    get info()
-    {
+    get info() {
         return this._info;
     }
 
-    get warn()
-    {
+    get warn() {
         return this._warn;
     }
 
-    get error()
-    {
+    get error() {
         return this._error;
     }
 }

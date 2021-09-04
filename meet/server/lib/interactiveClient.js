@@ -6,8 +6,7 @@ const SOCKET_PATH_UNIX = '/tmp/kolabmeet-server.sock';
 const SOCKET_PATH_WIN = path.join('\\\\?\\pipe', process.cwd(), 'kolabmeet-server');
 const SOCKET_PATH = os.platform() === 'win32'? SOCKET_PATH_WIN : SOCKET_PATH_UNIX;
 
-module.exports = async function()
-{
+module.exports = async function() {
     const socket = net.connect(SOCKET_PATH);
 
     process.stdin.pipe(socket);
@@ -18,8 +17,7 @@ module.exports = async function()
     socket.on('close', () => process.exit(0));
     socket.on('exit', () => socket.end());
 
-    if (process.argv && process.argv[2] === '--stats')
-    {
+    if (process.argv && process.argv[2] === '--stats') {
         await socket.write('stats\n');
 
         socket.end();

@@ -19,19 +19,14 @@ const metadata = {
     'score'     : { metricType: prom.Gauge }
 };
 
-module.exports = async function(rooms, peers, config)
-{
-    const collect = async function(registry)
-    {
-        const newMetrics = function(subsystem)
-        {
+module.exports = async function(rooms, peers, config) {
+    const collect = async function(registry) {
+        const newMetrics = function(subsystem) {
             const namespace = 'mediasoup';
             const metrics = new Map();
 
-            for (const key in metadata)
-            {
-                if (Object.prototype.hasOwnProperty.call(metadata, key))
-                {
+            for (const key in metadata) {
+                if (Object.prototype.hasOwnProperty.call(metadata, key)) {
                     const value = metadata[key];
                     const name = key.split(/(?=[A-Z])/).join('_')
                         .toLowerCase();
@@ -39,8 +34,7 @@ module.exports = async function(rooms, peers, config)
                     const metricType = value.metricType;
                     let s = `${namespace}_${subsystem}_${name}`;
 
-                    if (unit)
-                    {
+                    if (unit) {
                         s += `_${unit}`;
                     }
                     const m = new metricType({
@@ -53,14 +47,10 @@ module.exports = async function(rooms, peers, config)
             return metrics;
         };
 
-        const commonLabels = function(both, fn)
-        {
-            for (const roomId of rooms.keys())
-            {
-                for (const [ peerId, peer ] of peers)
-                {
-                    if (fn(peer))
-                    {
+        const commonLabels = function(both, fn) {
+            for (const roomId of rooms.keys()) {
+                for (const [ peerId, peer ] of peers) {
+                    if (fn(peer)) {
                         const displayName = peer._displayName;
                         const userAgent = peer._socket.client.request.headers['user-agent'];
                         const kind = both.kind;
@@ -73,33 +63,23 @@ module.exports = async function(rooms, peers, config)
             throw new Error('cannot find common labels');
         };
 
-        const addr = async function(ip, port)
-        {
-            if (config.deidentify)
-            {
+        const addr = async function(ip, port) {
+            if (config.deidentify) {
                 const a = ip.split('.');
 
-                for (let i = 0; i < a.length - 2; i++)
-                {
+                for (let i = 0; i < a.length - 2; i++) {
                     a[i] = 'xx';
                 }
 
                 return `${a.join('.')}:${port}`;
-            }
-            else if (config.numeric)
-            {
+            } else if (config.numeric) {
                 return `${ip}:${port}`;
-            }
-            else
-            {
-                try
-                {
+            } else {
+                try {
                     const a = await resolver.reverse(ip);
 
                     ip = a[0];
-                }
-                catch (err)
-                {
+                } catch (err) {
                     logger.error(`reverse DNS query failed: ${ip} ${err.code}`);
                 }
 
@@ -107,24 +87,21 @@ module.exports = async function(rooms, peers, config)
             }
         };
 
-        const quiet = function(s)
-        {
+        const quiet = function(s) {
             return config.quiet ? '' : s;
         };
 
-        const setValue = function(key, m, labels, v)
-        {
+        const setValue = function(key, m, labels, v) {
             logger.debug(`setValue key=${key} v=${v}`);
-            switch (metadata[key].metricType)
-            {
-                case prom.Counter:
-                    m.inc(labels, v);
-                    break;
-                case prom.Gauge:
-                    m.set(labels, v);
-                    break;
-                default:
-                    throw new Error(`unexpected metric: ${m}`);
+            switch (metadata[key].metricType) {
+            case prom.Counter:
+                m.inc(labels, v);
+                break;
+            case prom.Gauge:
+                m.set(labels, v);
+                break;
+            default:
+                throw new Error(`unexpected metric: ${m}`);
             }
         };
 
@@ -134,27 +111,22 @@ module.exports = async function(rooms, peers, config)
         mRooms.set(rooms.size);
         const mPeers = new prom.Gauge({ name: 'kolabmeet_peers', help: '#peers', labelNames: [ 'room_id' ], registers: [ registry ] });
 
-        for (const [ roomId, room ] of rooms)
-        {
+        for (const [ roomId, room ] of rooms) {
             mPeers.labels(roomId).set(Object.keys(room._peers).length);
         }
 
         const mConsumer = newMetrics('consumer');
         const mProducer = newMetrics('producer');
 
-        for (const [ pid, worker ] of workers)
-        {
+        for (const [ pid, worker ] of workers) {
             logger.debug(`visiting worker ${pid}`);
-            for (const router of worker._routers)
-            {
+            for (const router of worker._routers) {
                 logger.debug(`visiting router ${router.id}`);
-                for (const [ transportId, transport ] of router._transports)
-                {
+                for (const [ transportId, transport ] of router._transports) {
                     logger.debug(`visiting transport ${transportId}`);
                     const transportJson = await transport.dump();
 
-                    if (transportJson.iceState != 'completed')
-                    {
+                    if (transportJson.iceState != 'completed') {
                         logger.debug(`skipping transport ${transportId}}: ${transportJson.iceState}`);
                         continue;
                     }
@@ -165,15 +137,13 @@ module.exports = async function(rooms, peers, config)
                     const remoteAddr = await addr(iceSelectedTuple.remoteIp,
                         iceSelectedTuple.remotePort);
 
-                    for (const [ producerId, producer ] of transport._producers)
-                    {
+                    for (const [ producerId, producer ] of transport._producers) {
                         logger.debug(`visiting producer ${producerId}`);
                         const { roomId, peerId, displayName, userAgent, kind, codec } =
                             commonLabels(producer, (peer) => peer._producers.has(producerId));
                         const a = await producer.getStats();
 
-                        for (const x of a)
-                        {
+                        for (const x of a) {
                             const type = x.type;
                             const labels = {
                                 'pid'          : pid,
@@ -191,23 +161,19 @@ module.exports = async function(rooms, peers, config)
                                 'type'         : type
                             };
 
-                            for (const [ key, m ] of mProducer)
-                            {
+                            for (const [ key, m ] of mProducer) {
                                 setValue(key, m, labels, x[key]);
                             }
                         }
                     }
-                    for (const [ consumerId, consumer ] of transport._consumers)
-                    {
+                    for (const [ consumerId, consumer ] of transport._consumers) {
                         logger.debug(`visiting consumer ${consumerId}`);
                         const { roomId, peerId, displayName, userAgent, kind, codec } =
                             commonLabels(consumer, (peer) => peer._consumers.has(consumerId));
                         const a = await consumer.getStats();
 
-                        for (const x of a)
-                        {
-                            if (x.type == 'inbound-rtp')
-                            {
+                        for (const x of a) {
+                            if (x.type == 'inbound-rtp') {
                                 continue;
                             }
                             const type = x.type;
@@ -228,8 +194,7 @@ module.exports = async function(rooms, peers, config)
                                 'type'         : type
                             };
 
-                            for (const [ key, m ] of mConsumer)
-                            {
+                            for (const [ key, m ] of mConsumer) {
                                 setValue(key, m, labels, x[key]);
                             }
                         }
@@ -239,20 +204,17 @@ module.exports = async function(rooms, peers, config)
         }
     };
 
-    try
-    {
+    try {
         logger.debug(`config.deidentify=${config.deidentify}`);
         logger.debug(`config.listen=${config.listen}`);
         logger.debug(`config.numeric=${config.numeric}`);
         logger.debug(`config.port=${config.port}`);
         logger.debug(`config.quiet=${config.quiet}`);
 
-        mediasoup.observer.on('newworker', (worker) =>
-        {
+        mediasoup.observer.on('newworker', (worker) => {
             logger.debug(`observing newworker ${worker.pid} #${workers.size}`);
             workers.set(worker.pid, worker);
-            worker.observer.on('close', () =>
-            {
+            worker.observer.on('close', () => {
                 logger.debug(`observing close worker ${worker.pid} #${workers.size - 1}`);
                 workers.delete(worker.pid);
             });
@@ -260,8 +222,7 @@ module.exports = async function(rooms, peers, config)
 
         const app = express();
 
-        app.get('/', async (req, res) =>
-        {
+        app.get('/', async (req, res) => {
             logger.debug(`GET ${req.originalUrl}`);
             const registry = new prom.Registry();
 
@@ -272,15 +233,12 @@ module.exports = async function(rooms, peers, config)
             res.end(data);
         });
         const server = app.listen(config.port || 8889,
-            config.listen || undefined, () =>
-            {
+            config.listen || undefined, () => {
                 const address = server.address();
 
                 logger.info(`listening ${address.address}:${address.port}`);
             });
-    }
-    catch (err)
-    {
+    } catch (err) {
         logger.error(err);
     }
 };
