@@ -6,6 +6,8 @@ const io = require("socket.io-client");
 const child_process = require("child_process");
 const udp = require('dgram');
 
+const Roles = require('../lib/userRoles');
+
 let recvUdpSocket
 let recvRtcpUdpSocket
 let app
@@ -57,12 +59,12 @@ function startFFMPEGStream(peers, ssrc) {
     // FFmpeg writes its logs to stderr
     recProcess.stderr.on("data", (chunk) => {
         chunk
-        .toString()
-        .split(/\r?\n/g)
-        .filter(Boolean) // Filter out empty strings
-        .forEach((line) => {
-            // console.log(line);
-        });
+            .toString()
+            .split(/\r?\n/g)
+            .filter(Boolean) // Filter out empty strings
+            .forEach((line) => {
+                // console.log(line);
+            });
     });
 
     return recProcess;
@@ -87,7 +89,7 @@ async function createPeer(roomId, request, receiverPort, receiverRtcpPort) {
     let signalingSocket
     await request
         .post(`/meetmedia/api/sessions/${roomId}/connection`)
-        .send({role: 31})
+        .send({role: Roles.PUBLISHER | Roles.SUBSCRIBER | Roles.MODERATOR})
         .expect(200)
         .then(async (res) => {
             let data = res.body;
@@ -119,8 +121,8 @@ async function createPeer(roomId, request, receiverPort, receiverRtcpPort) {
 
     //Join
     await sendRequest(signalingSocket, 'join', {
-            nickname: "nickname",
-            rtpCapabilities: rtpParameters
+        nickname: "nickname",
+        rtpCapabilities: rtpParameters
     })
 
     //Create sending transport

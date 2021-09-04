@@ -2,6 +2,8 @@ const assert = require('assert');
 let request = require('supertest')
 const io = require("socket.io-client");
 
+const Roles = require('../lib/userRoles');
+
 const mediasoupClient = require('mediasoup-client');
 const { FakeHandler } = require('mediasoup-client/lib/handlers/FakeHandler');
 const fakeParameters = require('./fakeParameters');
@@ -51,7 +53,7 @@ describe('Join room', function() {
     it('create room', async () => {
         return request
             .post(`/meetmedia/api/sessions/${roomId}/connection`)
-            .send({role: 31})
+            .send({role: Roles.PUBLISHER | Roles.SUBSCRIBER | Roles.MODERATOR})
             .expect(200)
             .then(async (res) => {
                 let data = res.body;
@@ -84,11 +86,11 @@ describe('Join room', function() {
 
     it('join', async () => {
         const { id, role, peers } = await sendRequest(signalingSocket, 'join', {
-                nickname: "nickname",
-                rtpCapabilities: fakeParameters.generateNativeRtpCapabilities()
+            nickname: "nickname",
+            rtpCapabilities: fakeParameters.generateNativeRtpCapabilities()
         })
         assert.equal(id, peerId)
-        assert.equal(role, 31)
+        assert.equal(role, Roles.PUBLISHER | Roles.SUBSCRIBER | Roles.MODERATOR)
         assert.equal(peers.length, 0)
     })
 
