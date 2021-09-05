@@ -53,3 +53,46 @@ This leads to the following topolgy:
 * On the kolabmeet server you can connect to the server by executing connect.js, which allows to inspect the internal state.
 * The browser won't allow a ws: connection from a https:// site, but only chrome will tell you about it.
 * If in question, restart your browser. Sometimes things suddenly start working again.
+
+
+## Scalability
+
+The number of participants greatly depends on the number of streams that need to be handled.
+In principle there's at least 2 streams per participant for audio + video incoming (upstream), and then each of those streams is sent to all participants (excluding the sender). This leads to 2n * (n - 1) streams when everyone is sending and receiving vide + audio. A single cpu core is expected to be able to handle ~500 streams, which leads to ~16 participants.
+
+This number can of course be greatly affected by reducing the number of streams that need to be handled, e.g. listeners not sending video.
+
+### Horizontal scaling
+
+Currently we can scale with the number of threads on a system by using multiple workers, but not across multiple servers.
+
+In the simplest for it would of course be possible to load balance and just distribute rooms on different nodes.
+
+To distribute a single room across different nodes more work is required:
+* A transport needs to be established between the nodes.
+* For each participant on the remote node all streams need to be proxied as well as the signaling.
+
+The benefits of this should be:
+* A room can grow beyond the limits of a server (which would be very large rooms).
+* If we assume peers join a geo-local server:
+** Instead of having to send N streams across to all peers, we can send 1 stream to the server which then distributes to N peers, reducing the required bandwidth on the path between servers.
+** If a reencoder is implemented in each server, latency for request of keyframes is reduced.
+** Local peers can use a more efficient direct path between each other and thus further relieve the server interconnection.
+
+### High availability
+
+In the simplest for the server is simply restarted and all clients reconnect. This results in a brief interruption and some state is lost (chat history), but everyone should be back in the same room relatively quickly.
+
+More advanced forms could potentially recover the internal state from e.g. redis, to recover quicker and relatively transparent to the user. I think the transports need to be reestablished, but webrtc should allow for this.
+
+### Reencoder
+
+The reencoder is a process (running on the server) that consumes a track and simply reencodes it and forwards it to the server again. The server will then have to serve that reencoded track to the end user instead of the direct track.
+That way a keyframe request can be handled by the reencoder instead of the original client, which is especially useful with geolocated nodes (due to latency), but in general protects the client from constantly having to generate keyframes whenevery a client looses connection.
+
+A reencoder can be implemented using libmediasoupclient and thus probably is a c++ endavour (or potentially rust?).
+
+### Ideas to explore
+
+* Automatically disable video for silent participants, and only enable for last N active speakers: https://docs.openvidu.io/en/2.19.0/openvidu-enterprise/#large-scale-sessions
+* Ensure we make use of simulcast (per peer adaptive stream quality, depending on available bandwidth and processing power)
