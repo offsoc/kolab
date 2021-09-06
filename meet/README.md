@@ -57,8 +57,8 @@ This leads to the following topolgy:
 
 ## Scalability
 
-The number of participants greatly depends on the number of streams that need to be handled.
-In principle there's at least 2 streams per participant for audio + video incoming (upstream), and then each of those streams is sent to all participants (excluding the sender). This leads to 2n * (n - 1) streams when everyone is sending and receiving vide + audio. A single cpu core is expected to be able to handle ~500 streams, which leads to ~16 participants.
+The number of participants a server can handle, greatly depends on the number of streams that need to be handled.
+In principle there's at least 2 streams per participant (ignoring screensharing) for audio + video incoming (upstream), and then each of those streams is sent to all participants (excluding the sender). This leads to 2n * (n - 1) streams when everyone is sending and receiving vide + audio. A single cpu core is expected to be able to handle ~500 streams, which leads to ~16 participants.
 
 This number can of course be greatly affected by reducing the number of streams that need to be handled, e.g. listeners not sending video.
 
