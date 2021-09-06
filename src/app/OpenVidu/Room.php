@@ -351,10 +351,9 @@ class Room extends Model
     /**
      * Send a OpenVidu signal to the session participants (connections)
      *
-     * @param string            $name   Signal name (type)
-     * @param array             $data   Signal data array
-     * @param null|int|string[] $target List of target connections, Null for all connections.
-     *                                  It can be also a participant role.
+     * @param string $name   Signal name (type)
+     * @param array  $data   Signal data array
+     * @param int    $target Limit targets by their participant role
      *
      * @return bool True on success, False on failure
      * @throws \Exception if session does not exist
@@ -366,28 +365,11 @@ class Room extends Model
         }
 
         $post = [
-            'session' => $this->session_id,
-            'type' => $name,
-            'data' => $data ? json_encode($data) : '',
+            'roomId' => $this->session_id,
+            'type'   => $name,
+            'role'   => $target,
+            'data'   => $data,
         ];
-
-        // Get connection IDs by participant role
-        if (is_int($target)) {
-            $connections = Connection::where('session_id', $this->session_id)
-                ->whereRaw("(role & $target)")
-                ->pluck('id')
-                ->all();
-
-            if (empty($connections)) {
-                return false;
-            }
-
-            $target = $connections;
-        }
-
-        if (!empty($target)) {
-            $post['to'] = $target;
-        }
 
         $response = $this->client()->request('POST', 'signal', ['json' => $post]);
 

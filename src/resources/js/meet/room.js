@@ -172,7 +172,7 @@ function Room(container)
         })
 
         client.on('joinRequest', event => {
-            // TODO data.onJoinRequest(event)
+            data.onJoinRequest(event)
         })
 
         // Handle session disconnection events

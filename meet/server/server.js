@@ -120,8 +120,7 @@ async function run() {
         // Run WebSocketServer.
         await runWebSocketServer();
 
-        // eslint-disable-next-line no-unused-vars
-        const errorHandler = (err, req, res, next) => {
+        const errorHandler = (err, req, res /*, next */) => {
             const trackingId = uuidv4();
 
             res.status(500).send(
@@ -136,7 +135,6 @@ async function run() {
                 trackingId, err);
         };
 
-        // eslint-disable-next-line no-unused-vars
         app.use(errorHandler);
     } catch (error) {
         logger.error('run() [error:"%o"]', error);
@@ -157,11 +155,11 @@ function statusLog() {
 async function runHttpsServer() {
     app.use(compression());
 
-    app.get(`${config.pathPrefix}/api/ping`, function (req, res, /*next*/) {
+    app.get(`${config.pathPrefix}/api/ping`, function (req, res /*, next*/) {
         res.send('PONG')
     })
 
-    app.get(`${config.pathPrefix}/api/sessions`, function (req, res, /*next*/) {
+    app.get(`${config.pathPrefix}/api/sessions`, function (req, res /*, next*/) {
         //TODO json.stringify
         res.json({
             id : "testId"
@@ -169,7 +167,7 @@ async function runHttpsServer() {
     })
 
     //Check if the room exists
-    app.get(`${config.pathPrefix}/api/sessions/:session_id`, function (req, res, /*next*/) {
+    app.get(`${config.pathPrefix}/api/sessions/:session_id`, function (req, res /*, next*/) {
         console.warn("Checking for room")
         let room = rooms.get(req.params.session_id);
         if (!room) {
@@ -182,7 +180,7 @@ async function runHttpsServer() {
     })
 
     // Create room and return id
-    app.post(`${config.pathPrefix}/api/sessions`, async function (req, res, /*next*/) {
+    app.post(`${config.pathPrefix}/api/sessions`, async function (req, res /*, next*/) {
         console.warn("Creating new room", req.body.mediaMode, req.body.recordingMode)
         //FIXME we're truncating because of kolab4 database layout (should be fixed instead)
         const roomId = uuidv4().substring(0, 16)
@@ -193,25 +191,24 @@ async function runHttpsServer() {
         })
     })
 
-    app.post(`${config.pathPrefix}/api/signal`, async function (req, res, /*next*/) {
+    app.post(`${config.pathPrefix}/api/signal`, async function (req, res /*, next*/) {
         let data = req.body;
-        const roomId = data.session;
-        // const signalType = data.type;
-        // const payload = data.data;
-        const peers = data.to;
+        const roomId = data.roomId;
+        const emit = (socket) => {
+            socket.emit('notification', {
+                method: `signal:${data.type}`,
+                data: data.data
+            })
+        };
 
-
-        if (peers) {
-            for (const peerId of peers) {
-                let peer = peers.get(peerId);
-                peer.socket.emit(
-                    'signal', data
-                );
-            }
+        if ('role' in data) {
+            peers.forEach(peer => {
+                if (peer.socket && peer.roomId == roomId && peer.hasRole(data.role)) {
+                    emit(peer.socket);
+                }
+            })
         } else {
-            io.to(roomId).emit(
-                'signal', data
-            );
+            emit(io.to(roomId));
         }
 
         res.json({})
@@ -224,7 +221,7 @@ async function runHttpsServer() {
     //         'data' => json_encode(['role' => $role])
     //     ]
     // ];
-    app.post(`${config.pathPrefix}/api/sessions/:session_id/connection`, function (req, res, /*next*/) {
+    app.post(`${config.pathPrefix}/api/sessions/:session_id/connection`, function (req, res /*, next*/) {
         logger.info("Creating connection in session", req.params.session_id)
         let roomId = req.params.session_id
         let data = req.body;

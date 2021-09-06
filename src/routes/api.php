@@ -122,7 +122,6 @@ Route::group(
     function () {
         Route::post('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
         Route::post('openvidu/rooms/{id}/connections', 'API\V4\OpenViduController@createConnection');
-        Route::put('openvidu/rooms/{id}/connections/{conn}', 'API\V4\OpenViduController@updateConnection');
         Route::post('openvidu/rooms/{id}/request/{reqid}/accept', 'API\V4\OpenViduController@acceptJoinRequest');
         Route::post('openvidu/rooms/{id}/request/{reqid}/deny', 'API\V4\OpenViduController@denyJoinRequest');
     }

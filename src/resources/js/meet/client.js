@@ -427,6 +427,11 @@ function Client()
                     return
                 }
 
+                case 'signal:joinRequest': {
+                    trigger('joinRequest', notification.data)
+                    return
+                }
+
                 default:
                     console.error('Unknow notification method: ' + notification.method)
             }

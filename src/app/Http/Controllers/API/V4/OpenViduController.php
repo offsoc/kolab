@@ -236,7 +236,7 @@ class OpenViduController extends Controller
                         return $this->errorResponse(422, $error, $response + ['code' => 326]);
                     }
 
-                    // Send the request (signal) to the owner
+                    // Send the request (signal) to all moderators
                     $result = $room->signal('joinRequest', $request, Room::ROLE_MODERATOR);
                 }
 
@@ -357,21 +357,6 @@ class OpenViduController extends Controller
 
         foreach (request()->input() as $key => $value) {
             switch ($key) {
-                case 'hand':
-                    // Only possible on user's own connection(s)
-                    if (!$this->isSelfConnection($connection)) {
-                        return $this->errorResponse(403);
-                    }
-
-                    if ($value) {
-                        // Store current time, so we know the order in the queue
-                        $connection->metadata = ['hand' => time()] + $connection->metadata;
-                    } else {
-                        $connection->metadata = array_diff_key($connection->metadata, ['hand' => 0]);
-                    }
-
-                    break;
-
                 case 'language':
                     // Only the moderator can do it
                     if (!$this->isModerator($connection->room)) {
@@ -457,6 +442,11 @@ class OpenViduController extends Controller
                 Connection::where('session_id', $sessionId)->delete();
 
                 break;
+
+            // TODO: We need to update connection state via webhook
+            //       I.e. isModerator() checks here require up-to-date
+            //       participant role information. Another option might be accepting/denying
+            //       join requests via websocket
         }
 
         return response('Success', 200);
