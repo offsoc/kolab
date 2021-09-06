@@ -21,6 +21,8 @@ class Peer extends EventEmitter {
 
         this._nickname = false;
 
+        this._language = null;
+
         this._routerId = null;
 
         this._rtpCapabilities = null;
@@ -98,11 +100,23 @@ class Peer extends EventEmitter {
         return this._nickname;
     }
 
+    get language() {
+        return this._language;
+    }
+
     set nickname(nickname) {
         if (nickname !== this._nickname) {
             this._nickname = nickname;
 
             this.emit('nicknameChanged', {});
+        }
+    }
+
+    set language(language) {
+        if (language != this._language) {
+            this._language = language;
+
+            this.emit('languageChanged', {});
         }
     }
 
@@ -144,19 +158,9 @@ class Peer extends EventEmitter {
 
     setRole(newRole) {
         if (this._role != newRole) {
-            // It is either screen sharing or publisher/subscriber
-            if (newRole & Roles.SCREEN) {
-                if (newRole & Roles.PUBLISHER) {
-                    newRole ^= Roles.PUBLISHER;
-                }
-                if (newRole & Roles.SUBSCRIBER) {
-                    newRole ^= Roles.SUBSCRIBER;
-                }
-            }
-
             this._role = newRole;
 
-            this.emit('gotRole', { newRole });
+            this.emit('roleChanged', {});
         }
     }
 
@@ -220,6 +224,7 @@ class Peer extends EventEmitter {
         const peerInfo =
         {
             id: this.id,
+            language: this.language,
             nickname: this.nickname,
             role: this.role,
             raisedHand: this.raisedHand

@@ -357,18 +357,20 @@ class Room extends EventEmitter {
 
         peer.on('nicknameChanged', () => {
             // Spread to others
-            this._notification(peer.socket, 'changeNickname', {
-                peerId: peer.id,
-                nickname: peer.nickname
-            }, true);
+            const data = { peerId: peer.id, nickname: peer.nickname };
+            this._notification(peer.socket, 'changeNickname', data, true);
         });
 
-        peer.on('gotRole', ({ newRole }) => {
-            // Spread to others
-            this._notification(peer.socket, 'changeRole', {
-                peerId: peer.id,
-                role: newRole
-            }, true, true);
+        peer.on('languageChanged', () => {
+            // Spread to others (and self)
+            const data = { peerId: peer.id, language: peer.language };
+            this._notification(peer.socket, 'changeLanguage', data, true, true);
+        });
+
+        peer.on('roleChanged', () => {
+            // Spread to others (and self)
+            const data = { peerId: peer.id, role: peer.role };
+            this._notification(peer.socket, 'changeRole', data, true, true);
         });
 
         peer.socket.on('request', (request, cb) => {
@@ -464,6 +466,7 @@ class Room extends EventEmitter {
 
             break;
         }
+/*
         case 'createPlainTransport':
         {
             const { producing, consuming } = request.data;
@@ -516,7 +519,7 @@ class Room extends EventEmitter {
 
             break;
         }
-
+*/
         case 'createWebRtcTransport':
         {
             // NOTE: Don't require that the Peer is joined here, so the client can
@@ -664,12 +667,11 @@ class Room extends EventEmitter {
 
             // Optimization: Create a server-side Consumer for each Peer.
             for (const otherPeer of this.getPeers(peer)) {
-                this._createConsumer(
-                    {
-                        consumerPeer : otherPeer,
-                        producerPeer : peer,
+                this._createConsumer({
+                        consumerPeer: otherPeer,
+                        producerPeer: peer,
                         producer
-                    });
+                });
             }
 
             // Add into the audioLevelObserver.
@@ -835,6 +837,26 @@ class Room extends EventEmitter {
                 // This will propagate the event automatically
                 rolePeer.setRole(rolePeer.role ^ role);
             }
+
+            // Return no error
+            cb();
+
+            break;
+        }
+
+        case 'moderator:changeLanguage':
+        {
+            if (!peer.hasRole(Roles.MODERATOR))
+                throw new Error('peer not authorized');
+
+            const { language } = request.data;
+
+            if (language && !/^[a-z]{2}$/.test(language))
+                throw new Error('invalid language code');
+
+            peer.language = language;
+
+            // This will be spread through events from the peer object
 
             // Return no error
             cb();

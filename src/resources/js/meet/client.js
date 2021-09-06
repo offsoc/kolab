@@ -189,6 +189,10 @@ function Client()
         }
     }
 
+    this.setLanguage = (peerId, language) => {
+        socket.sendRequest('moderator:changeLanguage', { peerId, language })
+    }
+
     this.addRole = (peerId, role) => {
         socket.sendRequest('moderator:addRole', { peerId, role })
     }
@@ -338,19 +342,13 @@ function Client()
                     return
                 }
 
-                case 'changeNickname': {
-                    const { peerId, nickname } = notification.data
-                    const peer = peers[peerId]
-
-                    if (!peer) {
-                        return
-                    }
-
-                    peer.nickname = nickname
-
-                    trigger('updatePeer', peer, ['nickname'])
+                case 'changeLanguage':
+                    updatePeerProperty(notification.data, 'language')
                     return
-                }
+
+                case 'changeNickname':
+                    updatePeerProperty(notification.data, 'nickname')
+                    return
 
                 case 'changeRole': {
                     const { peerId, role } = notification.data
@@ -398,39 +396,26 @@ function Client()
                     return
                 }
 
-                case 'chatMessage': {
+                case 'chatMessage':
+                    notification.data.isSelf = notification.data.peerId == peers.self.id
                     trigger('chatMessage', notification.data)
                     return
-                }
 
-                case 'moderator:closeRoom': {
+                case 'moderator:closeRoom':
                     this.closeSession('session-closed')
                     return
-                }
 
-                case 'moderator:kickPeer': {
+                case 'moderator:kickPeer':
                     this.closeSession('session-closed')
                     return
-                }
 
-                case 'raisedHand': {
-                    const { peerId, raisedHand } = notification.data
-                    const peer = peers[peerId]
-
-                    if (!peer) {
-                        return
-                    }
-
-                    peer.raisedHand = raisedHand
-
-                    trigger('updatePeer', peer, ['raisedHand'])
+                case 'raisedHand':
+                    updatePeerProperty(notification.data, 'raisedHand')
                     return
-                }
 
-                case 'signal:joinRequest': {
+                case 'signal:joinRequest':
                     trigger('joinRequest', notification.data)
                     return
-                }
 
                 default:
                     console.error('Unknow notification method: ' + notification.method)
@@ -770,6 +755,19 @@ function Client()
                 .then(callback)
                 .catch(errback)
         })
+    }
+
+    const updatePeerProperty = (data, prop) => {
+        const peerId = data.peerId
+        const peer = peers.self.id === peerId ? peers.self : peers[peerId]
+
+        if (!peer) {
+            return
+        }
+
+        peer[prop] = data[prop]
+
+        trigger('updatePeer', peer, [ prop ])
     }
 }
 

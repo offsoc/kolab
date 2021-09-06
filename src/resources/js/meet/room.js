@@ -39,7 +39,6 @@ function Room(container)
     this.switchChannel = switchChannel
     this.switchScreen = switchScreen
     this.switchVideo = switchVideo
-    this.updateSession = updateSession
 
     /**
      * Join the room session
@@ -53,13 +52,13 @@ function Room(container)
      *      counterElement  - DOM element for the participants counter,
      *      menuElement     - DOM element of the room toolbar,
      *      queueElement    - DOM element for the Q&A queue (users with a raised hand)
-     *      onSuccess           - Callback for session connection (join) success
-     *      onError             - Callback for session connection (join) error
-     *      onDestroy           - Callback for session disconnection event,
-     *      onJoinRequest       - Callback for join request,
-     *      onSessionDataUpdate - Callback for current user connection update,
-     *      onMediaSetup        - Called when user clicks the Media setup button
-     *      translate           - Translation function
+     *      onSuccess       - Callback for session connection (join) success
+     *      onError         - Callback for session connection (join) error
+     *      onDestroy       - Callback for session disconnection event,
+     *      onJoinRequest   - Callback for join request,
+     *      onUpdate        - Callback for current user/session update,
+     *      onMediaSetup    - Called when user clicks the Media setup button
+     *      translate       - Translation function
      */
     function joinRoom(data) {
         // Create a container for subscribers and publishers
@@ -89,6 +88,8 @@ function Room(container)
             event.element = participantCreate(event)
 
             peers[event.id] = event
+
+            updateSession()
         })
 
         // Participant removed
@@ -103,6 +104,8 @@ function Room(container)
                 $(peer.element).remove()
                 delete peers[peerId]
             }
+
+            updateSession()
 
             resize()
         })
@@ -146,24 +149,10 @@ function Room(container)
                 // Open the media setup dialog
                 sessionData.onMediaSetup()
             }
-/*
-            // Update channels list
-            sessionData.channels = getChannels(peers)
-
-            // The channel user was using has been removed (or rather the participant stopped being an interpreter)
-            if (sessionData.channel && !sessionData.channels.includes(sessionData.channel)) {
-                sessionData.channel = null
-                refresh = true
-            }
-*/
-            if (changed && changed.includes('moderatorRole')) {
-                participantUpdateAll()
-            }
-
-            // Inform the vue component, so it can update some UI controls
-            // sessionData.onSessionDataUpdate(sessionData)
 
             peers[event.id] = event
+
+            updateSession(changed && changed.includes('moderatorRole'))
         })
 
         client.on('joinSuccess', () => {
@@ -334,7 +323,6 @@ function Room(container)
         message = message.replace(/\r?\n/, '<br>')
 
         // Display the message
-        let isSelf = false // TODO
         let chat = $(sessionData.chatElement).find('.chat')
         let box = chat.find('.message').last()
 
@@ -351,14 +339,14 @@ function Room(container)
                 .append(message)
                 .appendTo(chat)
 
-            if (isSelf) {
+            if (data.isSelf) {
                 box.addClass('self')
             }
         }
 
         // Count unread messages
         if (!$(sessionData.chatElement).is('.open')) {
-            if (!isSelf) {
+            if (!data.isSelf) {
                 chatCount++
             }
         } else {
@@ -380,9 +368,7 @@ function Room(container)
      */
     function switchChannel(channel) {
         sessionData.channel = channel
-
-        // Mute/unmute all peers depending on the selected channel
-        participantUpdateAll()
+        updateSession(true)
     }
 
     /**
@@ -800,7 +786,6 @@ function Room(container)
                             + ' <span class="form-check-label">' + $t('meet.perm-mod') + '</span>'
                         + '</label>'
                     + '</div>'
-/* TODO
                     + '<div class="dropdown-divider interpreting"></div>'
                     + '<div class="interpreting">'
                         + '<h6 class="dropdown-header">' + $t('meet.lang-int') + '</h6>'
@@ -809,7 +794,6 @@ function Room(container)
                             + languages.join('')
                         + '</select></div>'
                     + '</div>'
-*/
                 + '</div>'
             + '</div>'
         )
@@ -868,18 +852,18 @@ function Room(container)
         element.find('.action-role-moderator input').on('change', e => {
             client[e.target.checked ? 'addRole' : 'removeRole'](params.id, Roles.MODERATOR)
         })
-/*
+
         element.find('.interpreting select')
             .on('change', e => {
                 const language = $(e.target).val()
-                sessionData.onConnectionChange(params.id, { language })
+                client.setLanguage(params.id, language)
                 dropdown.hide()
             })
             .on('click', e => {
                 // Prevents from closing the dropdown menu on click
                 e.stopPropagation()
             })
-*/
+
         return element.get(0)
     }
 
@@ -1054,12 +1038,28 @@ function Room(container)
     }
 
     /**
-     * A way to update some session data, after you joined the room
+     * Update the session state
      *
-     * @param data Same input as for joinRoom()
+     * @param force Force UI refresh
      */
-    function updateSession(data) {
-        sessionData.shareToken = data.shareToken
+    function updateSession(force) {
+        // Update channels list
+        sessionData.channels = getChannels(peers)
+
+        // The channel user was using has been removed (or the participant stopped being an interpreter)
+        if (sessionData.channel && !sessionData.channels.includes(sessionData.channel)) {
+            sessionData.channel = null
+            force = true
+        }
+
+        // Mute/unmute all peers depending on the selected channel
+        // Also updates participant menu according to the current user role
+        if (force) {
+            participantUpdateAll()
+        }
+
+        // Inform the vue component, so it can update some UI controls
+        sessionData.onUpdate(sessionData)
     }
 
     /**
@@ -1068,9 +1068,7 @@ function Room(container)
     function getChannels(peers) {
         let channels = []
 
-        Object.keys(peers).forEach(peerId => {
-            let peer = peers[peerId]
-
+        Object.values(peers).forEach(peer => {
             if (peer.language && !channels.includes(peer.language)) {
                 channels.push(peer.language)
             }

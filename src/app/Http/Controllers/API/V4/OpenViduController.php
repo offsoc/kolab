@@ -261,9 +261,6 @@ class OpenViduController extends Controller
                 return $this->errorResponse(500, \trans('meet.session-join-error'));
             }
 
-            // Get up-to-date connections metadata
-            $response['connections'] = $room->getSessionConnections();
-
             $response_code = 200;
             $response['role'] = $role;
             $response['config'] = $config;
@@ -357,22 +354,6 @@ class OpenViduController extends Controller
 
         foreach (request()->input() as $key => $value) {
             switch ($key) {
-                case 'language':
-                    // Only the moderator can do it
-                    if (!$this->isModerator($connection->room)) {
-                        return $this->errorResponse(403);
-                    }
-
-                    if ($value) {
-                        if (preg_match('/^[a-z]{2}$/', $value)) {
-                            $connection->metadata = ['language' => $value] + $connection->metadata;
-                        }
-                    } else {
-                        $connection->metadata = array_diff_key($connection->metadata, ['language' => 0]);
-                    }
-
-                    break;
-
                 case 'role':
                     // Only the moderator can do it
                     if (!$this->isModerator($connection->room)) {

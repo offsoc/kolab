@@ -10,7 +10,7 @@
                 <button :class="'btn link-video' + (videoActive ? '' : ' on')" @click="switchVideo" :disabled="!isPublisher()" :title="$t('meet.menu-video-' + (videoActive ? 'mute' : 'unmute'))">
                     <svg-icon :icon="videoActive ? 'video' : 'video-slash'"></svg-icon>
                 </button>
-                <button :class="'btn link-screen' + (screenShareActive ? ' on' : '')" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" :title="$t('meet.menu-screen')">
+                <button :class="'btn link-screen' + (screenActive ? ' on' : '')" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" :title="$t('meet.menu-screen')">
                     <svg-icon icon="desktop"></svg-icon>
                 </button>
                 <button :class="'btn link-hand' + (handRaised ? ' on' : '')" v-if="!isPublisher()" @click="switchHand" :title="$t('meet.menu-hand-' + (handRaised ? 'lower' : 'raise'))">
@@ -180,7 +180,7 @@
 </template>
 
 <script>
-    import { Modal } from 'bootstrap'
+    import { Modal, Dropdown } from 'bootstrap'
     import { Media } from '../../js/meet/media.js'
     import { Room as Meet } from '../../js/meet/room.js'
     import { Roles } from '../../js/meet/constants.js'
@@ -278,7 +278,7 @@
                 videoActive: false,
                 chatActive: false,
                 handRaised: false,
-                screenShareActive: false
+                screenActive: false
             }
         },
         mounted() {
@@ -533,7 +533,7 @@
                         new Modal('#leave-dialog').show()
                     }
                 }
-                this.session.onSessionDataUpdate = data => { this.updateSession(data) }
+                this.session.onUpdate = data => { this.updateSession(data) }
                 this.session.onJoinRequest = data => { this.joinRequest(data) }
                 this.session.onMediaSetup = () => { this.setupMedia() }
 
@@ -622,10 +622,9 @@
                 this.audioActive = await this.meet.setupSetAudioDevice(this.microphone)
             },
             switchChannel(e) {
-                let channel = $(e.target).data('code')
-
-                this.$set(this.session, 'channel', channel)
-                this.meet.switchChannel(channel)
+                this.meet.switchChannel($(e.target).data('code'))
+                // FIXME: Why is the menu not closing by itself?
+                new Dropdown('#meet-session-menu .link-channel').hide()
             },
             switchChat() {
                 let chat = $('#meet-chat')
@@ -668,27 +667,8 @@
             async switchVideo() {
                 this.videoActive = await this.meet.switchVideo()
             },
-            switchScreen() {
-                const switchScreenAction = () => {
-                    this.meet.switchScreen((enabled, error) => {
-                        this.screenShareActive = enabled
-                        if (!enabled && !error) {
-                            // Closing a screen sharing connection invalidates the token
-                            delete this.session.shareToken
-                        }
-                    })
-                }
-
-                if (this.session.shareToken || this.screenShareActive) {
-                    switchScreenAction()
-                } else {
-                    axios.post('/api/v4/openvidu/rooms/' + this.room + '/connections')
-                        .then(response => {
-                            this.session.shareToken = response.data.token
-                            this.meet.updateSession(this.session)
-                            switchScreenAction()
-                        })
-                }
+            async switchScreen() {
+                this.screenActive = await this.meet.switchScreen()
             },
             updateSession(data) {
                 this.session = data
@@ -698,7 +678,7 @@
 
                 this.videoActive = isPublisher ? data.videoActive : false
                 this.audioActive = isPublisher ? data.audioActive : false
-                this.handRaised = data.hand
+                this.handRaised = data.raisedHand
             }
         }
     }
