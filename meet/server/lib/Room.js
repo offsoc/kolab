@@ -1,6 +1,6 @@
 const EventEmitter = require('events').EventEmitter;
 const AwaitQueue = require('awaitqueue');
-const axios = require('axios');
+const crypto = require('crypto');
 const Logger = require('./Logger');
 const { SocketTimeoutError } = require('./errors');
 const Roles = require('./userRoles');
@@ -303,6 +303,21 @@ class Room extends EventEmitter {
         return Object.keys(this._peers).length === 0;
     }
 
+    _getTURNCredentials(name, secret) {
+        const unixTimeStamp = parseInt(Date.now()/1000) + 24*3600; // this credential would be valid for the next 24 hours
+        // If there is no name, the timestamp alone can also be used.
+        const username = name ? `${unixTimeStamp}:${name}` : `${unixTimeStamp}`;
+        const hmac = crypto.createHmac('sha1', secret);
+        hmac.setEncoding('base64');
+        hmac.write(username);
+        hmac.end();
+        const password = hmac.read();
+        return {
+            username,
+            password
+        };
+    }
+
     _peerJoining(peer) {
         this._queue.push(async () => {
             peer.socket.join(this._roomId);
@@ -314,34 +329,16 @@ class Room extends EventEmitter {
 
             this._handlePeer(peer);
 
-            let iceServers;
+            let iceServers = []
+            if ('turn' in config) {
+                // Generate time-limited credentials. The name is only relevant for the logs.
+                const {username, password} = this._getTURNCredentials(peer.id, config.turn.staticSecret);
 
-            if ('turnAPIURI' in config) {
-                try {
-                    const { data } = await axios.get(
-                        config.turnAPIURI,
-                        {
-                            timeout : config.turnAPITimeout || 2000,
-                            params  : {
-                                ...config.turnAPIparams,
-                                'api_key' : config.turnAPIKey,
-                                'ip'      : peer.socket.request.connection.remoteAddress
-                            }
-                        });
-
-                    iceServers = [ {
-                        urls       : data.uris,
-                        username   : data.username,
-                        credential : data.password
-                    } ];
-                } catch (error) {
-                    if ('backupTurnServers' in config && config.backupTurnServers.length)
-                        iceServers = config.backupTurnServers;
-
-                    logger.error('_peerJoining() | error on REST turn [error:"%o"]', error);
-                }
-            } else if ('backupTurnServers' in config && config.backupTurnServers.length) {
-                iceServers = config.backupTurnServers;
+                iceServers = [ {
+                    urls       : config.turn.urls,
+                    username   : username,
+                    credential : password
+                } ];
             }
 
             this._notification(peer.socket, 'roomReady', { iceServers });

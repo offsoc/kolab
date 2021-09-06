@@ -6,10 +6,8 @@ cat > ./turnserver.conf << EOF
 external-ip=${TURN_PUBLIC_IP:-127.0.0.1}
 listening-port=${TURN_LISTEN_PORT:-3478}
 fingerprint
-lt-cred-mech
 
 # Temporary for testing
-user=username1:password1
 allow-loopback-peers
 cli-password=qwerty
 
@@ -21,7 +19,11 @@ min-port=${MIN_PORT:-40000}
 pidfile="$(pwd)/turnserver.pid"
 realm=kolabmeet
 log-file=stdout
-redis-userdb="ip=${REDIS_IP:-127.0.0.1} dbname=${REDIS_DBNAME:-2} password=${REDIS_PASSWORD:-turn} connect_timeout=30"
+
+# Dynamically generate username/password for turn
+use-auth-secret
+static-auth-secret=${TURN_STATIC_SECRET:-uzYguvIl9tpZFMuQOE78DpOi6Jc7VFSD0UAnvgMsg5n4e74MgIf6vQvbc6LWzZjz}
+
 verbose
 EOF
 

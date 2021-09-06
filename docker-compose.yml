@@ -5,11 +5,9 @@ services:
       context: ./docker/coturn/
     container_name: kolab-coturn
     environment:
-      - REDIS_DBNAME=${COTURN_REDIS_DATABASE}
-      - REDIS_PASSWORD=${COTURN_REDIS_PASSWORD}
-      - REDIS_IP=${COTURN_REDIS_IP}
       - TURN_PUBLIC_IP=${COTURN_PUBLIC_IP}
       - TURN_LISTEN_PORT=3478
+      - TURN_STATIC_SECRET==${COTURN_STATIC_SECRET}
     hostname: sturn.mgmt.com
     image: kolab-coturn
     network_mode: host
@@ -158,6 +156,7 @@ services:
       - PUBLIC_IP=${MEET_PUBLIC_IP}
       - PUBLIC_DOMAIN=${MEET_PUBLIC_DOMAIN}
       - TURN_SERVER=${MEET_TURN_SERVER}
+      - TURN_STATIC_SECRET==${COTURN_STATIC_SECRET}
     network_mode: host
     container_name: kolab-meet
     image: kolab-meet

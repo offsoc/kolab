@@ -2,27 +2,12 @@ const os = require('os');
 
 module.exports =
 {
-    // URI and key for requesting geoip-based TURN server closest to the client
-    // turnAPIKey    : 'examplekey',
-    // turnAPIURI    : 'https://example.com/api/turn',
-    // turnAPIparams : {
-    //     'uri_schema'     : 'turn',
-    //     'transport'         : 'tcp',
-    //     'ip_ver'            : 'ipv4',
-    //     'servercount'    : '2'
-    // },
-    // turnAPITimeout    : 2 * 1000,
-    // Backup turnservers if REST fails or is not configured
-    backupTurnServers: process.env.TURN_SERVER == 'none' ? [] : [
-        {
-            urls : [
-                process.env.TURN_SERVER || 'turn:127.0.0.1:3478?transport=tcp'
-            ],
-            //FIXME we use hardcoded credentials for now
-            username   : 'username1',
-            credential : 'password1'
-        }
-    ],
+    turn: {
+        urls : [
+            process.env.TURN_SERVER || 'turn:127.0.0.1:3478?transport=tcp'
+        ],
+        staticSecret: process.env.TURN_STATIC_SECRET || 'uzYguvIl9tpZFMuQOE78DpOi6Jc7VFSD0UAnvgMsg5n4e74MgIf6vQvbc6LWzZjz',
+    },
     // redis server options used for session storage
     redisOptions : {
         host: process.env.REDIS_IP || '127.0.0.1',
