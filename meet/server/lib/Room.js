@@ -466,7 +466,7 @@ class Room extends EventEmitter {
 
             break;
         }
-/*
+
         case 'createPlainTransport':
         {
             const { producing, consuming } = request.data;
@@ -519,7 +519,7 @@ class Room extends EventEmitter {
 
             break;
         }
-*/
+
         case 'createWebRtcTransport':
         {
             // NOTE: Don't require that the Peer is joined here, so the client can
