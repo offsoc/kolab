@@ -21,8 +21,6 @@ class Peer extends EventEmitter {
 
         this._nickname = false;
 
-        this._picture = null;
-
         this._routerId = null;
 
         this._rtpCapabilities = null;
@@ -105,20 +103,6 @@ class Peer extends EventEmitter {
             this._nickname = nickname;
 
             this.emit('nicknameChanged', {});
-        }
-    }
-
-    get picture() {
-        return this._picture;
-    }
-
-    set picture(picture) {
-        if (picture !== this._picture) {
-            const oldPicture = this._picture;
-
-            this._picture = picture;
-
-            this.emit('pictureChanged', { oldPicture });
         }
     }
 
@@ -237,7 +221,6 @@ class Peer extends EventEmitter {
         {
             id: this.id,
             nickname: this.nickname,
-            // picture: this.picture,
             role: this.role,
             raisedHand: this.raisedHand
         };

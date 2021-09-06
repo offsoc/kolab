@@ -242,8 +242,6 @@ async function runHttpsServer() {
         });
 
         peer.nickname = "Display Name";
-        // peer.picture = picture;
-        peer.email = "email@test.com";
 
         if ('role' in data)
             peer.setRole(data.role);
@@ -303,14 +301,11 @@ async function runWebSocketServer() {
 
         if (!roomId || !peerId) {
             logger.warn('connection request without roomId and/or peerId');
-
             socket.disconnect(true);
-
             return;
         }
 
-        logger.info(
-            'connection request [roomId:"%s", peerId:"%s"]', roomId, peerId);
+        logger.info('connection request [roomId:"%s", peerId:"%s"]', roomId, peerId);
 
         queue.push(async () => {
             const room = await getOrCreateRoom({ roomId });
@@ -334,8 +329,6 @@ async function runWebSocketServer() {
 
                 if (socket)
                     socket.disconnect(true);
-
-                return;
             });
     });
 }

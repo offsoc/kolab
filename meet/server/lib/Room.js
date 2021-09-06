@@ -429,13 +429,11 @@ class Room extends EventEmitter {
         {
             const {
                 nickname,
-                picture,
                 rtpCapabilities
             } = request.data;
 
             // Store client data into the Peer data object.
             peer.nickname = nickname;
-            peer.picture = picture;
             peer.rtpCapabilities = rtpCapabilities;
 
             // Tell the new Peer about already joined Peers.
@@ -464,8 +462,8 @@ class Room extends EventEmitter {
             this._notification(peer.socket, 'newPeer', peer.peerInfo, true);
 
             logger.debug(
-                'peer joined [peer: "%s", nickname: "%s", picture: "%s"]',
-                peer.id, nickname, picture);
+                'peer joined [peer: "%s", nickname: "%s"]',
+                peer.id, nickname);
 
             break;
         }
