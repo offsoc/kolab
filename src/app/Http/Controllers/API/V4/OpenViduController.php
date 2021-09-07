@@ -72,37 +72,6 @@ class OpenViduController extends Controller
     }
 
     /**
-     * Create a connection for screen sharing.
-     *
-     * @param string $id Room identifier (name)
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function createConnection($id)
-    {
-        $room = Room::where('name', $id)->first();
-
-        // This isn't a room, bye bye
-        if (!$room) {
-            return $this->errorResponse(404, \trans('meet.room-not-found'));
-        }
-
-        $connection = $this->getConnectionFromRequest();
-
-        if (
-            !$connection
-            || $connection->session_id != $room->session_id
-            || ($connection->role & Room::ROLE_PUBLISHER) == 0
-        ) {
-            return $this->errorResponse(403);
-        }
-
-        $response = $room->getSessionToken(Room::ROLE_SCREEN);
-
-        return response()->json(['status' => 'success', 'token' => $response['token']]);
-    }
-
-    /**
      * Listing of rooms that belong to the authenticated user.
      *
      * @return \Illuminate\Http\JsonResponse
@@ -336,64 +305,6 @@ class OpenViduController extends Controller
     }
 
     /**
-     * Update the participant/connection parameters (e.g. role).
-     *
-     * @param string $id   Room identifier (name)
-     * @param string $conn Connection identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function updateConnection($id, $conn)
-    {
-        $connection = Connection::where('id', $conn)->first();
-
-        // There's no such connection, bye bye
-        if (!$connection || $connection->room->name != $id) {
-            return $this->errorResponse(404, \trans('meet.connection-not-found'));
-        }
-
-        foreach (request()->input() as $key => $value) {
-            switch ($key) {
-                case 'role':
-                    // Only the moderator can do it
-                    if (!$this->isModerator($connection->room)) {
-                        return $this->errorResponse(403);
-                    }
-
-                    // The 'owner' role is not assignable
-                    if ($value & Room::ROLE_OWNER && !($connection->role & Room::ROLE_OWNER)) {
-                        return $this->errorResponse(403);
-                    } elseif (!($value & Room::ROLE_OWNER) && ($connection->role & Room::ROLE_OWNER)) {
-                        return $this->errorResponse(403);
-                    }
-
-                    // The room owner has always a 'moderator' role
-                    if (!($value & Room::ROLE_MODERATOR) && $connection->role & Room::ROLE_OWNER) {
-                        $value |= Room::ROLE_MODERATOR;
-                    }
-
-                    // Promotion to publisher? Put the user hand down
-                    if ($value & Room::ROLE_PUBLISHER && !($connection->role & Room::ROLE_PUBLISHER)) {
-                        $connection->metadata = array_diff_key($connection->metadata, ['hand' => 0]);
-                    }
-
-                    // Non-publisher cannot be a language interpreter
-                    if (!($value & Room::ROLE_PUBLISHER)) {
-                        $connection->metadata = array_diff_key($connection->metadata, ['language' => 0]);
-                    }
-
-                    $connection->{$key} = $value;
-                    break;
-            }
-        }
-
-        // The connection observer will send a signal to everyone when needed
-        $connection->save();
-
-        return response()->json(['status' => 'success']);
-    }
-
-    /**
      * Webhook as triggered from OpenVidu server
      *
      * @param \Illuminate\Http\Request $request The API request.
@@ -405,10 +316,10 @@ class OpenViduController extends Controller
         \Log::debug($request->getContent());
 
         switch ((string) $request->input('event')) {
-            case 'sessionDestroyed':
-                // When all participants left the room OpenVidu dispatches sessionDestroyed
+            case 'roomClosed':
+                // When all participants left the room the server will dispatch roomClosed
                 // event. We'll remove the session reference from the database.
-                $sessionId = $request->input('sessionId');
+                $sessionId = $request->input('roomId');
                 $room = Room::where('session_id', $sessionId)->first();
 
                 if ($room) {
@@ -416,18 +327,12 @@ class OpenViduController extends Controller
                     $room->save();
                 }
 
-                // Remove all connections
-                // Note: We could remove connections one-by-one via the 'participantLeft' event
-                // but that could create many INSERTs when the session (with many participants) ends
-                // So, it is better to remove them all in a single INSERT.
-                Connection::where('session_id', $sessionId)->delete();
-
                 break;
 
-            // TODO: We need to update connection state via webhook
-            //       I.e. isModerator() checks here require up-to-date
-            //       participant role information. Another option might be accepting/denying
-            //       join requests via websocket
+            case 'requestAccepted':
+            case 'requestDenied':
+                // TODO
+                break;
         }
 
         return response('Success', 200);

@@ -9,37 +9,37 @@ function Socket(url, options)
 
     const socket = io(url, {
         path: '/meetmedia/signaling/',
-        transports: ["websocket"]
+        transports: [ 'websocket' ]
     })
 
-    socket.on("connect", () => {
-        console.log("WebSocket connect: " + socket.id)
+    socket.on('connect', () => {
+        console.log('WebSocket connect: ' + socket.id)
     })
 
-    socket.on("disconnect", reason => {
-        console.log("WebSocket disconnect: " + reason)
+    socket.on('disconnect', reason => {
+        console.log('WebSocket disconnect: ' + reason)
 
         this.trigger('disconnect', reason)
     })
 
-    socket.on("reconnect_failed", () => {
-        console.log("WebSocket re-connect failed")
+    socket.on('reconnect_failed', () => {
+        console.log('WebSocket re-connect failed')
 
         this.trigger('reconnectFailed')
     })
 
-    socket.on("reconnect", attempt => {
-        console.log("WebSocket re-connect (" + attempt + ")")
+    socket.on('reconnect', attempt => {
+        console.log(`WebSocket re-connect (${attempt})`)
     })
 
-    socket.on("request", async (request, cb) => {
-        console.log("Recv: " + request.method, request.data)
+    socket.on('request', async (request, cb) => {
+        console.log('Recv: ' + request.method, request.data)
 
         this.trigger('request', request, cb)
     })
 
-    socket.on("notification", async notification => {
-        console.log("Recv: " + notification.method, notification.data)
+    socket.on('notification', async notification => {
+        console.log('Recv: ' + notification.method, notification.data)
 
         this.trigger('notification', notification)
     })
@@ -72,7 +72,7 @@ function Socket(url, options)
 
     this.sendRequest = (method, data) => {
         return new Promise((resolve, reject) => {
-            console.log("Send: " + method, data)
+            console.log('Send: ' + method, data)
 
             socket.emit(
                 'request',

@@ -19,7 +19,7 @@ class Room extends EventEmitter {
         const pipedRoutersIds = new Set();
 
         // Calculate router loads by adding up peers per router, and collected piped routers
-        for (const peer of peers) {
+        Object.values(peers).forEach(peer => {
             const routerId = peer.routerId;
 
             if (routerId) {
@@ -33,7 +33,7 @@ class Room extends EventEmitter {
                     routerLoads.set(routerId, 1);
                 }
             }
-        }
+        });
 
         // Calculate worker loads by adding up router loads per worker
         for (const worker of mediasoupWorkers) {
@@ -58,7 +58,7 @@ class Room extends EventEmitter {
      * A worker with a router that we are already piping to is preferred.
      */
     static getLeastLoadedRouter(mediasoupWorkers, peers, mediasoupRouters) {
-        const {workerLoads, pipedRoutersIds} = Room.calculateLoads(mediasoupWorkers, peers.values(), mediasoupRouters);
+        const {workerLoads, pipedRoutersIds} = Room.calculateLoads(mediasoupWorkers, peers, mediasoupRouters);
 
         const sortedWorkerLoads = new Map([ ...workerLoads.entries() ].sort(
             (a, b) => a[1] - b[1]));
@@ -210,7 +210,6 @@ class Room extends EventEmitter {
         console.log(stats);
     }
 
-
     close() {
         logger.debug('close()');
 
@@ -226,10 +225,10 @@ class Room extends EventEmitter {
         this._selfDestructTimeout = null;
 
         // Close the peers.
-        for (const peer of this._peers.values()) {
+        Object.values(this._peers).forEach(peer => {
             if (!peer.closed)
                 peer.close();
-        }
+        });
 
         this._peers = {};
 
@@ -238,9 +237,9 @@ class Room extends EventEmitter {
             router.close();
         }
 
-        this._mediasoupWorkers = null;
-
         this._mediasoupRouters.clear();
+
+        this._mediasoupWorkers = null;
 
         this._audioLevelObserver = null;
 
@@ -329,8 +328,9 @@ class Room extends EventEmitter {
 
             this._handlePeer(peer);
 
-            let iceServers = []
-            if ('turn' in config) {
+            let iceServers;
+
+            if (config.turn) {
                 // Generate time-limited credentials. The name is only relevant for the logs.
                 const {username, password} = this._getTURNCredentials(peer.id, config.turn.staticSecret);
 
@@ -808,6 +808,14 @@ class Room extends EventEmitter {
                 throw new Error('invalid role');
 
             if (!rolePeer.hasRole(role)) {
+                // The 'owner' role is not assignable
+                if (role & Roles.OWNER)
+                    throw new Error('the OWNER role is not assignable');
+
+                // Promotion to publisher? Put the user hand down
+                if (role & Roles.PUBLISHER && !(rolePeer.role & Roles.PUBLISHER))
+                    rolePeer.raisedHand = false;
+
                 // This will propagate the event automatically
                 rolePeer.setRole(rolePeer.role | role);
             }
@@ -834,6 +842,16 @@ class Room extends EventEmitter {
                 throw new Error('invalid role');
 
             if (rolePeer.hasRole(role)) {
+                if (role & Roles.OWNER)
+                    throw new Error('the OWNER role is not removable');
+
+                if (role & Roles.MODERATOR && rolePeer.role & Roles.OWNER)
+                    throw new Error('the MODERATOR role cannot be removed from the OWNER');
+
+                // Non-publisher cannot be a language interpreter
+                if (role & Roles.PUBLISHER)
+                    rolePeer.language = null;
+
                 // This will propagate the event automatically
                 rolePeer.setRole(rolePeer.role ^ role);
             }

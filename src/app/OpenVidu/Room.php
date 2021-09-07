@@ -129,16 +129,11 @@ class Room extends Model
      */
     public function createSession(): ?array
     {
-        $response = $this->client()->request(
-            'POST',
-            "sessions",
-            [
-                'json' => [
-                    'mediaMode' => 'ROUTED',
-                    'recordingMode' => 'MANUAL'
-                ]
-            ]
-        );
+        $params = [
+            'json' => [ /* request params here */ ]
+        ];
+
+        $response = $this->client()->request('POST', "sessions", $params);
 
         if ($response->getStatusCode() !== 200) {
             $this->session_id = null;
@@ -216,7 +211,6 @@ class Room extends Model
 
             $authToken = base64_encode($json['id'] . ':' . \random_bytes(16));
 
-            //This is actually the url to the websocket (includes the connectionId below)
             $connectionToken = $json['token'];
             $connectionId = $json['id'];
 
@@ -233,7 +227,6 @@ class Room extends Model
                 'session' => $this->session_id,
                 'token' => $connectionToken,
                 'authToken' => $authToken,
-                'connectionId' => $connectionId,
                 'role' => $role,
             ];
         }

@@ -2,19 +2,20 @@ const os = require('os');
 
 module.exports =
 {
-    turn: {
-        urls : [
+    turn: process.env.TURN_SERVER === 'none' ? null : {
+        urls: [
             process.env.TURN_SERVER || 'turn:127.0.0.1:3478?transport=tcp'
         ],
         staticSecret: process.env.TURN_STATIC_SECRET || 'uzYguvIl9tpZFMuQOE78DpOi6Jc7VFSD0UAnvgMsg5n4e74MgIf6vQvbc6LWzZjz',
     },
     // redis server options used for session storage
-    redisOptions : {
+    redisOptions: {
         host: process.env.REDIS_IP || '127.0.0.1',
         port: process.env.REDIS_PORT || 6379,
         db: process.env.REDIS_DB || '3',
-        ...(process.env.REDIS_PASSWORD ? {password: process.env.REDIS_PASSWORD} : {})
+        ...(process.env.REDIS_PASSWORD ? { password: process.env.REDIS_PASSWORD } : {})
     },
+    webhookURL: process.env.WEBHOOK_URL,
     // session cookie secret
     cookieSecret : 'T0P-S3cR3t_cook!e',
     cookieName   : 'kolabmeet.sid',

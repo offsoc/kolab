@@ -16,6 +16,7 @@ const Logger = require('./lib/Logger');
 const Room = require('./lib/Room');
 const Peer = require('./lib/Peer');
 const helmet = require('helmet');
+const axios = require('axios');
 // auth
 const redis = require('redis');
 const expressSession = require('express-session');
@@ -69,6 +70,15 @@ const tls =
         ].join(':'),
     honorCipherOrder : true
 };
+
+// HTTP client instance for webhook "pushes"
+let webhook = null;
+if (config.webhookURL) {
+    webhook = axios.create({
+        baseURL: config.webhookURL,
+        timeout: 5000
+    });
+}
 
 const app = express();
 
@@ -166,22 +176,23 @@ async function runHttpsServer() {
         })
     })
 
-    //Check if the room exists
+    // Check if the room exists
     app.get(`${config.pathPrefix}/api/sessions/:session_id`, function (req, res /*, next*/) {
-        console.warn("Checking for room")
+        console.log("Checking for room")
         let room = rooms.get(req.params.session_id);
+
         if (!room) {
-            console.warn("doesn't exist")
+            console.log("doesn't exist")
             res.status(404).send()
         } else {
-            console.warn("exist")
+            console.log("exist")
             res.status(200).send()
         }
     })
 
     // Create room and return id
     app.post(`${config.pathPrefix}/api/sessions`, async function (req, res /*, next*/) {
-        console.warn("Creating new room", req.body.mediaMode, req.body.recordingMode)
+        console.log("Creating new room");
         //FIXME we're truncating because of kolab4 database layout (should be fixed instead)
         const roomId = uuidv4().substring(0, 16)
         await getOrCreateRoom({ roomId });
@@ -222,7 +233,8 @@ async function runHttpsServer() {
     //     ]
     // ];
     app.post(`${config.pathPrefix}/api/sessions/:session_id/connection`, function (req, res /*, next*/) {
-        logger.info("Creating connection in session", req.params.session_id)
+        logger.info('Creating peer connection [roomId:"%s"]', req.params.session_id);
+
         let roomId = req.params.session_id
         let data = req.body;
 
@@ -238,8 +250,6 @@ async function runHttpsServer() {
             statusLog();
         });
 
-        peer.nickname = "Display Name";
-
         if ('role' in data)
             peer.setRole(data.role);
 
@@ -247,10 +257,9 @@ async function runHttpsServer() {
 
         res.json({
             id: peerId,
-            // When the below get's passed to the socket.io client we end up with something like (depending on the socket.io path)
-            // wss://${publicDomain}/meetmedia/signaling/?peerId=peer1&roomId=room1&EIO=3&transport=websocket,
-            token: `${proto}://${config.publicDomain}/?peerId=${peerId}&roomId=${roomId}`
-        })
+            // Note: socket.io client will end up using (hardcoded) /meetmedia/signaling path
+            token: `${proto}://${config.publicDomain}?peerId=${peerId}&roomId=${roomId}`
+        });
     })
 
     if (config.httpOnly === true) {
@@ -368,16 +377,35 @@ async function getOrCreateRoom({ roomId }) {
     if (!room) {
         logger.info('creating a new Room [roomId:"%s"]', roomId);
 
-        room = await Room.create({ mediasoupWorkers, roomId, peers });
+        // Get existing peers in the room
+        const roomPeers = {}
+        peers.forEach(peer => {
+            if (!peer.closed && peer.roomId == roomId)
+                roomPeers[peer.id] = peer;
+        });
+
+        // Create the room
+        room = await Room.create({ mediasoupWorkers, roomId, peers: roomPeers });
 
         rooms.set(roomId, room);
 
         statusLog();
 
         room.on('close', () => {
-            rooms.delete(roomId);
+            logger.info('closing a Room [roomId:"%s"]', roomId);
 
+            rooms.delete(roomId);
             statusLog();
+
+            if (webhook) {
+                webhook.post('', { roomId, event: 'roomClosed' })
+                    .then(function (response) {
+                        logger.info(`Room ${roomId} closed. Webhook succeeded.`);
+                    })
+                    .catch(function (error) {
+                        logger.error(error);
+                    });
+            }
         });
     }
 

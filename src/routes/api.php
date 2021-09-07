@@ -121,7 +121,6 @@ Route::group(
     ],
     function () {
         Route::post('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
-        Route::post('openvidu/rooms/{id}/connections', 'API\V4\OpenViduController@createConnection');
         Route::post('openvidu/rooms/{id}/request/{reqid}/accept', 'API\V4\OpenViduController@acceptJoinRequest');
         Route::post('openvidu/rooms/{id}/request/{reqid}/deny', 'API\V4\OpenViduController@denyJoinRequest');
     }
@@ -145,7 +144,7 @@ Route::group(
     ],
     function () {
         Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
-        Route::post('meet/openvidu', 'API\V4\OpenViduController@webhook');
+        Route::post('meet', 'API\V4\OpenViduController@webhook');
         Route::get('nginx', 'API\NGINXController@authenticate');
     }
 );
