@@ -55,8 +55,15 @@ function Media()
         return webcamDevices
     }
 
-    this.getMediaStream = async (successCallback, errorCallback) => {
-        navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+    this.getMediaStream = async (successCallback, errorCallback, props) => {
+        const constraints = { audio: true, video: true }
+
+        if (props && props.videoSource)
+            constraints.video = { deviceId: props.videoSource }
+        if (props && props.audioSource)
+            constraints.audio = { deviceId: props.audioSource }
+
+        navigator.mediaDevices.getUserMedia(constraints)
             .then(mediaStream => {
                 successCallback(mediaStream)
             })
@@ -143,6 +150,13 @@ function Media()
         setupVolumeElement = props.volumeElement
 
         const callback = async (mediaStream) => {
+            if (props.audioActive === false) {
+                this.removeTracksFromStream(mediaStream, 'Audio')
+            }
+            if (props.videoActive === false) {
+                this.removeTracksFromStream(mediaStream, 'Video')
+            }
+
             let videoStream = mediaStream.getVideoTracks()[0]
             let audioStream = mediaStream.getAudioTracks()[0]
 
@@ -152,7 +166,9 @@ function Media()
             this.setVideoProps(setupVideoElement, { mirror: true, muted: true })
             setupVideoElement.srcObject = mediaStream
 
-            volumeMeterStart()
+            if (audioActive) {
+                volumeMeterStart()
+            }
 
             microphones = await this.getAudioDevices()
             cameras = await this.getWebcams()
@@ -182,7 +198,7 @@ function Media()
             })
         }
 
-        this.getMediaStream(callback, props.onError)
+        this.getMediaStream(callback, props.onError, props)
     }
 
     /**

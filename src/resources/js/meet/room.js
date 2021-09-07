@@ -12,6 +12,7 @@ function Room(container)
     let peers = {}              // Participants in the session (including self)
     let publishersContainer     // Container element for publishers
     let subscribersContainer    // Container element for subscribers
+    let selfId                  // peerId of the current user
 
     let chatCount = 0
     let scrollStop
@@ -45,7 +46,6 @@ function Room(container)
      *
      * @param data Session metadata and event handlers:
      *      token           - A token for the main connection,
-     *      shareToken      - A token for screen-sharing connection,
      *      nickname        - Participant name,
      *      languages       - Supported languages (code-to-label map)
      *      chatElement     - DOM element for the chat widget,
@@ -56,8 +56,8 @@ function Room(container)
      *      onError         - Callback for session connection (join) error
      *      onDestroy       - Callback for session disconnection event,
      *      onJoinRequest   - Callback for join request,
-     *      onUpdate        - Callback for current user/session update,
      *      onMediaSetup    - Called when user clicks the Media setup button
+     *      onUpdate        - Callback for current user/session update,
      *      translate       - Translation function
      */
     function joinRoom(data) {
@@ -88,6 +88,10 @@ function Room(container)
             event.element = participantCreate(event)
 
             peers[event.id] = event
+
+            if (event.isSelf) {
+                selfId = event.id
+            }
 
             updateSession()
         })
@@ -212,6 +216,14 @@ function Room(container)
      * @param props Setup properties (videoElement, volumeElement, onSuccess, onError)
      */
     function setupStart(props) {
+        // set default media state
+        if (client.isJoined()) {
+            props.audioSource = sessionData.audioSource
+            props.videoSource = sessionData.videoSource
+            props.audioActive = sessionData.audioActive
+            props.videoActive = sessionData.videoActive
+        }
+
         client.media.setupStart(props)
 
         // When setting up devices while the session is ongoing we have to
@@ -1054,6 +1066,15 @@ function Room(container)
         if (force) {
             participantUpdateAll()
         }
+
+        // Update peer properties
+        let peer = peers[selfId]
+
+        sessionData.audioActive = peer.audioActive
+        sessionData.videoActive = peer.videoActive
+        sessionData.audioSource = peer.audioSource
+        sessionData.videoSource = peer.videoSource
+        sessionData.screenActive = peer.screenActive
 
         // Inform the vue component, so it can update some UI controls
         sessionData.onUpdate(sessionData)

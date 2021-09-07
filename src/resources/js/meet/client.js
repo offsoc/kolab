@@ -136,7 +136,7 @@ function Client()
     }
 
     this.camStatus = () => {
-        return camProducer && !camProducer.paused && !camProducer.closed
+        return !!(camProducer && !camProducer.paused && !camProducer.closed)
     }
 
     this.micMute = async () => {
@@ -160,7 +160,7 @@ function Client()
     }
 
     this.micStatus = () => {
-        return micProducer && !micProducer.paused && !micProducer.closed
+        return !!(micProducer && !micProducer.paused && !micProducer.closed)
     }
 
     this.kickPeer = (peerId) => {
@@ -466,6 +466,8 @@ function Client()
             id: peerId,
             role,
             nickname: joinProps.nickname,
+            audioActive: false,
+            videoActive: false,
             isSelf: true
         }
 
