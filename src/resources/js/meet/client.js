@@ -171,6 +171,24 @@ function Client()
         socket.sendRequest('chatMessage', { message })
     }
 
+    this.peerMicMute = (peerId) => {
+        Object.values(consumers).forEach(consumer => {
+            if (consumer.peerId == peerId && consumer.kind == 'audio' && !consumer.paused) {
+                consumer.pause()
+                socket.sendRequest('pauseConsumer', { consumerId: consumer.id })
+            }
+        })
+    }
+
+    this.peerMicUnmute = (peerId) => {
+        Object.values(consumers).forEach(consumer => {
+            if (consumer.peerId == peerId && consumer.kind == 'audio' && consumer.paused) {
+                consumer.resume()
+                socket.sendRequest('resumeConsumer', { consumerId: consumer.id })
+            }
+        })
+    }
+
     this.raiseHand = async (status) => {
         if (peers.self.raisedHand != status) {
             peers.self.raisedHand = status

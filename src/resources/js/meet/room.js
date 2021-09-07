@@ -539,16 +539,18 @@ function Room(container)
                     volumeInput.parent().addClass('hidden')
                 }
             }
+            let setVolume = (video, volume) => {
+                video.volume = volume
+                video.muted = volume == 0
+                audioButton[video.muted ? 'addClass' : 'removeClass']('text-danger')
+                client[video.muted ? 'peerMicMute' : 'peerMicUnmute'](params.id)
+            }
 
             // Enable and set up the audio mute button
             audioButton.removeClass('hidden')
                 .on('click', e => {
                     let video = wrapper.find('video')[0]
-
-                    video.muted = !video.muted
-                    video.volume = video.muted ? 0 : 1
-
-                    audioButton[video.muted ? 'addClass' : 'removeClass']('text-danger')
+                    setVolume(video, !video.muted ? 0 : 1)
                     volumeInput.val(video.volume)
                 })
                 // Show the volume slider when mouse is over the audio mute/unmute button
@@ -568,12 +570,7 @@ function Room(container)
                 .on('mouseenter', () => { inVolume = true })
                 .on('mouseleave', () => { inVolume = false })
                 .on('change input', () => {
-                    let video = wrapper.find('video')[0]
-                    let volume = volumeInput.val()
-
-                    video.volume = volume
-                    video.muted = volume == 0
-                    audioButton[video.muted ? 'addClass' : 'removeClass']('text-danger')
+                    setVolume(wrapper.find('video')[0], volumeInput.val())
                 })
         }
 
