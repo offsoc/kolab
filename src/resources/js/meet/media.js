@@ -2,8 +2,8 @@
 
 function Media()
 {
-    let audioActive = false     // True if the audio track is active
-    let videoActive = false     // True if the video track is active
+    let audioActive = null     // True if the audio track is active
+    let videoActive = null     // True if the video track is active
     let audioSource = ''        // Current audio device identifier
     let videoSource = ''        // Current video device identifier
     let cameras = []            // List of user video devices
@@ -55,13 +55,13 @@ function Media()
         return webcamDevices
     }
 
-    this.getMediaStream = async (successCallback, errorCallback, props) => {
+    this.getMediaStream = async (successCallback, errorCallback) => {
         const constraints = { audio: true, video: true }
 
-        if (props && props.videoSource)
-            constraints.video = { deviceId: props.videoSource }
-        if (props && props.audioSource)
-            constraints.audio = { deviceId: props.audioSource }
+        if (videoSource)
+            constraints.video = { deviceId: videoSource }
+        if (audioSource)
+            constraints.audio = { deviceId: audioSource }
 
         navigator.mediaDevices.getUserMedia(constraints)
             .then(mediaStream => {
@@ -96,6 +96,9 @@ function Media()
         return videoElement
     }
 
+    /**
+     * Make a picture from a video element
+     */
     this.makePicture = (videoElement) => {
         // Skip if video is not "playing"
         if (!videoElement.videoWidth) {
@@ -125,6 +128,9 @@ function Media()
         return canvas.toDataURL()
     }
 
+    /**
+     * Set video element properties
+     */
     this.setVideoProps = (videoElement, props) => {
         videoElement.autoplay = true
         videoElement.controls = false
@@ -150,10 +156,10 @@ function Media()
         setupVolumeElement = props.volumeElement
 
         const callback = async (mediaStream) => {
-            if (props.audioActive === false) {
+            if (audioActive === false) {
                 this.removeTracksFromStream(mediaStream, 'Audio')
             }
-            if (props.videoActive === false) {
+            if (videoActive === false) {
                 this.removeTracksFromStream(mediaStream, 'Video')
             }
 
@@ -198,7 +204,7 @@ function Media()
             })
         }
 
-        this.getMediaStream(callback, props.onError, props)
+        this.getMediaStream(callback, props.onError)
     }
 
     /**
@@ -214,6 +220,9 @@ function Media()
         }
     }
 
+    /**
+     * Return current setup information
+     */
     this.setupData = () => {
         return {
             microphones,

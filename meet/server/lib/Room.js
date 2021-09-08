@@ -592,7 +592,7 @@ class Room extends EventEmitter {
 
             break;
         }
-        /*
+/*
             case 'restartIce':
             {
                 const { transportId } = request.data;
@@ -634,8 +634,7 @@ class Room extends EventEmitter {
             // the 'loudest' event of the audioLevelObserver.
             appData = { ...appData, peerId: peer.id };
 
-            const producer =
-                    await transport.produce({ kind, rtpParameters, appData });
+            const producer = await transport.produce({ kind, rtpParameters, appData });
 
             const pipeRouters = this._getRoutersToPipeTo(peer.routerId);
 
@@ -1031,6 +1030,10 @@ class Room extends EventEmitter {
 
             this._notification(consumerPeer.socket, 'consumerClosed', { consumerId: consumer.id });
         });
+
+        // TODO: We don't have to send websocket signals on producerpause/producerresume
+        //       The same can be achieved on the client-side using consumer.observer.on('pause')
+        //       and consumer.observer.on('resume')
 
         consumer.on('producerpause', () => {
             this._notification(consumerPeer.socket, 'consumerPaused', { consumerId: consumer.id });

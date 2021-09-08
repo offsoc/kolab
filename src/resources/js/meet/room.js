@@ -12,7 +12,7 @@ function Room(container)
     let peers = {}              // Participants in the session (including self)
     let publishersContainer     // Container element for publishers
     let subscribersContainer    // Container element for subscribers
-    let selfId                  // peerId of the current user
+    let selfId                  // peer Id of the current user
 
     let chatCount = 0
     let scrollStop
@@ -65,13 +65,13 @@ function Room(container)
         publishersContainer = $('<div id="meet-publishers">').appendTo(container).get(0)
         subscribersContainer = $('<div id="meet-subscribers">').appendTo(container).get(0)
 
-        resize();
+        resize()
 
         $t = data.translate
 
         // Make sure all supported callbacks exist, so we don't have to check
         // their existence everywhere anymore
-        let events = ['Success', 'Error', 'Destroy', 'JoinRequest', 'SessionDataUpdate', 'MediaSetup']
+        let events = ['Success', 'Error', 'Destroy', 'JoinRequest', 'Update', 'MediaSetup']
 
         events.map(event => 'on' + event).forEach(event => {
             if (!data[event]) {
@@ -81,10 +81,8 @@ function Room(container)
 
         sessionData = data
 
-        // Participant added (including self)
+        // Handle new participants (including self)
         client.on('addPeer', (event) => {
-            console.log('addPeer', event)
-
             event.element = participantCreate(event)
 
             peers[event.id] = event
@@ -92,14 +90,10 @@ function Room(container)
             if (event.isSelf) {
                 selfId = event.id
             }
-
-            updateSession()
         })
 
-        // Participant removed
+        // Handle removed participants
         client.on('removePeer', (peerId) => {
-            console.log('removePeer', peerId)
-
             let peer = peers[peerId]
 
             if (peer) {
@@ -109,15 +103,11 @@ function Room(container)
                 delete peers[peerId]
             }
 
-            updateSession()
-
             resize()
         })
 
         // Participant properties changed e.g. audio/video muted/unmuted
         client.on('updatePeer', (event, changed) => {
-            console.log('updatePeer', event)
-
             let peer = peers[event.id]
 
             if (!peer) {
@@ -156,14 +146,18 @@ function Room(container)
 
             peers[event.id] = event
 
-            updateSession(changed && changed.includes('moderatorRole'))
+            if (changed && changed.includes('moderatorRole')) {
+                updateParticipantAll()
+            }
         })
 
+        // Handle successful connection to the room
         client.on('joinSuccess', () => {
             data.onSuccess()
             client.media.setupStop()
         })
 
+        // Handle join requests from other users (knocking to the room)
         client.on('joinRequest', event => {
             data.onJoinRequest(event)
         })
@@ -181,6 +175,12 @@ function Room(container)
 
             // refresh the matrix
             resize()
+        })
+
+        // Handle session update events (e.g. channel, channels list changes)
+        client.on('updateSession', event => {
+            // Inform the vue component, so it can update some UI controls
+            sessionData.onUpdate(event)
         })
 
         const { audioSource, videoSource } = client.media.setupData()
@@ -216,14 +216,6 @@ function Room(container)
      * @param props Setup properties (videoElement, volumeElement, onSuccess, onError)
      */
     function setupStart(props) {
-        // set default media state
-        if (client.isJoined()) {
-            props.audioSource = sessionData.audioSource
-            props.videoSource = sessionData.videoSource
-            props.audioActive = sessionData.audioActive
-            props.videoActive = sessionData.videoActive
-        }
-
         client.media.setupStart(props)
 
         // When setting up devices while the session is ongoing we have to
@@ -379,8 +371,7 @@ function Room(container)
      * @param channel Two-letter language code
      */
     function switchChannel(channel) {
-        sessionData.channel = channel
-        updateSession(true)
+        client.setLanguageChannel(channel)
     }
 
     /**
@@ -443,10 +434,10 @@ function Room(container)
     function peerHandDown(peer) {
         let list = $(sessionData.queueElement)
 
-        list.find('#qa' + peer.id).remove();
+        list.find('#qa' + peer.id).remove()
 
         if (!list.find('.meet-nickname').length) {
-            list.hide();
+            list.hide()
         }
     }
 
@@ -494,7 +485,7 @@ function Room(container)
             element = subscriberCreate(params, content)
         }
 
-        setTimeout(resize, 50);
+        setTimeout(resize, 50)
 
         return element
     }
@@ -562,6 +553,7 @@ function Room(container)
             audioButton.removeClass('hidden')
                 .on('click', e => {
                     let video = wrapper.find('video')[0]
+
                     setVolume(video, !video.muted ? 0 : 1)
                     volumeInput.val(video.volume)
                 })
@@ -657,34 +649,11 @@ function Room(container)
             }
         }
 
-        let muted = false
-        let video = element.find('video')[0]
-
-        // When a channel is selected - mute everyone except the interpreter of the language.
-        // When a channel is not selected - mute language interpreters only
-        if (sessionData.channel) {
-            muted = !(roleInterpreter && params.language == sessionData.channel)
-        } else {
-            muted = roleInterpreter
-        }
-
-        if (muted && !isSelf) {
-            element.find('.status-audio').removeClass('hidden')
-            element.find('.link-audio').addClass('hidden')
-        } else {
-            element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
-
-            if (!isSelf) {
-                element.find('.link-audio').removeClass('hidden')
-            }
-
-            muted = !params.audioActive || isSelf
-        }
-
+        element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
         element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
 
-        if (video) {
-            video.muted = muted
+        if (!isSelf) {
+            element.find('.link-audio').removeClass('hidden')
         }
 
         if ('nickname' in params) {
@@ -699,7 +668,7 @@ function Room(container)
             element.addClass('moderated')
         }
 
-        const withPerm = isModerator && !roleScreen && !(roleOwner && !isSelf);
+        const withPerm = isModerator && !roleScreen && !(roleOwner && !isSelf)
         const withMenu = isSelf || (isModerator && !roleOwner)
 
         // TODO: This probably could be better done with css
@@ -1009,7 +978,7 @@ function Room(container)
             }
         }
 
-        // console.log('factor=' + factor, 'num=' + numOfVideos, 'cols = '+cols, 'rows=' + rows);
+        // console.log('factor=' + factor, 'num=' + numOfVideos, 'cols = '+cols, 'rows=' + rows)
 
         // Update all tiles (except the main shared screen) in the matrix
         publishers.css({
@@ -1044,55 +1013,6 @@ function Room(container)
         return $(`<svg><path fill="currentColor" d="${icon[4]}"></path></svg>`)
             .attr(attrs)
             .get(0).outerHTML
-    }
-
-    /**
-     * Update the session state
-     *
-     * @param force Force UI refresh
-     */
-    function updateSession(force) {
-        // Update channels list
-        sessionData.channels = getChannels(peers)
-
-        // The channel user was using has been removed (or the participant stopped being an interpreter)
-        if (sessionData.channel && !sessionData.channels.includes(sessionData.channel)) {
-            sessionData.channel = null
-            force = true
-        }
-
-        // Mute/unmute all peers depending on the selected channel
-        // Also updates participant menu according to the current user role
-        if (force) {
-            participantUpdateAll()
-        }
-
-        // Update peer properties
-        let peer = peers[selfId]
-
-        sessionData.audioActive = peer.audioActive
-        sessionData.videoActive = peer.videoActive
-        sessionData.audioSource = peer.audioSource
-        sessionData.videoSource = peer.videoSource
-        sessionData.screenActive = peer.screenActive
-
-        // Inform the vue component, so it can update some UI controls
-        sessionData.onUpdate(sessionData)
-    }
-
-    /**
-     * Get all existing language interpretation channels
-     */
-    function getChannels(peers) {
-        let channels = []
-
-        Object.values(peers).forEach(peer => {
-            if (peer.language && !channels.includes(peer.language)) {
-                channels.push(peer.language)
-            }
-        })
-
-        return channels
     }
 }
 

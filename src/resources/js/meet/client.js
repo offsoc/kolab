@@ -20,6 +20,8 @@ function Client()
     let recvTransport
     let iceServers = []
     let nickname = ''
+    let channel = null
+    let channels = []
     let peers = {}
     let joinProps = {}
     let videoSource
@@ -95,8 +97,7 @@ function Client()
         }
 
         // Remove peers' video elements
-        Object.keys(peers).forEach(id => {
-            let peer = peers[id]
+        Object.values(peers).forEach(peer => {
             if (peer.videoElement) {
                 $(peer.videoElement).remove()
             }
@@ -109,12 +110,16 @@ function Client()
         screenProducer = null
         consumers = {}
         peers = {}
+        channels = []
     }
 
     this.isJoined = () => {
         return 'self' in peers
     }
 
+    /**
+     * Disable the current user camera
+     */
     this.camMute = async () => {
         if (camProducer) {
             camProducer.pause()
@@ -125,6 +130,9 @@ function Client()
         return this.camStatus()
     }
 
+    /**
+     * Enable the current user camera
+     */
     this.camUnmute = async () => {
         if (camProducer) {
             camProducer.resume()
@@ -135,10 +143,16 @@ function Client()
         return this.camStatus()
     }
 
+    /**
+     * Get the current user camera status
+     */
     this.camStatus = () => {
         return !!(camProducer && !camProducer.paused && !camProducer.closed)
     }
 
+    /**
+     * Mute the current user microphone
+     */
     this.micMute = async () => {
         if (micProducer) {
             micProducer.pause()
@@ -149,6 +163,9 @@ function Client()
         return this.micStatus()
     }
 
+    /**
+     * Unmute the current user microphone
+     */
     this.micUnmute = async () => {
         if (micProducer) {
             micProducer.resume()
@@ -159,36 +176,60 @@ function Client()
         return this.micStatus()
     }
 
+    /**
+     * Get the current user microphone status
+     */
     this.micStatus = () => {
         return !!(micProducer && !micProducer.paused && !micProducer.closed)
     }
 
+    /**
+     * Kick a user out of the room
+     */
     this.kickPeer = (peerId) => {
         socket.sendRequest('moderator:kickPeer', { peerId })
     }
 
+    /**
+     * Send a chat message to the server
+     */
     this.chatMessage = (message) => {
         socket.sendRequest('chatMessage', { message })
     }
 
+    /**
+     * Mute microphone of another user
+     */
     this.peerMicMute = (peerId) => {
         Object.values(consumers).forEach(consumer => {
-            if (consumer.peerId == peerId && consumer.kind == 'audio' && !consumer.paused) {
-                consumer.pause()
-                socket.sendRequest('pauseConsumer', { consumerId: consumer.id })
+            if (consumer.peerId == peerId && consumer.kind == 'audio') {
+                consumer.consumerPaused = true
+                if (!consumer.paused) {
+                    consumer.pause()
+                    socket.sendRequest('pauseConsumer', { consumerId: consumer.id })
+                }
             }
         })
     }
 
+    /**
+     * Unmute microphone of another user
+     */
     this.peerMicUnmute = (peerId) => {
         Object.values(consumers).forEach(consumer => {
-            if (consumer.peerId == peerId && consumer.kind == 'audio' && consumer.paused) {
-                consumer.resume()
-                socket.sendRequest('resumeConsumer', { consumerId: consumer.id })
+            if (consumer.peerId == peerId && consumer.kind == 'audio') {
+                consumer.consumerPaused = false
+                if (consumer.paused && !consumer.producerPaused && !consumer.channelPaused) {
+                    consumer.resume()
+                    socket.sendRequest('resumeConsumer', { consumerId: consumer.id })
+                }
             }
         })
     }
 
+    /**
+     * Set 'raisedHand' state of the current user
+     */
     this.raiseHand = async (status) => {
         if (peers.self.raisedHand != status) {
             peers.self.raisedHand = status
@@ -199,6 +240,9 @@ function Client()
         return status
     }
 
+    /**
+     * Set nickname of the current user
+     */
     this.setNickname = (nickname) => {
         if (peers.self.nickname != nickname) {
             peers.self.nickname = nickname
@@ -207,14 +251,31 @@ function Client()
         }
     }
 
+    /**
+     * Set language channel for the current user
+     */
+    this.setLanguageChannel = (language) => {
+        channel = language
+        updateChannels(true)
+    }
+
+    /**
+     * Set language for the current user (make him an interpreter)
+     */
     this.setLanguage = (peerId, language) => {
         socket.sendRequest('moderator:changeLanguage', { peerId, language })
     }
 
+    /**
+     * Add a role to a user
+     */
     this.addRole = (peerId, role) => {
         socket.sendRequest('moderator:addRole', { peerId, role })
     }
 
+    /**
+     * Remove a role from a user
+     */
     this.removeRole = (peerId, role) => {
         socket.sendRequest('moderator:removeRole', { peerId, role })
     }
@@ -232,11 +293,16 @@ function Client()
     const trigger = (...args) => {
         const eventName = args.shift()
 
+        console.log(eventName, args)
+
         if (eventName in eventHandlers) {
             eventHandlers[eventName].apply(null, args)
         }
     }
 
+    /**
+     * Initialize websocket connection, register event handlers
+     */
     const initSocket = (token) => {
         // Connect to websocket
         socket = new Socket(token)
@@ -283,6 +349,11 @@ function Client()
                     // resume this Consumer (which was paused for now).
                     cb(null)
 
+                    if (producerPaused) {
+                        consumer.producerPaused = true
+                        consumer.pause()
+                    }
+
                     let peer = peers[peerId]
 
                     if (!peer) {
@@ -292,6 +363,7 @@ function Client()
                     addPeerTrack(peer, consumer.track)
 
                     trigger('updatePeer', peer)
+                    updateChannels()
 
                     break
 
@@ -310,12 +382,14 @@ function Client()
                 case 'newPeer':
                     peers[notification.data.id] = notification.data
                     trigger('addPeer', notification.data)
+                    updateChannels()
                     return
 
                 case 'peerClosed':
                     const { peerId } = notification.data
                     delete peers[peerId]
                     trigger('removePeer', peerId)
+                    updateChannels()
                     return
 
                 case 'consumerClosed': {
@@ -340,7 +414,30 @@ function Client()
                     return
                 }
 
-                case 'consumerPaused':
+                case 'consumerPaused': {
+                    const { consumerId } = notification.data
+                    const consumer = consumers[consumerId]
+
+                    if (!consumer) {
+                        return
+                    }
+
+                    consumer.producerPaused = true
+
+                    if (!consumer.paused) {
+                        consumer.pause()
+                        socket.sendRequest('pauseConsumer', { consumerId: consumer.id })
+                    }
+
+                    let peer = peers[consumer.peerId]
+
+                    if (peer) {
+                        trigger('updatePeer', updatePeerState(peer))
+                    }
+
+                    return
+                }
+
                 case 'consumerResumed': {
                     const { consumerId } = notification.data
                     const consumer = consumers[consumerId]
@@ -349,7 +446,12 @@ function Client()
                         return
                     }
 
-                    consumer[notification.method == 'consumerPaused' ? 'pause' : 'resume']()
+                    consumer.producerPaused = false
+
+                    if (consumer.paused && !consumer.consumerPaused && !consumer.channelPaused) {
+                        consumer.resume()
+                        socket.sendRequest('resumeConsumer', { consumerId: consumer.id })
+                    }
 
                     let peer = peers[consumer.peerId]
 
@@ -362,6 +464,7 @@ function Client()
 
                 case 'changeLanguage':
                     updatePeerProperty(notification.data, 'language')
+                    updateChannels()
                     return
 
                 case 'changeNickname':
@@ -443,6 +546,9 @@ function Client()
         return socket
     }
 
+    /**
+     * Join the session (room)
+     */
     const joinRoom = async () => {
         const routerRtpCapabilities = await socket.getRtpCapabilities()
 
@@ -504,8 +610,13 @@ function Client()
 
             trigger('addPeer', peer)
         })
+
+        updateChannels()
     }
 
+    /**
+     * Set the camera device for the current user
+     */
     this.setCamera = async (deviceId, noUpdate) => {
         // Actually selected device, do nothing
         if (deviceId == videoSource) {
@@ -568,6 +679,9 @@ function Client()
         }
     }
 
+    /**
+     * Set the microphone device for the current user
+     */
     this.setMic = async (deviceId, noUpdate) => {
         // Actually selected device, do nothing
         if (deviceId == audioSource) {
@@ -651,6 +765,9 @@ function Client()
         }
     }
 
+    /**
+     * Set the media stream tracks for a video element of a peer
+     */
     const setPeerTracks = (peer, tracks) => {
         if (!peer.videoElement) {
             peer.videoElement = media.createVideoElement(tracks, { mirror: peer.isSelf })
@@ -663,6 +780,9 @@ function Client()
         updatePeerState(peer)
     }
 
+    /**
+     * Add a media stream track to a video element of a peer
+     */
     const addPeerTrack = (peer, track) => {
         if (!peer.videoElement) {
             setPeerTracks(peer, [ track ])
@@ -682,6 +802,9 @@ function Client()
         updatePeerState(peer)
     }
 
+    /**
+     * Update peer state
+     */
     const updatePeerState = (peer) => {
         if (peer.isSelf) {
             peer.videoActive = this.camStatus()
@@ -694,7 +817,7 @@ function Client()
                 const consumer = consumers[cid]
 
                 if (consumer.peerId == peer.id) {
-                    peer[consumer.kind + 'Active'] = !consumer.paused && !consumer.closed && !consumer.producerPaused
+                    peer[consumer.kind + 'Active'] = !consumer.closed && !consumer.producerPaused && !consumer.channelPaused
                 }
             })
         }
@@ -702,6 +825,9 @@ function Client()
         return peer
     }
 
+    /**
+     * Configure transport for producer (publisher) streams
+     */
     const setSendTransport = async () => {
         if (sendTransport && !sendTransport.closed) {
             return
@@ -750,6 +876,9 @@ function Client()
         })
     }
 
+    /**
+     * Configure transport for consumer streams
+     */
     const setRecvTransport = async () => {
         const transportInfo = await socket.sendRequest('createWebRtcTransport', {
                 forceTcp: false,
@@ -777,6 +906,9 @@ function Client()
         })
     }
 
+    /**
+     * A helper for a peer property update (received via websocket)
+     */
     const updatePeerProperty = (data, prop) => {
         const peerId = data.peerId
         const peer = peers.self.id === peerId ? peers.self : peers[peerId]
@@ -788,6 +920,82 @@ function Client()
         peer[prop] = data[prop]
 
         trigger('updatePeer', peer, [ prop ])
+    }
+
+    /**
+     * Update list of existing language interpretation channels and update
+     * audio state of all participants according to the selected channel.
+     */
+    const updateChannels = (update) => {
+        let list = []
+
+        Object.values(peers).forEach(peer => {
+            if (peer.language && !list.includes(peer.language)) {
+                list.push(peer.language)
+            }
+        })
+
+        update = update || channels.join() != list.join()
+        channels = list
+
+        // The channel user was using has been removed (or the participant stopped being an interpreter)
+        if (channel && !channels.includes(channel)) {
+            channel = null
+            update = true
+        }
+
+        // Mute/unmute all peers depending on the selected channel
+        Object.values(consumers).forEach(consumer => {
+            if (consumer.kind == 'audio' && !consumer.closed) {
+                let peer = peers[consumer.peerId]
+
+                // It can happen because consumers are being removed after the peer
+                if (!peer) {
+                    return
+                }
+
+                // When a channel is selected we mute everyone except the interpreter of the language.
+                // When a channel is not selected we mute language interpreters only
+                consumer.channelPaused = channel && peer.language != channel
+
+                if (consumer.channelPaused && !consumer.paused) {
+                    consumer.pause()
+                    socket.sendRequest('pauseConsumer', { consumerId: consumer.id })
+                } else if (!consumer.channelPaused && consumer.paused
+                    && !consumer.consumerPaused && !consumer.producerPaused
+                ) {
+                    consumer.resume()
+                    socket.sendRequest('resumeConsumer', { consumerId: consumer.id })
+                }
+
+                const state = !consumer.producerPaused && !consumer.channelPaused
+
+                if (peer.audioActive != state) {
+                    peer.audioActive = state
+                    trigger('updatePeer', peer)
+                }
+            }
+        })
+
+        if (update) {
+            trigger('updateSession', sessionData())
+        }
+    }
+
+    /**
+     * Returns all relevant information about the current session/user state
+     */
+    const sessionData = () => {
+        return {
+            channel,
+            channels,
+            audioActive: peers.self.audioActive,
+            videoActive: peers.self.videoActive,
+            audioSource: peers.self.audioSource,
+            videoSource: peers.self.videoSource,
+            screenActive: peers.self.screenActive,
+            raisedHand: peers.self.raisedHand
+        }
     }
 }
 

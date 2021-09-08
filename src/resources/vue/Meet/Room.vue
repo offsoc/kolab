@@ -605,7 +605,6 @@
                         this.setup = setup
                         this.microphone = setup.audioSource
                         this.camera = setup.videoSource
-
                         this.audioActive = setup.audioActive
                         this.videoActive = setup.videoActive
                     },
@@ -671,7 +670,7 @@
                 this.screenActive = await this.meet.switchScreen()
             },
             updateSession(data) {
-                this.session = data
+                this.session = Object.assign({}, this.session, data)
                 this.channels = data.channels || []
 
                 const isPublisher = this.isPublisher()

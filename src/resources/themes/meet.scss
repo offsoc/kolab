@@ -399,6 +399,7 @@
 
         &.self {
             background: lighten($main-color, 30%);
+            border-color: transparent;
         }
 
         &:last-child {
