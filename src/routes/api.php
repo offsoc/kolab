@@ -54,8 +54,6 @@ Route::group(
     }
 );
 
-
-
 Route::group(
     [
         'domain' => \config('app.website_domain'),
@@ -121,8 +119,6 @@ Route::group(
     ],
     function () {
         Route::post('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
-        Route::post('openvidu/rooms/{id}/request/{reqid}/accept', 'API\V4\OpenViduController@acceptJoinRequest');
-        Route::post('openvidu/rooms/{id}/request/{reqid}/deny', 'API\V4\OpenViduController@denyJoinRequest');
     }
 );
 

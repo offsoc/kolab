@@ -113,8 +113,25 @@ function Client()
         channels = []
     }
 
+    /**
+     * Returns True if user already joined the room session
+     */
     this.isJoined = () => {
         return 'self' in peers
+    }
+
+    /**
+     * Accept the join request
+     */
+    this.joinRequestAccept = (requestId) => {
+        socket.sendRequest('moderator:joinRequestAccept', { requestId })
+    }
+
+    /**
+     * Deny the join request
+     */
+    this.joinRequestDeny = (requestId) => {
+        socket.sendRequest('moderator:joinRequestDeny', { requestId })
     }
 
     /**

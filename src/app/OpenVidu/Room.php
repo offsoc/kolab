@@ -75,54 +75,6 @@ class Room extends Model
     }
 
     /**
-     * Destroy a OpenVidu connection
-     *
-     * @param string $conn Connection identifier
-     *
-     * @return bool True on success, False otherwise
-     * @throws \Exception if session does not exist
-     */
-    public function closeOVConnection($conn): bool
-    {
-        if (!$this->session_id) {
-            throw new \Exception("The room session does not exist");
-        }
-
-        $url = 'sessions/' . $this->session_id . '/connection/' . urlencode($conn);
-
-        $response = $this->client()->request('DELETE', $url);
-
-        return $response->getStatusCode() == 204;
-    }
-
-    /**
-     * Fetch a OpenVidu connection information.
-     *
-     * @param string $conn Connection identifier
-     *
-     * @return ?array Connection data on success, Null otherwise
-     * @throws \Exception if session does not exist
-     */
-    public function getOVConnection($conn): ?array
-    {
-        // Note: getOVConnection() not getConnection() because Eloquent\Model::getConnection() exists
-        // TODO: Maybe use some other name? getParticipant?
-        if (!$this->session_id) {
-            throw new \Exception("The room session does not exist");
-        }
-
-        $url = 'sessions/' . $this->session_id . '/connection/' . urlencode($conn);
-
-        $response = $this->client()->request('GET', $url);
-
-        if ($response->getStatusCode() == 200) {
-            return json_decode($response->getBody(), true);
-        }
-
-        return null;
-    }
-
-    /**
      * Create a OpenVidu session
      *
      * @return array|null Session data on success, NULL otherwise
@@ -152,38 +104,6 @@ class Room extends Model
     }
 
     /**
-     * Returns metadata for every connection in a session.
-     *
-     * @return array Connections metadata, indexed by connection identifier
-     * @throws \Exception if session does not exist
-     */
-    public function getSessionConnections(): array
-    {
-        if (!$this->session_id) {
-            throw new \Exception("The room session does not exist");
-        }
-
-        return Connection::where('session_id', $this->session_id)
-            // Ignore screen sharing connection for now
-            ->whereRaw("(role & " . self::ROLE_SCREEN . ") = 0")
-            ->get()
-            ->keyBy('id')
-            ->map(function ($item) {
-                // Warning: Make sure to not return all metadata here as it might contain sensitive data.
-                return [
-                    'role' => $item->role,
-                    'hand' => $item->metadata['hand'] ?? 0,
-                    'language' => $item->metadata['language'] ?? null,
-                ];
-            })
-            // Sort by order in the queue, so UI can re-build the existing queue in order
-            ->sort(function ($a, $b) {
-                return $a['hand'] <=> $b['hand'];
-            })
-            ->all();
-    }
-
-    /**
      * Create a OpenVidu session (connection) token
      *
      * @param int $role User role (see self::ROLE_* constants)
@@ -209,23 +129,13 @@ class Room extends Model
         if ($response->getStatusCode() == 200) {
             $json = json_decode($response->getBody(), true);
 
+            // TODO: make use of the authentication token
+
             $authToken = base64_encode($json['id'] . ':' . \random_bytes(16));
-
-            $connectionToken = $json['token'];
-            $connectionId = $json['id'];
-
-            // Create the connection reference in our database
-            $conn = new Connection();
-            $conn->id = $connectionId;
-            $conn->session_id = $this->session_id;
-            $conn->room_id = $this->id;
-            $conn->role = $role;
-            $conn->metadata = ['token' => $connectionToken, 'authToken' => $authToken];
-            $conn->save();
 
             return [
                 'session' => $this->session_id,
-                'token' => $connectionToken,
+                'token' => $json['token'],
                 'authToken' => $authToken,
                 'role' => $role,
             ];

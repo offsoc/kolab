@@ -446,51 +446,6 @@
             isRoomReady() {
                 return ['ready', 322, 324, 325, 326, 327].includes(this.roomState)
             },
-            // An event received by the room owner when a participant is asking for a permission to join the room
-            joinRequest(data) {
-                // The toast for this user request already exists, ignore
-                // It's not really needed as we do this on server-side already
-                if ($('#i' + data.requestId).length) {
-                    return
-                }
-
-                // FIXME: Should the message close button act as the Deny button? Do we need the Deny button?
-
-                let body = $(
-                    `<div>`
-                    + `<div class="picture"><img src="${data.picture}"></div>`
-                    + `<div class="content">`
-                        + `<p class="mb-2"></p>`
-                        + `<div class="text-end">`
-                            + `<button type="button" class="btn btn-sm btn-success accept">${this.$t('btn.accept')}</button>`
-                            + `<button type="button" class="btn btn-sm btn-danger deny ms-2">${this.$t('btn.deny')}</button>`
-                )
-
-                this.$toast.message({
-                    className: 'join-request',
-                    icon: 'user',
-                    timeout: 0,
-                    title: this.$t('meet.join-request'),
-                    // titleClassName: '',
-                    body: body.html(),
-                    onShow: element => {
-                        const id = data.requestId
-
-                        $(element).find('p').text(this.$t('meet.join-requested', { user: data.nickname || '' }))
-
-                        // add id attribute, so we can identify it
-                        $(element).attr('id', 'i' + id)
-                            // add action to the buttons
-                            .find('button.accept,button.deny').on('click', e => {
-                                const action = $(e.target).is('.accept') ? 'accept' : 'deny'
-                                axios.post('/api/v4/openvidu/rooms/' + this.room + '/request/' + id + '/' + action)
-                                    .then(response => {
-                                        $('#i' + id).remove()
-                                    })
-                            })
-                    }
-                })
-            },
             // Entering the room
             joinSession() {
                 // The form can be submitted not only via the submit button,
@@ -519,6 +474,7 @@
                 this.session.queueElement = $('#meet-queue')[0]
                 this.session.counterElement = $('#meet-counter span')[0]
                 this.session.translate = (label, args) => this.$t(label, args)
+                this.session.toast = this.$toast
                 this.session.onSuccess = () => {
                     $('#app').addClass('meet')
                     $('#meet-setup').addClass('hidden')
@@ -534,7 +490,6 @@
                     }
                 }
                 this.session.onUpdate = data => { this.updateSession(data) }
-                this.session.onJoinRequest = data => { this.joinRequest(data) }
                 this.session.onMediaSetup = () => { this.setupMedia() }
 
                 this.meet.joinRoom(this.session)

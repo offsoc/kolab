@@ -385,7 +385,7 @@ async function getOrCreateRoom({ roomId }) {
         });
 
         // Create the room
-        room = await Room.create({ mediasoupWorkers, roomId, peers: roomPeers });
+        room = await Room.create({ mediasoupWorkers, roomId, peers: roomPeers, webhook });
 
         rooms.set(roomId, room);
 

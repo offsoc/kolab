@@ -3,7 +3,6 @@
 namespace Tests\Feature\Controller;
 
 use App\Http\Controllers\API\V4\OpenViduController;
-use App\OpenVidu\Connection;
 use App\OpenVidu\Room;
 use Tests\TestCase;
 
@@ -273,66 +272,11 @@ class OpenViduTest extends TestCase
         $this->assertSame('Failed to join the session. Room locked.', $json['message']);
         $this->assertTrue($json['config']['locked']);
 
-        // TODO: How do we assert that a signal has been sent to the owner?
+        $room->refresh();
 
-        // Test denying a request
+        // $request = $room->requestGet($reqId);
 
-        // Unknown room
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/unknown/request/unknown/deny");
-        $response->assertStatus(404);
-
-        // Unknown request Id
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/request/unknown/deny");
-        $response->assertStatus(500);
-        $json = $response->json();
-
-        $this->assertCount(2, $json);
-        $this->assertSame('error', $json['status']);
-        $this->assertSame('Failed to deny the join request.', $json['message']);
-
-        // Non-owner access forbidden
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}/request/{$reqId}/deny");
-        $response->assertStatus(403);
-
-        // Valid request
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/request/{$reqId}/deny");
-        $response->assertStatus(200);
-        $json = $response->json();
-
-        $this->assertSame('success', $json['status']);
-
-        // Non-owner, locked room, join request denied
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
-        $response->assertStatus(422);
-
-        $json = $response->json();
-        $this->assertSame(327, $json['code']);
-
-        // Test accepting a request
-
-        // Unknown room
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/unknown/request/unknown/accept");
-        $response->assertStatus(404);
-
-        // Unknown request Id
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/request/unknown/accept");
-        $response->assertStatus(500);
-        $json = $response->json();
-
-        $this->assertCount(2, $json);
-        $this->assertSame('error', $json['status']);
-        $this->assertSame('Failed to accept the join request.', $json['message']);
-
-        // Non-owner access forbidden
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}/request/{$reqId}/accept");
-        $response->assertStatus(403);
-
-        // Valid request
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/request/{$reqId}/accept");
-        $response->assertStatus(200);
-        $json = $response->json();
-
-        $this->assertSame('success', $json['status']);
+        $room->requestAccept($reqId);
 
         // Non-owner, locked room, join request accepted
         $post['init'] = 1;
@@ -346,6 +290,7 @@ class OpenViduTest extends TestCase
 
         // TODO: Test a scenario where both password and lock are enabled
         // TODO: Test accepting/denying as a non-owner moderator
+        // TODO: Test somehow websocket communication
     }
 
     /**
@@ -358,7 +303,7 @@ class OpenViduTest extends TestCase
     {
         $this->assignMeetEntitlement('john@kolab.org');
 
-        // There's no asy way to logout the user in the same test after
+        // There's no easy way to logout the user in the same test after
         // using actingAs(). That's why this is moved to a separate test
         $room = Room::where('name', 'john')->first();
 
@@ -450,5 +395,15 @@ class OpenViduTest extends TestCase
 
         $room->refresh();
         $this->assertSame(null, $room->getSetting('password'));
+    }
+
+    /**
+     * Test the webhook
+     *
+     * @group openvidu
+     */
+    public function testWebhook(): void
+    {
+        $this->markTestIncomplete();
     }
 }

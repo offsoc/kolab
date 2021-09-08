@@ -126,7 +126,7 @@ class Room extends EventEmitter {
      *   mediasoup Router must be created.
      * @param {String} roomId - Id of the Room instance.
      */
-    static async create({ mediasoupWorkers, roomId, peers }) {
+    static async create({ mediasoupWorkers, roomId, peers, webhook }) {
         logger.info('create() [roomId:"%s"]', roomId);
 
         // Router media codecs.
@@ -156,7 +156,8 @@ class Room extends EventEmitter {
             mediasoupRouters,
             audioLevelObserver,
             mediasoupWorkers,
-            peers
+            peers,
+            webhook
         });
     }
 
@@ -165,7 +166,8 @@ class Room extends EventEmitter {
         mediasoupRouters,
         audioLevelObserver,
         mediasoupWorkers,
-        peers
+        peers,
+        webhook
     }) {
         logger.info('constructor() [roomId:"%s"]', roomId);
 
@@ -193,6 +195,8 @@ class Room extends EventEmitter {
         this._mediasoupRouters = mediasoupRouters;
 
         this._audioLevelObserver = audioLevelObserver;
+
+        this._webhook = webhook;
     }
 
 
@@ -877,6 +881,52 @@ class Room extends EventEmitter {
 
             // Return no error
             cb();
+
+            break;
+        }
+
+        case 'moderator:joinRequestAccept':
+        {
+            if (!peer.hasRole(Roles.MODERATOR))
+                throw new Error('peer not authorized');
+
+            const { requestId } = request.data;
+
+            // Return no error
+            cb();
+
+            if (this._webhook) {
+                this._webhook.post('', { requestId, roomId: this._roomId, event: 'joinRequestAccepted' })
+                    .then(function (response) {
+                        logger.info(`Accepted join request ${requestId}. Webhook succeeded.`);
+                    })
+                    .catch(function (error) {
+                        logger.error(error);
+                    });
+            }
+
+            break;
+        }
+
+        case 'moderator:joinRequestDeny':
+        {
+            if (!peer.hasRole(Roles.MODERATOR))
+                throw new Error('peer not authorized');
+
+            const { requestId } = request.data;
+
+            // Return no error
+            cb();
+
+            if (this._webhook) {
+                this._webhook.post('', { requestId, roomId: this._roomId, event: 'joinRequestDenied' })
+                    .then(function (response) {
+                        logger.info(`Denied join request ${requestId}. Webhook succeeded.`);
+                    })
+                    .catch(function (error) {
+                        logger.error(error);
+                    });
+            }
 
             break;
         }

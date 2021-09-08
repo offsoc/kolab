@@ -17,6 +17,7 @@ function Room(container)
     let chatCount = 0
     let scrollStop
     let $t
+    let $toast
 
     const client = new Client()
 
@@ -55,9 +56,9 @@ function Room(container)
      *      onSuccess       - Callback for session connection (join) success
      *      onError         - Callback for session connection (join) error
      *      onDestroy       - Callback for session disconnection event,
-     *      onJoinRequest   - Callback for join request,
      *      onMediaSetup    - Called when user clicks the Media setup button
      *      onUpdate        - Callback for current user/session update,
+     *      toast           - Toast widget
      *      translate       - Translation function
      */
     function joinRoom(data) {
@@ -68,10 +69,11 @@ function Room(container)
         resize()
 
         $t = data.translate
+        $toast = data.toast
 
         // Make sure all supported callbacks exist, so we don't have to check
         // their existence everywhere anymore
-        let events = ['Success', 'Error', 'Destroy', 'JoinRequest', 'Update', 'MediaSetup']
+        let events = ['Success', 'Error', 'Destroy', 'Update', 'MediaSetup']
 
         events.map(event => 'on' + event).forEach(event => {
             if (!data[event]) {
@@ -159,7 +161,7 @@ function Room(container)
 
         // Handle join requests from other users (knocking to the room)
         client.on('joinRequest', event => {
-            data.onJoinRequest(event)
+            joinRequest(event)
         })
 
         // Handle session disconnection events
@@ -198,6 +200,51 @@ function Room(container)
     function leaveRoom(forced) {
         client.closeSession(forced)
         peers = {}
+    }
+
+    /**
+     * Handler for an event received by the moderator when a participant
+     * is asking for a permission to join the room
+     */
+    function joinRequest(data) {
+        const id = data.requestId
+
+        // The toast for this user request already exists, ignore
+        // It's not really needed as we do this on server-side already
+        if ($('#i' + id).length) {
+            return
+        }
+
+        const body = $(
+            `<div>`
+            + `<div class="picture"><img src="${data.picture}"></div>`
+                + `<div class="content">`
+                    + `<p class="mb-2"></p>`
+                    + `<div class="text-end">`
+                        + `<button type="button" class="btn btn-sm btn-success accept">${$t('btn.accept')}</button>`
+                        + `<button type="button" class="btn btn-sm btn-danger deny ms-2">${$t('btn.deny')}</button>`
+        )
+
+        $toast.message({
+            className: 'join-request',
+            icon: 'user',
+            timeout: 0,
+            title: $t('meet.join-request'),
+            // titleClassName: '',
+            body: body.html(),
+            onShow: element => {
+                $(element).find('p').text($t('meet.join-requested', { user: data.nickname || '' }))
+
+                // add id attribute, so we can identify it
+                $(element).attr('id', 'i' + id)
+                    // add action to the buttons
+                    .find('button.accept,button.deny').on('click', e => {
+                        const action = $(e.target).is('.accept') ? 'Accept' : 'Deny'
+                        client['joinRequest' + action](id)
+                        $('#i' + id).remove()
+                    })
+            }
+        })
     }
 
     /**

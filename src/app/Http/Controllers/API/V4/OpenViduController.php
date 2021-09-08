@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
-use App\OpenVidu\Connection;
 use App\OpenVidu\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,66 +10,6 @@ use Illuminate\Support\Facades\Validator;
 
 class OpenViduController extends Controller
 {
-    public const AUTH_HEADER = 'X-Meet-Auth-Token';
-
-    /**
-     * Accept the room join request.
-     *
-     * @param string $id    Room identifier (name)
-     * @param string $reqid Request identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function acceptJoinRequest($id, $reqid)
-    {
-        $room = Room::where('name', $id)->first();
-
-        // This isn't a room, bye bye
-        if (!$room) {
-            return $this->errorResponse(404, \trans('meet.room-not-found'));
-        }
-
-        // Only the moderator can do it
-        if (!$this->isModerator($room)) {
-            return $this->errorResponse(403);
-        }
-
-        if (!$room->requestAccept($reqid)) {
-            return $this->errorResponse(500, \trans('meet.session-request-accept-error'));
-        }
-
-        return response()->json(['status' => 'success']);
-    }
-
-    /**
-     * Deny the room join request.
-     *
-     * @param string $id    Room identifier (name)
-     * @param string $reqid Request identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function denyJoinRequest($id, $reqid)
-    {
-        $room = Room::where('name', $id)->first();
-
-        // This isn't a room, bye bye
-        if (!$room) {
-            return $this->errorResponse(404, \trans('meet.room-not-found'));
-        }
-
-        // Only the moderator can do it
-        if (!$this->isModerator($room)) {
-            return $this->errorResponse(403);
-        }
-
-        if (!$room->requestDeny($reqid)) {
-            return $this->errorResponse(500, \trans('meet.session-request-deny-error'));
-        }
-
-        return response()->json(['status' => 'success']);
-    }
-
     /**
      * Listing of rooms that belong to the authenticated user.
      *
@@ -315,11 +254,13 @@ class OpenViduController extends Controller
     {
         \Log::debug($request->getContent());
 
-        switch ((string) $request->input('event')) {
+        $sessionId = $request->input('roomId');
+        $event = (string) $request->input('event');
+
+        switch ($event) {
             case 'roomClosed':
                 // When all participants left the room the server will dispatch roomClosed
                 // event. We'll remove the session reference from the database.
-                $sessionId = $request->input('roomId');
                 $room = Room::where('session_id', $sessionId)->first();
 
                 if ($room) {
@@ -329,76 +270,19 @@ class OpenViduController extends Controller
 
                 break;
 
-            case 'requestAccepted':
-            case 'requestDenied':
-                // TODO
+            case 'joinRequestAccepted':
+            case 'joinRequestDenied':
+                $room = Room::where('session_id', $sessionId)->first();
+
+                if ($room) {
+                    $method = $event == 'joinRequestAccepted' ? 'requestAccept' : 'requestDeny';
+
+                    $room->{$method}($request->input('requestId'));
+                }
+
                 break;
         }
 
         return response('Success', 200);
-    }
-
-    /**
-     * Check if current user is a moderator for the specified room.
-     *
-     * @param \App\OpenVidu\Room $room The room
-     *
-     * @return bool True if the current user is the room moderator
-     */
-    protected function isModerator(Room $room): bool
-    {
-        $user = Auth::guard()->user();
-
-        // The room owner is a moderator
-        if ($user && $user->id == $room->user_id) {
-            return true;
-        }
-
-        // Moderator's authentication via the extra request header
-        if (
-            ($connection = $this->getConnectionFromRequest())
-            && $connection->session_id === $room->session_id
-            && $connection->role & Room::ROLE_MODERATOR
-        ) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if current user "owns" the specified connection.
-     *
-     * @param \App\OpenVidu\Connection $connection The connection
-     *
-     * @return bool
-     */
-    protected function isSelfConnection(Connection $connection): bool
-    {
-        return ($conn = $this->getConnectionFromRequest())
-            && $conn->id === $connection->id;
-    }
-
-    /**
-     * Get the connection object for the token in current request headers.
-     * It will also validate the token.
-     *
-     * @return \App\OpenVidu\Connection|null Connection (if exists and the token is valid)
-     */
-    protected function getConnectionFromRequest()
-    {
-        // Authenticate the user via the extra request header
-        if ($token = request()->header(self::AUTH_HEADER)) {
-            list($connId, ) = explode(':', base64_decode($token), 2);
-
-            if (
-                ($connection = Connection::find($connId))
-                && $connection->metadata['authToken'] === $token
-            ) {
-                return $connection;
-            }
-        }
-
-        return null;
     }
 }
