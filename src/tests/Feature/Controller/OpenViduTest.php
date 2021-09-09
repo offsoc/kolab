@@ -274,7 +274,10 @@ class OpenViduTest extends TestCase
 
         $room->refresh();
 
-        // $request = $room->requestGet($reqId);
+        $request = $room->requestGet($reqId);
+
+        $this->assertSame($post['nickname'], $request['nickname']);
+        $this->assertSame($post['requestId'], $request['requestId']);
 
         $room->requestAccept($reqId);
 
@@ -291,6 +294,7 @@ class OpenViduTest extends TestCase
         // TODO: Test a scenario where both password and lock are enabled
         // TODO: Test accepting/denying as a non-owner moderator
         // TODO: Test somehow websocket communication
+        $this->markTestIncomplete();
     }
 
     /**
@@ -404,6 +408,45 @@ class OpenViduTest extends TestCase
      */
     public function testWebhook(): void
     {
-        $this->markTestIncomplete();
+        $this->assignMeetEntitlement('john@kolab.org');
+
+        $john = $this->getTestUser('john@kolab.org');
+        $room = Room::where('name', 'john')->first();
+
+        // First, create the session
+        $post = ['init' => 1];
+        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response->assertStatus(200);
+
+        $sessionId = $room->fresh()->session_id;
+
+        // Test accepting a join request
+        $room->requestSave('1234', ['nickname' => 'test']);
+
+        $post = ['roomId' => $sessionId, 'requestId' => '1234', 'event' => 'joinRequestAccepted'];
+        $response = $this->post("api/webhooks/meet", $post);
+        $response->assertStatus(200);
+
+        $request = $room->requestGet('1234');
+
+        $this->assertSame(Room::REQUEST_ACCEPTED, $request['status']);
+
+        // Test denying a join request
+        $room->requestSave('1234', ['nickname' => 'test']);
+
+        $post = ['roomId' => $sessionId, 'requestId' => '1234', 'event' => 'joinRequestDenied'];
+        $response = $this->post("api/webhooks/meet", $post);
+        $response->assertStatus(200);
+
+        $request = $room->requestGet('1234');
+
+        $this->assertSame(Room::REQUEST_DENIED, $request['status']);
+
+        // Test closing the session
+        $post = ['roomId' => $sessionId, 'event' => 'roomClosed'];
+        $response = $this->post("api/webhooks/meet", $post);
+        $response->assertStatus(200);
+
+        $this->assertNull($room->fresh()->session_id);
     }
 }
