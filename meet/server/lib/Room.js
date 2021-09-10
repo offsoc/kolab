@@ -872,12 +872,17 @@ class Room extends EventEmitter {
             if (!peer.hasRole(Roles.MODERATOR))
                 throw new Error('peer not authorized');
 
-            const { language } = request.data;
+            const { peerId, language } = request.data;
 
             if (language && !/^[a-z]{2}$/.test(language))
                 throw new Error('invalid language code');
 
-            peer.language = language;
+            const langPeer = this._peers[peerId];
+
+            if (!langPeer)
+                throw new Error(`peer with id "${peerId}" not found`);
+
+            langPeer.language = language;
 
             // This will be spread through events from the peer object
 

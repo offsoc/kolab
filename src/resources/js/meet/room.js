@@ -142,7 +142,21 @@ function Room(container)
                 }
             }
 
-            event.element = participantUpdate(event.element, event)
+            if (changed && changed.includes('interpreterRole')
+                && !peer.isSelf && $(event.element).find('video').length
+            ) {
+                // Publisher-to-interpreter or vice-versa, move element to the subscribers list or vice-versa,
+                // but keep the existing video element
+                let wrapper = participantCreate(event, $(event.element).find('video'))
+                event.element.remove()
+                event.element = wrapper
+            } else if (changed && changed.includes('publisherRole') && !event.language) {
+                // Handle publisher-to-subscriber and subscriber-to-publisher change
+                event.element.remove()
+                event.element = participantCreate(event)
+            } else {
+                participantUpdate(event.element, event)
+            }
 
             // It's me, got publisher role
             if (peer.isSelf && (event.role & Roles.PUBLISHER) && changed && changed.includes('publisherRole')) {
@@ -673,31 +687,6 @@ function Room(container)
         const roleOwner = params.role & Roles.OWNER
         const roleInterpreter = rolePublisher && !!params.language
 
-        if (!noupdate && !roleScreen) {
-            const isPublisher = element.is('.meet-video')
-
-            // Publisher-to-interpreter or vice-versa, move element to the subscribers list or vice-versa,
-            // but keep the existing video element
-            if (
-                !isSelf
-                && element.find('video').length
-                && ((roleInterpreter && isPublisher) || (!roleInterpreter && !isPublisher && rolePublisher))
-            ) {
-                wrapper = participantCreate(params, element.find('video'))
-                element.remove()
-                return wrapper
-            }
-
-            // Handle publisher-to-subscriber and subscriber-to-publisher change
-            if (
-                !roleInterpreter
-                && (rolePublisher && !isPublisher) || (!rolePublisher && isPublisher)
-            ) {
-                element.remove()
-                return participantCreate(params)
-            }
-        }
-
         element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
         element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
         element.find('.meet-nickname > .content').text(params.nickname || '')
@@ -735,8 +724,6 @@ function Room(container)
             .prop('disabled', roleOwner)
 
         element.find('.interpreting select').val(roleInterpreter ? params.language : '')
-
-        return wrapper
     }
 
     /**

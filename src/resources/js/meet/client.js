@@ -948,13 +948,17 @@ function Client()
             return
         }
 
-        peer[prop] = data[prop]
-
         if (!changes) {
             changes = []
         }
 
         changes.push(prop)
+
+        if (prop == 'language' && peer.language != data.language) {
+            changes.push('interpreterRole')
+        }
+
+        peer[prop] = data[prop]
 
         trigger('updatePeer', peer, changes)
 
@@ -973,7 +977,7 @@ function Client()
         let list = []
 
         Object.values(peers).forEach(peer => {
-            if (peer.language && !list.includes(peer.language)) {
+            if (!peer.isSelf && peer.language && !list.includes(peer.language)) {
                 list.push(peer.language)
             }
         })
@@ -999,7 +1003,7 @@ function Client()
 
                 // When a channel is selected we mute everyone except the interpreter of the language.
                 // When a channel is not selected we mute language interpreters only
-                consumer.channelPaused = channel && peer.language != channel
+                consumer.channelPaused = (peer.language || '') != (channel || '')
 
                 if (consumer.channelPaused && !consumer.paused) {
                     setConsumerState(consumer, false)
