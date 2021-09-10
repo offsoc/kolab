@@ -360,9 +360,9 @@ class Room extends EventEmitter {
         });
 
         peer.on('nicknameChanged', () => {
-            // Spread to others
+            // Spread to others (and self)
             const data = { peerId: peer.id, nickname: peer.nickname };
-            this._notification(peer.socket, 'changeNickname', data, true);
+            this._notification(peer.socket, 'changeNickname', data, true, true);
         });
 
         peer.on('languageChanged', () => {
@@ -375,6 +375,12 @@ class Room extends EventEmitter {
             // Spread to others (and self)
             const data = { peerId: peer.id, role: peer.role };
             this._notification(peer.socket, 'changeRole', data, true, true);
+        });
+
+        peer.on('raisedHandChanged', () => {
+            // Spread to others (and self)
+            const data = { peerId: peer.id, raisedHand: peer.raisedHand };
+            this._notification(peer.socket, 'changeRaisedHand', data, true, true);
         });
 
         peer.socket.on('request', (request, cb) => {
@@ -444,11 +450,7 @@ class Room extends EventEmitter {
 
             const peerInfos = otherPeers.map(otherPeer => otherPeer.peerInfo);
 
-            cb(null, {
-                id: peer.id,
-                role: peer.role,
-                peers: peerInfos,
-            });
+            cb(null, { peers: peerInfos, ...peer.peerInfo });
 
             // Create Consumers for existing Producers.
             for (const otherPeer of otherPeers) {
@@ -816,7 +818,7 @@ class Room extends EventEmitter {
                     throw new Error('the OWNER role is not assignable');
 
                 // Promotion to publisher? Put the user hand down
-                if (role & Roles.PUBLISHER && !(rolePeer.role & Roles.PUBLISHER))
+                if (role & Roles.PUBLISHER && rolePeer.raisedHand)
                     rolePeer.raisedHand = false;
 
                 // This will propagate the event automatically
@@ -975,11 +977,7 @@ class Room extends EventEmitter {
 
             peer.raisedHand = raisedHand;
 
-            // Spread to others
-            this._notification(peer.socket, 'raisedHand', {
-                peerId: peer.id,
-                raisedHand: raisedHand,
-            }, true);
+            // This will be spread through events from the peer object
 
             // Return no error
             cb();

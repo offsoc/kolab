@@ -222,8 +222,7 @@ function Client()
             if (consumer.peerId == peerId && consumer.kind == 'audio') {
                 consumer.consumerPaused = true
                 if (!consumer.paused) {
-                    consumer.pause()
-                    socket.sendRequest('pauseConsumer', { consumerId: consumer.id })
+                    setConsumerState(consumer, false)
                 }
             }
         })
@@ -237,8 +236,7 @@ function Client()
             if (consumer.peerId == peerId && consumer.kind == 'audio') {
                 consumer.consumerPaused = false
                 if (consumer.paused && !consumer.producerPaused && !consumer.channelPaused) {
-                    consumer.resume()
-                    socket.sendRequest('resumeConsumer', { consumerId: consumer.id })
+                    setConsumerState(consumer, true)
                 }
             }
         })
@@ -251,7 +249,6 @@ function Client()
         if (peers.self.raisedHand != status) {
             peers.self.raisedHand = status
             await socket.sendRequest('raisedHand', { raisedHand: status })
-            trigger('updatePeer', peers.self, ['raisedHand'])
         }
 
         return status
@@ -264,7 +261,6 @@ function Client()
         if (peers.self.nickname != nickname) {
             peers.self.nickname = nickname
             socket.sendRequest('changeNickname', { nickname })
-            trigger('updatePeer', peers.self, ['nickname'])
         }
     }
 
@@ -368,7 +364,7 @@ function Client()
 
                     if (producerPaused) {
                         consumer.producerPaused = true
-                        consumer.pause()
+                        setConsumerState(consumer, false, true)
                     }
 
                     let peer = peers[peerId]
@@ -417,6 +413,10 @@ function Client()
                         return
                     }
 
+                    // Calling pause() before close() on a video consumer prevents from
+                    // a "freezed" video frame left in the peer video element, even removing
+                    // the track from the stream below does not fix that.
+                    consumer.pause()
                     consumer.close()
 
                     delete consumers[consumerId]
@@ -424,8 +424,13 @@ function Client()
                     let peer = peers[consumer.peerId]
 
                     if (peer) {
-                        // TODO: Update peer state, remove track
-                        trigger('updatePeer', peer)
+                        // Remove the track from the video element
+                        // FIXME: This is not really needed if the consumer was closed
+                        // if (peer.videoElement) {
+                        //     media.removeTracksFromStream(peer.videoElement.srcObject, consumer.kind)
+                        // }
+
+                        trigger('updatePeer', updatePeerState(peer))
                     }
 
                     return
@@ -442,8 +447,7 @@ function Client()
                     consumer.producerPaused = true
 
                     if (!consumer.paused) {
-                        consumer.pause()
-                        socket.sendRequest('pauseConsumer', { consumerId: consumer.id })
+                        setConsumerState(consumer, false)
                     }
 
                     let peer = peers[consumer.peerId]
@@ -466,8 +470,7 @@ function Client()
                     consumer.producerPaused = false
 
                     if (consumer.paused && !consumer.consumerPaused && !consumer.channelPaused) {
-                        consumer.resume()
-                        socket.sendRequest('resumeConsumer', { consumerId: consumer.id })
+                        setConsumerState(consumer, true)
                     }
 
                     let peer = peers[consumer.peerId]
@@ -481,11 +484,14 @@ function Client()
 
                 case 'changeLanguage':
                     updatePeerProperty(notification.data, 'language')
-                    updateChannels()
                     return
 
                 case 'changeNickname':
                     updatePeerProperty(notification.data, 'nickname')
+                    return
+
+                case 'changeRaisedHand':
+                    updatePeerProperty(notification.data, 'raisedHand')
                     return
 
                 case 'changeRole': {
@@ -496,7 +502,7 @@ function Client()
                         return
                     }
 
-                    let changes = ['role']
+                    let changes = []
 
                     const rolePublisher = role & Roles.PUBLISHER
                     const roleModerator = role & Roles.MODERATOR
@@ -528,9 +534,8 @@ function Client()
                         changes.push('moderatorRole')
                     }
 
-                    peer.role = role
+                    updatePeerProperty(notification.data, 'role', changes)
 
-                    trigger('updatePeer', peer, changes)
                     return
                 }
 
@@ -578,7 +583,7 @@ function Client()
         await setRecvTransport()
 
         // Send the "join" request, get room data, participants, etc.
-        const { peers: existing, role, id: peerId } = await socket.sendRequest('join', {
+        const { peers: existing, role, nickname, id: peerId } = await socket.sendRequest('join', {
                 nickname: joinProps.nickname,
                 rtpCapabilities: device.rtpCapabilities
         })
@@ -588,7 +593,7 @@ function Client()
         let peer = {
             id: peerId,
             role,
-            nickname: joinProps.nickname,
+            nickname,
             audioActive: false,
             videoActive: false,
             isSelf: true
@@ -635,6 +640,12 @@ function Client()
      * Set the camera device for the current user
      */
     this.setCamera = async (deviceId, noUpdate) => {
+        if (!(peers.self.role & Roles.PUBLISHER)) {
+            // We're checking the role here because thanks to "subscribers only" feature
+            // the peer might have been "downgraded" automatically to a subscriber
+            deviceId = ''
+        }
+
         // Actually selected device, do nothing
         if (deviceId == videoSource) {
             return
@@ -700,6 +711,12 @@ function Client()
      * Set the microphone device for the current user
      */
     this.setMic = async (deviceId, noUpdate) => {
+        if (!(peers.self.role & Roles.PUBLISHER)) {
+            // We're checking the role here because thanks to "subscribers only" feature
+            // the peer might have been "downgraded" automatically to a subscriber
+            deviceId = ''
+        }
+
         // Actually selected device, do nothing
         if (deviceId == audioSource) {
             return
@@ -787,7 +804,8 @@ function Client()
      */
     const setPeerTracks = (peer, tracks) => {
         if (!peer.videoElement) {
-            peer.videoElement = media.createVideoElement(tracks, { mirror: peer.isSelf })
+            let props = peer.isSelf ? { mirror: true, muted: true } : {}
+            peer.videoElement = media.createVideoElement(tracks, props)
         } else {
             const stream = new MediaStream()
             tracks.forEach(track => stream.addTrack(track))
@@ -808,11 +826,7 @@ function Client()
 
         const stream = peer.videoElement.srcObject
 
-        if (track.kind == 'video') {
-            media.removeTracksFromStream(stream, 'Video')
-        } else {
-            media.removeTracksFromStream(stream, 'Audio')
-        }
+        media.removeTracksFromStream(stream, track.kind)
 
         stream.addTrack(track)
 
@@ -926,9 +940,9 @@ function Client()
     /**
      * A helper for a peer property update (received via websocket)
      */
-    const updatePeerProperty = (data, prop) => {
+    const updatePeerProperty = (data, prop, changes) => {
         const peerId = data.peerId
-        const peer = peers.self.id === peerId ? peers.self : peers[peerId]
+        const peer = peers.self && peers.self.id === peerId ? peers.self : peers[peerId]
 
         if (!peer) {
             return
@@ -936,7 +950,19 @@ function Client()
 
         peer[prop] = data[prop]
 
-        trigger('updatePeer', peer, [ prop ])
+        if (!changes) {
+            changes = []
+        }
+
+        changes.push(prop)
+
+        trigger('updatePeer', peer, changes)
+
+        if (prop == 'language') {
+            updateChannels()
+        } else if (peer.isSelf) {
+            trigger('updateSession', sessionData())
+        }
     }
 
     /**
@@ -976,13 +1002,11 @@ function Client()
                 consumer.channelPaused = channel && peer.language != channel
 
                 if (consumer.channelPaused && !consumer.paused) {
-                    consumer.pause()
-                    socket.sendRequest('pauseConsumer', { consumerId: consumer.id })
+                    setConsumerState(consumer, false)
                 } else if (!consumer.channelPaused && consumer.paused
                     && !consumer.consumerPaused && !consumer.producerPaused
                 ) {
-                    consumer.resume()
-                    socket.sendRequest('resumeConsumer', { consumerId: consumer.id })
+                    setConsumerState(consumer, true)
                 }
 
                 const state = !consumer.producerPaused && !consumer.channelPaused
@@ -1003,15 +1027,40 @@ function Client()
      * Returns all relevant information about the current session/user state
      */
     const sessionData = () => {
+        const { audioActive, videoActive, audioSource, videoSource, screenActive, raisedHand, role } = peers.self
+
         return {
             channel,
             channels,
-            audioActive: peers.self.audioActive,
-            videoActive: peers.self.videoActive,
-            audioSource: peers.self.audioSource,
-            videoSource: peers.self.videoSource,
-            screenActive: peers.self.screenActive,
-            raisedHand: peers.self.raisedHand
+            audioActive,
+            videoActive,
+            audioSource,
+            videoSource,
+            screenActive,
+            raisedHand,
+            role
+        }
+    }
+
+    const setConsumerState = (consumer, state, quiet) => {
+        const action = state ? 'resume' : 'pause'
+
+        // Pause/resume the consumer
+        consumer[action]()
+
+        // Mute/unmute the video element
+        // Note: We don't really have to do this, but this simplifies testing
+        if (consumer.kind == 'audio') {
+            const peer = peers[consumer.peerId]
+            if (peer && peer.videoElement) {
+                peer.videoElement.muted = !state
+            }
+        }
+
+        // TODO: Investigate whether we really need this, I found that the state
+        //       is communicated to the server anyway by the mediasoup client
+        if (!quiet) {
+            socket.sendRequest(action + 'Consumer', { consumerId: consumer.id })
         }
     }
 }

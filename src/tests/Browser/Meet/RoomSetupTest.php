@@ -165,11 +165,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertSeeIn('@setup-status-message', "The room is closed. It will be open for others after you join.")
                 ->assertSeeIn('@setup-button', "JOIN")
                 ->type('@setup-nickname-input', 'john')
-                // Join the room (click the button twice, to make sure it does not
-                // produce redundant participants/subscribers in the room)
                 ->clickWhenEnabled('@setup-button')
-                ->pause(5)
-                ->click('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
                 ->whenAvailable('div.meet-video.self', function (Browser $browser) {
@@ -567,7 +563,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertVisible('@session .meet-video .status .status-video');
 
             $guest->waitFor('@session video')
-                ->assertVisible('@session .meet-video .status .status-audio')
+                ->waitFor('@session .meet-video .status .status-audio')
                 ->assertVisible('@session .meet-video .status .status-video');
         });
     }

@@ -314,8 +314,12 @@ function Media()
         return videoActive
     }
 
+    /**
+     * Removes tracks of specified kind (audio or video) from a stream
+     */
     this.removeTracksFromStream = (stream, type) => {
         if (stream) {
+            type = type.replace(/^a/, 'A').replace(/^v/, 'V')
             stream[`get${type}Tracks`]().forEach(track => {
                 track.stop()
                 stream.removeTrack(track)
@@ -323,6 +327,9 @@ function Media()
         }
     }
 
+    /**
+     * Starts volume changes tracking on the setup video element
+     */
     const volumeMeterStart = () => {
         if (!setupVolumeElement) {
             return
@@ -375,6 +382,9 @@ function Media()
         this.volumeInterval = setInterval(update, 25)
     }
 
+    /**
+     * Stops volume changes tracking on the setup video element
+     */
     const volumeMeterStop = () => {
         if (this.audioContext) {
             clearInterval(this.volumeInterval)
@@ -384,6 +394,9 @@ function Media()
         }
     }
 
+    /**
+     * Updates volume meter widget on voluma level change
+     */
     const volumeMeterUpdate = (volume) => {
         const value = Math.min(100, Math.ceil(volume))
         const bar = setupVolumeElement.firstChild

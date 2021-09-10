@@ -85,12 +85,16 @@ function Room(container)
 
         // Handle new participants (including self)
         client.on('addPeer', (event) => {
-            event.element = participantCreate(event)
+            if (event.isSelf) {
+                selfId = event.id
+            }
 
             peers[event.id] = event
 
-            if (event.isSelf) {
-                selfId = event.id
+            event.element = participantCreate(event)
+
+            if (event.raisedHand) {
+                peerHandUp(event)
             }
         })
 
@@ -149,7 +153,7 @@ function Room(container)
             peers[event.id] = event
 
             if (changed && changed.includes('moderatorRole')) {
-                updateParticipantAll()
+                participantUpdateAll()
             }
         })
 
@@ -458,7 +462,7 @@ function Room(container)
      * Detect if screen sharing is supported by the browser
      */
     function isScreenSharingSupported() {
-        return false // TODO !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)
+        return true // TODO !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)
     }
 
     /**
@@ -469,10 +473,9 @@ function Room(container)
 
         participantUpdate(element, peer)
 
-        element.attr('id', 'qa' + peer.id)
-            .appendTo($(sessionData.queueElement).show())
+        element.attr('id', 'qa' + peer.id).appendTo($(sessionData.queueElement).show())
 
-        setTimeout(() => element.addClass('widdle'), 50)
+        setTimeout(() => element.addClass('wiggle'), 50)
     }
 
     /**
@@ -663,7 +666,6 @@ function Room(container)
      */
     function participantUpdate(wrapper, params, noupdate) {
         const element = $(wrapper)
-        const isModerator = params.role & Roles.MODERATOR
         const isSelf = params.isSelf
         const rolePublisher = params.role & Roles.PUBLISHER
         const roleModerator = params.role & Roles.MODERATOR
@@ -698,25 +700,21 @@ function Room(container)
 
         element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
         element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
-
-        if (!isSelf) {
-            element.find('.link-audio').removeClass('hidden')
-        }
-
-        if ('nickname' in params) {
-            element.find('.meet-nickname > .content').text(params.nickname)
-        }
+        element.find('.meet-nickname > .content').text(params.nickname || '')
 
         if (isSelf) {
             element.addClass('self')
+        } else {
+            element.find('.link-audio').removeClass('hidden')
         }
+
+        const isModerator = peers[selfId] && peers[selfId].role & Roles.MODERATOR
+        const withPerm = isModerator && !roleScreen && !(roleOwner && !isSelf)
+        const withMenu = isSelf || (isModerator && !roleOwner)
 
         if (isModerator) {
             element.addClass('moderated')
         }
-
-        const withPerm = isModerator && !roleScreen && !(roleOwner && !isSelf)
-        const withMenu = isSelf || (isModerator && !roleOwner)
 
         // TODO: This probably could be better done with css
         let elements = {

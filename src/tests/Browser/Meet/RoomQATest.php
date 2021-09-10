@@ -109,7 +109,7 @@ class RoomQATest extends TestCaseDusk
 
             // Promote guest (2) to publisher
             $owner->waitFor('@queue .dropdown:not(.self)')
-                ->pause(8000) // wait until it's not moving, otherwise click() will be possible
+                ->pause(8000) // wait until it's not moving, otherwise click() will fail
                 ->click('@queue .dropdown:not(.self)')
                 ->whenAvailable('@queue .dropdown:not(.self) .dropdown-menu', function ($browser) {
                     $browser->click('.action-role-publisher input');

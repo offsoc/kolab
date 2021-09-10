@@ -108,7 +108,7 @@ class Peer extends EventEmitter {
         if (nickname !== this._nickname) {
             this._nickname = nickname;
 
-            this.emit('nicknameChanged', {});
+            this.emit('nicknameChanged');
         }
     }
 
@@ -116,7 +116,7 @@ class Peer extends EventEmitter {
         if (language != this._language) {
             this._language = language;
 
-            this.emit('languageChanged', {});
+            this.emit('languageChanged');
         }
     }
 
@@ -141,7 +141,11 @@ class Peer extends EventEmitter {
     }
 
     set raisedHand(raisedHand) {
-        this._raisedHand = raisedHand;
+        if (this._raisedHand != raisedHand) {
+            this._raisedHand = raisedHand;
+
+            this.emit('raisedHandChanged');
+        }
     }
 
     get transports() {
@@ -160,7 +164,7 @@ class Peer extends EventEmitter {
         if (this._role != newRole) {
             this._role = newRole;
 
-            this.emit('roleChanged', {});
+            this.emit('roleChanged');
         }
     }
 
