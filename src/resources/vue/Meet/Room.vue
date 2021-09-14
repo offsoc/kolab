@@ -360,10 +360,6 @@
                         if (init) {
                             this.joinSession()
                         }
-
-                        if (this.session.authToken) {
-                            axios.defaults.headers.common[authHeader] = this.session.authToken
-                        }
                     })
                     .catch(error => {
                         if (!error.response) {

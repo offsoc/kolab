@@ -254,7 +254,7 @@ class OpenViduController extends Controller
     {
         \Log::debug($request->getContent());
 
-        $sessionId = $request->input('roomId');
+        $sessionId = (string) $request->input('roomId');
         $event = (string) $request->input('event');
 
         switch ($event) {

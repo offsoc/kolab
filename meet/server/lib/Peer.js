@@ -1,15 +1,18 @@
 const EventEmitter = require('events').EventEmitter;
 const Logger = require('./Logger');
+const crypto = require('crypto');
 const Roles = require('./userRoles');
+const { v4: uuidv4 } = require('uuid');
 
 const logger = new Logger('Peer');
 
 class Peer extends EventEmitter {
-    constructor({ id, roomId }) {
-        logger.info('constructor() [id:"%s"]', id);
+    constructor({ roomId }) {
+        logger.info('Peer constructor()');
+
         super();
 
-        this._id = id;
+        this._id = uuidv4();
 
         this._roomId = roomId;
 
@@ -34,6 +37,8 @@ class Peer extends EventEmitter {
         this._producers = new Map();
 
         this._consumers = new Map();
+
+        this._authToken = crypto.randomBytes(16).toString('hex');
     }
 
     close() {
@@ -53,12 +58,12 @@ class Peer extends EventEmitter {
         this.emit('close');
     }
 
-    get id() {
-        return this._id;
+    get authToken() {
+        return this._authToken;
     }
 
-    set id(id) {
-        this._id = id;
+    get id() {
+        return this._id;
     }
 
     get roomId() {

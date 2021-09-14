@@ -115,9 +115,8 @@ class OpenViduTest extends TestCase
         $session_id = $room->fresh()->session_id;
 
         $this->assertSame(Room::ROLE_SUBSCRIBER | Room::ROLE_MODERATOR | Room::ROLE_OWNER, $json['role']);
-        $this->assertSame($session_id, $json['session']);
-        $this->assertTrue(is_string($session_id) && !empty($session_id));
         $this->assertMatchesRegularExpression('|^wss?://|', $json['token']);
+        $this->assertMatchesRegularExpression('|&roomId=' . $session_id . '|', $json['token']);
 
         $john_token = $json['token'];
 
@@ -137,8 +136,8 @@ class OpenViduTest extends TestCase
         $json = $response->json();
 
         $this->assertSame(Room::ROLE_SUBSCRIBER, $json['role']);
-        $this->assertSame($session_id, $json['session']);
         $this->assertMatchesRegularExpression('|^wss?://|', $json['token']);
+        $this->assertMatchesRegularExpression('|&roomId=' . $session_id . '|', $json['token']);
         $this->assertTrue($json['token'] != $john_token);
 
         // Non-owner, now the session exists, with 'init', and with 'role=PUBLISHER'
@@ -149,8 +148,8 @@ class OpenViduTest extends TestCase
         $json = $response->json();
 
         $this->assertSame(Room::ROLE_PUBLISHER, $json['role']);
-        $this->assertSame($session_id, $json['session']);
         $this->assertMatchesRegularExpression('|^wss?://|', $json['token']);
+        $this->assertMatchesRegularExpression('|&roomId=' . $session_id . '|', $json['token']);
         $this->assertTrue($json['token'] != $john_token);
         $this->assertEmpty($json['config']['password']);
         $this->assertEmpty($json['config']['requires_password']);
@@ -181,10 +180,6 @@ class OpenViduTest extends TestCase
         $post = ['password' => 'pass', 'init' => 'init'];
         $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
         $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertSame($session_id, $json['session']);
 
         // Make sure the room owner can access the password protected room w/o password
         // TODO: Test without init=1
@@ -319,7 +314,6 @@ class OpenViduTest extends TestCase
         $json = $response->json();
 
         $this->assertSame(Room::ROLE_PUBLISHER, $json['role']);
-        $this->assertSame($room->session_id, $json['session']);
         $this->assertMatchesRegularExpression('|^wss?://|', $json['token']);
     }
 

@@ -52,23 +52,21 @@ const rooms = new Map();
 const peers = new Map();
 
 // TLS server configuration.
-const tls =
-{
-    cert          : fs.readFileSync(config.tls.cert),
-    key           : fs.readFileSync(config.tls.key),
-    secureOptions : 'tlsv12',
-    ciphers       :
-        [
-            'ECDHE-ECDSA-AES128-GCM-SHA256',
-            'ECDHE-RSA-AES128-GCM-SHA256',
-            'ECDHE-ECDSA-AES256-GCM-SHA384',
-            'ECDHE-RSA-AES256-GCM-SHA384',
-            'ECDHE-ECDSA-CHACHA20-POLY1305',
-            'ECDHE-RSA-CHACHA20-POLY1305',
-            'DHE-RSA-AES128-GCM-SHA256',
-            'DHE-RSA-AES256-GCM-SHA384'
-        ].join(':'),
-    honorCipherOrder : true
+const tls = {
+    cert: fs.readFileSync(config.tls.cert),
+    key: fs.readFileSync(config.tls.key),
+    secureOptions: 'tlsv12',
+    ciphers: [
+        'ECDHE-ECDSA-AES128-GCM-SHA256',
+        'ECDHE-RSA-AES128-GCM-SHA256',
+        'ECDHE-ECDSA-AES256-GCM-SHA384',
+        'ECDHE-RSA-AES256-GCM-SHA384',
+        'ECDHE-ECDSA-CHACHA20-POLY1305',
+        'ECDHE-RSA-CHACHA20-POLY1305',
+        'DHE-RSA-AES128-GCM-SHA256',
+        'DHE-RSA-AES256-GCM-SHA384'
+    ].join(':'),
+    honorCipherOrder: true
 };
 
 // HTTP client instance for webhook "pushes"
@@ -83,22 +81,22 @@ if (config.webhookURL) {
 const app = express();
 
 app.use(helmet.hsts());
-const sharedCookieParser=cookieParser();
+const sharedCookieParser = cookieParser();
 
 app.use(sharedCookieParser);
 app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
 
 const session = expressSession({
-    secret            : config.cookieSecret,
-    name              : config.cookieName,
-    resave            : true,
-    saveUninitialized : true,
-    store             : config.redisOptions.host != 'none' ? new RedisStore({ client: redis.createClient(config.redisOptions) }) : null,
-    cookie            : {
-        secure   : true,
-        httpOnly : true,
-        maxAge   : 60 * 60 * 1000 // Expire after 1 hour since last request from user
+    secret: config.cookieSecret,
+    name: config.cookieName,
+    resave: true,
+    saveUninitialized: true,
+    store: config.redisOptions.host != 'none' ? new RedisStore({ client: redis.createClient(config.redisOptions) }) : null,
+    cookie: {
+        secure: true,
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000 // Expire after 1 hour since last request from user
     }
 });
 
@@ -155,10 +153,7 @@ async function run() {
 
 function statusLog() {
     if (statusLogger) {
-        statusLogger.log({
-            rooms : rooms,
-            peers : peers
-        });
+        statusLogger.log({ rooms, peers });
     }
 }
 
@@ -166,7 +161,7 @@ async function runHttpsServer() {
     app.use(compression());
 
     app.get(`${config.pathPrefix}/api/ping`, function (req, res /*, next*/) {
-        res.send('PONG')
+        res.send('PONG');
     })
 
     app.get(`${config.pathPrefix}/api/sessions`, function (req, res /*, next*/) {
@@ -178,32 +173,33 @@ async function runHttpsServer() {
 
     // Check if the room exists
     app.get(`${config.pathPrefix}/api/sessions/:session_id`, function (req, res /*, next*/) {
-        console.log("Checking for room")
-        let room = rooms.get(req.params.session_id);
+        console.log("Checking for room");
+
+        const room = rooms.get(req.params.session_id);
 
         if (!room) {
-            console.log("doesn't exist")
-            res.status(404).send()
+            console.log("doesn't exist");
+            res.status(404).send();
         } else {
-            console.log("exist")
-            res.status(200).send()
+            console.log("exist");
+            res.status(200).send();
         }
     })
 
     // Create room and return id
     app.post(`${config.pathPrefix}/api/sessions`, async function (req, res /*, next*/) {
         console.log("Creating new room");
-        //FIXME we're truncating because of kolab4 database layout (should be fixed instead)
-        const roomId = uuidv4().substring(0, 16)
-        await getOrCreateRoom({ roomId });
+
+        const room = await createRoom();
 
         res.json({
-            id : roomId
+            id : room.id
         })
     })
 
+    // Seend websocket notification signals to room participants
     app.post(`${config.pathPrefix}/api/signal`, async function (req, res /*, next*/) {
-        let data = req.body;
+        const data = req.body;
         const roomId = data.roomId;
         const emit = (socket) => {
             socket.emit('notification', {
@@ -222,7 +218,7 @@ async function runHttpsServer() {
             emit(io.to(roomId));
         }
 
-        res.json({})
+        res.json({});
     });
 
     // Create connection in room (just wait for websocket instead?
@@ -235,20 +231,24 @@ async function runHttpsServer() {
     app.post(`${config.pathPrefix}/api/sessions/:session_id/connection`, function (req, res /*, next*/) {
         logger.info('Creating peer connection [roomId:"%s"]', req.params.session_id);
 
-        let roomId = req.params.session_id
-        let data = req.body;
+        const roomId = req.params.session_id;
+        const room = rooms.get(roomId);
 
-        //FIXME we're truncating because of kolab4 database layout (should be fixed instnead)
-        const peerId = uuidv4().substring(0, 16)
-        //TODO create room already?
+        if (!room) {
+            res.status(404).send();
+            return;
+        }
 
-        let peer = new Peer({ id: peerId, roomId });
-        peers.set(peerId, peer);
+        const peer = new Peer({ roomId });
+
+        peers.set(peer.id, peer);
 
         peer.on('close', () => {
-            peers.delete(peerId);
+            peers.delete(peer.id);
             statusLog();
         });
+
+        const data = req.body;
 
         if ('role' in data)
             peer.setRole(data.role);
@@ -256,9 +256,9 @@ async function runHttpsServer() {
         const proto = config.publicDomain.includes('localhost') || config.publicDomain.includes('127.0.0.1') ? 'ws' : 'wss';
 
         res.json({
-            id: peerId,
+            id: peer.id,
             // Note: socket.io client will end up using (hardcoded) /meetmedia/signaling path
-            token: `${proto}://${config.publicDomain}?peerId=${peerId}&roomId=${roomId}`
+            token: `${proto}://${config.publicDomain}?peerId=${peer.id}&roomId=${roomId}&authToken=${peer.authToken}`
         });
     })
 
@@ -303,9 +303,9 @@ async function runWebSocketServer() {
     io.on('connection', (socket) => {
         logger.info("websocket connection")
 
-        const { roomId, peerId } = socket.handshake.query;
+        const { roomId, peerId, authToken } = socket.handshake.query;
 
-        if (!roomId || !peerId) {
+        if (!roomId || !peerId || !authToken) {
             logger.warn('connection request without roomId and/or peerId');
             socket.disconnect(true);
             return;
@@ -314,11 +314,17 @@ async function runWebSocketServer() {
         logger.info('connection request [roomId:"%s", peerId:"%s"]', roomId, peerId);
 
         queue.push(async () => {
-            const room = await getOrCreateRoom({ roomId });
+            const room = rooms.get(roomId);
 
-            let peer = peers.get(peerId);
+            if (!room) {
+                logger.warn("Room does not exist %s", roomId);
+                socket.disconnect(true);
+                return;
+            }
 
-            if (!peer) {
+            const peer = peers.get(peerId);
+
+            if (!peer || peer.roomId != roomId || peer.authToken != authToken) {
                 logger.warn("Peer does not exist %s", peerId);
                 socket.disconnect(true);
                 return;
@@ -370,44 +376,32 @@ async function runMediasoupWorkers() {
 /**
  * Get a Room instance (or create one if it does not exist).
  */
-async function getOrCreateRoom({ roomId }) {
-    let room = rooms.get(roomId);
+async function createRoom() {
+    logger.info('creating a new Room');
 
-    // If the Room does not exist create a new one.
-    if (!room) {
-        logger.info('creating a new Room [roomId:"%s"]', roomId);
+    // Create the room
+    const room = await Room.create({ mediasoupWorkers, peers: {}, webhook });
 
-        // Get existing peers in the room
-        const roomPeers = {}
-        peers.forEach(peer => {
-            if (!peer.closed && peer.roomId == roomId)
-                roomPeers[peer.id] = peer;
-        });
+    room.on('close', () => {
+        logger.info('closing a Room [roomId:"%s"]', room.id);
 
-        // Create the room
-        room = await Room.create({ mediasoupWorkers, roomId, peers: roomPeers, webhook });
-
-        rooms.set(roomId, room);
-
+        rooms.delete(room.id);
         statusLog();
 
-        room.on('close', () => {
-            logger.info('closing a Room [roomId:"%s"]', roomId);
+        if (webhook) {
+            webhook.post('', { roomId: room.id, event: 'roomClosed' })
+                .then(function (response) {
+                    logger.info(`Room ${room.id} closed. Webhook succeeded.`);
+                })
+                .catch(function (error) {
+                    logger.error(error);
+                });
+        }
+    });
 
-            rooms.delete(roomId);
-            statusLog();
+    rooms.set(room.id, room);
 
-            if (webhook) {
-                webhook.post('', { roomId, event: 'roomClosed' })
-                    .then(function (response) {
-                        logger.info(`Room ${roomId} closed. Webhook succeeded.`);
-                    })
-                    .catch(function (error) {
-                        logger.error(error);
-                    });
-            }
-        });
-    }
+    statusLog();
 
     return room;
 }

@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const Logger = require('./Logger');
 const { SocketTimeoutError } = require('./errors');
 const Roles = require('./userRoles');
+const { v4: uuidv4 } = require('uuid');
 
 const config = require('../config/config');
 
@@ -124,9 +125,11 @@ class Room extends EventEmitter {
      *
      * @param {mediasoup.Worker} mediasoupWorkers - The mediasoup Worker in which a new
      *   mediasoup Router must be created.
-     * @param {String} roomId - Id of the Room instance.
+     * @param {axios} webhook - An axios instance for webhook (http) requests
      */
-    static async create({ mediasoupWorkers, roomId, peers, webhook }) {
+    static async create({ mediasoupWorkers, peers, webhook }) {
+        const roomId = uuidv4().substring(0, 16); // TODO: Use full uuid
+
         logger.info('create() [roomId:"%s"]', roomId);
 
         // Router media codecs.

@@ -129,14 +129,8 @@ class Room extends Model
         if ($response->getStatusCode() == 200) {
             $json = json_decode($response->getBody(), true);
 
-            // TODO: make use of the authentication token
-
-            $authToken = base64_encode($json['id'] . ':' . \random_bytes(16));
-
             return [
-                'session' => $this->session_id,
                 'token' => $json['token'],
-                'authToken' => $authToken,
                 'role' => $role,
             ];
         }
