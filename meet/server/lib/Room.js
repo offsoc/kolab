@@ -601,22 +601,22 @@ class Room extends EventEmitter {
 
             break;
         }
-/*
-            case 'restartIce':
-            {
-                const { transportId } = request.data;
-                const transport = peer.getTransport(transportId);
+        /*
+        case 'restartIce':
+        {
+            const { transportId } = request.data;
+            const transport = peer.getTransport(transportId);
 
-                if (!transport)
-                    throw new Error(`transport with id "${transportId}" not found`);
+            if (!transport)
+                throw new Error(`transport with id "${transportId}" not found`);
 
-                const iceParameters = await transport.restartIce();
+            const iceParameters = await transport.restartIce();
 
-                cb(null, iceParameters);
+            cb(null, iceParameters);
 
-                break;
-            }
-*/
+            break;
+        }
+        */
         case 'produce':
         {
             let { appData } = request.data;
@@ -676,9 +676,9 @@ class Room extends EventEmitter {
             // Optimization: Create a server-side Consumer for each Peer.
             for (const otherPeer of this.getPeers(peer)) {
                 this._createConsumer({
-                        consumerPeer: otherPeer,
-                        producerPeer: peer,
-                        producer
+                    consumerPeer: otherPeer,
+                    producerPeer: peer,
+                    producer
                 });
             }
 
@@ -907,7 +907,7 @@ class Room extends EventEmitter {
 
             if (this._webhook) {
                 this._webhook.post('', { requestId, roomId: this._roomId, event: 'joinRequestAccepted' })
-                    .then(function (response) {
+                    .then(function (/* response */) {
                         logger.info(`Accepted join request ${requestId}. Webhook succeeded.`);
                     })
                     .catch(function (error) {
@@ -930,7 +930,7 @@ class Room extends EventEmitter {
 
             if (this._webhook) {
                 this._webhook.post('', { requestId, roomId: this._roomId, event: 'joinRequestDenied' })
-                    .then(function (response) {
+                    .then(function (/* response */) {
                         logger.info(`Denied join request ${requestId}. Webhook succeeded.`);
                     })
                     .catch(function (error) {

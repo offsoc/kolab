@@ -363,7 +363,7 @@ async function createRoom() {
 
         if (webhook) {
             webhook.post('', { roomId: room.id, event: 'roomClosed' })
-                .then(function (response) {
+                .then(function (/* response */) {
                     logger.info(`Room ${room.id} closed. Webhook succeeded.`);
                 })
                 .catch(function (error) {
