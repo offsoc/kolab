@@ -142,10 +142,16 @@ async function runHttpsServer() {
     })
 
     app.get(`${config.pathPrefix}/api/sessions`, function (req, res /*, next*/) {
-        //TODO json.stringify
-        res.json({
-            id : "testId"
+        let list = [];
+
+        rooms.forEach(room => {
+            list.push({
+                roomId: room.id,
+                createdAt: room.createdAt
+            });
         })
+
+        res.json(list)
     })
 
     // Check if the room exists

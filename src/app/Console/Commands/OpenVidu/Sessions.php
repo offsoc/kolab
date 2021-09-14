@@ -46,10 +46,10 @@ class Sessions extends Command
             return 1;
         }
 
-        $sessionResponse = json_decode($response->getBody(), true);
+        $sessions = json_decode($response->getBody(), true);
 
-        foreach ($sessionResponse['content'] as $session) {
-            $room = \App\OpenVidu\Room::where('session_id', $session['sessionId'])->first();
+        foreach ($sessions as $session) {
+            $room = \App\OpenVidu\Room::where('session_id', $session['roomId'])->first();
             if ($room) {
                 $owner = $room->owner->email;
                 $roomName = $room->name;
@@ -61,9 +61,9 @@ class Sessions extends Command
             $this->info(
                 sprintf(
                     "Session: %s for %s since %s (by %s)",
-                    $session['sessionId'],
+                    $session['roomId'],
                     $roomName,
-                    \Carbon\Carbon::parse((int)substr($session['createdAt'], 0, 10), 'UTC'),
+                    \Carbon\Carbon::parse($session['createdAt'], 'UTC'),
                     $owner
                 )
             );

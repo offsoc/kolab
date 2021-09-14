@@ -200,8 +200,9 @@ class Room extends EventEmitter {
         this._audioLevelObserver = audioLevelObserver;
 
         this._webhook = webhook;
-    }
 
+        this._createdAt = parseInt(Date.now() / 1000);
+    }
 
     dumpStats() {
         const peers = this.getPeers();
@@ -284,6 +285,10 @@ class Room extends EventEmitter {
 
     get id() {
         return this._roomId;
+    }
+
+    get createdAt() {
+        return this._createdAt;
     }
 
     selfDestructCountdown() {
