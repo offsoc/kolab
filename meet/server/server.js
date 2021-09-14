@@ -8,7 +8,6 @@ const http = require('http');
 const spdy = require('spdy');
 const express = require('express');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
 const compression = require('compression');
 const mediasoup = require('mediasoup');
 const AwaitQueue = require('awaitqueue');
@@ -17,11 +16,6 @@ const Room = require('./lib/Room');
 const Peer = require('./lib/Peer');
 const helmet = require('helmet');
 const axios = require('axios');
-// auth
-const redis = require('redis');
-const expressSession = require('express-session');
-const RedisStore = require('connect-redis')(expressSession);
-const sharedSession = require('express-socket.io-session');
 const interactiveServer = require('./lib/interactiveServer');
 const promExporter = require('./lib/promExporter');
 const { v4: uuidv4 } = require('uuid');
@@ -81,30 +75,13 @@ if (config.webhookURL) {
 const app = express();
 
 app.use(helmet.hsts());
-const sharedCookieParser = cookieParser();
 
-app.use(sharedCookieParser);
 app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
-
-const session = expressSession({
-    secret: config.cookieSecret,
-    name: config.cookieName,
-    resave: true,
-    saveUninitialized: true,
-    store: config.redisOptions.host != 'none' ? new RedisStore({ client: redis.createClient(config.redisOptions) }) : null,
-    cookie: {
-        secure: true,
-        httpOnly: true,
-        maxAge: 60 * 60 * 1000 // Expire after 1 hour since last request from user
-    }
-});
 
 if (config.trustProxy) {
     app.set('trust proxy', config.trustProxy);
 }
-
-app.use(session);
 
 let mainListener;
 let io;
@@ -294,10 +271,6 @@ async function runWebSocketServer() {
         path: `${config.pathPrefix}/signaling`,
         cookie: false
     });
-
-    io.use(
-        sharedSession(session, sharedCookieParser, { autoSave: true })
-    );
 
     // Handle connections from clients.
     io.on('connection', (socket) => {
