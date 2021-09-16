@@ -91,7 +91,7 @@ function Room(container)
 
             peers[event.id] = event
 
-            event.element = participantCreate(event)
+            event.element = participantCreate(event, event.videoElement)
 
             if (event.raisedHand) {
                 peerHandUp(event)
@@ -105,7 +105,12 @@ function Room(container)
             if (peer) {
                 // Remove elements related to the participant
                 peerHandDown(peer)
+
                 $(peer.element).remove()
+                if (peer.screen) {
+                    $(peer.screen).remove()
+                }
+
                 delete peers[peerId]
             }
 
@@ -121,12 +126,26 @@ function Room(container)
             }
 
             event.element = peer.element
+            event.screen = peer.screen
 
+            // Video element added or removed
             if (event.videoElement && event.videoElement.parentNode != event.element) {
                 $(event.element).prepend(event.videoElement)
             } else if (!event.videoElement) {
                 $(event.element).find('video').remove()
             }
+
+            // Video element of the shared screen added or removed
+            if (event.screenVideoElement && !event.screen) {
+                const screen = { id: event.id, role: event.role | Roles.SCREEN, nickname: event.nickname }
+                event.screen = participantCreate(screen, event.screenVideoElement)
+            } else if (!event.screenVideoElement && event.screen) {
+                $(event.screen).remove()
+                event.screen = null
+                resize()
+            }
+
+            peers[event.id] = event
 
             if (changed && changed.length) {
                 if (changed && changed.includes('nickname')) {
@@ -140,10 +159,15 @@ function Room(container)
                         peerHandDown(event)
                     }
                 }
+
+                if (changed && changed.includes('screenWidth')) {
+                     resize()
+                     return
+                }
             }
 
             if (changed && changed.includes('interpreterRole')
-                && !peer.isSelf && $(event.element).find('video').length
+                && !event.isSelf && $(event.element).find('video').length
             ) {
                 // Publisher-to-interpreter or vice-versa, move element to the subscribers list or vice-versa,
                 // but keep the existing video element
@@ -153,18 +177,16 @@ function Room(container)
             } else if (changed && changed.includes('publisherRole') && !event.language) {
                 // Handle publisher-to-subscriber and subscriber-to-publisher change
                 event.element.remove()
-                event.element = participantCreate(event)
+                event.element = participantCreate(event, event.videoElement)
             } else {
                 participantUpdate(event.element, event)
             }
 
             // It's me, got publisher role
-            if (peer.isSelf && (event.role & Roles.PUBLISHER) && changed && changed.includes('publisherRole')) {
+            if (event.isSelf && (event.role & Roles.PUBLISHER) && changed && changed.includes('publisherRole')) {
                 // Open the media setup dialog
                 sessionData.onMediaSetup()
             }
-
-            peers[event.id] = event
 
             if (changed && changed.includes('moderatorRole')) {
                 participantUpdateAll()
@@ -468,15 +490,21 @@ function Room(container)
     /**
      * Switch on/off screen sharing
      */
-    function switchScreen(callback) {
-        // TODO
+    async function switchScreen() {
+        const isActive = client.screenStatus()
+
+        if (isActive) {
+            return await client.screenUnshare()
+        } else {
+            return await client.screenShare()
+        }
     }
 
     /**
      * Detect if screen sharing is supported by the browser
      */
     function isScreenSharingSupported() {
-        return true // TODO !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)
+        return !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)
     }
 
     /**
@@ -521,6 +549,10 @@ function Room(container)
             })
 
             $(sessionData.queueElement).find('#qa' + peerId + ' .content').text(nickname || '')
+
+            // Also update the nickname for the shared screen as we do not call
+            // participantUpdate() for this element
+            $('#screen-' + peerId).find('.meet-nickname .content').text(nickname || '')
         }
     }
 
@@ -530,7 +562,7 @@ function Room(container)
      * tag-like element on the subscribers list.
      *
      * @param params  Peer metadata/params
-     * @param content Optional content to prepend to the element
+     * @param content Optional content to prepend to the element, e.g. video element
      *
      * @return The element
      */
@@ -540,10 +572,6 @@ function Room(container)
         if ((!params.language && params.role & Roles.PUBLISHER) || params.role & Roles.SCREEN) {
             // publishers and shared screens
             element = publisherCreate(params, content)
-
-            if (params.videoElement) {
-                $(element).prepend(params.videoElement)
-            }
         } else {
             // subscribers and language interpreters
             element = subscriberCreate(params, content)
@@ -594,7 +622,7 @@ function Room(container)
 
         if (params.isSelf) {
             wrapper.find('.link-setup').removeClass('hidden').on('click', () => sessionData.onMediaSetup())
-        } else {
+        } else if (!isScreen) {
             let volumeInput = wrapper.find('.volume input')
             let audioButton = wrapper.find('.link-audio')
             let inVolume = false
@@ -642,7 +670,7 @@ function Room(container)
                 })
         }
 
-        participantUpdate(wrapper, params, true)
+        participantUpdate(wrapper, params)
 
         // Fullscreen control
         if (document.fullscreenEnabled) {
@@ -668,7 +696,7 @@ function Room(container)
         let prio = params.isSelf || (isScreen && !$(publishersContainer).children('.screen').length)
 
         return wrapper[prio ? 'prependTo' : 'appendTo'](publishersContainer)
-            .attr('id', 'publisher-' + params.id)
+            .attr('id', (isScreen ? 'screen-' : 'publisher-') + params.id)
             .get(0)
     }
 
@@ -678,7 +706,7 @@ function Room(container)
      * @param wrapper The wrapper element
      * @param params  Peer metadata/params
      */
-    function participantUpdate(wrapper, params, noupdate) {
+    function participantUpdate(wrapper, params) {
         const element = $(wrapper)
         const isSelf = params.isSelf
         const rolePublisher = params.role & Roles.PUBLISHER
@@ -686,14 +714,16 @@ function Room(container)
         const roleScreen = params.role & Roles.SCREEN
         const roleOwner = params.role & Roles.OWNER
         const roleInterpreter = rolePublisher && !!params.language
+        const audioActive = roleScreen ? true : params.audioActive
+        const videoActive = roleScreen ? true : params.videoActive
 
-        element.find('.status-audio')[params.audioActive ? 'addClass' : 'removeClass']('hidden')
-        element.find('.status-video')[params.videoActive ? 'addClass' : 'removeClass']('hidden')
+        element.find('.status-audio')[audioActive ? 'addClass' : 'removeClass']('hidden')
+        element.find('.status-video')[videoActive ? 'addClass' : 'removeClass']('hidden')
         element.find('.meet-nickname > .content').text(params.nickname || '')
 
         if (isSelf) {
             element.addClass('self')
-        } else {
+        } else if (!roleScreen) {
             element.find('.link-audio').removeClass('hidden')
         }
 
@@ -750,7 +780,7 @@ function Room(container)
             wrapper.prepend(content)
         }
 
-        participantUpdate(wrapper, params, true)
+        participantUpdate(wrapper, params)
 
         return wrapper[params.isSelf ? 'prependTo' : 'appendTo'](subscribersContainer)
             .attr('id', 'subscriber-' + params.id)
@@ -928,16 +958,15 @@ function Room(container)
         // Make the first screen sharing tile big
         let screenVideo = publishers.filter('.screen').find('video').get(0)
 
-/*
         if (screenVideo) {
             const element = screenVideo.parentNode
-            const peerId = element.id.replace(/^publisher-/, '')
+            const peerId = element.id.replace(/^screen-/, '')
             const peer = peers[peerId]
 
             // We know the shared screen video dimensions, we can calculate
             // width/height of the tile in the matrix
-            if (peer && peer.videoDimensions) {
-                let screenWidth = peer.videoDimensions.width
+            if (peer && peer.screenWidth) {
+                let screenWidth = peer.screenWidth
                 let screenHeight = containerHeight
 
                 // TODO: When the shared window is minimized the width/height is set to 1 (or 2)
@@ -967,7 +996,7 @@ function Room(container)
                 numOfVideos -= 1
             }
         }
-*/
+
         // Compensate the shared screen estate with a padding
         $(publishersContainer).css('padding-left', padding)
 

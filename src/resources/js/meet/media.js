@@ -75,7 +75,17 @@ function Media()
     this.getTrack = async (constraints) => {
         const stream = await navigator.mediaDevices.getUserMedia(constraints)
 
-        if (constraints['audio']) {
+        if (constraints.audio) {
+            return stream.getAudioTracks()[0]
+        }
+
+        return stream.getVideoTracks()[0]
+    }
+
+    this.getDisplayTrack = async (constraints) => {
+        const stream = await navigator.mediaDevices.getDisplayMedia(constraints)
+
+        if (constraints.audio) {
             return stream.getAudioTracks()[0]
         }
 

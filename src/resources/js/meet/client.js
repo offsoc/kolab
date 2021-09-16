@@ -85,7 +85,7 @@ function Client()
 
         media.setupStop()
 
-        // Close mediasoup Transports.
+        // Close mediasoup transports
         if (sendTransport) {
             sendTransport.close()
             sendTransport = null
@@ -100,6 +100,9 @@ function Client()
         Object.values(peers).forEach(peer => {
             if (peer.videoElement) {
                 $(peer.videoElement).remove()
+            }
+            if (peer.screenVideoElement) {
+                $(peer.screenVideoElement).remove()
             }
         })
 
@@ -350,6 +353,7 @@ function Client()
                     })
 
                     consumer.peerId = peerId
+                    consumer.source = appData.source
 
                     consumer.on('transportclose', () => {
                         // TODO: What actually else needs to be done here?
@@ -373,7 +377,7 @@ function Client()
                         return
                     }
 
-                    addPeerTrack(peer, consumer.track)
+                    addPeerTrack(peer, consumer.track, consumer.source)
 
                     trigger('updatePeer', peer)
                     updateChannels()
@@ -400,8 +404,8 @@ function Client()
 
                 case 'peerClosed':
                     const { peerId } = notification.data
-                    delete peers[peerId]
                     trigger('removePeer', peerId)
+                    delete peers[peerId]
                     updateChannels()
                     return
 
@@ -429,6 +433,11 @@ function Client()
                         // if (peer.videoElement) {
                         //     media.removeTracksFromStream(peer.videoElement.srcObject, consumer.kind)
                         // }
+
+                        // If this is a shared screen, remove the video element
+                        if (consumer.source == 'screen') {
+                            peer.screenVideoElement = null
+                        }
 
                         trigger('updatePeer', updatePeerState(peer))
                     }
@@ -517,9 +526,11 @@ function Client()
                             // stop publishing any streams
                             this.setMic('', true)
                             this.setCamera('', true)
+                            this.screenUnshare()
                         } else {
                             // remove the video element
                             peer.videoElement = null
+                            peer.screenVideoElement = null
                             // TODO: Do we need to remove/stop consumers?
                         }
                     } else if (!isPublisher && rolePublisher) {
@@ -596,6 +607,7 @@ function Client()
             nickname,
             audioActive: false,
             videoActive: false,
+            screenActive: false,
             isSelf: true
         }
 
@@ -613,6 +625,7 @@ function Client()
         // Trigger addPeer event for all peers already in the room, maintain peers list
         existing.forEach(peer => {
             let tracks = []
+            let screenTracks = []
 
             // We receive newConsumer requests before we add the peer to peers list,
             // therefore we look here for any consumers that belong to this peer and update
@@ -620,12 +633,15 @@ function Client()
             // newConsumer requests
             Object.keys(consumers).forEach(cid => {
                 if (consumers[cid].peerId === peer.id) {
-                    tracks.push(consumers[cid].track)
+                    (consumers.source == 'screen' ? screenTracks : tracks).push(consumers[cid].track)
                 }
             })
 
             if (tracks.length) {
                 setPeerTracks(peer, tracks)
+            }
+            if (screenTracks.length) {
+                setPeerTracks(peer, screenTracks, 'screen')
             }
 
             peers[peer.id] = peer
@@ -800,10 +816,89 @@ function Client()
     }
 
     /**
+     * Start the current user screen sharing
+     */
+    this.screenShare = async () => {
+        if (this.screenStatus()) {
+            return true
+        }
+
+        if (!(peers.self.role & Roles.PUBLISHER)) {
+            // We're checking the role here because thanks to "subscribers only" feature
+            // the peer might have been "downgraded" automatically to a subscriber
+            return false
+        }
+
+        const { frameRate, resolution } = Config.screenOptions
+
+        const track = await media.getDisplayTrack({
+            video: {
+                ...VIDEO_CONSTRAINTS[resolution],
+                frameRate
+            },
+            audio: false
+        })
+
+        await setSendTransport()
+
+        screenProducer = await sendTransport.produce({
+            track,
+            appData: {
+                source : 'screen'
+            }
+        })
+/*
+        screenProducer.on('transportclose', () => {
+            screenProducer = null
+        })
+
+        screenProducer.on('trackended', () => {
+        })
+*/
+        // Create the video element
+        createScreenElement(peers.self, [ track ])
+
+        trigger('updatePeer', peers.self)
+
+        return this.screenStatus()
+    }
+
+    /**
+     * Stop the current user screen sharing
+     */
+    this.screenUnshare = async () => {
+        if (screenProducer && !screenProducer.closed) {
+            screenProducer.close()
+            await socket.sendRequest('closeProducer', { producerId: screenProducer.id })
+
+            peers.self.screenVideoElement = null
+
+            trigger('updatePeer', peers.self)
+        }
+
+        screenProducer = null
+
+        return this.screenStatus()
+    }
+
+    /**
+     * Get the current user shared screen status
+     */
+    this.screenStatus = () => {
+        return !!screenProducer && !screenProducer.closed
+    }
+
+    /**
      * Set the media stream tracks for a video element of a peer
      */
-    const setPeerTracks = (peer, tracks) => {
-        if (!peer.videoElement) {
+    const setPeerTracks = (peer, tracks, source) => {
+        if (source == 'screen' && !peer.screenVideoElement) {
+            createScreenElement(peer, tracks)
+        } else if (source == 'screen') {
+            const stream = new MediaStream()
+            tracks.forEach(track => stream.addTrack(track))
+            peer.screenVideoElement.srcObject = stream
+        } else if (!peer.videoElement) {
             let props = peer.isSelf ? { mirror: true, muted: true } : {}
             peer.videoElement = media.createVideoElement(tracks, props)
         } else {
@@ -816,15 +911,26 @@ function Client()
     }
 
     /**
-     * Add a media stream track to a video element of a peer
+     * Add a media stream track to a video element(s) of a peer
      */
-    const addPeerTrack = (peer, track) => {
-        if (!peer.videoElement) {
-            setPeerTracks(peer, [ track ])
-            return
-        }
+    const addPeerTrack = (peer, track, source) => {
+        let stream
 
-        const stream = peer.videoElement.srcObject
+        if (source == 'screen') {
+            if (!peer.screenVideoElement) {
+                setPeerTracks(peer, [ track ], source)
+                return
+            }
+
+            stream = peer.screenVideoElement.srcObject
+        } else {
+            if (!peer.videoElement) {
+                setPeerTracks(peer, [ track ])
+                return
+            }
+
+            stream = peer.videoElement.srcObject
+        }
 
         media.removeTracksFromStream(stream, track.kind)
 
@@ -840,15 +946,18 @@ function Client()
         if (peer.isSelf) {
             peer.videoActive = this.camStatus()
             peer.audioActive = this.micStatus()
+            peer.screenActive = this.screenStatus()
         } else {
             peer.videoActive = false
             peer.audioActive = false
+            peer.screenActive = false
 
             Object.keys(consumers).forEach(cid => {
                 const consumer = consumers[cid]
 
                 if (consumer.peerId == peer.id) {
-                    peer[consumer.kind + 'Active'] = !consumer.closed && !consumer.producerPaused && !consumer.channelPaused
+                    const key = (consumer.source == 'screen' ? 'screen' : consumer.kind) + 'Active'
+                    peer[key] = !consumer.closed && !consumer.producerPaused && !consumer.channelPaused
                 }
             })
         }
@@ -1046,6 +1155,10 @@ function Client()
         }
     }
 
+    /**
+     * A helper to pause/resume a consumer and propagate the state
+     * to the video element as well as the server
+     */
     const setConsumerState = (consumer, state, quiet) => {
         const action = state ? 'resume' : 'pause'
 
@@ -1056,8 +1169,10 @@ function Client()
         // Note: We don't really have to do this, but this simplifies testing
         if (consumer.kind == 'audio') {
             const peer = peers[consumer.peerId]
-            if (peer && peer.videoElement) {
+            if (peer && peer.videoElement && consumer.source == 'mic') {
                 peer.videoElement.muted = !state
+            } else if (peer && peer.screenVideoElement && consumer.source == 'screen') {
+                peer.screenVideoElement.muted = !state
             }
         }
 
@@ -1066,6 +1181,29 @@ function Client()
         if (!quiet) {
             socket.sendRequest(action + 'Consumer', { consumerId: consumer.id })
         }
+    }
+
+    /**
+     * Creates video element for screen sharing stream
+     */
+    const createScreenElement = (peer, tracks) => {
+        peer.screenVideoElement = media.createVideoElement(tracks, { muted: true })
+
+        // Track video dimensions (width) change
+        // Note: the videoWidth is intially 0, we have to wait a while for the real value
+        let interval = setInterval(() => {
+            if (!peer || !peer.screenVideoElement) {
+                clearInterval(interval)
+                return
+            }
+
+            const width = peer.screenVideoElement.videoWidth
+
+            if (width != peer.screenWidth) {
+                peer.screenWidth = width
+                trigger('updatePeer', peers.self, [ 'screenWidth' ])
+            }
+        }, 1000)
     }
 }
 

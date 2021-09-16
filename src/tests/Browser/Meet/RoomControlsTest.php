@@ -387,8 +387,8 @@ class RoomControlsTest extends TestCaseDusk
                     $browser->waitFor('video')
                         ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
-                        ->assertVisible('.controls button.link-audio')
-                        ->assertVisible('.status .status-audio')
+                        ->assertMissing('.controls button.link-audio')
+                        ->assertMissing('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
                 ->assertElementsCount('@session div.meet-video', 2)
@@ -400,8 +400,8 @@ class RoomControlsTest extends TestCaseDusk
                     $browser->waitFor('video')
                         ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
-                        ->assertVisible('.controls button.link-audio')
-                        ->assertVisible('.status .status-audio')
+                        ->assertMissing('.controls button.link-audio')
+                        ->assertMissing('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
                 ->assertElementsCount('@session div.meet-video', 2)
