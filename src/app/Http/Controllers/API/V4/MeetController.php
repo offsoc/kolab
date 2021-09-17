@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
-use App\OpenVidu\Room;
+use App\Meet\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
-class OpenViduController extends Controller
+class MeetController extends Controller
 {
     /**
      * Listing of rooms that belong to the authenticated user.
@@ -244,7 +244,7 @@ class OpenViduController extends Controller
     }
 
     /**
-     * Webhook as triggered from OpenVidu server
+     * Webhook as triggered from the Meet server
      *
      * @param \Illuminate\Http\Request $request The API request.
      *

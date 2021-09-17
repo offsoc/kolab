@@ -1,6 +1,6 @@
 <?php
 
-namespace App\OpenVidu;
+namespace App\Meet;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,6 +27,6 @@ class RoomSetting extends Model
      */
     public function room()
     {
-        return $this->belongsTo('\App\OpenVidu\Room', 'room_id', 'id');
+        return $this->belongsTo('\App\Meet\Room', 'room_id', 'id');
     }
 }

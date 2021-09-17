@@ -76,6 +76,9 @@ Route::group(
         Route::apiResource('groups', API\V4\GroupsController::class);
         Route::get('groups/{id}/status', 'API\V4\GroupsController@status');
 
+        Route::get('meet/rooms', 'API\V4\MeetController@index');
+        Route::post('meet/rooms/{id}/config', 'API\V4\MeetController@setRoomConfig');
+
         Route::apiResource('packages', API\V4\PackagesController::class);
         Route::apiResource('skus', API\V4\SkusController::class);
 
@@ -98,9 +101,6 @@ Route::group(
         Route::get('payments/methods', 'API\V4\PaymentsController@paymentMethods');
         Route::get('payments/pending', 'API\V4\PaymentsController@payments');
         Route::get('payments/has-pending', 'API\V4\PaymentsController@hasPayments');
-
-        Route::get('openvidu/rooms', 'API\V4\OpenViduController@index');
-        Route::post('openvidu/rooms/{id}/config', 'API\V4\OpenViduController@setRoomConfig');
     }
 );
 
@@ -111,7 +111,7 @@ Route::group(
         'prefix' => $prefix . 'api/v4'
     ],
     function () {
-        Route::post('openvidu/rooms/{id}', 'API\V4\OpenViduController@joinRoom');
+        Route::post('meet/rooms/{id}', 'API\V4\MeetController@joinRoom');
     }
 );
 
@@ -133,7 +133,7 @@ Route::group(
     ],
     function () {
         Route::post('payment/{provider}', 'API\V4\PaymentsController@webhook');
-        Route::post('meet', 'API\V4\OpenViduController@webhook');
+        Route::post('meet', 'API\V4\MeetController@webhook');
         Route::get('nginx', 'API\NGINXController@authenticate');
     }
 );

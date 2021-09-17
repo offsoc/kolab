@@ -2,7 +2,7 @@
 
 namespace Tests\Browser\Meet;
 
-use App\OpenVidu\Room;
+use App\Meet\Room;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Menu;
@@ -29,7 +29,7 @@ class RoomModeratorTest extends TestCaseDusk
     /**
      * Test three users in a room, one will be promoted/demoted to/from a moderator
      *
-     * @group openvidu
+     * @group meet
      */
     public function testModeratorPromotion(): void
     {

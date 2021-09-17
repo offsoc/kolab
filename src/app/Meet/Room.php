@@ -1,6 +1,6 @@
 <?php
 
-namespace App\OpenVidu;
+namespace App\Meet;
 
 use App\Traits\SettingsTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Cache;
  * @property int     $id         Room identifier
  * @property string  $name       Room name
  * @property int     $user_id    Room owner
- * @property ?string $session_id OpenVidu session identifier
+ * @property ?string $session_id Meet session identifier
  */
 class Room extends Model
 {
@@ -43,7 +43,7 @@ class Room extends Model
 
 
     /**
-     * Creates HTTP client for connections to OpenVidu server
+     * Creates HTTP client for connections to Meet server
      *
      * @return \GuzzleHttp\Client HTTP client instance
      */
@@ -76,7 +76,7 @@ class Room extends Model
     }
 
     /**
-     * Create a OpenVidu session
+     * Create a Meet session
      *
      * @return array|null Session data on success, NULL otherwise
      */
@@ -104,7 +104,7 @@ class Room extends Model
     }
 
     /**
-     * Create a OpenVidu session (connection) token
+     * Create a Meet session (connection) token
      *
      * @param int $role User role (see self::ROLE_* constants)
      *
@@ -244,11 +244,11 @@ class Room extends Model
      */
     public function settings()
     {
-        return $this->hasMany('App\OpenVidu\RoomSetting', 'room_id');
+        return $this->hasMany('App\Meet\RoomSetting', 'room_id');
     }
 
     /**
-     * Send a OpenVidu signal to the session participants (connections)
+     * Send a signal to the Meet session participants (peers)
      *
      * @param string $name   Signal name (type)
      * @param array  $data   Signal data array

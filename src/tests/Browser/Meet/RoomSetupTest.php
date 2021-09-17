@@ -2,7 +2,7 @@
 
 namespace Tests\Browser\Meet;
 
-use App\OpenVidu\Room;
+use App\Meet\Room;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Menu;
@@ -29,7 +29,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test non-existing room
      *
-     * @group openvidu
+     * @group meet
      */
     public function testRoomNonExistingRoom(): void
     {
@@ -63,7 +63,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test the room setup page
      *
-     * @group openvidu
+     * @group meet
      */
     public function testRoomSetup(): void
     {
@@ -116,7 +116,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test two users in a room (joining/leaving and some basic functionality)
      *
-     * @group openvidu
+     * @group meet
      * @depends testRoomSetup
      */
     public function testTwoUsersInARoom(): void
@@ -276,7 +276,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test two subscribers-only users in a room
      *
-     * @group openvidu
+     * @group meet
      * @depends testTwoUsersInARoom
      */
     public function testSubscribers(): void
@@ -365,7 +365,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test demoting publisher to a subscriber
      *
-     * @group openvidu
+     * @group meet
      * @depends testSubscribers
      */
     public function testDemoteToSubscriber(): void
@@ -507,7 +507,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test the media setup dialog
      *
-     * @group openvidu
+     * @group meet
      * @depends testDemoteToSubscriber
      */
     public function testMediaSetupDialog(): void

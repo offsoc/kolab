@@ -34,7 +34,7 @@ class RoomsTest extends TestCaseDusk
     /**
      * Test rooms page (unauthenticated and unauthorized)
      *
-     * @group openvidu
+     * @group meet
      */
     public function testRoomsUnauth(): void
     {
@@ -53,7 +53,7 @@ class RoomsTest extends TestCaseDusk
     /**
      * Test rooms page
      *
-     * @group openvidu
+     * @group meet
      */
     public function testRooms(): void
     {

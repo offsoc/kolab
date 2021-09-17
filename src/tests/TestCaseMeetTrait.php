@@ -2,7 +2,7 @@
 
 namespace Tests;
 
-use App\OpenVidu\Room;
+use App\Meet\Room;
 
 trait TestCaseMeetTrait
 {

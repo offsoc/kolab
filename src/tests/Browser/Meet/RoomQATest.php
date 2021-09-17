@@ -2,7 +2,7 @@
 
 namespace Tests\Browser\Meet;
 
-use App\OpenVidu\Room;
+use App\Meet\Room;
 use Tests\Browser;
 use Tests\Browser\Pages\Meet\Room as RoomPage;
 use Tests\TestCaseDusk;
@@ -27,7 +27,7 @@ class RoomQATest extends TestCaseDusk
     /**
      * Test Q&A queue
      *
-     * @group openvidu
+     * @group meet
      */
     public function testQA(): void
     {

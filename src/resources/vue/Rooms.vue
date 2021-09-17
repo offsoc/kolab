@@ -48,7 +48,7 @@
 
             this.$root.startLoading()
 
-            axios.get('/api/v4/openvidu/rooms')
+            axios.get('/api/v4/meet/rooms')
                 .then(response => {
                     this.$root.stopLoading()
 

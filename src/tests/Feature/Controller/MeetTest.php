@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\V4\OpenViduController;
-use App\OpenVidu\Room;
+use App\Http\Controllers\API\V4\MeetController;
+use App\Meet\Room;
 use Tests\TestCase;
 
-class OpenViduTest extends TestCase
+class MeetTest extends TestCase
 {
     /**
      * {@inheritDoc}
@@ -32,7 +32,7 @@ class OpenViduTest extends TestCase
     /**
      * Test listing user rooms
      *
-     * @group openvidu
+     * @group meet
      */
     public function testIndex(): void
     {
@@ -41,11 +41,11 @@ class OpenViduTest extends TestCase
         Room::where('user_id', $jack->id)->delete();
 
         // Unauth access not allowed
-        $response = $this->get("api/v4/openvidu/rooms");
+        $response = $this->get("api/v4/meet/rooms");
         $response->assertStatus(401);
 
         // John has one room
-        $response = $this->actingAs($john)->get("api/v4/openvidu/rooms");
+        $response = $this->actingAs($john)->get("api/v4/meet/rooms");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -55,7 +55,7 @@ class OpenViduTest extends TestCase
         $this->assertSame('john', $json['list'][0]['name']);
 
         // Jack has no room, but it will be auto-created
-        $response = $this->actingAs($jack)->get("api/v4/openvidu/rooms");
+        $response = $this->actingAs($jack)->get("api/v4/meet/rooms");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -68,7 +68,7 @@ class OpenViduTest extends TestCase
     /**
      * Test joining the room
      *
-     * @group openvidu
+     * @group meet
      */
     public function testJoinRoom(): void
     {
@@ -81,33 +81,33 @@ class OpenViduTest extends TestCase
         $this->assignMeetEntitlement($john);
 
         // Unauth access, no session yet
-        $response = $this->post("api/v4/openvidu/rooms/{$room->name}");
+        $response = $this->post("api/v4/meet/rooms/{$room->name}");
         $response->assertStatus(422);
 
         $json = $response->json();
         $this->assertSame(323, $json['code']);
 
         // Non-existing room name
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/non-existing");
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/non-existing");
         $response->assertStatus(404);
 
         // TODO: Test accessing an existing room of deleted owner
 
         // Non-owner, no session yet
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}");
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}");
         $response->assertStatus(422);
 
         $json = $response->json();
         $this->assertSame(323, $json['code']);
 
         // Room owner, no session yet
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}");
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}");
         $response->assertStatus(422);
 
         $json = $response->json();
         $this->assertSame(324, $json['code']);
 
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}", ['init' => 1]);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -121,7 +121,7 @@ class OpenViduTest extends TestCase
         $john_token = $json['token'];
 
         // Non-owner, now the session exists, no 'init' argument
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}");
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}");
         $response->assertStatus(422);
 
         $json = $response->json();
@@ -130,7 +130,7 @@ class OpenViduTest extends TestCase
         $this->assertTrue(empty($json['token']));
 
         // Non-owner, now the session exists, with 'init', but no 'canPublish' argument
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}", ['init' => 1]);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -142,7 +142,7 @@ class OpenViduTest extends TestCase
 
         // Non-owner, now the session exists, with 'init', and with 'role=PUBLISHER'
         $post = ['canPublish' => true, 'init' => 1];
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -156,7 +156,7 @@ class OpenViduTest extends TestCase
 
         // Non-owner, password protected room, password not provided
         $room->setSettings(['password' => 'pass']);
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}");
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}");
         $response->assertStatus(422);
 
         $json = $response->json();
@@ -169,7 +169,7 @@ class OpenViduTest extends TestCase
         $this->assertTrue($json['config']['requires_password']);
 
         // Non-owner, password protected room, invalid provided
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", ['password' => 'aa']);
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}", ['password' => 'aa']);
         $response->assertStatus(422);
 
         $json = $response->json();
@@ -178,27 +178,27 @@ class OpenViduTest extends TestCase
         // Non-owner, password protected room, valid password provided
         // TODO: Test without init=1
         $post = ['password' => 'pass', 'init' => 'init'];
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         // Make sure the room owner can access the password protected room w/o password
         // TODO: Test without init=1
         $post = ['init' => 'init'];
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         // Test 'nomedia' room option
         $room->setSettings(['nomedia' => 'true', 'password' => null]);
 
         $post = ['init' => 'init', 'canPublish' => true];
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
         $this->assertSame(Room::ROLE_PUBLISHER & $json['role'], Room::ROLE_PUBLISHER);
 
         $post = ['init' => 'init', 'canPublish' => true];
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -208,7 +208,7 @@ class OpenViduTest extends TestCase
     /**
      * Test locked room and join requests
      *
-     * @group openvidu
+     * @group meet
      */
     public function testJoinRequests(): void
     {
@@ -222,11 +222,11 @@ class OpenViduTest extends TestCase
         $this->assignMeetEntitlement($john);
 
         // Create the session (also makes sure the owner can access a locked room)
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", ['init' => 1]);
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}", ['init' => 1]);
         $response->assertStatus(200);
 
         // Non-owner, locked room, invalid/missing input
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}");
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}");
         $response->assertStatus(422);
 
         $json = $response->json();
@@ -239,7 +239,7 @@ class OpenViduTest extends TestCase
 
         // Non-owner, locked room, invalid requestId
         $post = ['nickname' => 'name', 'requestId' => '-----', 'init' => 1];
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(422);
 
         $json = $response->json();
@@ -247,7 +247,7 @@ class OpenViduTest extends TestCase
 
         // Non-owner, locked room, invalid requestId
         $post = ['nickname' => 'name', 'init' => 1];
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(422);
 
         $json = $response->json();
@@ -256,7 +256,7 @@ class OpenViduTest extends TestCase
         // Non-owner, locked room, valid input
         $reqId = '12345678';
         $post = ['nickname' => 'name', 'requestId' => $reqId, 'picture' => 'data:image/png;base64,01234'];
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(422);
 
         $json = $response->json();
@@ -279,7 +279,7 @@ class OpenViduTest extends TestCase
         // Non-owner, locked room, join request accepted
         $post['init'] = 1;
         $post['canPublish'] = true;
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(200);
         $json = $response->json();
 
@@ -295,7 +295,7 @@ class OpenViduTest extends TestCase
     /**
      * Test joining the room
      *
-     * @group openvidu
+     * @group meet
      * @depends testJoinRoom
      */
     public function testJoinRoomGuest(): void
@@ -308,7 +308,7 @@ class OpenViduTest extends TestCase
 
         // Guest, request with screenShare token
         $post = ['canPublish' => true, 'screenShare' => 1, 'init' => 1];
-        $response = $this->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -320,7 +320,7 @@ class OpenViduTest extends TestCase
     /**
      * Test configuring the room (session)
      *
-     * @group openvidu
+     * @group meet
      */
     public function testSetRoomConfig(): void
     {
@@ -329,21 +329,21 @@ class OpenViduTest extends TestCase
         $room = Room::where('name', 'john')->first();
 
         // Unauth access not allowed
-        $response = $this->post("api/v4/openvidu/rooms/{$room->name}/config", []);
+        $response = $this->post("api/v4/meet/rooms/{$room->name}/config", []);
         $response->assertStatus(401);
 
         // Non-existing room name
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/non-existing/config", []);
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/non-existing/config", []);
         $response->assertStatus(404);
 
         // TODO: Test a room with a deleted owner
 
         // Non-owner
-        $response = $this->actingAs($jack)->post("api/v4/openvidu/rooms/{$room->name}/config", []);
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}/config", []);
         $response->assertStatus(403);
 
         // Room owner
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/config", []);
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}/config", []);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -354,7 +354,7 @@ class OpenViduTest extends TestCase
 
         // Set password and room lock
         $post = ['password' => 'aaa', 'locked' => 1];
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/config", $post);
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}/config", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -368,7 +368,7 @@ class OpenViduTest extends TestCase
 
         // Unset password and room lock
         $post = ['password' => '', 'locked' => 0];
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/config", $post);
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}/config", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -382,7 +382,7 @@ class OpenViduTest extends TestCase
 
         // Test invalid option error
         $post = ['password' => 'eee', 'unknown' => 0];
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}/config", $post);
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}/config", $post);
         $response->assertStatus(422);
 
         $json = $response->json();
@@ -398,7 +398,7 @@ class OpenViduTest extends TestCase
     /**
      * Test the webhook
      *
-     * @group openvidu
+     * @group meet
      */
     public function testWebhook(): void
     {
@@ -410,7 +410,7 @@ class OpenViduTest extends TestCase
 
         // First, create the session
         $post = ['init' => 1];
-        $response = $this->actingAs($john)->post("api/v4/openvidu/rooms/{$room->name}", $post);
+        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}", $post);
         $response->assertStatus(200);
 
         $sessionId = $room->fresh()->session_id;

@@ -284,7 +284,7 @@
         mounted() {
             this.room = this.$route.params.room
 
-            // Initialize OpenVidu and do some basic checks
+            // Initialize Meet client and do some basic checks
             this.meet = new Meet($('#meet-session')[0]);
             this.canShareScreen = this.meet.isScreenSharingSupported()
 
@@ -345,7 +345,7 @@
 
                 $('#setup-password,#setup-nickname').removeClass('is-invalid')
 
-                axios.post('/api/v4/openvidu/rooms/' + this.room, this.post, { ignoreErrors: true })
+                axios.post('/api/v4/meet/rooms/' + this.room, this.post, { ignoreErrors: true })
                     .then(response => {
                         button.prop('disabled', false)
 

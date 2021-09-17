@@ -22,7 +22,7 @@ export default {
     videoOptions: {
         resolution: 'medium',
         aspectRatio: 1.777, // 16 : 9
-        frameRate: 15, // Note: OpenVidu default was 30
+        frameRate: 15, // Note: OpenVidu's default was 30
         simulcast: true
     },
 
