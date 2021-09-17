@@ -782,6 +782,23 @@ function Room(container)
 
         participantUpdate(wrapper, params)
 
+        // Two event handlers below fix the dropdown in the subscribers list.
+        // Normally it gets hidden because of the overflow/height of the container.
+        // FIXME: I think it wasn't needed in BS4, but it's a problem with BS5.
+        const nickname = wrapper.children('.dropdown')[0]
+        nickname.addEventListener('show.bs.dropdown', () => {
+            $(subscribersContainer).css({
+                'overflow-y': 'unset',
+                height: $(subscribersContainer).height() + 'px'
+            })
+        })
+        nickname.addEventListener('hide.bs.dropdown', () => {
+            $(subscribersContainer).css({
+                'overflow-y': 'auto',
+                height: 'unset'
+            })
+        })
+
         return wrapper[params.isSelf ? 'prependTo' : 'appendTo'](subscribersContainer)
             .attr('id', 'subscriber-' + params.id)
             .get(0)
