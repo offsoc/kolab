@@ -66,7 +66,7 @@ This number can of course be greatly affected by reducing the number of streams 
 
 Currently we can scale with the number of threads on a system by using multiple workers, but not across multiple servers.
 
-In the simplest for it would of course be possible to load balance and just distribute rooms on different nodes.
+In the simplest form it would of course be possible to load balance and just distribute rooms on different nodes.
 
 To distribute a single room across different nodes more work is required:
 * A transport needs to be established between the nodes.
@@ -81,7 +81,7 @@ The benefits of this should be:
 
 ### High availability
 
-In the simplest for the server is simply restarted and all clients reconnect. This results in a brief interruption and some state is lost (chat history), but everyone should be back in the same room relatively quickly.
+In the simplest form the server is simply restarted and all clients reconnect. This results in a brief interruption and some state is lost (chat history), but everyone should be back in the same room relatively quickly.
 
 More advanced forms could potentially recover the internal state from e.g. redis, to recover quicker and relatively transparent to the user. I think the transports need to be reestablished, but webrtc should allow for this.
 

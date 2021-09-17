@@ -53,12 +53,13 @@ class Room extends Model
             self::$client = new \GuzzleHttp\Client(
                 [
                     'http_errors' => false, // No exceptions from Guzzle
-                    'base_uri' => \config('openvidu.api_url'),
-                    'verify' => \config('openvidu.api_verify_tls'),
-                    'auth' => [
-                        \config('openvidu.api_username'),
-                        \config('openvidu.api_password')
+                    'base_uri' => \config('meet.api_url'),
+                    'verify' => \config('meet.api_verify_tls'),
+                    'headers' => [
+                        'X-Auth-Token' => \config('meet.api_token'),
                     ],
+                    'connect_timeout' => 10,
+                    'timeout' => 10,
                     'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
                         $threshold = \config('logging.slow_log');
                         if ($threshold && ($sec = $stats->getTransferTime()) > $threshold) {
@@ -88,11 +89,10 @@ class Room extends Model
         $response = $this->client()->request('POST', "sessions", $params);
 
         if ($response->getStatusCode() !== 200) {
+            $this->logError("Failed to create the meet session", $response);
             $this->session_id = null;
             $this->save();
             return null;
-
-            // TODO: Log an error/warning
         }
 
         $session = json_decode($response->getBody(), true);
@@ -135,7 +135,7 @@ class Room extends Model
             ];
         }
 
-        // TODO: Log an error/warning on non-200 response
+        $this->logError("Failed to create the meet peer connection", $response);
 
         return null;
     }
@@ -152,6 +152,8 @@ class Room extends Model
         }
 
         $response = $this->client()->request('GET', "sessions/{$this->session_id}");
+
+        $this->logError("Failed to check that a meet session exists", $response);
 
         return $response->getStatusCode() == 200;
     }
@@ -270,6 +272,22 @@ class Room extends Model
 
         $response = $this->client()->request('POST', 'signal', ['json' => $post]);
 
+        $this->logError("Failed to send a signal to the meet session", $response);
+
         return $response->getStatusCode() == 200;
+    }
+
+    /**
+     * Log an error for a failed request to the meet server
+     *
+     * @param string $str      The error string
+     * @param object $response Guzzle client response
+     */
+    private function logError(string $str, $response)
+    {
+        $code = $response->getStatusCode();
+        if ($code != 200) {
+            \Log::error("$str [$code]");
+        }
     }
 }

@@ -2,6 +2,9 @@ const os = require('os');
 
 module.exports =
 {
+    // Authentication token for API (not websocket) requests
+    authToken: process.env.AUTH_TOKEN,
+    // Turn server configuration
     turn: process.env.TURN_SERVER === 'none' ? null : {
         urls: [
             process.env.TURN_SERVER || 'turn:127.0.0.1:3478?transport=tcp'
@@ -17,7 +20,10 @@ module.exports =
         ...(process.env.REDIS_PASSWORD ? { password: process.env.REDIS_PASSWORD } : {})
     },
     */
+    // Webhook URL
     webhookURL: process.env.WEBHOOK_URL,
+    // Webhook authentication token
+    webhookToken: process.env.WEBHOOK_TOKEN,
     // if you use encrypted private key the set the passphrase
     tls: {
         // passphrase: 'key_password'

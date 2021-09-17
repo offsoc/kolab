@@ -68,6 +68,7 @@ let webhook = null;
 if (config.webhookURL) {
     webhook = axios.create({
         baseURL: config.webhookURL,
+        headers: { 'X-Auth-Token': config.webhookToken },
         timeout: 5000
     });
 }
@@ -75,6 +76,14 @@ if (config.webhookURL) {
 const app = express();
 
 app.use(helmet.hsts());
+
+app.use((req, res, next) => {
+    if (req.get('X-Auth-Token') !== config.authToken) {
+        res.status(403).send();
+    } else {
+        next();
+    }
+});
 
 app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
@@ -156,15 +165,11 @@ async function runHttpsServer() {
 
     // Check if the room exists
     app.get(`${config.pathPrefix}/api/sessions/:session_id`, function (req, res /*, next*/) {
-        console.log("Checking for room");
-
         const room = rooms.get(req.params.session_id);
 
         if (!room) {
-            console.log("doesn't exist");
             res.status(404).send();
         } else {
-            console.log("exist");
             res.status(200).send();
         }
     })

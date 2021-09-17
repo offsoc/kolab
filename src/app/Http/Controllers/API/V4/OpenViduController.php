@@ -254,6 +254,11 @@ class OpenViduController extends Controller
     {
         \Log::debug($request->getContent());
 
+        // Authenticate the request
+        if ($request->headers->get('X-Auth-Token') != \config('meet.webhook_token')) {
+            return response('Unauthorized', 403);
+        }
+
         $sessionId = (string) $request->input('roomId');
         $event = (string) $request->input('event');
 

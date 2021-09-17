@@ -156,7 +156,9 @@ services:
       - PUBLIC_IP=${MEET_PUBLIC_IP}
       - PUBLIC_DOMAIN=${MEET_PUBLIC_DOMAIN}
       - TURN_SERVER=${MEET_TURN_SERVER}
-      - TURN_STATIC_SECRET==${COTURN_STATIC_SECRET}
+      - TURN_STATIC_SECRET=${COTURN_STATIC_SECRET}
+      - AUTH_TOKEN=${MEET_SERVER_TOKEN}
+      - WEBHOOK_TOKEN=${MEET_WEBHOOK_TOKEN}
     network_mode: host
     container_name: kolab-meet
     image: kolab-meet

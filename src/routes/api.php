@@ -100,14 +100,7 @@ Route::group(
         Route::get('payments/has-pending', 'API\V4\PaymentsController@hasPayments');
 
         Route::get('openvidu/rooms', 'API\V4\OpenViduController@index');
-        Route::post('openvidu/rooms/{id}/close', 'API\V4\OpenViduController@closeRoom');
         Route::post('openvidu/rooms/{id}/config', 'API\V4\OpenViduController@setRoomConfig');
-
-        // FIXME: I'm not sure about this one, should we use DELETE request maybe?
-        Route::post('openvidu/rooms/{id}/connections/{conn}/dismiss', 'API\V4\OpenViduController@dismissConnection');
-        Route::put('openvidu/rooms/{id}/connections/{conn}', 'API\V4\OpenViduController@updateConnection');
-        Route::post('openvidu/rooms/{id}/request/{reqid}/accept', 'API\V4\OpenViduController@acceptJoinRequest');
-        Route::post('openvidu/rooms/{id}/request/{reqid}/deny', 'API\V4\OpenViduController@denyJoinRequest');
     }
 );
 

@@ -406,6 +406,7 @@ class OpenViduTest extends TestCase
 
         $john = $this->getTestUser('john@kolab.org');
         $room = Room::where('name', 'john')->first();
+        $headers = ['X-Auth-Token' => \config('meet.webhook_token')];
 
         // First, create the session
         $post = ['init' => 1];
@@ -419,6 +420,9 @@ class OpenViduTest extends TestCase
 
         $post = ['roomId' => $sessionId, 'requestId' => '1234', 'event' => 'joinRequestAccepted'];
         $response = $this->post("api/webhooks/meet", $post);
+        $response->assertStatus(403); // 403 because no auth token
+
+        $response = $this->withHeaders($headers)->post("api/webhooks/meet", $post);
         $response->assertStatus(200);
 
         $request = $room->requestGet('1234');
@@ -429,7 +433,7 @@ class OpenViduTest extends TestCase
         $room->requestSave('1234', ['nickname' => 'test']);
 
         $post = ['roomId' => $sessionId, 'requestId' => '1234', 'event' => 'joinRequestDenied'];
-        $response = $this->post("api/webhooks/meet", $post);
+        $response = $this->withHeaders($headers)->post("api/webhooks/meet", $post);
         $response->assertStatus(200);
 
         $request = $room->requestGet('1234');
@@ -438,7 +442,7 @@ class OpenViduTest extends TestCase
 
         // Test closing the session
         $post = ['roomId' => $sessionId, 'event' => 'roomClosed'];
-        $response = $this->post("api/webhooks/meet", $post);
+        $response = $this->withHeaders($headers)->post("api/webhooks/meet", $post);
         $response->assertStatus(200);
 
         $this->assertNull($room->fresh()->session_id);
