@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\OpenVidu;
+namespace App\Console\Commands\Meet;
 
 use Illuminate\Console\Command;
 
@@ -11,14 +11,14 @@ class Rooms extends Command
      *
      * @var string
      */
-    protected $signature = 'openvidu:rooms';
+    protected $signature = 'meet:rooms';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'List OpenVidu rooms';
+    protected $description = 'List Meet rooms';
 
     /**
      * Execute the console command.
@@ -27,7 +27,7 @@ class Rooms extends Command
      */
     public function handle()
     {
-        $rooms = \App\OpenVidu\Room::all();
+        $rooms = \App\Meet\Room::all();
 
         foreach ($rooms as $room) {
             $this->info("{$room->name}");

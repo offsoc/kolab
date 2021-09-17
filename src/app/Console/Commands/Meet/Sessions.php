@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\OpenVidu;
+namespace App\Console\Commands\Meet;
 
 use Illuminate\Console\Command;
 
@@ -11,14 +11,14 @@ class Sessions extends Command
      *
      * @var string
      */
-    protected $signature = 'openvidu:sessions';
+    protected $signature = 'meet:sessions';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'List OpenVidu sessions';
+    protected $description = 'List Meet sessions';
 
     /**
      * Execute the console command.
@@ -27,20 +27,18 @@ class Sessions extends Command
      */
     public function handle()
     {
-        // curl -X GET -k -u OPENVIDUAPP:MY_SECRET https://localhost:4443/api/sessions, json
+        $client = new \GuzzleHttp\Client([
+                'http_errors' => false, // No exceptions from Guzzle
+                'base_uri' => \config('meet.api_url'),
+                'verify' => \config('meet.api_verify_tls'),
+                'headers' => [
+                    'X-Auth-Token' => \config('meet.api_token'),
+                ],
+                'connect_timeout' => 10,
+                'timeout' => 10,
+        ]);
 
-        $client = new \GuzzleHttp\Client(
-            [
-                'base_uri' => \config('openvidu.api_url'),
-                'verify' => \config('openvidu.api_verify_tls')
-            ]
-        );
-
-        $response = $client->request(
-            'GET',
-            'sessions',
-            ['auth' => [\config('openvidu.api_username'), \config('openvidu.api_password')]]
-        );
+        $response = $client->request('GET', 'sessions');
 
         if ($response->getStatusCode() !== 200) {
             return 1;
@@ -49,7 +47,7 @@ class Sessions extends Command
         $sessions = json_decode($response->getBody(), true);
 
         foreach ($sessions as $session) {
-            $room = \App\OpenVidu\Room::where('session_id', $session['roomId'])->first();
+            $room = \App\Meet\Room::where('session_id', $session['roomId'])->first();
             if ($room) {
                 $owner = $room->owner->email;
                 $roomName = $room->name;

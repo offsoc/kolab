@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\OpenVidu;
+namespace App\Console\Commands\Meet;
 
 use App\Console\Command;
 
@@ -11,7 +11,7 @@ class RoomCreate extends Command
      *
      * @var string
      */
-    protected $signature = 'openvidu:room-create {user} {room}';
+    protected $signature = 'meet:room-create {user} {room}';
 
     /**
      * The console command description.
@@ -40,18 +40,16 @@ class RoomCreate extends Command
             return 1;
         }
 
-        $room = \App\OpenVidu\Room::where('name', $roomName)->first();
+        $room = \App\Meet\Room::where('name', $roomName)->first();
 
         if ($room) {
             $this->error("Room already exists.");
             return 1;
         }
 
-        \App\OpenVidu\Room::create(
-            [
+        \App\Meet\Room::create([
                 'name' => $roomName,
                 'user_id' => $user->id
-            ]
-        );
+        ]);
     }
 }
