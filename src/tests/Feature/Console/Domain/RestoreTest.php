@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\Feature\Console;
+namespace Tests\Feature\Console\Domain;
 
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class DomainRestoreTest extends TestCase
+class RestoreTest extends TestCase
 {
     /**
      * {@inheritDoc}

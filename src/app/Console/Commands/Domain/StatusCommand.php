@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
 use App\Domain;
 
-class DomainStatus extends Command
+class StatusCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -19,7 +19,7 @@ class DomainStatus extends Command
      *
      * @var string
      */
-    protected $description = 'Display the status of a domain';
+    protected $description = "Display the status of a domain";
 
     /**
      * Execute the console command.
@@ -31,6 +31,7 @@ class DomainStatus extends Command
         $domain = $this->getDomain($this->argument('domain'));
 
         if (!$domain) {
+            $this->error("Domain not found.");
             return 1;
         }
 

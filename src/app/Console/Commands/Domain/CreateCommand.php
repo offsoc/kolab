@@ -38,7 +38,7 @@ class CreateCommand extends Command
         }
 
         if ($domain) {
-            if ($domain->deleted_at) {
+            if ($domain->trashed()) {
                 // set the status back to new
                 $domain->status = \App\Domain::STATUS_NEW;
                 $domain->save();

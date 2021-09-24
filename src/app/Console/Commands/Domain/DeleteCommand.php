@@ -15,12 +15,10 @@ class DeleteCommand extends ObjectDeleteCommand
 
     public function handle()
     {
-        $argument = $this->argument('domain');
-
-        $domain = $this->getDomain($argument);
+        $domain = $this->getDomain($this->argument('domain'));
 
         if (!$domain) {
-            $this->error("No such domain {$argument}");
+            $this->error("Domain not found.");
             return 1;
         }
 
