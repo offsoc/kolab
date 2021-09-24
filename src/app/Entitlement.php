@@ -94,13 +94,14 @@ class Entitlement extends Model
     }
 
     /**
-     * Principally entitleable objects such as 'Domain' or 'User'.
+     * Principally entitleable object such as Domain, User, Group.
+     * Note that it may be trashed (soft-deleted).
      *
      * @return mixed
      */
     public function entitleable()
     {
-        return $this->morphTo();
+        return $this->morphTo()->withTrashed(); // @phpstan-ignore-line
     }
 
     /**

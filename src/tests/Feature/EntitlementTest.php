@@ -8,6 +8,7 @@ use App\Package;
 use App\Sku;
 use App\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class EntitlementTest extends TestCase
@@ -131,10 +132,12 @@ class EntitlementTest extends TestCase
     }
 
     /**
-     * Test Entitlement::entitlementTitle()
+     * Test Entitlement::entitleableTitle()
      */
-    public function testEntitlementTitle(): void
+    public function testEntitleableTitle(): void
     {
+        Queue::fake();
+
         $packageDomain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $packageKolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $user = $this->getTestUser('entitled-user@custom-domain.com');
@@ -171,5 +174,13 @@ class EntitlementTest extends TestCase
             ->where('sku_id', $sku_domain->id)->first();
 
         $this->assertSame($domain->namespace, $entitlement->entitleableTitle());
+
+        // Make sure it still works if the entitleable is deleted
+        $domain->delete();
+
+        $entitlement->refresh();
+
+        $this->assertSame($domain->namespace, $entitlement->entitleableTitle());
+        $this->assertNotNull($entitlement->entitleable);
     }
 }
