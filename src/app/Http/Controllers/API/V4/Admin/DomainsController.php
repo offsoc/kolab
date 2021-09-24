@@ -74,7 +74,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.domain-suspend-success'),
+                'message' => \trans('app.domain-suspend-success'),
         ]);
     }
 
@@ -98,7 +98,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.domain-unsuspend-success'),
+                'message' => \trans('app.domain-unsuspend-success'),
         ]);
     }
 }

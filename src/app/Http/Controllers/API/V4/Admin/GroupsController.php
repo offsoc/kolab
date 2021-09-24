@@ -88,7 +88,7 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.distlist-suspend-success'),
+                'message' => \trans('app.distlist-suspend-success'),
         ]);
     }
 
@@ -112,7 +112,7 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.distlist-unsuspend-success'),
+                'message' => \trans('app.distlist-unsuspend-success'),
         ]);
     }
 }

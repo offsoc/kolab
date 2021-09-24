@@ -368,7 +368,8 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('table tbody tr:nth-child(6) td:last-child', '45,09 CHF/month¹')
                         ->assertMissing('table tfoot')
                         ->assertSeeIn('table + .hint', '¹ applied discount: 10% - Test voucher')
-                        ->assertSeeIn('#reset2fa', 'Reset 2-Factor Auth');
+                        ->assertSeeIn('#reset2fa', 'Reset 2-Factor Auth')
+                        ->assertMissing('#addbetasku');
                 });
 
             // We don't expect John's domains here
@@ -513,6 +514,31 @@ class UserTest extends TestCaseDusk
                 ->assertToast(Toast::TYPE_SUCCESS, '2-Factor authentication reset successfully.')
                 ->assertMissing('#sku' . $sku2fa->id)
                 ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (0)');
+        });
+    }
+
+    /**
+     * Test adding the beta SKU for the user
+     */
+    public function testAddBetaSku(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $this->deleteTestUser('userstest1@kolabnow.com');
+            $user = $this->getTestUser('userstest1@kolabnow.com');
+            $sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
+
+            $browser->visit(new UserPage($user->id))
+                ->click('@nav #tab-subscriptions')
+                ->waitFor('@user-subscriptions #addbetasku')
+                ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (0)')
+                ->assertSeeIn('#addbetasku', 'Enable beta program')
+                ->click('#addbetasku')
+                ->assertToast(Toast::TYPE_SUCCESS, 'The subscription added successfully.')
+                ->waitFor('#sku' . $sku->id)
+                ->assertSeeIn("#sku{$sku->id} td:first-child", 'Private Beta (invitation only)')
+                ->assertSeeIn("#sku{$sku->id} td:last-child", '0,00 CHF/month')
+                ->assertMissing('#addbetasku')
+                ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (1)');
         });
     }
 }

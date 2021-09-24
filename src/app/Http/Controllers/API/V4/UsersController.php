@@ -62,7 +62,7 @@ class UsersController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.user-delete-success'),
+                'message' => \trans('app.user-delete-success'),
         ]);
     }
 
@@ -113,7 +113,7 @@ class UsersController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.user-setconfig-success'),
+                'message' => \trans('app.user-setconfig-success'),
         ]);
     }
 
@@ -359,7 +359,7 @@ class UsersController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.user-create-success'),
+                'message' => \trans('app.user-create-success'),
         ]);
     }
 
@@ -420,7 +420,7 @@ class UsersController extends Controller
 
         $response = [
             'status' => 'success',
-            'message' => __('app.user-update-success'),
+            'message' => \trans('app.user-update-success'),
         ];
 
         // For self-update refresh the statusInfo in the UI

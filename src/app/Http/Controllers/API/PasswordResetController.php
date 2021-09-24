@@ -41,12 +41,12 @@ class PasswordResetController extends Controller
         $user = User::findByEmail($request->email);
 
         if (!$user) {
-            $errors = ['email' => __('validation.usernotexists')];
+            $errors = ['email' => \trans('validation.usernotexists')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
         if (!$user->getSetting('external_email')) {
-            $errors = ['email' => __('validation.noextemail')];
+            $errors = ['email' => \trans('validation.noextemail')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 

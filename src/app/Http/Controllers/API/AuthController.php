@@ -82,7 +82,7 @@ class AuthController extends Controller
         $user = \App\User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['status' => 'error', 'message' => __('auth.failed')], 401);
+            return response()->json(['status' => 'error', 'message' => \trans('auth.failed')], 401);
         }
 
         return self::logonResponse($user, $request->password, $request->secondfactor);
@@ -107,7 +107,7 @@ class AuthController extends Controller
         $refreshTokenRepository->revokeRefreshTokensByAccessTokenId($tokenId);
         return response()->json([
                 'status' => 'success',
-                'message' => __('auth.logoutsuccess')
+                'message' => \trans('auth.logoutsuccess')
         ]);
     }
 
@@ -161,7 +161,7 @@ class AuthController extends Controller
                 return response()->json(['status' => 'error', 'errors' => $errors], 422);
             }
 
-            return response()->json(['status' => 'error', 'message' => __('auth.failed')], 401);
+            return response()->json(['status' => 'error', 'message' => \trans('auth.failed')], 401);
         }
 
         $response['access_token'] = $data->access_token;

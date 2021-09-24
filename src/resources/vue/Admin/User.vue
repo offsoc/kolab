@@ -224,6 +224,9 @@
                             <button type="button" class="btn btn-danger" id="reset2fa" v-if="has2FA" @click="reset2FADialog">
                                 {{ $t('user.reset-2fa') }}
                             </button>
+                            <button type="button" class="btn btn-secondary" id="addbetasku" v-if="!hasBeta" @click="addBetaSku">
+                                {{ $t('user.add-beta') }}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -451,6 +454,7 @@
                 discounts: [],
                 external_email: '',
                 has2FA: false,
+                hasBeta: false,
                 wallet: {},
                 walletReload: false,
                 distlists: [],
@@ -529,6 +533,8 @@
                                     if (sku.handler == 'auth2f') {
                                         this.has2FA = true
                                         this.sku2FA = sku.id
+                                    } else if (sku.handler == 'beta') {
+                                        this.hasBeta = true
                                     }
                                 }
                             })
@@ -559,6 +565,22 @@
             $(this.$el).find('ul.nav-tabs a').on('click', this.$root.tab)
         },
         methods: {
+            addBetaSku() {
+                axios.post('/api/v4/users/' + this.user.id + '/skus/beta')
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.hasBeta = true
+                            const sku = response.data.sku
+                            this.skus.push({
+                                id: sku.id,
+                                name: sku.name,
+                                cost: sku.cost,
+                                price: this.$root.priceLabel(sku.cost, this.discount)
+                            })
+                        }
+                    })
+            },
             capitalize(str) {
                 return str.charAt(0).toUpperCase() + str.slice(1)
             },

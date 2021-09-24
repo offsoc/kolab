@@ -282,6 +282,8 @@ class UsersTest extends TestCase
      */
     public function testReset2FA(): void
     {
+        Queue::fake();
+
         $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
 
@@ -314,6 +316,58 @@ class UsersTest extends TestCase
 
         $sf = new SecondFactor($user);
         $this->assertCount(0, $sf->factors());
+    }
+
+    /**
+     * Test adding beta SKU (POST /api/v4/users/<user-id>/skus/beta)
+     */
+    public function testAddBetaSku(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $sku = Sku::withEnvTenantContext()->where(['title' => 'beta'])->first();
+
+        // Test unauthorized access to admin API
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/skus/beta", []);
+        $response->assertStatus(403);
+
+        // For now we allow only the beta sku
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/skus/mailbox", []);
+        $response->assertStatus(404);
+
+        $entitlements = $user->entitlements()->where('sku_id', $sku->id)->get();
+        $this->assertCount(0, $entitlements);
+
+        // Test adding the beta sku
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/skus/beta", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("The subscription added successfully.", $json['message']);
+        $this->assertSame(0, $json['sku']['cost']);
+        $this->assertSame($sku->id, $json['sku']['id']);
+        $this->assertSame($sku->name, $json['sku']['name']);
+        $this->assertCount(3, $json);
+
+        $entitlements = $user->entitlements()->where('sku_id', $sku->id)->get();
+        $this->assertCount(1, $entitlements);
+
+        // Test adding the beta sku again, expect an error
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/skus/beta", []);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("The subscription already exists.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $entitlements = $user->entitlements()->where('sku_id', $sku->id)->get();
+        $this->assertCount(1, $entitlements);
     }
 
     /**

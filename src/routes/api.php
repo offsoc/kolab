@@ -188,6 +188,7 @@ if (\config('app.with_admin')) {
             Route::get('users/{id}/discounts', 'API\V4\Reseller\DiscountsController@userDiscounts');
             Route::post('users/{id}/reset2FA', 'API\V4\Admin\UsersController@reset2FA');
             Route::get('users/{id}/skus', 'API\V4\Admin\SkusController@userSkus');
+            Route::post('users/{id}/skus/{sku}', 'API\V4\Admin\UsersController@setSku');
             Route::post('users/{id}/suspend', 'API\V4\Admin\UsersController@suspend');
             Route::post('users/{id}/unsuspend', 'API\V4\Admin\UsersController@unsuspend');
             Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
@@ -232,6 +233,7 @@ if (\config('app.with_reseller')) {
             Route::get('users/{id}/discounts', 'API\V4\Reseller\DiscountsController@userDiscounts');
             Route::post('users/{id}/reset2FA', 'API\V4\Reseller\UsersController@reset2FA');
             Route::get('users/{id}/skus', 'API\V4\Reseller\SkusController@userSkus');
+            Route::post('users/{id}/skus/{sku}', 'API\V4\Admin\UsersController@setSku');
             Route::post('users/{id}/suspend', 'API\V4\Reseller\UsersController@suspend');
             Route::post('users/{id}/unsuspend', 'API\V4\Reseller\UsersController@unsuspend');
             Route::apiResource('wallets', API\V4\Reseller\WalletsController::class);

@@ -46,7 +46,7 @@ class GroupsController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.distlist-delete-success'),
+                'message' => \trans('app.distlist-delete-success'),
         ]);
     }
 
@@ -294,7 +294,7 @@ class GroupsController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.distlist-create-success'),
+                'message' => \trans('app.distlist-create-success'),
         ]);
     }
 
@@ -352,7 +352,7 @@ class GroupsController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.distlist-update-success'),
+                'message' => \trans('app.distlist-update-success'),
         ]);
     }
 

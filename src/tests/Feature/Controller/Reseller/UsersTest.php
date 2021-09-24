@@ -300,6 +300,70 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test adding beta SKU (POST /api/v4/users/<user-id>/skus/beta)
+     */
+    public function testAddBetaSku(): void
+    {
+        Queue::fake(); // disable jobs
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
+        $sku = Sku::withEnvTenantContext()->where(['title' => 'beta'])->first();
+
+        // Test unauthorized access to reseller API
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/skus/beta", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/skus/beta", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($reseller2)->post("/api/v4/users/{$user->id}/skus/beta", []);
+        $response->assertStatus(404);
+
+        // Touching admins is forbidden
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$admin->id}/skus/beta", []);
+        $response->assertStatus(403);
+
+        // For now we allow only the beta sku
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$user->id}/skus/mailbox", []);
+        $response->assertStatus(404);
+
+        $entitlements = $user->entitlements()->where('sku_id', $sku->id)->get();
+        $this->assertCount(0, $entitlements);
+
+        // Test adding the beta sku
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$user->id}/skus/beta", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("The subscription added successfully.", $json['message']);
+        $this->assertSame(0, $json['sku']['cost']);
+        $this->assertSame($sku->id, $json['sku']['id']);
+        $this->assertSame($sku->name, $json['sku']['name']);
+        $this->assertCount(3, $json);
+
+        $entitlements = $user->entitlements()->where('sku_id', $sku->id)->get();
+        $this->assertCount(1, $entitlements);
+
+        // Test adding the beta sku again, expect an error
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$user->id}/skus/beta", []);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("The subscription already exists.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $entitlements = $user->entitlements()->where('sku_id', $sku->id)->get();
+        $this->assertCount(1, $entitlements);
+    }
+
+    /**
      * Test user creation (POST /api/v4/users)
      */
     public function testStore(): void

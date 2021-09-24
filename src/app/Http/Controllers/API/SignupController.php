@@ -48,7 +48,7 @@ class SignupController extends Controller
                 $plans[] = [
                     'title' => $plan->title,
                     'name' => $plan->name,
-                    'button' => __('app.planbutton', ['plan' => $plan->name]),
+                    'button' => \trans('app.planbutton', ['plan' => $plan->name]),
                     'description' => $plan->description,
                 ];
             });

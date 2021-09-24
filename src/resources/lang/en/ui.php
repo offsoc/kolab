@@ -322,6 +322,7 @@ return [
     'user' => [
         '2fa-hint1' => "This will remove 2-Factor Authentication entitlement as well as the user-configured factors.",
         '2fa-hint2' => "Please, make sure to confirm the user identity properly.",
+        'add-beta' => "Enable beta program",
         'address' => "Address",
         'aliases' => "Aliases",
         'aliases-email' => "Email Aliases",

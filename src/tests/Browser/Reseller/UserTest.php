@@ -480,4 +480,29 @@ class UserTest extends TestCaseDusk
                 ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (0)');
         });
     }
+
+    /**
+     * Test adding the beta SKU for the user
+     */
+    public function testAddBetaSku(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $this->deleteTestUser('userstest1@kolabnow.com');
+            $user = $this->getTestUser('userstest1@kolabnow.com');
+            $sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
+
+            $browser->visit(new UserPage($user->id))
+                ->click('@nav #tab-subscriptions')
+                ->waitFor('@user-subscriptions #addbetasku')
+                ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (0)')
+                ->assertSeeIn('#addbetasku', 'Enable beta program')
+                ->click('#addbetasku')
+                ->assertToast(Toast::TYPE_SUCCESS, 'The subscription added successfully.')
+                ->waitFor('#sku' . $sku->id)
+                ->assertSeeIn("#sku{$sku->id} td:first-child", 'Private Beta (invitation only)')
+                ->assertSeeIn("#sku{$sku->id} td:last-child", '0,00 CHF/month')
+                ->assertMissing('#addbetasku')
+                ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (1)');
+        });
+    }
 }
