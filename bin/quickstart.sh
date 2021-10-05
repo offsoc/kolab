@@ -34,6 +34,9 @@ rpm -qv php-mysqlnd >/dev/null 2>&1 || \
 test ! -z "$(php --modules | grep swoole)" || \
     die "Is swoole installed?"
 
+test ! -z "$(grep 'systemd.unified_cgroup_hierarchy=0' /proc/cmdline)" || \
+    die "systemd containers only work with cgroupv1 (use 'grubby --update-kernel=ALL --args=\"systemd.unified_cgroup_hierarchy=0\"' and a reboot to fix)"
+
 base_dir=$(dirname $(dirname $0))
 
 # Always reset .env with .env.example
@@ -48,7 +51,7 @@ fi
 docker pull docker.io/kolab/centos7:latest
 
 docker-compose down --remove-orphans
-docker-compose build
+docker-compose build coturn kolab mariadb openvidu kurento-media-server pdns-sql proxy redis nginx
 
 bin/regen-certs
 
@@ -57,7 +60,7 @@ docker-compose up -d coturn kolab mariadb openvidu kurento-media-server pdns-sql
 pushd ${base_dir}/src/
 
 rm -rf vendor/ composer.lock
-php -dmemory_limit=-1 /bin/composer install
+php -dmemory_limit=-1 $(which composer) install
 npm install
 find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan key:generate
@@ -75,7 +78,7 @@ PASSPORT_PUBLIC_KEY="$(cat storage/oauth-public.key)"
 EOF
 
 
-if [ ! -z "$(rpm -qv chromium 2>/dev/null)" ]; then
+if rpm -qv chromium 2>/dev/null; then
     chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
     ./artisan dusk:chrome-driver ${chver}
 fi
@@ -87,15 +90,16 @@ fi
 npm run dev
 popd
 
-docker-compose up -d worker nginx
+docker-compose up -d nginx
 
 pushd ${base_dir}/src/
 rm -rf database/database.sqlite
 ./artisan db:ping --wait
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
-./artisan data:import
+./artisan data:import || :
 ./artisan swoole:http stop >/dev/null 2>&1 || :
 SWOOLE_HTTP_DAEMONIZE=true ./artisan swoole:http start
-./artisan horizon
+./artisan horizon:terminate >/dev/null 2>&1 || :
+nohup ./artisan horizon >/dev/null 2>&1 &
 popd
 
