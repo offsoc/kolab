@@ -19,8 +19,10 @@ sed -i \
 
 systemctl restart cyrus-imapd
 
-sed -i -e '/submission/,10d' /etc/postfix/master.cf
+# Remove the submission block, by matching from submission until the next empty line
+sed -i -e '/submission          inet/,/^$/d' /etc/postfix/master.cf
 
+# Insert a new submission block with a modified port
 cat >> /etc/postfix/master.cf << EOF
 127.0.0.1:10587     inet        n       -       n       -       -       smtpd
     -o cleanup_service_name=cleanup_submission

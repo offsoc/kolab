@@ -1,0 +1,113 @@
+#!/usr/bin/ansible-playbook
+- name: Setup kolab deployment on fedora server
+  hosts: "{{ hostname }}"
+  remote_user: root
+  tasks:
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"
+
+    - import_tasks: packages.yml
+
+    - name: Setup user kolab
+      ansible.builtin.user:
+        name: kolab
+        shell: /bin/bash
+        groups: wheel, audio, docker
+        append: yes
+
+    - name: sudo without password
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%wheel\s'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+
+    - name: Start service docker, if not started
+      ansible.builtin.service:
+        name: docker
+        state: started
+
+    - name: Build swoole
+      ansible.builtin.script: build-swoole.sh
+      args:
+        creates: /usr/lib64/php/modules/swoole.so
+
+    - name: get kolab git repo
+      become: true
+      become_user: kolab
+      git:
+        repo: https://git.kolab.org/source/kolab.git
+        dest: /home/kolab/kolab
+        version: "{{ git_branch }}"
+        force: yes
+
+    - name: "kolab env.local"
+      vars:
+        host: "{{ hostname }}"
+        openexchangerates_api_key: "{{ openexchangerates_api_key }}"
+        firebase_api_key: "{{ firebase_api_key }}"
+        public_ip: "{{ public_ip }}"
+      ansible.builtin.template:
+        src: env.local
+        dest: /home/kolab/kolab/src/env.local
+        owner: kolab
+        group: kolab
+        mode: '0766'
+
+    - name: Permit receiving mail
+      firewalld:
+        port: 25/tcp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit http traffic
+      firewalld:
+        port: 80/tcp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit https traffic
+      firewalld:
+        port: 443/tcp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit TCP trafic for coturn
+      firewalld:
+        port: 3478/tcp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit TCP trafic for coturn
+      firewalld:
+        port: 5349/tcp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit UDP trafic for coturn
+      firewalld:
+        port: 3478/udp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit UDP trafic for coturn
+      firewalld:
+        port: 5349/udp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    # Not a great idea since it never exits
+    # - name: Run bin/quickstart
+    #   become: true
+    #   become_user: kolab
+    #   ansible.builtin.command: bin/quickstart.sh
+    #   args:
+    #     chdir: /home/kolab/kolab

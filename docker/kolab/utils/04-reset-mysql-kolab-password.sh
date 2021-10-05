@@ -11,5 +11,5 @@ mysql -h ${DB_HOST:-127.0.0.1} -u root --password=${DB_ROOT_PASSWORD:-Welcome2Ko
 mysql -h ${DB_HOST:-127.0.0.1} -u root --password=${DB_ROOT_PASSWORD:-Welcome2KolabSystems} \
     -e "SET PASSWORD FOR '${DB_RC_USERNAME:-roundcube}'@'%' = PASSWORD('${DB_RC_PASSWORD:-Welcome2KolabSystems}');"
 
-mysql -h ${DB_HOST} -u root --password=${DB_ROOT_PASSWORD}
+mysql -h ${DB_HOST:-127.0.0.1} -u root --password=${DB_ROOT_PASSWORD:-Welcome2KolabSystems} \
     -e "CREATE USER '${DB_RC_USERNAME:-roundcube}'@'%' IDENTIFIED BY '${DB_RC_PASSWORD:-Welcome2KolabSystems}'; FLUSH PRIVILEGES;"

@@ -3,44 +3,22 @@ FROM fedora:35
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@kolabsys.com>
 
 ENV container docker
-ENV SYSTEMD_PAGER=''
 
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
-        bash-completion \
-        bind-utils \
-        certbot \
-        curl \
-        dhcp-client \
-        git \
-        iproute \
-        iptraf-ng \
-        iputils \
-        less \
-        lsof \
-        mtr \
-        net-tools \
-        NetworkManager \
-        NetworkManager-tui \
-        network-scripts \
-        nginx \
-        nmap-ncat \
-        openssh-clients \
-        openssh-server \
-        procps-ng \
-        python3-certbot-nginx \
-        strace \
-        systemd-udev \
-        tcpdump \
-        telnet \
-        traceroute \
-        vim-enhanced \
-        wget && \
+        nginx && \
     dnf clean all
 
 COPY rootfs/ /
+ARG APP_WEBSITE_DOMAIN
+RUN sed -i -r -e "s|APP_WEBSITE_DOMAIN|$APP_WEBSITE_DOMAIN|g" /etc/nginx/nginx.conf
 
-RUN systemctl enable nginx
+# Forward request logs to Docker log collector
+RUN ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log
 
-CMD ["/lib/systemd/systemd", "--system"]
-ENTRYPOINT "/lib/systemd/systemd"
+STOPSIGNAL SIGTERM
+
+CMD ["nginx", "-g", "daemon off;"]
+
+EXPOSE 80/tcp 443/tcp

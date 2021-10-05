@@ -29,6 +29,10 @@ services:
     environment:
       - DB_HOST=${DB_HOST}
       - DB_ROOT_PASSWORD=Welcome2KolabSystems
+      - IMAP_HOST=127.0.0.1
+      - IMAP_PORT=11993
+      - MAIL_HOST=127.0.0.1
+      - MAIL_PORT=10587
     healthcheck:
       interval: 10s
       test: test -f /tmp/kolab-init.done
@@ -110,13 +114,15 @@ services:
   proxy:
     build:
       context: ./docker/proxy/
+      args:
+        APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
     healthcheck:
       interval: 10s
       test: ["CMD-SHELL", "curl -so /dev/null http://localhost/ || exit 1"]
       timeout: 5s
       retries: 30
     container_name: kolab-proxy
-    hostname: kanarip.internet-box.ch
+    hostname: ${APP_WEBSITE_DOMAIN:?err}
     image: kolab-proxy
     network_mode: host
     tmpfs:

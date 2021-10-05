@@ -5,6 +5,10 @@
 echo "ldap_domain_base_dn: ${domain_base_dn}" >> /etc/imapd.conf
 
 sed -i -r \
+    -e "s/^ldap_base: .*$/ldap_base: ${hosted_domain_rootdn}/g" \
+    /etc/imapd.conf
+
+sed -i -r \
     -e "s/(\s+)base => '.*',$/\1base => '${hosted_domain_rootdn}',/g" \
     -e "/\\\$mydomain = / a\
 \$myhostname = '${HOSTNAME:-kolab}.${DOMAIN:-mgmt.com}';" \

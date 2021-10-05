@@ -96,4 +96,15 @@
     echo "objectClass: organizationalunit"
     echo ""
 
+    echo "dn: uid=cyrus-admin,ou=Special Users,${hosted_domain_rootdn}"
+    echo "sn: Administrator"
+    echo "uid: cyrus-admin"
+    echo "objectClass: top"
+    echo "objectClass: person"
+    echo "objectClass: inetorgperson"
+    echo "objectClass: organizationalperson"
+    echo "givenName: Cyrus"
+    echo "cn: Cyrus Administrator"
+    echo ""
+
 ) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"

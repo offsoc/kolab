@@ -1,0 +1,28 @@
+---
+- name: Install list of required packages
+  package: name={{ item }} state=installed
+  with_items:
+    - git
+    - tig
+    - tmux
+    - docker
+    - docker-compose
+    - composer
+    - npm
+    - php-ldap
+    - php-mysqlnd
+    - diffutils
+    - file
+    - make
+    - openssl-devel
+    - patch
+    - php-cli
+    - php-common
+    - php-devel
+    - php-ldap
+    - php-opcache
+    - php-pecl-apcu
+    - php-mysqlnd
+    - re2c
+    - php-pear
+    - certbot
