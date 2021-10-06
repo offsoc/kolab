@@ -2,10 +2,10 @@
 
 namespace Database\Seeds\Local;
 
-use App\OpenVidu\Room;
+use App\Meet\Room;
 use Illuminate\Database\Seeder;
 
-class OpenViduRoomSeeder extends Seeder
+class MeetRoomSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -17,14 +17,14 @@ class OpenViduRoomSeeder extends Seeder
         $john = \App\User::where('email', 'john@kolab.org')->first();
         $jack = \App\User::where('email', 'jack@kolab.org')->first();
 
-        \App\OpenVidu\Room::create(
+        \App\Meet\Room::create(
             [
                 'user_id' => $john->id,
                 'name' => 'john'
             ]
         );
 
-        \App\OpenVidu\Room::create(
+        \App\Meet\Room::create(
             [
                 'user_id' => $jack->id,
                 'name' => strtolower(\App\Utils::randStr(3, 3, '-'))
