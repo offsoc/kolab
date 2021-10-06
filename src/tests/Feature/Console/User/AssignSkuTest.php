@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Feature\Console;
+namespace Tests\Feature\Console\User;
 
 use Tests\TestCase;
 
-class UserAssignSkuTest extends TestCase
+class AssignSkuTest extends TestCase
 {
     /**
      * {@inheritDoc}
@@ -36,7 +36,7 @@ class UserAssignSkuTest extends TestCase
 
         $this->artisan('user:assign-sku unknown@unknown.org ' . $sku->id)
              ->assertExitCode(1)
-             ->expectsOutput("Unable to find the user unknown@unknown.org.");
+             ->expectsOutput("User not found.");
 
         $this->artisan('user:assign-sku ' . $user->email . ' unknownsku')
              ->assertExitCode(1)

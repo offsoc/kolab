@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\User;
 
 use App\Console\Command;
 
-class UserAssignSku extends Command
+class AssignSkuCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -30,7 +30,7 @@ class UserAssignSku extends Command
         $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
-            $this->error("Unable to find the user {$this->argument('user')}.");
+            $this->error("User not found.");
             return 1;
         }
 

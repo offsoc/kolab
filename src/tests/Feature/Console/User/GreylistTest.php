@@ -1,11 +1,14 @@
 <?php
 
-namespace Tests\Feature\Console;
+namespace Tests\Feature\Console\User;
 
 use Tests\TestCase;
 
-class UserDiscountTest extends TestCase
+class GreylistTest extends TestCase
 {
+    /**
+     * Test command runs
+     */
     public function testHandle(): void
     {
         $this->markTestIncomplete();

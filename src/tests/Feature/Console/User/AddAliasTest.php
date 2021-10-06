@@ -1,11 +1,10 @@
 <?php
 
-namespace Tests\Feature\Console;
+namespace Tests\Feature\Console\User;
 
-use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class UserRestoreTest extends TestCase
+class AddAliasTest extends TestCase
 {
     /**
      * {@inheritDoc}
@@ -34,15 +33,13 @@ class UserRestoreTest extends TestCase
      */
     public function testHandle(): void
     {
-        Queue::fake();
-
         // Non-existing user
-        $code = \Artisan::call("user:restore unknown@unknown.org");
+        $code = \Artisan::call("user:add-alias unknown unknown");
         $output = trim(\Artisan::output());
+
         $this->assertSame(1, $code);
         $this->assertSame("User not found.", $output);
 
-        // Create a user account for delete
         $user = $this->getTestUser('user@force-delete.com');
         $domain = $this->getTestDomain('force-delete.com', [
                 'status' => \App\Domain::STATUS_NEW,
@@ -52,29 +49,29 @@ class UserRestoreTest extends TestCase
         $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $user->assignPackage($package_kolab);
         $domain->assignPackage($package_domain, $user);
-        $wallet = $user->wallets()->first();
-        $entitlements = $wallet->entitlements->pluck('id')->all();
 
-        $this->assertCount(8, $entitlements);
-
-        // Non-deleted user
-        $code = \Artisan::call("user:restore {$user->email}");
+        // Invalid alias
+        $code = \Artisan::call("user:add-alias {$user->email} invalid");
         $output = trim(\Artisan::output());
+
         $this->assertSame(1, $code);
-        $this->assertSame("The user is not yet deleted.", $output);
+        $this->assertSame("The specified alias is invalid.", $output);
 
-        $user->delete();
-
-        $this->assertTrue($user->trashed());
-        $this->assertTrue($domain->fresh()->trashed());
-
-        // Deleted user
-        $code = \Artisan::call("user:restore {$user->email}");
+        // Test success
+        $code = \Artisan::call("user:add-alias {$user->email} test@force-delete.com");
         $output = trim(\Artisan::output());
+
         $this->assertSame(0, $code);
         $this->assertSame("", $output);
+        $this->assertCount(1, $user->aliases()->where('alias', 'test@force-delete.com')->get());
 
-        $this->assertFalse($user->fresh()->trashed());
-        $this->assertFalse($domain->fresh()->trashed());
+        // Alias already exists
+        $code = \Artisan::call("user:add-alias {$user->email} test@force-delete.com");
+        $output = trim(\Artisan::output());
+
+        $this->assertSame(1, $code);
+        $this->assertSame("Address is already assigned to the user.", $output);
+
+        // TODO: test --force option
     }
 }

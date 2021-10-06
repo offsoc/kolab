@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\User;
 
 use App\Console\Command;
 
-class UserEntitlements extends Command
+class EntitlementsCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -30,10 +30,9 @@ class UserEntitlements extends Command
         $user = $this->getUser($this->argument('userid'));
 
         if (!$user) {
+            $this->error("User not found.");
             return 1;
         }
-
-        $this->info("Found user: {$user->id}");
 
         $skus_counted = [];
 
@@ -47,7 +46,7 @@ class UserEntitlements extends Command
 
         foreach ($skus_counted as $id => $qty) {
             $sku = \App\Sku::find($id);
-            $this->info("SKU: {$sku->title} ({$qty})");
+            $this->info("{$sku->title}: {$qty}");
         }
     }
 }

@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\User;
 
 use App\Console\Command;
 
-class UserVerify extends Command
+class WalletsCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'user:verify {user}';
+    protected $signature = 'user:wallets {user}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Verify the state of a user account';
+    protected $description = "List a user's wallets.";
 
     /**
      * Execute the console command.
@@ -30,12 +30,12 @@ class UserVerify extends Command
         $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
+            $this->error("User not found.");
             return 1;
         }
 
-        $this->info("Found user: {$user->id}");
-
-        $job = new \App\Jobs\User\VerifyJob($user->id);
-        $job->handle();
+        foreach ($user->wallets as $wallet) {
+            $this->info("{$wallet->id} {$wallet->description}");
+        }
     }
 }

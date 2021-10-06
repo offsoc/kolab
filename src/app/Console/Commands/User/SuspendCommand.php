@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\User;
 
 use App\Console\Command;
 
-class UserUnsuspend extends Command
+class SuspendCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'user:unsuspend {user}';
+    protected $signature = 'user:suspend {user}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Remove a user suspension';
+    protected $description = 'Suspend a user';
 
     /**
      * Execute the console command.
@@ -30,11 +30,10 @@ class UserUnsuspend extends Command
         $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
+            $this->error("User not found.");
             return 1;
         }
 
-        $this->info("Found user {$user->id}");
-
-        $user->unsuspend();
+        $user->suspend();
     }
 }

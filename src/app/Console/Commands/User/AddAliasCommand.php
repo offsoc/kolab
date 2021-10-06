@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\User;
 
 use App\Console\Command;
 use App\Http\Controllers\API\V4\UsersController;
 
-class UserAddAlias extends Command
+class AddAliasCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -31,6 +31,7 @@ class UserAddAlias extends Command
         $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
+            $this->error("User not found.");
             return 1;
         }
 

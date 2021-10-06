@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\Feature\Console;
+namespace Tests\Feature\Console\User;
 
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class UserForceDeleteTest extends TestCase
+class ForceDeleteTest extends TestCase
 {
     /**
      * {@inheritDoc}

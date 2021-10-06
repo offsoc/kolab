@@ -21,16 +21,6 @@ class GreylistCommand extends Command
     protected $description = 'List currently greylisted delivery attempts for the user.';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed

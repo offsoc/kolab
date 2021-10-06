@@ -1,25 +1,24 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\User;
 
-use App\User;
 use App\Console\Command;
 
-class UserSuspend extends Command
+class VerifyCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'user:suspend {user}';
+    protected $signature = 'user:verify {user}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Suspend a user';
+    protected $description = 'Verify the state of a user account';
 
     /**
      * Execute the console command.
@@ -31,11 +30,13 @@ class UserSuspend extends Command
         $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
+            $this->error("User not found.");
             return 1;
         }
 
-        $this->info("Found user: {$user->id}");
+        $job = new \App\Jobs\User\VerifyJob($user->id);
+        $job->handle();
 
-        $user->suspend();
+        // TODO: We should check the job result and print an error on failure
     }
 }
