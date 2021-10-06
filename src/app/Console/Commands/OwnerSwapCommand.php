@@ -63,10 +63,12 @@ class OwnerSwapCommand extends Command
         // Switch wallet for existing entitlements
         $wallet->entitlements()->withTrashed()->update(['wallet_id' => $target_wallet->id]);
 
-        // Update target user created_at
+        // Update target user's created_at timestamp to the source user's created_at.
+        // This is needed because we use this date when charging entitlements,
+        // i.e. the first month is free.
         $dt = \now()->subMonthsWithoutOverflow(1);
-        if ($target->created_at >= $dt) {
-            $target->created_at = $dt;
+        if ($target->created_at > $dt && $target->created_at > $user->created_at) {
+            $target->created_at = $user->created_at;
             $target->save();
         }
 
