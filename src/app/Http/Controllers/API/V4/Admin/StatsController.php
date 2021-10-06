@@ -24,6 +24,7 @@ class StatsController extends \App\Http\Controllers\Controller
         'income',
         'users',
         'users-all',
+        'vouchers',
     ];
 
     /**
@@ -80,31 +81,7 @@ class StatsController extends \App\Http\Controllers\Controller
             return $item . '%';
         }, $labels);
 
-        // See https://frappe.io/charts/docs for format/options description
-
-        return [
-            'title' => 'Discounts',
-            'type' => 'donut',
-            'colors' => [
-                self::COLOR_BLUE,
-                self::COLOR_BLUE_DARK,
-                self::COLOR_GREEN,
-                self::COLOR_GREEN_DARK,
-                self::COLOR_ORANGE,
-                self::COLOR_RED,
-                self::COLOR_RED_DARK
-            ],
-            'maxSlices' => 8,
-            'tooltipOptions' => [], // does not work without it (https://github.com/frappe/charts/issues/314)
-            'data' => [
-                'labels' => $labels,
-                'datasets' => [
-                    [
-                        'values' => $discounts
-                    ]
-                ]
-            ]
-        ];
+        return $this->donutChart(\trans('app.chart-discounts'), $labels, $discounts);
     }
 
     /**
@@ -177,7 +154,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // See https://frappe.io/charts/docs for format/options description
 
         return [
-            'title' => "Income in {$currency} - last 8 weeks",
+            'title' => \trans('app.chart-income', ['currency' => $currency]),
             'type' => 'bar',
             'colors' => [self::COLOR_BLUE],
             'axisOptions' => [
@@ -247,7 +224,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // See https://frappe.io/charts/docs for format/options description
 
         return [
-            'title' => 'Users - last 8 weeks',
+            'title' => \trans('app.chart-users'),
             'type' => 'bar', // Required to fix https://github.com/frappe/charts/issues/294
             'colors' => [self::COLOR_GREEN, self::COLOR_RED],
             'axisOptions' => [
@@ -257,19 +234,19 @@ class StatsController extends \App\Http\Controllers\Controller
                 'labels' => $labels,
                 'datasets' => [
                     [
-                        'name' => 'Created',
+                        'name' => \trans('app.chart-created'),
                         'chartType' => 'bar',
                         'values' => $created
                     ],
                     [
-                        'name' => 'Deleted',
+                        'name' => \trans('app.chart-deleted'),
                         'chartType' => 'line',
                         'values' => $deleted
                     ]
                 ],
                 'yMarkers' => [
                     [
-                        'label' => sprintf('average = %.1f', $avg),
+                        'label' => sprintf('%s = %.1f', \trans('app.chart-average'), $avg),
                         'value' => collect($created)->avg(),
                         'options' => [ 'labelPos' => 'left' ] // default: 'right'
                     ]
@@ -332,7 +309,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // See https://frappe.io/charts/docs for format/options description
 
         return [
-            'title' => 'All Users - last year',
+            'title' => \trans('app.chart-allusers'),
             'type' => 'line',
             'colors' => [self::COLOR_GREEN],
             'axisOptions' => [
@@ -349,6 +326,67 @@ class StatsController extends \App\Http\Controllers\Controller
                     [
                         // 'name' => 'Existing',
                         'values' => $all
+                    ]
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get vouchers chart
+     */
+    protected function chartVouchers(): array
+    {
+        $vouchers = DB::table('wallets')
+            ->selectRaw("count(discount_id) as cnt, code")
+            ->join('discounts', 'discounts.id', '=', 'wallets.discount_id')
+            ->join('users', 'users.id', '=', 'wallets.user_id')
+            ->where('discount', '>', 0)
+            ->whereNotNull('code')
+            ->whereNull('users.deleted_at')
+            ->groupBy('discounts.code')
+            ->havingRaw("count(discount_id) > 0")
+            ->orderByRaw('1');
+
+        $addTenantScope = function ($builder, $tenantId) {
+            return $builder->where('users.tenant_id', $tenantId);
+        };
+
+        $vouchers = $this->applyTenantScope($vouchers, $addTenantScope)
+            ->pluck('cnt', 'code')->all();
+
+        $labels = array_keys($vouchers);
+        $vouchers = array_values($vouchers);
+
+        // $labels = ["TEST", "NEW", "OTHER", "US"];
+        // $vouchers = [100, 120, 30, 50];
+
+        return $this->donutChart(\trans('app.chart-vouchers'), $labels, $vouchers);
+    }
+
+    protected static function donutChart($title, $labels, $data): array
+    {
+        // See https://frappe.io/charts/docs for format/options description
+
+        return [
+            'title' => $title,
+            'type' => 'donut',
+            'colors' => [
+                self::COLOR_BLUE,
+                self::COLOR_BLUE_DARK,
+                self::COLOR_GREEN,
+                self::COLOR_GREEN_DARK,
+                self::COLOR_ORANGE,
+                self::COLOR_RED,
+                self::COLOR_RED_DARK
+            ],
+            'maxSlices' => 8,
+            'tooltipOptions' => [], // does not work without it (https://github.com/frappe/charts/issues/314)
+            'data' => [
+                'labels' => $labels,
+                'datasets' => [
+                    [
+                        'values' => $data
                     ]
                 ]
             ]

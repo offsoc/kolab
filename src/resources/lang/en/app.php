@@ -10,6 +10,15 @@ return [
     | The following language lines are used in the application.
     */
 
+    'chart-created' => 'Created',
+    'chart-deleted' => 'Deleted',
+    'chart-average' => 'average',
+    'chart-allusers' => 'All Users - last year',
+    'chart-discounts' => 'Discounts',
+    'chart-vouchers' => 'Vouchers',
+    'chart-income' => 'Income in :currency - last 8 weeks',
+    'chart-users' => 'Users - last 8 weeks',
+
     'mandate-delete-success' => 'The auto-payment has been removed.',
     'mandate-update-success' => 'The auto-payment has been updated.',
 
