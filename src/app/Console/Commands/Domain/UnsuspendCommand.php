@@ -1,25 +1,24 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
-use App\Domain;
 
-class DomainSuspend extends Command
+class UnsuspendCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'domain:suspend {domain}';
+    protected $signature = 'domain:unsuspend {domain}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Suspend a domain';
+    protected $description = 'Remove a domain suspension';
 
     /**
      * Execute the console command.
@@ -31,11 +30,12 @@ class DomainSuspend extends Command
         $domain = $this->getDomain($this->argument('domain'));
 
         if (!$domain) {
+            $this->error("Domain not found.");
             return 1;
         }
 
-        $this->info("Found domain: {$domain->id}");
+        $this->info("Found domain {$domain->id}");
 
-        $domain->suspend();
+        $domain->unsuspend();
     }
 }

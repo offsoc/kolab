@@ -54,6 +54,8 @@ return [
     'user-unsuspend-success' => 'User unsuspended successfully.',
     'user-reset-2fa-success' => '2-Factor authentication reset successfully.',
     'user-setconfig-success' => 'User settings updated successfully.',
+    'user-set-sku-success' => 'The subscription added successfully.',
+    'user-set-sku-already-exists' => 'The subscription already exists.',
 
     'search-foundxdomains' => ':x domains have been found.',
     'search-foundxgroups' => ':x distribution lists have been found.',

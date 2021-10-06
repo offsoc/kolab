@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class DomainRestore extends Command
+class RestoreCommand extends Command
 {
     /**
      * The name and signature of the console command.

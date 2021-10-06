@@ -173,7 +173,57 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.user-reset-2fa-success'),
+                'message' => \trans('app.user-reset-2fa-success'),
+        ]);
+    }
+
+    /**
+     * Set/Add a SKU for the user
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @param string                   $id      User identifier
+     * @param string                   $sku     SKU title
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function setSku(Request $request, $id, $sku)
+    {
+        // For now we allow adding the 'beta' SKU only
+        if ($sku != 'beta') {
+            return $this->errorResponse(404);
+        }
+
+        $user = User::find($id);
+
+        if (!$this->checkTenant($user)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canUpdate($user)) {
+            return $this->errorResponse(403);
+        }
+
+        $sku = Sku::withObjectTenantContext($user)->where('title', $sku)->first();
+
+        if (!$sku) {
+            return $this->errorResponse(404);
+        }
+
+        if ($user->entitlements()->where('sku_id', $sku->id)->first()) {
+            return $this->errorResponse(422, \trans('app.user-set-sku-already-exists'));
+        }
+
+        $user->assignSku($sku);
+        $entitlement = $user->entitlements()->where('sku_id', $sku->id)->first();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => \trans('app.user-set-sku-success'),
+                'sku' => [
+                    'cost' => $entitlement->cost,
+                    'name' => $sku->name,
+                    'id' => $sku->id,
+                ]
         ]);
     }
 
@@ -251,7 +301,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.user-suspend-success'),
+                'message' => \trans('app.user-suspend-success'),
         ]);
     }
 
@@ -279,7 +329,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.user-unsuspend-success'),
+                'message' => \trans('app.user-unsuspend-success'),
         ]);
     }
 
@@ -327,7 +377,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.user-update-success'),
+                'message' => \trans('app.user-update-success'),
         ]);
     }
 }

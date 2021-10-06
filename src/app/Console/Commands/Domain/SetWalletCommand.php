@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
 use App\Entitlement;
 use App\Domain;
 use App\Sku;
-use App\Wallet;
 use Illuminate\Support\Facades\Queue;
 
-class DomainSetWallet extends Command
+class SetWalletCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -51,7 +50,7 @@ class DomainSetWallet extends Command
             return 1;
         }
 
-        $sku = Sku::where('title', 'domain-hosting')->first();
+        $sku = Sku::withObjectTenantContext($domain)->where('title', 'domain-hosting')->first();
 
         Queue::fake(); // ignore LDAP for now (note: adding entitlements updates the domain)
 

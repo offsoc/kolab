@@ -297,7 +297,8 @@ class SignupTest extends TestCaseDusk
 
             // Here we expect 3 text inputs, Back and Continue buttons
             $browser->with('@step3', function ($step) {
-                $domains_count = count(Domain::getPublicDomains());
+                $domains = Domain::getPublicDomains();
+                $domains_count = count($domains);
 
                 $step->assertSeeIn('.card-title', 'Sign Up - Step 3/3')
                     ->assertMissing('#signup_last_name')
@@ -307,11 +308,15 @@ class SignupTest extends TestCaseDusk
                     ->assertVisible('#signup_confirm')
                     ->assertVisible('select#signup_domain')
                     ->assertElementsCount('select#signup_domain option', $domains_count, false)
+                    ->assertText('select#signup_domain option:nth-child(1)', $domains[0])
+                    ->assertValue('select#signup_domain option:nth-child(1)', $domains[0])
+                    ->assertText('select#signup_domain option:nth-child(2)', $domains[1])
+                    ->assertValue('select#signup_domain option:nth-child(2)', $domains[1])
                     ->assertVisible('[type=button]')
                     ->assertVisible('[type=submit]')
                     ->assertSeeIn('[type=submit]', 'Submit')
                     ->assertFocused('#signup_login')
-                    ->assertValue('select#signup_domain', \config('app.domain'))
+                    ->assertSelected('select#signup_domain', \config('app.domain'))
                     ->assertValue('#signup_login', '')
                     ->assertValue('#signup_password', '')
                     ->assertValue('#signup_confirm', '');

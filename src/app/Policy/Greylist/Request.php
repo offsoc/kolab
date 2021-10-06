@@ -82,26 +82,11 @@ class Request
             $this->senderLocal = substr($this->senderLocal, 0, 255);
         }
 
-        $entry = $this->findConnectsCollectionRecent()->orderBy('updated_at')->first();
-
-        if (!$entry) {
-            // purge all entries to avoid a unique constraint violation.
+        // Purge all old information if we have no recent entries
+        $noEntry = false;
+        if (!$this->findConnectsCollectionRecent()->exists()) {
             $this->findConnectsCollection()->delete();
-
-            $entry = Connect::create(
-                [
-                    'sender_local' => $this->senderLocal,
-                    'sender_domain' => $this->senderDomain,
-                    'net_id' => $this->netID,
-                    'net_type' => $this->netType,
-                    'recipient_hash' => $this->recipientHash,
-                    'recipient_id' => $this->recipientID,
-                    'recipient_type' => $this->recipientType,
-                    'connect_count' => 1,
-                    'created_at' => $this->timestamp,
-                    'updated_at' => $this->timestamp
-                ]
-            );
+            $noEntry = true;
         }
 
         // See if the recipient opted-out of the feature
@@ -113,14 +98,6 @@ class Request
         // FIXME: Shouldn't we bail-out (return early) if there's no $recipient?
 
         // the following block is to maintain statistics and state ...
-        $entries = Connect::where(
-            [
-                'sender_domain' => $this->senderDomain,
-                'net_id' => $this->netID,
-                'net_type' => $this->netType
-            ]
-        )
-            ->whereDate('updated_at', '>=', $this->timestamp->copy()->subDays(7));
 
         // determine if the sender domain is a whitelist from this network
         $this->whitelist = Whitelist::where(
@@ -131,6 +108,8 @@ class Request
             ]
         )->first();
 
+        $cutoffDate = $this->timestamp->copy()->subDays(7);
+
         if ($this->whitelist) {
             if ($this->whitelist->updated_at < $this->timestamp->copy()->subMonthsWithoutOverflow(1)) {
                 $this->whitelist->delete();
@@ -138,17 +117,37 @@ class Request
                 $this->whitelist->updated_at = $this->timestamp;
                 $this->whitelist->save(['timestamps' => false]);
 
-                $entries->update(
+                Connect::where(
                     [
-                        'greylisting' => false,
-                        'updated_at' => $this->timestamp
+                        'sender_domain' => $this->senderDomain,
+                        'net_id' => $this->netID,
+                        'net_type' => $this->netType,
+                        'greylisting' => true
                     ]
-                );
+                )
+                    ->whereDate('updated_at', '>=', $cutoffDate)
+                    ->update(
+                        [
+                            'greylisting' => false,
+                            'updated_at' => $this->timestamp
+                        ]
+                    );
 
                 return false;
             }
         } else {
-            if ($entries->count() >= 5) {
+            $count = Connect::where(
+                [
+                    'sender_domain' => $this->senderDomain,
+                    'net_id' => $this->netID,
+                    'net_type' => $this->netType
+                ]
+            )
+                ->whereDate('updated_at', '>=', $cutoffDate)
+                ->limit(4)->count();
+
+            // Automatically create a whitelist if we have at least 5 (4 existing plus this) messages from the sender
+            if ($count >= 4) {
                 $this->whitelist = Whitelist::create(
                     [
                         'sender_domain' => $this->senderDomain,
@@ -159,12 +158,21 @@ class Request
                     ]
                 );
 
-                $entries->update(
+                Connect::where(
                     [
-                        'greylisting' => false,
-                        'updated_at' => $this->timestamp
+                        'sender_domain' => $this->senderDomain,
+                        'net_id' => $this->netID,
+                        'net_type' => $this->netType,
+                        'greylisting' => true
                     ]
-                );
+                )
+                    ->whereDate('updated_at', '>=', $cutoffDate)
+                    ->update(
+                        [
+                            'greylisting' => false,
+                            'updated_at' => $this->timestamp
+                        ]
+                    );
             }
         }
 
@@ -176,29 +184,15 @@ class Request
             return false;
         }
 
-        // determine if the sender, net and recipient combination has existed before, for each recipient
-        // any one recipient matching should supersede the other recipients not having matched
-        $connect = Connect::where(
-            [
-                'sender_local' => $this->senderLocal,
-                'sender_domain' => $this->senderDomain,
-                'recipient_hash' => $this->recipientHash,
-                'net_id' => $this->netID,
-                'net_type' => $this->netType,
-            ]
-        )
-            ->whereDate('updated_at', '>=', $this->timestamp->copy()->subMonthsWithoutOverflow(1))
-            ->orderBy('updated_at')
-            ->first();
+        $defer = true;
 
-        $deferIfPermit = true;
-
-        if ($connect) {
+        // Retrieve the entry for the sender/recipient/net combination
+        if (!$noEntry && ($connect = $this->findConnectsCollection()->first())) {
             $connect->connect_count += 1;
 
             // TODO: The period of time for which the greylisting persists is configurable.
             if ($connect->created_at < $this->timestamp->copy()->subMinutes(5)) {
-                $deferIfPermit = false;
+                $defer = false;
 
                 $connect->greylisting = false;
             }
@@ -220,7 +214,7 @@ class Request
             );
         }
 
-        return $deferIfPermit;
+        return $defer;
     }
 
     private function findConnectsCollection()

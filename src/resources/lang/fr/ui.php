@@ -322,6 +322,7 @@ return [
     'user' => [
         '2fa-hint1' => "Cela éliminera le droit à l'authentification à 2-Facteurs ainsi que les éléments configurés par l'utilisateur.",
         '2fa-hint2' => "Veuillez vous assurer que l'identité de l'utilisateur est correctement confirmée.",
+        'add-beta' => "Activer le programme bêta",
         'address' => "Adresse",
         'aliases' => "Alias",
         'aliases-email' => "Alias E-mail",

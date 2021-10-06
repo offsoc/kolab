@@ -48,7 +48,7 @@ class Kernel extends ConsoleKernel
     {
         $this->load(__DIR__ . '/Commands');
 
-        if (\app('env') != 'production') {
+        if (\app('env') == 'local') {
             $this->load(__DIR__ . '/Development');
         }
 

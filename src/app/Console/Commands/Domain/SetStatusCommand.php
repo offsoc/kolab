@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
-use App\Domain;
 use Illuminate\Support\Facades\Queue;
 
-class DomainSetStatus extends Command
+class SetStatusCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -32,6 +31,7 @@ class DomainSetStatus extends Command
         $domain = $this->getDomain($this->argument('domain'));
 
         if (!$domain) {
+            $this->error("Domain not found.");
             return 1;
         }
 
