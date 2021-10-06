@@ -236,8 +236,9 @@
 
                             // Update the invitation record
                             const index = this.invitations.findIndex(item => item.id == id)
-                            this.invitations.splice(index, 1)
-                            this.$set(this.invitations, index, response.data.invitation)
+                            if (index > -1) {
+                                this.$set(this.invitations, index, response.data.invitation)
+                            }
                         }
                     })
             },
