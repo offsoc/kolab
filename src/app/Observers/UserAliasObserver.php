@@ -86,7 +86,7 @@ class UserAliasObserver
             \App\Jobs\User\UpdateJob::dispatch($alias->user_id);
 
             if (Tenant::getConfig($alias->user->tenant_id, 'pgp.enable')) {
-                \App\Jobs\PGP\KeyUnregisterJob::dispatch($alias->alias);
+                \App\Jobs\PGP\KeyDeleteJob::dispatch($alias->user_id, $alias->alias);
             }
         }
     }

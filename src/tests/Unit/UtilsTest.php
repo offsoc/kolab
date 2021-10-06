@@ -8,6 +8,24 @@ use Tests\TestCase;
 class UtilsTest extends TestCase
 {
     /**
+     * Test for Utils::normalizeAddress()
+     */
+    public function testNormalizeAddress(): void
+    {
+        $this->assertSame('', \App\Utils::normalizeAddress(''));
+        $this->assertSame('', \App\Utils::normalizeAddress(null));
+        $this->assertSame('test', \App\Utils::normalizeAddress('TEST'));
+        $this->assertSame('test@domain.tld', \App\Utils::normalizeAddress('Test@Domain.TLD'));
+        $this->assertSame('test@domain.tld', \App\Utils::normalizeAddress('Test+Trash@Domain.TLD'));
+
+        $this->assertSame(['', ''], \App\Utils::normalizeAddress('', true));
+        $this->assertSame(['', ''], \App\Utils::normalizeAddress(null, true));
+        $this->assertSame(['test', ''], \App\Utils::normalizeAddress('TEST', true));
+        $this->assertSame(['test', 'domain.tld'], \App\Utils::normalizeAddress('Test@Domain.TLD', true));
+        $this->assertSame(['test', 'domain.tld'], \App\Utils::normalizeAddress('Test+Trash@Domain.TLD', true));
+    }
+
+    /**
      * Test for Utils::powerSet()
      */
     public function testPowerSet(): void

@@ -188,6 +188,10 @@ class UserObserver
         // FIXME: What do we do with user wallets?
 
         \App\Jobs\User\DeleteJob::dispatch($user->id);
+
+        if (\App\Tenant::getConfig($user->tenant_id, 'pgp.enable')) {
+            \App\Jobs\PGP\KeyDeleteJob::dispatch($user->id, $user->email);
+        }
     }
 
     /**

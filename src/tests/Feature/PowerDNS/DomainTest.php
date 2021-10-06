@@ -18,11 +18,7 @@ class DomainTest extends TestCase
     {
         parent::setUp();
 
-        $this->domain = Domain::firstOrCreate(
-            [
-                'name' => 'test-domain.com'
-            ]
-        );
+        $this->domain = Domain::firstOrCreate(['name' => 'test-domain.com']);
     }
 
     /**
@@ -35,36 +31,18 @@ class DomainTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * Test domain record creation (observer)
+     */
     public function testDomainCreate(): void
     {
         $this->assertCount(1, $this->domain->records()->where('type', 'SOA')->get());
         $this->assertCount(2, $this->domain->records()->where('type', 'NS')->get());
-    }
+        $this->assertCount(2, $this->domain->records()->where('type', 'A')->get());
+        $this->assertCount(5, $this->domain->records()->get());
 
-    public function testCreateRecord(): void
-    {
-        $before = $this->domain->getSerial();
+        $this->assertCount(1, $this->domain->settings()->get());
 
-        Record::create(
-            [
-                'domain_id' => $this->domain->id,
-                'name' => $this->domain->{'name'},
-                'type' => "MX",
-                'content' => '10 mx01.' . $this->domain->{'name'} . '.'
-            ]
-        );
-
-        Record::create(
-            [
-                'domain_id' => $this->domain->id,
-                'name' => 'mx01.' . $this->domain->{'name'},
-                'type' => "A",
-                'content' => '127.0.0.1'
-            ]
-        );
-
-        $after = $this->domain->getSerial();
-
-        $this->assertTrue($before < $after);
+        // TODO: Test content of every domain record/setting
     }
 }

@@ -21,6 +21,7 @@ class KeyCreateTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         UserAlias::where('alias', 'test-alias@kolab.org')->delete();
         PGP::homedirCleanup($user);
+        \App\PowerDNS\Domain::where('name', '_woat.kolab.org')->delete();
     }
 
     /**
@@ -31,6 +32,7 @@ class KeyCreateTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         UserAlias::where('alias', 'test-alias@kolab.org')->delete();
         PGP::homedirCleanup($user);
+        \App\PowerDNS\Domain::where('name', '_woat.kolab.org')->delete();
 
         parent::tearDown();
     }
@@ -82,7 +84,21 @@ class KeyCreateTest extends TestCase
         $this->assertSame(true, $key->canEncrypt());
         $this->assertSame(false, $key->isRevoked());
 
-        // TODO: Assert the public key in DNS?
+        // Assert the public key in DNS
+        $dns_domain = \App\PowerDNS\Domain::where('name', '_woat.kolab.org')->first();
+        $this->assertNotNull($dns_domain);
+        $dns_record = $dns_domain->records()->where('type', 'TXT')->first();
+        $this->assertNotNull($dns_record);
+        $this->assertSame('TXT', $dns_record->type);
+        $this->assertSame(sha1('john') . '._woat.kolab.org', $dns_record->name);
+        $this->assertMatchesRegularExpression(
+            '/^v=woat1,public_key='
+                . '-----BEGIN PGP PUBLIC KEY BLOCK-----'
+                . '[a-zA-Z0-9\n\/+=]+'
+                . '-----END PGP PUBLIC KEY BLOCK-----'
+                . '$/',
+            $dns_record->content
+        );
 
         // Test an alias
         Queue::fake();
@@ -119,5 +135,7 @@ class KeyCreateTest extends TestCase
         $this->assertSame(false, $key->canSign());
         $this->assertSame(true, $key->canEncrypt());
         $this->assertSame(false, $key->isRevoked());
+
+        $this->assertSame(2, $dns_domain->records()->where('type', 'TXT')->count());
     }
 }
