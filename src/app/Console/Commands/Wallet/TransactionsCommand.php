@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
 
-class WalletTransactions extends Command
+class TransactionsCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -30,6 +30,7 @@ class WalletTransactions extends Command
         $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
+            $this->error("Wallet not found.");
             return 1;
         }
 

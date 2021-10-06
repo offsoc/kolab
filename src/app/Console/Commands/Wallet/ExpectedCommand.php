@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
 
-class WalletExpected extends Command
+class ExpectedCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -31,6 +31,7 @@ class WalletExpected extends Command
             $user = $this->getUser($this->option('user'));
 
             if (!$user) {
+                $this->error("User not found.");
                 return 1;
             }
 
@@ -39,20 +40,15 @@ class WalletExpected extends Command
             $wallets = \App\Wallet::select('wallets.*')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
                 ->withEnvTenantContext('users')
-                ->all();
+                ->whereNull('users.deleted_at');
         }
 
-        foreach ($wallets as $wallet) {
+        $wallets->each(function ($wallet) {
             $charge = 0;
             $expected = $wallet->expectedCharges();
 
-            if (!$wallet->owner) {
-                \Log::debug("{$wallet->id} has no owner: {$wallet->user_id}");
-                continue;
-            }
-
             if ($this->option('non-zero') && $expected < 1) {
-                continue;
+                return;
             }
 
             $this->info(
@@ -63,6 +59,6 @@ class WalletExpected extends Command
                     $expected
                 )
             );
-        }
+        });
     }
 }

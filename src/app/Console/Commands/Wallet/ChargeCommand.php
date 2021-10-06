@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
-use App\Wallet;
 
-class WalletCharge extends Command
+class ChargeCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -32,14 +31,20 @@ class WalletCharge extends Command
             // Find specified wallet by ID
             $wallet = $this->getWallet($wallet);
 
-            if (!$wallet || !$wallet->owner) {
+            if (!$wallet) {
+                $this->error("Wallet not found.");
+                return 1;
+            }
+
+            if (!$wallet->owner) {
+                $this->error("Wallet's owner is deleted.");
                 return 1;
             }
 
             $wallets = [$wallet];
         } else {
             // Get all wallets, excluding deleted accounts
-            $wallets = Wallet::select('wallets.*')
+            $wallets = \App\Wallet::select('wallets.*')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
                 ->withEnvTenantContext('users')
                 ->whereNull('users.deleted_at')

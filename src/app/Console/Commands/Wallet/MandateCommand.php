@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
 use App\Http\Controllers\API\V4\PaymentsController;
 
-class WalletMandate extends Command
+class MandateCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -19,7 +19,7 @@ class WalletMandate extends Command
      *
      * @var string
      */
-    protected $description = 'Show expected charges to wallets';
+    protected $description = 'Show wallet auto-payment mandate information.';
 
     /**
      * Execute the console command.
@@ -31,6 +31,7 @@ class WalletMandate extends Command
         $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
+            $this->error("Wallet not found.");
             return 1;
         }
 

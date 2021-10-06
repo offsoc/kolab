@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
 
-class WalletGetDiscount extends Command
+class SetBalanceCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'wallet:get-discount {wallet}';
+    protected $signature = 'wallet:set-balance {wallet} {balance}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Display the existing discount to a wallet, if any.';
+    protected $description = 'Set the balance of a wallet';
 
     /**
      * Execute the console command.
@@ -30,14 +30,11 @@ class WalletGetDiscount extends Command
         $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
+            $this->error("Wallet not found.");
             return 1;
         }
 
-        if (!$wallet->discount) {
-            $this->info("No discount on this wallet.");
-            return 0;
-        }
-
-        $this->info($wallet->discount->discount);
+        $wallet->balance = (int) $this->argument('balance');
+        $wallet->save();
     }
 }

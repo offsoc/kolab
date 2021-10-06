@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use Illuminate\Console\Command;
 
-class WalletBalances extends Command
+class BalancesCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -30,19 +30,13 @@ class WalletBalances extends Command
         $wallets = \App\Wallet::select('wallets.*')
             ->join('users', 'users.id', '=', 'wallets.user_id')
             ->withEnvTenantContext('users')
-            ->all();
+            ->where('balance', '!=', '0')
+            ->whereNull('users.deleted_at')
+            ->orderBy('balance');
 
         $wallets->each(
             function ($wallet) {
-                if ($wallet->balance == 0) {
-                    return;
-                }
-
                 $user = $wallet->owner;
-
-                if (!$user) {
-                    return;
-                }
 
                 $this->info(
                     sprintf(

@@ -4,7 +4,7 @@ namespace Tests\Feature\Console;
 
 use Tests\TestCase;
 
-class WalletDiscountTest extends TestCase
+class WalletsTest extends TestCase
 {
     public function testHandle(): void
     {

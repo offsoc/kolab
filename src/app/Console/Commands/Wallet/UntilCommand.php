@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
 
-class WalletGetBalance extends Command
+class UntilCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'wallet:get-balance {wallet}';
+    protected $signature = 'wallet:until {wallet}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Display the balance of a wallet';
+    protected $description = 'Show until when the balance on a wallet lasts.';
 
     /**
      * Execute the console command.
@@ -30,9 +30,12 @@ class WalletGetBalance extends Command
         $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
+            $this->error("Wallet not found.");
             return 1;
         }
 
-        $this->info($wallet->balance);
+        $until = $wallet->balanceLastsUntil();
+
+        $this->info("Lasts until: " . ($until ? $until->toDateString() : 'unknown'));
     }
 }

@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
 
-class WalletAddTransaction extends Command
+class GetDiscountCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'wallet:add-transaction {wallet} {qty} {--message=}';
+    protected $signature = 'wallet:get-discount {wallet}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Add a transaction to a wallet';
+    protected $description = 'Display the existing discount to a wallet, if any.';
 
     /**
      * Execute the console command.
@@ -30,17 +30,15 @@ class WalletAddTransaction extends Command
         $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
+            $this->error("Wallet not found.");
             return 1;
         }
 
-        $qty = (int) $this->argument('qty');
-
-        $message = $this->option('message');
-
-        if ($qty < 0) {
-            $wallet->debit($qty, $message);
-        } else {
-            $wallet->credit($qty, $message);
+        if (!$wallet->discount) {
+            $this->info("No discount on this wallet.");
+            return 0;
         }
+
+        $this->info($wallet->discount->discount);
     }
 }

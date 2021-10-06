@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\Feature\Console;
+namespace Tests\Feature\Console\Wallet;
 
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class WalletChargeTest extends TestCase
+class ChargeTest extends TestCase
 {
     /**
      * {@inheritDoc}
@@ -41,7 +41,8 @@ class WalletChargeTest extends TestCase
 
         // Non-existing wallet ID
         $this->artisan('wallet:charge 123')
-            ->assertExitCode(1);
+            ->assertExitCode(1)
+            ->expectsOutput("Wallet not found.");
 
         Queue::assertNothingPushed();
 

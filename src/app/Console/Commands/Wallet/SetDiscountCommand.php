@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
 
-class WalletDiscount extends Command
+class SetDiscountCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'wallet:discount {wallet} {discount}';
+    protected $signature = 'wallet:set-discount {wallet} {discount}';
 
     /**
      * The console command description.
@@ -30,6 +30,7 @@ class WalletDiscount extends Command
         $wallet = $this->getWallet($this->argument('wallet'));
 
         if (!$wallet) {
+            $this->error("Wallet not found.");
             return 1;
         }
 
@@ -41,6 +42,7 @@ class WalletDiscount extends Command
             $discount = $this->getObject(\App\Discount::class, $this->argument('discount'));
 
             if (!$discount) {
+                $this->error("Discount not found.");
                 return 1;
             }
 

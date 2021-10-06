@@ -37,7 +37,7 @@ class WalletsTest extends TestCase
     public function testGetWalletNotice(): void
     {
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
-        $package = \App\Package::where('title', 'kolab')->first();
+        $package = \App\Package::withObjectTenantContext($user)->where('title', 'kolab')->first();
         $user->assignPackage($package);
         $wallet = $user->wallets()->first();
 
@@ -90,7 +90,7 @@ class WalletsTest extends TestCase
 
         // Old entitlements, 100% discount
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));
-        $discount = \App\Discount::where('discount', 100)->first();
+        $discount = \App\Discount::withObjectTenantContext($user)->where('discount', 100)->first();
         $wallet->discount()->associate($discount);
 
         $notice = $method->invoke($controller, $wallet->refresh());
