@@ -32,7 +32,7 @@ describe('GET /ping', function() {
 });
 
 describe('Join room', function() {
-    const roomId = "room1";
+    let roomId
     let signalingSocket
     let peerId
 
@@ -51,6 +51,18 @@ describe('Join room', function() {
     }
 
     it('create room', async () => {
+        return request
+            .post(`/meetmedia/api/sessions`)
+            .expect(200)
+            .then(async (res) => {
+                roomId = res.body['id'];
+            })
+            .catch(err => {
+                console.warn(err); throw err 
+            })
+    });
+
+    it('connect', async () => {
         return request
             .post(`/meetmedia/api/sessions/${roomId}/connection`)
             .send({role: Roles.PUBLISHER | Roles.SUBSCRIBER | Roles.MODERATOR})
