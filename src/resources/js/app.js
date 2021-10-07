@@ -400,6 +400,22 @@ const app = new Vue({
 
             return this.$t('status.active')
         },
+        // Append some wallet properties to the object
+        userWalletProps(object) {
+            let wallet = store.state.authInfo.accounts[0]
+
+            if (!wallet) {
+                wallet = store.state.authInfo.wallets[0]
+            }
+
+            if (wallet) {
+                object.currency = wallet.currency
+                if (wallet.discount) {
+                    object.discount = wallet.discount
+                    object.discount_description = wallet.discount_description
+                }
+            }
+        },
         updateBodyClass(name) {
             // Add 'class' attribute to the body, different for each page
             // so, we can apply page-specific styles

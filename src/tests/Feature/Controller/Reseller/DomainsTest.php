@@ -185,6 +185,18 @@ class DomainsTest extends TestCase
     }
 
     /**
+     * Test creeating a domain (POST /api/v4/domains)
+     */
+    public function testStore(): void
+    {
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+
+        // Resellers can't create domains
+        $response = $this->actingAs($reseller1)->post("api/v4/domains", []);
+        $response->assertStatus(404);
+    }
+
+    /**
      * Test domain suspending (POST /api/v4/domains/<domain-id>/suspend)
      */
     public function testSuspend(): void

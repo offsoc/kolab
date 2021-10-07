@@ -50,6 +50,7 @@ return [
     'distlist-suspend-success' => 'Distribution list suspended successfully.',
     'distlist-unsuspend-success' => 'Distribution list unsuspended successfully.',
 
+    'domain-create-success' => 'Domain created successfully.',
     'domain-verify-success' => 'Domain verified successfully.',
     'domain-verify-error' => 'Domain ownership verification failed.',
     'domain-suspend-success' => 'Domain suspended successfully.',

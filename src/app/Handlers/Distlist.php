@@ -15,21 +15,21 @@ class Distlist extends Beta\Base
     }
 
     /**
-     * Check if the SKU is available to the user.
+     * Check if the SKU is available to the user/domain.
      *
-     * @param \App\Sku  $sku  The SKU object
-     * @param \App\User $user The user object
+     * @param \App\Sku              $sku    The SKU object
+     * @param \App\User|\App\Domain $object The user or domain object
      *
      * @return bool
      */
-    public static function isAvailable(\App\Sku $sku, \App\User $user): bool
+    public static function isAvailable(\App\Sku $sku, $object): bool
     {
         // This SKU must be:
         // - already assigned, or active and a 'beta' entitlement must exist
         // - and this is a group account owner (custom domain)
 
-        if (parent::isAvailable($sku, $user)) {
-            return $user->wallet()->entitlements()
+        if (parent::isAvailable($sku, $object)) {
+            return $object->wallet()->entitlements()
                 ->where('entitleable_type', \App\Domain::class)->count() > 0;
         }
 

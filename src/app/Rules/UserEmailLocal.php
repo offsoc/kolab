@@ -34,7 +34,11 @@ class UserEmailLocal implements Rule
     public function passes($attribute, $login): bool
     {
         // Strict validation
-        if (!preg_match('/^[A-Za-z0-9_.-]+$/', $login)) {
+        if (
+            empty($login)
+            || !is_string($login)
+            || !preg_match('/^[A-Za-z0-9_.-]+$/', $login)
+        ) {
             $this->message = \trans('validation.entryinvalid', ['attribute' => $attribute]);
             return false;
         }

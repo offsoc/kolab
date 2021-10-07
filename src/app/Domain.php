@@ -115,6 +115,17 @@ class Domain extends Model
     }
 
     /**
+     * Entitlements for this domain.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function entitlements()
+    {
+        return $this->hasMany('App\Entitlement', 'entitleable_id', 'id')
+            ->where('entitleable_type', Domain::class);
+    }
+
+    /**
      * Return list of public+active domain names (for current tenant)
      */
     public static function getPublicDomains(): array

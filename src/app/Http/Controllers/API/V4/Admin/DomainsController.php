@@ -55,6 +55,18 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
     }
 
     /**
+     * Create a domain.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function store(Request $request)
+    {
+        return $this->errorResponse(404);
+    }
+
+    /**
      * Suspend the domain
      *
      * @param \Illuminate\Http\Request $request The API request.

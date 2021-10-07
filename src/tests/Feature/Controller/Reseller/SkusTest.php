@@ -35,6 +35,43 @@ class SkusTest extends TestCase
     }
 
     /**
+     * Test fetching SKUs list for a domain (GET /domains/<id>/skus)
+     */
+    public function testDomainSkus(): void
+    {
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $user = $this->getTestUser('john@kolab.org');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // Unauth access not allowed
+        $response = $this->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(401);
+
+        // User access not allowed
+        $response = $this->actingAs($user)->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(403);
+
+        // Admin access not allowed
+        $response = $this->actingAs($admin)->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(403);
+
+        // Reseller from another tenant
+        $response = $this->actingAs($reseller2)->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(404);
+
+        // Reseller access
+        $response = $this->actingAs($reseller1)->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        // Note: Details are tested where we test API\V4\SkusController
+    }
+
+    /**
      * Test fetching SKUs list
      */
     public function testIndex(): void
@@ -130,7 +167,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(8, $json);
+        $this->assertCount(6, $json);
         // Note: Details are tested where we test API\V4\SkusController
     }
 }

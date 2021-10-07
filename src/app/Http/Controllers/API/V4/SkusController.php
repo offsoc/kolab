@@ -33,6 +33,28 @@ class SkusController extends Controller
     }
 
     /**
+     * Get a list of SKUs available to the domain.
+     *
+     * @param int $id Domain identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function domainSkus($id)
+    {
+        $domain = \App\Domain::find($id);
+
+        if (!$this->checkTenant($domain)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canRead($domain)) {
+            return $this->errorResponse(403);
+        }
+
+        return $this->objectSkus($domain);
+    }
+
+    /**
      * Show the form for editing the specified sku.
      *
      * @param int $id SKU identifier
@@ -129,23 +151,35 @@ class SkusController extends Controller
             return $this->errorResponse(403);
         }
 
-        $type = request()->input('type');
+        return $this->objectSkus($user);
+    }
+
+    /**
+     * Return SKUs available to the specified user/domain.
+     *
+     * @param object $object User or Domain object
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected static function objectSkus($object)
+    {
+        $type = $object instanceof \App\Domain ? 'domain' : 'user';
         $response = [];
 
         // Note: Order by title for consistent ordering in tests
-        $skus = Sku::withObjectTenantContext($user)->orderBy('title')->get();
+        $skus = Sku::withObjectTenantContext($object)->orderBy('title')->get();
 
         foreach ($skus as $sku) {
             if (!class_exists($sku->handler_class)) {
                 continue;
             }
 
-            if (!$sku->handler_class::isAvailable($sku, $user)) {
+            if (!$sku->handler_class::isAvailable($sku, $object)) {
                 continue;
             }
 
-            if ($data = $this->skuElement($sku)) {
-                if ($type && $type != $data['type']) {
+            if ($data = self::skuElement($sku)) {
+                if ($type != $data['type']) {
                     continue;
                 }
 
@@ -168,7 +202,7 @@ class SkusController extends Controller
      *
      * @return array|null Metadata
      */
-    protected function skuElement($sku): ?array
+    protected static function skuElement($sku): ?array
     {
         if (!class_exists($sku->handler_class)) {
             return null;

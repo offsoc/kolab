@@ -138,18 +138,7 @@ class UsersController extends Controller
 
         $response = $this->userResponse($user);
 
-        // Simplified Entitlement/SKU information,
-        // TODO: I agree this format may need to be extended in future
-        $response['skus'] = [];
-        foreach ($user->entitlements as $ent) {
-            $sku = $ent->sku;
-            if (!isset($response['skus'][$sku->id])) {
-                $response['skus'][$sku->id] = ['costs' => [], 'count' => 0];
-            }
-            $response['skus'][$sku->id]['count']++;
-            $response['skus'][$sku->id]['costs'][] = $ent->cost;
-        }
-
+        $response['skus'] = \App\Entitlement::objectEntitlementsSummary($user);
         $response['config'] = $user->getConfig();
 
         return response()->json($response);

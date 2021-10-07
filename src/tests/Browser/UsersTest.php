@@ -300,7 +300,7 @@ class UsersTest extends TestCaseDusk
 
             $expected = ['activesync', 'groupware', 'mailbox',
                 'storage', 'storage', 'storage', 'storage', 'storage', 'storage'];
-            $this->assertUserEntitlements($john, $expected);
+            $this->assertEntitlements($john, $expected);
 
             // Test subscriptions interaction
             $browser->with('@general', function (Browser $browser) {
@@ -467,7 +467,7 @@ class UsersTest extends TestCaseDusk
             $alias = UserAlias::where('user_id', $julia->id)->where('alias', 'julia.roberts2@kolab.org')->first();
 
             $this->assertTrue(!empty($alias));
-            $this->assertUserEntitlements($julia, ['mailbox', 'storage', 'storage', 'storage', 'storage', 'storage']);
+            $this->assertEntitlements($julia, ['mailbox', 'storage', 'storage', 'storage', 'storage', 'storage']);
             $this->assertSame('Julia', $julia->getSetting('first_name'));
             $this->assertSame('Roberts', $julia->getSetting('last_name'));
             $this->assertSame('Test Org', $julia->getSetting('organization'));
@@ -810,7 +810,7 @@ class UsersTest extends TestCaseDusk
                 'storage', 'storage', 'storage', 'storage', 'storage'
             ];
 
-            $this->assertUserEntitlements($john, $expected);
+            $this->assertEntitlements($john, $expected);
 
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
@@ -825,7 +825,7 @@ class UsersTest extends TestCaseDusk
                 'storage', 'storage', 'storage', 'storage', 'storage'
             ];
 
-            $this->assertUserEntitlements($john, $expected);
+            $this->assertEntitlements($john, $expected);
         });
 
         // TODO: Test that the Distlist SKU is not available for users that aren't a group account owners

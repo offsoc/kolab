@@ -7,6 +7,7 @@ use App\Entitlement;
 use App\Sku;
 use App\User;
 use App\Wallet;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -214,6 +215,11 @@ class DomainsTest extends TestCase
                 'type' => Domain::TYPE_EXTERNAL,
         ]);
 
+        $discount = \App\Discount::withEnvTenantContext()->where('code', 'TEST')->first();
+        $wallet = $user->wallet();
+        $wallet->discount()->associate($discount);
+        $wallet->save();
+
         Entitlement::create([
                 'wallet_id' => $user->wallets()->first()->id,
                 'sku_id' => $sku_domain->id,
@@ -247,6 +253,14 @@ class DomainsTest extends TestCase
         $this->assertArrayHasKey('isSuspended', $json);
         $this->assertArrayHasKey('isActive', $json);
         $this->assertArrayHasKey('isLdapReady', $json);
+        $this->assertCount(1, $json['skus']);
+        $this->assertSame(1, $json['skus'][$sku_domain->id]['count']);
+        $this->assertSame([0], $json['skus'][$sku_domain->id]['costs']);
+        $this->assertSame($wallet->id, $json['wallet']['id']);
+        $this->assertSame($wallet->balance, $json['wallet']['balance']);
+        $this->assertSame($wallet->currency, $json['wallet']['currency']);
+        $this->assertSame($discount->discount, $json['wallet']['discount']);
+        $this->assertSame($discount->description, $json['wallet']['discount_description']);
 
         $john = $this->getTestUser('john@kolab.org');
         $ned = $this->getTestUser('ned@kolab.org');
@@ -317,5 +331,113 @@ class DomainsTest extends TestCase
         $this->assertSame('Setup process finished successfully.', $json['message']);
 
         // TODO: Test completing all process steps
+    }
+
+    /**
+     * Test domain creation (POST /api/v4/domains)
+     */
+    public function testStore(): void
+    {
+        Queue::fake();
+
+        $jack = $this->getTestUser('jack@kolab.org');
+        $john = $this->getTestUser('john@kolab.org');
+
+        // Test empty request
+        $response = $this->actingAs($john)->post("/api/v4/domains", []);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("The namespace field is required.", $json['errors']['namespace'][0]);
+        $this->assertCount(1, $json['errors']);
+        $this->assertCount(1, $json['errors']['namespace']);
+        $this->assertCount(2, $json);
+
+        // Test access by user not being a wallet controller
+        $post = ['namespace' => 'domainscontroller.com'];
+        $response = $this->actingAs($jack)->post("/api/v4/domains", $post);
+        $json = $response->json();
+
+        $response->assertStatus(403);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Access denied", $json['message']);
+        $this->assertCount(2, $json);
+
+        // Test some invalid data
+        $post = ['namespace' => '--'];
+        $response = $this->actingAs($john)->post("/api/v4/domains", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json);
+        $this->assertSame('The specified domain is invalid.', $json['errors']['namespace'][0]);
+        $this->assertCount(1, $json['errors']);
+        $this->assertCount(1, $json['errors']['namespace']);
+
+        // Test an existing domain
+        $post = ['namespace' => 'kolab.org'];
+        $response = $this->actingAs($john)->post("/api/v4/domains", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json);
+        $this->assertSame('The specified domain is not available.', $json['errors']['namespace']);
+
+        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+
+        // Missing package
+        $post = ['namespace' => 'domainscontroller.com'];
+        $response = $this->actingAs($john)->post("/api/v4/domains", $post);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Package is required.", $json['errors']['package']);
+        $this->assertCount(2, $json);
+
+        // Invalid package
+        $post['package'] = $package_kolab->id;
+        $response = $this->actingAs($john)->post("/api/v4/domains", $post);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Invalid package selected.", $json['errors']['package']);
+        $this->assertCount(2, $json);
+
+        // Test full and valid data
+        $post['package'] = $package_domain->id;
+        $response = $this->actingAs($john)->post("/api/v4/domains", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("Domain created successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $domain = Domain::where('namespace', $post['namespace'])->first();
+        $this->assertInstanceOf(Domain::class, $domain);
+
+        // Assert the new domain entitlements
+        $this->assertEntitlements($domain, ['domain-hosting']);
+
+        // Assert the wallet to which the new domain should be assigned to
+        $wallet = $domain->wallet();
+        $this->assertSame($john->wallets->first()->id, $wallet->id);
+
+        // Test acting as account controller (not owner)
+
+        $this->markTestIncomplete();
     }
 }

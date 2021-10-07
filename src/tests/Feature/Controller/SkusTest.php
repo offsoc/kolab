@@ -34,6 +34,46 @@ class SkusTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * Test fetching SKUs list for a domain (GET /domains/<id>/skus)
+     */
+    public function testDomainSkus(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // Unauth access not allowed
+        $response = $this->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(401);
+
+        // Create an sku for another tenant, to make sure it is not included in the result
+        $nsku = Sku::create([
+                'title' => 'test',
+                'name' => 'Test',
+                'description' => '',
+                'active' => true,
+                'cost' => 100,
+                'handler_class' => 'App\Handlers\Domain',
+        ]);
+        $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
+        $nsku->tenant_id = $tenant->id;
+        $nsku->save();
+
+        $response = $this->actingAs($user)->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+
+        $this->assertSkuElement('domain-hosting', $json[0], [
+                'prio' => 0,
+                'type' => 'domain',
+                'handler' => 'domainhosting',
+                'enabled' => false,
+                'readonly' => false,
+        ]);
+    }
 
     /**
      * Test fetching SKUs list
@@ -109,7 +149,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(8, $json);
+        $this->assertCount(6, $json);
 
         $this->assertSkuElement('mailbox', $json[0], [
                 'prio' => 100,
@@ -167,49 +207,15 @@ class SkusTest extends TestCase
                 'required' => ['groupware'],
         ]);
 
-        $this->assertSkuElement('domain-hosting', $json[6], [
-                'prio' => 0,
-                'type' => 'domain',
-                'handler' => 'domainhosting',
-                'enabled' => false,
-                'readonly' => false,
-        ]);
-
-        $this->assertSkuElement('group', $json[7], [
-                'prio' => 0,
-                'type' => 'group',
-                'handler' => 'group',
-                'enabled' => false,
-                'readonly' => false,
-        ]);
-
-        // Test filter by type
-        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus?type=domain");
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertCount(1, $json);
-        $this->assertSame('domain', $json[0]['type']);
-
         // Test inclusion of beta SKUs
         $sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
         $user->assignSku($sku);
-        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus?type=user");
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus");
         $response->assertStatus(200);
 
         $json = $response->json();
 
         $this->assertCount(8, $json);
-
-        $this->assertSkuElement('meet', $json[5], [
-                'prio' => 50,
-                'type' => 'user',
-                'handler' => 'meet',
-                'enabled' => false,
-                'readonly' => false,
-                'required' => ['groupware'],
-        ]);
 
         $this->assertSkuElement('beta', $json[6], [
                 'prio' => 10,
@@ -217,6 +223,15 @@ class SkusTest extends TestCase
                 'handler' => 'beta',
                 'enabled' => false,
                 'readonly' => false,
+        ]);
+
+        $this->assertSkuElement('distlist', $json[7], [
+                'prio' => 10,
+                'type' => 'user',
+                'handler' => 'distlist',
+                'enabled' => false,
+                'readonly' => false,
+                'required' => ['beta'],
         ]);
     }
 

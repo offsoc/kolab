@@ -5,23 +5,27 @@ namespace App\Handlers\Beta;
 class Base extends \App\Handlers\Base
 {
     /**
-     * Check if the SKU is available to the user.
+     * Check if the SKU is available to the user/domain.
      *
-     * @param \App\Sku  $sku  The SKU object
-     * @param \App\User $user The user object
+     * @param \App\Sku              $sku    The SKU object
+     * @param \App\User|\App\Domain $object The user or domain object
      *
      * @return bool
      */
-    public static function isAvailable(\App\Sku $sku, \App\User $user): bool
+    public static function isAvailable(\App\Sku $sku, $object): bool
     {
         // These SKUs must be:
         // 1) already assigned or
         // 2) active and a 'beta' entitlement must exist.
 
+        if (!$object instanceof \App\User) {
+            return false;
+        }
+
         if ($sku->active) {
-            return $user->hasSku('beta');
+            return $object->hasSku('beta');
         } else {
-            if ($user->entitlements()->where('sku_id', $sku->id)->first()) {
+            if ($object->entitlements()->where('sku_id', $sku->id)->first()) {
                 return true;
             }
         }

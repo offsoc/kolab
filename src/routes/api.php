@@ -72,6 +72,7 @@ Route::group(
 
         Route::apiResource('domains', API\V4\DomainsController::class);
         Route::get('domains/{id}/confirm', 'API\V4\DomainsController@confirm');
+        Route::get('domains/{id}/skus', 'API\V4\SkusController@domainSkus');
         Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
         Route::post('domains/{id}/config', 'API\V4\DomainsController@setConfig');
 
@@ -176,6 +177,7 @@ if (\config('app.with_admin')) {
         ],
         function () {
             Route::apiResource('domains', API\V4\Admin\DomainsController::class);
+            Route::get('domains/{id}/skus', 'API\V4\Admin\SkusController@domainSkus');
             Route::post('domains/{id}/suspend', 'API\V4\Admin\DomainsController@suspend');
             Route::post('domains/{id}/unsuspend', 'API\V4\Admin\DomainsController@unsuspend');
 
@@ -209,6 +211,7 @@ if (\config('app.with_reseller')) {
         ],
         function () {
             Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
+            Route::get('domains/{id}/skus', 'API\V4\Reseller\SkusController@domainSkus');
             Route::post('domains/{id}/suspend', 'API\V4\Reseller\DomainsController@suspend');
             Route::post('domains/{id}/unsuspend', 'API\V4\Reseller\DomainsController@unsuspend');
 

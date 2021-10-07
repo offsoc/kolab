@@ -35,6 +35,32 @@ class SkusTest extends TestCase
     }
 
     /**
+     * Test fetching SKUs list for a domain (GET /domains/<id>/skus)
+     */
+    public function testDomainSkus(): void
+    {
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $user = $this->getTestUser('john@kolab.org');
+        $domain = $this->getTestDOmain('kolab.org');
+
+        // Unauth access not allowed
+        $response = $this->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(401);
+
+        // Non-admin access not allowed
+        $response = $this->actingAs($user)->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($admin)->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        // Note: Details are tested where we test API\V4\SkusController
+    }
+
+    /**
      * Test fetching SKUs list
      */
     public function testIndex(): void
@@ -92,7 +118,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(8, $json);
+        $this->assertCount(6, $json);
         // Note: Details are tested where we test API\V4\SkusController
     }
 }

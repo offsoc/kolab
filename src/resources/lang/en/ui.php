@@ -79,6 +79,8 @@ return [
         'config-intro' => "In order to let {app} receive email traffic for your domain you need to adjust the DNS settings, more precisely the MX entries, accordingly.",
         'config-sample' => "Edit your domain's zone file and replace existing MX entries with the following values:",
         'config-hint' => "If you don't know how to set DNS entries for your domain, please contact the registration service where you registered the domain or your web hosting provider.",
+        'create' => "Create domain",
+        'new' => "New domain",
     ],
 
     'error' => [

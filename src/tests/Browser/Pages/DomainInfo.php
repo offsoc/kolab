@@ -38,6 +38,7 @@ class DomainInfo extends Page
         return [
             '@app' => '#app',
             '@config' => '#domain-config',
+            '@general' => '#general',
             '@nav' => 'ul.nav-tabs',
             '@settings' => '#settings',
             '@status' => '#status-box',
