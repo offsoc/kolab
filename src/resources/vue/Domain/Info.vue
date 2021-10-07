@@ -5,7 +5,14 @@
         <div class="card">
             <div class="card-body">
                 <div class="card-title" v-if="domain_id === 'new'">{{ $t('domain.new') }}</div>
-                <div class="card-title" v-else>{{ $t('form.domain') }}</div>
+                <div class="card-title" v-else>{{ $t('form.domain') }}
+                    <button
+                        class="btn btn-outline-danger button-delete float-end"
+                        @click="showDeleteConfirmation()" type="button"
+                    >
+                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('domain.delete') }}
+                    </button>
+                </div>
                 <div class="card-text">
                     <ul class="nav nav-tabs mt-3" role="tablist">
                         <li class="nav-item">
@@ -93,10 +100,30 @@
                 </div>
             </div>
         </div>
+        <div id="delete-warning" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ $t('domain.delete-domain', { domain: domain.namespace }) }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>{{ $t('domain.delete-text') }}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
+                        <button type="button" class="btn btn-danger modal-action" @click="deleteDomain()">
+                            <svg-icon icon="trash-alt"></svg-icon> {{ $t('btn.delete') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script>
+    import { Modal } from 'bootstrap'
     import ListInput from '../Widgets/ListInput'
     import PackageSelect from '../Widgets/PackageSelect'
     import StatusComponent from '../Widgets/Status'
@@ -140,6 +167,9 @@
         },
         mounted() {
             $('#namespace').focus()
+            $('#delete-warning')[0].addEventListener('shown.bs.modal', event => {
+                $(event.target).find('button.modal-cancel').focus()
+            })
         },
         methods: {
             confirm() {
@@ -154,6 +184,20 @@
                             this.$toast[response.data.status](response.data.message)
                         }
                     })
+            },
+            deleteDomain() {
+                // Delete the domain from the confirm dialog
+                axios.delete('/api/v4/domains/' + this.domain_id)
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.$router.push({ name: 'domains' })
+                        }
+                    })
+            },
+            showDeleteConfirmation() {
+                // Display the warning
+                new Modal('#delete-warning').show()
             },
             statusUpdate(domain) {
                 this.domain = Object.assign({}, this.domain, domain)

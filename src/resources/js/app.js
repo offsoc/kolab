@@ -452,9 +452,6 @@ window.axios.interceptors.response.use(
         return response
     },
     error => {
-        let error_msg
-        let status = error.response ? error.response.status : 200
-
         // Do not display the error in a toast message, pass the error as-is
         if (error.config.ignoreErrors) {
             return Promise.reject(error)
@@ -464,15 +461,20 @@ window.axios.interceptors.response.use(
             error.config.onFinish()
         }
 
-        if (error.response && status == 422) {
-            error_msg = "Form validation error"
+        let error_msg
+
+        const status = error.response ? error.response.status : 200
+        const data = error.response ? error.response.data : {}
+
+        if (status == 422 && data.errors) {
+            error_msg = app.$t('error.form')
 
             const modal = $('div.modal.show')
 
             $(modal.length ? modal : 'form').each((i, form) => {
                 form = $(form)
 
-                $.each(error.response.data.errors || {}, (idx, msg) => {
+                $.each(data.errors, (idx, msg) => {
                     const input_name = (form.data('validation-prefix') || form.find('form').first().data('validation-prefix') || '') + idx
                     let input = form.find('#' + input_name)
 
@@ -526,8 +528,8 @@ window.axios.interceptors.response.use(
                 form.find('.is-invalid:not(.listinput-widget)').first().focus()
             })
         }
-        else if (error.response && error.response.data) {
-            error_msg = error.response.data.message
+        else if (data.status == 'error') {
+            error_msg = data.message
         }
         else {
             error_msg = error.request ? error.request.statusText : error.message

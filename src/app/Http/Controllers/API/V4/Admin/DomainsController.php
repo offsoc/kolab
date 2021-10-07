@@ -9,6 +9,18 @@ use Illuminate\Http\Request;
 class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
 {
     /**
+     * Remove the specified domain.
+     *
+     * @param int $id Domain identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy($id)
+    {
+        return $this->errorResponse(404);
+    }
+
+    /**
      * Search for domains
      *
      * @return \Illuminate\Http\JsonResponse

@@ -61,6 +61,11 @@ return [
     ],
 
     'domain' => [
+        'delete' => "Delete domain",
+        'delete-domain' => "Delete {domain}",
+        'delete-text' => "Do you really want to delete this domain permanently?"
+            . " This is only possible if there are no users, aliases or other objects in this domain."
+            . " Please note that this action cannot be undone.",
         'dns-verify' => "Domain DNS verification sample:",
         'dns-config' => "Domain DNS configuration sample:",
         'namespace' => "Namespace",
@@ -92,6 +97,7 @@ return [
         '500' => "Internal server error",
         'unknown' => "Unknown Error",
         'server' => "Server Error",
+        'form' => "Form validation error",
     ],
 
     'form' => [

@@ -27,6 +27,7 @@ class DomainsTest extends TestCase
      */
     public function tearDown(): void
     {
+        $this->deleteTestUser('test1@domainscontroller.com');
         $this->deleteTestDomain('domainscontroller.com');
 
         parent::tearDown();
@@ -45,6 +46,19 @@ class DomainsTest extends TestCase
 
         // THe end-point exists on the users controller, but not reseller's
         $response = $this->actingAs($reseller1)->get("api/v4/domains/{$domain->id}/confirm");
+        $response->assertStatus(404);
+    }
+
+    /**
+     * Test deleting a domain (DELETE /api/v4/domains/<id>)
+     */
+    public function testDestroy(): void
+    {
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $domain = $this->getTestDomain('kolab.org');
+
+        // This end-point does not exist for resellers
+        $response = $this->actingAs($reseller1)->delete("api/v4/domains/{$domain->id}");
         $response->assertStatus(404);
     }
 
@@ -213,7 +227,7 @@ class DomainsTest extends TestCase
             'status' => Domain::STATUS_NEW,
             'type' => Domain::TYPE_EXTERNAL,
         ]);
-        $user = $this->getTestUser('test@domainscontroller.com');
+        $user = $this->getTestUser('test1@domainscontroller.com');
 
         // Test unauthorized access to the reseller API (user)
         $response = $this->actingAs($user)->post("/api/v4/domains/{$domain->id}/suspend", []);
@@ -263,7 +277,7 @@ class DomainsTest extends TestCase
             'status' => Domain::STATUS_NEW | Domain::STATUS_SUSPENDED,
             'type' => Domain::TYPE_EXTERNAL,
         ]);
-        $user = $this->getTestUser('test@domainscontroller.com');
+        $user = $this->getTestUser('test1@domainscontroller.com');
 
         // Test unauthorized access to reseller API (user)
         $response = $this->actingAs($user)->post("/api/v4/domains/{$domain->id}/unsuspend", []);

@@ -381,6 +381,31 @@ class Domain extends Model
     }
 
     /**
+     * Checks if there are any objects (users/aliases/groups) in a domain.
+     * Note: Public domains are always reported not empty.
+     *
+     * @return bool True if there are no objects assigned, False otherwise
+     */
+    public function isEmpty(): bool
+    {
+        if ($this->isPublic()) {
+            return false;
+        }
+
+        // FIXME: These queries will not use indexes, so maybe we should consider
+        // wallet/entitlements to search in objects that belong to this domain account?
+
+        $suffix = '@' . $this->namespace;
+        $suffixLen = strlen($suffix);
+
+        return !(
+            \App\User::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
+            || \App\UserAlias::whereRaw('substr(alias, ?) = ?', [-$suffixLen, $suffix])->exists()
+            || \App\Group::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
+        );
+    }
+
+    /**
      * Any (additional) properties of this domain.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -436,8 +461,9 @@ class Domain extends Model
 
     /**
      * List the users of a domain, so long as the domain is not a public registration domain.
+     * Note: It returns only users with a mailbox.
      *
-     * @return array
+     * @return \App\User[] A list of users
      */
     public function users(): array
     {

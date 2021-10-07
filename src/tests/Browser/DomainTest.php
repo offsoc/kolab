@@ -5,6 +5,7 @@ namespace Tests\Browser;
 use App\Domain;
 use App\User;
 use Tests\Browser;
+use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\ListInput;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
@@ -293,6 +294,60 @@ class DomainTest extends TestCaseDusk
                 ->assertToast(Toast::TYPE_SUCCESS, 'Domain created successfully.')
                 ->on(new DomainList())
                 ->assertSeeIn('@table tr:nth-child(2) a', 'testdomain.com');
+        });
+    }
+
+    /**
+     * Test domain deletion
+     */
+    public function testDomainDelete(): void
+    {
+        // Create the domain to delete
+        $john = $this->getTestUser('john@kolab.org');
+        $domain = $this->getTestDomain('testdomain.com', ['type' => Domain::TYPE_EXTERNAL]);
+        $packageDomain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $domain->assignPackage($packageDomain, $john);
+
+        $this->browse(function ($browser) {
+            $browser->visit('/login')
+                ->on(new Home())
+                ->submitLogon('john@kolab.org', 'simple123')
+                ->visit('/domains')
+                ->on(new DomainList())
+                ->assertElementsCount('@table tbody tr', 2)
+                ->assertSeeIn('@table tr:nth-child(2) a', 'testdomain.com')
+                ->click('@table tbody tr:nth-child(2) a')
+                ->on(new DomainInfo())
+                ->waitFor('button.button-delete')
+                ->assertSeeIn('button.button-delete', 'Delete domain')
+                ->click('button.button-delete')
+                ->with(new Dialog('#delete-warning'), function ($browser) {
+                    $browser->assertSeeIn('@title', 'Delete testdomain.com')
+                        ->assertFocused('@button-cancel')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Delete')
+                        ->click('@button-cancel');
+                })
+                ->waitUntilMissing('#delete-warning')
+                ->click('button.button-delete')
+                ->with(new Dialog('#delete-warning'), function (Browser $browser) {
+                    $browser->click('@button-action');
+                })
+                ->waitUntilMissing('#delete-warning')
+                ->assertToast(Toast::TYPE_SUCCESS, 'Domain deleted successfully.')
+                ->on(new DomainList())
+                ->assertElementsCount('@table tbody tr', 1);
+
+            // Test error handling on deleting a non-empty domain
+            $err = 'Unable to delete a domain with assigned users or other objects.';
+            $browser->click('@table tbody tr:nth-child(1) a')
+                ->on(new DomainInfo())
+                ->waitFor('button.button-delete')
+                ->click('button.button-delete')
+                ->with(new Dialog('#delete-warning'), function ($browser) {
+                    $browser->click('@button-action');
+                })
+                ->assertToast(Toast::TYPE_ERROR, $err);
         });
     }
 }

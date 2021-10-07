@@ -39,7 +39,7 @@ class DomainsController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new domain.
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -82,21 +82,42 @@ class DomainsController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified domain.
      *
-     * @param int $id
+     * @param int $id Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
-        return $this->errorResponse(404);
+        $domain = Domain::withEnvTenantContext()->find($id);
+
+        if (empty($domain)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canDelete($domain)) {
+            return $this->errorResponse(403);
+        }
+
+        // It is possible to delete domain only if there are no users/aliases/groups using it.
+        if (!$domain->isEmpty()) {
+            $response = ['status' => 'error', 'message' => \trans('app.domain-notempty-error')];
+            return response()->json($response, 422);
+        }
+
+        $domain->delete();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => \trans('app.domain-delete-success'),
+        ]);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified domain.
      *
-     * @param int $id
+     * @param int $id Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -168,9 +189,15 @@ class DomainsController extends Controller
         $namespace = \strtolower(request()->input('namespace'));
 
         // Domain already exists
-        if (Domain::withTrashed()->where('namespace', $namespace)->exists()) {
-            $errors = ['namespace' => \trans('validation.domainnotavailable')];
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        if ($domain = Domain::withTrashed()->where('namespace', $namespace)->first()) {
+            // Check if the domain is soft-deleted and belongs to the same user
+            $deleteBeforeCreate = $domain->trashed() && ($wallet = $domain->wallet())
+                && $wallet->owner && $wallet->owner->id == $owner->id;
+
+            if (!$deleteBeforeCreate) {
+                $errors = ['namespace' => \trans('validation.domainnotavailable')];
+                return response()->json(['status' => 'error', 'errors' => $errors], 422);
+            }
         }
 
         if (empty($request->package) || !($package = \App\Package::withEnvTenantContext()->find($request->package))) {
@@ -185,7 +212,10 @@ class DomainsController extends Controller
 
         DB::beginTransaction();
 
-        // TODO: Force-delete domain if it is soft-deleted and belongs to the same user
+        // Force-delete the existing domain if it is soft-deleted and belongs to the same user
+        if (!empty($deleteBeforeCreate)) {
+            $domain->forceDelete();
+        }
 
         // Create the domain
         $domain = Domain::create([
@@ -309,10 +339,10 @@ class DomainsController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified domain.
      *
      * @param \Illuminate\Http\Request $request
-     * @param int                      $id
+     * @param int                      $id Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse
      */

@@ -230,6 +230,34 @@ class DomainTest extends TestCase
     }
 
     /**
+     * Test isEmpty() method
+     */
+    public function testIsEmpty(): void
+    {
+        Queue::fake();
+
+        // Empty domain
+        $domain = $this->getTestDomain('gmail.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_EXTERNAL,
+        ]);
+
+        $this->assertTrue($domain->isEmpty());
+
+        // TODO: Test with adding a group/alias/user, each separately
+
+        // Empty public domain
+        $domain = Domain::where('namespace', 'libertymail.net')->first();
+
+        $this->assertFalse($domain->isEmpty());
+
+        // Non-empty private domain
+        $domain = Domain::where('namespace', 'kolab.org')->first();
+
+        $this->assertFalse($domain->isEmpty());
+    }
+
+    /**
      * Test domain restoring
      */
     public function testRestore(): void
