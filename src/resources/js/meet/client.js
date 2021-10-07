@@ -1014,6 +1014,14 @@ function Client()
                 errback(error)
             }
         })
+
+        sendTransport.on('connectionstatechange', (connectionState) => {
+            console.info("sendTransport new connecton state:", connectionState)
+            if (connectionState == 'connecting') {
+                // TODO check with a timer that we're reaching the connected state
+                console.info("The 'connected' state is expected next.")
+            }
+        })
     }
 
     /**
@@ -1043,6 +1051,14 @@ function Client()
             socket.sendRequest('connectWebRtcTransport', { transportId: recvTransport.id, dtlsParameters })
                 .then(callback)
                 .catch(errback)
+        })
+
+        recvTransport.on('connectionstatechange', (connectionState) => {
+            console.info("recvTransport new connecton state:", connectionState)
+            if (connectionState == 'connecting') {
+                // TODO check with a timer that we're reaching the connected state
+                console.info("The 'connected' state is expected next.")
+            }
         })
     }
 
