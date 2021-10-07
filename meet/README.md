@@ -53,6 +53,8 @@ This leads to the following topolgy:
 * On the kolabmeet server you can connect to the server by executing connect.js, which allows to inspect the internal state.
 * The browser won't allow a ws: connection from a https:// site, but only chrome will tell you about it.
 * If in question, restart your browser. Sometimes things suddenly start working again.
+* Access to media (webcam and microphone) only works on https or localhost sites (secure context). Otherwise the client side will start to break.
+* 127.0.0.1 as webrtc listening host may not work for a local webrtc setup (and will not give you any warnings about it either). See also firefoxes media.peerconnection.ice.* config options. Use a local interfaces ip instead.
 
 
 ## Scalability
