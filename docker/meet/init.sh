@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 cp -R /src/meet /src/meetsrc
+rm -Rf /src/meetsrc/node_modules
 ln -s /root/node_modules /src/meetsrc/node_modules
 cd /src/meetsrc
 npm install
