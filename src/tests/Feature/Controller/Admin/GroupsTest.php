@@ -99,7 +99,7 @@ class GroupsTest extends TestCase
     public function testShow(): void
     {
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
-        $user = $this->getTestUser('test1@domainscontroller.com');
+        $user = $this->getTestUser('john@kolab.org');
         $group = $this->getTestGroup('group-test@kolab.org');
         $group->assignToWallet($user->wallets->first());
 
