@@ -134,7 +134,7 @@ module.exports =
         // mediasoup WebRtcTransport settings.
         webRtcTransport: {
             listenIps: [
-                { ip: process.env.PUBLIC_IP, announcedIp: null }
+                { ip: process.env.WEBRTC_LISTEN_IP, announcedIp: null }
             ],
             initialAvailableOutgoingBitrate: 1000000,
             minimumAvailableOutgoingBitrate: 600000,
