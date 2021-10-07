@@ -201,12 +201,24 @@ before(function (done) {
 });
 
 describe('Testbench', function() {
-    const roomId = "room1";
+    let roomId;
     let peers = [];
 
     it('prepare udp sockets', async () => {
         await new Promise(resolve => recvUdpSocket.bind(22222, '127.0.0.1', resolve));
         await new Promise(resolve => recvRtcpUdpSocket.bind(22223, '127.0.0.1', resolve));
+    });
+
+    it('create room', async () => {
+        return request
+            .post(`/meetmedia/api/sessions`)
+            .expect(200)
+            .then(async (res) => {
+                roomId = res.body['id'];
+            })
+            .catch(err => {
+                console.warn(err); throw err
+            })
     });
 
     it('create peers', async () => {
