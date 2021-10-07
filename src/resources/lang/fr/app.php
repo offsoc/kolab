@@ -53,6 +53,8 @@ return [
     'distlist-suspend-success' => "Liste de distribution à été suspendue avec succès.",
     'distlist-unsuspend-success' => "Liste de distribution à été débloquée avec succès.",
 
+    'domain-create-success' => "Domaine a été crée avec succès.",
+    'domain-delete-success' => "Domaine supprimé avec succès.",
     'domain-verify-success' => "Domaine vérifié avec succès.",
     'domain-verify-error' => "Vérification de propriété de domaine à échoué.",
     'domain-suspend-success' => "Domaine suspendue avec succès.",
