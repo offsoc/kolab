@@ -981,6 +981,8 @@ function Client()
             })
         }
 
+        console.log("sendTransportInfo", sendTransportInfo)
+
         const { id, iceParameters, iceCandidates, dtlsParameters } = sendTransportInfo
 
         const iceTransportPolicy = (device.handlerName.toLowerCase().includes('firefox') && iceServers) ? 'relay' : undefined
@@ -1033,6 +1035,8 @@ function Client()
                 producing: false,
                 consuming: true
         })
+
+        console.log("recvTransportInfo", sendTransportInfo)
 
         const { id, iceParameters, iceCandidates, dtlsParameters } = transportInfo
 
