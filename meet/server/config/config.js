@@ -7,6 +7,8 @@ module.exports =
     // Turn server configuration
     turn: process.env.TURN_SERVER === 'none' ? null : {
         urls: [
+            // Using transport=tcp prevents the use of udp for the connection to the server, which is useful for testing,
+            // but most likely not desired for production: https://datatracker.ietf.org/doc/html/rfc5766#section-2.1
             process.env.TURN_SERVER || 'turn:127.0.0.1:3478?transport=tcp'
         ],
         staticSecret: process.env.TURN_STATIC_SECRET || 'uzYguvIl9tpZFMuQOE78DpOi6Jc7VFSD0UAnvgMsg5n4e74MgIf6vQvbc6LWzZjz',
