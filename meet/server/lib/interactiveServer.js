@@ -28,6 +28,42 @@ class Interactive {
         this._isTerminalOpen = false;
     }
 
+    async dump(name, params, entries) {
+        const list = params[0] ? [entries.get(params[0])] : entries.values();
+
+        for (const entry of list) {
+            if (!entry) {
+                this.error(`${name} not found`);
+                break;
+            }
+
+            try {
+                const dump = await entry.dump();
+                this.log(`${name}.dump():\n${JSON.stringify(dump, null, '  ')}`);
+            } catch (error) {
+                this.error(`${name}.dump() failed: ${error}`);
+            }
+        }
+    }
+
+    async dumpStats(name, params, entries) {
+        const list = params[0] ? [entries.get(params[0])] : entries.values();
+
+        for (const entry of list) {
+            if (!entry) {
+                this.error(`${name} not found`);
+                break;
+            }
+
+            try {
+                const stats = await entry.getStats();
+                this.log(`${name}.getStats():\n${JSON.stringify(stats, null, '  ')}`);
+            } catch (error) {
+                this.error(`${name}.getStats() failed: ${error}`);
+            }
+        }
+    }
+
     openCommandConsole() {
         const cmd = readline.createInterface(
             {
@@ -199,251 +235,77 @@ class Interactive {
                 case 'dr':
                 case 'dumpRouter':
                 {
-                    const id = params[0] || Array.from(routers.keys()).pop();
-                    const router = routers.get(id);
-
-                    if (!router) {
-                        this.error('Router not found');
-
-                        break;
-                    }
-
-                    try {
-                        const dump = await router.dump();
-
-                        this.log(`router.dump():\n${JSON.stringify(dump, null, '  ')}`);
-                    } catch (error) {
-                        this.error(`router.dump() failed: ${error}`);
-                    }
-
+                    await this.dump('router', params, routers);
                     break;
                 }
 
                 case 'dt':
                 case 'dumpTransport':
                 {
-                    const id = params[0] || Array.from(transports.keys()).pop();
-                    const transport = transports.get(id);
-
-                    if (!transport) {
-                        this.error('Transport not found');
-
-                        break;
-                    }
-
-                    try {
-                        const dump = await transport.dump();
-
-                        this.log(`transport.dump():\n${JSON.stringify(dump, null, '  ')}`);
-                    } catch (error) {
-                        this.error(`transport.dump() failed: ${error}`);
-                    }
-
+                    await this.dump('transport', params, transports);
                     break;
                 }
 
                 case 'dp':
                 case 'dumpProducer':
                 {
-                    const id = params[0] || Array.from(producers.keys()).pop();
-                    const producer = producers.get(id);
-
-                    if (!producer) {
-                        this.error('Producer not found');
-
-                        break;
-                    }
-
-                    try {
-                        const dump = await producer.dump();
-
-                        this.log(`producer.dump():\n${JSON.stringify(dump, null, '  ')}`);
-                    } catch (error) {
-                        this.error(`producer.dump() failed: ${error}`);
-                    }
-
+                    await this.dump('producer', params, producers);
                     break;
                 }
 
                 case 'dc':
                 case 'dumpConsumer':
                 {
-                    const id = params[0] || Array.from(consumers.keys()).pop();
-                    const consumer = consumers.get(id);
-
-                    if (!consumer) {
-                        this.error('Consumer not found');
-
-                        break;
-                    }
-
-                    try {
-                        const dump = await consumer.dump();
-
-                        this.log(`consumer.dump():\n${JSON.stringify(dump, null, '  ')}`);
-                    } catch (error) {
-                        this.error(`consumer.dump() failed: ${error}`);
-                    }
-
+                    await this.dump('consumer', params, consumers);
                     break;
                 }
 
                 case 'ddp':
                 case 'dumpDataProducer':
                 {
-                    const id = params[0] || Array.from(dataProducers.keys()).pop();
-                    const dataProducer = dataProducers.get(id);
-
-                    if (!dataProducer) {
-                        this.error('DataProducer not found');
-
-                        break;
-                    }
-
-                    try {
-                        const dump = await dataProducer.dump();
-
-                        this.log(`dataProducer.dump():\n${JSON.stringify(dump, null, '  ')}`);
-                    } catch (error) {
-                        this.error(`dataProducer.dump() failed: ${error}`);
-                    }
-
+                    await this.dump('dataProducer', params, dataProducers);
                     break;
                 }
 
                 case 'ddc':
                 case 'dumpDataConsumer':
                 {
-                    const id = params[0] || Array.from(dataConsumers.keys()).pop();
-                    const dataConsumer = dataConsumers.get(id);
-
-                    if (!dataConsumer) {
-                        this.error('DataConsumer not found');
-
-                        break;
-                    }
-
-                    try {
-                        const dump = await dataConsumer.dump();
-
-                        this.log(`dataConsumer.dump():\n${JSON.stringify(dump, null, '  ')}`);
-                    } catch (error) {
-                        this.error(`dataConsumer.dump() failed: ${error}`);
-                    }
-
+                    await this.dump('dataConsumer', params, dataConsumers);
                     break;
                 }
 
                 case 'st':
                 case 'statsTransport':
                 {
-                    const list = params[0] ? [transports.get(params[0])] : transports.values();
-
-                    for (const transport of list) {
-                        if (!transport) {
-                            this.error('Producer not found');
-                            break;
-                        }
-                        try {
-                            const stats = await transport.getStats();
-
-                            this.log(`transport.getStats():\n${JSON.stringify(stats, null, '  ')}`);
-                        } catch (error) {
-                            this.error(`transport.getStats() failed: ${error}`);
-                        }
-                    }
-
+                    await this.dumpStats('transport', params, transports);
                     break;
                 }
 
                 case 'sp':
                 case 'statsProducer':
                 {
-                    const list = params[0] ? [producers.get(params[0])] : producers.values();
-
-                    for (const producer of list) {
-                        if (!producer) {
-                            this.error('Producer not found');
-                            break;
-                        }
-
-                        try {
-                            const stats = await producer.getStats();
-
-                            this.log(`producer.getStats():\n${JSON.stringify(stats, null, '  ')}`);
-                        } catch (error) {
-                            this.error(`producer.getStats() failed: ${error}`);
-                        }
-                    }
-
+                    await this.dumpStats('producer', params, producers);
                     break;
                 }
 
                 case 'sc':
                 case 'statsConsumer':
                 {
-                    const list = params[0] ? [consumers.get(params[0])] : consumers.values();
-
-                    for (const consumer of list) {
-                        if (!consumer) {
-                            this.error('consumerr not found');
-                            break;
-                        }
-
-                        try {
-                            const stats = await consumer.getStats();
-                            this.log(`consumer.getStats():\n${JSON.stringify(stats, null, '  ')}`);
-                        } catch (error) {
-                            this.error(`consumer.getStats() failed: ${error}`);
-                        }
-                    }
-
+                    await this.dumpStats('consumer', params, consumers);
                     break;
                 }
 
                 case 'sdp':
                 case 'statsDataProducer':
                 {
-                    const id = params[0] || Array.from(dataProducers.keys()).pop();
-                    const dataProducer = dataProducers.get(id);
-
-                    if (!dataProducer) {
-                        this.error('DataProducer not found');
-
-                        break;
-                    }
-
-                    try {
-                        const stats = await dataProducer.getStats();
-
-                        this.log(`dataProducer.getStats():\n${JSON.stringify(stats, null, '  ')}`);
-                    } catch (error) {
-                        this.error(`dataProducer.getStats() failed: ${error}`);
-                    }
-
+                    await this.dumpStats('dataProducer', params, dataProducers);
                     break;
                 }
 
                 case 'sdc':
                 case 'statsDataConsumer':
                 {
-                    const id = params[0] || Array.from(dataConsumers.keys()).pop();
-                    const dataConsumer = dataConsumers.get(id);
-
-                    if (!dataConsumer) {
-                        this.error('DataConsumer not found');
-
-                        break;
-                    }
-
-                    try {
-                        const stats = await dataConsumer.getStats();
-
-                        this.log(`dataConsumer.getStats():\n${JSON.stringify(stats, null, '  ')}`);
-                    } catch (error) {
-                        this.error(`dataConsumer.getStats() failed: ${error}`);
-                    }
-
+                    await this.dumpStats('dataConsumer', params, dataConsumers);
                     break;
                 }
 
