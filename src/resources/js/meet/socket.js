@@ -81,6 +81,7 @@ function Socket(url, options)
                     if (error) {
                         reject(error)
                     } else {
+                        console.log('Recv: ' + method, response)
                         resolve(response)
                     }
                 })
