@@ -2,7 +2,8 @@
 
 namespace App\Console\Commands\User;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
+use App\User;
 
 class StatusCommand extends Command
 {
@@ -21,40 +22,26 @@ class StatusCommand extends Command
     protected $description = "Show a user's status.";
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $user = \App\User::withTrashed()->withEnvTenantContext()->where('email', $this->argument('user'))->first();
+        $user = $this->getUser($this->argument('user'), true);
 
         if (!$user) {
-            $user = \App\User::withTrashed()->withEnvTenantContext()->where('id', $this->argument('user'))->first();
-        }
-
-        if (!$user) {
-            $this->error("No such user '" . $this->argument('user') . "' within this tenant context.");
-            $this->info("Try ./artisan scalpel:user:read --attr=email --attr=tenant_id " . $this->argument('user'));
+            $this->error("User not found.");
+            $this->error("Try ./artisan scalpel:user:read --attr=email --attr=tenant_id " . $this->argument('user'));
             return 1;
         }
 
         $statuses = [
-            'active' => \App\User::STATUS_ACTIVE,
-            'suspended' => \App\User::STATUS_SUSPENDED,
-            'deleted' => \App\User::STATUS_DELETED,
-            'ldapReady' => \App\User::STATUS_LDAP_READY,
-            'imapReady' => \App\User::STATUS_IMAP_READY,
+            'active' => User::STATUS_ACTIVE,
+            'suspended' => User::STATUS_SUSPENDED,
+            'deleted' => User::STATUS_DELETED,
+            'ldapReady' => User::STATUS_LDAP_READY,
+            'imapReady' => User::STATUS_IMAP_READY,
         ];
 
         $user_state = [];

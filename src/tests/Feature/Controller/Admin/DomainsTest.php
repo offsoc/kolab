@@ -26,6 +26,7 @@ class DomainsTest extends TestCase
      */
     public function tearDown(): void
     {
+        $this->deleteTestUser('test1@domainscontroller.com');
         $this->deleteTestDomain('domainscontroller.com');
 
         parent::tearDown();
@@ -41,6 +42,19 @@ class DomainsTest extends TestCase
 
         // This end-point does not exist for admins
         $response = $this->actingAs($admin)->get("api/v4/domains/{$domain->id}/confirm");
+        $response->assertStatus(404);
+    }
+
+    /**
+     * Test deleting a domain (DELETE /api/v4/domains/<id>)
+     */
+    public function testDestroy(): void
+    {
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // This end-point does not exist for admins
+        $response = $this->actingAs($admin)->delete("api/v4/domains/{$domain->id}");
         $response->assertStatus(404);
     }
 
@@ -156,6 +170,18 @@ class DomainsTest extends TestCase
     }
 
     /**
+     * Test creeating a domain (POST /api/v4/domains)
+     */
+    public function testStore(): void
+    {
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        // Admins can't create domains
+        $response = $this->actingAs($admin)->post("api/v4/domains", []);
+        $response->assertStatus(404);
+    }
+
+    /**
      * Test domain suspending (POST /api/v4/domains/<domain-id>/suspend)
      */
     public function testSuspend(): void
@@ -166,7 +192,7 @@ class DomainsTest extends TestCase
             'status' => Domain::STATUS_NEW,
             'type' => Domain::TYPE_EXTERNAL,
         ]);
-        $user = $this->getTestUser('test@domainscontroller.com');
+        $user = $this->getTestUser('test1@domainscontroller.com');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
 
         // Test unauthorized access to admin API
@@ -199,7 +225,7 @@ class DomainsTest extends TestCase
             'status' => Domain::STATUS_NEW | Domain::STATUS_SUSPENDED,
             'type' => Domain::TYPE_EXTERNAL,
         ]);
-        $user = $this->getTestUser('test@domainscontroller.com');
+        $user = $this->getTestUser('test1@domainscontroller.com');
         $admin = $this->getTestUser('jeroen@jeroen.jeroen');
 
         // Test unauthorized access to admin API

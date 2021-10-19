@@ -119,6 +119,33 @@ class Entitlement extends Model
     }
 
     /**
+     * Simplified Entitlement/SKU information for a specified entitleable object
+     *
+     * @param object $object Entitleable object
+     *
+     * @return array Skus list with some metadata
+     */
+    public static function objectEntitlementsSummary($object): array
+    {
+        $skus = [];
+
+        // TODO: I agree this format may need to be extended in future
+
+        foreach ($object->entitlements as $ent) {
+            $sku = $ent->sku;
+
+            if (!isset($skus[$sku->id])) {
+                $skus[$sku->id] = ['costs' => [], 'count' => 0];
+            }
+
+            $skus[$sku->id]['count']++;
+            $skus[$sku->id]['costs'][] = $ent->cost;
+        }
+
+        return $skus;
+    }
+
+    /**
      * The SKU concerned.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo

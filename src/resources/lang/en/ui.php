@@ -61,6 +61,11 @@ return [
     ],
 
     'domain' => [
+        'delete' => "Delete domain",
+        'delete-domain' => "Delete {domain}",
+        'delete-text' => "Do you really want to delete this domain permanently?"
+            . " This is only possible if there are no users, aliases or other objects in this domain."
+            . " Please note that this action cannot be undone.",
         'dns-verify' => "Domain DNS verification sample:",
         'dns-config' => "Domain DNS configuration sample:",
         'namespace' => "Namespace",
@@ -79,6 +84,8 @@ return [
         'config-intro' => "In order to let {app} receive email traffic for your domain you need to adjust the DNS settings, more precisely the MX entries, accordingly.",
         'config-sample' => "Edit your domain's zone file and replace existing MX entries with the following values:",
         'config-hint' => "If you don't know how to set DNS entries for your domain, please contact the registration service where you registered the domain or your web hosting provider.",
+        'create' => "Create domain",
+        'new' => "New domain",
     ],
 
     'error' => [
@@ -90,6 +97,7 @@ return [
         '500' => "Internal server error",
         'unknown' => "Unknown Error",
         'server' => "Server Error",
+        'form' => "Form validation error",
     ],
 
     'form' => [

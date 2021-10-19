@@ -3,6 +3,7 @@
 namespace App\Backends;
 
 use App\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class PGP
@@ -82,6 +83,27 @@ class PGP
     }
 
     /**
+     * Deleta a keypair from DNS and Enigma keyring.
+     *
+     * @param \App\User $user  User object
+     * @param string    $email Email address of the key
+     *
+     * @throws \Exception
+     */
+    public static function keyDelete(User $user, string $email): void
+    {
+        // Start with the DNS, it's more important
+        self::keyUnregister($email);
+
+        // Remove the whole Enigma keyring (if it's a delete user account)
+        if ($user->email === $email) {
+            self::homedirCleanup($user);
+        } else {
+            // TODO: remove only the alias key from Enigma keyring
+        }
+    }
+
+    /**
      * List (public and private) keys from a user keyring.
      *
      * @param \App\User $user User object
@@ -110,9 +132,24 @@ class PGP
      * @param string $email Email address
      * @param string $key   The ASCII-armored key content
      */
-    public static function keyRegister(string $email, string $key)
+    private static function keyRegister(string $email, string $key): void
     {
-        // TODO
+        list($local, $domain) = \App\Utils::normalizeAddress($email, true);
+
+        DB::beginTransaction();
+
+        $domain = \App\PowerDNS\Domain::firstOrCreate([
+                'name' => '_woat.' . $domain,
+        ]);
+
+        \App\PowerDNS\Record::create([
+                'domain_id' => $domain->id,
+                'name' => sha1($local) . '.' . $domain->name,
+                'type' => 'TXT',
+                'content' => 'v=woat1,public_key=' . $key
+        ]);
+
+        DB::commit();
     }
 
     /**
@@ -120,9 +157,18 @@ class PGP
      *
      * @param string $email Email address
      */
-    public static function keyUnregister(string $email)
+    private static function keyUnregister(string $email): void
     {
-        // TODO
+        list($local, $domain) = \App\Utils::normalizeAddress($email, true);
+
+        $domain = \App\PowerDNS\Domain::where('name', '_woat.' . $domain)->first();
+
+        if ($domain) {
+            $fqdn = sha1($local) . '.' . $domain->name;
+
+            // For now we support only one WOAT key record
+            $domain->records()->where('name', $fqdn)->delete();
+        }
     }
 
     /**

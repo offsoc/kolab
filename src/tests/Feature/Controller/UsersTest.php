@@ -655,7 +655,7 @@ class UsersTest extends TestCase
         $this->assertSame('deleted@kolab.org', $aliases[0]->alias);
         $this->assertSame('useralias1@kolab.org', $aliases[1]->alias);
         // Assert the new user entitlements
-        $this->assertUserEntitlements($user, ['groupware', 'mailbox',
+        $this->assertEntitlements($user, ['groupware', 'mailbox',
             'storage', 'storage', 'storage', 'storage', 'storage']);
         // Assert the wallet to which the new user should be assigned to
         $wallet = $user->wallet();
@@ -681,7 +681,7 @@ class UsersTest extends TestCase
         $this->assertSame('Doe2', $user->getSetting('last_name'));
         $this->assertSame('TestOrg', $user->getSetting('organization'));
         $this->assertCount(0, $user->aliases()->get());
-        $this->assertUserEntitlements($user, ['groupware', 'mailbox',
+        $this->assertEntitlements($user, ['groupware', 'mailbox',
             'storage', 'storage', 'storage', 'storage', 'storage']);
 
         // Test acting as account controller (not owner)
@@ -876,7 +876,7 @@ class UsersTest extends TestCase
             ->orderBy('cost')
             ->pluck('cost')->all();
 
-        $this->assertUserEntitlements(
+        $this->assertEntitlements(
             $user,
             ['groupware', 'mailbox', 'storage', 'storage', 'storage', 'storage', 'storage', 'storage']
         );
@@ -914,7 +914,7 @@ class UsersTest extends TestCase
         $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
         $response->assertStatus(200);
 
-        $this->assertUserEntitlements(
+        $this->assertEntitlements(
             $jane,
             [
                 'activesync',
@@ -943,7 +943,7 @@ class UsersTest extends TestCase
         $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
         $response->assertStatus(200);
 
-        $this->assertUserEntitlements(
+        $this->assertEntitlements(
             $jane,
             [
                 'groupware',
@@ -973,7 +973,7 @@ class UsersTest extends TestCase
         $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
         $response->assertStatus(500);
 
-        $this->assertUserEntitlements(
+        $this->assertEntitlements(
             $jane,
             [
                 'groupware',
@@ -1003,7 +1003,7 @@ class UsersTest extends TestCase
         $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
         $response->assertStatus(500);
 
-        $this->assertUserEntitlements(
+        $this->assertEntitlements(
             $jane,
             [
                 'groupware',
@@ -1033,7 +1033,7 @@ class UsersTest extends TestCase
         $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
         $response->assertStatus(200);
 
-        $this->assertUserEntitlements(
+        $this->assertEntitlements(
             $jane,
             [
                 'groupware',

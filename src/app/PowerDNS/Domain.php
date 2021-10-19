@@ -12,7 +12,10 @@ class Domain extends Model
 
     protected $table = 'powerdns_domains';
 
-    public function bumpSerial()
+    /**
+     * Bump the SOA record serial
+     */
+    public function bumpSerial(): void
     {
         $soa = $this->records()->where('type', 'SOA')->first();
 
@@ -33,7 +36,12 @@ class Domain extends Model
         $soa->save();
     }
 
-    public function getSerial()
+    /**
+     * Returns the SOA record serial
+     *
+     * @return string
+     */
+    public function getSerial(): string
     {
         $soa = $this->records()->where('type', 'SOA')->first();
 
@@ -42,10 +50,23 @@ class Domain extends Model
         return $serial;
     }
 
+    /**
+     * Any DNS records assigned to this domain.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function records()
     {
-        return $this->hasMany('App\PowerDNS\Record', 'domain_id');
+        return $this->hasMany(Record::class, 'domain_id');
     }
 
-    //public function setSerial() { }
+    /**
+     * Any (additional) properties of this domain.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function settings()
+    {
+        return $this->hasMany(DomainSetting::class, 'domain_id');
+    }
 }

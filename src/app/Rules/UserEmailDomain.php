@@ -24,7 +24,7 @@ class UserEmailDomain implements Rule
     /**
      * Determine if the validation rule passes.
      *
-     * Validation of local part of an email address that's
+     * Validation of a domain part of an email address that's
      * going to be user's login.
      *
      * @param string $attribute Attribute name
@@ -34,8 +34,19 @@ class UserEmailDomain implements Rule
      */
     public function passes($attribute, $domain): bool
     {
-        // don't allow @localhost and other no-fqdn
-        if (empty($domain) || strpos($domain, '.') === false || stripos($domain, 'www.') === 0) {
+        // don't allow @localhost and other non-fqdn
+        if (
+            empty($domain)
+            || !is_string($domain)
+            || strpos($domain, '.') === false
+            || stripos($domain, 'www.') === 0
+        ) {
+            $this->message = \trans('validation.domaininvalid');
+            return false;
+        }
+
+        // Check the max length, according to the database column length
+        if (strlen($domain) > 191) {
             $this->message = \trans('validation.domaininvalid');
             return false;
         }

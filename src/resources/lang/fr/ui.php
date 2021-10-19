@@ -79,6 +79,13 @@ return [
         'spf-whitelist-text' => "Le Sender Policy Framework permet à un domaine expéditeur de dévoiler, par le biais de DNS,"
             . " quels systèmes sont autorisés à envoyer des e-mails avec une adresse d'expéditeur d'enveloppe dans le domaine en question.",
         'spf-whitelist-ex' => "Vous pouvez ici spécifier une liste de serveurs autorisés, par exemple: <var>.ess.barracuda.com</var>.",
+        'create' => "Créer domaine",
+        'new' => "Nouveau domaine",
+        'delete' => "Supprimer domaine",
+        'delete-domain' => "Supprimer {domain}",
+        'delete-text' => "Voulez-vous vraiment supprimer ce domaine de façon permanente?"
+            . " Ceci n'est possible que s'il n'y a pas d'utilisateurs, d'alias ou d'autres objets dans ce domaine."
+            . " Veuillez noter que cette action ne peut pas être inversée.",
     ],
 
     'error' => [
@@ -90,6 +97,7 @@ return [
         '500' => "Erreur de serveur interne",
         'unknown' => "Erreur inconnu",
         'server' => "Erreur de serveur",
+        'form' => "Erreur de validation du formulaire",
     ],
 
     'form' => [

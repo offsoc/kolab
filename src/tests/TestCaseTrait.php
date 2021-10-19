@@ -92,13 +92,13 @@ trait TestCaseTrait
     /**
      * Assert that the entitlements for the user match the expected list of entitlements.
      *
-     * @param \App\User $user     The user for which the entitlements need to be pulled.
-     * @param array     $expected An array of expected \App\SKU titles.
+     * @param \App\User|\App\Domain $object   The object for which the entitlements need to be pulled.
+     * @param array                 $expected An array of expected \App\SKU titles.
      */
-    protected function assertUserEntitlements($user, $expected)
+    protected function assertEntitlements($object, $expected)
     {
         // Assert the user entitlements
-        $skus = $user->entitlements()->get()
+        $skus = $object->entitlements()->get()
             ->map(function ($ent) {
                 return $ent->sku->title;
             })

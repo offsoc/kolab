@@ -311,29 +311,30 @@ class Utils
      *
      * This means to lowercase and strip components separated with recipient delimiters.
      *
-     * @param string $address The address to normalize.
+     * @param ?string $address The address to normalize
+     * @param bool    $asArray Return an array with local and domain part
      *
-     * @return string
+     * @return string|array Normalized email address as string or array
      */
-    public static function normalizeAddress($address)
+    public static function normalizeAddress(?string $address, bool $asArray = false)
     {
-        $address = strtolower($address);
+        if ($address === null || $address === '') {
+            return $asArray ? ['', ''] : '';
+        }
+
+        $address = \strtolower($address);
 
         if (strpos($address, '@') === false) {
-            return $address;
+            return $asArray ? [$address, ''] : $address;
         }
 
         list($local, $domain) = explode('@', $address);
 
-        if (strpos($local, '+') === false) {
-            return "{$local}@{$domain}";
+        if (strpos($local, '+') !== false) {
+            $local = explode('+', $local)[0];
         }
 
-        $localComponents = explode('+', $local);
-
-        $local = array_shift($localComponents);
-
-        return "{$local}@{$domain}";
+        return $asArray ? [$local, $domain] : "{$local}@{$domain}";
     }
 
     /**

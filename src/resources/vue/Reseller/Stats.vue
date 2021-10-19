@@ -9,7 +9,7 @@
         mixins: [Stats],
         data() {
             return {
-                chartTypes: ['users', 'users-all', 'discounts']
+                chartTypes: ['users', 'users-all', 'discounts', 'vouchers']
             }
         }
     }

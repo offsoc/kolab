@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Console\Domain;
+namespace Tests\Feature\Console;
 
 use Tests\TestCase;
 
@@ -23,5 +23,6 @@ class DomainsTest extends TestCase
         // TODO: Test --deleted argument
         // TODO: Test output format and other attributes
         // TODO: Test tenant context
+        $this->markTestIncomplete();
     }
 }

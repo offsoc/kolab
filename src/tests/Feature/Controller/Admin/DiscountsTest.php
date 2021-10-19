@@ -42,8 +42,8 @@ class DiscountsTest extends TestCase
 
         $json = $response->json();
 
-        $discount_test = Discount::where('code', 'TEST')->first();
-        $discount_free = Discount::where('discount', 100)->first();
+        $discount_test = Discount::withObjectTenantContext($user)->where('code', 'TEST')->first();
+        $discount_free = Discount::withObjectTenantContext($user)->where('discount', 100)->first();
 
         $this->assertSame(3, $json['count']);
         $this->assertSame($discount_test->id, $json['list'][0]['id']);

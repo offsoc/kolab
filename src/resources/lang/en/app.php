@@ -10,6 +10,15 @@ return [
     | The following language lines are used in the application.
     */
 
+    'chart-created' => 'Created',
+    'chart-deleted' => 'Deleted',
+    'chart-average' => 'average',
+    'chart-allusers' => 'All Users - last year',
+    'chart-discounts' => 'Discounts',
+    'chart-vouchers' => 'Vouchers',
+    'chart-income' => 'Income in :currency - last 8 weeks',
+    'chart-users' => 'Users - last 8 weeks',
+
     'mandate-delete-success' => 'The auto-payment has been removed.',
     'mandate-update-success' => 'The auto-payment has been updated.',
 
@@ -41,6 +50,9 @@ return [
     'distlist-suspend-success' => 'Distribution list suspended successfully.',
     'distlist-unsuspend-success' => 'Distribution list unsuspended successfully.',
 
+    'domain-create-success' => 'Domain created successfully.',
+    'domain-delete-success' => 'Domain deleted successfully.',
+    'domain-notempty-error' => 'Unable to delete a domain with assigned users or other objects.',
     'domain-verify-success' => 'Domain verified successfully.',
     'domain-verify-error' => 'Domain ownership verification failed.',
     'domain-suspend-success' => 'Domain suspended successfully.',

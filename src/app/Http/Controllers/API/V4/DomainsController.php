@@ -5,8 +5,11 @@ namespace App\Http\Controllers\API\V4;
 use App\Domain;
 use App\Http\Controllers\Controller;
 use App\Backends\LDAP;
+use App\Rules\UserEmailDomain;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class DomainsController extends Controller
 {
@@ -28,11 +31,15 @@ class DomainsController extends Controller
             }
         }
 
+        usort($list, function ($a, $b) {
+            return strcmp($a['namespace'], $b['namespace']);
+        });
+
         return response()->json($list);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new domain.
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -75,21 +82,42 @@ class DomainsController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified domain.
      *
-     * @param int $id
+     * @param int $id Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
-        return $this->errorResponse(404);
+        $domain = Domain::withEnvTenantContext()->find($id);
+
+        if (empty($domain)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canDelete($domain)) {
+            return $this->errorResponse(403);
+        }
+
+        // It is possible to delete domain only if there are no users/aliases/groups using it.
+        if (!$domain->isEmpty()) {
+            $response = ['status' => 'error', 'message' => \trans('app.domain-notempty-error')];
+            return response()->json($response, 422);
+        }
+
+        $domain->delete();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => \trans('app.domain-delete-success'),
+        ]);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified domain.
      *
-     * @param int $id
+     * @param int $id Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -130,9 +158,8 @@ class DomainsController extends Controller
         ]);
     }
 
-
     /**
-     * Store a newly created resource in storage.
+     * Create a domain.
      *
      * @param \Illuminate\Http\Request $request
      *
@@ -140,7 +167,70 @@ class DomainsController extends Controller
      */
     public function store(Request $request)
     {
-        return $this->errorResponse(404);
+        $current_user = $this->guard()->user();
+        $owner = $current_user->wallet()->owner;
+
+        if ($owner->id != $current_user->id) {
+            return $this->errorResponse(403);
+        }
+
+        // Validate the input
+        $v = Validator::make(
+            $request->all(),
+            [
+                'namespace' => ['required', 'string', new UserEmailDomain()]
+            ]
+        );
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        $namespace = \strtolower(request()->input('namespace'));
+
+        // Domain already exists
+        if ($domain = Domain::withTrashed()->where('namespace', $namespace)->first()) {
+            // Check if the domain is soft-deleted and belongs to the same user
+            $deleteBeforeCreate = $domain->trashed() && ($wallet = $domain->wallet())
+                && $wallet->owner && $wallet->owner->id == $owner->id;
+
+            if (!$deleteBeforeCreate) {
+                $errors = ['namespace' => \trans('validation.domainnotavailable')];
+                return response()->json(['status' => 'error', 'errors' => $errors], 422);
+            }
+        }
+
+        if (empty($request->package) || !($package = \App\Package::withEnvTenantContext()->find($request->package))) {
+            $errors = ['package' => \trans('validation.packagerequired')];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        if (!$package->isDomain()) {
+            $errors = ['package' => \trans('validation.packageinvalid')];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        DB::beginTransaction();
+
+        // Force-delete the existing domain if it is soft-deleted and belongs to the same user
+        if (!empty($deleteBeforeCreate)) {
+            $domain->forceDelete();
+        }
+
+        // Create the domain
+        $domain = Domain::create([
+                'namespace' => $namespace,
+                'type' => \App\Domain::TYPE_EXTERNAL,
+        ]);
+
+        $domain->assignPackage($package, $owner);
+
+        DB::commit();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => __('app.domain-create-success'),
+        ]);
     }
 
     /**
@@ -179,7 +269,18 @@ class DomainsController extends Controller
         // Status info
         $response['statusInfo'] = self::statusInfo($domain);
 
+        // Entitlements info
+        $response['skus'] = \App\Entitlement::objectEntitlementsSummary($domain);
+
         $response = array_merge($response, self::domainStatuses($domain));
+
+        // Some basic information about the domain wallet
+        $wallet = $domain->wallet();
+        $response['wallet'] = $wallet->toArray();
+        if ($wallet->discount) {
+            $response['wallet']['discount'] = $wallet->discount->discount;
+            $response['wallet']['discount_description'] = $wallet->discount->description;
+        }
 
         return response()->json($response);
     }
@@ -238,10 +339,10 @@ class DomainsController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified domain.
      *
      * @param \Illuminate\Http\Request $request
-     * @param int                      $id
+     * @param int                      $id Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse
      */

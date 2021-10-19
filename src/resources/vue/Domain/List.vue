@@ -2,7 +2,12 @@
     <div class="container">
         <div class="card" id="domain-list">
             <div class="card-body">
-                <div class="card-title">{{ $t('user.domains') }}</div>
+                <div class="card-title">
+                    {{ $t('user.domains') }}
+                    <router-link class="btn btn-success float-end create-domain" :to="{ path: 'domain/new' }" tag="button">
+                        <svg-icon icon="globe"></svg-icon> {{ $t('domain.create') }}
+                    </router-link>
+                </div>
                 <div class="card-text">
                     <table class="table table-sm table-hover">
                         <thead>

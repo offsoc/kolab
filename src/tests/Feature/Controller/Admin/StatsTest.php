@@ -4,6 +4,7 @@ namespace Tests\Feature\Controller\Admin;
 
 use App\Payment;
 use App\Providers\PaymentProvider;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class StatsTest extends TestCase
@@ -17,6 +18,7 @@ class StatsTest extends TestCase
         self::useAdminUrl();
 
         Payment::truncate();
+        DB::table('wallets')->update(['discount_id' => null]);
     }
 
     /**
@@ -25,6 +27,7 @@ class StatsTest extends TestCase
     public function tearDown(): void
     {
         Payment::truncate();
+        DB::table('wallets')->update(['discount_id' => null]);
 
         parent::tearDown();
     }
@@ -90,6 +93,21 @@ class StatsTest extends TestCase
         $this->assertSame('All Users - last year', $json['title']);
         $this->assertCount(54, $json['data']['labels']);
         $this->assertCount(1, $json['data']['datasets']);
+
+        // 'vouchers' chart
+        $discount = \App\Discount::withObjectTenantContext($user)->where('code', 'TEST')->first();
+        $wallet = $user->wallets->first();
+        $wallet->discount()->associate($discount);
+        $wallet->save();
+
+        $response = $this->actingAs($admin)->get("api/v4/stats/chart/vouchers");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('Vouchers', $json['title']);
+        $this->assertSame(['TEST'], $json['data']['labels']);
+        $this->assertSame([['values' => [1]]], $json['data']['datasets']);
     }
 
     /**

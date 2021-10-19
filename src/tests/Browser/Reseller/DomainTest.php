@@ -20,6 +20,10 @@ class DomainTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
+
+        $this->deleteTestUser('test1@domainscontroller.com');
+        $this->deleteTestDomain('domainscontroller.com');
+
         self::useResellerUrl();
     }
 
@@ -28,6 +32,9 @@ class DomainTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
+        $this->deleteTestUser('test1@domainscontroller.com');
+        $this->deleteTestDomain('domainscontroller.com');
+
         parent::tearDown();
     }
 
@@ -96,11 +103,20 @@ class DomainTest extends TestCaseDusk
     public function testSuspendAndUnsuspend(): void
     {
         $this->browse(function (Browser $browser) {
+            $sku_domain = \App\Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+            $user = $this->getTestUser('test1@domainscontroller.com');
             $domain = $this->getTestDomain('domainscontroller.com', [
                     'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE
                         | Domain::STATUS_LDAP_READY | Domain::STATUS_CONFIRMED
                         | Domain::STATUS_VERIFIED,
                     'type' => Domain::TYPE_EXTERNAL,
+            ]);
+
+            \App\Entitlement::create([
+                'wallet_id' => $user->wallets()->first()->id,
+                'sku_id' => $sku_domain->id,
+                'entitleable_id' => $domain->id,
+                'entitleable_type' => Domain::class
             ]);
 
             $browser->visit(new DomainPage($domain->id))

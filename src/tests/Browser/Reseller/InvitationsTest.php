@@ -123,21 +123,25 @@ class InvitationsTest extends TestCaseDusk
             Queue::fake();
             $i1 = SignupInvitation::create(['email' => 'test1@domain.org']);
             $i2 = SignupInvitation::create(['email' => 'test2@domain.org']);
-            SignupInvitation::where('id', $i2->id)
-                ->update(['created_at' => now()->subHours('2'), 'status' => SignupInvitation::STATUS_FAILED]);
+            SignupInvitation::where('id', $i1->id)->update(['status' => SignupInvitation::STATUS_FAILED]);
+            SignupInvitation::where('id', $i2->id)->update(['created_at' => now()->subHours('2')]);
 
-            // Test deleting
             $browser->visit(new Invitations())
-                // ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
-                ->assertElementsCount('@table tbody tr', 2)
-                ->click('@table tbody tr:first-child button.button-delete')
-                ->assertToast(Toast::TYPE_SUCCESS, "Invitation deleted successfully.")
-                ->assertElementsCount('@table tbody tr', 1);
+                ->assertElementsCount('@table tbody tr', 2);
 
             // Test resending
-            $browser->click('@table tbody tr:first-child button.button-resend')
+            $browser->assertSeeIn('@table tbody tr:first-child td.email', 'test1@domain.org')
+                ->click('@table tbody tr:first-child button.button-resend')
                 ->assertToast(Toast::TYPE_SUCCESS, "Invitation added to the sending queue successfully.")
-                ->assertElementsCount('@table tbody tr', 1);
+                ->assertVisible('@table tbody tr:first-child button.button-resend:disabled')
+                ->assertElementsCount('@table tbody tr', 2);
+
+            // Test deleting
+            $browser->assertSeeIn('@table tbody tr:last-child td.email', 'test2@domain.org')
+                ->click('@table tbody tr:last-child button.button-delete')
+                ->assertToast(Toast::TYPE_SUCCESS, "Invitation deleted successfully.")
+                ->assertElementsCount('@table tbody tr', 1)
+                ->assertSeeIn('@table tbody tr:first-child td.email', 'test1@domain.org');
         });
     }
 

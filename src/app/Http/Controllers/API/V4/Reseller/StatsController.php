@@ -12,6 +12,7 @@ class StatsController extends \App\Http\Controllers\API\V4\Admin\StatsController
         // 'income',
         'users',
         'users-all',
+        'vouchers',
     ];
 
     /**

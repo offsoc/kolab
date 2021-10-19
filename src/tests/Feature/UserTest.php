@@ -579,6 +579,40 @@ class UserTest extends TestCase
     }
 
     /**
+     * Test user deletion with PGP/WOAT enabled
+     */
+    public function testDeleteWithPGP(): void
+    {
+        Queue::fake();
+
+        // Test with PGP disabled
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+
+        $user->tenant->setSetting('pgp.enable', 0);
+        $user->delete();
+
+        Queue::assertPushed(\App\Jobs\PGP\KeyDeleteJob::class, 0);
+
+        // Test with PGP enabled
+        $this->deleteTestUser('user-test@' . \config('app.domain'));
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+
+        $user->tenant->setSetting('pgp.enable', 1);
+        $user->delete();
+        $user->tenant->setSetting('pgp.enable', 0);
+
+        Queue::assertPushed(\App\Jobs\PGP\KeyDeleteJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\PGP\KeyDeleteJob::class,
+            function ($job) use ($user) {
+                $userId = TestCase::getObjectProperty($job, 'userId');
+                $userEmail = TestCase::getObjectProperty($job, 'userEmail');
+                return $userId == $user->id && $userEmail === $user->email;
+            }
+        );
+    }
+
+    /**
      * Tests for User::aliasExists()
      */
     public function testAliasExists(): void
@@ -822,7 +856,15 @@ class UserTest extends TestCase
         $user->tenant->setSetting('pgp.enable', 0);
 
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 3);
-        Queue::assertPushed(\App\Jobs\PGP\KeyUnregisterJob::class, 1);
+        Queue::assertPushed(\App\Jobs\PGP\KeyDeleteJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\PGP\KeyDeleteJob::class,
+            function ($job) use ($user) {
+                $userId = TestCase::getObjectProperty($job, 'userId');
+                $userEmail = TestCase::getObjectProperty($job, 'userEmail');
+                return $userId == $user->id && $userEmail === 'useralias2@useraccount.com';
+            }
+        );
 
         $aliases = $user->aliases()->get();
         $this->assertCount(1, $aliases);

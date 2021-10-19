@@ -16,18 +16,18 @@ abstract class Base
 
     /**
      * Check if the SKU is available to the user. An SKU is available
-     * to the user when either it is active or there's already an
+     * to the user/domain when either it is active or there's already an
      * active entitlement.
      *
-     * @param \App\Sku  $sku  The SKU object
-     * @param \App\User $user The user object
+     * @param \App\Sku              $sku    The SKU object
+     * @param \App\User|\App\Domain $object The user or domain object
      *
      * @return bool
      */
-    public static function isAvailable(\App\Sku $sku, \App\User $user): bool
+    public static function isAvailable(\App\Sku $sku, $object): bool
     {
         if (!$sku->active) {
-            if (!$user->entitlements()->where('sku_id', $sku->id)->first()) {
+            if (!$object->entitlements()->where('sku_id', $sku->id)->first()) {
                 return false;
             }
         }

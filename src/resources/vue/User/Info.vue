@@ -78,98 +78,12 @@
                                     </div>
                                 </div>
                                 <div v-if="user_id === 'new'" id="user-packages" class="row mb-3">
-                                    <label class="col-sm-4 col-form-label">Package</label>
-                                    <div class="col-sm-8">
-                                        <table class="table table-sm form-list">
-                                            <thead class="visually-hidden">
-                                                <tr>
-                                                    <th scope="col"></th>
-                                                    <th scope="col">{{ $t('user.package') }}</th>
-                                                    <th scope="col">{{ $t('user.price') }}</th>
-                                                    <th scope="col"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="pkg in packages" :id="'p' + pkg.id" :key="pkg.id">
-                                                    <td class="selection">
-                                                        <input type="checkbox" @click="selectPackage"
-                                                               :value="pkg.id"
-                                                               :checked="pkg.id == package_id"
-                                                               :id="'pkg-input-' + pkg.id"
-                                                        >
-                                                    </td>
-                                                    <td class="name">
-                                                        <label :for="'pkg-input-' + pkg.id">{{ pkg.name }}</label>
-                                                    </td>
-                                                    <td class="price text-nowrap">
-                                                        {{ $root.priceLabel(pkg.cost, discount, currency) }}
-                                                    </td>
-                                                    <td class="buttons">
-                                                        <button v-if="pkg.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip="pkg.description">
-                                                            <svg-icon icon="info-circle"></svg-icon>
-                                                            <span class="visually-hidden">{{ $t('btn.moreinfo') }}</span>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                        <small v-if="discount > 0" class="hint">
-                                            <hr class="m-0">
-                                            &sup1; {{ $t('user.discount-hint') }}: {{ discount }}% - {{ discount_description }}
-                                        </small>
-                                    </div>
+                                    <label class="col-sm-4 col-form-label">{{ $t('user.package') }}</label>
+                                    <package-select class="col-sm-8 pt-sm-1"></package-select>
                                 </div>
                                 <div v-if="user_id !== 'new'" id="user-skus" class="row mb-3">
                                     <label class="col-sm-4 col-form-label">{{ $t('user.subscriptions') }}</label>
-                                    <div class="col-sm-8">
-                                        <table class="table table-sm form-list">
-                                            <thead class="visually-hidden">
-                                                <tr>
-                                                    <th scope="col"></th>
-                                                    <th scope="col">{{ $t('user.subscription') }}</th>
-                                                    <th scope="col">{{ $t('user.price') }}</th>
-                                                    <th scope="col"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="sku in skus" :id="'s' + sku.id" :key="sku.id">
-                                                    <td class="selection">
-                                                        <input type="checkbox" @input="onInputSku"
-                                                               :value="sku.id"
-                                                               :disabled="sku.readonly"
-                                                               :checked="sku.enabled"
-                                                               :id="'sku-input-' + sku.title"
-                                                        >
-                                                    </td>
-                                                    <td class="name">
-                                                        <label :for="'sku-input-' + sku.title">{{ sku.name }}</label>
-                                                        <div v-if="sku.range" class="range-input">
-                                                            <label class="text-nowrap">{{ sku.range.min }} {{ sku.range.unit }}</label>
-                                                            <input
-                                                                type="range" class="form-range" @input="rangeUpdate"
-                                                                :value="sku.value || sku.range.min"
-                                                                :min="sku.range.min"
-                                                                :max="sku.range.max"
-                                                            >
-                                                        </div>
-                                                    </td>
-                                                    <td class="price text-nowrap">
-                                                        {{ $root.priceLabel(sku.cost, discount, currency) }}
-                                                    </td>
-                                                    <td class="buttons">
-                                                        <button v-if="sku.description" type="button" class="btn btn-link btn-lg p-0" v-tooltip="sku.description">
-                                                            <svg-icon icon="info-circle"></svg-icon>
-                                                            <span class="visually-hidden">{{ $t('btn.moreinfo') }}</span>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                        <small v-if="discount > 0" class="hint">
-                                            <hr class="m-0">
-                                            &sup1; {{ $t('user.discount-hint') }}: {{ discount }}% - {{ discount_description }}
-                                        </small>
-                                    </div>
+                                    <subscription-select v-if="user.id" class="col-sm-8 pt-sm-1" :object="user"></subscription-select>
                                 </div>
                                 <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
                             </form>
@@ -217,57 +131,30 @@
 <script>
     import { Modal } from 'bootstrap'
     import ListInput from '../Widgets/ListInput'
+    import PackageSelect from '../Widgets/PackageSelect'
     import StatusComponent from '../Widgets/Status'
+    import SubscriptionSelect from '../Widgets/SubscriptionSelect'
 
     export default {
         components: {
             ListInput,
-            StatusComponent
+            PackageSelect,
+            StatusComponent,
+            SubscriptionSelect
         },
         data() {
             return {
-                currency: '',
-                discount: 0,
-                discount_description: '',
                 user_id: null,
                 user: { aliases: [], config: [] },
-                packages: [],
-                package_id: null,
-                skus: [],
                 status: {}
             }
         },
         created() {
             this.user_id = this.$route.params.user
 
-            let wallet = this.$store.state.authInfo.accounts[0]
+            if (this.user_id !== 'new') {
+                this.$root.startLoading()
 
-            if (!wallet) {
-                wallet = this.$store.state.authInfo.wallets[0]
-            }
-
-            if (wallet) {
-                this.currency = wallet.currency
-                if (wallet.discount) {
-                    this.discount = wallet.discount
-                    this.discount_description = wallet.discount_description
-                }
-            }
-
-            this.$root.startLoading()
-
-            if (this.user_id === 'new') {
-                // do nothing (for now)
-                axios.get('/api/v4/packages')
-                    .then(response => {
-                        this.$root.stopLoading()
-
-                        this.packages = response.data.filter(pkg => !pkg.isDomain)
-                        this.package_id = this.packages[0].id
-                    })
-                    .catch(this.$root.errorHandler)
-            }
-            else {
                 axios.get('/api/v4/users/' + this.user_id)
                     .then(response => {
                         this.$root.stopLoading()
@@ -276,35 +163,7 @@
                         this.user.first_name = response.data.settings.first_name
                         this.user.last_name = response.data.settings.last_name
                         this.user.organization = response.data.settings.organization
-                        this.discount = this.user.wallet.discount
-                        this.discount_description = this.user.wallet.discount_description
                         this.status = response.data.statusInfo
-
-                        axios.get('/api/v4/users/' + this.user_id + '/skus?type=user')
-                            .then(response => {
-                                // "merge" SKUs with user entitlement-SKUs
-                                this.skus = response.data
-                                    .map(sku => {
-                                        const userSku = this.user.skus[sku.id]
-                                        if (userSku) {
-                                            sku.enabled = true
-                                            sku.skuCost = sku.cost
-                                            sku.cost = userSku.costs.reduce((sum, current) => sum + current)
-                                            sku.value = userSku.count
-                                            sku.costs = userSku.costs
-                                        } else if (!sku.readonly) {
-                                            sku.enabled = false
-                                        }
-
-                                        return sku
-                                    })
-
-                                // Update all range inputs (and price)
-                                this.$nextTick(() => {
-                                    $('#user-skus input[type=range]').each((idx, elem) => { this.rangeUpdate(elem) })
-                                })
-                            })
-                            .catch(this.$root.errorHandler)
                     })
                     .catch(this.$root.errorHandler)
             }
@@ -317,7 +176,7 @@
         },
         methods: {
             submit() {
-                this.$root.clearFormValidation($('#user-info form'))
+                this.$root.clearFormValidation($('#general form'))
 
                 let method = 'post'
                 let location = '/api/v4/users'
@@ -335,7 +194,7 @@
                     })
                     this.user.skus = skus
                 } else {
-                    this.user.package = this.package_id
+                    this.user.package = $('#user-packages input:checked').val()
                 }
 
                 axios[method](location, this.user)
@@ -356,106 +215,6 @@
                     .then(response => {
                         this.$toast.success(response.data.message)
                     })
-            },
-            onInputSku(e) {
-                let input = e.target
-                let sku = this.findSku(input.value)
-                let required = []
-
-                // We use 'readonly', not 'disabled', because we might want to handle
-                // input events. For example to display an error when someone clicks
-                // the locked input
-                if (input.readOnly) {
-                    input.checked = !input.checked
-                    // TODO: Display an alert explaining why it's locked
-                    return
-                }
-
-                // TODO: Following code might not work if we change definition of forbidden/required
-                //       or we just need more sophisticated SKU dependency rules
-
-                if (input.checked) {
-                    // Check if a required SKU is selected, alert the user if not
-                    (sku.required || []).forEach(title => {
-                        this.skus.forEach(item => {
-                            let checkbox
-                            if (item.handler == title && (checkbox = $('#s' + item.id).find('input[type=checkbox]')[0])) {
-                                if (!checkbox.checked) {
-                                    required.push(item.name)
-                                }
-                            }
-                        })
-                    })
-
-                    if (required.length) {
-                        input.checked = false
-                        return alert(this.$t('user.skureq', { sku: sku.name, list: required.join(', ') }))
-                    }
-                } else {
-                    // Uncheck all dependent SKUs, e.g. when unchecking Groupware we also uncheck Activesync
-                    // TODO: Should we display an alert instead?
-                    this.skus.forEach(item => {
-                        if (item.required && item.required.indexOf(sku.handler) > -1) {
-                            $('#s' + item.id).find('input[type=checkbox]').prop('checked', false)
-                        }
-                    })
-                }
-
-                // Uncheck+lock/unlock conflicting SKUs
-                (sku.forbidden || []).forEach(title => {
-                    this.skus.forEach(item => {
-                        let checkbox
-                        if (item.handler == title && (checkbox = $('#s' + item.id).find('input[type=checkbox]')[0])) {
-                            if (input.checked) {
-                                checkbox.checked = false
-                                checkbox.readOnly = true
-                            } else {
-                                checkbox.readOnly = false
-                            }
-                        }
-                    })
-                })
-            },
-            selectPackage(e) {
-                // Make sure there always is only one package selected
-                $('#user-packages input').prop('checked', false)
-                this.package_id = $(e.target).prop('checked', false).val()
-            },
-            rangeUpdate(e) {
-                let input = $(e.target || e)
-                let value = input.val()
-                let record = input.parents('tr').first()
-                let sku_id = record.find('input[type=checkbox]').val()
-                let sku = this.findSku(sku_id)
-                let existing = sku.costs ? sku.costs.length : 0
-                let cost
-
-                // Calculate cost, considering both existing entitlement cost and sku cost
-                if (existing) {
-                    cost = sku.costs
-                        .sort((a, b) => a - b) // sort by cost ascending (free units first)
-                        .slice(0, value)
-                        .reduce((sum, current) => sum + current)
-
-                    if (value > existing) {
-                        cost += sku.skuCost * (value - existing)
-                    }
-                } else {
-                    cost = sku.cost * (value - sku.units_free)
-                }
-
-                // Update the label
-                input.prev().text(value + ' ' + sku.range.unit)
-
-                // Update the price
-                record.find('.price').text(this.$root.priceLabel(cost, this.discount, this.currency))
-            },
-            findSku(id) {
-                for (let i = 0; i < this.skus.length; i++) {
-                    if (this.skus[i].id == id) {
-                        return this.skus[i];
-                    }
-                }
             },
             statusUpdate(user) {
                 this.user = Object.assign({}, this.user, user)

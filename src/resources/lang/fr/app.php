@@ -10,6 +10,15 @@ return [
     | The following language lines are used in the application.
     */
 
+    'chart-created' => "Crée",
+    'chart-deleted' => "Supprimé",
+    'chart-average' => "moyenne",
+    'chart-allusers' => "Tous Utilisateurs - l'année derniere",
+    'chart-discounts' => "Rabais",
+    'chart-vouchers' => "Coupons",
+    'chart-income' => "Revenus en :currency - 8 dernières semaines",
+    'chart-users' => "Utilisateurs - 8 dernières semaines",
+
     'mandate-delete-success' => "L'auto-paiement a été supprimé.",
     'mandate-update-success' => "L'auto-paiement a été mis-à-jour.",
 
@@ -44,6 +53,8 @@ return [
     'distlist-suspend-success' => "Liste de distribution à été suspendue avec succès.",
     'distlist-unsuspend-success' => "Liste de distribution à été débloquée avec succès.",
 
+    'domain-create-success' => "Domaine a été crée avec succès.",
+    'domain-delete-success' => "Domaine supprimé avec succès.",
     'domain-verify-success' => "Domaine vérifié avec succès.",
     'domain-verify-error' => "Vérification de propriété de domaine à échoué.",
     'domain-suspend-success' => "Domaine suspendue avec succès.",
