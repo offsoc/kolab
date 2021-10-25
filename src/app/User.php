@@ -5,10 +5,11 @@ namespace App;
 use App\Entitlement;
 use App\UserAlias;
 use App\Sku;
-use App\Traits\UuidIntKeyTrait;
 use App\Traits\BelongsToTenantTrait;
-use App\Traits\UserConfigTrait;
+use App\Traits\EntitleableTrait;
 use App\Traits\UserAliasesTrait;
+use App\Traits\UserConfigTrait;
+use App\Traits\UuidIntKeyTrait;
 use App\Traits\SettingsTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -29,14 +30,15 @@ use League\OAuth2\Server\Exception\OAuthServerException;
  */
 class User extends Authenticatable
 {
-    use UuidIntKeyTrait;
     use BelongsToTenantTrait;
+    use EntitleableTrait;
+    use HasApiTokens;
     use NullableFields;
     use UserConfigTrait;
     use UserAliasesTrait;
+    use UuidIntKeyTrait;
     use SettingsTrait;
     use SoftDeletes;
-    use HasApiTokens;
 
     // a new user, default on creation
     public const STATUS_NEW        = 1 << 0;
@@ -214,7 +216,7 @@ class User extends Authenticatable
         // TODO: For now controller can delete/update the account owner,
         //       this may change in future, controllers are not 0-regression feature
 
-        return $this->wallets->contains($wallet) || $this->accounts->contains($wallet);
+        return $wallet && ($wallet->user_id == $this->id || $this->accounts->contains($wallet));
     }
 
     /**
@@ -256,7 +258,7 @@ class User extends Authenticatable
 
         $wallet = $object->wallet();
 
-        return $wallet && ($this->wallets->contains($wallet) || $this->accounts->contains($wallet));
+        return $wallet && ($wallet->user_id == $this->id || $this->accounts->contains($wallet));
     }
 
     /**
@@ -339,30 +341,6 @@ class User extends Authenticatable
         }
 
         return $domains;
-    }
-
-    /**
-     * The user entitlement.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
-     */
-    public function entitlement()
-    {
-        return $this->morphOne('App\Entitlement', 'entitleable');
-    }
-
-    /**
-     * Entitlements for this user.
-     *
-     * Note that these are entitlements that apply to the user account, and not entitlements that
-     * this user owns.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function entitlements()
-    {
-        return $this->hasMany('App\Entitlement', 'entitleable_id', 'id')
-            ->where('entitleable_type', User::class);
     }
 
     /**
@@ -694,20 +672,6 @@ class User extends Authenticatable
     public function verificationcodes()
     {
         return $this->hasMany('App\VerificationCode', 'user_id', 'id');
-    }
-
-    /**
-     * Returns the wallet by which the user is controlled
-     *
-     * @return ?\App\Wallet A wallet object
-     */
-    public function wallet(): ?Wallet
-    {
-        $entitlement = $this->entitlement()->withTrashed()->orderBy('created_at', 'desc')->first();
-
-        // TODO: No entitlement should not happen, but in tests we have
-        //       such cases, so we fallback to the user's wallet in this case
-        return $entitlement ? $entitlement->wallet : $this->wallets()->first();
     }
 
     /**

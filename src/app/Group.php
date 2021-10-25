@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Traits\BelongsToTenantTrait;
+use App\Traits\EntitleableTrait;
 use App\Traits\UuidIntKeyTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
@@ -20,8 +21,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Group extends Model
 {
     use BelongsToTenantTrait;
-    use UuidIntKeyTrait;
+    use EntitleableTrait;
     use SoftDeletes;
+    use UuidIntKeyTrait;
 
     // we've simply never heard of this domain
     public const STATUS_NEW        = 1 << 0;
@@ -54,7 +56,7 @@ class Group extends Model
             throw new \Exception("Group not yet exists");
         }
 
-        if ($this->entitlement()->count()) {
+        if ($this->entitlements()->count()) {
             throw new \Exception("Group already assigned to a wallet");
         }
 
@@ -108,16 +110,6 @@ class Group extends Model
         }
 
         return false;
-    }
-
-    /**
-     * The group entitlement.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
-     */
-    public function entitlement()
-    {
-        return $this->morphOne('App\Entitlement', 'entitleable');
     }
 
     /**
@@ -265,18 +257,5 @@ class Group extends Model
 
         $this->status ^= Group::STATUS_SUSPENDED;
         $this->save();
-    }
-
-    /**
-     * Returns the wallet by which the group is controlled
-     *
-     * @return \App\Wallet A wallet object
-     */
-    public function wallet(): ?Wallet
-    {
-        // Note: Not all domains have a entitlement/wallet
-        $entitlement = $this->entitlement()->withTrashed()->orderBy('created_at', 'desc')->first();
-
-        return $entitlement ? $entitlement->wallet : null;
     }
 }

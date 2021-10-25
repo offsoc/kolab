@@ -45,8 +45,8 @@ class SetWalletCommand extends Command
             return 1;
         }
 
-        if ($domain->entitlement) {
-            $this->error("Domain already assigned to a wallet: {$domain->entitlement->wallet->id}.");
+        if ($entitlement = $domain->entitlements()->first()) {
+            $this->error("Domain already assigned to a wallet: {$entitlement->wallet->id}.");
             return 1;
         }
 

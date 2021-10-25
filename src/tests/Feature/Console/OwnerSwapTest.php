@@ -107,7 +107,7 @@ class OwnerSwapTest extends TestCase
 
         // Test case when the target user does not belong to the same account
         $john = $this->getTestUser('john@kolab.org');
-        $owner->entitlement()->update(['wallet_id' => $john->wallets->first()->id]);
+        $owner->entitlements()->update(['wallet_id' => $john->wallets->first()->id]);
 
         $code = \Artisan::call("owner:swap user2@owner-swap.com user1@owner-swap.com");
         $output = trim(\Artisan::output());
