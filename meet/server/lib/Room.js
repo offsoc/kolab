@@ -1092,10 +1092,6 @@ class Room extends EventEmitter {
             this._notification(consumerPeer.socket, 'consumerClosed', { consumerId: consumer.id });
         });
 
-        // TODO: We don't have to send websocket signals on producerpause/producerresume
-        //       The same can be achieved on the client-side using consumer.observer.on('pause')
-        //       and consumer.observer.on('resume')
-
         consumer.on('producerpause', () => {
             this._notification(consumerPeer.socket, 'consumerPaused', { consumerId: consumer.id });
         });
