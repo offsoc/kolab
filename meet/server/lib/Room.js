@@ -958,8 +958,6 @@ class Room extends EventEmitter {
             // Close the room
             this.close();
 
-            // TODO: remove the room?
-
             break;
         }
 
