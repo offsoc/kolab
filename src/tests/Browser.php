@@ -278,7 +278,8 @@ class Browser extends \Laravel\Dusk\Browser
 
             // Ignore errors/warnings irrelevant for testing
             foreach ($console as $idx => $entry) {
-                if ($entry['level'] != 'SEVERE'
+                if (
+                    $entry['level'] != 'SEVERE'
                     || strpos($entry['message'], 'Failed to load resource: the server responded with a status of')
                 ) {
                     $console[$idx] = null;
@@ -297,5 +298,4 @@ class Browser extends \Laravel\Dusk\Browser
 
         return $this;
     }
-
 }
