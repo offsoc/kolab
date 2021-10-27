@@ -185,7 +185,7 @@ async function runHttpsServer() {
         })
     })
 
-    // Seend websocket notification signals to room participants
+    // Send a websocket notification signals to the room participants
     app.post(`${config.pathPrefix}/api/signal`, async function (req, res /*, next*/) {
         const data = req.body;
         const roomId = data.roomId;

@@ -128,7 +128,7 @@ class Room extends EventEmitter {
      * @param {axios} webhook - An axios instance for webhook (http) requests
      */
     static async create({ mediasoupWorkers, peers, webhook }) {
-        const roomId = uuidv4().substring(0, 16); // TODO: Use full uuid
+        const roomId = uuidv4();
 
         logger.info('create() [roomId:"%s"]', roomId);
 
