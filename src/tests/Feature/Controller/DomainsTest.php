@@ -537,7 +537,7 @@ class DomainsTest extends TestCase
 
         // Test creating a domain that is soft-deleted and belongs to another user
         $domain->delete();
-        $domain->entitlement()->withTrashed()->update(['wallet_id' => $jack->wallets->first()->id]);
+        $domain->entitlements()->withTrashed()->update(['wallet_id' => $jack->wallets->first()->id]);
 
         $response = $this->actingAs($john)->post("/api/v4/domains", $post);
         $response->assertStatus(422);

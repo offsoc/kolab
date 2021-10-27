@@ -35,7 +35,7 @@ class GroupTest extends TestCase
         $result = $group->assignToWallet($user->wallets->first());
 
         $this->assertSame($group, $result);
-        $this->assertSame(1, $group->entitlement()->count());
+        $this->assertSame(1, $group->entitlements()->count());
 
         // Can't be done twice on the same group
         $this->expectException(\Exception::class);

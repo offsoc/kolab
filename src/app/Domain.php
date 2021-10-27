@@ -3,10 +3,11 @@
 namespace App;
 
 use App\Wallet;
-use App\Traits\UuidIntKeyTrait;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\DomainConfigTrait;
+use App\Traits\EntitleableTrait;
 use App\Traits\SettingsTrait;
+use App\Traits\UuidIntKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -20,11 +21,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Domain extends Model
 {
-    use UuidIntKeyTrait;
     use BelongsToTenantTrait;
     use DomainConfigTrait;
+    use EntitleableTrait;
     use SettingsTrait;
     use SoftDeletes;
+    use UuidIntKeyTrait;
 
     // we've simply never heard of this domain
     public const STATUS_NEW        = 1 << 0;
@@ -102,27 +104,6 @@ class Domain extends Model
         }
 
         return $this;
-    }
-
-    /**
-     * The domain entitlement.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
-     */
-    public function entitlement()
-    {
-        return $this->morphOne('App\Entitlement', 'entitleable');
-    }
-
-    /**
-     * Entitlements for this domain.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function entitlements()
-    {
-        return $this->hasMany('App\Entitlement', 'entitleable_id', 'id')
-            ->where('entitleable_type', Domain::class);
     }
 
     /**
@@ -525,18 +506,5 @@ class Domain extends Model
         }
 
         return false;
-    }
-
-    /**
-     * Returns the wallet by which the domain is controlled
-     *
-     * @return \App\Wallet A wallet object
-     */
-    public function wallet(): ?Wallet
-    {
-        // Note: Not all domains have a entitlement/wallet
-        $entitlement = $this->entitlement()->withTrashed()->orderBy('created_at', 'desc')->first();
-
-        return $entitlement ? $entitlement->wallet : null;
     }
 }

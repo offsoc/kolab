@@ -60,11 +60,11 @@ class SetWalletTest extends TestCase
         $this->assertSame('', $output);
 
         $domain->refresh();
-        $sku = \App\Sku::withObjectTenantContext($domain)
-            ->where('title', 'domain-hosting')->first();
+        $sku = \App\Sku::withObjectTenantContext($domain)->where('title', 'domain-hosting')->first();
+        $entitlement = $domain->entitlements()->first();
 
-        $this->assertSame($sku->id, $domain->entitlement->sku_id);
-        $this->assertSame($wallet->id, $domain->entitlement->wallet_id);
+        $this->assertSame($sku->id, $entitlement->sku_id);
+        $this->assertSame($wallet->id, $entitlement->wallet_id);
 
         // Already assigned to a wallet
         $code = \Artisan::call("domain:set-wallet domain-delete.com " . $wallet->id);
