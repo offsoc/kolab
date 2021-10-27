@@ -1192,8 +1192,6 @@ function Client()
             }
         }
 
-        // TODO: Investigate whether we really need this, I found that the state
-        //       is communicated to the server anyway by the mediasoup client
         if (!quiet) {
             socket.sendRequest(action + 'Consumer', { consumerId: consumer.id })
         }
