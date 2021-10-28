@@ -169,6 +169,7 @@ if (\config('app.with_services')) {
         ],
         function () {
             Route::get('nginx', 'API\V4\NGINXController@authenticate');
+            Route::get('nginx-httpauth', 'API\V4\NGINXController@httpauth');
             Route::post('policy/greylist', 'API\V4\PolicyController@greylist');
             Route::post('policy/ratelimit', 'API\V4\PolicyController@ratelimit');
             Route::post('policy/spf', 'API\V4\PolicyController@senderPolicyFramework');

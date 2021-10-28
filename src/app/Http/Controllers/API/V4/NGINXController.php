@@ -10,6 +10,152 @@ use Illuminate\Support\Str;
 class NGINXController extends Controller
 {
     /**
+     * Authorize with the provided credentials.
+     *
+     * @param string $login The login name
+     * @param string $password The password
+     * @param string $clientIP The client ip
+     *
+     * @return \App\User The user
+     *
+     * @throws \Exception If the authorization fails.
+     */
+    private function authorizeRequest($login, $password, $clientIP)
+    {
+        if (empty($login)) {
+            throw new \Exception("Empty login");
+        }
+
+        if (empty($password)) {
+            throw new \Exception("Empty password");
+        }
+
+        if (empty($clientIP)) {
+            throw new \Exception("No client ip");
+        }
+
+        $user = \App\User::where('email', $login)->first();
+        if (!$user) {
+            throw new \Exception("User not found");
+        }
+
+        // TODO: validate the user's domain is A-OK (active, confirmed, not suspended, ldapready)
+        // TODO: validate the user is A-OK (active, not suspended, ldapready, imapready)
+
+        if (!Hash::check($password, $user->password)) {
+            $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+            // Avoid setting a password failure reason if we previously accepted the location.
+            if (!$attempt->isAccepted()) {
+                $attempt->reason = \App\AuthAttempt::REASON_PASSWORD;
+                $attempt->save();
+                $attempt->notify();
+            }
+            throw new \Exception("Password mismatch");
+        }
+
+        // validate country of origin against restrictions, otherwise bye bye
+        $countryCodes = json_decode($user->getSetting('limit_geo', "[]"));
+
+        \Log::debug("Countries for {$user->email}: " . var_export($countryCodes, true));
+
+        if (!empty($countryCodes)) {
+            $country = \App\Utils::countryForIP($clientIP);
+            if (!in_array($country, $countryCodes)) {
+                \Log::info(
+                    "Failed authentication attempt due to country code mismatch ({$country}) for user: {$login}"
+                );
+                $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+                $attempt->deny(\App\AuthAttempt::REASON_GEOLOCATION);
+                $attempt->notify();
+                throw new \Exception("Country code mismatch");
+            }
+        }
+
+        // TODO: Apply some sort of limit for Auth-Login-Attempt -- docs say it is the number of
+        // attempts over the same authAttempt.
+
+        // Check 2fa
+        if ($user->getSetting('2fa_enabled', false)) {
+            $authAttempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+            if (!$authAttempt->waitFor2FA()) {
+                throw new \Exception("2fa failed");
+            }
+        }
+        return $user;
+    }
+
+
+    /**
+     * Convert domain.tld\username into username@domain for activesync
+     *
+     * @param string $username The original username.
+     *
+     * @return string The username in canonical form
+     */
+    private function normalizeUsername($username)
+    {
+        $usernameParts = explode("\\", $username);
+        if (count($usernameParts) == 2) {
+            $username = $usernameParts[1];
+            if (!strpos($username, '@') && !empty($usernameParts[0])) {
+                $username .= '@' . $usernameParts[0];
+            }
+        }
+        return $username;
+    }
+
+
+    /**
+     * Authentication request from the ngx_http_auth_request_module
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\Response The response
+     */
+    public function httpauth(Request $request)
+    {
+        /**
+            Php-Auth-Pw:               simple123
+            Php-Auth-User:             john@kolab.org
+            Sec-Fetch-Dest:            document
+            Sec-Fetch-Mode:            navigate
+            Sec-Fetch-Site:            cross-site
+            Sec-Gpc:                   1
+            Upgrade-Insecure-Requests: 1
+            User-Agent:                Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0
+            X-Forwarded-For:           31.10.153.58
+            X-Forwarded-Proto:         https
+            X-Original-Uri:            /iRony/
+            X-Real-Ip:                 31.10.153.58
+         */
+
+        \Log::debug("Authentication attempt\n{$request->headers}");
+
+        $username = $this->normalizeUsername($request->headers->get('Php-Auth-User', ""));
+        $password = $request->headers->get('Php-Auth-Pw', null);
+
+        if (empty($password)) {
+            \Log::debug("Authentication attempt failed: Empty password provided.");
+            return response("", 401);
+        }
+
+        try {
+            $this->authorizeRequest(
+                $username,
+                $password,
+                $request->headers->get('X-Real-Ip', null),
+            );
+        } catch (\Exception $e) {
+            \Log::debug("Authentication attempt failed: {$e->getMessage()}");
+            return response("", 403);
+        }
+
+        \Log::debug("Authentication attempt succeeded");
+        return response("");
+    }
+
+
+    /**
      * Authentication request.
      *
      * @todo: Separate IMAP(+STARTTLS) from IMAPS, same for SMTP/submission. =>
@@ -39,77 +185,18 @@ class NGINXController extends Controller
          *  Auth-SSL-Fingerprint: 29d6a80a123d13355ed16b4b04605e29cb55a5ad
          */
 
-        \Log::debug("Authentication attempt");
-        \Log::debug($request->headers);
+        \Log::debug("Authentication attempt\n{$request->headers}");
 
-        $login = $request->headers->get('Auth-User', null);
-
-        if (empty($login)) {
-            return $this->byebye($request, "Empty login");
-        }
-
-        // validate password, otherwise bye bye
         $password = $request->headers->get('Auth-Pass', null);
 
-        if (empty($password)) {
-            return $this->byebye($request, "Empty password");
-        }
-
-        $clientIP = $request->headers->get('Client-Ip', null);
-
-        if (empty($clientIP)) {
-            return $this->byebye($request, "No client ip");
-        }
-
-        // validate user exists, otherwise bye bye
-        $user = \App\User::where('email', $login)->first();
-
-        if (!$user) {
-            return $this->byebye($request, "User not found");
-        }
-
-        // TODO: validate the user's domain is A-OK (active, confirmed, not suspended, ldapready)
-        // TODO: validate the user is A-OK (active, not suspended, ldapready, imapready)
-
-        if (!Hash::check($password, $user->password)) {
-            $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
-            // Avoid setting a password failure reason if we previously accepted the location.
-            if (!$attempt->isAccepted()) {
-                $attempt->reason = \App\AuthAttempt::REASON_PASSWORD;
-                $attempt->save();
-                $attempt->notify();
-            }
-            \Log::info("Failed authentication attempt due to password mismatch for user: {$login}");
-            return $this->byebye($request, "Password mismatch");
-        }
-
-        // validate country of origin against restrictions, otherwise bye bye
-        $countryCodes = json_decode($user->getSetting('limit_geo', "[]"));
-
-        \Log::debug("Countries for {$user->email}: " . var_export($countryCodes, true));
-
-        if (!empty($countryCodes)) {
-            $country = \App\Utils::countryForIP($clientIP);
-            if (!in_array($country, $countryCodes)) {
-                \Log::info(
-                    "Failed authentication attempt due to country code mismatch ({$country}) for user: {$login}"
-                );
-                $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
-                $attempt->deny(\App\AuthAttempt::REASON_GEOLOCATION);
-                $attempt->notify();
-                return $this->byebye($request, "Country code mismatch");
-            }
-        }
-
-        // TODO: Apply some sort of limit for Auth-Login-Attempt -- docs say it is the number of
-        // attempts over the same authAttempt.
-
-        // Check 2fa
-        if ($user->getSetting('2fa_enabled', false)) {
-            $authAttempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
-            if (!$authAttempt->waitFor2FA()) {
-                return $this->byebye($request, "2fa failed");
-            }
+        try {
+            $user = $this->authorizeRequest(
+                $request->headers->get('Auth-User', null),
+                $password,
+                $request->headers->get('Client-Ip', null),
+            );
+        } catch (\Exception $e) {
+            return $this->byebye($request, $e->getMessage());
         }
 
         // All checks passed

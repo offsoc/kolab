@@ -163,4 +163,84 @@ class NGINXTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
     }
+
+    /**
+     * Test the httpauth webhook
+     */
+    public function testNGINXHttpAuthHook(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+
+        $response = $this->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(403);
+
+        $pass = \App\Utils::generatePassphrase();
+        $headers = [
+            'Php-Auth-Pw' => $pass,
+            'Php-Auth-User' => 'john@kolab.org',
+            'X-Forwarded-For' => '127.0.0.1',
+            'X-Forwarded-Proto' => 'https',
+            'X-Original-Uri' => '/iRony/',
+            'X-Real-Ip' => '127.0.0.1',
+        ];
+
+        // Pass
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(200);
+
+        // domain.tld\username
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Php-Auth-User'] = "kolab.org\\john";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(200);
+
+        // Invalid Password
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Php-Auth-Pw'] = "Invalid";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(403);
+
+        // Empty Password
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Php-Auth-Pw'] = "";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(403);
+
+        // Empty User
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Php-Auth-User'] = "";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(403);
+
+        // Invalid User
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['Php-Auth-User'] = "foo@kolab.org";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(403);
+
+        // Empty Ip
+        $modifiedHeaders = $headers;
+        $modifiedHeaders['X-Real-Ip'] = "";
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(403);
+
+
+        // 2-FA without device
+        $john->setSettings(
+            [
+                '2fa_enabled' => true,
+            ]
+        );
+        \App\CompanionApp::where('user_id', $john->id)->delete();
+
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(403);
+
+        // 2-FA with accepted auth attempt
+        $authAttempt = \App\AuthAttempt::recordAuthAttempt($john, "127.0.0.1");
+        $authAttempt->accept();
+
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(200);
+    }
 }
