@@ -25,15 +25,15 @@ class Group extends Model
     use SoftDeletes;
     use UuidIntKeyTrait;
 
-    // we've simply never heard of this domain
+    // we've simply never heard of this group
     public const STATUS_NEW        = 1 << 0;
-    // it's been activated
+    // group has been activated
     public const STATUS_ACTIVE     = 1 << 1;
-    // domain has been suspended.
+    // group has been suspended.
     public const STATUS_SUSPENDED  = 1 << 2;
-    // domain has been deleted
+    // group has been deleted
     public const STATUS_DELETED    = 1 << 3;
-    // domain has been created in LDAP
+    // group has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 4;
 
     protected $fillable = [
@@ -125,7 +125,7 @@ class Group extends Model
     }
 
     /**
-     * Returns whether this domain is active.
+     * Returns whether this group is active.
      *
      * @return bool
      */
@@ -135,7 +135,7 @@ class Group extends Model
     }
 
     /**
-     * Returns whether this domain is deleted.
+     * Returns whether this group is deleted.
      *
      * @return bool
      */
@@ -145,7 +145,7 @@ class Group extends Model
     }
 
     /**
-     * Returns whether this domain is new.
+     * Returns whether this group is new.
      *
      * @return bool
      */
@@ -155,7 +155,7 @@ class Group extends Model
     }
 
     /**
-     * Returns whether this domain is registered in LDAP.
+     * Returns whether this group is registered in LDAP.
      *
      * @return bool
      */
@@ -165,7 +165,7 @@ class Group extends Model
     }
 
     /**
-     * Returns whether this domain is suspended.
+     * Returns whether this group is suspended.
      *
      * @return bool
      */
