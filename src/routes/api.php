@@ -70,6 +70,11 @@ Route::group(
         Route::get('auth-attempts/{id}/details', [API\V4\AuthAttemptsController::class, 'details']);
         Route::get('auth-attempts', [API\V4\AuthAttemptsController::class, 'index']);
 
+        Route::get('companion/pairing', [API\V4\CompanionAppsController::class, 'pairing']);
+        Route::apiResource('companion', API\V4\CompanionAppsController::class);
+        Route::post('companion/register', [API\V4\CompanionAppsController::class, 'register']);
+        Route::post('companion/revoke', [API\V4\CompanionAppsController::class, 'revokeAll']);
+
         Route::apiResource('domains', API\V4\DomainsController::class);
         Route::get('domains/{id}/confirm', [API\V4\DomainsController::class, 'confirm']);
         Route::get('domains/{id}/skus', [API\V4\SkusController::class, 'domainSkus']);

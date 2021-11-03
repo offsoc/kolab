@@ -118,6 +118,11 @@ return [
         'client_secret' => env('PASSPORT_PROXY_OAUTH_CLIENT_SECRET'),
     ],
 
+    'companion_app' => [
+        'client_id' => env('PASSPORT_COMPANIONAPP_OAUTH_CLIENT_ID'),
+        'client_secret' => env('PASSPORT_COMPANIONAPP_OAUTH_CLIENT_SECRET'),
+    ],
+
     'token_expiry_minutes' => env('OAUTH_TOKEN_EXPIRY', 60),
     'refresh_token_expiry_minutes' => env('OAUTH_REFRESH_TOKEN_EXPIRY', 30 * 24 * 60),
 ];

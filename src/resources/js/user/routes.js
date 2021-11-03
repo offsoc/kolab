@@ -8,6 +8,7 @@ import SignupComponent from '../../vue/Signup'
 // Note: you can pack multiple components into the same chunk, webpackChunkName
 // is also used to get a sensible file name instead of numbers
 
+const CompanionAppComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/CompanionApp')
 const DashboardComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Dashboard')
 const DistlistInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Distlist/Info')
 const DistlistListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Distlist/List')
@@ -44,6 +45,12 @@ const routes = [
         name: 'distlists',
         component: DistlistListComponent,
         meta: { requiresAuth: true, perm: 'distlists' }
+    },
+    {
+        path: '/companion',
+        name: 'companion',
+        component: CompanionAppComponent,
+        meta: { requiresAuth: true, perm: 'companionapps' }
     },
     {
         path: '/domain/:domain',

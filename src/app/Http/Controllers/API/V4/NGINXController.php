@@ -75,7 +75,7 @@ class NGINXController extends Controller
         // attempts over the same authAttempt.
 
         // Check 2fa
-        if ($user->getSetting('2fa_enabled', false)) {
+        if (\App\CompanionApp::where('user_id', $user->id)->exists()) {
             $authAttempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
             if (!$authAttempt->waitFor2FA()) {
                 throw new \Exception("2fa failed");

@@ -19,6 +19,8 @@ return [
     'chart-income' => 'Income in :currency - last 8 weeks',
     'chart-users' => 'Users - last 8 weeks',
 
+    'companion-deleteall-success' => 'All companion apps have been removed.',
+
     'mandate-delete-success' => 'The auto-payment has been removed.',
     'mandate-update-success' => 'The auto-payment has been updated.',
 

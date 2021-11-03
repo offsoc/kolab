@@ -15,6 +15,7 @@
     ],
     "require": {
         "php": "^8.0",
+        "bacon/bacon-qr-code": "^2.0",
         "barryvdh/laravel-dompdf": "^1.0.0",
         "doctrine/dbal": "^3.3.2",
         "dyrynda/laravel-nullable-fields": "^4.2.0",

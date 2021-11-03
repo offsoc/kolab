@@ -38,10 +38,27 @@ return [
         'verify' => "Verify",
     ],
 
+    'companion' => [
+        'title' => "Companion App",
+        'name' => "Name",
+        'description' => "Use the Companion App on your mobile phone for advanced two factor authentication.",
+        'pair-new' => "Pair new device",
+        'paired' => "Paired devices",
+        'pairing-instructions' => "Pair a new device using the following QR-Code:",
+        'deviceid' => "Device ID",
+        'nodevices' => "There are currently no devices",
+        'delete' => "Remove devices",
+        'remove-devices' => "Remove Devices",
+        'remove-devices-text' => "Do you really want to remove all devices permanently?"
+            . " Please note that this action cannot be undone, and you can only remove all devices together."
+            . " You may pair devices you would like to keep individually again.",
+    ],
+
     'dashboard' => [
         'beta' => "beta",
         'distlists' => "Distribution lists",
         'chat' => "Video chat",
+        'companion' => "Companion app",
         'domains' => "Domains",
         'invitations' => "Invitations",
         'profile' => "Your profile",

@@ -192,6 +192,7 @@ class UsersController extends RelationController
             'enableSettings' => $isController,
             'enableUsers' => $isController,
             'enableWallets' => $isController,
+            'enableCompanionapps' => $isController && in_array('beta', $skus),
         ];
 
         return array_merge($process, $result);

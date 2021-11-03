@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Backends\LDAP;
+use App\CompanionApp;
 use App\Domain;
 use App\Group;
 use App\Resource;
@@ -366,6 +367,24 @@ trait TestCaseTrait
     }
 
     /**
+     * Delete a test companion app whatever it takes.
+     *
+     * @coversNothing
+     */
+    protected function deleteTestCompanionApp($deviceId)
+    {
+        Queue::fake();
+
+        $companionApp = CompanionApp::where('device_id', $deviceId)->first();
+
+        if (!$companionApp) {
+            return;
+        }
+
+        $companionApp->forceDelete();
+    }
+
+    /**
      * Helper to access protected property of an object
      */
     protected static function getObjectProperty($object, $property_name)
@@ -484,6 +503,28 @@ trait TestCaseTrait
         }
 
         return $user;
+    }
+
+    /**
+     * Get CompanionApp object by deviceId, create it if needed.
+     * Skip LDAP jobs.
+     *
+     * @coversNothing
+     */
+    protected function getTestCompanionApp($deviceId, $user, $attrib = [])
+    {
+        // Disable jobs (i.e. skip LDAP oprations)
+        Queue::fake();
+        $companionApp = CompanionApp::firstOrCreate(
+            [
+                'device_id' => $deviceId,
+                'user_id' => $user->id,
+                'notification_token' => '',
+                'mfa_enabled' => 1
+            ],
+            $attrib
+        );
+        return $companionApp;
     }
 
     /**

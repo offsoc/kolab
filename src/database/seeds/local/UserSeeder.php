@@ -103,7 +103,6 @@ class UserSeeder extends Seeder
                 'country' => 'US',
                 // 'limit_geo' => json_encode(["CH"]),
                 'guam_enabled' => false,
-                '2fa_enabled' => true
             ]
         );
 

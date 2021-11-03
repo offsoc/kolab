@@ -20,7 +20,6 @@ class NGINXTest extends TestCase
             [
                 // 'limit_geo' => json_encode(["CH"]),
                 'guam_enabled' => false,
-                '2fa_enabled' => false
             ]
         );
         $this->useServicesUrl();
@@ -36,7 +35,6 @@ class NGINXTest extends TestCase
             [
                 // 'limit_geo' => json_encode(["CH"]),
                 'guam_enabled' => false,
-                '2fa_enabled' => false
             ]
         );
         parent::tearDown();
@@ -143,22 +141,33 @@ class NGINXTest extends TestCase
         $response->assertHeader('auth-server', '127.0.0.1');
         $response->assertHeader('auth-port', '9143');
 
-        // 2-FA without device
-        $john->setSettings(
+
+        $companionApp = $this->getTestCompanionApp(
+            'testdevice',
+            $john,
             [
-                '2fa_enabled' => true,
+                'notification_token' => 'notificationtoken',
+                'mfa_enabled' => 1,
+                'name' => 'testname',
             ]
         );
-        \App\CompanionApp::where('user_id', $john->id)->delete();
-
-        $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
-        $response->assertStatus(200);
-        $response->assertHeader('auth-status', 'authentication failure');
 
         // 2-FA with accepted auth attempt
         $authAttempt = \App\AuthAttempt::recordAuthAttempt($john, "127.0.0.1");
         $authAttempt->accept();
 
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'OK');
+
+        // Deny
+        $authAttempt->deny();
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'authentication failure');
+
+        // 2-FA without device
+        $companionApp->delete();
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
@@ -224,22 +233,30 @@ class NGINXTest extends TestCase
         $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx-httpauth");
         $response->assertStatus(403);
 
-
-        // 2-FA without device
-        $john->setSettings(
+        $companionApp = $this->getTestCompanionApp(
+            'testdevice',
+            $john,
             [
-                '2fa_enabled' => true,
+                'notification_token' => 'notificationtoken',
+                'mfa_enabled' => 1,
+                'name' => 'testname',
             ]
         );
-        \App\CompanionApp::where('user_id', $john->id)->delete();
-
-        $response = $this->withHeaders($headers)->get("api/webhooks/nginx-httpauth");
-        $response->assertStatus(403);
 
         // 2-FA with accepted auth attempt
         $authAttempt = \App\AuthAttempt::recordAuthAttempt($john, "127.0.0.1");
         $authAttempt->accept();
 
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(200);
+
+        // Deny
+        $authAttempt->deny();
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx-httpauth");
+        $response->assertStatus(403);
+
+        // 2-FA without device
+        $companionApp->delete();
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx-httpauth");
         $response->assertStatus(200);
     }

@@ -30,5 +30,20 @@ class OauthClientSeeder extends Seeder
         $client->id = \config('auth.proxy.client_id');
 
         $client->save();
+
+        $companionAppClient = Passport::client()->forceFill([
+            'user_id' => null,
+            'name' => "CompanionApp Password Grant Client",
+            'secret' => \config('auth.companion_app.client_secret'),
+            'provider' => 'users',
+            'redirect' => 'https://' . \config('app.website_domain'),
+            'personal_access_client' => 0,
+            'password_client' => 1,
+            'revoked' => false,
+        ]);
+
+        $companionAppClient->id = \config('auth.companion_app.client_id');
+
+        $companionAppClient->save();
     }
 }
