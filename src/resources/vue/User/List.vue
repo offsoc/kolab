@@ -4,12 +4,17 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ $t('user.list-title') }}
-                    <router-link class="btn btn-success float-end create-user" :to="{ path: 'user/new' }" tag="button">
-                        <svg-icon icon="user"></svg-icon> {{ $t('user.create') }}
-                    </router-link>
                 </div>
                 <div class="card-text">
-                    <table class="table table-sm table-hover">
+                    <div class="mb-2 d-flex">
+                        <list-search :placeholder="$t('user.search')" :on-search="searchUsers"></list-search>
+                        <div>
+                            <router-link class="btn btn-success ms-1 create-user" :to="{ path: 'user/new' }" tag="button">
+                                <svg-icon icon="user"></svg-icon> {{ $t('user.create') }}
+                            </router-link>
+                        </div>
+                    </div>
+                    <table id="users-list" class="table table-sm table-hover">
                         <thead>
                             <tr>
                                 <th scope="col">{{ $t('form.primary-email') }}</th>
@@ -23,12 +28,9 @@
                                 </td>
                             </tr>
                         </tbody>
-                        <tfoot class="table-fake-body">
-                            <tr>
-                                <td>{{ $t('user.users-none') }}</td>
-                            </tr>
-                        </tfoot>
+                        <list-foot :text="$t('user.users-none')"></list-foot>
                     </table>
+                    <list-more v-if="hasMore" :on-click="loadUsers"></list-more>
                 </div>
             </div>
         </div>
@@ -36,22 +38,25 @@
 </template>
 
 <script>
+    import ListTools from '../Widgets/ListTools'
+
     export default {
+        mixins: [ ListTools ],
         data() {
             return {
-                users: [],
-                current_user: null
+                users: []
             }
         },
-        created() {
-            this.$root.startLoading()
-
-            axios.get('/api/v4/users')
-                .then(response => {
-                    this.$root.stopLoading()
-                    this.users = response.data
-                })
-                .catch(this.$root.errorHandler)
+        mounted() {
+            this.loadUsers({ init: true })
+        },
+        methods: {
+            loadUsers(params) {
+                this.listSearch('users', '/api/v4/users', params)
+            },
+            searchUsers(search) {
+                this.loadUsers({ reset: true, search })
+            }
         }
     }
 </script>

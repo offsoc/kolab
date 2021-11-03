@@ -26,62 +26,34 @@
                     <td :class="'price ' + className(transaction)">{{ amount(transaction) }}</td>
                 </tr>
             </tbody>
-            <tfoot class="table-fake-body">
-                <tr>
-                    <td :colspan="isAdmin ? 5 : 4">{{ $t('wallet.transactions-none') }}</td>
-                </tr>
-            </tfoot>
+            <list-foot :text="$t('wallet.transactions-none')" :colspan="isAdmin ? 5 : 4"></list-foot>
         </table>
-        <div class="text-center p-3" id="transactions-loader" v-if="hasMore">
-            <button class="btn btn-secondary" @click="loadLog(true)">{{ $t('nav.more') }}</button>
-        </div>
+        <list-more v-if="hasMore" :on-click="loadLog"></list-more>
     </div>
 </template>
 
 <script>
+    import ListTools from './ListTools'
+
     export default {
+        mixins: [ ListTools ],
         props: {
             walletId: { type: String, default: null },
             isAdmin: { type: Boolean, default: false },
         },
         data() {
             return {
-                transactions: [],
-                hasMore: false,
-                page: 1
+                transactions: []
             }
         },
         mounted() {
-            this.loadLog()
+            this.loadLog({ reset: true })
         },
         methods: {
-            loadLog(more) {
-                if (!this.walletId) {
-                    return
+            loadLog(params) {
+                if (this.walletId) {
+                    this.listSearch('transactions', '/api/v4/wallets/' + this.walletId + '/transactions', params)
                 }
-
-                let loader = $(this.$el)
-                let param = ''
-
-                if (more) {
-                    param = '?page=' + (this.page + 1)
-                    loader = $('#transactions-loader')
-                }
-
-                this.$root.addLoader(loader)
-                axios.get('/api/v4/wallets/' + this.walletId + '/transactions' + param)
-                    .then(response => {
-                        this.$root.removeLoader(loader)
-                        // Note: In Vue we can't just use .concat()
-                        for (let i in response.data.list) {
-                            this.$set(this.transactions, this.transactions.length, response.data.list[i])
-                        }
-                        this.hasMore = response.data.hasMore
-                        this.page = response.data.page || 1
-                    })
-                    .catch(error => {
-                        this.$root.removeLoader(loader)
-                    })
             },
             loadTransaction(id) {
                 let record = $('#log' + id)

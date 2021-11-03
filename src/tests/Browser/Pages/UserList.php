@@ -39,6 +39,7 @@ class UserList extends Page
     {
         return [
             '@app' => '#app',
+            '@search' => '#search-form',
             '@table' => '#user-list table',
         ];
     }

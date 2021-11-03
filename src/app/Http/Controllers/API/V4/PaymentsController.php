@@ -406,9 +406,10 @@ class PaymentsController extends Controller
         $exists = Payment::where('wallet_id', $wallet->id)
             ->where('type', PaymentProvider::TYPE_ONEOFF)
             ->whereIn('status', [
-                PaymentProvider::STATUS_OPEN,
-                PaymentProvider::STATUS_PENDING,
-                PaymentProvider::STATUS_AUTHORIZED])
+                    PaymentProvider::STATUS_OPEN,
+                    PaymentProvider::STATUS_PENDING,
+                    PaymentProvider::STATUS_AUTHORIZED
+            ])
             ->exists();
 
         return response()->json([
@@ -437,9 +438,10 @@ class PaymentsController extends Controller
         $result = Payment::where('wallet_id', $wallet->id)
             ->where('type', PaymentProvider::TYPE_ONEOFF)
             ->whereIn('status', [
-                PaymentProvider::STATUS_OPEN,
-                PaymentProvider::STATUS_PENDING,
-                PaymentProvider::STATUS_AUTHORIZED])
+                    PaymentProvider::STATUS_OPEN,
+                    PaymentProvider::STATUS_PENDING,
+                    PaymentProvider::STATUS_AUTHORIZED
+            ])
             ->orderBy('created_at', 'desc')
             ->limit($pageSize + 1)
             ->offset($pageSize * ($page - 1))

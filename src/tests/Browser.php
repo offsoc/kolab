@@ -229,9 +229,7 @@ class Browser extends \Laravel\Dusk\Browser
      */
     public function vueClear($selector)
     {
-        if ($this->resolver->prefix != 'body') {
-            $selector = $this->resolver->prefix . ' ' . $selector;
-        }
+        $selector = $this->resolver->format($selector);
 
         // The existing clear(), and type() with empty string do not work.
         // We have to clear the field and dispatch 'input' event programatically.

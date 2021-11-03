@@ -7,10 +7,7 @@
                 </div>
                 <div class="card-text">
                     <div class="mb-2 d-flex">
-                        <form @submit.prevent="searchInvitations" id="search-form" class="input-group" style="flex:1">
-                            <input class="form-control" type="text" :placeholder="$t('invitation.search')" v-model="search">
-                            <button type="submit" class="btn btn-primary"><svg-icon icon="search"></svg-icon> {{ $t('btn.search') }}</button>
-                        </form>
+                        <list-search :placeholder="$t('invitation.search')" :on-search="searchInvitations"></list-search>
                         <div>
                             <button class="btn btn-success create-invite ms-1" @click="inviteUserDialog">
                                 <svg-icon icon="envelope-open-text"></svg-icon> {{ $t('invitation.create') }}
@@ -47,15 +44,9 @@
                                 </td>
                             </tr>
                         </tbody>
-                        <tfoot class="table-fake-body">
-                            <tr>
-                                <td colspan="3">{{ $t('invitation.empty-list') }}</td>
-                            </tr>
-                        </tfoot>
+                        <list-foot :text="$t('invitation.empty-list')" colspan="3"></list-foot>
                     </table>
-                    <div class="text-center p-3" id="more-loader" v-if="hasMore">
-                        <button class="btn btn-secondary" @click="loadInvitations(true)">{{ $t('nav.more') }}</button>
-                    </div>
+                    <list-more v-if="hasMore" :on-click="loadInvitations"></list-more>
                 </div>
             </div>
         </div>
@@ -96,21 +87,19 @@
     import { Modal } from 'bootstrap'
     import { library } from '@fortawesome/fontawesome-svg-core'
     import { faEnvelopeOpenText, faPaperPlane, faRedo } from '@fortawesome/free-solid-svg-icons'
+    import ListTools from '../Widgets/ListTools'
 
     library.add(faEnvelopeOpenText, faPaperPlane, faRedo)
 
     export default {
+        mixins: [ ListTools ],
         data() {
             return {
-                invitations: [],
-                hasMore: false,
-                page: 1,
-                search: ''
+                invitations: []
             }
         },
         mounted() {
-            this.$root.startLoading()
-            this.loadInvitations(null, () => this.$root.stopLoading())
+            this.loadInvitations({ init: true })
 
             $('#invite-create')[0].addEventListener('shown.bs.modal', event => {
                 $('input', event.target).first().focus()
@@ -179,54 +168,8 @@
                 this.dialog = new Modal(dialog)
                 this.dialog.show()
             },
-            loadInvitations(params, callback) {
-                let loader
-                let get = {}
-
-                if (params) {
-                    if (params.reset) {
-                        this.invitations = []
-                        this.page = 0
-                    }
-
-                    get.page = params.page || (this.page + 1)
-
-                    if (typeof params === 'object' && 'search' in params) {
-                        get.search = params.search
-                        this.currentSearch = params.search
-                    } else {
-                        get.search = this.currentSearch
-                    }
-
-                    loader = $(get.page > 1 ? '#more-loader' : '#invitations-list tfoot td')
-                } else {
-                    this.currentSearch = null
-                }
-
-                this.$root.addLoader(loader)
-
-                axios.get('/api/v4/invitations', { params: get })
-                    .then(response => {
-                        this.$root.removeLoader(loader)
-
-                        // Note: In Vue we can't just use .concat()
-                        for (let i in response.data.list) {
-                            this.$set(this.invitations, this.invitations.length, response.data.list[i])
-                        }
-                        this.hasMore = response.data.hasMore
-                        this.page = response.data.page || 1
-
-                        if (callback) {
-                            callback()
-                        }
-                    })
-                    .catch(error => {
-                        this.$root.removeLoader(loader)
-
-                        if (callback) {
-                            callback()
-                        }
-                    })
+            loadInvitations(params) {
+                this.listSearch('invitations', '/api/v4/invitations', params)
             },
             resendInvite(id) {
                 axios.post('/api/v4/invitations/' + id + '/resend')
@@ -242,8 +185,8 @@
                         }
                     })
             },
-            searchInvitations() {
-                this.loadInvitations({ reset: true, search: this.search })
+            searchInvitations(search) {
+                this.loadInvitations({ reset: true, search })
             },
             statusClass(invitation) {
                 if (invitation.isCompleted) {

@@ -17,56 +17,28 @@
                     <td class="price text-success">{{ amount(payment) }}</td>
                 </tr>
             </tbody>
-            <tfoot class="table-fake-body">
-                <tr>
-                    <td colspan="4">{{ $t('wallet.pending-payments-none') }}</td>
-                </tr>
-            </tfoot>
+            <list-foot :text="$t('wallet.pending-payments-none')" colspan="4"></list-foot>
         </table>
-        <div class="text-center p-3" id="payments-loader" v-if="hasMore">
-            <button class="btn btn-secondary" @click="loadLog(true)">{{ $t('nav.more') }}</button>
-        </div>
+        <list-more v-if="hasMore" :on-click="loadLog"></list-more>
     </div>
 </template>
 
 <script>
+    import ListTools from './ListTools'
+
     export default {
-        props: {
-        },
+        mixins: [ ListTools ],
         data() {
             return {
-                payments: [],
-                hasMore: false,
-                page: 1
+                payments: []
             }
         },
         mounted() {
-            this.loadLog()
+            this.loadLog({ reset: true })
         },
         methods: {
-            loadLog(more) {
-                let loader = $(this.$el)
-                let param = ''
-
-                if (more) {
-                    param = '?page=' + (this.page + 1)
-                    loader = $('#payments-loader')
-                }
-
-                this.$root.addLoader(loader)
-                axios.get('/api/v4/payments/pending' + param)
-                    .then(response => {
-                        this.$root.removeLoader(loader)
-                        // Note: In Vue we can't just use .concat()
-                        for (let i in response.data.list) {
-                            this.$set(this.payments, this.payments.length, response.data.list[i])
-                        }
-                        this.hasMore = response.data.hasMore
-                        this.page = response.data.page || 1
-                    })
-                    .catch(error => {
-                        this.$root.removeLoader(loader)
-                    })
+            loadLog(params) {
+                this.listSearch('payments', '/api/v4/payments/pending', params)
             },
             amount(payment) {
                 return this.$root.price(payment.amount, payment.currency)

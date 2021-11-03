@@ -51,7 +51,7 @@ class InvitationsTest extends TestCaseDusk
                 ->click('@links .link-invitations')
                 ->on(new Invitations())
                 ->assertElementsCount('@table tbody tr', 0)
-                ->assertMissing('#more-loader')
+                ->assertMissing('.more-loader')
                 ->assertSeeIn('@table tfoot td', "There are no invitations in the database.")
                 ->assertSeeIn('@create-button', 'Create invite(s)');
 
@@ -177,7 +177,7 @@ class InvitationsTest extends TestCaseDusk
             $browser->visit(new Invitations())
                 // ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->assertElementsCount('@table tbody tr', 10)
-                ->assertSeeIn('#more-loader button', 'Load more')
+                ->assertSeeIn('.more-loader button', 'Load more')
                 ->with('@table tbody', function ($browser) use ($i1, $i2, $i3) {
                     $browser->assertSeeIn('tr:nth-child(1) td.email', $i1->email)
                         ->assertText('tr:nth-child(1) td.email svg.text-danger title', 'Sending failed')
@@ -195,31 +195,31 @@ class InvitationsTest extends TestCaseDusk
                         ->assertVisible('tr:nth-child(4) td.buttons button.button-delete')
                         ->assertVisible('tr:nth-child(4) td.buttons button.button-resend:disabled');
                 })
-                ->click('#more-loader button')
+                ->click('.more-loader button')
                 ->whenAvailable('@table tbody tr:nth-child(11)', function ($browser) use ($i11) {
                     $browser->assertSeeIn('td.email', $i11->email);
                 })
-                ->assertMissing('#more-loader button');
+                ->assertMissing('.more-loader button');
 
             // Test searching (by domain)
             $browser->type('@search-input', 'ext.com')
                 ->click('@search-button')
                 ->waitUntilMissing('@table .app-loader')
                 ->assertElementsCount('@table tbody tr', 3)
-                ->assertMissing('#more-loader button')
+                ->assertMissing('.more-loader button')
                 // search by full email
                 ->type('@search-input', 'email7@other.com')
                 ->keys('@search-input', '{enter}')
                 ->waitUntilMissing('@table .app-loader')
                 ->assertElementsCount('@table tbody tr', 1)
                 ->assertSeeIn('@table tbody tr:nth-child(1) td.email', 'email7@other.com')
-                ->assertMissing('#more-loader button')
+                ->assertMissing('.more-loader button')
                 // reset search
                 ->vueClear('#search-form input')
                 ->keys('@search-input', '{enter}')
                 ->waitUntilMissing('@table .app-loader')
                 ->assertElementsCount('@table tbody tr', 10)
-                ->assertVisible('#more-loader button');
+                ->assertVisible('.more-loader button');
         });
     }
 }

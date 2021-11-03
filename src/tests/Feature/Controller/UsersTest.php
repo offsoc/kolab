@@ -196,35 +196,76 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(0, $json);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame(0, $json['count']);
+        $this->assertCount(0, $json['list']);
 
         $response = $this->actingAs($john)->get("/api/v4/users");
         $response->assertStatus(200);
 
         $json = $response->json();
 
-        $this->assertCount(4, $json);
-        $this->assertSame($jack->email, $json[0]['email']);
-        $this->assertSame($joe->email, $json[1]['email']);
-        $this->assertSame($john->email, $json[2]['email']);
-        $this->assertSame($ned->email, $json[3]['email']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame(4, $json['count']);
+        $this->assertCount(4, $json['list']);
+        $this->assertSame($jack->email, $json['list'][0]['email']);
+        $this->assertSame($joe->email, $json['list'][1]['email']);
+        $this->assertSame($john->email, $json['list'][2]['email']);
+        $this->assertSame($ned->email, $json['list'][3]['email']);
         // Values below are tested by Unit tests
-        $this->assertArrayHasKey('isDeleted', $json[0]);
-        $this->assertArrayHasKey('isSuspended', $json[0]);
-        $this->assertArrayHasKey('isActive', $json[0]);
-        $this->assertArrayHasKey('isLdapReady', $json[0]);
-        $this->assertArrayHasKey('isImapReady', $json[0]);
+        $this->assertArrayHasKey('isDeleted', $json['list'][0]);
+        $this->assertArrayHasKey('isSuspended', $json['list'][0]);
+        $this->assertArrayHasKey('isActive', $json['list'][0]);
+        $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
+        $this->assertArrayHasKey('isImapReady', $json['list'][0]);
 
         $response = $this->actingAs($ned)->get("/api/v4/users");
         $response->assertStatus(200);
 
         $json = $response->json();
 
-        $this->assertCount(4, $json);
-        $this->assertSame($jack->email, $json[0]['email']);
-        $this->assertSame($joe->email, $json[1]['email']);
-        $this->assertSame($john->email, $json[2]['email']);
-        $this->assertSame($ned->email, $json[3]['email']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame(4, $json['count']);
+        $this->assertCount(4, $json['list']);
+        $this->assertSame($jack->email, $json['list'][0]['email']);
+        $this->assertSame($joe->email, $json['list'][1]['email']);
+        $this->assertSame($john->email, $json['list'][2]['email']);
+        $this->assertSame($ned->email, $json['list'][3]['email']);
+
+        // Search by user email
+        $response = $this->actingAs($john)->get("/api/v4/users?search=jack@k");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($jack->email, $json['list'][0]['email']);
+
+        // Search by alias
+        $response = $this->actingAs($john)->get("/api/v4/users?search=monster");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($joe->email, $json['list'][0]['email']);
+
+        // Search by name
+        $response = $this->actingAs($john)->get("/api/v4/users?search=land");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($ned->email, $json['list'][0]['email']);
+
+        // TODO: Test paging
     }
 
     /**

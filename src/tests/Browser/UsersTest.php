@@ -88,64 +88,17 @@ class UsersTest extends TestCaseDusk
     }
 
     /**
-     * Test user info page (unauthenticated)
-     */
-    public function testInfoUnauth(): void
-    {
-        // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
-            $user = User::where('email', 'john@kolab.org')->first();
-
-            $browser->visit('/user/' . $user->id)->on(new Home());
-        });
-    }
-
-    /**
-     * Test users list page (unauthenticated)
-     */
-    public function testListUnauth(): void
-    {
-        // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/users')->on(new Home());
-        });
-    }
-
-    /**
-     * Test users list page
-     */
-    public function testList(): void
-    {
-        // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
-            $browser->visit(new Home())
-                ->submitLogon('john@kolab.org', 'simple123', true)
-                ->on(new Dashboard())
-                ->assertSeeIn('@links .link-users', 'User accounts')
-                ->click('@links .link-users')
-                ->on(new UserList())
-                ->whenAvailable('@table', function (Browser $browser) {
-                    $browser->waitFor('tbody tr')
-                        ->assertElementsCount('tbody tr', 4)
-                        ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
-                        ->assertSeeIn('tbody tr:nth-child(2) a', 'joe@kolab.org')
-                        ->assertSeeIn('tbody tr:nth-child(3) a', 'john@kolab.org')
-                        ->assertSeeIn('tbody tr:nth-child(4) a', 'ned@kolab.org')
-                        ->assertMissing('tfoot');
-                });
-        });
-    }
-
-    /**
      * Test user account editing page (not profile page)
-     *
-     * @depends testList
      */
     public function testInfo(): void
     {
         $this->browse(function (Browser $browser) {
-            $browser->on(new UserList())
-                ->click('@table tr:nth-child(3) a')
+            $user = User::where('email', 'john@kolab.org')->first();
+
+            // Test that the page requires authentication
+            $browser->visit('/user/' . $user->id)
+                ->on(new Home())
+                ->submitLogon('john@kolab.org', 'simple123', false)
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'User account')
                 ->with('@general', function (Browser $browser) {
@@ -366,7 +319,7 @@ class UsersTest extends TestCaseDusk
     /**
      * Test user adding page
      *
-     * @depends testList
+     * @depends testInfo
      */
     public function testNewUser(): void
     {
@@ -746,7 +699,7 @@ class UsersTest extends TestCaseDusk
     /**
      * Test beta entitlements
      *
-     * @depends testList
+     * @depends testInfo
      */
     public function testBetaEntitlements(): void
     {

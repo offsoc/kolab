@@ -76,12 +76,55 @@ class UsersController extends Controller
     public function index()
     {
         $user = $this->guard()->user();
+        $search = trim(request()->input('search'));
+        $page = intval(request()->input('page')) ?: 1;
+        $pageSize = 20;
+        $hasMore = false;
 
-        $result = $user->users()->orderBy('email')->get()->map(function ($user) {
-            $data = $user->toArray();
-            $data = array_merge($data, self::userStatuses($user));
-            return $data;
-        });
+        $result = $user->users();
+
+        // Search by user email, alias or name
+        if (strlen($search) > 0) {
+            // thanks to cloning we skip some extra queries in $user->users()
+            $allUsers1 = clone $result;
+            $allUsers2 = clone $result;
+
+            $result->whereLike('email', $search)
+                ->union(
+                    $allUsers1->join('user_aliases', 'users.id', '=', 'user_aliases.user_id')
+                        ->whereLike('alias', $search)
+                )
+                ->union(
+                    $allUsers2->join('user_settings', 'users.id', '=', 'user_settings.user_id')
+                        ->whereLike('value', $search)
+                        ->whereIn('key', ['first_name', 'last_name'])
+                );
+        }
+
+        $result = $result->orderBy('email')
+            ->limit($pageSize + 1)
+            ->offset($pageSize * ($page - 1))
+            ->get();
+
+        if (count($result) > $pageSize) {
+            $result->pop();
+            $hasMore = true;
+        }
+
+        // Process the result
+        $result = $result->map(
+            function ($user) {
+                $data = $user->toArray();
+                $data = array_merge($data, self::userStatuses($user));
+                return $data;
+            }
+        );
+
+        $result = [
+            'list' => $result,
+            'count' => count($result),
+            'hasMore' => $hasMore,
+        ];
 
         return response()->json($result);
     }

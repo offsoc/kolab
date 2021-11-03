@@ -382,6 +382,7 @@ return [
         'reset-2fa' => "Reset 2-Factor Auth",
         'reset-2fa-title' => "2-Factor Authentication Reset",
         'title' => "User account",
+        'search' => "User email address or name",
         'search-pl' => "User ID, email or domain",
         'skureq' => "{sku} requires {list}.",
         'subscription' => "Subscription",
