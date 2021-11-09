@@ -213,7 +213,7 @@ class WalletTest extends TestCaseDusk
                     $browser->waitUntilMissing('.app-loader')
                         ->assertElementsCount('table tbody tr', 10)
                         ->assertMissing('table td.email')
-                        ->assertSeeIn('#transactions-loader button', 'Load more');
+                        ->assertSeeIn('.more-loader button', 'Load more');
 
                     foreach ($pages[0] as $idx => $transaction) {
                         $selector = 'table tbody tr:nth-child(' . ($idx + 1) . ')';
@@ -225,10 +225,10 @@ class WalletTest extends TestCaseDusk
                     }
 
                     // Load the next page
-                    $browser->click('#transactions-loader button')
+                    $browser->click('.more-loader button')
                         ->waitUntilMissing('.app-loader')
                         ->assertElementsCount('table tbody tr', 12)
-                        ->assertMissing('#transactions-loader button');
+                        ->assertMissing('.more-loader button');
 
                     $debitEntry = null;
                     foreach ($pages[1] as $idx => $transaction) {

@@ -88,6 +88,37 @@ class GroupsController extends Controller
     }
 
     /**
+     * Set the group configuration.
+     *
+     * @param int $id Group identifier
+     *
+     * @return \Illuminate\Http\JsonResponse|void
+     */
+    public function setConfig($id)
+    {
+        $group = Group::find($id);
+
+        if (!$this->checkTenant($group)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canUpdate($group)) {
+            return $this->errorResponse(403);
+        }
+
+        $errors = $group->setConfig(request()->input());
+
+        if (!empty($errors)) {
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        return response()->json([
+                'status' => 'success',
+                'message' => \trans('app.distlist-setconfig-success'),
+        ]);
+    }
+
+    /**
      * Display information of a group specified by $id.
      *
      * @param int $id The group to show information for.
@@ -110,6 +141,9 @@ class GroupsController extends Controller
 
         $response = array_merge($response, self::groupStatuses($group));
         $response['statusInfo'] = self::statusInfo($group);
+
+        // Group configuration, e.g. sender_policy
+        $response['config'] = $group->getConfig();
 
         return response()->json($response);
     }

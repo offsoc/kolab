@@ -110,6 +110,16 @@ trait SettingsTrait
     }
 
     /**
+     * Any (additional) properties of this domain.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function settings()
+    {
+        return $this->hasMany(self::class . 'Setting');
+    }
+
+    /**
      * Create or update a setting.
      *
      * @param string      $key   Setting name

@@ -118,6 +118,83 @@ class GroupsTest extends TestCase
     }
 
     /**
+     * Test group config update (POST /api/v4/groups/<group>/config)
+     */
+    public function testSetConfig(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $group = $this->getTestGroup('group-test@kolab.org');
+        $group->assignToWallet($john->wallets->first());
+
+        // Test unknown group id
+        $post = ['sender_policy' => []];
+        $response = $this->actingAs($john)->post("/api/v4/groups/123/config", $post);
+        $json = $response->json();
+
+        $response->assertStatus(404);
+
+        // Test access by user not being a wallet controller
+        $post = ['sender_policy' => []];
+        $response = $this->actingAs($jack)->post("/api/v4/groups/{$group->id}/config", $post);
+        $json = $response->json();
+
+        $response->assertStatus(403);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Access denied", $json['message']);
+        $this->assertCount(2, $json);
+
+        // Test some invalid data
+        $post = ['test' => 1];
+        $response = $this->actingAs($john)->post("/api/v4/groups/{$group->id}/config", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame('The requested configuration parameter is not supported.', $json['errors']['test']);
+
+        $group->refresh();
+
+        $this->assertNull($group->getSetting('test'));
+        $this->assertNull($group->getSetting('sender_policy'));
+
+        // Test some valid data
+        $post = ['sender_policy' => ['domain.com']];
+        $response = $this->actingAs($john)->post("/api/v4/groups/{$group->id}/config", $post);
+
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('Distribution list settings updated successfully.', $json['message']);
+
+        $this->assertSame(['sender_policy' => $post['sender_policy']], $group->fresh()->getConfig());
+
+        // Test input validation
+        $post = ['sender_policy' => [5]];
+        $response = $this->actingAs($john)->post("/api/v4/groups/{$group->id}/config", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame(
+            'The entry format is invalid. Expected an email, domain, or part of it.',
+            $json['errors']['sender_policy'][0]
+        );
+
+        $this->assertSame(['sender_policy' => ['domain.com']], $group->fresh()->getConfig());
+    }
+
+    /**
      * Test fetching group data/profile (GET /api/v4/groups/<group-id>)
      */
     public function testShow(): void
@@ -128,6 +205,7 @@ class GroupsTest extends TestCase
 
         $group = $this->getTestGroup('group-test@kolab.org');
         $group->assignToWallet($john->wallets->first());
+        $group->setSetting('sender_policy', '["test"]');
 
         // Test unauthorized access to a profile of other user
         $response = $this->get("/api/v4/groups/{$group->id}");
@@ -155,6 +233,7 @@ class GroupsTest extends TestCase
         $this->assertArrayHasKey('isSuspended', $json);
         $this->assertArrayHasKey('isActive', $json);
         $this->assertArrayHasKey('isLdapReady', $json);
+        $this->assertSame(['sender_policy' => ['test']], $json['config']);
     }
 
     /**

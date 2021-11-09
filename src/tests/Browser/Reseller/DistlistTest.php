@@ -63,6 +63,7 @@ class DistlistTest extends TestCaseDusk
             $group->assignToWallet($user->wallets->first());
             $group->members = ['test1@gmail.com', 'test2@gmail.com'];
             $group->save();
+            $group->setConfig(['sender_policy' => ['test1.com', 'test2.com']]);
 
             $distlist_page = new DistlistPage($group->id);
             $user_page = new UserPage($user->id);
@@ -87,6 +88,13 @@ class DistlistTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(3) label', 'Recipients')
                         ->assertSeeIn('.row:nth-child(3) #members', $group->members[0])
                         ->assertSeeIn('.row:nth-child(3) #members', $group->members[1]);
+                })
+                ->assertElementsCount('ul.nav-tabs', 1)
+                ->assertSeeIn('ul.nav-tabs .nav-link', 'Settings')
+                ->with('@distlist-settings form', function (Browser $browser) {
+                    $browser->assertElementsCount('.row', 1)
+                        ->assertSeeIn('.row:nth-child(1) label', 'Sender Access List')
+                        ->assertSeeIn('.row:nth-child(1) #sender_policy', 'test1.com, test2.com');
                 });
 
             // Test invalid group identifier

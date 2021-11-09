@@ -8,7 +8,12 @@ use App\User;
 
 class LDAP
 {
-    /** @const array UserSettings used by the backend */
+    /** @const array Group settings used by the backend */
+    public const GROUP_SETTINGS = [
+        'sender_policy',
+    ];
+
+    /** @const array User settings used by the backend */
     public const USER_SETTINGS = [
         'first_name',
         'last_name',
@@ -570,7 +575,7 @@ class LDAP
         if (empty($domain)) {
             self::throwException(
                 $ldap,
-                "Failed to update group {$group->email} in LDAP (" . __LINE__ . ")"
+                "Failed to update group {$group->email} in LDAP (group not found)"
             );
         }
 
@@ -704,6 +709,10 @@ class LDAP
      */
     private static function setGroupAttributes($ldap, Group $group, &$entry)
     {
+        $settings = $group->getSettings(['sender_policy']);
+
+        $entry['kolaballowsmtpsender'] = json_decode($settings['sender_policy'] ?: '[]', true);
+
         $validMembers = [];
 
         $domain = $group->domain();

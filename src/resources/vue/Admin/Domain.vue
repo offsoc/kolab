@@ -66,7 +66,7 @@
                                 <label for="spf_whitelist" class="col-sm-4 col-form-label">{{ $t('domain.spf-whitelist') }}</label>
                                 <div class="col-sm-8">
                                     <span class="form-control-plaintext" id="spf_whitelist">
-                                        {{ domain.config && domain.config.spf_whitelist.length ? domain.config.spf_whitelist.join(', ') : 'none' }}
+                                        {{ domain.config && domain.config.spf_whitelist.length ? domain.config.spf_whitelist.join(', ') : $t('form.none') }}
                                     </span>
                                 </div>
                             </div>

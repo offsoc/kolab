@@ -47,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Domain::observe(\App\Observers\DomainObserver::class);
         \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);
         \App\Group::observe(\App\Observers\GroupObserver::class);
+        \App\GroupSetting::observe(\App\Observers\GroupSettingObserver::class);
         \App\OpenVidu\Connection::observe(\App\Observers\OpenVidu\ConnectionObserver::class);
         \App\PackageSku::observe(\App\Observers\PackageSkuObserver::class);
         \App\PlanPackage::observe(\App\Observers\PlanPackageObserver::class);

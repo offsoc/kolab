@@ -25,7 +25,7 @@ class DistlistInfo extends Page
      */
     public function assert($browser)
     {
-        $browser->waitFor('@form')
+        $browser->waitFor('@general')
             ->waitUntilMissing('.app-loader');
     }
 
@@ -38,7 +38,9 @@ class DistlistInfo extends Page
     {
         return [
             '@app' => '#app',
-            '@form' => '#distlist-info form',
+            '@general' => '#general',
+            '@nav' => 'ul.nav-tabs',
+            '@settings' => '#settings',
             '@status' => '#status-box',
         ];
     }

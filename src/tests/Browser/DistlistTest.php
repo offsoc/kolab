@@ -125,7 +125,9 @@ class DistlistTest extends TestCaseDusk
                 ->click('button.create-list')
                 ->on(new DistlistInfo())
                 ->assertSeeIn('#distlist-info .card-title', 'New distribution list')
-                ->with('@form', function (Browser $browser) {
+                ->assertSeeIn('@nav #tab-general', 'General')
+                ->assertMissing('@nav #tab-settings')
+                ->with('@general', function (Browser $browser) {
                     // Assert form content
                     $browser->assertMissing('#status')
                         ->assertSeeIn('div.row:nth-child(1) label', 'Email')
@@ -140,7 +142,7 @@ class DistlistTest extends TestCaseDusk
                 })
                 // Test error conditions
                 ->type('#email', 'group-test@kolabnow.com')
-                ->click('button[type=submit]')
+                ->click('@general button[type=submit]')
                 ->waitFor('#email + .invalid-feedback')
                 ->assertSeeIn('#email + .invalid-feedback', 'The specified domain is not available.')
                 ->assertFocused('#email')
@@ -153,7 +155,7 @@ class DistlistTest extends TestCaseDusk
                     $browser->addListEntry('test1@gmail.com')
                         ->addListEntry('test2@gmail.com');
                 })
-                ->click('button[type=submit]')
+                ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'Distribution list created successfully.')
                 ->on(new DistlistList())
                 ->assertElementsCount('@table tbody tr', 1);
@@ -162,7 +164,7 @@ class DistlistTest extends TestCaseDusk
             $browser->click('@table tr:nth-child(1) a')
                 ->on(new DistlistInfo())
                 ->assertSeeIn('#distlist-info .card-title', 'Distribution list')
-                ->with('@form', function (Browser $browser) {
+                ->with('@general', function (Browser $browser) {
                     // Assert form content
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Status')
                         ->assertSeeIn('div.row:nth-child(1) span.text-danger', 'Not Ready')
@@ -180,7 +182,7 @@ class DistlistTest extends TestCaseDusk
                 ->with(new ListInput('#members'), function (Browser $browser) {
                     $browser->addListEntry('invalid address');
                 })
-                ->click('button[type=submit]')
+                ->click('@general button[type=submit]')
                 ->waitFor('#members + .invalid-feedback')
                 ->assertSeeIn('#members + .invalid-feedback', 'The specified email address is invalid.')
                 ->assertVisible('#members .input-group:nth-child(4) input.is-invalid')
@@ -189,7 +191,7 @@ class DistlistTest extends TestCaseDusk
                 ->with(new ListInput('#members'), function (Browser $browser) {
                     $browser->removeListEntry(3)->removeListEntry(2);
                 })
-                ->click('button[type=submit]')
+                ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'Distribution list updated successfully.')
                 ->assertMissing('.invalid-feedback')
                 ->on(new DistlistList())
@@ -251,6 +253,53 @@ class DistlistTest extends TestCaseDusk
         // TODO: Test all group statuses on the list
     }
 
+    /**
+     * Test distribution list settings
+     */
+    public function testSettings(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $this->addDistlistEntitlement($john);
+        $group = $this->getTestGroup('group-test@kolab.org');
+        $group->assignToWallet($john->wallets->first());
+        $group->status = Group::STATUS_NEW | Group::STATUS_ACTIVE;
+        $group->save();
+
+        $this->browse(function ($browser) use ($group) {
+            // Test auto-refresh
+            $browser->visit('/distlist/' . $group->id)
+                ->on(new DistlistInfo())
+                ->assertSeeIn('@nav #tab-general', 'General')
+                ->assertSeeIn('@nav #tab-settings', 'Settings')
+                ->click('@nav #tab-settings')
+                ->with('@settings form', function (Browser $browser) {
+                    // Assert form content
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Sender Access List')
+                        ->assertVisible('div.row:nth-child(1) .list-input')
+                        ->with(new ListInput('#sender-policy'), function (Browser $browser) {
+                            $browser->assertListInputValue([])
+                                ->assertValue('@input', '');
+                        })
+                        ->assertSeeIn('button[type=submit]', 'Submit');
+                })
+                // Test error handling
+                ->with(new ListInput('#sender-policy'), function (Browser $browser) {
+                    $browser->addListEntry('test.com');
+                })
+                ->click('@settings button[type=submit]')
+                ->assertToast(Toast::TYPE_SUCCESS, 'Distribution list settings updated successfully.')
+                ->assertMissing('.invalid-feedback')
+                ->refresh()
+                ->on(new DistlistInfo())
+                ->click('@nav #tab-settings')
+                ->with('@settings form', function (Browser $browser) {
+                    $browser->with(new ListInput('#sender-policy'), function (Browser $browser) {
+                        $browser->assertListInputValue(['test.com'])
+                            ->assertValue('@input', '');
+                    });
+                });
+        });
+    }
 
     /**
      * Register the beta + distlist entitlements for the user

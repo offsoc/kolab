@@ -43,6 +43,30 @@ class GroupTest extends TestCase
     }
 
     /**
+     * Test Group::getConfig() and setConfig() methods
+     */
+    public function testConfigTrait(): void
+    {
+        $group = $this->getTestGroup('group-test@kolabnow.com');
+
+        $group->setSetting('sender_policy', '["test","-"]');
+
+        $this->assertSame(['sender_policy' => ['test']], $group->getConfig());
+
+        $result = $group->setConfig(['sender_policy' => [], 'unknown' => false]);
+
+        $this->assertSame(['sender_policy' => []], $group->getConfig());
+        $this->assertSame('[]', $group->getSetting('sender_policy'));
+        $this->assertSame(['unknown' => "The requested configuration parameter is not supported."], $result);
+
+        $result = $group->setConfig(['sender_policy' => ['test']]);
+
+        $this->assertSame(['sender_policy' => ['test']], $group->getConfig());
+        $this->assertSame('["test","-"]', $group->getSetting('sender_policy'));
+        $this->assertSame([], $result);
+    }
+
+    /**
      * Test group status assignment and is*() methods
      */
     public function testStatus(): void
@@ -187,6 +211,64 @@ class GroupTest extends TestCase
 
         $result = Group::emailExists($group->email, true);
         $this->assertSame($result->id, $group->id);
+    }
+
+    /**
+     * Tests for GroupSettingsTrait functionality and GroupSettingObserver
+     */
+    public function testSettings(): void
+    {
+        Queue::fake();
+        Queue::assertNothingPushed();
+
+        $group = $this->getTestGroup('group-test@kolabnow.com');
+
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
+
+        // Add a setting
+        $group->setSetting('unknown', 'test');
+
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
+
+        // Add a setting that is synced to LDAP
+        $group->setSetting('sender_policy', '[]');
+
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+
+        // Note: We test both current group as well as fresh group object
+        //       to make sure cache works as expected
+        $this->assertSame('test', $group->getSetting('unknown'));
+        $this->assertSame('[]', $group->fresh()->getSetting('sender_policy'));
+
+        Queue::fake();
+
+        // Update a setting
+        $group->setSetting('unknown', 'test1');
+
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
+
+        // Update a setting that is synced to LDAP
+        $group->setSetting('sender_policy', '["-"]');
+
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+
+        $this->assertSame('test1', $group->getSetting('unknown'));
+        $this->assertSame('["-"]', $group->fresh()->getSetting('sender_policy'));
+
+        Queue::fake();
+
+        // Delete a setting (null)
+        $group->setSetting('unknown', null);
+
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
+
+        // Delete a setting that is synced to LDAP
+        $group->setSetting('sender_policy', null);
+
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+
+        $this->assertSame(null, $group->getSetting('unknown'));
+        $this->assertSame(null, $group->fresh()->getSetting('sender_policy'));
     }
 
     /**

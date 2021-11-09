@@ -144,7 +144,7 @@ class UsersController extends Controller
             return $this->errorResponse(404);
         }
 
-        if (!$this->guard()->user()->canRead($user)) {
+        if (!$this->guard()->user()->canUpdate($user)) {
             return $this->errorResponse(403);
         }
 

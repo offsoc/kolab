@@ -410,16 +410,6 @@ class Wallet extends Model
     }
 
     /**
-     * Any (additional) properties of this wallet.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function settings()
-    {
-        return $this->hasMany('App\WalletSetting');
-    }
-
-    /**
      * Retrieve the transactions against this wallet.
      *
      * @return \Illuminate\Database\Eloquent\Builder Query builder

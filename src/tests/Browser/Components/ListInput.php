@@ -34,9 +34,9 @@ class ListInput extends BaseComponent
      */
     public function assert($browser)
     {
-        $browser->assertVisible($this->selector())
-            ->assertVisible('@input')
-            ->assertVisible('@add-btn');
+        $browser->assertVisible($this->selector)
+            ->assertVisible("{$this->selector} @input")
+            ->assertVisible("{$this->selector} @add-btn");
     }
 
     /**

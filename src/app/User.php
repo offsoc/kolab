@@ -602,16 +602,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Any (additional) properties of this user.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function settings()
-    {
-        return $this->hasMany('App\UserSetting', 'user_id');
-    }
-
-    /**
      * Suspend this domain.
      *
      * @return void

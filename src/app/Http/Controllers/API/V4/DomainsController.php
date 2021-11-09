@@ -142,7 +142,7 @@ class DomainsController extends Controller
         }
 
         // Only owner (or admin) has access to the domain
-        if (!$this->guard()->user()->canRead($domain)) {
+        if (!$this->guard()->user()->canUpdate($domain)) {
             return $this->errorResponse(403);
         }
 

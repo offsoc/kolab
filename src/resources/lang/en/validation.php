@@ -139,6 +139,7 @@ return [
     'memberislist' => 'A recipient cannot be the same as the list address.',
     'listmembersrequired' => 'At least one recipient is required.',
     'spf-entry-invalid' => 'The entry format is invalid. Expected a domain name starting with a dot.',
+    'sp-entry-invalid' => 'The entry format is invalid. Expected an email, domain, or part of it.',
     'invalid-config-parameter' => 'The requested configuration parameter is not supported.',
 
     /*

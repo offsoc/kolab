@@ -58,6 +58,10 @@ return [
         'list-empty' => "There are no distribution lists in this account.",
         'new' => "New distribution list",
         'recipients' => "Recipients",
+        'sender-policy' => "Sender Access List",
+        'sender-policy-text' => "With this list you can specify who can send mail to the distribution list."
+            . " You can put a complete email address (jane@kolab.org), domain (kolab.org) or suffix (.org) that the sender email address is compared to."
+            . " If the list is empty, mail from anyone is allowed.",
     ],
 
     'domain' => [

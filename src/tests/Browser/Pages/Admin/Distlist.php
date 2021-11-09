@@ -51,7 +51,7 @@ class Distlist extends Page
         return [
             '@app' => '#app',
             '@distlist-info' => '#distlist-info',
-            '@distlist-config' => '#distlist-config',
+            '@distlist-settings' => '#distlist-settings',
         ];
     }
 }

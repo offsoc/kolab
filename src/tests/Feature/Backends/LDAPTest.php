@@ -127,6 +127,7 @@ class LDAPTest extends TestCase
         $group = $this->getTestGroup('group@kolab.org', [
                 'members' => ['member1@testldap.com', 'member2@testldap.com']
         ]);
+        $group->setSetting('sender_policy', '["test.com"]');
 
         // Create the group
         LDAP::createGroup($group);
@@ -142,6 +143,7 @@ class LDAPTest extends TestCase
                 'groupofuniquenames',
                 'kolabgroupofuniquenames'
             ],
+            'kolaballowsmtpsender' => 'test.com',
             'uniquemember' => [
                 'uid=member1@testldap.com,ou=People,ou=kolab.org,' . $root_dn,
                 'uid=member2@testldap.com,ou=People,ou=kolab.org,' . $root_dn,
@@ -155,11 +157,13 @@ class LDAPTest extends TestCase
         // Update members
         $group->members = ['member3@testldap.com'];
         $group->save();
+        $group->setSetting('sender_policy', '["test.com","-"]');
 
         LDAP::updateGroup($group);
 
         // TODO: Should we force this to be always an array?
         $expected['uniquemember'] = 'uid=member3@testldap.com,ou=People,ou=kolab.org,' . $root_dn;
+        $expected['kolaballowsmtpsender'] = ['test.com', '-'];
 
         $ldap_group = LDAP::getGroup($group->email);
 
@@ -172,11 +176,13 @@ class LDAPTest extends TestCase
         // Update members (add non-existing local member, expect it to be aot-removed from the group)
         $group->members = ['member3@testldap.com', 'member-local@kolab.org'];
         $group->save();
+        $group->setSetting('sender_policy', null);
 
         LDAP::updateGroup($group);
 
         // TODO: Should we force this to be always an array?
         $expected['uniquemember'] = 'uid=member3@testldap.com,ou=People,ou=kolab.org,' . $root_dn;
+        $expected['kolaballowsmtpsender'] = null;
 
         $ldap_group = LDAP::getGroup($group->email);
 
@@ -186,9 +192,9 @@ class LDAPTest extends TestCase
 
         $this->assertSame(['member3@testldap.com'], $group->fresh()->members);
 
-        // We called save() twice, so we expect two update obs, this is making sure
-        // that there's no job executed by the LDAP backend
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 2);
+        // We called save() twice, and setSettings() three times,
+        // this is making sure that there's no job executed by the LDAP backend
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 5);
 
         // Delete the domain
         LDAP::deleteGroup($group);
@@ -343,6 +349,24 @@ class LDAPTest extends TestCase
         ]);
 
         LDAP::updateDomain($domain);
+    }
+
+    /**
+     * Test handling update of a non-existing group
+     *
+     * @group ldap
+     */
+    public function testUpdateGroupException(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/group not found/');
+
+        $group = new Group([
+                'email' => 'test@testldap.com',
+                'status' => Group::STATUS_NEW | Group::STATUS_ACTIVE,
+        ]);
+
+        LDAP::updateGroup($group);
     }
 
     /**

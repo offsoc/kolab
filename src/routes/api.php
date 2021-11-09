@@ -54,8 +54,6 @@ Route::group(
     }
 );
 
-
-
 Route::group(
     [
         'domain' => \config('app.website_domain'),
@@ -78,6 +76,7 @@ Route::group(
 
         Route::apiResource('groups', API\V4\GroupsController::class);
         Route::get('groups/{id}/status', 'API\V4\GroupsController@status');
+        Route::post('groups/{id}/config', 'API\V4\GroupsController@setConfig');
 
         Route::apiResource('packages', API\V4\PackagesController::class);
         Route::apiResource('skus', API\V4\SkusController::class);

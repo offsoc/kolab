@@ -4,6 +4,8 @@ namespace App;
 
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
+use App\Traits\GroupConfigTrait;
+use App\Traits\SettingsTrait;
 use App\Traits\UuidIntKeyTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +24,8 @@ class Group extends Model
 {
     use BelongsToTenantTrait;
     use EntitleableTrait;
+    use GroupConfigTrait;
+    use SettingsTrait;
     use SoftDeletes;
     use UuidIntKeyTrait;
 

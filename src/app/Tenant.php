@@ -72,16 +72,6 @@ class Tenant extends Model
     }
 
     /**
-     * Any (additional) settings of this tenant.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function settings()
-    {
-        return $this->hasMany('App\TenantSetting');
-    }
-
-    /**
      * SignupInvitations assigned to this tenant.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany

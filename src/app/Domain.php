@@ -387,16 +387,6 @@ class Domain extends Model
     }
 
     /**
-     * Any (additional) properties of this domain.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function settings()
-    {
-        return $this->hasMany('App\DomainSetting', 'domain_id');
-    }
-
-    /**
      * Suspend this domain.
      *
      * @return void

@@ -22,7 +22,7 @@
                             </div>
                         </div>
                         <div class="row plaintext">
-                            <label for="members-input" class="col-sm-4 col-form-label">{{ $t('distlist.recipients') }}</label>
+                            <label for="members" class="col-sm-4 col-form-label">{{ $t('distlist.recipients') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="members">
                                     <span v-for="member in list.members" :key="member">{{ member }}<br></span>
@@ -41,6 +41,31 @@
                 </div>
             </div>
         </div>
+        <ul class="nav nav-tabs mt-3" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="tab-settings" href="#distlist-settings" role="tab" aria-controls="distlist-settings" aria-selected="false" @click="$root.tab">
+                    {{ $t('form.settings') }}
+                </a>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane show active" id="distlist-settings" role="tabpanel" aria-labelledby="tab-settings">
+                <div class="card-body">
+                    <div class="card-text">
+                        <form class="read-only short">
+                            <div class="row plaintext">
+                                <label for="sender_policy" class="col-sm-4 col-form-label">{{ $t('distlist.sender-policy') }}</label>
+                                <div class="col-sm-8">
+                                    <span class="form-control-plaintext" id="sender_policy">
+                                        {{ list.config.sender_policy && list.config.sender_policy.length ? list.config.sender_policy.join(', ') : $t('form.none') }}
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -48,7 +73,7 @@
     export default {
         data() {
             return {
-                list: { members: [] }
+                list: { members: [], config: {} }
             }
         },
         created() {
