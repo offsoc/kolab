@@ -52,6 +52,7 @@ return [
     'distlist-delete-success' => "Liste de distribution suppriméee avec succès.",
     'distlist-suspend-success' => "Liste de distribution à été suspendue avec succès.",
     'distlist-unsuspend-success' => "Liste de distribution à été débloquée avec succès.",
+    'distlist-setconfig-success' => "Mise à jour des paramètres de la liste de distribution avec succès.",
 
     'domain-create-success' => "Domaine a été crée avec succès.",
     'domain-delete-success' => "Domaine supprimé avec succès.",
