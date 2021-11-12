@@ -2,6 +2,11 @@ version: '3'
 services:
   coturn:
     container_name: kolab-coturn
+    healthcheck:
+      interval: 10s
+      test: "kill -0 $$(cat /tmp/turnserver.pid)"
+      timeout: 5s
+      retries: 30
     environment:
       - DB_NAME=${OPENVIDU_COTURN_REDIS_DATABASE}
       - DB_PASSWORD=${OPENVIDU_COTURN_REDIS_PASSWORD}
@@ -75,6 +80,11 @@ services:
       context: ./docker/nginx/
       args:
         APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
+    healthcheck:
+      interval: 10s
+      test: ["CMD-SHELL", "curl -so /dev/null http://localhost/ || exit 1"]
+      timeout: 5s
+      retries: 30
     container_name: kolab-nginx
     hostname: nginx.hosted.com
     image: kolab-nginx
@@ -141,6 +151,11 @@ services:
   proxy:
     build:
       context: ./docker/proxy/
+    healthcheck:
+      interval: 10s
+      test: ["CMD-SHELL", "curl -so /dev/null http://localhost/ || exit 1"]
+      timeout: 5s
+      retries: 30
     container_name: kolab-proxy
     hostname: kanarip.internet-box.ch
     image: kolab-proxy
@@ -158,6 +173,11 @@ services:
   redis:
     build:
       context: ./docker/redis/
+    healthcheck:
+      interval: 10s
+      test: "redis-cli ping || exit 1"
+      timeout: 5s
+      retries: 30
     container_name: kolab-redis
     hostname: redis
     image: redis
