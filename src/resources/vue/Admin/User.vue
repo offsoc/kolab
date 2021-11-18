@@ -290,6 +290,7 @@
                         <table class="table table-sm table-hover mb-0">
                             <thead>
                                 <tr>
+                                    <th scope="col">{{ $t('distlist.name') }}</th>
                                     <th scope="col">{{ $t('form.email') }}</th>
                                 </tr>
                             </thead>
@@ -297,13 +298,16 @@
                                 <tr v-for="list in distlists" :key="list.id" @click="$root.clickRecord">
                                     <td>
                                         <svg-icon icon="users" :class="$root.distlistStatusClass(list)" :title="$root.distlistStatusText(list)"></svg-icon>
+                                        <router-link :to="{ path: '/distlist/' + list.id }">{{ list.name }}</router-link>
+                                    </td>
+                                    <td>
                                         <router-link :to="{ path: '/distlist/' + list.id }">{{ list.email }}</router-link>
                                     </td>
                                 </tr>
                             </tbody>
                             <tfoot class="table-fake-body">
                                 <tr>
-                                    <td>{{ $t('user.distlists-none') }}</td>
+                                    <td colspan="2">{{ $t('user.distlists-none') }}</td>
                                 </tr>
                             </tfoot>
                         </table>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V4;
 use App\Http\Controllers\Controller;
 use App\Domain;
 use App\Group;
+use App\Rules\GroupName;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -73,11 +74,12 @@ class GroupsController extends Controller
     {
         $user = $this->guard()->user();
 
-        $result = $user->groups()->orderBy('email')->get()
+        $result = $user->groups()->orderBy('name')->orderBy('email')->get()
             ->map(function (Group $group) {
                 $data = [
                     'id' => $group->id,
                     'email' => $group->email,
+                    'name' => $group->name,
                 ];
 
                 $data = array_merge($data, self::groupStatuses($group));
@@ -284,13 +286,26 @@ class GroupsController extends Controller
             return $this->errorResponse(403);
         }
 
-        $email = request()->input('email');
-        $members = request()->input('members');
+        $email = $request->input('email');
+        $members = $request->input('members');
         $errors = [];
+        $rules = [
+            'name' => 'required|string|max:191',
+        ];
 
         // Validate group address
         if ($error = GroupsController::validateGroupEmail($email, $owner)) {
             $errors['email'] = $error;
+        } else {
+            list(, $domainName) = explode('@', $email);
+            $rules['name'] = ['required', 'string', new GroupName($owner, $domainName)];
+        }
+
+        // Validate the group name
+        $v = Validator::make($request->all(), $rules);
+
+        if ($v->fails()) {
+            $errors = array_merge($errors, $v->errors()->toArray());
         }
 
         // Validate members' email addresses
@@ -318,6 +333,7 @@ class GroupsController extends Controller
 
         // Create the group
         $group = new Group();
+        $group->name = $request->input('name');
         $group->email = $email;
         $group->members = $members;
         $group->save();
@@ -355,10 +371,23 @@ class GroupsController extends Controller
         }
 
         $owner = $group->wallet()->owner;
-
-        // It is possible to update members property only for now
-        $members = request()->input('members');
+        $name = $request->input('name');
+        $members = $request->input('members');
         $errors = [];
+
+        // Validate the group name
+        if ($name !== null && $name != $group->name) {
+            list(, $domainName) = explode('@', $group->email);
+            $rules = ['name' => ['required', 'string', new GroupName($owner, $domainName)]];
+
+            $v = Validator::make($request->all(), $rules);
+
+            if ($v->fails()) {
+                $errors = array_merge($errors, $v->errors()->toArray());
+            } else {
+                $group->name = $name;
+            }
+        }
 
         // Validate members' email addresses
         if (empty($members) || !is_array($members)) {

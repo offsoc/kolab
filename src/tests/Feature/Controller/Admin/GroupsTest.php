@@ -80,6 +80,7 @@ class GroupsTest extends TestCase
         $this->assertSame(1, $json['count']);
         $this->assertCount(1, $json['list']);
         $this->assertSame($group->email, $json['list'][0]['email']);
+        $this->assertSame($group->name, $json['list'][0]['name']);
 
         // Search by owner (Ned is a controller on John's wallets,
         // here we expect only domains assigned to Ned's wallet(s))
@@ -114,6 +115,7 @@ class GroupsTest extends TestCase
 
         $this->assertEquals($group->id, $json['id']);
         $this->assertEquals($group->email, $json['email']);
+        $this->assertEquals($group->name, $json['name']);
         $this->assertEquals($group->status, $json['status']);
     }
 

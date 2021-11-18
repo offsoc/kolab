@@ -22,6 +22,12 @@
                             </div>
                         </div>
                         <div class="row plaintext">
+                            <label for="name" class="col-sm-4 col-form-label">{{ $t('distlist.name') }}</label>
+                            <div class="col-sm-8">
+                                <span class="form-control-plaintext" id="name">{{ list.name }}</span>
+                            </div>
+                        </div>
+                        <div class="row plaintext">
                             <label for="members" class="col-sm-4 col-form-label">{{ $t('distlist.recipients') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="members">

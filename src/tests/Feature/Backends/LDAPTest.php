@@ -174,7 +174,9 @@ class LDAPTest extends TestCase
         $this->assertSame(['member3@testldap.com'], $group->fresh()->members);
 
         // Update members (add non-existing local member, expect it to be aot-removed from the group)
+        // Update group name and sender_policy
         $group->members = ['member3@testldap.com', 'member-local@kolab.org'];
+        $group->name = 'Te(=ść)1';
         $group->save();
         $group->setSetting('sender_policy', null);
 
@@ -183,6 +185,8 @@ class LDAPTest extends TestCase
         // TODO: Should we force this to be always an array?
         $expected['uniquemember'] = 'uid=member3@testldap.com,ou=People,ou=kolab.org,' . $root_dn;
         $expected['kolaballowsmtpsender'] = null;
+        $expected['dn'] = 'cn=Te(\\3dść)1,ou=Groups,ou=kolab.org,' . $root_dn;
+        $expected['cn'] = 'Te(=ść)1';
 
         $ldap_group = LDAP::getGroup($group->email);
 
@@ -315,6 +319,25 @@ class LDAPTest extends TestCase
     }
 
     /**
+     * Test handling errors on a group creation
+     *
+     * @group ldap
+     */
+    public function testCreateGroupException(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/Failed to create group/');
+
+        $group = new Group([
+                'name' => 'test',
+                'email' => 'test@testldap.com',
+                'status' => Group::STATUS_NEW | Group::STATUS_ACTIVE,
+        ]);
+
+        LDAP::createGroup($group);
+    }
+
+    /**
      * Test handling errors on user creation
      *
      * @group ldap
@@ -362,6 +385,7 @@ class LDAPTest extends TestCase
         $this->expectExceptionMessageMatches('/group not found/');
 
         $group = new Group([
+                'name' => 'test',
                 'email' => 'test@testldap.com',
                 'status' => Group::STATUS_NEW | Group::STATUS_ACTIVE,
         ]);

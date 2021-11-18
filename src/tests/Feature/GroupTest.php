@@ -65,65 +65,6 @@ class GroupTest extends TestCase
         $this->assertSame('["test","-"]', $group->getSetting('sender_policy'));
         $this->assertSame([], $result);
     }
-
-    /**
-     * Test group status assignment and is*() methods
-     */
-    public function testStatus(): void
-    {
-        $group = new Group();
-
-        $this->assertSame(false, $group->isNew());
-        $this->assertSame(false, $group->isActive());
-        $this->assertSame(false, $group->isDeleted());
-        $this->assertSame(false, $group->isLdapReady());
-        $this->assertSame(false, $group->isSuspended());
-
-        $group->status = Group::STATUS_NEW;
-
-        $this->assertSame(true, $group->isNew());
-        $this->assertSame(false, $group->isActive());
-        $this->assertSame(false, $group->isDeleted());
-        $this->assertSame(false, $group->isLdapReady());
-        $this->assertSame(false, $group->isSuspended());
-
-        $group->status |= Group::STATUS_ACTIVE;
-
-        $this->assertSame(true, $group->isNew());
-        $this->assertSame(true, $group->isActive());
-        $this->assertSame(false, $group->isDeleted());
-        $this->assertSame(false, $group->isLdapReady());
-        $this->assertSame(false, $group->isSuspended());
-
-        $group->status |= Group::STATUS_LDAP_READY;
-
-        $this->assertSame(true, $group->isNew());
-        $this->assertSame(true, $group->isActive());
-        $this->assertSame(false, $group->isDeleted());
-        $this->assertSame(true, $group->isLdapReady());
-        $this->assertSame(false, $group->isSuspended());
-
-        $group->status |= Group::STATUS_DELETED;
-
-        $this->assertSame(true, $group->isNew());
-        $this->assertSame(true, $group->isActive());
-        $this->assertSame(true, $group->isDeleted());
-        $this->assertSame(true, $group->isLdapReady());
-        $this->assertSame(false, $group->isSuspended());
-
-        $group->status |= Group::STATUS_SUSPENDED;
-
-        $this->assertSame(true, $group->isNew());
-        $this->assertSame(true, $group->isActive());
-        $this->assertSame(true, $group->isDeleted());
-        $this->assertSame(true, $group->isLdapReady());
-        $this->assertSame(true, $group->isSuspended());
-
-        // Unknown status value
-        $this->expectException(\Exception::class);
-        $group->status = 111;
-    }
-
     /**
      * Test creating a group
      */
@@ -134,6 +75,7 @@ class GroupTest extends TestCase
         $group = Group::create(['email' => 'GROUP-test@kolabnow.com']);
 
         $this->assertSame('group-test@kolabnow.com', $group->email);
+        $this->assertSame('group-test', $group->name);
         $this->assertMatchesRegularExpression('/^[0-9]{1,20}$/', $group->id);
         $this->assertSame([], $group->members);
         $this->assertTrue($group->isNew());
@@ -319,6 +261,64 @@ class GroupTest extends TestCase
 
         $this->assertSame(null, $group->getSetting('unknown'));
         $this->assertSame(null, $group->fresh()->getSetting('sender_policy'));
+    }
+
+    /**
+     * Test group status assignment and is*() methods
+     */
+    public function testStatus(): void
+    {
+        $group = new Group();
+
+        $this->assertSame(false, $group->isNew());
+        $this->assertSame(false, $group->isActive());
+        $this->assertSame(false, $group->isDeleted());
+        $this->assertSame(false, $group->isLdapReady());
+        $this->assertSame(false, $group->isSuspended());
+
+        $group->status = Group::STATUS_NEW;
+
+        $this->assertSame(true, $group->isNew());
+        $this->assertSame(false, $group->isActive());
+        $this->assertSame(false, $group->isDeleted());
+        $this->assertSame(false, $group->isLdapReady());
+        $this->assertSame(false, $group->isSuspended());
+
+        $group->status |= Group::STATUS_ACTIVE;
+
+        $this->assertSame(true, $group->isNew());
+        $this->assertSame(true, $group->isActive());
+        $this->assertSame(false, $group->isDeleted());
+        $this->assertSame(false, $group->isLdapReady());
+        $this->assertSame(false, $group->isSuspended());
+
+        $group->status |= Group::STATUS_LDAP_READY;
+
+        $this->assertSame(true, $group->isNew());
+        $this->assertSame(true, $group->isActive());
+        $this->assertSame(false, $group->isDeleted());
+        $this->assertSame(true, $group->isLdapReady());
+        $this->assertSame(false, $group->isSuspended());
+
+        $group->status |= Group::STATUS_DELETED;
+
+        $this->assertSame(true, $group->isNew());
+        $this->assertSame(true, $group->isActive());
+        $this->assertSame(true, $group->isDeleted());
+        $this->assertSame(true, $group->isLdapReady());
+        $this->assertSame(false, $group->isSuspended());
+
+        $group->status |= Group::STATUS_SUSPENDED;
+
+        $this->assertSame(true, $group->isNew());
+        $this->assertSame(true, $group->isActive());
+        $this->assertSame(true, $group->isDeleted());
+        $this->assertSame(true, $group->isLdapReady());
+        $this->assertSame(true, $group->isSuspended());
+
+        // Unknown status value
+        $this->expectException(\Exception::class);
+        $group->status = 111;
     }
 
     /**

@@ -17,6 +17,10 @@ class GroupObserver
     public function creating(Group $group): void
     {
         $group->status |= Group::STATUS_NEW | Group::STATUS_ACTIVE;
+
+        if (!isset($group->name) && isset($group->email)) {
+            $group->name = explode('@', $group->email)[0];
+        }
     }
 
     /**

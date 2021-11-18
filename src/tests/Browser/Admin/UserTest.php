@@ -195,7 +195,7 @@ class UserTest extends TestCaseDusk
             $wallet->discount()->associate($discount);
             $wallet->debit(2010);
             $wallet->save();
-            $group = $this->getTestGroup('group-test@kolab.org');
+            $group = $this->getTestGroup('group-test@kolab.org', ['name' => 'Test Group']);
             $group->assignToWallet($john->wallets->first());
             $john->setSetting('greylist_enabled', null);
 
@@ -276,8 +276,9 @@ class UserTest extends TestCaseDusk
                 ->click('@nav #tab-distlists')
                 ->with('@user-distlists table', function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 1)
-                        ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'group-test@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'Test Group')
                         ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-danger')
+                        ->assertSeeIn('tbody tr:nth-child(1) td:last-child a', 'group-test@kolab.org')
                         ->assertMissing('tfoot');
                 });
 

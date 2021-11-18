@@ -27,7 +27,7 @@ class GroupsController extends \App\Http\Controllers\API\V4\Admin\GroupsControll
                         });
                 }
 
-                $result = $result->sortBy('namespace')->values();
+                $result = $result->sortBy('name')->values();
             }
         } elseif (!empty($search)) {
             if ($group = Group::withSubjectTenantContext()->where('email', $search)->first()) {
@@ -40,6 +40,7 @@ class GroupsController extends \App\Http\Controllers\API\V4\Admin\GroupsControll
             $data = [
                 'id' => $group->id,
                 'email' => $group->email,
+                'name' => $group->name,
             ];
 
             $data = array_merge($data, self::groupStatuses($group));

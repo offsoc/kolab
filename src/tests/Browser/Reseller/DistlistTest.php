@@ -59,7 +59,7 @@ class DistlistTest extends TestCaseDusk
 
         $this->browse(function (Browser $browser) {
             $user = $this->getTestUser('john@kolab.org');
-            $group = $this->getTestGroup('group-test@kolab.org');
+            $group = $this->getTestGroup('group-test@kolab.org', ['name' => 'Test Group']);
             $group->assignToWallet($user->wallets->first());
             $group->members = ['test1@gmail.com', 'test2@gmail.com'];
             $group->save();
@@ -80,14 +80,16 @@ class DistlistTest extends TestCaseDusk
                 ->on($distlist_page)
                 ->assertSeeIn('@distlist-info .card-title', $group->email)
                 ->with('@distlist-info form', function (Browser $browser) use ($group) {
-                    $browser->assertElementsCount('.row', 3)
+                    $browser->assertElementsCount('.row', 4)
                         ->assertSeeIn('.row:nth-child(1) label', 'ID (Created)')
                         ->assertSeeIn('.row:nth-child(1) #distlistid', "{$group->id} ({$group->created_at})")
                         ->assertSeeIn('.row:nth-child(2) label', 'Status')
                         ->assertSeeIn('.row:nth-child(2) #status.text-danger', 'Not Ready')
-                        ->assertSeeIn('.row:nth-child(3) label', 'Recipients')
-                        ->assertSeeIn('.row:nth-child(3) #members', $group->members[0])
-                        ->assertSeeIn('.row:nth-child(3) #members', $group->members[1]);
+                        ->assertSeeIn('.row:nth-child(3) label', 'Name')
+                        ->assertSeeIn('.row:nth-child(3) #name', $group->name)
+                        ->assertSeeIn('.row:nth-child(4) label', 'Recipients')
+                        ->assertSeeIn('.row:nth-child(4) #members', $group->members[0])
+                        ->assertSeeIn('.row:nth-child(4) #members', $group->members[1]);
                 })
                 ->assertElementsCount('ul.nav-tabs', 1)
                 ->assertSeeIn('ul.nav-tabs .nav-link', 'Settings')

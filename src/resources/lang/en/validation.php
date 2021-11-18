@@ -141,6 +141,9 @@ return [
     'spf-entry-invalid' => 'The entry format is invalid. Expected a domain name starting with a dot.',
     'sp-entry-invalid' => 'The entry format is invalid. Expected an email, domain, or part of it.',
     'invalid-config-parameter' => 'The requested configuration parameter is not supported.',
+    'nameexists' => 'The specified name is not available.',
+    'nameinvalid' => 'The specified name is invalid.',
+    'nametoolong' => 'The specified name is too long.',
 
     /*
     |--------------------------------------------------------------------------

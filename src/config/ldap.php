@@ -21,10 +21,7 @@ return [
         // probably proxy credentials?
     ],
 
-    'user_base_dn' => env('LDAP_USER_BASE_DN', null),
-    'base_dn' => env('LDAP_BASE_DN', null),
     'root_dn' => env('LDAP_ROOT_DN', null),
-    'unique_attribute' => env('LDAP_UNIQUE_ATTRIBUTE', 'nsuniqueid'),
     'service_bind_dn' => env('LDAP_SERVICE_BIND_DN', null),
     'service_bind_pw' => env('LDAP_SERVICE_BIND_PW', null),
     'login_filter' => env('LDAP_LOGIN_FILTER', '(&(objectclass=kolabinetorgperson)(uid=%s))'),

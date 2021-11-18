@@ -56,6 +56,7 @@ return [
         'delete' => "Delete list",
         'email' => "Email",
         'list-empty' => "There are no distribution lists in this account.",
+        'name' => "Name",
         'new' => "New distribution list",
         'recipients' => "Recipients",
         'sender-policy' => "Sender Access List",

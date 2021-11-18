@@ -18,6 +18,7 @@ class GroupsTest extends TestCase
         parent::setUp();
 
         $this->deleteTestGroup('group-test@kolab.org');
+        $this->deleteTestGroup('group-test2@kolab.org');
     }
 
     /**
@@ -26,6 +27,7 @@ class GroupsTest extends TestCase
     public function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolab.org');
+        $this->deleteTestGroup('group-test2@kolab.org');
 
         parent::tearDown();
     }
@@ -102,6 +104,7 @@ class GroupsTest extends TestCase
         $this->assertCount(1, $json);
         $this->assertSame($group->id, $json[0]['id']);
         $this->assertSame($group->email, $json[0]['email']);
+        $this->assertSame($group->name, $json[0]['name']);
         $this->assertArrayHasKey('isDeleted', $json[0]);
         $this->assertArrayHasKey('isSuspended', $json[0]);
         $this->assertArrayHasKey('isActive', $json[0]);
@@ -227,6 +230,7 @@ class GroupsTest extends TestCase
 
         $this->assertSame($group->id, $json['id']);
         $this->assertSame($group->email, $json['email']);
+        $this->assertSame($group->name, $json['name']);
         $this->assertSame($group->members, $json['members']);
         $this->assertTrue(!empty($json['statusInfo']));
         $this->assertArrayHasKey('isDeleted', $json);
@@ -385,9 +389,12 @@ class GroupsTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertSame("The email field is required.", $json['errors']['email']);
+        $this->assertSame("At least one recipient is required.", $json['errors']['members']);
+        $this->assertSame("The name field is required.", $json['errors']['name'][0]);
         $this->assertCount(2, $json);
+        $this->assertCount(3, $json['errors']);
 
-        // Test missing members
+        // Test missing members and name
         $post = ['email' => 'group-test@kolab.org'];
         $response = $this->actingAs($john)->post("/api/v4/groups", $post);
         $json = $response->json();
@@ -396,10 +403,12 @@ class GroupsTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertSame("At least one recipient is required.", $json['errors']['members']);
+        $this->assertSame("The name field is required.", $json['errors']['name'][0]);
         $this->assertCount(2, $json);
+        $this->assertCount(2, $json['errors']);
 
-        // Test invalid email
-        $post = ['email' => 'invalid'];
+        // Test invalid email and too long name
+        $post = ['email' => 'invalid', 'name' => str_repeat('A', 192)];
         $response = $this->actingAs($john)->post("/api/v4/groups", $post);
         $response->assertStatus(422);
 
@@ -407,10 +416,13 @@ class GroupsTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(2, $json);
-        $this->assertSame('The specified email is invalid.', $json['errors']['email']);
+        $this->assertSame("The specified email is invalid.", $json['errors']['email']);
+        $this->assertSame("The name may not be greater than 191 characters.", $json['errors']['name'][0]);
+        $this->assertCount(3, $json['errors']);
 
         // Test successful group creation
         $post = [
+            'name' => 'Test Group',
             'email' => 'group-test@kolab.org',
             'members' => ['test1@domain.tld', 'test2@domain.tld']
         ];
@@ -429,6 +441,19 @@ class GroupsTest extends TestCase
         $this->assertSame($post['email'], $group->email);
         $this->assertSame($post['members'], $group->members);
         $this->assertTrue($john->groups()->get()->contains($group));
+
+        // Group name must be unique within a domain
+        $post['email'] = 'group-test2@kolab.org';
+        $post['members'] = ['test1@domain.tld'];
+
+        $response = $this->actingAs($john)->post("/api/v4/groups", $post);
+        $response->assertStatus(422);
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame("The specified name is not available.", $json['errors']['name'][0]);
     }
 
     /**
@@ -474,8 +499,9 @@ class GroupsTest extends TestCase
         $this->assertCount(2, $json);
         $this->assertSame('The specified email address is invalid.', $json['errors']['members'][1]);
 
-        // Valid data - members changed
+        // Valid data - members and name changed
         $post = [
+            'name' => 'Test Gr',
             'members' => ['member1@test.domain', 'member2@test.domain']
         ];
 
@@ -487,7 +513,11 @@ class GroupsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame("Distribution list updated successfully.", $json['message']);
         $this->assertCount(2, $json);
-        $this->assertSame($group->fresh()->members, $post['members']);
+
+        $group->refresh();
+
+        $this->assertSame($post['name'], $group->name);
+        $this->assertSame($post['members'], $group->members);
     }
 
     /**

@@ -34,6 +34,12 @@
                                     </div>
                                 </div>
                                 <div class="row mb-3">
+                                    <label for="name" class="col-sm-4 col-form-label">{{ $t('distlist.name') }}</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="name" required v-model="list.name">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
                                     <label for="email" class="col-sm-4 col-form-label">{{ $t('form.email') }}</label>
                                     <div class="col-sm-8">
                                         <input type="text" class="form-control" id="email" :disabled="list_id !== 'new'" required v-model="list.email">
@@ -50,10 +56,10 @@
                         </div>
                         <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
                             <form @submit.prevent="submitSettings" class="card-body">
-                                <div class="row checkbox mb-3">
+                                <div class="row mb-3">
                                     <label for="sender-policy-input" class="col-sm-4 col-form-label">{{ $t('distlist.sender-policy') }}</label>
                                     <div class="col-sm-8 pt-2">
-                                        <list-input id="sender-policy" :list="list.config.sender_policy"></list-input>
+                                        <list-input id="sender-policy" :list="list.config.sender_policy" class="mb-1"></list-input>
                                         <small id="sender-policy-hint" class="text-muted">
                                             {{ $t('distlist.sender-policy-text') }}
                                         </small>
@@ -99,6 +105,9 @@
                     })
                     .catch(this.$root.errorHandler)
             }
+        },
+        mounted() {
+            $('#name').focus()
         },
         methods: {
             deleteList() {

@@ -82,7 +82,7 @@ class DistlistTest extends TestCaseDusk
         // Create a single group, add beta+distlist entitlements
         $john = $this->getTestUser('john@kolab.org');
         $this->addDistlistEntitlement($john);
-        $group = $this->getTestGroup('group-test@kolab.org');
+        $group = $this->getTestGroup('group-test@kolab.org', ['name' => 'Test Group']);
         $group->assignToWallet($john->wallets->first());
 
         // Test distribution lists page
@@ -93,9 +93,12 @@ class DistlistTest extends TestCaseDusk
                 ->on(new DistlistList())
                 ->whenAvailable('@table', function (Browser $browser) {
                     $browser->waitFor('tbody tr')
+                        ->assertSeeIn('thead tr th:nth-child(1)', 'Name')
+                        ->assertSeeIn('thead tr th:nth-child(2)', 'Email')
                         ->assertElementsCount('tbody tr', 1)
-                        ->assertSeeIn('tbody tr:nth-child(1) a', 'group-test@kolab.org')
-                        ->assertText('tbody tr:nth-child(1) svg.text-danger title', 'Not Ready')
+                        ->assertSeeIn('tbody tr:nth-child(1) td:nth-child(1) a', 'Test Group')
+                        ->assertText('tbody tr:nth-child(1) td:nth-child(1) svg.text-danger title', 'Not Ready')
+                        ->assertSeeIn('tbody tr:nth-child(1) td:nth-child(2) a', 'group-test@kolab.org')
                         ->assertMissing('tfoot');
                 });
         });
@@ -130,10 +133,13 @@ class DistlistTest extends TestCaseDusk
                 ->with('@general', function (Browser $browser) {
                     // Assert form content
                     $browser->assertMissing('#status')
-                        ->assertSeeIn('div.row:nth-child(1) label', 'Email')
+                        ->assertFocused('#name')
+                        ->assertSeeIn('div.row:nth-child(1) label', 'Name')
                         ->assertValue('div.row:nth-child(1) input[type=text]', '')
-                        ->assertSeeIn('div.row:nth-child(2) label', 'Recipients')
-                        ->assertVisible('div.row:nth-child(2) .list-input')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Email')
+                        ->assertValue('div.row:nth-child(2) input[type=text]', '')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Recipients')
+                        ->assertVisible('div.row:nth-child(3) .list-input')
                         ->with(new ListInput('#members'), function (Browser $browser) {
                             $browser->assertListInputValue([])
                                 ->assertValue('@input', '');
@@ -141,15 +147,17 @@ class DistlistTest extends TestCaseDusk
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })
                 // Test error conditions
+                ->type('#name', str_repeat('A', 192))
                 ->type('#email', 'group-test@kolabnow.com')
                 ->click('@general button[type=submit]')
-                ->waitFor('#email + .invalid-feedback')
-                ->assertSeeIn('#email + .invalid-feedback', 'The specified domain is not available.')
-                ->assertFocused('#email')
                 ->waitFor('#members + .invalid-feedback')
+                ->assertSeeIn('#email + .invalid-feedback', 'The specified domain is not available.')
+                ->assertSeeIn('#name + .invalid-feedback', 'The name may not be greater than 191 characters.')
                 ->assertSeeIn('#members + .invalid-feedback', 'At least one recipient is required.')
+                ->assertFocused('#name')
                 ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
                 // Test successful group creation
+                ->type('#name', 'Test Group')
                 ->type('#email', 'group-test@kolab.org')
                 ->with(new ListInput('#members'), function (Browser $browser) {
                     $browser->addListEntry('test1@gmail.com')
@@ -161,17 +169,20 @@ class DistlistTest extends TestCaseDusk
                 ->assertElementsCount('@table tbody tr', 1);
 
             // Test group update
-            $browser->click('@table tr:nth-child(1) a')
+            $browser->click('@table tr:nth-child(1) td:first-child a')
                 ->on(new DistlistInfo())
                 ->assertSeeIn('#distlist-info .card-title', 'Distribution list')
                 ->with('@general', function (Browser $browser) {
                     // Assert form content
-                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Status')
+                    $browser->assertFocused('#name')
+                        ->assertSeeIn('div.row:nth-child(1) label', 'Status')
                         ->assertSeeIn('div.row:nth-child(1) span.text-danger', 'Not Ready')
-                        ->assertSeeIn('div.row:nth-child(2) label', 'Email')
-                        ->assertValue('div.row:nth-child(2) input[type=text]:disabled', 'group-test@kolab.org')
-                        ->assertSeeIn('div.row:nth-child(3) label', 'Recipients')
-                        ->assertVisible('div.row:nth-child(3) .list-input')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Name')
+                        ->assertValue('div.row:nth-child(2) input[type=text]', 'Test Group')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Email')
+                        ->assertValue('div.row:nth-child(3) input[type=text]:disabled', 'group-test@kolab.org')
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Recipients')
+                        ->assertVisible('div.row:nth-child(4) .list-input')
                         ->with(new ListInput('#members'), function (Browser $browser) {
                             $browser->assertListInputValue(['test1@gmail.com', 'test2@gmail.com'])
                                 ->assertValue('@input', '');
@@ -201,7 +212,7 @@ class DistlistTest extends TestCaseDusk
             $this->assertSame(['test1@gmail.com'], $group->members);
 
             // Test group deletion
-            $browser->click('@table tr:nth-child(1) a')
+            $browser->click('@table tr:nth-child(1) td:first-child a')
                 ->on(new DistlistInfo())
                 ->assertSeeIn('button.button-delete', 'Delete list')
                 ->click('button.button-delete')
