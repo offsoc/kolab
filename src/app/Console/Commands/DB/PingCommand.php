@@ -22,16 +22,6 @@ class PingCommand extends Command
     protected $description = 'Ping the database [and wait for it to respond]';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed

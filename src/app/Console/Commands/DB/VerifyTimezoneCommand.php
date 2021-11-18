@@ -22,16 +22,6 @@ class VerifyTimezoneCommand extends Command
     protected $description = "Verify the application's timezone compared to the DB timezone";
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed

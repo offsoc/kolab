@@ -115,21 +115,7 @@ class DomainObserver
     public function restored(Domain $domain)
     {
         // Restore domain entitlements
-        // We'll restore only these that were deleted last. So, first we get
-        // the maximum deleted_at timestamp and then use it to select
-        // domain entitlements for restore
-        $deleted_at = \App\Entitlement::withTrashed()
-            ->where('entitleable_id', $domain->id)
-            ->where('entitleable_type', Domain::class)
-            ->max('deleted_at');
-
-        if ($deleted_at) {
-            \App\Entitlement::withTrashed()
-                ->where('entitleable_id', $domain->id)
-                ->where('entitleable_type', Domain::class)
-                ->where('deleted_at', '>=', (new \Carbon\Carbon($deleted_at))->subMinute())
-                ->update(['updated_at' => now(), 'deleted_at' => null]);
-        }
+        \App\Entitlement::restoreEntitlementsFor($domain);
 
         // Create the domain in LDAP again
         \App\Jobs\Domain\CreateJob::dispatch($domain->id);

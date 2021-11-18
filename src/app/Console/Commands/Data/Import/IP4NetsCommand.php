@@ -22,16 +22,6 @@ class IP4NetsCommand extends Command
     protected $description = 'Update IP4 Networks';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return int

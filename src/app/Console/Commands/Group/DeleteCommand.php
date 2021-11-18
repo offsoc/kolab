@@ -28,7 +28,7 @@ class DeleteCommand extends Command
     public function handle()
     {
         $input = $this->argument('group');
-        $group = $this->getObject(\App\Group::class, $input, 'email');
+        $group = $this->getGroup($input);
 
         if (empty($group)) {
             $this->error("Group {$input} does not exist.");

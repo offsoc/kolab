@@ -213,6 +213,56 @@ class GroupTest extends TestCase
         $this->assertSame($result->id, $group->id);
     }
 
+    /*
+     * Test group restoring
+     */
+    public function testRestore(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('user-test@kolabnow.com');
+        $group = $this->getTestGroup('group-test@kolabnow.com');
+        $group->assignToWallet($user->wallets->first());
+
+        $entitlements = \App\Entitlement::where('entitleable_id', $group->id);
+
+        $this->assertSame(1, $entitlements->count());
+
+        $group->delete();
+
+        $this->assertTrue($group->fresh()->trashed());
+        $this->assertSame(0, $entitlements->count());
+        $this->assertSame(1, $entitlements->withTrashed()->count());
+
+        Queue::fake();
+
+        $group->restore();
+        $group->refresh();
+
+        $this->assertFalse($group->trashed());
+        $this->assertFalse($group->isDeleted());
+        $this->assertFalse($group->isSuspended());
+        $this->assertFalse($group->isLdapReady());
+        $this->assertTrue($group->isActive());
+
+        $this->assertSame(1, $entitlements->count());
+        $entitlements->get()->each(function ($ent) {
+            $this->assertTrue($ent->updated_at->greaterThan(\Carbon\Carbon::now()->subSeconds(5)));
+        });
+
+        Queue::assertPushed(\App\Jobs\Group\CreateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\Group\CreateJob::class,
+            function ($job) use ($group) {
+                $groupEmail = TestCase::getObjectProperty($job, 'groupEmail');
+                $groupId = TestCase::getObjectProperty($job, 'groupId');
+
+                return $groupEmail === $group->email
+                    && $groupId === $group->id;
+            }
+        );
+    }
+
     /**
      * Tests for GroupSettingsTrait functionality and GroupSettingObserver
      */

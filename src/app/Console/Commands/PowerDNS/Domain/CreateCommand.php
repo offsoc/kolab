@@ -21,16 +21,6 @@ class CreateCommand extends Command
     protected $description = 'Create a domain in PowerDNS';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed

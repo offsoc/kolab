@@ -299,37 +299,15 @@ class UserObserver
      */
     public function restored(User $user)
     {
-        $wallets = $user->wallets()->pluck('id')->all();
-
         // Restore user entitlements
-        // We'll restore only these that were deleted last. So, first we get
-        // the maximum deleted_at timestamp and then use it to select
-        // entitlements for restore
-        $deleted_at = \App\Entitlement::withTrashed()
-            ->where('entitleable_id', $user->id)
-            ->where('entitleable_type', User::class)
-            ->max('deleted_at');
+        \App\Entitlement::restoreEntitlementsFor($user);
 
-        if ($deleted_at) {
-            $threshold = (new \Carbon\Carbon($deleted_at))->subMinute();
-
-            // We need at least the user domain so it can be created in ldap.
-            // FIXME: What if the domain is owned by someone else?
-            $domain = $user->domain();
-            if ($domain->trashed() && !$domain->isPublic()) {
-                // Note: Domain entitlements will be restored by the DomainObserver
-                $domain->restore();
-            }
-
-            // Restore user entitlements
-            \App\Entitlement::withTrashed()
-                ->where('entitleable_id', $user->id)
-                ->where('entitleable_type', User::class)
-                ->where('deleted_at', '>=', $threshold)
-                ->update(['updated_at' => now(), 'deleted_at' => null]);
-
-            // Note: We're assuming that cost of entitlements was correct
-            // on user deletion, so we don't have to re-calculate it again.
+        // We need at least the user domain so it can be created in ldap.
+        // FIXME: What if the domain is owned by someone else?
+        $domain = $user->domain();
+        if ($domain->trashed() && !$domain->isPublic()) {
+            // Note: Domain entitlements will be restored by the DomainObserver
+            $domain->restore();
         }
 
         // FIXME: Should we reset user aliases? or re-validate them in any way?

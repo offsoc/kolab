@@ -76,6 +76,31 @@ class GroupObserver
     }
 
     /**
+     * Handle the group "restoring" event.
+     *
+     * @param \App\Group $group The group
+     *
+     * @return void
+     */
+    public function restoring(Group $group)
+    {
+        // Make sure it's not DELETED/LDAP_READY/SUSPENDED anymore
+        if ($group->isDeleted()) {
+            $group->status ^= Group::STATUS_DELETED;
+        }
+        if ($group->isLdapReady()) {
+            $group->status ^= Group::STATUS_LDAP_READY;
+        }
+        if ($group->isSuspended()) {
+            $group->status ^= Group::STATUS_SUSPENDED;
+        }
+
+        $group->status |= Group::STATUS_ACTIVE;
+
+        // Note: $group->save() is invoked between 'restoring' and 'restored' events
+    }
+
+    /**
      * Handle the group "restored" event.
      *
      * @param \App\Group $group The group
@@ -84,7 +109,10 @@ class GroupObserver
      */
     public function restored(Group $group)
     {
-        //
+        // Restore group entitlements
+        \App\Entitlement::restoreEntitlementsFor($group);
+
+        \App\Jobs\Group\CreateJob::dispatch($group->id);
     }
 
     /**

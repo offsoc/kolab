@@ -146,6 +146,32 @@ class Entitlement extends Model
     }
 
     /**
+     * Restore object entitlements.
+     *
+     * @param \App\User|\App\Domain|\App\Group $object The user|domain|group object
+     */
+    public static function restoreEntitlementsFor($object): void
+    {
+        // We'll restore only these that were deleted last. So, first we get
+        // the maximum deleted_at timestamp and then use it to select
+        // entitlements for restore
+        $deleted_at = $object->entitlements()->withTrashed()->max('deleted_at');
+
+        if ($deleted_at) {
+            $threshold = (new \Carbon\Carbon($deleted_at))->subMinute();
+
+            // Restore object entitlements
+            $object->entitlements()->withTrashed()
+                ->where('deleted_at', '>=', $threshold)
+                ->update(['updated_at' => now(), 'deleted_at' => null]);
+
+            // Note: We're assuming that cost of entitlements was correct
+            // on deletion, so we don't have to re-calculate it again.
+            // TODO: We should probably re-calculate the cost
+        }
+    }
+
+    /**
      * The SKU concerned.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo

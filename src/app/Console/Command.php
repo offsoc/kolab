@@ -43,6 +43,19 @@ abstract class Command extends \Illuminate\Console\Command
     }
 
     /**
+     * Find a group.
+     *
+     * @param string $group       Group ID or email
+     * @param bool   $withDeleted Include deleted
+     *
+     * @return \App\Group|null
+     */
+    public function getGroup($group, $withDeleted = false)
+    {
+        return $this->getObject(\App\Group::class, $group, 'email', $withDeleted);
+    }
+
+    /**
      * Find an object.
      *
      * @param string $objectClass      The name of the class

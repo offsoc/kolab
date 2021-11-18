@@ -29,8 +29,7 @@ class RemoveMemberCommand extends Command
     {
         $input = $this->argument('group');
         $member = \strtolower($this->argument('member'));
-
-        $group = $this->getObject(\App\Group::class, $input, 'email');
+        $group = $this->getGroup($input);
 
         if (empty($group)) {
             $this->error("Group {$input} does not exist.");

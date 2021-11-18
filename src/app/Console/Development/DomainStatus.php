@@ -22,16 +22,6 @@ class DomainStatus extends Command
     protected $description = "Set/get a domain's status.";
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
