@@ -7,13 +7,16 @@ use App\Domain;
 use App\Group;
 use App\Rules\GroupName;
 use App\User;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class GroupsController extends Controller
 {
+    /** @var array Common object properties in the API response */
+    protected static $objectProps = ['email', 'name', 'status'];
+
+
     /**
      * Show the form for creating a new group.
      *
@@ -75,15 +78,8 @@ class GroupsController extends Controller
         $user = $this->guard()->user();
 
         $result = $user->groups()->orderBy('name')->orderBy('email')->get()
-            ->map(function (Group $group) {
-                $data = [
-                    'id' => $group->id,
-                    'email' => $group->email,
-                    'name' => $group->name,
-                ];
-
-                $data = array_merge($data, self::groupStatuses($group));
-                return $data;
+            ->map(function ($group) {
+                return $this->objectToClient($group);
             });
 
         return response()->json($result);
@@ -139,9 +135,8 @@ class GroupsController extends Controller
             return $this->errorResponse(403);
         }
 
-        $response = $group->toArray();
+        $response = $this->objectToClient($group, true);
 
-        $response = array_merge($response, self::groupStatuses($group));
         $response['statusInfo'] = self::statusInfo($group);
 
         // Group configuration, e.g. sender_policy
@@ -169,49 +164,8 @@ class GroupsController extends Controller
             return $this->errorResponse(403);
         }
 
-        $response = self::statusInfo($group);
-
-        if (!empty(request()->input('refresh'))) {
-            $updated = false;
-            $async = false;
-            $last_step = 'none';
-
-            foreach ($response['process'] as $idx => $step) {
-                $last_step = $step['label'];
-
-                if (!$step['state']) {
-                    $exec = $this->execProcessStep($group, $step['label']);
-
-                    if (!$exec) {
-                        if ($exec === null) {
-                            $async = true;
-                        }
-
-                        break;
-                    }
-
-                    $updated = true;
-                }
-            }
-
-            if ($updated) {
-                $response = self::statusInfo($group);
-            }
-
-            $success = $response['isReady'];
-            $suffix = $success ? 'success' : 'error-' . $last_step;
-
-            $response['status'] = $success ? 'success' : 'error';
-            $response['message'] = \trans('app.process-' . $suffix);
-
-            if ($async && !$success) {
-                $response['processState'] = 'waiting';
-                $response['status'] = 'success';
-                $response['message'] = \trans('app.process-async');
-            }
-        }
-
-        $response = array_merge($response, self::groupStatuses($group));
+        $response = $this->processStateUpdate($group);
+        $response = array_merge($response, self::objectState($group));
 
         return response()->json($response);
     }
@@ -225,49 +179,13 @@ class GroupsController extends Controller
      */
     public static function statusInfo(Group $group): array
     {
-        $process = [];
-        $steps = [
-            'distlist-new' => true,
-            'distlist-ldap-ready' => $group->isLdapReady(),
-        ];
-
-        // Create a process check list
-        foreach ($steps as $step_name => $state) {
-            $step = [
-                'label' => $step_name,
-                'title' => \trans("app.process-{$step_name}"),
-                'state' => $state,
-            ];
-
-            $process[] = $step;
-        }
-
-        $domain = $group->domain();
-
-        // If that is not a public domain, add domain specific steps
-        if ($domain && !$domain->isPublic()) {
-            $domain_status = DomainsController::statusInfo($domain);
-            $process = array_merge($process, $domain_status['process']);
-        }
-
-        $all = count($process);
-        $checked = count(array_filter($process, function ($v) {
-                return $v['state'];
-        }));
-
-        $state = $all === $checked ? 'done' : 'running';
-
-        // After 180 seconds assume the process is in failed state,
-        // this should unlock the Refresh button in the UI
-        if ($all !== $checked && $group->created_at->diffInSeconds(Carbon::now()) > 180) {
-            $state = 'failed';
-        }
-
-        return [
-            'process' => $process,
-            'processState' => $state,
-            'isReady' => $all === $checked,
-        ];
+        return self::processStateInfo(
+            $group,
+            [
+                'distlist-new' => true,
+                'distlist-ldap-ready' => $group->isLdapReady(),
+            ]
+        );
     }
 
     /**
@@ -459,7 +377,7 @@ class GroupsController extends Controller
      *
      * @return array Statuses array
      */
-    protected static function groupStatuses(Group $group): array
+    protected static function objectState(Group $group): array
     {
         return [
             'isLdapReady' => $group->isLdapReady(),

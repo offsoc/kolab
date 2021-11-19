@@ -36,16 +36,11 @@ class GroupsController extends \App\Http\Controllers\API\V4\Admin\GroupsControll
         }
 
         // Process the result
-        $result = $result->map(function ($group) {
-            $data = [
-                'id' => $group->id,
-                'email' => $group->email,
-                'name' => $group->name,
-            ];
-
-            $data = array_merge($data, self::groupStatuses($group));
-            return $data;
-        });
+        $result = $result->map(
+            function ($group) {
+                return $this->objectToClient($group);
+            }
+        );
 
         $result = [
             'list' => $result,

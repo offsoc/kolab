@@ -9,7 +9,6 @@ use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\Sku;
 use App\User;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -36,6 +35,9 @@ class UsersController extends Controller
      * @var \App\User|\App\Group|null
      */
     protected $deleteBeforeCreate;
+
+    /** @var array Common object properties in the API response */
+    protected static $objectProps = ['email', 'status'];
 
 
     /**
@@ -114,9 +116,7 @@ class UsersController extends Controller
         // Process the result
         $result = $result->map(
             function ($user) {
-                $data = $user->toArray();
-                $data = array_merge($data, self::userStatuses($user));
-                return $data;
+                return $this->objectToClient($user);
             }
         );
 
@@ -206,49 +206,8 @@ class UsersController extends Controller
             return $this->errorResponse(403);
         }
 
-        $response = self::statusInfo($user);
-
-        if (!empty(request()->input('refresh'))) {
-            $updated = false;
-            $async = false;
-            $last_step = 'none';
-
-            foreach ($response['process'] as $idx => $step) {
-                $last_step = $step['label'];
-
-                if (!$step['state']) {
-                    $exec = $this->execProcessStep($user, $step['label']);
-
-                    if (!$exec) {
-                        if ($exec === null) {
-                            $async = true;
-                        }
-
-                        break;
-                    }
-
-                    $updated = true;
-                }
-            }
-
-            if ($updated) {
-                $response = self::statusInfo($user);
-            }
-
-            $success = $response['isReady'];
-            $suffix = $success ? 'success' : 'error-' . $last_step;
-
-            $response['status'] = $success ? 'success' : 'error';
-            $response['message'] = \trans('app.process-' . $suffix);
-
-            if ($async && !$success) {
-                $response['processState'] = 'waiting';
-                $response['status'] = 'success';
-                $response['message'] = \trans('app.process-async');
-            }
-        }
-
-        $response = array_merge($response, self::userStatuses($user));
+        $response = $this->processStateUpdate($user);
+        $response = array_merge($response, self::objectState($user));
 
         return response()->json($response);
     }
@@ -262,45 +221,14 @@ class UsersController extends Controller
      */
     public static function statusInfo(User $user): array
     {
-        $process = [];
-        $steps = [
-            'user-new' => true,
-            'user-ldap-ready' => $user->isLdapReady(),
-            'user-imap-ready' => $user->isImapReady(),
-        ];
-
-        // Create a process check list
-        foreach ($steps as $step_name => $state) {
-            $step = [
-                'label' => $step_name,
-                'title' => \trans("app.process-{$step_name}"),
-                'state' => $state,
-            ];
-
-            $process[] = $step;
-        }
-
-        list ($local, $domain) = explode('@', $user->email);
-        $domain = Domain::where('namespace', $domain)->first();
-
-        // If that is not a public domain, add domain specific steps
-        if ($domain && !$domain->isPublic()) {
-            $domain_status = DomainsController::statusInfo($domain);
-            $process = array_merge($process, $domain_status['process']);
-        }
-
-        $all = count($process);
-        $checked = count(array_filter($process, function ($v) {
-                return $v['state'];
-        }));
-
-        $state = $all === $checked ? 'done' : 'running';
-
-        // After 180 seconds assume the process is in failed state,
-        // this should unlock the Refresh button in the UI
-        if ($all !== $checked && $user->created_at->diffInSeconds(Carbon::now()) > 180) {
-            $state = 'failed';
-        }
+        $process = self::processStateInfo(
+            $user,
+            [
+                'user-new' => true,
+                'user-ldap-ready' => $user->isLdapReady(),
+                'user-imap-ready' => $user->isImapReady(),
+            ]
+        );
 
         // Check if the user is a controller of his wallet
         $isController = $user->canDelete($user);
@@ -318,7 +246,7 @@ class UsersController extends Controller
             ->values()
             ->all();
 
-        return [
+        $result = [
             'skus' => $skus,
             // TODO: This will change when we enable all users to create domains
             'enableDomains' => $isController && $hasCustomDomain,
@@ -326,10 +254,9 @@ class UsersController extends Controller
             'enableDistlists' => $isController && $hasCustomDomain && in_array('distlist', $skus),
             'enableUsers' => $isController,
             'enableWallets' => $isController,
-            'process' => $process,
-            'processState' => $state,
-            'isReady' => $all === $checked,
         ];
+
+        return array_merge($process, $result);
     }
 
     /**
@@ -521,7 +448,7 @@ class UsersController extends Controller
      */
     public static function userResponse(User $user): array
     {
-        $response = $user->toArray();
+        $response = self::objectToClient($user, true);
 
         // Settings
         $response['settings'] = [];
@@ -537,8 +464,6 @@ class UsersController extends Controller
 
         // Status info
         $response['statusInfo'] = self::statusInfo($user);
-
-        $response = array_merge($response, self::userStatuses($user));
 
         // Add more info to the wallet object output
         $map_func = function ($wallet) use ($user) {
@@ -574,7 +499,7 @@ class UsersController extends Controller
      *
      * @return array Statuses array
      */
-    protected static function userStatuses(User $user): array
+    protected static function objectState(User $user): array
     {
         return [
             'isImapReady' => $user->isImapReady(),

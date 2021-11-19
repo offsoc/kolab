@@ -38,11 +38,11 @@ class DomainsController extends \App\Http\Controllers\API\V4\Admin\DomainsContro
         }
 
         // Process the result
-        $result = $result->map(function ($domain) {
-            $data = $domain->toArray();
-            $data = array_merge($data, self::domainStatuses($domain));
-            return $data;
-        });
+        $result = $result->map(
+            function ($domain) {
+                return $this->objectToClient($domain);
+            }
+        );
 
         $result = [
             'list' => $result,

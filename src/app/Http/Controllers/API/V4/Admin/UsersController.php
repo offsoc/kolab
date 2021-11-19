@@ -128,9 +128,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         // Process the result
         $result = $result->map(
             function ($user) {
-                $data = $user->toArray();
-                $data = array_merge($data, self::userStatuses($user));
-                return $data;
+                return $this->objectToClient($user, true);
             }
         );
 

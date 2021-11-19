@@ -6,13 +6,16 @@ use App\Domain;
 use App\Http\Controllers\Controller;
 use App\Backends\LDAP;
 use App\Rules\UserEmailDomain;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class DomainsController extends Controller
 {
+    /** @var array Common object properties in the API response */
+    protected static $objectProps = ['namespace', 'status', 'type'];
+
+
     /**
      * Return a list of domains owned by the current user
      *
@@ -21,19 +24,17 @@ class DomainsController extends Controller
     public function index()
     {
         $user = $this->guard()->user();
-        $list = [];
 
-        foreach ($user->domains() as $domain) {
-            if (!$domain->isPublic()) {
-                $data = $domain->toArray();
-                $data = array_merge($data, self::domainStatuses($domain));
-                $list[] = $data;
-            }
-        }
-
-        usort($list, function ($a, $b) {
-            return strcmp($a['namespace'], $b['namespace']);
-        });
+        $list = \collect($user->domains())
+            ->filter(function ($domain) {
+                return !$domain->isPublic();
+            })
+            ->map(function ($domain) {
+                return $this->objectToClient($domain);
+            })
+            ->sortBy('namespace')
+            ->values()
+            ->all();
 
         return response()->json($list);
     }
@@ -252,7 +253,7 @@ class DomainsController extends Controller
             return $this->errorResponse(403);
         }
 
-        $response = $domain->toArray();
+        $response = $this->objectToClient($domain, true);
 
         // Add hash information to the response
         $response['hash_text'] = $domain->hash(Domain::HASH_TEXT);
@@ -271,8 +272,6 @@ class DomainsController extends Controller
 
         // Entitlements info
         $response['skus'] = \App\Entitlement::objectEntitlementsSummary($domain);
-
-        $response = array_merge($response, self::domainStatuses($domain));
 
         // Some basic information about the domain wallet
         $wallet = $domain->wallet();
@@ -304,36 +303,8 @@ class DomainsController extends Controller
             return $this->errorResponse(403);
         }
 
-        $response = self::statusInfo($domain);
-
-        if (!empty(request()->input('refresh'))) {
-            $updated = false;
-            $last_step = 'none';
-
-            foreach ($response['process'] as $idx => $step) {
-                $last_step = $step['label'];
-
-                if (!$step['state']) {
-                    if (!$this->execProcessStep($domain, $step['label'])) {
-                        break;
-                    }
-
-                    $updated = true;
-                }
-            }
-
-            if ($updated) {
-                $response = self::statusInfo($domain);
-            }
-
-            $success = $response['isReady'];
-            $suffix = $success ? 'success' : 'error-' . $last_step;
-
-            $response['status'] = $success ? 'success' : 'error';
-            $response['message'] = \trans('app.process-' . $suffix);
-        }
-
-        $response = array_merge($response, self::domainStatuses($domain));
+        $response = $this->processStateUpdate($domain);
+        $response = array_merge($response, self::objectState($domain));
 
         return response()->json($response);
     }
@@ -419,7 +390,7 @@ class DomainsController extends Controller
      *
      * @return array Statuses array
      */
-    protected static function domainStatuses(Domain $domain): array
+    protected static function objectState(Domain $domain): array
     {
         return [
             'isLdapReady' => $domain->isLdapReady(),
@@ -440,50 +411,16 @@ class DomainsController extends Controller
      */
     public static function statusInfo(Domain $domain): array
     {
-        $process = [];
-
         // If that is not a public domain, add domain specific steps
-        $steps = [
-            'domain-new' => true,
-            'domain-ldap-ready' => $domain->isLdapReady(),
-            'domain-verified' => $domain->isVerified(),
-            'domain-confirmed' => $domain->isConfirmed(),
-        ];
-
-        $count = count($steps);
-
-        // Create a process check list
-        foreach ($steps as $step_name => $state) {
-            $step = [
-                'label' => $step_name,
-                'title' => \trans("app.process-{$step_name}"),
-                'state' => $state,
-            ];
-
-            if ($step_name == 'domain-confirmed' && !$state) {
-                $step['link'] = "/domain/{$domain->id}";
-            }
-
-            $process[] = $step;
-
-            if ($state) {
-                $count--;
-            }
-        }
-
-        $state = $count === 0 ? 'done' : 'running';
-
-        // After 180 seconds assume the process is in failed state,
-        // this should unlock the Refresh button in the UI
-        if ($count > 0 && $domain->created_at->diffInSeconds(Carbon::now()) > 180) {
-            $state = 'failed';
-        }
-
-        return [
-            'process' => $process,
-            'processState' => $state,
-            'isReady' => $count === 0,
-        ];
+        return self::processStateInfo(
+            $domain,
+            [
+                'domain-new' => true,
+                'domain-ldap-ready' => $domain->isLdapReady(),
+                'domain-verified' => $domain->isVerified(),
+                'domain-confirmed' => [$domain->isConfirmed(), "/domain/{$domain->id}"],
+            ]
+        );
     }
 
     /**
