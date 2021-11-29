@@ -13,6 +13,6 @@
     echo "objectClass: kolabresource"
     echo "objectClass: mailrecipient"
     echo "kolabFolderType: event"
-    echo "kolabInvitationPolicy: ACT_MANUAL"
+    echo "kolabInvitationPolicy: ACT_STORE_AND_NOTIFY"
     echo ""
 ) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
