@@ -189,6 +189,18 @@ const app = new Vue({
 
             $(elem).append(small ? $(loader).addClass('small') : $(loader))
         },
+        // Create an object copy with specified properties only
+        pick(obj, properties) {
+            let result = {}
+
+            properties.forEach(prop => {
+                if (prop in obj) {
+                    result[prop] = obj[prop]
+                }
+            })
+
+            return result
+        },
         // Remove loader element added in addLoader()
         removeLoader(elem) {
             $(elem).find('.app-loader').remove()
@@ -355,6 +367,12 @@ const app = new Vue({
 
             return page ? page : '404'
         },
+        resourceStatusClass(resource) {
+            return this.userStatusClass(resource)
+        },
+        resourceStatusText(resource) {
+            return this.userStatusText(resource)
+        },
         supportDialog(container) {
             let dialog = $('#support-dialog')[0]
 
@@ -515,8 +533,12 @@ window.axios.interceptors.response.use(
 
                             input.addClass('is-invalid').next('.invalid-feedback').remove()
                             input.after(feedback)
-                        }
-                        else {
+                        } else {
+                            // a special case, e.g. the invitation policy widget
+                            if (input.is('select') && input.parent().is('.input-group-select.selected')) {
+                                input = input.next()
+                            }
+
                             // Standard form element
                             input.addClass('is-invalid')
                             input.parent().find('.invalid-feedback').remove()

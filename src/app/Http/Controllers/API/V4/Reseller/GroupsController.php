@@ -20,14 +20,7 @@ class GroupsController extends \App\Http\Controllers\API\V4\Admin\GroupsControll
 
         if ($owner) {
             if ($owner = User::withSubjectTenantContext()->find($owner)) {
-                foreach ($owner->wallets as $wallet) {
-                    $wallet->entitlements()->where('entitleable_type', Group::class)->get()
-                        ->each(function ($entitlement) use ($result) {
-                            $result->push($entitlement->entitleable);
-                        });
-                }
-
-                $result = $result->sortBy('name')->values();
+                $result = $owner->groups(false)->orderBy('name')->get();
             }
         } elseif (!empty($search)) {
             if ($group = Group::withSubjectTenantContext()->where('email', $search)->first()) {

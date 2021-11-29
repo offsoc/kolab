@@ -118,6 +118,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" id="tab-resources" href="#user-resources" role="tab" aria-controls="user-resources" aria-selected="false">
+                    {{ $t('user.resources') }} ({{ resources.length }})
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" id="tab-settings" href="#user-settings" role="tab" aria-controls="user-settings" aria-selected="false">
                     Settings
                 </a>
@@ -307,7 +312,37 @@
                             </tbody>
                             <tfoot class="table-fake-body">
                                 <tr>
-                                    <td colspan="2">{{ $t('user.distlists-none') }}</td>
+                                    <td colspan="2">{{ $t('distlist.list-empty') }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="user-resources" role="tabpanel" aria-labelledby="tab-resources">
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{ $t('form.name') }}</th>
+                                    <th scope="col">{{ $t('form.email') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="resource in resources" :key="resource.id" @click="$root.clickRecord">
+                                    <td>
+                                        <svg-icon icon="cog" :class="$root.resourceStatusClass(resource)" :title="$root.resourceStatusText(resource)"></svg-icon>
+                                        <router-link :to="{ path: '/resource/' + resource.id }">{{ resource.name }}</router-link>
+                                    </td>
+                                    <td>
+                                        <router-link :to="{ path: '/resource/' + resource.id }">{{ resource.email }}</router-link>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-fake-body">
+                                <tr>
+                                    <td colspan="2">{{ $t('resource.list-empty') }}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -463,6 +498,7 @@
                 walletReload: false,
                 distlists: [],
                 domains: [],
+                resources: [],
                 skus: [],
                 sku2FA: null,
                 users: [],
@@ -561,6 +597,12 @@
                     axios.get('/api/v4/groups?owner=' + user_id)
                         .then(response => {
                             this.distlists = response.data.list
+                        })
+
+                    // Fetch resources lists
+                    axios.get('/api/v4/resources?owner=' + user_id)
+                        .then(response => {
+                            this.resources = response.data.list
                         })
                 })
                 .catch(this.$root.errorHandler)

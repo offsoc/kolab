@@ -3787,6 +3787,11 @@ class rcube_imap_generic
             // remove spaces from the beginning of the string
             $str = ltrim($str);
 
+            // empty string
+            if ($str === '' || $str === null) {
+                break;
+            }
+
             switch ($str[0]) {
 
             // String literal
@@ -3834,11 +3839,6 @@ class rcube_imap_generic
 
             // String atom, number, astring, NIL, *, %
             default:
-                // empty string
-                if ($str === '' || $str === null) {
-                    break 2;
-                }
-
                 // excluded chars: SP, CTL, ), DEL
                 // we do not exclude [ and ] (#1489223)
                 if (preg_match('/^([^\x00-\x20\x29\x7F]+)/', $str, $m)) {

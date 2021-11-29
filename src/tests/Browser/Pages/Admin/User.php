@@ -58,6 +58,7 @@ class User extends Page
             '@user-subscriptions' => '#user-subscriptions',
             '@user-distlists' => '#user-distlists',
             '@user-domains' => '#user-domains',
+            '@user-resources' => '#user-resources',
             '@user-users' => '#user-users',
             '@user-settings' => '#user-settings',
         ];

@@ -89,7 +89,7 @@ class GroupsTest extends TestCase
         $this->assertSame($group->name, $json['list'][0]['name']);
 
         // Search by owner (Ned is a controller on John's wallets,
-        // here we expect only domains assigned to Ned's wallet(s))
+        // here we expect only groups assigned to Ned's wallet(s))
         $ned = $this->getTestUser('ned@kolab.org');
         $response = $this->actingAs($reseller1)->get("api/v4/groups?owner={$ned->id}");
         $response->assertStatus(200);
@@ -99,7 +99,7 @@ class GroupsTest extends TestCase
         $this->assertSame(0, $json['count']);
         $this->assertCount(0, $json['list']);
 
-        $response = $this->actingAs($reseller2)->get("api/v4/groups?search=kolab.org");
+        $response = $this->actingAs($reseller2)->get("api/v4/groups?search={$group->email}");
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -150,7 +150,7 @@ class GroupsTest extends TestCase
     }
 
     /**
-     * Test fetching group status (GET /api/v4/domains/<domain-id>/status)
+     * Test fetching group status (GET /api/v4/groups/<group-id>/status)
      */
     public function testStatus(): void
     {

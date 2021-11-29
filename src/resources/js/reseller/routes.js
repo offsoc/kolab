@@ -5,6 +5,7 @@ import InvitationsComponent from '../../vue/Reseller/Invitations'
 import LoginComponent from '../../vue/Login'
 import LogoutComponent from '../../vue/Logout'
 import PageComponent from '../../vue/Page'
+import ResourceComponent from '../../vue/Admin/Resource'
 import StatsComponent from '../../vue/Reseller/Stats'
 import UserComponent from '../../vue/Admin/User'
 import WalletComponent from '../../vue/Wallet'
@@ -46,6 +47,12 @@ const routes = [
         path: '/invitations',
         name: 'invitations',
         component: InvitationsComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/resource/:resource',
+        name: 'resource',
+        component: ResourceComponent,
         meta: { requiresAuth: true }
     },
     {

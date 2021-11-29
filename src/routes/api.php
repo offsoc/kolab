@@ -79,6 +79,11 @@ Route::group(
         Route::post('groups/{id}/config', 'API\V4\GroupsController@setConfig');
 
         Route::apiResource('packages', API\V4\PackagesController::class);
+
+        Route::apiResource('resources', API\V4\ResourcesController::class);
+        Route::get('resources/{id}/status', 'API\V4\ResourcesController@status');
+        Route::post('resources/{id}/config', 'API\V4\ResourcesController@setConfig');
+
         Route::apiResource('skus', API\V4\SkusController::class);
 
         Route::apiResource('users', API\V4\UsersController::class);
@@ -184,6 +189,7 @@ if (\config('app.with_admin')) {
             Route::post('groups/{id}/suspend', 'API\V4\Admin\GroupsController@suspend');
             Route::post('groups/{id}/unsuspend', 'API\V4\Admin\GroupsController@unsuspend');
 
+            Route::apiResource('resources', API\V4\Admin\ResourcesController::class);
             Route::apiResource('skus', API\V4\Admin\SkusController::class);
             Route::apiResource('users', API\V4\Admin\UsersController::class);
             Route::get('users/{id}/discounts', 'API\V4\Reseller\DiscountsController@userDiscounts');
@@ -230,6 +236,7 @@ if (\config('app.with_reseller')) {
             Route::get('payments/pending', 'API\V4\Reseller\PaymentsController@payments');
             Route::get('payments/has-pending', 'API\V4\Reseller\PaymentsController@hasPayments');
 
+            Route::apiResource('resources', API\V4\Reseller\ResourcesController::class);
             Route::apiResource('skus', API\V4\Reseller\SkusController::class);
             Route::apiResource('users', API\V4\Reseller\UsersController::class);
             Route::get('users/{id}/discounts', 'API\V4\Reseller\DiscountsController@userDiscounts');

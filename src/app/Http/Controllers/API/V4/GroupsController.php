@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Validator;
 class GroupsController extends Controller
 {
     /** @var array Common object properties in the API response */
-    protected static $objectProps = ['email', 'name', 'status'];
+    protected static $objectProps = ['email', 'name'];
 
 
     /**

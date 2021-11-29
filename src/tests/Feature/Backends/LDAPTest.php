@@ -6,6 +6,7 @@ use App\Backends\LDAP;
 use App\Domain;
 use App\Group;
 use App\Entitlement;
+use App\Resource;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -28,6 +29,7 @@ class LDAPTest extends TestCase
         $this->deleteTestUser('user-ldap-test@' . \config('app.domain'));
         $this->deleteTestDomain('testldap.com');
         $this->deleteTestGroup('group@kolab.org');
+        $this->deleteTestResource('test-resource@kolab.org');
         // TODO: Remove group members
     }
 
@@ -41,6 +43,7 @@ class LDAPTest extends TestCase
         $this->deleteTestUser('user-ldap-test@' . \config('app.domain'));
         $this->deleteTestDomain('testldap.com');
         $this->deleteTestGroup('group@kolab.org');
+        $this->deleteTestResource('test-resource@kolab.org');
         // TODO: Remove group members
 
         parent::tearDown();
@@ -200,10 +203,78 @@ class LDAPTest extends TestCase
         // this is making sure that there's no job executed by the LDAP backend
         Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 5);
 
-        // Delete the domain
+        // Delete the group
         LDAP::deleteGroup($group);
 
         $this->assertSame(null, LDAP::getGroup($group->email));
+    }
+
+    /**
+     * Test creating/updating/deleting a resource record
+     *
+     * @group ldap
+     */
+    public function testResource(): void
+    {
+        Queue::fake();
+
+        $root_dn = \config('ldap.hosted.root_dn');
+        $resource = $this->getTestResource('test-resource@kolab.org', ['name' => 'Test1']);
+        $resource->setSetting('invitation_policy', null);
+
+        // Make sure the resource does not exist
+        // LDAP::deleteResource($resource);
+
+        // Create the resource
+        LDAP::createResource($resource);
+
+        $ldap_resource = LDAP::getResource($resource->email);
+
+        $expected = [
+            'cn' => 'Test1',
+            'dn' => 'cn=Test1,ou=Resources,ou=kolab.org,' . $root_dn,
+            'mail' => $resource->email,
+            'objectclass' => [
+                'top',
+                'kolabresource',
+                'kolabsharedfolder',
+                'mailrecipient',
+            ],
+            'kolabfoldertype' => 'event',
+            'kolabtargetfolder' => 'shared/Resources/Test1@kolab.org',
+            'kolabinvitationpolicy' => null,
+            'owner' => null,
+        ];
+
+        foreach ($expected as $attr => $value) {
+            $ldap_value = isset($ldap_resource[$attr]) ? $ldap_resource[$attr] : null;
+            $this->assertEquals($value, $ldap_value, "Resource $attr attribute");
+        }
+
+        // Update resource name and invitation_policy
+        $resource->name = 'Te(=ść)1';
+        $resource->save();
+        $resource->setSetting('invitation_policy', 'manual:john@kolab.org');
+
+        LDAP::updateResource($resource);
+
+        $expected['kolabtargetfolder'] = 'shared/Resources/Te(=ść)1@kolab.org';
+        $expected['kolabinvitationpolicy'] = 'ACT_MANUAL';
+        $expected['owner'] = 'uid=john@kolab.org,ou=People,ou=kolab.org,' . $root_dn;
+        $expected['dn'] = 'cn=Te(\\3dść)1,ou=Resources,ou=kolab.org,' . $root_dn;
+        $expected['cn'] = 'Te(=ść)1';
+
+        $ldap_resource = LDAP::getResource($resource->email);
+
+        foreach ($expected as $attr => $value) {
+            $ldap_value = isset($ldap_resource[$attr]) ? $ldap_resource[$attr] : null;
+            $this->assertEquals($value, $ldap_value, "Resource $attr attribute");
+        }
+
+        // Delete the resource
+        LDAP::deleteResource($resource);
+
+        $this->assertSame(null, LDAP::getResource($resource->email));
     }
 
     /**
@@ -319,6 +390,25 @@ class LDAPTest extends TestCase
     }
 
     /**
+     * Test handling errors on a resource creation
+     *
+     * @group ldap
+     */
+    public function testCreateResourceException(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/Failed to create resource/');
+
+        $resource = new Resource([
+                'email' => 'test-non-existing-ldap@non-existing.org',
+                'name' => 'Test',
+                'status' => User::STATUS_ACTIVE,
+        ]);
+
+        LDAP::createResource($resource);
+    }
+
+    /**
      * Test handling errors on a group creation
      *
      * @group ldap
@@ -391,6 +481,23 @@ class LDAPTest extends TestCase
         ]);
 
         LDAP::updateGroup($group);
+    }
+
+    /**
+     * Test handling update of a non-existing resource
+     *
+     * @group ldap
+     */
+    public function testUpdateResourceException(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/resource not found/');
+
+        $resource = new Resource([
+                'email' => 'test-resource@kolab.org',
+        ]);
+
+        LDAP::updateResource($resource);
     }
 
     /**

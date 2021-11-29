@@ -105,7 +105,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(9, $json);
+        $this->assertCount(11, $json);
 
         $this->assertSame(100, $json[0]['prio']);
         $this->assertSame($sku->id, $json[0]['id']);
@@ -215,7 +215,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(8, $json);
+        $this->assertCount(9, $json);
 
         $this->assertSkuElement('beta', $json[6], [
                 'prio' => 10,
@@ -225,7 +225,16 @@ class SkusTest extends TestCase
                 'readonly' => false,
         ]);
 
-        $this->assertSkuElement('distlist', $json[7], [
+        $this->assertSkuElement('beta-resources', $json[7], [
+                'prio' => 10,
+                'type' => 'user',
+                'handler' => 'resources', // TODO: shouldn't it be beta-resources or beta/resources?
+                'enabled' => false,
+                'readonly' => false,
+                'required' => ['beta'],
+        ]);
+
+        $this->assertSkuElement('distlist', $json[8], [
                 'prio' => 10,
                 'type' => 'user',
                 'handler' => 'distlist',

@@ -4,6 +4,8 @@ namespace Tests;
 
 use App\Domain;
 use App\Group;
+use App\Resource;
+use App\Sku;
 use App\Transaction;
 use App\User;
 use Carbon\Carbon;
@@ -90,10 +92,22 @@ trait TestCaseTrait
     protected $userPassword;
 
     /**
+     * Register the beta entitlement for a user
+     */
+    protected function addBetaEntitlement($user, $title): void
+    {
+        // Add beta + $title entitlements
+        $beta_sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', $title)->first();
+        $user->assignSku($beta_sku);
+        $user->assignSku($sku);
+    }
+
+    /**
      * Assert that the entitlements for the user match the expected list of entitlements.
      *
      * @param \App\User|\App\Domain $object   The object for which the entitlements need to be pulled.
-     * @param array                 $expected An array of expected \App\SKU titles.
+     * @param array                 $expected An array of expected \App\Sku titles.
      */
     protected function assertEntitlements($object, $expected)
     {
@@ -139,10 +153,11 @@ trait TestCaseTrait
     {
         $beta_handlers = [
             'App\Handlers\Beta',
+            'App\Handlers\Beta\Resources',
             'App\Handlers\Distlist',
         ];
 
-        $betas = \App\Sku::whereIn('handler_class', $beta_handlers)->pluck('id')->all();
+        $betas = Sku::whereIn('handler_class', $beta_handlers)->pluck('id')->all();
 
         \App\Entitlement::whereIn('sku_id', $betas)->delete();
     }
@@ -282,6 +297,27 @@ trait TestCaseTrait
     }
 
     /**
+     * Delete a test resource whatever it takes.
+     *
+     * @coversNothing
+     */
+    protected function deleteTestResource($email)
+    {
+        Queue::fake();
+
+        $resource = Resource::withTrashed()->where('email', $email)->first();
+
+        if (!$resource) {
+            return;
+        }
+
+        $job = new \App\Jobs\Resource\DeleteJob($resource->id);
+        $job->handle();
+
+        $resource->forceDelete();
+    }
+
+    /**
      * Delete a test user whatever it takes.
      *
      * @coversNothing
@@ -336,6 +372,38 @@ trait TestCaseTrait
         // Disable jobs (i.e. skip LDAP oprations)
         Queue::fake();
         return Group::firstOrCreate(['email' => $email], $attrib);
+    }
+
+    /**
+     * Get Resource object by name+domain, create it if needed.
+     * Skip LDAP jobs.
+     */
+    protected function getTestResource($email, $attrib = [])
+    {
+        // Disable jobs (i.e. skip LDAP oprations)
+        Queue::fake();
+
+        $resource = Resource::where('email', $email)->first();
+
+        if (!$resource) {
+            list($local, $domain) = explode('@', $email, 2);
+
+            $resource = new Resource();
+            $resource->email = $email;
+            $resource->domain = $domain;
+
+            if (!isset($attrib['name'])) {
+                $resource->name = $local;
+            }
+        }
+
+        foreach ($attrib as $key => $val) {
+            $resource->{$key} = $val;
+        }
+
+        $resource->save();
+
+        return $resource;
     }
 
     /**
@@ -424,7 +492,7 @@ trait TestCaseTrait
         $this->domainUsers[] = $this->domainOwner;
 
         // assign second factor to joe
-        $this->joe->assignSku(\App\Sku::where('title', '2fa')->first());
+        $this->joe->assignSku(Sku::where('title', '2fa')->first());
         \App\Auth\SecondFactor::seed($this->joe->email);
 
         usort(

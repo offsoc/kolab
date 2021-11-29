@@ -4,6 +4,7 @@ import DomainComponent from '../../vue/Admin/Domain'
 import LoginComponent from '../../vue/Login'
 import LogoutComponent from '../../vue/Logout'
 import PageComponent from '../../vue/Page'
+import ResourceComponent from '../../vue/Admin/Resource'
 import StatsComponent from '../../vue/Admin/Stats'
 import UserComponent from '../../vue/Admin/User'
 
@@ -39,6 +40,12 @@ const routes = [
         path: '/logout',
         name: 'logout',
         component: LogoutComponent
+    },
+    {
+        path: '/resource/:resource',
+        name: 'resource',
+        component: ResourceComponent,
+        meta: { requiresAuth: true }
     },
     {
         path: '/stats',

@@ -4,6 +4,7 @@ namespace App\Backends;
 
 use App\Domain;
 use App\Group;
+use App\Resource;
 use App\User;
 
 class LDAP
@@ -11,6 +12,12 @@ class LDAP
     /** @const array Group settings used by the backend */
     public const GROUP_SETTINGS = [
         'sender_policy',
+    ];
+
+    /** @const array Resource settings used by the backend */
+    public const RESOURCE_SETTINGS = [
+        'folder',
+        'invitation_policy',
     ];
 
     /** @const array User settings used by the backend */
@@ -249,6 +256,47 @@ class LDAP
     }
 
     /**
+     * Create a resource in LDAP.
+     *
+     * @param \App\Resource $resource The resource to create.
+     *
+     * @throws \Exception
+     */
+    public static function createResource(Resource $resource): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $domainName = explode('@', $resource->email, 2)[1];
+        $cn = $ldap->quote_string($resource->name);
+        $dn = "cn={$cn}," . self::baseDN($domainName, 'Resources');
+
+        $entry = [
+            'mail' => $resource->email,
+            'objectclass' => [
+                'top',
+                'kolabresource',
+                'kolabsharedfolder',
+                'mailrecipient',
+            ],
+            'kolabfoldertype' => 'event',
+        ];
+
+        self::setResourceAttributes($ldap, $resource, $entry);
+
+        self::addEntry(
+            $ldap,
+            $dn,
+            $entry,
+            "Failed to create resource {$resource->email} in LDAP (" . __LINE__ . ")"
+        );
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+    }
+
+    /**
      * Create a user in LDAP.
      *
      * Only need to add user if in any of the local domains? Figure that out here for now. Should
@@ -381,6 +429,34 @@ class LDAP
     }
 
     /**
+     * Delete a resource from LDAP.
+     *
+     * @param \App\Resource $resource The resource to delete.
+     *
+     * @throws \Exception
+     */
+    public static function deleteResource(Resource $resource): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        if (self::getResourceEntry($ldap, $resource->email, $dn)) {
+            $result = $ldap->delete_entry($dn);
+
+            if (!$result) {
+                self::throwException(
+                    $ldap,
+                    "Failed to delete resource {$resource->email} from LDAP (" . __LINE__ . ")"
+                );
+            }
+        }
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+    }
+
+    /**
      * Delete a user from LDAP.
      *
      * @param \App\User $user The user account to delete.
@@ -454,6 +530,28 @@ class LDAP
         }
 
         return $group;
+    }
+
+    /**
+     * Get a resource data from LDAP.
+     *
+     * @param string $email The resource email.
+     *
+     * @return array|false|null
+     * @throws \Exception
+     */
+    public static function getResource(string $email)
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $resource = self::getResourceEntry($ldap, $email, $dn);
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+
+        return $resource;
     }
 
     /**
@@ -551,6 +649,43 @@ class LDAP
             self::throwException(
                 $ldap,
                 "Failed to update group {$group->email} in LDAP (" . __LINE__ . ")"
+            );
+        }
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+    }
+
+    /**
+     * Update a resource in LDAP.
+     *
+     * @param \App\Resource $resource The resource to update
+     *
+     * @throws \Exception
+     */
+    public static function updateResource(Resource $resource): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $newEntry = $oldEntry = self::getResourceEntry($ldap, $resource->email, $dn);
+
+        if (empty($oldEntry)) {
+            self::throwException(
+                $ldap,
+                "Failed to update resource {$resource->email} in LDAP (resource not found)"
+            );
+        }
+
+        self::setResourceAttributes($ldap, $resource, $newEntry);
+
+        $result = $ldap->modify_entry($dn, $oldEntry, $newEntry);
+
+        if (!is_array($result)) {
+            self::throwException(
+                $ldap,
+                "Failed to update resource {$resource->email} in LDAP (" . __LINE__ . ")"
             );
         }
 
@@ -705,6 +840,53 @@ class LDAP
     }
 
     /**
+     * Set common resource attributes
+     */
+    private static function setResourceAttributes($ldap, Resource $resource, &$entry)
+    {
+        $entry['cn'] = $resource->name;
+        $entry['owner'] = null;
+        $entry['kolabinvitationpolicy'] = null;
+
+        $settings = $resource->getSettings(['invitation_policy', 'folder']);
+
+        $entry['kolabtargetfolder'] = $settings['folder'] ?? '';
+
+        // Here's how Wallace's resources module works:
+        // - if policy is ACT_MANUAL and owner mail specified: a tentative response is sent, event saved,
+        //   and mail sent to the owner to accept/decline the request.
+        // - if policy is ACT_ACCEPT_AND_NOTIFY and owner mail specified: an accept response is sent,
+        //   event saved, and notification (not confirmation) mail sent to the owner.
+        // - if there's no owner (policy irrelevant): an accept response is sent, event saved.
+        // - if policy is ACT_REJECT: a decline response is sent
+        // - note that the notification email is being send if COND_NOTIFY policy is set or saving failed.
+        // - all above assume there's no conflict, if there's a conflict the decline response is sent automatically
+        //   (notification is sent if policy = ACT_ACCEPT_AND_NOTIFY).
+        // - the only supported policies are: 'ACT_MANUAL', 'ACT_ACCEPT' (defined but not used anywhere),
+        //   'ACT_REJECT', 'ACT_ACCEPT_AND_NOTIFY'.
+
+        // For now we ignore the notifications feature
+
+        if (!empty($settings['invitation_policy'])) {
+            if ($settings['invitation_policy'] === 'accept') {
+                $entry['kolabinvitationpolicy'] = 'ACT_ACCEPT';
+            } elseif ($settings['invitation_policy'] === 'reject') {
+                $entry['kolabinvitationpolicy'] = 'ACT_REJECT';
+            } elseif (preg_match('/^manual:(\S+@\S+)$/', $settings['invitation_policy'], $m)) {
+                if (self::getUserEntry($ldap, $m[1], $userDN)) {
+                    $entry['owner'] = $userDN;
+                    $entry['kolabinvitationpolicy'] = 'ACT_MANUAL';
+                } else {
+                    $entry['kolabinvitationpolicy'] = 'ACT_ACCEPT';
+                }
+
+                // TODO: Set folder ACL so the owner can write to it
+                // TODO: Do we need to add lrs for anyone?
+            }
+        }
+    }
+
+    /**
      * Set common user attributes
      */
     private static function setUserAttributes(User $user, array &$entry)
@@ -807,7 +989,7 @@ class LDAP
      * @param string     $email Group email (mail)
      * @param string     $dn    Reference to group DN
      *
-     * @return false|null|array Group entry, False on error, NULL if not found
+     * @return null|array Group entry, False on error, NULL if not found
      */
     private static function getGroupEntry($ldap, $email, &$dn = null)
     {
@@ -819,18 +1001,30 @@ class LDAP
         // For groups we're using search() instead of get_entry() because
         // a group name is not constant, so e.g. on update we might have
         // the new name, but not the old one. Email address is constant.
-        $result = $ldap->search($base_dn, "(mail=$email)", "sub", $attrs);
+        return self::searchEntry($ldap, $base_dn, "(mail=$email)", $attrs, $dn);
+    }
 
-        if ($result && $result->count() == 1) {
-            $entries = $result->entries(true);
-            $dn = key($entries);
-            $entry = $entries[$dn];
-            $entry['dn'] = $dn;
+    /**
+     * Get a resource entry from LDAP.
+     *
+     * @param \Net_LDAP3 $ldap  Ldap connection
+     * @param string     $email Resource email (mail)
+     * @param string     $dn    Reference to the resource DN
+     *
+     * @return null|array Resource entry, NULL if not found
+     */
+    private static function getResourceEntry($ldap, $email, &$dn = null)
+    {
+        $domainName = explode('@', $email, 2)[1];
+        $base_dn = self::baseDN($domainName, 'Resources');
 
-            return $entry;
-        }
+        $attrs = ['dn', 'cn', 'mail', 'objectclass', 'kolabtargetfolder',
+            'kolabfoldertype', 'kolabinvitationpolicy', 'owner'];
 
-        return null;
+        // For resources we're using search() instead of get_entry() because
+        // a resource name is not constant, so e.g. on update we might have
+        // the new name, but not the old one. Email address is constant.
+        return self::searchEntry($ldap, $base_dn, "(mail=$email)", $attrs, $dn);
     }
 
     /**
@@ -948,6 +1142,33 @@ class LDAP
 
             self::throwException($ldap, $errorMsg);
         }
+    }
+
+    /**
+     * Find a single entry in LDAP by using search.
+     *
+     * @param \Net_LDAP3 $ldap    Ldap connection
+     * @param string     $base_dn Base DN
+     * @param string     $filter  Search filter
+     * @param array      $attrs   Result attributes
+     * @param string     $dn      Reference to a DN of the found entry
+     *
+     * @return null|array LDAP entry, NULL if not found
+     */
+    private static function searchEntry($ldap, $base_dn, $filter, $attrs, &$dn = null)
+    {
+        $result = $ldap->search($base_dn, $filter, 'sub', $attrs);
+
+        if ($result && $result->count() == 1) {
+            $entries = $result->entries(true);
+            $dn = key($entries);
+            $entry = $entries[$dn];
+            $entry['dn'] = $dn;
+
+            return $entry;
+        }
+
+        return null;
     }
 
     /**

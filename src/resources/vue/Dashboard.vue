@@ -15,6 +15,9 @@
             <router-link v-if="status.enableDistlists" class="card link-distlists" :to="{ name: 'distlists' }">
                 <svg-icon icon="users"></svg-icon><span class="name">{{ $t('dashboard.distlists') }}</span>
             </router-link>
+            <router-link v-if="status.enableResources" class="card link-resources" :to="{ name: 'resources' }">
+                <svg-icon icon="cog"></svg-icon><span class="name">{{ $t('dashboard.resources') }}</span>
+            </router-link>
             <router-link v-if="status.enableWallets" class="card link-wallet" :to="{ name: 'wallet' }">
                 <svg-icon icon="wallet"></svg-icon><span class="name">{{ $t('dashboard.wallet') }}</span>
                 <span v-if="balance < 0" class="badge bg-danger">{{ $root.price(balance, currency) }}</span>

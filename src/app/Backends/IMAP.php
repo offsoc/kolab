@@ -21,13 +21,50 @@ class IMAP
 
         $folders = $imap->listMailboxes('', '*');
 
+        $imap->closeConnection();
+
         if (!is_array($folders)) {
             throw new \Exception("Failed to get IMAP folders");
         }
 
+        return count($folders) > 0;
+    }
+
+    /**
+     * Check if a shared folder is set up.
+     *
+     * @param string $folder Folder name, eg. shared/Resources/Name@domain.tld
+     *
+     * @return bool True if a folder exists and is set up, False otherwise
+     */
+    public static function verifySharedFolder(string $folder): bool
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config);
+
+        // Convert the folder from UTF8 to UTF7-IMAP
+        if (\preg_match('|^(shared/Resources/)(.*)(@[^@]+)$|', $folder, $matches)) {
+            $folderName = \mb_convert_encoding($matches[2], 'UTF7-IMAP', 'UTF8');
+            $folder = $matches[1] . $folderName . $matches[3];
+        }
+
+        // FIXME: just listMailboxes() does not return shared folders at all
+
+        $metadata = $imap->getMetadata($folder, ['/shared/vendor/kolab/folder-type']);
+
         $imap->closeConnection();
 
-        return count($folders) > 0;
+        // Note: We have to use error code to distinguish an error from "no mailbox" response
+
+        if ($imap->errornum === \rcube_imap_generic::ERROR_NO) {
+            return false;
+        }
+
+        if ($imap->errornum !== \rcube_imap_generic::ERROR_OK) {
+            throw new \Exception("Failed to get folder metadata from IMAP");
+        }
+
+        return true;
     }
 
     /**

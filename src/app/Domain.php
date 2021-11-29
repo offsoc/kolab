@@ -383,6 +383,7 @@ class Domain extends Model
             \App\User::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
             || \App\UserAlias::whereRaw('substr(alias, ?) = ?', [-$suffixLen, $suffix])->exists()
             || \App\Group::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
+            || \App\Resource::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
         );
     }
 

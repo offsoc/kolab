@@ -37,7 +37,7 @@ class UsersController extends Controller
     protected $deleteBeforeCreate;
 
     /** @var array Common object properties in the API response */
-    protected static $objectProps = ['email', 'status'];
+    protected static $objectProps = ['email'];
 
 
     /**
@@ -252,6 +252,8 @@ class UsersController extends Controller
             'enableDomains' => $isController && $hasCustomDomain,
             // TODO: Make 'enableDistlists' working for wallet controllers that aren't account owners
             'enableDistlists' => $isController && $hasCustomDomain && in_array('distlist', $skus),
+            // TODO: Make 'enableResources' working for wallet controllers that aren't account owners
+            'enableResources' => $isController && $hasCustomDomain && in_array('beta-resources', $skus),
             'enableUsers' => $isController,
             'enableWallets' => $isController,
         ];
@@ -718,12 +720,15 @@ class UsersController extends Controller
             return \trans('validation.entryexists', ['attribute' => 'email']);
         }
 
-        // Check if a group with specified address already exists
-        if ($existing_group = Group::emailExists($email, true)) {
-            // If this is a deleted group in the same custom domain
+        // Check if a group or resource with specified address already exists
+        if (
+            ($existing = Group::emailExists($email, true))
+            || ($existing = \App\Resource::emailExists($email, true))
+        ) {
+            // If this is a deleted group/resource in the same custom domain
             // we'll force delete it before
-            if (!$domain->isPublic() && $existing_group->trashed()) {
-                $deleted = $existing_group;
+            if (!$domain->isPublic() && $existing->trashed()) {
+                $deleted = $existing;
             } else {
                 return \trans('validation.entryexists', ['attribute' => 'email']);
             }

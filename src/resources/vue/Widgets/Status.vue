@@ -5,6 +5,7 @@
                 <span v-if="scope == 'dashboard'">{{ $t('status.prepare-account') }}</span>
                 <span v-else-if="scope == 'domain'">{{ $t('status.prepare-domain') }}</span>
                 <span v-else-if="scope == 'distlist'">{{ $t('status.prepare-distlist') }}</span>
+                <span v-else-if="scope == 'resource'">{{ $t('status.prepare-resource') }}</span>
                 <span v-else>{{ $t('status.prepare-user') }}</span>
                 <br>
                 {{ $t('status.prepare-hint') }}
@@ -20,6 +21,7 @@
                 <span v-if="scope == 'dashboard'">{{ $t('status.ready-account') }}</span>
                 <span v-else-if="scope == 'domain'">{{ $t('status.ready-domain') }}</span>
                 <span v-else-if="scope == 'distlist'">{{ $t('status.ready-distlist') }}</span>
+                <span v-else-if="scope == 'resource'">{{ $t('status.ready-resource') }}</span>
                 <span v-else>{{ $t('status.ready-user') }}</span>
                 <br>
                 {{ $t('status.verify') }}
@@ -187,14 +189,11 @@
                     case 'dashboard':
                         url = '/api/v4/users/' + this.$store.state.authInfo.id + '/status'
                         break
-                    case 'domain':
-                        url = '/api/v4/domains/' + this.$route.params.domain + '/status'
-                        break
                     case 'distlist':
                         url = '/api/v4/groups/' + this.$route.params.list + '/status'
                         break
                     default:
-                        url = '/api/v4/users/' + this.$route.params.user + '/status'
+                        url = '/api/v4/' + this.scope + 's/' + this.$route.params[this.scope] + '/status'
                 }
 
                 return url

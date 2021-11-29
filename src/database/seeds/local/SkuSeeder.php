@@ -110,7 +110,7 @@ class SkuSeeder extends Seeder
                 'cost' => 101,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Resource',
-                'active' => false,
+                'active' => true,
             ]
         );
 
@@ -153,7 +153,7 @@ class SkuSeeder extends Seeder
         );
 
         // Check existence because migration might have added this already
-        $sku = \App\Sku::where(['title' => 'beta', 'tenant_id' => \config('app.tenant_id')])->first();
+        $sku = Sku::where(['title' => 'beta', 'tenant_id' => \config('app.tenant_id')])->first();
 
         if (!$sku) {
             Sku::create(
@@ -171,7 +171,7 @@ class SkuSeeder extends Seeder
         }
 
         // Check existence because migration might have added this already
-        $sku = \App\Sku::where(['title' => 'meet', 'tenant_id' => \config('app.tenant_id')])->first();
+        $sku = Sku::where(['title' => 'meet', 'tenant_id' => \config('app.tenant_id')])->first();
 
         if (!$sku) {
             Sku::create(
@@ -189,7 +189,7 @@ class SkuSeeder extends Seeder
         }
 
         // Check existence because migration might have added this already
-        $sku = \App\Sku::where(['title' => 'group', 'tenant_id' => \config('app.tenant_id')])->first();
+        $sku = Sku::where(['title' => 'group', 'tenant_id' => \config('app.tenant_id')])->first();
 
         if (!$sku) {
             Sku::create(
@@ -207,10 +207,10 @@ class SkuSeeder extends Seeder
         }
 
         // Check existence because migration might have added this already
-        $sku = \App\Sku::where(['title' => 'distlist', 'tenant_id' => \config('app.tenant_id')])->first();
+        $sku = Sku::where(['title' => 'distlist', 'tenant_id' => \config('app.tenant_id')])->first();
 
         if (!$sku) {
-            \App\Sku::create(
+            Sku::create(
                 [
                     'title' => 'distlist',
                     'name' => 'Distribution lists',
@@ -222,6 +222,22 @@ class SkuSeeder extends Seeder
                     'active' => true,
                 ]
             );
+        }
+
+        // Check existence because migration might have added this already
+        $sku = Sku::where(['title' => 'beta-resources', 'tenant_id' => \config('app.tenant_id')])->first();
+
+        if (!$sku) {
+            Sku::create([
+                'title' => 'beta-resources',
+                'name' => 'Calendaring resources',
+                'description' => 'Access to calendaring resources',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Beta\Resources',
+                'active' => true,
+            ]);
         }
 
         // for tenants that are not the configured tenant id

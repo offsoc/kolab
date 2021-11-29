@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Domain;
-use App\Group;
 use App\Sku;
 use App\User;
-use App\UserAlias;
-use App\UserSetting;
 use App\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -51,19 +48,21 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
             if ($result->isEmpty()) {
                 // Search by an alias
-                $user_ids = UserAlias::where('alias', $search)->get()->pluck('user_id');
+                $user_ids = \App\UserAlias::where('alias', $search)->get()->pluck('user_id');
 
                 // Search by an external email
-                $ext_user_ids = UserSetting::where('key', 'external_email')
+                $ext_user_ids = \App\UserSetting::where('key', 'external_email')
                     ->where('value', $search)
                     ->get()
                     ->pluck('user_id');
 
                 $user_ids = $user_ids->merge($ext_user_ids)->unique();
 
-                // Search by a distribution list email
-                if ($group = Group::withTrashed()->where('email', $search)->first()) {
+                // Search by a distribution list or resource email
+                if ($group = \App\Group::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$group->wallet()->user_id])->unique();
+                } elseif ($resource = \App\Resource::withTrashed()->where('email', $search)->first()) {
+                    $user_ids = $user_ids->merge([$resource->wallet()->user_id])->unique();
                 }
 
                 if (!$user_ids->isEmpty()) {

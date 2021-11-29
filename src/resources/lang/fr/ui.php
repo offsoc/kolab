@@ -358,7 +358,6 @@ return [
         'discount-hint' => "rabais appliqué",
         'discount-title' => "Rabais de compte",
         'distlists' => "Listes de Distribution",
-        'distlists-none' => "Il y a aucune liste de distribution dans ce compte.",
         'domains' => "Domaines",
         'domains-none' => "Il y a pas de domaines dans ce compte.",
         'ext-email' => "E-mail externe",

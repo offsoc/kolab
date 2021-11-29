@@ -19,6 +19,7 @@ class UserTest extends TestCase
         $this->deleteTestUser('UserAccountB@UserAccount.com');
         $this->deleteTestUser('UserAccountC@UserAccount.com');
         $this->deleteTestGroup('test-group@UserAccount.com');
+        $this->deleteTestResource('test-resource@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
         $this->deleteTestDomain('UserAccountAdd.com');
     }
@@ -31,6 +32,7 @@ class UserTest extends TestCase
         $this->deleteTestUser('UserAccountB@UserAccount.com');
         $this->deleteTestUser('UserAccountC@UserAccount.com');
         $this->deleteTestGroup('test-group@UserAccount.com');
+        $this->deleteTestResource('test-resource@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
         $this->deleteTestDomain('UserAccountAdd.com');
 
@@ -439,7 +441,7 @@ class UserTest extends TestCase
 
         $this->assertCount(0, User::withTrashed()->where('id', $id)->get());
 
-        // Test an account with users, domain, and group
+        // Test an account with users, domain, and group, and resource
         $userA = $this->getTestUser('UserAccountA@UserAccount.com');
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
         $userC = $this->getTestUser('UserAccountC@UserAccount.com');
@@ -455,18 +457,22 @@ class UserTest extends TestCase
         $userA->assignPackage($package_kolab, $userC);
         $group = $this->getTestGroup('test-group@UserAccount.com');
         $group->assignToWallet($userA->wallets->first());
+        $resource = $this->getTestResource('test-resource@UserAccount.com', ['name' => 'test']);
+        $resource->assignToWallet($userA->wallets->first());
 
         $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
         $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
         $entitlementsC = \App\Entitlement::where('entitleable_id', $userC->id);
         $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domain->id);
         $entitlementsGroup = \App\Entitlement::where('entitleable_id', $group->id);
+        $entitlementsResource = \App\Entitlement::where('entitleable_id', $resource->id);
 
         $this->assertSame(7, $entitlementsA->count());
         $this->assertSame(7, $entitlementsB->count());
         $this->assertSame(7, $entitlementsC->count());
         $this->assertSame(1, $entitlementsDomain->count());
         $this->assertSame(1, $entitlementsGroup->count());
+        $this->assertSame(1, $entitlementsResource->count());
 
         // Delete non-controller user
         $userC->delete();
@@ -482,14 +488,17 @@ class UserTest extends TestCase
         $this->assertSame(0, $entitlementsB->count());
         $this->assertSame(0, $entitlementsDomain->count());
         $this->assertSame(0, $entitlementsGroup->count());
+        $this->assertSame(0, $entitlementsResource->count());
         $this->assertTrue($userA->fresh()->trashed());
         $this->assertTrue($userB->fresh()->trashed());
         $this->assertTrue($domain->fresh()->trashed());
         $this->assertTrue($group->fresh()->trashed());
+        $this->assertTrue($resource->fresh()->trashed());
         $this->assertFalse($userA->isDeleted());
         $this->assertFalse($userB->isDeleted());
         $this->assertFalse($domain->isDeleted());
         $this->assertFalse($group->isDeleted());
+        $this->assertFalse($resource->isDeleted());
 
         $userA->forceDelete();
 
@@ -501,6 +510,7 @@ class UserTest extends TestCase
         $this->assertCount(0, User::withTrashed()->where('id', $userC->id)->get());
         $this->assertCount(0, Domain::withTrashed()->where('id', $domain->id)->get());
         $this->assertCount(0, Group::withTrashed()->where('id', $group->id)->get());
+        $this->assertCount(0, \App\Resource::withTrashed()->where('id', $resource->id)->get());
     }
 
     /**
@@ -692,6 +702,32 @@ class UserTest extends TestCase
 
         $this->assertSame('First Last', $user->name());
         $this->assertSame('First Last', $user->name(true));
+    }
+
+    /**
+     * Test resources() method
+     */
+    public function testResources(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+
+        $resources = $john->resources()->orderBy('email')->get();
+
+        $this->assertSame(2, $resources->count());
+        $this->assertSame('resource-test1@kolab.org', $resources[0]->email);
+        $this->assertSame('resource-test2@kolab.org', $resources[1]->email);
+
+        $resources = $ned->resources()->orderBy('email')->get();
+
+        $this->assertSame(2, $resources->count());
+        $this->assertSame('resource-test1@kolab.org', $resources[0]->email);
+        $this->assertSame('resource-test2@kolab.org', $resources[1]->email);
+
+        $resources = $jack->resources()->get();
+
+        $this->assertSame(0, $resources->count());
     }
 
     /**

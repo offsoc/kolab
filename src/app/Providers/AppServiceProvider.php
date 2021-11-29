@@ -51,6 +51,8 @@ class AppServiceProvider extends ServiceProvider
         \App\OpenVidu\Connection::observe(\App\Observers\OpenVidu\ConnectionObserver::class);
         \App\PackageSku::observe(\App\Observers\PackageSkuObserver::class);
         \App\PlanPackage::observe(\App\Observers\PlanPackageObserver::class);
+        \App\Resource::observe(\App\Observers\ResourceObserver::class);
+        \App\ResourceSetting::observe(\App\Observers\ResourceSettingObserver::class);
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
         \App\SignupInvitation::observe(\App\Observers\SignupInvitationObserver::class);
         \App\Transaction::observe(\App\Observers\TransactionObserver::class);

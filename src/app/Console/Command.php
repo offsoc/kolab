@@ -107,6 +107,7 @@ abstract class Command extends \Illuminate\Console\Command
             \App\Group::class,
             \App\Package::class,
             \App\Plan::class,
+            \App\Resource::class,
             \App\Sku::class,
             \App\User::class,
         ];
@@ -130,6 +131,19 @@ abstract class Command extends \Illuminate\Console\Command
         }
 
         return $model;
+    }
+
+    /**
+     * Find a resource.
+     *
+     * @param string $resource    Resource ID or email
+     * @param bool   $withDeleted Include deleted
+     *
+     * @return \App\Resource|null
+     */
+    public function getResource($resource, $withDeleted = false)
+    {
+        return $this->getObject(\App\Resource::class, $resource, 'email', $withDeleted);
     }
 
     /**

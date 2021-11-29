@@ -8,6 +8,8 @@ import LogoutComponent from '../../vue/Logout'
 import MeetComponent from '../../vue/Rooms'
 import PageComponent from '../../vue/Page'
 import PasswordResetComponent from '../../vue/PasswordReset'
+import ResourceInfoComponent from '../../vue/Resource/Info'
+import ResourceListComponent from '../../vue/Resource/List'
 import SignupComponent from '../../vue/Signup'
 import UserInfoComponent from '../../vue/User/Info'
 import UserListComponent from '../../vue/User/List'
@@ -77,6 +79,18 @@ const routes = [
         name: 'profile-delete',
         component: UserProfileDeleteComponent,
         meta: { requiresAuth: true }
+    },
+    {
+        path: '/resource/:resource',
+        name: 'resource',
+        component: ResourceInfoComponent,
+        meta: { requiresAuth: true, perm: 'resources' }
+    },
+    {
+        path: '/resources',
+        name: 'resources',
+        component: ResourceListComponent,
+        meta: { requiresAuth: true, perm: 'resources' }
     },
     {
         component: RoomComponent,

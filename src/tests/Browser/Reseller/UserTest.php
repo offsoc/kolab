@@ -113,7 +113,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 7);
+                ->assertElementsCount('@nav a', 8);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -164,6 +164,23 @@ class UserTest extends TestCaseDusk
                 ->with('@user-distlists', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no distribution lists in this account.');
+                });
+
+            // Assert Resources tab
+            $browser->assertSeeIn('@nav #tab-resources', 'Resources (0)')
+                ->click('@nav #tab-resources')
+                ->with('@user-resources', function (Browser $browser) {
+                    $browser->assertElementsCount('table tbody tr', 0)
+                        ->assertSeeIn('table tfoot tr td', 'There are no resources in this account.');
+                });
+
+            // Assert Settings tab
+            $browser->assertSeeIn('@nav #tab-settings', 'Settings')
+                ->click('@nav #tab-settings')
+                ->whenAvailable('@user-settings form', function (Browser $browser) {
+                    $browser->assertElementsCount('.row', 1)
+                        ->assertSeeIn('.row:first-child label', 'Greylisting')
+                        ->assertSeeIn('.row:first-child .text-success', 'enabled');
                 });
         });
     }
@@ -219,7 +236,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 7);
+                ->assertElementsCount('@nav a', 8);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -269,6 +286,18 @@ class UserTest extends TestCaseDusk
                         ->assertMissing('tfoot');
                 });
 
+            // Assert Resources tab
+            $browser->assertSeeIn('@nav #tab-resources', 'Resources (2)')
+                ->click('@nav #tab-resources')
+                ->with('@user-resources', function (Browser $browser) {
+                    $browser->assertElementsCount('table tbody tr', 2)
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'Conference Room #1')
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', 'resource-test1@kolab.org')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Conference Room #2')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', 'resource-test2@kolab.org')
+                        ->assertMissing('table tfoot');
+                });
+
             // Assert Users tab
             $browser->assertSeeIn('@nav #tab-users', 'Users (4)')
                 ->click('@nav #tab-users')
@@ -304,7 +333,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 7);
+                ->assertElementsCount('@nav a', 8);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -359,6 +388,14 @@ class UserTest extends TestCaseDusk
                 ->with('@user-distlists', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no distribution lists in this account.');
+                });
+
+            // Assert Resources tab
+            $browser->assertSeeIn('@nav #tab-resources', 'Resources (0)')
+                ->click('@nav #tab-resources')
+                ->with('@user-resources', function (Browser $browser) {
+                    $browser->assertElementsCount('table tbody tr', 0)
+                        ->assertSeeIn('table tfoot tr td', 'There are no resources in this account.');
                 });
 
             // Assert Settings tab

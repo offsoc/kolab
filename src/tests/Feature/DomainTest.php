@@ -236,6 +236,10 @@ class DomainTest extends TestCase
     {
         Queue::fake();
 
+        $this->deleteTestUser('user@gmail.com');
+        $this->deleteTestGroup('group@gmail.com');
+        $this->deleteTestResource('resource@gmail.com');
+
         // Empty domain
         $domain = $this->getTestDomain('gmail.com', [
                 'status' => Domain::STATUS_NEW,
@@ -244,15 +248,22 @@ class DomainTest extends TestCase
 
         $this->assertTrue($domain->isEmpty());
 
-        // TODO: Test with adding a group/alias/user, each separately
+        $this->getTestUser('user@gmail.com');
+        $this->assertFalse($domain->isEmpty());
+        $this->deleteTestUser('user@gmail.com');
+        $this->assertTrue($domain->isEmpty());
+        $this->getTestGroup('group@gmail.com');
+        $this->assertFalse($domain->isEmpty());
+        $this->deleteTestGroup('group@gmail.com');
+        $this->assertTrue($domain->isEmpty());
+        $this->getTestResource('resource@gmail.com');
+        $this->assertFalse($domain->isEmpty());
+        $this->deleteTestResource('resource@gmail.com');
+
+        // TODO: Test with an existing alias, but not other objects in a domain
 
         // Empty public domain
         $domain = Domain::where('namespace', 'libertymail.net')->first();
-
-        $this->assertFalse($domain->isEmpty());
-
-        // Non-empty private domain
-        $domain = Domain::where('namespace', 'kolab.org')->first();
 
         $this->assertFalse($domain->isEmpty());
     }

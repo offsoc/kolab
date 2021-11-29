@@ -71,7 +71,7 @@ return [
     'user-set-sku-already-exists' => "La souscription existe déjà.",
 
     'search-foundxdomains' => "Les domaines :x ont été trouvés.",
-    'search-foundxgroups' => "Les listes de distribution :x ont été trouvées.",
+    'search-foundxdistlists' => "Les listes de distribution :x ont été trouvées.",
     'search-foundxusers' => "Les comptes d'utilisateurs :x ont été trouvés.",
 
     'signup-invitations-created' => "L'invitation à été crée.|:count nombre d'invitations ont été crée.",

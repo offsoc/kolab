@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 class DomainsController extends Controller
 {
     /** @var array Common object properties in the API response */
-    protected static $objectProps = ['namespace', 'status', 'type'];
+    protected static $objectProps = ['namespace', 'type'];
 
 
     /**

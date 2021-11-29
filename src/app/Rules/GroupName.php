@@ -41,7 +41,7 @@ class GroupName implements Rule
 
         // Check the max length, according to the database column length
         if (strlen($name) > 191) {
-            $this->message = \trans('validation.nametoolong');
+            $this->message = \trans('validation.max.string', ['max' => 191]);
             return false;
         }
 

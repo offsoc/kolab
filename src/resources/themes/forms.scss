@@ -69,6 +69,26 @@
     }
 }
 
+// An input group with a select and input, where input is displayed
+// only for some select values
+.input-group-select {
+    &:not(.selected) {
+        input {
+            display: none;
+        }
+
+        select {
+            border-bottom-right-radius: .25rem !important;
+            border-top-right-radius: .25rem !important;
+        }
+    }
+
+    input {
+        border-bottom-right-radius: .25rem !important;
+        border-top-right-radius: .25rem !important;
+    }
+}
+
 .form-control-plaintext .btn-sm {
     margin-top: -0.25rem;
 }

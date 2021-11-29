@@ -107,10 +107,10 @@ class SkuSeeder extends Seeder
                 'title' => 'resource',
                 'name' => 'Resource',
                 'description' => 'Reservation taker',
-                'cost' => 101,
+                'cost' => 0,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Resource',
-                'active' => false,
+                'active' => true,
             ]
         );
 
@@ -153,7 +153,7 @@ class SkuSeeder extends Seeder
         );
 
         // Check existence because migration might have added this already
-        if (!\App\Sku::where('title', 'beta')->first()) {
+        if (!Sku::where('title', 'beta')->first()) {
             Sku::create(
                 [
                     'title' => 'beta',
@@ -169,7 +169,7 @@ class SkuSeeder extends Seeder
         }
 
         // Check existence because migration might have added this already
-        if (!\App\Sku::where('title', 'meet')->first()) {
+        if (!Sku::where('title', 'meet')->first()) {
             Sku::create(
                 [
                     'title' => 'meet',
@@ -185,7 +185,7 @@ class SkuSeeder extends Seeder
         }
 
         // Check existence because migration might have added this already
-        if (!\App\Sku::where('title', 'group')->first()) {
+        if (!Sku::where('title', 'group')->first()) {
             Sku::create(
                 [
                     'title' => 'group',
@@ -201,8 +201,8 @@ class SkuSeeder extends Seeder
         }
 
         // Check existence because migration might have added this already
-        if (!\App\Sku::where('title', 'distlist')->first()) {
-            \App\Sku::create([
+        if (!Sku::where('title', 'distlist')->first()) {
+            Sku::create([
                 'title' => 'distlist',
                 'name' => 'Distribution lists',
                 'description' => 'Access to mail distribution lists',
@@ -210,6 +210,20 @@ class SkuSeeder extends Seeder
                 'units_free' => 0,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Distlist',
+                'active' => true,
+            ]);
+        }
+
+        // Check existence because migration might have added this already
+        if (!Sku::where('title', 'beta-resources')->first()) {
+            Sku::create([
+                'title' => 'beta-resources',
+                'name' => 'Calendaring resources',
+                'description' => 'Access to calendaring resources',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Beta\Resources',
                 'active' => true,
             ]);
         }

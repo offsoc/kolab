@@ -35,4 +35,18 @@ class IMAPTest extends TestCase
 
         IMAP::verifyAccount('non-existing@domain.tld');
     }
+
+    /**
+     * Test verifying IMAP shared folder existence
+     *
+     * @group imap
+     */
+    public function testVerifySharedFolder(): void
+    {
+        $result = IMAP::verifySharedFolder('shared/Resources/UnknownResource@kolab.org');
+        $this->assertFalse($result);
+
+        // TODO: Test with an existing shared folder
+        $this->markTestIncomplete();
+    }
 }

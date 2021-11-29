@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Entitlement;
 use App\Domain;
 use App\Group;
+use App\Resource;
 use App\Transaction;
 use App\User;
 use App\Wallet;
@@ -147,6 +148,7 @@ class UserObserver
         $users = [];
         $domains = [];
         $groups = [];
+        $resources = [];
         $entitlements = [];
 
         foreach ($assignments as $entitlement) {
@@ -156,6 +158,8 @@ class UserObserver
                 $users[] = $entitlement->entitleable_id;
             } elseif ($entitlement->entitleable_type == Group::class) {
                 $groups[] = $entitlement->entitleable_id;
+            } elseif ($entitlement->entitleable_type == Resource::class) {
+                $resources[] = $entitlement->entitleable_id;
             } else {
                 $entitlements[] = $entitlement;
             }
@@ -178,6 +182,12 @@ class UserObserver
         if (!empty($groups)) {
             foreach (Group::whereIn('id', array_unique($groups))->get() as $_group) {
                 $_group->delete();
+            }
+        }
+
+        if (!empty($resources)) {
+            foreach (Resource::whereIn('id', array_unique($resources))->get() as $_resource) {
+                $_resource->delete();
             }
         }
 
@@ -211,6 +221,7 @@ class UserObserver
         $entitlements = [];
         $domains = [];
         $groups = [];
+        $resources = [];
         $users = [];
 
         foreach ($assignments as $entitlement) {
@@ -225,6 +236,8 @@ class UserObserver
                 $users[] = $entitlement->entitleable_id;
             } elseif ($entitlement->entitleable_type == Group::class) {
                 $groups[] = $entitlement->entitleable_id;
+            } elseif ($entitlement->entitleable_type == Resource::class) {
+                $resources[] = $entitlement->entitleable_id;
             }
         }
 
@@ -250,6 +263,11 @@ class UserObserver
         // Groups can be just removed
         if (!empty($groups)) {
             Group::withTrashed()->whereIn('id', array_unique($groups))->forceDelete();
+        }
+
+        // Resources can be just removed
+        if (!empty($resources)) {
+            Resource::withTrashed()->whereIn('id', array_unique($resources))->forceDelete();
         }
 
         // Remove transactions, they also have no foreign key constraint

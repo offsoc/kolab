@@ -309,22 +309,29 @@ class User extends Authenticatable
 
     /**
      * List the domains to which this user is entitled.
-     * Note: Active public domains are also returned (for the user tenant).
+     *
+     * @param bool $with_accounts Include domains assigned to wallets
+     *                            the current user controls but not owns.
+     * @param bool $with_public   Include active public domains (for the user tenant).
      *
      * @return Domain[] List of Domain objects
      */
-    public function domains(): array
+    public function domains($with_accounts = true, $with_public = true): array
     {
-        if ($this->tenant_id) {
-            $domains = Domain::where('tenant_id', $this->tenant_id);
-        } else {
-            $domains = Domain::withEnvTenantContext();
-        }
+        $domains = [];
 
-        $domains = $domains->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
-            ->whereRaw(sprintf('(status & %s)', Domain::STATUS_ACTIVE))
-            ->get()
-            ->all();
+        if ($with_public) {
+            if ($this->tenant_id) {
+                $domains = Domain::where('tenant_id', $this->tenant_id);
+            } else {
+                $domains = Domain::withEnvTenantContext();
+            }
+
+            $domains = $domains->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
+                ->whereRaw(sprintf('(status & %s)', Domain::STATUS_ACTIVE))
+                ->get()
+                ->all();
+        }
 
         foreach ($this->wallets as $wallet) {
             $entitlements = $wallet->entitlements()->where('entitleable_type', Domain::class)->get();
@@ -333,10 +340,12 @@ class User extends Authenticatable
             }
         }
 
-        foreach ($this->accounts as $wallet) {
-            $entitlements = $wallet->entitlements()->where('entitleable_type', Domain::class)->get();
-            foreach ($entitlements as $entitlement) {
-                $domains[] = $entitlement->entitleable;
+        if ($with_accounts) {
+            foreach ($this->accounts as $wallet) {
+                $entitlements = $wallet->entitlements()->where('entitleable_type', Domain::class)->get();
+                foreach ($entitlements as $entitlement) {
+                    $domains[] = $entitlement->entitleable;
+                }
             }
         }
 
@@ -403,8 +412,6 @@ class User extends Authenticatable
 
         return null;
     }
-
-
 
     /**
      * Return groups controlled by the current user.
@@ -559,6 +566,29 @@ class User extends Authenticatable
         }
 
         return $this;
+    }
+
+    /**
+     * Return resources controlled by the current user.
+     *
+     * @param bool $with_accounts Include resources assigned to wallets
+     *                            the current user controls but not owns.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     */
+    public function resources($with_accounts = true)
+    {
+        $wallets = $this->wallets()->pluck('id')->all();
+
+        if ($with_accounts) {
+            $wallets = array_merge($wallets, $this->accounts()->pluck('wallet_id')->all());
+        }
+
+        return \App\Resource::select(['resources.*', 'entitlements.wallet_id'])
+            ->distinct()
+            ->join('entitlements', 'entitlements.entitleable_id', '=', 'resources.id')
+            ->whereIn('entitlements.wallet_id', $wallets)
+            ->where('entitlements.entitleable_type', \App\Resource::class);
     }
 
     public function senderPolicyFrameworkWhitelist($clientName)

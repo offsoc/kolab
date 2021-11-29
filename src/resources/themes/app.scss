@@ -292,6 +292,9 @@ table {
         }
 
         // Some icons are too big, scale them down
+        &.link-domains,
+        &.link-resources,
+        &.link-wallet,
         &.link-invitations {
             svg {
                 transform: scale(0.9);
