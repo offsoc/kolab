@@ -1,0 +1,14 @@
+---
+- name: Install list of required packages
+  package: name={{ item }} state=installed
+  with_items:
+    - git
+    - npm
+    - certbot
+    - coturn
+    - make
+    - clang
+    - meson
+    - ninja-build
+    - python3
+    - python3-pip

@@ -1,0 +1,13 @@
+[Unit]
+Description=Kolab Meet
+After=network.target
+
+[Service]
+Environment=DEBUG="kolabmeet-server*"
+Type=simple
+User=kolab
+ExecStart=/usr/bin/node /home/kolab/kolab/meet/server/server.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
