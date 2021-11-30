@@ -44,6 +44,7 @@ services:
       - /var/tmp
     tty: true
     volumes:
+      - ./ext/:/src/:ro
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
       - ./docker/certs/ca.cert:/etc/pki/tls/certs/ca.cert:ro
       - ./docker/certs/ca.cert:/etc/pki/ca-trust/source/anchors/ca.cert:ro
