@@ -56,13 +56,15 @@ class UntilTest extends TestCase
         $wallet->balance = 1000;
         $wallet->save();
 
-        $expected = \now()->addMonths(2)->toDateString();
-
         // Existing wallet
         $code = \Artisan::call("wallet:until {$wallet->id}");
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertSame("Lasts until: $expected", $output);
+
+        // Depending on a month it could last a day less
+        $expected1 = \now()->addMonths(2)->toDateString();
+        $expected2 = \now()->addMonths(2)->subDay()->toDateString();
+        $this->assertTrue("Lasts until: $expected1" == $output || "Lasts until: $expected2" == $output);
     }
 }
