@@ -32,7 +32,7 @@
                                 <div v-if="user_id !== 'new'" class="row plaintext mb-3">
                                     <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                                     <div class="col-sm-8">
-                                        <span :class="$root.userStatusClass(user) + ' form-control-plaintext'" id="status">{{ $root.userStatusText(user) }}</span>
+                                        <span :class="$root.statusClass(user) + ' form-control-plaintext'" id="status">{{ $root.statusText(user) }}</span>
                                     </div>
                                 </div>
                                 <div class="row mb-3">

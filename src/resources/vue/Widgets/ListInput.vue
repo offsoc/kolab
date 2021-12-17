@@ -40,7 +40,8 @@
                 let value = this.input.value
 
                 if (value) {
-                    this.list.push(value)
+                    this.$set(this.list, this.list.length, value)
+
                     this.input.value = ''
                     this.input.classList.remove('is-invalid')
 

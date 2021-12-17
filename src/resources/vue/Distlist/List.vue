@@ -19,7 +19,7 @@
                         <tbody>
                             <tr v-for="list in lists" :key="list.id" @click="$root.clickRecord">
                                 <td>
-                                    <svg-icon icon="users" :class="$root.distlistStatusClass(list)" :title="$root.distlistStatusText(list)"></svg-icon>
+                                    <svg-icon icon="users" :class="$root.statusClass(list)" :title="$root.statusText(list)"></svg-icon>
                                     <router-link :to="{ path: 'distlist/' + list.id }">{{ list.name }}</router-link>
                                 </td>
                                 <td>

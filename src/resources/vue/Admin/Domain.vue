@@ -19,7 +19,7 @@
                             <label for="first_name" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="status">
-                                    <span :class="$root.domainStatusClass(domain)">{{ $root.domainStatusText(domain) }}</span>
+                                    <span :class="$root.statusClass(domain)">{{ $root.statusText(domain) }}</span>
                                 </span>
                             </div>
                         </div>

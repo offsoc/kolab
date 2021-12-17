@@ -32,7 +32,7 @@
                                 <div v-if="domain.id" class="row plaintext mb-3">
                                     <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                                     <div class="col-sm-8">
-                                        <span :class="$root.domainStatusClass(domain) + ' form-control-plaintext'" id="status">{{ $root.domainStatusText(domain) }}</span>
+                                        <span :class="$root.statusClass(domain) + ' form-control-plaintext'" id="status">{{ $root.statusText(domain) }}</span>
                                     </div>
                                 </div>
                                 <div class="row mb-3">

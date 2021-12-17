@@ -291,72 +291,6 @@ const app = new Vue({
                 $(event.target).closest('tr').find('a').trigger('click')
             }
         },
-        domainStatusClass(domain) {
-            if (domain.isDeleted) {
-                return 'text-muted'
-            }
-
-            if (domain.isSuspended) {
-                return 'text-warning'
-            }
-
-            if (!domain.isVerified || !domain.isLdapReady || !domain.isConfirmed) {
-                return 'text-danger'
-            }
-
-            return 'text-success'
-        },
-        domainStatusText(domain) {
-            if (domain.isDeleted) {
-                return this.$t('status.deleted')
-            }
-
-            if (domain.isSuspended) {
-                return this.$t('status.suspended')
-            }
-
-            if (!domain.isVerified || !domain.isLdapReady || !domain.isConfirmed) {
-                return this.$t('status.notready')
-            }
-
-            return this.$t('status.active')
-        },
-        distlistStatusClass(list) {
-            if (list.isDeleted) {
-                return 'text-muted'
-            }
-
-            if (list.isSuspended) {
-                return 'text-warning'
-            }
-
-            if (!list.isLdapReady) {
-                return 'text-danger'
-            }
-
-            return 'text-success'
-        },
-        distlistStatusText(list) {
-            if (list.isDeleted) {
-                return this.$t('status.deleted')
-            }
-
-            if (list.isSuspended) {
-                return this.$t('status.suspended')
-            }
-
-            if (!list.isLdapReady) {
-                return this.$t('status.notready')
-            }
-
-            return this.$t('status.active')
-        },
-        folderStatusClass(folder) {
-            return this.userStatusClass(folder)
-        },
-        folderStatusText(folder) {
-            return this.userStatusText(folder)
-        },
         isDegraded() {
             return store.state.authInfo.isAccountDegraded
         },
@@ -376,12 +310,6 @@ const app = new Vue({
 
             return page ? page : '404'
         },
-        resourceStatusClass(resource) {
-            return this.userStatusClass(resource)
-        },
-        resourceStatusText(resource) {
-            return this.userStatusText(resource)
-        },
         supportDialog(container) {
             let dialog = $('#support-dialog')[0]
 
@@ -397,35 +325,35 @@ const app = new Vue({
 
             dialog.__vue__.showDialog()
         },
-        userStatusClass(user) {
-            if (user.isDeleted) {
+        statusClass(obj) {
+            if (obj.isDeleted) {
                 return 'text-muted'
             }
 
-            if (user.isDegraded || user.isAccountDegraded || user.isSuspended) {
+            if (obj.isDegraded || obj.isAccountDegraded || obj.isSuspended) {
                 return 'text-warning'
             }
 
-            if (!user.isImapReady || !user.isLdapReady) {
+            if (obj.isImapReady === false || obj.isLdapReady === false || obj.isVerified === false || obj.isConfirmed === false) {
                 return 'text-danger'
             }
 
             return 'text-success'
         },
-        userStatusText(user) {
-            if (user.isDeleted) {
+        statusText(obj) {
+            if (obj.isDeleted) {
                 return this.$t('status.deleted')
             }
 
-            if (user.isDegraded || user.isAccountDegraded) {
+            if (obj.isDegraded || obj.isAccountDegraded) {
                 return this.$t('status.degraded')
             }
 
-            if (user.isSuspended) {
+            if (obj.isSuspended) {
                 return this.$t('status.suspended')
             }
 
-            if (!user.isImapReady || !user.isLdapReady) {
+            if (obj.isImapReady === false || obj.isLdapReady === false || obj.isVerified === false || obj.isConfirmed === false) {
                 return this.$t('status.notready')
             }
 

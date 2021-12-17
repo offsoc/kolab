@@ -30,7 +30,7 @@
                                 <div v-if="folder_id !== 'new'" class="row plaintext mb-3">
                                     <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                                     <div class="col-sm-8">
-                                        <span :class="$root.folderStatusClass(folder) + ' form-control-plaintext'" id="status">{{ $root.folderStatusText(folder) }}</span>
+                                        <span :class="$root.statusClass(folder) + ' form-control-plaintext'" id="status">{{ $root.statusText(folder) }}</span>
                                     </div>
                                 </div>
                                 <div class="row mb-3">

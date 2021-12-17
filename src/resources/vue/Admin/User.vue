@@ -25,7 +25,7 @@
                             <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="status">
-                                    <span :class="$root.userStatusClass(user)">{{ $root.userStatusText(user) }}</span>
+                                    <span :class="$root.statusClass(user)">{{ $root.statusText(user) }}</span>
                                 </span>
                             </div>
                         </div>
@@ -253,7 +253,7 @@
                             <tbody>
                                 <tr v-for="domain in domains" :id="'domain' + domain.id" :key="domain.id" @click="$root.clickRecord">
                                     <td>
-                                        <svg-icon icon="globe" :class="$root.domainStatusClass(domain)" :title="$root.domainStatusText(domain)"></svg-icon>
+                                        <svg-icon icon="globe" :class="$root.statusClass(domain)" :title="$root.statusText(domain)"></svg-icon>
                                         <router-link :to="{ path: '/domain/' + domain.id }">{{ domain.namespace }}</router-link>
                                     </td>
                                 </tr>
@@ -279,7 +279,7 @@
                             <tbody>
                                 <tr v-for="item in users" :id="'user' + item.id" :key="item.id" @click="$root.clickRecord">
                                     <td>
-                                        <svg-icon icon="user" :class="$root.userStatusClass(item)" :title="$root.userStatusText(item)"></svg-icon>
+                                        <svg-icon icon="user" :class="$root.statusClass(item)" :title="$root.statusText(item)"></svg-icon>
                                         <router-link v-if="item.id != user.id" :to="{ path: '/user/' + item.id }">{{ item.email }}</router-link>
                                         <span v-else>{{ item.email }}</span>
                                     </td>
@@ -307,7 +307,7 @@
                             <tbody>
                                 <tr v-for="list in distlists" :key="list.id" @click="$root.clickRecord">
                                     <td>
-                                        <svg-icon icon="users" :class="$root.distlistStatusClass(list)" :title="$root.distlistStatusText(list)"></svg-icon>
+                                        <svg-icon icon="users" :class="$root.statusClass(list)" :title="$root.statusText(list)"></svg-icon>
                                         <router-link :to="{ path: '/distlist/' + list.id }">{{ list.name }}</router-link>
                                     </td>
                                     <td>
@@ -337,7 +337,7 @@
                             <tbody>
                                 <tr v-for="resource in resources" :key="resource.id" @click="$root.clickRecord">
                                     <td>
-                                        <svg-icon icon="cog" :class="$root.resourceStatusClass(resource)" :title="$root.resourceStatusText(resource)"></svg-icon>
+                                        <svg-icon icon="cog" :class="$root.statusClass(resource)" :title="$root.statusText(resource)"></svg-icon>
                                         <router-link :to="{ path: '/resource/' + resource.id }">{{ resource.name }}</router-link>
                                     </td>
                                     <td>
@@ -368,7 +368,7 @@
                             <tbody>
                                 <tr v-for="folder in folders" :key="folder.id" @click="$root.clickRecord">
                                     <td>
-                                        <svg-icon icon="folder-open" :class="$root.folderStatusClass(folder)" :title="$root.folderStatusText(folder)"></svg-icon>
+                                        <svg-icon icon="folder-open" :class="$root.statusClass(folder)" :title="$root.statusText(folder)"></svg-icon>
                                         <router-link :to="{ path: '/shared-folder/' + folder.id }">{{ folder.name }}</router-link>
                                     </td>
                                     <td>{{ $t('shf.type-' + folder.type) }}</td>

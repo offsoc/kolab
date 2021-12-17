@@ -20,7 +20,7 @@
                         <tbody>
                             <tr v-for="folder in folders" :key="folder.id" @click="$root.clickRecord">
                                 <td>
-                                    <svg-icon icon="folder-open" :class="$root.folderStatusClass(folder)" :title="$root.folderStatusText(folder)"></svg-icon>
+                                    <svg-icon icon="folder-open" :class="$root.statusClass(folder)" :title="$root.statusText(folder)"></svg-icon>
                                     <router-link :to="{ path: 'shared-folder/' + folder.id }">{{ folder.name }}</router-link>
                                 </td>
                                 <td>{{ $t('shf.type-' + folder.type) }}</td>

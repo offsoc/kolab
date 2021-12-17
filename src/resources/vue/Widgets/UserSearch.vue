@@ -19,7 +19,7 @@
                 <tbody>
                     <tr v-for="user in users" :id="'user' + user.id" :key="user.id" :class="user.isDeleted ? 'text-secondary' : ''">
                         <td class="text-nowrap">
-                            <svg-icon icon="user" :class="$root.userStatusClass(user)" :title="$root.userStatusText(user)"></svg-icon>
+                            <svg-icon icon="user" :class="$root.statusClass(user)" :title="$root.statusText(user)"></svg-icon>
                             <router-link v-if="!user.isDeleted" :to="{ path: 'user/' + user.id }">{{ user.email }}</router-link>
                             <span v-if="user.isDeleted">{{ user.email }}</span>
                         </td>

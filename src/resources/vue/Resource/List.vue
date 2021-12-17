@@ -19,7 +19,7 @@
                         <tbody>
                             <tr v-for="resource in resources" :key="resource.id" @click="$root.clickRecord">
                                 <td>
-                                    <svg-icon icon="cog" :class="$root.resourceStatusClass(resource)" :title="$root.resourceStatusText(resource)"></svg-icon>
+                                    <svg-icon icon="cog" :class="$root.statusClass(resource)" :title="$root.statusText(resource)"></svg-icon>
                                     <router-link :to="{ path: 'resource/' + resource.id }">{{ resource.name }}</router-link>
                                 </td>
                                 <td>

@@ -30,7 +30,7 @@
                                 <div v-if="resource_id !== 'new'" class="row plaintext mb-3">
                                     <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
                                     <div class="col-sm-8">
-                                        <span :class="$root.resourceStatusClass(resource) + ' form-control-plaintext'" id="status">{{ $root.resourceStatusText(resource) }}</span>
+                                        <span :class="$root.statusClass(resource) + ' form-control-plaintext'" id="status">{{ $root.statusText(resource) }}</span>
                                     </div>
                                 </div>
                                 <div class="row mb-3">
