@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\API\V4;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\RelationController;
 use App\SharedFolder;
 use App\Rules\SharedFolderName;
 use App\Rules\SharedFolderType;
@@ -10,162 +10,36 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class SharedFoldersController extends Controller
+class SharedFoldersController extends RelationController
 {
+    /** @var string Resource localization label */
+    protected $label = 'shared-folder';
+
+    /** @var string Resource model name */
+    protected $model = SharedFolder::class;
+
+    /** @var array Resource listing order (column names) */
+    protected $order = ['name'];
+
     /** @var array Common object properties in the API response */
-    protected static $objectProps = ['email', 'name', 'type'];
+    protected $objectProps = ['email', 'name', 'type'];
+
 
     /**
-     * Show the form for creating a new shared folder.
+     * Prepare shared folder statuses for the UI
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @param \App\SharedFolder $folder Shared folder object
+     *
+     * @return array Statuses array
      */
-    public function create()
+    protected static function objectState($folder): array
     {
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Delete a shared folder.
-     *
-     * @param int $id Shared folder identifier
-     *
-     * @return \Illuminate\Http\JsonResponse The response
-     */
-    public function destroy($id)
-    {
-        $folder = SharedFolder::find($id);
-
-        if (!$this->checkTenant($folder)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canDelete($folder)) {
-            return $this->errorResponse(403);
-        }
-
-        $folder->delete();
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.shared-folder-delete-success'),
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified shared folder.
-     *
-     * @param int $id Shared folder identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function edit($id)
-    {
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Listing of a shared folders belonging to the authenticated user.
-     *
-     * The shared-folder entitlements billed to the current user wallet(s)
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        $user = $this->guard()->user();
-
-        $result = $user->sharedFolders()->orderBy('name')->get()
-            ->map(function (SharedFolder $folder) {
-                return $this->objectToClient($folder);
-            });
-
-        return response()->json($result);
-    }
-
-    /**
-     * Set the shared folder configuration.
-     *
-     * @param int $id Shared folder identifier
-     *
-     * @return \Illuminate\Http\JsonResponse|void
-     */
-    public function setConfig($id)
-    {
-        $folder = SharedFolder::find($id);
-
-        if (!$this->checkTenant($folder)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canUpdate($folder)) {
-            return $this->errorResponse(403);
-        }
-
-        $errors = $folder->setConfig(request()->input());
-
-        if (!empty($errors)) {
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
-        }
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.shared-folder-setconfig-success'),
-        ]);
-    }
-
-    /**
-     * Display information of a shared folder specified by $id.
-     *
-     * @param int $id Shared folder identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
-    {
-        $folder = SharedFolder::find($id);
-
-        if (!$this->checkTenant($folder)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($folder)) {
-            return $this->errorResponse(403);
-        }
-
-        $response = $this->objectToClient($folder, true);
-
-        $response['statusInfo'] = self::statusInfo($folder);
-
-        // Shared folder configuration, e.g. acl
-        $response['config'] = $folder->getConfig();
-
-        return response()->json($response);
-    }
-
-    /**
-     * Fetch a shared folder status (and reload setup process)
-     *
-     * @param int $id Shared folder identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function status($id)
-    {
-        $folder = SharedFolder::find($id);
-
-        if (!$this->checkTenant($folder)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($folder)) {
-            return $this->errorResponse(403);
-        }
-
-        $response = $this->processStateUpdate($folder);
-        $response = array_merge($response, self::objectState($folder));
-
-        return response()->json($response);
+        return [
+            'isLdapReady' => $folder->isLdapReady(),
+            'isImapReady' => $folder->isImapReady(),
+            'isActive' => $folder->isActive(),
+            'isDeleted' => $folder->isDeleted() || $folder->trashed(),
+        ];
     }
 
     /**
@@ -175,7 +49,7 @@ class SharedFoldersController extends Controller
      *
      * @return array Status information
      */
-    public static function statusInfo(SharedFolder $folder): array
+    public static function statusInfo($folder): array
     {
         return self::processStateInfo(
             $folder,
@@ -336,22 +210,5 @@ class SharedFoldersController extends Controller
         }
 
         return false;
-    }
-
-    /**
-     * Prepare shared folder statuses for the UI
-     *
-     * @param \App\SharedFolder $folder Shared folder object
-     *
-     * @return array Statuses array
-     */
-    protected static function objectState(SharedFolder $folder): array
-    {
-        return [
-            'isLdapReady' => $folder->isLdapReady(),
-            'isImapReady' => $folder->isImapReady(),
-            'isActive' => $folder->isActive(),
-            'isDeleted' => $folder->isDeleted() || $folder->trashed(),
-        ];
     }
 }

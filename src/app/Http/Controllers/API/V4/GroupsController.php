@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\API\V4;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\RelationController;
 use App\Domain;
 use App\Group;
 use App\Rules\GroupName;
@@ -11,164 +11,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class GroupsController extends Controller
+class GroupsController extends RelationController
 {
+    /** @var string Resource localization label */
+    protected $label = 'distlist';
+
+    /** @var string Resource model name */
+    protected $model = Group::class;
+
+    /** @var array Resource listing order (column names) */
+    protected $order = ['name', 'email'];
+
     /** @var array Common object properties in the API response */
-    protected static $objectProps = ['email', 'name'];
+    protected $objectProps = ['email', 'name'];
 
-
-    /**
-     * Show the form for creating a new group.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function create()
-    {
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Delete a group.
-     *
-     * @param int $id Group identifier
-     *
-     * @return \Illuminate\Http\JsonResponse The response
-     */
-    public function destroy($id)
-    {
-        $group = Group::find($id);
-
-        if (!$this->checkTenant($group)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canDelete($group)) {
-            return $this->errorResponse(403);
-        }
-
-        $group->delete();
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.distlist-delete-success'),
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified group.
-     *
-     * @param int $id Group identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function edit($id)
-    {
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Listing of groups belonging to the authenticated user.
-     *
-     * The group-entitlements billed to the current user wallet(s)
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        $user = $this->guard()->user();
-
-        $result = $user->groups()->orderBy('name')->orderBy('email')->get()
-            ->map(function ($group) {
-                return $this->objectToClient($group);
-            });
-
-        return response()->json($result);
-    }
-
-    /**
-     * Set the group configuration.
-     *
-     * @param int $id Group identifier
-     *
-     * @return \Illuminate\Http\JsonResponse|void
-     */
-    public function setConfig($id)
-    {
-        $group = Group::find($id);
-
-        if (!$this->checkTenant($group)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canUpdate($group)) {
-            return $this->errorResponse(403);
-        }
-
-        $errors = $group->setConfig(request()->input());
-
-        if (!empty($errors)) {
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
-        }
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.distlist-setconfig-success'),
-        ]);
-    }
-
-    /**
-     * Display information of a group specified by $id.
-     *
-     * @param int $id The group to show information for.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
-    {
-        $group = Group::find($id);
-
-        if (!$this->checkTenant($group)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($group)) {
-            return $this->errorResponse(403);
-        }
-
-        $response = $this->objectToClient($group, true);
-
-        $response['statusInfo'] = self::statusInfo($group);
-
-        // Group configuration, e.g. sender_policy
-        $response['config'] = $group->getConfig();
-
-        return response()->json($response);
-    }
-
-    /**
-     * Fetch group status (and reload setup process)
-     *
-     * @param int $id Group identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function status($id)
-    {
-        $group = Group::find($id);
-
-        if (!$this->checkTenant($group)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($group)) {
-            return $this->errorResponse(403);
-        }
-
-        $response = $this->processStateUpdate($group);
-        $response = array_merge($response, self::objectState($group));
-
-        return response()->json($response);
-    }
 
     /**
      * Group status (extended) information
@@ -177,7 +33,7 @@ class GroupsController extends Controller
      *
      * @return array Status information
      */
-    public static function statusInfo(Group $group): array
+    public static function statusInfo($group): array
     {
         return self::processStateInfo(
             $group,
@@ -377,7 +233,7 @@ class GroupsController extends Controller
      *
      * @return array Statuses array
      */
-    protected static function objectState(Group $group): array
+    protected static function objectState($group): array
     {
         return [
             'isLdapReady' => $group->isLdapReady(),

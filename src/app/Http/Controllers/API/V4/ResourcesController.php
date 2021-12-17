@@ -2,169 +2,43 @@
 
 namespace App\Http\Controllers\API\V4;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\RelationController;
 use App\Resource;
 use App\Rules\ResourceName;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class ResourcesController extends Controller
+class ResourcesController extends RelationController
 {
+    /** @var string Resource localization label */
+    protected $label = 'resource';
+
+    /** @var string Resource model name */
+    protected $model = Resource::class;
+
+    /** @var array Resource listing order (column names) */
+    protected $order = ['name'];
+
     /** @var array Common object properties in the API response */
-    protected static $objectProps = ['email', 'name'];
+    protected $objectProps = ['email', 'name'];
+
 
     /**
-     * Show the form for creating a new resource.
+     * Prepare resource statuses for the UI
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @param \App\Resource $resource Resource object
+     *
+     * @return array Statuses array
      */
-    public function create()
+    protected static function objectState($resource): array
     {
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Delete a resource.
-     *
-     * @param int $id Resource identifier
-     *
-     * @return \Illuminate\Http\JsonResponse The response
-     */
-    public function destroy($id)
-    {
-        $resource = Resource::find($id);
-
-        if (!$this->checkTenant($resource)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canDelete($resource)) {
-            return $this->errorResponse(403);
-        }
-
-        $resource->delete();
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.resource-delete-success'),
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param int $id Resource identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function edit($id)
-    {
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Listing of resources belonging to the authenticated user.
-     *
-     * The resource-entitlements billed to the current user wallet(s)
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        $user = $this->guard()->user();
-
-        $result = $user->resources()->orderBy('name')->get()
-            ->map(function (Resource $resource) {
-                return $this->objectToClient($resource);
-            });
-
-        return response()->json($result);
-    }
-
-    /**
-     * Set the resource configuration.
-     *
-     * @param int $id Resource identifier
-     *
-     * @return \Illuminate\Http\JsonResponse|void
-     */
-    public function setConfig($id)
-    {
-        $resource = Resource::find($id);
-
-        if (!$this->checkTenant($resource)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canUpdate($resource)) {
-            return $this->errorResponse(403);
-        }
-
-        $errors = $resource->setConfig(request()->input());
-
-        if (!empty($errors)) {
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
-        }
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.resource-setconfig-success'),
-        ]);
-    }
-
-    /**
-     * Display information of a resource specified by $id.
-     *
-     * @param int $id Resource identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
-    {
-        $resource = Resource::find($id);
-
-        if (!$this->checkTenant($resource)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($resource)) {
-            return $this->errorResponse(403);
-        }
-
-        $response = $this->objectToClient($resource, true);
-
-        $response['statusInfo'] = self::statusInfo($resource);
-
-        // Resource configuration, e.g. invitation_policy
-        $response['config'] = $resource->getConfig();
-
-        return response()->json($response);
-    }
-
-    /**
-     * Fetch resource status (and reload setup process)
-     *
-     * @param int $id Resource identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function status($id)
-    {
-        $resource = Resource::find($id);
-
-        if (!$this->checkTenant($resource)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($resource)) {
-            return $this->errorResponse(403);
-        }
-
-        $response = $this->processStateUpdate($resource);
-        $response = array_merge($response, self::objectState($resource));
-
-        return response()->json($response);
+        return [
+            'isLdapReady' => $resource->isLdapReady(),
+            'isImapReady' => $resource->isImapReady(),
+            'isActive' => $resource->isActive(),
+            'isDeleted' => $resource->isDeleted() || $resource->trashed(),
+        ];
     }
 
     /**
@@ -174,7 +48,7 @@ class ResourcesController extends Controller
      *
      * @return array Status information
      */
-    public static function statusInfo(Resource $resource): array
+    public static function statusInfo($resource): array
     {
         return self::processStateInfo(
             $resource,
@@ -331,22 +205,5 @@ class ResourcesController extends Controller
         }
 
         return false;
-    }
-
-    /**
-     * Prepare resource statuses for the UI
-     *
-     * @param \App\Resource $resource Resource object
-     *
-     * @return array Statuses array
-     */
-    protected static function objectState(Resource $resource): array
-    {
-        return [
-            'isLdapReady' => $resource->isLdapReady(),
-            'isImapReady' => $resource->isImapReady(),
-            'isActive' => $resource->isActive(),
-            'isDeleted' => $resource->isDeleted() || $resource->trashed(),
-        ];
     }
 }

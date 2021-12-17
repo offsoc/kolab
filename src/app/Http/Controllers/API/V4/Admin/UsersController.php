@@ -14,7 +14,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
     /**
      * Delete a user.
      *
-     * @param int $id User identifier
+     * @param string $id User identifier
      *
      * @return \Illuminate\Http\JsonResponse The response
      */
@@ -224,44 +224,6 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
                     'id' => $sku->id,
                 ]
         ]);
-    }
-
-    /**
-     * Display information on the user account specified by $id.
-     *
-     * @param int $id The account to show information for.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
-    {
-        $user = User::find($id);
-
-        if (!$this->checkTenant($user)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($user)) {
-            return $this->errorResponse(403);
-        }
-
-        $response = $this->userResponse($user);
-
-        // Simplified Entitlement/SKU information,
-        // TODO: I agree this format may need to be extended in future
-        $response['skus'] = [];
-        foreach ($user->entitlements as $ent) {
-            $sku = $ent->sku;
-            if (!isset($response['skus'][$sku->id])) {
-                $response['skus'][$sku->id] = ['costs' => [], 'count' => 0];
-            }
-            $response['skus'][$sku->id]['count']++;
-            $response['skus'][$sku->id]['costs'][] = $ent->cost;
-        }
-
-        $response['config'] = $user->getConfig();
-
-        return response()->json($response);
     }
 
     /**

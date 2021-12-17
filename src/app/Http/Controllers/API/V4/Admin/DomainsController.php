@@ -11,7 +11,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
     /**
      * Remove the specified domain.
      *
-     * @param int $id Domain identifier
+     * @param string $id Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse
      */

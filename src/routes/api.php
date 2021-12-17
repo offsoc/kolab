@@ -68,34 +68,34 @@ Route::group(
         Route::get('auth-attempts/{id}/details', 'API\V4\AuthAttemptsController@details');
         Route::get('auth-attempts', 'API\V4\AuthAttemptsController@index');
 
-        Route::apiResource('domains', API\V4\DomainsController::class);
+        Route::apiResource('domains', 'API\V4\DomainsController');
         Route::get('domains/{id}/confirm', 'API\V4\DomainsController@confirm');
         Route::get('domains/{id}/skus', 'API\V4\SkusController@domainSkus');
         Route::get('domains/{id}/status', 'API\V4\DomainsController@status');
         Route::post('domains/{id}/config', 'API\V4\DomainsController@setConfig');
 
-        Route::apiResource('groups', API\V4\GroupsController::class);
+        Route::apiResource('groups', 'API\V4\GroupsController');
         Route::get('groups/{id}/status', 'API\V4\GroupsController@status');
         Route::post('groups/{id}/config', 'API\V4\GroupsController@setConfig');
 
-        Route::apiResource('packages', API\V4\PackagesController::class);
+        Route::apiResource('packages', 'API\V4\PackagesController');
 
-        Route::apiResource('resources', API\V4\ResourcesController::class);
+        Route::apiResource('resources', 'API\V4\ResourcesController');
         Route::get('resources/{id}/status', 'API\V4\ResourcesController@status');
         Route::post('resources/{id}/config', 'API\V4\ResourcesController@setConfig');
 
-        Route::apiResource('shared-folders', API\V4\SharedFoldersController::class);
+        Route::apiResource('shared-folders', 'API\V4\SharedFoldersController');
         Route::get('shared-folders/{id}/status', 'API\V4\SharedFoldersController@status');
         Route::post('shared-folders/{id}/config', 'API\V4\SharedFoldersController@setConfig');
 
-        Route::apiResource('skus', API\V4\SkusController::class);
+        Route::apiResource('skus', 'API\V4\SkusController');
 
-        Route::apiResource('users', API\V4\UsersController::class);
+        Route::apiResource('users', 'API\V4\UsersController');
         Route::post('users/{id}/config', 'API\V4\UsersController@setConfig');
         Route::get('users/{id}/skus', 'API\V4\SkusController@userSkus');
         Route::get('users/{id}/status', 'API\V4\UsersController@status');
 
-        Route::apiResource('wallets', API\V4\WalletsController::class);
+        Route::apiResource('wallets', 'API\V4\WalletsController');
         Route::get('wallets/{id}/transactions', 'API\V4\WalletsController@transactions');
         Route::get('wallets/{id}/receipts', 'API\V4\WalletsController@receipts');
         Route::get('wallets/{id}/receipts/{receipt}', 'API\V4\WalletsController@receiptDownload');
@@ -184,26 +184,26 @@ if (\config('app.with_admin')) {
             'prefix' => $prefix . 'api/v4',
         ],
         function () {
-            Route::apiResource('domains', API\V4\Admin\DomainsController::class);
+            Route::apiResource('domains', 'API\V4\Admin\DomainsController');
             Route::get('domains/{id}/skus', 'API\V4\Admin\SkusController@domainSkus');
             Route::post('domains/{id}/suspend', 'API\V4\Admin\DomainsController@suspend');
             Route::post('domains/{id}/unsuspend', 'API\V4\Admin\DomainsController@unsuspend');
 
-            Route::apiResource('groups', API\V4\Admin\GroupsController::class);
+            Route::apiResource('groups', 'API\V4\Admin\GroupsController');
             Route::post('groups/{id}/suspend', 'API\V4\Admin\GroupsController@suspend');
             Route::post('groups/{id}/unsuspend', 'API\V4\Admin\GroupsController@unsuspend');
 
-            Route::apiResource('resources', API\V4\Admin\ResourcesController::class);
-            Route::apiResource('shared-folders', API\V4\Admin\SharedFoldersController::class);
-            Route::apiResource('skus', API\V4\Admin\SkusController::class);
-            Route::apiResource('users', API\V4\Admin\UsersController::class);
+            Route::apiResource('resources', 'API\V4\Admin\ResourcesController');
+            Route::apiResource('shared-folders', 'API\V4\Admin\SharedFoldersController');
+            Route::apiResource('skus', 'API\V4\Admin\SkusController');
+            Route::apiResource('users', 'API\V4\Admin\UsersController');
             Route::get('users/{id}/discounts', 'API\V4\Reseller\DiscountsController@userDiscounts');
             Route::post('users/{id}/reset2FA', 'API\V4\Admin\UsersController@reset2FA');
             Route::get('users/{id}/skus', 'API\V4\Admin\SkusController@userSkus');
             Route::post('users/{id}/skus/{sku}', 'API\V4\Admin\UsersController@setSku');
             Route::post('users/{id}/suspend', 'API\V4\Admin\UsersController@suspend');
             Route::post('users/{id}/unsuspend', 'API\V4\Admin\UsersController@unsuspend');
-            Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
+            Route::apiResource('wallets', 'API\V4\Admin\WalletsController');
             Route::post('wallets/{id}/one-off', 'API\V4\Admin\WalletsController@oneOff');
             Route::get('wallets/{id}/transactions', 'API\V4\Admin\WalletsController@transactions');
 
@@ -220,16 +220,16 @@ if (\config('app.with_reseller')) {
             'prefix' => $prefix . 'api/v4',
         ],
         function () {
-            Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
+            Route::apiResource('domains', 'API\V4\Reseller\DomainsController');
             Route::get('domains/{id}/skus', 'API\V4\Reseller\SkusController@domainSkus');
             Route::post('domains/{id}/suspend', 'API\V4\Reseller\DomainsController@suspend');
             Route::post('domains/{id}/unsuspend', 'API\V4\Reseller\DomainsController@unsuspend');
 
-            Route::apiResource('groups', API\V4\Reseller\GroupsController::class);
+            Route::apiResource('groups', 'API\V4\Reseller\GroupsController');
             Route::post('groups/{id}/suspend', 'API\V4\Reseller\GroupsController@suspend');
             Route::post('groups/{id}/unsuspend', 'API\V4\Reseller\GroupsController@unsuspend');
 
-            Route::apiResource('invitations', API\V4\Reseller\InvitationsController::class);
+            Route::apiResource('invitations', 'API\V4\Reseller\InvitationsController');
             Route::post('invitations/{id}/resend', 'API\V4\Reseller\InvitationsController@resend');
 
             Route::post('payments', 'API\V4\Reseller\PaymentsController@store');
@@ -241,17 +241,17 @@ if (\config('app.with_reseller')) {
             Route::get('payments/pending', 'API\V4\Reseller\PaymentsController@payments');
             Route::get('payments/has-pending', 'API\V4\Reseller\PaymentsController@hasPayments');
 
-            Route::apiResource('resources', API\V4\Reseller\ResourcesController::class);
-            Route::apiResource('shared-folders', API\V4\Reseller\SharedFoldersController::class);
-            Route::apiResource('skus', API\V4\Reseller\SkusController::class);
-            Route::apiResource('users', API\V4\Reseller\UsersController::class);
+            Route::apiResource('resources', 'API\V4\Reseller\ResourcesController');
+            Route::apiResource('shared-folders', 'API\V4\Reseller\SharedFoldersController');
+            Route::apiResource('skus', 'API\V4\Reseller\SkusController');
+            Route::apiResource('users', 'API\V4\Reseller\UsersController');
             Route::get('users/{id}/discounts', 'API\V4\Reseller\DiscountsController@userDiscounts');
             Route::post('users/{id}/reset2FA', 'API\V4\Reseller\UsersController@reset2FA');
             Route::get('users/{id}/skus', 'API\V4\Reseller\SkusController@userSkus');
             Route::post('users/{id}/skus/{sku}', 'API\V4\Admin\UsersController@setSku');
             Route::post('users/{id}/suspend', 'API\V4\Reseller\UsersController@suspend');
             Route::post('users/{id}/unsuspend', 'API\V4\Reseller\UsersController@unsuspend');
-            Route::apiResource('wallets', API\V4\Reseller\WalletsController::class);
+            Route::apiResource('wallets', 'API\V4\Reseller\WalletsController');
             Route::post('wallets/{id}/one-off', 'API\V4\Reseller\WalletsController@oneOff');
             Route::get('wallets/{id}/receipts', 'API\V4\Reseller\WalletsController@receipts');
             Route::get('wallets/{id}/receipts/{receipt}', 'API\V4\Reseller\WalletsController@receiptDownload');

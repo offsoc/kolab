@@ -2,36 +2,12 @@
 
 namespace App\Http\Controllers\API\V4;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\ResourceController;
 use App\Sku;
 use Illuminate\Http\Request;
 
-class SkusController extends Controller
+class SkusController extends ResourceController
 {
-    /**
-     * Show the form for creating a new sku.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function create()
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Remove the specified sku from storage.
-     *
-     * @param int $id SKU identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy($id)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
     /**
      * Get a list of SKUs available to the domain.
      *
@@ -52,19 +28,6 @@ class SkusController extends Controller
         }
 
         return $this->objectSkus($domain);
-    }
-
-    /**
-     * Show the form for editing the specified sku.
-     *
-     * @param int $id SKU identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function edit($id)
-    {
-        // TODO
-        return $this->errorResponse(404);
     }
 
     /**
@@ -90,46 +53,6 @@ class SkusController extends Controller
         });
 
         return response()->json($response);
-    }
-
-    /**
-     * Store a newly created sku in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Display the specified sku.
-     *
-     * @param int $id SKU identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Update the specified sku in storage.
-     *
-     * @param \Illuminate\Http\Request $request Request object
-     * @param int                      $id      SKU identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Request $request, $id)
-    {
-        // TODO
-        return $this->errorResponse(404);
     }
 
     /**

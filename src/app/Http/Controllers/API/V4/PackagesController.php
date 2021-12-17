@@ -3,48 +3,11 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Package;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\ResourceController;
 use Illuminate\Http\Request;
 
-class PackagesController extends Controller
+class PackagesController extends ResourceController
 {
-    /**
-     * Show the form for creating a new package.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function create()
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Remove the specified package from storage.
-     *
-     * @param int $id Package identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy($id)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Show the form for editing the specified package.
-     *
-     * @param int $id Package identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function edit($id)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
     /**
      * Display a listing of packages.
      *
@@ -68,45 +31,5 @@ class PackagesController extends Controller
         }
 
         return response()->json($response);
-    }
-
-    /**
-     * Store a newly created package in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Display the specified package.
-     *
-     * @param int $id Package identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
-    {
-        // TODO
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Update the specified package in storage.
-     *
-     * @param \Illuminate\Http\Request $request Request object
-     * @param int                      $id      Package identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Request $request, $id)
-    {
-        // TODO
-        return $this->errorResponse(404);
     }
 }

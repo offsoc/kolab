@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\API\V4;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\RelationController;
 use App\Domain;
 use App\Group;
 use App\Rules\UserEmailDomain;
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
-class UsersController extends Controller
+class UsersController extends RelationController
 {
     /** @const array List of user setting keys available for modification in UI */
     public const USER_SETTINGS = [
@@ -36,37 +36,15 @@ class UsersController extends Controller
      */
     protected $deleteBeforeCreate;
 
+    /** @var string Resource localization label */
+    protected $label = 'user';
+
+    /** @var string Resource model name */
+    protected $model = User::class;
+
     /** @var array Common object properties in the API response */
-    protected static $objectProps = ['email'];
+    protected $objectProps = ['email'];
 
-
-    /**
-     * Delete a user.
-     *
-     * @param int $id User identifier
-     *
-     * @return \Illuminate\Http\JsonResponse The response
-     */
-    public function destroy($id)
-    {
-        $user = User::withEnvTenantContext()->find($id);
-
-        if (empty($user)) {
-            return $this->errorResponse(404);
-        }
-
-        // User can't remove himself until he's the controller
-        if (!$this->guard()->user()->canDelete($user)) {
-            return $this->errorResponse(403);
-        }
-
-        $user->delete();
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.user-delete-success'),
-        ]);
-    }
 
     /**
      * Listing of users.
@@ -130,48 +108,17 @@ class UsersController extends Controller
     }
 
     /**
-     * Set user config.
-     *
-     * @param int $id The user
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function setConfig($id)
-    {
-        $user = User::find($id);
-
-        if (empty($user)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canUpdate($user)) {
-            return $this->errorResponse(403);
-        }
-
-        $errors = $user->setConfig(request()->input());
-
-        if (!empty($errors)) {
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
-        }
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.user-setconfig-success'),
-        ]);
-    }
-
-    /**
      * Display information on the user account specified by $id.
      *
-     * @param int $id The account to show information for.
+     * @param string $id The account to show information for.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
-        $user = User::withEnvTenantContext()->find($id);
+        $user = User::find($id);
 
-        if (empty($user)) {
+        if (!$this->checkTenant($user)) {
             return $this->errorResponse(404);
         }
 
@@ -188,38 +135,13 @@ class UsersController extends Controller
     }
 
     /**
-     * Fetch user status (and reload setup process)
-     *
-     * @param int $id User identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function status($id)
-    {
-        $user = User::withEnvTenantContext()->find($id);
-
-        if (empty($user)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($user)) {
-            return $this->errorResponse(403);
-        }
-
-        $response = $this->processStateUpdate($user);
-        $response = array_merge($response, self::objectState($user));
-
-        return response()->json($response);
-    }
-
-    /**
      * User status (extended) information
      *
      * @param \App\User $user User object
      *
      * @return array Status information
      */
-    public static function statusInfo(User $user): array
+    public static function statusInfo($user): array
     {
         $process = self::processStateInfo(
             $user,
@@ -452,7 +374,7 @@ class UsersController extends Controller
      */
     public static function userResponse(User $user): array
     {
-        $response = self::objectToClient($user, true);
+        $response = array_merge($user->toArray(), self::objectState($user));
 
         // Settings
         $response['settings'] = [];
@@ -503,7 +425,7 @@ class UsersController extends Controller
      *
      * @return array Statuses array
      */
-    protected static function objectState(User $user): array
+    protected static function objectState($user): array
     {
         return [
             'isImapReady' => $user->isImapReady(),

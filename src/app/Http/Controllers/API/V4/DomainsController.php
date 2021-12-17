@@ -3,48 +3,30 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Domain;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\RelationController;
 use App\Backends\LDAP;
 use App\Rules\UserEmailDomain;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class DomainsController extends Controller
+class DomainsController extends RelationController
 {
+    /** @var string Resource localization label */
+    protected $label = 'domain';
+
+    /** @var string Resource model name */
+    protected $model = Domain::class;
+
     /** @var array Common object properties in the API response */
-    protected static $objectProps = ['namespace', 'type'];
+    protected $objectProps = ['namespace', 'type'];
 
+    /** @var array Resource listing order (column names) */
+    protected $order = ['namespace'];
 
-    /**
-     * Return a list of domains owned by the current user
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        $user = $this->guard()->user();
+    /** @var array Resource relation method arguments */
+    protected $relationArgs = [true, false];
 
-        $list = $user->domains(true, false)
-            ->orderBy('namespace')
-            ->get()
-            ->map(function ($domain) {
-                return $this->objectToClient($domain);
-            })
-            ->all();
-
-        return response()->json($list);
-    }
-
-    /**
-     * Show the form for creating a new domain.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function create()
-    {
-        return $this->errorResponse(404);
-    }
 
     /**
      * Confirm ownership of the specified domain (via DNS check).
@@ -82,7 +64,7 @@ class DomainsController extends Controller
     /**
      * Remove the specified domain.
      *
-     * @param int $id Domain identifier
+     * @param string $id Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -109,50 +91,6 @@ class DomainsController extends Controller
         return response()->json([
                 'status' => 'success',
                 'message' => \trans('app.domain-delete-success'),
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified domain.
-     *
-     * @param int $id Domain identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function edit($id)
-    {
-        return $this->errorResponse(404);
-    }
-
-    /**
-     * Set the domain configuration.
-     *
-     * @param int $id Domain identifier
-     *
-     * @return \Illuminate\Http\JsonResponse|void
-     */
-    public function setConfig($id)
-    {
-        $domain = Domain::find($id);
-
-        if (empty($domain)) {
-            return $this->errorResponse(404);
-        }
-
-        // Only owner (or admin) has access to the domain
-        if (!$this->guard()->user()->canUpdate($domain)) {
-            return $this->errorResponse(403);
-        }
-
-        $errors = $domain->setConfig(request()->input());
-
-        if (!empty($errors)) {
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
-        }
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.domain-setconfig-success'),
         ]);
     }
 
@@ -234,7 +172,7 @@ class DomainsController extends Controller
     /**
      * Get the information about the specified domain.
      *
-     * @param int $id Domain identifier
+     * @param string $id Domain identifier
      *
      * @return \Illuminate\Http\JsonResponse|void
      */
@@ -279,44 +217,6 @@ class DomainsController extends Controller
         }
 
         return response()->json($response);
-    }
-
-    /**
-     * Fetch domain status (and reload setup process)
-     *
-     * @param int $id Domain identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function status($id)
-    {
-        $domain = Domain::find($id);
-
-        if (!$this->checkTenant($domain)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($domain)) {
-            return $this->errorResponse(403);
-        }
-
-        $response = $this->processStateUpdate($domain);
-        $response = array_merge($response, self::objectState($domain));
-
-        return response()->json($response);
-    }
-
-    /**
-     * Update the specified domain.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int                      $id Domain identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Request $request, $id)
-    {
-        return $this->errorResponse(404);
     }
 
     /**
@@ -387,7 +287,7 @@ class DomainsController extends Controller
      *
      * @return array Statuses array
      */
-    protected static function objectState(Domain $domain): array
+    protected static function objectState($domain): array
     {
         return [
             'isLdapReady' => $domain->isLdapReady(),
@@ -406,7 +306,7 @@ class DomainsController extends Controller
      *
      * @return array Status information
      */
-    public static function statusInfo(Domain $domain): array
+    public static function statusInfo($domain): array
     {
         // If that is not a public domain, add domain specific steps
         return self::processStateInfo(
