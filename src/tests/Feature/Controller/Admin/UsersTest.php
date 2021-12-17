@@ -194,6 +194,17 @@ class UsersTest extends TestCase
         $this->assertSame($user->id, $json['list'][0]['id']);
         $this->assertSame($user->email, $json['list'][0]['email']);
 
+        // Search by shared folder email
+        $response = $this->actingAs($admin)->get("api/v4/users?search=folder-event@kolab.org");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($user->id, $json['list'][0]['id']);
+        $this->assertSame($user->email, $json['list'][0]['email']);
+
         // Deleted users/domains
         $domain = $this->getTestDomain('testsearch.com', ['type' => \App\Domain::TYPE_EXTERNAL]);
         $user = $this->getTestUser('test@testsearch.com');

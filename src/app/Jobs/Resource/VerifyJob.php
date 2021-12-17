@@ -19,7 +19,7 @@ class VerifyJob extends ResourceJob
             return;
         }
 
-        // the user has a mailbox (or is marked as such)
+        // the resource was already verified
         if ($resource->isImapReady()) {
             $this->fail(new \Exception("Resource {$this->resourceId} is already verified."));
             return;

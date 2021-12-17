@@ -6,6 +6,7 @@ use App\Entitlement;
 use App\Domain;
 use App\Group;
 use App\Resource;
+use App\SharedFolder;
 use App\Transaction;
 use App\User;
 use App\Wallet;
@@ -149,6 +150,7 @@ class UserObserver
         $domains = [];
         $groups = [];
         $resources = [];
+        $folders = [];
         $entitlements = [];
 
         foreach ($assignments as $entitlement) {
@@ -160,6 +162,8 @@ class UserObserver
                 $groups[] = $entitlement->entitleable_id;
             } elseif ($entitlement->entitleable_type == Resource::class) {
                 $resources[] = $entitlement->entitleable_id;
+            } elseif ($entitlement->entitleable_type == SharedFolder::class) {
+                $folders[] = $entitlement->entitleable_id;
             } else {
                 $entitlements[] = $entitlement;
             }
@@ -188,6 +192,12 @@ class UserObserver
         if (!empty($resources)) {
             foreach (Resource::whereIn('id', array_unique($resources))->get() as $_resource) {
                 $_resource->delete();
+            }
+        }
+
+        if (!empty($folders)) {
+            foreach (SharedFolder::whereIn('id', array_unique($folders))->get() as $_folder) {
+                $_folder->delete();
             }
         }
 
@@ -222,6 +232,7 @@ class UserObserver
         $domains = [];
         $groups = [];
         $resources = [];
+        $folders = [];
         $users = [];
 
         foreach ($assignments as $entitlement) {
@@ -238,6 +249,8 @@ class UserObserver
                 $groups[] = $entitlement->entitleable_id;
             } elseif ($entitlement->entitleable_type == Resource::class) {
                 $resources[] = $entitlement->entitleable_id;
+            } elseif ($entitlement->entitleable_type == SharedFolder::class) {
+                $folders[] = $entitlement->entitleable_id;
             }
         }
 
@@ -268,6 +281,11 @@ class UserObserver
         // Resources can be just removed
         if (!empty($resources)) {
             Resource::withTrashed()->whereIn('id', array_unique($resources))->forceDelete();
+        }
+
+        // Shared folders can be just removed
+        if (!empty($folders)) {
+            SharedFolder::withTrashed()->whereIn('id', array_unique($folders))->forceDelete();
         }
 
         // Remove transactions, they also have no foreign key constraint

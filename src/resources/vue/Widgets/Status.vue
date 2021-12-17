@@ -2,11 +2,7 @@
     <div v-if="!state.isReady" id="status-box" :class="'p-4 mb-3 rounded process-' + className">
         <div v-if="state.step != 'domain-confirmed'" class="d-flex align-items-start">
             <p id="status-body" class="flex-grow-1">
-                <span v-if="scope == 'dashboard'">{{ $t('status.prepare-account') }}</span>
-                <span v-else-if="scope == 'domain'">{{ $t('status.prepare-domain') }}</span>
-                <span v-else-if="scope == 'distlist'">{{ $t('status.prepare-distlist') }}</span>
-                <span v-else-if="scope == 'resource'">{{ $t('status.prepare-resource') }}</span>
-                <span v-else>{{ $t('status.prepare-user') }}</span>
+                <span>{{ $t('status.prepare-' + scopeLabel()) }}</span>
                 <br>
                 {{ $t('status.prepare-hint') }}
                 <br>
@@ -18,11 +14,7 @@
         </div>
         <div v-else class="d-flex align-items-start">
             <p id="status-body" class="flex-grow-1">
-                <span v-if="scope == 'dashboard'">{{ $t('status.ready-account') }}</span>
-                <span v-else-if="scope == 'domain'">{{ $t('status.ready-domain') }}</span>
-                <span v-else-if="scope == 'distlist'">{{ $t('status.ready-distlist') }}</span>
-                <span v-else-if="scope == 'resource'">{{ $t('status.ready-resource') }}</span>
-                <span v-else>{{ $t('status.ready-user') }}</span>
+                <span>{{ $t('status.ready-' + scopeLabel()) }}</span>
                 <br>
                 {{ $t('status.verify') }}
             </p>
@@ -183,20 +175,23 @@
                 this.$emit('status-update', data)
             },
             getUrl() {
-                let url
+                let scope = this.scope
+                let id = this.$route.params[scope]
 
-                switch (this.scope) {
-                    case 'dashboard':
-                        url = '/api/v4/users/' + this.$store.state.authInfo.id + '/status'
-                        break
-                    case 'distlist':
-                        url = '/api/v4/groups/' + this.$route.params.list + '/status'
-                        break
-                    default:
-                        url = '/api/v4/' + this.scope + 's/' + this.$route.params[this.scope] + '/status'
+                if (scope == 'dashboard') {
+                    id = this.$store.state.authInfo.id
+                    scope = 'user'
+                } else if (scope =='distlist') {
+                    id = this.$route.params.list
+                    scope = 'group'
+                } else if (scope == 'shared-folder') {
+                    id = this.$route.params.folder
                 }
 
-                return url
+                return '/api/v4/' + scope + 's/' + id + '/status'
+            },
+            scopeLabel() {
+                return this.scope == 'dashboard' ? 'account' : this.scope
             }
         }
     }

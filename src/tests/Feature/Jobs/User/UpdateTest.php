@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\User;
 
 use App\Backends\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class UserUpdateTest extends TestCase
+class UpdateTest extends TestCase
 {
     /**
      * {@inheritDoc}

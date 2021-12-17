@@ -7,6 +7,7 @@ use App\Domain;
 use App\Group;
 use App\Entitlement;
 use App\Resource;
+use App\SharedFolder;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -30,6 +31,7 @@ class LDAPTest extends TestCase
         $this->deleteTestDomain('testldap.com');
         $this->deleteTestGroup('group@kolab.org');
         $this->deleteTestResource('test-resource@kolab.org');
+        $this->deleteTestSharedFolder('test-folder@kolab.org');
         // TODO: Remove group members
     }
 
@@ -44,6 +46,7 @@ class LDAPTest extends TestCase
         $this->deleteTestDomain('testldap.com');
         $this->deleteTestGroup('group@kolab.org');
         $this->deleteTestResource('test-resource@kolab.org');
+        $this->deleteTestSharedFolder('test-folder@kolab.org');
         // TODO: Remove group members
 
         parent::tearDown();
@@ -278,6 +281,71 @@ class LDAPTest extends TestCase
     }
 
     /**
+     * Test creating/updating/deleting a shared folder record
+     *
+     * @group ldap
+     */
+    public function testSharedFolder(): void
+    {
+        Queue::fake();
+
+        $root_dn = \config('ldap.hosted.root_dn');
+        $folder = $this->getTestSharedFolder('test-folder@kolab.org', ['type' => 'event']);
+        $folder->setSetting('acl', null);
+
+        // Make sure the shared folder does not exist
+        // LDAP::deleteSharedFolder($folder);
+
+        // Create the shared folder
+        LDAP::createSharedFolder($folder);
+
+        $ldap_folder = LDAP::getSharedFolder($folder->email);
+
+        $expected = [
+            'cn' => 'test-folder',
+            'dn' => 'cn=test-folder,ou=Shared Folders,ou=kolab.org,' . $root_dn,
+            'mail' => $folder->email,
+            'objectclass' => [
+                'top',
+                'kolabsharedfolder',
+                'mailrecipient',
+            ],
+            'kolabfoldertype' => 'event',
+            'kolabtargetfolder' => 'shared/test-folder@kolab.org',
+            'acl' => null,
+        ];
+
+        foreach ($expected as $attr => $value) {
+            $ldap_value = isset($ldap_folder[$attr]) ? $ldap_folder[$attr] : null;
+            $this->assertEquals($value, $ldap_value, "Shared folder $attr attribute");
+        }
+
+        // Update folder name and acl
+        $folder->name = 'Te(=ść)1';
+        $folder->save();
+        $folder->setSetting('acl', '["john@kolab.org, read-write","anyone, read-only"]');
+
+        LDAP::updateSharedFolder($folder);
+
+        $expected['kolabtargetfolder'] = 'shared/Te(=ść)1@kolab.org';
+        $expected['acl'] = ['john@kolab.org, read-write', 'anyone, read-only'];
+        $expected['dn'] = 'cn=Te(\\3dść)1,ou=Shared Folders,ou=kolab.org,' . $root_dn;
+        $expected['cn'] = 'Te(=ść)1';
+
+        $ldap_folder = LDAP::getSharedFolder($folder->email);
+
+        foreach ($expected as $attr => $value) {
+            $ldap_value = isset($ldap_folder[$attr]) ? $ldap_folder[$attr] : null;
+            $this->assertEquals($value, $ldap_value, "Shared folder $attr attribute");
+        }
+
+        // Delete the resource
+        LDAP::deleteSharedFolder($folder);
+
+        $this->assertSame(null, LDAP::getSharedFolder($folder->email));
+    }
+
+    /**
      * Test creating/editing/deleting a user record
      *
      * @group ldap
@@ -402,7 +470,7 @@ class LDAPTest extends TestCase
         $resource = new Resource([
                 'email' => 'test-non-existing-ldap@non-existing.org',
                 'name' => 'Test',
-                'status' => User::STATUS_ACTIVE,
+                'status' => Resource::STATUS_ACTIVE,
         ]);
 
         LDAP::createResource($resource);
@@ -425,6 +493,25 @@ class LDAPTest extends TestCase
         ]);
 
         LDAP::createGroup($group);
+    }
+
+    /**
+     * Test handling errors on a shared folder creation
+     *
+     * @group ldap
+     */
+    public function testCreateSharedFolderException(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/Failed to create shared folder/');
+
+        $folder = new SharedFolder([
+                'email' => 'test-non-existing-ldap@non-existing.org',
+                'name' => 'Test',
+                'status' => SharedFolder::STATUS_ACTIVE,
+        ]);
+
+        LDAP::createSharedFolder($folder);
     }
 
     /**
@@ -498,6 +585,23 @@ class LDAPTest extends TestCase
         ]);
 
         LDAP::updateResource($resource);
+    }
+
+    /**
+     * Test handling update of a non-existing shared folder
+     *
+     * @group ldap
+     */
+    public function testUpdateSharedFolderException(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/folder not found/');
+
+        $folder = new SharedFolder([
+                'email' => 'test-folder-unknown@kolab.org',
+        ]);
+
+        LDAP::updateSharedFolder($folder);
     }
 
     /**

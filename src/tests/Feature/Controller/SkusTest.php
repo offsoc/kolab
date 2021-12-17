@@ -105,7 +105,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(11, $json);
+        $this->assertCount(13, $json);
 
         $this->assertSame(100, $json[0]['prio']);
         $this->assertSame($sku->id, $json[0]['id']);
@@ -215,7 +215,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(9, $json);
+        $this->assertCount(10, $json);
 
         $this->assertSkuElement('beta', $json[6], [
                 'prio' => 10,
@@ -234,7 +234,16 @@ class SkusTest extends TestCase
                 'required' => ['beta'],
         ]);
 
-        $this->assertSkuElement('distlist', $json[8], [
+        $this->assertSkuElement('beta-shared-folders', $json[8], [
+                'prio' => 10,
+                'type' => 'user',
+                'handler' => 'sharedfolders',
+                'enabled' => false,
+                'readonly' => false,
+                'required' => ['beta'],
+        ]);
+
+        $this->assertSkuElement('distlist', $json[9], [
                 'prio' => 10,
                 'type' => 'user',
                 'handler' => 'distlist',

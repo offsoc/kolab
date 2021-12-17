@@ -18,6 +18,9 @@
             <router-link v-if="status.enableResources" class="card link-resources" :to="{ name: 'resources' }">
                 <svg-icon icon="cog"></svg-icon><span class="name">{{ $t('dashboard.resources') }}</span>
             </router-link>
+            <router-link v-if="status.enableFolders" class="card link-shared-folders" :to="{ name: 'shared-folders' }">
+                <svg-icon icon="folder-open"></svg-icon><span class="name">{{ $t('dashboard.shared-folders') }}</span>
+            </router-link>
             <router-link v-if="status.enableWallets" class="card link-wallet" :to="{ name: 'wallet' }">
                 <svg-icon icon="wallet"></svg-icon><span class="name">{{ $t('dashboard.wallet') }}</span>
                 <span v-if="balance < 0" class="badge bg-danger">{{ $root.price(balance, currency) }}</span>

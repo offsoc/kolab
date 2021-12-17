@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             'OpenViduRoomSeeder',
             'OauthClientSeeder',
             'ResourceSeeder',
+            'SharedFolderSeeder',
         ];
 
         $env = ucfirst(App::environment());

@@ -1,0 +1,177 @@
+<template>
+    <div class="container">
+        <status-component v-if="folder_id !== 'new'" :status="status" @status-update="statusUpdate"></status-component>
+
+        <div class="card" id="folder-info">
+            <div class="card-body">
+                <div class="card-title" v-if="folder_id !== 'new'">
+                    {{ $tc('shf.list-title', 1) }}
+                    <button class="btn btn-outline-danger button-delete float-end" @click="deleteFolder()" tag="button">
+                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('shf.delete') }}
+                    </button>
+                </div>
+                <div class="card-title" v-if="folder_id === 'new'">{{ $t('shf.new') }}</div>
+                <div class="card-text">
+                    <ul class="nav nav-tabs mt-3" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="tab-general" href="#general" role="tab" aria-controls="general" aria-selected="true" @click="$root.tab">
+                                {{ $t('form.general') }}
+                            </a>
+                        </li>
+                        <li v-if="folder_id !== 'new'" class="nav-item">
+                            <a class="nav-link" id="tab-settings" href="#settings" role="tab" aria-controls="settings" aria-selected="false" @click="$root.tab">
+                                {{ $t('form.settings') }}
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane show active" id="general" role="tabpanel" aria-labelledby="tab-general">
+                            <form @submit.prevent="submit" class="card-body">
+                                <div v-if="folder_id !== 'new'" class="row plaintext mb-3">
+                                    <label for="status" class="col-sm-4 col-form-label">{{ $t('form.status') }}</label>
+                                    <div class="col-sm-8">
+                                        <span :class="$root.folderStatusClass(folder) + ' form-control-plaintext'" id="status">{{ $root.folderStatusText(folder) }}</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <label for="name" class="col-sm-4 col-form-label">{{ $t('form.name') }}</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="name" v-model="folder.name">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <label for="type" class="col-sm-4 col-form-label">{{ $t('form.type') }}</label>
+                                    <div class="col-sm-8">
+                                        <select id="type" class="form-select" v-model="folder.type" :disabled="folder_id !== 'new'">
+                                            <option v-for="type in types" :key="type" :value="type">{{ $t('shf.type-' + type) }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div v-if="domains.length" class="row mb-3">
+                                    <label for="domain" class="col-sm-4 col-form-label">{{ $t('form.domain') }}</label>
+                                    <div v-if="domains.length" class="col-sm-8">
+                                        <select class="form-select" v-model="folder.domain">
+                                            <option v-for="_domain in domains" :key="_domain.id" :value="_domain.namespace">{{ _domain.namespace }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div v-if="folder.email" class="row mb-3">
+                                    <label for="email" class="col-sm-4 col-form-label">{{ $t('form.email') }}</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="email" disabled v-model="folder.email">
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
+                            <form @submit.prevent="submitSettings" class="card-body">
+                                <div class="row mb-3">
+                                    <label for="acl-input" class="col-sm-4 col-form-label">{{ $t('form.acl') }}</label>
+                                    <div class="col-sm-8">
+                                        <acl-input id="acl" v-model="folder.config.acl" :list="folder.config.acl" class="mb-1"></acl-input>
+                                        <small id="acl-hint" class="text-muted">
+                                            {{ $t('shf.acl-text') }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import AclInput from '../Widgets/AclInput'
+    import StatusComponent from '../Widgets/Status'
+
+    export default {
+        components: {
+            AclInput,
+            StatusComponent
+        },
+        data() {
+            return {
+                domains: [],
+                folder_id: null,
+                folder: { type: 'mail', config: {} },
+                status: {},
+                types: [ 'mail', 'event', 'task', 'contact', 'note', 'file' ]
+            }
+        },
+        created() {
+            this.folder_id = this.$route.params.folder
+
+            if (this.folder_id != 'new') {
+                this.$root.startLoading()
+
+                axios.get('/api/v4/shared-folders/' + this.folder_id)
+                    .then(response => {
+                        this.$root.stopLoading()
+                        this.folder = response.data
+                        this.status = response.data.statusInfo
+                    })
+                    .catch(this.$root.errorHandler)
+            } else {
+                this.$root.startLoading()
+
+                axios.get('/api/v4/domains')
+                    .then(response => {
+                        this.$root.stopLoading()
+                        this.domains = response.data
+                        this.folder.domain = this.domains[0].namespace
+                    })
+                    .catch(this.$root.errorHandler)
+            }
+        },
+        mounted() {
+            $('#name').focus()
+        },
+        methods: {
+            deleteFolder() {
+                axios.delete('/api/v4/shared-folders/' + this.folder_id)
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.$router.push({ name: 'shared-folders' })
+                        }
+                    })
+            },
+            statusUpdate(folder) {
+                this.folder = Object.assign({}, this.folder, folder)
+            },
+            submit() {
+                this.$root.clearFormValidation($('#folder-info form'))
+
+                let method = 'post'
+                let location = '/api/v4/shared-folders'
+
+                if (this.folder_id !== 'new') {
+                    method = 'put'
+                    location += '/' + this.folder_id
+                }
+
+                const post = this.$root.pick(this.folder, ['id', 'name', 'domain', 'type'])
+
+                axios[method](location, post)
+                    .then(response => {
+                        this.$toast.success(response.data.message)
+                        this.$router.push({ name: 'shared-folders' })
+                    })
+            },
+            submitSettings() {
+                this.$root.clearFormValidation($('#settings form'))
+                let post = {...this.folder.config}
+
+                axios.post('/api/v4/shared-folders/' + this.folder_id + '/config', post)
+                    .then(response => {
+                        this.$toast.success(response.data.message)
+                    })
+            }
+        }
+    }
+</script>

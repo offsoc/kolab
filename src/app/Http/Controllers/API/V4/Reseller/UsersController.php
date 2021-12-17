@@ -53,6 +53,10 @@ class UsersController extends \App\Http\Controllers\API\V4\Admin\UsersController
                 // Search by a distribution list email
                 if ($group = Group::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$group->wallet()->user_id])->unique();
+                } elseif ($resource = \App\Resource::withTrashed()->where('email', $search)->first()) {
+                    $user_ids = $user_ids->merge([$resource->wallet()->user_id])->unique();
+                } elseif ($folder = \App\SharedFolder::withTrashed()->where('email', $search)->first()) {
+                    $user_ids = $user_ids->merge([$folder->wallet()->user_id])->unique();
                 }
 
                 if (!$user_ids->isEmpty()) {

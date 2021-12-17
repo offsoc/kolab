@@ -711,7 +711,7 @@ class UsersTest extends TestCaseDusk
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
                 ->with('@skus', function ($browser) {
-                    $browser->assertElementsCount('tbody tr', 9)
+                    $browser->assertElementsCount('tbody tr', 10)
                         // Meet SKU
                         ->assertSeeIn('tbody tr:nth-child(6) td.name', 'Voice & Video Conferencing (public beta)')
                         ->assertSeeIn('tr:nth-child(6) td.price', '0,00 CHF/month')
@@ -739,13 +739,22 @@ class UsersTest extends TestCaseDusk
                             'tbody tr:nth-child(8) td.buttons button',
                             'Access to calendaring resources'
                         )
-                        // Distlist SKU
-                        ->assertSeeIn('tbody tr:nth-child(9) td.name', 'Distribution lists')
+                        // Shared folders SKU
+                        ->assertSeeIn('tbody tr:nth-child(9) td.name', 'Shared folders')
                         ->assertSeeIn('tr:nth-child(9) td.price', '0,00 CHF/month')
                         ->assertNotChecked('tbody tr:nth-child(9) td.selection input')
                         ->assertEnabled('tbody tr:nth-child(9) td.selection input')
                         ->assertTip(
                             'tbody tr:nth-child(9) td.buttons button',
+                            'Access to shared folders'
+                        )
+                        // Distlist SKU
+                        ->assertSeeIn('tbody tr:nth-child(10) td.name', 'Distribution lists')
+                        ->assertSeeIn('tr:nth-child(10) td.price', '0,00 CHF/month')
+                        ->assertNotChecked('tbody tr:nth-child(10) td.selection input')
+                        ->assertEnabled('tbody tr:nth-child(10) td.selection input')
+                        ->assertTip(
+                            'tbody tr:nth-child(10) td.buttons button',
                             'Access to mail distribution lists'
                         )
                         // Check Distlist, Uncheck Beta, expect Distlist unchecked

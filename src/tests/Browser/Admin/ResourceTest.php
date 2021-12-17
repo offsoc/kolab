@@ -56,6 +56,9 @@ class ResourceTest extends TestCaseDusk
             $user = $this->getTestUser('john@kolab.org');
             $resource = $this->getTestResource('resource-test1@kolab.org');
             $resource->setSetting('invitation_policy', 'accept');
+            $resource->status = Resource::STATUS_NEW | Resource::STATUS_ACTIVE
+                | Resource::STATUS_LDAP_READY | Resource::STATUS_IMAP_READY;
+            $resource->save();
 
             $resource_page = new ResourcePage($resource->id);
             $user_page = new UserPage($user->id);

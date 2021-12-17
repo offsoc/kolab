@@ -2,9 +2,11 @@
 
 namespace Tests;
 
+use App\Backends\LDAP;
 use App\Domain;
 use App\Group;
 use App\Resource;
+use App\SharedFolder;
 use App\Sku;
 use App\Transaction;
 use App\User;
@@ -154,6 +156,7 @@ trait TestCaseTrait
         $beta_handlers = [
             'App\Handlers\Beta',
             'App\Handlers\Beta\Resources',
+            'App\Handlers\Beta\SharedFolders',
             'App\Handlers\Distlist',
         ];
 
@@ -290,8 +293,7 @@ trait TestCaseTrait
             return;
         }
 
-        $job = new \App\Jobs\Group\DeleteJob($group->id);
-        $job->handle();
+        LDAP::deleteGroup($group);
 
         $group->forceDelete();
     }
@@ -311,10 +313,29 @@ trait TestCaseTrait
             return;
         }
 
-        $job = new \App\Jobs\Resource\DeleteJob($resource->id);
-        $job->handle();
+        LDAP::deleteResource($resource);
 
         $resource->forceDelete();
+    }
+
+    /**
+     * Delete a test shared folder whatever it takes.
+     *
+     * @coversNothing
+     */
+    protected function deleteTestSharedFolder($email)
+    {
+        Queue::fake();
+
+        $folder = SharedFolder::withTrashed()->where('email', $email)->first();
+
+        if (!$folder) {
+            return;
+        }
+
+        LDAP::deleteSharedFolder($folder);
+
+        $folder->forceDelete();
     }
 
     /**
@@ -332,8 +353,7 @@ trait TestCaseTrait
             return;
         }
 
-        $job = new \App\Jobs\User\DeleteJob($user->id);
-        $job->handle();
+        LDAP::deleteUser($user);
 
         $user->forceDelete();
     }
@@ -375,7 +395,7 @@ trait TestCaseTrait
     }
 
     /**
-     * Get Resource object by name+domain, create it if needed.
+     * Get Resource object by email, create it if needed.
      * Skip LDAP jobs.
      */
     protected function getTestResource($email, $attrib = [])
@@ -404,6 +424,38 @@ trait TestCaseTrait
         $resource->save();
 
         return $resource;
+    }
+
+    /**
+     * Get SharedFolder object by email, create it if needed.
+     * Skip LDAP jobs.
+     */
+    protected function getTestSharedFolder($email, $attrib = [])
+    {
+        // Disable jobs (i.e. skip LDAP oprations)
+        Queue::fake();
+
+        $folder = SharedFolder::where('email', $email)->first();
+
+        if (!$folder) {
+            list($local, $domain) = explode('@', $email, 2);
+
+            $folder = new SharedFolder();
+            $folder->email = $email;
+            $folder->domain = $domain;
+
+            if (!isset($attrib['name'])) {
+                $folder->name = $local;
+            }
+        }
+
+        foreach ($attrib as $key => $val) {
+            $folder->{$key} = $val;
+        }
+
+        $folder->save();
+
+        return $folder;
     }
 
     /**

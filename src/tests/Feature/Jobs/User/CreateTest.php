@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\User;
 
 use App\User;
 use Tests\TestCase;
 
-class UserCreateTest extends TestCase
+class CreateTest extends TestCase
 {
     /**
      * {@inheritDoc}

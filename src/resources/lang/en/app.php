@@ -39,6 +39,8 @@ return [
     'process-error-domain-confirmed' => 'Failed to verify an ownership of a domain.',
     'process-error-resource-imap-ready' => 'Failed to verify that a shared folder exists.',
     'process-error-resource-ldap-ready' => 'Failed to create a resource.',
+    'process-error-shared-folder-imap-ready' => 'Failed to verify that a shared folder exists.',
+    'process-error-shared-folder-ldap-ready' => 'Failed to create a shared folder.',
     'process-error-user-ldap-ready' => 'Failed to create a user.',
     'process-error-user-imap-ready' => 'Failed to verify that a mailbox exists.',
     'process-distlist-new' => 'Registering a distribution list...',
@@ -46,6 +48,9 @@ return [
     'process-resource-new' => 'Registering a resource...',
     'process-resource-imap-ready' => 'Creating a shared folder...',
     'process-resource-ldap-ready' => 'Creating a resource...',
+    'process-shared-folder-new' => 'Registering a shared folder...',
+    'process-shared-folder-imap-ready' => 'Creating a shared folder...',
+    'process-shared-folder-ldap-ready' => 'Creating a shared folder...',
 
     'distlist-update-success' => 'Distribution list updated successfully.',
     'distlist-create-success' => 'Distribution list created successfully.',
@@ -68,6 +73,11 @@ return [
     'resource-delete-success' => 'Resource deleted successfully.',
     'resource-setconfig-success' => 'Resource settings updated successfully.',
 
+    'shared-folder-update-success' => 'Shared folder updated successfully.',
+    'shared-folder-create-success' => 'Shared folder created successfully.',
+    'shared-folder-delete-success' => 'Shared folder deleted successfully.',
+    'shared-folder-setconfig-success' => 'Shared folder settings updated successfully.',
+
     'user-update-success' => 'User data updated successfully.',
     'user-create-success' => 'User created successfully.',
     'user-delete-success' => 'User deleted successfully.',
@@ -81,6 +91,7 @@ return [
     'search-foundxdomains' => ':x domains have been found.',
     'search-foundxdistlists' => ':x distribution lists have been found.',
     'search-foundxresources' => ':x resources have been found.',
+    'search-foundxsharedfolders' => ':x shared folders have been found.',
     'search-foundxusers' => ':x user accounts have been found.',
 
     'signup-invitations-created' => 'The invitation has been created.|:count invitations has been created.',

@@ -123,8 +123,13 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" id="tab-shared-folders" href="#user-shared-folders" role="tab" aria-controls="user-shared-folders" aria-selected="false">
+                    {{ $t('dashboard.shared-folders') }} ({{ folders.length }})
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" id="tab-settings" href="#user-settings" role="tab" aria-controls="user-settings" aria-selected="false">
-                    Settings
+                    {{ $t('form.settings') }}
                 </a>
             </li>
         </ul>
@@ -349,6 +354,36 @@
                     </div>
                 </div>
             </div>
+            <div class="tab-pane" id="user-shared-folders" role="tabpanel" aria-labelledby="tab-shared-folders">
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{ $t('form.name') }}</th>
+                                    <th scope="col">{{ $t('form.type') }}</th>
+                                    <th scope="col">{{ $t('form.email') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="folder in folders" :key="folder.id" @click="$root.clickRecord">
+                                    <td>
+                                        <svg-icon icon="folder-open" :class="$root.folderStatusClass(folder)" :title="$root.folderStatusText(folder)"></svg-icon>
+                                        <router-link :to="{ path: '/shared-folder/' + folder.id }">{{ folder.name }}</router-link>
+                                    </td>
+                                    <td>{{ $t('shf.type-' + folder.type) }}</td>
+                                    <td><router-link :to="{ path: '/shared-folder/' + folder.id }">{{ folder.email }}</router-link></td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-fake-body">
+                                <tr>
+                                    <td colspan="3">{{ $t('shf.list-empty') }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
             <div class="tab-pane" id="user-settings" role="tabpanel" aria-labelledby="tab-settings">
                 <div class="card-body">
                     <div class="card-text">
@@ -492,6 +527,7 @@
                 discount_description: '',
                 discounts: [],
                 external_email: '',
+                folders: [],
                 has2FA: false,
                 hasBeta: false,
                 wallet: {},
@@ -603,6 +639,12 @@
                     axios.get('/api/v4/resources?owner=' + user_id)
                         .then(response => {
                             this.resources = response.data.list
+                        })
+
+                    // Fetch shared folders lists
+                    axios.get('/api/v4/shared-folders?owner=' + user_id)
+                        .then(response => {
+                            this.folders = response.data.list
                         })
                 })
                 .catch(this.$root.errorHandler)

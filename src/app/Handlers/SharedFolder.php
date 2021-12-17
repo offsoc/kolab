@@ -11,7 +11,6 @@ class SharedFolder extends \App\Handlers\Base
      */
     public static function entitleableClass(): string
     {
-        // TODO
-        return '';
+        return \App\SharedFolder::class;
     }
 }

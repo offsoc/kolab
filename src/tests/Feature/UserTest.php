@@ -20,6 +20,7 @@ class UserTest extends TestCase
         $this->deleteTestUser('UserAccountC@UserAccount.com');
         $this->deleteTestGroup('test-group@UserAccount.com');
         $this->deleteTestResource('test-resource@UserAccount.com');
+        $this->deleteTestSharedFolder('test-folder@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
         $this->deleteTestDomain('UserAccountAdd.com');
     }
@@ -33,6 +34,7 @@ class UserTest extends TestCase
         $this->deleteTestUser('UserAccountC@UserAccount.com');
         $this->deleteTestGroup('test-group@UserAccount.com');
         $this->deleteTestResource('test-resource@UserAccount.com');
+        $this->deleteTestSharedFolder('test-folder@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
         $this->deleteTestDomain('UserAccountAdd.com');
 
@@ -459,6 +461,8 @@ class UserTest extends TestCase
         $group->assignToWallet($userA->wallets->first());
         $resource = $this->getTestResource('test-resource@UserAccount.com', ['name' => 'test']);
         $resource->assignToWallet($userA->wallets->first());
+        $folder = $this->getTestSharedFolder('test-folder@UserAccount.com', ['name' => 'test']);
+        $folder->assignToWallet($userA->wallets->first());
 
         $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
         $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
@@ -466,6 +470,7 @@ class UserTest extends TestCase
         $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domain->id);
         $entitlementsGroup = \App\Entitlement::where('entitleable_id', $group->id);
         $entitlementsResource = \App\Entitlement::where('entitleable_id', $resource->id);
+        $entitlementsFolder = \App\Entitlement::where('entitleable_id', $folder->id);
 
         $this->assertSame(7, $entitlementsA->count());
         $this->assertSame(7, $entitlementsB->count());
@@ -473,6 +478,7 @@ class UserTest extends TestCase
         $this->assertSame(1, $entitlementsDomain->count());
         $this->assertSame(1, $entitlementsGroup->count());
         $this->assertSame(1, $entitlementsResource->count());
+        $this->assertSame(1, $entitlementsFolder->count());
 
         // Delete non-controller user
         $userC->delete();
@@ -489,16 +495,19 @@ class UserTest extends TestCase
         $this->assertSame(0, $entitlementsDomain->count());
         $this->assertSame(0, $entitlementsGroup->count());
         $this->assertSame(0, $entitlementsResource->count());
+        $this->assertSame(0, $entitlementsFolder->count());
         $this->assertTrue($userA->fresh()->trashed());
         $this->assertTrue($userB->fresh()->trashed());
         $this->assertTrue($domain->fresh()->trashed());
         $this->assertTrue($group->fresh()->trashed());
         $this->assertTrue($resource->fresh()->trashed());
+        $this->assertTrue($folder->fresh()->trashed());
         $this->assertFalse($userA->isDeleted());
         $this->assertFalse($userB->isDeleted());
         $this->assertFalse($domain->isDeleted());
         $this->assertFalse($group->isDeleted());
         $this->assertFalse($resource->isDeleted());
+        $this->assertFalse($folder->isDeleted());
 
         $userA->forceDelete();
 
@@ -511,6 +520,7 @@ class UserTest extends TestCase
         $this->assertCount(0, Domain::withTrashed()->where('id', $domain->id)->get());
         $this->assertCount(0, Group::withTrashed()->where('id', $group->id)->get());
         $this->assertCount(0, \App\Resource::withTrashed()->where('id', $resource->id)->get());
+        $this->assertCount(0, \App\SharedFolder::withTrashed()->where('id', $folder->id)->get());
     }
 
     /**
@@ -728,6 +738,32 @@ class UserTest extends TestCase
         $resources = $jack->resources()->get();
 
         $this->assertSame(0, $resources->count());
+    }
+
+    /**
+     * Test sharedFolders() method
+     */
+    public function testSharedFolders(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+
+        $folders = $john->sharedFolders()->orderBy('email')->get();
+
+        $this->assertSame(2, $folders->count());
+        $this->assertSame('folder-contact@kolab.org', $folders[0]->email);
+        $this->assertSame('folder-event@kolab.org', $folders[1]->email);
+
+        $folders = $ned->sharedFolders()->orderBy('email')->get();
+
+        $this->assertSame(2, $folders->count());
+        $this->assertSame('folder-contact@kolab.org', $folders[0]->email);
+        $this->assertSame('folder-event@kolab.org', $folders[1]->email);
+
+        $folders = $jack->sharedFolders()->get();
+
+        $this->assertSame(0, $folders->count());
     }
 
     /**

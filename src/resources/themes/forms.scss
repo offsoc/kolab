@@ -28,6 +28,13 @@
     }
 }
 
+.acl-input {
+    select.acl,
+    select.mod-user {
+        max-width: fit-content;
+    }
+}
+
 .range-input {
     display: flex;
 

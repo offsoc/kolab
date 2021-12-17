@@ -209,7 +209,6 @@ class ResourcesController extends Controller
         $v = Validator::make($request->all(), $rules);
 
         if ($v->fails()) {
-            $errors = $v->errors()->toArray();
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 

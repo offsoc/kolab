@@ -33,7 +33,7 @@ class IMAP
     /**
      * Check if a shared folder is set up.
      *
-     * @param string $folder Folder name, eg. shared/Resources/Name@domain.tld
+     * @param string $folder Folder name, e.g. shared/Resources/Name@domain.tld
      *
      * @return bool True if a folder exists and is set up, False otherwise
      */
@@ -43,7 +43,7 @@ class IMAP
         $imap = self::initIMAP($config);
 
         // Convert the folder from UTF8 to UTF7-IMAP
-        if (\preg_match('|^(shared/Resources/)(.*)(@[^@]+)$|', $folder, $matches)) {
+        if (\preg_match('#^(shared/|shared/Resources/)(.+)(@[^@]+)$#', $folder, $matches)) {
             $folderName = \mb_convert_encoding($matches[2], 'UTF7-IMAP', 'UTF8');
             $folder = $matches[1] . $folderName . $matches[3];
         }

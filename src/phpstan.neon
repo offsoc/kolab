@@ -12,4 +12,5 @@ parameters:
         processTimeout: 300.0
     paths:
         - app/
+        - config/
         - tests/

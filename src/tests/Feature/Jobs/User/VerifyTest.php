@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\User;
 
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class UserVerifyTest extends TestCase
+class VerifyTest extends TestCase
 {
     /**
      * {@inheritDoc}

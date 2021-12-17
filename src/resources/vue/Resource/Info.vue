@@ -43,7 +43,7 @@
                                     <label for="domain" class="col-sm-4 col-form-label">{{ $t('form.domain') }}</label>
                                     <div class="col-sm-8">
                                         <select class="form-select" v-model="resource.domain">
-                                            <option v-for="_domain in domains" :key="_domain" :value="_domain.namespace">{{ _domain.namespace }}</option>
+                                            <option v-for="_domain in domains" :key="_domain.id" :value="_domain.namespace">{{ _domain.namespace }}</option>
                                         </select>
                                     </div>
                                 </div>

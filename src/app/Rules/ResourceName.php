@@ -12,6 +12,8 @@ class ResourceName implements Rule
     private $owner;
     private $domain;
 
+    private const FORBIDDEN_CHARS = '+/^%*!`@(){}|\\?<;"';
+
     /**
      * Class constructor.
      *
@@ -39,13 +41,18 @@ class ResourceName implements Rule
             return false;
         }
 
+        if (strcspn($name, self::FORBIDDEN_CHARS) < strlen($name)) {
+            $this->message = \trans('validation.nameinvalid');
+            return false;
+        }
+
         // Check the max length, according to the database column length
         if (strlen($name) > 191) {
             $this->message = \trans('validation.max.string', ['max' => 191]);
             return false;
         }
 
-        // Check if specified domain is belongs to the user
+        // Check if specified domain belongs to the user
         $domains = \collect($this->owner->domains(true, false))->pluck('namespace')->all();
         if (!in_array($this->domain, $domains)) {
             $this->message = \trans('validation.domaininvalid');

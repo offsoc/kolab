@@ -14,25 +14,12 @@ class IMAPTest extends TestCase
      */
     public function testVerifyAccountExisting(): void
     {
+        // existing user
         $result = IMAP::verifyAccount('john@kolab.org');
+        $this->assertTrue($result);
 
-        // TODO: Mocking rcube_imap_generic is not that nice,
-        //       Find a way to be sure some testing account has folders
-        //       initialized, and some other not, so we can make assertions
-        //       on the verifyAccount() result
-
-        $this->markTestIncomplete();
-    }
-
-    /**
-     * Test verifying IMAP account existence (non-existing account)
-     *
-     * @group imap
-     */
-    public function testVerifyAccountNonExisting(): void
-    {
+        // non-existing user
         $this->expectException(\Exception::class);
-
         IMAP::verifyAccount('non-existing@domain.tld');
     }
 
@@ -43,10 +30,12 @@ class IMAPTest extends TestCase
      */
     public function testVerifySharedFolder(): void
     {
+        // non-existing
         $result = IMAP::verifySharedFolder('shared/Resources/UnknownResource@kolab.org');
         $this->assertFalse($result);
 
-        // TODO: Test with an existing shared folder
-        $this->markTestIncomplete();
+        // existing
+        $result = IMAP::verifySharedFolder('shared/Calendar@kolab.org');
+        $this->assertTrue($result);
     }
 }

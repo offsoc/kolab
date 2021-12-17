@@ -10,6 +10,8 @@ import PageComponent from '../../vue/Page'
 import PasswordResetComponent from '../../vue/PasswordReset'
 import ResourceInfoComponent from '../../vue/Resource/Info'
 import ResourceListComponent from '../../vue/Resource/List'
+import SharedFolderInfoComponent from '../../vue/SharedFolder/Info'
+import SharedFolderListComponent from '../../vue/SharedFolder/List'
 import SignupComponent from '../../vue/Signup'
 import UserInfoComponent from '../../vue/User/Info'
 import UserListComponent from '../../vue/User/List'
@@ -103,6 +105,18 @@ const routes = [
         name: 'rooms',
         component: MeetComponent,
         meta: { requiresAuth: true }
+    },
+    {
+        path: '/shared-folder/:folder',
+        name: 'shared-folder',
+        component: SharedFolderInfoComponent,
+        meta: { requiresAuth: true, perm: 'folders' }
+    },
+    {
+        path: '/shared-folders',
+        name: 'shared-folders',
+        component: SharedFolderListComponent,
+        meta: { requiresAuth: true, perm: 'folders' }
     },
     {
         path: '/signup/invite/:param',

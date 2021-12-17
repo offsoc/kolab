@@ -239,6 +239,7 @@ class DomainTest extends TestCase
         $this->deleteTestUser('user@gmail.com');
         $this->deleteTestGroup('group@gmail.com');
         $this->deleteTestResource('resource@gmail.com');
+        $this->deleteTestSharedFolder('folder@gmail.com');
 
         // Empty domain
         $domain = $this->getTestDomain('gmail.com', [
@@ -259,6 +260,9 @@ class DomainTest extends TestCase
         $this->getTestResource('resource@gmail.com');
         $this->assertFalse($domain->isEmpty());
         $this->deleteTestResource('resource@gmail.com');
+        $this->getTestSharedFolder('folder@gmail.com');
+        $this->assertFalse($domain->isEmpty());
+        $this->deleteTestSharedFolder('folder@gmail.com');
 
         // TODO: Test with an existing alias, but not other objects in a domain
 

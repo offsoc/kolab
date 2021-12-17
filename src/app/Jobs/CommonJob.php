@@ -30,6 +30,13 @@ abstract class CommonJob implements ShouldQueue
     public $failureMessage;
 
     /**
+     * The job deleted state.
+     *
+     * @var bool
+     */
+    protected $isDeleted = false;
+
+    /**
      * The job released state.
      *
      * @var bool
@@ -49,6 +56,22 @@ abstract class CommonJob implements ShouldQueue
      * @return void
      */
     abstract public function handle();
+
+    /**
+     * Delete the job from the queue.
+     *
+     * @return void
+     */
+    public function delete()
+    {
+        // We need this for testing purposes
+        $this->isDeleted = true;
+
+        // @phpstan-ignore-next-line
+        if ($this->job) {
+            $this->job->delete();
+        }
+    }
 
     /**
      * Delete the job, call the "failed" method, and raise the failed job event.
@@ -93,6 +116,16 @@ abstract class CommonJob implements ShouldQueue
         if ($this->job) {
             $this->job->release($delay);
         }
+    }
+
+    /**
+     * Determine if the job has been deleted.
+     *
+     * @return bool
+     */
+    public function isDeleted(): bool
+    {
+        return $this->isDeleted;
     }
 
     /**

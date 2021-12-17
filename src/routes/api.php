@@ -84,6 +84,10 @@ Route::group(
         Route::get('resources/{id}/status', 'API\V4\ResourcesController@status');
         Route::post('resources/{id}/config', 'API\V4\ResourcesController@setConfig');
 
+        Route::apiResource('shared-folders', API\V4\SharedFoldersController::class);
+        Route::get('shared-folders/{id}/status', 'API\V4\SharedFoldersController@status');
+        Route::post('shared-folders/{id}/config', 'API\V4\SharedFoldersController@setConfig');
+
         Route::apiResource('skus', API\V4\SkusController::class);
 
         Route::apiResource('users', API\V4\UsersController::class);
@@ -190,6 +194,7 @@ if (\config('app.with_admin')) {
             Route::post('groups/{id}/unsuspend', 'API\V4\Admin\GroupsController@unsuspend');
 
             Route::apiResource('resources', API\V4\Admin\ResourcesController::class);
+            Route::apiResource('shared-folders', API\V4\Admin\SharedFoldersController::class);
             Route::apiResource('skus', API\V4\Admin\SkusController::class);
             Route::apiResource('users', API\V4\Admin\UsersController::class);
             Route::get('users/{id}/discounts', 'API\V4\Reseller\DiscountsController@userDiscounts');
@@ -237,6 +242,7 @@ if (\config('app.with_reseller')) {
             Route::get('payments/has-pending', 'API\V4\Reseller\PaymentsController@hasPayments');
 
             Route::apiResource('resources', API\V4\Reseller\ResourcesController::class);
+            Route::apiResource('shared-folders', API\V4\Reseller\SharedFoldersController::class);
             Route::apiResource('skus', API\V4\Reseller\SkusController::class);
             Route::apiResource('users', API\V4\Reseller\UsersController::class);
             Route::get('users/{id}/discounts', 'API\V4\Reseller\DiscountsController@userDiscounts');

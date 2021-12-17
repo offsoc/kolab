@@ -116,7 +116,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 8);
+                ->assertElementsCount('@nav a', 9);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -175,6 +175,14 @@ class UserTest extends TestCaseDusk
                 ->with('@user-resources', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no resources in this account.');
+                });
+
+            // Assert Shared folders tab
+            $browser->assertSeeIn('@nav #tab-shared-folders', 'Shared folders (0)')
+                ->click('@nav #tab-shared-folders')
+                ->with('@user-shared-folders', function (Browser $browser) {
+                    $browser->assertElementsCount('table tbody tr', 0)
+                        ->assertSeeIn('table tfoot tr td', 'There are no shared folders in this account.');
                 });
 
             // Assert Settings tab
@@ -240,7 +248,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 8);
+                ->assertElementsCount('@nav a', 9);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -279,6 +287,22 @@ class UserTest extends TestCaseDusk
                         ->assertMissing('tfoot');
                 });
 
+            // Assert Users tab
+            $browser->assertSeeIn('@nav #tab-users', 'Users (4)')
+                ->click('@nav #tab-users')
+                ->with('@user-users table', function (Browser $browser) {
+                    $browser->assertElementsCount('tbody tr', 4)
+                        ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'jack@kolab.org')
+                        ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-success')
+                        ->assertSeeIn('tbody tr:nth-child(2) td:first-child a', 'joe@kolab.org')
+                        ->assertVisible('tbody tr:nth-child(2) td:first-child svg.text-success')
+                        ->assertSeeIn('tbody tr:nth-child(3) td:first-child span', 'john@kolab.org')
+                        ->assertVisible('tbody tr:nth-child(3) td:first-child svg.text-success')
+                        ->assertSeeIn('tbody tr:nth-child(4) td:first-child a', 'ned@kolab.org')
+                        ->assertVisible('tbody tr:nth-child(4) td:first-child svg.text-success')
+                        ->assertMissing('tfoot');
+                });
+
             // Assert Distribution lists tab
             $browser->assertSeeIn('@nav #tab-distlists', 'Distribution lists (1)')
                 ->click('@nav #tab-distlists')
@@ -302,20 +326,18 @@ class UserTest extends TestCaseDusk
                         ->assertMissing('table tfoot');
                 });
 
-            // Assert Users tab
-            $browser->assertSeeIn('@nav #tab-users', 'Users (4)')
-                ->click('@nav #tab-users')
-                ->with('@user-users table', function (Browser $browser) {
-                    $browser->assertElementsCount('tbody tr', 4)
-                        ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'jack@kolab.org')
-                        ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-success')
-                        ->assertSeeIn('tbody tr:nth-child(2) td:first-child a', 'joe@kolab.org')
-                        ->assertVisible('tbody tr:nth-child(2) td:first-child svg.text-success')
-                        ->assertSeeIn('tbody tr:nth-child(3) td:first-child span', 'john@kolab.org')
-                        ->assertVisible('tbody tr:nth-child(3) td:first-child svg.text-success')
-                        ->assertSeeIn('tbody tr:nth-child(4) td:first-child a', 'ned@kolab.org')
-                        ->assertVisible('tbody tr:nth-child(4) td:first-child svg.text-success')
-                        ->assertMissing('tfoot');
+            // Assert Shared folders tab
+            $browser->assertSeeIn('@nav #tab-shared-folders', 'Shared folders (2)')
+                ->click('@nav #tab-shared-folders')
+                ->with('@user-shared-folders', function (Browser $browser) {
+                    $browser->assertElementsCount('table tbody tr', 2)
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'Calendar')
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:nth-child(2)', 'Calendar')
+                        ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', 'folder-event@kolab.org')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:first-child', 'Contacts')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:nth-child(2)', 'Address Book')
+                        ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', 'folder-contact@kolab.org')
+                        ->assertMissing('table tfoot');
                 });
         });
 
@@ -345,7 +367,8 @@ class UserTest extends TestCaseDusk
             $page = new UserPage($ned->id);
             $ned->setSetting('greylist_enabled', 'false');
 
-            $browser->click('@user-users tbody tr:nth-child(4) td:first-child a')
+            $browser->click('@nav #tab-users')
+                ->click('@user-users tbody tr:nth-child(4) td:first-child a')
                 ->on($page);
 
             // Assert main info box content
@@ -357,7 +380,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 8);
+                ->assertElementsCount('@nav a', 9);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -423,6 +446,14 @@ class UserTest extends TestCaseDusk
                 ->with('@user-resources', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no resources in this account.');
+                });
+
+            // We don't expect John's folders here
+            $browser->assertSeeIn('@nav #tab-shared-folders', 'Shared folders (0)')
+                ->click('@nav #tab-shared-folders')
+                ->with('@user-shared-folders', function (Browser $browser) {
+                    $browser->assertElementsCount('table tbody tr', 0)
+                        ->assertSeeIn('table tfoot tr td', 'There are no shared folders in this account.');
                 });
 
             // Assert Settings tab

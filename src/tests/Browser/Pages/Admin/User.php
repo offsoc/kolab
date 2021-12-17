@@ -59,6 +59,7 @@ class User extends Page
             '@user-distlists' => '#user-distlists',
             '@user-domains' => '#user-domains',
             '@user-resources' => '#user-resources',
+            '@user-shared-folders' => '#user-shared-folders',
             '@user-users' => '#user-users',
             '@user-settings' => '#user-settings',
         ];

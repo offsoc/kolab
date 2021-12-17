@@ -53,6 +53,8 @@ class AppServiceProvider extends ServiceProvider
         \App\PlanPackage::observe(\App\Observers\PlanPackageObserver::class);
         \App\Resource::observe(\App\Observers\ResourceObserver::class);
         \App\ResourceSetting::observe(\App\Observers\ResourceSettingObserver::class);
+        \App\SharedFolder::observe(\App\Observers\SharedFolderObserver::class);
+        \App\SharedFolderSetting::observe(\App\Observers\SharedFolderSettingObserver::class);
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
         \App\SignupInvitation::observe(\App\Observers\SignupInvitationObserver::class);
         \App\Transaction::observe(\App\Observers\TransactionObserver::class);

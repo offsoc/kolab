@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\Domain;
 
 use App\Domain;
 use Tests\TestCase;
 
-class DomainVerifyTest extends TestCase
+class VerifyTest extends TestCase
 {
     /**
      * {@inheritDoc}

@@ -167,7 +167,7 @@ class PaymentsController extends Controller
         // It has to be at least minimum payment amount and must cover current debt
         if (
             $wallet->balance < 0
-            && $wallet->balance * -1 > PaymentProvider::MIN_AMOUNT
+            && $wallet->balance <= PaymentProvider::MIN_AMOUNT * -1
             && $wallet->balance + $amount < 0
         ) {
             return ['amount' => \trans('validation.minamountdebt')];

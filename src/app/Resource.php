@@ -48,8 +48,7 @@ class Resource extends Model
         'status',
     ];
 
-    /**
-     * @var ?string Domain name for a resource to be created */
+    /** @var ?string Domain name for a resource to be created */
     public $domain;
 
 

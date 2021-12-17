@@ -5,6 +5,7 @@ import LoginComponent from '../../vue/Login'
 import LogoutComponent from '../../vue/Logout'
 import PageComponent from '../../vue/Page'
 import ResourceComponent from '../../vue/Admin/Resource'
+import SharedFolderComponent from '../../vue/Admin/SharedFolder'
 import StatsComponent from '../../vue/Admin/Stats'
 import UserComponent from '../../vue/Admin/User'
 
@@ -45,6 +46,12 @@ const routes = [
         path: '/resource/:resource',
         name: 'resource',
         component: ResourceComponent,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/shared-folder/:folder',
+        name: 'shared-folder',
+        component: SharedFolderComponent,
         meta: { requiresAuth: true }
     },
     {

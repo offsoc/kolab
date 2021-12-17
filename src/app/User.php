@@ -591,6 +591,29 @@ class User extends Authenticatable
             ->where('entitlements.entitleable_type', \App\Resource::class);
     }
 
+    /**
+     * Return shared folders controlled by the current user.
+     *
+     * @param bool $with_accounts Include folders assigned to wallets
+     *                            the current user controls but not owns.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     */
+    public function sharedFolders($with_accounts = true)
+    {
+        $wallets = $this->wallets()->pluck('id')->all();
+
+        if ($with_accounts) {
+            $wallets = array_merge($wallets, $this->accounts()->pluck('wallet_id')->all());
+        }
+
+        return \App\SharedFolder::select(['shared_folders.*', 'entitlements.wallet_id'])
+            ->distinct()
+            ->join('entitlements', 'entitlements.entitleable_id', '=', 'shared_folders.id')
+            ->whereIn('entitlements.wallet_id', $wallets)
+            ->where('entitlements.entitleable_type', \App\SharedFolder::class);
+    }
+
     public function senderPolicyFrameworkWhitelist($clientName)
     {
         $setting = $this->getSetting('spf_whitelist');

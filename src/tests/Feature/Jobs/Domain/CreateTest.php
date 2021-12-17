@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\Domain;
 
 use App\Domain;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class DomainCreateTest extends TestCase
+class CreateTest extends TestCase
 {
     /**
      * {@inheritDoc}

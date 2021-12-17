@@ -351,6 +351,12 @@ const app = new Vue({
 
             return this.$t('status.active')
         },
+        folderStatusClass(folder) {
+            return this.userStatusClass(folder)
+        },
+        folderStatusText(folder) {
+            return this.userStatusText(folder)
+        },
         pageName(path) {
             let page = this.$route.path
 

@@ -5,6 +5,7 @@ namespace App\Backends;
 use App\Domain;
 use App\Group;
 use App\Resource;
+use App\SharedFolder;
 use App\User;
 
 class LDAP
@@ -18,6 +19,12 @@ class LDAP
     public const RESOURCE_SETTINGS = [
         'folder',
         'invitation_policy',
+    ];
+
+    /** @const array Shared folder settings used by the backend */
+    public const SHARED_FOLDER_SETTINGS = [
+        'folder',
+        'acl',
     ];
 
     /** @const array User settings used by the backend */
@@ -297,6 +304,45 @@ class LDAP
     }
 
     /**
+     * Create a shared folder in LDAP.
+     *
+     * @param \App\SharedFolder $folder The shared folder to create.
+     *
+     * @throws \Exception
+     */
+    public static function createSharedFolder(SharedFolder $folder): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $domainName = explode('@', $folder->email, 2)[1];
+        $cn = $ldap->quote_string($folder->name);
+        $dn = "cn={$cn}," . self::baseDN($domainName, 'Shared Folders');
+
+        $entry = [
+            'mail' => $folder->email,
+            'objectclass' => [
+                'top',
+                'kolabsharedfolder',
+                'mailrecipient',
+            ],
+        ];
+
+        self::setSharedFolderAttributes($ldap, $folder, $entry);
+
+        self::addEntry(
+            $ldap,
+            $dn,
+            $entry,
+            "Failed to create shared folder {$folder->id} in LDAP (" . __LINE__ . ")"
+        );
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+    }
+
+    /**
      * Create a user in LDAP.
      *
      * Only need to add user if in any of the local domains? Figure that out here for now. Should
@@ -457,6 +503,34 @@ class LDAP
     }
 
     /**
+     * Delete a shared folder from LDAP.
+     *
+     * @param \App\SharedFolder $folder The shared folder to delete.
+     *
+     * @throws \Exception
+     */
+    public static function deleteSharedFolder(SharedFolder $folder): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        if (self::getSharedFolderEntry($ldap, $folder->email, $dn)) {
+            $result = $ldap->delete_entry($dn);
+
+            if (!$result) {
+                self::throwException(
+                    $ldap,
+                    "Failed to delete shared folder {$folder->id} from LDAP (" . __LINE__ . ")"
+                );
+            }
+        }
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+    }
+
+    /**
      * Delete a user from LDAP.
      *
      * @param \App\User $user The user account to delete.
@@ -552,6 +626,28 @@ class LDAP
         }
 
         return $resource;
+    }
+
+    /**
+     * Get a shared folder data from LDAP.
+     *
+     * @param string $email The resource email.
+     *
+     * @return array|false|null
+     * @throws \Exception
+     */
+    public static function getSharedFolder(string $email)
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $folder = self::getSharedFolderEntry($ldap, $email, $dn);
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+
+        return $folder;
     }
 
     /**
@@ -686,6 +782,43 @@ class LDAP
             self::throwException(
                 $ldap,
                 "Failed to update resource {$resource->email} in LDAP (" . __LINE__ . ")"
+            );
+        }
+
+        if (empty(self::$ldap)) {
+            $ldap->close();
+        }
+    }
+
+    /**
+     * Update a shared folder in LDAP.
+     *
+     * @param \App\SharedFolder $folder The shared folder to update
+     *
+     * @throws \Exception
+     */
+    public static function updateSharedFolder(SharedFolder $folder): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $newEntry = $oldEntry = self::getSharedFolderEntry($ldap, $folder->email, $dn);
+
+        if (empty($oldEntry)) {
+            self::throwException(
+                $ldap,
+                "Failed to update shared folder {$folder->id} in LDAP (folder not found)"
+            );
+        }
+
+        self::setSharedFolderAttributes($ldap, $folder, $newEntry);
+
+        $result = $ldap->modify_entry($dn, $oldEntry, $newEntry);
+
+        if (!is_array($result)) {
+            self::throwException(
+                $ldap,
+                "Failed to update shared folder {$folder->id} in LDAP (" . __LINE__ . ")"
             );
         }
 
@@ -887,6 +1020,19 @@ class LDAP
     }
 
     /**
+     * Set common shared folder attributes
+     */
+    private static function setSharedFolderAttributes($ldap, SharedFolder $folder, &$entry)
+    {
+        $settings = $folder->getSettings(['acl', 'folder']);
+
+        $entry['cn'] = $folder->name;
+        $entry['kolabfoldertype'] = $folder->type;
+        $entry['kolabtargetfolder'] = $settings['folder'] ?? '';
+        $entry['acl'] = !empty($settings['acl']) ? json_decode($settings['acl'], true) : '';
+    }
+
+    /**
      * Set common user attributes
      */
     private static function setUserAttributes(User $user, array &$entry)
@@ -1023,6 +1169,28 @@ class LDAP
 
         // For resources we're using search() instead of get_entry() because
         // a resource name is not constant, so e.g. on update we might have
+        // the new name, but not the old one. Email address is constant.
+        return self::searchEntry($ldap, $base_dn, "(mail=$email)", $attrs, $dn);
+    }
+
+    /**
+     * Get a shared folder entry from LDAP.
+     *
+     * @param \Net_LDAP3 $ldap  Ldap connection
+     * @param string     $email Resource email (mail)
+     * @param string     $dn    Reference to the shared folder DN
+     *
+     * @return null|array Shared folder entry, NULL if not found
+     */
+    private static function getSharedFolderEntry($ldap, $email, &$dn = null)
+    {
+        $domainName = explode('@', $email, 2)[1];
+        $base_dn = self::baseDN($domainName, 'Shared Folders');
+
+        $attrs = ['dn', 'cn', 'mail', 'objectclass', 'kolabtargetfolder', 'kolabfoldertype', 'acl'];
+
+        // For shared folders we're using search() instead of get_entry() because
+        // a folder name is not constant, so e.g. on update we might have
         // the new name, but not the old one. Email address is constant.
         return self::searchEntry($ldap, $base_dn, "(mail=$email)", $attrs, $dn);
     }

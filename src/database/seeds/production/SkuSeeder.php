@@ -116,7 +116,7 @@ class SkuSeeder extends Seeder
 
         Sku::create(
             [
-                'title' => 'shared_folder',
+                'title' => 'shared-folder',
                 'name' => 'Shared Folder',
                 'description' => 'A shared folder',
                 'cost' => 89,
@@ -224,6 +224,20 @@ class SkuSeeder extends Seeder
                 'units_free' => 0,
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Beta\Resources',
+                'active' => true,
+            ]);
+        }
+
+        // Check existence because migration might have added this already
+        if (!Sku::where('title', 'beta-shared-folders')->first()) {
+            Sku::create([
+                'title' => 'beta-shared-folders',
+                'name' => 'Shared folders',
+                'description' => 'Access to shared folders',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Beta\SharedFolders',
                 'active' => true,
             ]);
         }
