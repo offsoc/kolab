@@ -4,7 +4,7 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ $tc('shf.list-title', 2) }}
-                    <router-link class="btn btn-success float-end create-folder" :to="{ path: 'shared-folder/new' }" tag="button">
+                    <router-link v-if="!$root.isDegraded()" class="btn btn-success float-end create-folder" :to="{ path: 'shared-folder/new' }" tag="button">
                         <svg-icon icon="cog"></svg-icon> {{ $t('shf.create') }}
                     </router-link>
                 </div>

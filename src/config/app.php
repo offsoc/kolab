@@ -271,6 +271,10 @@ return [
         'footer' => env('COMPANY_FOOTER', env('COMPANY_DETAILS')),
     ],
 
+    'storage' => [
+        'min_qty' => (int) env('STORAGE_MIN_QTY', 5), // in GB
+    ],
+
     'vat' => [
         'countries' => env('VAT_COUNTRIES'),
         'rate' => (float) env('VAT_RATE'),

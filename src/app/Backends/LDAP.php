@@ -1036,11 +1036,11 @@ class LDAP
      */
     private static function setUserAttributes(User $user, array &$entry)
     {
+        $isDegraded = $user->isDegraded(true);
         $settings = $user->getSettings(['first_name', 'last_name', 'organization']);
 
         $firstName = $settings['first_name'];
         $lastName = $settings['last_name'];
-
         $cn = "unknown";
         $displayname = "";
 
@@ -1100,12 +1100,17 @@ class LDAP
             $entry['nsroledn'][] = "cn=2fa-user,{$hostedRootDN}";
         }
 
-        if (in_array("activesync", $roles)) {
-            $entry['nsroledn'][] = "cn=activesync-user,{$hostedRootDN}";
-        }
+        if ($isDegraded) {
+            $entry['nsroledn'][] = "cn=degraded-user,{$hostedRootDN}";
+            $entry['mailquota'] = \config('app.storage.min_qty') * 1048576;
+        } else {
+            if (in_array("activesync", $roles)) {
+                $entry['nsroledn'][] = "cn=activesync-user,{$hostedRootDN}";
+            }
 
-        if (!in_array("groupware", $roles)) {
-            $entry['nsroledn'][] = "cn=imap-user,{$hostedRootDN}";
+            if (!in_array("groupware", $roles)) {
+                $entry['nsroledn'][] = "cn=imap-user,{$hostedRootDN}";
+            }
         }
     }
 

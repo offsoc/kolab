@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\User;
+use App\Wallet;
 use Tests\TestCase;
 
 class UserTest extends TestCase
@@ -76,6 +77,7 @@ class UserTest extends TestCase
             User::STATUS_DELETED,
             User::STATUS_IMAP_READY,
             User::STATUS_LDAP_READY,
+            User::STATUS_DEGRADED,
         ];
 
         $users = \App\Utils::powerSet($statuses);
@@ -94,6 +96,7 @@ class UserTest extends TestCase
             $this->assertTrue($user->isDeleted() === in_array(User::STATUS_DELETED, $user_statuses));
             $this->assertTrue($user->isLdapReady() === in_array(User::STATUS_LDAP_READY, $user_statuses));
             $this->assertTrue($user->isImapReady() === in_array(User::STATUS_IMAP_READY, $user_statuses));
+            $this->assertTrue($user->isDegraded() === in_array(User::STATUS_DEGRADED, $user_statuses));
         }
     }
 

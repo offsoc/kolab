@@ -89,10 +89,15 @@ class WalletObserver
                     'balance_warning_before_delete' => null,
             ]);
 
-            // Unsuspend the account/domains/users
+            // FIXME: Since we use account degradation, should we leave suspended state untouched?
+
+            // Un-suspend and un-degrade the account owner
             if ($wallet->owner) {
                 $wallet->owner->unsuspend();
+                $wallet->owner->undegrade();
             }
+
+            // Un-suspend domains/users
             foreach ($wallet->entitlements as $entitlement) {
                 if (
                     $entitlement->entitleable_type == \App\Domain::class

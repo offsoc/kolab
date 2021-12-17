@@ -96,13 +96,18 @@ trait TestCaseTrait
     /**
      * Register the beta entitlement for a user
      */
-    protected function addBetaEntitlement($user, $title): void
+    protected function addBetaEntitlement($user, $titles = []): void
     {
         // Add beta + $title entitlements
         $beta_sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
-        $sku = Sku::withEnvTenantContext()->where('title', $title)->first();
         $user->assignSku($beta_sku);
-        $user->assignSku($sku);
+
+        if (!empty($titles)) {
+            Sku::withEnvTenantContext()->whereIn('title', (array) $titles)->get()
+                ->each(function ($sku) use ($user) {
+                    $user->assignSku($sku);
+                });
+        }
     }
 
     /**
@@ -125,7 +130,7 @@ trait TestCaseTrait
         Assert::assertSame($expected, $skus);
     }
 
-    protected function backdateEntitlements($entitlements, $targetDate)
+    protected function backdateEntitlements($entitlements, $targetDate, $targetCreatedDate = null)
     {
         $wallets = [];
         $ids = [];
@@ -136,7 +141,7 @@ trait TestCaseTrait
         }
 
         \App\Entitlement::whereIn('id', $ids)->update([
-                'created_at' => $targetDate,
+                'created_at' => $targetCreatedDate ?: $targetDate,
                 'updated_at' => $targetDate,
         ]);
 
@@ -144,7 +149,9 @@ trait TestCaseTrait
             $wallets = array_unique($wallets);
             $owners = \App\Wallet::whereIn('id', $wallets)->pluck('user_id')->all();
 
-            \App\User::whereIn('id', $owners)->update(['created_at' => $targetDate]);
+            \App\User::whereIn('id', $owners)->update([
+                    'created_at' => $targetCreatedDate ?: $targetDate
+            ]);
         }
     }
 

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Domain;
 use App\Group;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -397,36 +398,99 @@ class UserTest extends TestCase
     }
 
     /**
-     * Test User::hasSku() method
+     * Test user account degradation and un-degradation
      */
-    public function testHasSku(): void
+    public function testDegradeAndUndegrade(): void
     {
-        $john = $this->getTestUser('john@kolab.org');
+        Queue::fake();
 
-        $this->assertTrue($john->hasSku('mailbox'));
-        $this->assertTrue($john->hasSku('storage'));
-        $this->assertFalse($john->hasSku('beta'));
-        $this->assertFalse($john->hasSku('unknown'));
-    }
+        // Test an account with users, domain
+        $userA = $this->getTestUser('UserAccountA@UserAccount.com');
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $domain = $this->getTestDomain('UserAccount.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_HOSTED,
+        ]);
+        $userA->assignPackage($package_kolab);
+        $domain->assignPackage($package_domain, $userA);
+        $userA->assignPackage($package_kolab, $userB);
 
-    public function testUserQuota(): void
-    {
-        // TODO: This test does not test much, probably could be removed
-        //       or moved to somewhere else, or extended with
-        //       other entitlements() related cases.
+        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
+        $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domain->id);
 
-        $user = $this->getTestUser('john@kolab.org');
-        $storage_sku = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $yesterday = Carbon::now()->subDays(1);
 
-        $count = 0;
+        $this->backdateEntitlements($entitlementsA->get(), $yesterday, Carbon::now()->subMonthsWithoutOverflow(1));
+        $this->backdateEntitlements($entitlementsB->get(), $yesterday, Carbon::now()->subMonthsWithoutOverflow(1));
 
-        foreach ($user->entitlements()->get() as $entitlement) {
-            if ($entitlement->sku_id == $storage_sku->id) {
-                $count += 1;
-            }
-        }
+        $wallet = $userA->wallets->first();
 
-        $this->assertTrue($count == 5);
+        $this->assertSame(7, $entitlementsA->count());
+        $this->assertSame(7, $entitlementsB->count());
+        $this->assertSame(7, $entitlementsA->whereDate('updated_at', $yesterday->toDateString())->count());
+        $this->assertSame(7, $entitlementsB->whereDate('updated_at', $yesterday->toDateString())->count());
+        $this->assertSame(0, $wallet->balance);
+
+        Queue::fake(); // reset queue state
+
+        // Degrade the account/wallet owner
+        $userA->degrade();
+
+        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
+
+        $this->assertTrue($userA->fresh()->isDegraded());
+        $this->assertTrue($userA->fresh()->isDegraded(true));
+        $this->assertFalse($userB->fresh()->isDegraded());
+        $this->assertTrue($userB->fresh()->isDegraded(true));
+
+        $balance = $wallet->fresh()->balance;
+        $this->assertTrue($balance <= -64);
+        $this->assertSame(7, $entitlementsA->whereDate('updated_at', Carbon::now()->toDateString())->count());
+        $this->assertSame(7, $entitlementsB->whereDate('updated_at', Carbon::now()->toDateString())->count());
+
+        // Expect one update job for every user
+        // @phpstan-ignore-next-line
+        $userIds = Queue::pushed(\App\Jobs\User\UpdateJob::class)->map(function ($job) {
+            return TestCase::getObjectProperty($job, 'userId');
+        })->all();
+
+        $this->assertSame([$userA->id, $userB->id], $userIds);
+
+        // Un-Degrade the account/wallet owner
+
+        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
+
+        $yesterday = Carbon::now()->subDays(1);
+
+        $this->backdateEntitlements($entitlementsA->get(), $yesterday, Carbon::now()->subMonthsWithoutOverflow(1));
+        $this->backdateEntitlements($entitlementsB->get(), $yesterday, Carbon::now()->subMonthsWithoutOverflow(1));
+
+        Queue::fake(); // reset queue state
+
+        $userA->undegrade();
+
+        $this->assertFalse($userA->fresh()->isDegraded());
+        $this->assertFalse($userA->fresh()->isDegraded(true));
+        $this->assertFalse($userB->fresh()->isDegraded());
+        $this->assertFalse($userB->fresh()->isDegraded(true));
+
+        // Expect no balance change, degraded account entitlements are free
+        $this->assertSame($balance, $wallet->fresh()->balance);
+        $this->assertSame(7, $entitlementsA->whereDate('updated_at', Carbon::now()->toDateString())->count());
+        $this->assertSame(7, $entitlementsB->whereDate('updated_at', Carbon::now()->toDateString())->count());
+
+        // Expect one update job for every user
+        // @phpstan-ignore-next-line
+        $userIds = Queue::pushed(\App\Jobs\User\UpdateJob::class)->map(function ($job) {
+            return TestCase::getObjectProperty($job, 'userId');
+        })->all();
+
+        $this->assertSame([$userA->id, $userB->id], $userIds);
     }
 
     /**
@@ -715,6 +779,19 @@ class UserTest extends TestCase
 
         // TODO: searching by external email (setting)
         $this->markTestIncomplete();
+    }
+
+    /**
+     * Test User::hasSku() method
+     */
+    public function testHasSku(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+
+        $this->assertTrue($john->hasSku('mailbox'));
+        $this->assertTrue($john->hasSku('storage'));
+        $this->assertFalse($john->hasSku('beta'));
+        $this->assertFalse($john->hasSku('unknown'));
     }
 
     /**
@@ -1099,6 +1176,9 @@ class UserTest extends TestCase
         $this->assertCount(4, $users);
     }
 
+    /**
+     * Tests for User::wallets()
+     */
     public function testWallets(): void
     {
         $this->markTestIncomplete();

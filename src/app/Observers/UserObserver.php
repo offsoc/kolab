@@ -189,15 +189,51 @@ class UserObserver
     }
 
     /**
-     * Handle the "updating" event.
+     * Handle the "updated" event.
      *
-     * @param User $user The user that is being updated.
+     * @param \App\User $user The user that is being updated.
      *
      * @return void
      */
-    public function updating(User $user)
+    public function updated(User $user)
     {
         \App\Jobs\User\UpdateJob::dispatch($user->id);
+
+        $oldStatus = $user->getOriginal('status');
+        $newStatus = $user->status;
+
+        if (($oldStatus & User::STATUS_DEGRADED) !== ($newStatus & User::STATUS_DEGRADED)) {
+            $wallets = [];
+            $isDegraded = $user->isDegraded();
+
+            // Charge all entitlements as if they were being deleted,
+            // but don't delete them. Just debit the wallet and update
+            // entitlements' updated_at timestamp. On un-degrade we still
+            // update updated_at, but with no debit (the cost is 0 on a degraded account).
+            foreach ($user->wallets as $wallet) {
+                $wallet->updateEntitlements($isDegraded);
+
+                // Remember time of the degradation for sending periodic reminders
+                // and reset it on un-degradation
+                $val = $isDegraded ? \Carbon\Carbon::now()->toDateTimeString() : null;
+                $wallet->setSetting('degraded_last_reminder', $val);
+
+                $wallets[] = $wallet->id;
+            }
+
+            // (Un-)degrade users by invoking an update job.
+            // LDAP backend will read the wallet owner's degraded status and
+            // set LDAP attributes accordingly.
+            // We do not change their status as their wallets have its own state
+            \App\Entitlement::whereIn('wallet_id', $wallets)
+                ->where('entitleable_id', '!=', $user->id)
+                ->where('entitleable_type', User::class)
+                ->pluck('entitleable_id')
+                ->unique()
+                ->each(function ($user_id) {
+                    \App\Jobs\User\UpdateJob::dispatch($user_id);
+                });
+        }
     }
 
     /**
@@ -222,12 +258,10 @@ class UserObserver
                 }
 
                 // Objects need to be deleted one by one to make sure observers can do the proper cleanup
-                if ($entitlement->entitleable) {
-                    if ($force) {
-                        $entitlement->entitleable->forceDelete();
-                    } elseif (!$entitlement->entitleable->trashed()) {
-                        $entitlement->entitleable->delete();
-                    }
+                if ($force) {
+                    $entitlement->entitleable->forceDelete();
+                } elseif (!$entitlement->entitleable->trashed()) {
+                    $entitlement->entitleable->delete();
                 }
             });
 

@@ -4,6 +4,7 @@ namespace Tests\Feature\Jobs;
 
 use App\Jobs\WalletCheck;
 use App\User;
+use App\Wallet;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -17,12 +18,6 @@ class WalletCheckTest extends TestCase
     {
         parent::setUp();
 
-        $ned = $this->getTestUser('ned@kolab.org');
-        if ($ned->isSuspended()) {
-            $ned->status -= User::STATUS_SUSPENDED;
-            $ned->save();
-        }
-
         $this->deleteTestUser('wallet-check@kolabnow.com');
     }
 
@@ -31,12 +26,6 @@ class WalletCheckTest extends TestCase
      */
     public function tearDown(): void
     {
-        $ned = $this->getTestUser('ned@kolab.org');
-        if ($ned->isSuspended()) {
-            $ned->status -= User::STATUS_SUSPENDED;
-            $ned->save();
-        }
-
         $this->deleteTestUser('wallet-check@kolabnow.com');
 
         parent::tearDown();
@@ -49,14 +38,9 @@ class WalletCheckTest extends TestCase
     {
         Mail::fake();
 
-        $user = $this->getTestUser('ned@kolab.org');
-        $user->setSetting('external_email', 'external@test.com');
-        $wallet = $user->wallets()->first();
+        $user = $this->prepareTestUser($wallet);
         $now = Carbon::now();
 
-        // Balance is not negative, double-update+save for proper resetting of the state
-        $wallet->balance = -100;
-        $wallet->save();
         $wallet->balance = 0;
         $wallet->save();
 
@@ -123,8 +107,7 @@ class WalletCheckTest extends TestCase
     {
         Mail::fake();
 
-        $user = $this->getTestUser('ned@kolab.org');
-        $wallet = $user->wallets()->first();
+        $user = $this->prepareTestUser($wallet);
         $now = Carbon::now();
 
         // Balance turned negative 7-1 days ago
@@ -149,9 +132,7 @@ class WalletCheckTest extends TestCase
     {
         Mail::fake();
 
-        $user = $this->getTestUser('ned@kolab.org');
-        $user->setSetting('external_email', 'external@test.com');
-        $wallet = $user->wallets()->first();
+        $user = $this->prepareTestUser($wallet);
         $now = Carbon::now();
 
         // Balance turned negative 7+1 days ago, expect mail sent
@@ -160,10 +141,10 @@ class WalletCheckTest extends TestCase
         $job = new WalletCheck($wallet);
         $job->handle();
 
-        // Assert the mail was sent to the user's email, but not to his external email
-        Mail::assertSent(\App\Mail\NegativeBalanceReminder::class, 1);
-        Mail::assertSent(\App\Mail\NegativeBalanceReminder::class, function ($mail) use ($user) {
-            return $mail->hasTo($user->email) && !$mail->hasCc('external@test.com');
+        // Assert the mail was sent to the user's email and to his external email
+        Mail::assertSent(\App\Mail\NegativeBalanceReminderDegrade::class, 1);
+        Mail::assertSent(\App\Mail\NegativeBalanceReminderDegrade::class, function ($mail) use ($user) {
+            return $mail->hasTo($user->email) && $mail->hasCc('external@test.com');
         });
 
         // Run the job again to make sure the notification is not sent again
@@ -179,12 +160,12 @@ class WalletCheckTest extends TestCase
      *
      * @depends testHandleReminder
      */
+/*
     public function testHandleBeforeSuspended(): void
     {
         Mail::fake();
 
-        $user = $this->getTestUser('ned@kolab.org');
-        $wallet = $user->wallets()->first();
+        $user = $this->prepareTestUser($wallet);
         $now = Carbon::now();
 
         // Balance turned negative 7+14-1 days ago
@@ -200,19 +181,18 @@ class WalletCheckTest extends TestCase
         $this->assertSame(WalletCheck::THRESHOLD_BEFORE_SUSPEND, $res);
         $this->assertFalse($user->fresh()->isSuspended());
     }
-
+*/
     /**
      * Test job handle, account suspending
      *
      * @depends testHandleBeforeSuspended
      */
+/*
     public function testHandleSuspended(): void
     {
         Mail::fake();
 
-        $user = $this->getTestUser('ned@kolab.org');
-        $user->setSetting('external_email', 'external@test.com');
-        $wallet = $user->wallets()->first();
+        $user = $this->prepareTestUser($wallet);
         $now = Carbon::now();
 
         // Balance turned negative 7+14+1 days ago, expect mail sent
@@ -232,16 +212,6 @@ class WalletCheckTest extends TestCase
         $this->assertTrue($user->fresh()->isSuspended());
 
         // TODO: Test that group account members/domain are also being suspended
-        /*
-        foreach ($wallet->entitlements()->fresh()->get() as $entitlement) {
-            if (
-                $entitlement->entitleable_type == \App\Domain::class
-                || $entitlement->entitleable_type == \App\User::class
-            ) {
-                $this->assertTrue($entitlement->entitleable->isSuspended());
-            }
-        }
-        */
 
         // Run the job again to make sure the notification is not sent again
         Mail::fake();
@@ -250,19 +220,18 @@ class WalletCheckTest extends TestCase
 
         Mail::assertNothingSent();
     }
-
+*/
     /**
      * Test job handle, final warning before delete
      *
      * @depends testHandleSuspended
      */
+/*
     public function testHandleBeforeDelete(): void
     {
         Mail::fake();
 
-        $user = $this->getTestUser('ned@kolab.org');
-        $user->setSetting('external_email', 'external@test.com');
-        $wallet = $user->wallets()->first();
+        $user = $this->prepareTestUser($wallet);
         $now = Carbon::now();
 
         // Balance turned negative 7+14+21-3+1 days ago, expect mail sent
@@ -288,24 +257,19 @@ class WalletCheckTest extends TestCase
 
         Mail::assertNothingSent();
     }
-
+*/
     /**
      * Test job handle, account delete
      *
      * @depends testHandleBeforeDelete
      */
+/*
     public function testHandleDelete(): void
     {
         Mail::fake();
 
-        $user = $this->getTestUser('wallet-check@kolabnow.com');
-        $wallet = $user->wallets()->first();
-        $wallet->balance = -100;
-        $wallet->save();
+        $user = $this->prepareTestUser($wallet);
         $now = Carbon::now();
-
-        $package = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $user->assignPackage($package);
 
         $this->assertFalse($user->isDeleted());
         $this->assertCount(7, $user->entitlements()->get());
@@ -324,5 +288,112 @@ class WalletCheckTest extends TestCase
         $this->assertCount(0, $user->entitlements()->get());
 
         // TODO: Test it deletes all members of the group account
+    }
+*/
+
+    /**
+     * Test job handle, account degrade
+     *
+     * @depends testHandleReminder
+     */
+    public function testHandleDegrade(): void
+    {
+        Mail::fake();
+
+        $user = $this->prepareTestUser($wallet);
+        $now = Carbon::now();
+
+        $this->assertFalse($user->isDegraded());
+
+        // Balance turned negative 7+7+1 days ago, expect mail sent
+        $days = 7 + 7 + 1;
+        $wallet->setSetting('balance_negative_since', $now->subDays($days)->toDateTimeString());
+
+        $job = new WalletCheck($wallet);
+        $job->handle();
+
+        // Assert the mail was sent to the user's email, and his external email
+        Mail::assertSent(\App\Mail\NegativeBalanceDegraded::class, 1);
+        Mail::assertSent(\App\Mail\NegativeBalanceDegraded::class, function ($mail) use ($user) {
+            return $mail->hasTo($user->email) && $mail->hasCc('external@test.com');
+        });
+
+        // Check that it has been degraded
+        $this->assertTrue($user->fresh()->isDegraded());
+    }
+
+    /**
+     * Test job handle, periodic reminder to a degraded account
+     *
+     * @depends testHandleDegrade
+     */
+    public function testHandleDegradeReminder(): void
+    {
+        Mail::fake();
+
+        $user = $this->prepareTestUser($wallet);
+        $user->update(['status' => $user->status | User::STATUS_DEGRADED]);
+        $now = Carbon::now();
+
+        $this->assertTrue($user->isDegraded());
+
+        // Test degraded_last_reminder not set
+        $wallet->setSetting('degraded_last_reminder', null);
+
+        $job = new WalletCheck($wallet);
+        $res = $job->handle();
+
+        Mail::assertNothingSent();
+
+        $_last = Wallet::find($wallet->id)->getSetting('degraded_last_reminder');
+        $this->assertSame(Carbon::now()->toDateTimeString(), $_last);
+        $this->assertSame(WalletCheck::THRESHOLD_DEGRADE_REMINDER, $res);
+
+        // Test degraded_last_reminder set, but 14 days didn't pass yet
+        $last = $now->copy()->subDays(10);
+        $wallet->setSetting('degraded_last_reminder', $last->toDateTimeString());
+
+        $job = new WalletCheck($wallet);
+        $res = $job->handle();
+
+        Mail::assertNothingSent();
+
+        $_last = $wallet->fresh()->getSetting('degraded_last_reminder');
+        $this->assertSame(WalletCheck::THRESHOLD_DEGRADE_REMINDER, $res);
+        $this->assertSame($last->toDateTimeString(), $_last);
+
+        // Test degraded_last_reminder set, and 14 days passed
+        $wallet->setSetting('degraded_last_reminder', $now->copy()->subDays(14)->setSeconds(0));
+
+        $job = new WalletCheck($wallet);
+        $res = $job->handle();
+
+        // Assert the mail was sent to the user's email, and his external email
+        Mail::assertSent(\App\Mail\DegradedAccountReminder::class, 1);
+        Mail::assertSent(\App\Mail\DegradedAccountReminder::class, function ($mail) use ($user) {
+            return $mail->hasTo($user->email) && $mail->hasCc('external@test.com');
+        });
+
+        $_last = $wallet->fresh()->getSetting('degraded_last_reminder');
+        $this->assertSame(Carbon::now()->toDateTimeString(), $_last);
+        $this->assertSame(WalletCheck::THRESHOLD_DEGRADE_REMINDER, $res);
+    }
+
+    /**
+     * A helper to prepare a user for tests
+     */
+    private function prepareTestUser(&$wallet)
+    {
+        $user = $this->getTestUser('wallet-check@kolabnow.com');
+        $user->setSetting('external_email', 'external@test.com');
+        $wallet = $user->wallets()->first();
+
+        $package = \App\Package::withObjectTenantContext($user)->where('title', 'kolab')->first();
+        $user->assignPackage($package);
+
+        $wallet->balance = -100;
+        $wallet->save();
+
+        return $user;
     }
 }

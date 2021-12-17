@@ -469,6 +469,32 @@ class LDAPTest extends TestCase
 
         $this->assertSame($expected_roles, $ldap_roles);
 
+        // Test degraded user
+
+        $sku_storage = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $sku_2fa = \App\Sku::withEnvTenantContext()->where('title', '2fa')->first();
+        $user->status |= User::STATUS_DEGRADED;
+        $user->update(['status' => $user->status]);
+        $user->assignSku($sku_storage, 2);
+        $user->assignSku($sku_2fa, 1);
+
+        LDAP::updateUser($user->fresh());
+
+        $expected['inetuserstatus'] = $user->status;
+        $expected['mailquota'] = \config('app.storage.min_qty') * 1048576;
+        $expected['nsroledn'] = [
+            'cn=2fa-user,' . \config('ldap.hosted.root_dn'),
+            'cn=degraded-user,' . \config('ldap.hosted.root_dn')
+        ];
+
+        $ldap_user = LDAP::getUser($user->email);
+
+        foreach ($expected as $attr => $value) {
+            $this->assertEquals($value, isset($ldap_user[$attr]) ? $ldap_user[$attr] : null);
+        }
+
+        // TODO: Test user who's owner is degraded
+
         // Delete the user
         LDAP::deleteUser($user);
 

@@ -82,7 +82,14 @@ class Wallet extends Model
         }
     }
 
-    public function chargeEntitlements($apply = true)
+    /**
+     * Charge entitlements in the wallet
+     *
+     * @param bool $apply Set to false for a dry-run mode
+     *
+     * @return int Charged amount in cents
+     */
+    public function chargeEntitlements($apply = true): int
     {
         // This wallet has been created less than a month ago, this is the trial period
         if ($this->owner->created_at >= Carbon::now()->subMonthsWithoutOverflow(1)) {
@@ -103,13 +110,16 @@ class Wallet extends Model
         $profit = 0;
         $charges = 0;
         $discount = $this->getDiscountRate();
+        $isDegraded = $this->owner->isDegraded();
 
-        DB::beginTransaction();
+        if ($apply) {
+            DB::beginTransaction();
+        }
 
         // used to parent individual entitlement billings to the wallet debit.
         $entitlementTransactions = [];
 
-        foreach ($this->entitlements()->get()->fresh() as $entitlement) {
+        foreach ($this->entitlements()->get() as $entitlement) {
             // This entitlement has been created less than or equal to 14 days ago (this is at
             // maximum the fourteenth 24-hour period).
             if ($entitlement->created_at > Carbon::now()->subDays(14)) {
@@ -127,6 +137,10 @@ class Wallet extends Model
 
                 $cost = (int) ($entitlement->cost * $discount * $diff);
                 $fee = (int) ($entitlement->fee * $diff);
+
+                if ($isDegraded) {
+                    $cost = 0;
+                }
 
                 $charges += $cost;
                 $profit += $cost - $fee;
@@ -164,9 +178,9 @@ class Wallet extends Model
                     $wallet->{$method}(abs($profit), $desc);
                 }
             }
-        }
 
-        DB::commit();
+            DB::commit();
+        }
 
         return $charges;
     }
@@ -422,5 +436,73 @@ class Wallet extends Model
                 'object_type' => \App\Wallet::class
             ]
         );
+    }
+
+    /**
+     * Force-update entitlements' updated_at, charge if needed.
+     *
+     * @param bool $withCost When enabled the cost will be charged
+     *
+     * @return int Charged amount in cents
+     */
+    public function updateEntitlements($withCost = true): int
+    {
+        $charges = 0;
+        $discount = $this->getDiscountRate();
+        $now = Carbon::now();
+
+        DB::beginTransaction();
+
+        // used to parent individual entitlement billings to the wallet debit.
+        $entitlementTransactions = [];
+
+        foreach ($this->entitlements()->get() as $entitlement) {
+            $cost = 0;
+            $diffInDays = $entitlement->updated_at->diffInDays($now);
+
+            // This entitlement has been created less than or equal to 14 days ago (this is at
+            // maximum the fourteenth 24-hour period).
+            if ($entitlement->created_at > Carbon::now()->subDays(14)) {
+                // $cost=0
+            } elseif ($withCost && $diffInDays > 0) {
+                // The price per day is based on the number of days in the last month
+                // or the current month if the period does not overlap with the previous month
+                // FIXME: This really should be simplified to constant $daysInMonth=30
+                if ($now->day >= $diffInDays && $now->month == $entitlement->updated_at->month) {
+                    $daysInMonth = $now->daysInMonth;
+                } else {
+                    $daysInMonth = \App\Utils::daysInLastMonth();
+                }
+
+                $pricePerDay = $entitlement->cost / $daysInMonth;
+
+                $cost = (int) (round($pricePerDay * $discount * $diffInDays, 0));
+            }
+
+            if ($diffInDays > 0) {
+                $entitlement->updated_at = $entitlement->updated_at->setDateFrom($now);
+                $entitlement->save();
+            }
+
+            if ($cost == 0) {
+                continue;
+            }
+
+            $charges += $cost;
+
+            // FIXME: Shouldn't we store also cost=0 transactions (to have the full history)?
+            $entitlementTransactions[] = $entitlement->createTransaction(
+                \App\Transaction::ENTITLEMENT_BILLED,
+                $cost
+            );
+        }
+
+        if ($charges > 0) {
+            $this->debit($charges, '', $entitlementTransactions);
+        }
+
+        DB::commit();
+
+        return $charges;
     }
 }

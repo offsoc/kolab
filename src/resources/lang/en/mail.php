@@ -17,6 +17,16 @@ return [
     'more-info-html' => "See <a href=\":href\">here</a> for more information.",
     'more-info-text' => "See :href for more information.",
 
+    'degradedaccountreminder-subject' => ":site Reminder: Your account is free",
+    'degradedaccountreminder-body1' => "Thanks for sticking around, we remind you your account is a free "
+        . "account and restricted to receiving email, and use of the web client and cockpit only.",
+    'degradedaccountreminder-body2' => "This leaves you with an ideal account to use for account registration with third parties "
+        . "and password resets, notifications or even just subscriptions to newsletters and the like.",
+    'degradedaccountreminder-body3' => "To regain functionality such as sending email, calendars, address books, phone synchronization "
+        . "and voice & video conferencing, log on to the cockpit and make sure you have a positive account balance.",
+    'degradedaccountreminder-body4' => "You can also delete your account there, making sure your data disappears from our systems.",
+    'degradedaccountreminder-body5' => "Thank you for your consideration!",
+
     'negativebalance-subject' => ":site Payment Required",
     'negativebalance-body' => "This is a notification to let you know that your :site account balance has run into the negative and requires your attention. "
         . "Consider setting up an automatic payment to avoid messages like this in the future.",
@@ -28,6 +38,14 @@ return [
     'negativebalancereminder-body-ext' => "Settle up to keep your account running:",
     'negativebalancereminder-body-warning' => "Please, be aware that your account will be suspended "
         . "if your account balance is not settled by :date.",
+
+    'negativebalancereminderdegrade-body-warning' => "Please, be aware that your account will be degraded "
+        . "if your account balance is not settled by :date.",
+
+    'negativebalancedegraded-subject' => ":site Account Degraded",
+    'negativebalancedegraded-body' => "Your :site account has been degraded for having a negative balance for too long. "
+        . "Consider setting up an automatic payment to avoid messages like this in the future.",
+    'negativebalancedegraded-body-ext' => "Settle up now to undegrade your account:",
 
     'negativebalancesuspended-subject' => ":site Account Suspended",
     'negativebalancesuspended-body' => "Your :site account has been suspended for having a negative balance for too long. "

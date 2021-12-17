@@ -214,6 +214,8 @@ class UsersTest extends TestCase
         $this->assertSame($ned->email, $json['list'][3]['email']);
         // Values below are tested by Unit tests
         $this->assertArrayHasKey('isDeleted', $json['list'][0]);
+        $this->assertArrayHasKey('isDegraded', $json['list'][0]);
+        $this->assertArrayHasKey('isAccountDegraded', $json['list'][0]);
         $this->assertArrayHasKey('isSuspended', $json['list'][0]);
         $this->assertArrayHasKey('isActive', $json['list'][0]);
         $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
@@ -290,6 +292,8 @@ class UsersTest extends TestCase
         $this->assertSame([], $json['skus']);
         // Values below are tested by Unit tests
         $this->assertArrayHasKey('isDeleted', $json);
+        $this->assertArrayHasKey('isDegraded', $json);
+        $this->assertArrayHasKey('isAccountDegraded', $json);
         $this->assertArrayHasKey('isSuspended', $json);
         $this->assertArrayHasKey('isActive', $json);
         $this->assertArrayHasKey('isLdapReady', $json);

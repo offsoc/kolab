@@ -433,6 +433,8 @@ class UsersController extends RelationController
             'isSuspended' => $user->isSuspended(),
             'isActive' => $user->isActive(),
             'isDeleted' => $user->isDeleted() || $user->trashed(),
+            'isDegraded' => $user->isDegraded(),
+            'isAccountDegraded' => $user->isDegraded(true),
         ];
     }
 

@@ -51,6 +51,8 @@ class User extends Authenticatable
     public const STATUS_LDAP_READY = 1 << 4;
     // user mailbox has been created in IMAP
     public const STATUS_IMAP_READY = 1 << 5;
+    // user in "limited feature-set" state
+    public const STATUS_DEGRADED   = 1 << 6;
 
     /**
      * The attributes that are mass assignable.
@@ -244,6 +246,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Degrade the user
+     *
+     * @return void
+     */
+    public function degrade(): void
+    {
+        if ($this->isDegraded()) {
+            return;
+        }
+
+        $this->status |= User::STATUS_DEGRADED;
+        $this->save();
+    }
+
+    /**
      * Return the \App\Domain for this user.
      *
      * @return \App\Domain|null
@@ -391,7 +408,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Returns whether this domain is active.
+     * Returns whether this user is active.
      *
      * @return bool
      */
@@ -401,7 +418,27 @@ class User extends Authenticatable
     }
 
     /**
-     * Returns whether this domain is deleted.
+     * Returns whether this user (or its wallet owner) is degraded.
+     *
+     * @param bool $owner Check also the wallet owner instead just the user himself
+     *
+     * @return bool
+     */
+    public function isDegraded(bool $owner = false): bool
+    {
+        if ($this->status & self::STATUS_DEGRADED) {
+            return true;
+        }
+
+        if ($owner && ($wallet = $this->wallet())) {
+            return $wallet->owner && $wallet->owner->isDegraded();
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns whether this user is deleted.
      *
      * @return bool
      */
@@ -411,8 +448,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Returns whether this (external) domain has been verified
-     * to exist in DNS.
+     * Returns whether this user is registered in IMAP.
      *
      * @return bool
      */
@@ -442,7 +478,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Returns whether this domain is suspended.
+     * Returns whether this user is suspended.
      *
      * @return bool
      */
@@ -538,7 +574,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Suspend this domain.
+     * Suspend this user.
      *
      * @return void
      */
@@ -553,7 +589,22 @@ class User extends Authenticatable
     }
 
     /**
-     * Unsuspend this domain.
+     * Un-degrade this user.
+     *
+     * @return void
+     */
+    public function undegrade(): void
+    {
+        if (!$this->isDegraded()) {
+            return;
+        }
+
+        $this->status ^= User::STATUS_DEGRADED;
+        $this->save();
+    }
+
+    /**
+     * Unsuspend this user.
      *
      * @return void
      */
@@ -645,6 +696,7 @@ class User extends Authenticatable
             self::STATUS_DELETED,
             self::STATUS_LDAP_READY,
             self::STATUS_IMAP_READY,
+            self::STATUS_DEGRADED,
         ];
 
         foreach ($allowed_values as $value) {

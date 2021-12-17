@@ -312,6 +312,7 @@ return [
         'ready-user' => "Le compte d'utilisateur est presque prêt.",
         'verify' => "Veuillez vérifier votre domaine pour terminer le processus de configuration.",
         'verify-domain' => "Vérifier domaine",
+        'degraded' => "Dégradé",
         'deleted' => "Supprimé",
         'suspended' => "Suspendu",
         'notready' => "Pas Prêt",
@@ -349,6 +350,8 @@ return [
         'country' => "Pays",
         'create' => "Créer un utilisateur",
         'custno' => "No. de Client.",
+        'degraded-warning' => "Le compte est dégradé. Certaines fonctionnalités ont été désactivées.",
+        'degraded-hint' => "Veuillez effectuer un paiement.",
         'delete' => "Supprimer Utilisateur",
         'delete-email' => "Supprimer {email}",
         'delete-text' => "Voulez-vous vraiment supprimer cet utilisateur de façon permanente?"

@@ -63,6 +63,22 @@
             childMounted() {
                 this.$root.updateBodyClass()
                 this.getFAQ()
+                this.degradedWarning()
+            },
+            degradedWarning() {
+                // Display "Account Degraded" warning on all pages
+                if (this.$root.isDegraded()) {
+                    let message = this.$t('user.degraded-warning')
+
+                    if (this.$store.state.authInfo.isDegraded) {
+                        message += ' ' + this.$t('user.degraded-hint')
+                    }
+
+                    const html = `<div id="status-degraded" class="d-flex justify-content-center">`
+                        + `<p class="alert alert-danger">${message}</p></div>`
+
+                    $('#app > div.container').prepend(html)
+                }
             },
             getFAQ() {
                 let page = this.$route.path

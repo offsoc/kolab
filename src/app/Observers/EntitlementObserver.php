@@ -79,7 +79,7 @@ class EntitlementObserver
             $sf->removeFactors();
         }
 
-        if ($entitlement->entitleable && !$entitlement->entitleable->trashed()) {
+        if (!$entitlement->entitleable->trashed()) {
             $entitlement->entitleable->updated_at = Carbon::now();
             $entitlement->entitleable->save();
 
@@ -109,6 +109,10 @@ class EntitlementObserver
         }
 
         $owner = $entitlement->wallet->owner;
+
+        if ($owner->isDegraded()) {
+            return;
+        }
 
         // Determine if we're still within the free first month
         $freeMonthEnds = $owner->created_at->copy()->addMonthsWithoutOverflow(1);

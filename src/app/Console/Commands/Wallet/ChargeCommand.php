@@ -64,7 +64,8 @@ class ChargeCommand extends Command
             }
 
             if ($wallet->balance < 0) {
-                // Check the account balance, send notifications, suspend, delete
+                // Check the account balance, send notifications, (suspend, delete,) degrade
+                // Also sends reminders to the degraded account owners
                 \App\Jobs\WalletCheck::dispatch($wallet);
             }
         }

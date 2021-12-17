@@ -4,7 +4,7 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ $tc('resource.list-title', 2) }}
-                    <router-link class="btn btn-success float-end create-resource" :to="{ path: 'resource/new' }" tag="button">
+                    <router-link v-if="!$root.isDegraded()" class="btn btn-success float-end create-resource" :to="{ path: 'resource/new' }" tag="button">
                         <svg-icon icon="cog"></svg-icon> {{ $t('resource.create') }}
                     </router-link>
                 </div>

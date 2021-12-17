@@ -18,6 +18,9 @@ class WalletCheck implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    public const THRESHOLD_DEGRADE = 'degrade';
+    public const THRESHOLD_DEGRADE_REMINDER = 'degrade-reminder';
+    public const THRESHOLD_BEFORE_DEGRADE = 'before_degrade';
     public const THRESHOLD_DELETE = 'delete';
     public const THRESHOLD_BEFORE_DELETE = 'before_delete';
     public const THRESHOLD_SUSPEND = 'suspend';
@@ -63,54 +66,56 @@ class WalletCheck implements ShouldQueue
         }
 
         $now = Carbon::now();
+/*
+        // Steps for old "first suspend then delete" approach
+        $steps = [
+            // Send the initial reminder
+            self::THRESHOLD_INITIAL => 'initialReminder',
+            // Try to top-up the wallet before the second reminder
+            self::THRESHOLD_BEFORE_REMINDER => 'topUpWallet',
+            // Send the second reminder
+            self::THRESHOLD_REMINDER => 'secondReminder',
+            // Try to top-up the wallet before suspending the account
+            self::THRESHOLD_BEFORE_SUSPEND => 'topUpWallet',
+            // Suspend the account
+            self::THRESHOLD_SUSPEND => 'suspendAccount',
+            // Warn about the upcomming account deletion
+            self::THRESHOLD_BEFORE_DELETE => 'warnBeforeDelete',
+            // Delete the account
+            self::THRESHOLD_DELETE => 'deleteAccount',
+        ];
+*/
+        // Steps for "demote instead of suspend+delete" approach
+        $steps = [
+            // Send the initial reminder
+            self::THRESHOLD_INITIAL => 'initialReminderForDegrade',
+            // Try to top-up the wallet before the second reminder
+            self::THRESHOLD_BEFORE_REMINDER => 'topUpWallet',
+            // Send the second reminder
+            self::THRESHOLD_REMINDER => 'secondReminderForDegrade',
+            // Try to top-up the wallet before the account degradation
+            self::THRESHOLD_BEFORE_DEGRADE => 'topUpWallet',
+            // Degrade the account
+            self::THRESHOLD_DEGRADE => 'degradeAccount',
+        ];
 
-        // Delete the account
-        if (self::threshold($this->wallet, self::THRESHOLD_DELETE) < $now) {
-            $this->deleteAccount();
-            return self::THRESHOLD_DELETE;
+        if ($this->wallet->owner && $this->wallet->owner->isDegraded()) {
+            $this->degradedReminder();
+            return self::THRESHOLD_DEGRADE_REMINDER;
         }
 
-        // Warn about the upcomming account deletion
-        if (self::threshold($this->wallet, self::THRESHOLD_BEFORE_DELETE) < $now) {
-            $this->warnBeforeDelete();
-            return self::THRESHOLD_BEFORE_DELETE;
-        }
-
-        // Suspend the account
-        if (self::threshold($this->wallet, self::THRESHOLD_SUSPEND) < $now) {
-            $this->suspendAccount();
-            return self::THRESHOLD_SUSPEND;
-        }
-
-        // Try to top-up the wallet before suspending the account
-        if (self::threshold($this->wallet, self::THRESHOLD_BEFORE_SUSPEND) < $now) {
-            PaymentsController::topUpWallet($this->wallet);
-            return self::THRESHOLD_BEFORE_SUSPEND;
-        }
-
-        // Send the second reminder
-        if (self::threshold($this->wallet, self::THRESHOLD_REMINDER) < $now) {
-            $this->secondReminder();
-            return self::THRESHOLD_REMINDER;
-        }
-
-        // Try to top-up the wallet before the second reminder
-        if (self::threshold($this->wallet, self::THRESHOLD_BEFORE_REMINDER) < $now) {
-            PaymentsController::topUpWallet($this->wallet);
-            return self::THRESHOLD_BEFORE_REMINDER;
-        }
-
-        // Send the initial reminder
-        if (self::threshold($this->wallet, self::THRESHOLD_INITIAL) < $now) {
-            $this->initialReminder();
-            return self::THRESHOLD_INITIAL;
+        foreach (array_reverse($steps, true) as $type => $method) {
+            if (self::threshold($this->wallet, $type) < $now) {
+                $this->{$method}();
+                return $type;
+            }
         }
 
         return null;
     }
 
     /**
-     * Send the initial reminder
+     * Send the initial reminder (for the suspend+delete process)
      */
     protected function initialReminder()
     {
@@ -127,7 +132,26 @@ class WalletCheck implements ShouldQueue
     }
 
     /**
-     * Send the second reminder
+     * Send the initial reminder (for the process of degrading a account)
+     */
+    protected function initialReminderForDegrade()
+    {
+        if ($this->wallet->getSetting('balance_warning_initial')) {
+            return;
+        }
+
+        if (!$this->wallet->owner || $this->wallet->owner->isDegraded()) {
+            return;
+        }
+
+        $this->sendMail(\App\Mail\NegativeBalance::class, false);
+
+        $now = \Carbon\Carbon::now()->toDateTimeString();
+        $this->wallet->setSetting('balance_warning_initial', $now);
+    }
+
+    /**
+     * Send the second reminder (for the suspend+delete process)
      */
     protected function secondReminder()
     {
@@ -138,6 +162,25 @@ class WalletCheck implements ShouldQueue
         // TODO: Should we check if the account is already suspended?
 
         $this->sendMail(\App\Mail\NegativeBalanceReminder::class, false);
+
+        $now = \Carbon\Carbon::now()->toDateTimeString();
+        $this->wallet->setSetting('balance_warning_reminder', $now);
+    }
+
+    /**
+     * Send the second reminder (for the process of degrading a account)
+     */
+    protected function secondReminderForDegrade()
+    {
+        if ($this->wallet->getSetting('balance_warning_reminder')) {
+            return;
+        }
+
+        if (!$this->wallet->owner || $this->wallet->owner->isDegraded()) {
+            return;
+        }
+
+        $this->sendMail(\App\Mail\NegativeBalanceReminderDegrade::class, true);
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_reminder', $now);
@@ -192,6 +235,59 @@ class WalletCheck implements ShouldQueue
 
         $now = \Carbon\Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_before_delete', $now);
+    }
+
+    /**
+     * Send the periodic reminder to the degraded account owners
+     */
+    protected function degradedReminder()
+    {
+        // Sanity check
+        if (!$this->wallet->owner || !$this->wallet->owner->isDegraded()) {
+            return;
+        }
+
+        $now = \Carbon\Carbon::now();
+        $last = $this->wallet->getSetting('degraded_last_reminder');
+
+        if ($last) {
+            $last = new Carbon($last);
+            $period = 14;
+
+            if ($last->addDays($period) > $now) {
+                return;
+            }
+
+            $this->sendMail(\App\Mail\DegradedAccountReminder::class, true);
+        }
+
+        $this->wallet->setSetting('degraded_last_reminder', $now->toDateTimeString());
+    }
+
+    /**
+     * Degrade the account
+     */
+    protected function degradeAccount()
+    {
+        // The account may be already deleted, or degraded
+        if (!$this->wallet->owner || $this->wallet->owner->isDegraded()) {
+            return;
+        }
+
+        $email = $this->wallet->owner->email;
+
+        // The dirty work will be done by UserObserver
+        $this->wallet->owner->degrade();
+
+        \Log::info(
+            sprintf(
+                "[WalletCheck] Account degraded %s (%s)",
+                $this->wallet->id,
+                $email
+            )
+        );
+
+        $this->sendMail(\App\Mail\NegativeBalanceDegraded::class, true);
     }
 
     /**
@@ -265,47 +361,45 @@ class WalletCheck implements ShouldQueue
             $negative_since = new Carbon($negative_since);
         }
 
-        $remind = 7;   // remind after first X days
-        $suspend = 14; // suspend after next X days
-        $delete = 21;  // delete after next X days
-        $warn = 3;     // warn about delete on X days before delete
-
-        // Acount deletion
-        if ($type == self::THRESHOLD_DELETE) {
-            return $negative_since->addDays($delete + $suspend + $remind);
-        }
-
-        // Warning about the upcomming account deletion
-        if ($type == self::THRESHOLD_BEFORE_DELETE) {
-            return $negative_since->addDays($delete + $suspend + $remind - $warn);
-        }
-
-        // Account suspension
-        if ($type == self::THRESHOLD_SUSPEND) {
-            return $negative_since->addDays($suspend + $remind);
-        }
-
-        // A day before account suspension
-        if ($type == self::THRESHOLD_BEFORE_SUSPEND) {
-            return $negative_since->addDays($suspend + $remind - 1);
-        }
-
-        // Second notification
-        if ($type == self::THRESHOLD_REMINDER) {
-            return $negative_since->addDays($remind);
-        }
-
-        // A day before the second reminder
-        if ($type == self::THRESHOLD_BEFORE_REMINDER) {
-            return $negative_since->addDays($remind - 1);
-        }
-
         // Initial notification
         // Give it an hour so the async recurring payment has a chance to be finished
         if ($type == self::THRESHOLD_INITIAL) {
             return $negative_since->addHours(1);
         }
 
+        $thresholds = [
+            // A day before the second reminder
+            self::THRESHOLD_BEFORE_REMINDER => 7 - 1,
+            // Second notification
+            self::THRESHOLD_REMINDER => 7,
+
+            // A day before account suspension
+            self::THRESHOLD_BEFORE_SUSPEND => 14 + 7 - 1,
+            // Account suspension
+            self::THRESHOLD_SUSPEND => 14 + 7,
+            // Warning about the upcomming account deletion
+            self::THRESHOLD_BEFORE_DELETE => 21 + 14 + 7 - 3,
+            // Acount deletion
+            self::THRESHOLD_DELETE => 21 + 14 + 7,
+
+            // Last chance to top-up the wallet
+            self::THRESHOLD_BEFORE_DEGRADE => 13,
+            // Account degradation
+            self::THRESHOLD_DEGRADE => 14,
+        ];
+
+        if (!empty($thresholds[$type])) {
+            return $negative_since->addDays($thresholds[$type]);
+        }
+
         return null;
+    }
+
+    /**
+     * Try to automatically top-up the wallet
+     */
+    protected function topUpWallet(): void
+    {
+        PaymentsController::topUpWallet($this->wallet);
     }
 }

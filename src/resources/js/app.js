@@ -357,6 +357,9 @@ const app = new Vue({
         folderStatusText(folder) {
             return this.userStatusText(folder)
         },
+        isDegraded() {
+            return store.state.authInfo.isAccountDegraded
+        },
         pageName(path) {
             let page = this.$route.path
 
@@ -399,7 +402,7 @@ const app = new Vue({
                 return 'text-muted'
             }
 
-            if (user.isSuspended) {
+            if (user.isDegraded || user.isAccountDegraded || user.isSuspended) {
                 return 'text-warning'
             }
 
@@ -412,6 +415,10 @@ const app = new Vue({
         userStatusText(user) {
             if (user.isDeleted) {
                 return this.$t('status.deleted')
+            }
+
+            if (user.isDegraded || user.isAccountDegraded) {
+                return this.$t('status.degraded')
             }
 
             if (user.isSuspended) {

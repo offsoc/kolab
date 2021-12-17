@@ -9,6 +9,7 @@ use App\Transaction;
 use App\Wallet;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class WalletTest extends TestCase
@@ -48,27 +49,34 @@ class WalletTest extends TestCase
 
     /**
      * Test that turning wallet balance from negative to positive
-     * unsuspends the account
+     * unsuspends and undegrades the account
      */
-    public function testBalancePositiveUnsuspend(): void
+    public function testBalanceTurnsPositive(): void
     {
+        Queue::fake();
+
         $user = $this->getTestUser('UserWallet1@UserWallet.com');
         $user->suspend();
+        $user->degrade();
 
         $wallet = $user->wallets()->first();
         $wallet->balance = -100;
         $wallet->save();
 
         $this->assertTrue($user->isSuspended());
+        $this->assertTrue($user->isDegraded());
         $this->assertNotNull($wallet->getSetting('balance_negative_since'));
 
         $wallet->balance = 100;
         $wallet->save();
 
-        $this->assertFalse($user->fresh()->isSuspended());
+        $user->refresh();
+
+        $this->assertFalse($user->isSuspended());
+        $this->assertFalse($user->isDegraded());
         $this->assertNull($wallet->getSetting('balance_negative_since'));
 
-        // TODO: Test group account and unsuspending domain/members
+        // TODO: Test group account and unsuspending domain/members/groups
     }
 
     /**
@@ -411,5 +419,13 @@ class WalletTest extends TestCase
         $this->assertSame(Transaction::WALLET_DEBIT, $trans->type);
 
         // TODO: Test entitlement transaction records
+    }
+
+    /**
+     * Tests for updateEntitlements()
+     */
+    public function testUpdateEntitlements(): void
+    {
+        $this->markTestIncomplete();
     }
 }

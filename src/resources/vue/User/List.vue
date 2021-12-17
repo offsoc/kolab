@@ -8,7 +8,7 @@
                 <div class="card-text">
                     <div class="mb-2 d-flex">
                         <list-search :placeholder="$t('user.search')" :on-search="searchUsers"></list-search>
-                        <div>
+                        <div v-if="!$root.isDegraded()">
                             <router-link class="btn btn-success ms-1 create-user" :to="{ path: 'user/new' }" tag="button">
                                 <svg-icon icon="user"></svg-icon> {{ $t('user.create') }}
                             </router-link>

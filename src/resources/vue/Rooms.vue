@@ -41,7 +41,7 @@
             }
         },
         mounted() {
-            if (!this.$root.hasSKU('meet')) {
+            if (!this.$root.hasSKU('meet') || this.$root.isDegraded()) {
                 this.$root.errorPage(403)
                 return
             }

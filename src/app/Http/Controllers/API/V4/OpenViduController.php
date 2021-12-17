@@ -213,7 +213,7 @@ class OpenViduController extends Controller
         $room = Room::where('name', $id)->first();
 
         // Room does not exist, or the owner is deleted
-        if (!$room || !$room->owner) {
+        if (!$room || !$room->owner || $room->owner->isDegraded(true)) {
             return $this->errorResponse(404, \trans('meet.room-not-found'));
         }
 
@@ -349,7 +349,7 @@ class OpenViduController extends Controller
         $room = Room::where('name', $id)->first();
 
         // Room does not exist, or the owner is deleted
-        if (!$room || !$room->owner) {
+        if (!$room || !$room->owner || $room->owner->isDegraded(true)) {
             return $this->errorResponse(404);
         }
 

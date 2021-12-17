@@ -42,6 +42,7 @@ class StatusCommand extends Command
             'deleted' => User::STATUS_DELETED,
             'ldapReady' => User::STATUS_LDAP_READY,
             'imapReady' => User::STATUS_IMAP_READY,
+            'degraded' => User::STATUS_DEGRADED,
         ];
 
         $user_state = [];
