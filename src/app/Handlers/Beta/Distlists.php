@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Handlers;
+namespace App\Handlers\Beta;
 
-class Distlist extends Beta\Base
+class Distlists extends Base
 {
     /**
      * The entitleable class for this handler.

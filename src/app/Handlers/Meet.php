@@ -25,7 +25,7 @@ class Meet extends Base
     {
         $data = parent::metadata($sku);
 
-        $data['required'] = ['groupware'];
+        $data['required'] = ['Groupware'];
 
         return $data;
     }

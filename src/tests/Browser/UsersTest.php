@@ -730,52 +730,52 @@ class UsersTest extends TestCaseDusk
                             'tbody tr:nth-child(7) td.buttons button',
                             'Access to the private beta program subscriptions'
                         )
-                        // Resources SKU
-                        ->assertSeeIn('tbody tr:nth-child(8) td.name', 'Calendaring resources')
+                        // Distlists SKU
+                        ->assertSeeIn('tbody tr:nth-child(8) td.name', 'Distribution lists')
                         ->assertSeeIn('tr:nth-child(8) td.price', '0,00 CHF/month')
                         ->assertNotChecked('tbody tr:nth-child(8) td.selection input')
                         ->assertEnabled('tbody tr:nth-child(8) td.selection input')
                         ->assertTip(
                             'tbody tr:nth-child(8) td.buttons button',
-                            'Access to calendaring resources'
+                            'Access to mail distribution lists'
                         )
-                        // Shared folders SKU
-                        ->assertSeeIn('tbody tr:nth-child(9) td.name', 'Shared folders')
+                        // Resources SKU
+                        ->assertSeeIn('tbody tr:nth-child(9) td.name', 'Calendaring resources')
                         ->assertSeeIn('tr:nth-child(9) td.price', '0,00 CHF/month')
                         ->assertNotChecked('tbody tr:nth-child(9) td.selection input')
                         ->assertEnabled('tbody tr:nth-child(9) td.selection input')
                         ->assertTip(
                             'tbody tr:nth-child(9) td.buttons button',
-                            'Access to shared folders'
+                            'Access to calendaring resources'
                         )
-                        // Distlist SKU
-                        ->assertSeeIn('tbody tr:nth-child(10) td.name', 'Distribution lists')
+                        // Shared folders SKU
+                        ->assertSeeIn('tbody tr:nth-child(10) td.name', 'Shared folders')
                         ->assertSeeIn('tr:nth-child(10) td.price', '0,00 CHF/month')
                         ->assertNotChecked('tbody tr:nth-child(10) td.selection input')
                         ->assertEnabled('tbody tr:nth-child(10) td.selection input')
                         ->assertTip(
                             'tbody tr:nth-child(10) td.buttons button',
-                            'Access to mail distribution lists'
+                            'Access to shared folders'
                         )
                         // Check Distlist, Uncheck Beta, expect Distlist unchecked
-                        ->click('#sku-input-distlist')
+                        ->click('#sku-input-beta-distlists')
                         ->click('#sku-input-beta')
                         ->assertNotChecked('#sku-input-beta')
-                        ->assertNotChecked('#sku-input-distlist')
-                        // Click Distlist expect an alert
-                        ->click('#sku-input-distlist')
+                        ->assertNotChecked('#sku-input-beta-distlists')
+                        // Click Distlists expect an alert
+                        ->click('#sku-input-beta-distlists')
                         ->assertDialogOpened('Distribution lists requires Private Beta (invitation only).')
                         ->acceptDialog()
                         // Enable Beta and Distlist and submit
                         ->click('#sku-input-beta')
-                        ->click('#sku-input-distlist');
+                        ->click('#sku-input-beta-distlists');
                 })
                 ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
             $expected = [
                 'beta',
-                'distlist',
+                'beta-distlists',
                 'groupware',
                 'mailbox',
                 'storage', 'storage', 'storage', 'storage', 'storage'
@@ -799,7 +799,7 @@ class UsersTest extends TestCaseDusk
             $this->assertEntitlements($john, $expected);
         });
 
-        // TODO: Test that the Distlist SKU is not available for users that aren't a group account owners
+        // TODO: Test that the Distlists SKU is not available for users that aren't a group account owners
         // TODO: Test that entitlements change has immediate effect on the available items in dashboard
         //       i.e. does not require a page reload nor re-login.
     }

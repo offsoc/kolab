@@ -94,7 +94,7 @@ class SkusTest extends TestCase
         $this->assertSame($sku->period, $json[0]['period']);
         $this->assertSame($sku->active, $json[0]['active']);
         $this->assertSame('user', $json[0]['type']);
-        $this->assertSame('mailbox', $json[0]['handler']);
+        $this->assertSame('Mailbox', $json[0]['handler']);
     }
 
     /**

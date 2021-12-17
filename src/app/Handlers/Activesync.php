@@ -25,7 +25,7 @@ class Activesync extends \App\Handlers\Base
     {
         $data = parent::metadata($sku);
 
-        $data['required'] = ['groupware'];
+        $data['required'] = ['Groupware'];
 
         return $data;
     }

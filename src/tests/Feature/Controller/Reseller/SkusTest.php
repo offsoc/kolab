@@ -111,7 +111,7 @@ class SkusTest extends TestCase
         $this->assertSame($sku->period, $json[0]['period']);
         $this->assertSame($sku->active, $json[0]['active']);
         $this->assertSame('user', $json[0]['type']);
-        $this->assertSame('mailbox', $json[0]['handler']);
+        $this->assertSame('Mailbox', $json[0]['handler']);
 
         // Test with another tenant
         $sku = Sku::where('title', 'mailbox')->where('tenant_id', $reseller2->tenant_id)->first();
@@ -132,7 +132,7 @@ class SkusTest extends TestCase
         $this->assertSame($sku->period, $json[0]['period']);
         $this->assertSame($sku->active, $json[0]['active']);
         $this->assertSame('user', $json[0]['type']);
-        $this->assertSame('mailbox', $json[0]['handler']);
+        $this->assertSame('Mailbox', $json[0]['handler']);
     }
 
     /**

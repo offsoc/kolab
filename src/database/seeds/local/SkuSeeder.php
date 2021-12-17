@@ -207,18 +207,18 @@ class SkuSeeder extends Seeder
         }
 
         // Check existence because migration might have added this already
-        $sku = Sku::where(['title' => 'distlist', 'tenant_id' => \config('app.tenant_id')])->first();
+        $sku = Sku::where(['title' => 'beta-distlists', 'tenant_id' => \config('app.tenant_id')])->first();
 
         if (!$sku) {
             Sku::create(
                 [
-                    'title' => 'distlist',
+                    'title' => 'beta-distlists',
                     'name' => 'Distribution lists',
                     'description' => 'Access to mail distribution lists',
                     'cost' => 0,
                     'units_free' => 0,
                     'period' => 'monthly',
-                    'handler_class' => 'App\Handlers\Distlist',
+                    'handler_class' => 'App\Handlers\Beta\Distlists',
                     'active' => true,
                 ]
             );

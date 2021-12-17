@@ -69,7 +69,7 @@ class SkusTest extends TestCase
         $this->assertSkuElement('domain-hosting', $json[0], [
                 'prio' => 0,
                 'type' => 'domain',
-                'handler' => 'domainhosting',
+                'handler' => 'DomainHosting',
                 'enabled' => false,
                 'readonly' => false,
         ]);
@@ -117,7 +117,7 @@ class SkusTest extends TestCase
         $this->assertSame($sku->period, $json[0]['period']);
         $this->assertSame($sku->active, $json[0]['active']);
         $this->assertSame('user', $json[0]['type']);
-        $this->assertSame('mailbox', $json[0]['handler']);
+        $this->assertSame('Mailbox', $json[0]['handler']);
     }
 
     /**
@@ -138,7 +138,7 @@ class SkusTest extends TestCase
                 'description' => '',
                 'active' => true,
                 'cost' => 100,
-                'handler_class' => 'App\Handlers\Mailbox',
+                'handler_class' => 'Mailbox',
         ]);
         $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
         $nsku->tenant_id = $tenant->id;
@@ -154,7 +154,7 @@ class SkusTest extends TestCase
         $this->assertSkuElement('mailbox', $json[0], [
                 'prio' => 100,
                 'type' => 'user',
-                'handler' => 'mailbox',
+                'handler' => 'Mailbox',
                 'enabled' => true,
                 'readonly' => true,
         ]);
@@ -162,7 +162,7 @@ class SkusTest extends TestCase
         $this->assertSkuElement('storage', $json[1], [
                 'prio' => 90,
                 'type' => 'user',
-                'handler' => 'storage',
+                'handler' => 'Storage',
                 'enabled' => true,
                 'readonly' => true,
                 'range' => [
@@ -175,7 +175,7 @@ class SkusTest extends TestCase
         $this->assertSkuElement('groupware', $json[2], [
                 'prio' => 80,
                 'type' => 'user',
-                'handler' => 'groupware',
+                'handler' => 'Groupware',
                 'enabled' => false,
                 'readonly' => false,
         ]);
@@ -183,28 +183,28 @@ class SkusTest extends TestCase
         $this->assertSkuElement('activesync', $json[3], [
                 'prio' => 70,
                 'type' => 'user',
-                'handler' => 'activesync',
+                'handler' => 'Activesync',
                 'enabled' => false,
                 'readonly' => false,
-                'required' => ['groupware'],
+                'required' => ['Groupware'],
         ]);
 
         $this->assertSkuElement('2fa', $json[4], [
                 'prio' => 60,
                 'type' => 'user',
-                'handler' => 'auth2f',
+                'handler' => 'Auth2F',
                 'enabled' => false,
                 'readonly' => false,
-                'forbidden' => ['activesync'],
+                'forbidden' => ['Activesync'],
         ]);
 
         $this->assertSkuElement('meet', $json[5], [
                 'prio' => 50,
                 'type' => 'user',
-                'handler' => 'meet',
+                'handler' => 'Meet',
                 'enabled' => false,
                 'readonly' => false,
-                'required' => ['groupware'],
+                'required' => ['Groupware'],
         ]);
 
         // Test inclusion of beta SKUs
@@ -220,36 +220,36 @@ class SkusTest extends TestCase
         $this->assertSkuElement('beta', $json[6], [
                 'prio' => 10,
                 'type' => 'user',
-                'handler' => 'beta',
+                'handler' => 'Beta',
                 'enabled' => false,
                 'readonly' => false,
         ]);
 
-        $this->assertSkuElement('beta-resources', $json[7], [
+        $this->assertSkuElement('beta-distlists', $json[7], [
                 'prio' => 10,
                 'type' => 'user',
-                'handler' => 'resources', // TODO: shouldn't it be beta-resources or beta/resources?
+                'handler' => 'Beta\Distlists',
                 'enabled' => false,
                 'readonly' => false,
-                'required' => ['beta'],
+                'required' => ['Beta'],
         ]);
 
-        $this->assertSkuElement('beta-shared-folders', $json[8], [
+        $this->assertSkuElement('beta-resources', $json[8], [
                 'prio' => 10,
                 'type' => 'user',
-                'handler' => 'sharedfolders',
+                'handler' => 'Beta\Resources',
                 'enabled' => false,
                 'readonly' => false,
-                'required' => ['beta'],
+                'required' => ['Beta'],
         ]);
 
-        $this->assertSkuElement('distlist', $json[9], [
+        $this->assertSkuElement('beta-shared-folders', $json[9], [
                 'prio' => 10,
                 'type' => 'user',
-                'handler' => 'distlist',
+                'handler' => 'Beta\SharedFolders',
                 'enabled' => false,
                 'readonly' => false,
-                'required' => ['beta'],
+                'required' => ['Beta'],
         ]);
     }
 

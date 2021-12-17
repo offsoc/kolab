@@ -44,7 +44,7 @@ class Base extends \App\Handlers\Base
     {
         $data = parent::metadata($sku);
 
-        $data['required'] = ['beta'];
+        $data['required'] = ['Beta'];
 
         return $data;
     }

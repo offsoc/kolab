@@ -25,7 +25,7 @@ class Auth2F extends \App\Handlers\Base
     {
         $data = parent::metadata($sku);
 
-        $data['forbidden'] = ['activesync'];
+        $data['forbidden'] = ['Activesync'];
 
         return $data;
     }

@@ -217,7 +217,7 @@
                             <tbody>
                                 <tr v-for="(sku, sku_id) in skus" :id="'sku' + sku.id" :key="sku_id">
                                     <td>{{ sku.name }}</td>
-                                    <td>{{ sku.price }}</td>
+                                    <td class="price">{{ sku.price }}</td>
                                 </tr>
                             </tbody>
                             <tfoot class="table-fake-body">
@@ -606,10 +606,10 @@
 
                                     this.skus.push(item)
 
-                                    if (sku.handler == 'auth2f') {
+                                    if (sku.handler == 'Auth2F') {
                                         this.has2FA = true
                                         this.sku2FA = sku.id
-                                    } else if (sku.handler == 'beta') {
+                                    } else if (sku.handler == 'Beta') {
                                         this.hasBeta = true
                                     }
                                 }

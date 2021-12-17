@@ -134,11 +134,10 @@
 
                 if (input.checked) {
                     // Check if a required SKU is selected, alert the user if not
-                    (sku.required || []).forEach(title => {
+                    (sku.required || []).forEach(requiredHandler => {
                         this.skus.forEach(item => {
-                            let checkbox
-                            if (item.handler == title && (checkbox = $('#s' + item.id).find('input[type=checkbox]')[0])) {
-                                if (!checkbox.checked) {
+                            if (item.handler == requiredHandler) {
+                                if (!$('#s' + item.id).find('input[type=checkbox]:checked').length) {
                                     required.push(item.name)
                                 }
                             }
@@ -160,10 +159,10 @@
                 }
 
                 // Uncheck+lock/unlock conflicting SKUs
-                (sku.forbidden || []).forEach(title => {
+                (sku.forbidden || []).forEach(forbiddenHandler => {
                     this.skus.forEach(item => {
                         let checkbox
-                        if (item.handler == title && (checkbox = $('#s' + item.id).find('input[type=checkbox]')[0])) {
+                        if (item.handler == forbiddenHandler && (checkbox = $('#s' + item.id).find('input[type=checkbox]')[0])) {
                             if (input.checked) {
                                 checkbox.checked = false
                                 checkbox.readOnly = true

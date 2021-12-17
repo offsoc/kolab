@@ -44,17 +44,11 @@ abstract class Base
      */
     public static function metadata(\App\Sku $sku): array
     {
-        $handler = explode('\\', static::class);
-        $handler = strtolower(end($handler));
-
-        $type = explode('\\', static::entitleableClass());
-        $type = strtolower(end($type));
-
         return [
             // entitleable type
-            'type' => $type,
-            // handler (as a keyword)
-            'handler' => $handler,
+            'type' => \lcfirst(\class_basename(static::entitleableClass())),
+            // handler
+            'handler' => str_replace("App\\Handlers\\", '', static::class),
             // readonly entitlement state cannot be changed
             'readonly' => false,
             // is entitlement enabled by default?
