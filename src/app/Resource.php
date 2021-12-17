@@ -53,39 +53,6 @@ class Resource extends Model
 
 
     /**
-     * Assign the resource to a wallet.
-     *
-     * @param \App\Wallet $wallet The wallet
-     *
-     * @return \App\Resource Self
-     * @throws \Exception
-     */
-    public function assignToWallet(Wallet $wallet): Resource
-    {
-        if (empty($this->id)) {
-            throw new \Exception("Resource not yet exists");
-        }
-
-        if ($this->entitlements()->count()) {
-            throw new \Exception("Resource already assigned to a wallet");
-        }
-
-        $sku = \App\Sku::withObjectTenantContext($this)->where('title', 'resource')->first();
-        $exists = $wallet->entitlements()->where('sku_id', $sku->id)->count();
-
-        \App\Entitlement::create([
-            'wallet_id' => $wallet->id,
-            'sku_id' => $sku->id,
-            'cost' => $exists >= $sku->units_free ? $sku->cost : 0,
-            'fee' => $exists >= $sku->units_free ? $sku->fee : 0,
-            'entitleable_id' => $this->id,
-            'entitleable_type' => Resource::class
-        ]);
-
-        return $this;
-    }
-
-    /**
      * Returns the resource domain.
      *
      * @return ?\App\Domain The domain to which the resource belongs to, NULL if it does not exist

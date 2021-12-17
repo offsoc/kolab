@@ -123,24 +123,7 @@ class User extends Authenticatable
             $user = $this;
         }
 
-        $wallet_id = $this->wallets()->first()->id;
-
-        foreach ($package->skus as $sku) {
-            for ($i = $sku->pivot->qty; $i > 0; $i--) {
-                \App\Entitlement::create(
-                    [
-                        'wallet_id' => $wallet_id,
-                        'sku_id' => $sku->id,
-                        'cost' => $sku->pivot->cost(),
-                        'fee' => $sku->pivot->fee(),
-                        'entitleable_id' => $user->id,
-                        'entitleable_type' => User::class
-                    ]
-                );
-            }
-        }
-
-        return $user;
+        return $user->assignPackageAndWallet($package, $this->wallets()->first());
     }
 
     /**
@@ -161,38 +144,6 @@ class User extends Authenticatable
             } else {
                 $this->assignPackage($package);
             }
-        }
-
-        return $this;
-    }
-
-    /**
-     * Assign a Sku to a user.
-     *
-     * @param \App\Sku $sku   The sku to assign.
-     * @param int      $count Count of entitlements to add
-     *
-     * @return \App\User Self
-     * @throws \Exception
-     */
-    public function assignSku(Sku $sku, int $count = 1): User
-    {
-        // TODO: I guess wallet could be parametrized in future
-        $wallet = $this->wallet();
-        $exists = $this->entitlements()->where('sku_id', $sku->id)->count();
-
-        while ($count > 0) {
-            \App\Entitlement::create([
-                'wallet_id' => $wallet->id,
-                'sku_id' => $sku->id,
-                'cost' => $exists >= $sku->units_free ? $sku->cost : 0,
-                'fee' => $exists >= $sku->units_free ? $sku->fee : 0,
-                'entitleable_id' => $this->id,
-                'entitleable_type' => User::class
-            ]);
-
-            $exists++;
-            $count--;
         }
 
         return $this;
@@ -437,24 +388,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user has an entitlement for the specified SKU.
-     *
-     * @param string $title The SKU title
-     *
-     * @return bool True if specified SKU entitlement exists
-     */
-    public function hasSku(string $title): bool
-    {
-        $sku = Sku::withObjectTenantContext($this)->where('title', $title)->first();
-
-        if (!$sku) {
-            return false;
-        }
-
-        return $this->entitlements()->where('sku_id', $sku->id)->count() > 0;
-    }
-
-    /**
      * Returns whether this domain is active.
      *
      * @return bool
@@ -533,39 +466,6 @@ class User extends Authenticatable
         }
 
         return $name;
-    }
-
-    /**
-     * Remove a number of entitlements for the SKU.
-     *
-     * @param \App\Sku $sku   The SKU
-     * @param int      $count The number of entitlements to remove
-     *
-     * @return User Self
-     */
-    public function removeSku(Sku $sku, int $count = 1): User
-    {
-        $entitlements = $this->entitlements()
-            ->where('sku_id', $sku->id)
-            ->orderBy('cost', 'desc')
-            ->orderBy('created_at')
-            ->get();
-
-        $entitlements_count = count($entitlements);
-
-        foreach ($entitlements as $entitlement) {
-            if ($entitlements_count <= $sku->units_free) {
-                continue;
-            }
-
-            if ($count > 0) {
-                $entitlement->delete();
-                $entitlements_count--;
-                $count--;
-            }
-        }
-
-        return $this;
     }
 
     /**

@@ -59,39 +59,6 @@ class SharedFolder extends Model
 
 
     /**
-     * Assign the folder to a wallet.
-     *
-     * @param \App\Wallet $wallet The wallet
-     *
-     * @return \App\SharedFolder Self
-     * @throws \Exception
-     */
-    public function assignToWallet(Wallet $wallet): SharedFolder
-    {
-        if (empty($this->id)) {
-            throw new \Exception("Shared folder not yet exists");
-        }
-
-        if ($this->entitlements()->count()) {
-            throw new \Exception("Shared folder already assigned to a wallet");
-        }
-
-        $sku = \App\Sku::withObjectTenantContext($this)->where('title', 'shared-folder')->first();
-        $exists = $wallet->entitlements()->where('sku_id', $sku->id)->count();
-
-        \App\Entitlement::create([
-            'wallet_id' => $wallet->id,
-            'sku_id' => $sku->id,
-            'cost' => $exists >= $sku->units_free ? $sku->cost : 0,
-            'fee' => $exists >= $sku->units_free ? $sku->fee : 0,
-            'entitleable_id' => $this->id,
-            'entitleable_type' => SharedFolder::class
-        ]);
-
-        return $this;
-    }
-
-    /**
      * Returns the shared folder domain.
      *
      * @return ?\App\Domain The domain to which the folder belongs to, NULL if it does not exist

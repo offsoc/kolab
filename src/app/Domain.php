@@ -86,24 +86,7 @@ class Domain extends Model
             return $this;
         }
 
-        $wallet_id = $user->wallets()->first()->id;
-
-        foreach ($package->skus as $sku) {
-            for ($i = $sku->pivot->qty; $i > 0; $i--) {
-                \App\Entitlement::create(
-                    [
-                        'wallet_id' => $wallet_id,
-                        'sku_id' => $sku->id,
-                        'cost' => $sku->pivot->cost(),
-                        'fee' => $sku->pivot->fee(),
-                        'entitleable_id' => $this->id,
-                        'entitleable_type' => Domain::class
-                    ]
-                );
-            }
-        }
-
-        return $this;
+        return $this->assignPackageAndWallet($package, $user->wallets()->first());
     }
 
     /**
