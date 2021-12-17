@@ -980,6 +980,7 @@ class LDAP
         $entry['cn'] = $resource->name;
         $entry['owner'] = null;
         $entry['kolabinvitationpolicy'] = null;
+        $entry['acl'] = '';
 
         $settings = $resource->getSettings(['invitation_policy', 'folder']);
 
@@ -1008,13 +1009,11 @@ class LDAP
             } elseif (preg_match('/^manual:(\S+@\S+)$/', $settings['invitation_policy'], $m)) {
                 if (self::getUserEntry($ldap, $m[1], $userDN)) {
                     $entry['owner'] = $userDN;
+                    $entry['acl'] = $m[1] . ', full';
                     $entry['kolabinvitationpolicy'] = 'ACT_MANUAL';
                 } else {
                     $entry['kolabinvitationpolicy'] = 'ACT_ACCEPT';
                 }
-
-                // TODO: Set folder ACL so the owner can write to it
-                // TODO: Do we need to add lrs for anyone?
             }
         }
     }
@@ -1165,7 +1164,7 @@ class LDAP
         $base_dn = self::baseDN($domainName, 'Resources');
 
         $attrs = ['dn', 'cn', 'mail', 'objectclass', 'kolabtargetfolder',
-            'kolabfoldertype', 'kolabinvitationpolicy', 'owner'];
+            'kolabfoldertype', 'kolabinvitationpolicy', 'owner', 'acl'];
 
         // For resources we're using search() instead of get_entry() because
         // a resource name is not constant, so e.g. on update we might have

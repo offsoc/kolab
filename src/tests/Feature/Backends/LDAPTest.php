@@ -247,6 +247,7 @@ class LDAPTest extends TestCase
             'kolabtargetfolder' => 'shared/Resources/Test1@kolab.org',
             'kolabinvitationpolicy' => null,
             'owner' => null,
+            'acl' => null,
         ];
 
         foreach ($expected as $attr => $value) {
@@ -266,6 +267,23 @@ class LDAPTest extends TestCase
         $expected['owner'] = 'uid=john@kolab.org,ou=People,ou=kolab.org,' . $root_dn;
         $expected['dn'] = 'cn=Te(\\3dść)1,ou=Resources,ou=kolab.org,' . $root_dn;
         $expected['cn'] = 'Te(=ść)1';
+        $expected['acl'] = 'john@kolab.org, full';
+
+        $ldap_resource = LDAP::getResource($resource->email);
+
+        foreach ($expected as $attr => $value) {
+            $ldap_value = isset($ldap_resource[$attr]) ? $ldap_resource[$attr] : null;
+            $this->assertEquals($value, $ldap_value, "Resource $attr attribute");
+        }
+
+        // Remove the invitation policy
+        $resource->setSetting('invitation_policy', '[]');
+
+        LDAP::updateResource($resource);
+
+        $expected['acl'] = null;
+        $expected['kolabinvitationpolicy'] = null;
+        $expected['owner'] = null;
 
         $ldap_resource = LDAP::getResource($resource->email);
 
