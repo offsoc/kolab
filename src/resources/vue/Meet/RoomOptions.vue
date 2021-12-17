@@ -70,7 +70,7 @@
 
                 axios.post('/api/v4/openvidu/rooms/' + this.room + '/config', post)
                     .then(response => {
-                        this.config[name] = value
+                        this.$set(this.config, name, value)
                         if (callback) {
                             callback(response.data)
                         }
