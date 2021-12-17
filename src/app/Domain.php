@@ -440,17 +440,12 @@ class Domain extends Model
             return [];
         }
 
-        $entitlements = $wallet->entitlements()
+        return $wallet->entitlements()
             ->where('entitleable_type', \App\User::class)
-            ->where('sku_id', $mailboxSKU->id)->get();
-
-        $users = [];
-
-        foreach ($entitlements as $entitlement) {
-            $users[] = $entitlement->entitleable;
-        }
-
-        return $users;
+            ->where('sku_id', $mailboxSKU->id)
+            ->get()
+            ->pluck('entitleable')
+            ->all();
     }
 
     /**

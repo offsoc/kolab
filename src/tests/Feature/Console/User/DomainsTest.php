@@ -15,13 +15,14 @@ class DomainsTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(1, $code);
-        $this->assertSame("User not found.", $output);
+        $this->assertSame("No such user unknown", $output);
 
-        $code = \Artisan::call("user:domains john@kolab.org");
+        $code = \Artisan::call("user:domains john@kolab.org --attr=namespace");
         $output = trim(\Artisan::output());
 
+        $domain = $this->getTestDomain('kolab.org');
+
         $this->assertSame(0, $code);
-        $this->assertTrue(strpos($output, "kolab.org") !== false);
-        $this->assertTrue(strpos($output, \config('app.domain')) !== false);
+        $this->assertSame("{$domain->id} {$domain->namespace}", $output);
     }
 }

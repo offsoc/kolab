@@ -53,8 +53,7 @@ class ResourceName implements Rule
         }
 
         // Check if specified domain belongs to the user
-        $domains = \collect($this->owner->domains(true, false))->pluck('namespace')->all();
-        if (!in_array($this->domain, $domains)) {
+        if (!$this->owner->domains(true, false)->where('namespace', $this->domain)->exists()) {
             $this->message = \trans('validation.domaininvalid');
             return false;
         }
@@ -62,8 +61,8 @@ class ResourceName implements Rule
         // Check if the name is unique in the domain
         // FIXME: Maybe just using the whole resources table would be faster than resources()?
         $exists = $this->owner->resources()
-            ->where('resources.name', $name)
-            ->where('resources.email', 'like', '%@' . $this->domain)
+            ->where('name', $name)
+            ->where('email', 'like', '%@' . $this->domain)
             ->exists();
 
         if ($exists) {

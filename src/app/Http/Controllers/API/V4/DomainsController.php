@@ -25,15 +25,12 @@ class DomainsController extends Controller
     {
         $user = $this->guard()->user();
 
-        $list = \collect($user->domains())
-            ->filter(function ($domain) {
-                return !$domain->isPublic();
-            })
+        $list = $user->domains(true, false)
+            ->orderBy('namespace')
+            ->get()
             ->map(function ($domain) {
                 return $this->objectToClient($domain);
             })
-            ->sortBy('namespace')
-            ->values()
             ->all();
 
         return response()->json($list);

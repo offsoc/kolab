@@ -683,7 +683,7 @@ class UsersController extends Controller
         }
 
         // Check if domain exists
-        $domain = Domain::withEnvTenantContext()->where('namespace', $domain)->first();
+        $domain = Domain::withObjectTenantContext($user)->where('namespace', $domain)->first();
 
         if (empty($domain)) {
             return \trans('validation.domaininvalid');
@@ -700,9 +700,7 @@ class UsersController extends Controller
         }
 
         // Check if it is one of domains available to the user
-        $domains = \collect($user->domains())->pluck('namespace')->all();
-
-        if (!in_array($domain->namespace, $domains)) {
+        if (!$user->domains()->where('namespace', $domain->namespace)->exists()) {
             return \trans('validation.entryexists', ['attribute' => 'domain']);
         }
 
@@ -760,7 +758,7 @@ class UsersController extends Controller
         }
 
         // Check if domain exists
-        $domain = Domain::withEnvTenantContext()->where('namespace', $domain)->first();
+        $domain = Domain::withObjectTenantContext($user)->where('namespace', $domain)->first();
 
         if (empty($domain)) {
             return \trans('validation.domaininvalid');
@@ -777,9 +775,7 @@ class UsersController extends Controller
         }
 
         // Check if it is one of domains available to the user
-        $domains = \collect($user->domains())->pluck('namespace')->all();
-
-        if (!in_array($domain->namespace, $domains)) {
+        if (!$user->domains()->where('namespace', $domain->namespace)->exists()) {
             return \trans('validation.entryexists', ['attribute' => 'domain']);
         }
 

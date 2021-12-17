@@ -53,8 +53,7 @@ class SharedFolderName implements Rule
         }
 
         // Check if specified domain belongs to the user
-        $domains = \collect($this->owner->domains(true, false))->pluck('namespace')->all();
-        if (!in_array($this->domain, $domains)) {
+        if (!$this->owner->domains(true, false)->where('namespace', $this->domain)->exists()) {
             $this->message = \trans('validation.domaininvalid');
             return false;
         }
@@ -62,8 +61,8 @@ class SharedFolderName implements Rule
         // Check if the name is unique in the domain
         // FIXME: Maybe just using the whole shared_folders table would be faster than sharedFolders()?
         $exists = $this->owner->sharedFolders()
-            ->where('shared_folders.name', $name)
-            ->where('shared_folders.email', 'like', '%@' . $this->domain)
+            ->where('name', $name)
+            ->where('email', 'like', '%@' . $this->domain)
             ->exists();
 
         if ($exists) {

@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use Illuminate\Support\Str;
+
 /**
  * This abstract class provides a means to treat objects in our model using CRUD, with the exception that
  * this particular abstract class lists objects' relations.
@@ -14,6 +16,13 @@ abstract class ObjectRelationListCommand extends ObjectCommand
      * @var string
      */
     protected $objectRelation;
+
+    /**
+     * Optional arguments for $objectRelation method
+     *
+     * @var array
+     */
+    protected $objectRelationArgs = [];
 
     /**
      * Supplement the base command constructor with a derived or generated signature and
@@ -29,7 +38,7 @@ abstract class ObjectRelationListCommand extends ObjectCommand
             "%s%s:%s {%s}",
             $this->commandPrefix ? $this->commandPrefix . ":" : "",
             $this->objectName,
-            $this->objectRelation,
+            Str::kebab($this->objectRelation),
             $this->objectName
         );
 
@@ -59,7 +68,7 @@ abstract class ObjectRelationListCommand extends ObjectCommand
         }
 
         if (method_exists($object, $this->objectRelation)) {
-            $result = call_user_func([$object, $this->objectRelation]);
+            $result = call_user_func_array([$object, $this->objectRelation], $this->objectRelationArgs);
         } elseif (property_exists($object, $this->objectRelation)) {
             $result = $object->{"{$this->objectRelation}"};
         } else {
@@ -68,7 +77,10 @@ abstract class ObjectRelationListCommand extends ObjectCommand
         }
 
         // Convert query builder into a collection
-        if ($result instanceof \Illuminate\Database\Eloquent\Relations\Relation) {
+        if (
+            ($result instanceof \Illuminate\Database\Eloquent\Relations\Relation)
+            || ($result instanceof \Illuminate\Database\Eloquent\Builder)
+        ) {
             $result = $result->get();
         }
 

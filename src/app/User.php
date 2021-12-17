@@ -2,9 +2,7 @@
 
 namespace App;
 
-use App\Entitlement;
 use App\UserAlias;
-use App\Sku;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
 use App\Traits\UserAliasesTrait;
@@ -13,6 +11,7 @@ use App\Traits\UuidIntKeyTrait;
 use App\Traits\SettingsTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Iatstuti\Database\Support\NullableFields;
@@ -265,39 +264,23 @@ class User extends Authenticatable
      *                            the current user controls but not owns.
      * @param bool $with_public   Include active public domains (for the user tenant).
      *
-     * @return Domain[] List of Domain objects
+     * @return \Illuminate\Database\Eloquent\Builder Query builder
      */
-    public function domains($with_accounts = true, $with_public = true): array
+    public function domains($with_accounts = true, $with_public = true)
     {
-        $domains = [];
+        $domains = $this->entitleables(Domain::class, $with_accounts);
 
         if ($with_public) {
-            if ($this->tenant_id) {
-                $domains = Domain::where('tenant_id', $this->tenant_id);
-            } else {
-                $domains = Domain::withEnvTenantContext();
-            }
-
-            $domains = $domains->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
-                ->whereRaw(sprintf('(status & %s)', Domain::STATUS_ACTIVE))
-                ->get()
-                ->all();
-        }
-
-        foreach ($this->wallets as $wallet) {
-            $entitlements = $wallet->entitlements()->where('entitleable_type', Domain::class)->get();
-            foreach ($entitlements as $entitlement) {
-                $domains[] = $entitlement->entitleable;
-            }
-        }
-
-        if ($with_accounts) {
-            foreach ($this->accounts as $wallet) {
-                $entitlements = $wallet->entitlements()->where('entitleable_type', Domain::class)->get();
-                foreach ($entitlements as $entitlement) {
-                    $domains[] = $entitlement->entitleable;
+            $domains->orWhere(function ($query) {
+                if (!$this->tenant_id) {
+                    $query->where('tenant_id', $this->tenant_id);
+                } else {
+                    $query->withEnvTenantContext();
                 }
-            }
+
+                $query->whereRaw(sprintf('(domains.type & %s)', Domain::TYPE_PUBLIC))
+                    ->whereRaw(sprintf('(domains.status & %s)', Domain::STATUS_ACTIVE));
+            });
         }
 
         return $domains;
@@ -326,6 +309,36 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    /**
+     * Return entitleable objects of a specified type controlled by the current user.
+     *
+     * @param string $class         Object class
+     * @param bool   $with_accounts Include objects assigned to wallets
+     *                              the current user controls, but not owns.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     */
+    private function entitleables(string $class, bool $with_accounts = true)
+    {
+        $wallets = $this->wallets()->pluck('id')->all();
+
+        if ($with_accounts) {
+            $wallets = array_merge($wallets, $this->accounts()->pluck('wallet_id')->all());
+        }
+
+        $object = new $class();
+        $table = $object->getTable();
+
+        return $object->select("{$table}.*")
+            ->whereExists(function ($query) use ($table, $wallets, $class) {
+                $query->select(DB::raw(1))
+                    ->from('entitlements')
+                    ->whereColumn('entitleable_id', "{$table}.id")
+                    ->whereIn('entitlements.wallet_id', $wallets)
+                    ->where('entitlements.entitleable_type', $class);
+            });
     }
 
     /**
@@ -374,17 +387,7 @@ class User extends Authenticatable
      */
     public function groups($with_accounts = true)
     {
-        $wallets = $this->wallets()->pluck('id')->all();
-
-        if ($with_accounts) {
-            $wallets = array_merge($wallets, $this->accounts()->pluck('wallet_id')->all());
-        }
-
-        return Group::select(['groups.*', 'entitlements.wallet_id'])
-            ->distinct()
-            ->join('entitlements', 'entitlements.entitleable_id', '=', 'groups.id')
-            ->whereIn('entitlements.wallet_id', $wallets)
-            ->where('entitlements.entitleable_type', Group::class);
+        return $this->entitleables(Group::class, $with_accounts);
     }
 
     /**
@@ -478,17 +481,7 @@ class User extends Authenticatable
      */
     public function resources($with_accounts = true)
     {
-        $wallets = $this->wallets()->pluck('id')->all();
-
-        if ($with_accounts) {
-            $wallets = array_merge($wallets, $this->accounts()->pluck('wallet_id')->all());
-        }
-
-        return \App\Resource::select(['resources.*', 'entitlements.wallet_id'])
-            ->distinct()
-            ->join('entitlements', 'entitlements.entitleable_id', '=', 'resources.id')
-            ->whereIn('entitlements.wallet_id', $wallets)
-            ->where('entitlements.entitleable_type', \App\Resource::class);
+        return $this->entitleables(\App\Resource::class, $with_accounts);
     }
 
     /**
@@ -501,17 +494,7 @@ class User extends Authenticatable
      */
     public function sharedFolders($with_accounts = true)
     {
-        $wallets = $this->wallets()->pluck('id')->all();
-
-        if ($with_accounts) {
-            $wallets = array_merge($wallets, $this->accounts()->pluck('wallet_id')->all());
-        }
-
-        return \App\SharedFolder::select(['shared_folders.*', 'entitlements.wallet_id'])
-            ->distinct()
-            ->join('entitlements', 'entitlements.entitleable_id', '=', 'shared_folders.id')
-            ->whereIn('entitlements.wallet_id', $wallets)
-            ->where('entitlements.entitleable_type', \App\SharedFolder::class);
+        return $this->entitleables(\App\SharedFolder::class, $with_accounts);
     }
 
     public function senderPolicyFrameworkWhitelist($clientName)
@@ -594,17 +577,7 @@ class User extends Authenticatable
      */
     public function users($with_accounts = true)
     {
-        $wallets = $this->wallets()->pluck('id')->all();
-
-        if ($with_accounts) {
-            $wallets = array_merge($wallets, $this->accounts()->pluck('wallet_id')->all());
-        }
-
-        return $this->select(['users.*', 'entitlements.wallet_id'])
-            ->distinct()
-            ->leftJoin('entitlements', 'entitlements.entitleable_id', '=', 'users.id')
-            ->whereIn('entitlements.wallet_id', $wallets)
-            ->where('entitlements.entitleable_type', User::class);
+        return $this->entitleables(User::class, $with_accounts);
     }
 
     /**

@@ -334,7 +334,7 @@ class UserTest extends TestCase
                 'type' => Domain::TYPE_PUBLIC,
         ]);
 
-        $domains = collect($user->domains())->pluck('namespace')->all();
+        $domains = $user->domains()->pluck('namespace')->all();
 
         $this->assertContains($domain->namespace, $domains);
         $this->assertContains('kolab.org', $domains);
@@ -343,7 +343,7 @@ class UserTest extends TestCase
         // include John's domains, kolab.org specifically
         $user = $this->getTestUser('jack@kolab.org');
 
-        $domains = collect($user->domains())->pluck('namespace')->all();
+        $domains = $user->domains()->pluck('namespace')->all();
 
         $this->assertContains($domain->namespace, $domains);
         $this->assertNotContains('kolab.org', $domains);
@@ -353,7 +353,7 @@ class UserTest extends TestCase
         $domain->tenant_id = $tenant->id;
         $domain->save();
 
-        $domains = collect($user->domains())->pluck('namespace')->all();
+        $domains = $user->domains()->pluck('namespace')->all();
 
         $this->assertNotContains($domain->namespace, $domains);
     }
@@ -1063,10 +1063,6 @@ class UserTest extends TestCase
         $this->assertEquals($joe->id, $users[1]->id);
         $this->assertEquals($john->id, $users[2]->id);
         $this->assertEquals($ned->id, $users[3]->id);
-        $this->assertSame($wallet->id, $users[0]->wallet_id);
-        $this->assertSame($wallet->id, $users[1]->wallet_id);
-        $this->assertSame($wallet->id, $users[2]->wallet_id);
-        $this->assertSame($wallet->id, $users[3]->wallet_id);
 
         $users = $jack->users()->orderBy('email')->get();
 

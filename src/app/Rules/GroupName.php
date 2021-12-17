@@ -48,8 +48,8 @@ class GroupName implements Rule
         // Check if the name is unique in the domain
         // FIXME: Maybe just using the whole groups table would be faster than groups()?
         $exists = $this->owner->groups()
-            ->where('groups.name', $name)
-            ->where('groups.email', 'like', '%@' . $this->domain)
+            ->where('name', $name)
+            ->where('email', 'like', '%@' . $this->domain)
             ->exists();
 
         if ($exists) {
