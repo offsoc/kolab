@@ -86,6 +86,7 @@ class ForceDeleteTest extends TestCase
             0,
             \App\Entitlement::withTrashed()->where('entitleable_id', $user->id)->get()
         );
+
         $this->assertCount(
             0,
             \App\Transaction::whereIn('object_id', $entitlements)

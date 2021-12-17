@@ -106,32 +106,6 @@ class EntitlementTest extends TestCase
     }
 
     /**
-     * @todo This really should be in User tests file
-     */
-    public function testEntitlementFunctions(): void
-    {
-        $user = $this->getTestUser('entitlement-test@kolabnow.com');
-
-        $package = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-
-        $user->assignPackage($package);
-
-        $wallet = $user->wallets()->first();
-        $this->assertNotNull($wallet);
-
-        $sku = \App\Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
-
-        $entitlement = Entitlement::where('wallet_id', $wallet->id)
-            ->where('sku_id', $sku->id)->first();
-
-        $this->assertNotNull($entitlement);
-        $this->assertSame($sku->id, $entitlement->sku->id);
-        $this->assertSame($wallet->id, $entitlement->wallet->id);
-        $this->assertEquals($user->id, $entitlement->entitleable->id);
-        $this->assertTrue($entitlement->entitleable instanceof \App\User);
-    }
-
-    /**
      * Test Entitlement::entitleableTitle()
      */
     public function testEntitleableTitle(): void

@@ -153,7 +153,7 @@ class Transaction extends Model
     {
         $result = [
             'user_email' => $this->user_email,
-            'description' => $this->{'description'},
+            'description' => $this->description,
         ];
 
         $amount = $this->amount * ($this->amount < 0 ? -1 : 1);
@@ -165,12 +165,12 @@ class Transaction extends Model
 
             $result['entitlement_cost'] = $cost * $discount;
             $result['object'] = $entitlement->entitleableTitle();
-            $result['sku_title'] = $entitlement->sku->{'title'};
+            $result['sku_title'] = $entitlement->sku->title;
         } else {
             $wallet = $this->wallet();
         }
 
-        $result['wallet'] = $wallet->{'description'} ?: 'Default wallet';
+        $result['wallet'] = $wallet->description ?: 'Default wallet';
         $result['amount'] = $wallet->money($amount);
 
         return $result;

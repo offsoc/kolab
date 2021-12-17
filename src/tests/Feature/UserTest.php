@@ -46,7 +46,24 @@ class UserTest extends TestCase
      */
     public function testAssignPackage(): void
     {
-        $this->markTestIncomplete();
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+        $wallet = $user->wallets()->first();
+
+        $package = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+
+        $user->assignPackage($package);
+
+        $sku = \App\Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+
+        $entitlement = \App\Entitlement::where('wallet_id', $wallet->id)
+            ->where('sku_id', $sku->id)->first();
+
+        $this->assertNotNull($entitlement);
+        $this->assertSame($sku->id, $entitlement->sku->id);
+        $this->assertSame($wallet->id, $entitlement->wallet->id);
+        $this->assertEquals($user->id, $entitlement->entitleable->id);
+        $this->assertTrue($entitlement->entitleable instanceof \App\User);
+        $this->assertCount(7, $user->entitlements()->get());
     }
 
     /**
@@ -496,6 +513,13 @@ class UserTest extends TestCase
         $this->assertSame(0, $entitlementsGroup->count());
         $this->assertSame(0, $entitlementsResource->count());
         $this->assertSame(0, $entitlementsFolder->count());
+        $this->assertSame(7, $entitlementsA->withTrashed()->count());
+        $this->assertSame(7, $entitlementsB->withTrashed()->count());
+        $this->assertSame(7, $entitlementsC->withTrashed()->count());
+        $this->assertSame(1, $entitlementsDomain->withTrashed()->count());
+        $this->assertSame(1, $entitlementsGroup->withTrashed()->count());
+        $this->assertSame(1, $entitlementsResource->withTrashed()->count());
+        $this->assertSame(1, $entitlementsFolder->withTrashed()->count());
         $this->assertTrue($userA->fresh()->trashed());
         $this->assertTrue($userB->fresh()->trashed());
         $this->assertTrue($domain->fresh()->trashed());
@@ -512,8 +536,10 @@ class UserTest extends TestCase
         $userA->forceDelete();
 
         $all_entitlements = \App\Entitlement::where('wallet_id', $userA->wallets->first()->id);
+        $transactions = \App\Transaction::where('object_id', $userA->wallets->first()->id);
 
         $this->assertSame(0, $all_entitlements->withTrashed()->count());
+        $this->assertSame(0, $transactions->count());
         $this->assertCount(0, User::withTrashed()->where('id', $userA->id)->get());
         $this->assertCount(0, User::withTrashed()->where('id', $userB->id)->get());
         $this->assertCount(0, User::withTrashed()->where('id', $userC->id)->get());

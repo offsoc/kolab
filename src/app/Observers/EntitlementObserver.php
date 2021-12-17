@@ -79,10 +79,12 @@ class EntitlementObserver
             $sf->removeFactors();
         }
 
-        $entitlement->entitleable->updated_at = Carbon::now();
-        $entitlement->entitleable->save();
+        if ($entitlement->entitleable && !$entitlement->entitleable->trashed()) {
+            $entitlement->entitleable->updated_at = Carbon::now();
+            $entitlement->entitleable->save();
 
-        $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_DELETED);
+            $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_DELETED);
+        }
     }
 
     /**

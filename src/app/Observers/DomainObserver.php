@@ -36,22 +36,6 @@ class DomainObserver
     }
 
     /**
-     * Handle the domain "deleting" event.
-     *
-     * @param \App\Domain $domain The domain.
-     *
-     * @return void
-     */
-    public function deleting(Domain $domain)
-    {
-        // Entitlements do not have referential integrity on the entitled object, so this is our
-        // way of doing an onDelete('cascade') without the foreign key.
-        \App\Entitlement::where('entitleable_id', $domain->id)
-            ->where('entitleable_type', Domain::class)
-            ->delete();
-    }
-
-    /**
      * Handle the domain "deleted" event.
      *
      * @param \App\Domain $domain The domain.
@@ -114,22 +98,7 @@ class DomainObserver
      */
     public function restored(Domain $domain)
     {
-        // Restore domain entitlements
-        \App\Entitlement::restoreEntitlementsFor($domain);
-
         // Create the domain in LDAP again
         \App\Jobs\Domain\CreateJob::dispatch($domain->id);
-    }
-
-    /**
-     * Handle the domain "force deleted" event.
-     *
-     * @param \App\Domain $domain The domain.
-     *
-     * @return void
-     */
-    public function forceDeleted(Domain $domain)
-    {
-        //
     }
 }

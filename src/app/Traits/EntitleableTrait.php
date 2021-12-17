@@ -110,6 +110,45 @@ trait EntitleableTrait
     }
 
     /**
+     * Boot function from Laravel.
+     */
+    protected static function bootEntitleableTrait()
+    {
+        // Soft-delete and force-delete object's entitlements on object's delete
+        static::deleting(function ($model) {
+            $force = $model->isForceDeleting();
+            $entitlements = $model->entitlements();
+
+            if ($force) {
+                $entitlements = $entitlements->withTrashed();
+            }
+
+            $list = $entitlements->get()
+                ->map(function ($entitlement) use ($force) {
+                    if ($force) {
+                        $entitlement->forceDelete();
+                    } else {
+                        $entitlement->delete();
+                    }
+                    return $entitlement->id;
+                })
+                ->all();
+
+            // Remove transactions, they have no foreign key constraint
+            if ($force && !empty($list)) {
+                \App\Transaction::where('object_type', \App\Entitlement::class)
+                    ->whereIn('object_id', $list)
+                    ->delete();
+            }
+        });
+
+        // Restore object's entitlements on restore
+        static::restored(function ($model) {
+            $model->restoreEntitlements();
+        });
+    }
+
+    /**
      * Entitlements for this object.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -169,6 +208,30 @@ trait EntitleableTrait
         }
 
         return $this;
+    }
+
+    /**
+     * Restore object entitlements.
+     */
+    public function restoreEntitlements(): void
+    {
+        // We'll restore only these that were deleted last. So, first we get
+        // the maximum deleted_at timestamp and then use it to select
+        // entitlements for restore
+        $deleted_at = $this->entitlements()->withTrashed()->max('deleted_at');
+
+        if ($deleted_at) {
+            $threshold = (new \Carbon\Carbon($deleted_at))->subMinute();
+
+            // Restore object entitlements
+            $this->entitlements()->withTrashed()
+                ->where('deleted_at', '>=', $threshold)
+                ->update(['updated_at' => now(), 'deleted_at' => null]);
+
+            // Note: We're assuming that cost of entitlements was correct
+            // on deletion, so we don't have to re-calculate it again.
+            // TODO: We should probably re-calculate the cost
+        }
     }
 
     /**

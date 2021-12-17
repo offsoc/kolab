@@ -66,22 +66,6 @@ class ResourceObserver
     }
 
     /**
-     * Handle the resource "deleting" event.
-     *
-     * @param \App\Resource $resource The resource
-     *
-     * @return void
-     */
-    public function deleting(Resource $resource)
-    {
-        // Entitlements do not have referential integrity on the entitled object, so this is our
-        // way of doing an onDelete('cascade') without the foreign key.
-        \App\Entitlement::where('entitleable_id', $resource->id)
-            ->where('entitleable_type', Resource::class)
-            ->delete();
-    }
-
-    /**
      * Handle the resource "deleted" event.
      *
      * @param \App\Resource $resource The resource
@@ -116,21 +100,5 @@ class ResourceObserver
             // Note: This does not invoke ResourceSetting observer events, good.
             $resource->settings()->where('key', 'folder')->update(['value' => $folder]);
         }
-    }
-
-    /**
-     * Handle the resource "force deleted" event.
-     *
-     * @param \App\Resource $resource The resource
-     *
-     * @return void
-     */
-    public function forceDeleted(Resource $resource)
-    {
-        // A group can be force-deleted separately from the owner
-        // we have to force-delete entitlements
-        \App\Entitlement::where('entitleable_id', $resource->id)
-            ->where('entitleable_type', Resource::class)
-            ->forceDelete();
     }
 }

@@ -70,22 +70,6 @@ class SharedFolderObserver
     }
 
     /**
-     * Handle the shared folder "deleting" event.
-     *
-     * @param \App\SharedFolder $folder The folder
-     *
-     * @return void
-     */
-    public function deleting(SharedFolder $folder)
-    {
-        // Entitlements do not have referential integrity on the entitled object, so this is our
-        // way of doing an onDelete('cascade') without the foreign key.
-        \App\Entitlement::where('entitleable_id', $folder->id)
-            ->where('entitleable_type', SharedFolder::class)
-            ->delete();
-    }
-
-    /**
      * Handle the shared folder "deleted" event.
      *
      * @param \App\SharedFolder $folder The folder
@@ -120,21 +104,5 @@ class SharedFolderObserver
             // Note: This does not invoke SharedFolderSetting observer events, good.
             $folder->settings()->where('key', 'folder')->update(['value' => $folderName]);
         }
-    }
-
-    /**
-     * Handle the shared folder "force deleted" event.
-     *
-     * @param \App\SharedFolder $folder The folder
-     *
-     * @return void
-     */
-    public function forceDeleted(SharedFolder $folder)
-    {
-        // A folder can be force-deleted separately from the owner
-        // we have to force-delete entitlements
-        \App\Entitlement::where('entitleable_id', $folder->id)
-            ->where('entitleable_type', SharedFolder::class)
-            ->forceDelete();
     }
 }
