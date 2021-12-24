@@ -42,7 +42,7 @@ class DomainObserver
                         'domain_id' => $domain->id,
                         'name' => "ns1." . $domain->name,
                         'type' => "A",
-                        'content' => "127.0.0.1"
+                        'content' => \config('app.woat_ns1')
                     ]
                 );
             }
@@ -68,7 +68,7 @@ class DomainObserver
                         'domain_id' => $domain->id,
                         'name' => "ns2." . $domain->name,
                         'type' => "A",
-                        'content' => "127.0.0.1"
+                        'content' => \config('app.woat_ns2')
                     ]
                 );
             }

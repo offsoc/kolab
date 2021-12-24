@@ -293,4 +293,7 @@ return [
         'email_limit' => (int) env('SIGNUP_LIMIT_EMAIL', 0),
         'ip_limit' => (int) env('SIGNUP_LIMIT_IP', 0),
     ],
+
+    'woat_ns1' => env('WOAT_NS1', '127.0.0.1'),
+    'woat_ns2' => env('WOAT_NS2', '127.0.0.1'),
 ];
