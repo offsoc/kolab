@@ -288,4 +288,9 @@ return [
     'with_admin' => (bool) env('APP_WITH_ADMIN', false),
     'with_reseller' => (bool) env('APP_WITH_RESELLER', false),
     'with_services' => (bool) env('APP_WITH_SERVICES', false),
+
+    'signup' => [
+        'email_limit' => (int) env('SIGNUP_LIMIT_EMAIL', 0),
+        'ip_limit' => (int) env('SIGNUP_LIMIT_IP', 0),
+    ],
 ];

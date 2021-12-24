@@ -8,7 +8,7 @@ use App\Jobs\SignupVerificationSMS;
 use App\Discount;
 use App\Domain;
 use App\Plan;
-use App\Rules\ExternalEmail;
+use App\Rules\SignupExternalEmail;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\SignupCode;
@@ -375,7 +375,7 @@ class SignupController extends Controller
 
         $v = Validator::make(
             ['email' => $input],
-            ['email' => ['required', 'string', new ExternalEmail()]]
+            ['email' => ['required', 'string', new SignupExternalEmail()]]
         );
 
         if ($v->fails()) {

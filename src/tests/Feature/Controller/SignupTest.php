@@ -190,6 +190,76 @@ class SignupTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertArrayHasKey('voucher', $json['errors']);
 
+        // Email address too long
+        $data = [
+            'email' => str_repeat('a', 190) . '@example.org',
+            'first_name' => 'Signup',
+            'last_name' => 'User',
+        ];
+
+        $response = $this->post('/api/auth/signup/init', $data);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame("The specified email address is invalid.", $json['errors']['email']);
+
+        SignupCode::truncate();
+
+        // Email address limit check
+        $data = [
+            'email' => 'test@example.org',
+            'first_name' => 'Signup',
+            'last_name' => 'User',
+        ];
+
+        \config(['app.signup.email_limit' => 0]);
+
+        $response = $this->post('/api/auth/signup/init', $data);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        \config(['app.signup.email_limit' => 1]);
+
+        $response = $this->post('/api/auth/signup/init', $data);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        // TODO: This probably should be a different message?
+        $this->assertSame("The specified email address is invalid.", $json['errors']['email']);
+
+        // IP address limit check
+        $data = [
+            'email' => 'ip@example.org',
+            'first_name' => 'Signup',
+            'last_name' => 'User',
+        ];
+
+        \config(['app.signup.email_limit' => 0]);
+        \config(['app.signup.ip_limit' => 0]);
+
+        $response = $this->post('/api/auth/signup/init', $data, ['REMOTE_ADDR' => '10.1.1.1']);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        \config(['app.signup.ip_limit' => 1]);
+
+        $response = $this->post('/api/auth/signup/init', $data, ['REMOTE_ADDR' => '10.1.1.1']);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        // TODO: This probably should be a different message?
+        $this->assertSame("The specified email address is invalid.", $json['errors']['email']);
+
         // TODO: Test phone validation
     }
 

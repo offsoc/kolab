@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ExternalEmail implements Rule
 {
-    private $message;
+    protected $message;
 
     /**
      * Determine if the validation rule passes.
