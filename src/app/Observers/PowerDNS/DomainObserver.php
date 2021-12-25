@@ -29,19 +29,6 @@ class DomainObserver
                         'domain_id' => $domain->id,
                         'name' => $domain->name,
                         'type' => "NS",
-                        'content' => "ns1." . $domain->name . "."
-                    ]
-                );
-            }
-        );
-
-        \App\PowerDNS\Record::withoutEvents(
-            function () use ($domain) {
-                \App\PowerDNS\Record::create(
-                    [
-                        'domain_id' => $domain->id,
-                        'name' => "ns1." . $domain->name,
-                        'type' => "A",
                         'content' => \config('app.woat_ns1')
                     ]
                 );
@@ -55,19 +42,6 @@ class DomainObserver
                         'domain_id' => $domain->id,
                         'name' => $domain->name,
                         'type' => "NS",
-                        'content' => "ns2." . $domain->name . "."
-                    ]
-                );
-            }
-        );
-
-        \App\PowerDNS\Record::withoutEvents(
-            function () use ($domain) {
-                \App\PowerDNS\Record::create(
-                    [
-                        'domain_id' => $domain->id,
-                        'name' => "ns2." . $domain->name,
-                        'type' => "A",
                         'content' => \config('app.woat_ns2')
                     ]
                 );

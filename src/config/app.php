@@ -294,6 +294,6 @@ return [
         'ip_limit' => (int) env('SIGNUP_LIMIT_IP', 0),
     ],
 
-    'woat_ns1' => env('WOAT_NS1', '127.0.0.1'),
-    'woat_ns2' => env('WOAT_NS2', '127.0.0.1'),
+    'woat_ns1' => env('WOAT_NS1', 'ns01.' . env('APP_DOMAIN')),
+    'woat_ns2' => env('WOAT_NS2', 'ns02.' . env('APP_DOMAIN')),
 ];
