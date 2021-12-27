@@ -38,8 +38,7 @@ class DomainTest extends TestCase
     {
         $this->assertCount(1, $this->domain->records()->where('type', 'SOA')->get());
         $this->assertCount(2, $this->domain->records()->where('type', 'NS')->get());
-        $this->assertCount(2, $this->domain->records()->where('type', 'A')->get());
-        $this->assertCount(5, $this->domain->records()->get());
+        $this->assertCount(3, $this->domain->records()->get());
 
         $this->assertCount(1, $this->domain->settings()->get());
 
