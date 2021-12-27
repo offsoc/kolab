@@ -1213,7 +1213,8 @@ class LDAP
     {
         $domainName = explode('@', $email, 2)[1];
 
-        $dn = "uid={$email}," . self::baseDN($domainName, 'People');
+        $base_dn = $ldap->domain_root_dn($domainName);
+        $dn = "uid={$email},ou=People,{$base_dn}";
 
         $entry = $ldap->get_entry($dn);
 
