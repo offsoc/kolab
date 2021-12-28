@@ -12,10 +12,15 @@ abstract class ObjectListCommand extends ObjectCommand
 {
     public function __construct()
     {
-        $this->description = "List {$this->objectName}s";
+        $this->description = "List all {$this->objectName} objects";
 
         $this->signature = $this->commandPrefix ? $this->commandPrefix . ":" : "";
-        $this->signature .= "{$this->objectName}s";
+
+        if (!empty($this->objectNamePlural)) {
+            $this->signature .= "{$this->objectNamePlural}";
+        } else {
+            $this->signature .= "{$this->objectName}s";
+        }
 
         $classes = class_uses_recursive($this->objectClass);
 
