@@ -254,6 +254,11 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
     ],
 
+    'headers' => [
+        'csp' => env('APP_HEADER_CSP', ""),
+        'xfo' => env('APP_HEADER_XFO', ""),
+    ],
+
     // Locations of knowledge base articles
     'kb' => [
         // An article about suspended accounts

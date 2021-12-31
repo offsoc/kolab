@@ -292,7 +292,7 @@ const app = new Vue({
             }
         },
         isDegraded() {
-            return store.state.authInfo.isAccountDegraded
+            return store.state.authInfo && store.state.authInfo.isAccountDegraded
         },
         pageName(path) {
             let page = this.$route.path

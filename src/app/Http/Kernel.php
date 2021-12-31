@@ -22,6 +22,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \App\Http\Middleware\DevelConfig::class,
         \App\Http\Middleware\Locale::class,
+        \App\Http\Middleware\ContentSecurityPolicy::class,
         // FIXME: CORS handling added here, I didn't find a nice way
         // to add this only to the API routes
         // \App\Http\Middleware\Cors::class,
@@ -86,6 +87,7 @@ class Kernel extends HttpKernel
         \Illuminate\Session\Middleware\AuthenticateSession::class,
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
         \Illuminate\Auth\Middleware\Authorize::class,
+        \App\Http\Middleware\ContentSecurityPolicy::class,
     ];
 
     /**
