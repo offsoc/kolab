@@ -2,7 +2,7 @@ FROM fedora:34
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
 
-ARG SWOOLE_VERSION=4.6.x
+ARG SWOOLE_VERSION=v4.6.7
 ENV HOME=/opt/app-root/src
 
 LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
@@ -28,8 +28,9 @@ RUN dnf -y install \
         php-mysqlnd \
         re2c \
         wget && \
-    git clone -b v${SWOOLE_VERSION} https://github.com/swoole/swoole-src.git/ /swoole-src.git/ && \
+    git clone https://github.com/swoole/swoole-src.git/ /swoole-src.git/ && \
         cd /swoole-src.git/ && \
+        git checkout -f ${SWOOLE_VERSION} && \
         git clean -d -f -x && \
         phpize --clean && \
         phpize && \

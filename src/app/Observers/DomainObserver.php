@@ -52,6 +52,23 @@ class DomainObserver
     }
 
     /**
+     * Handle the domain "deleting" event.
+     *
+     * @param \App\Domain $domain The domain.
+     *
+     * @return void
+     */
+    public function deleting(Domain $domain)
+    {
+        \App\Policy\RateLimitWhitelist::where(
+            [
+                'whitelistable_id' => $domain->id,
+                'whitelistable_type' => Domain::class
+            ]
+        )->delete();
+    }
+
+    /**
      * Handle the domain "updated" event.
      *
      * @param \App\Domain $domain The domain.

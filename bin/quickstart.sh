@@ -36,23 +36,19 @@ test ! -z "$(php --modules | grep swoole)" || \
 
 base_dir=$(dirname $(dirname $0))
 
+# Always reset .env with .env.example
+cp src/.env.example src/.env
+
+if [ -f "src/.env.local" ]; then
+    # Ensure there's a line ending
+    echo "" >> src/.env
+    cat src/.env.local >> src/.env
+fi
+
 docker pull docker.io/kolab/centos7:latest
 
 docker-compose down --remove-orphans
 docker-compose build
-
-pushd ${base_dir}/src/
-
-# Always reset .env with .env.example
-cp .env.example .env
-
-if [ -f ".env.local" ]; then
-    # Ensure there's a line ending
-    echo "" >> .env
-    cat .env.local >> .env
-fi
-
-popd
 
 bin/regen-certs
 
@@ -99,6 +95,7 @@ rm -rf database/database.sqlite
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
 ./artisan data:import
 ./artisan swoole:http stop >/dev/null 2>&1 || :
-./artisan swoole:http start
+SWOOLE_HTTP_DAEMONIZE=true ./artisan swoole:http start
+./artisan horizon
 popd
 

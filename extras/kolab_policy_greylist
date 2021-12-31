@@ -1,6 +1,6 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 """
-This policy applies rate limitations
+An example implementation of a policy service.
 """
 
 import json
@@ -22,6 +22,8 @@ def read_request_input():
 
     while not end_of_request:
         if (time.time() - start_time) >= 10:
+            print("action=DEFER_IF_PERMIT Temporary error, try again later.\n")
+            sys.stdout.flush()
             sys.exit(0)
 
         request_line = sys.stdin.readline()
@@ -40,7 +42,7 @@ def read_request_input():
 
 
 if __name__ == "__main__":
-    URL = 'https://services.kolabnow.com/api/webhooks/policy/ratelimit'
+    URL = 'https://services.kolabnow.com/api/webhooks/policy/greylist'
 
     # Start the work
     while True:
@@ -54,14 +56,17 @@ if __name__ == "__main__":
             )
         # pylint: disable=broad-except
         except Exception:
-            print("action=DEFER_IF_PERMIT Temporary error, try again later.")
-            sys.exit(1)
+            print("action=DEFER_IF_PERMIT Temporary error, try again later.\n")
+            sys.stdout.flush()
+            sys.exit(0)
 
         try:
             R = json.loads(RESPONSE.text)
         # pylint: disable=broad-except
         except Exception:
-            sys.exit(1)
+            print("action=DEFER_IF_PERMIT Temporary error, try again later.\n")
+            sys.stdout.flush()
+            sys.exit(0)
 
         if 'prepend' in R:
             for prepend in R['prepend']:
@@ -69,11 +74,8 @@ if __name__ == "__main__":
 
         if RESPONSE.ok:
             print("action={0}\n".format(R['response']))
-
-            sys.stdout.flush()
         else:
             print("action={0} {1}\n".format(R['response'], R['reason']))
 
-            sys.stdout.flush()
-
+        sys.stdout.flush()
         sys.exit(0)

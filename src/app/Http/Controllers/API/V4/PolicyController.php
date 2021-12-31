@@ -47,59 +47,239 @@ class PolicyController extends Controller
      */
     public function ratelimit()
     {
-        /*
-        $data = [
-            'instance' => 'test.local.instance',
-            'protocol_state' => 'RCPT',
-            'sender' => 'sender@spf-pass.kolab.org',
-            'client_name' => 'mx.kolabnow.com',
-            'client_address' => '212.103.80.148',
-            'recipient' => $this->domainOwner->email
-        ];
-
-        $response = $this->post('/api/webhooks/spf', $data);
-        */
-/*
         $data = \request()->input();
 
-        // TODO: normalize sender address
         $sender = strtolower($data['sender']);
 
-        $alias = \App\UserAlias::where('alias', $sender)->first();
+        if (strpos($sender, '+') !== false) {
+            list($local, $rest) = explode('+', $sender);
+            list($rest, $domain) = explode('@', $sender);
+            $sender = "{$local}@{$domain}";
+        }
 
-        if (!$alias) {
-            $user = \App\User::where('email', $sender)->first();
+        list($local, $domain) = explode('@', $sender);
 
-            if (!$user) {
-                // what's the situation here?
+        if (in_array($sender, \config('app.ratelimit_whitelist', []))) {
+            return response()->json(['response' => 'DUNNO'], 200);
+        }
+
+        //
+        // Examine the individual sender
+        //
+        $user = \App\User::where('email', $sender)->first();
+
+        if (!$user) {
+            $alias = \App\UserAlias::where('alias', $sender)->first();
+
+            if (!$alias) {
+                // use HOLD, so that it is silent (as opposed to REJECT)
+                return response()->json(['response' => 'HOLD', 'reason' => 'Sender not allowed here.'], 403);
             }
-        } else {
+
             $user = $alias->user;
         }
 
-        // TODO time-limit
-        $userRates = \App\Policy\Ratelimit::where('user_id', $user->id);
-
-        // TODO message vs. recipient limit
-        if ($userRates->count() > 10) {
-            // TODO
+        if ($user->isDeleted() || $user->isSuspended()) {
+            // use HOLD, so that it is silent (as opposed to REJECT)
+            return response()->json(['response' => 'HOLD', 'reason' => 'Sender deleted or suspended'], 403);
         }
 
-        // this is the wallet to which the account is billed
-        $wallet = $user->wallet;
+        //
+        // Examine the domain
+        //
+        $domain = \App\Domain::where('namespace', $domain)->first();
 
-        // TODO: consider $wallet->payments;
-
-        $owner = $wallet->user;
-
-        // TODO time-limit
-        $ownerRates = \App\Policy\Ratelimit::where('owner_id', $owner->id);
-
-        // TODO message vs. recipient limit (w/ user counts)
-        if ($ownerRates->count() > 10) {
-            // TODO
+        if (!$domain) {
+            // external sender through where this policy is applied
+            return response()->json(['response' => 'DUNNO'], 200);
         }
-*/
+
+        if ($domain->isDeleted() || $domain->isSuspended()) {
+            // use HOLD, so that it is silent (as opposed to REJECT)
+            return response()->json(['response' => 'HOLD', 'reason' => 'Sender domain deleted or suspended'], 403);
+        }
+
+        // see if the user or domain is whitelisted
+        // use ./artisan policy:ratelimit:whitelist:create <email|namespace>
+        $whitelist = \App\Policy\RateLimitWhitelist::where(
+            [
+                'whitelistable_type' => \App\User::class,
+                'whitelistable_id' => $user->id
+            ]
+        )->orWhere(
+            [
+                'whitelistable_type' => \App\Domain::class,
+                'whitelistable_id' => $domain->id
+            ]
+        )->exists();
+
+        if ($whitelist) {
+            return response()->json(['response' => 'DUNNO'], 200);
+        }
+
+        // user nor domain whitelisted, continue scrutinizing request
+        $recipients = $data['recipients'];
+        sort($recipients);
+
+        $recipientCount = count($recipients);
+        $recipientHash = hash('sha256', implode(',', $recipients));
+
+        //
+        // Retrieve the wallet to get to the owner
+        //
+        $wallet = $user->wallet();
+
+        // wait, there is no wallet?
+        if (!$wallet) {
+            return response()->json(['response' => 'HOLD', 'reason' => 'Sender without a wallet'], 403);
+        }
+
+        $owner = $wallet->owner;
+
+        // find or create the request
+        $request = \App\Policy\RateLimit::where(
+            [
+                'recipient_hash' => $recipientHash,
+                'user_id' => $user->id
+            ]
+        )->where('updated_at', '>=', \Carbon\Carbon::now()->subHour())->first();
+
+        if (!$request) {
+            $request = \App\Policy\RateLimit::create(
+                [
+                    'user_id' => $user->id,
+                    'owner_id' => $owner->id,
+                    'recipient_hash' => $recipientHash,
+                    'recipient_count' => $recipientCount
+                ]
+            );
+
+        // ensure the request has an up to date timestamp
+        } else {
+            $request->updated_at = \Carbon\Carbon::now();
+            $request->save();
+        }
+
+        // excempt owners that have made at least two payments and currently maintain a positive balance.
+        $payments = $wallet->payments
+            ->where('amount', '>', 0)
+            ->where('status', 'paid');
+
+        if ($payments->count() >= 2 && $wallet->balance > 0) {
+            return response()->json(['response' => 'DUNNO'], 200);
+        }
+
+        //
+        // Examine the rates at which the owner (or its users) is sending
+        //
+        $ownerRates = \App\Policy\RateLimit::where('owner_id', $owner->id)
+            ->where('updated_at', '>=', \Carbon\Carbon::now()->subHour());
+
+        if ($ownerRates->count() >= 10) {
+            $result = [
+                'response' => 'DEFER_IF_PERMIT',
+                'reason' => 'The account is at 10 messages per hour, cool down.'
+            ];
+
+            // automatically suspend (recursively) if 2.5 times over the original limit and younger than two months
+            $ageThreshold = \Carbon\Carbon::now()->subMonthsWithoutOverflow(2);
+
+            if ($ownerRates->count() >= 25 && $owner->created_at > $ageThreshold) {
+                $wallet->entitlements->each(
+                    function ($entitlement) {
+                        if ($entitlement->entitleable_type == \App\Domain::class) {
+                            $entitlement->entitleable->suspend();
+                        }
+
+                        if ($entitlement->entitleable_type == \App\User::class) {
+                            $entitlement->entitleable->suspend();
+                        }
+                    }
+                );
+            }
+
+            return response()->json($result, 403);
+        }
+
+        $ownerRates = \App\Policy\RateLimit::where('owner_id', $owner->id)
+            ->where('updated_at', '>=', \Carbon\Carbon::now()->subHour())
+            ->sum('recipient_count');
+
+        if ($ownerRates >= 100) {
+            $result = [
+                'response' => 'DEFER_IF_PERMIT',
+                'reason' => 'The account is at 100 recipients per hour, cool down.'
+            ];
+
+            // automatically suspend if 2.5 times over the original limit and younger than two months
+            $ageThreshold = \Carbon\Carbon::now()->subMonthsWithoutOverflow(2);
+
+            if ($ownerRates >= 250 && $owner->created_at > $ageThreshold) {
+                $wallet->entitlements->each(
+                    function ($entitlement) {
+                        if ($entitlement->entitleable_type == \App\Domain::class) {
+                            $entitlement->entitleable->suspend();
+                        }
+
+                        if ($entitlement->entitleable_type == \App\User::class) {
+                            $entitlement->entitleable->suspend();
+                        }
+                    }
+                );
+            }
+
+            return response()->json($result, 403);
+        }
+
+        //
+        // Examine the rates at which the user is sending (if not also the owner
+        //
+        if ($user->id != $owner->id) {
+            $userRates = \App\Policy\RateLimit::where('user_id', $user->id)
+                ->where('updated_at', '>=', \Carbon\Carbon::now()->subHour());
+
+            if ($userRates->count() >= 10) {
+                $result = [
+                    'response' => 'DEFER_IF_PERMIT',
+                    'reason' => 'User is at 10 messages per hour, cool down.'
+                ];
+
+                // automatically suspend if 2.5 times over the original limit and younger than two months
+                $ageThreshold = \Carbon\Carbon::now()->subMonthsWithoutOverflow(2);
+
+                if ($userRates->count() >= 25 && $user->created_at > $ageThreshold) {
+                    $user->suspend();
+                }
+
+                return response()->json($result, 403);
+            }
+
+            $userRates = \App\Policy\RateLimit::where('user_id', $user->id)
+                ->where('updated_at', '>=', \Carbon\Carbon::now()->subHour())
+                ->sum('recipient_count');
+
+            if ($userRates >= 100) {
+                $result = [
+                    'response' => 'DEFER_IF_PERMIT',
+                    'reason' => 'User is at 100 recipients per hour, cool down.'
+                ];
+
+                // automatically suspend if 2.5 times over the original limit
+                $ageThreshold = \Carbon\Carbon::now()->subMonthsWithoutOverflow(2);
+
+                if ($userRates >= 250 && $user->created_at > $ageThreshold) {
+                    $user->suspend();
+                }
+
+                return response()->json($result, 403);
+            }
+        }
+
+        $result = [
+            'response' => 'DUNNO'
+        ];
+
+        return response()->json($result, 200);
     }
 
     /*
@@ -117,7 +297,7 @@ class PolicyController extends Controller
             return response()->json(
                 [
                     'response' => 'DEFER_IF_PERMIT',
-                    'reason' => 'Temporary error. Please try again later (' . __LINE__ . ')'
+                    'reason' => 'Temporary error. Please try again later.'
                 ],
                 403
             );
@@ -132,7 +312,7 @@ class PolicyController extends Controller
             return response()->json(
                 [
                     'response' => 'DEFER_IF_PERMIT',
-                    'reason' => 'Temporary error. Please try again later (' . __LINE__ . ')'
+                    'reason' => 'Temporary error. Please try again later.'
                 ],
                 403
             );

@@ -1,0 +1,144 @@
+#!/usr/bin/python3
+"""
+This policy applies rate limitations
+"""
+
+import json
+import time
+import sys
+
+import requests
+
+
+class PolicyRequest:
+    """
+        A holder of policy request instances.
+    """
+    db = None
+    recipients = []
+    sender = None
+
+    def __init__(self, request):
+        """
+            Initialize a policy request, usually in RCPT protocol state.
+        """
+        if 'sender' in request:
+            self.sender = request['sender']
+
+        if 'recipient' in request:
+            request['recipient'] = request['recipient']
+
+            self.recipients.append(request['recipient'])
+
+    def add_request(self, request):
+        """
+            Add an additional request from an instance to the existing instance
+        """
+        # Normalize email addresses (they may contain recipient delimiters)
+        if 'recipient' in request:
+            request['recipient'] = request['recipient']
+
+            if not request['recipient'].strip() == '':
+                self.recipients.append(request['recipient'])
+
+    def check_rate(self):
+        """
+            Check the rates at which this sender is hitting our mailserver.
+        """
+        if self.sender == "":
+            return {'response': 'DUNNO'}
+
+        try:
+            response = requests.post(
+                URL,
+                data={
+                    'sender': self.sender,
+                    'recipients': self.recipients
+                },
+                verify=True
+            )
+
+        # pylint: disable=broad-except
+        except Exception:
+            print("action=DEFER_IF_PERMIT Temporary error, try again later.\n")
+            sys.stdout.flush()
+            sys.exit(0)
+
+        return response
+
+
+def read_request_input():
+    """
+        Read a single policy request from sys.stdin, and return a dictionary
+        containing the request.
+    """
+    start_time = time.time()
+
+    policy_request = {}
+    end_of_request = False
+
+    while not end_of_request:
+        if (time.time() - start_time) >= 10:
+            print("action=DEFER_IF_PERMIT Temporary error, try again later.\n")
+            sys.stdout.flush()
+            sys.exit(0)
+
+        request_line = sys.stdin.readline()
+
+        if request_line.strip() == '':
+            if 'request' in policy_request:
+                end_of_request = True
+        else:
+            request_line = request_line.strip()
+            request_key = request_line.split('=')[0]
+            request_value = '='.join(request_line.split('=')[1:])
+
+            policy_request[request_key] = request_value
+
+    return policy_request
+
+
+if __name__ == "__main__":
+    URL = 'https://services.kolabnow.com/api/webhooks/policy/ratelimit'
+
+    POLICY_REQUESTS = {}
+
+    # Start the work
+    while True:
+        POLICY_REQUEST = read_request_input()
+
+        INSTANCE = POLICY_REQUEST['instance']
+
+        if INSTANCE in POLICY_REQUESTS:
+            POLICY_REQUESTS[INSTANCE].add_request(POLICY_REQUEST)
+        else:
+            POLICY_REQUESTS[INSTANCE] = PolicyRequest(POLICY_REQUEST)
+
+        protocol_state = POLICY_REQUEST['protocol_state'].strip().lower()
+
+        if not protocol_state == 'data':
+            print("action=DUNNO\n")
+            sys.stdout.flush()
+
+        else:
+            RESPONSE = POLICY_REQUESTS[INSTANCE].check_rate()
+
+        try:
+            R = json.loads(RESPONSE.text)
+        # pylint: disable=broad-except
+        except Exception:
+            print("action=DEFER_IF_PERMIT Temporary error, try again later.\n")
+            sys.stdout.flush()
+            sys.exit(0)
+
+        if 'prepend' in R:
+            for prepend in R['prepend']:
+                print("action=PREPEND {0}".format(prepend))
+
+        if 'reason' in R:
+            print("action={0} {1}\n".format(R['response'], R['reason']))
+        else:
+            print("action={0}\n".format(R['response']))
+
+        sys.stdout.flush()
+        sys.exit(0)

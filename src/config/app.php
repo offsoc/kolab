@@ -301,4 +301,6 @@ return [
 
     'woat_ns1' => env('WOAT_NS1', 'ns01.' . env('APP_DOMAIN')),
     'woat_ns2' => env('WOAT_NS2', 'ns02.' . env('APP_DOMAIN')),
+
+    'ratelimit_whitelist' => explode(',', env('RATELIMIT_WHITELIST', ''))
 ];

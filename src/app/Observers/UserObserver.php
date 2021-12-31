@@ -271,5 +271,13 @@ class UserObserver
                 ->whereIn('object_id', $wallets)
                 ->delete();
         }
+
+        // regardless of force delete, we're always purging whitelists... just in case
+        \App\Policy\RateLimitWhitelist::where(
+            [
+                'whitelistable_id' => $user->id,
+                'whitelistable_type' => User::class
+            ]
+        )->delete();
     }
 }
