@@ -139,6 +139,18 @@ class UserSeeder extends Seeder
 
         $joe->setAliases(['joe.monster@kolab.org']);
 
+        // This only exists so the user create job doesn't fail because the domain is not found
+        Domain::create(
+            [
+                'namespace' => 'jeroen.jeroen',
+                'status' => Domain::STATUS_NEW
+                    + Domain::STATUS_ACTIVE
+                    + Domain::STATUS_CONFIRMED
+                    + Domain::STATUS_VERIFIED,
+                'type' => Domain::TYPE_EXTERNAL
+            ]
+        );
+
         $jeroen = User::create(
             [
                 'email' => 'jeroen@jeroen.jeroen',
