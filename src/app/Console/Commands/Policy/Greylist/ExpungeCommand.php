@@ -27,10 +27,10 @@ class ExpungeCommand extends Command
      */
     public function handle()
     {
-        \App\Policy\Greylist\Connect::where('updated_at', '<', \Carbon\Carbon::now()->subMonthsWithoutOverflow(6))
+        \App\Policy\Greylist\Connect::where('updated_at', '<', \Carbon\Carbon::now()->subMonthsWithoutOverflow(2))
             ->delete();
 
-        \App\Policy\Greylist\Whitelist::where('updated_at', '<', \Carbon\Carbon::now()->subMonthsWithoutOverflow(6))
+        \App\Policy\Greylist\Whitelist::where('updated_at', '<', \Carbon\Carbon::now()->subMonthsWithoutOverflow(2))
             ->delete();
     }
 }
