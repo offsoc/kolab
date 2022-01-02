@@ -60,20 +60,20 @@ class PolicyController extends Controller
         list($local, $domain) = explode('@', $sender);
 
         if (in_array($sender, \config('app.ratelimit_whitelist', []), true)) {
-            return response()->json(['response' => 'DUNNO', 'reason' => 'Sender whitelisted for application'], 200);
+            return response()->json(['response' => 'DUNNO'], 200);
         }
 
         //
         // Examine the individual sender
         //
-        $user = \App\User::where('email', $sender)->first();
+        $user = \App\User::withTrashed()->where('email', $sender)->first();
 
         if (!$user) {
             $alias = \App\UserAlias::where('alias', $sender)->first();
 
             if (!$alias) {
                 // external sender through where this policy is applied
-                return response()->json(['response' => 'DUNNO', 'reason' => 'Sender address not local'], 200);
+                return response()->json(['response' => 'DUNNO'], 200);
             }
 
             $user = $alias->user;
@@ -87,11 +87,11 @@ class PolicyController extends Controller
         //
         // Examine the domain
         //
-        $domain = \App\Domain::where('namespace', $domain)->first();
+        $domain = \App\Domain::withTrashed()->where('namespace', $domain)->first();
 
         if (!$domain) {
             // external sender through where this policy is applied
-            return response()->json(['response' => 'DUNNO', 'reason' => 'Sender domain not local'], 200);
+            return response()->json(['response' => 'DUNNO'], 200);
         }
 
         if ($domain->isDeleted() || $domain->isSuspended()) {
@@ -109,7 +109,7 @@ class PolicyController extends Controller
         )->first();
 
         if ($whitelist) {
-            return response()->json(['response' => 'DUNNO', 'reason' => 'Sender address whitelisted'], 200);
+            return response()->json(['response' => 'DUNNO'], 200);
         }
 
         $whitelist = \App\Policy\RateLimitWhitelist::where(
@@ -120,7 +120,7 @@ class PolicyController extends Controller
         )->first();
 
         if ($whitelist) {
-            return response()->json(['response' => 'DUNNO', 'reason' => 'Sender domain whitelisted'], 200);
+            return response()->json(['response' => 'DUNNO'], 200);
         }
 
         // user nor domain whitelisted, continue scrutinizing request
@@ -172,7 +172,7 @@ class PolicyController extends Controller
             ->where('status', 'paid');
 
         if ($payments->count() >= 2 && $wallet->balance > 0) {
-            return response()->json(['response' => 'DUNNO', 'reason' => 'Stable account'], 200);
+            return response()->json(['response' => 'DUNNO'], 200);
         }
 
         //
@@ -281,12 +281,7 @@ class PolicyController extends Controller
             }
         }
 
-        $result = [
-            'response' => 'DUNNO',
-            'reason' => 'Unknown'
-        ];
-
-        return response()->json($result, 200);
+        return response()->json(['response' => 'DUNNO'], 200);
     }
 
     /*
