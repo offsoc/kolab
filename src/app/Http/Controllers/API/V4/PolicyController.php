@@ -58,11 +58,11 @@ class PolicyController extends Controller
         }
 
         list($local, $domain) = explode('@', $sender);
-/*
+
         if (in_array($sender, \config('app.ratelimit_whitelist', []), true)) {
-            return response()->json(['response' => 'DUNNO'], 200);
+            return response()->json(['response' => 'DUNNO', 'reason' => 'Sender whitelisted for application'], 200);
         }
-*/
+
         //
         // Examine the individual sender
         //
@@ -73,7 +73,7 @@ class PolicyController extends Controller
 
             if (!$alias) {
                 // external sender through where this policy is applied
-                return response()->json(['response' => 'DUNNO'], 200);
+                return response()->json(['response' => 'DUNNO', 'reason' => 'Sender address not local'], 200);
             }
 
             $user = $alias->user;
@@ -91,7 +91,7 @@ class PolicyController extends Controller
 
         if (!$domain) {
             // external sender through where this policy is applied
-            return response()->json(['response' => 'DUNNO'], 200);
+            return response()->json(['response' => 'DUNNO', 'reason' => 'Sender domain not local'], 200);
         }
 
         if ($domain->isDeleted() || $domain->isSuspended()) {
@@ -111,10 +111,10 @@ class PolicyController extends Controller
                 'whitelistable_type' => \App\Domain::class,
                 'whitelistable_id' => $domain->id
             ]
-        )->first();
+        )->exists();
 
         if ($whitelist) {
-            return response()->json(['response' => 'DUNNO'], 200);
+            return response()->json(['response' => 'DUNNO', 'reason' => 'Sender whitelisted'], 200);
         }
 
         // user nor domain whitelisted, continue scrutinizing request
@@ -166,7 +166,7 @@ class PolicyController extends Controller
             ->where('status', 'paid');
 
         if ($payments->count() >= 2 && $wallet->balance > 0) {
-            return response()->json(['response' => 'DUNNO'], 200);
+            return response()->json(['response' => 'DUNNO', 'reason' => 'Stable account'], 200);
         }
 
         //
@@ -276,7 +276,8 @@ class PolicyController extends Controller
         }
 
         $result = [
-            'response' => 'DUNNO'
+            'response' => 'DUNNO',
+            'reason' => 'Unknown'
         ];
 
         return response()->json($result, 200);
