@@ -58,11 +58,11 @@ class PolicyController extends Controller
         }
 
         list($local, $domain) = explode('@', $sender);
-
+/*
         if (in_array($sender, \config('app.ratelimit_whitelist', []), true)) {
             return response()->json(['response' => 'DUNNO'], 200);
         }
-
+*/
         //
         // Examine the individual sender
         //
