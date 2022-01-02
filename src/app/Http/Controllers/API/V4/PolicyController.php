@@ -106,15 +106,21 @@ class PolicyController extends Controller
                 'whitelistable_type' => \App\User::class,
                 'whitelistable_id' => $user->id
             ]
-        )->orWhere(
+        )->first();
+
+        if ($whitelist) {
+            return response()->json(['response' => 'DUNNO', 'reason' => 'Sender address whitelisted'], 200);
+        }
+
+        $whitelist = \App\Policy\RateLimitWhitelist::where(
             [
                 'whitelistable_type' => \App\Domain::class,
                 'whitelistable_id' => $domain->id
             ]
-        )->exists();
+        )->first();
 
         if ($whitelist) {
-            return response()->json(['response' => 'DUNNO', 'reason' => 'Sender whitelisted'], 200);
+            return response()->json(['response' => 'DUNNO', 'reason' => 'Sender domain whitelisted'], 200);
         }
 
         // user nor domain whitelisted, continue scrutinizing request
