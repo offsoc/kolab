@@ -72,8 +72,8 @@ class PolicyController extends Controller
             $alias = \App\UserAlias::where('alias', $sender)->first();
 
             if (!$alias) {
-                // use HOLD, so that it is silent (as opposed to REJECT)
-                return response()->json(['response' => 'HOLD', 'reason' => 'Sender not allowed here.'], 403);
+                // external sender through where this policy is applied
+                return response()->json(['response' => 'DUNNO'], 200);
             }
 
             $user = $alias->user;
@@ -111,7 +111,7 @@ class PolicyController extends Controller
                 'whitelistable_type' => \App\Domain::class,
                 'whitelistable_id' => $domain->id
             ]
-        )->exists();
+        )->first();
 
         if ($whitelist) {
             return response()->json(['response' => 'DUNNO'], 200);
