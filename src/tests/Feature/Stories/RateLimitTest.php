@@ -300,7 +300,7 @@ class RateLimitTest extends TestCase
         // the tenth request should now be allowed
         $response = $this->post('api/webhooks/policy/ratelimit', $request);
 
-        $response->assertStatus(200, '102nd recipient not accepted');
+        $response->assertStatus(200);
     }
 
     /**
