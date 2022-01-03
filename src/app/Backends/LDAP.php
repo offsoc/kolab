@@ -77,7 +77,9 @@ class LDAP
         $ldap = self::initLDAP($config);
 
         $mgmtRootDN = \config('ldap.admin.root_dn');
-        $domainBaseDN = self::baseDN($domain->namespace);
+        $hostedRootDN = \config('ldap.hosted.root_dn');
+
+        $domainBaseDN = "ou={$domain->namespace},{$hostedRootDN}";
 
         $aci = [
             '(targetattr = "*")'
@@ -172,7 +174,7 @@ class LDAP
         }
 
         foreach (['Groups', 'People', 'Resources', 'Shared Folders'] as $item) {
-            $itemDN = self::baseDN($domain->namespace, $item);
+            $itemDN = "ou={$item},{$domainBaseDN}";
             if (!$ldap->get_entry($itemDN)) {
                 $itemEntry = [
                     'ou' => $item,
@@ -237,7 +239,7 @@ class LDAP
 
         $domainName = explode('@', $group->email, 2)[1];
         $cn = $ldap->quote_string($group->name);
-        $dn = "cn={$cn}," . self::baseDN($domainName, 'Groups');
+        $dn = "cn={$cn}," . self::baseDN($ldap, $domainName, 'Groups');
 
         $entry = [
             'mail' => $group->email,
@@ -276,7 +278,7 @@ class LDAP
 
         $domainName = explode('@', $resource->email, 2)[1];
         $cn = $ldap->quote_string($resource->name);
-        $dn = "cn={$cn}," . self::baseDN($domainName, 'Resources');
+        $dn = "cn={$cn}," . self::baseDN($ldap, $domainName, 'Resources');
 
         $entry = [
             'mail' => $resource->email,
@@ -317,7 +319,7 @@ class LDAP
 
         $domainName = explode('@', $folder->email, 2)[1];
         $cn = $ldap->quote_string($folder->name);
-        $dn = "cn={$cn}," . self::baseDN($domainName, 'Shared Folders');
+        $dn = "cn={$cn}," . self::baseDN($ldap, $domainName, 'Shared Folders');
 
         $entry = [
             'mail' => $folder->email,
@@ -415,7 +417,7 @@ class LDAP
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
 
-        $domainBaseDN = self::baseDN($domain->namespace);
+        $domainBaseDN = self::baseDN($ldap, $domain->namespace);
 
         if ($ldap->get_entry($domainBaseDN)) {
             $result = $ldap->delete_entry_recursive($domainBaseDN);
@@ -927,7 +929,7 @@ class LDAP
         $entry['uniquemember'] = [];
 
         $groupDomain = explode('@', $group->email, 2)[1];
-        $domainBaseDN = self::baseDN($groupDomain);
+        $domainBaseDN = self::baseDN($ldap, $groupDomain);
         $validMembers = [];
 
         foreach ($group->members as $member) {
@@ -1144,7 +1146,7 @@ class LDAP
     private static function getGroupEntry($ldap, $email, &$dn = null)
     {
         $domainName = explode('@', $email, 2)[1];
-        $base_dn = self::baseDN($domainName, 'Groups');
+        $base_dn = self::baseDN($ldap, $domainName, 'Groups');
 
         $attrs = ['dn', 'cn', 'mail', 'uniquemember', 'objectclass', 'kolaballowsmtpsender'];
 
@@ -1166,7 +1168,7 @@ class LDAP
     private static function getResourceEntry($ldap, $email, &$dn = null)
     {
         $domainName = explode('@', $email, 2)[1];
-        $base_dn = self::baseDN($domainName, 'Resources');
+        $base_dn = self::baseDN($ldap, $domainName, 'Resources');
 
         $attrs = ['dn', 'cn', 'mail', 'objectclass', 'kolabtargetfolder',
             'kolabfoldertype', 'kolabinvitationpolicy', 'owner', 'acl'];
@@ -1189,7 +1191,7 @@ class LDAP
     private static function getSharedFolderEntry($ldap, $email, &$dn = null)
     {
         $domainName = explode('@', $email, 2)[1];
-        $base_dn = self::baseDN($domainName, 'Shared Folders');
+        $base_dn = self::baseDN($ldap, $domainName, 'Shared Folders');
 
         $attrs = ['dn', 'cn', 'mail', 'objectclass', 'kolabtargetfolder', 'kolabfoldertype', 'acl'];
 
@@ -1213,8 +1215,7 @@ class LDAP
     {
         $domainName = explode('@', $email, 2)[1];
 
-        $base_dn = $ldap->domain_root_dn($domainName);
-        $dn = "uid={$email},ou=People,{$base_dn}";
+        $dn = "uid={$email}," . self::baseDN($ldap, $domainName, 'People');
 
         $entry = $ldap->get_entry($dn);
 
@@ -1362,18 +1363,18 @@ class LDAP
     }
 
     /**
-     * Create a base DN string for specified object
+     * Create a base DN string for a specified object.
+     * Note: It makes sense with an existing domain only.
      *
-     * @param string  $domainName Domain namespace
-     * @param ?string $ouName     Optional name of the sub-tree (OU)
+     * @param \Net_LDAP3 $ldap       Ldap connection
+     * @param string     $domainName Domain namespace
+     * @param ?string    $ouName     Optional name of the sub-tree (OU)
      *
      * @return string Full base DN
      */
-    private static function baseDN(string $domainName, string $ouName = null): string
+    private static function baseDN($ldap, string $domainName, string $ouName = null): string
     {
-        $hostedRootDN = \config('ldap.hosted.root_dn');
-
-        $dn = "ou={$domainName},{$hostedRootDN}";
+        $dn = $ldap->domain_root_dn($domainName);
 
         if ($ouName) {
             $dn = "ou={$ouName},{$dn}";
