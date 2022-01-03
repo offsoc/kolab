@@ -30,7 +30,7 @@ const setI18nLanguage = (lang) => {
     // Save the selected language in a cookie, so it can be used server-side
     // after page reload. Make the cookie valid for 10 years
     const age = 10 * 60 * 60 * 24 * 365
-    document.cookie = 'language=' + lang + '; max-age=' + age
+    document.cookie = 'language=' + lang + '; max-age=' + age + '; path=/; secure'
 
     return lang
 }

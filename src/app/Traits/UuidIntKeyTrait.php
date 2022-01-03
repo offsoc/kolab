@@ -38,14 +38,4 @@ trait UuidIntKeyTrait
     {
         return false;
     }
-
-    /**
-     * Get the key type.
-     *
-     * @return string
-     */
-    public function getKeyType()
-    {
-        return 'bigint';
-    }
 }

@@ -69,7 +69,7 @@ class ChargeTest extends TestCase
         Queue::fake();
 
         // The wallet has entitlements to charge, and negative balance
-        $sku = \App\Sku::where('title', 'mailbox')->first();
+        $sku = \App\Sku::withObjectTenantContext($user)->where('title', 'mailbox')->first();
         $entitlement = \App\Entitlement::create([
                 'wallet_id' => $wallet->id,
                 'sku_id' => $sku->id,
@@ -78,12 +78,12 @@ class ChargeTest extends TestCase
                 'entitleable_type' => \App\User::class,
         ]);
         \App\Entitlement::where('id', $entitlement->id)->update([
-                'created_at' => \Carbon\Carbon::now()->subMonths(1),
-                'updated_at' => \Carbon\Carbon::now()->subMonths(1),
+                'created_at' => \Carbon\Carbon::now()->subMonthsNoOverflow(1),
+                'updated_at' => \Carbon\Carbon::now()->subMonthsNoOverflow(1),
         ]);
         \App\User::where('id', $user->id)->update([
-                'created_at' => \Carbon\Carbon::now()->subMonths(1),
-                'updated_at' => \Carbon\Carbon::now()->subMonths(1),
+                'created_at' => \Carbon\Carbon::now()->subMonthsNoOverflow(1),
+                'updated_at' => \Carbon\Carbon::now()->subMonthsNoOverflow(1),
         ]);
 
         $this->assertSame(100, $wallet->fresh()->chargeEntitlements(false));

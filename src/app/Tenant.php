@@ -20,7 +20,6 @@ class Tenant extends Model
         'title',
     ];
 
-    protected $keyType = 'bigint';
 
     /**
      * Utility method to get tenant-specific system setting.
