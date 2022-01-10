@@ -14,9 +14,18 @@ const { spawn } = require('child_process');
 const glob = require('glob');
 const mix = require('laravel-mix');
 
-mix.js('resources/js/user/app.js', 'public/js/user.js').vue()
-    .js('resources/js/admin/app.js', 'public/js/admin.js').vue()
-    .js('resources/js/reseller/app.js', 'public/js/reseller.js').vue()
+mix.options({
+    vue: {
+        compilerOptions: {
+            whitespace: 'condense'
+        }
+    }
+})
+
+mix.js('resources/js/user/app.js', 'public/js/user.js')
+    .js('resources/js/admin/app.js', 'public/js/admin.js')
+    .js('resources/js/reseller/app.js', 'public/js/reseller.js')
+    .vue()
 
 mix.before(() => {
     spawn('php', ['resources/build/before.php'], { stdio: 'inherit' })

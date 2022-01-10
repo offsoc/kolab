@@ -24,7 +24,7 @@
                             </div>
                         </div>
                     </form>
-                    <div class="mt-2">
+                    <div class="mt-2 buttons">
                         <button v-if="!domain.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendDomain">
                             {{ $t('btn.suspend') }}
                         </button>

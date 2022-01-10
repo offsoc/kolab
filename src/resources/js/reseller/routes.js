@@ -1,15 +1,20 @@
-import DashboardComponent from '../../vue/Reseller/Dashboard'
-import DistlistComponent from '../../vue/Admin/Distlist'
-import DomainComponent from '../../vue/Admin/Domain'
-import InvitationsComponent from '../../vue/Reseller/Invitations'
 import LoginComponent from '../../vue/Login'
 import LogoutComponent from '../../vue/Logout'
 import PageComponent from '../../vue/Page'
-import ResourceComponent from '../../vue/Admin/Resource'
-import SharedFolderComponent from '../../vue/Admin/SharedFolder'
-import StatsComponent from '../../vue/Reseller/Stats'
-import UserComponent from '../../vue/Admin/User'
-import WalletComponent from '../../vue/Wallet'
+
+// Here's a list of lazy-loaded components
+// Note: you can pack multiple components into the same chunk, webpackChunkName
+// is also used to get a sensible file name instead of numbers
+
+const DashboardComponent = () => import(/* webpackChunkName: "../reseller/pages" */ '../../vue/Reseller/Dashboard')
+const DistlistComponent = () => import(/* webpackChunkName: "../reseller/pages" */ '../../vue/Admin/Distlist')
+const DomainComponent = () => import(/* webpackChunkName: "../reseller/pages" */ '../../vue/Admin/Domain')
+const InvitationsComponent = () => import(/* webpackChunkName: "../reseller/pages" */ '../../vue/Reseller/Invitations')
+const ResourceComponent = () => import(/* webpackChunkName: "../reseller/pages" */ '../../vue/Admin/Resource')
+const SharedFolderComponent = () => import(/* webpackChunkName: "../reseller/pages" */ '../../vue/Admin/SharedFolder')
+const StatsComponent = () => import(/* webpackChunkName: "../reseller/pages" */ '../../vue/Reseller/Stats')
+const UserComponent = () => import(/* webpackChunkName: "../reseller/pages" */ '../../vue/Admin/User')
+const WalletComponent = () => import(/* webpackChunkName: "../reseller/pages" */ '../../vue/Wallet')
 
 const routes = [
     {

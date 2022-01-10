@@ -29,7 +29,7 @@
                         <input type="text" class="form-control" id="reset_short_code" :placeholder="$t('form.code')" required v-model="short_code">
                     </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
-                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}</button>
+                    <button class="btn btn-primary ms-2" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}</button>
                     <input type="hidden" id="reset_code" v-model="code" />
                 </form>
             </div>
@@ -49,18 +49,18 @@
                         <label for="reset_confirm" class="visually-hidden">{{ $t('form.password-confirm') }}</label>
                         <input type="password" class="form-control" id="reset_confirm" :placeholder="$t('form.password-confirm')" required v-model="password_confirmation">
                     </div>
-                    <div class="form-group pt-3">
+                    <div class="form-group pt-3 mb-3">
                         <label for="secondfactor" class="sr-only">2FA</label>
                         <div class="input-group">
-                            <span class="input-group-prepend">
-                                <span class="input-group-text"><svg-icon icon="key"></svg-icon></span>
+                            <span class="input-group-text">
+                                <svg-icon icon="key"></svg-icon>
                             </span>
-                            <input type="text" id="secondfactor" class="form-control rounded-right" placeholder="Second factor code" v-model="secondFactor">
+                            <input type="text" id="secondfactor" class="form-control rounded-end" placeholder="Second factor code" v-model="secondFactor">
                         </div>
                         <small class="form-text text-muted">Second factor code is optional for users with no 2-Factor Authentication setup.</small>
                     </div>
                     <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
-                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                    <button class="btn btn-primary ms-2" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
                 </form>
             </div>
         </div>

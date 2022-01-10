@@ -100,6 +100,12 @@
     margin-top: -0.25rem;
 }
 
+.buttons {
+    & > button + button {
+        margin-left: .5em;
+    }
+}
+
 // Various improvements for mobile
 @include media-breakpoint-down(sm) {
     .row.mb-3 {

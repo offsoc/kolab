@@ -167,6 +167,13 @@ table {
         line-height: 1;
         padding: 0;
     }
+
+    td {
+        & > svg + a,
+        & > svg + span {
+            margin-left: .4em;
+        }
+    }
 }
 
 .list-details {

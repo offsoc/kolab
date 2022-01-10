@@ -36,7 +36,7 @@
                             </div>
                         </div>
                     </form>
-                    <div class="mt-2">
+                    <div class="mt-2 buttons">
                         <button v-if="!list.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendList">
                             {{ $t('btn.suspend') }}
                         </button>

@@ -35,7 +35,7 @@
                     </li>
                     <li v-if="languages.length > 1 && mode == 'header'" id="language-selector" class="nav-item dropdown">
                         <a href="#" class="nav-link link-lang dropdown-toggle" role="button" data-bs-toggle="dropdown">{{ getLang().toUpperCase() }}</a>
-                        <div class="dropdown-menu dropdown-menu-right mb-2">
+                        <div class="dropdown-menu dropdown-menu-end mb-2">
                             <a class="dropdown-item" href="#" v-for="lang in languages" :key="lang" @click="setLang(lang)">
                                 {{ lang.toUpperCase() }} - {{ $t('lang.' + lang) }}
                             </a>

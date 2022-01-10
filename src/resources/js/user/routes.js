@@ -1,28 +1,29 @@
-import DashboardComponent from '../../vue/Dashboard'
-import DistlistInfoComponent from '../../vue/Distlist/Info'
-import DistlistListComponent from '../../vue/Distlist/List'
-import DomainInfoComponent from '../../vue/Domain/Info'
-import DomainListComponent from '../../vue/Domain/List'
 import LoginComponent from '../../vue/Login'
 import LogoutComponent from '../../vue/Logout'
-import MeetComponent from '../../vue/Rooms'
 import PageComponent from '../../vue/Page'
 import PasswordResetComponent from '../../vue/PasswordReset'
-import ResourceInfoComponent from '../../vue/Resource/Info'
-import ResourceListComponent from '../../vue/Resource/List'
-import SharedFolderInfoComponent from '../../vue/SharedFolder/Info'
-import SharedFolderListComponent from '../../vue/SharedFolder/List'
 import SignupComponent from '../../vue/Signup'
-import UserInfoComponent from '../../vue/User/Info'
-import UserListComponent from '../../vue/User/List'
-import UserProfileComponent from '../../vue/User/Profile'
-import UserProfileDeleteComponent from '../../vue/User/ProfileDelete'
-import WalletComponent from '../../vue/Wallet'
 
 // Here's a list of lazy-loaded components
 // Note: you can pack multiple components into the same chunk, webpackChunkName
 // is also used to get a sensible file name instead of numbers
-const RoomComponent = () => import(/* webpackChunkName: "room" */ '../../vue/Meet/Room.vue')
+
+const DashboardComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Dashboard')
+const DistlistInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Distlist/Info')
+const DistlistListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Distlist/List')
+const DomainInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Domain/Info')
+const DomainListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Domain/List')
+const MeetComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Rooms')
+const ResourceInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/Info')
+const ResourceListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/List')
+const SharedFolderInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/SharedFolder/Info')
+const SharedFolderListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/SharedFolder/List')
+const UserInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/Info')
+const UserListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/List')
+const UserProfileComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/Profile')
+const UserProfileDeleteComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/ProfileDelete')
+const WalletComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Wallet')
+const RoomComponent = () => import(/* webpackChunkName: "../user/meet" */ '../../vue/Meet/Room.vue')
 
 const routes = [
     {

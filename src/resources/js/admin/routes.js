@@ -1,13 +1,18 @@
-import DashboardComponent from '../../vue/Admin/Dashboard'
-import DistlistComponent from '../../vue/Admin/Distlist'
-import DomainComponent from '../../vue/Admin/Domain'
 import LoginComponent from '../../vue/Login'
 import LogoutComponent from '../../vue/Logout'
 import PageComponent from '../../vue/Page'
-import ResourceComponent from '../../vue/Admin/Resource'
-import SharedFolderComponent from '../../vue/Admin/SharedFolder'
-import StatsComponent from '../../vue/Admin/Stats'
-import UserComponent from '../../vue/Admin/User'
+
+// Here's a list of lazy-loaded components
+// Note: you can pack multiple components into the same chunk, webpackChunkName
+// is also used to get a sensible file name instead of numbers
+
+const DashboardComponent = () => import(/* webpackChunkName: "../admin/pages" */ '../../vue/Admin/Dashboard')
+const DistlistComponent = () => import(/* webpackChunkName: "../admin/pages" */ '../../vue/Admin/Distlist')
+const DomainComponent = () => import(/* webpackChunkName: "../admin/pages" */ '../../vue/Admin/Domain')
+const ResourceComponent = () => import(/* webpackChunkName: "../admin/pages" */ '../../vue/Admin/Resource')
+const SharedFolderComponent = () => import(/* webpackChunkName: "../admin/pages" */ '../../vue/Admin/SharedFolder')
+const StatsComponent = () => import(/* webpackChunkName: "../admin/pages" */ '../../vue/Admin/Stats')
+const UserComponent = () => import(/* webpackChunkName: "../admin/pages" */ '../../vue/Admin/User')
 
 const routes = [
     {

@@ -58,7 +58,7 @@
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="external_email">
                                     <a v-if="user.external_email" :href="'mailto:' + user.external_email">{{ user.external_email }}</a>
-                                    <button type="button" class="btn btn-secondary btn-sm" @click="emailEdit">{{ $t('btn.edit') }}</button>
+                                    <button type="button" class="btn btn-secondary btn-sm ms-2" @click="emailEdit">{{ $t('btn.edit') }}</button>
                                 </span>
                             </div>
                         </div>
@@ -75,7 +75,7 @@
                             </div>
                         </div>
                     </form>
-                    <div class="mt-2">
+                    <div class="mt-2 buttons">
                         <button v-if="!user.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendUser">
                             {{ $t('btn.suspend') }}
                         </button>
@@ -147,7 +147,7 @@
                                 <div class="col-sm-8">
                                     <span class="form-control-plaintext" id="discount">
                                         <span>{{ wallet.discount ? (wallet.discount + '% - ' + wallet.discount_description) : 'none' }}</span>
-                                        <button type="button" class="btn btn-secondary btn-sm" @click="discountEdit">{{ $t('btn.edit') }}</button>
+                                        <button type="button" class="btn btn-secondary btn-sm ms-2" @click="discountEdit">{{ $t('btn.edit') }}</button>
                                     </span>
                                 </div>
                             </div>
@@ -172,7 +172,7 @@
                                 </div>
                             </div>
                         </form>
-                        <div class="mt-2">
+                        <div class="mt-2 buttons">
                             <button id="button-award" class="btn btn-success" type="button" @click="awardDialog">{{ $t('user.add-bonus') }}</button>
                             <button id="button-penalty" class="btn btn-danger" type="button" @click="penalizeDialog">{{ $t('user.add-penalty') }}</button>
                         </div>
@@ -230,7 +230,7 @@
                             <hr class="m-0">
                             &sup1; {{ $t('user.discount-hint') }}: {{ discount }}% - {{ discount_description }}
                         </small>
-                        <div class="mt-2">
+                        <div class="mt-2 buttons">
                             <button type="button" class="btn btn-danger" id="reset2fa" v-if="has2FA" @click="reset2FADialog">
                                 {{ $t('user.reset-2fa') }}
                             </button>

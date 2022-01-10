@@ -32,7 +32,7 @@
                         <div v-if="mandate.isPending" class="alert alert-warning">
                             {{ $t('wallet.auto-payment-inprogress') }}
                         </div>
-                        <p>
+                        <p class="buttons">
                             <button type="button" class="btn btn-danger" @click="autoPaymentDelete">{{ $t('wallet.auto-payment-cancel') }}</button>
                             <button type="button" class="btn btn-primary" @click="autoPaymentChange">{{ $t('wallet.auto-payment-change') }}</button>
                         </p>
