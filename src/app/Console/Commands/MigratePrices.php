@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Console\Command;
 
 class MigratePrices extends Command
 {
@@ -33,7 +33,7 @@ class MigratePrices extends Command
 
     private function updateSKUs()
     {
-        $bar = \App\Utils::createProgressBar($this->output, 8, "Updating SKUs");
+        $bar = $this->createProgressBar(8, "Updating SKUs");
 
         // 1. Set the list price for the SKU 'mailbox' to 500.
         $bar->advance();
@@ -88,7 +88,7 @@ class MigratePrices extends Command
     {
         $users = \App\User::all();
 
-        $bar = \App\Utils::createProgressBar($this->output, count($users), "Updating entitlements");
+        $bar = $this->createProgressBar(count($users), "Updating entitlements");
 
         $groupware_sku = \App\Sku::where('title', 'groupware')->first();
         $activesync_sku = \App\Sku::where('title', 'activesync')->first();

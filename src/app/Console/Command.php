@@ -29,6 +29,31 @@ abstract class Command extends \Illuminate\Console\Command
      */
     protected $dangerous = false;
 
+
+    /**
+     * Shortcut to creating a progress bar of a particular format with a particular message.
+     *
+     * @param int    $count   Number of progress steps
+     * @param string $message The description
+     *
+     * @return \Symfony\Component\Console\Helper\ProgressBar
+     */
+    protected function createProgressBar($count, $message = null)
+    {
+        $bar = $this->output->createProgressBar($count);
+        $bar->setFormat(
+            '%current:7s%/%max:7s% [%bar%] %percent:3s%% %elapsed:7s%/%estimated:-7s% %message% '
+        );
+
+        if ($message) {
+            $bar->setMessage("{$message}...");
+        }
+
+        $bar->start();
+
+        return $bar;
+    }
+
     /**
      * Find the domain.
      *

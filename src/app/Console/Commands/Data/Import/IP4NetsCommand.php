@@ -57,11 +57,7 @@ class IP4NetsCommand extends Command
                 continue;
             }
 
-            $bar = \App\Utils::createProgressBar(
-                $this->output,
-                $numLines,
-                "Importing IPv4 Networks from {$file}"
-            );
+            $bar = $this->createProgressBar($numLines, "Importing IPv4 Networks from {$file}");
 
             $fp = fopen($file, 'r');
 

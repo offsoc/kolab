@@ -66,32 +66,6 @@ class Utils
     }
 
     /**
-     * Shortcut to creating a progress bar of a particular format with a particular message.
-     *
-     * @param \Illuminate\Console\OutputStyle $output  Console output object
-     * @param int                             $count   Number of progress steps
-     * @param string                          $message The description
-     *
-     * @return \Symfony\Component\Console\Helper\ProgressBar
-     */
-    public static function createProgressBar($output, $count, $message = null)
-    {
-        $bar = $output->createProgressBar($count);
-
-        $bar->setFormat(
-            '%current:7s%/%max:7s% [%bar%] %percent:3s%% %elapsed:7s%/%estimated:-7s% %message% '
-        );
-
-        if ($message) {
-            $bar->setMessage($message . " ...");
-        }
-
-        $bar->start();
-
-        return $bar;
-    }
-
-    /**
      * Return the number of days in the month prior to this one.
      *
      * @return int

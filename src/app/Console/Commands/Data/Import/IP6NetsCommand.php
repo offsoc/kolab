@@ -57,11 +57,7 @@ class IP6NetsCommand extends Command
                 continue;
             }
 
-            $bar = \App\Utils::createProgressBar(
-                $this->output,
-                $numLines,
-                "Importing IPv6 Networks from {$file}"
-            );
+            $bar = $this->createProgressBar($numLines, "Importing IPv6 Networks from {$file}");
 
             $fp = fopen($file, 'r');
 

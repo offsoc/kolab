@@ -20,7 +20,7 @@ class SharedFolderObserver
         }
 
         if (empty($folder->email)) {
-            if (!isset($folder->name)) {
+            if (!isset($folder->domain)) {
                 throw new \Exception("Missing 'domain' property for a new shared folder");
             }
 
