@@ -18,3 +18,4 @@ parameters:
         - resources/
         - routes/
         - tests/
+        - resources/
