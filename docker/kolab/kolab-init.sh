@@ -30,6 +30,8 @@ pushd /root/utils/
 ./19-turn-on-vlv-in-roundcube.sh && echo "19 done"
 ./20-add-alias-attribute-index.sh && echo "20 done"
 ./21-adjust-postfix-config.sh && echo "21 done"
+# FIXME we can only create the resource once the owner exists
+#./22-create-resource.sh && echo "22 done"
 ./23-patch-system.sh && echo "23 done"
 ./24-roundcubeconfig.sh && echo "24 done"
 
