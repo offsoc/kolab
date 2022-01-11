@@ -1,0 +1,36 @@
+From 294ef5b076c42d029fdb58b8167124f0cfd9e4a8 Mon Sep 17 00:00:00 2001
+From: Christian Mollekopf <mollekopf@kolabsys.com>
+Date: Fri, 19 Nov 2021 11:16:33 +0100
+Subject: [PATCH 1/2] Make iTip messages outlook compatible
+
+Summary: Use multipart/alternative and loose the Content-Disposition header
+
+Differential Revision: https://git.kolab.org/D3056
+---
+ pykolab/xml/event.py | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/pykolab/xml/event.py b/pykolab/xml/event.py
+index 276bb6f..a668f77 100644
+--- a/pykolab/xml/event.py
++++ b/pykolab/xml/event.py
+@@ -1273,7 +1273,7 @@ class Event(object):
+         from email import charset
+         charset.add_charset('utf-8', charset.SHORTEST, charset.QP)
+ 
+-        msg = MIMEMultipart()
++        msg = MIMEMultipart("alternative")
+ 
+         msg_from = None
+         attendees = None
+@@ -1353,7 +1353,6 @@ class Event(object):
+ 
+         part.set_payload(self.as_string_itip(method=method))
+ 
+-        part.add_header('Content-Disposition', 'attachment; filename="event.ics"')
+         part.add_header('Content-Transfer-Encoding', '8bit')
+ 
+         msg.attach(part)
+-- 
+2.33.1
+
