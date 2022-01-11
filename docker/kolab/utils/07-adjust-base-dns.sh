@@ -21,6 +21,7 @@ sed -i -r \
     /etc/kolab-freebusy/config.ini \
     /etc/postfix/ldap/*.cf \
     /etc/roundcubemail/config.inc.php \
+    /etc/roundcubemail/calendar.inc.php \
     /etc/roundcubemail/kolab_auth.inc.php
 
 sed -i -r \
