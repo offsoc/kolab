@@ -20,7 +20,7 @@ sed -i -r \
 # imapready: (inetuserstatus:1.2.840.113556.1.4.803:=32)
 
 sed -i -r \
-    -e 's/^query_filter.*$/query_filter = (\&(|(mail=%s)(alias=%s))(|(objectclass=kolabinetorgperson)(|(objectclass=kolabgroupofuniquenames)(objectclass=kolabgroupofurls))(|(|(objectclass=groupofuniquenames)(objectclass=groupofurls))(objectclass=kolabsharedfolder))(objectclass=kolabsharedfolder))(inetuserstatus:1.2.840.113556.1.4.803:=50)(!(inetuserstatus:1.2.840.113556.1.4.803:=4)))/g' \
+    -e 's/^query_filter.*$/query_filter = (\&(|(mail=%s)(alias=%s))(|(objectclass=kolabinetorgperson)(|(objectclass=kolabgroupofuniquenames)(objectclass=kolabgroupofurls))(|(|(objectclass=groupofuniquenames)(objectclass=groupofurls))(objectclass=kolabsharedfolder))(objectclass=kolabsharedfolder))(!(inetuserstatus:1.2.840.113556.1.4.803:=4)))/g' \
     /etc/postfix/ldap/local_recipient_maps.cf
 
 systemctl restart postfix
