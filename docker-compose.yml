@@ -29,6 +29,14 @@ services:
     environment:
       - DB_HOST=${DB_HOST}
       - DB_ROOT_PASSWORD=Welcome2KolabSystems
+      - DB_HKCCP_DATABASE=${DB_DATABASE}
+      - DB_HKCCP_USERNAME=${DB_USERNAME}
+      - DB_HKCCP_PASSWORD=${DB_PASSWORD}
+      - DB_KOLAB_DATABASE=kolab
+      - DB_KOLAB_USERNAME=kolab
+      - DB_KOLAB_PASSWORD=Welcome2KolabSystems
+      - DB_RC_USERNAME=roundcube
+      - DB_RC_PASSWORD=Welcome2KolabSystems
       - IMAP_HOST=127.0.0.1
       - IMAP_PORT=11993
       - MAIL_HOST=127.0.0.1
