@@ -31,5 +31,6 @@ pushd /root/utils/
 ./20-add-alias-attribute-index.sh && echo "20 done"
 ./21-adjust-postfix-config.sh && echo "21 done"
 ./23-patch-system.sh && echo "23 done"
+./24-roundcubeconfig.sh && echo "24 done"
 
 touch /tmp/kolab-init.done
