@@ -86,7 +86,22 @@ class RelationController extends ResourceController
      */
     protected static function objectState($resource): array
     {
-        return [];
+        $state = [];
+
+        $reflect = new \ReflectionClass(get_class($resource));
+
+        foreach (array_keys($reflect->getConstants()) as $const) {
+            if (strpos($const, 'STATUS_') === 0 && $const != 'STATUS_NEW') {
+                $method = Str::camel('is_' . strtolower(substr($const, 7)));
+                $state[$method] = $resource->{$method}();
+            }
+        }
+
+        if (empty($state['isDeleted']) && method_exists($resource, 'trashed')) {
+            $state['isDeleted'] = $resource->trashed();
+        }
+
+        return $state;
     }
 
     /**

@@ -281,25 +281,6 @@ class DomainsController extends RelationController
     }
 
     /**
-     * Prepare domain statuses for the UI
-     *
-     * @param \App\Domain $domain Domain object
-     *
-     * @return array Statuses array
-     */
-    protected static function objectState($domain): array
-    {
-        return [
-            'isLdapReady' => $domain->isLdapReady(),
-            'isConfirmed' => $domain->isConfirmed(),
-            'isVerified' => $domain->isVerified(),
-            'isSuspended' => $domain->isSuspended(),
-            'isActive' => $domain->isActive(),
-            'isDeleted' => $domain->isDeleted() || $domain->trashed(),
-        ];
-    }
-
-    /**
      * Domain status (extended) information.
      *
      * @param \App\Domain $domain Domain object

@@ -26,23 +26,6 @@ class SharedFoldersController extends RelationController
 
 
     /**
-     * Prepare shared folder statuses for the UI
-     *
-     * @param \App\SharedFolder $folder Shared folder object
-     *
-     * @return array Statuses array
-     */
-    protected static function objectState($folder): array
-    {
-        return [
-            'isLdapReady' => $folder->isLdapReady(),
-            'isImapReady' => $folder->isImapReady(),
-            'isActive' => $folder->isActive(),
-            'isDeleted' => $folder->isDeleted() || $folder->trashed(),
-        ];
-    }
-
-    /**
      * SharedFolder status (extended) information
      *
      * @param \App\SharedFolder $folder SharedFolder object

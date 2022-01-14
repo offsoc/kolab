@@ -9,6 +9,7 @@ use App\Traits\UserAliasesTrait;
 use App\Traits\UserConfigTrait;
 use App\Traits\UuidIntKeyTrait;
 use App\Traits\SettingsTrait;
+use App\Traits\StatusPropertyTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,7 @@ class User extends Authenticatable
     use UuidIntKeyTrait;
     use SettingsTrait;
     use SoftDeletes;
+    use StatusPropertyTrait;
 
     // a new user, default on creation
     public const STATUS_NEW        = 1 << 0;
@@ -409,16 +411,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Returns whether this user is active.
-     *
-     * @return bool
-     */
-    public function isActive(): bool
-    {
-        return ($this->status & self::STATUS_ACTIVE) > 0;
-    }
-
-    /**
      * Returns whether this user (or its wallet owner) is degraded.
      *
      * @param bool $owner Check also the wallet owner instead just the user himself
@@ -436,56 +428,6 @@ class User extends Authenticatable
         }
 
         return false;
-    }
-
-    /**
-     * Returns whether this user is deleted.
-     *
-     * @return bool
-     */
-    public function isDeleted(): bool
-    {
-        return ($this->status & self::STATUS_DELETED) > 0;
-    }
-
-    /**
-     * Returns whether this user is registered in IMAP.
-     *
-     * @return bool
-     */
-    public function isImapReady(): bool
-    {
-        return ($this->status & self::STATUS_IMAP_READY) > 0;
-    }
-
-    /**
-     * Returns whether this user is registered in LDAP.
-     *
-     * @return bool
-     */
-    public function isLdapReady(): bool
-    {
-        return ($this->status & self::STATUS_LDAP_READY) > 0;
-    }
-
-    /**
-     * Returns whether this user is new.
-     *
-     * @return bool
-     */
-    public function isNew(): bool
-    {
-        return ($this->status & self::STATUS_NEW) > 0;
-    }
-
-    /**
-     * Returns whether this user is suspended.
-     *
-     * @return bool
-     */
-    public function isSuspended(): bool
-    {
-        return ($this->status & self::STATUS_SUSPENDED) > 0;
     }
 
     /**
@@ -575,21 +517,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Suspend this user.
-     *
-     * @return void
-     */
-    public function suspend(): void
-    {
-        if ($this->isSuspended()) {
-            return;
-        }
-
-        $this->status |= User::STATUS_SUSPENDED;
-        $this->save();
-    }
-
-    /**
      * Un-degrade this user.
      *
      * @return void
@@ -601,21 +528,6 @@ class User extends Authenticatable
         }
 
         $this->status ^= User::STATUS_DEGRADED;
-        $this->save();
-    }
-
-    /**
-     * Unsuspend this user.
-     *
-     * @return void
-     */
-    public function unsuspend(): void
-    {
-        if (!$this->isSuspended()) {
-            return;
-        }
-
-        $this->status ^= User::STATUS_SUSPENDED;
         $this->save();
     }
 

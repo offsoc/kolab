@@ -427,15 +427,11 @@ class UsersController extends RelationController
      */
     protected static function objectState($user): array
     {
-        return [
-            'isImapReady' => $user->isImapReady(),
-            'isLdapReady' => $user->isLdapReady(),
-            'isSuspended' => $user->isSuspended(),
-            'isActive' => $user->isActive(),
-            'isDeleted' => $user->isDeleted() || $user->trashed(),
-            'isDegraded' => $user->isDegraded(),
-            'isAccountDegraded' => $user->isDegraded(true),
-        ];
+        $state = parent::objectState($user);
+
+        $state['isAccountDegraded'] = $user->isDegraded(true);
+
+        return $state;
     }
 
     /**

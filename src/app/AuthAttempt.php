@@ -65,10 +65,7 @@ class AuthAttempt extends Model
     */
     public function isAccepted(): bool
     {
-        if ($this->status == self::STATUS_ACCEPTED && Carbon::now() < $this->expires_at) {
-            return true;
-        }
-        return false;
+        return $this->status == self::STATUS_ACCEPTED && Carbon::now() < $this->expires_at;
     }
 
     /**
@@ -78,7 +75,7 @@ class AuthAttempt extends Model
     */
     public function isDenied(): bool
     {
-        return ($this->status == self::STATUS_DENIED);
+        return $this->status == self::STATUS_DENIED;
     }
 
     /**
@@ -183,6 +180,7 @@ class AuthAttempt extends Model
         if ($this->isAccepted()) {
             return true;
         }
+
         if ($this->isDenied()) {
             return false;
         }

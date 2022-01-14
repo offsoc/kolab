@@ -203,10 +203,7 @@ class WalletCheck implements ShouldQueue
         // Suspend the account
         $this->wallet->owner->suspend();
         foreach ($this->wallet->entitlements as $entitlement) {
-            if (
-                $entitlement->entitleable_type == \App\Domain::class
-                || $entitlement->entitleable_type == \App\User::class
-            ) {
+            if (method_exists($entitlement->entitleable_type, 'suspend')) {
                 $entitlement->entitleable->suspend();
             }
         }

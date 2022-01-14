@@ -227,23 +227,6 @@ class GroupsController extends RelationController
     }
 
     /**
-     * Prepare group statuses for the UI
-     *
-     * @param \App\Group $group Group object
-     *
-     * @return array Statuses array
-     */
-    protected static function objectState($group): array
-    {
-        return [
-            'isLdapReady' => $group->isLdapReady(),
-            'isSuspended' => $group->isSuspended(),
-            'isActive' => $group->isActive(),
-            'isDeleted' => $group->isDeleted() || $group->trashed(),
-        ];
-    }
-
-    /**
      * Validate an email address for use as a group email
      *
      * @param string    $email Email address

@@ -25,23 +25,6 @@ class ResourcesController extends RelationController
 
 
     /**
-     * Prepare resource statuses for the UI
-     *
-     * @param \App\Resource $resource Resource object
-     *
-     * @return array Statuses array
-     */
-    protected static function objectState($resource): array
-    {
-        return [
-            'isLdapReady' => $resource->isLdapReady(),
-            'isImapReady' => $resource->isImapReady(),
-            'isActive' => $resource->isActive(),
-            'isDeleted' => $resource->isDeleted() || $resource->trashed(),
-        ];
-    }
-
-    /**
      * Resource status (extended) information
      *
      * @param \App\Resource $resource Resource object

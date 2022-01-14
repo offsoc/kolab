@@ -7,6 +7,7 @@ use App\Traits\BelongsToTenantTrait;
 use App\Traits\DomainConfigTrait;
 use App\Traits\EntitleableTrait;
 use App\Traits\SettingsTrait;
+use App\Traits\StatusPropertyTrait;
 use App\Traits\UuidIntKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -26,6 +27,7 @@ class Domain extends Model
     use EntitleableTrait;
     use SettingsTrait;
     use SoftDeletes;
+    use StatusPropertyTrait;
     use UuidIntKeyTrait;
 
     // we've simply never heard of this domain
@@ -100,16 +102,6 @@ class Domain extends Model
     }
 
     /**
-     * Returns whether this domain is active.
-     *
-     * @return bool
-     */
-    public function isActive(): bool
-    {
-        return ($this->status & self::STATUS_ACTIVE) > 0;
-    }
-
-    /**
      * Returns whether this domain is confirmed the ownership of.
      *
      * @return bool
@@ -117,16 +109,6 @@ class Domain extends Model
     public function isConfirmed(): bool
     {
         return ($this->status & self::STATUS_CONFIRMED) > 0;
-    }
-
-    /**
-     * Returns whether this domain is deleted.
-     *
-     * @return bool
-     */
-    public function isDeleted(): bool
-    {
-        return ($this->status & self::STATUS_DELETED) > 0;
     }
 
     /**
@@ -150,16 +132,6 @@ class Domain extends Model
     }
 
     /**
-     * Returns whether this domain is new.
-     *
-     * @return bool
-     */
-    public function isNew(): bool
-    {
-        return ($this->status & self::STATUS_NEW) > 0;
-    }
-
-    /**
      * Returns whether this domain is public.
      *
      * @return bool
@@ -167,26 +139,6 @@ class Domain extends Model
     public function isPublic(): bool
     {
         return ($this->type & self::TYPE_PUBLIC) > 0;
-    }
-
-    /**
-     * Returns whether this domain is registered in LDAP.
-     *
-     * @return bool
-     */
-    public function isLdapReady(): bool
-    {
-        return ($this->status & self::STATUS_LDAP_READY) > 0;
-    }
-
-    /**
-     * Returns whether this domain is suspended.
-     *
-     * @return bool
-     */
-    public function isSuspended(): bool
-    {
-        return ($this->status & self::STATUS_SUSPENDED) > 0;
     }
 
     /**
@@ -369,21 +321,6 @@ class Domain extends Model
             || \App\Resource::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
             || \App\SharedFolder::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
         );
-    }
-
-    /**
-     * Suspend this domain.
-     *
-     * @return void
-     */
-    public function suspend(): void
-    {
-        if ($this->isSuspended()) {
-            return;
-        }
-
-        $this->status |= Domain::STATUS_SUSPENDED;
-        $this->save();
     }
 
     /**

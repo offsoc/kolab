@@ -6,6 +6,7 @@ use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
 use App\Traits\GroupConfigTrait;
 use App\Traits\SettingsTrait;
+use App\Traits\StatusPropertyTrait;
 use App\Traits\UuidIntKeyTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,7 @@ class Group extends Model
     use GroupConfigTrait;
     use SettingsTrait;
     use SoftDeletes;
+    use StatusPropertyTrait;
     use UuidIntKeyTrait;
 
     // we've simply never heard of this group
@@ -99,56 +101,6 @@ class Group extends Model
     }
 
     /**
-     * Returns whether this group is active.
-     *
-     * @return bool
-     */
-    public function isActive(): bool
-    {
-        return ($this->status & self::STATUS_ACTIVE) > 0;
-    }
-
-    /**
-     * Returns whether this group is deleted.
-     *
-     * @return bool
-     */
-    public function isDeleted(): bool
-    {
-        return ($this->status & self::STATUS_DELETED) > 0;
-    }
-
-    /**
-     * Returns whether this group is new.
-     *
-     * @return bool
-     */
-    public function isNew(): bool
-    {
-        return ($this->status & self::STATUS_NEW) > 0;
-    }
-
-    /**
-     * Returns whether this group is registered in LDAP.
-     *
-     * @return bool
-     */
-    public function isLdapReady(): bool
-    {
-        return ($this->status & self::STATUS_LDAP_READY) > 0;
-    }
-
-    /**
-     * Returns whether this group is suspended.
-     *
-     * @return bool
-     */
-    public function isSuspended(): bool
-    {
-        return ($this->status & self::STATUS_SUSPENDED) > 0;
-    }
-
-    /**
      * Ensure the email is appropriately cased.
      *
      * @param string $email Group email address
@@ -170,66 +122,5 @@ class Group extends Model
         sort($members);
 
         $this->attributes['members'] = implode(',', $members);
-    }
-
-    /**
-     * Group status mutator
-     *
-     * @throws \Exception
-     */
-    public function setStatusAttribute($status)
-    {
-        $new_status = 0;
-
-        $allowed_values = [
-            self::STATUS_NEW,
-            self::STATUS_ACTIVE,
-            self::STATUS_SUSPENDED,
-            self::STATUS_DELETED,
-            self::STATUS_LDAP_READY,
-        ];
-
-        foreach ($allowed_values as $value) {
-            if ($status & $value) {
-                $new_status |= $value;
-                $status ^= $value;
-            }
-        }
-
-        if ($status > 0) {
-            throw new \Exception("Invalid group status: {$status}");
-        }
-
-        $this->attributes['status'] = $new_status;
-    }
-
-    /**
-     * Suspend this group.
-     *
-     * @return void
-     */
-    public function suspend(): void
-    {
-        if ($this->isSuspended()) {
-            return;
-        }
-
-        $this->status |= Group::STATUS_SUSPENDED;
-        $this->save();
-    }
-
-    /**
-     * Unsuspend this group.
-     *
-     * @return void
-     */
-    public function unsuspend(): void
-    {
-        if (!$this->isSuspended()) {
-            return;
-        }
-
-        $this->status ^= Group::STATUS_SUSPENDED;
-        $this->save();
     }
 }

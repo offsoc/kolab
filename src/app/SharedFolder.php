@@ -6,6 +6,7 @@ use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
 use App\Traits\SharedFolderConfigTrait;
 use App\Traits\SettingsTrait;
+use App\Traits\StatusPropertyTrait;
 use App\Traits\UuidIntKeyTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,7 @@ class SharedFolder extends Model
     use SharedFolderConfigTrait;
     use SettingsTrait;
     use SoftDeletes;
+    use StatusPropertyTrait;
     use UuidIntKeyTrait;
 
     // we've simply never heard of this folder
@@ -97,87 +99,6 @@ class SharedFolder extends Model
         }
 
         return false;
-    }
-
-    /**
-     * Returns whether this folder is active.
-     *
-     * @return bool
-     */
-    public function isActive(): bool
-    {
-        return ($this->status & self::STATUS_ACTIVE) > 0;
-    }
-
-    /**
-     * Returns whether this folder is deleted.
-     *
-     * @return bool
-     */
-    public function isDeleted(): bool
-    {
-        return ($this->status & self::STATUS_DELETED) > 0;
-    }
-
-    /**
-     * Returns whether this folder exists in IMAP.
-     *
-     * @return bool
-     */
-    public function isImapReady(): bool
-    {
-        return ($this->status & self::STATUS_IMAP_READY) > 0;
-    }
-
-    /**
-     * Returns whether this folder is registered in LDAP.
-     *
-     * @return bool
-     */
-    public function isLdapReady(): bool
-    {
-        return ($this->status & self::STATUS_LDAP_READY) > 0;
-    }
-
-    /**
-     * Returns whether this folder is new.
-     *
-     * @return bool
-     */
-    public function isNew(): bool
-    {
-        return ($this->status & self::STATUS_NEW) > 0;
-    }
-
-    /**
-     * Folder status mutator
-     *
-     * @throws \Exception
-     */
-    public function setStatusAttribute($status)
-    {
-        $new_status = 0;
-
-        $allowed_values = [
-            self::STATUS_NEW,
-            self::STATUS_ACTIVE,
-            self::STATUS_DELETED,
-            self::STATUS_IMAP_READY,
-            self::STATUS_LDAP_READY,
-        ];
-
-        foreach ($allowed_values as $value) {
-            if ($status & $value) {
-                $new_status |= $value;
-                $status ^= $value;
-            }
-        }
-
-        if ($status > 0) {
-            throw new \Exception("Invalid shared folder status: {$status}");
-        }
-
-        $this->attributes['status'] = $new_status;
     }
 
     /**

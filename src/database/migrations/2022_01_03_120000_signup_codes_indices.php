@@ -34,9 +34,9 @@ class SignupCodesIndices extends Migration
         Schema::table(
             'signup_codes',
             function (Blueprint $table) {
-                $table->dropIndex('email');
-                $table->dropIndex('ip_address');
-                $table->dropIndex('expires_at');
+                $table->dropIndex('signup_codes_email_index');
+                $table->dropIndex('signup_codes_ip_address_index');
+                $table->dropIndex('signup_codes_expires_at_index');
             }
         );
     }

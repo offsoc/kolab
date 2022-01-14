@@ -6,6 +6,7 @@ use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
 use App\Traits\ResourceConfigTrait;
 use App\Traits\SettingsTrait;
+use App\Traits\StatusPropertyTrait;
 use App\Traits\UuidIntKeyTrait;
 use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,7 @@ class Resource extends Model
     use ResourceConfigTrait;
     use SettingsTrait;
     use SoftDeletes;
+    use StatusPropertyTrait;
     use UuidIntKeyTrait;
 
     // we've simply never heard of this resource
@@ -91,86 +93,5 @@ class Resource extends Model
         }
 
         return false;
-    }
-
-    /**
-     * Returns whether this resource is active.
-     *
-     * @return bool
-     */
-    public function isActive(): bool
-    {
-        return ($this->status & self::STATUS_ACTIVE) > 0;
-    }
-
-    /**
-     * Returns whether this resource is deleted.
-     *
-     * @return bool
-     */
-    public function isDeleted(): bool
-    {
-        return ($this->status & self::STATUS_DELETED) > 0;
-    }
-
-    /**
-     * Returns whether this resource's folder exists in IMAP.
-     *
-     * @return bool
-     */
-    public function isImapReady(): bool
-    {
-        return ($this->status & self::STATUS_IMAP_READY) > 0;
-    }
-
-    /**
-     * Returns whether this resource is registered in LDAP.
-     *
-     * @return bool
-     */
-    public function isLdapReady(): bool
-    {
-        return ($this->status & self::STATUS_LDAP_READY) > 0;
-    }
-
-    /**
-     * Returns whether this resource is new.
-     *
-     * @return bool
-     */
-    public function isNew(): bool
-    {
-        return ($this->status & self::STATUS_NEW) > 0;
-    }
-
-    /**
-     * Resource status mutator
-     *
-     * @throws \Exception
-     */
-    public function setStatusAttribute($status)
-    {
-        $new_status = 0;
-
-        $allowed_values = [
-            self::STATUS_NEW,
-            self::STATUS_ACTIVE,
-            self::STATUS_DELETED,
-            self::STATUS_IMAP_READY,
-            self::STATUS_LDAP_READY,
-        ];
-
-        foreach ($allowed_values as $value) {
-            if ($status & $value) {
-                $new_status |= $value;
-                $status ^= $value;
-            }
-        }
-
-        if ($status > 0) {
-            throw new \Exception("Invalid resource status: {$status}");
-        }
-
-        $this->attributes['status'] = $new_status;
     }
 }

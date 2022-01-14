@@ -99,10 +99,7 @@ class WalletObserver
 
             // Un-suspend domains/users
             foreach ($wallet->entitlements as $entitlement) {
-                if (
-                    $entitlement->entitleable_type == \App\Domain::class
-                    || $entitlement->entitleable_type == \App\User::class
-                ) {
+                if (method_exists($entitlement->entitleable_type, 'unsuspend')) {
                     $entitlement->entitleable->unsuspend();
                 }
             }
