@@ -2,7 +2,7 @@
 
 namespace Tests\Browser\Meet;
 
-use App\OpenVidu\Room;
+use App\Meet\Room;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Menu;
@@ -29,7 +29,7 @@ class RoomModeratorTest extends TestCaseDusk
     /**
      * Test three users in a room, one will be promoted/demoted to/from a moderator
      *
-     * @group openvidu
+     * @group meet
      */
     public function testModeratorPromotion(): void
     {
@@ -86,15 +86,13 @@ class RoomModeratorTest extends TestCaseDusk
 
             $guest2->waitFor('@session video')
                 ->assertVisible('@session div.meet-video svg.user') // self
-                ->assertMissing('@session div.meet-video svg.moderator'); // self
-                /*
-                    it does not work because the order is different all the time
-
+                ->assertMissing('@session div.meet-video svg.moderator') // self
+                // the following 4 assertions used to be flaky on openvidu
+                // because the order is different all the time
                 ->assertMissing('@session div.meet-subscriber:nth-child(1) svg.user') // owner
                 ->assertVisible('@session div.meet-subscriber:nth-child(1) svg.moderator') // owner
                 ->assertVisible('@session div.meet-subscriber:nth-child(2) svg.user') // guest1
                 ->assertMissing('@session div.meet-subscriber:nth-child(2) svg.moderator'); // guest1
-                */
 
             // Promote guest1 to a moderator
             $browser->waitFor('@session video')

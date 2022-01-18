@@ -10,7 +10,7 @@
                 <button :class="'btn link-video' + (videoActive ? '' : ' on')" @click="switchVideo" :disabled="!isPublisher()" :title="$t('meet.menu-video-' + (videoActive ? 'mute' : 'unmute'))">
                     <svg-icon :icon="videoActive ? 'video' : 'video-slash'"></svg-icon>
                 </button>
-                <button :class="'btn link-screen' + (screenShareActive ? ' on' : '')" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" :title="$t('meet.menu-screen')">
+                <button :class="'btn link-screen' + (screenActive ? ' on' : '')" @click="switchScreen" :disabled="!canShareScreen || !isPublisher()" :title="$t('meet.menu-screen')">
                     <svg-icon icon="desktop"></svg-icon>
                 </button>
                 <button :class="'btn link-hand' + (handRaised ? ' on' : '')" v-if="!isPublisher()" @click="switchHand" :title="$t('meet.menu-hand-' + (handRaised ? 'lower' : 'raise'))">
@@ -176,15 +176,19 @@
         </div>
 
         <room-options v-if="session.config" :config="session.config" :room="room" @config-update="configUpdate"></room-options>
+        <room-stats ref="roomStatsDialog" :stats="stats" :room="room"></room-stats>
     </div>
 </template>
 
 <script>
-    import { Modal } from 'bootstrap'
-    import { Meet, Roles } from '../../js/meet/app.js'
+    import { Modal, Dropdown } from 'bootstrap'
+    import { Media } from '../../js/meet/media.js'
+    import { Room as Meet } from '../../js/meet/room.js'
+    import { Roles } from '../../js/meet/constants.js'
     import StatusMessage from '../Widgets/StatusMessage'
     import LogonForm from '../Login'
     import RoomOptions from './RoomOptions'
+    import RoomStats from './RoomStats'
 
     // Register additional icons
     import { library } from '@fortawesome/fontawesome-svg-core'
@@ -231,12 +235,14 @@
     )
 
     let roomRequest
+    let statsRequest
     const authHeader = 'X-Meet-Auth-Token'
 
     export default {
         components: {
             LogonForm,
             RoomOptions,
+            RoomStats,
             StatusMessage
         },
         data() {
@@ -272,17 +278,18 @@
                     500: 'meet.status-500'
                 },
                 session: {},
+                stats: {},
                 audioActive: false,
                 videoActive: false,
                 chatActive: false,
                 handRaised: false,
-                screenShareActive: false
+                screenActive: false
             }
         },
         mounted() {
             this.room = this.$route.params.room
 
-            // Initialize OpenVidu and do some basic checks
+            // Initialize Meet client and do some basic checks
             this.meet = new Meet($('#meet-session')[0]);
             this.canShareScreen = this.meet.isScreenSharingSupported()
 
@@ -301,11 +308,14 @@
             })
 
             const dialog = $('#media-setup-dialog')[0]
-            dialog.addEventListener('show.bs.modal', () => { this.meet.setupStart() })
+            dialog.addEventListener('show.bs.modal', () => { this.setupSession() })
             dialog.addEventListener('hide.bs.modal', () => { this.meet.setupStop() })
+
+            this.roomStatsDialog = new Modal('#room-stats-dialog')
         },
         beforeDestroy() {
             clearTimeout(roomRequest)
+            clearInterval(statsRequest)
 
             $('#app').removeClass('meet')
 
@@ -328,8 +338,9 @@
             configUpdate(config) {
                 this.session.config = Object.assign({}, this.session.config, config)
             },
-            dismissParticipant(id) {
-                axios.post('/api/v4/openvidu/rooms/' + this.room + '/connections/' + id + '/dismiss')
+            async refreshStats() {
+                let stats = await this.meet.getStats()
+                this.stats = stats
             },
             initSession(init) {
                 const button = $('#join-button').prop('disabled', true)
@@ -346,7 +357,7 @@
 
                 $('#setup-password,#setup-nickname').removeClass('is-invalid')
 
-                axios.post('/api/v4/openvidu/rooms/' + this.room, this.post, { ignoreErrors: true })
+                axios.post('/api/v4/meet/rooms/' + this.room, this.post, { ignoreErrors: true })
                     .then(response => {
                         button.prop('disabled', false)
 
@@ -360,10 +371,6 @@
 
                         if (init) {
                             this.joinSession()
-                        }
-
-                        if (this.session.authToken) {
-                            axios.defaults.headers.common[authHeader] = this.session.authToken
                         }
                     })
                     .catch(error => {
@@ -447,51 +454,6 @@
             isRoomReady() {
                 return ['ready', 322, 324, 325, 326, 327].includes(this.roomState)
             },
-            // An event received by the room owner when a participant is asking for a permission to join the room
-            joinRequest(data) {
-                // The toast for this user request already exists, ignore
-                // It's not really needed as we do this on server-side already
-                if ($('#i' + data.requestId).length) {
-                    return
-                }
-
-                // FIXME: Should the message close button act as the Deny button? Do we need the Deny button?
-
-                let body = $(
-                    `<div>`
-                    + `<div class="picture"><img src="${data.picture}"></div>`
-                    + `<div class="content">`
-                        + `<p class="mb-2"></p>`
-                        + `<div class="text-end">`
-                            + `<button type="button" class="btn btn-sm btn-success accept">${this.$t('btn.accept')}</button>`
-                            + `<button type="button" class="btn btn-sm btn-danger deny ms-2">${this.$t('btn.deny')}</button>`
-                )
-
-                this.$toast.message({
-                    className: 'join-request',
-                    icon: 'user',
-                    timeout: 0,
-                    title: this.$t('meet.join-request'),
-                    // titleClassName: '',
-                    body: body.html(),
-                    onShow: element => {
-                        const id = data.requestId
-
-                        $(element).find('p').text(this.$t('meet.join-requested', { user: data.nickname || '' }))
-
-                        // add id attribute, so we can identify it
-                        $(element).attr('id', 'i' + id)
-                            // add action to the buttons
-                            .find('button.accept,button.deny').on('click', e => {
-                                const action = $(e.target).is('.accept') ? 'accept' : 'deny'
-                                axios.post('/api/v4/openvidu/rooms/' + this.room + '/request/' + id + '/' + action)
-                                    .then(response => {
-                                        $('#i' + id).remove()
-                                    })
-                            })
-                    }
-                })
-            },
             // Entering the room
             joinSession() {
                 // The form can be submitted not only via the submit button,
@@ -512,6 +474,7 @@
                 }
 
                 clearTimeout(roomRequest)
+                clearInterval(statsRequest)
 
                 this.session.nickname = this.nickname
                 this.session.languages = this.languages
@@ -520,6 +483,7 @@
                 this.session.queueElement = $('#meet-queue')[0]
                 this.session.counterElement = $('#meet-counter span')[0]
                 this.session.translate = (label, args) => this.$t(label, args)
+                this.session.toast = this.$toast
                 this.session.onSuccess = () => {
                     $('#app').addClass('meet')
                     $('#meet-setup').addClass('hidden')
@@ -529,19 +493,17 @@
                     this.roomState = 500
                 }
                 this.session.onDestroy = event => {
-                    // TODO: Display different message for each reason: forceDisconnectByUser,
-                    //       forceDisconnectByServer, sessionClosedByServer?
-                    if (event.reason != 'disconnect' && event.reason != 'networkDisconnect' && !this.isRoomOwner()) {
+                    // TODO: Display different message for every other reason
+                    if (event.reason == 'session-closed' && !this.isRoomOwner()) {
                         new Modal('#leave-dialog').show()
                     }
                 }
-                this.session.onDismiss = connId => { this.dismissParticipant(connId) }
-                this.session.onSessionDataUpdate = data => { this.updateSession(data) }
-                this.session.onConnectionChange = (connId, data) => { this.updateParticipant(connId, data) }
-                this.session.onJoinRequest = data => { this.joinRequest(data) }
+                this.session.onUpdate = data => { this.updateSession(data) }
                 this.session.onMediaSetup = () => { this.setupMedia() }
 
                 this.meet.joinRoom(this.session)
+
+                this.refreshStats()
 
                 this.keyboardShortcuts()
             },
@@ -557,50 +519,19 @@
                             this.switchSound()
                         }
                     }
+                    //Show stats with '?' key
+                    if (e.key == '?' || e.key == '?') {
+                        this.roomStats()
+                    }
                 })
             },
             logout() {
-                const logout = () => {
-                    this.meet.leaveRoom()
-                    this.meet = null
-                    this.$router.push({ name: 'dashboard' })
-                }
-
-                if (this.isRoomOwner()) {
-                    axios.post('/api/v4/openvidu/rooms/' + this.room + '/close').then(logout)
-                } else {
-                    logout()
-                }
+                this.meet.leaveRoom(true)
+                this.meet = null
+                this.$router.push({ name: 'dashboard' })
             },
             makePicture() {
-                const video = $("#meet-setup video")[0];
-
-                // Skip if video is not "playing"
-                if (!video.videoWidth || !this.camera) {
-                    return ''
-                }
-
-                // we're going to crop a square from the video and resize it
-                const maxSize = 64
-
-                // Calculate sizing
-                let sh = Math.floor(video.videoHeight / 1.5)
-                let sw = sh
-                let sx = (video.videoWidth - sw) / 2
-                let sy = (video.videoHeight - sh) / 2
-
-                let dh = Math.min(sh, maxSize)
-                let dw = sh < maxSize ? sw : Math.floor(sw * dh/sh)
-
-                const canvas = $("<canvas>")[0];
-                canvas.width = dw;
-                canvas.height = dh;
-
-                // draw the image on the canvas (square cropped and resized)
-                canvas.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, dw, dh);
-
-                // convert it to a usable data URL (png format)
-                return canvas.toDataURL();
+                return (new Media()).makePicture($("#meet-setup video")[0]) || '';
             },
             requestId() {
                 const key = 'kolab-meet-uid'
@@ -627,6 +558,18 @@
             roomOptions() {
                 new Modal('#room-options-dialog').show()
             },
+            roomStats() {
+                clearInterval(statsRequest)
+                if (this.roomStatsDialog.visible) {
+                    this.roomStatsDialog.hide()
+                } else {
+                    this.refreshStats()
+                    statsRequest = setInterval(() => {
+                        this.refreshStats()
+                    }, 3000)
+                    this.roomStatsDialog.show()
+                }
+            },
             setupMedia() {
                 const dialog = $('#media-setup-dialog')[0]
 
@@ -636,39 +579,34 @@
 
                 new Modal(dialog).show()
             },
-            setupSession() {
+            async setupSession() {
                 this.meet.setupStart({
-                    videoElement: $('#meet-setup video')[0],
-                    volumeElement: $('#meet-setup .volume')[0],
+                    videoElement: $('#meet-setup video')[0] || $('#media-setup-dialog video')[0],
+                    volumeElement: $('#meet-setup .volume')[0] || $('#media-setup-dialog .volume')[0],
                     onSuccess: setup => {
                         this.setup = setup
                         this.microphone = setup.audioSource
                         this.camera = setup.videoSource
-
                         this.audioActive = setup.audioActive
                         this.videoActive = setup.videoActive
                     },
                     onError: error => {
+                        console.warn("Media setup failed: ", error);
                         this.audioActive = false
                         this.videoActive = false
                     }
                 })
             },
-            setupCameraChange() {
-                this.meet.setupSetVideoDevice(this.camera).then(enabled => {
-                    this.videoActive = enabled
-                })
+            async setupCameraChange() {
+                this.videoActive = await this.meet.setupSetVideoDevice(this.camera)
             },
-            setupMicrophoneChange() {
-                this.meet.setupSetAudioDevice(this.microphone).then(enabled => {
-                    this.audioActive = enabled
-                })
+            async setupMicrophoneChange() {
+                this.audioActive = await this.meet.setupSetAudioDevice(this.microphone)
             },
             switchChannel(e) {
-                let channel = $(e.target).data('code')
-
-                this.$set(this.session, 'channel', channel)
-                this.meet.switchChannel(channel)
+                this.meet.switchChannel($(e.target).data('code'))
+                // FIXME: Why is the menu not closing by itself?
+                new Dropdown('#meet-session-menu .link-channel').hide()
             },
             switchChat() {
                 let chat = $('#meet-chat')
@@ -702,59 +640,27 @@
                     element.requestFullscreen()
                 }
             },
-            switchHand() {
-                this.updateSelf({ hand: !this.handRaised })
+            async switchHand() {
+                this.handRaised = await this.meet.raiseHand(!this.handRaised)
             },
-            switchSound() {
-                this.audioActive = this.meet.switchAudio()
+            async switchSound() {
+                this.audioActive = await this.meet.switchAudio()
             },
-            switchVideo() {
-                this.videoActive = this.meet.switchVideo()
+            async switchVideo() {
+                this.videoActive = await this.meet.switchVideo()
             },
-            switchScreen() {
-                const switchScreenAction = () => {
-                    this.meet.switchScreen((enabled, error) => {
-                        this.screenShareActive = enabled
-                        if (!enabled && !error) {
-                            // Closing a screen sharing connection invalidates the token
-                            delete this.session.shareToken
-                        }
-                    })
-                }
-
-                if (this.session.shareToken || this.screenShareActive) {
-                    switchScreenAction()
-                } else {
-                    axios.post('/api/v4/openvidu/rooms/' + this.room + '/connections')
-                        .then(response => {
-                            this.session.shareToken = response.data.token
-                            this.meet.updateSession(this.session)
-                            switchScreenAction()
-                        })
-                }
-            },
-            updateParticipant(connId, params) {
-                if (this.isModerator()) {
-                    axios.put('/api/v4/openvidu/rooms/' + this.room + '/connections/' + connId, params)
-                }
-            },
-            updateSelf(params, onSuccess) {
-                axios.put('/api/v4/openvidu/rooms/' + this.room + '/connections/' + this.session.connectionId, params)
-                    .then(response => {
-                        if (onSuccess) {
-                            onSuccess(response)
-                        }
-                    })
+            async switchScreen() {
+                this.screenActive = await this.meet.switchScreen()
             },
             updateSession(data) {
-                this.session = data
+                this.session = Object.assign({}, this.session, data)
                 this.channels = data.channels || []
 
                 const isPublisher = this.isPublisher()
 
                 this.videoActive = isPublisher ? data.videoActive : false
                 this.audioActive = isPublisher ? data.audioActive : false
-                this.handRaised = data.hand
+                this.handRaised = data.raisedHand
             }
         }
     }

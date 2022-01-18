@@ -51,11 +51,11 @@ fi
 docker pull docker.io/kolab/centos7:latest
 
 docker-compose down --remove-orphans
-docker-compose build coturn kolab mariadb openvidu kurento-media-server pdns-sql proxy redis nginx
+docker-compose build coturn kolab mariadb meet pdns-sql proxy redis nginx
 
 bin/regen-certs
 
-docker-compose up -d coturn kolab mariadb openvidu kurento-media-server pdns-sql proxy redis
+docker-compose up -d coturn kolab mariadb meet pdns-sql proxy redis
 
 pushd ${base_dir}/src/
 

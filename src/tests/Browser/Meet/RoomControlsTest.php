@@ -2,7 +2,7 @@
 
 namespace Tests\Browser\Meet;
 
-use App\OpenVidu\Room;
+use App\Meet\Room;
 use Tests\Browser;
 use Tests\Browser\Pages\Meet\Room as RoomPage;
 use Tests\TestCaseDusk;
@@ -27,7 +27,7 @@ class RoomControlsTest extends TestCaseDusk
     /**
      * Test fullscreen buttons
      *
-     * @group openvidu
+     * @group meet
      */
     public function testFullscreen(): void
     {
@@ -76,7 +76,7 @@ class RoomControlsTest extends TestCaseDusk
     /**
      * Test nickname and audio/video muting/volume controls
      *
-     * @group openvidu
+     * @group meet
      */
     public function testNicknameAndMuting(): void
     {
@@ -170,7 +170,7 @@ class RoomControlsTest extends TestCaseDusk
                 ->waitFor('div.meet-video.self .status .status-audio');
 
             // FIXME: It looks that we can't just check the <video> element state
-            //        We might consider using OpenVidu API to make sure
+            //        We might consider using some API to make sure
             $guest->waitFor('div.meet-video:not(.self) .status .status-audio');
 
             // Test unmuting audio
@@ -202,7 +202,7 @@ class RoomControlsTest extends TestCaseDusk
                 ->assertVisible('div.meet-video.self .status .status-video');
 
             // FIXME: It looks that we can't just check the <video> element state
-            //        We might consider using OpenVidu API to make sure
+            //        We might consider using some API to make sure
             $guest->waitFor('div.meet-video:not(.self) .status .status-video');
 
             // Test unmuting video
@@ -261,7 +261,7 @@ class RoomControlsTest extends TestCaseDusk
     /**
      * Test text chat
      *
-     * @group openvidu
+     * @group meet
      */
     public function testChat(): void
     {
@@ -356,7 +356,7 @@ class RoomControlsTest extends TestCaseDusk
     /**
      * Test screen sharing
      *
-     * @group openvidu
+     * @group meet
      */
     public function testShareScreen(): void
     {
@@ -387,8 +387,8 @@ class RoomControlsTest extends TestCaseDusk
                     $browser->waitFor('video')
                         ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
-                        ->assertVisible('.controls button.link-audio')
-                        ->assertVisible('.status .status-audio')
+                        ->assertMissing('.controls button.link-audio')
+                        ->assertMissing('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
                 ->assertElementsCount('@session div.meet-video', 2)
@@ -400,8 +400,8 @@ class RoomControlsTest extends TestCaseDusk
                     $browser->waitFor('video')
                         ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
-                        ->assertVisible('.controls button.link-audio')
-                        ->assertVisible('.status .status-audio')
+                        ->assertMissing('.controls button.link-audio')
+                        ->assertMissing('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
                 ->assertElementsCount('@session div.meet-video', 2)

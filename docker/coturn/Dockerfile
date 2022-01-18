@@ -1,36 +1,10 @@
-FROM fedora:31
+FROM fedora:34
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@kolabsys.com>
 
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
-        bash-completion \
-        bind-utils \
-        coturn \
-        curl \
-        dhcp-client \
-        iproute \
-        iptraf-ng \
-        iputils \
-        less \
-        lsof \
-        mtr \
-        net-tools \
-        NetworkManager \
-        NetworkManager-tui \
-        network-scripts \
-        nmap-ncat \
-        openssh-clients \
-        openssh-server \
-        procps-ng \
-        redis \
-        strace \
-        systemd-udev \
-        tcpdump \
-        telnet \
-        traceroute \
-        vim-enhanced \
-        wget && \
+        coturn && \
     dnf clean all
 
 COPY rootfs/ /

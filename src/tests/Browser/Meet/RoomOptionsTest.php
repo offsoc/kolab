@@ -2,7 +2,7 @@
 
 namespace Tests\Browser\Meet;
 
-use App\OpenVidu\Room;
+use App\Meet\Room;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Toast;
@@ -29,7 +29,7 @@ class RoomOptionsTest extends TestCaseDusk
     /**
      * Test password protected room
      *
-     * @group openvidu
+     * @group meet
      */
     public function testRoomPassword(): void
     {
@@ -117,7 +117,7 @@ class RoomOptionsTest extends TestCaseDusk
     /**
      * Test locked room (denying the join request)
      *
-     * @group openvidu
+     * @group meet
      */
     public function testLockedRoomDeny(): void
     {
@@ -191,7 +191,7 @@ class RoomOptionsTest extends TestCaseDusk
     /**
      * Test locked room (accepting the join request, and dismissing a user)
      *
-     * @group openvidu
+     * @group meet
      */
     public function testLockedRoomAcceptAndDismiss(): void
     {
@@ -269,7 +269,7 @@ class RoomOptionsTest extends TestCaseDusk
     /**
      * Test nomedia (subscribers only) feature
      *
-     * @group openvidu
+     * @group meet
      */
     public function testSubscribersOnly(): void
     {

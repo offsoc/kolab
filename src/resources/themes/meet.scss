@@ -399,6 +399,7 @@
 
         &.self {
             background: lighten($main-color, 30%);
+            border-color: transparent;
         }
 
         &:last-child {
@@ -434,7 +435,7 @@
             width: 100%;
         }
 
-        &.widdle {
+        &.wiggle {
             top: 0;
             animation-name: wiggle;
             animation-duration: 1s;

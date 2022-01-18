@@ -23,10 +23,10 @@ class DatabaseSeeder extends Seeder
             'PlanSeeder',
             'PowerDNSSeeder',
             'UserSeeder',
-            'OpenViduRoomSeeder',
             'OauthClientSeeder',
             'ResourceSeeder',
             'SharedFolderSeeder',
+            'MeetRoomSeeder'
         ];
 
         $env = ucfirst(App::environment());

@@ -87,6 +87,11 @@ Route::group(
 
         Route::apiResource('packages', API\V4\PackagesController::class);
 
+        Route::get('meet/rooms', [API\V4\MeetController::class, 'index']);
+        Route::post('meet/rooms/{id}/config', [API\V4\MeetController::class, 'setRoomConfig']);
+        Route::post('meet/rooms/{id}', [API\V4\MeetController::class, 'joinRoom'])
+            ->withoutMiddleware(['auth:api']);
+
         Route::apiResource('resources', API\V4\ResourcesController::class);
         Route::get('resources/{id}/status', [API\V4\ResourcesController::class, 'status']);
         Route::post('resources/{id}/config', [API\V4\ResourcesController::class, 'setConfig']);
@@ -121,24 +126,6 @@ Route::group(
         Route::get('payments/pending', [API\V4\PaymentsController::class, 'payments']);
         Route::get('payments/has-pending', [API\V4\PaymentsController::class, 'hasPayments']);
 
-        Route::get('openvidu/rooms', [API\V4\OpenViduController::class, 'index']);
-        Route::post('openvidu/rooms/{id}/close', [API\V4\OpenViduController::class, 'closeRoom']);
-        Route::post('openvidu/rooms/{id}/config', [API\V4\OpenViduController::class, 'setRoomConfig']);
-
-        Route::post('openvidu/rooms/{id}', [API\V4\OpenViduController::class, 'joinRoom'])
-            ->withoutMiddleware(['auth:api']);
-        Route::post('openvidu/rooms/{id}/connections', [API\V4\OpenViduController::class, 'createConnection'])
-            ->withoutMiddleware(['auth:api']);
-        // FIXME: I'm not sure about this one, should we use DELETE request maybe?
-        Route::post('openvidu/rooms/{id}/connections/{conn}/dismiss', [API\V4\OpenViduController::class, 'dismissConnection'])
-            ->withoutMiddleware(['auth:api']);
-        Route::put('openvidu/rooms/{id}/connections/{conn}', [API\V4\OpenViduController::class, 'updateConnection'])
-            ->withoutMiddleware(['auth:api']);
-        Route::post('openvidu/rooms/{id}/request/{reqid}/accept', [API\V4\OpenViduController::class, 'acceptJoinRequest'])
-            ->withoutMiddleware(['auth:api']);
-        Route::post('openvidu/rooms/{id}/request/{reqid}/deny', [API\V4\OpenViduController::class, 'denyJoinRequest'])
-            ->withoutMiddleware(['auth:api']);
-
         Route::post('support/request', [API\V4\SupportController::class, 'request'])
             ->withoutMiddleware(['auth:api'])
             ->middleware(['api']);
@@ -152,7 +139,7 @@ Route::group(
     ],
     function () {
         Route::post('payment/{provider}', [API\V4\PaymentsController::class, 'webhook']);
-        Route::post('meet/openvidu', [API\V4\OpenViduController::class, 'webhook']);
+        Route::post('meet', [API\V4\MeetController::class, 'webhook']);
     }
 );
 

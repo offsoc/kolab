@@ -262,4 +262,38 @@ class Browser extends \Laravel\Dusk\Browser
 
         return $this;
     }
+
+    /**
+     * Store the console output with the given name. Overwrites Dusk's method.
+     *
+     * @param  string  $name
+     * @return $this
+     */
+    public function storeConsoleLog($name)
+    {
+        if (in_array($this->driver->getCapabilities()->getBrowserName(), static::$supportsRemoteLogs)) {
+            $console = $this->driver->manage()->getLog('browser');
+
+            // Ignore errors/warnings irrelevant for testing
+            foreach ($console as $idx => $entry) {
+                if (
+                    $entry['level'] != 'SEVERE'
+                    || strpos($entry['message'], 'Failed to load resource: the server responded with a status of')
+                ) {
+                    $console[$idx] = null;
+                }
+            }
+
+            $console = array_values(array_filter($console));
+
+            if (!empty($console)) {
+                $file = sprintf('%s/%s.log', rtrim(static::$storeConsoleLogAt, '/'), $name);
+                $content = json_encode($console, JSON_PRETTY_PRINT);
+
+                file_put_contents($file, $content);
+            }
+        }
+
+        return $this;
+    }
 }

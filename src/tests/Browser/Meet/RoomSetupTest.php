@@ -2,7 +2,7 @@
 
 namespace Tests\Browser\Meet;
 
-use App\OpenVidu\Room;
+use App\Meet\Room;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Menu;
@@ -29,7 +29,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test non-existing room
      *
-     * @group openvidu
+     * @group meet
      */
     public function testRoomNonExistingRoom(): void
     {
@@ -63,7 +63,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test the room setup page
      *
-     * @group openvidu
+     * @group meet
      */
     public function testRoomSetup(): void
     {
@@ -116,7 +116,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test two users in a room (joining/leaving and some basic functionality)
      *
-     * @group openvidu
+     * @group meet
      * @depends testRoomSetup
      */
     public function testTwoUsersInARoom(): void
@@ -165,11 +165,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertSeeIn('@setup-status-message', "The room is closed. It will be open for others after you join.")
                 ->assertSeeIn('@setup-button', "JOIN")
                 ->type('@setup-nickname-input', 'john')
-                // Join the room (click the button twice, to make sure it does not
-                // produce redundant participants/subscribers in the room)
                 ->clickWhenEnabled('@setup-button')
-                ->pause(5)
-                ->click('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
                 ->whenAvailable('div.meet-video.self', function (Browser $browser) {
@@ -280,7 +276,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test two subscribers-only users in a room
      *
-     * @group openvidu
+     * @group meet
      * @depends testTwoUsersInARoom
      */
     public function testSubscribers(): void
@@ -369,7 +365,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test demoting publisher to a subscriber
      *
-     * @group openvidu
+     * @group meet
      * @depends testSubscribers
      */
     public function testDemoteToSubscriber(): void
@@ -511,7 +507,7 @@ class RoomSetupTest extends TestCaseDusk
     /**
      * Test the media setup dialog
      *
-     * @group openvidu
+     * @group meet
      * @depends testDemoteToSubscriber
      */
     public function testMediaSetupDialog(): void
@@ -567,7 +563,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertVisible('@session .meet-video .status .status-video');
 
             $guest->waitFor('@session video')
-                ->assertVisible('@session .meet-video .status .status-audio')
+                ->waitFor('@session .meet-video .status .status-audio')
                 ->assertVisible('@session .meet-video .status .status-video');
         });
     }

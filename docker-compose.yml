@@ -1,6 +1,8 @@
 version: '3'
 services:
   coturn:
+    build:
+      context: ./docker/coturn/
     container_name: kolab-coturn
     healthcheck:
       interval: 10s
@@ -8,13 +10,11 @@ services:
       timeout: 5s
       retries: 30
     environment:
-      - DB_NAME=${OPENVIDU_COTURN_REDIS_DATABASE}
-      - DB_PASSWORD=${OPENVIDU_COTURN_REDIS_PASSWORD}
-      - REDIS_IP=${OPENVIDU_COTURN_REDIS_IP}
-      - TURN_PUBLIC_IP=${OPENVIDU_COTURN_IP}
+      - TURN_PUBLIC_IP=${COTURN_PUBLIC_IP}
       - TURN_LISTEN_PORT=3478
+      - TURN_STATIC_SECRET==${COTURN_STATIC_SECRET}
     hostname: sturn.mgmt.com
-    image: openvidu/openvidu-coturn:1.0.0
+    image: kolab-coturn
     network_mode: host
     restart: on-failure
     tty: true
@@ -55,15 +55,6 @@ services:
       - ./docker/kolab/utils:/root/utils:ro
       - ./src/.env:/.dockerenv:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
-  kurento-media-server:
-    build:
-      context: ./docker/kurento-media-server/
-    container_name: kolab-kurento-media-server
-    environment:
-      - GST_DEBUG=3,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4
-    hostname: kurento-media-server.hosted.com
-    image: apheleia/kurento-media-server:6.15.0
-    network_mode: host
   mariadb:
     container_name: kolab-mariadb
     environment:
@@ -99,39 +90,6 @@ services:
     volumes:
       - ./docker/certs/imap.hosted.com.cert:/etc/pki/tls/certs/imap.hosted.com.cert
       - ./docker/certs/imap.hosted.com.key:/etc/pki/tls/private/imap.hosted.com.key
-  openvidu:
-    build:
-      context: ./docker/openvidu/
-    container_name: kolab-openvidu
-    depends_on:
-      - kurento-media-server
-    environment:
-      - APP_DOMAIN=${APP_DOMAIN}
-      - CERTIFICATE_TYPE=letsencrypt
-      - COTURN_IP=${OPENVIDU_COTURN_IP}
-      - COTURN_REDIS_DBNAME=${OPENVIDU_COTURN_REDIS_DATABASE}
-      - COTURN_REDIS_PASSWORD=${OPENVIDU_COTURN_REDIS_PASSWORD}
-      - COTURN_REDIS_IP=${OPENVIDU_COTURN_REDIS_IP}
-      - DOMAIN_OR_PUBLIC_IP=${OPENVIDU_PUBLIC_IP}
-      - SERVER_PORT=${OPENVIDU_SERVER_PORT}
-      - KMS_STUN_IP=${OPENVIDU_COTURN_IP}
-      - KMS_STUN_PORT=3478
-      - KMS_URIS=["ws://localhost:8888/kurento", "ws://localhost:8889/kurento"]
-      - OPENVIDU_SECRET=${OPENVIDU_API_PASSWORD}
-      - OPENVIDU_WEBHOOK=${OPENVIDU_WEBHOOK}
-      - OPENVIDU_WEBHOOK_ENDPOINT=${OPENVIDU_WEBHOOK_ENDPOINT}
-      - SERVER_SSL_ENABLED=false
-    hostname: openvidu.hosted.com
-    image: apheleia/openvidu:2.18.0
-    network_mode: host
-    tmpfs:
-      - /run
-      - /tmp
-      - /var/run
-      - /var/tmp
-    tty: true
-    volumes:
-      - /etc/letsencrypt/:/etc/letsencrypt/:ro
   pdns-sql:
     build:
       context: ./docker/pdns-sql/
@@ -208,3 +166,31 @@ services:
     volumes:
       - ./src:/home/worker/src.orig:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  meet:
+    build:
+      context: ./docker/meet/
+    healthcheck:
+      interval: 10s
+      test: "curl --insecure -H 'X-AUTH-TOKEN: ${MEET_SERVER_TOKEN}' --fail https://localhost:12443/meetmedia/api/health || exit 1"
+      timeout: 5s
+      retries: 30
+    environment:
+      - WEBRTC_LISTEN_IP=${MEET_WEBRTC_LISTEN_IP:?err}
+      - PUBLIC_DOMAIN=${MEET_PUBLIC_DOMAIN:?err}
+      - LISTENING_HOST=0.0.0.0
+      - LISTENING_PORT=12443
+      - TURN_SERVER=${MEET_TURN_SERVER}
+      - TURN_STATIC_SECRET=${COTURN_STATIC_SECRET}
+      - AUTH_TOKEN=${MEET_SERVER_TOKEN:?err}
+      - WEBHOOK_TOKEN=${MEET_WEBHOOK_TOKEN:?err}
+      - WEBHOOK_URL=${APP_PUBLIC_URL:?err}/api/webhooks/meet
+      - SSL_CERT=/etc/pki/tls/certs/meet.${APP_WEBSITE_DOMAIN:?err}.cert
+      - SSL_KEY=/etc/pki/tls/private/meet.${APP_WEBSITE_DOMAIN:?err}.key
+    network_mode: host
+    container_name: kolab-meet
+    image: kolab-meet
+    volumes:
+      - ./meet/server:/src/meet/:ro
+      - ./docker/meet/build/node_modules:/root/node_modules
+      - ./docker/certs/meet.${APP_WEBSITE_DOMAIN}.cert:/etc/pki/tls/certs/meet.${APP_WEBSITE_DOMAIN}.cert
+      - ./docker/certs/meet.${APP_WEBSITE_DOMAIN}.key:/etc/pki/tls/private/meet.${APP_WEBSITE_DOMAIN}.key
