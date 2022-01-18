@@ -235,9 +235,10 @@ const app = new Vue({
         errorHandler(error) {
             this.stopLoading()
 
-            if (!error.response) {
-                // TODO: probably network connection error
-            } else if (error.response.status === 401) {
+            const status = error.response ? error.response.status : 500
+            const message = error.response ? error.response.statusText : ''
+
+            if (status == 401) {
                 // Remember requested route to come back to it after log in
                 if (this.$route.meta.requiresAuth) {
                     store.state.afterLogin = this.$route
@@ -246,7 +247,7 @@ const app = new Vue({
                     this.logoutUser(false)
                 }
             } else {
-                this.errorPage(error.response.status, error.response.statusText)
+                this.errorPage(status, message)
             }
         },
         downloadFile(url) {

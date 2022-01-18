@@ -41,7 +41,7 @@
                     .catch(error => {
                         // Release lock on the router-view, otherwise links (e.g. Logout) will not work
                         this.isLoading = false
-                        this.$root.logoutUser(false)
+                        // Handle the error, on 401 display the logon page
                         this.$root.errorHandler(error)
                     })
             } else {

@@ -770,6 +770,7 @@ class UsersTest extends TestCaseDusk
                         ->click('#sku-input-beta')
                         ->click('#sku-input-beta-distlists');
                 })
+                ->scrollTo('@general button[type=submit]')
                 ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
@@ -787,6 +788,7 @@ class UsersTest extends TestCaseDusk
                 ->on(new UserInfo())
                 ->waitFor('#sku-input-beta')
                 ->click('#sku-input-beta')
+                ->scrollTo('@general button[type=submit]')
                 ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
