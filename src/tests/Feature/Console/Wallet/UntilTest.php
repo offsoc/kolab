@@ -62,9 +62,7 @@ class UntilTest extends TestCase
 
         $this->assertSame(0, $code);
 
-        // Depending on a month it could last a day less
-        $expected1 = \now()->addMonths(2)->toDateString();
-        $expected2 = \now()->addMonths(2)->subDay()->toDateString();
-        $this->assertTrue("Lasts until: $expected1" == $output || "Lasts until: $expected2" == $output);
+        $expected = \now()->addMonthsWithoutOverflow(1)->addDays(31)->toDateString();
+        $this->assertSame("Lasts until: $expected", $output);
     }
 }

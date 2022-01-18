@@ -77,7 +77,7 @@ class WalletsTest extends TestCase
         $wallet->balance = 990 * 2.6;
         $notice = $method->invoke($controller, $wallet);
 
-        $this->assertMatchesRegularExpression('/\(2 months 2 weeks\)/', $notice);
+        $this->assertMatchesRegularExpression('/\(2 months (2|3) weeks\)/', $notice);
 
         // Change locale to make sure the text is localized by Carbon
         \app()->setLocale('de');

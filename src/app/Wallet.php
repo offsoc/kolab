@@ -209,7 +209,7 @@ class Wallet extends Model
         }
 
         // the number of days this balance, minus the expected charges, would last
-        $daysDelta = ($this->balance - $expectedCharge) / $costsPerDay;
+        $daysDelta = floor(($this->balance - $expectedCharge) / $costsPerDay);
 
         // calculate from the last entitlement billed
         $entitlement = $this->entitlements()->orderBy('updated_at', 'desc')->first();
