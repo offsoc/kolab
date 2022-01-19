@@ -35,7 +35,7 @@ def print_assertion_failure():
     print(f"  ERROR assertion on line {line} failed on {text}")
 
 
-def http_request(url, method, params=None, headers=None, body=None):
+def http_request(url, method, params=None, headers=None, body=None, verbose=False):
     """
         Perform an HTTP request.
     """
@@ -46,6 +46,10 @@ def http_request(url, method, params=None, headers=None, body=None):
         conn = http.client.HTTPSConnection(parsed_url.netloc, 443, context = (ssl._create_unverified_context() if SSLNOVERIFY else None))
     else:
         conn = http.client.HTTPConnection(parsed_url.netloc, 80)
+
+    if verbose:
+        conn.set_debuglevel(9)
+    conn.connect()
 
     if params is None:
         params = {}
@@ -72,7 +76,8 @@ def http_request(url, method, params=None, headers=None, body=None):
             method,
             params,
             headers,
-            body)
+            body,
+            verbose)
 
     return response
 
@@ -93,7 +98,8 @@ def try_get(name, url, verbose, headers = None, body = None):
         "GET",
         None,
         headers,
-        body
+        body,
+        verbose
     )
     success = response.status == 200
     if not success:
@@ -131,7 +137,7 @@ def test_caldav_redirect(host, username, password, verbose):
 
     return success
 
-def discover_principal(url, username, password, verbose = False):
+def discover_principal(url, username, password, verbose):
     body = '<d:propfind xmlns:d="DAV:" xmlns:cs="https://calendarserver.org/ns/"><d:prop><d:resourcetype /><d:displayname /></d:prop></d:propfind>'
 
     headers = {
@@ -145,7 +151,8 @@ def discover_principal(url, username, password, verbose = False):
         "PROPFIND",
         None,
         headers,
-        body
+        body,
+        verbose
     )
 
     success = response.status == 207
@@ -263,7 +270,8 @@ xmlns="http://schemas.microsoft.com/exchange/autodiscover/mobilesync/requestsche
         "POST",
         None,
         headers,
-        body
+        body,
+        verbose
     )
 
     success = response.status == 200
@@ -300,7 +308,8 @@ def test_activesync(host, username, password, verbose = False):
         "OPTIONS",
         None,
         headers,
-        None
+        None,
+        verbose
     )
 
     success = response.status == 200
