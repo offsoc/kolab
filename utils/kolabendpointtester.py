@@ -17,6 +17,10 @@ import argparse
 from base64 import b64encode
 import http.client
 import urllib.parse
+from imaplib import IMAP4
+from imaplib import IMAP4_SSL
+from smtplib import SMTP
+from smtplib import SMTP_SSL
 import dns.resolver
 
 SSLNOVERIFY = False
@@ -54,8 +58,10 @@ def http_request(url, method, params=None, headers=None, body=None):
     if body is None:
         body = urllib.parse.urlencode(params)
 
-    print("Requesting", parsed_url.path, "From", parsed_url.netloc)
-    conn.request(method, parsed_url.geturl(), body, headers)
+    # Assemble a relative url
+    url = urllib.parse.urlunsplit(["", "", parsed_url.path, parsed_url.query, parsed_url.fragment])
+    print(f"Requesting {url} From {parsed_url.netloc} Using {method}")
+    conn.request(method, url, body, headers)
     response = conn.getresponse()
 
     # Handle redirects
@@ -371,6 +377,105 @@ def test_email_dns(host, verbose = False):
 
     return success
 
+
+def test_imap(host, user, password, verbose):
+    success = True
+
+    hosts = [
+        (host, 993, True, False),
+        # (host, 143, False, True),
+    ]
+
+    for hosttuple in hosts:
+        if verbose:
+            print("Connecting to ", hosttuple)
+
+        host, port, usessl, starttls = hosttuple
+
+        try:
+            if usessl:
+                imap = IMAP4_SSL(host=host, port=port)
+            else:
+                imap = IMAP4(host=host, port=port)
+
+            if starttls:
+                imap.starttls()
+
+            imap.login(user, password)
+
+            status, list_response = imap.list()
+            assert status == 'OK'
+
+            for folder in list_response:
+                if 'INBOX' in folder.decode('utf-8'):
+                    inbox_found = True
+
+            assert inbox_found
+
+        except AssertionError as err:
+            print("  ERROR on peer", hosttuple, err)
+            success = False
+
+        except Exception as err:  # pylint: disable=broad-except
+            print("  ERROR on peer", hosttuple, err)
+            success = False
+
+        if not success:
+            print("=> Error: IMAP failed")
+
+    return success
+
+
+def test_smtp(host, user, password, verbose):
+    success = True
+
+    hosts = [
+        (host, 465, True, False),
+        (host, 587, False, True),
+    ]
+
+    for hosttuple in hosts:
+        if verbose:
+            print("Connecting to ", hosttuple)
+
+        host, port, usessl, starttls = hosttuple
+
+        try:
+            if usessl:
+                smtp = SMTP_SSL(host=host, port=port)
+            else:
+                smtp = SMTP(host=host, port=port)
+
+            if starttls:
+                smtp.starttls()
+
+            # check we have an open socket
+            assert smtp.sock
+
+            # run a no-operation, which is basically a server-side pass-through
+            status, _response = smtp.noop()
+            assert status == 250
+
+            status, _response = smtp.login(user, password)
+            assert status == 235
+
+            status, _response = smtp.quit()
+            assert status == 221
+
+        except AssertionError as err:
+            print("  ERROR on peer", hosttuple, err)
+            success = False
+
+        except Exception as err:  # pylint: disable=broad-except
+            print("  ERROR on peer", hosttuple, err)
+            success = False
+
+    if not success:
+        print("=> Error: SMTP failed")
+
+    return success
+
+
 def test_certificates(host, davhost, imaphost, verbose):
     success = True
     hosts = [
@@ -381,7 +486,7 @@ def test_certificates(host, davhost, imaphost, verbose):
         hosts.append((urllib.parse.urlparse(davhost).netloc, 443))
     if imaphost:
         hosts.append((imaphost, 993))
-        hosts.append((imaphost, 587))
+        hosts.append((imaphost, 465))
 
     context = ssl.create_default_context()
 
@@ -392,7 +497,7 @@ def test_certificates(host, davhost, imaphost, verbose):
             conn.connect(hosttuple)
             cert = conn.getpeercert()
             if verbose:
-                print(cert)
+                print(f"Certificate for {hosttuple}: {cert}")
         except OSError as err:
             print("  ERROR on peer", hosttuple, err)
             success = False
@@ -418,7 +523,7 @@ def main():
         if discover_principal(options.dav, options.username, options.password, options.verbose):
             print("=> Caldav is available")
 
-        if discover_principal("https://" + options.host + "/.well-known/caldav", options.username, options.password, options.verbose):
+        if options.host and discover_principal("https://" + options.host + "/.well-known/caldav", options.username, options.password, options.verbose):
             print("=> Caldav on .well-known/caldav is available")
 
     if test_autoconfig(options.host, options.username, options.password, options.verbose):
@@ -447,6 +552,11 @@ def main():
     if test_certificates(options.host, options.dav, options.imap, options.verbose):
         print("=> All certificates are valid")
 
+    if options.imap and test_imap(options.imap, options.username, options.password, options.verbose):
+        print("=> IMAP is available")
+
+    if options.imap and test_smtp(options.imap, options.username, options.password, options.verbose):
+        print("=> SMTP is available")
 
 if __name__ == "__main__":
     main()
