@@ -126,17 +126,6 @@ abstract class Command extends \Illuminate\Console\Command
             return $model;
         }
 
-        $modelsWithTenant = [
-            \App\Discount::class,
-            \App\Domain::class,
-            \App\Group::class,
-            \App\Package::class,
-            \App\Plan::class,
-            \App\Resource::class,
-            \App\Sku::class,
-            \App\User::class,
-        ];
-
         $modelsWithOwner = [
             \App\Wallet::class,
         ];
@@ -144,7 +133,7 @@ abstract class Command extends \Illuminate\Console\Command
         $tenantId = \config('app.tenant_id');
 
         // Add tenant filter
-        if (in_array($objectClass, $modelsWithTenant)) {
+        if (in_array(\App\Traits\BelongsToTenantTrait::class, class_uses($objectClass))) {
             $model = $model->withEnvTenantContext();
         } elseif (in_array($objectClass, $modelsWithOwner)) {
             $model = $model->whereExists(function ($query) use ($tenantId) {
@@ -169,6 +158,19 @@ abstract class Command extends \Illuminate\Console\Command
     public function getResource($resource, $withDeleted = false)
     {
         return $this->getObject(\App\Resource::class, $resource, 'email', $withDeleted);
+    }
+
+    /**
+     * Find a shared folder.
+     *
+     * @param string $folder      Folder ID or email
+     * @param bool   $withDeleted Include deleted
+     *
+     * @return \App\SharedFolder|null
+     */
+    public function getSharedFolder($folder, $withDeleted = false)
+    {
+        return $this->getObject(\App\SharedFolder::class, $folder, 'email', $withDeleted);
     }
 
     /**
