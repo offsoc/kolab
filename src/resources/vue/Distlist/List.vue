@@ -4,6 +4,7 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ $tc('distlist.list-title', 2) }}
+                    <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
                     <router-link v-if="!$root.isDegraded()" class="btn btn-success float-end create-list" :to="{ path: 'distlist/new' }" tag="button">
                         <svg-icon icon="users"></svg-icon> {{ $t('distlist.create') }}
                     </router-link>
