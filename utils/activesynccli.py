@@ -117,7 +117,7 @@ def try_get(name, url, verbose, headers = None, body = None):
 class ActiveSync:
     def __init__(self, options):
         self.host = options.host
-        self.username = options.username
+        self.username = options.user
         self.password = options.password
         self.verbose = options.verbose
 
