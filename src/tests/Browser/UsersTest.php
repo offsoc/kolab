@@ -97,6 +97,7 @@ class UsersTest extends TestCaseDusk
             $jack = $this->getTestUser('jack@kolab.org');
             $john->verificationcodes()->delete();
             $jack->verificationcodes()->delete();
+            $john->setSetting('password_policy', 'min:10,upper,digit');
 
             // Test that the page requires authentication
             $browser->visit('/user/' . $john->id)
@@ -144,8 +145,17 @@ class UsersTest extends TestCaseDusk
                 ->assertSeeIn('#user-info .card-title', 'User account')
                 ->with('@general', function (Browser $browser) {
                     // Test error handling (password)
-                    $browser->type('#password', 'aaaaaa')
+                    $browser->type('#password', 'aaaaaA')
                         ->vueClear('#password_confirmation')
+                        ->whenAvailable('#password_policy', function (Browser $browser) {
+                            $browser->assertElementsCount('li', 3)
+                                ->assertMissing('li:nth-child(1) svg.text-success')
+                                ->assertSeeIn('li:nth-child(1) small', "Minimum password length: 10 characters")
+                                ->waitFor('li:nth-child(2) svg.text-success')
+                                ->assertSeeIn('li:nth-child(2) small', "Password contains an upper-case character")
+                                ->assertMissing('li:nth-child(3) svg.text-success')
+                                ->assertSeeIn('li:nth-child(3) small', "Password contains a digit");
+                        })
                         ->click('button[type=submit]')
                         ->waitFor('#password_confirmation + .invalid-feedback')
                         ->assertSeeIn(
@@ -163,6 +173,7 @@ class UsersTest extends TestCaseDusk
                         ->with(new ListInput('#aliases'), function (Browser $browser) {
                             $browser->addListEntry('invalid address');
                         })
+                        ->scrollTo('button[type=submit]')->pause(500)
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
 
@@ -389,6 +400,9 @@ class UsersTest extends TestCaseDusk
      */
     public function testNewUser(): void
     {
+        $john = $this->getTestUser('john@kolab.org');
+        $john->setSetting('password_policy', null);
+
         $this->browse(function (Browser $browser) {
             $browser->visit(new UserList())
                 ->assertSeeIn('button.create-user', 'Create user')
@@ -819,6 +833,7 @@ class UsersTest extends TestCaseDusk
                             'Access to calendaring resources'
                         )
                         // Shared folders SKU
+                        ->scrollTo('tbody tr:nth-child(10)')->pause(500)
                         ->assertSeeIn('tbody tr:nth-child(10) td.name', 'Shared folders')
                         ->assertSeeIn('tr:nth-child(10) td.price', '0,00 CHF/month')
                         ->assertNotChecked('tbody tr:nth-child(10) td.selection input')
@@ -858,7 +873,7 @@ class UsersTest extends TestCaseDusk
                 ->on(new UserInfo())
                 ->waitFor('#sku-input-beta')
                 ->click('#sku-input-beta')
-                ->scrollTo('@general button[type=submit]')
+                ->scrollTo('@general button[type=submit]')->pause(500)
                 ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 

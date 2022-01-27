@@ -145,6 +145,10 @@ return [
     'invalid-config-parameter' => 'The requested configuration parameter is not supported.',
     'nameexists' => 'The specified name is not available.',
     'nameinvalid' => 'The specified name is invalid.',
+    'password-policy-error' => 'Specified password does not comply with the policy.',
+    'invalid-password-policy' => 'Specified password policy is invalid.',
+    'password-policy-min-len-error' => 'Minimum password length cannot be less than :min.',
+    'password-policy-max-len-error' => 'Maximum password length cannot be more than :max.',
 
     /*
     |--------------------------------------------------------------------------

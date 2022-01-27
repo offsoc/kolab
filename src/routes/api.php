@@ -42,6 +42,8 @@ Route::group(
         'prefix' => $prefix . 'api/auth'
     ],
     function ($router) {
+        Route::post('password-policy/check', 'API\PasswordPolicyController@check');
+
         Route::post('password-reset/init', 'API\PasswordResetController@init');
         Route::post('password-reset/verify', 'API\PasswordResetController@verify');
         Route::post('password-reset', 'API\PasswordResetController@reset');
@@ -100,6 +102,7 @@ Route::group(
         Route::get('wallets/{id}/receipts', 'API\V4\WalletsController@receipts');
         Route::get('wallets/{id}/receipts/{receipt}', 'API\V4\WalletsController@receiptDownload');
 
+        Route::get('password-policy', 'API\PasswordPolicyController@index');
         Route::post('password-reset/code', 'API\PasswordResetController@codeCreate');
         Route::delete('password-reset/code/{id}', 'API\PasswordResetController@codeDelete');
 

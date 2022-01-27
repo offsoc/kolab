@@ -383,18 +383,58 @@ class UserTest extends TestCase
     {
         $john = $this->getTestUser('john@kolab.org');
         $john->setSetting('greylist_enabled', null);
+        $john->setSetting('password_policy', null);
 
-        $this->assertSame(['greylist_enabled' => true], $john->getConfig());
+        // Greylist_enabled
+        $this->assertSame(true, $john->getConfig()['greylist_enabled']);
 
         $result = $john->setConfig(['greylist_enabled' => false, 'unknown' => false]);
 
-        $this->assertSame(['greylist_enabled' => false], $john->getConfig());
+        $this->assertSame(['unknown' => "The requested configuration parameter is not supported."], $result);
+        $this->assertSame(false, $john->getConfig()['greylist_enabled']);
         $this->assertSame('false', $john->getSetting('greylist_enabled'));
 
         $result = $john->setConfig(['greylist_enabled' => true]);
 
-        $this->assertSame(['greylist_enabled' => true], $john->getConfig());
+        $this->assertSame([], $result);
+        $this->assertSame(true, $john->getConfig()['greylist_enabled']);
         $this->assertSame('true', $john->getSetting('greylist_enabled'));
+
+        // Password_policy
+        $result = $john->setConfig(['password_policy' => true]);
+
+        $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
+        $this->assertSame(null, $john->getConfig()['password_policy']);
+        $this->assertSame(null, $john->getSetting('password_policy'));
+
+        $result = $john->setConfig(['password_policy' => 'min:-1']);
+
+        $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
+
+        $result = $john->setConfig(['password_policy' => 'min:-1']);
+
+        $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
+
+        $result = $john->setConfig(['password_policy' => 'min:10,unknown']);
+
+        $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
+
+        \config(['app.password_policy' => 'min:5,max:100']);
+        $result = $john->setConfig(['password_policy' => 'min:4,max:255']);
+
+        $this->assertSame(['password_policy' => "Minimum password length cannot be less than 5."], $result);
+
+        \config(['app.password_policy' => 'min:5,max:100']);
+        $result = $john->setConfig(['password_policy' => 'min:10,max:255']);
+
+        $this->assertSame(['password_policy' => "Maximum password length cannot be more than 100."], $result);
+
+        \config(['app.password_policy' => 'min:5,max:255']);
+        $result = $john->setConfig(['password_policy' => 'min:10,max:255']);
+
+        $this->assertSame([], $result);
+        $this->assertSame('min:10,max:255', $john->getConfig()['password_policy']);
+        $this->assertSame('min:10,max:255', $john->getSetting('password_policy'));
     }
 
     /**
@@ -1177,10 +1217,37 @@ class UserTest extends TestCase
     }
 
     /**
+     * Tests for User::walletOwner() (from EntitleableTrait)
+     */
+    public function testWalletOwner(): void
+    {
+        $jack = $this->getTestUser('jack@kolab.org');
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+
+        $this->assertSame($john->id, $john->walletOwner()->id);
+        $this->assertSame($john->id, $jack->walletOwner()->id);
+        $this->assertSame($john->id, $ned->walletOwner()->id);
+
+        // User with no entitlements
+        $user = $this->getTestUser('UserAccountA@UserAccount.com');
+        $this->assertSame($user->id, $user->walletOwner()->id);
+    }
+
+    /**
      * Tests for User::wallets()
      */
     public function testWallets(): void
     {
-        $this->markTestIncomplete();
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+
+        $this->assertSame(1, $john->wallets()->count());
+        $this->assertCount(1, $john->wallets);
+        $this->assertInstanceOf(\App\Wallet::class, $john->wallets->first());
+
+        $this->assertSame(1, $ned->wallets()->count());
+        $this->assertCount(1, $ned->wallets);
+        $this->assertInstanceOf(\App\Wallet::class, $ned->wallets->first());
     }
 }

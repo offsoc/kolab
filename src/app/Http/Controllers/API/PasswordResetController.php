@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\PasswordResetEmail;
+use App\Rules\Password;
 use App\User;
 use App\VerificationCode;
 use Illuminate\Http\Request;
@@ -99,8 +100,11 @@ class PasswordResetController extends Controller
         // with single SQL query (->delete()) instead of two (::destroy())
         $this->code = $code;
 
-        // Return user name and email/phone from the codes database on success
-        return response()->json(['status' => 'success']);
+        return response()->json([
+                'status' => 'success',
+                // we need user's ID for e.g. password policy checks
+                'userId' => $code->user_id,
+        ]);
     }
 
     /**
@@ -112,24 +116,22 @@ class PasswordResetController extends Controller
      */
     public function reset(Request $request)
     {
-        // Validate the request args
-        $v = Validator::make(
-            $request->all(),
-            [
-                'password' => 'required|min:4|confirmed',
-            ]
-        );
-
-        if ($v->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
-        }
-
         $v = $this->verify($request);
         if ($v->status() !== 200) {
             return $v;
         }
 
         $user = $this->code->user;
+
+        // Validate the password
+        $v = Validator::make(
+            $request->all(),
+            ['password' => ['required', 'confirmed', new Password($user->walletOwner())]]
+        );
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
 
         // Change the user password
         $user->setPasswordAttribute($request->password);

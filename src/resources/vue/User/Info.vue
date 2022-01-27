@@ -74,16 +74,7 @@
                                             <input type="checkbox" id="pass-mode-link" value="link" class="btn-check" @change="setPasswordMode">
                                             <label class="btn btn-outline-secondary" for="pass-mode-link">{{ $t('user.pass-link') }}</label>
                                         </div>
-                                        <div v-if="passwordMode == 'input'" :class="isSelf ? '' : 'mt-2'">
-                                            <input id="password" type="password" class="form-control"
-                                                   v-model="user.password"
-                                                   :placeholder="$t('form.password')"
-                                            >
-                                            <input id="password_confirmation" type="password" class="form-control mt-2"
-                                                   v-model="user.password_confirmation"
-                                                   :placeholder="$t('form.password-confirm')"
-                                            >
-                                        </div>
+                                        <password-input v-if="passwordMode == 'input'" :class="isSelf ? '' : 'mt-2'" v-model="user"></password-input>
                                         <div id="password-link" v-if="passwordMode == 'link' || user.passwordLinkCode" class="mt-2">
                                             <span>{{ $t('user.pass-link-label') }}</span>&nbsp;<code>{{ passwordLink }}</code>
                                             <span class="d-inline-block">
@@ -152,6 +143,7 @@
     import { Modal } from 'bootstrap'
     import ListInput from '../Widgets/ListInput'
     import PackageSelect from '../Widgets/PackageSelect'
+    import PasswordInput from '../Widgets/PasswordInput'
     import StatusComponent from '../Widgets/Status'
     import SubscriptionSelect from '../Widgets/SubscriptionSelect'
 
@@ -159,6 +151,7 @@
         components: {
             ListInput,
             PackageSelect,
+            PasswordInput,
             StatusComponent,
             SubscriptionSelect
         },

@@ -348,4 +348,24 @@ class DomainTest extends TestCase
             }
         );
     }
+
+    /**
+     * Tests for Domain::walletOwner() (from EntitleableTrait)
+     */
+    public function testWalletOwner(): void
+    {
+        $domain = $this->getTestDomain('kolab.org');
+        $john = $this->getTestUser('john@kolab.org');
+
+        $this->assertSame($john->id, $domain->walletOwner()->id);
+
+        // A domain without an owner
+        $domain = $this->getTestDomain('gmail.com', [
+                'status' => Domain::STATUS_NEW | Domain::STATUS_SUSPENDED
+                    | Domain::STATUS_LDAP_READY | Domain::STATUS_CONFIRMED,
+                'type' => Domain::TYPE_PUBLIC,
+        ]);
+
+        $this->assertSame(null, $domain->walletOwner());
+    }
 }

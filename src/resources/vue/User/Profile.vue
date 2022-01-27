@@ -5,7 +5,7 @@
                 <div class="card-title">
                     {{ $t('user.profile-title') }}
                     <router-link
-                        v-if="$root.isController(wallet_id)"
+                        v-if="$root.isController(wallet.id)"
                         class="btn btn-outline-danger button-delete float-end"
                         to="/profile/delete" tag="button"
                     >
@@ -67,16 +67,7 @@
                         </div>
                         <div class="row mb-3">
                             <label for="password" class="col-sm-4 col-form-label">{{ $t('form.password') }}</label>
-                            <div class="col-sm-8">
-                                <input type="password" class="form-control" id="password"
-                                       v-model="profile.password"
-                                       :placeholder="$t('form.password')"
-                                >
-                                <input type="password" class="form-control mt-2" id="password_confirmation"
-                                       v-model="profile.password_confirmation"
-                                       :placeholder="$t('form.password-confirm')"
-                                >
-                            </div>
+                            <password-input class="col-sm-8" v-model="profile"></password-input>
                         </div>
                         <button class="btn btn-primary button-submit mt-2" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
                     </form>
@@ -87,17 +78,22 @@
 </template>
 
 <script>
+    import PasswordInput from '../Widgets/PasswordInput'
+
     export default {
+        components: {
+            PasswordInput
+        },
         data() {
             return {
                 profile: {},
                 user_id: null,
-                wallet_id: null,
+                wallet: {},
                 countries: window.config.countries
             }
         },
         created() {
-            this.wallet_id = this.$store.state.authInfo.wallet.id
+            this.wallet = this.$store.state.authInfo.wallet
             this.profile = this.$store.state.authInfo.settings
             this.user_id = this.$store.state.authInfo.id
         },

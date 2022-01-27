@@ -285,6 +285,8 @@ return [
         'rate' => (float) env('VAT_RATE'),
     ],
 
+    'password_policy' => env('PASSWORD_POLICY'),
+
     'payment' => [
         'methods_oneoff' => env('PAYMENT_METHODS_ONEOFF', "creditcard,paypal,banktransfer"),
         'methods_recurring' => env('PAYMENT_METHODS_RECURRING', "creditcard"),

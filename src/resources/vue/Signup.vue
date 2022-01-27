@@ -83,15 +83,8 @@
                             </select>
                         </div>
                     </div>
+                    <password-input class="mb-3" v-model="pass"></password-input>
                     <div class="mb-3">
-                        <label for="signup_password" class="visually-hidden">{{ $t('form.password') }}</label>
-                        <input type="password" class="form-control" id="signup_password" :placeholder="$t('form.password')" required v-model="password">
-                    </div>
-                    <div class="mb-3">
-                        <label for="signup_confirm" class="visually-hidden">{{ $t('form.password-confirm') }}</label>
-                        <input type="password" class="form-control" id="signup_confirm" :placeholder="$t('form.password-confirm')" required v-model="password_confirmation">
-                    </div>
-                    <div class="mb-3 pt-2">
                         <label for="signup_voucher" class="visually-hidden">{{ $t('signup.voucher') }}</label>
                         <input type="text" class="form-control" id="signup_voucher" :placeholder="$t('signup.voucher')" v-model="voucher">
                     </div>
@@ -106,7 +99,12 @@
 </template>
 
 <script>
+    import PasswordInput from './Widgets/PasswordInput'
+
     export default {
+        components: {
+            PasswordInput
+        },
         data() {
             return {
                 email: '',
@@ -115,8 +113,7 @@
                 code: '',
                 short_code: '',
                 login: '',
-                password: '',
-                password_confirmation: '',
+                pass: {},
                 domain: '',
                 domains: [],
                 invitation: null,
@@ -245,8 +242,8 @@
                 let post = {
                     login: this.login,
                     domain: this.domain,
-                    password: this.password,
-                    password_confirmation: this.password_confirmation,
+                    password: this.pass.password,
+                    password_confirmation: this.pass.password_confirmation,
                     voucher: this.voucher
                 }
 

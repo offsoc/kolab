@@ -62,6 +62,9 @@ class UserProfileTest extends TestCaseDusk
      */
     public function testProfile(): void
     {
+        $user = $this->getTestUser('john@kolab.org');
+        $user->setSetting('password_policy', 'min:10,upper,digit');
+
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
@@ -95,7 +98,25 @@ class UserProfileTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(9) input#password_confirmation', '')
                         ->assertAttribute('#password', 'placeholder', 'Password')
                         ->assertAttribute('#password_confirmation', 'placeholder', 'Confirm Password')
+                        ->whenAvailable('#password_policy', function (Browser $browser) {
+                            $browser->assertElementsCount('li', 3)
+                                ->assertMissing('li:nth-child(1) svg.text-success')
+                                ->assertSeeIn('li:nth-child(1) small', "Minimum password length: 10 characters")
+                                ->assertMissing('li:nth-child(2) svg.text-success')
+                                ->assertSeeIn('li:nth-child(2) small', "Password contains an upper-case character")
+                                ->assertMissing('li:nth-child(3) svg.text-success')
+                                ->assertSeeIn('li:nth-child(3) small', "Password contains a digit");
+                        })
                         ->assertSeeIn('button[type=submit]', 'Submit');
+
+                    // Test password policy checking
+                    $browser->type('#password', '1A')
+                        ->whenAvailable('#password_policy', function (Browser $browser) {
+                            $browser->waitFor('li:nth-child(2) svg.text-success')
+                                ->waitFor('li:nth-child(3) svg.text-success')
+                                ->assertMissing('li:nth-child(1) svg.text-success');
+                        })
+                        ->vueClear('#password');
 
                     // Test form error handling
                     $browser->type('#phone', 'aaaaaa')
@@ -132,6 +153,9 @@ class UserProfileTest extends TestCaseDusk
      */
     public function testProfileNonController(): void
     {
+        $user = $this->getTestUser('john@kolab.org');
+        $user->setSetting('password_policy', 'min:10,upper,digit');
+
         // Test acting as non-controller
         $this->browse(function (Browser $browser) {
             $browser->visit('/logout')
@@ -145,6 +169,16 @@ class UserProfileTest extends TestCaseDusk
                 ->whenAvailable('@form', function (Browser $browser) {
                     // TODO: decide on what fields the non-controller user should be able
                     //       to see/change
+                })
+                // Check that the account policy is used
+                ->whenAvailable('#password_policy', function (Browser $browser) {
+                    $browser->assertElementsCount('li', 3)
+                        ->assertMissing('li:nth-child(1) svg.text-success')
+                        ->assertSeeIn('li:nth-child(1) small', "Minimum password length: 10 characters")
+                        ->assertMissing('li:nth-child(2) svg.text-success')
+                        ->assertSeeIn('li:nth-child(2) small', "Password contains an upper-case character")
+                        ->assertMissing('li:nth-child(3) svg.text-success')
+                        ->assertSeeIn('li:nth-child(3) small', "Password contains a digit");
                 });
 
             // Test that /profile/delete page is not accessible

@@ -41,15 +41,8 @@
                 <p class="card-text">
                 </p>
                 <form @submit.prevent="submitStep3" data-validation-prefix="reset_">
-                    <div class="mb-3">
-                        <label for="reset_password" class="visually-hidden">{{ $t('form.password') }}</label>
-                        <input type="password" class="form-control" id="reset_password" :placeholder="$t('form.password')" required v-model="password">
-                    </div>
-                    <div class="mb-3">
-                        <label for="reset_confirm" class="visually-hidden">{{ $t('form.password-confirm') }}</label>
-                        <input type="password" class="form-control" id="reset_confirm" :placeholder="$t('form.password-confirm')" required v-model="password_confirmation">
-                    </div>
-                    <div class="form-group pt-3 mb-3">
+                    <password-input class="mb-3" v-model="pass" :user="userId" v-if="userId" :focus="true"></password-input>
+                    <div class="form-group pt-1 mb-3">
                         <label for="secondfactor" class="sr-only">2FA</label>
                         <div class="input-group">
                             <span class="input-group-text">
@@ -68,15 +61,20 @@
 </template>
 
 <script>
+    import PasswordInput from './Widgets/PasswordInput'
+
     export default {
+        components: {
+            PasswordInput
+        },
         data() {
             return {
                 email: '',
                 code: '',
                 short_code: '',
-                password: '',
-                password_confirmation: '',
+                pass: {},
                 secondFactor: '',
+                userId: null,
                 fromEmail: window.config['mail.from.address']
             }
         },
@@ -121,6 +119,7 @@
                     code: this.code,
                     short_code: this.short_code
                 }).then(response => {
+                    this.userId = response.data.userId
                     this.displayForm(3, true)
                 }).catch(error => {
                     if (bylink === true) {
@@ -137,8 +136,8 @@
                 axios.post('/api/auth/password-reset', {
                     code: this.code,
                     short_code: this.short_code,
-                    password: this.password,
-                    password_confirmation: this.password_confirmation,
+                    password: this.pass.password,
+                    password_confirmation: this.pass.password_confirmation,
                     secondfactor: this.secondFactor
                 }).then(response => {
                     // auto-login and goto dashboard
@@ -151,6 +150,8 @@
 
                 card.prev().removeClass('d-none').find('input').first().focus()
                 card.addClass('d-none').find('form')[0].reset()
+
+                this.userId = null
             },
             displayForm(step, focus) {
                 [1, 2, 3].filter(value => value != step).forEach(value => {

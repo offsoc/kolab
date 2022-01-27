@@ -32,6 +32,9 @@
                 <svg-icon icon="comments"></svg-icon><span class="name">{{ $t('dashboard.chat') }}</span>
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>
+            <router-link v-if="status.enableSettings" class="card link-settings" :to="{ name: 'settings' }">
+                <svg-icon icon="sliders-h"></svg-icon><span class="name">{{ $t('dashboard.settings') }}</span>
+            </router-link>
             <a v-if="webmailURL" class="card link-webmail" :href="webmailURL">
                 <svg-icon icon="envelope"></svg-icon><span class="name">{{ $t('dashboard.webmail') }}</span>
             </a>

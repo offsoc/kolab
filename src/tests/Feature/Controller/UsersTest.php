@@ -521,6 +521,7 @@ class UsersTest extends TestCase
         $john = $this->getTestUser('john@kolab.org');
 
         $john->setSetting('greylist_enabled', null);
+        $john->setSetting('password_policy', null);
 
         // Test unknown user id
         $post = ['greylist_enabled' => 1];
@@ -555,7 +556,7 @@ class UsersTest extends TestCase
         $this->assertNull($john->fresh()->getSetting('greylist_enabled'));
 
         // Test some valid data
-        $post = ['greylist_enabled' => 1];
+        $post = ['greylist_enabled' => 1, 'password_policy' => 'min:10,max:255,upper,lower,digit,special'];
         $response = $this->actingAs($john)->post("/api/v4/users/{$john->id}/config", $post);
         $response->assertStatus(200);
 
@@ -566,10 +567,12 @@ class UsersTest extends TestCase
         $this->assertSame('User settings updated successfully.', $json['message']);
 
         $this->assertSame('true', $john->fresh()->getSetting('greylist_enabled'));
+        $this->assertSame('min:10,max:255,upper,lower,digit,special', $john->fresh()->getSetting('password_policy'));
 
-        // Test some valid data
-        $post = ['greylist_enabled' => 0];
-        $response = $this->actingAs($john)->post("/api/v4/users/{$john->id}/config", $post);
+        // Test some valid data, acting as another account controller
+        $ned = $this->getTestUser('ned@kolab.org');
+        $post = ['greylist_enabled' => 0, 'password_policy' => 'min:10,max:255,upper'];
+        $response = $this->actingAs($ned)->post("/api/v4/users/{$john->id}/config", $post);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -579,6 +582,7 @@ class UsersTest extends TestCase
         $this->assertSame('User settings updated successfully.', $json['message']);
 
         $this->assertSame('false', $john->fresh()->getSetting('greylist_enabled'));
+        $this->assertSame('min:10,max:255,upper', $john->fresh()->getSetting('password_policy'));
     }
 
     /**
@@ -590,6 +594,7 @@ class UsersTest extends TestCase
 
         $jack = $this->getTestUser('jack@kolab.org');
         $john = $this->getTestUser('john@kolab.org');
+        $john->setSetting('password_policy', 'min:8,max:100,digit');
         $deleted_priv = $this->getTestUser('deleted@kolab.org');
         $deleted_priv->delete();
 
@@ -629,8 +634,8 @@ class UsersTest extends TestCase
 
         // Test existing user email
         $post = [
-            'password' => 'simple',
-            'password_confirmation' => 'simple',
+            'password' => 'simple123',
+            'password_confirmation' => 'simple123',
             'first_name' => 'John2',
             'last_name' => 'Doe2',
             'email' => 'jack.daniels@kolab.org',
@@ -649,8 +654,8 @@ class UsersTest extends TestCase
         $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
 
         $post = [
-            'password' => 'simple',
-            'password_confirmation' => 'simple',
+            'password' => 'simple123',
+            'password_confirmation' => 'simple123',
             'first_name' => 'John2',
             'last_name' => 'Doe2',
             'email' => 'john2.doe2@kolab.org',
@@ -679,8 +684,33 @@ class UsersTest extends TestCase
         $this->assertSame("Invalid package selected.", $json['errors']['package']);
         $this->assertCount(2, $json);
 
-        // Test full and valid data
+        // Test password policy checking
         $post['package'] = $package_kolab->id;
+        $post['password'] = 'password';
+        $response = $this->actingAs($john)->post("/api/v4/users", $post);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("The password confirmation does not match.", $json['errors']['password'][0]);
+        $this->assertSame("Specified password does not comply with the policy.", $json['errors']['password'][1]);
+        $this->assertCount(2, $json);
+
+        // Test password confirmation
+        $post['password_confirmation'] = 'password';
+        $response = $this->actingAs($john)->post("/api/v4/users", $post);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("Specified password does not comply with the policy.", $json['errors']['password'][0]);
+        $this->assertCount(2, $json);
+
+        // Test full and valid data
+        $post['password'] = 'password123';
+        $post['password_confirmation'] = 'password123';
         $response = $this->actingAs($john)->post("/api/v4/users", $post);
         $json = $response->json();
 
@@ -772,6 +802,7 @@ class UsersTest extends TestCase
     public function testUpdate(): void
     {
         $userA = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $userA->setSetting('password_policy', 'min:8,digit');
         $jack = $this->getTestUser('jack@kolab.org');
         $john = $this->getTestUser('john@kolab.org');
         $ned = $this->getTestUser('ned@kolab.org');
@@ -800,7 +831,7 @@ class UsersTest extends TestCase
         $this->assertCount(3, $json);
 
         // Test some invalid data
-        $post = ['password' => '12345678', 'currency' => 'invalid'];
+        $post = ['password' => '1234567', 'currency' => 'invalid'];
         $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
         $response->assertStatus(422);
 
@@ -808,13 +839,14 @@ class UsersTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(2, $json);
-        $this->assertSame('The password confirmation does not match.', $json['errors']['password'][0]);
-        $this->assertSame('The currency must be 3 characters.', $json['errors']['currency'][0]);
+        $this->assertSame("The password confirmation does not match.", $json['errors']['password'][0]);
+        $this->assertSame("Specified password does not comply with the policy.", $json['errors']['password'][1]);
+        $this->assertSame("The currency must be 3 characters.", $json['errors']['currency'][0]);
 
         // Test full profile update including password
         $post = [
-            'password' => 'simple',
-            'password_confirmation' => 'simple',
+            'password' => 'simple123',
+            'password_confirmation' => 'simple123',
             'first_name' => 'John2',
             'last_name' => 'Doe2',
             'organization' => 'TestOrg',
@@ -1175,6 +1207,7 @@ class UsersTest extends TestCase
         $this->assertTrue($result['statusInfo']['enableDomains']);
         $this->assertTrue($result['statusInfo']['enableWallets']);
         $this->assertTrue($result['statusInfo']['enableUsers']);
+        $this->assertTrue($result['statusInfo']['enableSettings']);
 
         // Ned is John's wallet controller
         $ned = $this->getTestUser('ned@kolab.org');
@@ -1196,6 +1229,7 @@ class UsersTest extends TestCase
         $this->assertTrue($result['statusInfo']['enableDomains']);
         $this->assertTrue($result['statusInfo']['enableWallets']);
         $this->assertTrue($result['statusInfo']['enableUsers']);
+        $this->assertTrue($result['statusInfo']['enableSettings']);
 
         // Test discount in a response
         $discount = Discount::where('code', 'TEST')->first();
@@ -1224,6 +1258,7 @@ class UsersTest extends TestCase
         $this->assertFalse($result['statusInfo']['enableDomains']);
         $this->assertFalse($result['statusInfo']['enableWallets']);
         $this->assertFalse($result['statusInfo']['enableUsers']);
+        $this->assertFalse($result['statusInfo']['enableSettings']);
     }
 
     /**

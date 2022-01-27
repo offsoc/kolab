@@ -29,6 +29,10 @@ class VerificationCodeActiveColumn extends Migration
      */
     public function down()
     {
+        if (!Schema::hasTable('verification_codes')) {
+            return;
+        }
+
         Schema::table(
             'verification_codes',
             function (Blueprint $table) {

@@ -36,7 +36,7 @@ class PasswordResetTest extends TestCaseDusk
     /**
      * Test the link from logon to password-reset page
      */
-    public function testPasswordResetLinkOnLogon(): void
+    public function testLinkOnLogon(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home());
@@ -52,7 +52,7 @@ class PasswordResetTest extends TestCaseDusk
     /**
      * Test 1st step of password-reset
      */
-    public function testPasswordResetStep1(): void
+    public function testStep1(): void
     {
         $user = $this->getTestUser('passwordresettestdusk@' . \config('app.domain'));
         $user->setSetting('external_email', 'external@domain.tld');
@@ -105,9 +105,9 @@ class PasswordResetTest extends TestCaseDusk
     /**
      * Test 2nd Step of the password reset process
      *
-     * @depends testPasswordResetStep1
+     * @depends testStep1
      */
-    public function testPasswordResetStep2(): void
+    public function testStep2(): void
     {
         $user = $this->getTestUser('passwordresettestdusk@' . \config('app.domain'));
         $user->setSetting('external_email', 'external@domain.tld');
@@ -180,41 +180,43 @@ class PasswordResetTest extends TestCaseDusk
     /**
      * Test 3rd Step of the password reset process
      *
-     * @depends testPasswordResetStep2
+     * @depends testStep2
      */
-    public function testPasswordResetStep3(): void
+    public function testStep3(): void
     {
         $user = $this->getTestUser('passwordresettestdusk@' . \config('app.domain'));
         $user->setSetting('external_email', 'external@domain.tld');
+        $user->setSetting('password_policy', 'upper,digit');
 
         $this->browse(function (Browser $browser) {
-            $browser->assertVisible('@step3');
+            $browser->assertVisible('@step3')
+                ->clearToasts();
 
             // Here we expect 2 text inputs, Back and Continue buttons
-            $browser->with('@step3', function ($step) {
-                $step->assertVisible('#reset_password');
-                $step->assertVisible('#reset_confirm');
-                $step->assertVisible('[type=button]');
-                $step->assertVisible('[type=submit]');
-                $step->assertFocused('#reset_password');
+            $browser->with('@step3', function (Browser $step) {
+                $step->assertVisible('#reset_password')
+                    ->assertVisible('#reset_password_confirmation')
+                    ->assertVisible('[type=button]')
+                    ->assertVisible('[type=submit]')
+                    ->assertFocused('#reset_password');
             });
 
             // Test Back button
-            $browser->click('@step3 [type=button]');
-            $browser->waitFor('@step2');
-            $browser->assertFocused('@step2 #reset_short_code');
-            $browser->assertMissing('@step3');
-            $browser->assertMissing('@step1');
+            $browser->click('@step3 [type=button]')
+                ->waitFor('@step2')
+                ->assertFocused('@step2 #reset_short_code')
+                ->assertMissing('@step3')
+                ->assertMissing('@step1');
 
             // TODO: Test form reset when going back
 
             // Because the verification code is removed in tearDown()
             // we'll start from the beginning (Step 1)
-            $browser->click('@step2 [type=button]');
-            $browser->waitFor('@step1');
-            $browser->assertFocused('@step1 #reset_email');
-            $browser->assertMissing('@step3');
-            $browser->assertMissing('@step2');
+            $browser->click('@step2 [type=button]')
+                ->waitFor('@step1')
+                ->assertFocused('@step1 #reset_email')
+                ->assertMissing('@step3')
+                ->assertMissing('@step2');
 
             // Submit valid data
             $browser->with('@step1', function ($step) {
@@ -222,8 +224,8 @@ class PasswordResetTest extends TestCaseDusk
                 $step->click('[type=submit]');
             });
 
-            $browser->waitFor('@step2');
-            $browser->waitUntilMissing('@step2 #reset_code[value=""]');
+            $browser->waitFor('@step2')
+                ->waitUntilMissing('@step2 #reset_code[value=""]');
 
             // Submit valid code again
             $browser->with('@step2', function ($step) {
@@ -241,18 +243,27 @@ class PasswordResetTest extends TestCaseDusk
 
             // Submit invalid data
             $browser->with('@step3', function ($step) use ($browser) {
-                $step->assertFocused('#reset_password');
-
-                $step->type('#reset_password', '12345678');
-                $step->type('#reset_confirm', '123456789');
+                $step->assertFocused('#reset_password')
+                    ->whenAvailable('#reset_password_policy', function (Browser $browser) {
+                        $browser->assertElementsCount('li', 2)
+                            ->assertMissing('li:first-child svg.text-success')
+                            ->assertSeeIn('li:first-child small', "Password contains an upper-case character")
+                            ->assertMissing('li:last-child svg.text-success')
+                            ->assertSeeIn('li:last-child small', "Password contains a digit");
+                    })
+                    ->type('#reset_password', 'A2345678')
+                    ->type('#reset_password_confirmation', '123456789')
+                    ->with('#reset_password_policy', function (Browser $browser) {
+                        $browser->waitFor('li:first-child svg.text-success')
+                            ->waitFor('li:last-child svg.text-success');
+                    });
 
                 $step->click('[type=submit]');
 
                 $browser->waitFor('.toast-error');
 
                 $step->waitFor('#reset_password.is-invalid')
-                    ->assertVisible('#reset_password.is-invalid')
-                    ->assertVisible('#reset_password + .invalid-feedback')
+                    ->assertVisible('#reset_password_input .invalid-feedback')
                     ->assertFocused('#reset_password');
 
                 $browser->click('.toast-error'); // remove the toast
@@ -260,9 +271,8 @@ class PasswordResetTest extends TestCaseDusk
 
             // Submit valid data
             $browser->with('@step3', function ($step) {
-                $step->type('#reset_confirm', '12345678');
-
-                $step->click('[type=submit]');
+                $step->type('#reset_password_confirmation', 'A2345678')
+                    ->click('[type=submit]');
             });
 
             $browser->waitUntilMissing('@step3');
@@ -272,5 +282,13 @@ class PasswordResetTest extends TestCaseDusk
 
             // FIXME: Is it enough to be sure user is logged in?
         });
+    }
+
+    /**
+     * Test password reset process for a user with 2FA enabled.
+     */
+    public function testResetWith2FA(): void
+    {
+        $this->markTestIncomplete();
     }
 }

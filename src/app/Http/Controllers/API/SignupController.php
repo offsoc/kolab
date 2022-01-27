@@ -9,6 +9,7 @@ use App\Discount;
 use App\Domain;
 use App\Plan;
 use App\Rules\SignupExternalEmail;
+use App\Rules\Password;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\SignupCode;
@@ -207,7 +208,7 @@ class SignupController extends Controller
             $request->all(),
             [
                 'login' => 'required|min:2',
-                'password' => 'required|min:4|confirmed',
+                'password' => ['required', 'confirmed', new Password()],
                 'domain' => 'required',
                 'voucher' => 'max:32',
             ]

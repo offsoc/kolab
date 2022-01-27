@@ -305,7 +305,7 @@ class SignupTest extends TestCaseDusk
                     ->assertMissing('#signup_first_name')
                     ->assertVisible('#signup_login')
                     ->assertVisible('#signup_password')
-                    ->assertVisible('#signup_confirm')
+                    ->assertVisible('#signup_password_confirmation')
                     ->assertVisible('select#signup_domain')
                     ->assertElementsCount('select#signup_domain option', $domains_count, false)
                     ->assertText('select#signup_domain option:nth-child(1)', $domains[0])
@@ -319,7 +319,14 @@ class SignupTest extends TestCaseDusk
                     ->assertSelected('select#signup_domain', \config('app.domain'))
                     ->assertValue('#signup_login', '')
                     ->assertValue('#signup_password', '')
-                    ->assertValue('#signup_confirm', '');
+                    ->assertValue('#signup_password_confirmation', '')
+                    ->with('#signup_password_policy', function (Browser $browser) {
+                        $browser->assertElementsCount('li', 2)
+                            ->assertMissing('li:first-child svg.text-success')
+                            ->assertSeeIn('li:first-child small', "Minimum password length: 6 characters")
+                            ->assertMissing('li:last-child svg.text-success')
+                            ->assertSeeIn('li:last-child small', "Maximum password length: 255 characters");
+                    });
 
                 // TODO: Test domain selector
             });
@@ -351,12 +358,16 @@ class SignupTest extends TestCaseDusk
                 $step->assertFocused('#signup_login')
                     ->type('#signup_login', '*')
                     ->type('#signup_password', '12345678')
-                    ->type('#signup_confirm', '123456789')
+                    ->type('#signup_password_confirmation', '123456789')
+                    ->with('#signup_password_policy', function (Browser $browser) {
+                        $browser->waitFor('li:first-child svg.text-success')
+                            ->waitFor('li:last-child svg.text-success');
+                    })
                     ->click('[type=submit]')
                     ->waitFor('#signup_login.is-invalid')
                     ->assertVisible('#signup_domain + .invalid-feedback')
                     ->assertVisible('#signup_password.is-invalid')
-                    ->assertVisible('#signup_password + .invalid-feedback')
+                    ->assertVisible('#signup_password_input .invalid-feedback')
                     ->assertFocused('#signup_login')
                     ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
@@ -366,7 +377,7 @@ class SignupTest extends TestCaseDusk
                 $step->type('#signup_login', 'SignupTestDusk')
                     ->click('[type=submit]')
                     ->waitFor('#signup_password.is-invalid')
-                    ->assertVisible('#signup_password + .invalid-feedback')
+                    ->assertVisible('#signup_password_input .invalid-feedback')
                     ->assertMissing('#signup_login.is-invalid')
                     ->assertMissing('#signup_domain + .invalid-feedback')
                     ->assertFocused('#signup_password')
@@ -375,7 +386,7 @@ class SignupTest extends TestCaseDusk
 
             // Submit valid data
             $browser->with('@step3', function ($step) {
-                $step->type('#signup_confirm', '12345678');
+                $step->type('#signup_password_confirmation', '12345678');
 
                 $step->click('[type=submit]');
             });
@@ -433,7 +444,7 @@ class SignupTest extends TestCaseDusk
             $browser->whenAvailable('@step3', function ($step) {
                 $step->assertVisible('#signup_login')
                     ->assertVisible('#signup_password')
-                    ->assertVisible('#signup_confirm')
+                    ->assertVisible('#signup_password_confirmation')
                     ->assertVisible('input#signup_domain')
                     ->assertVisible('[type=button]')
                     ->assertVisible('[type=submit]')
@@ -441,7 +452,7 @@ class SignupTest extends TestCaseDusk
                     ->assertValue('input#signup_domain', '')
                     ->assertValue('#signup_login', '')
                     ->assertValue('#signup_password', '')
-                    ->assertValue('#signup_confirm', '');
+                    ->assertValue('#signup_password_confirmation', '');
             });
 
             // Submit invalid login and password data
@@ -450,12 +461,12 @@ class SignupTest extends TestCaseDusk
                     ->type('#signup_login', '*')
                     ->type('#signup_domain', 'test.com')
                     ->type('#signup_password', '12345678')
-                    ->type('#signup_confirm', '123456789')
+                    ->type('#signup_password_confirmation', '123456789')
                     ->click('[type=submit]')
                     ->waitFor('#signup_login.is-invalid')
                     ->assertVisible('#signup_domain + .invalid-feedback')
                     ->assertVisible('#signup_password.is-invalid')
-                    ->assertVisible('#signup_password + .invalid-feedback')
+                    ->assertVisible('#signup_password_input .invalid-feedback')
                     ->assertFocused('#signup_login')
                     ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
@@ -465,12 +476,12 @@ class SignupTest extends TestCaseDusk
                 $step->type('#signup_login', 'admin')
                     ->type('#signup_domain', 'aaa')
                     ->type('#signup_password', '12345678')
-                    ->type('#signup_confirm', '12345678')
+                    ->type('#signup_password_confirmation', '12345678')
                     ->click('[type=submit]')
                     ->waitUntilMissing('#signup_login.is-invalid')
                     ->waitFor('#signup_domain.is-invalid + .invalid-feedback')
                     ->assertMissing('#signup_password.is-invalid')
-                    ->assertMissing('#signup_password + .invalid-feedback')
+                    ->assertMissing('#signup_password_input .invalid-feedback')
                     ->assertFocused('#signup_domain')
                     ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
             });
@@ -533,7 +544,7 @@ class SignupTest extends TestCaseDusk
                         ->type('#signup_voucher', 'TESTXX')
                         ->type('#signup_login', 'signuptestdusk')
                         ->type('#signup_password', '123456789')
-                        ->type('#signup_confirm', '123456789')
+                        ->type('#signup_password_confirmation', '123456789')
                         ->click('[type=submit]')
                         ->waitFor('#signup_voucher.is-invalid')
                         ->assertVisible('#signup_voucher + .invalid-feedback')
@@ -585,7 +596,7 @@ class SignupTest extends TestCaseDusk
                         ->assertVisible('#signup_first_name')
                         ->assertVisible('#signup_login')
                         ->assertVisible('#signup_password')
-                        ->assertVisible('#signup_confirm')
+                        ->assertVisible('#signup_password_confirmation')
                         ->assertVisible('select#signup_domain')
                         ->assertElementsCount('select#signup_domain option', $domains_count, false)
                         ->assertVisible('[type=submit]')
@@ -597,22 +608,22 @@ class SignupTest extends TestCaseDusk
                         ->assertValue('#signup_last_name', '')
                         ->assertValue('#signup_login', '')
                         ->assertValue('#signup_password', '')
-                        ->assertValue('#signup_confirm', '');
+                        ->assertValue('#signup_password_confirmation', '');
 
                     // Submit invalid data
                     $step->type('#signup_login', '*')
                         ->type('#signup_password', '12345678')
-                        ->type('#signup_confirm', '123456789')
+                        ->type('#signup_password_confirmation', '123456789')
                         ->click('[type=submit]')
                         ->waitFor('#signup_login.is-invalid')
                         ->assertVisible('#signup_domain + .invalid-feedback')
                         ->assertVisible('#signup_password.is-invalid')
-                        ->assertVisible('#signup_password + .invalid-feedback')
+                        ->assertVisible('#signup_password_input .invalid-feedback')
                         ->assertFocused('#signup_login')
                         ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
 
                     // Submit valid data
-                    $step->type('#signup_confirm', '12345678')
+                    $step->type('#signup_password_confirmation', '12345678')
                         ->type('#signup_login', 'signuptestdusk')
                         ->type('#signup_first_name', 'First')
                         ->type('#signup_last_name', 'Last')

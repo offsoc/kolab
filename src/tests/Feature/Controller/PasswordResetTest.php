@@ -207,8 +207,9 @@ class PasswordResetTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(1, $json);
+        $this->assertCount(2, $json);
         $this->assertSame('success', $json['status']);
+        $this->assertSame($user->id, $json['userId']);
     }
 
     /**
@@ -222,12 +223,14 @@ class PasswordResetTest extends TestCase
         $data = [];
 
         $response = $this->post('/api/auth/password-reset', $data);
+        $response->assertStatus(422);
+
         $json = $response->json();
 
-        $response->assertStatus(422);
         $this->assertSame('error', $json['status']);
-        $this->assertCount(1, $json['errors']);
-        $this->assertArrayHasKey('password', $json['errors']);
+        $this->assertCount(2, $json['errors']);
+        $this->assertArrayHasKey('code', $json['errors']);
+        $this->assertArrayHasKey('short_code', $json['errors']);
 
         $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
         $code = new VerificationCode(['mode' => 'password-reset']);
@@ -236,12 +239,14 @@ class PasswordResetTest extends TestCase
         // Data with existing code but missing password
         $data = [
             'code' => $code->code,
+            'short_code' => $code->short_code,
         ];
 
         $response = $this->post('/api/auth/password-reset', $data);
+        $response->assertStatus(422);
+
         $json = $response->json();
 
-        $response->assertStatus(422);
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
         $this->assertArrayHasKey('password', $json['errors']);
@@ -252,6 +257,22 @@ class PasswordResetTest extends TestCase
             'short_code' => $code->short_code,
             'password' => 'password',
             'password_confirmation' => 'passwrong',
+        ];
+
+        $response = $this->post('/api/auth/password-reset', $data);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertArrayHasKey('password', $json['errors']);
+
+        // Data with existing code but password too short
+        $data = [
+            'code' => $code->code,
+            'short_code' => $code->short_code,
+            'password' => 'pas',
+            'password_confirmation' => 'pas',
         ];
 
         $response = $this->post('/api/auth/password-reset', $data);
@@ -294,8 +315,8 @@ class PasswordResetTest extends TestCase
         Queue::assertNothingPushed();
 
         $data = [
-            'password' => 'test',
-            'password_confirmation' => 'test',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
             'code' => $code->code,
             'short_code' => $code->short_code,
         ];

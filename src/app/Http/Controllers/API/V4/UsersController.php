@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V4;
 use App\Http\Controllers\RelationController;
 use App\Domain;
 use App\Group;
+use App\Rules\Password;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\Sku;
@@ -188,6 +189,7 @@ class UsersController extends RelationController
             'enableFolders' => $isController && $hasCustomDomain && in_array('beta-shared-folders', $skus),
             // TODO: Make 'enableResources' working for wallet controllers that aren't account owners
             'enableResources' => $isController && $hasCustomDomain && in_array('beta-resources', $skus),
+            'enableSettings' => $isController,
             'enableUsers' => $isController,
             'enableWallets' => $isController,
         ];
@@ -310,10 +312,6 @@ class UsersController extends RelationController
         if (isset($request->aliases)) {
             $user->setAliases($request->aliases);
         }
-
-        // TODO: Make sure that UserUpdate job is created in case of entitlements update
-        //       and no password change. So, for example quota change is applied to LDAP
-        // TODO: Review use of $user->save() in the above context
 
         DB::commit();
 
@@ -471,6 +469,8 @@ class UsersController extends RelationController
             'aliases' => 'array|nullable',
         ];
 
+        $controller = ($user ?: $this->guard()->user())->walletOwner();
+
         // Handle generated password reset code
         if ($code = $request->input('passwordLinkCode')) {
             // Accept <short-code>-<code> input
@@ -491,7 +491,7 @@ class UsersController extends RelationController
 
         if (empty($user) || !empty($request->password) || !empty($request->password_confirmation)) {
             if (empty($ignorePassword)) {
-                $rules['password'] = 'required|min:6|max:255|confirmed';
+                $rules['password'] = ['required', 'confirmed', new Password($controller)];
             }
         }
 
@@ -503,8 +503,6 @@ class UsersController extends RelationController
         if ($v->fails()) {
             $errors = $v->errors()->toArray();
         }
-
-        $controller = $user ? $user->wallet()->owner : $this->guard()->user();
 
         // For new user validate email address
         if (empty($user)) {

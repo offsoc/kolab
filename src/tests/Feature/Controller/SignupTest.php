@@ -453,7 +453,7 @@ class SignupTest extends TestCase
 
         $domain = $this->getPublicDomain();
 
-        // Login too short
+        // Login too short, password too short
         $data = [
             'login' => '1',
             'domain' => $domain,
@@ -466,15 +466,16 @@ class SignupTest extends TestCase
 
         $response->assertStatus(422);
         $this->assertSame('error', $json['status']);
-        $this->assertCount(1, $json['errors']);
+        $this->assertCount(2, $json['errors']);
         $this->assertArrayHasKey('login', $json['errors']);
+        $this->assertArrayHasKey('password', $json['errors']);
 
         // Missing codes
         $data = [
             'login' => 'login-valid',
             'domain' => $domain,
-            'password' => 'test',
-            'password_confirmation' => 'test',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
         ];
 
         $response = $this->post('/api/auth/signup', $data);
@@ -490,8 +491,8 @@ class SignupTest extends TestCase
         $data = [
             'login' => 'TestLogin',
             'domain' => $domain,
-            'password' => 'test',
-            'password_confirmation' => 'test',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
             'code' => $result['code'],
             'short_code' => 'XXXX',
         ];
@@ -510,8 +511,8 @@ class SignupTest extends TestCase
         $data = [
             'login' => 'TestLogin',
             'domain' => $domain,
-            'password' => 'test',
-            'password_confirmation' => 'test',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
             'code' => $result['code'],
             'short_code' => $code->short_code,
             'voucher' => 'XXX',
@@ -529,8 +530,8 @@ class SignupTest extends TestCase
         $data = [
             'login' => 'żżżżżż',
             'domain' => $domain,
-            'password' => 'test',
-            'password_confirmation' => 'test',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
             'code' => $result['code'],
             'short_code' => $code->short_code,
         ];
@@ -559,8 +560,8 @@ class SignupTest extends TestCase
         $data = [
             'login' => 'SignupLogin',
             'domain' => $domain,
-            'password' => 'test',
-            'password_confirmation' => 'test',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
             'code' => $code->code,
             'short_code' => $code->short_code,
             'voucher' => 'TEST',
@@ -672,8 +673,8 @@ class SignupTest extends TestCase
         $data = [
             'login' => $login,
             'domain' => $domain,
-            'password' => 'test',
-            'password_confirmation' => 'test',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
             'code' => $code->code,
             'short_code' => $code->short_code,
         ];
@@ -745,8 +746,8 @@ class SignupTest extends TestCase
             'last_name' => 'User',
             'login' => 'test-inv',
             'domain' => 'kolabnow.com',
-            'password' => 'test',
-            'password_confirmation' => 'test',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
         ];
 
         // Test invalid invitation identifier

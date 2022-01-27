@@ -255,4 +255,24 @@ trait EntitleableTrait
 
         return null;
     }
+
+    /**
+     * Return the owner of the wallet (account) this entitleable is assigned to
+     *
+     * @return ?\App\User Account owner
+     */
+    public function walletOwner(): ?\App\User
+    {
+        $wallet = $this->wallet();
+
+        if ($wallet) {
+            if ($this instanceof \App\User && $wallet->user_id == $this->id) {
+                return $this;
+            }
+
+            return $wallet->owner;
+        }
+
+        return null;
+    }
 }

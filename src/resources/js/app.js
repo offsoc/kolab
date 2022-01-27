@@ -388,7 +388,7 @@ const app = new Vue({
 loadLangAsync().then(() => app.$mount('#app'))
 
 // Add a axios request interceptor
-window.axios.interceptors.request.use(
+axios.interceptors.request.use(
     config => {
         // This is the only way I found to change configuration options
         // on a running application. We need this for browser testing.
@@ -403,7 +403,7 @@ window.axios.interceptors.request.use(
 )
 
 // Add a axios response interceptor for general/validation error handler
-window.axios.interceptors.response.use(
+axios.interceptors.response.use(
     response => {
         if (response.config.onFinish) {
             response.config.onFinish()
@@ -413,7 +413,7 @@ window.axios.interceptors.response.use(
     },
     error => {
         // Do not display the error in a toast message, pass the error as-is
-        if (error.config.ignoreErrors) {
+        if (axios.isCancel(error) || error.config.ignoreErrors) {
             return Promise.reject(error)
         }
 

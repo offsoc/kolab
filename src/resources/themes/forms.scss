@@ -35,6 +35,17 @@
     }
 }
 
+.password-input {
+    ul {
+        svg {
+            width: 0.75em !important;
+        }
+        span {
+            padding: 0 0.05em;
+        }
+    }
+}
+
 .range-input {
     display: flex;
 

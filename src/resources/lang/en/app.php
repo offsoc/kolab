@@ -110,6 +110,12 @@ return [
     'wallet-update-success' => 'User wallet updated successfully.',
 
     'password-reset-code-delete-success' => 'Password reset code deleted successfully.',
+    'password-rule-min' => 'Minimum password length: :param characters',
+    'password-rule-max' => 'Maximum password length: :param characters',
+    'password-rule-lower' => 'Password contains a lower-case character',
+    'password-rule-upper' => 'Password contains an upper-case character',
+    'password-rule-digit' => 'Password contains a digit',
+    'password-rule-special' => 'Password contains a special character',
 
     'wallet-notice-date' => 'With your current subscriptions your account balance will last until about :date (:days).',
     'wallet-notice-nocredit' => 'You are out of credit, top up your balance now.',

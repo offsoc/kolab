@@ -16,6 +16,7 @@ const DomainListComponent = () => import(/* webpackChunkName: "../user/pages" */
 const MeetComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Rooms')
 const ResourceInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/Info')
 const ResourceListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/List')
+const SettingsComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Settings')
 const SharedFolderInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/SharedFolder/Info')
 const SharedFolderListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/SharedFolder/List')
 const UserInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/Info')
@@ -106,6 +107,12 @@ const routes = [
         name: 'rooms',
         component: MeetComponent,
         meta: { requiresAuth: true }
+    },
+    {
+        path: '/settings',
+        name: 'settings',
+        component: SettingsComponent,
+        meta: { requiresAuth: true, perm: 'settings' }
     },
     {
         path: '/shared-folder/:folder',
