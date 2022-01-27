@@ -91,9 +91,10 @@ class UserProfileTest extends TestCaseDusk
                         ->assertSeeIn('div.row:nth-child(8) label', 'Country')
                         ->assertValue('div.row:nth-child(8) select', $this->profile['country'])
                         ->assertSeeIn('div.row:nth-child(9) label', 'Password')
-                        ->assertValue('div.row:nth-child(9) input[type=password]', '')
-                        ->assertSeeIn('div.row:nth-child(10) label', 'Confirm Password')
-                        ->assertValue('div.row:nth-child(10) input[type=password]', '')
+                        ->assertValue('div.row:nth-child(9) input#password', '')
+                        ->assertValue('div.row:nth-child(9) input#password_confirmation', '')
+                        ->assertAttribute('#password', 'placeholder', 'Password')
+                        ->assertAttribute('#password_confirmation', 'placeholder', 'Confirm Password')
                         ->assertSeeIn('button[type=submit]', 'Submit');
 
                     // Test form error handling

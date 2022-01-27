@@ -34,6 +34,15 @@ class VerificationCodeObserver
             }
         }
 
-        $code->expires_at = Carbon::now()->addHours($exp_hours);
+        if (empty($code->expires_at)) {
+            $code->expires_at = Carbon::now()->addHours($exp_hours);
+        }
+
+        // Verification codes are active by default
+        // Note: This is not required, but this way we make sure the property value
+        // is a boolean not null after create() call, if it wasn't specified there.
+        if (!isset($code->active)) {
+            $code->active = true;
+        }
     }
 }

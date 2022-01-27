@@ -83,7 +83,7 @@ class PasswordResetController extends Controller
         }
 
         // Validate the verification code
-        $code = VerificationCode::find($request->code);
+        $code = VerificationCode::where('code', $request->code)->where('active', true)->first();
 
         if (
             empty($code)
@@ -139,5 +139,68 @@ class PasswordResetController extends Controller
         $this->code->delete();
 
         return AuthController::logonResponse($user, $request->password);
+    }
+
+    /**
+     * Create a verification code for the current user.
+     *
+     * @param \Illuminate\Http\Request $request HTTP request
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response
+     */
+    public function codeCreate(Request $request)
+    {
+        // Generate the verification code
+        $code = new VerificationCode();
+        $code->mode = 'password-reset';
+
+        // These codes are valid for 24 hours
+        $code->expires_at = now()->addHours(24);
+
+        // The code is inactive until it is submitted via a different endpoint
+        $code->active = false;
+
+        $this->guard()->user()->verificationcodes()->save($code);
+
+        return response()->json([
+                'status' => 'success',
+                'code' => $code->code,
+                'short_code' => $code->short_code,
+                'expires_at' => $code->expires_at->toDateTimeString(),
+        ]);
+    }
+
+    /**
+     * Delete a verification code.
+     *
+     * @param string $id Code identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function codeDelete($id)
+    {
+        // Accept <short-code>-<code> input
+        if (strpos($id, '-')) {
+            $id = explode('-', $id)[1];
+        }
+
+        $code = VerificationCode::find($id);
+
+        if (!$code) {
+            return $this->errorResponse(404);
+        }
+
+        $current_user = $this->guard()->user();
+
+        if (empty($code->user) || !$current_user->canUpdate($code->user)) {
+            return $this->errorResponse(403);
+        }
+
+        $code->delete();
+
+        return response()->json([
+                'status' => 'success',
+                'message' => \trans('app.password-reset-code-delete-success'),
+        ]);
     }
 }

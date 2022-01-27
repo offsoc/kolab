@@ -45,6 +45,8 @@ class UsersController extends RelationController
     /** @var array Common object properties in the API response */
     protected $objectProps = ['email'];
 
+    /** @var ?\App\VerificationCode Password reset code to activate on user create/update */
+    protected $passCode;
 
     /**
      * Listing of users.
@@ -130,6 +132,14 @@ class UsersController extends RelationController
 
         $response['skus'] = \App\Entitlement::objectEntitlementsSummary($user);
         $response['config'] = $user->getConfig();
+
+        $code = $user->verificationcodes()->where('active', true)
+            ->where('expires_at', '>', \Carbon\Carbon::now())
+            ->first();
+
+        if ($code) {
+            $response['passwordLinkCode'] = $code->short_code . '-' . $code->code;
+        }
 
         return response()->json($response);
     }
@@ -230,6 +240,8 @@ class UsersController extends RelationController
                 'password' => $request->password,
         ]);
 
+        $this->activatePassCode($user);
+
         $owner->assignPackage($package, $user);
 
         if (!empty($settings)) {
@@ -292,6 +304,8 @@ class UsersController extends RelationController
             $user->password = $request->password;
             $user->save();
         }
+
+        $this->activatePassCode($user);
 
         if (isset($request->aliases)) {
             $user->setAliases($request->aliases);
@@ -457,8 +471,28 @@ class UsersController extends RelationController
             'aliases' => 'array|nullable',
         ];
 
+        // Handle generated password reset code
+        if ($code = $request->input('passwordLinkCode')) {
+            // Accept <short-code>-<code> input
+            if (strpos($code, '-')) {
+                $code = explode('-', $code)[1];
+            }
+
+            $this->passCode = $this->guard()->user()->verificationcodes()
+                ->where('code', $code)->where('active', false)->first();
+
+            // Generate a password for a new user with password reset link
+            // FIXME: Should/can we have a user with no password set?
+            if ($this->passCode && empty($user)) {
+                $request->password = $request->password_confirmation = Str::random(16);
+                $ignorePassword = true;
+            }
+        }
+
         if (empty($user) || !empty($request->password) || !empty($request->password_confirmation)) {
-            $rules['password'] = 'required|min:4|max:2048|confirmed';
+            if (empty($ignorePassword)) {
+                $rules['password'] = 'required|min:6|max:255|confirmed';
+            }
         }
 
         $errors = [];
@@ -722,5 +756,20 @@ class UsersController extends RelationController
         }
 
         return null;
+    }
+
+    /**
+     * Activate password reset code (if set), and assign it to a user.
+     *
+     * @param \App\User $user The user
+     */
+    protected function activatePassCode(User $user): void
+    {
+        // Activate the password reset code
+        if ($this->passCode) {
+            $this->passCode->user_id = $user->id;
+            $this->passCode->active = true;
+            $this->passCode->save();
+        }
     }
 }

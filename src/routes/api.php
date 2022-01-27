@@ -100,6 +100,9 @@ Route::group(
         Route::get('wallets/{id}/receipts', 'API\V4\WalletsController@receipts');
         Route::get('wallets/{id}/receipts/{receipt}', 'API\V4\WalletsController@receiptDownload');
 
+        Route::post('password-reset/code', 'API\PasswordResetController@codeCreate');
+        Route::delete('password-reset/code/{id}', 'API\PasswordResetController@codeDelete');
+
         Route::post('payments', 'API\V4\PaymentsController@store');
         //Route::delete('payments', 'API\V4\PaymentsController@cancel');
         Route::get('payments/mandate', 'API\V4\PaymentsController@mandate');

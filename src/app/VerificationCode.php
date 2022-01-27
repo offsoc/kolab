@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * The eloquent definition of a VerificationCode
  *
- * @property string    $code
- * @property string    $mode
- * @property \App\User $user
- * @property int       $user_id
- * @property string    $short_code
+ * @property bool           $active      Active status
+ * @property string         $code        The code
+ * @property \Carbon\Carbon $expires_at  Expiration date-time
+ * @property string         $mode        Mode, e.g. password-reset
+ * @property \App\User      $user        User object
+ * @property int            $user_id     User identifier
+ * @property string         $short_code  Short code
  */
 class VerificationCode extends Model
 {
@@ -53,18 +55,21 @@ class VerificationCode extends Model
     public $timestamps = false;
 
     /**
+     * Casts properties as type
+     *
+     * @var array
+     */
+    protected $casts = [
+        'active' => 'boolean',
+        'expires_at' => 'datetime',
+    ];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = ['user_id', 'code', 'short_code', 'mode', 'expires_at'];
-
-    /**
-     * The attributes that should be mutated to dates.
-     *
-     * @var array
-     */
-    protected $dates = ['expires_at'];
+    protected $fillable = ['user_id', 'code', 'short_code', 'mode', 'expires_at', 'active'];
 
 
     /**
@@ -91,7 +96,7 @@ class VerificationCode extends Model
     }
 
     /**
-     * The user to which this setting belongs.
+     * The user to which this code belongs.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */

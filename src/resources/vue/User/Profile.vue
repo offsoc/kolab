@@ -68,13 +68,14 @@
                         <div class="row mb-3">
                             <label for="password" class="col-sm-4 col-form-label">{{ $t('form.password') }}</label>
                             <div class="col-sm-8">
-                                <input type="password" class="form-control" id="password" v-model="profile.password">
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <label for="password_confirmaton" class="col-sm-4 col-form-label">{{ $t('form.password-confirm') }}</label>
-                            <div class="col-sm-8">
-                                <input type="password" class="form-control" id="password_confirmation" v-model="profile.password_confirmation">
+                                <input type="password" class="form-control" id="password"
+                                       v-model="profile.password"
+                                       :placeholder="$t('form.password')"
+                                >
+                                <input type="password" class="form-control mt-2" id="password_confirmation"
+                                       v-model="profile.password_confirmation"
+                                       :placeholder="$t('form.password-confirm')"
+                                >
                             </div>
                         </div>
                         <button class="btn btn-primary button-submit mt-2" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>

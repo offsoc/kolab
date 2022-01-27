@@ -68,13 +68,33 @@
                                 <div class="row mb-3">
                                     <label for="password" class="col-sm-4 col-form-label">{{ $t('form.password') }}</label>
                                     <div class="col-sm-8">
-                                        <input type="password" class="form-control" id="password" v-model="user.password" :required="user_id === 'new'">
-                                    </div>
-                                </div>
-                                <div class="row mb-3">
-                                    <label for="password_confirmaton" class="col-sm-4 col-form-label">{{ $t('form.password-confirm') }}</label>
-                                    <div class="col-sm-8">
-                                        <input type="password" class="form-control" id="password_confirmation" v-model="user.password_confirmation" :required="user_id === 'new'">
+                                        <div v-if="!isSelf" class="btn-group w-100" role="group">
+                                            <input type="checkbox" id="pass-mode-input" value="input" class="btn-check" @change="setPasswordMode" :checked="passwordMode == 'input'">
+                                            <label class="btn btn-outline-secondary" for="pass-mode-input">{{ $t('user.pass-input') }}</label>
+                                            <input type="checkbox" id="pass-mode-link" value="link" class="btn-check" @change="setPasswordMode">
+                                            <label class="btn btn-outline-secondary" for="pass-mode-link">{{ $t('user.pass-link') }}</label>
+                                        </div>
+                                        <div v-if="passwordMode == 'input'" :class="isSelf ? '' : 'mt-2'">
+                                            <input id="password" type="password" class="form-control"
+                                                   v-model="user.password"
+                                                   :placeholder="$t('form.password')"
+                                            >
+                                            <input id="password_confirmation" type="password" class="form-control mt-2"
+                                                   v-model="user.password_confirmation"
+                                                   :placeholder="$t('form.password-confirm')"
+                                            >
+                                        </div>
+                                        <div id="password-link" v-if="passwordMode == 'link' || user.passwordLinkCode" class="mt-2">
+                                            <span>{{ $t('user.pass-link-label') }}</span>&nbsp;<code>{{ passwordLink }}</code>
+                                            <span class="d-inline-block">
+                                                <button class="btn btn-link p-1" type="button" :title="$t('btn.copy')" @click="passwordLinkCopy">
+                                                    <svg-icon :icon="['far', 'clipboard']"></svg-icon>
+                                                </button>
+                                                <button v-if="user.passwordLinkCode" class="btn btn-link text-danger p-1" type="button" :title="$t('btn.delete')" @click="passwordLinkDelete">
+                                                    <svg-icon icon="trash-alt"></svg-icon>
+                                                </button>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div v-if="user_id === 'new'" id="user-packages" class="row mb-3">
@@ -144,9 +164,19 @@
         },
         data() {
             return {
+                passwordLinkCode: '',
+                passwordMode: '',
                 user_id: null,
                 user: { aliases: [], config: [] },
                 status: {}
+            }
+        },
+        computed: {
+            isSelf: function () {
+                return this.user_id == this.$store.state.authInfo.id
+            },
+            passwordLink: function () {
+                return this.$root.appUrl + '/password-reset/' + this.passwordLinkCode
             }
         },
         created() {
@@ -164,8 +194,16 @@
                         this.user.last_name = response.data.settings.last_name
                         this.user.organization = response.data.settings.organization
                         this.status = response.data.statusInfo
+
+                        this.passwordLinkCode = this.user.passwordLinkCode
                     })
                     .catch(this.$root.errorHandler)
+
+                if (this.isSelf) {
+                    this.passwordMode = 'input'
+                }
+            } else {
+                this.passwordMode = 'input'
             }
         },
         mounted() {
@@ -175,11 +213,64 @@
             })
         },
         methods: {
+            passwordLinkCopy() {
+                navigator.clipboard.writeText($('#password-link code').text());
+            },
+            passwordLinkDelete() {
+                this.passwordMode = ''
+                $('#pass-mode-link')[0].checked = false
+
+                // Delete the code for real
+                axios.delete('/api/v4/password-reset/code/' + this.passwordLinkCode)
+                    .then(response => {
+                        this.passwordLinkCode = ''
+                        this.user.passwordLinkCode = ''
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                        }
+                    })
+            },
+            setPasswordMode(event) {
+                const mode = event.target.checked ? event.target.value : ''
+
+                // In the "new user" mode the password mode cannot be unchecked
+                if (!mode && this.user_id === 'new') {
+                    event.target.checked = true
+                    return
+                }
+
+                this.passwordMode = mode
+
+                if (!event.target.checked) {
+                    return
+                }
+
+                $('#pass-mode-' + (mode == 'link' ? 'input' : 'link'))[0].checked = false
+
+                // Note: we use $nextTick() becouse we have to wait for the HTML elements to exist
+                this.$nextTick().then(() => {
+                    if (mode == 'link' && !this.passwordLinkCode) {
+                        const element = $('#password-link')
+                        this.$root.addLoader(element)
+                        axios.post('/api/v4/password-reset/code', [])
+                            .then(response => {
+                                this.$root.removeLoader(element)
+                                this.passwordLinkCode = response.data.short_code + '-' + response.data.code
+                            })
+                            .catch(error => {
+                                this.$root.removeLoader(element)
+                            })
+                    } else if (mode == 'input') {
+                        $('#password').focus();
+                    }
+                })
+            },
             submit() {
                 this.$root.clearFormValidation($('#general form'))
 
                 let method = 'post'
                 let location = '/api/v4/users'
+                let post = this.$root.pick(this.user, ['aliases', 'email', 'first_name', 'last_name', 'organization'])
 
                 if (this.user_id !== 'new') {
                     method = 'put'
@@ -192,12 +283,19 @@
 
                         skus[id] = range || 1
                     })
-                    this.user.skus = skus
+                    post.skus = skus
                 } else {
-                    this.user.package = $('#user-packages input:checked').val()
+                    post.package = $('#user-packages input:checked').val()
                 }
 
-                axios[method](location, this.user)
+                if (this.passwordMode == 'link' && this.passwordLinkCode) {
+                    post.passwordLinkCode = this.passwordLinkCode
+                } else if (this.passwordMode == 'input') {
+                    post.password = this.user.password
+                    post.password_confirmation = this.user.password_confirmation
+                }
+
+                axios[method](location, post)
                     .then(response => {
                         if (response.data.statusInfo) {
                             this.$store.state.authInfo.statusInfo = response.data.statusInfo

@@ -93,10 +93,13 @@ class UsersTest extends TestCaseDusk
     public function testInfo(): void
     {
         $this->browse(function (Browser $browser) {
-            $user = User::where('email', 'john@kolab.org')->first();
+            $john = $this->getTestUser('john@kolab.org');
+            $jack = $this->getTestUser('jack@kolab.org');
+            $john->verificationcodes()->delete();
+            $jack->verificationcodes()->delete();
 
             // Test that the page requires authentication
-            $browser->visit('/user/' . $user->id)
+            $browser->visit('/user/' . $john->id)
                 ->on(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', false)
                 ->on(new UserInfo())
@@ -122,9 +125,12 @@ class UsersTest extends TestCaseDusk
                                 ->assertValue('@input', '');
                         })
                         ->assertSeeIn('div.row:nth-child(7) label', 'Password')
-                        ->assertValue('div.row:nth-child(7) input[type=password]', '')
-                        ->assertSeeIn('div.row:nth-child(8) label', 'Confirm Password')
-                        ->assertValue('div.row:nth-child(8) input[type=password]', '')
+                        ->assertValue('div.row:nth-child(7) input#password', '')
+                        ->assertValue('div.row:nth-child(7) input#password_confirmation', '')
+                        ->assertAttribute('#password', 'placeholder', 'Password')
+                        ->assertAttribute('#password_confirmation', 'placeholder', 'Confirm Password')
+                        ->assertMissing('div.row:nth-child(7) .btn-group')
+                        ->assertMissing('div.row:nth-child(7) #password-link')
                         ->assertSeeIn('button[type=submit]', 'Submit')
                         // Clear some fields and submit
                         ->vueClear('#first_name')
@@ -141,8 +147,11 @@ class UsersTest extends TestCaseDusk
                     $browser->type('#password', 'aaaaaa')
                         ->vueClear('#password_confirmation')
                         ->click('button[type=submit]')
-                        ->waitFor('#password + .invalid-feedback')
-                        ->assertSeeIn('#password + .invalid-feedback', 'The password confirmation does not match.')
+                        ->waitFor('#password_confirmation + .invalid-feedback')
+                        ->assertSeeIn(
+                            '#password_confirmation + .invalid-feedback',
+                            'The password confirmation does not match.'
+                        )
                         ->assertFocused('#password')
                         ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
 
@@ -173,14 +182,13 @@ class UsersTest extends TestCaseDusk
                 ->click('@table tr:nth-child(3) a')
                 ->on(new UserInfo());
 
-            $john = User::where('email', 'john@kolab.org')->first();
-            $alias = UserAlias::where('user_id', $john->id)->where('alias', 'john.test@kolab.org')->first();
+            $alias = $john->aliases()->where('alias', 'john.test@kolab.org')->first();
             $this->assertTrue(!empty($alias));
 
             // Test subscriptions
             $browser->with('@general', function (Browser $browser) {
-                $browser->assertSeeIn('div.row:nth-child(9) label', 'Subscriptions')
-                    ->assertVisible('@skus.row:nth-child(9)')
+                $browser->assertSeeIn('div.row:nth-child(8) label', 'Subscriptions')
+                    ->assertVisible('@skus.row:nth-child(8)')
                     ->with('@skus', function ($browser) {
                         $browser->assertElementsCount('tbody tr', 6)
                             // Mailbox SKU
@@ -253,7 +261,7 @@ class UsersTest extends TestCaseDusk
 
             $expected = ['activesync', 'groupware', 'mailbox',
                 'storage', 'storage', 'storage', 'storage', 'storage', 'storage'];
-            $this->assertEntitlements($john, $expected);
+            $this->assertEntitlements($john->fresh(), $expected);
 
             // Test subscriptions interaction
             $browser->with('@general', function (Browser $browser) {
@@ -285,6 +293,64 @@ class UsersTest extends TestCaseDusk
                         ->assertNotReadonly('#sku-input-activesync');
                 });
             });
+
+            // Test password reset link delete and create
+            $code = new \App\VerificationCode(['mode' => 'password-reset']);
+            $jack->verificationcodes()->save($code);
+
+            $browser->visit('/user/' . $jack->id)
+                ->on(new UserInfo())
+                ->with('@general', function (Browser $browser) use ($jack, $john, $code) {
+                    // Test displaying an existing password reset link
+                    $link = Browser::$baseUrl . '/password-reset/' . $code->short_code . '-' . $code->code;
+                    $browser->assertSeeIn('div.row:nth-child(7) label', 'Password')
+                        ->assertMissing('#password')
+                        ->assertMissing('#password_confirmation')
+                        ->assertMissing('#pass-mode-link:checked')
+                        ->assertMissing('#pass-mode-input:checked')
+                        ->assertSeeIn('#password-link code', $link)
+                        ->assertVisible('#password-link button.text-danger')
+                        ->assertVisible('#password-link button:not(.text-danger)')
+                        ->assertAttribute('#password-link button:not(.text-danger)', 'title', 'Copy')
+                        ->assertAttribute('#password-link button.text-danger', 'title', 'Delete');
+
+                    // Test deleting an existing password reset link
+                    $browser->click('#password-link button.text-danger')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'Password reset code deleted successfully.')
+                        ->assertMissing('#password-link')
+                        ->assertMissing('#pass-mode-link:checked')
+                        ->assertMissing('#pass-mode-input:checked')
+                        ->assertMissing('#password');
+
+                    $this->assertSame(0, $jack->verificationcodes()->count());
+
+                    // Test creating a password reset link
+                    $link = preg_replace('|/[a-z0-9A-Z-]+$|', '', $link) . '/';
+                    $browser->click('#pass-mode-link + label')
+                        ->assertMissing('#password')
+                        ->assertMissing('#password_confirmation')
+                        ->waitFor('#password-link code')
+                        ->assertSeeIn('#password-link code', $link);
+
+                    // Test copy to clipboard
+                    /* TODO: Figure out how to give permission to do this operation
+                    $code = $john->verificationcodes()->first();
+                    $link .= $code->short_code . '-' . $code->code;
+
+                    $browser->assertMissing('#password-link button.text-danger')
+                        ->click('#password-link button:not(.text-danger)')
+                        ->keys('#organization', ['{left_control}', 'v'])
+                        ->assertAttribute('#organization', 'value', $link)
+                        ->vueClear('#organization');
+                    */
+
+                    // Finally submit the form
+                    $browser->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+
+                    $this->assertSame(1, $jack->verificationcodes()->where('active', true)->count());
+                    $this->assertSame(0, $john->verificationcodes()->count());
+                });
         });
     }
 
@@ -348,10 +414,15 @@ class UsersTest extends TestCaseDusk
                                 ->assertValue('@input', '');
                         })
                         ->assertSeeIn('div.row:nth-child(6) label', 'Password')
-                        ->assertValue('div.row:nth-child(6) input[type=password]', '')
-                        ->assertSeeIn('div.row:nth-child(7) label', 'Confirm Password')
-                        ->assertValue('div.row:nth-child(7) input[type=password]', '')
-                        ->assertSeeIn('div.row:nth-child(8) label', 'Package')
+                        ->assertValue('div.row:nth-child(6) input#password', '')
+                        ->assertValue('div.row:nth-child(6) input#password_confirmation', '')
+                        ->assertAttribute('#password', 'placeholder', 'Password')
+                        ->assertAttribute('#password_confirmation', 'placeholder', 'Confirm Password')
+                        ->assertSeeIn('div.row:nth-child(6) .btn-group input:first-child + label', 'Enter password')
+                        ->assertSeeIn('div.row:nth-child(6) .btn-group input:not(:first-child) + label', 'Set via link')
+                        ->assertChecked('div.row:nth-child(6) .btn-group input:first-child')
+                        ->assertMissing('div.row:nth-child(6) #password-link')
+                        ->assertSeeIn('div.row:nth-child(7) label', 'Package')
                         // assert packages list widget, select "Lite Account"
                         ->with('@packages', function ($browser) {
                             $browser->assertElementsCount('tbody tr', 2)
@@ -371,16 +442,15 @@ class UsersTest extends TestCaseDusk
                     $browser->click('button[type=submit]')
                         ->assertFocused('#email')
                         ->type('#email', 'invalid email')
-                        ->click('button[type=submit]')
-                        ->assertFocused('#password')
                         ->type('#password', 'simple123')
-                        ->click('button[type=submit]')
-                        ->assertFocused('#password_confirmation')
                         ->type('#password_confirmation', 'simple')
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
                         ->assertSeeIn('#email + .invalid-feedback', 'The specified email is invalid.')
-                        ->assertSeeIn('#password + .invalid-feedback', 'The password confirmation does not match.');
+                        ->assertSeeIn(
+                            '#password_confirmation + .invalid-feedback',
+                            'The password confirmation does not match.'
+                        );
                 });
 
             // Test form error handling (aliases)

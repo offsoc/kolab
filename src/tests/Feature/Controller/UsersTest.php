@@ -704,7 +704,7 @@ class UsersTest extends TestCase
             'storage', 'storage', 'storage', 'storage', 'storage']);
         // Assert the wallet to which the new user should be assigned to
         $wallet = $user->wallet();
-        $this->assertSame($john->wallets()->first()->id, $wallet->id);
+        $this->assertSame($john->wallets->first()->id, $wallet->id);
 
         // Attempt to create a user previously deleted
         $user->delete();
@@ -729,9 +729,41 @@ class UsersTest extends TestCase
         $this->assertEntitlements($user, ['groupware', 'mailbox',
             'storage', 'storage', 'storage', 'storage', 'storage']);
 
-        // Test acting as account controller (not owner)
+        // Test password reset link "mode"
+        $code = new \App\VerificationCode(['mode' => 'password-reset', 'active' => false]);
+        $john->verificationcodes()->save($code);
 
-        $this->markTestIncomplete();
+        $post = [
+            'first_name' => 'John2',
+            'last_name' => 'Doe2',
+            'email' => 'deleted@kolab.org',
+            'organization' => '',
+            'aliases' => [],
+            'passwordLinkCode' => $code->short_code . '-' . $code->code,
+            'package' => $package_kolab->id,
+        ];
+
+        $response = $this->actingAs($john)->post("/api/v4/users", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User created successfully.", $json['message']);
+        $this->assertCount(2, $json);
+
+        $user = $this->getTestUser('deleted@kolab.org');
+        $code->refresh();
+
+        $this->assertSame($user->id, $code->user_id);
+        $this->assertTrue($code->active);
+        $this->assertTrue(is_string($user->password) && strlen($user->password) >= 60);
+
+        // Test acting as account controller not owner, which is not yet supported
+        $john->wallets->first()->addController($user);
+
+        $response = $this->actingAs($user)->post("/api/v4/users", []);
+        $response->assertStatus(403);
     }
 
     /**
@@ -928,6 +960,23 @@ class UsersTest extends TestCase
 
         $this->assertSame([0, 0, 0, 0, 0, 25], $storage_cost);
         $this->assertTrue(empty($json['statusInfo']));
+
+        // Test password reset link "mode"
+        $code = new \App\VerificationCode(['mode' => 'password-reset', 'active' => false]);
+        $owner->verificationcodes()->save($code);
+
+        $post = ['passwordLinkCode' => $code->short_code . '-' . $code->code];
+
+        $response = $this->actingAs($owner)->put("/api/v4/users/{$user->id}", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $code->refresh();
+
+        $this->assertSame($user->id, $code->user_id);
+        $this->assertTrue($code->active);
+        $this->assertSame($user->password, $user->fresh()->password);
     }
 
     /**

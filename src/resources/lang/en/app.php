@@ -109,6 +109,8 @@ return [
     'wallet-penalty-success' => 'The penalty has been added to the wallet successfully.',
     'wallet-update-success' => 'User wallet updated successfully.',
 
+    'password-reset-code-delete-success' => 'Password reset code deleted successfully.',
+
     'wallet-notice-date' => 'With your current subscriptions your account balance will last until about :date (:days).',
     'wallet-notice-nocredit' => 'You are out of credit, top up your balance now.',
     'wallet-notice-today' => 'You will run out of credit today, top up your balance now.',

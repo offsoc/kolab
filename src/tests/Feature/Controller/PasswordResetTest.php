@@ -330,4 +330,82 @@ class PasswordResetTest extends TestCase
 
         // TODO: Check if the access token works
     }
+
+    /**
+     * Test creating a password verification code
+     *
+     * @return void
+     */
+    public function testCodeCreate()
+    {
+        $user = $this->getTestUser('john@kolab.org');
+        $user->verificationcodes()->delete();
+
+        $response = $this->actingAs($user)->post('/api/v4/password-reset/code', []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $code = $user->verificationcodes()->first();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame($code->code, $json['code']);
+        $this->assertSame($code->short_code, $json['short_code']);
+        $this->assertStringContainsString(now()->addHours(24)->toDateString(), $json['expires_at']);
+    }
+
+    /**
+     * Test deleting a password verification code
+     *
+     * @return void
+     */
+    public function testCodeDelete()
+    {
+        $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $john->verificationcodes()->delete();
+        $jack->verificationcodes()->delete();
+
+        $john_code = new VerificationCode(['mode' => 'password-reset']);
+        $john->verificationcodes()->save($john_code);
+        $jack_code = new VerificationCode(['mode' => 'password-reset']);
+        $jack->verificationcodes()->save($jack_code);
+        $user_code = new VerificationCode(['mode' => 'password-reset']);
+        $user->verificationcodes()->save($user_code);
+
+        // Unauth access
+        $response = $this->delete('/api/v4/password-reset/code/' . $user_code->code);
+        $response->assertStatus(401);
+
+        // Non-existing code
+        $response = $this->actingAs($john)->delete('/api/v4/password-reset/code/123');
+        $response->assertStatus(404);
+
+        // Existing code belonging to another user not controlled by the acting user
+        $response = $this->actingAs($john)->delete('/api/v4/password-reset/code/' . $user_code->code);
+        $response->assertStatus(403);
+
+        // Deleting owned code
+        $response = $this->actingAs($john)->delete('/api/v4/password-reset/code/' . $john_code->code);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(0, $john->verificationcodes()->count());
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("Password reset code deleted successfully.", $json['message']);
+
+        // Deleting code of another user owned by the acting user
+        // also use short_code+code as input parameter
+        $id = $jack_code->short_code . '-' . $jack_code->code;
+        $response = $this->actingAs($john)->delete('/api/v4/password-reset/code/' . $id);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(0, $jack->verificationcodes()->count());
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("Password reset code deleted successfully.", $json['message']);
+    }
 }

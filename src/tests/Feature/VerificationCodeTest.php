@@ -45,6 +45,7 @@ class VerificationCodeTest extends TestCase
         $this->assertFalse($code->isExpired());
         $this->assertTrue(strlen($code->code) === VerificationCode::CODE_LENGTH);
         $this->assertTrue(strlen($code->short_code) === $code_length);
+        $this->assertTrue($code->active);
         $this->assertSame($data['mode'], $code->mode);
         $this->assertEquals($user->id, $code->user->id);
         $this->assertInstanceOf(\DateTime::class, $code->expires_at);
@@ -54,5 +55,12 @@ class VerificationCodeTest extends TestCase
 
         $this->assertInstanceOf(VerificationCode::class, $inst);
         $this->assertSame($inst->code, $code->code);
+
+        // Custom active flag and custom expires_at
+        $data['expires_at'] = Carbon::now()->addDays(10);
+        $data['active'] = false;
+        $code = VerificationCode::create($data);
+        $this->assertFalse($code->active);
+        $this->assertSame($code->expires_at->toDateTimeString(), $data['expires_at']->toDateTimeString());
     }
 }
