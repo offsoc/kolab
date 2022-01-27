@@ -105,6 +105,31 @@ def try_get(name, url, verbose, headers = None, body = None):
 
     return success
 
+def test_caldav_redirect(host, username, password, verbose):
+    headers = {
+        "Content-Type": "application/xml; charset=utf-8",
+        "Depth": "infinity",
+        **basic_auth_headers(username, password)
+    }
+
+    response = http_request(
+        "https://" + host + "/.well-known/caldav",
+        "GET",
+        None,
+        headers,
+        None,
+        verbose
+    )
+
+    success = response.status in (301, 302)
+    if not success:
+        print("=> Error: .well-known/caldav is not available")
+
+    if verbose or not success:
+        print("  ", "Status", response.status)
+        print("  ", response.read().decode())
+
+    return success
 
 def discover_principal(url, username, password, verbose = False):
     body = '<d:propfind xmlns:d="DAV:" xmlns:cs="https://calendarserver.org/ns/"><d:prop><d:resourcetype /><d:displayname /></d:prop></d:propfind>'
@@ -148,6 +173,7 @@ def test_autoconfig(host, username, password, verbose = False):
         return False
     if not try_get("Autoconf /mail", f"https://{host}/mail/config-v1.1.xml?emailaddress={username}", verbose):
         return False
+    return True
 
 # TODO
 # def test_007_well_known_outlook():
@@ -193,7 +219,7 @@ def test_autoconfig(host, username, password, verbose = False):
 #     ).status == 200
 
 
-def test_autodiscover_activesync(host, username, password, verbose = False):
+def test_autodiscover_activesync(host, activesynchost, username, password, verbose = False):
     """
     We expect something along the lines of
 
@@ -246,9 +272,10 @@ xmlns="http://schemas.microsoft.com/exchange/autodiscover/mobilesync/requestsche
         try:
             # Sanity check of the data
             assert "<Type>MobileSync</Type>" in data
-            assert f"<Url>https://{host}/Microsoft-Server-ActiveSync</Url>" in data
+            assert f"<Url>https://{activesynchost}/Microsoft-Server-ActiveSync</Url>" in data
             assert username in data
         except AssertionError:
+            print(data)
             print_assertion_failure()
             success = False
 
@@ -515,48 +542,85 @@ def main():
     parser.add_argument("--password", help="User password")
     parser.add_argument("--imap", help="IMAP URI")
     parser.add_argument("--dav", help="DAV URI")
+    parser.add_argument("--activesync", help="ActiveSync URI")
     parser.add_argument("--fb", help="Freebusy url as displayed in roundcube")
     parser.add_argument("--verbose", action='store_true', help="Verbose output")
     options = parser.parse_args()
 
+    error = False
+
     if options.dav:
         if discover_principal(options.dav, options.username, options.password, options.verbose):
             print("=> Caldav is available")
+        else:
+            error = True
 
-        if options.host and discover_principal("https://" + options.host + "/.well-known/caldav", options.username, options.password, options.verbose):
-            print("=> Caldav on .well-known/caldav is available")
+        if options.host:
+            if test_caldav_redirect(options.host, options.username, options.password, options.verbose):
+                print("=> Caldav on .well-known/caldav is available")
+            else:
+                # Kolabnow doesn't support this atm (it offers the redirect on apps.kolabnow.com
+                error = False
 
     if test_autoconfig(options.host, options.username, options.password, options.verbose):
         print("=> Autoconf available")
+    else:
+        error = True
 
-    if test_autodiscover_activesync(options.host, options.username, options.password, options.verbose):
-        print("=> Activesync Autodsicovery available")
+    if options.activesync:
+        if test_autodiscover_activesync(options.host, options.activesync, options.username, options.password, options.verbose):
+            print("=> Activesync Autodsicovery available")
+        else:
+            # Kolabnow doesn't support this
+            error = False
 
-    if test_activesync(options.host, options.username, options.password, options.verbose):
-        print("=> Activesync available")
+        if test_activesync(options.activesync, options.username, options.password, options.verbose):
+            print("=> Activesync available")
+        else:
+            error = True
 
-    if options.fb and test_freebusy_authenticated(options.fb, options.username, options.password, options.verbose):
-        print("=> Authenticated Freebusy is available")
+    if options.fb:
+        if test_freebusy_authenticated(options.fb, options.username, options.password, options.verbose):
+            print("=> Authenticated Freebusy is available")
+        else:
+            error = True
 
-    # We rely on the activesync test to have generated the token for unauthenticated access.
-    if options.fb and test_freebusy_unauthenticated(options.fb, options.username, options.password, options.verbose):
-        print("=> Unauthenticated Freebusy is available")
+        # We rely on the activesync test to have generated the token for unauthenticated access.
+        if test_freebusy_unauthenticated(options.fb, options.username, options.password, options.verbose):
+            print("=> Unauthenticated Freebusy is available")
+        else:
+            error = True
 
     if test_dns(options.host, options.verbose):
         print(f"=> DNS entries on {options.host} available")
+    else:
+        error = True
 
     userhost = options.username.split('@')[1]
     if test_email_dns(userhost, options.verbose):
         print(f"=> DNS entries on {userhost} available")
+    else:
+        error = True
 
     if test_certificates(options.host, options.dav, options.imap, options.verbose):
         print("=> All certificates are valid")
+    else:
+        error = True
 
-    if options.imap and test_imap(options.imap, options.username, options.password, options.verbose):
-        print("=> IMAP is available")
+    if options.imap:
+        if test_imap(options.imap, options.username, options.password, options.verbose):
+            print("=> IMAP is available")
+        else:
+            error = True
 
-    if options.imap and test_smtp(options.imap, options.username, options.password, options.verbose):
-        print("=> SMTP is available")
+        if test_smtp(options.imap, options.username, options.password, options.verbose):
+            print("=> SMTP is available")
+        else:
+            error = True
+
+    if error:
+        print("At least one check failed")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
