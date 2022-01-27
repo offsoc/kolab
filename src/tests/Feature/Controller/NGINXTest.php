@@ -172,7 +172,7 @@ class NGINXTest extends TestCase
         $john = $this->getTestUser('john@kolab.org');
 
         $response = $this->get("api/webhooks/nginx-httpauth");
-        $response->assertStatus(403);
+        $response->assertStatus(401);
 
         $pass = \App\Utils::generatePassphrase();
         $headers = [
@@ -204,7 +204,7 @@ class NGINXTest extends TestCase
         $modifiedHeaders = $headers;
         $modifiedHeaders['Php-Auth-Pw'] = "";
         $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx-httpauth");
-        $response->assertStatus(403);
+        $response->assertStatus(401);
 
         // Empty User
         $modifiedHeaders = $headers;
