@@ -43,8 +43,6 @@ return [
     'process-error-domain-ldap-ready' => "Échec de créer un domaine.",
     'process-error-domain-verified' => "Échec de vérifier un domaine.",
     'process-error-domain-confirmed' => "Échec de la vérification de la propriété d'un domaine.",
-    'process-distlist-new' => "Enregistrement d'une liste de distribution...",
-    'process-distlist-ldap-ready' => "Création d'une liste de distribution...",
     'process-error-distlist-ldap-ready' => "Échec de créer une liste de distrubion.",
 
     'distlist-update-success' => "Liste de distribution mis-à-jour avec succès.",

@@ -15,7 +15,6 @@ return [
     'wallet-debit' => ':amount a été déduit du solde de :wallet',
     'wallet-penalty' => 'Le solde de :wallet été réduit de :amount; :description',
     'wallet-refund' => ':amount a été remboursé sur le solde de :wallet',
-    'wallet-refund' => ':amount a été remboursé par :wallet',
 
     'wallet-award-short' => 'Prime: :description',
     'wallet-chargeback-short' => 'Rétrofacturation',

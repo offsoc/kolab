@@ -14,7 +14,6 @@ return [
     'wallet-credit' => ':amount was added to the balance of :wallet',
     'wallet-debit' => ':amount was deducted from the balance of :wallet',
     'wallet-penalty' => 'The balance of :wallet was reduced by :amount; :description',
-    'wallet-refund' => ':amount was refunded from the balance of :wallet',
     'wallet-refund' => ':amount was refunded from :wallet',
 
     'wallet-award-short' => 'Bonus: :description',
