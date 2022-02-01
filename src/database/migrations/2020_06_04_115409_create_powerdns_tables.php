@@ -39,7 +39,7 @@ class CreatePowerDNSTables extends Migration
                 $table->integer('ttl')->unsigned()->nullable();
                 $table->integer('prio')->unsigned()->nullable();
                 $table->boolean('disabled')->default(false);
-                $table->binary('ordername', 255)->nullable();
+                $table->binary('ordername')->nullable();
                 $table->boolean('auth')->default(true);
                 $table->timestamps();
 
