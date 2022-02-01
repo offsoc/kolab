@@ -16,4 +16,5 @@ parameters:
         - app/
         - config/
         - database/
+        - resources/
         - tests/

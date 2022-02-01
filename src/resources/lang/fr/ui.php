@@ -175,7 +175,7 @@ return [
         'security' => "sécurité de chambre",
         'security-text' => "Renforcez la sécurité de la salle en définissant un mot de passe que les participants devront connaître."
             . " avant de pouvoir entrer, ou verrouiller la porte afin que les participants doivent frapper, et un modérateur peut accepter ou refuser ces demandes.",
-        'qa' => "Lever la main (Q&A)",
+        'qa-title' => "Lever la main (Q&A)",
         'qa-text' => "Les membres du public silencieux peuvent lever la main pour animer une séance de questions-réponses avec les membres du panel.",
         'moderation' => "Délégation des Modérateurs",
         'moderation-text' => "Déléguer l'autorité du modérateur pour la séance, afin qu'un orateur ne soit pas inutilement"
