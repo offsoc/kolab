@@ -13,7 +13,7 @@
                         <dd>{{ $t('meet.sharing-text') }}</dd>
                         <dt>{{ $t('meet.security') }}</dt>
                         <dd>{{ $t('meet.security-text') }}</dd>
-                        <dt>{{ $t('meet.qa') }}</dt>
+                        <dt>{{ $t('meet.qa-title') }}</dt>
                         <dd>{{ $t('meet.qa-text') }}</dd>
                         <dt>{{ $t('meet.moderation') }}</dt>
                         <dd>{{ $t('meet.moderation-text') }}</dd>

@@ -187,7 +187,7 @@ return [
         'security' => "Room Security",
         'security-text' => "Increase the room security by setting a password that attendees will need to know"
             . " before they can enter, or lock the door so attendees will have to knock, and a moderator can accept or deny those requests.",
-        'qa' => "Raise Hand (Q&A)",
+        'qa-title' => "Raise Hand (Q&A)",
         'qa-text' => "Silent audience members can raise their hand to facilitate a Question & Answer session with the panel members.",
         'moderation' => "Moderator Delegation",
         'moderation-text' => "Delegate moderator authority for the session, so that a speaker is not needlessly"
