@@ -44,6 +44,18 @@ return [
     'process-error-domain-verified' => "Échec de vérifier un domaine.",
     'process-error-domain-confirmed' => "Échec de la vérification de la propriété d'un domaine.",
     'process-error-distlist-ldap-ready' => "Échec de créer une liste de distrubion.",
+    'process-error-resource-imap-ready' => "Échec de la vérification de l'existence d'un dossier partagé.",
+    'process-error-resource-ldap-ready' => "Échec de la création d'une ressource.",
+    'process-error-shared-folder-imap-ready' => "Impossible de vérifier qu'un dossier partagé existe.",
+    'process-error-shared-folder-ldap-ready' => "Échec de la création d'un dossier partagé.",
+    'process-error-user-ldap-ready' => "Échec de la création d'un utilisateur.",
+    'process-error-user-imap-ready' => "Échec de la vérification de l'existence d'une boîte aux lettres.",
+    'process-resource-new' => "Enregistrement d'une ressource...",
+    'process-resource-imap-ready' => "Création d'un dossier partagé...",
+    'process-resource-ldap-ready' => "Création d'un ressource...",
+    'process-shared-folder-new' => "Enregistrement d'un dossier partagé...",
+    'process-shared-folder-imap-ready' => "Création d'un dossier partagé...",
+    'process-shared-folder-ldap-ready' => "Création d'un dossier partagé...",
 
     'distlist-update-success' => "Liste de distribution mis-à-jour avec succès.",
     'distlist-create-success' => "Liste de distribution créer avec succès.",
@@ -59,6 +71,16 @@ return [
     'domain-suspend-success' => "Domaine suspendue avec succès.",
     'domain-unsuspend-success' => "Domaine debloqué avec succès.",
 
+    'resource-update-success' => "Ressource mise à jour avec succès.",
+    'resource-create-success' => "Resource crée avec succès.",
+    'resource-delete-success' => "Ressource suprimmée avec succès.",
+    'resource-setconfig-success' => "Les paramètres des ressources ont été mis à jour avec succès.",
+
+    'shared-folder-update-success' => "Dossier partagé mis à jour avec succès.",
+    'shared-folder-create-success' => "Dossier partagé créé avec succès.",
+    'shared-folder-delete-success' => "Dossier partagé supprimé avec succès.",
+    'shared-folder-setconfig-success' => "Mise à jour des paramètres du dossier partagé avec succès.",
+
     'user-update-success' => "Mis-à-jour des données de l'utilsateur effectué avec succès.",
     'user-create-success' => "Utilisateur a été crée avec succès.",
     'user-delete-success' => "Utilisateur a été supprimé avec succès.",
@@ -69,8 +91,9 @@ return [
     'user-set-sku-already-exists' => "La souscription existe déjà.",
 
     'search-foundxdomains' => "Les domaines :x ont été trouvés.",
-    'search-foundxdistlists' => "Les listes de distribution :x ont été trouvées.",
+    'search-foundxdistlists' => "Les listes de distribution :x ont été trouvés.",
     'search-foundxusers' => "Les comptes d'utilisateurs :x ont été trouvés.",
+    'search-foundxsharedfolders' => ":x dossiers partagés ont été trouvés.",
 
     'signup-invitations-created' => "L'invitation à été crée.|:count nombre d'invitations ont été crée.",
     'signup-invitations-csv-empty' => "Aucune adresses email valides ont été trouvées dans le fichier téléchargé.",

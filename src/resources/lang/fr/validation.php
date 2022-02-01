@@ -183,5 +183,9 @@ return [
     'listmembersrequired' => "Au moins un destinataire est requis.",
     'spf-entry-invalid' => "Le format de l'entrée est invalide. Un nom de domaine débutant par un point est attendu.",
     'invalid-config-parameter' => "Le paramètre de configuration demandé est inconnu.",
-
+    'nameexists' => "Le nom spécifié n'est pas disponible.",
+    'nameinvalid' => "Le nom spécifié est invalide.",
+    'nametoolong' => "Le nom indiqué est trop long.",
+    'ipolicy-invalid' => "La procédure d'invitation spécifiée est invalide.",
+    'acl-entry-invalid' => "Le format de l'entrée est invalide. Attendait une adresse e-mail.",
 ];
