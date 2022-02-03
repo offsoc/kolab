@@ -574,7 +574,7 @@ class User extends Authenticatable
     public function setPasswordAttribute($password)
     {
         if (!empty($password)) {
-            $this->attributes['password'] = bcrypt($password, [ "rounds" => 12 ]);
+            $this->attributes['password'] = Hash::make($password);
             $this->attributes['password_ldap'] = '{SSHA512}' . base64_encode(
                 pack('H*', hash('sha512', $password))
             );
@@ -699,6 +699,7 @@ class User extends Authenticatable
     public static function findAndAuthenticate($username, $password, $secondFactor = null): ?array
     {
         $user = User::where('email', $username)->first();
+
         if (!$user) {
             return ['reason' => 'notfound', 'errorMessage' => "User not found."];
         }
@@ -706,8 +707,6 @@ class User extends Authenticatable
         if (!$user->validateCredentials($username, $password)) {
             return ['reason' => 'credentials', 'errorMessage' => "Invalid password."];
         }
-
-
 
         if (!$secondFactor) {
             // Check the request if there is a second factor provided
@@ -740,8 +739,10 @@ class User extends Authenticatable
                 // This results in a json response of {'error': 'secondfactor', 'error_description': '$errorMessage'}
                 throw new OAuthServerException($result['errorMessage'], 6, 'secondfactor', 401);
             }
+
             throw OAuthServerException::invalidCredentials();
         }
+
         return $result['user'];
     }
 }
