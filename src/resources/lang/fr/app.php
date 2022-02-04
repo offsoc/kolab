@@ -38,8 +38,6 @@ return [
     'process-domain-verified' => "Vérification d'un domaine personnalisé...",
     'process-domain-confirmed' => "vérification de la propriété d'un domaine personnalisé...",
     'process-success' => "Le processus d'installation s'est terminé avec succès.",
-    'process-error-user-ldap-ready' => "Échec de créar un utilisateur.",
-    'process-error-user-imap-ready' => "Échec de la vérification de l'existence d'une boîte aux lettres.",
     'process-error-domain-ldap-ready' => "Échec de créer un domaine.",
     'process-error-domain-verified' => "Échec de vérifier un domaine.",
     'process-error-domain-confirmed' => "Échec de la vérification de la propriété d'un domaine.",
