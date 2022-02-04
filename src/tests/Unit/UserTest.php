@@ -20,7 +20,7 @@ class UserTest extends TestCase
         $ssh512 = "{SSHA512}7iaw3Ur350mqGo7jwQrpkj9hiYB3Lkc/iBml1JQODbJ"
             . "6wYX4oOHV+E+IvIh/1nsUNzLDBMxfqa2Ob1f1ACio/w==";
 
-        $this->assertMatchesRegularExpression('/^\$2y\$12\$[0-9a-zA-Z\/.]{53}$/', $user->password);
+        $this->assertMatchesRegularExpression('/^\$2y\$04\$[0-9a-zA-Z\/.]{53}$/', $user->password);
         $this->assertSame($ssh512, $user->password_ldap);
     }
 
@@ -36,7 +36,7 @@ class UserTest extends TestCase
         $ssh512 = "{SSHA512}7iaw3Ur350mqGo7jwQrpkj9hiYB3Lkc/iBml1JQODbJ"
             . "6wYX4oOHV+E+IvIh/1nsUNzLDBMxfqa2Ob1f1ACio/w==";
 
-        $this->assertMatchesRegularExpression('/^\$2y\$12\$[0-9a-zA-Z\/.]{53}$/', $user->password);
+        $this->assertMatchesRegularExpression('/^\$2y\$04\$[0-9a-zA-Z\/.]{53}$/', $user->password);
         $this->assertSame($ssh512, $user->password_ldap);
     }
 
