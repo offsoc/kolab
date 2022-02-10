@@ -46,7 +46,7 @@ class SharedFolder extends Model
     public const STATUS_IMAP_READY = 1 << 8;
 
     /** @const array Supported folder type labels */
-    public const SUPPORTED_TYPES = ['mail', 'event', 'contact', 'task', 'note'];
+    public const SUPPORTED_TYPES = ['mail', 'event', 'contact', 'task', 'note', 'file'];
 
     /** @var array Mass-assignable properties */
     protected $fillable = [
