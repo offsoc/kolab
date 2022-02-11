@@ -285,11 +285,11 @@ return [
         'rate' => (float) env('VAT_RATE'),
     ],
 
-    'password_policy' => env('PASSWORD_POLICY'),
+    'password_policy' => env('PASSWORD_POLICY') ?: 'min:6,max:255',
 
     'payment' => [
-        'methods_oneoff' => env('PAYMENT_METHODS_ONEOFF', "creditcard,paypal,banktransfer"),
-        'methods_recurring' => env('PAYMENT_METHODS_RECURRING', "creditcard"),
+        'methods_oneoff' => env('PAYMENT_METHODS_ONEOFF', 'creditcard,paypal,banktransfer'),
+        'methods_recurring' => env('PAYMENT_METHODS_RECURRING', 'creditcard'),
     ],
 
     'with_admin' => (bool) env('APP_WITH_ADMIN', false),

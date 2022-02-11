@@ -126,11 +126,6 @@ class Password implements Rule
             $conf = \config('app.password_policy');
         }
 
-        // Default policy, if not set
-        if (empty($conf)) {
-            $conf = 'min:6,max:255';
-        }
-
         $supported = self::parsePolicy($supported);
         $conf = self::parsePolicy($conf);
         $rules = $all ? $supported : $conf;
