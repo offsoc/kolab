@@ -78,14 +78,14 @@ trait UserConfigTrait
 
         // Min/Max values cannot exceed the system defaults, i.e. if system policy
         // is min:5, user's policy cannot be set to a smaller number.
-        if (!empty($systemPolicy['min'])) {
+        if (!empty($systemPolicy['min']) && strpos($rule, 'min:') === 0) {
             $value = trim(substr($rule, 4));
             if ($value < $systemPolicy['min']) {
                 return \trans('validation.password-policy-min-len-error', ['min' => $systemPolicy['min']]);
             }
         }
 
-        if (!empty($systemPolicy['max'])) {
+        if (!empty($systemPolicy['max']) && strpos($rule, 'max:') === 0) {
             $value = trim(substr($rule, 4));
             if ($value > $systemPolicy['max']) {
                 return \trans('validation.password-policy-max-len-error', ['max' => $systemPolicy['max']]);

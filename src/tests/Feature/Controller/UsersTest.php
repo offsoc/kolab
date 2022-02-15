@@ -542,7 +542,7 @@ class UsersTest extends TestCase
         $this->assertCount(2, $json);
 
         // Test some invalid data
-        $post = ['grey' => 1];
+        $post = ['grey' => 1, 'password_policy' => 'min:1'];
         $response = $this->actingAs($john)->post("/api/v4/users/{$john->id}/config", $post);
         $response->assertStatus(422);
 
@@ -550,8 +550,9 @@ class UsersTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(2, $json);
-        $this->assertCount(1, $json['errors']);
-        $this->assertSame('The requested configuration parameter is not supported.', $json['errors']['grey']);
+        $this->assertCount(2, $json['errors']);
+        $this->assertSame("The requested configuration parameter is not supported.", $json['errors']['grey']);
+        $this->assertSame("Minimum password length cannot be less than 6.", $json['errors']['password_policy']);
 
         $this->assertNull($john->fresh()->getSetting('greylist_enabled'));
 
