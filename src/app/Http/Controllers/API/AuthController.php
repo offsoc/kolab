@@ -66,12 +66,11 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        // TODO: Redirect to dashboard if authenticated.
         $v = Validator::make(
             $request->all(),
             [
-                'email' => 'required|min:2',
-                'password' => 'required|min:4',
+                'email' => 'required|min:3',
+                'password' => 'required|min:1',
             ]
         );
 
