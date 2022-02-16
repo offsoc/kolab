@@ -29,7 +29,7 @@
         "mollie/laravel-mollie": "^2.9",
         "moontoast/math": "^1.2",
         "morrislaptop/laravel-queue-clear": "^1.2",
-        "pear/crypt_gpg": "dev-master",
+        "pear/crypt_gpg": "^1.6.6",
         "silviolleite/laravelpwa": "^2.0",
         "spatie/laravel-translatable": "^4.2",
         "spomky-labs/otphp": "~4.0.0",
