@@ -100,7 +100,7 @@ return [
 
     'suspendeddebtor-subject' => ":site Account Suspended",
     'suspendeddebtor-body' => "You have been behind on paying for your :site account "
-        ."for over :days days. Your account has been suspended.",
+        . "for over :days days. Your account has been suspended.",
     'suspendeddebtor-middle' => "Settle up now to reactivate your account.",
     'suspendeddebtor-cancel' => "Don't want to be our customer anymore? "
         . "Here is how you can cancel your account:",
