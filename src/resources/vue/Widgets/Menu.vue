@@ -74,11 +74,6 @@
         },
         mounted() {
             this.menuList = this.loadMenu()
-
-            // On mobile close the menu when the menu item is clicked
-            if (this.mode == 'header') {
-                $('#header-menu .navbar').on('click', function() { $(this).removeClass('show') })
-            }
         },
         methods: {
             loadMenu() {

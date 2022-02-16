@@ -69,6 +69,11 @@ window.router.afterEach((to, from) => {
     // - modal backdrop
     $('#error-page,.modal-backdrop.show').remove()
     $('body').css('padding', 0) // remove padding added by unclosed modal
+
+    // Close the mobile menu
+    if ($('#header-menu .navbar-collapse.show').length) {
+        $('#header-menu .navbar-toggler').click();
+    }
 })
 
 const app = new Vue({

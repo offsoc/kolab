@@ -12,6 +12,13 @@ $.fn.focus = function() {
     return this
 }
 
+$.fn.click = function() {
+    if (this.length && this[0].click) {
+        this[0].click()
+    }
+    return this
+}
+
 /**
  * Load Vue, VueRouter and global components
  */
