@@ -12,9 +12,14 @@
                             <div class="col-sm-8">
                                 <ul id="password_policy" class="list-group ms-1 mt-1">
                                     <li v-for="rule in passwordPolicy" :key="rule.label" class="list-group-item border-0 form-check pt-1 pb-1">
-                                        <input type="checkbox" class="form-check-input" :id="'policy-' + rule.label" :name="rule.label" :checked="rule.enabled">
+                                        <input type="checkbox" class="form-check-input"
+                                               :id="'policy-' + rule.label"
+                                               :name="rule.label"
+                                               :checked="rule.enabled || isRequired(rule)"
+                                               :disabled="isRequired(rule)"
+                                        >
                                         <span v-if="rule.label == 'last'" v-html="ruleLastHTML(rule)"></span>
-                                        <label v-else :for="'policy-' + rule.label" class="form-check-label pe-2">{{ rule.name.split(':')[0] }}</label>
+                                        <label v-else :for="'policy-' + rule.label" class="form-check-label pe-2" style="opacity:1">{{ rule.name.split(':')[0] }}</label>
                                         <input type="text" class="form-control form-control-sm w-auto d-inline" v-if="['min', 'max'].includes(rule.label)" :value="rule.param" size="3">
                                     </li>
                                 </ul>
@@ -52,6 +57,9 @@
                 .catch(this.$root.errorHandler)
         },
         methods: {
+            isRequired(rule) {
+                return rule.label == 'min' || rule.label == 'max'
+            },
             ruleLastHTML(rule) {
                 let parts = rule.name.split(/[0-9]+/)
                 let options = [1, 2, 3, 4, 5, 6]

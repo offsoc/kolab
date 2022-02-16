@@ -542,7 +542,7 @@ class UsersTest extends TestCase
         $this->assertCount(2, $json);
 
         // Test some invalid data
-        $post = ['grey' => 1, 'password_policy' => 'min:1'];
+        $post = ['grey' => 1, 'password_policy' => 'min:1,max:255'];
         $response = $this->actingAs($john)->post("/api/v4/users/{$john->id}/config", $post);
         $response->assertStatus(422);
 

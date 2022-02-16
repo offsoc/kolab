@@ -36,7 +36,13 @@ trait UserConfigTrait
             if ($key == 'greylist_enabled') {
                 $this->setSetting('greylist_enabled', $value ? 'true' : 'false');
             } elseif ($key == 'password_policy') {
-                if (!is_string($value) || (strlen($value) && !preg_match('/^[a-z0-9:,]+$/', $value))) {
+                // Validate the syntax and make sure min and max is included
+                if (
+                    !is_string($value)
+                    || strpos($value, 'min:') === false
+                    || strpos($value, 'max:') === false
+                    || !preg_match('/^[a-z0-9:,]+$/', $value)
+                ) {
                     $errors[$key] = \trans('validation.invalid-password-policy');
                     continue;
                 }
