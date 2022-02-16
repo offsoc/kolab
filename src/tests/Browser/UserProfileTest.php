@@ -72,7 +72,7 @@ class UserProfileTest extends TestCaseDusk
                 ->assertSeeIn('@links .link-profile', 'Your profile')
                 ->click('@links .link-profile')
                 ->on(new UserProfile())
-                ->assertSeeIn('#user-profile .button-delete', 'Delete account')
+                ->assertSeeIn('#user-profile .profile-delete', 'Delete account')
                 ->whenAvailable('@form', function (Browser $browser) {
                     $user = User::where('email', 'john@kolab.org')->first();
                     // Assert form content
@@ -165,7 +165,7 @@ class UserProfileTest extends TestCaseDusk
                 ->assertSeeIn('@links .link-profile', 'Your profile')
                 ->click('@links .link-profile')
                 ->on(new UserProfile())
-                ->assertMissing('#user-profile .button-delete')
+                ->assertMissing('#user-profile .profile-delete')
                 ->whenAvailable('@form', function (Browser $browser) {
                     // TODO: decide on what fields the non-controller user should be able
                     //       to see/change
@@ -202,7 +202,7 @@ class UserProfileTest extends TestCaseDusk
                 ->assertSeeIn('@links .link-profile', 'Your profile')
                 ->click('@links .link-profile')
                 ->on(new UserProfile())
-                ->click('#user-profile .button-delete')
+                ->click('#user-profile .profile-delete')
                 ->waitForLocation('/profile/delete')
                 ->assertSeeIn('#user-delete .card-title', 'Delete this account?')
                 ->assertSeeIn('#user-delete .button-cancel', 'Cancel')
@@ -213,7 +213,7 @@ class UserProfileTest extends TestCaseDusk
                 ->on(new UserProfile());
 
             // Test deleting the user
-            $browser->click('#user-profile .button-delete')
+            $browser->click('#user-profile .profile-delete')
                 ->waitForLocation('/profile/delete')
                 ->click('#user-delete .button-delete')
                 ->waitForLocation('/login')

@@ -76,31 +76,31 @@ class DegradedAccountTest extends TestCaseDusk
                         ->assertVisible('tbody tr:nth-child(3) td:first-child svg.text-warning') // John
                         ->assertText('tbody tr:nth-child(3) td:first-child svg.text-warning title', 'Degraded');
                 })
-                ->assertMissing('button.create-user');
+                ->assertMissing('button.user-new');
 
             // Goto /domains and assert that the warning is also displayed there
             $browser->visit(new DomainList())
                 ->assertSeeIn('#status-degraded p.alert', 'The account is degraded')
                 ->assertSeeIn('#status-degraded p.alert', 'Please, make a payment')
-                ->assertMissing('button.create-domain');
+                ->assertMissing('button.domain-new');
 
             // Goto /distlists and assert that the warning is also displayed there
             $browser->visit(new DistlistList())
                 ->assertSeeIn('#status-degraded p.alert', 'The account is degraded')
                 ->assertSeeIn('#status-degraded p.alert', 'Please, make a payment')
-                ->assertMissing('button.create-list');
+                ->assertMissing('button.distlist-new');
 
             // Goto /resources and assert that the warning is also displayed there
             $browser->visit(new ResourceList())
                 ->assertSeeIn('#status-degraded p.alert', 'The account is degraded')
                 ->assertSeeIn('#status-degraded p.alert', 'Please, make a payment')
-                ->assertMissing('button.create-resource');
+                ->assertMissing('button.resource-new');
 
             // Goto /shared-folders and assert that the warning is also displayed there
             $browser->visit(new SharedFolderList())
                 ->assertSeeIn('#status-degraded p.alert', 'The account is degraded')
                 ->assertSeeIn('#status-degraded p.alert', 'Please, make a payment')
-                ->assertMissing('button.create-resource');
+                ->assertMissing('button.shared-folder-new');
 
             // Test that /rooms is not accessible
             $browser->visit('/rooms')

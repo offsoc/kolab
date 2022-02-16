@@ -405,8 +405,8 @@ class UsersTest extends TestCaseDusk
 
         $this->browse(function (Browser $browser) {
             $browser->visit(new UserList())
-                ->assertSeeIn('button.create-user', 'Create user')
-                ->click('button.create-user')
+                ->assertSeeIn('button.user-new', 'Create user')
+                ->click('button.user-new')
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'New user account')
                 ->with('@general', function (Browser $browser) {
@@ -660,7 +660,7 @@ class UsersTest extends TestCaseDusk
         // Packages on new user page
         $this->browse(function (Browser $browser) {
             $browser->visit(new UserList())
-                ->click('button.create-user')
+                ->click('button.user-new')
                 ->on(new UserInfo())
                 ->with('@general', function (Browser $browser) {
                     $browser->whenAvailable('@packages', function (Browser $browser) {
@@ -768,7 +768,7 @@ class UsersTest extends TestCaseDusk
         // Packages on new user page
         $this->browse(function (Browser $browser) {
             $browser->visit(new UserList())
-                ->click('button.create-user')
+                ->click('button.user-new')
                 ->on(new UserInfo())
                 ->with('@general', function (Browser $browser) {
                     $browser->whenAvailable('@packages', function (Browser $browser) {

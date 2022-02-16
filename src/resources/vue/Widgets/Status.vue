@@ -8,9 +8,9 @@
                 <br>
                 <span id="refresh-text" v-if="refresh">{{ $t('status.prepare-refresh') }}</span>
             </p>
-            <button v-if="refresh" id="status-refresh" href="#" class="btn btn-secondary" @click="statusRefresh">
-                <svg-icon icon="sync-alt"></svg-icon> {{ $t('btn.refresh') }}
-            </button>
+            <btn v-if="refresh" id="status-refresh" href="#" class="btn-secondary" @click="statusRefresh" icon="sync-alt">
+                {{ $t('btn.refresh') }}
+            </btn>
         </div>
         <div v-else class="d-flex align-items-start">
             <p id="status-body" class="flex-grow-1">
@@ -19,9 +19,9 @@
                 {{ $t('status.verify') }}
             </p>
             <div v-if="scope == 'domain'">
-                <button id="status-verify" class="btn btn-secondary text-nowrap" @click="confirmDomain">
-                    <svg-icon icon="sync-alt"></svg-icon> {{ $t('btn.verify') }}
-                </button>
+                <btn id="status-verify" class="btn-secondary text-nowrap" @click="confirmDomain" icon="sync-alt">
+                    {{ $t('btn.verify') }}
+                </btn>
             </div>
             <div v-else-if="state.link && scope != 'domain'">
                 <router-link id="status-link" class="btn btn-secondary" :to="{ path: state.link }">{{ $t('status.verify-domain') }}</router-link>

@@ -7,7 +7,7 @@
             <svg-icon icon="exclamation-circle" v-else-if="data.type == 'warning'"></svg-icon>
             <svg-icon :icon="data.icon" v-else-if="data.type == 'custom' && data.icon"></svg-icon>
             <strong>{{ data.title || $t('msg.' + data.type) }}</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" :aria-label="$t('btn.close')"></button>
+            <btn class="btn-close btn-close-white" data-bs-dismiss="toast" :aria-label="$t('btn.close')"></btn>
         </div>
         <div v-if="data.body" v-html="data.body" class="toast-body"></div>
         <div v-else class="toast-body">{{ data.msg }}</div>

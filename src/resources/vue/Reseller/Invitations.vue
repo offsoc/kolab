@@ -8,11 +8,7 @@
                 <div class="card-text">
                     <div class="mb-2 d-flex">
                         <list-search :placeholder="$t('invitation.search')" :on-search="searchInvitations"></list-search>
-                        <div>
-                            <button class="btn btn-success create-invite ms-1" @click="inviteUserDialog">
-                                <svg-icon icon="envelope-open-text"></svg-icon> {{ $t('invitation.create') }}
-                            </button>
-                        </div>
+                        <btn class="btn-success create-invite ms-1" @click="inviteUserDialog" icon="envelope-open-text">{{ $t('invitation.create') }}</btn>
                     </div>
 
                     <table id="invitations-list" class="table table-sm table-hover">
@@ -33,14 +29,12 @@
                                     {{ inv.created }}
                                 </td>
                                 <td class="buttons">
-                                    <button class="btn text-danger button-delete p-0 ms-1" @click="deleteInvite(inv.id)">
-                                        <svg-icon icon="trash-alt"></svg-icon>
+                                    <btn class="text-danger button-delete p-0 ms-1" @click="deleteInvite(inv.id)" icon="trash-alt">
                                         <span class="btn-label">{{ $t('btn.delete') }}</span>
-                                    </button>
-                                    <button class="btn button-resend p-0 ms-1" :disabled="inv.isNew || inv.isCompleted" @click="resendInvite(inv.id)">
-                                        <svg-icon icon="redo"></svg-icon>
+                                    </btn>
+                                    <btn class="button-resend p-0 ms-1" :disabled="inv.isNew || inv.isCompleted" @click="resendInvite(inv.id)" icon="redo">
                                         <span class="btn-label">{{ $t('btn.resend') }}</span>
-                                    </button>
+                                    </btn>
                                 </td>
                             </tr>
                         </tbody>
@@ -56,7 +50,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('invitation.create-title') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <form>
@@ -72,10 +66,8 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
-                        <button type="button" class="btn btn-primary modal-action" @click="inviteUser()">
-                            <svg-icon icon="paper-plane"></svg-icon> {{ $t('invitation.send') }}
-                        </button>
+                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
+                        <btn class="btn-primary modal-action" icon="paper-plane" @click="inviteUser()">{{ $t('invitation.send') }}</btn>
                     </div>
                 </div>
             </div>

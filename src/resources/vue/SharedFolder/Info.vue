@@ -6,9 +6,7 @@
             <div class="card-body">
                 <div class="card-title" v-if="folder_id !== 'new'">
                     {{ $tc('shf.list-title', 1) }}
-                    <button class="btn btn-outline-danger button-delete float-end" @click="deleteFolder()" tag="button">
-                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('shf.delete') }}
-                    </button>
+                    <btn class="btn-outline-danger button-delete float-end" @click="deleteFolder()" icon="trash-alt">{{ $t('shf.delete') }}</btn>
                 </div>
                 <div class="card-title" v-if="folder_id === 'new'">{{ $t('shf.new') }}</div>
                 <div class="card-text">
@@ -61,7 +59,7 @@
                                         <input type="text" class="form-control" id="email" disabled v-model="folder.email">
                                     </div>
                                 </div>
-                                <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                                <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
                         <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
@@ -75,7 +73,7 @@
                                         </small>
                                     </div>
                                 </div>
-                                <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                                <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
                     </div>

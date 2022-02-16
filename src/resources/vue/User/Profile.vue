@@ -4,13 +4,9 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ $t('user.profile-title') }}
-                    <router-link
-                        v-if="$root.isController(wallet.id)"
-                        class="btn btn-outline-danger button-delete float-end"
-                        to="/profile/delete" tag="button"
-                    >
-                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('user.profile-delete') }}
-                    </router-link>
+                    <btn-router v-if="$root.isController(wallet.id)" to="profile/delete" class="btn-outline-danger float-end" icon="trash-alt">
+                        {{ $t('user.profile-delete') }}
+                    </btn-router>
                 </div>
                 <div class="card-text">
                     <form @submit.prevent="submit">
@@ -69,7 +65,7 @@
                             <label for="password" class="col-sm-4 col-form-label">{{ $t('form.password') }}</label>
                             <password-input class="col-sm-8" v-model="profile"></password-input>
                         </div>
-                        <button class="btn btn-primary button-submit mt-2" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                        <btn class="btn-primary button-submit mt-2" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                     </form>
                 </div>
             </div>

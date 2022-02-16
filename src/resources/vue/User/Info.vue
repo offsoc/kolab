@@ -5,12 +5,9 @@
         <div class="card" id="user-info">
             <div class="card-body">
                 <div class="card-title" v-if="user_id !== 'new'">{{ $t('user.title') }}
-                    <button
-                        class="btn btn-outline-danger button-delete float-end"
-                        @click="showDeleteConfirmation()" type="button"
-                    >
-                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('user.delete') }}
-                    </button>
+                    <btn icon="trash-alt" class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()">
+                        {{ $t('user.delete') }}
+                    </btn>
                 </div>
                 <div class="card-title" v-if="user_id === 'new'">{{ $t('user.new') }}</div>
                 <div class="card-text">
@@ -78,12 +75,8 @@
                                         <div id="password-link" v-if="passwordMode == 'link' || user.passwordLinkCode" class="mt-2">
                                             <span>{{ $t('user.pass-link-label') }}</span>&nbsp;<code>{{ passwordLink }}</code>
                                             <span class="d-inline-block">
-                                                <button class="btn btn-link p-1" type="button" :title="$t('btn.copy')" @click="passwordLinkCopy">
-                                                    <svg-icon :icon="['far', 'clipboard']"></svg-icon>
-                                                </button>
-                                                <button v-if="user.passwordLinkCode" class="btn btn-link text-danger p-1" type="button" :title="$t('btn.delete')" @click="passwordLinkDelete">
-                                                    <svg-icon icon="trash-alt"></svg-icon>
-                                                </button>
+                                                <btn class="btn-link p-1" :icon="['far', 'clipboard']" :title="$t('btn.copy')" @click="passwordLinkCopy"></btn>
+                                                <btn v-if="user.passwordLinkCode" class="btn-link text-danger p-1" icon="trash-alt" :title="$t('btn.delete')" @click="passwordLinkDelete"></btn>
                                             </span>
                                         </div>
                                     </div>
@@ -96,7 +89,7 @@
                                     <label class="col-sm-4 col-form-label">{{ $t('user.subscriptions') }}</label>
                                     <subscription-select v-if="user.id" class="col-sm-8 pt-sm-1" :object="user"></subscription-select>
                                 </div>
-                                <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                                <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
                         <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
@@ -110,7 +103,7 @@
                                         </small>
                                     </div>
                                 </div>
-                                <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                                <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
                     </div>
@@ -122,16 +115,14 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('user.delete-email', { email: user.email }) }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <p>{{ $t('user.delete-text') }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
-                        <button type="button" class="btn btn-danger modal-action" @click="deleteUser()">
-                            <svg-icon icon="trash-alt"></svg-icon> {{ $t('btn.delete') }}
-                        </button>
+                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
+                        <btn class="btn-danger modal-action" icon="trash-alt" @click="deleteUser()">{{ $t('btn.delete') }}</btn>
                     </div>
                 </div>
             </div>

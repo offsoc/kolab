@@ -10,16 +10,16 @@
                         {{ $t('wallet.pending-payments-warning') }}
                     </div>
                     <p>
-                        <button type="button" class="btn btn-primary" @click="paymentMethodForm('manual')">{{ $t('wallet.add-credit') }}</button>
+                        <btn class="btn-primary" @click="paymentMethodForm('manual')">{{ $t('wallet.add-credit') }}</btn>
                     </p>
                     <div id="mandate-form" v-if="!mandate.isValid && !mandate.isPending">
                         <template v-if="mandate.id && !mandate.isValid">
                             <div class="alert alert-danger">
                                 {{ $t('wallet.auto-payment-failed') }}
                             </div>
-                            <button type="button" class="btn btn-danger" @click="autoPaymentDelete">{{ $t('wallet.auto-payment-cancel') }}</button>
+                            <btn class="btn-danger" @click="autoPaymentDelete">{{ $t('wallet.auto-payment-cancel') }}</btn>
                         </template>
-                        <button type="button" class="btn btn-primary" @click="paymentMethodForm('auto')">{{ $t('wallet.auto-payment-setup') }}</button>
+                        <btn class="btn-primary" @click="paymentMethodForm('auto')">{{ $t('wallet.auto-payment-setup') }}</btn>
                     </div>
                     <div id="mandate-info" v-else>
                         <div v-if="mandate.isDisabled" class="disabled-mandate alert alert-danger">
@@ -33,8 +33,8 @@
                             {{ $t('wallet.auto-payment-inprogress') }}
                         </div>
                         <p class="buttons">
-                            <button type="button" class="btn btn-danger" @click="autoPaymentDelete">{{ $t('wallet.auto-payment-cancel') }}</button>
-                            <button type="button" class="btn btn-primary" @click="autoPaymentChange">{{ $t('wallet.auto-payment-change') }}</button>
+                            <btn class="btn-danger" @click="autoPaymentDelete">{{ $t('wallet.auto-payment-cancel') }}</btn>
+                            <btn class="btn-primary" @click="autoPaymentChange">{{ $t('wallet.auto-payment-change') }}</btn>
                         </p>
                     </div>
                 </div>
@@ -69,9 +69,7 @@
                             <select id="receipt-id" class="form-control">
                                 <option v-for="(receipt, index) in receipts" :key="index" :value="receipt">{{ receipt }}</option>
                             </select>
-                            <button type="button" class="btn btn-secondary" @click="receiptDownload">
-                                <svg-icon icon="download"></svg-icon> {{ $t('btn.download') }}
-                            </button>
+                            <btn class="btn-secondary" @click="receiptDownload" icon="download">{{ $t('btn.download') }}</btn>
                         </div>
                         <p v-if="!receipts.length">
                             {{ $t('wallet.receipts-none') }}
@@ -96,7 +94,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ paymentDialogTitle }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <div id="payment-method" v-if="paymentForm == 'method'">
@@ -163,25 +161,22 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
-                        <button type="button" class="btn btn-primary modal-action"
-                                v-if="paymentForm == 'auto' && (mandate.isValid || mandate.isPending)"
-                                @click="autoPayment"
+                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
+                        <btn class="btn-primary modal-action" icon="check" @click="autoPayment"
+                             v-if="paymentForm == 'auto' && (mandate.isValid || mandate.isPending)"
                         >
-                            <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
-                        </button>
-                        <button type="button" class="btn btn-primary modal-action"
-                                v-if="paymentForm == 'auto' && !mandate.isValid && !mandate.isPending"
-                                @click="autoPayment"
+                            {{ $t('btn.submit') }}
+                        </btn>
+                        <btn class="btn btn-primary modal-action" icon="check" @click="autoPayment"
+                             v-if="paymentForm == 'auto' && !mandate.isValid && !mandate.isPending"
                         >
-                            <svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}
-                        </button>
-                        <button type="button" class="btn btn-primary modal-action"
-                                v-if="paymentForm == 'manual'"
-                                @click="payment"
+                            {{ $t('btn.continue') }}
+                        </btn>
+                        <btn class="btn-primary modal-action" icon="check" @click="payment"
+                             v-if="paymentForm == 'manual'"
                         >
-                            <svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}
-                        </button>
+                            {{ $t('btn.continue') }}
+                        </btn>
                     </div>
                 </div>
             </div>

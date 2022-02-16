@@ -6,12 +6,7 @@
             <div class="card-body">
                 <div class="card-title" v-if="domain_id === 'new'">{{ $t('domain.new') }}</div>
                 <div class="card-title" v-else>{{ $t('form.domain') }}
-                    <button
-                        class="btn btn-outline-danger button-delete float-end"
-                        @click="showDeleteConfirmation()" type="button"
-                    >
-                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('domain.delete') }}
-                    </button>
+                    <btn class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()" icon="trash-alt">{{ $t('domain.delete') }}</btn>
                 </div>
                 <div class="card-text">
                     <ul class="nav nav-tabs mt-3" role="tablist">
@@ -49,9 +44,7 @@
                                     <label class="col-sm-4 col-form-label">{{ $t('user.subscriptions') }}</label>
                                     <subscription-select v-if="domain.id" class="col-sm-8 pt-sm-1" type="domain" :object="domain" :readonly="true"></subscription-select>
                                 </div>
-                                <button v-if="!domain.id" class="btn btn-primary mt-3" type="submit">
-                                    <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
-                                </button>
+                                <btn v-if="!domain.id" class="btn-primary mt-3" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                             <hr class="m-0" v-if="domain.id">
                             <div v-if="domain.id && !domain.isConfirmed" class="card-body" id="domain-verify">
@@ -67,7 +60,7 @@
                                         <span>{{ $t('domain.verify-outro') }}</span>
                                     </p>
                                     <p>{{ $t('domain.verify-sample') }} <pre>{{ domain.dns.join("\n") }}</pre></p>
-                                    <button class="btn btn-primary" type="button" @click="confirm"><svg-icon icon="sync-alt"></svg-icon> {{ $t('btn.verify') }}</button>
+                                    <btn class="btn-primary" @click="confirm" icon="sync-alt">{{ $t('btn.verify') }}</btn>
                                 </div>
                             </div>
                             <div v-if="domain.isConfirmed" class="card-body" id="domain-config">
@@ -92,7 +85,7 @@
                                             </small>
                                         </div>
                                     </div>
-                                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> Submit</button>
+                                    <btn class="btn-primary" type="submit" icon="check">{{ $t('form.submit') }}</btn>
                                 </form>
                             </div>
                         </div>
@@ -105,16 +98,14 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('domain.delete-domain', { domain: domain.namespace }) }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <p>{{ $t('domain.delete-text') }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
-                        <button type="button" class="btn btn-danger modal-action" @click="deleteDomain()">
-                            <svg-icon icon="trash-alt"></svg-icon> {{ $t('btn.delete') }}
-                        </button>
+                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
+                        <btn class="btn-danger modal-action" @click="deleteDomain()" icon="trash-alt">{{ $t('btn.delete') }}</btn>
                     </div>
                 </div>
             </div>

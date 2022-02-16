@@ -4,7 +4,7 @@
             <form @submit.prevent="searchUser" class="row justify-content-center">
                 <div class="input-group col-sm-8">
                     <input class="form-control" type="text" :placeholder="$t('user.search-pl')" v-model="search">
-                    <button type="submit" class="btn btn-primary"><svg-icon icon="search"></svg-icon> {{ $t('btn.search') }}</button>
+                    <btn type="submit" class="btn-primary" icon="search">{{ $t('btn.search') }}</btn>
                 </div>
             </form>
             <table v-if="users.length" class="table table-sm table-hover mt-4">

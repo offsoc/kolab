@@ -12,7 +12,7 @@
                         <label for="reset_email" class="visually-hidden">{{ $t('form.email') }}</label>
                         <input type="text" class="form-control" id="reset_email" :placeholder="$t('form.email')" required v-model="email">
                     </div>
-                    <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}</button>
+                    <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.continue') }}</btn>
                 </form>
             </div>
         </div>
@@ -28,8 +28,8 @@
                         <label for="reset_short_code" class="visually-hidden">{{ $t('form.code') }}</label>
                         <input type="text" class="form-control" id="reset_short_code" :placeholder="$t('form.code')" required v-model="short_code">
                     </div>
-                    <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
-                    <button class="btn btn-primary ms-2" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}</button>
+                    <btn class="btn-secondary" @click="stepBack">{{ $t('btn.back') }}</btn>
+                    <btn class="btn-primary ms-2" type="submit" icon="check">{{ $t('btn.continue') }}</btn>
                     <input type="hidden" id="reset_code" v-model="code" />
                 </form>
             </div>
@@ -52,8 +52,8 @@
                         </div>
                         <small class="form-text text-muted">Second factor code is optional for users with no 2-Factor Authentication setup.</small>
                     </div>
-                    <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
-                    <button class="btn btn-primary ms-2" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                    <btn class="btn-secondary" @click="stepBack">{{ $t('btn.back') }}</btn>
+                    <btn class="btn-primary ms-2" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                 </form>
             </div>
         </div>

@@ -131,8 +131,8 @@ class SharedFolderTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             // Create a folder
             $browser->visit(new SharedFolderList())
-                ->assertSeeIn('button.create-folder', 'Create folder')
-                ->click('button.create-folder')
+                ->assertSeeIn('button.shared-folder-new', 'Create folder')
+                ->click('button.shared-folder-new')
                 ->on(new SharedFolderInfo())
                 ->assertSeeIn('#folder-info .card-title', 'New shared folder')
                 ->assertSeeIn('@nav #tab-general', 'General')

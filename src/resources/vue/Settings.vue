@@ -19,7 +19,7 @@
                                 </ul>
                             </div>
                         </div>
-                        <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                        <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                     </form>
                 </div>
             </div>

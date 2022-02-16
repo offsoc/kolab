@@ -28,9 +28,7 @@
                             <small class="text-muted mt-2">{{ $t('login.2fa_desc') }}</small>
                         </div>
                         <div class="text-center">
-                            <button class="btn btn-primary" type="submit">
-                                <svg-icon icon="sign-in-alt"></svg-icon> {{ $t('login.sign_in') }}
-                            </button>
+                            <btn class="btn-primary" type="submit" icon="sign-in-alt">{{ $t('login.sign_in') }}</btn>
                         </div>
                     </form>
                 </div>

@@ -5,9 +5,9 @@
                 <div class="card-title">
                     {{ $tc('shf.list-title', 2) }}
                     <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
-                    <router-link v-if="!$root.isDegraded()" class="btn btn-success float-end create-folder" :to="{ path: 'shared-folder/new' }" tag="button">
-                        <svg-icon icon="cog"></svg-icon> {{ $t('shf.create') }}
-                    </router-link>
+                    <btn-router v-if="!$root.isDegraded()" to="shared-folder/new" class="btn-success float-end" icon="cog">
+                        {{ $t('shf.create') }}
+                    </btn-router>
                 </div>
                 <div class="card-text">
                     <table class="table table-sm table-hover">

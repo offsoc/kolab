@@ -15,12 +15,10 @@
                     <td class="datetime">{{ transaction.createdAt }}</td>
                     <td class="email" v-if="isAdmin">{{ transaction.user }}</td>
                     <td class="selection">
-                        <button class="btn btn-lg btn-link btn-action" title="Details" type="button"
-                                v-if="transaction.hasDetails"
-                                @click="loadTransaction(transaction.id)"
-                        >
-                            <svg-icon icon="info-circle"></svg-icon>
-                        </button>
+                        <btn v-if="transaction.hasDetails" class="btn-lg btn-link btn-action" icon="info-circle"
+                             :title="$t('form.details')"
+                             @click="loadTransaction(transaction.id)"
+                        ></btn>
                     </td>
                     <td class="description">{{ description(transaction) }}</td>
                     <td :class="'price ' + className(transaction)">{{ amount(transaction) }}</td>

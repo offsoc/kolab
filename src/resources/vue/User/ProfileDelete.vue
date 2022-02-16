@@ -8,10 +8,10 @@
                     <p>{{ $t('user.profile-delete-text2') }}</p>
                     <p v-if="supportEmail" v-html="$t('user.profile-delete-support', { href: 'mailto:' + supportEmail, email: supportEmail })"></p>
                     <p>{{ $t('user.profile-delete-contact', { app: $root.appName }) }}</p>
-                    <button class="btn btn-secondary button-cancel" @click="$router.go(-1)">{{ $t('btn.cancel') }}</button>
-                    <button class="btn btn-danger button-delete" @click="deleteProfile">
-                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('user.profile-delete') }}
-                    </button>
+                    <p class="buttons">
+                        <btn class="btn-secondary button-cancel" @click="$router.go(-1)">{{ $t('btn.cancel') }}</btn>
+                        <btn class="btn-danger button-delete" @click="deleteProfile" icon="trash-alt">{{ $t('user.profile-delete') }}</btn>
+                    </p>
                 </div>
             </div>
         </div>

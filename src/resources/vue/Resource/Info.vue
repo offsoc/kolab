@@ -6,9 +6,7 @@
             <div class="card-body">
                 <div class="card-title" v-if="resource_id !== 'new'">
                     {{ $tc('resource.list-title', 1) }}
-                    <button class="btn btn-outline-danger button-delete float-end" @click="deleteResource()" tag="button">
-                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('resource.delete') }}
-                    </button>
+                    <btn class="btn-outline-danger button-delete float-end" @click="deleteResource()" icon="trash-alt">{{ $t('resource.delete') }}</btn>
                 </div>
                 <div class="card-title" v-if="resource_id === 'new'">{{ $t('resource.new') }}</div>
                 <div class="card-text">
@@ -53,7 +51,7 @@
                                         <input type="text" class="form-control" id="email" disabled v-model="resource.email">
                                     </div>
                                 </div>
-                                <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                                <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
                         <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
@@ -74,7 +72,7 @@
                                         </small>
                                     </div>
                                 </div>
-                                <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                                <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
                     </div>

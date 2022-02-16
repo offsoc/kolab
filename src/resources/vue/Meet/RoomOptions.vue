@@ -5,7 +5,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('meet.options') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <form id="room-options-password">
@@ -14,9 +14,9 @@
                                 <span v-if="config.password" id="password-input-text" class="input-group-text">{{ config.password }}</span>
                                 <span v-else id="password-input-text" class="input-group-text text-muted">{{ $t('meet.password-none') }}</span>
                                 <input type="text" :value="config.password" name="password" class="form-control rounded-start activable">
-                                <button type="button" @click="passwordSave" id="password-save-btn" class="btn btn-outline-primary activable rounded-end">{{ $t('btn.save') }}</button>
-                                <button type="button" v-if="config.password" id="password-clear-btn" @click="passwordClear" class="btn btn-outline-danger rounded">{{ $t('meet.password-clear') }}</button>
-                                <button type="button" v-else @click="passwordSet" id="password-set-btn" class="btn btn-outline-primary rounded">{{ $t('meet.password-set') }}</button>
+                                <btn @click="passwordSave" id="password-save-btn" class="btn-outline-primary activable rounded-end">{{ $t('btn.save') }}</btn>
+                                <btn v-if="config.password" id="password-clear-btn" @click="passwordClear" class="btn-outline-danger rounded">{{ $t('meet.password-clear') }}</btn>
+                                <btn v-else @click="passwordSet" id="password-set-btn" class="btn-outline-primary rounded">{{ $t('meet.password-set') }}</btn>
                             </div>
                             <small class="text-muted">
                                 {{ $t('meet.password-text') }}
@@ -44,7 +44,7 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-action" data-bs-dismiss="modal">{{ $t('btn.close') }}</button>
+                        <btn class="btn-secondary modal-action" data-bs-dismiss="modal">{{ $t('btn.close') }}</btn>
                     </div>
                 </div>
             </div>

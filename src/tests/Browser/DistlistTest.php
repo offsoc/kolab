@@ -124,8 +124,8 @@ class DistlistTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             // Create a group
             $browser->visit(new DistlistList())
-                ->assertSeeIn('button.create-list', 'Create list')
-                ->click('button.create-list')
+                ->assertSeeIn('button.distlist-new', 'Create list')
+                ->click('button.distlist-new')
                 ->on(new DistlistInfo())
                 ->assertSeeIn('#distlist-info .card-title', 'New distribution list')
                 ->assertSeeIn('@nav #tab-general', 'General')

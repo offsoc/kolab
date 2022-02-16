@@ -6,9 +6,7 @@
             <div class="card-body">
                 <div class="card-title" v-if="list_id !== 'new'">
                     {{ $tc('distlist.list-title', 1) }}
-                    <button class="btn btn-outline-danger button-delete float-end" @click="deleteList()" tag="button">
-                        <svg-icon icon="trash-alt"></svg-icon> {{ $t('distlist.delete') }}
-                    </button>
+                    <btn class="btn-outline-danger button-delete float-end" @click="deleteList()" icon="trash-alt">{{ $t('distlist.delete') }}</btn>
                 </div>
                 <div class="card-title" v-if="list_id === 'new'">{{ $t('distlist.new') }}</div>
                 <div class="card-text">
@@ -51,7 +49,7 @@
                                         <list-input id="members" :list="list.members"></list-input>
                                     </div>
                                 </div>
-                                <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                                <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
                         <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
@@ -65,7 +63,7 @@
                                         </small>
                                     </div>
                                 </div>
-                                <button class="btn btn-primary" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}</button>
+                                <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
                     </div>

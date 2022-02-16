@@ -20,12 +20,16 @@ import { Tooltip } from 'bootstrap'
 import FontAwesomeIcon from './fontawesome'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import Btn from '../vue/Widgets/Btn'
+import BtnRouter from '../vue/Widgets/BtnRouter'
 import Toast from '../vue/Widgets/Toast'
 import store from './store'
 
 window.Vue = Vue
 
 Vue.component('SvgIcon', FontAwesomeIcon)
+Vue.component('Btn', Btn)
+Vue.component('BtnRouter', BtnRouter)
 
 const vTooltip = (el, binding) => {
     let t = []

@@ -10,7 +10,7 @@
                             </div>
                         </div>
                         <div class="card-body text-center">
-                            <button class="btn btn-primary" :data-title="item.title" @click="selectPlan(item.title)" v-html="item.button"></button>
+                            <btn class="btn-primary" :data-title="item.title" @click="selectPlan(item.title)" v-html="item.button"></btn>
                             <div class="plan-description text-start mt-3" v-html="item.description"></div>
                         </div>
                     </div>
@@ -35,8 +35,8 @@
                         <label for="signup_email" class="visually-hidden">{{ $t('signup.email') }}</label>
                         <input type="text" class="form-control" id="signup_email" :placeholder="$t('signup.email')" required v-model="email">
                     </div>
-                    <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
-                    <button class="btn btn-primary ms-2" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}</button>
+                    <btn class="btn-secondary" @click="stepBack">{{ $t('btn.back') }}</btn>
+                    <btn class="btn-primary ms-2" type="submit" icon="check">{{ $t('btn.continue') }}</btn>
                 </form>
             </div>
         </div>
@@ -52,8 +52,8 @@
                         <label for="signup_short_code" class="visually-hidden">{{ $t('form.code') }}</label>
                         <input type="text" class="form-control" id="signup_short_code" :placeholder="$t('form.code')" required v-model="short_code">
                     </div>
-                    <button class="btn btn-secondary" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
-                    <button class="btn btn-primary ms-2" type="submit"><svg-icon icon="check"></svg-icon> {{ $t('btn.continue') }}</button>
+                    <btn class="btn-secondary" @click="stepBack">{{ $t('btn.back') }}</btn>
+                    <btn class="btn-primary ms-2" type="submit" icon="check">{{ $t('btn.continue') }}</btn>
                     <input type="hidden" id="signup_code" v-model="code" />
                 </form>
             </div>
@@ -88,10 +88,11 @@
                         <label for="signup_voucher" class="visually-hidden">{{ $t('signup.voucher') }}</label>
                         <input type="text" class="form-control" id="signup_voucher" :placeholder="$t('signup.voucher')" v-model="voucher">
                     </div>
-                    <button v-if="!invitation" class="btn btn-secondary me-2" type="button" @click="stepBack">{{ $t('btn.back') }}</button>
-                    <button class="btn btn-primary" type="submit">
-                        <svg-icon icon="check"></svg-icon> <span v-if="invitation">{{ $t('btn.signup') }}</span><span v-else>{{ $t('btn.submit') }}</span>
-                    </button>
+                    <btn v-if="!invitation" class="btn-secondary me-2" @click="stepBack">{{ $t('btn.back') }}</btn>
+                    <btn class="btn-primary" type="submit" icon="check">
+                        <span v-if="invitation">{{ $t('btn.signup') }}</span>
+                        <span v-else>{{ $t('btn.submit') }}</span>
+                    </btn>
                 </form>
             </div>
         </div>

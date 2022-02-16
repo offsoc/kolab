@@ -58,7 +58,7 @@
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="external_email">
                                     <a v-if="user.external_email" :href="'mailto:' + user.external_email">{{ user.external_email }}</a>
-                                    <button type="button" class="btn btn-secondary btn-sm ms-2" @click="emailEdit">{{ $t('btn.edit') }}</button>
+                                    <btn class="btn-secondary btn-sm ms-2" @click="emailEdit">{{ $t('btn.edit') }}</btn>
                                 </span>
                             </div>
                         </div>
@@ -76,12 +76,12 @@
                         </div>
                     </form>
                     <div class="mt-2 buttons">
-                        <button v-if="!user.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendUser">
+                        <btn v-if="!user.isSuspended" id="button-suspend" class="btn-warning" @click="suspendUser">
                             {{ $t('btn.suspend') }}
-                        </button>
-                        <button v-if="user.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendUser">
+                        </btn>
+                        <btn v-if="user.isSuspended" id="button-unsuspend" class="btn-warning" @click="unsuspendUser">
                             {{ $t('btn.unsuspend') }}
-                        </button>
+                        </btn>
                     </div>
                 </div>
             </div>
@@ -147,7 +147,7 @@
                                 <div class="col-sm-8">
                                     <span class="form-control-plaintext" id="discount">
                                         <span>{{ wallet.discount ? (wallet.discount + '% - ' + wallet.discount_description) : 'none' }}</span>
-                                        <button type="button" class="btn btn-secondary btn-sm ms-2" @click="discountEdit">{{ $t('btn.edit') }}</button>
+                                        <btn class="btn-secondary btn-sm ms-2" @click="discountEdit">{{ $t('btn.edit') }}</btn>
                                     </span>
                                 </div>
                             </div>
@@ -173,8 +173,8 @@
                             </div>
                         </form>
                         <div class="mt-2 buttons">
-                            <button id="button-award" class="btn btn-success" type="button" @click="awardDialog">{{ $t('user.add-bonus') }}</button>
-                            <button id="button-penalty" class="btn btn-danger" type="button" @click="penalizeDialog">{{ $t('user.add-penalty') }}</button>
+                            <btn id="button-award" class="btn-success" @click="awardDialog">{{ $t('user.add-bonus') }}</btn>
+                            <btn id="button-penalty" class="btn-danger" @click="penalizeDialog">{{ $t('user.add-penalty') }}</btn>
                         </div>
                     </div>
                     <h2 class="card-title mt-4">{{ $t('wallet.transactions') }}</h2>
@@ -231,12 +231,8 @@
                             &sup1; {{ $t('user.discount-hint') }}: {{ discount }}% - {{ discount_description }}
                         </small>
                         <div class="mt-2 buttons">
-                            <button type="button" class="btn btn-danger" id="reset2fa" v-if="has2FA" @click="reset2FADialog">
-                                {{ $t('user.reset-2fa') }}
-                            </button>
-                            <button type="button" class="btn btn-secondary" id="addbetasku" v-if="!hasBeta" @click="addBetaSku">
-                                {{ $t('user.add-beta') }}
-                            </button>
+                            <btn class="btn-danger" id="reset2fa" v-if="has2FA" @click="reset2FADialog">{{ $t('user.reset-2fa') }}</btn>
+                            <btn class="btn-secondary" id="addbetasku" v-if="!hasBeta" @click="addBetaSku">{{ $t('user.add-beta') }}</btn>
                         </div>
                     </div>
                 </div>
@@ -408,7 +404,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('user.discount-title') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <p>
@@ -419,10 +415,8 @@
                         </p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
-                        <button type="button" class="btn btn-primary modal-action" @click="submitDiscount()">
-                            <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
-                        </button>
+                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
+                        <btn class="btn-primary modal-action" @click="submitDiscount()" icon="check">{{ $t('btn.submit') }}</btn>
                     </div>
                 </div>
             </div>
@@ -433,7 +427,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('user.ext-email') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <p>
@@ -441,10 +435,8 @@
                         </p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
-                        <button type="button" class="btn btn-primary modal-action" @click="submitEmail()">
-                            <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
-                        </button>
+                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
+                        <btn class="btn-primary modal-action" @click="submitEmail()" icon="check">{{ $t('btn.submit') }}</btn>
                     </div>
                 </div>
             </div>
@@ -455,7 +447,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t(oneoff_negative ? 'user.add-penalty-title' : 'user.add-bonus-title') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <form data-validation-prefix="oneoff_">
@@ -473,10 +465,8 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
-                        <button type="button" class="btn btn-primary modal-action" @click="submitOneOff()">
-                            <svg-icon icon="check"></svg-icon> {{ $t('btn.submit') }}
-                        </button>
+                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
+                        <btn class="btn-primary modal-action" @click="submitOneOff()" icon="check">{{ $t('btn.submit') }}</btn>
                     </div>
                 </div>
             </div>
@@ -487,15 +477,15 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('user.reset-2fa-title') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <p>{{ $t('user.2fa-hint1') }}</p>
                         <p>{{ $t('user.2fa-hint2') }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</button>
-                        <button type="button" class="btn btn-danger modal-action" @click="reset2FA()">{{ $t('btn.reset') }}</button>
+                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
+                        <btn class="btn-danger modal-action" @click="reset2FA()">{{ $t('btn.reset') }}</btn>
                     </div>
                 </div>
             </div>

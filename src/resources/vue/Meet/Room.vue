@@ -126,13 +126,13 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('meet.leave-title') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <p>{{ $t('meet.leave-body') }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-danger modal-action" data-bs-dismiss="modal">{{ $t('btn.close') }}</button>
+                        <btn class="btn-danger modal-action" data-bs-dismiss="modal">{{ $t('btn.close') }}</btn>
                     </div>
                 </div>
             </div>
@@ -143,7 +143,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ $t('meet.media-title') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></button>
+                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
                     </div>
                     <div class="modal-body">
                         <form class="media-setup-form">
@@ -169,7 +169,7 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-action" data-bs-dismiss="modal">{{ $t('btn.close') }}</button>
+                        <btn class="btn-secondary modal-action" data-bs-dismiss="modal">{{ $t('btn.close') }}</btn>
                     </div>
                 </div>
             </div>

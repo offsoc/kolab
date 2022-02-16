@@ -25,12 +25,12 @@
                         </div>
                     </form>
                     <div class="mt-2 buttons">
-                        <button v-if="!domain.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendDomain">
+                        <btn v-if="!domain.isSuspended" id="button-suspend" class="btn-warning" @click="suspendDomain">
                             {{ $t('btn.suspend') }}
-                        </button>
-                        <button v-if="domain.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendDomain">
+                        </btn>
+                        <btn v-if="domain.isSuspended" id="button-unsuspend" class="btn-warning" @click="unsuspendDomain">
                             {{ $t('btn.unsuspend') }}
-                        </button>
+                        </btn>
                     </div>
                 </div>
             </div>

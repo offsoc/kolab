@@ -125,8 +125,8 @@ class ResourceTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             // Create a resource
             $browser->visit(new ResourceList())
-                ->assertSeeIn('button.create-resource', 'Create resource')
-                ->click('button.create-resource')
+                ->assertSeeIn('button.resource-new', 'Create resource')
+                ->click('button.resource-new')
                 ->on(new ResourceInfo())
                 ->assertSeeIn('#resource-info .card-title', 'New resource')
                 ->assertSeeIn('@nav #tab-general', 'General')

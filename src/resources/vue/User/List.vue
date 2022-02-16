@@ -8,11 +8,9 @@
                 <div class="card-text">
                     <div class="mb-2 d-flex">
                         <list-search :placeholder="$t('user.search')" :on-search="searchUsers"></list-search>
-                        <div v-if="!$root.isDegraded()">
-                            <router-link class="btn btn-success ms-1 create-user" :to="{ path: 'user/new' }" tag="button">
-                                <svg-icon icon="user"></svg-icon> {{ $t('user.create') }}
-                            </router-link>
-                        </div>
+                        <btn-router v-if="!$root.isDegraded()" to="user/new" class="btn-success ms-1" icon="user">
+                            {{ $t('user.create') }}
+                        </btn-router>
                     </div>
                     <table id="users-list" class="table table-sm table-hover">
                         <thead>

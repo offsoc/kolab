@@ -4,16 +4,15 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ $t('user.domains') }}
-                    <router-link v-if="!$root.isDegraded()" class="btn btn-success float-end create-domain" :to="{ path: 'domain/new' }" tag="button">
-                        <svg-icon icon="globe"></svg-icon> {{ $t('domain.create') }}
-                    </router-link>
+                    <btn-router v-if="!$root.isDegraded()" class="btn-success float-end" to="domain/new" icon="globe">
+                        {{ $t('domain.create') }}
+                    </btn-router>
                 </div>
                 <div class="card-text">
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
                                 <th scope="col">{{ $t('domain.namespace') }}</th>
-                                <th scope="col"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -22,12 +21,11 @@
                                     <svg-icon icon="globe" :class="$root.statusClass(domain)" :title="$root.statusText(domain)"></svg-icon>
                                     <router-link :to="{ path: 'domain/' + domain.id }">{{ domain.namespace }}</router-link>
                                 </td>
-                                <td class="buttons"></td>
                             </tr>
                         </tbody>
                         <tfoot class="table-fake-body">
                             <tr>
-                                <td colspan="2">{{ $t('user.domains-none') }}</td>
+                                <td>{{ $t('user.domains-none') }}</td>
                             </tr>
                         </tfoot>
                     </table>
