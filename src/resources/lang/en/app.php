@@ -116,6 +116,7 @@ return [
     'password-rule-upper' => 'Password contains an upper-case character',
     'password-rule-digit' => 'Password contains a digit',
     'password-rule-special' => 'Password contains a special character',
+    'password-rule-last' => 'Password cannot be the same as the last :param passwords',
 
     'wallet-notice-date' => 'With your current subscriptions your account balance will last until about :date (:days).',
     'wallet-notice-nocredit' => 'You are out of credit, top up your balance now.',

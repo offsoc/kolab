@@ -451,6 +451,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Old passwords for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function passwords()
+    {
+        return $this->hasMany('App\UserPassword');
+    }
+
+    /**
      * Return resources controlled by the current user.
      *
      * @param bool $with_accounts Include resources assigned to wallets

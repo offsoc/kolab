@@ -3,6 +3,7 @@
 namespace Tests\Unit\Rules;
 
 use App\Rules\Password;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
@@ -93,6 +94,52 @@ class PasswordTest extends TestCase
         $this->assertSame(null, $result['digit']['param']);
         $this->assertSame(true, $result['digit']['enabled']);
         $this->assertSame(false, $result['digit']['status']);
+
+        // Test password history check
+        $user = $this->getTestUser('john@kolab.org');
+        $user->passwords()->delete();
+        $user_pass = \App\Utils::generatePassphrase(); // should be the same plain password as John already has
+
+        $pass = new Password(null, $user);
+
+        \config(['app.password_policy' => 'min:5,last:1']);
+
+        $result = $pass->check('abcd');
+
+        $this->assertCount(2, $result);
+        $this->assertSame('min', $result['min']['label']);
+        $this->assertSame('Minimum password length: 5 characters', $result['min']['name']);
+        $this->assertSame('5', $result['min']['param']);
+        $this->assertSame(true, $result['min']['enabled']);
+        $this->assertSame(false, $result['min']['status']);
+
+        $this->assertSame('last', $result['last']['label']);
+        $this->assertSame('Password cannot be the same as the last 1 passwords', $result['last']['name']);
+        $this->assertSame('1', $result['last']['param']);
+        $this->assertSame(true, $result['last']['enabled']);
+        $this->assertSame(true, $result['last']['status']);
+
+        $result = $pass->check($user_pass);
+
+        $this->assertCount(2, $result);
+        $this->assertSame('last', $result['last']['label']);
+        $this->assertSame('Password cannot be the same as the last 1 passwords', $result['last']['name']);
+        $this->assertSame('1', $result['last']['param']);
+        $this->assertSame(true, $result['last']['enabled']);
+        $this->assertSame(false, $result['last']['status']);
+
+        $user->passwords()->create(['password' => Hash::make('1234567891')]);
+        $user->passwords()->create(['password' => Hash::make('1234567890')]);
+
+        $result = $pass->check('1234567890');
+
+        $this->assertSame(true, $result['last']['status']);
+
+        \config(['app.password_policy' => 'min:5,last:3']);
+
+        $result = $pass->check('1234567890');
+
+        $this->assertSame(false, $result['last']['status']);
     }
 
     /**
@@ -123,7 +170,7 @@ class PasswordTest extends TestCase
         // Expect to see all supported policy rules
         $result = $pass->rules(true);
 
-        $this->assertCount(6, $result);
+        $this->assertCount(7, $result);
         $this->assertSame('min', $result['min']['label']);
         $this->assertSame('Minimum password length: 10 characters', $result['min']['name']);
         $this->assertSame('10', $result['min']['param']);
@@ -153,24 +200,29 @@ class PasswordTest extends TestCase
         $this->assertSame('Password contains a special character', $result['special']['name']);
         $this->assertSame(null, $result['digit']['param']);
         $this->assertSame(false, $result['digit']['enabled']);
+
+        $this->assertSame('last', $result['last']['label']);
+        $this->assertSame('Password cannot be the same as the last 3 passwords', $result['last']['name']);
+        $this->assertSame('3', $result['last']['param']);
+        $this->assertSame(false, $result['last']['enabled']);
     }
 
     /**
      * Validates the password using Laravel Validator API
      *
      * @param string     $password The password to validate
-     * @param ?\App\User $user     The account owner
+     * @param ?\App\User $owner    The account owner
      *
      * @return ?string Validation error message on error, NULL otherwise
      */
-    private function validate($password, $user = null): ?string
+    private function validate($password, $owner = null): ?string
     {
         // Instead of doing direct tests, we use validator to make sure
         // it works with the framework api
 
         $v = Validator::make(
             ['password' => $password],
-            ['password' => new Password($user)]
+            ['password' => new Password($owner)]
         );
 
         if ($v->fails()) {

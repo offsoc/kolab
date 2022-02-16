@@ -45,7 +45,7 @@ class PasswordPolicyController extends Controller
         $user = !empty($userId) ? \App\User::find($userId) : null;
 
         // Get the policy
-        $policy = new Password($user ? $user->walletOwner() : null);
+        $policy = new Password($user ? $user->walletOwner() : null, $user);
 
         // Check the password
         $status = $policy->check($request->input('password'));

@@ -67,7 +67,7 @@ trait UserConfigTrait
     protected function validatePasswordPolicyRule(string $rule): ?string
     {
         $regexp = [
-            'min:[0-9]+', 'max:[0-9]+', 'upper', 'lower', 'digit', 'special',
+            'min:[0-9]+', 'max:[0-9]+', 'upper', 'lower', 'digit', 'special', 'last:[0-9]+'
         ];
 
         if (empty($rule) || !preg_match('/^(' . implode('|', $regexp) . ')$/', $rule)) {
@@ -89,6 +89,13 @@ trait UserConfigTrait
             $value = trim(substr($rule, 4));
             if ($value > $systemPolicy['max']) {
                 return \trans('validation.password-policy-max-len-error', ['max' => $systemPolicy['max']]);
+            }
+        }
+
+        if (!empty($systemPolicy['last']) && strpos($rule, 'last:') === 0) {
+            $value = trim(substr($rule, 5));
+            if ($value < $systemPolicy['last']) {
+                return \trans('validation.password-policy-last-error', ['last' => $systemPolicy['last']]);
             }
         }
 

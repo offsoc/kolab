@@ -234,6 +234,12 @@ class UserObserver
                     \App\Jobs\User\UpdateJob::dispatch($user_id);
                 });
         }
+
+        // Save the old password in the password history
+        $oldPassword = $user->getOriginal('password');
+        if ($oldPassword && $user->password != $oldPassword) {
+            self::saveOldPassword($user, $oldPassword);
+        }
     }
 
     /**
@@ -279,5 +285,40 @@ class UserObserver
                 'whitelistable_type' => User::class
             ]
         )->delete();
+    }
+
+    /**
+     * Store the old password in user password history. Make sure
+     * we do not store more passwords than we need in the history.
+     *
+     * @param \App\User $user     The user
+     * @param string    $password The old password
+     */
+    private static function saveOldPassword(User $user, string $password): void
+    {
+        // Note: All this is kinda heavy and complicated because we don't want to store
+        // more old passwords than we need. However, except the complication/performance,
+        // there's one issue with it. E.g. the policy changes from 2 to 4, and we already
+        // removed the old passwords that were excessive before, but not now.
+
+        // Get the account password policy
+        $policy = new \App\Rules\Password($user->walletOwner());
+        $rules = $policy->rules();
+
+        // Password history disabled?
+        if (empty($rules['last']) || $rules['last']['param'] < 2) {
+            return;
+        }
+
+        // Store the old password
+        $user->passwords()->create(['password' => $password]);
+
+        // Remove passwords that we don't need anymore
+        $limit = $rules['last']['param'] - 1;
+        $ids = $user->passwords()->latest()->limit($limit)->pluck('id')->all();
+
+        if (count($ids) >= $limit) {
+            $user->passwords()->where('id', '<', $ids[count($ids) - 1])->delete();
+        }
     }
 }

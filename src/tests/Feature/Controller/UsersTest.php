@@ -572,7 +572,7 @@ class UsersTest extends TestCase
 
         // Test some valid data, acting as another account controller
         $ned = $this->getTestUser('ned@kolab.org');
-        $post = ['greylist_enabled' => 0, 'password_policy' => 'min:10,max:255,upper'];
+        $post = ['greylist_enabled' => 0, 'password_policy' => 'min:10,max:255,upper,last:1'];
         $response = $this->actingAs($ned)->post("/api/v4/users/{$john->id}/config", $post);
         $response->assertStatus(200);
 
@@ -583,7 +583,7 @@ class UsersTest extends TestCase
         $this->assertSame('User settings updated successfully.', $json['message']);
 
         $this->assertSame('false', $john->fresh()->getSetting('greylist_enabled'));
-        $this->assertSame('min:10,max:255,upper', $john->fresh()->getSetting('password_policy'));
+        $this->assertSame('min:10,max:255,upper,last:1', $john->fresh()->getSetting('password_policy'));
     }
 
     /**

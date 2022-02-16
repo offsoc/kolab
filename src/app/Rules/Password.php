@@ -3,22 +3,31 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class Password implements Rule
 {
+    /** @var ?string The validation error message */
     private $message;
+
+    /** @var ?\App\User The account owner which to take the policy from */
     private $owner;
+
+    /** @var ?\App\User The user to whom the checked password belongs */
+    private $user;
 
     /**
      * Class constructor.
      *
-     * @param \App\User $owner The account owner (to take the policy from)
+     * @param ?\App\User $owner The account owner (to take the policy from)
+     * @param ?\App\User $user  The user the password is for (Null for a new user)
      */
-    public function __construct(?\App\User $owner = null)
+    public function __construct(?\App\User $owner = null, ?\App\User $user = null)
     {
         $this->owner = $owner;
+        $this->user = $user;
     }
 
     /**
@@ -64,41 +73,47 @@ class Password implements Rule
             switch ($name) {
                 case 'min':
                     // Check the min length
-                    $pass = strlen($password) >= intval($rule['param']);
+                    $status = strlen($password) >= intval($rule['param']);
                     break;
 
                 case 'max':
                     // Check the max length
                     $length = strlen($password);
-                    $pass = $length && $length <= intval($rule['param']);
+                    $status = $length && $length <= intval($rule['param']);
                     break;
 
                 case 'lower':
                     // Check if password contains a lower-case character
-                    $pass = preg_match('/[a-z]/', $password) > 0;
+                    $status = preg_match('/[a-z]/', $password) > 0;
                     break;
 
                 case 'upper':
                     // Check if password contains a upper-case character
-                    $pass = preg_match('/[A-Z]/', $password) > 0;
+                    $status = preg_match('/[A-Z]/', $password) > 0;
                     break;
 
                 case 'digit':
                     // Check if password contains a digit
-                    $pass = preg_match('/[0-9]/', $password) > 0;
+                    $status = preg_match('/[0-9]/', $password) > 0;
                     break;
 
                 case 'special':
                     // Check if password contains a special character
-                    $pass = preg_match('/[-~!@#$%^&*_+=`(){}[]|:;"\'`<>,.?\/\\]/', $password) > 0;
+                    $status = preg_match('/[-~!@#$%^&*_+=`(){}[]|:;"\'`<>,.?\/\\]/', $password) > 0;
+                    break;
+
+                case 'last':
+                    // TODO: For performance reasons we might consider checking the history
+                    //       only when the password passed all other checks
+                    $status = $this->checkPasswordHistory($password, (int) $rule['param']);
                     break;
 
                 default:
                     // Ignore unknown rule name
-                    $pass = true;
+                    $status = true;
             }
 
-            $rules[$name]['status'] = $pass;
+            $rules[$name]['status'] = $status;
         }
 
         return $rules;
@@ -114,7 +129,7 @@ class Password implements Rule
     public function rules(bool $all = false): array
     {
         // All supported password policy rules (with default params)
-        $supported = 'min:6,max:255,lower,upper,digit,special';
+        $supported = 'min:6,max:255,lower,upper,digit,special,last:3';
 
         // Get the password policy from the $owner settings
         if ($this->owner) {
@@ -165,6 +180,43 @@ class Password implements Rule
         $policy = array_unique(array_filter($policy));
 
         return self::mapWithKeys($policy);
+    }
+
+    /**
+     * Check password agains <count> of old passwords in user history
+     *
+     * @param string $password The password to check
+     * @param int    $count    Number of old passwords to check (including current one)
+     *
+     * @return bool True if password is unique, False otherwise
+     */
+    protected function checkPasswordHistory($password, int $count): bool
+    {
+        $status = strlen($password) > 0;
+
+        // Check if password is not the same as last X passwords
+        if ($status && $this->user && $count > 0) {
+            // Current password
+            if ($this->user->password) {
+                $count -= 1;
+                if (Hash::check($password, $this->user->password)) {
+                    return false;
+                }
+            }
+
+            // Passwords from the history
+            if ($count > 0) {
+                $this->user->passwords()->latest()->limit($count)->get()
+                    ->each(function ($oldPassword) use (&$status, $password) {
+                        if (Hash::check($password, $oldPassword->password)) {
+                            $status = false;
+                            return false; // stop iteration
+                        }
+                    });
+            }
+        }
+
+        return $status;
     }
 
     /**

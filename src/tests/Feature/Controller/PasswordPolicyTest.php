@@ -85,8 +85,8 @@ class PasswordPolicyTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertCount(2, $json);
-        $this->assertSame(6, $json['count']);
-        $this->assertCount(6, $json['list']);
+        $this->assertSame(7, $json['count']);
+        $this->assertCount(7, $json['list']);
         $this->assertSame('Minimum password length: 8 characters', $json['list'][0]['name']);
         $this->assertSame('min', $json['list'][0]['label']);
         $this->assertSame('8', $json['list'][0]['param']);
@@ -103,6 +103,8 @@ class PasswordPolicyTest extends TestCase
         $this->assertSame(false, $json['list'][4]['enabled']);
         $this->assertSame('special', $json['list'][5]['label']);
         $this->assertSame(true, $json['list'][5]['enabled']);
+        $this->assertSame('last', $json['list'][6]['label']);
+        $this->assertSame(false, $json['list'][6]['enabled']);
 
         // Test acting as Jack
         $response = $this->actingAs($jack)->get('/api/v4/password-policy');
@@ -111,8 +113,8 @@ class PasswordPolicyTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertCount(2, $json);
-        $this->assertSame(6, $json['count']);
-        $this->assertCount(6, $json['list']);
+        $this->assertSame(7, $json['count']);
+        $this->assertCount(7, $json['list']);
         $this->assertSame('Minimum password length: 8 characters', $json['list'][0]['name']);
         $this->assertSame('min', $json['list'][0]['label']);
         $this->assertSame('8', $json['list'][0]['param']);
@@ -129,5 +131,7 @@ class PasswordPolicyTest extends TestCase
         $this->assertSame(false, $json['list'][4]['enabled']);
         $this->assertSame('special', $json['list'][5]['label']);
         $this->assertSame(true, $json['list'][5]['enabled']);
+        $this->assertSame('last', $json['list'][6]['label']);
+        $this->assertSame(false, $json['list'][6]['enabled']);
     }
 }

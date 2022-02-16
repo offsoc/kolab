@@ -102,9 +102,59 @@ class UserTest extends TestCase
         $this->assertTrue($userB->accounts()->get()[0]->id === $userA->wallets()->get()[0]->id);
     }
 
+    /**
+     * Test User::canDelete() method
+     */
     public function testCanDelete(): void
     {
-        $this->markTestIncomplete();
+        $john = $this->getTestUser('john@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // Admin
+        $this->assertTrue($admin->canDelete($admin));
+        $this->assertFalse($admin->canDelete($john));
+        $this->assertFalse($admin->canDelete($jack));
+        $this->assertFalse($admin->canDelete($reseller1));
+        $this->assertFalse($admin->canDelete($domain));
+        $this->assertFalse($admin->canDelete($domain->wallet()));
+
+        // Reseller - kolabnow
+        $this->assertFalse($reseller1->canDelete($john));
+        $this->assertFalse($reseller1->canDelete($jack));
+        $this->assertTrue($reseller1->canDelete($reseller1));
+        $this->assertFalse($reseller1->canDelete($domain));
+        $this->assertFalse($reseller1->canDelete($domain->wallet()));
+        $this->assertFalse($reseller1->canDelete($admin));
+
+        // Normal user - account owner
+        $this->assertTrue($john->canDelete($john));
+        $this->assertTrue($john->canDelete($ned));
+        $this->assertTrue($john->canDelete($jack));
+        $this->assertTrue($john->canDelete($domain));
+        $this->assertFalse($john->canDelete($domain->wallet()));
+        $this->assertFalse($john->canDelete($reseller1));
+        $this->assertFalse($john->canDelete($admin));
+
+        // Normal user - a non-owner and non-controller
+        $this->assertFalse($jack->canDelete($jack));
+        $this->assertFalse($jack->canDelete($john));
+        $this->assertFalse($jack->canDelete($domain));
+        $this->assertFalse($jack->canDelete($domain->wallet()));
+        $this->assertFalse($jack->canDelete($reseller1));
+        $this->assertFalse($jack->canDelete($admin));
+
+        // Normal user - John's wallet controller
+        $this->assertTrue($ned->canDelete($ned));
+        $this->assertTrue($ned->canDelete($john));
+        $this->assertTrue($ned->canDelete($jack));
+        $this->assertTrue($ned->canDelete($domain));
+        $this->assertFalse($ned->canDelete($domain->wallet()));
+        $this->assertFalse($ned->canDelete($reseller1));
+        $this->assertFalse($ned->canDelete($admin));
     }
 
     /**
@@ -248,33 +298,25 @@ class UserTest extends TestCase
     }
 
     /**
-     * Test user create/creating observer
+     * Test user created/creating/updated observers
      */
-    public function testCreate(): void
+    public function testCreateAndUpdate(): void
     {
         Queue::fake();
 
         $domain = \config('app.domain');
 
-        $user = User::create(['email' => 'USER-test@' . \strtoupper($domain)]);
+        $user = User::create([
+                'email' => 'USER-test@' . \strtoupper($domain),
+                'password' => 'test',
+        ]);
 
-        $result = User::where('email', 'user-test@' . $domain)->first();
+        $result = User::where('email', "user-test@$domain")->first();
 
-        $this->assertSame('user-test@' . $domain, $result->email);
+        $this->assertSame("user-test@$domain", $result->email);
         $this->assertSame($user->id, $result->id);
         $this->assertSame(User::STATUS_NEW | User::STATUS_ACTIVE, $result->status);
-    }
-
-    /**
-     * Verify user creation process
-     */
-    public function testCreateJobs(): void
-    {
-        Queue::fake();
-
-        $user = User::create([
-                'email' => 'user-test@' . \config('app.domain')
-        ]);
+        $this->assertSame(0, $user->passwords()->count());
 
         Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
         Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 0);
@@ -311,20 +353,13 @@ class UserTest extends TestCase
                 && $userId === $user->id;
         });
 */
-    }
 
-    /**
-     * Verify user creation process invokes the PGP keys creation job (if configured)
-     */
-    public function testCreatePGPJob(): void
-    {
-        Queue::fake();
+        // Test invoking KeyCreateJob
+        $this->deleteTestUser("user-test@$domain");
 
         \App\Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', 1);
 
-        $user = User::create([
-                'email' => 'user-test@' . \config('app.domain')
-        ]);
+        $user = User::create(['email' => "user-test@$domain", 'password' => 'test']);
 
         Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 1);
 
@@ -338,6 +373,44 @@ class UserTest extends TestCase
                     && $userId === $user->id;
             }
         );
+
+        // Update the user, test the password change
+        $oldPassword = $user->password;
+        $user->password = 'test123';
+        $user->save();
+
+        $this->assertNotEquals($oldPassword, $user->password);
+        $this->assertSame(0, $user->passwords()->count());
+
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\User\UpdateJob::class,
+            function ($job) use ($user) {
+                $userEmail = TestCase::getObjectProperty($job, 'userEmail');
+                $userId = TestCase::getObjectProperty($job, 'userId');
+
+                return $userEmail === $user->email
+                    && $userId === $user->id;
+            }
+        );
+
+        // Update the user, test the password history
+        $user->setSetting('password_policy', 'last:3');
+        $oldPassword = $user->password;
+        $user->password = 'test1234';
+        $user->save();
+
+        $this->assertSame(1, $user->passwords()->count());
+        $this->assertSame($oldPassword, $user->passwords()->first()->password);
+
+        $user->password = 'test12345';
+        $user->save();
+        $oldPassword = $user->password;
+        $user->password = 'test123456';
+        $user->save();
+
+        $this->assertSame(2, $user->passwords()->count());
+        $this->assertSame($oldPassword, $user->passwords()->latest()->first()->password);
     }
 
     /**

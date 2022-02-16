@@ -66,7 +66,7 @@ class SettingsTest extends TestCaseDusk
                 // Password policy
                 ->assertSeeIn('@form .row:nth-child(1) > label', 'Password Policy')
                 ->with('@form #password_policy', function (Browser $browser) {
-                    $browser->assertElementsCount('li', 6)
+                    $browser->assertElementsCount('li', 7)
                         ->assertSeeIn('li:nth-child(1) label', 'Minimum password length')
                         ->assertChecked('li:nth-child(1) input[type=checkbox]')
                         ->assertValue('li:nth-child(1) input[type=text]', '5')
@@ -85,6 +85,11 @@ class SettingsTest extends TestCaseDusk
                         ->assertSeeIn('li:nth-child(6) label', 'Password contains a special character')
                         ->assertNotChecked('li:nth-child(6) input[type=checkbox]')
                         ->assertMissing('li:nth-child(6) input[type=text]')
+                        ->assertSeeIn('li:nth-child(7) label', 'Password cannot be the same as the last')
+                        ->assertNotChecked('li:nth-child(7) input[type=checkbox]')
+                        ->assertMissing('li:nth-child(7) input[type=text]')
+                        ->assertSelected('li:nth-child(7) select', 3)
+                        ->assertSelectHasOptions('li:nth-child(7) select', [1,2,3,4,5,6])
                         // Change the policy
                         ->type('li:nth-child(1) input[type=text]', '11')
                         ->type('li:nth-child(2) input[type=text]', '120')
