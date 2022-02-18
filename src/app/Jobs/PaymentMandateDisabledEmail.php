@@ -30,7 +30,7 @@ class PaymentMandateDisabledEmail implements ShouldQueue
     /** @var \App\Wallet A wallet object */
     protected $wallet;
 
-    /** @var \App\User A wallet controller */
+    /** @var ?\App\User A wallet controller */
     protected $controller;
 
 

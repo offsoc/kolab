@@ -29,11 +29,7 @@ class Entitlement extends Model
     use SoftDeletes;
     use UuidStrKeyTrait;
 
-    /**
-     * The fillable columns for this Entitlement
-     *
-     * @var array
-     */
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'sku_id',
         'wallet_id',

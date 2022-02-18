@@ -30,7 +30,7 @@ class PaymentEmail implements ShouldQueue
     /** @var \App\Payment A payment object */
     protected $payment;
 
-    /** @var \App\User A wallet controller */
+    /** @var ?\App\User A wallet controller */
     protected $controller;
 
 

@@ -14,9 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class UserSetting extends Model
 {
-    protected $fillable = [
-        'user_id', 'key', 'value'
-    ];
+    /** @var string[] The attributes that are mass assignable */
+    protected $fillable = ['user_id', 'key', 'value'];
 
     /**
      * The user to which this setting belongs.

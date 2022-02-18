@@ -14,9 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class DomainSetting extends Model
 {
-    protected $fillable = [
-        'domain_id', 'key', 'value'
-    ];
+    /** @var string[] The attributes that are mass assignable */
+    protected $fillable = ['domain_id', 'key', 'value'];
 
     /**
      * The domain to which this setting belongs.

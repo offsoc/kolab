@@ -34,6 +34,7 @@ class Plan extends Model
 
     public $timestamps = false;
 
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'title',
         'name',

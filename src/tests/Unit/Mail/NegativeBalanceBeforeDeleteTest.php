@@ -6,13 +6,10 @@ use App\Jobs\WalletCheck;
 use App\Mail\NegativeBalanceBeforeDelete;
 use App\User;
 use App\Wallet;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class NegativeBalanceBeforeDeleteTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * {@inheritDoc}
      */
@@ -49,7 +46,7 @@ class NegativeBalanceBeforeDeleteTest extends TestCase
                 'app.support_url' => 'https://kolab.org/support',
         ]);
 
-        $mail = $this->fakeMail(new NegativeBalanceBeforeDelete($wallet, $user));
+        $mail = $this->renderMail(new NegativeBalanceBeforeDelete($wallet, $user));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -60,7 +57,7 @@ class NegativeBalanceBeforeDeleteTest extends TestCase
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
         $appName = $user->tenant->title;
 
-        $this->assertMailSubject("$appName Final Warning", $mail['message']);
+        $this->assertSame("$appName Final Warning", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
@@ -93,7 +90,7 @@ class NegativeBalanceBeforeDeleteTest extends TestCase
                 'app.public_url' => 'https://test.org',
         ]);
 
-        $mail = $this->fakeMail(new NegativeBalanceBeforeDelete($wallet, $user));
+        $mail = $this->renderMail(new NegativeBalanceBeforeDelete($wallet, $user));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -103,7 +100,7 @@ class NegativeBalanceBeforeDeleteTest extends TestCase
         $supportUrl = 'https://test.org/support';
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
 
-        $this->assertMailSubject("{$tenant->title} Final Warning", $mail['message']);
+        $this->assertSame("{$tenant->title} Final Warning", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);

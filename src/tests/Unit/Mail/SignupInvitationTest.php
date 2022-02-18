@@ -5,13 +5,10 @@ namespace Tests\Unit\Mail;
 use App\Mail\SignupInvitation;
 use App\SignupInvitation as SI;
 use App\Utils;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class SignupInvitationTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * Test email content
      */
@@ -22,7 +19,7 @@ class SignupInvitationTest extends TestCase
                 'email' => 'test@email',
         ]);
 
-        $mail = $this->fakeMail(new SignupInvitation($invitation));
+        $mail = $this->renderMail(new SignupInvitation($invitation));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -31,7 +28,7 @@ class SignupInvitationTest extends TestCase
         $link = "<a href=\"$url\">$url</a>";
         $appName = \config('app.name');
 
-        $this->assertMailSubject("$appName Invitation", $mail['message']);
+        $this->assertSame("$appName Invitation", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $link) > 0);

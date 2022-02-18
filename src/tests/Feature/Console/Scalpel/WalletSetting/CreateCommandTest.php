@@ -17,7 +17,7 @@ class CreateCommandTest extends TestCase
 
         $setting = $wallet->settings()->where('key', 'test')->first();
 
-        $this->assertSame('init', $setting->fresh()->value);
+        $this->assertSame('init', $setting->value);
         $this->assertSame('init', $wallet->fresh()->getSetting('test'));
     }
 }

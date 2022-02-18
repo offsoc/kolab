@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  */
 class PlanPackage extends Pivot
 {
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'plan_id',
         'package_id',

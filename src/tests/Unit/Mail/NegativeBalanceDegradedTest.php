@@ -6,13 +6,10 @@ use App\Jobs\WalletCheck;
 use App\Mail\NegativeBalanceDegraded;
 use App\User;
 use App\Wallet;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class NegativeBalanceDegradedTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * Test email content
      */
@@ -27,7 +24,7 @@ class NegativeBalanceDegradedTest extends TestCase
                 'app.support_url' => 'https://kolab.org/support',
         ]);
 
-        $mail = $this->fakeMail(new NegativeBalanceDegraded($wallet, $user));
+        $mail = $this->renderMail(new NegativeBalanceDegraded($wallet, $user));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -38,7 +35,7 @@ class NegativeBalanceDegradedTest extends TestCase
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
         $appName = $user->tenant->title;
 
-        $this->assertMailSubject("$appName Account Degraded", $mail['message']);
+        $this->assertSame("$appName Account Degraded", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);

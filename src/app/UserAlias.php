@@ -13,9 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class UserAlias extends Model
 {
-    protected $fillable = [
-        'user_id', 'alias'
-    ];
+    /** @var string[] The attributes that are mass assignable */
+    protected $fillable = ['user_id', 'alias'];
 
     /**
      * The user to which this alias belongs.

@@ -24,6 +24,7 @@ class Payment extends Model
         'amount' => 'integer'
     ];
 
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'id',
         'wallet_id',

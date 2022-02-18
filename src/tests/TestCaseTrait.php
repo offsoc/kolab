@@ -495,13 +495,36 @@ trait TestCaseTrait
      *
      * @return mixed Method return.
      */
-    protected function invokeMethod($object, $methodName, array $parameters = array())
+    protected function invokeMethod($object, $methodName, array $parameters = [])
     {
         $reflection = new \ReflectionClass(get_class($object));
         $method = $reflection->getMethod($methodName);
         $method->setAccessible(true);
 
         return $method->invokeArgs($object, $parameters);
+    }
+
+    /**
+     * Extract content of an email message.
+     *
+     * @param \Illuminate\Mail\Mailable $mail Mailable object
+     *
+     * @return array Parsed message data:
+     *               - 'plain': Plain text body
+     *               - 'html: HTML body
+     *               - 'subject': Mail subject
+     */
+    protected function renderMail(\Illuminate\Mail\Mailable $mail): array
+    {
+        $mail->build(); // @phpstan-ignore-line
+
+        $result = $this->invokeMethod($mail, 'renderForAssertions');
+
+        return [
+            'plain' => $result[1],
+            'html' => $result[0],
+            'subject' => $mail->subject,
+        ];
     }
 
     protected function setUpTest()

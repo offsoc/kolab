@@ -4,13 +4,10 @@ namespace Tests\Unit\Mail;
 
 use App\Mail\SuspendedDebtor;
 use App\User;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class SuspendedDebtorTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * Test email content
      */
@@ -24,7 +21,7 @@ class SuspendedDebtorTest extends TestCase
                 'app.kb.account_delete' => 'https://kb.kolab.org/account-delete',
         ]);
 
-        $mail = $this->fakeMail(new SuspendedDebtor($user));
+        $mail = $this->renderMail(new SuspendedDebtor($user));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -39,7 +36,7 @@ class SuspendedDebtorTest extends TestCase
         $moreLink = sprintf('<a href="%s">here</a>', $moreUrl);
         $appName = \config('app.name');
 
-        $this->assertMailSubject("$appName Account Suspended", $mail['message']);
+        $this->assertSame("$appName Account Suspended", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);

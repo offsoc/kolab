@@ -3,7 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use Iatstuti\Database\Support\NullableFields;
+use Dyrynda\Database\Support\NullableFields;
 use App\Traits\UuidStrKeyTrait;
 use Carbon\Carbon;
 
@@ -27,10 +27,9 @@ class AuthAttempt extends Model
     private const STATUS_ACCEPTED  = 'ACCEPTED';
     private const STATUS_DENIED  = 'DENIED';
 
-    protected $nullable = [
-        'reason',
-    ];
+    protected $nullable = ['reason'];
 
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'ip',
         'user_id',

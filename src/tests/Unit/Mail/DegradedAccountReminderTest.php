@@ -5,13 +5,10 @@ namespace Tests\Unit\Mail;
 use App\Mail\DegradedAccountReminder;
 use App\User;
 use App\Wallet;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class DegradedAccountReminderTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * Test email content
      */
@@ -20,7 +17,7 @@ class DegradedAccountReminderTest extends TestCase
         $user = $this->getTestUser('ned@kolab.org');
         $wallet = $user->wallets->first();
 
-        $mail = $this->fakeMail(new DegradedAccountReminder($wallet, $user));
+        $mail = $this->renderMail(new DegradedAccountReminder($wallet, $user));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -29,7 +26,7 @@ class DegradedAccountReminderTest extends TestCase
         $dashboardLink = sprintf('<a href="%s">%s</a>', $dashboardUrl, $dashboardUrl);
         $appName = $user->tenant->title;
 
-        $this->assertMailSubject("$appName Reminder: Your account is free", $mail['message']);
+        $this->assertSame("$appName Reminder: Your account is free", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);

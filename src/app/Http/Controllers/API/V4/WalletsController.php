@@ -161,6 +161,7 @@ class WalletsController extends ResourceController
             // Get sub-transactions for the specified transaction ID, first
             // check access rights to the transaction's wallet
 
+            /** @var ?\App\Transaction $transaction */
             $transaction = $wallet->transactions()->where('id', $transaction)->first();
 
             if (!$transaction) {

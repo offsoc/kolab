@@ -6,7 +6,7 @@ use App\User;
 use App\Traits\SettingsTrait;
 use App\Traits\UuidStrKeyTrait;
 use Carbon\Carbon;
-use Iatstuti\Database\Support\NullableFields;
+use Dyrynda\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -30,39 +30,23 @@ class Wallet extends Model
 
     public $timestamps = false;
 
-    /**
-     * The attributes' default values.
-     *
-     * @var array
-     */
+    /** @var array The attributes' default values */
     protected $attributes = [
         'balance' => 0,
     ];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'currency',
         'description'
     ];
 
-    /**
-     * The attributes that can be not set.
-     *
-     * @var array
-     */
+    /** @var array The attributes that can be not set */
     protected $nullable = [
         'description',
     ];
 
-    /**
-     * The types of attributes to which its values will be cast
-     *
-     * @var array
-     */
+    /** @var array The types of attributes to which its values will be cast */
     protected $casts = [
         'balance' => 'integer',
     ];

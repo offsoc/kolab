@@ -34,6 +34,7 @@ class Transaction extends Model
     public const WALLET_REFUND = 'refund';
     public const WALLET_CHARGEBACK = 'chback';
 
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         // actor, if any
         'user_email',

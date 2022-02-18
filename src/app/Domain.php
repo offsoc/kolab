@@ -56,11 +56,8 @@ class Domain extends Model
     public const HASH_TEXT = 2;
     public const HASH_CNAME = 3;
 
-    protected $fillable = [
-        'namespace',
-        'status',
-        'type'
-    ];
+    /** @var string[] The attributes that are mass assignable */
+    protected $fillable = ['namespace', 'status', 'type'];
 
     /**
      * Assign a package to a domain. The domain should not belong to any existing entitlements.

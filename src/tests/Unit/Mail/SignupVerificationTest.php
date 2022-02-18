@@ -5,13 +5,10 @@ namespace Tests\Unit\Mail;
 use App\Mail\SignupVerification;
 use App\SignupCode;
 use App\Utils;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class SignupVerificationTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * Test email content
      */
@@ -25,7 +22,7 @@ class SignupVerificationTest extends TestCase
                 'last_name' => 'Last',
         ]);
 
-        $mail = $this->fakeMail(new SignupVerification($code));
+        $mail = $this->renderMail(new SignupVerification($code));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -34,7 +31,7 @@ class SignupVerificationTest extends TestCase
         $link = "<a href=\"$url\">$url</a>";
         $appName = \config('app.name');
 
-        $this->assertMailSubject("$appName Registration", $mail['message']);
+        $this->assertSame("$appName Registration", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $link) > 0);

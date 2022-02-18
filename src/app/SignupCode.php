@@ -35,32 +35,16 @@ class SignupCode extends Model
     public const CODE_EXP_HOURS    = 24;
 
 
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
+    /** @var string The primary key associated with the table */
     protected $primaryKey = 'code';
 
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
+    /** @var bool Indicates if the IDs are auto-incrementing */
     public $incrementing = false;
 
-    /**
-     * The "type" of the auto-incrementing ID.
-     *
-     * @var string
-     */
+    /** @var string The "type" of the auto-incrementing ID */
     protected $keyType = 'string';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'code',
         'email',
@@ -74,12 +58,9 @@ class SignupCode extends Model
 
     protected $casts = ['headers' => 'array'];
 
-    /**
-     * The attributes that should be mutated to dates.
-     *
-     * @var array
-     */
+    /** @var array The attributes that should be mutated to dates */
     protected $dates = ['expires_at'];
+
 
     /**
      * Check if code is expired.

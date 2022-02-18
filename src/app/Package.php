@@ -39,6 +39,7 @@ class Package extends Model
 
     public $timestamps = false;
 
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'description',
         'discount_rate',

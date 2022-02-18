@@ -9,6 +9,7 @@ class IP6Net extends Model
 {
     protected $table = "ip6nets";
 
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'rir_name',
         'net_number',

@@ -11,8 +11,6 @@ use Tests\TestCase;
 
 class PasswordResetEmailTest extends TestCase
 {
-    private $code;
-
     /**
      * {@inheritDoc}
      *

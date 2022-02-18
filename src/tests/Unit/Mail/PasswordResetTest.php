@@ -6,13 +6,10 @@ use App\Mail\PasswordReset;
 use App\User;
 use App\Utils;
 use App\VerificationCode;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * Test email content
      */
@@ -29,7 +26,7 @@ class PasswordResetTest extends TestCase
                 'name' => 'User Name',
         ]);
 
-        $mail = $this->fakeMail(new PasswordReset($code));
+        $mail = $this->renderMail(new PasswordReset($code));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -38,7 +35,7 @@ class PasswordResetTest extends TestCase
         $link = "<a href=\"$url\">$url</a>";
         $appName = \config('app.name');
 
-        $this->assertMailSubject("$appName Password Reset", $mail['message']);
+        $this->assertSame("$appName Password Reset", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $link) > 0);

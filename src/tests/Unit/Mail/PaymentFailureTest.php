@@ -5,13 +5,10 @@ namespace Tests\Unit\Mail;
 use App\Mail\PaymentFailure;
 use App\Payment;
 use App\User;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class PaymentFailureTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * Test email content
      */
@@ -23,7 +20,7 @@ class PaymentFailureTest extends TestCase
 
         \config(['app.support_url' => 'https://kolab.org/support']);
 
-        $mail = $this->fakeMail(new PaymentFailure($payment, $user));
+        $mail = $this->renderMail(new PaymentFailure($payment, $user));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -34,7 +31,7 @@ class PaymentFailureTest extends TestCase
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
         $appName = \config('app.name');
 
-        $this->assertMailSubject("$appName Payment Failed", $mail['message']);
+        $this->assertSame("$appName Payment Failed", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);

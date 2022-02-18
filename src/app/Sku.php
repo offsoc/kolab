@@ -32,6 +32,7 @@ class Sku extends Model
         'units_free' => 'integer'
     ];
 
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'active',
         'cost',

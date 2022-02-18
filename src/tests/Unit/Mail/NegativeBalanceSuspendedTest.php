@@ -6,13 +6,10 @@ use App\Jobs\WalletCheck;
 use App\Mail\NegativeBalanceSuspended;
 use App\User;
 use App\Wallet;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class NegativeBalanceSuspendedTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * Test email content
      */
@@ -29,7 +26,7 @@ class NegativeBalanceSuspendedTest extends TestCase
                 'app.support_url' => 'https://kolab.org/support',
         ]);
 
-        $mail = $this->fakeMail(new NegativeBalanceSuspended($wallet, $user));
+        $mail = $this->renderMail(new NegativeBalanceSuspended($wallet, $user));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -40,7 +37,7 @@ class NegativeBalanceSuspendedTest extends TestCase
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
         $appName = $user->tenant->title;
 
-        $this->assertMailSubject("$appName Account Suspended", $mail['message']);
+        $this->assertSame("$appName Account Suspended", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);

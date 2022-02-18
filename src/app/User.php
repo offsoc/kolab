@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Iatstuti\Database\Support\NullableFields;
+use Dyrynda\Database\Support\NullableFields;
 use Laravel\Passport\HasApiTokens;
 use League\OAuth2\Server\Exception\OAuthServerException;
 
@@ -57,11 +57,7 @@ class User extends Authenticatable
     // user in "limited feature-set" state
     public const STATUS_DEGRADED   = 1 << 6;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'id',
         'email',
@@ -70,11 +66,7 @@ class User extends Authenticatable
         'status',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
+    /** @var array The attributes that should be hidden for arrays */
     protected $hidden = [
         'password',
         'password_ldap',

@@ -31,12 +31,9 @@ class SignupInvitation extends Model
     public const STATUS_COMPLETED = 1 << 3;
 
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = ['email'];
+
 
     /**
      * Returns whether this invitation process completed (user signed up)

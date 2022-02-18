@@ -15,10 +15,8 @@ class Tenant extends Model
 {
     use SettingsTrait;
 
-    protected $fillable = [
-        'id',
-        'title',
-    ];
+    /** @var string[] The attributes that are mass assignable */
+    protected $fillable = ['id', 'title'];
 
 
     /**

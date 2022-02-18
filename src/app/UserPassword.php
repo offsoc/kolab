@@ -19,7 +19,7 @@ class UserPassword extends Model
     /** @var array The attributes that should be mutated to dates. */
     protected $dates = ['created_at'];
 
-    /** @var array The attributes that are mass assignable. */
+    /** @var string[] The attributes that are mass assignable. */
     protected $fillable = ['user_id', 'password'];
 
     /** @var array The attributes that should be hidden for arrays. */

@@ -48,7 +48,7 @@ class SharedFolder extends Model
     /** @const array Supported folder type labels */
     public const SUPPORTED_TYPES = ['mail', 'event', 'contact', 'task', 'note', 'file'];
 
-    /** @var array Mass-assignable properties */
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'email',
         'name',

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  */
 class PackageSku extends Pivot
 {
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'package_id',
         'sku_id',

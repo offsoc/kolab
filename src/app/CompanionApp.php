@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class CompanionApp extends Model
 {
+    /** @var string[] The attributes that are mass assignable */
     protected $fillable = [
         'name',
         'user_id',

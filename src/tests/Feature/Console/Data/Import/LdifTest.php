@@ -92,6 +92,7 @@ class LdifTest extends TestCase
 
         // Users
         $this->assertSame(2, $owner->users(false)->count());
+        /** @var \App\User $user */
         $user = $owner->users(false)->where('email', 'user@kolab3.com')->first();
 
         // User settings
@@ -112,6 +113,7 @@ class LdifTest extends TestCase
         ]);
 
         // Domains
+        /** @var \App\Domain[] $domains */
         $domains = $owner->domains(false, false)->orderBy('namespace')->get();
 
         $this->assertCount(2, $domains);
@@ -124,6 +126,7 @@ class LdifTest extends TestCase
         $this->assertEntitlements($domains[1], ['domain-hosting']);
 
         // Shared folders
+        /** @var \App\SharedFolder[] $folders */
         $folders = $owner->sharedFolders(false)->orderBy('email')->get();
 
         $this->assertCount(2, $folders);
@@ -139,6 +142,7 @@ class LdifTest extends TestCase
         $this->assertSame('shared/Folder1@kolab3.com', $folders[1]->getSetting('folder'));
 
         // Groups
+        /** @var \App\Group[] $groups */
         $groups = $owner->groups(false)->orderBy('email')->get();
 
         $this->assertCount(1, $groups);
@@ -148,6 +152,7 @@ class LdifTest extends TestCase
         $this->assertSame('["sender@gmail.com","-"]', $groups[0]->getSetting('sender_policy'));
 
         // Resources
+        /** @var \App\Resource[] $resources */
         $resources = $owner->resources(false)->orderBy('email')->get();
 
         $this->assertCount(1, $resources);

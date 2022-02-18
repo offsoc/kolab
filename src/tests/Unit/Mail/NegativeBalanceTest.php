@@ -5,13 +5,10 @@ namespace Tests\Unit\Mail;
 use App\Mail\NegativeBalance;
 use App\User;
 use App\Wallet;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class NegativeBalanceTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * Test email content
      */
@@ -24,7 +21,7 @@ class NegativeBalanceTest extends TestCase
                 'app.support_url' => 'https://kolab.org/support',
         ]);
 
-        $mail = $this->fakeMail(new NegativeBalance($wallet, $user));
+        $mail = $this->renderMail(new NegativeBalance($wallet, $user));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -35,7 +32,7 @@ class NegativeBalanceTest extends TestCase
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
         $appName = \config('app.name');
 
-        $this->assertMailSubject("$appName Payment Required", $mail['message']);
+        $this->assertSame("$appName Payment Required", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
