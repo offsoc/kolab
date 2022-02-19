@@ -10,7 +10,9 @@ use Tests\TestCase;
 
 class SecondFactorTest extends TestCase
 {
-
+    /**
+     * {@inheritDoc}
+     */
     public function setUp(): void
     {
         parent::setUp();
@@ -18,6 +20,9 @@ class SecondFactorTest extends TestCase
         $this->deleteTestUser('entitlement-test@kolabnow.com');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         $this->deleteTestUser('entitlement-test@kolabnow.com');

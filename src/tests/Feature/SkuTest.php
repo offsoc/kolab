@@ -11,7 +11,9 @@ use Tests\TestCase;
 
 class SkuTest extends TestCase
 {
-
+    /**
+     * {@inheritDoc}
+     */
     public function setUp(): void
     {
         parent::setUp();
@@ -19,6 +21,9 @@ class SkuTest extends TestCase
         $this->deleteTestUser('jane@kolabnow.com');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         $this->deleteTestUser('jane@kolabnow.com');

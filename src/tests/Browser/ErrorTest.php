@@ -7,7 +7,6 @@ use Tests\TestCaseDusk;
 
 class ErrorTest extends TestCaseDusk
 {
-
     /**
      * Test error 404 page on unknown route
      *

@@ -10,7 +10,6 @@ use Laravel\Passport\Bridge;
 
 class PassportServiceProvider extends \Laravel\Passport\PassportServiceProvider
 {
-
     /**
      * Make the authorization service instance.
      *

@@ -8,7 +8,6 @@ use Tests\TestCase;
 
 class TenantTest extends TestCase
 {
-
     /**
      * {@inheritDoc}
      */
