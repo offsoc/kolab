@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class UserAlias extends Model
 {
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['user_id', 'alias'];
 
     /**

@@ -29,7 +29,7 @@ class Entitlement extends Model
     use SoftDeletes;
     use UuidStrKeyTrait;
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'sku_id',
         'wallet_id',
@@ -40,6 +40,7 @@ class Entitlement extends Model
         'fee',
     ];
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'cost' => 'integer',
         'fee' => 'integer'

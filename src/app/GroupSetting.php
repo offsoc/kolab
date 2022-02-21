@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class GroupSetting extends Model
 {
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['group_id', 'key', 'value'];
 
     /**

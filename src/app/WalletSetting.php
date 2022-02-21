@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class WalletSetting extends Model
 {
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['wallet_id', 'key', 'value'];
 
     /**

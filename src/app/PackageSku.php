@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  */
 class PackageSku extends Pivot
 {
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'package_id',
         'sku_id',
@@ -24,6 +24,7 @@ class PackageSku extends Pivot
         'qty'
     ];
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'cost' => 'integer',
         'qty' => 'integer'

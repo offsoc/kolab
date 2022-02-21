@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
+
 /**
  * Laravel - A PHP Framework For Web Artisans
  *
@@ -8,6 +11,10 @@
  */
 
 define('LARAVEL_START', microtime(true));
+
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -49,10 +56,10 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 |
 */
 
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+$kernel = $app->make(Kernel::class);
 
 $response = $kernel->handle(
-    $request = Illuminate\Http\Request::capture()
+    $request = Request::capture()
 );
 
 $response->send();

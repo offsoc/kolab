@@ -56,7 +56,7 @@ class Domain extends Model
     public const HASH_TEXT = 2;
     public const HASH_CNAME = 3;
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['namespace', 'status', 'type'];
 
     /**

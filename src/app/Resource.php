@@ -44,7 +44,7 @@ class Resource extends Model
     // resource has been created in IMAP
     public const STATUS_IMAP_READY = 1 << 8;
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['email', 'name', 'status'];
 
     /** @var ?string Domain name for a resource to be created */

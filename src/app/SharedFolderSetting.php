@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SharedFolderSetting extends Model
 {
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['shared_folder_id', 'key', 'value'];
 
     /**

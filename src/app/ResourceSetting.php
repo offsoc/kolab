@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ResourceSetting extends Model
 {
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['resource_id', 'key', 'value'];
 
     /**

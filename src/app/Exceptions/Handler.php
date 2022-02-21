@@ -2,7 +2,6 @@
 
 namespace App\Exceptions;
 
-use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Support\Facades\DB;
@@ -17,27 +16,23 @@ class Handler extends ExceptionHandler
 
     /** @var string[] A list of the inputs that are never flashed for validation exceptions */
     protected $dontFlash = [
+        'current_password',
         'password',
         'password_confirmation',
     ];
 
 
     /**
-     * Render an exception into an HTTP response.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \Throwable               $exception
-     *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * Register the exception handling callbacks for the application.
      */
-    public function render($request, \Throwable $exception)
+    public function register()
     {
-        // Rollback uncommitted transactions
-        while (DB::transactionLevel() > 0) {
-            DB::rollBack();
-        }
-
-        return parent::render($request, $exception);
+        $this->reportable(function (\Throwable $e) {
+            // Rollback uncommitted transactions
+            while (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+        });
     }
 
     /**

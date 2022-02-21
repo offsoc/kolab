@@ -34,28 +34,23 @@ class Transaction extends Model
     public const WALLET_REFUND = 'refund';
     public const WALLET_CHARGEBACK = 'chback';
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         // actor, if any
         'user_email',
-
         // entitlement, wallet
         'object_id',
         'object_type',
-
         // entitlement: created, deleted, billed
         // wallet: debit, credit, award, penalty
         'type',
-
         'amount',
-
         'description',
-
         // parent, for example wallet debit is parent for entitlements charged.
         'transaction_id'
     ];
 
-    /** @var array Casts properties as type */
+    /** @var array<string, string> Casts properties as type */
     protected $casts = [
         'amount' => 'integer',
     ];

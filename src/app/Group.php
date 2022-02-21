@@ -43,7 +43,7 @@ class Group extends Model
     // group has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 4;
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'email',
         'members',

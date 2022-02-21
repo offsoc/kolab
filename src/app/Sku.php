@@ -28,11 +28,12 @@ class Sku extends Model
     use HasTranslations;
     use UuidStrKeyTrait;
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'units_free' => 'integer'
     ];
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'active',
         'cost',
@@ -46,7 +47,7 @@ class Sku extends Model
         'units_free',
     ];
 
-    /** @var array Translatable properties */
+    /** @var array<int, string> Translatable properties */
     public $translatable = [
         'name',
         'description',

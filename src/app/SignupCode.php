@@ -56,9 +56,10 @@ class SignupCode extends Model
         'voucher'
     ];
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = ['headers' => 'array'];
 
-    /** @var array The attributes that should be mutated to dates */
+    /** @var array<int, string> The attributes that should be mutated to dates */
     protected $dates = ['expires_at'];
 
 

@@ -57,7 +57,7 @@ class User extends Authenticatable
     // user in "limited feature-set" state
     public const STATUS_DEGRADED   = 1 << 6;
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'id',
         'email',
@@ -66,13 +66,14 @@ class User extends Authenticatable
         'status',
     ];
 
-    /** @var array The attributes that should be hidden for arrays */
+    /** @var array<int, string> The attributes that should be hidden for arrays */
     protected $hidden = [
         'password',
         'password_ldap',
         'role'
     ];
 
+    /** @var array<int, string> The attributes that can be null */
     protected $nullable = [
         'password',
         'password_ldap'

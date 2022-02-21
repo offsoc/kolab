@@ -20,11 +20,12 @@ class Payment extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'amount' => 'integer'
     ];
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int,string> The attributes that are mass assignable */
     protected $fillable = [
         'id',
         'wallet_id',

@@ -29,7 +29,7 @@ class AuthAttempt extends Model
 
     protected $nullable = ['reason'];
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'ip',
         'user_id',
@@ -39,6 +39,7 @@ class AuthAttempt extends Model
         'last_seen',
     ];
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'expires_at' => 'datetime',
         'last_seen' => 'datetime'

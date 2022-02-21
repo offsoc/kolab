@@ -39,7 +39,7 @@ class Package extends Model
 
     public $timestamps = false;
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'description',
         'discount_rate',
@@ -47,7 +47,7 @@ class Package extends Model
         'title',
     ];
 
-    /** @var array Translatable properties */
+    /** @var array<int, string> Translatable properties */
     public $translatable = [
         'name',
         'description',

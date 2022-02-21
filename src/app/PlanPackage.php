@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  */
 class PlanPackage extends Pivot
 {
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'plan_id',
         'package_id',
@@ -30,6 +30,7 @@ class PlanPackage extends Pivot
         'discount_rate'
     ];
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'qty' => 'integer',
         'qty_max' => 'integer',

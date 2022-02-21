@@ -26,10 +26,10 @@ class Discount extends Model
         'discount' => 'integer',
     ];
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['active', 'code', 'description', 'discount'];
 
-    /** @var array Translatable properties */
+    /** @var array<int, string> Translatable properties */
     public $translatable = ['description'];
 
 

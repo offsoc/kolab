@@ -9,7 +9,7 @@ class IP4Net extends Model
 {
     protected $table = "ip4nets";
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'rir_name',
         'net_number',

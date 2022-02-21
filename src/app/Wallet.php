@@ -35,18 +35,18 @@ class Wallet extends Model
         'balance' => 0,
     ];
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'currency',
         'description'
     ];
 
-    /** @var array The attributes that can be not set */
+    /** @var array<int, string> The attributes that can be not set */
     protected $nullable = [
         'description',
     ];
 
-    /** @var array The types of attributes to which its values will be cast */
+    /** @var array<string, string> The types of attributes to which its values will be cast */
     protected $casts = [
         'balance' => 'integer',
     ];

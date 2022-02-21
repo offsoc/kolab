@@ -38,13 +38,13 @@ class VerificationCode extends Model
     /** @var bool Indicates if the model should be timestamped */
     public $timestamps = false;
 
-    /** @var array Casts properties as type */
+    /** @var array<string, string> Casts properties as type */
     protected $casts = [
         'active' => 'boolean',
         'expires_at' => 'datetime',
     ];
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['user_id', 'code', 'short_code', 'mode', 'expires_at', 'active'];
 
 
