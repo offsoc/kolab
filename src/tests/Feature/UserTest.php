@@ -1096,7 +1096,7 @@ class UserTest extends TestCase
     }
 
     /**
-     * Tests for UserAliasesTrait::setAliases()
+     * Tests for AliasesTrait::setAliases()
      */
     public function testSetAliases(): void
     {

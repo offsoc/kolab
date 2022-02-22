@@ -105,6 +105,8 @@ objectClass: top
 kolabFolderType: mail
 kolabTargetFolder: shared/Folder1@kolab3.com
 mail: folder1@kolab3.com
+alias: folder-alias1@kolab3.com
+alias: folder-alias2@kolab3.com
 acl: anyone, read-write
 acl: owner@kolab3.com, full
 

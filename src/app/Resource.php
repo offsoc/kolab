@@ -4,6 +4,7 @@ namespace App;
 
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
+use App\Traits\EmailPropertyTrait;
 use App\Traits\ResourceConfigTrait;
 use App\Traits\SettingsTrait;
 use App\Traits\StatusPropertyTrait;
@@ -30,6 +31,7 @@ class Resource extends Model
     use SoftDeletes;
     use StatusPropertyTrait;
     use UuidIntKeyTrait;
+    use EmailPropertyTrait; // must be first after UuidIntKeyTrait
 
     // we've simply never heard of this resource
     public const STATUS_NEW        = 1 << 0;
@@ -44,54 +46,12 @@ class Resource extends Model
     // resource has been created in IMAP
     public const STATUS_IMAP_READY = 1 << 8;
 
+    // A template for the email attribute on a resource creation
+    public const EMAIL_TEMPLATE = 'resource-{id}@{domainName}';
+
     protected $fillable = [
         'email',
         'name',
         'status',
     ];
-
-    /** @var ?string Domain name for a resource to be created */
-    public $domain;
-
-
-    /**
-     * Returns the resource domain.
-     *
-     * @return ?\App\Domain The domain to which the resource belongs to, NULL if it does not exist
-     */
-    public function domain(): ?Domain
-    {
-        if (isset($this->domain)) {
-            $domainName = $this->domain;
-        } else {
-            list($local, $domainName) = explode('@', $this->email);
-        }
-
-        return Domain::where('namespace', $domainName)->first();
-    }
-
-    /**
-     * Find whether an email address exists as a resource (including deleted resources).
-     *
-     * @param string $email           Email address
-     * @param bool   $return_resource Return Resource instance instead of boolean
-     *
-     * @return \App\Resource|bool True or Resource model object if found, False otherwise
-     */
-    public static function emailExists(string $email, bool $return_resource = false)
-    {
-        if (strpos($email, '@') === false) {
-            return false;
-        }
-
-        $email = \strtolower($email);
-
-        $resource = self::withTrashed()->where('email', $email)->first();
-
-        if ($resource) {
-            return $return_resource ? $resource : true;
-        }
-
-        return false;
-    }
 }

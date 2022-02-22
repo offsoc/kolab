@@ -74,7 +74,7 @@ class ResourcesController extends RelationController
         // Create the resource
         $resource = new Resource();
         $resource->name = request()->input('name');
-        $resource->domain = $domain;
+        $resource->domainName = $domain;
         $resource->save();
 
         $resource->assignToWallet($owner->wallets->first());

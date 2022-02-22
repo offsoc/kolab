@@ -75,7 +75,6 @@ class AuthTest extends TestCase
         $this->assertEquals(User::STATUS_NEW | User::STATUS_ACTIVE, $json['status']);
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
-        $this->assertTrue(is_array($json['aliases']));
         $this->assertTrue(!isset($json['access_token']));
 
         // Note: Details of the content are tested in testUserResponse()
@@ -95,7 +94,6 @@ class AuthTest extends TestCase
         $this->assertEquals('john@kolab.org', $json['email']);
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
-        $this->assertTrue(is_array($json['aliases']));
         $this->assertTrue(!empty($json['access_token']));
         $this->assertTrue(!empty($json['expires_in']));
     }
@@ -142,7 +140,6 @@ class AuthTest extends TestCase
         $this->assertEquals($user->email, $json['email']);
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
-        $this->assertTrue(is_array($json['aliases']));
 
         // Valid user+password (upper-case)
         $post = ['email' => 'John@Kolab.org', 'password' => 'simple123'];

@@ -54,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Resource::observe(\App\Observers\ResourceObserver::class);
         \App\ResourceSetting::observe(\App\Observers\ResourceSettingObserver::class);
         \App\SharedFolder::observe(\App\Observers\SharedFolderObserver::class);
+        \App\SharedFolderAlias::observe(\App\Observers\SharedFolderAliasObserver::class);
         \App\SharedFolderSetting::observe(\App\Observers\SharedFolderSettingObserver::class);
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
         \App\SignupInvitation::observe(\App\Observers\SignupInvitationObserver::class);

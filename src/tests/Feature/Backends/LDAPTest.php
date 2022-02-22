@@ -331,6 +331,7 @@ class LDAPTest extends TestCase
             'kolabfoldertype' => 'event',
             'kolabtargetfolder' => 'shared/test-folder@kolab.org',
             'acl' => null,
+            'alias' => null,
         ];
 
         foreach ($expected as $attr => $value) {
@@ -342,6 +343,8 @@ class LDAPTest extends TestCase
         $folder->name = 'Te(=ść)1';
         $folder->save();
         $folder->setSetting('acl', '["john@kolab.org, read-write","anyone, read-only"]');
+        $aliases = ['t1-' . $folder->email, 't2-' . $folder->email];
+        $folder->setAliases($aliases);
 
         LDAP::updateSharedFolder($folder);
 
@@ -349,6 +352,7 @@ class LDAPTest extends TestCase
         $expected['acl'] = ['john@kolab.org, read-write', 'anyone, read-only'];
         $expected['dn'] = 'cn=Te(\\3dść)1,ou=Shared Folders,ou=kolab.org,' . $root_dn;
         $expected['cn'] = 'Te(=ść)1';
+        $expected['alias'] = $aliases;
 
         $ldap_folder = LDAP::getSharedFolder($folder->email);
 

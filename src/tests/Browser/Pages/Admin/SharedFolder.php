@@ -52,6 +52,7 @@ class SharedFolder extends Page
             '@app' => '#app',
             '@folder-info' => '#folder-info',
             '@folder-settings' => '#folder-settings',
+            '@folder-aliases' => '#folder-aliases',
         ];
     }
 }

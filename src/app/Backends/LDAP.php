@@ -1031,6 +1031,7 @@ class LDAP
         $entry['kolabfoldertype'] = $folder->type;
         $entry['kolabtargetfolder'] = $settings['folder'] ?? '';
         $entry['acl'] = !empty($settings['acl']) ? json_decode($settings['acl'], true) : '';
+        $entry['alias'] = $folder->aliases()->pluck('alias')->all();
     }
 
     /**
@@ -1073,7 +1074,7 @@ class LDAP
         $entry['inetuserstatus'] = $user->status;
         $entry['o'] = $settings['organization'];
         $entry['mailquota'] = 0;
-        $entry['alias'] = $user->aliases->pluck('alias')->toArray();
+        $entry['alias'] = $user->aliases()->pluck('alias')->all();
 
         $roles = [];
 
@@ -1193,7 +1194,7 @@ class LDAP
         $domainName = explode('@', $email, 2)[1];
         $base_dn = self::baseDN($ldap, $domainName, 'Shared Folders');
 
-        $attrs = ['dn', 'cn', 'mail', 'objectclass', 'kolabtargetfolder', 'kolabfoldertype', 'acl'];
+        $attrs = ['dn', 'cn', 'mail', 'objectclass', 'kolabtargetfolder', 'kolabfoldertype', 'acl', 'alias'];
 
         // For shared folders we're using search() instead of get_entry() because
         // a folder name is not constant, so e.g. on update we might have

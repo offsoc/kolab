@@ -417,7 +417,7 @@ trait TestCaseTrait
 
             $resource = new Resource();
             $resource->email = $email;
-            $resource->domain = $domain;
+            $resource->domainName = $domain;
 
             if (!isset($attrib['name'])) {
                 $resource->name = $local;
@@ -449,7 +449,7 @@ trait TestCaseTrait
 
             $folder = new SharedFolder();
             $folder->email = $email;
-            $folder->domain = $domain;
+            $folder->domainName = $domain;
 
             if (!isset($attrib['name'])) {
                 $folder->name = $local;

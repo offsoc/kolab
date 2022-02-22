@@ -56,6 +56,7 @@ class SharedFolderTest extends TestCaseDusk
             $user = $this->getTestUser('john@kolab.org');
             $folder = $this->getTestSharedFolder('folder-event@kolab.org');
             $folder->setConfig(['acl' => ['anyone, read-only', 'jack@kolab.org, read-write']]);
+            $folder->setAliases(['folder-alias1@kolab.org', 'folder-alias2@kolab.org']);
             $folder->status = SharedFolder::STATUS_NEW | SharedFolder::STATUS_ACTIVE
                 | SharedFolder::STATUS_LDAP_READY | SharedFolder::STATUS_IMAP_READY;
             $folder->save();
@@ -85,13 +86,20 @@ class SharedFolderTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(4) label', 'Type')
                         ->assertSeeIn('.row:nth-child(4) #type', 'Calendar');
                 })
-                ->assertElementsCount('ul.nav-tabs', 1)
-                ->assertSeeIn('ul.nav-tabs .nav-link', 'Settings')
+                ->assertElementsCount('ul.nav-tabs .nav-item', 2)
+                ->assertSeeIn('ul.nav-tabs .nav-item:nth-child(1) .nav-link', 'Settings')
                 ->with('@folder-settings form', function (Browser $browser) {
                     $browser->assertElementsCount('.row', 1)
                         ->assertSeeIn('.row:nth-child(1) label', 'Access rights')
                         ->assertSeeIn('.row:nth-child(1) #acl', 'anyone: read-only')
                         ->assertSeeIn('.row:nth-child(1) #acl', 'jack@kolab.org: read-write');
+                })
+                ->assertSeeIn('ul.nav-tabs .nav-item:nth-child(2) .nav-link', 'Email Aliases (2)')
+                ->click('ul.nav-tabs .nav-item:nth-child(2) .nav-link')
+                ->with('@folder-aliases table', function (Browser $browser) {
+                    $browser->assertElementsCount('tbody tr', 2)
+                        ->assertSeeIn('tbody tr:nth-child(1) td', 'folder-alias1@kolab.org')
+                        ->assertSeeIn('tbody tr:nth-child(2) td', 'folder-alias2@kolab.org');
                 });
 
             // Test invalid shared folder identifier

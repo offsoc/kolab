@@ -2,11 +2,22 @@
 
 namespace App\Traits;
 
-trait UserAliasesTrait
+use Illuminate\Support\Str;
+
+trait AliasesTrait
 {
     /**
+     * Email aliases of this object.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function aliases()
+    {
+        return $this->hasMany(static::class . 'Alias');
+    }
+
+    /**
      * Find whether an email address exists as an alias
-     * (including aliases of deleted users).
      *
      * @param string $email Email address
      *
@@ -19,14 +30,13 @@ trait UserAliasesTrait
         }
 
         $email = \strtolower($email);
+        $class = static::class . 'Alias';
 
-        $count = \App\UserAlias::where('alias', $email)->count();
-
-        return $count > 0;
+        return $class::where('alias', $email)->count() > 0;
     }
 
     /**
-     * A helper to update user aliases list.
+     * A helper to update object's aliases list.
      *
      * Example Usage:
      *
@@ -47,6 +57,7 @@ trait UserAliasesTrait
         $existing_aliases = [];
 
         foreach ($this->aliases()->get() as $alias) {
+            /** @var \App\UserAlias|\App\SharedFolderAlias $alias */
             if (!in_array($alias->alias, $aliases)) {
                 $alias->delete();
             } else {

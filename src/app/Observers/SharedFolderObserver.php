@@ -19,18 +19,6 @@ class SharedFolderObserver
             $folder->type = 'mail';
         }
 
-        if (empty($folder->email)) {
-            if (!isset($folder->domain)) {
-                throw new \Exception("Missing 'domain' property for a new shared folder");
-            }
-
-            $domainName = \strtolower($folder->domain);
-
-            $folder->email = "{$folder->type}-{$folder->id}@{$domainName}";
-        } else {
-            $folder->email = \strtolower($folder->email);
-        }
-
         $folder->status |= SharedFolder::STATUS_NEW | SharedFolder::STATUS_ACTIVE;
     }
 

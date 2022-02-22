@@ -5,6 +5,7 @@ namespace Tests\Browser;
 use App\SharedFolder;
 use Tests\Browser;
 use Tests\Browser\Components\AclInput;
+use Tests\Browser\Components\ListInput;
 use Tests\Browser\Components\Status;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
@@ -95,17 +96,15 @@ class SharedFolderTest extends TestCaseDusk
                 ->on(new SharedFolderList())
                 ->whenAvailable('@table', function (Browser $browser) {
                     $browser->waitFor('tbody tr')
+                        ->assertElementsCount('thead th', 2)
                         ->assertSeeIn('thead tr th:nth-child(1)', 'Name')
                         ->assertSeeIn('thead tr th:nth-child(2)', 'Type')
-                        ->assertSeeIn('thead tr th:nth-child(3)', 'Email Address')
                         ->assertElementsCount('tbody tr', 2)
                         ->assertSeeIn('tbody tr:nth-child(1) td:nth-child(1) a', 'Calendar')
                         ->assertSeeIn('tbody tr:nth-child(1) td:nth-child(2)', 'Calendar')
-                        ->assertSeeIn('tbody tr:nth-child(1) td:nth-child(3) a', 'folder-event@kolab.org')
                         ->assertText('tbody tr:nth-child(1) td:nth-child(1) svg.text-success title', 'Active')
                         ->assertSeeIn('tbody tr:nth-child(2) td:nth-child(1) a', 'Contacts')
                         ->assertSeeIn('tbody tr:nth-child(2) td:nth-child(2)', 'Address Book')
-                        ->assertSeeIn('tbody tr:nth-child(2) td:nth-child(3) a', 'folder-contact@kolab.org')
                         ->assertMissing('tfoot');
                 });
         });
@@ -152,22 +151,44 @@ class SharedFolderTest extends TestCaseDusk
                         ->assertSeeIn('div.row:nth-child(3) label', 'Domain')
                         ->assertSelectHasOptions('div.row:nth-child(3) select', ['kolab.org'])
                         ->assertValue('div.row:nth-child(3) select', 'kolab.org')
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Email Addresses')
+                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                            $browser->assertListInputValue([])
+                                ->assertValue('@input', '');
+                        })
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })
                 // Test error conditions
                 ->type('#name', str_repeat('A', 192))
+                ->select('#type', 'event')
+                ->assertMissing('#aliases')
                 ->click('@general button[type=submit]')
                 ->waitFor('#name + .invalid-feedback')
                 ->assertSeeIn('#name + .invalid-feedback', 'The name may not be greater than 191 characters.')
                 ->assertFocused('#name')
                 ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
-                // Test successful folder creation
+                // Test error handling on aliases input
                 ->type('#name', 'Test Folder')
+                ->select('#type', 'mail')
+                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    $browser->addListEntry('folder-alias@unknown');
+                })
+                ->click('@general button[type=submit]')
+                ->assertMissing('#name + .invalid-feedback')
+                ->waitFor('#aliases + .invalid-feedback')
+                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    $browser->assertFormError(1, "The specified domain is invalid.", true);
+                })
+                ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                // Test successful folder creation
                 ->select('#type', 'event')
                 ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'Shared folder created successfully.')
                 ->on(new SharedFolderList())
                 ->assertElementsCount('@table tbody tr', 3);
+
+            $this->assertSame(1, SharedFolder::where('name', 'Test Folder')->count());
+            $this->assertSame(0, SharedFolder::where('name', 'Test Folder')->first()->aliases()->count());
 
             // Test folder update
             $browser->click('@table tr:nth-child(3) td:first-child a')
@@ -182,12 +203,7 @@ class SharedFolderTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(2) input[type=text]', 'Test Folder')
                         ->assertSeeIn('div.row:nth-child(3) label', 'Type')
                         ->assertSelected('div.row:nth-child(3) select:disabled', 'event')
-                        ->assertSeeIn('div.row:nth-child(4) label', 'Email Address')
-                        ->assertAttributeRegExp(
-                            'div.row:nth-child(4) input[type=text]:disabled',
-                            'value',
-                            '/^event-[0-9]+@kolab\.org$/'
-                        )
+                        ->assertMissing('#aliases')
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })
                 // Test error handling
@@ -218,6 +234,54 @@ class SharedFolderTest extends TestCaseDusk
                 ->assertElementsCount('@table tbody tr', 2);
 
             $this->assertNull(SharedFolder::where('name', 'Test Folder Update')->first());
+        });
+
+        // Test creation/updating a mail folder with mail aliases
+        $this->browse(function (Browser $browser) {
+            $browser->on(new SharedFolderList())
+                ->click('button.create-folder')
+                ->on(new SharedFolderInfo())
+                ->type('#name', 'Test Folder2')
+                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    $browser->addListEntry('folder-alias1@kolab.org')
+                        ->addListEntry('folder-alias2@kolab.org');
+                })
+                ->click('@general button[type=submit]')
+                ->assertToast(Toast::TYPE_SUCCESS, 'Shared folder created successfully.')
+                ->on(new SharedFolderList())
+                ->assertElementsCount('@table tbody tr', 3);
+
+            $folder = SharedFolder::where('name', 'Test Folder2')->first();
+
+            $this->assertSame(
+                ['folder-alias1@kolab.org', 'folder-alias2@kolab.org'],
+                $folder->aliases()->pluck('alias')->all()
+            );
+
+            // Test folder update
+            $browser->click('@table tr:nth-child(3) td:first-child a')
+                ->on(new SharedFolderInfo())
+                ->with('@general', function (Browser $browser) {
+                    // Assert form content
+                    $browser->assertFocused('#name')
+                        ->assertValue('div.row:nth-child(2) input[type=text]', 'Test Folder2')
+                        ->assertSelected('div.row:nth-child(3) select:disabled', 'mail')
+                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                            $browser->assertListInputValue(['folder-alias1@kolab.org', 'folder-alias2@kolab.org'])
+                                ->assertValue('@input', '');
+                        });
+                })
+                // change folder name, and remove one alias
+                ->type('#name', 'Test Folder Update2')
+                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    $browser->removeListEntry(2);
+                })
+                ->click('@general button[type=submit]')
+                ->assertToast(Toast::TYPE_SUCCESS, 'Shared folder updated successfully.');
+
+            $folder->refresh();
+            $this->assertSame('Test Folder Update2', $folder->name);
+            $this->assertSame(['folder-alias1@kolab.org'], $folder->aliases()->pluck('alias')->all());
         });
     }
 

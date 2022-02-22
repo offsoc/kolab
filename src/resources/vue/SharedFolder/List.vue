@@ -15,7 +15,6 @@
                             <tr>
                                 <th scope="col">{{ $t('form.name') }}</th>
                                 <th scope="col">{{ $t('form.type') }}</th>
-                                <th scope="col">{{ $t('form.email') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -25,12 +24,11 @@
                                     <router-link :to="{ path: 'shared-folder/' + folder.id }">{{ folder.name }}</router-link>
                                 </td>
                                 <td>{{ $t('shf.type-' + folder.type) }}</td>
-                                <td><router-link :to="{ path: 'shared-folder/' + folder.id }">{{ folder.email }}</router-link></td>
                             </tr>
                         </tbody>
                         <tfoot class="table-fake-body">
                             <tr>
-                                <td colspan="3">{{ $t('shf.list-empty') }}</td>
+                                <td colspan="2">{{ $t('shf.list-empty') }}</td>
                             </tr>
                         </tfoot>
                     </table>

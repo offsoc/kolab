@@ -308,6 +308,10 @@ class RelationController extends ResourceController
             $response['config'] = $resource->getConfig();
         }
 
+        if (method_exists($resource, 'aliases')) {
+            $response['aliases'] = $resource->aliases()->pluck('alias')->all();
+        }
+
         return response()->json($response);
     }
 

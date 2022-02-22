@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\User;
+namespace App\Console\Commands\SharedFolder;
 
 use App\Console\Command;
 
@@ -11,14 +11,14 @@ class AliasesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'user:aliases {user}';
+    protected $signature = 'sharedfolder:aliases {folder}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = "List a user's aliases";
+    protected $description = "List shared folder's aliases";
 
     /**
      * Execute the console command.
@@ -27,14 +27,14 @@ class AliasesCommand extends Command
      */
     public function handle()
     {
-        $user = $this->getUser($this->argument('user'));
+        $folder = $this->getSharedFolder($this->argument('folder'));
 
-        if (!$user) {
-            $this->error("User not found.");
+        if (!$folder) {
+            $this->error("Folder not found.");
             return 1;
         }
 
-        foreach ($user->aliases()->pluck('alias')->all() as $alias) {
+        foreach ($folder->aliases()->pluck('alias')->all() as $alias) {
             $this->info($alias);
         }
     }

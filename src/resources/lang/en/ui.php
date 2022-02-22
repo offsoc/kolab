@@ -124,6 +124,7 @@ return [
         'disabled' => "disabled",
         'domain' => "Domain",
         'email' => "Email Address",
+        'emails' => "Email Addresses",
         'enabled' => "enabled",
         'firstname' => "First Name",
         'general' => "General",
@@ -317,6 +318,7 @@ return [
     ],
 
     'shf' => [
+        'aliases-none' => "This shared folder has no email aliases.",
         'create' => "Create folder",
         'delete' => "Delete folder",
         'acl-text' => "Defines user permissions to access the shared folder.",

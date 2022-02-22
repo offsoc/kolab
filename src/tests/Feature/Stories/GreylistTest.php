@@ -254,11 +254,11 @@ class GreylistTest extends TestCase
         $this->assertFalse($request->shouldDefer());
 
         // Ensure we also find the setting by alias
-        $aliases = $this->domainOwner->aliases()->orderBy('alias')->get();
+        $aliases = $this->domainOwner->aliases()->orderBy('alias')->pluck('alias')->all();
         $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
-                'recipient' => $aliases[0]->alias,
+                'recipient' => $aliases[0],
                 'client_address' => $this->clientAddress
             ]
         );
