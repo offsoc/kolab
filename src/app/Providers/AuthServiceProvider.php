@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Auth\LDAPUserProvider;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -27,13 +26,6 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
-
-        Auth::provider(
-            'ldap',
-            function ($app, array $config) {
-                return new LDAPUserProvider($app['hash'], $config['model']);
-            }
-        );
 
         // Hashes all secrets and thus makes them non-recoverable
         /* Passport::hashClientSecrets(); */
