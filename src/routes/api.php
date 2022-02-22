@@ -15,12 +15,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-$prefix = \trim(\parse_url(\config('app.url'), PHP_URL_PATH), '/') . '/';
-
 Route::group(
     [
         'middleware' => 'api',
-        'prefix' => $prefix . 'auth'
+        'prefix' => 'auth'
     ],
     function ($router) {
         Route::post('login', API\AuthController::class . '@login');
@@ -41,7 +39,7 @@ Route::group(
     [
         'domain' => \config('app.website_domain'),
         'middleware' => 'api',
-        'prefix' => $prefix . 'auth'
+        'prefix' => 'auth'
     ],
     function ($router) {
         Route::post('password-policy/check', API\PasswordPolicyController::class . '@check');
@@ -62,7 +60,7 @@ Route::group(
     [
         'domain' => \config('app.website_domain'),
         'middleware' => 'auth:api',
-        'prefix' => $prefix . 'v4'
+        'prefix' => 'v4'
     ],
     function () {
         Route::post('companion/register', API\V4\CompanionAppsController::class . '@register');
@@ -134,7 +132,7 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.website_domain'),
-        'prefix' => $prefix . 'v4'
+        'prefix' => 'v4'
     ],
     function () {
         Route::post('openvidu/rooms/{id}', API\V4\OpenViduController::class . '@joinRoom');
@@ -151,7 +149,7 @@ Route::group(
     [
         'domain' => \config('app.website_domain'),
         'middleware' => 'api',
-        'prefix' => $prefix . 'v4'
+        'prefix' => 'v4'
     ],
     function ($router) {
         Route::post('support/request', API\V4\SupportController::class . '@request');
@@ -161,7 +159,7 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.website_domain'),
-        'prefix' => $prefix . 'webhooks'
+        'prefix' => 'webhooks'
     ],
     function () {
         Route::post('payment/{provider}', API\V4\PaymentsController::class . '@webhook');
@@ -173,7 +171,7 @@ if (\config('app.with_services')) {
     Route::group(
         [
             'domain' => 'services.' . \config('app.website_domain'),
-            'prefix' => $prefix . 'webhooks'
+            'prefix' => 'webhooks'
         ],
         function () {
             Route::get('nginx', API\V4\NGINXController::class . '@authenticate');
@@ -190,7 +188,7 @@ if (\config('app.with_admin')) {
         [
             'domain' => 'admin.' . \config('app.website_domain'),
             'middleware' => ['auth:api', 'admin'],
-            'prefix' => $prefix . 'v4',
+            'prefix' => 'v4',
         ],
         function () {
             Route::apiResource('domains', API\V4\Admin\DomainsController::class);
@@ -226,7 +224,7 @@ if (\config('app.with_reseller')) {
         [
             'domain' => 'reseller.' . \config('app.website_domain'),
             'middleware' => ['auth:api', 'reseller'],
-            'prefix' => $prefix . 'v4',
+            'prefix' => 'v4',
         ],
         function () {
             Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
