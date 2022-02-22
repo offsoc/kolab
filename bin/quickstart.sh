@@ -97,9 +97,8 @@ rm -rf database/database.sqlite
 ./artisan db:ping --wait
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
 ./artisan data:import || :
-./artisan swoole:http stop >/dev/null 2>&1 || :
-SWOOLE_HTTP_DAEMONIZE=true ./artisan swoole:http start
+./artisan octane:stop >/dev/null 2>&1 || :
+./artisan octane:start >/dev/null 2>&1 &
 ./artisan horizon:terminate >/dev/null 2>&1 || :
 nohup ./artisan horizon >/dev/null 2>&1 &
 popd
-

@@ -25,13 +25,6 @@ use Illuminate\Support\Str;
  */
 class SignupController extends Controller
 {
-    /** @var ?\App\SignupCode A verification code object */
-    protected $code;
-
-    /** @var ?\App\Plan Signup plan object */
-    protected $plan;
-
-
     /**
      * Returns plans definitions for signup.
      *
@@ -177,7 +170,7 @@ class SignupController extends Controller
 
         // For signup last-step mode remember the code object, so we can delete it
         // with single SQL query (->delete()) instead of two (::destroy())
-        $this->code = $code;
+        $request->code = $code;
 
         $has_domain = $this->getPlan()->hasDomain();
 
@@ -328,8 +321,8 @@ class SignupController extends Controller
         }
 
         // Remove the verification code
-        if ($this->code) {
-            $this->code->delete();
+        if ($request->code) {
+            $request->code->delete();
         }
 
         DB::commit();
@@ -344,10 +337,12 @@ class SignupController extends Controller
      */
     protected function getPlan()
     {
-        if (!$this->plan) {
+        $request = request();
+
+        if (!$request->plan || !$request->plan instanceof Plan) {
             // Get the plan if specified and exists...
-            if ($this->code && $this->code->plan) {
-                $plan = Plan::withEnvTenantContext()->where('title', $this->code->plan)->first();
+            if ($request->code && $request->code->plan) {
+                $plan = Plan::withEnvTenantContext()->where('title', $request->code->plan)->first();
             }
 
             // ...otherwise use the default plan
@@ -356,10 +351,10 @@ class SignupController extends Controller
                 $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
             }
 
-            $this->plan = $plan;
+            $request->plan = $plan;
         }
 
-        return $this->plan;
+        return $request->plan;
     }
 
     /**

@@ -56,6 +56,13 @@ class Domain extends Model
     public const HASH_TEXT = 2;
     public const HASH_CNAME = 3;
 
+    /** @var array<string, string> The attributes that should be cast */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
+    ];
+
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['namespace', 'status', 'type'];
 

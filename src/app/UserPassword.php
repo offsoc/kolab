@@ -16,8 +16,10 @@ class UserPassword extends Model
     /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
-    /** @var array<int, string> The attributes that should be mutated to dates. */
-    protected $dates = ['created_at'];
+    /** @var array<string, string> The attributes that should be cast. */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+    ];
 
     /** @var array<int, string> The attributes that are mass assignable. */
     protected $fillable = ['user_id', 'password'];

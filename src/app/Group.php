@@ -45,6 +45,13 @@ class Group extends Model
     // group has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 4;
 
+    /** @var array<string, string> The attributes that should be cast */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
+    ];
+
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'email',

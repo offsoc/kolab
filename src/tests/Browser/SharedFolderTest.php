@@ -239,7 +239,7 @@ class SharedFolderTest extends TestCaseDusk
         // Test creation/updating a mail folder with mail aliases
         $this->browse(function (Browser $browser) {
             $browser->on(new SharedFolderList())
-                ->click('button.create-folder')
+                ->click('button.shared-folder-new')
                 ->on(new SharedFolderInfo())
                 ->type('#name', 'Test Folder2')
                 ->with(new ListInput('#aliases'), function (Browser $browser) {

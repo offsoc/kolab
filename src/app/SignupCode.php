@@ -57,10 +57,10 @@ class SignupCode extends Model
     ];
 
     /** @var array<string, string> The attributes that should be cast */
-    protected $casts = ['headers' => 'array'];
-
-    /** @var array<int, string> The attributes that should be mutated to dates */
-    protected $dates = ['expires_at'];
+    protected $casts = [
+        'expires_at' => 'datetime:Y-m-d H:i:s',
+        'headers' => 'array'
+    ];
 
 
     /**

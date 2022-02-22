@@ -79,6 +79,13 @@ class User extends Authenticatable
         'password_ldap'
     ];
 
+    /** @var array<string, string> The attributes that should be cast */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
+    ];
+
     /**
      * Any wallets on which this user is a controller.
      *

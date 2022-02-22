@@ -54,6 +54,13 @@ class SharedFolder extends Model
     /** @const string A template for the email attribute on a folder creation */
     public const EMAIL_TEMPLATE = '{type}-{id}@{domainName}';
 
+    /** @var array<string, string> The attributes that should be cast */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
+    ];
+
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'email',

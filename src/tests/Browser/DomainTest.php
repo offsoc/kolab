@@ -47,6 +47,17 @@ class DomainTest extends TestCaseDusk
     }
 
     /**
+     * Test domains list page (unauthenticated)
+     */
+    public function testDomainListUnauth(): void
+    {
+        // Test that the page requires authentication
+        $this->browse(function ($browser) {
+            $browser->visit('/domains')->on(new Home());
+        });
+    }
+
+    /**
      * Test domain info page (non-existing domain id)
      */
     public function testDomainInfo404(): void
@@ -164,19 +175,6 @@ class DomainTest extends TestCaseDusk
     }
 
     /**
-     * Test domains list page (unauthenticated)
-     */
-    public function testDomainListUnauth(): void
-    {
-        // Test that the page requires authentication
-        $this->browse(function ($browser) {
-            $browser->visit('/logout')
-                ->visit('/domains')
-                ->on(new Home());
-        });
-    }
-
-    /**
      * Test domains list page
      *
      * @depends testDomainListUnauth
@@ -245,7 +243,7 @@ class DomainTest extends TestCaseDusk
         $this->browse(function ($browser) {
             $browser->visit('/login')
                 ->on(new Home())
-                ->submitLogon('john@kolab.org', 'simple123')
+                ->submitLogon('john@kolab.org', 'simple123', true)
                 ->visit('/domains')
                 ->on(new DomainList())
                 ->assertSeeIn('.card-title button.btn-success', 'Create domain')
