@@ -323,7 +323,8 @@ class UsersTest extends TestCaseDusk
                         ->assertVisible('#password-link button.text-danger')
                         ->assertVisible('#password-link button:not(.text-danger)')
                         ->assertAttribute('#password-link button:not(.text-danger)', 'title', 'Copy')
-                        ->assertAttribute('#password-link button.text-danger', 'title', 'Delete');
+                        ->assertAttribute('#password-link button.text-danger', 'title', 'Delete')
+                        ->assertMissing('#password-link div.form-text');
 
                     // Test deleting an existing password reset link
                     $browser->click('#password-link button.text-danger')
@@ -341,7 +342,8 @@ class UsersTest extends TestCaseDusk
                         ->assertMissing('#password')
                         ->assertMissing('#password_confirmation')
                         ->waitFor('#password-link code')
-                        ->assertSeeIn('#password-link code', $link);
+                        ->assertSeeIn('#password-link code', $link)
+                        ->assertSeeIn('#password-link div.form-text', "Press Submit to activate the link");
 
                     // Test copy to clipboard
                     /* TODO: Figure out how to give permission to do this operation

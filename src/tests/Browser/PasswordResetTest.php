@@ -5,6 +5,7 @@ namespace Tests\Browser;
 use App\User;
 use App\VerificationCode;
 use Tests\Browser;
+use Tests\Browser\Components\Menu;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\PasswordReset;
@@ -39,13 +40,11 @@ class PasswordResetTest extends TestCaseDusk
     public function testLinkOnLogon(): void
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit(new Home());
-
-            $browser->assertSeeLink('Forgot password?');
-            $browser->clickLink('Forgot password?');
-
-            $browser->on(new PasswordReset());
-            $browser->assertVisible('@step1');
+            $browser->visit(new Home())
+                ->assertSeeLink('Forgot password?')
+                ->clickLink('Forgot password?')
+                ->on(new PasswordReset())
+                ->assertVisible('@step1');
         });
     }
 
@@ -281,6 +280,44 @@ class PasswordResetTest extends TestCaseDusk
             $browser->on(new Dashboard());
 
             // FIXME: Is it enough to be sure user is logged in?
+        });
+    }
+
+    /**
+     * Test password-reset via a link
+     */
+    public function testResetViaLink(): void
+    {
+        $user = $this->getTestUser('passwordresettestdusk@' . \config('app.domain'));
+        $user->setSetting('external_email', 'external@domain.tld');
+
+        $code = new VerificationCode(['mode' => 'password-reset']);
+        $user->verificationcodes()->save($code);
+
+        $this->browse(function (Browser $browser) use ($code) {
+            // Test a valid link
+            $browser->visit("/password-reset/{$code->short_code}-{$code->code}")
+                ->on(new PasswordReset())
+                ->waitFor('@step3')
+                ->assertMissing('@step1')
+                ->assertMissing('@step2')
+                ->with('@step3', function ($step) {
+                    $step->type('#reset_password', 'A2345678')
+                        ->type('#reset_password_confirmation', 'A2345678')
+                        ->click('[type=submit]');
+                })
+                ->waitUntilMissing('@step3')
+                // At this point we should be auto-logged-in to dashboard
+                ->on(new Dashboard())
+                ->within(new Menu(), function ($browser) {
+                    $browser->clickMenuItem('logout');
+                });
+
+            $this->assertNull(VerificationCode::find($code->code));
+
+            // Test an invalid link
+            $browser->visit("/password-reset/{$code->short_code}-{$code->code}")
+                ->assertErrorPage(404, 'The password reset code is expired or invalid.');
         });
     }
 

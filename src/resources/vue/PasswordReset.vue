@@ -85,8 +85,7 @@
                     this.short_code = RegExp.$1
                     this.code = RegExp.$2
                     this.submitStep2(true)
-                }
-                else {
+                } else {
                     this.$root.errorPage(404)
                 }
             }
@@ -109,23 +108,28 @@
             },
             // Submits the code to the API for verification
             submitStep2(bylink) {
+                let post = {
+                    code: this.code,
+                    short_code: this.short_code
+                }
+
+                let params = {}
+
                 if (bylink === true) {
-                    this.displayForm(2, false)
+                    this.$root.startLoading()
+                    params.ignoreErrors = true
                 }
 
                 this.$root.clearFormValidation($('#step2 form'))
 
-                axios.post('/api/auth/password-reset/verify', {
-                    code: this.code,
-                    short_code: this.short_code
-                }).then(response => {
+                axios.post('/api/auth/password-reset/verify', post, params).then(response => {
+                    this.$root.stopLoading()
                     this.userId = response.data.userId
                     this.displayForm(3, true)
                 }).catch(error => {
                     if (bylink === true) {
-                        // FIXME: display step 1, user can do nothing about it anyway
-                        //        Maybe we should display 404 error page?
-                        this.displayForm(1, true)
+                        this.$root.stopLoading()
+                        this.$root.errorPage(404, '', this.$t('password.link-invalid'))
                     }
                 })
             },

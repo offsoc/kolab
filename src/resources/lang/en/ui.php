@@ -295,6 +295,7 @@ return [
     ],
 
     'password' => [
+        'link-invalid' => "The password reset code is expired or invalid.",
         'reset' => "Password Reset",
         'reset-step1' => "Enter your email address to reset your password.",
         'reset-step1-hint' => "You may need to check your spam folder or unblock {email}.",
@@ -426,6 +427,7 @@ return [
         'pass-input' => "Enter password",
         'pass-link' => "Set via link",
         'pass-link-label' => "Link:",
+        'pass-link-hint' => "Press Submit to activate the link",
         'passwordpolicy' => "Password Policy",
         'price' => "Price",
         'profile-title' => "Your profile",
