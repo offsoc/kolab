@@ -30,7 +30,7 @@ class WalletCheck implements ShouldQueue
     public const THRESHOLD_INITIAL = 'initial';
 
     /** @var int The number of seconds to wait before retrying the job. */
-    public $retryAfter = 10;
+    public $backoff = 10;
 
     /** @var int How many times retry the job if it fails. */
     public $tries = 5;
