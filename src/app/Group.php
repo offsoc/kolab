@@ -4,6 +4,7 @@ namespace App;
 
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
+use App\Traits\EmailPropertyTrait;
 use App\Traits\GroupConfigTrait;
 use App\Traits\SettingsTrait;
 use App\Traits\StatusPropertyTrait;
@@ -26,6 +27,7 @@ class Group extends Model
 {
     use BelongsToTenantTrait;
     use EntitleableTrait;
+    use EmailPropertyTrait;
     use GroupConfigTrait;
     use SettingsTrait;
     use SoftDeletes;
@@ -53,43 +55,6 @@ class Group extends Model
 
 
     /**
-     * Returns group domain.
-     *
-     * @return ?\App\Domain The domain group belongs to, NULL if it does not exist
-     */
-    public function domain(): ?Domain
-    {
-        list($local, $domainName) = explode('@', $this->email);
-
-        return Domain::where('namespace', $domainName)->first();
-    }
-
-    /**
-     * Find whether an email address exists as a group (including deleted groups).
-     *
-     * @param string $email        Email address
-     * @param bool   $return_group Return Group instance instead of boolean
-     *
-     * @return \App\Group|bool True or Group model object if found, False otherwise
-     */
-    public static function emailExists(string $email, bool $return_group = false)
-    {
-        if (strpos($email, '@') === false) {
-            return false;
-        }
-
-        $email = \strtolower($email);
-
-        $group = self::withTrashed()->where('email', $email)->first();
-
-        if ($group) {
-            return $return_group ? $group : true;
-        }
-
-        return false;
-    }
-
-    /**
      * Group members propert accessor. Converts internal comma-separated list into an array
      *
      * @param string $members Comma-separated list of email addresses
@@ -99,16 +64,6 @@ class Group extends Model
     public function getMembersAttribute($members): array
     {
         return $members ? explode(',', $members) : [];
-    }
-
-    /**
-     * Ensure the email is appropriately cased.
-     *
-     * @param string $email Group email address
-     */
-    public function setEmailAttribute(string $email)
-    {
-        $this->attributes['email'] = strtolower($email);
     }
 
     /**

@@ -78,6 +78,7 @@
                                                 <btn class="btn-link p-1" :icon="['far', 'clipboard']" :title="$t('btn.copy')" @click="passwordLinkCopy"></btn>
                                                 <btn v-if="user.passwordLinkCode" class="btn-link text-danger p-1" icon="trash-alt" :title="$t('btn.delete')" @click="passwordLinkDelete"></btn>
                                             </span>
+                                            <div v-if="!user.passwordLinkCode" class="form-text m-0">{{ $t('user.pass-link-hint') }}</div>
                                         </div>
                                     </div>
                                 </div>

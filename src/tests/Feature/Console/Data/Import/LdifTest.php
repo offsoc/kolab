@@ -140,6 +140,11 @@ class LdifTest extends TestCase
         $this->assertSame('shared/Folder2@kolab3.com', $folders[0]->getSetting('folder'));
         $this->assertSame('["anyone, read-write","owner@kolab3.com, full"]', $folders[1]->getSetting('acl'));
         $this->assertSame('shared/Folder1@kolab3.com', $folders[1]->getSetting('folder'));
+        $this->assertSame([], $folders[0]->aliases()->orderBy('alias')->pluck('alias')->all());
+        $this->assertSame(
+            ['folder-alias1@kolab3.com', 'folder-alias2@kolab3.com'],
+            $folders[1]->aliases()->orderBy('alias')->pluck('alias')->all()
+        );
 
         // Groups
         /** @var \App\Group[] $groups */
@@ -368,6 +373,7 @@ class LdifTest extends TestCase
             'kolabtargetfolder' => 'Folder',
             'kolabfoldertype' => 'event',
             'acl' => 'anyone, read-write',
+            'alias' => ['test1@domain.tld', 'test2@domain.tld'],
         ];
 
         $expected = [
@@ -376,6 +382,7 @@ class LdifTest extends TestCase
             'type' => 'event',
             'folder' => 'Folder',
             'acl' => ['anyone, read-write'],
+            'aliases' => ['test1@domain.tld', 'test2@domain.tld'],
         ];
 
         $result = $this->invokeMethod($command, 'parseLDAPSharedFolder', [$entry]);

@@ -72,24 +72,6 @@ class Kernel extends HttpKernel
     ];
 
     /**
-     * The priority-sorted list of middleware.
-     *
-     * This forces non-global middleware to always be in the given order.
-     *
-     * @var string[]
-    protected $middlewarePriority = [
-        \Illuminate\Session\Middleware\StartSession::class,
-        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-        \App\Http\Middleware\AuthenticateAdmin::class,
-        \App\Http\Middleware\AuthenticateReseller::class,
-        \App\Http\Middleware\Authenticate::class,
-        \Illuminate\Session\Middleware\AuthenticateSession::class,
-        \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        \Illuminate\Auth\Middleware\Authorize::class,
-        \App\Http\Middleware\ContentSecurityPolicy::class,
-    ];
-*/
-    /**
      * Handle an incoming HTTP request.
      *
      * @param \Illuminate\Http\Request $request HTTP Request object

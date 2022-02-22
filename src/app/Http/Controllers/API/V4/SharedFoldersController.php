@@ -9,6 +9,7 @@ use App\Rules\SharedFolderType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class SharedFoldersController extends RelationController
 {
@@ -54,33 +55,28 @@ class SharedFoldersController extends RelationController
     public function store(Request $request)
     {
         $current_user = $this->guard()->user();
-        $owner = $current_user->wallet()->owner;
+        $owner = $current_user->walletOwner();
 
-        if ($owner->id != $current_user->id) {
+        if (empty($owner) || $owner->id != $current_user->id) {
             return $this->errorResponse(403);
         }
 
-        $domain = request()->input('domain');
-
-        $rules = [
-            'name' => ['required', 'string', new SharedFolderName($owner, $domain)],
-            'type' => ['required', 'string', new SharedFolderType()]
-        ];
-
-        $v = Validator::make($request->all(), $rules);
-
-        if ($v->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        if ($error_response = $this->validateFolderRequest($request, null, $owner)) {
+            return $error_response;
         }
 
         DB::beginTransaction();
 
         // Create the shared folder
         $folder = new SharedFolder();
-        $folder->name = request()->input('name');
-        $folder->type = request()->input('type');
-        $folder->domain = $domain;
+        $folder->name = $request->input('name');
+        $folder->type = $request->input('type');
+        $folder->domainName = $request->input('domain');
         $folder->save();
+
+        if (!empty($request->aliases) && $folder->type === 'mail') {
+            $folder->setAliases($request->aliases);
+        }
 
         $folder->assignToWallet($owner->wallets->first());
 
@@ -114,30 +110,25 @@ class SharedFoldersController extends RelationController
             return $this->errorResponse(403);
         }
 
-        $owner = $folder->wallet()->owner;
-
-        $name = $request->input('name');
-        $errors = [];
-
-        // Validate the folder name
-        if ($name !== null && $name != $folder->name) {
-            $domainName = explode('@', $folder->email, 2)[1];
-            $rules = ['name' => ['required', 'string', new SharedFolderName($owner, $domainName)]];
-
-            $v = Validator::make($request->all(), $rules);
-
-            if ($v->fails()) {
-                $errors = $v->errors()->toArray();
-            } else {
-                $folder->name = $name;
-            }
+        if ($error_response = $this->validateFolderRequest($request, $folder, $folder->walletOwner())) {
+            return $error_response;
         }
 
-        if (!empty($errors)) {
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        $name = $request->input('name');
+
+        DB::beginTransaction();
+
+        if ($name && $name != $folder->name) {
+            $folder->name = $name;
         }
 
         $folder->save();
+
+        if (isset($request->aliases) && $folder->type === 'mail') {
+            $folder->setAliases($request->aliases);
+        }
+
+        DB::commit();
 
         return response()->json([
                 'status' => 'success',
@@ -193,5 +184,79 @@ class SharedFoldersController extends RelationController
         }
 
         return false;
+    }
+
+    /**
+     * Validate shared folder input
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @param \App\SharedFolder|null   $folder  Shared folder
+     * @param \App\User|null           $owner   Account owner
+     *
+     * @return \Illuminate\Http\JsonResponse|null The error response on error
+     */
+    protected function validateFolderRequest(Request $request, $folder, $owner)
+    {
+        $errors = [];
+
+        if (empty($folder)) {
+            $domain = $request->input('domain');
+            $rules = [
+                'name' => ['required', 'string', new SharedFolderName($owner, $domain)],
+                'type' => ['required', 'string', new SharedFolderType()],
+            ];
+        } else {
+            // On update validate the folder name (if changed)
+            $name = $request->input('name');
+            if ($name !== null && $name != $folder->name) {
+                $domain = explode('@', $folder->email, 2)[1];
+                $rules = ['name' => ['required', 'string', new SharedFolderName($owner, $domain)]];
+            }
+        }
+
+        if (!empty($rules)) {
+            $v = Validator::make($request->all(), $rules);
+
+            if ($v->fails()) {
+                $errors = $v->errors()->toArray();
+            }
+        }
+
+        // Validate aliases input
+        if (isset($request->aliases)) {
+            $aliases = [];
+            $existing_aliases = $owner->aliases()->get()->pluck('alias')->toArray();
+
+            foreach ($request->aliases as $idx => $alias) {
+                if (is_string($alias) && !empty($alias)) {
+                    // Alias cannot be the same as the email address
+                    if (!empty($folder) && Str::lower($alias) == Str::lower($folder->email)) {
+                        continue;
+                    }
+
+                    // validate new aliases
+                    if (
+                        !in_array($alias, $existing_aliases)
+                        && ($error = UsersController::validateAlias($alias, $owner))
+                    ) {
+                        if (!isset($errors['aliases'])) {
+                            $errors['aliases'] = [];
+                        }
+                        $errors['aliases'][$idx] = $error;
+                        continue;
+                    }
+
+                    $aliases[] = $alias;
+                }
+            }
+
+            $request->aliases = $aliases;
+        }
+
+        if (!empty($errors)) {
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        return null;
     }
 }

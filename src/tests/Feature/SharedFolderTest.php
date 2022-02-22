@@ -29,6 +29,60 @@ class SharedFolderTest extends TestCase
     }
 
     /**
+     * Tests for AliasesTrait methods
+     */
+    public function testAliases(): void
+    {
+        Queue::fake();
+        Queue::assertNothingPushed();
+
+        $folder = $this->getTestSharedFolder('folder-test@kolabnow.com');
+
+        $this->assertCount(0, $folder->aliases->all());
+
+        // Add an alias
+        $folder->setAliases(['FolderAlias1@kolabnow.com']);
+
+        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 1);
+
+        $aliases = $folder->aliases()->get();
+
+        $this->assertCount(1, $aliases);
+        $this->assertSame('folderalias1@kolabnow.com', $aliases[0]->alias);
+        $this->assertTrue(SharedFolder::aliasExists('folderalias1@kolabnow.com'));
+
+        // Add another alias
+        $folder->setAliases(['FolderAlias1@kolabnow.com', 'FolderAlias2@kolabnow.com']);
+
+        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 2);
+
+        $aliases = $folder->aliases()->orderBy('alias')->get();
+        $this->assertCount(2, $aliases);
+        $this->assertSame('folderalias1@kolabnow.com', $aliases[0]->alias);
+        $this->assertSame('folderalias2@kolabnow.com', $aliases[1]->alias);
+
+        // Remove an alias
+        $folder->setAliases(['FolderAlias1@kolabnow.com']);
+
+        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 3);
+
+        $aliases = $folder->aliases()->get();
+
+        $this->assertCount(1, $aliases);
+        $this->assertSame('folderalias1@kolabnow.com', $aliases[0]->alias);
+        $this->assertFalse(SharedFolder::aliasExists('folderalias2@kolabnow.com'));
+
+        // Remove all aliases
+        $folder->setAliases([]);
+
+        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 4);
+
+        $this->assertCount(0, $folder->aliases()->get());
+        $this->assertFalse(SharedFolder::aliasExists('folderalias1@kolabnow.com'));
+        $this->assertFalse(SharedFolder::aliasExists('folderalias2@kolabnow.com'));
+    }
+
+    /**
      * Tests for SharedFolder::assignToWallet()
      */
     public function testAssignToWallet(): void
@@ -116,7 +170,7 @@ class SharedFolderTest extends TestCase
 
         $folder = new SharedFolder();
         $folder->name = 'Reśo';
-        $folder->domain = 'kolabnow.com';
+        $folder->domainName = 'kolabnow.com';
         $folder->save();
 
         $this->assertMatchesRegularExpression('/^[0-9]{1,20}$/', $folder->id);

@@ -58,13 +58,15 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
                 $user_ids = $user_ids->merge($ext_user_ids)->unique();
 
-                // Search by a distribution list or resource email
+                // Search by an email of a group, resource, shared folder, etc.
                 if ($group = \App\Group::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$group->wallet()->user_id])->unique();
                 } elseif ($resource = \App\Resource::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$resource->wallet()->user_id])->unique();
                 } elseif ($folder = \App\SharedFolder::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$folder->wallet()->user_id])->unique();
+                } elseif ($alias = \App\SharedFolderAlias::where('alias', $search)->first()) {
+                    $user_ids = $user_ids->merge([$alias->sharedFolder->wallet()->user_id])->unique();
                 }
 
                 if (!$user_ids->isEmpty()) {

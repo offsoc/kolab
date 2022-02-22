@@ -15,18 +15,6 @@ class ResourceObserver
      */
     public function creating(Resource $resource): void
     {
-        if (empty($resource->email)) {
-            if (!isset($resource->domain)) {
-                throw new \Exception("Missing 'domain' property for a new resource");
-            }
-
-            $domainName = \strtolower($resource->domain);
-
-            $resource->email = "resource-{$resource->id}@{$domainName}";
-        } else {
-            $resource->email = \strtolower($resource->email);
-        }
-
         $resource->status |= Resource::STATUS_NEW | Resource::STATUS_ACTIVE;
     }
 

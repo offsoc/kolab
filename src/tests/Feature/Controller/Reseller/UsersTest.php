@@ -32,6 +32,8 @@ class UsersTest extends TestCase
         $this->deleteTestUser('test@testsearch.com');
         $this->deleteTestDomain('testsearch.com');
 
+        \App\SharedFolderAlias::truncate();
+
         parent::tearDown();
     }
 
@@ -129,6 +131,30 @@ class UsersTest extends TestCase
 
         $this->assertSame(0, $json['count']);
         $this->assertSame([], $json['list']);
+
+        // Search by shared folder email
+        $response = $this->actingAs($reseller1)->get("api/v4/users?search=folder-event@kolab.org");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($user->id, $json['list'][0]['id']);
+        $this->assertSame($user->email, $json['list'][0]['email']);
+
+        // Search by shared folder alias
+        $folder = $this->getTestSharedFolder('folder-event@kolab.org');
+        $folder->setAliases(['folder-alias@kolab.org']);
+        $response = $this->actingAs($reseller1)->get("api/v4/users?search=folder-alias@kolab.org");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(1, $json['count']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($user->id, $json['list'][0]['id']);
+        $this->assertSame($user->email, $json['list'][0]['email']);
 
         // Create a domain with some users in the Sample Tenant so we have anything to search for
         $domain = $this->getTestDomain('testsearch.com', ['type' => \App\Domain::TYPE_EXTERNAL]);

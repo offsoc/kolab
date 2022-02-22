@@ -43,6 +43,11 @@
                     {{ $t('form.settings') }}
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-aliases" href="#folder-aliases" role="tab" aria-controls="folder-aliases" aria-selected="false" @click="$root.tab">
+                    {{ $t('user.aliases-email') }} ({{ folder.aliases.length }})
+                </a>
+            </li>
         </ul>
         <div class="tab-content">
             <div class="tab-pane show active" id="folder-settings" role="tabpanel" aria-labelledby="tab-settings">
@@ -66,6 +71,29 @@
                     </div>
                 </div>
             </div>
+            <div class="tab-pane" id="folder-aliases" role="tabpanel" aria-labelledby="tab-aliases">
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{ $t('form.email') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(alias, index) in folder.aliases" :id="'alias' + index" :key="index">
+                                    <td>{{ alias }}</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-fake-body">
+                                <tr>
+                                    <td>{{ $t('shf.aliases-none') }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -74,7 +102,7 @@
     export default {
         data() {
             return {
-                folder: { config: {} }
+                folder: { config: {}, aliases: [] }
             }
         },
         created() {

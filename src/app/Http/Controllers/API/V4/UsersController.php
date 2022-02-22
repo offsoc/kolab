@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\RelationController;
 use App\Domain;
-use App\Group;
 use App\Rules\Password;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
@@ -133,6 +132,7 @@ class UsersController extends RelationController
 
         $response['skus'] = \App\Entitlement::objectEntitlementsSummary($user);
         $response['config'] = $user->getConfig();
+        $response['aliases'] = $user->aliases()->pluck('alias')->all();
 
         $code = $user->verificationcodes()->where('active', true)
             ->where('expires_at', '>', \Carbon\Carbon::now())
@@ -207,7 +207,7 @@ class UsersController extends RelationController
     public function store(Request $request)
     {
         $current_user = $this->guard()->user();
-        $owner = $current_user->wallet()->owner;
+        $owner = $current_user->walletOwner();
 
         if ($owner->id != $current_user->id) {
             return $this->errorResponse(403);
@@ -392,12 +392,6 @@ class UsersController extends RelationController
         $response['settings'] = [];
         foreach ($user->settings()->whereIn('key', self::USER_SETTINGS)->get() as $item) {
             $response['settings'][$item->key] = $item->value;
-        }
-
-        // Aliases
-        $response['aliases'] = [];
-        foreach ($user->aliases as $item) {
-            $response['aliases'][] = $item->alias;
         }
 
         // Status info
@@ -652,38 +646,29 @@ class UsersController extends RelationController
         }
 
         // Check if it is one of domains available to the user
-        if (!$user->domains()->where('namespace', $domain->namespace)->exists()) {
+        if (!$domain->isPublic() && $user->id != $domain->walletOwner()->id) {
             return \trans('validation.entryexists', ['attribute' => 'domain']);
         }
 
-        // Check if a user with specified address already exists
-        if ($existing_user = User::emailExists($email, true)) {
-            // If this is a deleted user in the same custom domain
-            // we'll force delete him before
-            if (!$domain->isPublic() && $existing_user->trashed()) {
-                $deleted = $existing_user;
+        // Check if a user/group/resource/shared folder with specified address already exists
+        if (
+            ($existing = User::emailExists($email, true))
+            || ($existing = \App\Group::emailExists($email, true))
+            || ($existing = \App\Resource::emailExists($email, true))
+            || ($existing = \App\SharedFolder::emailExists($email, true))
+        ) {
+            // If this is a deleted user/group/resource/folder in the same custom domain
+            // we'll force delete it before creating the target user
+            if (!$domain->isPublic() && $existing->trashed()) {
+                $deleted = $existing;
             } else {
                 return \trans('validation.entryexists', ['attribute' => 'email']);
             }
         }
 
         // Check if an alias with specified address already exists.
-        if (User::aliasExists($email)) {
+        if (User::aliasExists($email) || \App\SharedFolder::aliasExists($email)) {
             return \trans('validation.entryexists', ['attribute' => 'email']);
-        }
-
-        // Check if a group or resource with specified address already exists
-        if (
-            ($existing = Group::emailExists($email, true))
-            || ($existing = \App\Resource::emailExists($email, true))
-        ) {
-            // If this is a deleted group/resource in the same custom domain
-            // we'll force delete it before
-            if (!$domain->isPublic() && $existing->trashed()) {
-                $deleted = $existing;
-            } else {
-                return \trans('validation.entryexists', ['attribute' => 'email']);
-            }
         }
 
         return null;
@@ -727,7 +712,7 @@ class UsersController extends RelationController
         }
 
         // Check if it is one of domains available to the user
-        if (!$user->domains()->where('namespace', $domain->namespace)->exists()) {
+        if (!$domain->isPublic() && $user->id != $domain->walletOwner()->id) {
             return \trans('validation.entryexists', ['attribute' => 'domain']);
         }
 
@@ -739,18 +724,22 @@ class UsersController extends RelationController
             }
         }
 
+        // Check if a group/resource/shared folder with specified address already exists
+        if (
+            \App\Group::emailExists($email)
+            || \App\Resource::emailExists($email)
+            || \App\SharedFolder::emailExists($email)
+        ) {
+            return \trans('validation.entryexists', ['attribute' => 'alias']);
+        }
+
         // Check if an alias with specified address already exists
-        if (User::aliasExists($email)) {
+        if (User::aliasExists($email) || \App\SharedFolder::aliasExists($email)) {
             // Allow assigning the same alias to a user in the same group account,
             // but only for non-public domains
             if ($domain->isPublic()) {
                 return \trans('validation.entryexists', ['attribute' => 'alias']);
             }
-        }
-
-        // Check if a group with specified address already exists
-        if (Group::emailExists($email)) {
-            return \trans('validation.entryexists', ['attribute' => 'alias']);
         }
 
         return null;

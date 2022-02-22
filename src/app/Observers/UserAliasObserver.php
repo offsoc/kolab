@@ -12,8 +12,6 @@ class UserAliasObserver
     /**
      * Handle the "creating" event on an alias
      *
-     * Ensures that there's no user with specified email.
-     *
      * @param \App\UserAlias $alias The user email alias
      *
      * @return bool
@@ -60,7 +58,7 @@ class UserAliasObserver
     }
 
     /**
-     * Handle the user setting "updated" event.
+     * Handle the user alias "updated" event.
      *
      * @param \App\UserAlias $alias User email alias
      *
@@ -74,7 +72,7 @@ class UserAliasObserver
     }
 
     /**
-     * Handle the user setting "deleted" event.
+     * Handle the user alias "deleted" event.
      *
      * @param \App\UserAlias $alias User email alias
      *

@@ -494,7 +494,7 @@ axios.interceptors.response.use(
                     }
                 })
 
-                form.find('.is-invalid:not(.listinput-widget)').first().focus()
+                form.find('.is-invalid:not(.list-input)').first().focus()
             })
         }
         else if (data.status == 'error') {

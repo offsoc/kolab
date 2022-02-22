@@ -20,11 +20,12 @@ class AuthController extends Controller
     public function info()
     {
         $user = Auth::guard()->user();
-        $response = V4\UsersController::userResponse($user);
 
         if (!empty(request()->input('refresh'))) {
-            return $this->refreshAndRespond(request(), $response);
+            return $this->refreshAndRespond(request(), $user);
         }
+
+        $response = V4\UsersController::userResponse($user);
 
         return response()->json($response);
     }
@@ -51,10 +52,7 @@ class AuthController extends Controller
 
         $tokenResponse = app()->handle($proxyRequest);
 
-        $response = V4\UsersController::userResponse($user);
-        $response['status'] = 'success';
-
-        return self::respondWithToken($tokenResponse, $response);
+        return self::respondWithToken($tokenResponse, $user);
     }
 
     /**
@@ -104,6 +102,7 @@ class AuthController extends Controller
 
         // Revoke all of the token's refresh tokens...
         $refreshTokenRepository->revokeRefreshTokensByAccessTokenId($tokenId);
+
         return response()->json([
                 'status' => 'success',
                 'message' => \trans('auth.logoutsuccess')
@@ -124,11 +123,11 @@ class AuthController extends Controller
      * Refresh the token and respond with it.
      *
      * @param \Illuminate\Http\Request $request  The API request.
-     * @param array                    $response Additional response data
+     * @param ?\App\User               $user     The user being authenticated
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected static function refreshAndRespond(Request $request, array $response = [])
+    protected static function refreshAndRespond(Request $request, $user = null)
     {
         $proxyRequest = Request::create('/oauth/token', 'POST', [
             'grant_type' => 'refresh_token',
@@ -139,18 +138,18 @@ class AuthController extends Controller
 
         $tokenResponse = app()->handle($proxyRequest);
 
-        return self::respondWithToken($tokenResponse, $response);
+        return self::respondWithToken($tokenResponse, $user);
     }
 
     /**
      * Get the token array structure.
      *
      * @param \Illuminate\Http\JsonResponse $tokenResponse The response containing the token.
-     * @param array                         $response      Additional response data
+     * @param ?\App\User                    $user          The user being authenticated
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected static function respondWithToken($tokenResponse, array $response = [])
+    protected static function respondWithToken($tokenResponse, $user = null)
     {
         $data = json_decode($tokenResponse->getContent());
 
@@ -163,6 +162,13 @@ class AuthController extends Controller
             return response()->json(['status' => 'error', 'message' => \trans('auth.failed')], 401);
         }
 
+        if ($user) {
+            $response = V4\UsersController::userResponse($user);
+        } else {
+            $response = [];
+        }
+
+        $response['status'] = 'success';
         $response['access_token'] = $data->access_token;
         $response['refresh_token'] = $data->refresh_token;
         $response['token_type'] = 'bearer';

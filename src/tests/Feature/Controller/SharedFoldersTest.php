@@ -208,6 +208,7 @@ class SharedFoldersTest extends TestCase
         $folder = $this->getTestSharedFolder('folder-test@kolab.org');
         $folder->assignToWallet($john->wallets->first());
         $folder->setSetting('acl', '["anyone, full"]');
+        $folder->setAliases(['folder-alias@kolab.org']);
 
         // Test unauthenticated access
         $response = $this->get("/api/v4/shared-folders/{$folder->id}");
@@ -231,6 +232,7 @@ class SharedFoldersTest extends TestCase
         $this->assertSame($folder->email, $json['email']);
         $this->assertSame($folder->name, $json['name']);
         $this->assertSame($folder->type, $json['type']);
+        $this->assertSame(['folder-alias@kolab.org'], $json['aliases']);
         $this->assertTrue(!empty($json['statusInfo']));
         $this->assertArrayHasKey('isDeleted', $json);
         $this->assertArrayHasKey('isActive', $json);
@@ -404,8 +406,14 @@ class SharedFoldersTest extends TestCase
         $this->assertCount(2, $json);
         $this->assertCount(2, $json['errors']);
 
-        // Test too long name
-        $post = ['domain' => 'kolab.org', 'name' => str_repeat('A', 192), 'type' => 'unknown'];
+        // Test too long name, invalid alias domain
+        $post = [
+            'domain' => 'kolab.org',
+            'name' => str_repeat('A', 192),
+            'type' => 'unknown',
+            'aliases' => ['folder-alias@unknown.org'],
+        ];
+
         $response = $this->actingAs($john)->post("/api/v4/shared-folders", $post);
         $response->assertStatus(422);
 
@@ -415,11 +423,14 @@ class SharedFoldersTest extends TestCase
         $this->assertCount(2, $json);
         $this->assertSame(["The name may not be greater than 191 characters."], $json['errors']['name']);
         $this->assertSame(["The specified type is invalid."], $json['errors']['type']);
-        $this->assertCount(2, $json['errors']);
+        $this->assertSame(["The specified domain is invalid."], $json['errors']['aliases']);
+        $this->assertCount(3, $json['errors']);
 
         // Test successful folder creation
         $post['name'] = 'Test Folder';
         $post['type'] = 'event';
+        $post['aliases'] = ['folder-alias@kolab.org']; // expected to be ignored
+
         $response = $this->actingAs($john)->post("/api/v4/shared-folders", $post);
         $json = $response->json();
 
@@ -433,6 +444,7 @@ class SharedFoldersTest extends TestCase
         $this->assertInstanceOf(SharedFolder::class, $folder);
         $this->assertSame($post['type'], $folder->type);
         $this->assertTrue($john->sharedFolders()->get()->contains($folder));
+        $this->assertSame([], $folder->aliases()->pluck('alias')->all());
 
         // Shared folder name must be unique within a domain
         $post['type'] = 'mail';
@@ -444,6 +456,20 @@ class SharedFoldersTest extends TestCase
         $this->assertCount(2, $json);
         $this->assertCount(1, $json['errors']);
         $this->assertSame("The specified name is not available.", $json['errors']['name'][0]);
+
+        $folder->forceDelete();
+
+        // Test successful folder creation with aliases
+        $post['name'] = 'Test Folder';
+        $post['type'] = 'mail';
+        $post['aliases'] = ['folder-alias@kolab.org'];
+        $response = $this->actingAs($john)->post("/api/v4/shared-folders", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $folder = SharedFolder::where('name', $post['name'])->first();
+        $this->assertSame(['folder-alias@kolab.org'], $folder->aliases()->pluck('alias')->all());
     }
 
     /**
@@ -484,5 +510,41 @@ class SharedFoldersTest extends TestCase
 
         $folder->refresh();
         $this->assertSame($post['name'], $folder->name);
+
+        // Aliases with error
+        $post['aliases'] = ['folder-alias1@kolab.org', 'folder-alias2@unknown.com'];
+
+        $response = $this->actingAs($john)->put("/api/v4/shared-folders/{$folder->id}", $post);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json);
+        $this->assertCount(1, $json['errors']);
+        $this->assertCount(1, $json['errors']['aliases']);
+        $this->assertSame("The specified domain is invalid.", $json['errors']['aliases'][1]);
+        $this->assertSame([], $folder->aliases()->pluck('alias')->all());
+
+        // Aliases with success expected
+        $post['aliases'] = ['folder-alias1@kolab.org', 'folder-alias2@kolab.org'];
+
+        $response = $this->actingAs($john)->put("/api/v4/shared-folders/{$folder->id}", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("Shared folder updated successfully.", $json['message']);
+        $this->assertCount(2, $json);
+        $this->assertSame($post['aliases'], $folder->aliases()->pluck('alias')->all());
+
+        // All aliases removal
+        $post['aliases'] = [];
+
+        $response = $this->actingAs($john)->put("/api/v4/shared-folders/{$folder->id}", $post);
+        $response->assertStatus(200);
+
+        $this->assertSame($post['aliases'], $folder->aliases()->pluck('alias')->all());
     }
 }

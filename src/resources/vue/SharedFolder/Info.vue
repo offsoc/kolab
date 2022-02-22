@@ -53,10 +53,10 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div v-if="folder.email" class="row mb-3">
-                                    <label for="email" class="col-sm-4 col-form-label">{{ $t('form.email') }}</label>
+                                <div class="row mb-3" v-if="folder.type == 'mail'">
+                                    <label for="aliases-input" class="col-sm-4 col-form-label">{{ $t('form.emails') }}</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control" id="email" disabled v-model="folder.email">
+                                        <list-input id="aliases" :list="folder.aliases"></list-input>
                                     </div>
                                 </div>
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
@@ -85,18 +85,20 @@
 
 <script>
     import AclInput from '../Widgets/AclInput'
+    import ListInput from '../Widgets/ListInput'
     import StatusComponent from '../Widgets/Status'
 
     export default {
         components: {
             AclInput,
+            ListInput,
             StatusComponent
         },
         data() {
             return {
                 domains: [],
                 folder_id: null,
-                folder: { type: 'mail', config: {} },
+                folder: { type: 'mail', config: {}, aliases: [] },
                 status: {},
                 types: [ 'mail', 'event', 'task', 'contact', 'note', 'file' ]
             }
@@ -153,7 +155,11 @@
                     location += '/' + this.folder_id
                 }
 
-                const post = this.$root.pick(this.folder, ['id', 'name', 'domain', 'type'])
+                const post = this.$root.pick(this.folder, ['id', 'name', 'domain', 'type', 'aliases'])
+
+                if (post.type != 'mail') {
+                    delete post.aliases
+                }
 
                 axios[method](location, post)
                     .then(response => {

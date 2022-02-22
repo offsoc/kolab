@@ -343,7 +343,7 @@ class LdifCommand extends Command
 
             $resource = new \App\Resource();
             $resource->name = $data->name;
-            $resource->domain = $data->domain;
+            $resource->domainName = $data->domain;
             $resource->save();
 
             $resource->assignToWallet($this->wallet);
@@ -397,7 +397,7 @@ class LdifCommand extends Command
             $folder = new \App\SharedFolder();
             $folder->name = $data->name;
             $folder->type = $data->type ?? 'mail';
-            $folder->domain = $data->domain;
+            $folder->domainName = $data->domain;
             $folder->save();
 
             $folder->assignToWallet($this->wallet);
@@ -410,6 +410,11 @@ class LdifCommand extends Command
             // Target folder
             if (!empty($data->folder)) {
                 $folder->setSetting('folder', $data->folder);
+            }
+
+            // Import aliases
+            if (!empty($data->aliases)) {
+                $this->setObjectAliases($folder, $data->aliases);
             }
         }
 
@@ -432,7 +437,7 @@ class LdifCommand extends Command
 
         // Import aliases of the owner, we got from importOwner() call
         if (!empty($this->aliases) && $this->wallet) {
-            $this->setUserAliases($this->wallet->owner, $this->aliases);
+            $this->setObjectAliases($this->wallet->owner, $this->aliases);
         }
 
         $bar = $this->createProgressBar($users->count(), "Importing users");
@@ -538,7 +543,7 @@ class LdifCommand extends Command
                 // domain records yet, save the aliases to be inserted later (in importUsers())
                 $this->aliases = $data->aliases;
             } else {
-                $this->setUserAliases($user, $data->aliases);
+                $this->setObjectAliases($user, $data->aliases);
             }
         }
 
@@ -706,6 +711,10 @@ class LdifCommand extends Command
 
             if (!empty($entry['acl'])) {
                 $result['acl'] = $this->parseACL($this->attrArrayValue($entry, 'acl'));
+            }
+
+            if (!empty($entry['alias'])) {
+                $result['aliases'] = $this->attrArrayValue($entry, 'alias');
             }
         }
 
@@ -958,14 +967,14 @@ class LdifCommand extends Command
     }
 
     /**
-     * Set aliases for the user
+     * Set aliases for for an object
      */
-    protected function setUserAliases(\App\User $user, array $aliases = [])
+    protected function setObjectAliases($object, array $aliases = [])
     {
         if (!empty($aliases)) {
             // Some users might have alias entry with their main address, remove it
             $aliases = array_map('strtolower', $aliases);
-            $aliases = array_diff(array_unique($aliases), [$user->email]);
+            $aliases = array_diff(array_unique($aliases), [$object->email]);
 
             // Remove aliases for domains that do not exist
             if (!empty($aliases)) {
@@ -978,7 +987,7 @@ class LdifCommand extends Command
             }
 
             if (!empty($aliases)) {
-                $user->setAliases($aliases);
+                $object->setAliases($aliases);
             }
         }
     }

@@ -2,15 +2,14 @@
 
 namespace App;
 
-use App\UserAlias;
+use App\Traits\AliasesTrait;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
-use App\Traits\UserAliasesTrait;
+use App\Traits\EmailPropertyTrait;
 use App\Traits\UserConfigTrait;
 use App\Traits\UuidIntKeyTrait;
 use App\Traits\SettingsTrait;
 use App\Traits\StatusPropertyTrait;
-use App\Wallet;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -31,12 +30,13 @@ use League\OAuth2\Server\Exception\OAuthServerException;
  */
 class User extends Authenticatable
 {
+    use AliasesTrait;
     use BelongsToTenantTrait;
     use EntitleableTrait;
+    use EmailPropertyTrait;
     use HasApiTokens;
     use NullableFields;
     use UserConfigTrait;
-    use UserAliasesTrait;
     use UuidIntKeyTrait;
     use SettingsTrait;
     use SoftDeletes;
@@ -94,16 +94,6 @@ class User extends Authenticatable
             'user_id',          // The local foreign key
             'wallet_id'         // The remote foreign key
         );
-    }
-
-    /**
-     * Email aliases of this user.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function aliases()
-    {
-        return $this->hasMany('App\UserAlias', 'user_id');
     }
 
     /**
@@ -257,20 +247,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Return the \App\Domain for this user.
-     *
-     * @return \App\Domain|null
-     */
-    public function domain()
-    {
-        list($local, $domainName) = explode('@', $this->email);
-
-        $domain = \App\Domain::withTrashed()->where('namespace', $domainName)->first();
-
-        return $domain;
-    }
-
-    /**
      * List the domains to which this user is entitled.
      *
      * @param bool $with_accounts Include domains assigned to wallets
@@ -297,31 +273,6 @@ class User extends Authenticatable
         }
 
         return $domains;
-    }
-
-    /**
-     * Find whether an email address exists as a user (including deleted users).
-     *
-     * @param string $email       Email address
-     * @param bool   $return_user Return User instance instead of boolean
-     *
-     * @return \App\User|bool True or User model object if found, False otherwise
-     */
-    public static function emailExists(string $email, bool $return_user = false)
-    {
-        if (strpos($email, '@') === false) {
-            return false;
-        }
-
-        $email = \strtolower($email);
-
-        $user = self::withTrashed()->where('email', $email)->first();
-
-        if ($user) {
-            return $return_user ? $user : true;
-        }
-
-        return false;
     }
 
     /**
@@ -379,7 +330,7 @@ class User extends Authenticatable
             return $user;
         }
 
-        $aliases = UserAlias::where('alias', $email)->get();
+        $aliases = \App\UserAlias::where('alias', $email)->get();
 
         if (count($aliases) == 1) {
             return $aliases->first()->user;

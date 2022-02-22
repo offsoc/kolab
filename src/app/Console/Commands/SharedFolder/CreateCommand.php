@@ -79,7 +79,7 @@ class CreateCommand extends Command
         $folder = new SharedFolder();
         $folder->name = $name;
         $folder->type = $type;
-        $folder->domain = $domainName;
+        $folder->domainName = $domainName;
         $folder->save();
 
         $folder->assignToWallet($owner->wallets->first());

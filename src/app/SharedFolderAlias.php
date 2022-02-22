@@ -5,16 +5,16 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * A email address alias for a User.
+ * An email address alias for a SharedFolder.
  *
  * @property string $alias
  * @property int    $id
- * @property int    $user_id
+ * @property int    $shared_folder_id
  */
-class UserAlias extends Model
+class SharedFolderAlias extends Model
 {
     /** @var array<int, string> The attributes that are mass assignable */
-    protected $fillable = ['user_id', 'alias'];
+    protected $fillable = ['shared_folder_id', 'alias'];
 
     /**
      * Ensure the email address is appropriately cased.
@@ -27,12 +27,12 @@ class UserAlias extends Model
     }
 
     /**
-     * The user to which this alias belongs.
+     * The shared folder to which this alias belongs.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function user()
+    public function sharedFolder()
     {
-        return $this->belongsTo('\App\User', 'user_id', 'id');
+        return $this->belongsTo('\App\SharedFolder', 'shared_folder_id', 'id');
     }
 }
