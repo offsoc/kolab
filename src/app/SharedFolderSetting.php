@@ -24,6 +24,6 @@ class SharedFolderSetting extends Model
      */
     public function folder()
     {
-        return $this->belongsTo(\App\SharedFolder::class, 'shared_folder_id', 'id');
+        return $this->belongsTo(SharedFolder::class, 'shared_folder_id', 'id');
     }
 }

@@ -85,7 +85,7 @@ class Tenant extends Model
      */
     public function wallet(): ?Wallet
     {
-        $user = \App\User::where('role', 'reseller')->where('tenant_id', $this->id)->first();
+        $user = User::where('role', 'reseller')->where('tenant_id', $this->id)->first();
 
         return $user ? $user->wallets->first() : null;
     }

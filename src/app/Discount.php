@@ -62,6 +62,6 @@ class Discount extends Model
      */
     public function wallets()
     {
-        return $this->hasMany('App\Wallet');
+        return $this->hasMany(Wallet::class);
     }
 }

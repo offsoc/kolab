@@ -106,7 +106,7 @@ class AuthAttempt extends Model
     */
     public function notify(): bool
     {
-        return \App\CompanionApp::notifyUser($this->user_id, ['token' => $this->id]);
+        return CompanionApp::notifyUser($this->user_id, ['token' => $this->id]);
     }
 
     /**
@@ -154,12 +154,12 @@ class AuthAttempt extends Model
     *
     * @return \App\AuthAttempt
     */
-    public static function recordAuthAttempt(\App\User $user, $clientIP)
+    public static function recordAuthAttempt(User $user, $clientIP)
     {
-        $authAttempt = \App\AuthAttempt::where('ip', $clientIP)->where('user_id', $user->id)->first();
+        $authAttempt = AuthAttempt::where('ip', $clientIP)->where('user_id', $user->id)->first();
 
         if (!$authAttempt) {
-            $authAttempt = new \App\AuthAttempt();
+            $authAttempt = new AuthAttempt();
             $authAttempt->ip = $clientIP;
             $authAttempt->user_id = $user->id;
         }

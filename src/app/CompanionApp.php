@@ -68,7 +68,7 @@ class CompanionApp extends Model
     */
     public static function notifyUser($userId, $data): bool
     {
-        $notificationTokens = \App\CompanionApp::where('user_id', $userId)
+        $notificationTokens = CompanionApp::where('user_id', $userId)
             ->where('mfa_enabled', true)
             ->pluck('notification_token')
             ->all();

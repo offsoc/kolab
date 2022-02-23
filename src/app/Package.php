@@ -84,7 +84,7 @@ class Package extends Model
     public function isDomain(): bool
     {
         foreach ($this->skus as $sku) {
-            if ($sku->handler_class::entitleableClass() == \App\Domain::class) {
+            if ($sku->handler_class::entitleableClass() == Domain::class) {
                 return true;
             }
         }

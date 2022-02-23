@@ -25,7 +25,7 @@ class DomainSetting extends Model
     public function domain()
     {
         return $this->belongsTo(
-            '\App\Domain',
+            Domain::class,
             'domain_id', /* local */
             'id' /* remote */
         );
