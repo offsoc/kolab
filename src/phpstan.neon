@@ -16,4 +16,5 @@ parameters:
         - config/
         - database/
         - resources/
+        - routes/
         - tests/
