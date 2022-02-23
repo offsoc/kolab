@@ -24,6 +24,6 @@ class TenantSetting extends Model
      */
     public function tenant()
     {
-        return $this->belongsTo('\App\Tenant', 'tenant_id', 'id');
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 }

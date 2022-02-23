@@ -24,6 +24,6 @@ class ResourceSetting extends Model
      */
     public function resource()
     {
-        return $this->belongsTo(\App\Resource::class, 'resource_id', 'id');
+        return $this->belongsTo(Resource::class, 'resource_id', 'id');
     }
 }

@@ -24,6 +24,6 @@ class WalletSetting extends Model
      */
     public function wallet()
     {
-        return $this->belongsTo('\App\Wallet', 'wallet_id', 'id');
+        return $this->belongsTo(Wallet::class, 'wallet_id', 'id');
     }
 }

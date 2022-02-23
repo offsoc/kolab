@@ -337,7 +337,7 @@ class User extends Authenticatable
             return $user;
         }
 
-        $aliases = \App\UserAlias::where('alias', $email)->get();
+        $aliases = UserAlias::where('alias', $email)->get();
 
         if (count($aliases) == 1) {
             return $aliases->first()->user;
@@ -395,7 +395,7 @@ class User extends Authenticatable
         $name = trim($settings['first_name'] . ' ' . $settings['last_name']);
 
         if (empty($name) && $fallback) {
-            return trim(\trans('app.siteuser', ['site' => \App\Tenant::getConfig($this->tenant_id, 'app.name')]));
+            return trim(\trans('app.siteuser', ['site' => Tenant::getConfig($this->tenant_id, 'app.name')]));
         }
 
         return $name;
@@ -421,7 +421,7 @@ class User extends Authenticatable
      */
     public function resources($with_accounts = true)
     {
-        return $this->entitleables(\App\Resource::class, $with_accounts);
+        return $this->entitleables(Resource::class, $with_accounts);
     }
 
     /**
@@ -434,7 +434,7 @@ class User extends Authenticatable
      */
     public function sharedFolders($with_accounts = true)
     {
-        return $this->entitleables(\App\SharedFolder::class, $with_accounts);
+        return $this->entitleables(SharedFolder::class, $with_accounts);
     }
 
     public function senderPolicyFrameworkWhitelist($clientName)

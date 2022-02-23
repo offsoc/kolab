@@ -9,7 +9,6 @@ use App\Traits\GroupConfigTrait;
 use App\Traits\SettingsTrait;
 use App\Traits\StatusPropertyTrait;
 use App\Traits\UuidIntKeyTrait;
-use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 

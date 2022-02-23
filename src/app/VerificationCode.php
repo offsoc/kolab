@@ -78,6 +78,6 @@ class VerificationCode extends Model
      */
     public function user()
     {
-        return $this->belongsTo('\App\User', 'user_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

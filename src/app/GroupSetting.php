@@ -24,6 +24,6 @@ class GroupSetting extends Model
      */
     public function group()
     {
-        return $this->belongsTo(\App\Group::class, 'group_id', 'id');
+        return $this->belongsTo(Group::class, 'group_id', 'id');
     }
 }

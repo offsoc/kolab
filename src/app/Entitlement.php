@@ -77,10 +77,10 @@ class Entitlement extends Model
      */
     public function createTransaction($type, $amount = null)
     {
-        $transaction = \App\Transaction::create(
+        $transaction = Transaction::create(
             [
                 'object_id' => $this->id,
-                'object_type' => \App\Entitlement::class,
+                'object_type' => Entitlement::class,
                 'type' => $type,
                 'amount' => $amount
             ]
@@ -107,7 +107,7 @@ class Entitlement extends Model
      */
     public function entitleableTitle(): ?string
     {
-        if ($this->entitleable instanceof \App\Domain) {
+        if ($this->entitleable instanceof Domain) {
             return $this->entitleable->namespace;
         }
 

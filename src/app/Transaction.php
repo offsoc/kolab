@@ -2,8 +2,6 @@
 
 namespace App;
 
-use App\Entitlement;
-use App\Wallet;
 use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 
