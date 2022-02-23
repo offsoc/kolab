@@ -65,7 +65,7 @@ class Tenant extends Model
      */
     public function discounts()
     {
-        return $this->hasMany('App\Discount');
+        return $this->hasMany(Discount::class);
     }
 
     /**
@@ -75,7 +75,7 @@ class Tenant extends Model
      */
     public function signupInvitations()
     {
-        return $this->hasMany('App\SignupInvitation');
+        return $this->hasMany(SignupInvitation::class);
     }
 
     /*

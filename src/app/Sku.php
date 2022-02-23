@@ -2,10 +2,10 @@
 
 namespace App;
 
-use Illuminate\Database\Eloquent\Model;
-use Spatie\Translatable\HasTranslations;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidStrKeyTrait;
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * The eloquent definition of a Stock Keeping Unit (SKU).
@@ -60,7 +60,7 @@ class Sku extends Model
      */
     public function entitlements()
     {
-        return $this->hasMany('App\Entitlement');
+        return $this->hasMany(Entitlement::class);
     }
 
     /**
@@ -70,9 +70,8 @@ class Sku extends Model
      */
     public function packages()
     {
-        return $this->belongsToMany(
-            'App\Package',
-            'package_skus'
-        )->using('App\PackageSku')->withPivot(['cost', 'qty']);
+        return $this->belongsToMany(Package::class, 'package_skus')
+            ->using(PackageSku::class)
+            ->withPivot(['cost', 'qty']);
     }
 }

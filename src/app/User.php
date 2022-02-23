@@ -96,7 +96,7 @@ class User extends Authenticatable
     public function accounts()
     {
         return $this->belongsToMany(
-            'App\Wallet',       // The foreign object definition
+            Wallet::class,      // The foreign object definition
             'user_accounts',    // The table name
             'user_id',          // The local foreign key
             'wallet_id'         // The remote foreign key
@@ -408,7 +408,7 @@ class User extends Authenticatable
      */
     public function passwords()
     {
-        return $this->hasMany('App\UserPassword');
+        return $this->hasMany(UserPassword::class);
     }
 
     /**
@@ -512,7 +512,7 @@ class User extends Authenticatable
      */
     public function verificationcodes()
     {
-        return $this->hasMany('App\VerificationCode', 'user_id', 'id');
+        return $this->hasMany(VerificationCode::class, 'user_id', 'id');
     }
 
     /**
@@ -522,7 +522,7 @@ class User extends Authenticatable
      */
     public function wallets()
     {
-        return $this->hasMany('App\Wallet');
+        return $this->hasMany(Wallet::class);
     }
 
     /**

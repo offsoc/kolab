@@ -99,11 +99,8 @@ class Package extends Model
      */
     public function skus()
     {
-        return $this->belongsToMany(
-            'App\Sku',
-            'package_skus'
-        )->using('App\PackageSku')->withPivot(
-            ['qty']
-        );
+        return $this->belongsToMany(Sku::class, 'package_skus')
+            ->using(PackageSku::class)
+            ->withPivot(['qty']);
     }
 }

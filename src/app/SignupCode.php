@@ -44,7 +44,7 @@ class SignupCode extends Model
     /** @var string The "type" of the auto-incrementing ID */
     protected $keyType = 'string';
 
-    /** @var string[] The attributes that are mass assignable */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'code',
         'email',

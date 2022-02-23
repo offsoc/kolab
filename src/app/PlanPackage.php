@@ -64,7 +64,7 @@ class PlanPackage extends Pivot
      */
     public function package()
     {
-        return $this->belongsTo('App\Package');
+        return $this->belongsTo(Package::class);
     }
 
     /**
@@ -74,6 +74,6 @@ class PlanPackage extends Pivot
      */
     public function plan()
     {
-        return $this->belongsTo('App\Plan');
+        return $this->belongsTo(Plan::class);
     }
 }

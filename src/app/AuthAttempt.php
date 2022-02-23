@@ -2,10 +2,10 @@
 
 namespace App;
 
-use Illuminate\Database\Eloquent\Model;
-use Dyrynda\Database\Support\NullableFields;
 use App\Traits\UuidStrKeyTrait;
 use Carbon\Carbon;
+use Dyrynda\Database\Support\NullableFields;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * The eloquent definition of an AuthAttempt.
@@ -27,6 +27,7 @@ class AuthAttempt extends Model
     private const STATUS_ACCEPTED  = 'ACCEPTED';
     private const STATUS_DENIED  = 'DENIED';
 
+    /** @var array<int, string> The attributes that can be not set */
     protected $nullable = ['reason'];
 
     /** @var array<int, string> The attributes that are mass assignable */

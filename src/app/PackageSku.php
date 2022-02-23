@@ -73,7 +73,7 @@ class PackageSku extends Pivot
      */
     public function package()
     {
-        return $this->belongsTo('App\Package');
+        return $this->belongsTo(Package::class);
     }
 
     /**
@@ -83,6 +83,6 @@ class PackageSku extends Pivot
      */
     public function sku()
     {
-        return $this->belongsTo('App\Sku');
+        return $this->belongsTo(Sku::class);
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App;
 
+use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\UuidStrKeyTrait;
 
 /**
  * The eloquent definition of an Entitlement.
@@ -148,7 +148,7 @@ class Entitlement extends Model
      */
     public function sku()
     {
-        return $this->belongsTo('App\Sku');
+        return $this->belongsTo(Sku::class);
     }
 
     /**
@@ -158,7 +158,7 @@ class Entitlement extends Model
      */
     public function wallet()
     {
-        return $this->belongsTo('App\Wallet');
+        return $this->belongsTo(Wallet::class);
     }
 
     /**
