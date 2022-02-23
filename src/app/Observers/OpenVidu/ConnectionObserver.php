@@ -34,7 +34,7 @@ class ConnectionObserver
 
         foreach ($keys as $key => $type) {
             $newState = $connection->metadata[$key] ?? null;
-            $oldState = $this->getOriginal($connection, 'metadata')[$key] ?? null;
+            $oldState = $connection->getOriginal('metadata')[$key] ?? null;
 
             if ($newState !== $oldState) {
                 $params[$key] = $type == 'bool' ? !empty($newState) : $newState;
@@ -46,26 +46,5 @@ class ConnectionObserver
             $params['connectionId'] = $connection->id;
             $connection->room->signal('connectionUpdate', $params);
         }
-    }
-
-    /**
-     * A wrapper to getOriginal() on an object
-     *
-     * @param \App\OpenVidu\Connection $connection The connection.
-     * @param string                   $property   The property name
-     *
-     * @return mixed
-     */
-    private function getOriginal($connection, $property)
-    {
-        $original = $connection->getOriginal($property);
-
-        // The original value for a property is in a format stored in database
-        // I.e. for 'metadata' it is a JSON string instead of an array
-        if ($property == 'metadata') {
-            $original = json_decode($original, true);
-        }
-
-        return $original;
     }
 }
