@@ -52,13 +52,15 @@ class TOTP extends Base
         );
 
         // copy config options
-        $this->backend = new \Kolab2FA\OTP\TOTP();
-        $this->backend
-            ->setDigits($this->config['digits'])
-            ->setInterval($this->config['interval'])
-            ->setDigest($this->config['digest'])
-            ->setIssuer($this->config['issuer'])
-            ->setIssuerIncludedAsParameter(true);
+        $this->backend = \OTPHP\TOTP::create(
+            null,
+            $this->config['interval'],
+            $this->config['digest'],
+            $this->config['digits']
+        );
+
+        $this->backend->setIssuer($this->config['issuer']);
+        $this->backend->setIssuerIncludedAsParameter(true);
     }
 
     /**
@@ -75,14 +77,11 @@ class TOTP extends Base
             return false;
         }
 
-        $this->backend->setLabel($this->username)->setSecret($secret);
+        $this->backend->setLabel($this->username);
+        $this->backend->setParameter('secret', $secret);
 
-        // PHP gets a string, but we're comparing integers.
-        $code = (int)$code;
-//$code = (string) $code;
-        // Pass a window to indicate the maximum timeslip between client (mobile
-        // device) and server.
-        $pass = $this->backend->verify($code, $timestamp, 150);
+        // Pass a window to indicate the maximum timeslip between client (device) and server.
+        $pass = $this->backend->verify((string) $code, $timestamp, 150);
 
         // try all codes from $timestamp till now
         if (!$pass && $timestamp) {
@@ -109,7 +108,8 @@ class TOTP extends Base
             return;
         }
 
-        $this->backend->setLabel($this->username)->setSecret($secret);
+        $this->backend->setLabel($this->username);
+        $this->backend->setParameter('secret', $secret);
 
         return $this->backend->at(time());
     }
@@ -130,8 +130,9 @@ class TOTP extends Base
 
         // TODO: deny call if already active?
 
-        $this->backend->setLabel($this->username)->setSecret($this->secret);
+        $this->backend->setLabel($this->username);
+        $this->backend->setParameter('secret', $secret);
+
         return $this->backend->getProvisioningUri();
     }
-
 }

@@ -31,7 +31,7 @@
         "pear/crypt_gpg": "^1.6.6",
         "predis/predis": "^1.1.10",
         "spatie/laravel-translatable": "^5.2",
-        "spomky-labs/otphp": "~4.0.0",
+        "spomky-labs/otphp": "~10.0.0",
         "stripe/stripe-php": "^7.29"
     },
     "require-dev": {
