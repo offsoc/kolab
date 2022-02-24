@@ -100,8 +100,8 @@ class Domain extends Model
     public static function getPublicDomains(): array
     {
         return self::withEnvTenantContext()
-            ->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
-            ->get(['namespace'])->pluck('namespace')->toArray();
+            ->where('type', '&', Domain::TYPE_PUBLIC)
+            ->pluck('namespace')->all();
     }
 
     /**

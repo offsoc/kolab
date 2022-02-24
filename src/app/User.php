@@ -274,8 +274,8 @@ class User extends Authenticatable
                     $query->withEnvTenantContext();
                 }
 
-                $query->whereRaw(sprintf('(domains.type & %s)', Domain::TYPE_PUBLIC))
-                    ->whereRaw(sprintf('(domains.status & %s)', Domain::STATUS_ACTIVE));
+                $query->where('domains.type', '&', Domain::TYPE_PUBLIC)
+                    ->where('domains.status', '&', Domain::STATUS_ACTIVE);
             });
         }
 
