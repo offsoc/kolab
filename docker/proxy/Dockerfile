@@ -11,7 +11,11 @@ RUN dnf -y install \
 
 COPY rootfs/ /
 ARG APP_WEBSITE_DOMAIN
+ARG SSL_CERTIFICATE
+ARG SSL_CERTIFICATE_KEY
 RUN sed -i -r -e "s|APP_WEBSITE_DOMAIN|$APP_WEBSITE_DOMAIN|g" /etc/nginx/nginx.conf
+RUN sed -i -r -e "s|SSL_CERTIFICATE_CERT|$SSL_CERTIFICATE|g" /etc/nginx/nginx.conf
+RUN sed -i -r -e "s|SSL_CERTIFICATE_KEY|$SSL_CERTIFICATE_KEY|g" /etc/nginx/nginx.conf
 
 # Forward request logs to Docker log collector
 RUN ln -sf /dev/stdout /var/log/nginx/access.log \

@@ -124,6 +124,8 @@ services:
       context: ./docker/proxy/
       args:
         APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
+        SSL_CERTIFICATE: /etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/fullchain.pem
+        SSL_CERTIFICATE_KEY: /etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/privkey.pem
     healthcheck:
       interval: 10s
       test: ["CMD-SHELL", "curl -so /dev/null http://localhost/ || exit 1"]
