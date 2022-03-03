@@ -46,7 +46,8 @@ RUN yum -y install https://mirror.kolabenterprise.com/kolab-16-for-el7.rpm && \
     yum -y install kolab-16-release-development patch && \
         yum clean all
 
-RUN yum -y --setopt tsflags= install kolab
+RUN yum -y --setopt tsflags= install kolab roundcubemail-plugin-enigma
+RUN mkdir /var/lib/roundcubemail/plugins/enigma && chmod 777 /var/lib/roundcubemail/plugins/enigma
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
 COPY kolab-setenv.service /etc/systemd/system/kolab-setenv.service
