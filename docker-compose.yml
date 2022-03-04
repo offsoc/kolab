@@ -169,6 +169,22 @@ services:
       context: ./docker/swoole/
     container_name: kolab-swoole
     image: apheleia/swoole:4.8.x
+  webapp:
+    build:
+      context: ./docker/webapp/
+    container_name: kolab-webapp
+    image: kolab-webapp
+    healthcheck:
+      interval: 10s
+      test: "/src/kolabsrc/artisan octane:status || exit 1"
+      timeout: 5s
+      retries: 30
+    depends_on:
+      kolab:
+        condition: service_healthy
+    network_mode: host
+    volumes:
+      - ./src:/src/kolabsrc.orig:ro
   worker:
     build:
       context: ./docker/worker/

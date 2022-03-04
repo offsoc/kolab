@@ -7,32 +7,9 @@ function die() {
     exit 1
 }
 
-rpm -qv composer >/dev/null 2>&1 || \
-    test ! -z "$(which composer 2>/dev/null)" || \
-    die "Is composer installed?"
-
 rpm -qv docker-compose >/dev/null 2>&1 || \
     test ! -z "$(which docker-compose 2>/dev/null)" || \
     die "Is docker-compose installed?"
-
-rpm -qv npm >/dev/null 2>&1 || \
-    test ! -z "$(which npm 2>/dev/null)" || \
-    die "Is npm installed?"
-
-rpm -qv php >/dev/null 2>&1 || \
-    test ! -z "$(which php 2>/dev/null)" || \
-    die "Is php installed?"
-
-rpm -qv php-ldap >/dev/null 2>&1 || \
-    test ! -z "$(php --ini | grep ldap)" || \
-    die "Is php-ldap installed?"
-
-rpm -qv php-mysqlnd >/dev/null 2>&1 || \
-    test ! -z "$(php --ini | grep mysql)" || \
-    die "Is php-mysqlnd installed?"
-
-test ! -z "$(php --modules | grep swoole)" || \
-    die "Is swoole installed?"
 
 test ! -z "$(grep 'systemd.unified_cgroup_hierarchy=0' /proc/cmdline)" || \
     die "systemd containers only work with cgroupv1 (use 'grubby --update-kernel=ALL --args=\"systemd.unified_cgroup_hierarchy=0\"' and a reboot to fix)"
@@ -51,6 +28,9 @@ fi
 docker pull docker.io/kolab/centos7:latest
 
 docker-compose down --remove-orphans
+src/artisan octane:stop >/dev/null 2>&1 || :
+src/artisan horizon:terminate >/dev/null 2>&1 || :
+
 docker-compose build coturn kolab mariadb meet pdns-sql proxy redis nginx
 
 bin/regen-certs
@@ -82,6 +62,38 @@ function wait_for_container {
 # Ensure the containers we depend on are fully started
 wait_for_container 'kolab'
 wait_for_container 'kolab-redis'
+
+if [ "$1" == "--nodev" ]; then
+    echo "starting everything in containers"
+    docker-compose build swoole webapp
+    docker-compose up -d webapp nginx
+    wait_for_container 'kolab-webapp'
+    exit 0
+fi
+echo "Starting the development environment"
+
+rpm -qv composer >/dev/null 2>&1 || \
+    test ! -z "$(which composer 2>/dev/null)" || \
+    die "Is composer installed?"
+
+rpm -qv npm >/dev/null 2>&1 || \
+    test ! -z "$(which npm 2>/dev/null)" || \
+    die "Is npm installed?"
+
+rpm -qv php >/dev/null 2>&1 || \
+    test ! -z "$(which php 2>/dev/null)" || \
+    die "Is php installed?"
+
+rpm -qv php-ldap >/dev/null 2>&1 || \
+    test ! -z "$(php --ini | grep ldap)" || \
+    die "Is php-ldap installed?"
+
+rpm -qv php-mysqlnd >/dev/null 2>&1 || \
+    test ! -z "$(php --ini | grep mysql)" || \
+    die "Is php-mysqlnd installed?"
+
+test ! -z "$(php --modules | grep swoole)" || \
+    die "Is swoole installed?"
 
 pushd ${base_dir}/src/
 
@@ -123,8 +135,6 @@ rm -rf database/database.sqlite
 ./artisan db:ping --wait
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
 ./artisan data:import || :
-./artisan octane:stop >/dev/null 2>&1 || :
 nohup ./artisan octane:start --host=$(grep OCTANE_HTTP_HOST .env | tail -n1 | sed "s/OCTANE_HTTP_HOST=//") > octane.out &
-./artisan horizon:terminate >/dev/null 2>&1 || :
 nohup ./artisan horizon > horizon.out &
 popd
