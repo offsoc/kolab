@@ -23,7 +23,8 @@ services:
       context: ./docker/kolab/
     container_name: kolab
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     extra_hosts:
       - "kolab.mgmt.com:127.0.0.1"
     environment:
@@ -84,6 +85,9 @@ services:
       context: ./docker/nginx/
       args:
         APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
+    depends_on:
+      kolab:
+        condition: service_healthy
     healthcheck:
       interval: 10s
       test: "kill -0 $$(cat /run/nginx.pid)"
@@ -107,7 +111,8 @@ services:
       context: ./docker/pdns-sql/
     container_name: kolab-pdns-sql
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     hostname: pdns-sql
     image: apheleia/kolab-pdns-sql
     network_mode: host

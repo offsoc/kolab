@@ -57,6 +57,32 @@ bin/regen-certs
 
 docker-compose up -d coturn kolab mariadb meet pdns-sql proxy redis
 
+# Workaround until we have docker-compose --wait (https://github.com/docker/compose/pull/8777)
+function wait_for_container {
+    container_id="$1"
+    container_name="$(docker inspect "${container_id}" --format '{{ .Name }}')"
+    echo "Waiting for container: ${container_name} [${container_id}]"
+    waiting_done="false"
+    while [[ "${waiting_done}" != "true" ]]; do
+        container_state="$(docker inspect "${container_id}" --format '{{ .State.Status }}')"
+        if [[ "${container_state}" == "running" ]]; then
+            health_status="$(docker inspect "${container_id}" --format '{{ .State.Health.Status }}')"
+            echo "${container_name}: container_state=${container_state}, health_status=${health_status}"
+            if [[ ${health_status} == "healthy" ]]; then
+                waiting_done="true"
+            fi
+        else
+            echo "${container_name}: container_state=${container_state}"
+            waiting_done="true"
+        fi
+        sleep 1;
+    done;
+}
+
+# Ensure the containers we depend on are fully started
+wait_for_container 'kolab'
+wait_for_container 'kolab-redis'
+
 pushd ${base_dir}/src/
 
 rm -rf vendor/ composer.lock
