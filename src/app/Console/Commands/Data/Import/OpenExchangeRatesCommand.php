@@ -28,19 +28,23 @@ class OpenExchangeRatesCommand extends Command
     public function handle()
     {
         foreach (['CHF', 'EUR'] as $sourceCurrency) {
-            $rates = \App\Backends\OpenExchangeRates::retrieveRates($sourceCurrency);
+            try {
+                $rates = \App\Backends\OpenExchangeRates::retrieveRates($sourceCurrency);
 
-            $file = resource_path("exchangerates-$sourceCurrency.php");
+                $file = resource_path("exchangerates-$sourceCurrency.php");
 
-            $out = "<?php return [\n";
+                $out = "<?php return [\n";
 
-            foreach ($rates as $countryCode => $rate) {
-                $out .= sprintf("  '%s' => '%s',\n", $countryCode, $rate);
+                foreach ($rates as $countryCode => $rate) {
+                    $out .= sprintf("  '%s' => '%s',\n", $countryCode, $rate);
+                }
+
+                $out .= "];\n";
+
+                file_put_contents($file, $out);
+            } catch (\Exception $exception) {
+                $this->error("Failed to import $sourceCurrency: " . $exception->getMessage());
             }
-
-            $out .= "];\n";
-
-            file_put_contents($file, $out);
         }
     }
 }
