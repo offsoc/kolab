@@ -86,7 +86,7 @@ services:
         APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
     healthcheck:
       interval: 10s
-      test: ["CMD-SHELL", "curl -so /dev/null http://localhost/ || exit 1"]
+      test: "kill -0 $$(cat /run/nginx.pid)"
       timeout: 5s
       retries: 30
     container_name: kolab-nginx
@@ -128,7 +128,7 @@ services:
         SSL_CERTIFICATE_KEY: /etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/privkey.pem
     healthcheck:
       interval: 10s
-      test: ["CMD-SHELL", "curl -so /dev/null http://localhost/ || exit 1"]
+      test: "kill -0 $$(cat /run/nginx.pid)"
       timeout: 5s
       retries: 30
     container_name: kolab-proxy
