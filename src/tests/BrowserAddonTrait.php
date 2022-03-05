@@ -61,6 +61,7 @@ trait BrowserAddonTrait
             '--lang=en_US',
             '--disable-gpu',
             '--headless',
+            '--no-sandbox',
         ]);
 
         return RemoteWebDriver::create(

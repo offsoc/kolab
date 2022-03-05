@@ -185,6 +185,17 @@ services:
     network_mode: host
     volumes:
       - ./src:/src/kolabsrc.orig:ro
+  tests:
+    build:
+      context: ./docker/tests/
+    container_name: kolab-tests
+    image: kolab-tests
+    depends_on:
+      kolab:
+        condition: service_healthy
+    network_mode: host
+    volumes:
+      - ./src:/src/kolabsrc.orig:ro
   worker:
     build:
       context: ./docker/worker/
