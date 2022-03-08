@@ -21,7 +21,7 @@ class ErrorTest extends TestCaseDusk
                 ->assertVisible('#app > #footer-menu');
 
             $this->assertSame('404', $browser->text('#error-page .code'));
-            $this->assertSame('Not found', $browser->text('#error-page .message'));
+            $this->assertSame('Not Found', $browser->text('#error-page .message'));
         });
 
         $this->browse(function (Browser $browser) {
@@ -31,7 +31,7 @@ class ErrorTest extends TestCaseDusk
                 ->assertVisible('#app > #footer-menu');
 
             $this->assertSame('404', $browser->text('#error-page .code'));
-            $this->assertSame('Not found', $browser->text('#error-page .message'));
+            $this->assertSame('Not Found', $browser->text('#error-page .message'));
         });
     }
 }
