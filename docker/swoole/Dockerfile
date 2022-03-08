@@ -1,8 +1,8 @@
-FROM fedora:34
+FROM fedora:35
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
 
-ARG SWOOLE_VERSION=v4.6.7
+ARG SWOOLE_VERSION=v4.8.7
 ENV HOME=/opt/app-root/src
 
 LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
