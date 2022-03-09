@@ -16,13 +16,15 @@ class UserPassword extends Model
     /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
-    /** @var array The attributes that should be mutated to dates. */
-    protected $dates = ['created_at'];
+    /** @var array<string, string> The attributes that should be cast. */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+    ];
 
-    /** @var array The attributes that are mass assignable. */
+    /** @var array<int, string> The attributes that are mass assignable. */
     protected $fillable = ['user_id', 'password'];
 
-    /** @var array The attributes that should be hidden for arrays. */
+    /** @var array<int, string> The attributes that should be hidden for arrays. */
     protected $hidden = ['password'];
 
     /**
@@ -32,6 +34,6 @@ class UserPassword extends Model
      */
     public function user()
     {
-        return $this->belongsTo('\App\User', 'user_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

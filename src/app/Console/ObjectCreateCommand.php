@@ -61,7 +61,5 @@ abstract class ObjectCreateCommand extends ObjectCommand
         } else {
             $this->error("Object could not be created.");
         }
-
-        return $object;
     }
 }

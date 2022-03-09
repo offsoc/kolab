@@ -14,9 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TenantSetting extends Model
 {
-    protected $fillable = [
-        'tenant_id', 'key', 'value'
-    ];
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['tenant_id', 'key', 'value'];
 
     /**
      * The tenant to which this setting belongs.
@@ -25,6 +24,6 @@ class TenantSetting extends Model
      */
     public function tenant()
     {
-        return $this->belongsTo('\App\Tenant', 'tenant_id', 'id');
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 }

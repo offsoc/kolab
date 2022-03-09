@@ -20,10 +20,12 @@ class Payment extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'amount' => 'integer'
     ];
 
+    /** @var array<int,string> The attributes that are mass assignable */
     protected $fillable = [
         'id',
         'wallet_id',
@@ -52,6 +54,6 @@ class Payment extends Model
      */
     public function wallet()
     {
-        return $this->belongsTo('\App\Wallet', 'wallet_id', 'id');
+        return $this->belongsTo(Wallet::class, 'wallet_id', 'id');
     }
 }

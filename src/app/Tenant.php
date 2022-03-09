@@ -15,10 +15,8 @@ class Tenant extends Model
 {
     use SettingsTrait;
 
-    protected $fillable = [
-        'id',
-        'title',
-    ];
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['id', 'title'];
 
 
     /**
@@ -67,7 +65,7 @@ class Tenant extends Model
      */
     public function discounts()
     {
-        return $this->hasMany('App\Discount');
+        return $this->hasMany(Discount::class);
     }
 
     /**
@@ -77,7 +75,7 @@ class Tenant extends Model
      */
     public function signupInvitations()
     {
-        return $this->hasMany('App\SignupInvitation');
+        return $this->hasMany(SignupInvitation::class);
     }
 
     /*
@@ -87,7 +85,7 @@ class Tenant extends Model
      */
     public function wallet(): ?Wallet
     {
-        $user = \App\User::where('role', 'reseller')->where('tenant_id', $this->id)->first();
+        $user = User::where('role', 'reseller')->where('tenant_id', $this->id)->first();
 
         return $user ? $user->wallets->first() : null;
     }

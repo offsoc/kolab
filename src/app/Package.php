@@ -39,6 +39,7 @@ class Package extends Model
 
     public $timestamps = false;
 
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'description',
         'discount_rate',
@@ -46,7 +47,7 @@ class Package extends Model
         'title',
     ];
 
-    /** @var array Translatable properties */
+    /** @var array<int, string> Translatable properties */
     public $translatable = [
         'name',
         'description',
@@ -83,7 +84,7 @@ class Package extends Model
     public function isDomain(): bool
     {
         foreach ($this->skus as $sku) {
-            if ($sku->handler_class::entitleableClass() == \App\Domain::class) {
+            if ($sku->handler_class::entitleableClass() == Domain::class) {
                 return true;
             }
         }
@@ -98,11 +99,8 @@ class Package extends Model
      */
     public function skus()
     {
-        return $this->belongsToMany(
-            'App\Sku',
-            'package_skus'
-        )->using('App\PackageSku')->withPivot(
-            ['qty']
-        );
+        return $this->belongsToMany(Sku::class, 'package_skus')
+            ->using(PackageSku::class)
+            ->withPivot(['qty']);
     }
 }

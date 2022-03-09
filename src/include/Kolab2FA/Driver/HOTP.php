@@ -58,12 +58,15 @@ class HOTP extends Base
         );
 
         // copy config options
-        $this->backend = new \Kolab2FA\OTP\HOTP();
-        $this->backend
-            ->setDigits($this->config['digits'])
-            ->setDigest($this->config['digest'])
-            ->setIssuer($this->config['issuer'])
-            ->setIssuerIncludedAsParameter(true);
+        $this->backend = \OTPHP\HOTP::create(
+            null,
+            0,
+            $this->config['digest'],
+            $this->config['digits']
+        );
+
+        $this->backend->setIssuer($this->config['issuer']);
+        $this->backend->setIssuerIncludedAsParameter(true);
     }
 
     /**
@@ -73,7 +76,7 @@ class HOTP extends Base
     {
         // get my secret from the user storage
         $secret  = $this->get('secret');
-        $counter = $this->get('counter');
+        $counter = (int) $this->get('counter');
 
         if (!strlen($secret)) {
             // LOG: "no secret set for user $this->username"
@@ -82,7 +85,10 @@ class HOTP extends Base
         }
 
         try {
-            $this->backend->setLabel($this->username)->setSecret($secret)->setCounter(intval($this->get('counter')));
+            $this->backend->setLabel($this->username);
+            $this->backend->setSecret($secret);
+            $this->backend->setParameter('counter', $counter);
+
             $pass = $this->backend->verify($code, $counter, $this->config['window']);
 
             // store incremented counter value
@@ -114,7 +120,10 @@ class HOTP extends Base
 
         // TODO: deny call if already active?
 
-        $this->backend->setLabel($this->username)->setSecret($this->secret)->setCounter(intval($this->get('counter')));
+        $this->backend->setLabel($this->username);
+        $this->backend->setSecret($this->secret);
+        $this->backend->setParameter('counter', (int) $this->get('counter'));
+
         return $this->backend->getProvisioningUri();
     }
 

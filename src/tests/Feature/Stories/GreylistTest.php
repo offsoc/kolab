@@ -14,7 +14,6 @@ use Tests\TestCase;
 class GreylistTest extends TestCase
 {
     private $clientAddress;
-    private $requests = [];
     private $net;
 
     public function setUp(): void

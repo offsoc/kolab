@@ -215,6 +215,8 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         }
 
         $user->assignSku($sku);
+
+        /** @var \App\Entitlement $entitlement */
         $entitlement = $user->entitlements()->where('sku_id', $sku->id)->first();
 
         return response()->json([

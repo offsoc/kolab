@@ -13,9 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class UserAlias extends Model
 {
-    protected $fillable = [
-        'user_id', 'alias'
-    ];
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['user_id', 'alias'];
 
     /**
      * Ensure the email address is appropriately cased.
@@ -34,6 +33,6 @@ class UserAlias extends Model
      */
     public function user()
     {
-        return $this->belongsTo('\App\User', 'user_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

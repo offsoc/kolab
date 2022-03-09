@@ -14,9 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class DomainSetting extends Model
 {
-    protected $fillable = [
-        'domain_id', 'key', 'value'
-    ];
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['domain_id', 'key', 'value'];
 
     /**
      * The domain to which this setting belongs.
@@ -26,7 +25,7 @@ class DomainSetting extends Model
     public function domain()
     {
         return $this->belongsTo(
-            '\App\Domain',
+            Domain::class,
             'domain_id', /* local */
             'id' /* remote */
         );

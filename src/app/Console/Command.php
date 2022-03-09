@@ -9,9 +9,9 @@ abstract class Command extends \Illuminate\Console\Command
     /**
      * This needs to be here to be used.
      *
-     * @var null
+     * @var string
      */
-    protected $commandPrefix = null;
+    protected $commandPrefix = '';
 
     /**
      * Annotate this command as being dangerous for any potential unintended consequences.

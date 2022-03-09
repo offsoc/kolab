@@ -2,9 +2,9 @@
 
 namespace App;
 
+use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\UuidStrKeyTrait;
 
 /**
  * The eloquent definition of an Entitlement.
@@ -29,11 +29,7 @@ class Entitlement extends Model
     use SoftDeletes;
     use UuidStrKeyTrait;
 
-    /**
-     * The fillable columns for this Entitlement
-     *
-     * @var array
-     */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'sku_id',
         'wallet_id',
@@ -44,6 +40,7 @@ class Entitlement extends Model
         'fee',
     ];
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'cost' => 'integer',
         'fee' => 'integer'
@@ -80,10 +77,10 @@ class Entitlement extends Model
      */
     public function createTransaction($type, $amount = null)
     {
-        $transaction = \App\Transaction::create(
+        $transaction = Transaction::create(
             [
                 'object_id' => $this->id,
-                'object_type' => \App\Entitlement::class,
+                'object_type' => Entitlement::class,
                 'type' => $type,
                 'amount' => $amount
             ]
@@ -110,7 +107,7 @@ class Entitlement extends Model
      */
     public function entitleableTitle(): ?string
     {
-        if ($this->entitleable instanceof \App\Domain) {
+        if ($this->entitleable instanceof Domain) {
             return $this->entitleable->namespace;
         }
 
@@ -151,7 +148,7 @@ class Entitlement extends Model
      */
     public function sku()
     {
-        return $this->belongsTo('App\Sku');
+        return $this->belongsTo(Sku::class);
     }
 
     /**
@@ -161,7 +158,7 @@ class Entitlement extends Model
      */
     public function wallet()
     {
-        return $this->belongsTo('App\Wallet');
+        return $this->belongsTo(Wallet::class);
     }
 
     /**

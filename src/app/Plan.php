@@ -34,6 +34,7 @@ class Plan extends Model
 
     public $timestamps = false;
 
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'title',
         'name',
@@ -47,14 +48,15 @@ class Plan extends Model
         'discount_rate',
     ];
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
-        'promo_from' => 'datetime',
-        'promo_to' => 'datetime',
+        'promo_from' => 'datetime:Y-m-d H:i:s',
+        'promo_to' => 'datetime:Y-m-d H:i:s',
         'discount_qty' => 'integer',
         'discount_rate' => 'integer'
     ];
 
-    /** @var array Translatable properties */
+    /** @var array<int, string> Translatable properties */
     public $translatable = [
         'name',
         'description',
@@ -87,18 +89,15 @@ class Plan extends Model
      */
     public function packages()
     {
-        return $this->belongsToMany(
-            'App\Package',
-            'plan_packages'
-        )->using('App\PlanPackage')->withPivot(
-            [
-                'qty',
-                'qty_min',
-                'qty_max',
-                'discount_qty',
-                'discount_rate'
-            ]
-        );
+        return $this->belongsToMany(Package::class, 'plan_packages')
+            ->using(PlanPackage::class)
+            ->withPivot([
+                    'qty',
+                    'qty_min',
+                    'qty_max',
+                    'discount_qty',
+                    'discount_rate'
+            ]);
     }
 
     /**

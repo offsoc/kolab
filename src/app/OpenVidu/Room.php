@@ -27,9 +27,9 @@ class Room extends Model
     public const REQUEST_ACCEPTED = 'accepted';
     public const REQUEST_DENIED = 'denied';
 
-    private const OV_ROLE_MODERATOR = 'MODERATOR';
+    private const OV_ROLE_MODERATOR = 'MODERATOR'; // @phpstan-ignore-line
     private const OV_ROLE_PUBLISHER = 'PUBLISHER';
-    private const OV_ROLE_SUBSCRIBER = 'SUBSCRIBER';
+    private const OV_ROLE_SUBSCRIBER = 'SUBSCRIBER'; // @phpstan-ignore-line
 
     protected $fillable = [
         'user_id',

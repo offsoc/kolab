@@ -38,7 +38,7 @@ class CreateCommandTest extends TestCase
 
         $setting = $tenant->settings()->where('key', 'test')->first();
 
-        $this->assertSame('init', $setting->fresh()->value);
+        $this->assertSame('init', $setting->value);
         $this->assertSame('init', $tenant->fresh()->getSetting('test'));
     }
 }

@@ -1356,7 +1356,7 @@ class LDAP
      */
     private static function throwException($ldap, string $message): void
     {
-        if (empty(self::$ldap) && !empty($ldap)) {
+        if (empty(self::$ldap)) {
             $ldap->close();
         }
 

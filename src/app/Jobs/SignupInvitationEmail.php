@@ -24,7 +24,7 @@ class SignupInvitationEmail implements ShouldQueue
     public $deleteWhenMissingModels = true;
 
     /** @var int The number of seconds to wait before retrying the job. */
-    public $retryAfter = 10;
+    public $backoff = 10;
 
     /** @var SignupInvitation Signup invitation object */
     protected $invitation;

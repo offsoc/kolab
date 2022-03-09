@@ -8,7 +8,6 @@ parameters:
         - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withObjectTenantContext\(\)#'
         - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withSubjectTenantContext\(\)#'
         - '#Call to an undefined method Tests\\Browser::#'
-        - '#Call to an undefined method Illuminate\\Support\\Fluent::references\(\)#'
     level: 4
     parallel:
         processTimeout: 300.0
@@ -17,4 +16,5 @@ parameters:
         - config/
         - database/
         - resources/
+        - routes/
         - tests/

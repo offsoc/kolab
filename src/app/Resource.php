@@ -9,7 +9,6 @@ use App\Traits\ResourceConfigTrait;
 use App\Traits\SettingsTrait;
 use App\Traits\StatusPropertyTrait;
 use App\Traits\UuidIntKeyTrait;
-use App\Wallet;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -49,9 +48,13 @@ class Resource extends Model
     // A template for the email attribute on a resource creation
     public const EMAIL_TEMPLATE = 'resource-{id}@{domainName}';
 
-    protected $fillable = [
-        'email',
-        'name',
-        'status',
+    /** @var array<string, string> The attributes that should be cast */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
     ];
+
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['email', 'name', 'status'];
 }

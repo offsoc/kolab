@@ -47,7 +47,7 @@ class SupportTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertSame(['The email must be a valid email address.'], $json['errors']['email']);
 
-        $this->assertCount(0, $this->app->make('swift.transport')->driver()->messages());
+        $this->assertCount(0, $this->getSentMessages());
 
         // Valid input
         $post = [
@@ -66,17 +66,44 @@ class SupportTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame('Support request submitted successfully.', $json['message']);
 
-        $emails = $this->app->make('swift.transport')->driver()->messages();
-
-        $expected_body = "ID: 1234567\nName: Username\nWorking email address: test@test.com\n"
-            . "Subject: Test summary\n\nTest body";
+        $emails = $this->getSentMessages();
 
         $this->assertCount(1, $emails);
+
+        $to = $emails[0]->getTo();
+        $from = $emails[0]->getFrom();
+        $replyTo = $emails[0]->getReplyTo();
+        $expectedBody = "ID: 1234567\nName: Username\nWorking email address: test@test.com\n"
+            . "Subject: Test summary\n\nTest body";
+
+        $this->assertCount(1, $to);
+        $this->assertCount(1, $from);
+        $this->assertCount(1, $replyTo);
         $this->assertSame('Test summary', $emails[0]->getSubject());
-        $this->assertSame(['test@test.com' => 'Username'], $emails[0]->getFrom());
-        $this->assertSame(['test@test.com' => 'Username'], $emails[0]->getReplyTo());
-        $this->assertNull($emails[0]->getCc());
-        $this->assertSame([$support_email => null], $emails[0]->getTo());
-        $this->assertSame($expected_body, trim($emails[0]->getBody()));
+        $this->assertSame('test@test.com', $from[0]->getAddress());
+        $this->assertSame('Username', $from[0]->getName());
+        $this->assertSame('test@test.com', $replyTo[0]->getAddress());
+        $this->assertSame('Username', $replyTo[0]->getName());
+        $this->assertSame([], $emails[0]->getCc());
+        $this->assertSame($support_email, $to[0]->getAddress());
+        $this->assertSame('', $to[0]->getName());
+        $this->assertSame($expectedBody, trim($emails[0]->getTextBody()));
+        $this->assertSame('', trim($emails[0]->getHtmlBody()));
+    }
+
+    /**
+     * Get all messages that have been sent
+     *
+     * @return \Symfony\Component\Mime\Email[]
+     */
+    protected function getSentMessages(): array
+    {
+        $transport = $this->app->make('mail.manager')->mailer()->getSymfonyTransport();
+
+        return $this->getObjectProperty($transport, 'messages')
+            ->map(function (\Symfony\Component\Mailer\SentMessage $item) {
+                return $item->getOriginalMessage();
+            })
+            ->all();
     }
 }

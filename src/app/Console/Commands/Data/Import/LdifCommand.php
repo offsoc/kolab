@@ -121,6 +121,7 @@ class LdifCommand extends Command
         $lastAttr = null;
 
         $insertFunc = function ($limit = 0) use (&$entry, &$inserts) {
+            // @phpstan-ignore-next-line
             if (!empty($entry)) {
                 if ($entry = $this->parseLDAPEntry($entry)) {
                     $inserts[] = $entry;

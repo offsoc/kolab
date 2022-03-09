@@ -7,7 +7,9 @@ use Tests\TestCase;
 
 class AuthAttemptTest extends TestCase
 {
-
+    /**
+     * {@inheritDoc}
+     */
     public function setUp(): void
     {
         parent::setUp();
@@ -15,6 +17,9 @@ class AuthAttemptTest extends TestCase
         $this->deleteTestUser('jane@kolabnow.com');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         $this->deleteTestUser('jane@kolabnow.com');

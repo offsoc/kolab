@@ -14,9 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ResourceSetting extends Model
 {
-    protected $fillable = [
-        'resource_id', 'key', 'value'
-    ];
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['resource_id', 'key', 'value'];
 
     /**
      * The resource to which this setting belongs.
@@ -25,6 +24,6 @@ class ResourceSetting extends Model
      */
     public function resource()
     {
-        return $this->belongsTo(\App\Resource::class, 'resource_id', 'id');
+        return $this->belongsTo(Resource::class, 'resource_id', 'id');
     }
 }

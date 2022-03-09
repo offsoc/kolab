@@ -22,7 +22,7 @@ class PaymentEmail implements ShouldQueue
     public $tries = 2;
 
     /** @var int The number of seconds to wait before retrying the job. */
-    public $retryAfter = 10;
+    public $backoff = 10;
 
     /** @var bool Delete the job if the wallet no longer exist. */
     public $deleteWhenMissingModels = true;
@@ -30,7 +30,7 @@ class PaymentEmail implements ShouldQueue
     /** @var \App\Payment A payment object */
     protected $payment;
 
-    /** @var \App\User A wallet controller */
+    /** @var ?\App\User A wallet controller */
     protected $controller;
 
 

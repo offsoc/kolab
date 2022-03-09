@@ -2,9 +2,8 @@
 
 namespace App\Providers;
 
-use App\Auth\LDAPUserProvider;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Laravel\Passport\Passport;
 
@@ -13,7 +12,7 @@ class AuthServiceProvider extends ServiceProvider
     /**
      * The policy mappings for the application.
      *
-     * @var array
+     * @var array<class-string, class-string>
      */
     protected $policies = [
         // 'App\Model' => 'App\Policies\ModelPolicy',
@@ -28,13 +27,6 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        Auth::provider(
-            'ldap',
-            function ($app, array $config) {
-                return new LDAPUserProvider($app['hash'], $config['model']);
-            }
-        );
-
         // Hashes all secrets and thus makes them non-recoverable
         /* Passport::hashClientSecrets(); */
         // Only enable routes for access tokens
@@ -43,7 +35,7 @@ class AuthServiceProvider extends ServiceProvider
                 $router->forAccessTokens();
 
                 // Override the default route to avoid rate-limiting.
-                \Route::post('/token', [
+                Route::post('/token', [
                     'uses' => 'AccessTokenController@issueToken',
                     'as' => 'passport.token',
                 ]);

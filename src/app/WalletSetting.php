@@ -14,9 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class WalletSetting extends Model
 {
-    protected $fillable = [
-        'wallet_id', 'key', 'value'
-    ];
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['wallet_id', 'key', 'value'];
 
     /**
      * The wallet to which this setting belongs.
@@ -25,6 +24,6 @@ class WalletSetting extends Model
      */
     public function wallet()
     {
-        return $this->belongsTo('\App\Wallet', 'wallet_id', 'id');
+        return $this->belongsTo(Wallet::class, 'wallet_id', 'id');
     }
 }

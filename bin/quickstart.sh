@@ -42,10 +42,10 @@ base_dir=$(dirname $(dirname $0))
 # Always reset .env with .env.example
 cp src/.env.example src/.env
 
-if [ -f "src/.env.local" ]; then
+if [ -f "src/env.local" ]; then
     # Ensure there's a line ending
     echo "" >> src/.env
-    cat src/.env.local >> src/.env
+    cat src/env.local >> src/.env
 fi
 
 docker pull docker.io/kolab/centos7:latest
@@ -97,9 +97,8 @@ rm -rf database/database.sqlite
 ./artisan db:ping --wait
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
 ./artisan data:import || :
-./artisan swoole:http stop >/dev/null 2>&1 || :
-SWOOLE_HTTP_DAEMONIZE=true ./artisan swoole:http start
+./artisan octane:stop >/dev/null 2>&1 || :
+nohup ./artisan octane:start --host=$(grep OCTANE_HTTP_HOST .env | tail -n1 | sed "s/OCTANE_HTTP_HOST=//") > octane.out &
 ./artisan horizon:terminate >/dev/null 2>&1 || :
-nohup ./artisan horizon >/dev/null 2>&1 &
+nohup ./artisan horizon > horizon.out &
 popd
-

@@ -26,49 +26,25 @@ class VerificationCode extends Model
     // Code expires after so many hours
     public const CODE_EXP_HOURS = 8;
 
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
+    /** @var string The primary key associated with the table */
     protected $primaryKey = 'code';
 
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
+    /** @var bool Indicates if the IDs are auto-incrementing */
     public $incrementing = false;
 
-    /**
-     * The "type" of the auto-incrementing ID.
-     *
-     * @var string
-     */
+    /** @var string The "type" of the auto-incrementing ID */
     protected $keyType = 'string';
 
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
+    /** @var bool Indicates if the model should be timestamped */
     public $timestamps = false;
 
-    /**
-     * Casts properties as type
-     *
-     * @var array
-     */
+    /** @var array<string, string> Casts properties as type */
     protected $casts = [
         'active' => 'boolean',
         'expires_at' => 'datetime',
     ];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['user_id', 'code', 'short_code', 'mode', 'expires_at', 'active'];
 
 
@@ -102,6 +78,6 @@ class VerificationCode extends Model
      */
     public function user()
     {
-        return $this->belongsTo('\App\User', 'user_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

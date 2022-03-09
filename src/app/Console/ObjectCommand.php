@@ -13,7 +13,7 @@ abstract class ObjectCommand extends Command
      *
      * @var string
      */
-    protected $commandPrefix = null;
+    protected $commandPrefix = '';
 
     /**
      * The object class that we are operating on, for example \App\User::class

@@ -16,10 +16,6 @@ use Illuminate\Support\Str;
  */
 class PasswordResetController extends Controller
 {
-    /** @var \App\VerificationCode A verification code object */
-    protected $code;
-
-
     /**
      * Sends password reset code to the user's external email
      *
@@ -98,7 +94,7 @@ class PasswordResetController extends Controller
 
         // For last-step remember the code object, so we can delete it
         // with single SQL query (->delete()) instead of two (::destroy())
-        $this->code = $code;
+        $request->code = $code;
 
         return response()->json([
                 'status' => 'success',
@@ -121,7 +117,7 @@ class PasswordResetController extends Controller
             return $v;
         }
 
-        $user = $this->code->user;
+        $user = $request->code->user;
 
         // Validate the password
         $v = Validator::make(
@@ -138,7 +134,7 @@ class PasswordResetController extends Controller
         $user->save();
 
         // Remove the verification code
-        $this->code->delete();
+        $request->code->delete();
 
         return AuthController::logonResponse($user, $request->password);
     }

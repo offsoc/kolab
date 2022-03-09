@@ -34,6 +34,6 @@ class SharedFolderAlias extends Model
      */
     public function sharedFolder()
     {
-        return $this->belongsTo('\App\SharedFolder', 'shared_folder_id', 'id');
+        return $this->belongsTo(SharedFolder::class, 'shared_folder_id', 'id');
     }
 }

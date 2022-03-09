@@ -736,6 +736,7 @@ class UsersTest extends TestCase
         $this->assertSame('John2', $user->getSetting('first_name'));
         $this->assertSame('Doe2', $user->getSetting('last_name'));
         $this->assertSame('TestOrg', $user->getSetting('organization'));
+        /** @var \App\UserAlias[] $aliases */
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
         $this->assertSame('deleted@kolab.org', $aliases[0]->alias);

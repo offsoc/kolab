@@ -61,7 +61,7 @@ trait EmailPropertyTrait
      * @param string $email         Email address
      * @param bool   $return_object Return model instance instead of a boolean
      *
-     * @return object|bool True or Model object if found, False otherwise
+     * @return static|bool True or Model object if found, False otherwise
      */
     public static function emailExists(string $email, bool $return_object = false)
     {

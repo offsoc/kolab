@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 
 class AuthAttemptsController extends Controller
 {
-
     /**
      * Confirm the authentication attempt.
      *

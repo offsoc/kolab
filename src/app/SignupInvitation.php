@@ -31,12 +31,9 @@ class SignupInvitation extends Model
     public const STATUS_COMPLETED = 1 << 3;
 
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['email'];
+
 
     /**
      * Returns whether this invitation process completed (user signed up)
@@ -85,6 +82,6 @@ class SignupInvitation extends Model
      */
     public function user()
     {
-        return $this->belongsTo('App\User', 'user_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

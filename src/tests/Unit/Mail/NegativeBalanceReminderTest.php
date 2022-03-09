@@ -6,13 +6,10 @@ use App\Jobs\WalletCheck;
 use App\Mail\NegativeBalanceReminder;
 use App\User;
 use App\Wallet;
-use Tests\MailInterceptTrait;
 use Tests\TestCase;
 
 class NegativeBalanceReminderTest extends TestCase
 {
-    use MailInterceptTrait;
-
     /**
      * Test email content
      */
@@ -29,7 +26,7 @@ class NegativeBalanceReminderTest extends TestCase
                 'app.support_url' => 'https://kolab.org/support',
         ]);
 
-        $mail = $this->fakeMail(new NegativeBalanceReminder($wallet, $user));
+        $mail = $this->renderMail(new NegativeBalanceReminder($wallet, $user));
 
         $html = $mail['html'];
         $plain = $mail['plain'];
@@ -40,7 +37,7 @@ class NegativeBalanceReminderTest extends TestCase
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
         $appName = $user->tenant->title;
 
-        $this->assertMailSubject("$appName Payment Reminder", $mail['message']);
+        $this->assertSame("$appName Payment Reminder", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);

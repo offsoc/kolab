@@ -2,7 +2,6 @@
 
 namespace App;
 
-use App\Wallet;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\DomainConfigTrait;
 use App\Traits\EntitleableTrait;
@@ -56,11 +55,15 @@ class Domain extends Model
     public const HASH_TEXT = 2;
     public const HASH_CNAME = 3;
 
-    protected $fillable = [
-        'namespace',
-        'status',
-        'type'
+    /** @var array<string, string> The attributes that should be cast */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
     ];
+
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['namespace', 'status', 'type'];
 
     /**
      * Assign a package to a domain. The domain should not belong to any existing entitlements.
@@ -97,8 +100,8 @@ class Domain extends Model
     public static function getPublicDomains(): array
     {
         return self::withEnvTenantContext()
-            ->whereRaw(sprintf('(type & %s)', Domain::TYPE_PUBLIC))
-            ->get(['namespace'])->pluck('namespace')->toArray();
+            ->where('type', '&', Domain::TYPE_PUBLIC)
+            ->pluck('namespace')->all();
     }
 
     /**
@@ -315,11 +318,11 @@ class Domain extends Model
         $suffixLen = strlen($suffix);
 
         return !(
-            \App\User::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
-            || \App\UserAlias::whereRaw('substr(alias, ?) = ?', [-$suffixLen, $suffix])->exists()
-            || \App\Group::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
-            || \App\Resource::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
-            || \App\SharedFolder::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
+            User::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
+            || UserAlias::whereRaw('substr(alias, ?) = ?', [-$suffixLen, $suffix])->exists()
+            || Group::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
+            || Resource::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
+            || SharedFolder::whereRaw('substr(email, ?) = ?', [-$suffixLen, $suffix])->exists()
         );
     }
 
@@ -370,7 +373,7 @@ class Domain extends Model
             return [];
         }
 
-        $mailboxSKU = \App\Sku::withObjectTenantContext($this)->where('title', 'mailbox')->first();
+        $mailboxSKU = Sku::withObjectTenantContext($this)->where('title', 'mailbox')->first();
 
         if (!$mailboxSKU) {
             \Log::error("No mailbox SKU available.");
@@ -378,7 +381,7 @@ class Domain extends Model
         }
 
         return $wallet->entitlements()
-            ->where('entitleable_type', \App\User::class)
+            ->where('entitleable_type', User::class)
             ->where('sku_id', $mailboxSKU->id)
             ->get()
             ->pluck('entitleable')

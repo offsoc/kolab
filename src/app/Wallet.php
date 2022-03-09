@@ -2,11 +2,10 @@
 
 namespace App;
 
-use App\User;
 use App\Traits\SettingsTrait;
 use App\Traits\UuidStrKeyTrait;
 use Carbon\Carbon;
-use Iatstuti\Database\Support\NullableFields;
+use Dyrynda\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -30,39 +29,23 @@ class Wallet extends Model
 
     public $timestamps = false;
 
-    /**
-     * The attributes' default values.
-     *
-     * @var array
-     */
+    /** @var array The attributes' default values */
     protected $attributes = [
         'balance' => 0,
     ];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'currency',
         'description'
     ];
 
-    /**
-     * The attributes that can be not set.
-     *
-     * @var array
-     */
+    /** @var array<int, string> The attributes that can be not set */
     protected $nullable = [
         'description',
     ];
 
-    /**
-     * The types of attributes to which its values will be cast
-     *
-     * @var array
-     */
+    /** @var array<string, string> The types of attributes to which its values will be cast */
     protected $casts = [
         'balance' => 'integer',
     ];
@@ -160,7 +143,7 @@ class Wallet extends Model
                 }
 
                 $entitlementTransactions[] = $entitlement->createTransaction(
-                    \App\Transaction::ENTITLEMENT_BILLED,
+                    Transaction::ENTITLEMENT_BILLED,
                     $cost
                 );
             }
@@ -232,8 +215,8 @@ class Wallet extends Model
     public function controllers()
     {
         return $this->belongsToMany(
-            'App\User',         // The foreign object definition
-            'user_accounts',    // The table name
+            User::class,      // The foreign object definition
+            'user_accounts',  // The table name
             'wallet_id',      // The local foreign key
             'user_id'         // The remote foreign key
         );
@@ -269,11 +252,11 @@ class Wallet extends Model
 
         $this->save();
 
-        \App\Transaction::create(
+        Transaction::create(
             [
                 'object_id' => $this->id,
-                'object_type' => \App\Wallet::class,
-                'type' => \App\Transaction::WALLET_CREDIT,
+                'object_type' => Wallet::class,
+                'type' => Transaction::WALLET_CREDIT,
                 'amount' => $amount,
                 'description' => $description
             ]
@@ -301,18 +284,18 @@ class Wallet extends Model
 
         $this->save();
 
-        $transaction = \App\Transaction::create(
+        $transaction = Transaction::create(
             [
                 'object_id' => $this->id,
-                'object_type' => \App\Wallet::class,
-                'type' => \App\Transaction::WALLET_DEBIT,
+                'object_type' => Wallet::class,
+                'type' => Transaction::WALLET_DEBIT,
                 'amount' => $amount * -1,
                 'description' => $description
             ]
         );
 
         if (!empty($eTIDs)) {
-            \App\Transaction::whereIn('id', $eTIDs)->update(['transaction_id' => $transaction->id]);
+            Transaction::whereIn('id', $eTIDs)->update(['transaction_id' => $transaction->id]);
         }
 
         return $this;
@@ -325,7 +308,7 @@ class Wallet extends Model
      */
     public function discount()
     {
-        return $this->belongsTo('App\Discount', 'discount_id', 'id');
+        return $this->belongsTo(Discount::class, 'discount_id', 'id');
     }
 
     /**
@@ -335,7 +318,7 @@ class Wallet extends Model
      */
     public function entitlements()
     {
-        return $this->hasMany('App\Entitlement');
+        return $this->hasMany(Entitlement::class);
     }
 
     /**
@@ -396,7 +379,7 @@ class Wallet extends Model
      */
     public function owner()
     {
-        return $this->belongsTo('App\User', 'user_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     /**
@@ -406,7 +389,7 @@ class Wallet extends Model
      */
     public function payments()
     {
-        return $this->hasMany('App\Payment');
+        return $this->hasMany(Payment::class);
     }
 
     /**
@@ -430,10 +413,10 @@ class Wallet extends Model
      */
     public function transactions()
     {
-        return \App\Transaction::where(
+        return Transaction::where(
             [
                 'object_id' => $this->id,
-                'object_type' => \App\Wallet::class
+                'object_type' => Wallet::class
             ]
         );
     }
@@ -492,7 +475,7 @@ class Wallet extends Model
 
             // FIXME: Shouldn't we store also cost=0 transactions (to have the full history)?
             $entitlementTransactions[] = $entitlement->createTransaction(
-                \App\Transaction::ENTITLEMENT_BILLED,
+                Transaction::ENTITLEMENT_BILLED,
                 $cost
             );
         }

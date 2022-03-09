@@ -14,9 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SharedFolderSetting extends Model
 {
-    protected $fillable = [
-        'shared_folder_id', 'key', 'value'
-    ];
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['shared_folder_id', 'key', 'value'];
 
     /**
      * The folder to which this setting belongs.
@@ -25,6 +24,6 @@ class SharedFolderSetting extends Model
      */
     public function folder()
     {
-        return $this->belongsTo(\App\SharedFolder::class, 'shared_folder_id', 'id');
+        return $this->belongsTo(SharedFolder::class, 'shared_folder_id', 'id');
     }
 }

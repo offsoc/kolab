@@ -57,6 +57,7 @@ class SecondFactor extends Base
                 return;
             }
         }
+
         throw new \Exception(\trans('validation.2fainvalid'));
     }
 

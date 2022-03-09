@@ -10,11 +10,11 @@ use App\Traits\UserConfigTrait;
 use App\Traits\UuidIntKeyTrait;
 use App\Traits\SettingsTrait;
 use App\Traits\StatusPropertyTrait;
+use Dyrynda\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Iatstuti\Database\Support\NullableFields;
 use Laravel\Passport\HasApiTokens;
 use League\OAuth2\Server\Exception\OAuthServerException;
 
@@ -57,11 +57,7 @@ class User extends Authenticatable
     // user in "limited feature-set" state
     public const STATUS_DEGRADED   = 1 << 6;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'id',
         'email',
@@ -70,20 +66,24 @@ class User extends Authenticatable
         'status',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
+    /** @var array<int, string> The attributes that should be hidden for arrays */
     protected $hidden = [
         'password',
         'password_ldap',
         'role'
     ];
 
+    /** @var array<int, string> The attributes that can be null */
     protected $nullable = [
         'password',
         'password_ldap'
+    ];
+
+    /** @var array<string, string> The attributes that should be cast */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
     ];
 
     /**
@@ -96,7 +96,7 @@ class User extends Authenticatable
     public function accounts()
     {
         return $this->belongsToMany(
-            'App\Wallet',       // The foreign object definition
+            Wallet::class,      // The foreign object definition
             'user_accounts',    // The table name
             'user_id',          // The local foreign key
             'wallet_id'         // The remote foreign key
@@ -274,8 +274,8 @@ class User extends Authenticatable
                     $query->withEnvTenantContext();
                 }
 
-                $query->whereRaw(sprintf('(domains.type & %s)', Domain::TYPE_PUBLIC))
-                    ->whereRaw(sprintf('(domains.status & %s)', Domain::STATUS_ACTIVE));
+                $query->where('domains.type', '&', Domain::TYPE_PUBLIC)
+                    ->where('domains.status', '&', Domain::STATUS_ACTIVE);
             });
         }
 
@@ -337,7 +337,7 @@ class User extends Authenticatable
             return $user;
         }
 
-        $aliases = \App\UserAlias::where('alias', $email)->get();
+        $aliases = UserAlias::where('alias', $email)->get();
 
         if (count($aliases) == 1) {
             return $aliases->first()->user;
@@ -395,7 +395,7 @@ class User extends Authenticatable
         $name = trim($settings['first_name'] . ' ' . $settings['last_name']);
 
         if (empty($name) && $fallback) {
-            return trim(\trans('app.siteuser', ['site' => \App\Tenant::getConfig($this->tenant_id, 'app.name')]));
+            return trim(\trans('app.siteuser', ['site' => Tenant::getConfig($this->tenant_id, 'app.name')]));
         }
 
         return $name;
@@ -408,7 +408,7 @@ class User extends Authenticatable
      */
     public function passwords()
     {
-        return $this->hasMany('App\UserPassword');
+        return $this->hasMany(UserPassword::class);
     }
 
     /**
@@ -421,7 +421,7 @@ class User extends Authenticatable
      */
     public function resources($with_accounts = true)
     {
-        return $this->entitleables(\App\Resource::class, $with_accounts);
+        return $this->entitleables(Resource::class, $with_accounts);
     }
 
     /**
@@ -434,7 +434,7 @@ class User extends Authenticatable
      */
     public function sharedFolders($with_accounts = true)
     {
-        return $this->entitleables(\App\SharedFolder::class, $with_accounts);
+        return $this->entitleables(SharedFolder::class, $with_accounts);
     }
 
     public function senderPolicyFrameworkWhitelist($clientName)
@@ -512,7 +512,7 @@ class User extends Authenticatable
      */
     public function verificationcodes()
     {
-        return $this->hasMany('App\VerificationCode', 'user_id', 'id');
+        return $this->hasMany(VerificationCode::class, 'user_id', 'id');
     }
 
     /**
@@ -522,7 +522,7 @@ class User extends Authenticatable
      */
     public function wallets()
     {
-        return $this->hasMany('App\Wallet');
+        return $this->hasMany(Wallet::class);
     }
 
     /**

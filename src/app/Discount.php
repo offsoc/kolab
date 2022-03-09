@@ -26,17 +26,12 @@ class Discount extends Model
         'discount' => 'integer',
     ];
 
-    protected $fillable = [
-        'active',
-        'code',
-        'description',
-        'discount',
-    ];
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['active', 'code', 'description', 'discount'];
 
-    /** @var array Translatable properties */
-    public $translatable = [
-        'description',
-    ];
+    /** @var array<int, string> Translatable properties */
+    public $translatable = ['description'];
+
 
     /**
      * Discount value mutator
@@ -67,6 +62,6 @@ class Discount extends Model
      */
     public function wallets()
     {
-        return $this->hasMany('App\Wallet');
+        return $this->hasMany(Wallet::class);
     }
 }

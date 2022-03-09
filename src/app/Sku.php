@@ -2,10 +2,10 @@
 
 namespace App;
 
-use Illuminate\Database\Eloquent\Model;
-use Spatie\Translatable\HasTranslations;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidStrKeyTrait;
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * The eloquent definition of a Stock Keeping Unit (SKU).
@@ -28,10 +28,12 @@ class Sku extends Model
     use HasTranslations;
     use UuidStrKeyTrait;
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'units_free' => 'integer'
     ];
 
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'active',
         'cost',
@@ -45,7 +47,7 @@ class Sku extends Model
         'units_free',
     ];
 
-    /** @var array Translatable properties */
+    /** @var array<int, string> Translatable properties */
     public $translatable = [
         'name',
         'description',
@@ -58,7 +60,7 @@ class Sku extends Model
      */
     public function entitlements()
     {
-        return $this->hasMany('App\Entitlement');
+        return $this->hasMany(Entitlement::class);
     }
 
     /**
@@ -68,9 +70,8 @@ class Sku extends Model
      */
     public function packages()
     {
-        return $this->belongsToMany(
-            'App\Package',
-            'package_skus'
-        )->using('App\PackageSku')->withPivot(['cost', 'qty']);
+        return $this->belongsToMany(Package::class, 'package_skus')
+            ->using(PackageSku::class)
+            ->withPivot(['cost', 'qty']);
     }
 }

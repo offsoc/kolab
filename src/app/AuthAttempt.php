@@ -2,10 +2,10 @@
 
 namespace App;
 
-use Illuminate\Database\Eloquent\Model;
-use Iatstuti\Database\Support\NullableFields;
 use App\Traits\UuidStrKeyTrait;
 use Carbon\Carbon;
+use Dyrynda\Database\Support\NullableFields;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * The eloquent definition of an AuthAttempt.
@@ -27,10 +27,10 @@ class AuthAttempt extends Model
     private const STATUS_ACCEPTED  = 'ACCEPTED';
     private const STATUS_DENIED  = 'DENIED';
 
-    protected $nullable = [
-        'reason',
-    ];
+    /** @var array<int, string> The attributes that can be not set */
+    protected $nullable = ['reason'];
 
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'ip',
         'user_id',
@@ -40,6 +40,7 @@ class AuthAttempt extends Model
         'last_seen',
     ];
 
+    /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'expires_at' => 'datetime',
         'last_seen' => 'datetime'
@@ -106,7 +107,7 @@ class AuthAttempt extends Model
     */
     public function notify(): bool
     {
-        return \App\CompanionApp::notifyUser($this->user_id, ['token' => $this->id]);
+        return CompanionApp::notifyUser($this->user_id, ['token' => $this->id]);
     }
 
     /**
@@ -154,12 +155,12 @@ class AuthAttempt extends Model
     *
     * @return \App\AuthAttempt
     */
-    public static function recordAuthAttempt(\App\User $user, $clientIP)
+    public static function recordAuthAttempt(User $user, $clientIP)
     {
-        $authAttempt = \App\AuthAttempt::where('ip', $clientIP)->where('user_id', $user->id)->first();
+        $authAttempt = AuthAttempt::where('ip', $clientIP)->where('user_id', $user->id)->first();
 
         if (!$authAttempt) {
-            $authAttempt = new \App\AuthAttempt();
+            $authAttempt = new AuthAttempt();
             $authAttempt->ip = $clientIP;
             $authAttempt->user_id = $user->id;
         }
