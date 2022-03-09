@@ -231,14 +231,14 @@ return [
         'options' => [
             'log_file' => storage_path('logs/swoole_http.log'),
             'package_max_length' => 10 * 1024 * 1024,
-            // 'enable_coroutine' => false,
+            'enable_coroutine' => false,
             'daemonize' => env('OCTANE_DAEMONIZE', false),
-            // 'log_level' => app()->environment('local') ? SWOOLE_LOG_INFO : SWOOLE_LOG_ERROR,
-            // 'reactor_num' =>
-            // 'send_yield' => true,
-            // 'socket_buffer_size' => 10 * 1024 * 1024,
-            // 'task_worker_num' =>
-            // 'worker_num' =>
+            'log_level' => app()->environment('local') ? SWOOLE_LOG_INFO : SWOOLE_LOG_ERROR,
+            'reactor_num' => 'auto', // number of available cpus
+            'send_yield' => true,
+            'socket_buffer_size' => 10 * 1024 * 1024,
+            'task_worker_num' => 'auto', // number of available cpus
+            'worker_num' => 'auto' // number of available cpus
         ],
     ],
 ];
