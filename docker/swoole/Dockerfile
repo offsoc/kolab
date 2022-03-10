@@ -10,6 +10,7 @@ LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
       io.openshift.expose-services="8000:http" \
       io.openshift.tags="builder,php,swoole"
 
+RUN dnf -y update
 RUN dnf -y install \
         composer \
         diffutils \
