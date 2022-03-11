@@ -232,7 +232,8 @@ return [
             'log_file' => storage_path('logs/swoole_http.log'),
             'package_max_length' => 10 * 1024 * 1024,
             'enable_coroutine' => false,
-            'daemonize' => env('OCTANE_DAEMONIZE', false),
+            //FIXME the daemonize option does not work
+            // 'daemonize' => env('OCTANE_DAEMONIZE', true),
             //FIXME accessing app()->environment in here renders artisan disfunctional. I suppose it's too early.
             //'log_level' => app()->environment('local') ? SWOOLE_LOG_INFO : SWOOLE_LOG_ERROR,
             // 'reactor_num' => , // number of available cpus by default

@@ -98,7 +98,7 @@ rm -rf database/database.sqlite
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
 ./artisan data:import || :
 ./artisan octane:stop >/dev/null 2>&1 || :
-OCTANE_DAEMONIZE=true ./artisan octane:start --host=$(grep OCTANE_HTTP_HOST .env | tail -n1 | sed "s/OCTANE_HTTP_HOST=//")
+nohup ./artisan octane:start --host=$(grep OCTANE_HTTP_HOST .env | tail -n1 | sed "s/OCTANE_HTTP_HOST=//") > octane.out &
 ./artisan horizon:terminate >/dev/null 2>&1 || :
-nohup ./artisan horizon >/dev/null 2>&1 &
+nohup ./artisan horizon > horizon.out &
 popd
