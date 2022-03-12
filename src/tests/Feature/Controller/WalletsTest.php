@@ -71,13 +71,13 @@ class WalletsTest extends TestCase
         $wallet->balance = 990;
         $notice = $method->invoke($controller, $wallet);
 
-        $this->assertMatchesRegularExpression('/\((1 month|4 weeks)\)/', $notice);
+        $this->assertMatchesRegularExpression('/\((3 weeks)\)/', $notice);
 
         // test "2 months"
         $wallet->balance = 990 * 2.6;
         $notice = $method->invoke($controller, $wallet);
 
-        $this->assertMatchesRegularExpression('/\(2 months (2|3) weeks\)/', $notice);
+        $this->assertMatchesRegularExpression('/\(2 months 1 week\)/', $notice);
 
         // Change locale to make sure the text is localized by Carbon
         \app()->setLocale('de');
@@ -86,7 +86,7 @@ class WalletsTest extends TestCase
         $wallet->balance = 990 * 23.5;
         $notice = $method->invoke($controller, $wallet);
 
-        $this->assertMatchesRegularExpression('/\(1 Jahr 11 Monate\)/', $notice);
+        $this->assertMatchesRegularExpression('/\(1 Jahr 9 Monate\)/', $notice);
 
         // Old entitlements, 100% discount
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));
