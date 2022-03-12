@@ -931,13 +931,13 @@ class PaymentsMollieTest extends TestCase
 
         $wallet->refresh();
 
-        $this->assertTrue($wallet->balance <= -108);
+        $this->assertTrue($wallet->balance <= -100);
         $this->assertTrue($wallet->balance >= -114);
 
         $payments = $wallet->payments()->where('id', 're_123456')->get();
 
         $this->assertCount(1, $payments);
-        $this->assertTrue($payments[0]->amount <= -108);
+        $this->assertTrue($payments[0]->amount <= -100);
         $this->assertTrue($payments[0]->amount >= -114);
         $this->assertSame(-101, $payments[0]->currency_amount);
         $this->assertSame('EUR', $payments[0]->currency);
