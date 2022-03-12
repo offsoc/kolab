@@ -16,6 +16,11 @@ class Utils
     public const CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
     /**
+     * Exchange rates for unit tests
+     */
+    private static $testRates;
+
+    /**
      * Count the number of lines in a file.
      *
      * Useful for progress bars.
@@ -497,6 +502,16 @@ class Utils
     }
 
     /**
+     * Set test exchange rates.
+     *
+     * @param array       $rates: Exchange rates
+     */
+    public static function setTestExchangeRates(array $rates): void
+    {
+        self::$testRates = $rates;
+    }
+
+    /**
      * Retrieve an exchange rate.
      *
      * @param string       $sourceCurrency: Currency from which to convert
@@ -508,6 +523,10 @@ class Utils
     {
         if (strcasecmp($sourceCurrency, $targetCurrency) == 0) {
             return 1.0;
+        }
+
+        if (isset(self::$testRates[$targetCurrency])) {
+            return floatval(self::$testRates[$targetCurrency]);
         }
 
         $currencyFile = resource_path("exchangerates-$sourceCurrency.php");

@@ -8,6 +8,7 @@ use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
 use App\WalletSetting;
+use App\Utils;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
@@ -29,6 +30,7 @@ class PaymentsMollieTest extends TestCase
         // All tests in this file use Mollie
         \config(['services.payment_provider' => 'mollie']);
 
+        Utils::setTestExchangeRates(['EUR' => '0.90503424978382']);
         $john = $this->getTestUser('john@kolab.org');
         $wallet = $john->wallets()->first();
         Payment::where('wallet_id', $wallet->id)->delete();
@@ -58,6 +60,7 @@ class PaymentsMollieTest extends TestCase
             Transaction::WALLET_CHARGEBACK,
         ];
         Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
+        Utils::setTestExchangeRates([]);
 
         parent::tearDown();
     }
