@@ -4,6 +4,7 @@ namespace Tests\Feature\Console\Wallet;
 
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
+use Carbon\Carbon;
 
 class UntilTest extends TestCase
 {
@@ -13,6 +14,7 @@ class UntilTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
+        Carbon::setTestNow(Carbon::createFromDate(2022, 02, 02));
 
         $this->deleteTestUser('wallets-controller@kolabnow.com');
     }
@@ -62,7 +64,6 @@ class UntilTest extends TestCase
 
         $this->assertSame(0, $code);
 
-        $expected = \now()->addMonthsWithoutOverflow(1)->addDays(31)->toDateString();
-        $this->assertSame("Lasts until: $expected", $output);
+        $this->assertSame("Lasts until: 2022-04-02", $output);
     }
 }
