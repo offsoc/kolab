@@ -62,6 +62,37 @@ class UserSeeder extends Seeder
         $domain->assignPackage($packageDomain, $john);
         $john->assignPackage($packageKolab);
 
+
+        $appDomain = \App\Domain::where(
+            [
+                'namespace' => \config('app.domain')
+            ]
+        )->first();
+
+        $fred = User::create(
+            [
+                'email' => 'fred@' . \config('app.domain'),
+                'password' => \App\Utils::generatePassphrase()
+            ]
+        );
+
+        $fred->setSettings(
+            [
+                'first_name' => 'fred',
+                'last_name' => 'Doe',
+                'currency' => 'USD',
+                'country' => 'US',
+                'billing_address' => "601 13th Street NW\nSuite 900 South\nWashington, DC 20005",
+                'external_email' => 'fred.doe.external@gmail.com',
+                'organization' => 'Kolab Developers',
+                'phone' => '+1 509-248-1111',
+            ]
+        );
+
+        $appDomain->assignPackage($packageDomain, $fred);
+        $fred->assignPackage($packageKolab);
+
+
         $jack = User::create(
             [
                 'email' => 'jack@kolab.org',
