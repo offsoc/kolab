@@ -28,11 +28,6 @@
         name: docker
         state: started
 
-    - name: Build swoole
-      ansible.builtin.script: build-swoole.sh
-      args:
-        creates: /usr/lib64/php/modules/swoole.so
-
     - name: get kolab git repo
       become: true
       become_user: kolab
