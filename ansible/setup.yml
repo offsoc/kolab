@@ -104,10 +104,9 @@
         state: enabled
         zone: FedoraServer
 
-    # Not a great idea since it never exits
-    # - name: Run bin/quickstart
-    #   become: true
-    #   become_user: kolab
-    #   ansible.builtin.command: bin/quickstart.sh
-    #   args:
-    #     chdir: /home/kolab/kolab
+    - name: Run bin/deploy
+      become: true
+      become_user: kolab
+      ansible.builtin.command: bin/deploy.sh
+      args:
+        chdir: /home/kolab/kolab
