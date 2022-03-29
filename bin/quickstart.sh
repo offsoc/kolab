@@ -42,10 +42,10 @@ base_dir=$(dirname $(dirname $0))
 # Always reset .env with .env.example
 cp src/.env.example src/.env
 
-if [ -f "src/.env.local.example" ]; then
+if [ -f "src/env.local" ]; then
     # Ensure there's a line ending
     echo "" >> src/.env
-    cat src/.env.local.example >> src/.env
+    cat src/env.local >> src/.env
 fi
 
 docker pull docker.io/kolab/centos7:latest
