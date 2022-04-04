@@ -38,6 +38,9 @@ services:
       - DB_KOLAB_PASSWORD=Welcome2KolabSystems
       - DB_RC_USERNAME=roundcube
       - DB_RC_PASSWORD=Welcome2KolabSystems
+      - SSL_CERTIFICATE=/etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/cert.pem
+      - SSL_CERTIFICATE_FULLCHAIN=/etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/fullchain.pem
+      - SSL_CERTIFICATE_KEY=/etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/privkey.pem
       - IMAP_HOST=127.0.0.1
       - IMAP_PORT=11993
       - MAIL_HOST=127.0.0.1

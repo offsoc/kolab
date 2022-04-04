@@ -1,5 +1,19 @@
 #!/bin/bash
 
+cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
+chown cyrus:mail /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
+
+cp /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem /etc/pki/tls/private/postfix.pem
+chown postfix:mail /etc/pki/tls/private/postfix.pem
+chmod 655 /etc/pki/tls/private/postfix.pem
+
+sed -i "s/tls_server_cert:.*/tls_server_cert: \/etc\/pki\/cyrus-imapd\/cyrus-imapd.bundle.pem/" /etc/imapd.conf
+sed -i "s/tls_server_key:.*/tls_server_key: \/etc\/pki\/cyrus-imapd\/cyrus-imapd.bundle.pem/" /etc/imapd.conf
+sed -i "s/tls_server_ca_file:.*/tls_server_ca_file: \/etc\/pki\/cyrus-imapd\/cyrus-imapd.bundle.pem/" /etc/imapd.conf
+
+sed -i "s/smtpd_tls_key_file =.*/smtpd_tls_key_file = \/etc\/pki\/tls\/private\/postfix.pem/" /etc/postfix/main.cf
+sed -i "s/smtpd_tls_cert_file =.*/smtpd_tls_cert_file = \/etc\/pki\/tls\/private\/postfix.pem/" /etc/postfix/main.cf
+
 sed -i -r \
     -e '/allowplaintext/ a\
 guam_allowplaintext: yes' \
@@ -90,7 +104,9 @@ cat > /etc/guam/sys.config << EOF
                             },
                             {
                                 tls_config, [
-                                    { certfile, "/etc/pki/cyrus-imapd/cyrus-imapd.pem" }
+                                    { certfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" },
+                                    { keyfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" },
+                                    { cacertfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" }
                                 ]
                             }
                         ]
@@ -107,7 +123,9 @@ cat > /etc/guam/sys.config << EOF
                             },
                             {
                                 tls_config, [
-                                    { certfile, "/etc/pki/cyrus-imapd/cyrus-imapd.pem" }
+                                    { certfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" },
+                                    { keyfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" },
+                                    { cacertfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" }
                                 ]
                             }
                         ]
