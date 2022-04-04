@@ -2,6 +2,7 @@
 - name: Install list of required packages
   package: name={{ item }} state=installed
   with_items:
+    - grubby
     - git
     - tig
     - tmux
