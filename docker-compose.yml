@@ -88,6 +88,8 @@ services:
       context: ./docker/nginx/
       args:
         APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
+        SSL_CERTIFICATE: /etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/fullchain.pem
+        SSL_CERTIFICATE_KEY: /etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/privkey.pem
     depends_on:
       kolab:
         condition: service_healthy
@@ -107,6 +109,7 @@ services:
       - /var/tmp
     tty: true
     volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
       - ./docker/certs/imap.hosted.com.cert:/etc/pki/tls/certs/imap.hosted.com.cert
       - ./docker/certs/imap.hosted.com.key:/etc/pki/tls/private/imap.hosted.com.key
   pdns-sql:
