@@ -65,14 +65,20 @@ case ${KOLAB_ROLE} in
         ./artisan horizon
     ;;
 
+    octane|OCTANE)
+        echo "----> Running octane"
+        exec ./artisan octane:start --host=0.0.0.0
+    ;;
+
     server|SERVER)
         echo "----> Running server"
         exec ./artisan serve
     ;;
 
     swoole|SWOOLE )
-        echo "----> Running swoole"
-        exec ./artisan swoole:http start
+        echo "----> WARNING: Role is swoole but must become octane"
+        echo "----> Running octane"
+        exec ./artisan octane:start --host=0.0.0.0
     ;;
 
     worker|WORKER )
