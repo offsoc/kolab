@@ -63,7 +63,7 @@ return new class extends Migration
             }
         );
 
-        if (!\App\Sku::where('title', 'files')->first()) {
+        if (\config('app.with_files') && !\App\Sku::where('title', 'files')->first()) {
             \App\Sku::create([
                 'title' => 'files',
                 'name' => 'File storage',
@@ -82,6 +82,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (\App\Sku::where('title', 'files')->first()) {
+            \App\Sku::where('title', 'files')->delete();
+        }
+
         Schema::dropIfExists('fs_properties');
         Schema::dropIfExists('fs_chunks');
         Schema::dropIfExists('fs_items');
