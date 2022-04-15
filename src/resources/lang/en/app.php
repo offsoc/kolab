@@ -70,6 +70,13 @@ return [
     'domain-unsuspend-success' => 'Domain unsuspended successfully.',
     'domain-setconfig-success' => 'Domain settings updated successfully.',
 
+    'file-create-success' => 'File created successfully.',
+    'file-delete-success' => 'File deleted successfully.',
+    'file-update-success' => 'File updated successfully.',
+    'file-permissions-create-success' => 'File permissions created successfully.',
+    'file-permissions-update-success' => 'File permissions updated successfully.',
+    'file-permissions-delete-success' => 'File permissions deleted successfully.',
+
     'resource-update-success' => 'Resource updated successfully.',
     'resource-create-success' => 'Resource created successfully.',
     'resource-delete-success' => 'Resource deleted successfully.',

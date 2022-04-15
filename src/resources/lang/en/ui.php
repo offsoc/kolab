@@ -31,6 +31,7 @@ return [
         'resend' => "Resend",
         'save' => "Save",
         'search' => "Search",
+        'share' => "Share",
         'signup' => "Sign Up",
         'submit' => "Submit",
         'suspend' => "Suspend",
@@ -60,6 +61,7 @@ return [
         'chat' => "Video chat",
         'companion' => "Companion app",
         'domains' => "Domains",
+        'files' => "Files",
         'invitations' => "Invitations",
         'profile' => "Your profile",
         'resources' => "Resources",
@@ -126,6 +128,19 @@ return [
         'form' => "Form validation error",
     ],
 
+    'file' => [
+        'create' => "Create file",
+        'delete' => "Delete file",
+        'list-empty' => "There are no files in this account.",
+        'mimetype' => "Mimetype",
+        'mtime' => "Modified",
+        'new' => "New file",
+        'search' => "File name",
+        'sharing' => "Sharing",
+        'sharing-links-text' => "You can share the file with other users by giving them read-only access "
+            . "to the file via a unique link.",
+    ],
+
     'form' => [
         'acl' => "Access rights",
         'acl-full' => "All",
@@ -154,6 +169,7 @@ return [
         'phone' => "Phone",
         'settings' => "Settings",
         'shared-folder' => "Shared Folder",
+        'size' => "Size",
         'status' => "Status",
         'surname' => "Surname",
         'type' => "Type",
@@ -302,6 +318,7 @@ return [
         'notfound' => "Resource not found.",
         'info' => "Information",
         'error' => "Error",
+        'uploading' => "Uploading...",
         'warning' => "Warning",
         'success' => "Success",
     ],

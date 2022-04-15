@@ -27,6 +27,7 @@ class Wallet extends Model
     use SettingsTrait;
     use UuidStrKeyTrait;
 
+    /** @var bool Indicates that the model should be timestamped or not */
     public $timestamps = false;
 
     /** @var array The attributes' default values */

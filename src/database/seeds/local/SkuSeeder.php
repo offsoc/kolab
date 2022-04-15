@@ -256,6 +256,22 @@ class SkuSeeder extends Seeder
             ]);
         }
 
+        // Check existence because migration might have added this already
+        $sku = Sku::where(['title' => 'files', 'tenant_id' => \config('app.tenant_id')])->first();
+
+        if (!$sku) {
+            Sku::create([
+                'title' => 'files',
+                'name' => 'File storage',
+                'description' => 'Access to file storage',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Files',
+                'active' => true,
+            ]);
+        }
+
         // for tenants that are not the configured tenant id
         $tenants = \App\Tenant::where('id', '!=', \config('app.tenant_id'))->get();
 

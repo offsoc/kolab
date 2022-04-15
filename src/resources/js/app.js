@@ -161,7 +161,7 @@ const app = new Vue({
             //       while the token is being refreshed
 
             this.refreshTimeout = setTimeout(() => {
-                axios.post('/api/auth/refresh', {'refresh_token': response.refresh_token}).then(response => {
+                axios.post('api/auth/refresh', { refresh_token: response.refresh_token }).then(response => {
                     this.loginUser(response.data, false, true)
                 })
             }, timeout * 1000)
@@ -255,7 +255,7 @@ const app = new Vue({
                 this.errorPage(status, message)
             }
         },
-        downloadFile(url) {
+        downloadFile(url, filename) {
             // TODO: This might not be a best way for big files as the content
             //       will be stored (temporarily) in browser memory
             // TODO: This method does not show the download progress in the browser
@@ -263,13 +263,16 @@ const app = new Vue({
             axios.get(url, { responseType: 'blob' })
                 .then(response => {
                     const link = document.createElement('a')
-                    const contentDisposition = response.headers['content-disposition']
-                    let filename = 'unknown'
 
-                    if (contentDisposition) {
-                        const match = contentDisposition.match(/filename="(.+)"/);
-                        if (match.length === 2) {
-                            filename = match[1];
+                    if (!filename) {
+                        const contentDisposition = response.headers['content-disposition']
+                        filename = 'unknown'
+
+                        if (contentDisposition) {
+                            const match = contentDisposition.match(/filename="?(.+)"?/);
+                            if (match && match.length === 2) {
+                                filename = match[1];
+                            }
                         }
                     }
 

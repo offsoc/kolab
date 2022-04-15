@@ -5,16 +5,6 @@ namespace App\Handlers\Beta;
 class Distlists extends Base
 {
     /**
-     * The entitleable class for this handler.
-     *
-     * @return string
-     */
-    public static function entitleableClass(): string
-    {
-        return \App\User::class;
-    }
-
-    /**
      * Check if the SKU is available to the user/domain.
      *
      * @param \App\Sku              $sku    The SKU object
@@ -34,16 +24,5 @@ class Distlists extends Base
         }
 
         return false;
-    }
-
-    /**
-     * The priority that specifies the order of SKUs in UI.
-     * Higher number means higher on the list.
-     *
-     * @return int
-     */
-    public static function priority(): int
-    {
-        return 10;
     }
 }

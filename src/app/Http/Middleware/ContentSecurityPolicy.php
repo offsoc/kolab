@@ -25,7 +25,7 @@ class ContentSecurityPolicy
 
         foreach ($headers as $opt => $header) {
             if ($value = \config("app.headers.{$opt}")) {
-                $next->header($header, $value);
+                $next->headers->set($header, $value);
             }
         }
 

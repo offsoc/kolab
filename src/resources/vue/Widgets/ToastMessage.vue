@@ -11,6 +11,9 @@
         </div>
         <div v-if="data.body" v-html="data.body" class="toast-body"></div>
         <div v-else class="toast-body">{{ data.msg }}</div>
+        <div v-if="'progress' in data" class="toast-progress">
+            <div class="toast-progress-bar" :style="'width: ' + data.progress + '%'"></div>
+        </div>
     </div>
 </template>
 
@@ -52,9 +55,15 @@
                         return this.data.titleClassName || ''
                 }
             },
+            delete() {
+                new Toast(this.$el).dispose()
+            },
             toastClassName() {
                 return 'toast hide toast-' + this.data.type
                     + (this.data.className ? ' ' + this.data.className : '')
+            },
+            updateProgress(percent) {
+                $(this.$el).find('.toast-progress-bar').css('width', percent + '%')
             }
         }
     }

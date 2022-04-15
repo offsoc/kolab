@@ -32,6 +32,10 @@
                 <svg-icon icon="comments"></svg-icon><span class="name">{{ $t('dashboard.chat') }}</span>
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>
+            <router-link v-if="status.enableFiles && !$root.isDegraded()" class="card link-files" :to="{ name: 'files' }">
+                <svg-icon icon="folder-open"></svg-icon><span class="name">{{ $t('dashboard.files') }}</span>
+                <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
+            </router-link>
             <router-link v-if="status.enableSettings" class="card link-settings" :to="{ name: 'settings' }">
                 <svg-icon icon="sliders-h"></svg-icon><span class="name">{{ $t('dashboard.settings') }}</span>
             </router-link>

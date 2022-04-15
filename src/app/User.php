@@ -349,6 +349,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Storage items for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function fsItems()
+    {
+        return $this->hasMany(Fs\Item::class);
+    }
+
+    /**
      * Return groups controlled by the current user.
      *
      * @param bool $with_accounts Include groups assigned to wallets

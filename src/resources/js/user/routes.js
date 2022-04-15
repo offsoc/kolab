@@ -14,6 +14,8 @@ const DistlistInfoComponent = () => import(/* webpackChunkName: "../user/pages" 
 const DistlistListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Distlist/List')
 const DomainInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Domain/Info')
 const DomainListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Domain/List')
+const FileInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/File/Info')
+const FileListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/File/List')
 const MeetComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Rooms')
 const ResourceInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/Info')
 const ResourceListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/List')
@@ -63,6 +65,18 @@ const routes = [
         name: 'domains',
         component: DomainListComponent,
         meta: { requiresAuth: true, perm: 'domains' }
+    },
+    {
+        path: '/file/:file',
+        name: 'file',
+        component: FileInfoComponent,
+        meta: { requiresAuth: true /*, perm: 'files' */ }
+    },
+    {
+        path: '/files',
+        name: 'files',
+        component: FileListComponent,
+        meta: { requiresAuth: true, perm: 'files' }
     },
     {
         path: '/login',

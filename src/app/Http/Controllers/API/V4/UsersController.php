@@ -185,6 +185,7 @@ class UsersController extends RelationController
             'enableDomains' => $isController && $hasCustomDomain,
             // TODO: Make 'enableDistlists' working for wallet controllers that aren't account owners
             'enableDistlists' => $isController && $hasCustomDomain && in_array('beta-distlists', $skus),
+            'enableFiles' => in_array('files', $skus),
             // TODO: Make 'enableFolders' working for wallet controllers that aren't account owners
             'enableFolders' => $isController && $hasCustomDomain && in_array('beta-shared-folders', $skus),
             // TODO: Make 'enableResources' working for wallet controllers that aren't account owners

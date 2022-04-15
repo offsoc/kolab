@@ -137,7 +137,9 @@ table {
 
     td.buttons,
     th.price,
-    td.price {
+    td.price,
+    th.size,
+    td.size {
         width: 1%;
         text-align: right;
         white-space: nowrap;
@@ -172,6 +174,38 @@ table {
         & > svg + a,
         & > svg + span {
             margin-left: .4em;
+        }
+    }
+
+    &.files {
+        table-layout: fixed;
+
+        td {
+            white-space: nowrap;
+        }
+
+        td.name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+/*
+        td.size,
+        th.size {
+            width: 80px;
+        }
+
+        td.mtime,
+        th.mtime {
+            width: 140px;
+
+            @include media-breakpoint-down(sm) {
+                display: none;
+            }
+        }
+*/
+        td.buttons,
+        th.buttons {
+            width: 50px;
         }
     }
 }

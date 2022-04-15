@@ -5,6 +5,16 @@ namespace App\Handlers\Beta;
 class Base extends \App\Handlers\Base
 {
     /**
+     * The entitleable class for this handler.
+     *
+     * @return string
+     */
+    public static function entitleableClass(): string
+    {
+        return \App\User::class;
+    }
+
+    /**
      * Check if the SKU is available to the user/domain.
      *
      * @param \App\Sku              $sku    The SKU object
@@ -66,5 +76,16 @@ class Base extends \App\Handlers\Base
         // TODO: User has to have the "beta" entitlement
 
         return true;
+    }
+
+    /**
+     * The priority that specifies the order of SKUs in UI.
+     * Higher number means higher on the list.
+     *
+     * @return int
+     */
+    public static function priority(): int
+    {
+        return 10;
     }
 }

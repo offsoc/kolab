@@ -81,6 +81,17 @@ Route::group(
         Route::get('domains/{id}/status', [API\V4\DomainsController::class, 'status']);
         Route::post('domains/{id}/config', [API\V4\DomainsController::class, 'setConfig']);
 
+        Route::apiResource('files', API\V4\FilesController::class);
+        Route::get('files/{fileId}/permissions', [API\V4\FilesController::class, 'getPermissions']);
+        Route::post('files/{fileId}/permissions', [API\V4\FilesController::class, 'createPermission']);
+        Route::put('files/{fileId}/permissions/{id}', [API\V4\FilesController::class, 'updatePermission']);
+        Route::delete('files/{fileId}/permissions/{id}', [API\V4\FilesController::class, 'deletePermission']);
+        Route::post('files/uploads/{id}', [API\V4\FilesController::class, 'upload'])
+            ->withoutMiddleware(['auth:api'])
+            ->middleware(['api']);
+        Route::get('files/downloads/{id}', [API\V4\FilesController::class, 'download'])
+            ->withoutMiddleware(['auth:api']);
+
         Route::apiResource('groups', API\V4\GroupsController::class);
         Route::get('groups/{id}/status', [API\V4\GroupsController::class, 'status']);
         Route::post('groups/{id}/config', [API\V4\GroupsController::class, 'setConfig']);

@@ -230,7 +230,7 @@ return [
     'swoole' => [
         'options' => [
             'log_file' => storage_path('logs/swoole_http.log'),
-            'package_max_length' => 10 * 1024 * 1024,
+            'package_max_length' => env('SWOOLE_PACKAGE_MAX_LENGTH', 10 * 1024 * 1024),
             'enable_coroutine' => false,
             //FIXME the daemonize option does not work
             // 'daemonize' => env('OCTANE_DAEMONIZE', true),

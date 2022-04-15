@@ -241,5 +241,19 @@ class SkuSeeder extends Seeder
                 'active' => true,
             ]);
         }
+
+        // Check existence because migration might have added this already
+        if (!Sku::where('title', 'files')->first()) {
+            Sku::create([
+                'title' => 'files',
+                'name' => 'File storage',
+                'description' => 'Access to file storage',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Files',
+                'active' => true,
+            ]);
+        }
     }
 }

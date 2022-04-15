@@ -1,7 +1,7 @@
 <template>
     <div class="list-input acl-input" :id="id">
         <div class="input-group">
-            <select class="form-select mod mod-user" @change="changeMod" v-model="mod">
+            <select v-if="!useronly" class="form-select mod mod-user" @change="changeMod" v-model="mod">
                 <option value="user">{{ $t('form.user') }}</option>
                 <option value="anyone">{{ $t('form.anyone') }}</option>
             </select>
@@ -29,7 +29,8 @@
     export default {
         props: {
             list: { type: Array, default: () => [] },
-            id: { type: String, default: '' }
+            id: { type: String, default: '' },
+            useronly: { type: Boolean, default: false }
         },
         data() {
             return {

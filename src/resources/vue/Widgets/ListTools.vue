@@ -53,7 +53,7 @@
         methods: {
             listSearch(name, url, params) {
                 let loader
-                let get = {}
+                let get = params.get || {}
 
                 if (params) {
                     if (params.reset || params.init) {

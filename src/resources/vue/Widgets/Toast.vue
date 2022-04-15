@@ -14,6 +14,8 @@
                 const instance = new msg({ propsData: { data: data } })
                 instance.$mount()
                 $(instance.$el).prependTo(this.$el)
+
+                return instance
             },
             processObjectData(data) {
                 if (typeof data === 'object' && data.msg !== undefined) {
