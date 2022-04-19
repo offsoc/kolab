@@ -5,6 +5,10 @@
   register: cgroup_status
   ignore_errors: true
 
+- name: Install grubby
+  package: name=grubby state=installed
+  when: cgroup_status.stdout == "0"
+
 - name: Disable cgroupv2
   shell: grubby --update-kernel=ALL --args=\"systemd.unified_cgroup_hierarchy=0\"
   when: cgroup_status.stdout == "0"
