@@ -11,6 +11,11 @@
 
     - import_tasks: packages.yml
 
+    - name: Put SELinux in permissive mode for docker
+      ansible.posix.selinux:
+        policy: targeted
+        state: permissive
+
     - name: Setup user kolab
       ansible.builtin.user:
         name: kolab
