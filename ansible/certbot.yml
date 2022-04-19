@@ -16,8 +16,11 @@
       args:
         creates: /etc/letsencrypt/live/{{ hostname }}
 
-    - name: chmod letsencrypt certificate
-      shell: chmod 755 /etc/letsencrypt/{live, archive}
+    - name: chmod letsencrypt certificate live
+      shell: chmod 755 /etc/letsencrypt/live
+
+    - name: chmod letsencrypt certificate archive
+      shell: chmod 755 /etc/letsencrypt/archive
 
     - name: start firewall
       ansible.builtin.service:
