@@ -27,15 +27,14 @@ class Room extends Model
     public const REQUEST_ACCEPTED = 'accepted';
     public const REQUEST_DENIED = 'denied';
 
-    protected $fillable = [
-        'user_id',
-        'name'
-    ];
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['user_id', 'name'];
 
+    /** @var string Database table name */
     protected $table = 'openvidu_rooms';
 
     /** @var \GuzzleHttp\Client|null HTTP client instance */
-    private static $client = null;
+    private $client = null;
 
     /**
      * Select a Meet server for this room
@@ -70,10 +69,10 @@ class Room extends Model
      */
     private function client()
     {
-        if (!self::$client) {
-            $url =  $this->selectMeetServer();
+        if (!$this->client) {
+            $url = $this->selectMeetServer();
 
-            self::$client = new \GuzzleHttp\Client(
+            $this->client = new \GuzzleHttp\Client(
                 [
                     'http_errors' => false, // No exceptions from Guzzle
                     'base_uri' => $url,
@@ -95,7 +94,7 @@ class Room extends Model
             );
         }
 
-        return self::$client;
+        return $this->client;
     }
 
     /**
