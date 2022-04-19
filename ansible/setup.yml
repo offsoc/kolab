@@ -12,7 +12,7 @@
     - import_tasks: packages.yml
 
     - name: Put SELinux in permissive mode for docker
-      ansible.posix.selinux:
+      selinux:
         policy: targeted
         state: permissive
 
