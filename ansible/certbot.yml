@@ -12,7 +12,7 @@
         state: stopped
 
     - name: Create letsencrypt certificate
-      shell: certonly --standalone -d {{ hostname }} --staple-ocsp -m test@{{ hostname }} --agree-tos
+      shell: certbot certonly --standalone -d {{ hostname }} --staple-ocsp -m test@{{ hostname }} --agree-tos
       args:
         creates: /etc/letsencrypt/live/{{ hostname }}
 
