@@ -9,6 +9,9 @@ use App\User;
 use Illuminate\Support\Facades\Storage as LaravelStorage;
 use Tests\TestCase;
 
+/**
+ * @group files
+ */
 class FilesTest extends TestCase
 {
     /**

@@ -50,7 +50,7 @@ class SkuTest extends TestCase
 
     public function testSkuEntitlements(): void
     {
-        $this->assertCount(5, Sku::withEnvTenantContext()->where('title', 'mailbox')->first()->entitlements);
+        $this->assertCount(6, Sku::withEnvTenantContext()->where('title', 'mailbox')->first()->entitlements);
     }
 
     public function testSkuPackages(): void

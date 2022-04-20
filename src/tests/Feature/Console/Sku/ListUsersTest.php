@@ -54,6 +54,7 @@ class ListUsersTest extends TestCase
         $this->assertSame(0, $code);
 
         $expected = [
+            "fred@" . \config('app.domain'),
             "jack@kolab.org",
             "joe@kolab.org",
             "john@kolab.org",
