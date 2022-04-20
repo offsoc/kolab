@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\DB;
 
 class Handler extends ExceptionHandler
 {
-    /** @var string[] A list of the exception types that are not reported */
+    /** @var array<int, class-string<\Throwable>> A list of the exception types that are not reported */
     protected $dontReport = [
         \Laravel\Passport\Exceptions\OAuthServerException::class,
         \League\OAuth2\Server\Exception\OAuthServerException::class
     ];
 
-    /** @var string[] A list of the inputs that are never flashed for validation exceptions */
+    /** @var array<int, string> A list of the inputs that are never flashed for validation exceptions */
     protected $dontFlash = [
         'current_password',
         'password',
