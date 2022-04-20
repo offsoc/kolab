@@ -261,7 +261,9 @@ class Storage
 
         // TODO: If file is empty, detect the mimetype based on the extension?
         try {
-            return $disk->mimeType($path);
+            $mimetype = $disk->mimeType($path);
+            // The mimetype may contain e.g. "; charset=UTF-8", remove this
+            return preg_replace('/;.*$/', '', $mimetype);
         } catch (\Exception $e) {
             // do nothing
         }

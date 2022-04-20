@@ -46,7 +46,7 @@ class FilesTest extends TestCase
     {
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
-        $file = $this->getTestFile($john, 'teśt.txt', 'Teśt content');
+        $file = $this->getTestFile($john, 'teśt.txt', 'Teśt content', ['mimetype' => 'plain/text']);
 
         // Unauth access
         $response = $this->delete("api/v4/files/{$file->id}");
@@ -82,7 +82,7 @@ class FilesTest extends TestCase
     {
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
-        $file = $this->getTestFile($john, 'teśt.txt', 'Teśt content');
+        $file = $this->getTestFile($john, 'teśt.txt', 'Teśt content', ['mimetype' => 'plain/text']);
 
         // Unauth access
         $response = $this->get("api/v4/files/{$file->id}?downloadUrl=1");
@@ -109,7 +109,7 @@ class FilesTest extends TestCase
         $response->assertStatus(200)
             ->assertHeader('Content-Disposition', "attachment; filename=test.txt; filename*=utf-8''te%C5%9Bt.txt")
             ->assertHeader('Content-Length', $file->getProperty('size'))
-            ->assertHeader('Content-Type', $file->getProperty('mimetype') . '; charset=UTF-8');
+            ->assertHeader('Content-Type', $file->getProperty('mimetype'));
 
         $this->assertSame('Teśt content', $response->streamedContent());
 
@@ -128,12 +128,12 @@ class FilesTest extends TestCase
         $response->assertStatus(200)
             ->assertHeader('Content-Disposition', "attachment; filename=test.txt; filename*=utf-8''te%C5%9Bt.txt")
             ->assertHeader('Content-Length', $file->getProperty('size'))
-            ->assertHeader('Content-Type', $file->getProperty('mimetype') . '; charset=UTF-8');
+            ->assertHeader('Content-Type', $file->getProperty('mimetype'));
 
         $this->assertSame('Teśt content', $response->streamedContent());
 
         // Test downloading a multi-chunk file
-        $file = $this->getTestFile($john, 'test2.txt', ['T1', 'T2']);
+        $file = $this->getTestFile($john, 'test2.txt', ['T1', 'T2'], ['mimetype' => 'plain/text']);
         $response = $this->actingAs($john)->get("api/v4/files/{$file->id}?downloadUrl=1");
         $response->assertStatus(200);
 
@@ -368,7 +368,7 @@ class FilesTest extends TestCase
 
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
-        $file = $this->getTestFile($john, 'teśt.txt', 'Teśt content');
+        $file = $this->getTestFile($john, 'teśt.txt', 'Teśt content', ['mimetype' => 'plain/text']);
 
         // Non-existing file
         $response = $this->actingAs($jack)->get("api/v4/files/1234");
@@ -397,7 +397,7 @@ class FilesTest extends TestCase
         $response->assertStatus(200)
             ->assertHeader('Content-Disposition', "attachment; filename=test.txt; filename*=utf-8''te%C5%9Bt.txt")
             ->assertHeader('Content-Length', $file->getProperty('size'))
-            ->assertHeader('Content-Type', $file->getProperty('mimetype') . '; charset=UTF-8');
+            ->assertHeader('Content-Type', $file->getProperty('mimetype'));
 
         $this->assertSame('Teśt content', $response->streamedContent());
 
@@ -452,7 +452,7 @@ class FilesTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame("File created successfully.", $json['message']);
-        $this->assertSame('text/plain', $json['mimetype']);
+        $this->assertMatchesRegularExpression('|^[a-z]+/[a-z-]+$|', $json['mimetype']);
         $this->assertSame(strlen($body), $json['size']);
         $this->assertSame('test.txt', $json['name']);
 
@@ -510,7 +510,7 @@ class FilesTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         // $this->assertSame("", $json['message']);
-        $this->assertSame('text/plain', $json['mimetype']);
+        $this->assertMatchesRegularExpression('|^[a-z]+/[a-z-]+$|', $json['mimetype']);
         $this->assertSame($size, $json['size']);
         $this->assertSame('test2.txt', $json['name']);
 
@@ -534,7 +534,7 @@ class FilesTest extends TestCase
 
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
-        $file = $this->getTestFile($john, 'teśt.txt', 'Teśt content');
+        $file = $this->getTestFile($john, 'teśt.txt', 'Teśt content', ['mimetype' => 'plain/text']);
 
         // Non-existing file
         $response = $this->actingAs($john)->put("api/v4/files/1234", []);
@@ -590,7 +590,7 @@ class FilesTest extends TestCase
         $file->refresh();
 
         $this->assertSame($body, $this->getTestFileContent($file));
-        $this->assertSame('text/plain', $file->getProperty('mimetype'));
+        $this->assertMatchesRegularExpression('|^[a-z]+/[a-z-]+$|', $file->getProperty('mimetype'));
         $this->assertSame(strlen($body), (int) $file->getProperty('size'));
 
         // TODO: Test acting as another user with file permissions
@@ -623,10 +623,6 @@ class FilesTest extends TestCase
                 $path = Storage::chunkLocation($chunkId, $file);
 
                 $disk->write($path, $chunk);
-
-                if (!$size) {
-                    $mimetype = $disk->mimeType($path);
-                }
 
                 $size += strlen($chunk);
 
