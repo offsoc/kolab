@@ -55,7 +55,6 @@
         data() {
             return {
                 api: {},
-                file: null,
                 files: []
             }
         },

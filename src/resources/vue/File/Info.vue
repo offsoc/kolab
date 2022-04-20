@@ -57,7 +57,7 @@
                             </div>
                             <div id="share-links" class="row m-0" v-if="shares.length">
                                 <div class="list-group p-0">
-                                    <div v-for="(item, index) in shares" :key="item.id" class="list-group-item">
+                                    <div v-for="item in shares" :key="item.id" class="list-group-item">
                                         <div class="d-flex w-100 justify-content-between">
                                             <span class="user lh-lg">
                                                 <svg-icon icon="user"></svg-icon> {{ item.user }}

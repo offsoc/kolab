@@ -19,7 +19,7 @@
                                                :disabled="isRequired(rule)"
                                         >
                                         <span v-if="rule.label == 'last'" v-html="ruleLastHTML(rule)"></span>
-                                        <label v-else :for="'policy-' + rule.label" class="form-check-label pe-2" style="opacity:1">{{ rule.name.split(':')[0] }}</label>
+                                        <label v-else :for="'policy-' + rule.label" class="form-check-label pe-2" style="opacity: 1;">{{ rule.name.split(':')[0] }}</label>
                                         <input type="text" class="form-control form-control-sm w-auto d-inline" v-if="['min', 'max'].includes(rule.label)" :value="rule.param" size="3">
                                     </li>
                                 </ul>
