@@ -33,7 +33,25 @@ class Storage
 
         $disk->deleteDirectory($path);
 
-        $file->chunks()->delete();
+        $file->forceDelete();
+    }
+
+    /**
+     * Delete a file chunk.
+     *
+     * @param \App\Fs\Chunk $chunk File chunk object
+     *
+     * @throws \Exception
+     */
+    public static function fileChunkDelete(Chunk $chunk): void
+    {
+        $disk = LaravelStorage::disk('files');
+
+        $path = self::chunkLocation($chunk->chunk_id, $chunk->item);
+
+        $disk->delete($path);
+
+        $chunk->forceDelete();
     }
 
     /**

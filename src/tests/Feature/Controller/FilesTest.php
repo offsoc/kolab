@@ -65,27 +65,9 @@ class FilesTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame("File deleted successfully.", $json['message']);
-
-        // Test that the file has been removed from the filesystem?
-        $disk = LaravelStorage::disk('files');
-        $this->assertFalse($disk->directoryExists($file->path . '/' . $file->id));
         $this->assertSame(null, Item::find($file->id));
 
-        // Test deletion of a chunked file
-        $file = $this->getTestFile($john, 'test.txt', ['T1', 'T2']);
-
-        $response = $this->actingAs($john)->delete("api/v4/files/{$file->id}");
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertSame('success', $json['status']);
-        $this->assertSame("File deleted successfully.", $json['message']);
-
-        // Test that the file has been removed from the filesystem?
-        $disk = LaravelStorage::disk('files');
-        $this->assertFalse($disk->directoryExists($file->path . '/' . $file->id));
-        $this->assertSame(null, Item::find($file->id));
+        // Note: The file is expected to stay still in the filesystem, we're not testing this here.
 
         // TODO: Test acting as another user with permissions
     }

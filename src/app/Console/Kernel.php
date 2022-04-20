@@ -28,6 +28,9 @@ class Kernel extends ConsoleKernel
 
         // this is a laravel 8-ism
         //$schedule->command('wallet:charge')->everyFourHours();
+
+        // This command removes deleted storage files/file chunks from the filesystem
+        $schedule->command('fs:expunge')->hourly();
     }
 
     /**

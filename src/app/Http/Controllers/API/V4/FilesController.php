@@ -41,12 +41,8 @@ class FilesController extends RelationController
             return $this->errorResponse($file);
         }
 
-        // FIXME: Here we're just deleting the file, but maybe it would be better/faster
-        // to mark the file (record in db) as deleted and invoke a job to
-        // delete it asynchronously?
-
-        Storage::fileDelete($file);
-
+        // Here we're just marking the file as deleted, it will be removed from the
+        // storage later with the fs:expunge command
         $file->delete();
 
         return response()->json([

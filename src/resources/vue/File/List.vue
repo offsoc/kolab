@@ -23,7 +23,7 @@
                         <tbody>
                             <tr v-for="file in files" :key="file.id" @click="$root.clickRecord">
                                 <td class="name">
-                                    <svg-icon icon="file" :title="file.mimetype"></svg-icon>
+                                    <svg-icon icon="file"></svg-icon>
                                     <router-link :to="{ path: 'file/' + file.id }">{{ file.name }}</router-link>
                                 </td>
                                 <td class="buttons">
