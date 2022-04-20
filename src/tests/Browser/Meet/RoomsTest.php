@@ -74,7 +74,8 @@ class RoomsTest extends TestCaseDusk
                 ->whenAvailable('@skus', function ($browser) {
                     $browser->click('#sku-input-meet');
                 })
-                ->click('button[type=submit]')
+                ->scrollTo('#general button[type=submit]')->pause(200)
+                ->click('#general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.')
                 ->click('.navbar-brand')
                 ->on(new Dashboard())
