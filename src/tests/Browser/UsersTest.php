@@ -797,7 +797,7 @@ class UsersTest extends TestCaseDusk
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
                 ->with('@skus', function ($browser) {
-                    $browser->assertElementsCount('tbody tr', 10)
+                    $browser->assertElementsCount('tbody tr', 11)
                         // Meet SKU
                         ->assertSeeIn('tbody tr:nth-child(6) td.name', 'Voice & Video Conferencing (public beta)')
                         ->assertSeeIn('tr:nth-child(6) td.price', '0,00 CHF/month')
@@ -835,7 +835,7 @@ class UsersTest extends TestCaseDusk
                             'Access to calendaring resources'
                         )
                         // Shared folders SKU
-                        ->scrollTo('tbody tr:nth-child(10)')->pause(500)
+                        ->scrollTo('tbody tr:nth-child(10)')->pause(250)
                         ->assertSeeIn('tbody tr:nth-child(10) td.name', 'Shared folders')
                         ->assertSeeIn('tr:nth-child(10) td.price', '0,00 CHF/month')
                         ->assertNotChecked('tbody tr:nth-child(10) td.selection input')
@@ -843,6 +843,16 @@ class UsersTest extends TestCaseDusk
                         ->assertTip(
                             'tbody tr:nth-child(10) td.buttons button',
                             'Access to shared folders'
+                        )
+                        // Files SKU
+                        ->scrollTo('tbody tr:nth-child(11)')->pause(250)
+                        ->assertSeeIn('tbody tr:nth-child(11) td.name', 'File storage')
+                        ->assertSeeIn('tr:nth-child(11) td.price', '0,00 CHF/month')
+                        ->assertNotChecked('tbody tr:nth-child(11) td.selection input')
+                        ->assertEnabled('tbody tr:nth-child(11) td.selection input')
+                        ->assertTip(
+                            'tbody tr:nth-child(11) td.buttons button',
+                            'Access to file storage'
                         )
                         // Check Distlist, Uncheck Beta, expect Distlist unchecked
                         ->click('#sku-input-beta-distlists')
