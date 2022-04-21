@@ -210,6 +210,11 @@ table {
     }
 }
 
+.table > :not(:first-child) {
+    // Remove Bootstrap's 2px border
+    border-width: 0;
+}
+
 .list-details {
     min-height: 1em;
 
