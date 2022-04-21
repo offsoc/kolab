@@ -598,7 +598,8 @@ class FilesController extends RelationController
         if ($full) {
             $props = array_filter($object->getProperties(['name', 'size', 'mimetype']));
 
-            $props['size'] *= 1; // convert to int
+            // convert size to int and make sure the property exists
+            $props['size'] = (int) ($props['size'] ?? 0);
             $result += $props;
         }
 
