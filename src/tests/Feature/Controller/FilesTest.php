@@ -613,7 +613,6 @@ class FilesTest extends TestCase
 
         $file = $user->fsItems()->create(['type' => Item::TYPE_FILE]);
         $size = 0;
-        $mimetype = '';
 
         if (is_array($content) && empty($content)) {
             // do nothing, we don't need the body here
@@ -637,7 +636,7 @@ class FilesTest extends TestCase
         $properties = [
             'name' => $name,
             'size' => $size,
-            'mimetype' => $mimetype ?: 'application/octet-stream',
+            'mimetype' => 'application/octet-stream',
         ];
 
         $file->setProperties($props + $properties);
