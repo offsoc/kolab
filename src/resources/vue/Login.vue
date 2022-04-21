@@ -58,15 +58,15 @@
             submitLogin() {
                 this.$root.clearFormValidation($('form.form-signin'))
 
-                axios.post('/api/auth/login', {
-                    email: this.email,
-                    password: this.password,
-                    secondfactor: this.secondFactor
-                }).then(response => {
-                    // login user and redirect to dashboard
-                    this.$root.loginUser(response.data, this.dashboard)
-                    this.$emit('success')
-                })
+                const post = this.$root.pick(this, ['email', 'password', 'secondFactor'])
+
+                axios.post('/api/auth/login', post)
+                    .then(response => {
+                        // login user and redirect to dashboard
+                        this.$root.loginUser(response.data, this.dashboard)
+                        this.$emit('success')
+                    })
+                    .catch(e => {})
             }
         }
     }

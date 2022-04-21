@@ -32,7 +32,9 @@
                 this.$root.startLoading()
                 axios.defaults.headers.common.Authorization = 'Bearer ' + token
 
-                axios.post('/api/auth/info?refresh=1', {refresh_token: localStorage.getItem("refreshToken")})
+                const post = { refresh_token: localStorage.getItem("refreshToken") }
+
+                axios.post('/api/auth/info?refresh=1', post, { ignoreErrors: true })
                     .then(response => {
                         this.$root.loginUser(response.data, false)
                         this.$root.stopLoading()
