@@ -9,6 +9,7 @@ class Roundcube
 {
     private const FILESTORE_TABLE = 'filestore';
     private const USERS_TABLE = 'users';
+    private const IDENTITIES_TABLE = 'identities';
 
     /** @var array List of GnuPG files to store */
     private static $enigma_files = ['pubring.gpg', 'secring.gpg', 'pubring.kbx'];
@@ -218,7 +219,7 @@ class Roundcube
 
             $uri = \parse_url(\config('imap.uri'));
 
-            return (int) $db->table(self::USERS_TABLE)->insertGetId(
+            $user_id = (int) $db->table(self::USERS_TABLE)->insertGetId(
                 [
                     'username' => $email,
                     'mail_host' => $uri['host'],
@@ -226,6 +227,18 @@ class Roundcube
                 ],
                 'user_id'
             );
+
+            $username = \App\User::where('email', $email)->first()->name();
+
+            $db->table(self::IDENTITIES_TABLE)->insert([
+                    'user_id' => $user_id,
+                    'email' => $email,
+                    'name' => $username,
+                    'changed' => now()->toDateTimeString(),
+                    'standard' => 1,
+            ]);
+
+            return $user_id;
         }
 
         return (int) $user->user_id;
