@@ -58,6 +58,7 @@ class SettingsTest extends TestCaseDusk
     {
         $john = $this->getTestUser('john@kolab.org');
         $john->setSetting('password_policy', 'min:5,max:100,lower');
+        $john->setSetting('max_password_age', null);
 
         $this->browse(function (Browser $browser) {
             $browser->click('@links .link-settings')
@@ -98,10 +99,22 @@ class SettingsTest extends TestCaseDusk
                         ->click('li:nth-child(3) input[type=checkbox]')
                         ->click('li:nth-child(4) input[type=checkbox]');
                 })
+                ->assertSeeIn('@form .row:nth-child(2) > label', 'Password Retention')
+                ->with('@form #password_retention', function (Browser $browser) {
+                    $browser->assertElementsCount('li', 1)
+                        ->assertSeeIn('li:nth-child(1) label', 'Require a password change every')
+                        ->assertNotChecked('li:nth-child(1) input[type=checkbox]')
+                        ->assertSelected('li:nth-child(1) select', 3)
+                        ->assertSelectHasOptions('li:nth-child(1) select', [3, 6, 9, 12])
+                        // change the policy
+                        ->check('li:nth-child(1) input[type=checkbox]')
+                        ->select('li:nth-child(1) select', 6);
+                })
                 ->click('button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
         });
 
         $this->assertSame('min:11,max:120,upper', $john->getSetting('password_policy'));
+        $this->assertSame('6', $john->getSetting('max_password_age'));
     }
 }

@@ -77,6 +77,7 @@ class PasswordPolicyTest extends TestCase
         $jack = $this->getTestUser('jack@kolab.org');
         $john = $this->getTestUser('john@kolab.org');
         $john->setSetting('password_policy', 'min:8,max:255,special');
+        $john->setSetting('max_password_age', 6);
 
         // Get available policy rules
         $response = $this->actingAs($john)->get('/api/v4/password-policy');
@@ -84,9 +85,10 @@ class PasswordPolicyTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertCount(2, $json);
+        $this->assertCount(3, $json);
         $this->assertSame(7, $json['count']);
         $this->assertCount(7, $json['list']);
+        $this->assertSame(['max_password_age' => '6'], $json['config']);
         $this->assertSame('Minimum password length: 8 characters', $json['list'][0]['name']);
         $this->assertSame('min', $json['list'][0]['label']);
         $this->assertSame('8', $json['list'][0]['param']);
@@ -112,9 +114,10 @@ class PasswordPolicyTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertCount(2, $json);
+        $this->assertCount(3, $json);
         $this->assertSame(7, $json['count']);
         $this->assertCount(7, $json['list']);
+        $this->assertSame(['max_password_age' => '6'], $json['config']);
         $this->assertSame('Minimum password length: 8 characters', $json['list'][0]['name']);
         $this->assertSame('min', $json['list'][0]['label']);
         $this->assertSame('8', $json['list'][0]['param']);

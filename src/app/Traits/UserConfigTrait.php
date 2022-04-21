@@ -11,12 +11,13 @@ trait UserConfigTrait
      */
     public function getConfig(): array
     {
-        $config = [];
+        $settings = $this->getSettings(['greylist_enabled', 'password_policy', 'max_password_age']);
 
-        // TODO: Should we store the default value somewhere in config?
-
-        $config['greylist_enabled'] = $this->getSetting('greylist_enabled') !== 'false';
-        $config['password_policy'] = $this->getSetting('password_policy');
+        $config = [
+            'greylist_enabled' => $settings['greylist_enabled'] !== 'false',
+            'max_password_age' => $settings['max_password_age'],
+            'password_policy' => $settings['password_policy'],
+        ];
 
         return $config;
     }
@@ -34,7 +35,9 @@ trait UserConfigTrait
 
         foreach ($config as $key => $value) {
             if ($key == 'greylist_enabled') {
-                $this->setSetting('greylist_enabled', $value ? 'true' : 'false');
+                $this->setSetting($key, $value ? 'true' : 'false');
+            } elseif ($key == 'max_password_age') {
+                $this->setSetting($key, intval($value) > 0 ? (int) $value : null);
             } elseif ($key == 'password_policy') {
                 // Validate the syntax and make sure min and max is included
                 if (
@@ -54,7 +57,7 @@ trait UserConfigTrait
                     }
                 }
 
-                $this->setSetting('password_policy', $value);
+                $this->setSetting($key, $value);
             } else {
                 $errors[$key] = \trans('validation.invalid-config-parameter');
             }

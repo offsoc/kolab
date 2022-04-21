@@ -25,9 +25,15 @@ class PasswordPolicyController extends Controller
         $policy = new Password($owner);
         $rules = $policy->rules(true);
 
+        // Get the account's password retention config
+        $config = [
+            'max_password_age' => $owner->getSetting('max_password_age'),
+        ];
+
         return response()->json([
                 'list' => array_values($rules),
                 'count' => count($rules),
+                'config' => $config,
         ]);
     }
 

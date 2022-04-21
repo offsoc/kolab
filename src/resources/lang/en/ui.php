@@ -162,6 +162,7 @@ return [
         'general' => "General",
         'lastname' => "Last Name",
         'name' => "Name",
+        'months' => "months",
         'none' => "none",
         'or' => "or",
         'password' => "Password",
@@ -350,6 +351,12 @@ return [
         'list-title' => "Resource | Resources",
         'list-empty' => "There are no resources in this account.",
         'new' => "New resource",
+    ],
+
+    'settings' => [
+        'password-policy' => "Password Policy",
+        'password-retention' => "Password Retention",
+        'password-max-age' => "Require a password change every",
     ],
 
     'shf' => [

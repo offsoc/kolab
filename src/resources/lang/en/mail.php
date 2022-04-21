@@ -65,6 +65,9 @@ return [
     'passwordreset-body3' => "You can also click the link below:",
     'passwordreset-body4' => "If you did not make such a request, you can either ignore this message or get in touch with us about this incident.",
 
+    'passwordexpiration-subject' => ":site password expires on :date",
+    'passwordexpiration-body' => "Your password will expire on :date. You can change it here:",
+
     'paymentmandatedisabled-subject' => ":site Auto-payment Problem",
     'paymentmandatedisabled-body' => "Your :site account balance is negative "
         . "and the configured amount for automatically topping up the balance does not cover "

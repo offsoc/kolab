@@ -296,6 +296,14 @@ class UserObserver
      */
     private static function saveOldPassword(User $user, string $password): void
     {
+        // Remember the timestamp of the last password change and unset the last warning date
+        $user->setSettings([
+                'password_expiration_warning' => null,
+                // Note: We could get this from user_passwords table, but only if the policy
+                // enables storing of old passwords there.
+                'password_update' => now()->format('Y-m-d H:i:s'),
+        ]);
+
         // Note: All this is kinda heavy and complicated because we don't want to store
         // more old passwords than we need. However, except the complication/performance,
         // there's one issue with it. E.g. the policy changes from 2 to 4, and we already

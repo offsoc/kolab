@@ -8,7 +8,7 @@
                 <div class="card-text">
                     <form @submit.prevent="submit">
                         <div class="row mb-3">
-                            <label class="col-sm-4 col-form-label">{{ $t('user.passwordpolicy') }}</label>
+                            <label class="col-sm-4 col-form-label">{{ $t('settings.password-policy') }}</label>
                             <div class="col-sm-8">
                                 <ul id="password_policy" class="list-group ms-1 mt-1">
                                     <li v-for="rule in passwordPolicy" :key="rule.label" class="list-group-item border-0 form-check pt-1 pb-1">
@@ -25,6 +25,22 @@
                                 </ul>
                             </div>
                         </div>
+                        <div class="row mb-3">
+                            <label class="col-sm-4 col-form-label">{{ $t('settings.password-retention') }}</label>
+                            <div class="col-sm-8">
+                                <ul id="password_retention" class="list-group ms-1 mt-1">
+                                    <li class="list-group-item border-0 form-check pt-1 pb-1">
+                                        <input type="checkbox" class="form-check-input" id="max_password_age" :checked="config.max_password_age">
+                                        <label for="max_password_age" class="form-check-label pe-2">{{ $t('settings.password-max-age') }}</label>
+                                        <select class="form-select form-select-sm d-inline w-auto" id="max_password_age_value">
+                                            <option v-for="num in [3, 6, 9, 12]" :key="num" :value="num" :selected="num == config.max_password_age">
+                                                {{ num }} {{ $t('form.months') }}
+                                            </option>
+                                        </select>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                         <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                     </form>
                 </div>
@@ -37,6 +53,7 @@
     export default {
         data() {
             return {
+                config: [],
                 passwordPolicy: []
             }
         },
@@ -52,6 +69,7 @@
 
                     if (response.data.list) {
                         this.passwordPolicy = response.data.list
+                        this.config = response.data.config
                     }
                 })
                 .catch(this.$root.errorHandler)
@@ -76,6 +94,7 @@
             submit() {
                 this.$root.clearFormValidation($('#settings form'))
 
+                let max_password_age = $('#max_password_age:checked').length ? $('#max_password_age_value').val() : 0
                 let password_policy = [];
 
                 $('#password_policy > li > input:checked').each((i, element) => {
@@ -89,7 +108,10 @@
                     password_policy.push(entry)
                 })
 
-                let post = { password_policy: password_policy.join(',') }
+                let post = {
+                    max_password_age,
+                    password_policy: password_policy.join(','),
+                }
 
                 axios.post('/api/v4/users/' + this.wallet.user_id + '/config', post)
                     .then(response => {

@@ -375,12 +375,18 @@ class UserTest extends TestCase
         );
 
         // Update the user, test the password change
+        $user->setSetting('password_expiration_warning', '2020-10-10 10:10:10');
         $oldPassword = $user->password;
         $user->password = 'test123';
         $user->save();
 
         $this->assertNotEquals($oldPassword, $user->password);
         $this->assertSame(0, $user->passwords()->count());
+        $this->assertNull($user->getSetting('password_expiration_warning'));
+        $this->assertMatchesRegularExpression(
+            '/^' . now()->format('Y-m-d') . ' [0-9]{2}:[0-9]{2}:[0-9]{2}$/',
+            $user->getSetting('password_update')
+        );
 
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
         Queue::assertPushed(
@@ -457,8 +463,9 @@ class UserTest extends TestCase
         $john = $this->getTestUser('john@kolab.org');
         $john->setSetting('greylist_enabled', null);
         $john->setSetting('password_policy', null);
+        $john->setSetting('max_password_age', null);
 
-        // Greylist_enabled
+        // greylist_enabled
         $this->assertSame(true, $john->getConfig()['greylist_enabled']);
 
         $result = $john->setConfig(['greylist_enabled' => false, 'unknown' => false]);
@@ -473,7 +480,22 @@ class UserTest extends TestCase
         $this->assertSame(true, $john->getConfig()['greylist_enabled']);
         $this->assertSame('true', $john->getSetting('greylist_enabled'));
 
-        // Password_policy
+        // max_apssword_age
+        $this->assertSame(null, $john->getConfig()['max_password_age']);
+
+        $result = $john->setConfig(['max_password_age' => -1]);
+
+        $this->assertSame([], $result);
+        $this->assertSame(null, $john->getConfig()['max_password_age']);
+        $this->assertSame(null, $john->getSetting('max_password_age'));
+
+        $result = $john->setConfig(['max_password_age' => 12]);
+
+        $this->assertSame([], $result);
+        $this->assertSame('12', $john->getConfig()['max_password_age']);
+        $this->assertSame('12', $john->getSetting('max_password_age'));
+
+        // password_policy
         $result = $john->setConfig(['password_policy' => true]);
 
         $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
