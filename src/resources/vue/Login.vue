@@ -23,7 +23,7 @@
                             <label for="secondfactor" class="visually-hidden">{{ $t('login.2fa') }}</label>
                             <div class="input-group">
                                 <span class="input-group-text"><svg-icon icon="key"></svg-icon></span>
-                                <input type="text" id="secondfactor" class="form-control" :placeholder="$t('login.2fa')" v-model="secondFactor">
+                                <input type="text" id="secondfactor" class="form-control rounded-end" :placeholder="$t('login.2fa')" v-model="secondfactor">
                             </div>
                             <small class="text-muted mt-2">{{ $t('login.2fa_desc') }}</small>
                         </div>
@@ -50,7 +50,7 @@
             return {
                 email: '',
                 password: '',
-                secondFactor: '',
+                secondfactor: '',
                 webmailURL: window.config['app.webmail_url']
             }
         },
@@ -58,7 +58,7 @@
             submitLogin() {
                 this.$root.clearFormValidation($('form.form-signin'))
 
-                const post = this.$root.pick(this, ['email', 'password', 'secondFactor'])
+                const post = this.$root.pick(this, ['email', 'password', 'secondfactor'])
 
                 axios.post('/api/auth/login', post)
                     .then(response => {
