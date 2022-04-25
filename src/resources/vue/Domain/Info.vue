@@ -85,7 +85,7 @@
                                             </small>
                                         </div>
                                     </div>
-                                    <btn class="btn-primary" type="submit" icon="check">{{ $t('form.submit') }}</btn>
+                                    <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                                 </form>
                             </div>
                         </div>
