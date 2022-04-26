@@ -341,23 +341,19 @@ function Media()
         processor.averaging = 0.95
 
         processor.onaudioprocess = function(event) {
-            let buf = event.inputBuffer.getChannelData(0)
-            let bufLength = buf.length
-            let sum = 0
+            const buf = event.inputBuffer.getChannelData(0)
 
             // Do a root-mean-square on the samples: sum up the squares...
-            for (let x, i=0; i<bufLength; i++) {
-                x = buf[i]
-                sum += x * x
-            }
+            const sum = buf.reduce((prev, curr) => prev + curr * curr, 0)
 
             // ... then take the square root of the sum.
-            const rms = Math.sqrt(sum / bufLength)
+            // multiply by 2 to make the levels visible in the indicator
+            const volume = Math.sqrt(sum / buf.length) * 2 * 100
 
             // Now smooth this out with the averaging factor applied
             // to the previous sample - take the max here because we
             // want "fast attack, slow release."
-            this.volume = Math.max(rms, this.volume * this.averaging)
+            this.volume = Math.max(volume, this.volume * this.averaging)
         }
 
         processor.shutdown = function() {
@@ -372,7 +368,7 @@ function Media()
         // Connect the volume processor to the source
         source.connect(processor)
 
-        const update = () => { volumeMeterUpdate(processor.volume  * 100) }
+        const update = () => { volumeMeterUpdate(processor.volume) }
 
         this.audioContext = audioContext
         this.volumeInterval = setInterval(update, 25)
