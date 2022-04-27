@@ -348,6 +348,12 @@ table {
             }
         }
 
+        &.link-companionapp {
+            svg {
+                transform: scale(0.8);
+            }
+        }
+
         .badge {
             position: absolute;
             top: 0.5rem;
