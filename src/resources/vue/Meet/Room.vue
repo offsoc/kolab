@@ -345,7 +345,7 @@
             initSession(init) {
                 const button = $('#join-button').prop('disabled', true)
 
-                this.post = {
+                const post = {
                     password: this.password,
                     nickname: this.nickname,
                     screenShare: this.canShareScreen ? 1 : 0,
@@ -357,7 +357,7 @@
 
                 $('#setup-password,#setup-nickname').removeClass('is-invalid')
 
-                axios.post('/api/v4/meet/rooms/' + this.room, this.post, { ignoreErrors: true })
+                axios.post('/api/v4/meet/rooms/' + this.room, post, { ignoreErrors: true })
                     .then(response => {
                         button.prop('disabled', false)
 
@@ -519,8 +519,8 @@
                             this.switchSound()
                         }
                     }
-                    //Show stats with '?' key
-                    if (e.key == '?' || e.key == '?') {
+                    // Show stats with '?' key
+                    if (e.key == '?') {
                         this.roomStats()
                     }
                 })
@@ -531,7 +531,7 @@
                 this.$router.push({ name: 'dashboard' })
             },
             makePicture() {
-                return (new Media()).makePicture($("#meet-setup video")[0]) || '';
+                return (new Media()).makePicture($('#meet-setup video')[0]) || '';
             },
             requestId() {
                 const key = 'kolab-meet-uid'

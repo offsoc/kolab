@@ -810,7 +810,7 @@
                     })
             },
             suspendUser() {
-                axios.post('/api/v4/users/' + this.user.id + '/suspend', {})
+                axios.post('/api/v4/users/' + this.user.id + '/suspend')
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
@@ -819,7 +819,7 @@
                     })
             },
             unsuspendUser() {
-                axios.post('/api/v4/users/' + this.user.id + '/unsuspend', {})
+                axios.post('/api/v4/users/' + this.user.id + '/unsuspend')
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)

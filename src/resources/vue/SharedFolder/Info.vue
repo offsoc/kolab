@@ -169,7 +169,8 @@
             },
             submitSettings() {
                 this.$root.clearFormValidation($('#settings form'))
-                let post = {...this.folder.config}
+
+                let post = this.$root.pick(this.folder.config, ['acl'])
 
                 axios.post('/api/v4/shared-folders/' + this.folder_id + '/config', post)
                     .then(response => {

@@ -295,7 +295,13 @@
 
                 this.$root.clearFormValidation($('#payment-form'))
 
-                axios.post('/api/v4/payments', {amount: this.amount, methodId: this.selectedPaymentMethod.id, currency: this.selectedPaymentMethod.currency}, { onFinish })
+                const post =  {
+                    amount: this.amount,
+                    methodId: this.selectedPaymentMethod.id,
+                    currency: this.selectedPaymentMethod.currency
+                }
+
+                axios.post('/api/v4/payments', post, { onFinish })
                     .then(response => {
                         if (response.data.redirectUrl) {
                             location.href = response.data.redirectUrl
@@ -321,8 +327,8 @@
 
                 // Modifications can't change the method of payment
                 if (this.selectedPaymentMethod) {
-                    post['methodId'] = this.selectedPaymentMethod.id;
-                    post['currency'] = this.selectedPaymentMethod.currency;
+                    post.methodId = this.selectedPaymentMethod.id
+                    post.currency = this.selectedPaymentMethod.currency
                 }
 
                 this.$root.clearFormValidation($('#auto-payment form'))
@@ -371,9 +377,11 @@
 
                 this.$nextTick().then(() => {
                     const form = $('#payment-method')
-                    this.$root.addLoader(form, false, {'min-height': '10em'})
+                    const type = nextForm == 'manual' ? 'oneoff' : 'recurring'
 
-                    axios.get('/api/v4/payments/methods', {params: {type: nextForm == 'manual' ? 'oneoff' : 'recurring'}})
+                    this.$root.addLoader(form, false, { 'min-height': '10em' })
+
+                    axios.get('/api/v4/payments/methods', { params: { type } })
                         .then(response => {
                             this.$root.removeLoader(form)
                             this.paymentMethods = response.data

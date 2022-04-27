@@ -33,7 +33,7 @@ class SettingsTest extends TestCaseDusk
             $browser->visit(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
-                ->assertMissing('@links .link-settings .name')
+                ->assertMissing('@links .link-settings')
                 ->visit('/settings')
                 ->assertErrorPage(403)
                 ->within(new Menu(), function (Browser $browser) {
@@ -45,7 +45,7 @@ class SettingsTest extends TestCaseDusk
                 ->on(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
-                ->assertSeeIn('@links .link-settings .name', 'Settings');
+                ->assertSeeIn('@links .link-settings svg + span', 'Settings');
         });
     }
 

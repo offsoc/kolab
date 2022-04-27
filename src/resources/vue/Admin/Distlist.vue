@@ -94,7 +94,7 @@
         },
         methods: {
             suspendList() {
-                axios.post('/api/v4/groups/' + this.list.id + '/suspend', {})
+                axios.post('/api/v4/groups/' + this.list.id + '/suspend')
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
@@ -103,7 +103,7 @@
                     })
             },
             unsuspendList() {
-                axios.post('/api/v4/groups/' + this.list.id + '/unsuspend', {})
+                axios.post('/api/v4/groups/' + this.list.id + '/unsuspend')
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)

@@ -43,14 +43,14 @@
                 <form @submit.prevent="submitStep3" data-validation-prefix="reset_">
                     <password-input class="mb-3" v-model="pass" :user="userId" v-if="userId" :focus="true"></password-input>
                     <div class="form-group pt-1 mb-3">
-                        <label for="secondfactor" class="sr-only">2FA</label>
+                        <label for="secondfactor" class="visually-hidden">{{ $t('login.2fa') }}</label>
                         <div class="input-group">
                             <span class="input-group-text">
                                 <svg-icon icon="key"></svg-icon>
                             </span>
-                            <input type="text" id="secondfactor" class="form-control rounded-end" placeholder="Second factor code" v-model="secondFactor">
+                            <input type="text" id="secondfactor" class="form-control rounded-end" :placeholder="$t('login.2fa')" v-model="secondfactor">
                         </div>
-                        <small class="form-text text-muted">Second factor code is optional for users with no 2-Factor Authentication setup.</small>
+                        <small class="form-text text-muted">{{ $t('login.2fa_desc') }}</small>
                     </div>
                     <btn class="btn-secondary" @click="stepBack">{{ $t('btn.back') }}</btn>
                     <btn class="btn-primary ms-2" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
@@ -73,7 +73,7 @@
                 code: '',
                 short_code: '',
                 pass: {},
-                secondFactor: '',
+                secondfactor: '',
                 userId: null,
                 fromEmail: window.config['mail.from.address']
             }
@@ -137,16 +137,16 @@
             submitStep3() {
                 this.$root.clearFormValidation($('#step3 form'))
 
-                axios.post('/api/auth/password-reset', {
-                    code: this.code,
-                    short_code: this.short_code,
-                    password: this.pass.password,
-                    password_confirmation: this.pass.password_confirmation,
-                    secondfactor: this.secondFactor
-                }).then(response => {
-                    // auto-login and goto dashboard
-                    this.$root.loginUser(response.data)
-                })
+                const post = {
+                    ...this.$root.pick(this, ['code', 'short_code', 'secondfactor']),
+                    ...this.pass
+                }
+
+                axios.post('/api/auth/password-reset', post)
+                    .then(response => {
+                        // auto-login and goto dashboard
+                        this.$root.loginUser(response.data)
+                    })
             },
             // Moves the user a step back in registration form
             stepBack(e) {

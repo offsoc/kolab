@@ -65,8 +65,7 @@
         },
         methods: {
             configSave(name, value, callback) {
-                const post = {}
-                post[name] = value
+                const post = { [name]: value }
 
                 axios.post('/api/v4/meet/rooms/' + this.room + '/config', post)
                     .then(response => {

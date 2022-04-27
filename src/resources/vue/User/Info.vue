@@ -232,12 +232,12 @@
 
                 $('#pass-mode-' + (mode == 'link' ? 'input' : 'link'))[0].checked = false
 
-                // Note: we use $nextTick() becouse we have to wait for the HTML elements to exist
+                // Note: we use $nextTick() because we have to wait for the HTML elements to exist
                 this.$nextTick().then(() => {
                     if (mode == 'link' && !this.passwordLinkCode) {
                         const element = $('#password-link')
                         this.$root.addLoader(element)
-                        axios.post('/api/v4/password-reset/code', [])
+                        axios.post('/api/v4/password-reset/code')
                             .then(response => {
                                 this.$root.removeLoader(element)
                                 this.passwordLinkCode = response.data.short_code + '-' + response.data.code

@@ -96,7 +96,7 @@
         },
         methods: {
             suspendDomain() {
-                axios.post('/api/v4/domains/' + this.domain.id + '/suspend', {})
+                axios.post('/api/v4/domains/' + this.domain.id + '/suspend')
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
@@ -105,7 +105,7 @@
                     })
             },
             unsuspendDomain() {
-                axios.post('/api/v4/domains/' + this.domain.id + '/unsuspend', {})
+                axios.post('/api/v4/domains/' + this.domain.id + '/unsuspend')
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)

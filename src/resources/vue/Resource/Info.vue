@@ -169,7 +169,8 @@
             },
             submitSettings() {
                 this.$root.clearFormValidation($('#settings form'))
-                let post = {...this.resource.config}
+
+                let post = this.$root.pick(this.resource.config, ['invitation_policy', 'owner'])
 
                 if (post.invitation_policy == 'manual') {
                     post.invitation_policy += ':' + post.owner

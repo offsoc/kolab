@@ -63,7 +63,7 @@ class WalletTest extends TestCaseDusk
             $browser->visit(new Home())
                 ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
-                ->assertSeeIn('@links .link-wallet .name', 'Wallet')
+                ->assertSeeIn('@links .link-wallet svg + span', 'Wallet')
                 ->assertSeeIn('@links .link-wallet .badge.bg-success', '1,25 CHF');
         });
 
@@ -72,7 +72,7 @@ class WalletTest extends TestCaseDusk
         // Negative balance
         $this->browse(function (Browser $browser) {
             $browser->visit(new Dashboard())
-                ->assertSeeIn('@links .link-wallet .name', 'Wallet')
+                ->assertSeeIn('@links .link-wallet svg + span', 'Wallet')
                 ->assertSeeIn('@links .link-wallet .badge.bg-danger', '-12,34 CHF');
         });
     }

@@ -103,7 +103,7 @@
                 axios.put('/api/v4/users/' + this.user_id, this.profile)
                     .then(response => {
                         delete this.profile.password
-                        delete this.profile.password_confirm
+                        delete this.profile.password_confirmation
 
                         this.$toast.success(response.data.message)
                         this.$router.push({ name: 'dashboard' })

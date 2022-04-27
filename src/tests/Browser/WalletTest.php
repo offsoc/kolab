@@ -62,7 +62,7 @@ class WalletTest extends TestCaseDusk
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
-                ->assertSeeIn('@links .link-wallet .name', 'Wallet')
+                ->assertSeeIn('@links .link-wallet svg + span', 'Wallet')
                 ->assertSeeIn('@links .link-wallet .badge', '-12,34 CHF');
         });
     }

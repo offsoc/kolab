@@ -193,16 +193,13 @@
             submitStep1() {
                 this.$root.clearFormValidation($('#step1 form'))
 
-                axios.post('/api/auth/signup/init', {
-                    email: this.email,
-                    last_name: this.last_name,
-                    first_name: this.first_name,
-                    plan: this.plan,
-                    voucher: this.voucher
-                }).then(response => {
-                    this.displayForm(2, true)
-                    this.code = response.data.code
-                })
+                const post = this.$root.pick(this, ['email', 'last_name', 'first_name', 'plan', 'voucher'])
+
+                axios.post('/api/auth/signup/init', post)
+                    .then(response => {
+                        this.displayForm(2, true)
+                        this.code = response.data.code
+                    })
             },
             // Submits the code to the API for verification
             submitStep2(bylink) {
@@ -212,40 +209,38 @@
 
                 this.$root.clearFormValidation($('#step2 form'))
 
-                axios.post('/api/auth/signup/verify', {
-                    code: this.code,
-                    short_code: this.short_code
-                }).then(response => {
-                    this.displayForm(3, true)
-                    // Reset user name/email/plan, we don't have them if user used a verification link
-                    this.first_name = response.data.first_name
-                    this.last_name = response.data.last_name
-                    this.email = response.data.email
-                    this.is_domain = response.data.is_domain
-                    this.voucher = response.data.voucher
+                const post = this.$root.pick(this, ['code', 'short_code'])
 
-                    // Fill the domain selector with available domains
-                    if (!this.is_domain) {
-                        this.setDomain(response.data)
-                    }
-                }).catch(error => {
-                    if (bylink === true) {
-                        // FIXME: display step 1, user can do nothing about it anyway
-                        //        Maybe we should display 404 error page?
-                        this.displayForm(1, true)
-                    }
-                })
+                axios.post('/api/auth/signup/verify', post)
+                    .then(response => {
+                        this.displayForm(3, true)
+                        // Reset user name/email/plan, we don't have them if user used a verification link
+                        this.first_name = response.data.first_name
+                        this.last_name = response.data.last_name
+                        this.email = response.data.email
+                        this.is_domain = response.data.is_domain
+                        this.voucher = response.data.voucher
+
+                        // Fill the domain selector with available domains
+                        if (!this.is_domain) {
+                            this.setDomain(response.data)
+                        }
+                    })
+                    .catch(error => {
+                        if (bylink === true) {
+                            // FIXME: display step 1, user can do nothing about it anyway
+                            //        Maybe we should display 404 error page?
+                            this.displayForm(1, true)
+                        }
+                    })
             },
             // Submits the data to the API to create the user account
             submitStep3() {
                 this.$root.clearFormValidation($('#step3 form'))
 
                 let post = {
-                    login: this.login,
-                    domain: this.domain,
-                    password: this.pass.password,
-                    password_confirmation: this.pass.password_confirmation,
-                    voucher: this.voucher
+                    ...this.$root.pick(this, ['login', 'domain', 'voucher']),
+                    ...this.pass
                 }
 
                 if (this.invitation) {

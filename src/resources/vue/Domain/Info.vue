@@ -196,12 +196,11 @@
             submit() {
                 this.$root.clearFormValidation($('#general form'))
 
-                let method = 'post'
-                let location = '/api/v4/domains'
+                let post = this.$root.pick(this.domain, ['namespace'])
 
-                this.domain.package = $('#domain-packages input:checked').val()
+                post.package = $('#domain-packages input:checked').val()
 
-                axios[method](location, this.domain)
+                axios.post('/api/v4/domains', post)
                     .then(response => {
                         this.$toast.success(response.data.message)
                         this.$router.push({ name: 'domains' })
@@ -210,7 +209,7 @@
             submitSettings() {
                 this.$root.clearFormValidation($('#settings form'))
 
-                let post = { spf_whitelist: this.spf_whitelist }
+                const post = this.$root.pick(this, ['spf_whitelist'])
 
                 axios.post('/api/v4/domains/' + this.domain_id + '/config', post)
                     .then(response => {
