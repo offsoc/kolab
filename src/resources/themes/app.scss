@@ -338,17 +338,12 @@ table {
         }
 
         // Some icons are too big, scale them down
+        &.link-companionapp,
         &.link-domains,
         &.link-resources,
         &.link-settings,
         &.link-wallet,
         &.link-invitations {
-            svg {
-                transform: scale(0.9);
-            }
-        }
-
-        &.link-companionapp {
             svg {
                 transform: scale(0.8);
             }
