@@ -355,6 +355,18 @@ class FilesTest extends TestCase
         $this->assertSame($file2->id, $json['list'][0]['id']);
 
         // TODO: Test paging
+
+        // Make sure incomplete files are skipped
+        $file1->type |= Item::TYPE_INCOMPLETE;
+        $file1->save();
+
+        $response = $this->actingAs($user)->get("api/v4/files");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(3, $json);
+        $this->assertSame(1, $json['count']);
     }
 
     /**

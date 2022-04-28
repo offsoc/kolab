@@ -21,9 +21,9 @@ class Item extends Model
     use SoftDeletes;
     use UuidStrKeyTrait;
 
-    public const TYPE_INCOMPLETE = 0;
     public const TYPE_FILE       = 1;
     public const TYPE_FOLDER     = 2;
+    public const TYPE_INCOMPLETE = 4;
 
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['user_id', 'type'];

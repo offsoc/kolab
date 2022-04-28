@@ -119,6 +119,11 @@ class Storage
 
         $fileSize = $disk->fileSize($path);
 
+        if ($file->type & Item::TYPE_INCOMPLETE) {
+            $file->type -= Item::TYPE_INCOMPLETE;
+            $file->save();
+        }
+
         // Update the file type and size information
         $file->setProperties([
                 'size' => $fileSize,
@@ -223,6 +228,11 @@ class Storage
 
         // Update the file metadata after the upload of all chunks is completed
         if ($upload['uploaded'] >= $upload['size']) {
+            if ($file->type & Item::TYPE_INCOMPLETE) {
+                $file->type -= Item::TYPE_INCOMPLETE;
+                $file->save();
+            }
+
             // Update file metadata
             $file->setProperties([
                     'size' => $upload['uploaded'],

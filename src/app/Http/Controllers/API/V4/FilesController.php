@@ -572,7 +572,7 @@ class FilesController extends RelationController
 
         $file = Item::find($fileId);
 
-        if (!$file) {
+        if (!$file || !($file->type & Item::TYPE_FILE) || ($file->type & Item::TYPE_INCOMPLETE)) {
             return 404;
         }
 
