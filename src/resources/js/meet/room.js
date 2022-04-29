@@ -1,10 +1,10 @@
 'use strict'
 
-import anchorme from 'anchorme'
 import { Client } from './client.js'
 import { Roles } from './constants.js'
 import { Dropdown } from 'bootstrap'
 import { library } from '@fortawesome/fontawesome-svg-core'
+import linkifyStr from 'linkify-string'
 
 function Room(container)
 {
@@ -405,31 +405,23 @@ function Room(container)
         let message = $('<span>').text(data.message).text() // make the message secure
 
         // Format the message, convert emails and urls to links
-        message = anchorme({
-            input: message,
-            options: {
-                attributes: {
-                    target: "_blank"
-                },
-                // any link above 20 characters will be truncated
-                // to 20 characters and ellipses at the end
-                truncate: 20,
-                // characters will be taken out of the middle
-                middleTruncation: true
+        message = linkifyStr(message, {
+            nl2br: true,
+            rel: 'noreferrer',
+            target: '_blank',
+            truncate: 25,
+            // Skip links that don't begin with a protocol
+            // e.g., "http://github.com" will be linkified, but "github.com" will not.
+            validate: {
+                url: value => /^https?:\/\//.test(value)
             }
-            // TODO: anchorme is extensible, we could support
-            //       github/phabricator's markup e.g. backticks for code samples
         })
-
-        message = message.replace(/\r?\n/, '<br>')
 
         // Display the message
         let chat = $(sessionData.chatElement).find('.chat')
         let box = chat.find('.message').last()
 
         message = $('<div>').html(message)
-
-        message.find('a').attr('rel', 'noreferrer')
 
         if (box.length && box.data('id') == data.peerId) {
             // A message from the same user as the last message, no new box needed
