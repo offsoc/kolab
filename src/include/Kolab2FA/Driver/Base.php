@@ -310,7 +310,7 @@ abstract class Base
             $this->user_props = (array)$this->storage->read($this->id);
         }
 
-        return $this->user_props[$key];
+        return $this->user_props[$key] ?? null;
     }
 
     /**
