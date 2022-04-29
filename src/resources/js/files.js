@@ -21,11 +21,7 @@ function FileAPI(params = {})
         .get(0)
 
     // Register events on the upload area element
-    area.on('click', event => {
-            input.click()
-            // Prevent Bootstrap+cash-dom error (https://github.com/twbs/bootstrap/issues/36207)
-            event.stopPropagation()
-        })
+    area.on('click', () => input.click())
         .on('drop', event => fileDropHandler(event))
         .on('dragenter dragleave drop', event => fileDragHandler(event))
         .on('dragover', event => event.preventDefault()) // prevents file from being opened on drop)
