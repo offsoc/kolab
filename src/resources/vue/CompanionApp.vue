@@ -3,8 +3,8 @@
         <div class="card">
             <div class="card-body">
                 <div class="card-title">
-                    <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
                     {{ $t('companion.title') }}
+                    <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
                 </div>
                 <div class="card-text">
                     <p>

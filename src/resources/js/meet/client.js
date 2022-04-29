@@ -46,85 +46,87 @@ function Client()
      * Sample statistics
      */
     this.getStats = async () => {
-        let consumerStats = {};
+        let consumerStats = {}
         for (const consumer of Object.values(consumers)) {
             const stats = await consumer.getStats()
             const peerId = consumer.peerId
             const peer = peers.self && peers.self.id === peerId ? peers.self : peers[peerId]
-            const name = peer ? peer['nickname'] : ""
-            const entryName = name + ":" + consumer.id
+            const name = peer ? peer.nickname : ''
+            const entryName = name + ':' + consumer.id
+
             stats.forEach((stat) => {
-                if (stat["type"] == "inbound-rtp") {
-                    if (stat["kind"] == "video") {
-                        //There should only be one matching entry
+                if (stat.type == 'inbound-rtp') {
+                    if (stat.kind == 'video') {
+                        // There should only be one matching entry
                         console.assert(!(entryName in consumerStats))
                         consumerStats[entryName] = stat
-                        consumerStats[entryName]['activeLayers'] = consumerActiveLayers[consumer.id]
-                        consumerStats[entryName]['score'] = consumerScore[consumer.id]
+                        consumerStats[entryName].activeLayers = consumerActiveLayers[consumer.id]
+                        consumerStats[entryName].score = consumerScore[consumer.id]
                     }
                 }
             })
         }
 
-        let sendTransportStats = {};
+        let sendTransportStats = {}
         if (sendTransport) {
             (await sendTransport.getStats()).forEach((stat) => {
-                if (stat["type"] == "outbound-rtp") {
-                    const entryName = stat["kind"] + ":" + stat["id"]
+                if (stat.type == 'outbound-rtp') {
+                    const entryName = stat.kind + ':' + stat.id
                     sendTransportStats[entryName] = stat
                 }
             })
         }
 
-        let receiveTransportStats = {};
+        let receiveTransportStats = {}
         if (recvTransport) {
             (await recvTransport.getStats()).forEach((stat) => {
-                if (stat["type"] == "inbound-rtp") {
-                    //NOTE: The inbound-rtp stats with ssrc 1234 are RtpProbator, which is used for REMB (you'll see a lot of PLI's for it)
-                    const entryName = stat["kind"] + ":" + stat["id"]
+                if (stat.type == 'inbound-rtp') {
+                    // NOTE: The inbound-rtp stats with ssrc 1234 are RtpProbator,
+                    // which is used for REMB (you'll see a lot of PLI's for it)
+                    const entryName = stat.kind + ':' + stat.id
                     receiveTransportStats[entryName] = stat
                 }
             })
         }
 
-        let camProducerStats = {};
+        let camProducerStats = {}
         if (camProducer) {
             (await camProducer.getStats()).forEach((stat) => {
-                if (stat["type"] == "outbound-rtp") {
-                    camProducerStats[stat["id"]] = stat
+                if (stat.type == 'outbound-rtp') {
+                    camProducerStats[stat.id] = stat
                 }
             })
         }
 
-        let micProducerStats = {};
+        let micProducerStats = {}
         if (micProducer) {
             (await micProducer.getStats()).forEach((stat) => {
-                if (stat["type"] == "outbound-rtp") {
-                    micProducerStats[stat["id"]] = stat
+                if (stat.type == 'outbound-rtp') {
+                    micProducerStats[stat.id] = stat
                 }
             })
         }
 
-        let screenProducerStats = {};
+        let screenProducerStats = {}
         if (screenProducer) {
             (await screenProducer.getStats()).forEach((stat) => {
-                if (stat["type"] == "outbound-rtp") {
-                    screenProducerStats[stat["id"]] = stat
+                if (stat.type == 'outbound-rtp') {
+                    screenProducerStats[stat.id] = stat
                 }
             })
         }
 
         return {
-            'roomId': roomId,
-            'sendTransportState': sendTransport ? sendTransport.connectionState : "undefined",
-            'sendTransportStats': sendTransportStats,
-            'receiveTransportState': recvTransport ? recvTransport.connectionState : "undefined",
-            'receiveTransportStats': receiveTransportStats,
-            'camProducerStats': camProducerStats,
-            'micProducerStats': micProducerStats,
-            'screenProducerStats': screenProducerStats,
-            'consumerStats': consumerStats,
-        };
+            roomId,
+            sendTransportStats,
+            receiveTransportStats,
+            camProducerStats,
+            micProducerStats,
+            screenProducerStats,
+            consumerStats,
+            'receiveTransportState': recvTransport ? recvTransport.connectionState : 'undefined',
+            'sendTransportState': sendTransport ? sendTransport.connectionState : 'undefined'
+        }
     }
 
     /**
@@ -167,12 +169,8 @@ function Client()
 
         // Remove peers' video elements
         Object.values(peers).forEach(peer => {
-            if (peer.videoElement) {
-                $(peer.videoElement).remove()
-            }
-            if (peer.screenVideoElement) {
-                $(peer.screenVideoElement).remove()
-            }
+            media.resetVideoElement(peer.videoElement, true)
+            media.resetVideoElement(peer.screenVideoElement, true)
         })
 
         // Reset state
@@ -465,7 +463,6 @@ function Client()
         })
 
         socket.on('notification', (notification) => {
-            console.warn("notification", notification)
             switch (notification.method) {
                 case 'roomReady':
                     iceServers = notification.data.iceServers
@@ -574,13 +571,13 @@ function Client()
 
                 case 'consumerScoreChanged': {
                     const { consumerId, score } = notification.data
-                    consumerScore[consumerId] = score;
+                    consumerScore[consumerId] = score
                     return
                 }
 
                 case 'consumerLayersChanged': {
                     const { consumerId, layers } = notification.data
-                    consumerActiveLayers[consumerId] = layers;
+                    consumerActiveLayers[consumerId] = layers
                     return
                 }
 
@@ -746,7 +743,7 @@ function Client()
             // the peer. If we do not do this we have to wait about 20 seconds for repeated
             // newConsumer requests
             Object.keys(consumers).forEach(cid => {
-                const consumer = consumers[cid];
+                const consumer = consumers[cid]
                 if (consumer.peerId === peer.id) {
                     (consumer.source == 'screen' ? screenTracks : tracks).push(consumer.track)
                 }
@@ -827,7 +824,7 @@ function Client()
 
         // Workaround the firefox screenshare issue.
         // With this we effectively limit ourselves to 640 width
-        await camProducer.setMaxSpatialLayer(1);
+        await camProducer.setMaxSpatialLayer(1)
 
         camProducer.on('transportclose', () => {
             camProducer = null

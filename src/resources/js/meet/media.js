@@ -75,6 +75,9 @@ function Media()
         return stream.getVideoTracks()[0]
     }
 
+    /**
+     * Creates a <video> element with media stream/tracks assigned
+     */
     this.createVideoElement = (tracks, props) => {
         const videoElement = document.createElement('video')
 
@@ -87,6 +90,28 @@ function Media()
         this.setVideoProps(videoElement, props)
 
         return videoElement
+    }
+
+    /**
+     * Resets a <video> element media streams
+     */
+    this.resetVideoElement = (element, remove) => {
+        if (!element) {
+            return
+        }
+
+        const stream = element.srcObject
+
+        if (stream) {
+            stream.getTracks().forEach(track => {
+                track.stop()
+                stream.removeTrack(track)
+            })
+        }
+
+        if (remove) {
+            element.remove()
+        }
     }
 
     /**
@@ -110,7 +135,7 @@ function Media()
         let dh = Math.min(sh, maxSize)
         let dw = sh < maxSize ? sw : Math.floor(sw * dh/sh)
 
-        const canvas = $("<canvas>")[0]
+        const canvas = document.createElement('canvas')
         canvas.width = dw
         canvas.height = dh
 
@@ -211,11 +236,8 @@ function Media()
     this.setupStop = () => {
         volumeMeterStop()
 
-        // Unset the video element tracks
-        if (setupVideoElement) {
-            const mediaStream = new MediaStream()
-            setupVideoElement.srcObject = mediaStream
-        }
+        // Unset the video element tracks, if any set
+        this.resetVideoElement(setupVideoElement)
     }
 
     /**
