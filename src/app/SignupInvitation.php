@@ -5,20 +5,21 @@ namespace App;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\BelongsToTenantTrait;
+use App\Traits\BelongsToUserTrait;
 use App\Traits\UuidStrKeyTrait;
 
 /**
  * The eloquent definition of a signup invitation.
  *
- * @property string       $email
- * @property string       $id
- * @property ?int         $tenant_id
- * @property ?\App\Tenant $tenant
- * @property ?\App\User   $user
+ * @property string   $email
+ * @property string   $id
+ * @property ?int     $tenant_id
+ * @property ?int     $user_id
  */
 class SignupInvitation extends Model
 {
     use BelongsToTenantTrait;
+    use BelongsToUserTrait;
     use UuidStrKeyTrait;
 
     // just created
@@ -73,15 +74,5 @@ class SignupInvitation extends Model
     public function isSent(): bool
     {
         return ($this->status & self::STATUS_SENT) > 0;
-    }
-
-    /**
-     * The account to which the invitation was used for.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

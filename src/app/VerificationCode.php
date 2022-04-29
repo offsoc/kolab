@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\BelongsToUserTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,12 +13,13 @@ use Illuminate\Database\Eloquent\Model;
  * @property string         $code        The code
  * @property \Carbon\Carbon $expires_at  Expiration date-time
  * @property string         $mode        Mode, e.g. password-reset
- * @property \App\User      $user        User object
  * @property int            $user_id     User identifier
  * @property string         $short_code  Short code
  */
 class VerificationCode extends Model
 {
+    use BelongsToUserTrait;
+
     // Code expires after so many hours
     public const SHORTCODE_LENGTH = 8;
 
@@ -69,15 +71,5 @@ class VerificationCode extends Model
     {
         // @phpstan-ignore-next-line
         return $this->expires_at ? Carbon::now()->gte($this->expires_at) : false;
-    }
-
-    /**
-     * The user to which this code belongs.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Fs;
 
 use App\User;
+use App\Traits\BelongsToUserTrait;
 use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Item extends Model
 {
+    use BelongsToUserTrait;
     use SoftDeletes;
     use UuidStrKeyTrait;
 
@@ -164,15 +166,5 @@ class Item extends Model
                 ['value' => $value]
             );
         }
-    }
-
-    /**
-     * The user to which this item belongs.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

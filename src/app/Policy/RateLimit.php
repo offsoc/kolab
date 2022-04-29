@@ -2,10 +2,13 @@
 
 namespace App\Policy;
 
+use App\Traits\BelongsToUserTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class RateLimit extends Model
 {
+    use BelongsToUserTrait;
+
     protected $fillable = [
         'user_id',
         'owner_id',
@@ -17,11 +20,6 @@ class RateLimit extends Model
 
     public function owner()
     {
-        $this->belongsTo('App\User');
-    }
-
-    public function user()
-    {
-        $this->belongsTo('App\User');
+        $this->belongsTo(\App\User::class);
     }
 }

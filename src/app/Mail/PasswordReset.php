@@ -75,6 +75,7 @@ class PasswordReset extends Mailable
                 'short_code' => VerificationCode::generateShortCode(),
         ]);
 
+        // @phpstan-ignore-next-line
         $code->user = new User([
               'email' => 'test@' . \config('app.domain'),
         ]);

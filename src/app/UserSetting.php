@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\BelongsToUserTrait;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -14,16 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class UserSetting extends Model
 {
+    use BelongsToUserTrait;
+
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = ['user_id', 'key', 'value'];
-
-    /**
-     * The user to which this setting belongs.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id');
-    }
 }

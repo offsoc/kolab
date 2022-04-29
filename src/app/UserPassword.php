@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\BelongsToUserTrait;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class UserPassword extends Model
 {
+    use BelongsToUserTrait;
+
     /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
@@ -26,14 +29,4 @@ class UserPassword extends Model
 
     /** @var array<int, string> The attributes that should be hidden for arrays. */
     protected $hidden = ['password'];
-
-    /**
-     * The user to which this entry belongs.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id');
-    }
 }
