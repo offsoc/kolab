@@ -58,7 +58,7 @@
             }
         },
         created() {
-            this.wallet = this.$store.state.authInfo.wallet
+            this.wallet = this.$root.authInfo.wallet
         },
         mounted() {
             this.$root.startLoading()

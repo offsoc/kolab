@@ -26,7 +26,7 @@
             }
         },
         created() {
-            if (!this.$root.isController(this.$store.state.authInfo.wallet.id)) {
+            if (!this.$root.isController(this.$root.authInfo.wallet.id)) {
                 this.$root.errorPage(403)
             }
         },
@@ -35,7 +35,7 @@
         },
         methods: {
             deleteProfile() {
-                axios.delete('/api/v4/users/' + this.$store.state.authInfo.id)
+                axios.delete('/api/v4/users/' + this.$root.authInfo.id)
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$root.logoutUser()

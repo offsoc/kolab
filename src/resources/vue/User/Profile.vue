@@ -89,9 +89,10 @@
             }
         },
         created() {
-            this.wallet = this.$store.state.authInfo.wallet
-            this.profile = this.$store.state.authInfo.settings
-            this.user_id = this.$store.state.authInfo.id
+            const authInfo = this.$root.authInfo
+            this.wallet = authInfo.wallet
+            this.profile = authInfo.settings
+            this.user_id = authInfo.id
         },
         mounted() {
             $('#first_name').focus()

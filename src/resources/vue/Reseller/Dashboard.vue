@@ -34,9 +34,8 @@
             }
         },
         mounted() {
-            const authInfo = this.$store.state.authInfo
-            this.status = authInfo.statusInfo
-            this.getBalance(authInfo)
+            this.status = this.$root.authInfo.statusInfo
+            this.getBalance(this.$root.authInfo)
         },
         methods: {
             getBalance(authInfo) {

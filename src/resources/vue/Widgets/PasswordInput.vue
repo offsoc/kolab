@@ -64,8 +64,8 @@
 
                 const post = { password, user: this.user }
 
-                if (!post.user && this.$store.state.authInfo) {
-                    post.user = this.$store.state.authInfo.id
+                if (!post.user && this.$root.authInfo) {
+                    post.user = this.$root.authInfo.id
                 }
 
                 const cancelToken = axios.CancelToken;

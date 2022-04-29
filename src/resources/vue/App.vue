@@ -72,7 +72,7 @@
                 if (this.$root.isDegraded()) {
                     let message = this.$t('user.degraded-warning')
 
-                    if (this.$store.state.authInfo.isDegraded) {
+                    if (this.$root.authInfo.isDegraded) {
                         message += ' ' + this.$t('user.degraded-hint')
                     }
 

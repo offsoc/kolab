@@ -68,7 +68,7 @@
             }
         },
         computed: {
-            loggedIn() { return this.$store.state.isLoggedIn },
+            loggedIn() { return !!this.$root.authInfo },
             menu() { return this.menuList.filter(item => !item.footer || this.mode == 'footer') },
             route() { return this.$route.name }
         },

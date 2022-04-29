@@ -124,7 +124,7 @@
                     window.infoRequest = setTimeout(() => {
                         delete window.infoRequest
                         // Stop updates after user logged out
-                        if (!this.$store.state.isLoggedIn) {
+                        if (!this.$root.authInfo) {
                             return;
                         }
 
@@ -179,7 +179,7 @@
                 let id = this.$route.params[scope]
 
                 if (scope == 'dashboard') {
-                    id = this.$store.state.authInfo.id
+                    id = this.$root.authInfo.id
                     scope = 'user'
                 } else if (scope =='distlist') {
                     id = this.$route.params.list

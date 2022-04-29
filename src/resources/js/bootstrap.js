@@ -30,7 +30,6 @@ import VueRouter from 'vue-router'
 import Btn from '../vue/Widgets/Btn'
 import BtnRouter from '../vue/Widgets/BtnRouter'
 import Toast from '../vue/Widgets/Toast'
-import store from './store'
 
 window.Vue = Vue
 

@@ -215,7 +215,7 @@
         mounted() {
             $('#wallet button').focus()
 
-            this.walletId = this.$store.state.authInfo.wallets[0].id
+            this.walletId = this.$root.authInfo.wallets[0].id
 
             this.$root.startLoading()
             axios.get('/api/v4/wallets/' + this.walletId)

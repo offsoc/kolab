@@ -38,7 +38,7 @@ class Dashboard extends Page
      */
     public function assertUser($browser, $user)
     {
-        $browser->assertVue('$store.state.authInfo.email', $user, '@dashboard-component');
+        $browser->assertVue('$root.authInfo.email', $user, '@dashboard-component');
     }
 
     /**

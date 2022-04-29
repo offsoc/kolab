@@ -66,9 +66,8 @@
             }
         },
         mounted() {
-            const authInfo = this.$store.state.authInfo
-            this.status = authInfo.statusInfo
-            this.getBalance(authInfo)
+            this.status = this.$root.authInfo.statusInfo
+            this.getBalance(this.$root.authInfo)
         },
         methods: {
             getBalance(authInfo) {
@@ -81,7 +80,7 @@
             },
             statusUpdate(user) {
                 this.status = Object.assign({}, this.status, user)
-                this.$store.state.authInfo.statusInfo = this.status
+                this.$root.authInfo.statusInfo = this.status
             }
         }
     }

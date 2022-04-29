@@ -158,7 +158,7 @@
         },
         computed: {
             isSelf: function () {
-                return this.user_id == this.$store.state.authInfo.id
+                return this.user_id == this.$root.authInfo.id
             },
             passwordLink: function () {
                 return this.$root.appUrl + '/password-reset/' + this.passwordLinkCode
@@ -283,7 +283,7 @@
                 axios[method](location, post)
                     .then(response => {
                         if (response.data.statusInfo) {
-                            this.$store.state.authInfo.statusInfo = response.data.statusInfo
+                            this.$root.authInfo.statusInfo = response.data.statusInfo
                         }
 
                         this.$toast.success(response.data.message)
@@ -313,7 +313,7 @@
                     })
             },
             showDeleteConfirmation() {
-                if (this.user_id == this.$store.state.authInfo.id) {
+                if (this.user_id == this.$root.authInfo.id) {
                     // Deleting self, redirect to /profile/delete page
                     this.$router.push({ name: 'profile-delete' })
                 } else {

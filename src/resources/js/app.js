@@ -9,11 +9,15 @@ require('./bootstrap')
 import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Widgets/Menu'
 import SupportForm from '../vue/Widgets/SupportForm'
-import store from './store'
 import { Tab } from 'bootstrap'
 import { loadLangAsync, i18n } from './locale'
 
 const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="visually-hidden">Loading</span></div></div>'
+
+const routerState = {
+    afterLogin: null,
+    isLoggedIn: !!localStorage.getItem('token')
+}
 
 let isLoading = 0
 
@@ -40,9 +44,9 @@ let loadingRoute
 // Note: You cannot use app inside of the function
 window.router.beforeEach((to, from, next) => {
     // check if the route requires authentication and user is not logged in
-    if (to.meta.requiresAuth && !store.state.isLoggedIn) {
+    if (to.meta.requiresAuth && !routerState.isLoggedIn) {
         // remember the original request, to use after login
-        store.state.afterLogin = to;
+        routerState.afterLogin = to;
 
         // redirect to login page
         next({ name: 'login' })
@@ -82,10 +86,10 @@ const app = new Vue({
         MenuComponent,
     },
     i18n,
-    store,
     router: window.router,
     data() {
         return {
+            authInfo: null,
             isUser: !window.isAdmin && !window.isReseller,
             appName: window.config['app.name'],
             appUrl: window.config['app.url'],
@@ -99,27 +103,25 @@ const app = new Vue({
             $(form).find('.invalid-feedback').remove()
         },
         hasPermission(type) {
-            const authInfo = store.state.authInfo
             const key = 'enable' + type.charAt(0).toUpperCase() + type.slice(1)
-            return !!(authInfo && authInfo.statusInfo[key])
+            return !!(this.authInfo && this.authInfo.statusInfo[key])
         },
         hasRoute(name) {
             return this.$router.resolve({ name: name }).resolved.matched.length > 0
         },
         hasSKU(name) {
-            const authInfo = store.state.authInfo
-            return authInfo.statusInfo.skus && authInfo.statusInfo.skus.indexOf(name) != -1
+            return this.authInfo.statusInfo.skus && this.authInfo.statusInfo.skus.indexOf(name) != -1
         },
         isController(wallet_id) {
-            if (wallet_id && store.state.authInfo) {
+            if (wallet_id && this.authInfo) {
                 let i
-                for (i = 0; i < store.state.authInfo.wallets.length; i++) {
-                    if (wallet_id == store.state.authInfo.wallets[i].id) {
+                for (i = 0; i < this.authInfo.wallets.length; i++) {
+                    if (wallet_id == this.authInfo.wallets[i].id) {
                         return true
                     }
                 }
-                for (i = 0; i < store.state.authInfo.accounts.length; i++) {
-                    if (wallet_id == store.state.authInfo.accounts[i].id) {
+                for (i = 0; i < this.authInfo.accounts.length; i++) {
+                    if (wallet_id == this.authInfo.accounts[i].id) {
                         return true
                     }
                 }
@@ -130,8 +132,8 @@ const app = new Vue({
         // Set user state to "logged in"
         loginUser(response, dashboard, update) {
             if (!update) {
-                store.commit('logoutUser') // destroy old state data
-                store.commit('loginUser')
+                routerState.isLoggedIn = true
+                this.authInfo = null
             }
 
             localStorage.setItem('token', response.access_token)
@@ -139,14 +141,14 @@ const app = new Vue({
             axios.defaults.headers.common.Authorization = 'Bearer ' + response.access_token
 
             if (response.email) {
-                store.state.authInfo = response
+                this.authInfo = response
             }
 
             if (dashboard !== false) {
-                this.$router.push(store.state.afterLogin || { name: 'dashboard' })
+                this.$router.push(routerState.afterLogin || { name: 'dashboard' })
             }
 
-            store.state.afterLogin = null
+            routerState.afterLogin = null
 
             // Refresh the token before it expires
             let timeout = response.expires_in || 0
@@ -168,7 +170,8 @@ const app = new Vue({
         },
         // Set user state to "not logged in"
         logoutUser(redirect) {
-            store.commit('logoutUser')
+            routerState.isLoggedIn = true
+            this.authInfo = null
             localStorage.setItem('token', '')
             localStorage.setItem('refreshToken', '')
             delete axios.defaults.headers.common.Authorization
@@ -246,7 +249,7 @@ const app = new Vue({
             if (status == 401) {
                 // Remember requested route to come back to it after log in
                 if (this.$route.meta.requiresAuth) {
-                    store.state.afterLogin = this.$route
+                    routerState.afterLogin = this.$route
                     this.logoutUser()
                 } else {
                     this.logoutUser(false)
@@ -301,7 +304,7 @@ const app = new Vue({
             }
         },
         isDegraded() {
-            return store.state.authInfo && store.state.authInfo.isAccountDegraded
+            return this.authInfo && this.authInfo.isAccountDegraded
         },
         pageName(path) {
             let page = this.$route.path
@@ -370,10 +373,10 @@ const app = new Vue({
         },
         // Append some wallet properties to the object
         userWalletProps(object) {
-            let wallet = store.state.authInfo.accounts[0]
+            let wallet = this.authInfo.accounts[0]
 
             if (!wallet) {
-                wallet = store.state.authInfo.wallets[0]
+                wallet = this.authInfo.wallets[0]
             }
 
             if (wallet) {
