@@ -28,7 +28,7 @@
                                 </td>
                                 <td class="buttons">
                                     <btn class="button-download p-0 ms-1" @click="fileDownload(file)" icon="download" :title="$t('btn.download')"></btn>
-                                    <btn class="button-delete text-danger p-0 ms-1" @click="fileDelete(file)" icon="trash-alt" :title="$t('btn.delete')"></btn>
+                                    <btn class="button-delete text-danger p-0 ms-1" @click="fileDelete(file)" icon="trash-can" :title="$t('btn.delete')"></btn>
                                 </td>
                             </tr>
                         </tbody>
@@ -46,9 +46,12 @@
     import ListTools from '../Widgets/ListTools'
 
     import { library } from '@fortawesome/fontawesome-svg-core'
-    import { faFile, faDownload, faUpload } from '@fortawesome/free-solid-svg-icons'
 
-    library.add(faFile, faDownload, faUpload)
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faFile').definition,
+        require('@fortawesome/free-solid-svg-icons/faDownload').definition,
+        require('@fortawesome/free-solid-svg-icons/faUpload').definition,
+    )
 
     export default {
         mixins: [ ListTools ],

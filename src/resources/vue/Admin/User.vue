@@ -333,7 +333,7 @@
                             <tbody>
                                 <tr v-for="resource in resources" :key="resource.id" @click="$root.clickRecord">
                                     <td>
-                                        <svg-icon icon="cog" :class="$root.statusClass(resource)" :title="$root.statusText(resource)"></svg-icon>
+                                        <svg-icon icon="gear" :class="$root.statusClass(resource)" :title="$root.statusText(resource)"></svg-icon>
                                         <router-link :to="{ path: '/resource/' + resource.id }">{{ resource.name }}</router-link>
                                     </td>
                                     <td>
@@ -496,6 +496,15 @@
 <script>
     import { Modal } from 'bootstrap'
     import TransactionLog from '../Widgets/TransactionLog'
+
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faFolderOpen').definition,
+        require('@fortawesome/free-solid-svg-icons/faGear').definition,
+        require('@fortawesome/free-solid-svg-icons/faGlobe').definition,
+        require('@fortawesome/free-solid-svg-icons/faUsers').definition,
+    )
 
     export default {
         components: {

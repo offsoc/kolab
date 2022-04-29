@@ -16,7 +16,7 @@
         },
         template: `<form @submit.prevent="onSearch(search)" id="search-form" class="input-group" style="flex:1">
                 <input class="form-control" type="text" :placeholder="placeholder" v-model="search">
-                <button type="submit" class="btn btn-primary"><svg-icon icon="search"></svg-icon> {{ $t('btn.search') }}</button>
+                <button type="submit" class="btn btn-primary"><svg-icon icon="magnifying-glass"></svg-icon> {{ $t('btn.search') }}</button>
             </form>`
     }
 

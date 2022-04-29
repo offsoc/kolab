@@ -5,7 +5,7 @@
         <div class="card" id="user-info">
             <div class="card-body">
                 <div class="card-title" v-if="user_id !== 'new'">{{ $t('user.title') }}
-                    <btn icon="trash-alt" class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()">
+                    <btn icon="trash-can" class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()">
                         {{ $t('user.delete') }}
                     </btn>
                 </div>
@@ -76,7 +76,7 @@
                                             <span>{{ $t('user.pass-link-label') }}</span>&nbsp;<code>{{ passwordLink }}</code>
                                             <span class="d-inline-block">
                                                 <btn class="btn-link p-1" :icon="['far', 'clipboard']" :title="$t('btn.copy')" @click="passwordLinkCopy"></btn>
-                                                <btn v-if="user.passwordLinkCode" class="btn-link text-danger p-1" icon="trash-alt" :title="$t('btn.delete')" @click="passwordLinkDelete"></btn>
+                                                <btn v-if="user.passwordLinkCode" class="btn-link text-danger p-1" icon="trash-can" :title="$t('btn.delete')" @click="passwordLinkDelete"></btn>
                                             </span>
                                             <div v-if="!user.passwordLinkCode" class="form-text m-0">{{ $t('user.pass-link-hint') }}</div>
                                         </div>
@@ -123,7 +123,7 @@
                     </div>
                     <div class="modal-footer">
                         <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-danger modal-action" icon="trash-alt" @click="deleteUser()">{{ $t('btn.delete') }}</btn>
+                        <btn class="btn-danger modal-action" icon="trash-can" @click="deleteUser()">{{ $t('btn.delete') }}</btn>
                     </div>
                 </div>
             </div>
@@ -138,6 +138,12 @@
     import PasswordInput from '../Widgets/PasswordInput'
     import StatusComponent from '../Widgets/Status'
     import SubscriptionSelect from '../Widgets/SubscriptionSelect'
+
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-regular-svg-icons/faClipboard').definition,
+    )
 
     export default {
         components: {

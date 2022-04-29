@@ -28,7 +28,7 @@
                             <small class="text-muted mt-2">{{ $t('login.2fa_desc') }}</small>
                         </div>
                         <div class="text-center">
-                            <btn class="btn-primary" type="submit" icon="sign-in-alt">{{ $t('login.sign_in') }}</btn>
+                            <btn class="btn-primary" type="submit" icon="right-to-bracket">{{ $t('login.sign_in') }}</btn>
                         </div>
                     </form>
                 </div>
@@ -42,6 +42,14 @@
 </template>
 
 <script>
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faKey').definition,
+        require('@fortawesome/free-solid-svg-icons/faLock').definition,
+        require('@fortawesome/free-solid-svg-icons/faRightToBracket').definition,
+    )
+
     export default {
         props: {
             dashboard: { type: Boolean, default: true }

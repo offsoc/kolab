@@ -102,6 +102,12 @@
 <script>
     import PasswordInput from './Widgets/PasswordInput'
 
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faUsers').definition,
+    )
+
     export default {
         components: {
             PasswordInput

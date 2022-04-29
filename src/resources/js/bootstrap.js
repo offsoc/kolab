@@ -23,13 +23,13 @@ $.fn.click = function() {
  * Load Vue, VueRouter and global components
  */
 
-import { Tooltip } from 'bootstrap'
-import FontAwesomeIcon from './fontawesome'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Btn from '../vue/Widgets/Btn'
 import BtnRouter from '../vue/Widgets/BtnRouter'
 import Toast from '../vue/Widgets/Toast'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { Tooltip } from 'bootstrap'
 
 window.Vue = Vue
 
@@ -92,3 +92,14 @@ window.router = new VueRouter({
 window.axios = require('axios')
 axios.defaults.baseURL = vueRouterBase
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
+
+// Register a few most common icons
+import { library } from '@fortawesome/fontawesome-svg-core'
+library.add(
+    require('@fortawesome/free-solid-svg-icons/faCheck').definition,
+    require('@fortawesome/free-solid-svg-icons/faCircleInfo').definition,
+    require('@fortawesome/free-solid-svg-icons/faPlus').definition,
+    require('@fortawesome/free-solid-svg-icons/faMagnifyingGlass').definition,
+    require('@fortawesome/free-solid-svg-icons/faTrashCan').definition,
+    require('@fortawesome/free-solid-svg-icons/faUser').definition,
+)

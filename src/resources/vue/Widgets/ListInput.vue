@@ -10,7 +10,7 @@
         <div class="input-group" v-for="(item, index) in list" :key="index">
             <input type="text" class="form-control" @input="$set(list, index, $event.target.value)" :value="item">
             <a href="#" class="btn btn-outline-secondary" @click.prevent="deleteItem(index)">
-                <svg-icon icon="trash-alt"></svg-icon>
+                <svg-icon icon="trash-can"></svg-icon>
                 <span class="visually-hidden">{{ $t('btn.delete') }}</span>
             </a>
         </div>

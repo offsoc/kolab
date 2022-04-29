@@ -26,7 +26,7 @@
                         {{ $root.priceLabel(pkg.cost, discount, currency) }}
                     </td>
                     <td class="buttons">
-                        <btn v-if="pkg.description" class="btn-link btn-lg p-0" v-tooltip="pkg.description" icon="info-circle">
+                        <btn v-if="pkg.description" class="btn-link btn-lg p-0" v-tooltip="pkg.description" icon="circle-info">
                             <span class="visually-hidden">{{ $t('btn.moreinfo') }}</span>
                         </btn>
                     </td>

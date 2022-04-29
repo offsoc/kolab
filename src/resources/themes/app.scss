@@ -349,6 +349,14 @@ table {
             }
         }
 
+        &.link-distlists,
+        &.link-files,
+        &.link-shared-folders {
+            svg {
+                transform: scale(0.9);
+            }
+        }
+
         .badge {
             position: absolute;
             top: 0.5rem;

@@ -6,7 +6,7 @@
             <div class="card-body">
                 <div class="card-title" v-if="folder_id !== 'new'">
                     {{ $tc('shf.list-title', 1) }}
-                    <btn class="btn-outline-danger button-delete float-end" @click="deleteFolder()" icon="trash-alt">{{ $t('shf.delete') }}</btn>
+                    <btn class="btn-outline-danger button-delete float-end" @click="deleteFolder()" icon="trash-can">{{ $t('shf.delete') }}</btn>
                 </div>
                 <div class="card-title" v-if="folder_id === 'new'">{{ $t('shf.new') }}</div>
                 <div class="card-text">

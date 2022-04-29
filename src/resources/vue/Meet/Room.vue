@@ -14,7 +14,7 @@
                     <svg-icon icon="desktop"></svg-icon>
                 </button>
                 <button :class="'btn link-hand' + (handRaised ? ' on' : '')" v-if="!isPublisher()" @click="switchHand" :title="$t('meet.menu-hand-' + (handRaised ? 'lower' : 'raise'))">
-                    <svg-icon icon="hand-paper"></svg-icon>
+                    <svg-icon icon="hand"></svg-icon>
                 </button>
                 <span id="channel-select" :style="'display:' + (channels.length ? '' : 'none')" class="dropdown">
                     <button :class="'btn link-channel' + (session.channel ? ' on' : '')" data-bs-toggle="dropdown"
@@ -40,7 +40,7 @@
                     <svg-icon icon="compress"></svg-icon>
                 </button>
                 <button class="btn link-options" v-if="isRoomOwner()" @click="roomOptions" :title="$t('meet.options')">
-                    <svg-icon icon="cog"></svg-icon>
+                    <svg-icon icon="gear"></svg-icon>
                 </button>
                 <button class="btn link-logout" @click="logout" :title="$t('meet.menu-leave')">
                     <svg-icon icon="power-off"></svg-icon>
@@ -108,7 +108,7 @@
 
         <div id="meet-session-layout" class="d-flex hidden">
             <div id="meet-queue">
-                <div class="head" :title="$t('meet.qa')"><svg-icon icon="microphone-alt"></svg-icon></div>
+                <div class="head" :title="$t('meet.qa')"><svg-icon icon="microphone-lines"></svg-icon></div>
             </div>
             <div id="meet-session"></div>
             <div id="meet-chat">
@@ -190,48 +190,27 @@
     import RoomOptions from './RoomOptions'
     import RoomStats from './RoomStats'
 
-    // Register additional icons
     import { library } from '@fortawesome/fontawesome-svg-core'
 
-    import {
-        faComment,
-        faCog,
-        faCompress,
-        faCrown,
-        faDesktop,
-        faExpand,
-        faHandPaper,
-        faHeadphones,
-        faMicrophone,
-        faMicrophoneSlash,
-        faMicrophoneAlt,
-        faPowerOff,
-        faUser,
-        faUsers,
-        faVideo,
-        faVideoSlash,
-        faVolumeMute
-    } from '@fortawesome/free-solid-svg-icons'
-
-    // Register only these icons we need
     library.add(
-        faComment,
-        faCog,
-        faCompress,
-        faCrown,
-        faDesktop,
-        faExpand,
-        faHandPaper,
-        faHeadphones,
-        faMicrophone,
-        faMicrophoneSlash,
-        faMicrophoneAlt,
-        faPowerOff,
-        faUser,
-        faUsers,
-        faVideo,
-        faVideoSlash,
-        faVolumeMute
+        require('@fortawesome/free-solid-svg-icons/faComment').definition,
+        require('@fortawesome/free-solid-svg-icons/faCompress').definition,
+        require('@fortawesome/free-solid-svg-icons/faCrown').definition,
+        require('@fortawesome/free-solid-svg-icons/faDesktop').definition,
+        require('@fortawesome/free-solid-svg-icons/faExpand').definition,
+        require('@fortawesome/free-solid-svg-icons/faHand').definition,
+        require('@fortawesome/free-solid-svg-icons/faHeadphones').definition,
+        require('@fortawesome/free-solid-svg-icons/faGear').definition,
+        require('@fortawesome/free-solid-svg-icons/faKey').definition,
+        require('@fortawesome/free-solid-svg-icons/faMicrophone').definition,
+        require('@fortawesome/free-solid-svg-icons/faMicrophoneLines').definition,
+        require('@fortawesome/free-solid-svg-icons/faMicrophoneSlash').definition,
+        require('@fortawesome/free-solid-svg-icons/faPowerOff').definition,
+        require('@fortawesome/free-solid-svg-icons/faUser').definition,
+        require('@fortawesome/free-solid-svg-icons/faUsers').definition,
+        require('@fortawesome/free-solid-svg-icons/faVideo').definition,
+        require('@fortawesome/free-solid-svg-icons/faVideoSlash').definition,
+        require('@fortawesome/free-solid-svg-icons/faVolumeMute').definition,
     )
 
     let roomRequest

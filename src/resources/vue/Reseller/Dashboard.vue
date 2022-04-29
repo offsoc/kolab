@@ -18,10 +18,14 @@
 
 <script>
     import UserSearch from '../Widgets/UserSearch'
-    import { library } from '@fortawesome/fontawesome-svg-core'
-    import { faChartLine, faEnvelopeOpenText, faWallet } from '@fortawesome/free-solid-svg-icons'
 
-    library.add(faChartLine, faEnvelopeOpenText, faWallet)
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faChartLine').definition,
+        require('@fortawesome/free-solid-svg-icons/faEnvelopeOpenText').definition,
+        require('@fortawesome/free-solid-svg-icons/faWallet').definition,
+    )
 
     export default {
         components: {

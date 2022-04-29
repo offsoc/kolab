@@ -29,7 +29,7 @@
                                     {{ inv.created }}
                                 </td>
                                 <td class="buttons">
-                                    <btn class="text-danger button-delete p-0 ms-1" @click="deleteInvite(inv.id)" icon="trash-alt">
+                                    <btn class="text-danger button-delete p-0 ms-1" @click="deleteInvite(inv.id)" icon="trash-can">
                                         <span class="btn-label">{{ $t('btn.delete') }}</span>
                                     </btn>
                                     <btn class="button-resend p-0 ms-1" :disabled="inv.isNew || inv.isCompleted" @click="resendInvite(inv.id)" icon="redo">
@@ -77,11 +77,15 @@
 
 <script>
     import { Modal } from 'bootstrap'
-    import { library } from '@fortawesome/fontawesome-svg-core'
-    import { faEnvelopeOpenText, faPaperPlane, faRedo } from '@fortawesome/free-solid-svg-icons'
     import ListTools from '../Widgets/ListTools'
 
-    library.add(faEnvelopeOpenText, faPaperPlane, faRedo)
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faEnvelopeOpenText').definition,
+        require('@fortawesome/free-solid-svg-icons/faPaperPlane').definition,
+        require('@fortawesome/free-solid-svg-icons/faRedo').definition,
+    )
 
     export default {
         mixins: [ ListTools ],

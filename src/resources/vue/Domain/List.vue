@@ -36,6 +36,12 @@
 </template>
 
 <script>
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faGlobe').definition,
+    )
+
     export default {
         data() {
             return {

@@ -15,7 +15,7 @@
                     <td class="datetime">{{ transaction.createdAt }}</td>
                     <td class="email" v-if="isAdmin">{{ transaction.user }}</td>
                     <td class="selection">
-                        <btn v-if="transaction.hasDetails" class="btn-lg btn-link btn-action" icon="info-circle"
+                        <btn v-if="transaction.hasDetails" class="btn-lg btn-link btn-action" icon="circle-info"
                              :title="$t('form.details')"
                              @click="loadTransaction(transaction.id)"
                         ></btn>

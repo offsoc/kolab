@@ -1,10 +1,10 @@
 <template>
     <div :class="toastClassName()" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-header" :class="className()">
-            <svg-icon icon="info-circle" v-if="data.type == 'info'"></svg-icon>
-            <svg-icon icon="check-circle" v-else-if="data.type == 'success'"></svg-icon>
-            <svg-icon icon="exclamation-circle" v-else-if="data.type == 'error'"></svg-icon>
-            <svg-icon icon="exclamation-circle" v-else-if="data.type == 'warning'"></svg-icon>
+            <svg-icon icon="circle-info" v-if="data.type == 'info'"></svg-icon>
+            <svg-icon icon="circle-check" v-else-if="data.type == 'success'"></svg-icon>
+            <svg-icon icon="circle-exclamation" v-else-if="data.type == 'error'"></svg-icon>
+            <svg-icon icon="circle-exclamation" v-else-if="data.type == 'warning'"></svg-icon>
             <svg-icon :icon="data.icon" v-else-if="data.type == 'custom' && data.icon"></svg-icon>
             <strong>{{ data.title || $t('msg.' + data.type) }}</strong>
             <btn class="btn-close btn-close-white" data-bs-dismiss="toast" :aria-label="$t('btn.close')"></btn>
@@ -19,6 +19,14 @@
 
 <script>
     import { Toast } from 'bootstrap'
+
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faCircleCheck').definition,
+        require('@fortawesome/free-solid-svg-icons/faCircleInfo').definition,
+        require('@fortawesome/free-solid-svg-icons/faCircleExclamation').definition,
+    )
 
     export default {
         props: {

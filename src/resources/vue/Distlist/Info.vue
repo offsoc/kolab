@@ -6,7 +6,7 @@
             <div class="card-body">
                 <div class="card-title" v-if="list_id !== 'new'">
                     {{ $tc('distlist.list-title', 1) }}
-                    <btn class="btn-outline-danger button-delete float-end" @click="deleteList()" icon="trash-alt">{{ $t('distlist.delete') }}</btn>
+                    <btn class="btn-outline-danger button-delete float-end" @click="deleteList()" icon="trash-can">{{ $t('distlist.delete') }}</btn>
                 </div>
                 <div class="card-title" v-if="list_id === 'new'">{{ $t('distlist.new') }}</div>
                 <div class="card-text">

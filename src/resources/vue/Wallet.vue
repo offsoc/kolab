@@ -189,6 +189,14 @@
     import TransactionLog from './Widgets/TransactionLog'
     import PaymentLog from './Widgets/PaymentLog'
 
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-brands-svg-icons/faPaypal').definition,
+        require('@fortawesome/free-regular-svg-icons/faCreditCard').definition,
+        require('@fortawesome/free-solid-svg-icons/faUniversity').definition,
+    )
+
     export default {
         components: {
             TransactionLog,

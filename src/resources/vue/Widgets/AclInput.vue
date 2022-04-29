@@ -19,7 +19,7 @@
                 <option v-for="t in types" :key="t" :value="t" :selected="aclPerm(item) == t">{{ $t('form.acl-' + t) }}</option>
             </select>
             <a href="#" class="btn btn-outline-secondary" @click.prevent="deleteItem(index)">
-                <svg-icon icon="trash-alt"></svg-icon><span class="visually-hidden">{{ $t('btn.delete') }}</span>
+                <svg-icon icon="trash-can"></svg-icon><span class="visually-hidden">{{ $t('btn.delete') }}</span>
             </a>
         </div>
     </div>

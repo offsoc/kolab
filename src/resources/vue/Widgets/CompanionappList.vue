@@ -1,6 +1,6 @@
 <template>
     <div>
-        <btn icon="trash-alt" class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()">
+        <btn icon="trash-can" class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()">
             {{ $t('companion.delete') }}
         </btn>
         <table class="table table-sm m-0 entries">
@@ -31,7 +31,7 @@
                     </div>
                     <div class="modal-footer">
                         <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-danger modal-action" data-bs-dismiss="modal" @click="removeDevices()" icon="trash-alt">{{ $t('btn.delete') }}</btn>
+                        <btn class="btn-danger modal-action" data-bs-dismiss="modal" @click="removeDevices()" icon="trash-can">{{ $t('btn.delete') }}</btn>
                     </div>
                 </div>
             </div>

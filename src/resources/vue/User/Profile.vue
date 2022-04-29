@@ -4,7 +4,7 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ $t('user.profile-title') }}
-                    <btn-router v-if="$root.isController(wallet.id)" to="profile/delete" class="btn-outline-danger float-end" icon="trash-alt">
+                    <btn-router v-if="$root.isController(wallet.id)" to="profile/delete" class="btn-outline-danger float-end" icon="trash-can">
                         {{ $t('user.profile-delete') }}
                     </btn-router>
                 </div>

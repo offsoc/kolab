@@ -8,7 +8,7 @@
                 <br>
                 <span id="refresh-text" v-if="refresh">{{ $t('status.prepare-refresh') }}</span>
             </p>
-            <btn v-if="refresh" id="status-refresh" href="#" class="btn-secondary" @click="statusRefresh" icon="sync-alt">
+            <btn v-if="refresh" id="status-refresh" href="#" class="btn-secondary" @click="statusRefresh" icon="rotate">
                 {{ $t('btn.refresh') }}
             </btn>
         </div>
@@ -19,7 +19,7 @@
                 {{ $t('status.verify') }}
             </p>
             <div v-if="scope == 'domain'">
-                <btn id="status-verify" class="btn-secondary text-nowrap" @click="confirmDomain" icon="sync-alt">
+                <btn id="status-verify" class="btn-secondary text-nowrap" @click="confirmDomain" icon="rotate">
                     {{ $t('btn.verify') }}
                 </btn>
             </div>
@@ -38,6 +38,12 @@
 </template>
 
 <script>
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faRotate').definition,
+    )
+
     export default {
         props: {
             status: { type: Object, default: () => {} }

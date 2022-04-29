@@ -6,7 +6,7 @@
             <div class="card-body">
                 <div class="card-title" v-if="resource_id !== 'new'">
                     {{ $tc('resource.list-title', 1) }}
-                    <btn class="btn-outline-danger button-delete float-end" @click="deleteResource()" icon="trash-alt">{{ $t('resource.delete') }}</btn>
+                    <btn class="btn-outline-danger button-delete float-end" @click="deleteResource()" icon="trash-can">{{ $t('resource.delete') }}</btn>
                 </div>
                 <div class="card-title" v-if="resource_id === 'new'">{{ $t('resource.new') }}</div>
                 <div class="card-text">

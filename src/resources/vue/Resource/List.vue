@@ -5,7 +5,7 @@
                 <div class="card-title">
                     {{ $tc('resource.list-title', 2) }}
                     <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
-                    <btn-router v-if="!$root.isDegraded()" to="resource/new" class="btn-success float-end" icon="cog">
+                    <btn-router v-if="!$root.isDegraded()" to="resource/new" class="btn-success float-end" icon="gear">
                         {{ $t('resource.create') }}
                     </btn-router>
                 </div>
@@ -20,7 +20,7 @@
                         <tbody>
                             <tr v-for="resource in resources" :key="resource.id" @click="$root.clickRecord">
                                 <td>
-                                    <svg-icon icon="cog" :class="$root.statusClass(resource)" :title="$root.statusText(resource)"></svg-icon>
+                                    <svg-icon icon="gear" :class="$root.statusClass(resource)" :title="$root.statusText(resource)"></svg-icon>
                                     <router-link :to="{ path: 'resource/' + resource.id }">{{ resource.name }}</router-link>
                                 </td>
                                 <td>
@@ -41,6 +41,12 @@
 </template>
 
 <script>
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faGear').definition,
+    )
+
     export default {
         data() {
             return {

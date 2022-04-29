@@ -4,7 +4,7 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ file.name }}
-                    <btn v-if="file.canDelete" class="btn-outline-danger button-delete float-end" @click="fileDelete" icon="trash-alt">{{ $t('file.delete') }}</btn>
+                    <btn v-if="file.canDelete" class="btn-outline-danger button-delete float-end" @click="fileDelete" icon="trash-can">{{ $t('file.delete') }}</btn>
                 </div>
                 <div class="card-text">
                     <ul class="nav nav-tabs mt-3" role="tablist">
@@ -64,7 +64,7 @@
                                             </span>
                                             <span class="d-inline-block">
                                                 <btn class="btn-link p-1" :icon="['far', 'clipboard']" :title="$t('btn.copy')" @click="copyLink(item.link)"></btn>
-                                                <btn class="btn-link text-danger p-1" icon="trash-alt" :title="$t('btn.delete')" @click="shareDelete(item.id)"></btn>
+                                                <btn class="btn-link text-danger p-1" icon="trash-can" :title="$t('btn.delete')" @click="shareDelete(item.id)"></btn>
                                             </span>
                                         </div>
                                         <code>{{ item.link }}</code>
@@ -83,9 +83,11 @@
     import FileAPI from '../../js/files.js'
 
     import { library } from '@fortawesome/fontawesome-svg-core'
-    import { faDownload } from '@fortawesome/free-solid-svg-icons'
 
-    library.add(faDownload)
+    library.add(
+        require('@fortawesome/free-regular-svg-icons/faClipboard').definition,
+        require('@fortawesome/free-solid-svg-icons/faDownload').definition,
+    )
 
     export default {
         data() {

@@ -5,7 +5,7 @@
                 <div class="card-title">
                     {{ $tc('shf.list-title', 2) }}
                     <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
-                    <btn-router v-if="!$root.isDegraded()" to="shared-folder/new" class="btn-success float-end" icon="cog">
+                    <btn-router v-if="!$root.isDegraded()" to="shared-folder/new" class="btn-success float-end" icon="gear">
                         {{ $t('shf.create') }}
                     </btn-router>
                 </div>
@@ -39,6 +39,13 @@
 </template>
 
 <script>
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faFolderOpen').definition,
+        require('@fortawesome/free-solid-svg-icons/faGear').definition,
+    )
+
     export default {
         data() {
             return {

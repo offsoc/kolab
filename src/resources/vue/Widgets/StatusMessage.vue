@@ -5,12 +5,19 @@
         </div>
         <span v-if="status == 'init'">{{ $t(statusLabel()) }}</span>
 
-        <svg-icon v-if="status != 'init' && statusLabel()" :icon="Number(status) >= 400 ? 'exclamation-circle' : 'info-circle'"></svg-icon>
+        <svg-icon v-if="status != 'init' && statusLabel()" :icon="Number(status) >= 400 ? 'circle-exclamation' : 'circle-info'"></svg-icon>
         <span v-if="status != 'init' && statusLabel()">{{ $t(statusLabel()) }}</span>
     </div>
 </template>
 
 <script>
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faCircleInfo').definition,
+        require('@fortawesome/free-solid-svg-icons/faCircleExclamation').definition,
+    )
+
     const defaultLabels = {
         init: 'msg.loading',
         404: 'msg.notfound'

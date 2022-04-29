@@ -10,7 +10,7 @@
                     <p>{{ $t('user.profile-delete-contact', { app: $root.appName }) }}</p>
                     <p class="buttons">
                         <btn class="btn-secondary button-cancel" @click="$router.go(-1)">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-danger button-delete" @click="deleteProfile" icon="trash-alt">{{ $t('user.profile-delete') }}</btn>
+                        <btn class="btn-danger button-delete" @click="deleteProfile" icon="trash-can">{{ $t('user.profile-delete') }}</btn>
                     </p>
                 </div>
             </div>

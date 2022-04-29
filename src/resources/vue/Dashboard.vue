@@ -4,20 +4,20 @@
 
         <div id="dashboard-nav">
             <router-link class="card link-profile" :to="{ name: 'profile' }">
-                <svg-icon icon="user-cog"></svg-icon><span>{{ $t('dashboard.profile') }}</span>
+                <svg-icon icon="user-gear"></svg-icon><span>{{ $t('dashboard.profile') }}</span>
             </router-link>
             <router-link v-if="status.enableDomains" class="card link-domains" :to="{ name: 'domains' }">
                 <svg-icon icon="globe"></svg-icon><span>{{ $t('dashboard.domains') }}</span>
             </router-link>
             <router-link v-if="status.enableUsers" class="card link-users" :to="{ name: 'users' }">
-                <svg-icon icon="user-friends"></svg-icon><span>{{ $t('dashboard.users') }}</span>
+                <svg-icon icon="user-group"></svg-icon><span>{{ $t('dashboard.users') }}</span>
             </router-link>
             <router-link v-if="status.enableDistlists" class="card link-distlists" :to="{ name: 'distlists' }">
                 <svg-icon icon="users"></svg-icon><span>{{ $t('dashboard.distlists') }}</span>
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>
             <router-link v-if="status.enableResources" class="card link-resources" :to="{ name: 'resources' }">
-                <svg-icon icon="cog"></svg-icon><span>{{ $t('dashboard.resources') }}</span>
+                <svg-icon icon="gear"></svg-icon><span>{{ $t('dashboard.resources') }}</span>
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>
             <router-link v-if="status.enableFolders" class="card link-shared-folders" :to="{ name: 'shared-folders' }">
@@ -33,17 +33,17 @@
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>
             <router-link v-if="status.enableFiles && !$root.isDegraded()" class="card link-files" :to="{ name: 'files' }">
-                <svg-icon icon="folder-open"></svg-icon><span>{{ $t('dashboard.files') }}</span>
+                <svg-icon icon="folder-closed"></svg-icon><span>{{ $t('dashboard.files') }}</span>
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>
             <router-link v-if="status.enableSettings" class="card link-settings" :to="{ name: 'settings' }">
-                <svg-icon icon="sliders-h"></svg-icon><span>{{ $t('dashboard.settings') }}</span>
+                <svg-icon icon="sliders"></svg-icon><span>{{ $t('dashboard.settings') }}</span>
             </router-link>
             <a v-if="webmailURL" class="card link-webmail" :href="webmailURL">
                 <svg-icon icon="envelope"></svg-icon><span>{{ $t('dashboard.webmail') }}</span>
             </a>
             <router-link v-if="status.enableCompanionapps" class="card link-companionapp" :to="{ name: 'companion' }">
-                <svg-icon icon="mobile-alt"></svg-icon><span>{{ $t('dashboard.companion') }}</span>
+                <svg-icon icon="mobile-screen"></svg-icon><span>{{ $t('dashboard.companion') }}</span>
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>
         </div>
@@ -52,6 +52,24 @@
 
 <script>
     import StatusComponent from './Widgets/Status'
+
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faComments').definition,
+        require('@fortawesome/free-solid-svg-icons/faDownload').definition,
+        require('@fortawesome/free-solid-svg-icons/faEnvelope').definition,
+        require('@fortawesome/free-solid-svg-icons/faFolderOpen').definition,
+        require('@fortawesome/free-solid-svg-icons/faFolderClosed').definition,
+        require('@fortawesome/free-solid-svg-icons/faGear').definition,
+        require('@fortawesome/free-solid-svg-icons/faGlobe').definition,
+        require('@fortawesome/free-solid-svg-icons/faMobileScreen').definition,
+        require('@fortawesome/free-solid-svg-icons/faSliders').definition,
+        require('@fortawesome/free-solid-svg-icons/faUserGear').definition,
+        require('@fortawesome/free-solid-svg-icons/faUsers').definition,
+        require('@fortawesome/free-solid-svg-icons/faUserGroup').definition,
+        require('@fortawesome/free-solid-svg-icons/faWallet').definition,
+    )
 
     export default {
         components: {

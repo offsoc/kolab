@@ -6,7 +6,7 @@
             <div class="card-body">
                 <div class="card-title" v-if="domain_id === 'new'">{{ $t('domain.new') }}</div>
                 <div class="card-title" v-else>{{ $t('form.domain') }}
-                    <btn class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()" icon="trash-alt">{{ $t('domain.delete') }}</btn>
+                    <btn class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()" icon="trash-can">{{ $t('domain.delete') }}</btn>
                 </div>
                 <div class="card-text">
                     <ul class="nav nav-tabs mt-3" role="tablist">
@@ -60,7 +60,7 @@
                                         <span>{{ $t('domain.verify-outro') }}</span>
                                     </p>
                                     <p>{{ $t('domain.verify-sample') }} <pre>{{ domain.dns.join("\n") }}</pre></p>
-                                    <btn class="btn-primary" @click="confirm" icon="sync-alt">{{ $t('btn.verify') }}</btn>
+                                    <btn class="btn-primary" @click="confirm" icon="rotate">{{ $t('btn.verify') }}</btn>
                                 </div>
                             </div>
                             <div v-if="domain.isConfirmed" class="card-body" id="domain-config">
@@ -105,7 +105,7 @@
                     </div>
                     <div class="modal-footer">
                         <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-danger modal-action" @click="deleteDomain()" icon="trash-alt">{{ $t('btn.delete') }}</btn>
+                        <btn class="btn-danger modal-action" @click="deleteDomain()" icon="trash-can">{{ $t('btn.delete') }}</btn>
                     </div>
                 </div>
             </div>
@@ -119,6 +119,12 @@
     import PackageSelect from '../Widgets/PackageSelect'
     import StatusComponent from '../Widgets/Status'
     import SubscriptionSelect from '../Widgets/SubscriptionSelect'
+
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faRotate').definition,
+    )
 
     export default {
         components: {

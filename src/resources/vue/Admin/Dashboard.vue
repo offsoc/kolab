@@ -11,10 +11,12 @@
 
 <script>
     import UserSearch from '../Widgets/UserSearch'
-    import { library } from '@fortawesome/fontawesome-svg-core'
-    import { faChartLine } from '@fortawesome/free-solid-svg-icons'
 
-    library.add(faChartLine)
+    import { library } from '@fortawesome/fontawesome-svg-core'
+
+    library.add(
+        require('@fortawesome/free-solid-svg-icons/faChartLine').definition,
+    )
 
     export default {
         components: {
