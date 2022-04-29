@@ -69,7 +69,7 @@ class PasswordRetentionTest extends TestCase
 
         // Test with the policy, the passwords expired already
         $owner->setSetting('max_password_age', '2');
-        $user->setSetting('password_update', now()->copy()->subMonths(2));
+        $user->setSetting('password_update', now()->copy()->subMonthsWithoutOverflow(2));
 
         $code = \Artisan::call("password:retention");
         $output = trim(\Artisan::output());
