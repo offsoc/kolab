@@ -390,6 +390,10 @@ table {
         height: 6rem;
         margin: auto;
     }
+
+    .link-banktransfer svg {
+        transform: scale(.8);
+    }
 }
 
 #logon-form {

@@ -37,7 +37,7 @@ abstract class PaymentProvider
     private static $paymentMethodIcons = [
         self::METHOD_CREDITCARD => ['prefix' => 'far', 'name' => 'credit-card'],
         self::METHOD_PAYPAL => ['prefix' => 'fab', 'name' => 'paypal'],
-        self::METHOD_BANKTRANSFER => ['prefix' => 'fas', 'name' => 'university']
+        self::METHOD_BANKTRANSFER => ['prefix' => 'fas', 'name' => 'building-columns']
     ];
 
     /**
