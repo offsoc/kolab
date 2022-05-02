@@ -100,7 +100,7 @@
                         <div id="payment-method" v-if="paymentForm == 'method'">
                             <form data-validation-prefix="mandate_">
                                 <div id="payment-method-selection">
-                                    <a :id="method.id" v-for="method in paymentMethods" :key="method.id" @click="selectPaymentMethod(method)" href="#" :class="'card link-' + method.id">
+                                    <a v-for="method in paymentMethods" :key="method.id" @click="selectPaymentMethod(method)" href="#" :class="'card link-' + method.id">
                                         <svg-icon v-if="method.icon" :icon="[method.icon.prefix, method.icon.name]" />
                                         <img v-if="method.image" :src="method.image" />
                                         <span class="name">{{ method.name }}</span>

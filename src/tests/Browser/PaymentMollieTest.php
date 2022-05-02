@@ -56,10 +56,10 @@ class PaymentMollieTest extends TestCaseDusk
                 ->click('@main button')
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Top up your wallet')
-                        ->waitFor('#payment-method-selection #creditcard')
-                        ->waitFor('#payment-method-selection #paypal')
-                        ->waitFor('#payment-method-selection #banktransfer')
-                        ->click('#creditcard');
+                        ->waitFor('#payment-method-selection .link-creditcard svg')
+                        ->waitFor('#payment-method-selection .link-paypal svg')
+                        ->waitFor('#payment-method-selection .link-banktransfer svg')
+                        ->click('#payment-method-selection .link-creditcard');
                 })
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Top up your wallet')
@@ -130,10 +130,10 @@ class PaymentMollieTest extends TestCaseDusk
                 ->click('@main #mandate-form button')
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
-                        ->waitFor('#payment-method-selection #creditcard')
-                        ->assertMissing('#payment-method-selection #paypal')
-                        ->assertMissing('#payment-method-selection #banktransfer')
-                        ->click('#creditcard');
+                        ->waitFor('#payment-method-selection .link-creditcard svg')
+                        ->assertMissing('#payment-method-selection .link-paypal')
+                        ->assertMissing('#payment-method-selection .link-banktransfer')
+                        ->click('#payment-method-selection .link-creditcard');
                 })
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
@@ -251,8 +251,8 @@ class PaymentMollieTest extends TestCaseDusk
                 ->click('@main #mandate-form button')
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
-                        ->waitFor('#payment-method-selection #creditcard')
-                        ->click('#creditcard');
+                        ->waitFor('#payment-method-selection .link-creditcard')
+                        ->click('#payment-method-selection .link-creditcard');
                 })
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
@@ -281,8 +281,8 @@ class PaymentMollieTest extends TestCaseDusk
                 ->click('@main #mandate-form button')
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
-                        ->waitFor('#payment-method-selection #creditcard')
-                        ->click('#creditcard');
+                        ->waitFor('#payment-method-selection .link-creditcard')
+                        ->click('#payment-method-selection .link-creditcard');
                 })
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
