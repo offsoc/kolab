@@ -74,23 +74,7 @@
             <div class="tab-pane" id="folder-aliases" role="tabpanel" aria-labelledby="tab-aliases">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ $t('form.email') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(alias, index) in folder.aliases" :id="'alias' + index" :key="index">
-                                    <td>{{ alias }}</td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-fake-body">
-                                <tr>
-                                    <td>{{ $t('shf.aliases-none') }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                        <list-table :list="folder.aliases" :setup="aliasesListSetup" class="mb-0"></list-table>
                     </div>
                 </div>
             </div>
@@ -99,9 +83,23 @@
 </template>
 
 <script>
+    import { ListTable } from '../Widgets/ListTools'
+
     export default {
+        components: {
+            ListTable
+        },
         data() {
             return {
+                aliasesListSetup: {
+                    columns: [
+                        {
+                            prop: 'email',
+                            content: item => item
+                        },
+                    ],
+                    footLabel: 'shf.aliases-none'
+                },
                 folder: { config: {}, aliases: [] }
             }
         },

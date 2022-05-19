@@ -70,6 +70,7 @@ return [
     'domain' => [
         'dns-verify' => "Exemple de vérification du DNS d'un domaine:",
         'dns-config' => "Exemple de configuration du DNS d'un domaine:",
+        'list-empty' => "Il y a pas de domaines dans ce compte.",
         'namespace' => "Espace de noms",
         'verify' => "Vérification du domaine",
         'verify-intro' => "Afin de confirmer que vous êtes bien le titulaire du domaine, nous devons exécuter un processus de vérification avant de l'activer définitivement pour la livraison d'e-mails.",
@@ -148,7 +149,7 @@ return [
         'create-title' => "Invitation à une inscription",
         'create-email' => "Saisissez l'adresse électronique de la personne que vous souhaitez inviter.",
         'create-csv' => "Pour envoyer plusieurs invitations à la fois, fournissez un fichier CSV (séparé par des virgules) ou un fichier en texte brut, contenant une adresse e-mail par ligne.",
-        'empty-list' => "Il y a aucune invitation dans la mémoire de données.",
+        'list-empty' => "Il y a aucune invitation dans la mémoire de données.",
         'title' => "Invitation d'inscription",
         'search' => "Adresse E-mail ou domaine",
         'send' => "Envoyer invitation(s)",
@@ -405,7 +406,6 @@ return [
         'discount-title' => "Rabais de compte",
         'distlists' => "Listes de Distribution",
         'domains' => "Domaines",
-        'domains-none' => "Il y a pas de domaines dans ce compte.",
         'ext-email' => "E-mail externe",
         'finances' => "Finances",
         'greylisting' => "Greylisting",
@@ -414,6 +414,7 @@ return [
             . " Le serveur d'origine doit réessayer après un délai cette fois-ci, le mail sera accepté."
             . " Les spammeurs ne réessayent généralement pas de remettre le mail.",
         'list-title' => "Comptes d'utilisateur",
+        'list-empty' => "Il n'y a aucun utilisateur dans ce compte.",
         'managed-by' => "Géré par",
         'new' => "Nouveau compte d'utilisateur",
         'org' => "Organisation",
@@ -440,7 +441,6 @@ return [
         'subscriptions' => "Subscriptions",
         'subscriptions-none' => "Cet utilisateur n'a pas de subscriptions.",
         'users' => "Utilisateurs",
-        'users-none' => "Il n'y a aucun utilisateur dans ce compte.",
     ],
 
     'wallet' => [

@@ -47,7 +47,7 @@ return [
         'paired' => "Paired devices",
         'pairing-instructions' => "Pair a new device using the following QR-Code:",
         'deviceid' => "Device ID",
-        'nodevices' => "There are currently no devices",
+        'list-empty' => "There are currently no devices",
         'delete' => "Remove devices",
         'remove-devices' => "Remove Devices",
         'remove-devices-text' => "Do you really want to remove all devices permanently?"
@@ -96,6 +96,7 @@ return [
             . " Please note that this action cannot be undone.",
         'dns-verify' => "Domain DNS verification sample:",
         'dns-config' => "Domain DNS configuration sample:",
+        'list-empty' => "There are no domains in this account.",
         'namespace' => "Namespace",
         'spf-whitelist' => "SPF Whitelist",
         'spf-whitelist-text' => "The Sender Policy Framework allows a sender domain to disclose, through DNS, "
@@ -186,7 +187,7 @@ return [
         'create-title' => "Invite for a signup",
         'create-email' => "Enter an email address of the person you want to invite.",
         'create-csv' => "To send multiple invitations at once, provide a CSV (comma separated) file, or alternatively a plain-text file, containing one email address per line.",
-        'empty-list' => "There are no invitations in the database.",
+        'list-empty' => "There are no invitations in the database.",
         'title' => "Signup invitations",
         'search' => "Email address or domain",
         'send' => "Send invite(s)",
@@ -453,7 +454,6 @@ return [
         'discount-title' => "Account discount",
         'distlists' => "Distribution lists",
         'domains' => "Domains",
-        'domains-none' => "There are no domains in this account.",
         'ext-email' => "External Email",
         'finances' => "Finances",
         'greylisting' => "Greylisting",
@@ -461,6 +461,7 @@ return [
             . "is temporarily rejected. The originating server should try again after a delay. "
             . "This time the email will be accepted. Spammers usually do not reattempt mail delivery.",
         'list-title' => "User accounts",
+        'list-empty' => "There are no users in this account.",
         'managed-by' => "Managed by",
         'new' => "New user account",
         'org' => "Organization",
@@ -492,7 +493,6 @@ return [
         'subscriptions' => "Subscriptions",
         'subscriptions-none' => "This user has no subscriptions.",
         'users' => "Users",
-        'users-none' => "There are no users in this account.",
     ],
 
     'wallet' => [

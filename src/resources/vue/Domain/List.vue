@@ -9,26 +9,7 @@
                     </btn-router>
                 </div>
                 <div class="card-text">
-                    <table class="table table-sm table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">{{ $t('domain.namespace') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="domain in domains" :key="domain.id" @click="$root.clickRecord">
-                                <td>
-                                    <svg-icon icon="globe" :class="$root.statusClass(domain)" :title="$root.statusText(domain)"></svg-icon>
-                                    <router-link :to="{ path: 'domain/' + domain.id }">{{ domain.namespace }}</router-link>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot class="table-fake-body">
-                            <tr>
-                                <td>{{ $t('user.domains-none') }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <list-widget :list="domains"></list-widget>
                 </div>
             </div>
         </div>
@@ -36,6 +17,7 @@
 </template>
 
 <script>
+    import ListWidget from './ListWidget'
     import { library } from '@fortawesome/fontawesome-svg-core'
 
     library.add(
@@ -43,6 +25,9 @@
     )
 
     export default {
+        components: {
+            ListWidget
+        },
         data() {
             return {
                 domains: []

@@ -12,22 +12,7 @@
                             {{ $t('user.create') }}
                         </btn-router>
                     </div>
-                    <table id="users-list" class="table table-sm table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">{{ $t('form.primary-email') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="user in users" :id="'user' + user.id" :key="user.id" @click="$root.clickRecord">
-                                <td>
-                                    <svg-icon icon="user" :class="$root.statusClass(user)" :title="$root.statusText(user)"></svg-icon>
-                                    <router-link :to="{ path: 'user/' + user.id }">{{ user.email }}</router-link>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <list-foot :text="$t('user.users-none')"></list-foot>
-                    </table>
+                    <list-widget :list="users"></list-widget>
                     <list-more v-if="hasMore" :on-click="loadUsers"></list-more>
                 </div>
             </div>
@@ -37,8 +22,12 @@
 
 <script>
     import ListTools from '../Widgets/ListTools'
+    import ListWidget from './ListWidget'
 
     export default {
+        components: {
+            ListWidget
+        },
         mixins: [ ListTools ],
         data() {
             return {

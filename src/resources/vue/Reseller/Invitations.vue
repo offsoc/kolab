@@ -11,35 +11,20 @@
                         <btn class="btn-success create-invite ms-1" @click="inviteUserDialog" icon="envelope-open-text">{{ $t('invitation.create') }}</btn>
                     </div>
 
-                    <table id="invitations-list" class="table table-sm table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">{{ $t('user.ext-email') }}</th>
-                                <th scope="col">{{ $t('form.created') }}</th>
-                                <th scope="col"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="inv in invitations" :id="'i' + inv.id" :key="inv.id">
-                                <td class="email">
-                                    <svg-icon icon="envelope-open-text" :class="statusClass(inv)" :title="$t('invitation.status-' + statusLabel(inv))"></svg-icon>
-                                    <span>{{ inv.email }}</span>
-                                </td>
-                                <td class="datetime">
-                                    {{ inv.created }}
-                                </td>
-                                <td class="buttons">
-                                    <btn class="text-danger button-delete p-0 ms-1" @click="deleteInvite(inv.id)" icon="trash-can">
-                                        <span class="btn-label">{{ $t('btn.delete') }}</span>
-                                    </btn>
-                                    <btn class="button-resend p-0 ms-1" :disabled="inv.isNew || inv.isCompleted" @click="resendInvite(inv.id)" icon="redo">
-                                        <span class="btn-label">{{ $t('btn.resend') }}</span>
-                                    </btn>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <list-foot :text="$t('invitation.empty-list')" colspan="3"></list-foot>
-                    </table>
+                    <list-table id="invitations-list" :list="invitations" :setup="setup">
+                        <template #email="{ item }">
+                            <svg-icon icon="envelope-open-text" :class="statusClass(item)" :title="$t('invitation.status-' + statusLabel(item))"></svg-icon>
+                            &nbsp;<span>{{ item.email }}</span>
+                        </template>
+                        <template #buttons="{ item }">
+                            <btn class="text-danger button-delete p-0 ms-1" @click="deleteInvite(item.id)" icon="trash-can">
+                                <span class="btn-label">{{ $t('btn.delete') }}</span>
+                            </btn>
+                            <btn class="button-resend p-0 ms-1" :disabled="item.isNew || item.isCompleted" @click="resendInvite(item.id)" icon="rotate-left">
+                                <span class="btn-label">{{ $t('btn.resend') }}</span>
+                            </btn>
+                        </template>
+                    </list-table>
                     <list-more v-if="hasMore" :on-click="loadInvitations"></list-more>
                 </div>
             </div>
@@ -84,14 +69,30 @@
     library.add(
         require('@fortawesome/free-solid-svg-icons/faEnvelopeOpenText').definition,
         require('@fortawesome/free-solid-svg-icons/faPaperPlane').definition,
-        require('@fortawesome/free-solid-svg-icons/faRedo').definition,
+        require('@fortawesome/free-solid-svg-icons/faRotateLeft').definition,
     )
 
     export default {
         mixins: [ ListTools ],
         data() {
             return {
-                invitations: []
+                invitations: [],
+                setup: {
+                    buttons: true,
+                    model: 'invitation',
+                    columns: [
+                        {
+                            prop: 'email',
+                            label: 'user.ext-email',
+                            className: 'email',
+                            contentSlot: 'email'
+                        },
+                        {
+                            prop: 'created',
+                            className: 'datetime'
+                        }
+                    ]
+                }
             }
         },
         mounted() {

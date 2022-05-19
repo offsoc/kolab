@@ -10,30 +10,7 @@
                     </btn-router>
                 </div>
                 <div class="card-text">
-                    <table class="table table-sm table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">{{ $t('form.name') }}</th>
-                                <th scope="col">{{ $t('form.email') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="resource in resources" :key="resource.id" @click="$root.clickRecord">
-                                <td>
-                                    <svg-icon icon="gear" :class="$root.statusClass(resource)" :title="$root.statusText(resource)"></svg-icon>
-                                    <router-link :to="{ path: 'resource/' + resource.id }">{{ resource.name }}</router-link>
-                                </td>
-                                <td>
-                                    <router-link :to="{ path: 'resource/' + resource.id }">{{ resource.email }}</router-link>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot class="table-fake-body">
-                            <tr>
-                                <td colspan="2">{{ $t('resource.list-empty') }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <list-widget :list="resources"></list-widget>
                 </div>
             </div>
         </div>
@@ -41,6 +18,7 @@
 </template>
 
 <script>
+    import ListWidget from './ListWidget'
     import { library } from '@fortawesome/fontawesome-svg-core'
 
     library.add(
@@ -48,6 +26,9 @@
     )
 
     export default {
+        components: {
+            ListWidget
+        },
         data() {
             return {
                 resources: []

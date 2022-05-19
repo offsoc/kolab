@@ -10,30 +10,7 @@
                     </btn-router>
                 </div>
                 <div class="card-text">
-                    <table class="table table-sm table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">{{ $t('distlist.name') }}</th>
-                                <th scope="col">{{ $t('distlist.email') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="list in lists" :key="list.id" @click="$root.clickRecord">
-                                <td>
-                                    <svg-icon icon="users" :class="$root.statusClass(list)" :title="$root.statusText(list)"></svg-icon>
-                                    <router-link :to="{ path: 'distlist/' + list.id }">{{ list.name }}</router-link>
-                                </td>
-                                <td>
-                                    <router-link :to="{ path: 'distlist/' + list.id }">{{ list.email }}</router-link>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot class="table-fake-body">
-                            <tr>
-                                <td colspan="2">{{ $t('distlist.list-empty') }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <list-widget :list="lists"></list-widget>
                 </div>
             </div>
         </div>
@@ -41,6 +18,7 @@
 </template>
 
 <script>
+    import ListWidget from './ListWidget'
     import { library } from '@fortawesome/fontawesome-svg-core'
 
     library.add(
@@ -48,6 +26,9 @@
     )
 
     export default {
+        components: {
+            ListWidget
+        },
         data() {
             return {
                 lists: []

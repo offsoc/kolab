@@ -170,13 +170,6 @@ table {
         padding: 0;
     }
 
-    td {
-        & > svg + a,
-        & > svg + span {
-            margin-left: .4em;
-        }
-    }
-
     &.files {
         table-layout: fixed;
 

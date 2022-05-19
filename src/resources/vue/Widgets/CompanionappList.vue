@@ -3,21 +3,7 @@
         <btn icon="trash-can" class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()">
             {{ $t('companion.delete') }}
         </btn>
-        <table class="table table-sm m-0 entries">
-            <thead>
-                <tr>
-                    <th scope="col">{{ $t('companion.name') }}</th>
-                    <th scope="col">{{ $t('companion.deviceid') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="entry in entries" :id="'entry' + entry.id" :key="entry.id">
-                    <td class="description">{{ entry.name }}</td>
-                    <td class="description">{{ entry.device_id }}</td>
-                </tr>
-            </tbody>
-            <list-foot :text="$t('companion.nodevices')" :colspan="2"></list-foot>
-        </table>
+        <list-table class="m-0" :list="entries" :setup="setup"></list-table>
         <list-more v-if="hasMore" :on-click="loadMore"></list-more>
         <div id="delete-warning" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
@@ -45,11 +31,22 @@
 
     export default {
         mixins: [ ListTools ],
-        props: {
-        },
         data() {
             return {
-                entries: []
+                entries: [],
+                setup: {
+                    model: 'companion',
+                    columns: [
+                        {
+                            prop: 'name'
+                        },
+                        {
+                            prop: 'device_id',
+                            label: 'companion.deviceid'
+                        }
+                    ]
+                }
+
             }
         },
         mounted() {

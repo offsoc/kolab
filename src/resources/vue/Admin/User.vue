@@ -184,48 +184,14 @@
             <div class="tab-pane" id="user-aliases" role="tabpanel" aria-labelledby="tab-aliases">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ $t('form.email') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(alias, index) in user.aliases" :id="'alias' + index" :key="index">
-                                    <td>{{ alias }}</td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-fake-body">
-                                <tr>
-                                    <td>{{ $t('user.aliases-none') }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                        <list-table :list="user.aliases" :setup="aliasesListSetup" class="mb-0"></list-table>
                     </div>
                 </div>
             </div>
             <div class="tab-pane" id="user-subscriptions" role="tabpanel" aria-labelledby="tab-subscriptions">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ $t('user.subscription') }}</th>
-                                    <th scope="col">{{ $t('user.price') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(sku, sku_id) in skus" :id="'sku' + sku.id" :key="sku_id">
-                                    <td>{{ sku.name }}</td>
-                                    <td class="price">{{ sku.price }}</td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-fake-body">
-                                <tr>
-                                    <td colspan="2">{{ $t('user.subscriptions-none') }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                        <list-table :list="skus" :setup="skusListSetup" class="mb-0"></list-table>
                         <small v-if="discount > 0" class="hint">
                             <hr class="m-0">
                             &sup1; {{ $t('user.discount-hint') }}: {{ discount }}% - {{ discount_description }}
@@ -240,143 +206,35 @@
             <div class="tab-pane" id="user-domains" role="tabpanel" aria-labelledby="tab-domains">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ $t('domain.namespace') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="domain in domains" :id="'domain' + domain.id" :key="domain.id" @click="$root.clickRecord">
-                                    <td>
-                                        <svg-icon icon="globe" :class="$root.statusClass(domain)" :title="$root.statusText(domain)"></svg-icon>
-                                        <router-link :to="{ path: '/domain/' + domain.id }">{{ domain.namespace }}</router-link>
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-fake-body">
-                                <tr>
-                                    <td>{{ $t('user.domains-none') }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                        <domain-list :list="domains" class="mb-0"></domain-list>
                     </div>
                 </div>
             </div>
             <div class="tab-pane" id="user-users" role="tabpanel" aria-labelledby="tab-users">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ $t('form.primary-email') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="item in users" :id="'user' + item.id" :key="item.id" @click="$root.clickRecord">
-                                    <td>
-                                        <svg-icon icon="user" :class="$root.statusClass(item)" :title="$root.statusText(item)"></svg-icon>
-                                        <router-link v-if="item.id != user.id" :to="{ path: '/user/' + item.id }">{{ item.email }}</router-link>
-                                        <span v-else>{{ item.email }}</span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-fake-body">
-                                <tr>
-                                    <td>{{ $t('user.users-none') }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                        <user-list :list="users" :current="user" class="mb-0"></user-list>
                     </div>
                 </div>
             </div>
             <div class="tab-pane" id="user-distlists" role="tabpanel" aria-labelledby="tab-distlists">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ $t('distlist.name') }}</th>
-                                    <th scope="col">{{ $t('form.email') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="list in distlists" :key="list.id" @click="$root.clickRecord">
-                                    <td>
-                                        <svg-icon icon="users" :class="$root.statusClass(list)" :title="$root.statusText(list)"></svg-icon>
-                                        <router-link :to="{ path: '/distlist/' + list.id }">{{ list.name }}</router-link>
-                                    </td>
-                                    <td>
-                                        <router-link :to="{ path: '/distlist/' + list.id }">{{ list.email }}</router-link>
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-fake-body">
-                                <tr>
-                                    <td colspan="2">{{ $t('distlist.list-empty') }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                        <distlist-list :list="distlists" class="mb-0"></distlist-list>
                     </div>
                 </div>
             </div>
             <div class="tab-pane" id="user-resources" role="tabpanel" aria-labelledby="tab-resources">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ $t('form.name') }}</th>
-                                    <th scope="col">{{ $t('form.email') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="resource in resources" :key="resource.id" @click="$root.clickRecord">
-                                    <td>
-                                        <svg-icon icon="gear" :class="$root.statusClass(resource)" :title="$root.statusText(resource)"></svg-icon>
-                                        <router-link :to="{ path: '/resource/' + resource.id }">{{ resource.name }}</router-link>
-                                    </td>
-                                    <td>
-                                        <router-link :to="{ path: '/resource/' + resource.id }">{{ resource.email }}</router-link>
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-fake-body">
-                                <tr>
-                                    <td colspan="2">{{ $t('resource.list-empty') }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                        <resource-list :list="resources" class="mb-0"></resource-list>
                     </div>
                 </div>
             </div>
             <div class="tab-pane" id="user-shared-folders" role="tabpanel" aria-labelledby="tab-shared-folders">
                 <div class="card-body">
                     <div class="card-text">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ $t('form.name') }}</th>
-                                    <th scope="col">{{ $t('form.type') }}</th>
-                                    <th scope="col">{{ $t('form.email') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="folder in folders" :key="folder.id" @click="$root.clickRecord">
-                                    <td>
-                                        <svg-icon icon="folder-open" :class="$root.statusClass(folder)" :title="$root.statusText(folder)"></svg-icon>
-                                        <router-link :to="{ path: '/shared-folder/' + folder.id }">{{ folder.name }}</router-link>
-                                    </td>
-                                    <td>{{ $t('shf.type-' + folder.type) }}</td>
-                                    <td><router-link :to="{ path: '/shared-folder/' + folder.id }">{{ folder.email }}</router-link></td>
-                                </tr>
-                            </tbody>
-                            <tfoot class="table-fake-body">
-                                <tr>
-                                    <td colspan="3">{{ $t('shf.list-empty') }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                        <shared-folder-list :list="folders" :with-email="true" class="mb-0"></shared-folder-list>
                     </div>
                 </div>
             </div>
@@ -496,6 +354,12 @@
 <script>
     import { Modal } from 'bootstrap'
     import TransactionLog from '../Widgets/TransactionLog'
+    import { ListTable } from '../Widgets/ListTools'
+    import { default as DistlistList } from '../Distlist/ListWidget'
+    import { default as DomainList } from '../Domain/ListWidget'
+    import { default as ResourceList } from '../Resource/ListWidget'
+    import { default as SharedFolderList } from '../SharedFolder/ListWidget'
+    import { default as UserList } from '../User/ListWidget'
 
     import { library } from '@fortawesome/fontawesome-svg-core'
 
@@ -508,7 +372,13 @@
 
     export default {
         components: {
-            TransactionLog
+            DistlistList,
+            DomainList,
+            ListTable,
+            ResourceList,
+            SharedFolderList,
+            TransactionLog,
+            UserList
         },
         beforeRouteUpdate (to, from, next) {
             // An event called when the route that renders this component has changed,
@@ -519,6 +389,15 @@
         },
         data() {
             return {
+                aliasesListSetup: {
+                    columns: [
+                        {
+                            prop: 'email',
+                            content: item => item
+                        },
+                    ],
+                    footLabel: 'user.aliases-none'
+                },
                 oneoff_amount: '',
                 oneoff_description: '',
                 oneoff_negative: false,
@@ -534,8 +413,23 @@
                 distlists: [],
                 domains: [],
                 resources: [],
-                skus: [],
                 sku2FA: null,
+                skus: [],
+                skusListSetup: {
+                    columns: [
+                        {
+                            prop: 'name',
+                            label: 'user.subscription'
+                        },
+                        {
+                            prop: 'price',
+                            className: 'price',
+                            label: 'user.price'
+                        }
+                    ],
+                    footLabel: 'user.subscriptions-none',
+                    model: 'sku'
+                },
                 users: [],
                 user: {
                     aliases: [],

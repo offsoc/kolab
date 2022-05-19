@@ -4,7 +4,7 @@
 
 <script>
 
-    const ListSearch = {
+    export const ListSearch = {
         props: {
             onSearch: { type: Function, default: () => {} },
             placeholder: { type: String, default: '' }
@@ -20,7 +20,7 @@
             </form>`
     }
 
-    const ListFoot = {
+    export const ListFoot = {
         props: {
             colspan: { type: Number, default: 1 },
             text: { type: String, default: '' }
@@ -28,7 +28,7 @@
         template: `<tfoot class="table-fake-body"><tr><td :colspan="colspan">{{ text }}</td></tr></tfoot>`
     }
 
-    const ListMore = {
+    export const ListMore = {
         props: {
             onClick: { type: Function, default: () => {} }
         },
@@ -37,11 +37,64 @@
             </div>`
     }
 
+    export const ListTable = {
+        components: {
+            ListFoot
+        },
+        props: {
+            current: { type: Object, default: () => null },
+            list: { type: Array, default: () => [] },
+            setup: { type: Object, default: () => {} },
+        },
+        methods: {
+            content(column, item) {
+                if (column.contentLabel) {
+                    return this.$t(column.contentLabel(item))
+                }
+                if (column.content) {
+                    return column.content(item)
+                }
+                return item[column.prop]
+            },
+            label(label) {
+                let l = `${this.setup.prefix || this.setup.model}${label}`
+                return this.$te(l) ? l : `form${label}`
+            },
+            url(item) {
+                return `/${this.setup.model}/${item.id}`
+            }
+        },
+        template:
+            `<table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th v-for="column in setup.columns" scope="col">{{ $t(column.label || label('.' + column.prop)) }}</th>
+                        <th v-if="setup.buttons" scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(item, index) in list" :key="item.id || index" :id="setup.model ? (setup.model + (item.id || index)) : null" @click="$root.clickRecord">
+                        <td v-for="column in setup.columns" :key="column.prop + (item.id || index)" :class="column.className">
+                            <svg-icon v-if="column.icon" :icon="column.icon" :class="$root.statusClass(item)" :title="$root.statusText(item)"></svg-icon>
+                            <router-link v-if="column.link && (!current || current.id != item.id)" :to="url(item)">{{ content(column, item) }}</router-link>
+                            <slot v-else-if="column.contentSlot" :name="column.contentSlot" v-bind:item="item"></slot>
+                            <span v-else>{{ content(column, item) }}</span>
+                        </td>
+                        <td v-if="setup.buttons" class="buttons">
+                             <slot name="buttons" v-bind:item="item"></slot>
+                        </td>
+                    </tr>
+                </tbody>
+                <list-foot :text="$t(setup.footLabel || label('.list-empty'))" :colspan="setup.columns.length + (setup.buttons ? 1 : 0)"></list-foot>
+            </table>`
+    }
+
     export default {
         components: {
             ListFoot,
             ListMore,
-            ListSearch
+            ListSearch,
+            ListTable
         },
         data() {
             return {
