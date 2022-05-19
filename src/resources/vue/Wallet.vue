@@ -188,6 +188,7 @@
     import { Modal } from 'bootstrap'
     import TransactionLog from './Widgets/TransactionLog'
     import PaymentLog from './Widgets/PaymentLog'
+    import { downloadFile } from '../js/utils'
 
     import { library } from '@fortawesome/fontawesome-svg-core'
 
@@ -225,22 +226,13 @@
 
             this.walletId = this.$root.authInfo.wallets[0].id
 
-            this.$root.startLoading()
-            axios.get('/api/v4/wallets/' + this.walletId)
+            axios.get('/api/v4/wallets/' + this.walletId, { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
                     this.wallet = response.data
 
-                    const receiptsTab = $('#wallet-receipts')
-
-                    this.$root.addLoader(receiptsTab)
-                    axios.get('/api/v4/wallets/' + this.walletId + '/receipts')
+                    axios.get('/api/v4/wallets/' + this.walletId + '/receipts', { loader: '#wallet-receipts' })
                         .then(response => {
-                            this.$root.removeLoader(receiptsTab)
                             this.receipts = response.data.list
-                        })
-                        .catch(error => {
-                            this.$root.removeLoader(receiptsTab)
                         })
 
                     if (this.wallet.provider == 'stripe') {
@@ -269,19 +261,14 @@
         },
         methods: {
             loadMandate() {
-                const mandate_form = $('#mandate-form')
+                const loader = '#mandate-form'
 
-                this.$root.removeLoader(mandate_form)
+                this.$root.stopLoading(loader)
 
                 if (!this.mandate.id || this.mandate.isPending) {
-                    this.$root.addLoader(mandate_form)
-                    axios.get('/api/v4/payments/mandate')
+                    axios.get('/api/v4/payments/mandate', { loader })
                         .then(response => {
-                            this.$root.removeLoader(mandate_form)
                             this.mandate = response.data
-                        })
-                        .catch(error => {
-                            this.$root.removeLoader(mandate_form)
                         })
                 }
             },
@@ -384,14 +371,11 @@
                 this.dialog.show()
 
                 this.$nextTick().then(() => {
-                    const form = $('#payment-method')
                     const type = nextForm == 'manual' ? 'oneoff' : 'recurring'
+                    const loader = ['#payment-method', { 'min-height': '10em', small: false }]
 
-                    this.$root.addLoader(form, false, { 'min-height': '10em' })
-
-                    axios.get('/api/v4/payments/methods', { params: { type } })
+                    axios.get('/api/v4/payments/methods', { params: { type }, loader })
                         .then(response => {
-                            this.$root.removeLoader(form)
                             this.paymentMethods = response.data
                         })
                 })
@@ -406,7 +390,7 @@
             },
             receiptDownload() {
                 const receipt = $('#receipt-id').val()
-                this.$root.downloadFile('/api/v4/wallets/' + this.walletId + '/receipts/' + receipt)
+                downloadFile('/api/v4/wallets/' + this.walletId + '/receipts/' + receipt)
             },
             stripeInit() {
                 let script = $('#stripe-script')

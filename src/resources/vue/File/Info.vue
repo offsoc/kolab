@@ -102,11 +102,8 @@
 
             this.fileId = this.$route.params.file
 
-            this.$root.startLoading()
-
-            axios.get('/api/v4/files/' + this.fileId)
+            axios.get('/api/v4/files/' + this.fileId, { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
                     this.file = response.data
 
                     if (this.file.isOwner) {

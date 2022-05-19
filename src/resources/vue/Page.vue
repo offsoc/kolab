@@ -18,11 +18,8 @@
                 return
             }
 
-            this.$root.startLoading()
-
-            axios.get('/content/page/' + page, { ignoreErrors: true })
+            axios.get('/content/page/' + page, { ignoreErrors: true, loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
                     this.content = response.data
                 })
                 .catch(this.$root.errorHandler)

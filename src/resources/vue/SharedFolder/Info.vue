@@ -107,21 +107,15 @@
             this.folder_id = this.$route.params.folder
 
             if (this.folder_id != 'new') {
-                this.$root.startLoading()
-
-                axios.get('/api/v4/shared-folders/' + this.folder_id)
+                axios.get('/api/v4/shared-folders/' + this.folder_id, { loader: true })
                     .then(response => {
-                        this.$root.stopLoading()
                         this.folder = response.data
                         this.status = response.data.statusInfo
                     })
                     .catch(this.$root.errorHandler)
             } else {
-                this.$root.startLoading()
-
-                axios.get('/api/v4/domains')
+                axios.get('/api/v4/domains', { loader: true })
                     .then(response => {
-                        this.$root.stopLoading()
                         this.domains = response.data
                         this.folder.domain = this.domains[0].namespace
                     })

@@ -67,11 +67,8 @@
             }
         },
         created() {
-            this.$root.startLoading()
-
-            axios.get('/api/v4/resources/' + this.$route.params.resource)
+            axios.get('/api/v4/resources/' + this.$route.params.resource, { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
                     this.resource = response.data
                 })
                 .catch(this.$root.errorHandler)

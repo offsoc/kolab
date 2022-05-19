@@ -54,11 +54,8 @@
             }
         },
         created() {
-            this.$root.startLoading()
-
-            axios.get('/api/v4/groups')
+            axios.get('/api/v4/groups', { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
                     this.lists = response.data
                 })
                 .catch(this.$root.errorHandler)

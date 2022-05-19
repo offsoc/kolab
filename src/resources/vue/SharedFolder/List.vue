@@ -53,11 +53,8 @@
             }
         },
         created() {
-            this.$root.startLoading()
-
-            axios.get('/api/v4/shared-folders')
+            axios.get('/api/v4/shared-folders', { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
                     this.folders = response.data
                 })
                 .catch(this.$root.errorHandler)

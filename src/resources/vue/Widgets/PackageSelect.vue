@@ -58,12 +58,8 @@
             // assign currency, discount, discount_description of the current user
             this.$root.userWalletProps(this)
 
-            this.$root.startLoading()
-
-            axios.get('/api/v4/packages')
+            axios.get('/api/v4/packages', { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
-
                     this.packages = response.data.filter(pkg => {
                         if (this.type == 'domain') {
                             return pkg.isDomain

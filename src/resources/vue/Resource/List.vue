@@ -54,11 +54,8 @@
             }
         },
         created() {
-            this.$root.startLoading()
-
-            axios.get('/api/v4/resources')
+            axios.get('/api/v4/resources', { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
                     this.resources = response.data
                 })
                 .catch(this.$root.errorHandler)

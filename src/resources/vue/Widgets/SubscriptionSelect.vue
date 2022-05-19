@@ -72,12 +72,8 @@
                 this.discount_description = this.object.wallet.discount_description
             }
 
-            this.$root.startLoading()
-
-            axios.get('/api/v4/' + this.type + 's/' + this.object.id + '/skus')
+            axios.get('/api/v4/' + this.type + 's/' + this.object.id + '/skus', { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
-
                     if (this.readonly) {
                         response.data = response.data.filter(sku => { return sku.id in this.object.skus })
                     }

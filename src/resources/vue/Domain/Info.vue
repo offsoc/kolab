@@ -145,11 +145,8 @@
             this.domain_id = this.$route.params.domain
 
             if (this.domain_id !== 'new') {
-                this.$root.startLoading()
-
-                axios.get('/api/v4/domains/' + this.domain_id)
+                axios.get('/api/v4/domains/' + this.domain_id, { loader: true })
                     .then(response => {
-                        this.$root.stopLoading()
                         this.domain = response.data
                         this.spf_whitelist = this.domain.config.spf_whitelist || []
 

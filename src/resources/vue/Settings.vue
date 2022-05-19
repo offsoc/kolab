@@ -61,12 +61,8 @@
             this.wallet = this.$root.authInfo.wallet
         },
         mounted() {
-            this.$root.startLoading()
-
-            axios.get('/api/v4/password-policy')
+            axios.get('/api/v4/password-policy', { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
-
                     if (response.data.list) {
                         this.passwordPolicy = response.data.list
                         this.config = response.data.config

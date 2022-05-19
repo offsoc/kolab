@@ -101,11 +101,8 @@
             this.resource_id = this.$route.params.resource
 
             if (this.resource_id != 'new') {
-                this.$root.startLoading()
-
-                axios.get('/api/v4/resources/' + this.resource_id)
+                axios.get('/api/v4/resources/' + this.resource_id, { loader: true })
                     .then(response => {
-                        this.$root.stopLoading()
                         this.resource = response.data
                         this.status = response.data.statusInfo
 
@@ -117,11 +114,8 @@
                     })
                     .catch(this.$root.errorHandler)
             } else {
-                this.$root.startLoading()
-
-                axios.get('/api/v4/domains')
+                axios.get('/api/v4/domains', { loader: true })
                     .then(response => {
-                        this.$root.stopLoading()
                         this.domains = response.data
                         this.resource.domain = this.domains[0].namespace
                     })

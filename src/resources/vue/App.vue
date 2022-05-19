@@ -29,22 +29,21 @@
             const token = localStorage.getItem('token')
 
             if (token) {
-                this.$root.startLoading()
                 axios.defaults.headers.common.Authorization = 'Bearer ' + token
 
                 const post = { refresh_token: localStorage.getItem("refreshToken") }
 
-                axios.post('/api/auth/info?refresh=1', post, { ignoreErrors: true })
+                axios.post('/api/auth/info?refresh=1', post, { ignoreErrors: true, loader: true })
                     .then(response => {
                         this.$root.loginUser(response.data, false)
-                        this.$root.stopLoading()
-                        this.isLoading = false
                     })
                     .catch(error => {
-                        // Release lock on the router-view, otherwise links (e.g. Logout) will not work
-                        this.isLoading = false
                         // Handle the error, on 401 display the logon page
                         this.$root.errorHandler(error)
+                    })
+                    .finally(() => {
+                        // Release lock on the router-view, otherwise links (e.g. Logout) will not work
+                        this.isLoading = false
                     })
             } else {
                 this.isLoading = false

@@ -11,31 +11,11 @@ import MenuComponent from '../vue/Widgets/Menu'
 import SupportForm from '../vue/Widgets/SupportForm'
 import { Tab } from 'bootstrap'
 import { loadLangAsync, i18n } from './locale'
-
-const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="visually-hidden">Loading</span></div></div>'
+import { clearFormValidation, pick, startLoading, stopLoading } from './utils'
 
 const routerState = {
     afterLogin: null,
     isLoggedIn: !!localStorage.getItem('token')
-}
-
-let isLoading = 0
-
-// Lock the UI with the 'loading...' element
-const startLoading = () => {
-    isLoading++
-    let loading = $('#app > .app-loader').removeClass('fadeOut')
-    if (!loading.length) {
-        $('#app').append($(loader))
-    }
-}
-
-// Hide "loading" overlay
-const stopLoading = () => {
-    if (isLoading > 0) {
-        $('#app > .app-loader').addClass('fadeOut')
-        isLoading--;
-    }
 }
 
 let loadingRoute
@@ -97,11 +77,7 @@ const app = new Vue({
         }
     },
     methods: {
-        // Clear (bootstrap) form validation state
-        clearFormValidation(form) {
-            $(form).find('.is-invalid').removeClass('is-invalid')
-            $(form).find('.invalid-feedback').remove()
-        },
+        clearFormValidation,
         hasPermission(type) {
             const key = 'enable' + type.charAt(0).toUpperCase() + type.slice(1)
             return !!(this.authInfo && this.authInfo.statusInfo[key])
@@ -128,6 +104,9 @@ const app = new Vue({
             }
 
             return false
+        },
+        isDegraded() {
+            return this.authInfo && this.authInfo.isAccountDegraded
         },
         // Set user state to "logged in"
         loginUser(response, dashboard, update) {
@@ -187,37 +166,9 @@ const app = new Vue({
 
             return `<img src="${src}" alt="${this.appName}">`
         },
-        // Display "loading" overlay inside of the specified element
-        addLoader(elem, small = true, style = null) {
-            if (style) {
-                $(elem).css(style)
-            } else {
-                $(elem).css('position', 'relative')
-            }
-
-            $(elem).append(small ? $(loader).addClass('small') : $(loader))
-        },
-        // Create an object copy with specified properties only
-        pick(obj, properties) {
-            let result = {}
-
-            properties.forEach(prop => {
-                if (prop in obj) {
-                    result[prop] = obj[prop]
-                }
-            })
-
-            return result
-        },
-        // Remove loader element added in addLoader()
-        removeLoader(elem) {
-            $(elem).find('.app-loader').remove()
-        },
+        pick,
         startLoading,
         stopLoading,
-        isLoading() {
-            return isLoading > 0
-        },
         tab(e) {
             e.preventDefault()
             new Tab(e.target).show()
@@ -241,7 +192,7 @@ const app = new Vue({
             app.updateBodyClass('error')
         },
         errorHandler(error) {
-            this.stopLoading()
+            stopLoading()
 
             const status = error.response ? error.response.status : 500
             const message = error.response ? error.response.statusText : ''
@@ -257,32 +208,6 @@ const app = new Vue({
             } else {
                 this.errorPage(status, message)
             }
-        },
-        downloadFile(url, filename) {
-            // TODO: This might not be a best way for big files as the content
-            //       will be stored (temporarily) in browser memory
-            // TODO: This method does not show the download progress in the browser
-            //       but it could be implemented in the UI, axios has 'progress' property
-            axios.get(url, { responseType: 'blob' })
-                .then(response => {
-                    const link = document.createElement('a')
-
-                    if (!filename) {
-                        const contentDisposition = response.headers['content-disposition']
-                        filename = 'unknown'
-
-                        if (contentDisposition) {
-                            const match = contentDisposition.match(/filename="?(.+)"?/);
-                            if (match && match.length === 2) {
-                                filename = match[1];
-                            }
-                        }
-                    }
-
-                    link.href = window.URL.createObjectURL(response.data)
-                    link.download = filename
-                    link.click()
-                })
         },
         price(price, currency) {
             // TODO: Set locale argument according to the currently used locale
@@ -302,9 +227,6 @@ const app = new Vue({
             if (!/^(a|button|svg|path)$/i.test(event.target.nodeName)) {
                 $(event.target).closest('tr').find('a').trigger('click')
             }
-        },
-        isDegraded() {
-            return this.authInfo && this.authInfo.isAccountDegraded
         },
         pageName(path) {
             let page = this.$route.path
@@ -405,6 +327,11 @@ axios.interceptors.request.use(
         // on a running application. We need this for browser testing.
         config.headers['X-Test-Payment-Provider'] = window.config.paymentProvider
 
+        let loader = config.loader
+        if (loader) {
+            startLoading(loader)
+        }
+
         return config
     },
     error => {
@@ -420,9 +347,19 @@ axios.interceptors.response.use(
             response.config.onFinish()
         }
 
+        let loader = response.config.loader
+        if (loader) {
+            stopLoading(loader)
+        }
+
         return response
     },
     error => {
+        let loader = error.config.loader
+        if (loader) {
+            stopLoading(loader)
+        }
+
         // Do not display the error in a toast message, pass the error as-is
         if (axios.isCancel(error) || error.config.ignoreErrors) {
             return Promise.reject(error)

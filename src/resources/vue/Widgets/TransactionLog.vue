@@ -58,18 +58,13 @@
                 let cell = record.find('td.description')
                 let details = $('<div class="list-details"><ul></ul><div>').appendTo(cell)
 
-                this.$root.addLoader(cell)
-                axios.get('/api/v4/wallets/' + this.walletId + '/transactions' + '?transaction=' + id)
+                axios.get('/api/v4/wallets/' + this.walletId + '/transactions' + '?transaction=' + id, { loader: cell })
                     .then(response => {
-                        this.$root.removeLoader(cell)
                         record.find('button').remove()
                         let list = details.find('ul')
                         response.data.list.forEach(elem => {
                            list.append($('<li>').text(this.description(elem)))
                         })
-                    })
-                    .catch(error => {
-                        this.$root.removeLoader(cell)
                     })
             },
             amount(transaction) {

@@ -138,8 +138,7 @@
             let param = this.$route.params.param;
 
             if (this.$route.name == 'signup-invite') {
-                this.$root.startLoading()
-                axios.get('/api/auth/signup/invitations/' + param)
+                axios.get('/api/auth/signup/invitations/' + param, { loader: true })
                     .then(response => {
                         this.invitation = response.data
                         this.login = response.data.login
@@ -149,7 +148,6 @@
                         this.plan = response.data.plan
                         this.is_domain = response.data.is_domain
                         this.setDomain(response.data)
-                        this.$root.stopLoading()
                         this.displayForm(3, true)
                     })
                     .catch(error => {
@@ -185,9 +183,7 @@
             // Composes plan selection page
             step0() {
                 if (!this.plans.length) {
-                    this.$root.startLoading()
-                    axios.get('/api/auth/signup/plans').then(response => {
-                        this.$root.stopLoading()
+                    axios.get('/api/auth/signup/plans', { loader: true }).then(response => {
                         this.plans = response.data.plans
                     })
                     .catch(error => {

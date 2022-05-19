@@ -49,11 +49,8 @@
             }
         },
         created() {
-            this.$root.startLoading()
-
-            axios.get('/api/v4/domains')
+            axios.get('/api/v4/domains', { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
                     this.domains = response.data
                 })
                 .catch(this.$root.errorHandler)

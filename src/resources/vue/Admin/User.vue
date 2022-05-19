@@ -548,15 +548,11 @@
         created() {
             const user_id = this.$route.params.user
 
-            this.$root.startLoading()
-
-            axios.get('/api/v4/users/' + user_id)
+            axios.get('/api/v4/users/' + user_id, { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
-
                     this.user = response.data
 
-                    const financesTab = '#user-finances'
+                    const loader = '#user-finances'
                     const keys = ['first_name', 'last_name', 'external_email', 'billing_address', 'phone', 'organization']
 
                     let country = this.user.settings.country
@@ -573,15 +569,10 @@
 
                     // TODO: currencies, multi-wallets, accounts
                     // Get more info about the wallet (e.g. payment provider related)
-                    this.$root.addLoader(financesTab)
-                    axios.get('/api/v4/wallets/' + this.user.wallets[0].id)
+                    axios.get('/api/v4/wallets/' + this.user.wallets[0].id, { loader })
                         .then(response => {
-                            this.$root.removeLoader(financesTab)
                             this.wallet = response.data
                             this.setMandateState()
-                        })
-                        .catch(error => {
-                            this.$root.removeLoader(financesTab)
                         })
 
                     // Create subscriptions list

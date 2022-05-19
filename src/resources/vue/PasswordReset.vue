@@ -122,19 +122,17 @@
                 let params = {}
 
                 if (bylink === true) {
-                    this.$root.startLoading()
                     params.ignoreErrors = true
+                    params.loader = true
                 }
 
                 this.$root.clearFormValidation($('#step2 form'))
 
                 axios.post('/api/auth/password-reset/verify', post, params).then(response => {
-                    this.$root.stopLoading()
                     this.userId = response.data.userId
                     this.displayForm(3, true)
                 }).catch(error => {
                     if (bylink === true) {
-                        this.$root.stopLoading()
                         this.$root.errorPage(404, '', this.$t('password.link-invalid'))
                     }
                 })

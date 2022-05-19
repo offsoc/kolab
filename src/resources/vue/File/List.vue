@@ -93,7 +93,7 @@
             fileDownload(file) {
                 // This is not an appropriate method for big files, we can consider
                 // using it still for very small files.
-                // this.$root.downloadFile('api/v4/files/' + file.id + '?download=1', file.name)
+                // downloadFile('api/v4/files/' + file.id + '?download=1', file.name)
 
                 // This method first makes a request to the API to get the download URL (which does not
                 // require authentication) and then use it to download the file.

@@ -63,16 +63,11 @@
             }
         },
         mounted() {
-            this.$root.startLoading()
-
-            axios.get('/api/v4/companion/pairing')
+            axios.get('/api/v4/companion/pairing', { loading: true })
                 .then(response => {
-                    this.$root.stopLoading()
                     this.qrcode = response.data.qrcode
                 })
                 .catch(this.$root.errorHandler)
-        },
-        methods: {
-        },
+        }
     }
 </script>

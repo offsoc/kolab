@@ -46,12 +46,8 @@
                 return
             }
 
-            this.$root.startLoading()
-
-            axios.get('/api/v4/meet/rooms')
+            axios.get('/api/v4/meet/rooms', { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
-
                     this.rooms = response.data.list
                     if (response.data.count) {
                         this.roomRoute = '/meet/' + encodeURI(this.rooms[0].name)

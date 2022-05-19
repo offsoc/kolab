@@ -76,26 +76,14 @@
                         if (!loader.length || get.page == 1) {
                             loader = $(this.$el).find('tfoot td')
                         }
+                    } else {
+                        loader = true
                     }
                 } else {
                     this.currentSearch = null
                 }
 
-                if (params && params.init) {
-                    this.$root.startLoading()
-                } else {
-                    this.$root.addLoader(loader)
-                }
-
-                const finish = () => {
-                    if (params && params.init) {
-                        this.$root.stopLoading()
-                    } else {
-                        this.$root.removeLoader(loader)
-                    }
-                }
-
-                axios.get(url, { params: get })
+                axios.get(url, { params: get, loader })
                     .then(response => {
                         // Note: In Vue we can't just use .concat()
                         for (let i in response.data.list) {
@@ -104,11 +92,6 @@
 
                         this.hasMore = response.data.hasMore
                         this.page = response.data.page || 1
-
-                        finish()
-                    })
-                    .catch(error => {
-                        finish()
                     })
             }
         }

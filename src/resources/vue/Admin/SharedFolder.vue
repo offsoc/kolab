@@ -106,11 +106,8 @@
             }
         },
         created() {
-            this.$root.startLoading()
-
-            axios.get('/api/v4/shared-folders/' + this.$route.params.folder)
+            axios.get('/api/v4/shared-folders/' + this.$route.params.folder, { loader: true })
                 .then(response => {
-                    this.$root.stopLoading()
                     this.folder = response.data
                 })
                 .catch(this.$root.errorHandler)

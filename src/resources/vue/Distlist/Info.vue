@@ -93,11 +93,8 @@
             this.list_id = this.$route.params.list
 
             if (this.list_id != 'new') {
-                this.$root.startLoading()
-
-                axios.get('/api/v4/groups/' + this.list_id)
+                axios.get('/api/v4/groups/' + this.list_id, { loader: true })
                     .then(response => {
-                        this.$root.stopLoading()
                         this.list = response.data
                         this.status = response.data.statusInfo
                     })

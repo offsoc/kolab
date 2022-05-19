@@ -174,12 +174,8 @@
             this.user_id = this.$route.params.user
 
             if (this.user_id !== 'new') {
-                this.$root.startLoading()
-
-                axios.get('/api/v4/users/' + this.user_id)
+                axios.get('/api/v4/users/' + this.user_id, { loader: true })
                     .then(response => {
-                        this.$root.stopLoading()
-
                         this.user = response.data
                         this.user.first_name = response.data.settings.first_name
                         this.user.last_name = response.data.settings.last_name
@@ -241,15 +237,9 @@
                 // Note: we use $nextTick() because we have to wait for the HTML elements to exist
                 this.$nextTick().then(() => {
                     if (mode == 'link' && !this.passwordLinkCode) {
-                        const element = $('#password-link')
-                        this.$root.addLoader(element)
-                        axios.post('/api/v4/password-reset/code')
+                        axios.post('/api/v4/password-reset/code', {}, { loader: '#password-link' })
                             .then(response => {
-                                this.$root.removeLoader(element)
                                 this.passwordLinkCode = response.data.short_code + '-' + response.data.code
-                            })
-                            .catch(error => {
-                                this.$root.removeLoader(element)
                             })
                     } else if (mode == 'input') {
                         $('#password').focus();

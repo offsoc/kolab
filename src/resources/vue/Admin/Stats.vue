@@ -28,16 +28,12 @@
             loadChart(name) {
                 const chart = $('<div>').attr({ id: 'chart-' + name }).appendTo(this.$el)
 
-                this.$root.addLoader(chart)
-
-                axios.get('/api/v4/stats/chart/' + name)
+                axios.get('/api/v4/stats/chart/' + name, { loader: chart })
                     .then(response => {
-                        this.$root.removeLoader(chart)
                         this.drawChart(name, response.data)
                     })
                     .catch(error => {
                         console.error(error)
-                        this.$root.removeLoader(chart)
                         chart.append($('<span>').text(this.$t('msg.loading-failed')))
                     })
             }
