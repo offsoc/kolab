@@ -69,10 +69,19 @@ class RelationController extends ResourceController
             }
         }
 
+        // TODO: Search and paging
+
         $result = $query->get()
             ->map(function ($resource) {
                 return $this->objectToClient($resource);
             });
+
+        $result = [
+            'list' => $result,
+            'count' => count($result),
+            'hasMore' => false,
+            'message' => \trans("app.search-foundx{$this->label}s", ['x' => count($result)]),
+        ];
 
         return response()->json($result);
     }

@@ -90,7 +90,11 @@ class ResourcesTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(0, $json);
+        $this->assertCount(4, $json);
+        $this->assertSame(0, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("0 resources have been found.", $json['message']);
+        $this->assertSame([], $json['list']);
 
         // Test a user with two resources
         $response = $this->actingAs($john)->get("/api/v4/resources");
@@ -100,14 +104,18 @@ class ResourcesTest extends TestCase
 
         $resource = Resource::where('name', 'Conference Room #1')->first();
 
-        $this->assertCount(2, $json);
-        $this->assertSame($resource->id, $json[0]['id']);
-        $this->assertSame($resource->email, $json[0]['email']);
-        $this->assertSame($resource->name, $json[0]['name']);
-        $this->assertArrayHasKey('isDeleted', $json[0]);
-        $this->assertArrayHasKey('isActive', $json[0]);
-        $this->assertArrayHasKey('isLdapReady', $json[0]);
-        $this->assertArrayHasKey('isImapReady', $json[0]);
+        $this->assertCount(4, $json);
+        $this->assertSame(2, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("2 resources have been found.", $json['message']);
+        $this->assertCount(2, $json['list']);
+        $this->assertSame($resource->id, $json['list'][0]['id']);
+        $this->assertSame($resource->email, $json['list'][0]['email']);
+        $this->assertSame($resource->name, $json['list'][0]['name']);
+        $this->assertArrayHasKey('isDeleted', $json['list'][0]);
+        $this->assertArrayHasKey('isActive', $json['list'][0]);
+        $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
+        $this->assertArrayHasKey('isImapReady', $json['list'][0]);
 
         // Test that another wallet controller has access to resources
         $response = $this->actingAs($ned)->get("/api/v4/resources");
@@ -115,8 +123,12 @@ class ResourcesTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(2, $json);
-        $this->assertSame($resource->email, $json[0]['email']);
+        $this->assertCount(4, $json);
+        $this->assertSame(2, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("2 resources have been found.", $json['message']);
+        $this->assertCount(2, $json['list']);
+        $this->assertSame($resource->email, $json['list'][0]['email']);
     }
 
     /**

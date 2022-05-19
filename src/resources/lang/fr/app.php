@@ -90,8 +90,9 @@ return [
 
     'search-foundxdomains' => "Les domaines :x ont été trouvés.",
     'search-foundxdistlists' => "Les listes de distribution :x ont été trouvés.",
+    'search-foundxresources' => "Les ressources :x ont été trouvés.",
     'search-foundxusers' => "Les comptes d'utilisateurs :x ont été trouvés.",
-    'search-foundxsharedfolders' => ":x dossiers partagés ont été trouvés.",
+    'search-foundxshared-folders' => ":x dossiers partagés ont été trouvés.",
 
     'signup-invitations-created' => "L'invitation à été crée.|:count nombre d'invitations ont été crée.",
     'signup-invitations-csv-empty' => "Aucune adresses email valides ont été trouvées dans le fichier téléchargé.",

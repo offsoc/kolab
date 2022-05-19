@@ -89,7 +89,11 @@ class SharedFoldersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(0, $json);
+        $this->assertCount(4, $json);
+        $this->assertSame(0, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("0 shared folders have been found.", $json['message']);
+        $this->assertSame([], $json['list']);
 
         // Test a user with two shared folders
         $response = $this->actingAs($john)->get("/api/v4/shared-folders");
@@ -99,15 +103,19 @@ class SharedFoldersTest extends TestCase
 
         $folder = SharedFolder::where('name', 'Calendar')->first();
 
-        $this->assertCount(2, $json);
-        $this->assertSame($folder->id, $json[0]['id']);
-        $this->assertSame($folder->email, $json[0]['email']);
-        $this->assertSame($folder->name, $json[0]['name']);
-        $this->assertSame($folder->type, $json[0]['type']);
-        $this->assertArrayHasKey('isDeleted', $json[0]);
-        $this->assertArrayHasKey('isActive', $json[0]);
-        $this->assertArrayHasKey('isLdapReady', $json[0]);
-        $this->assertArrayHasKey('isImapReady', $json[0]);
+        $this->assertCount(4, $json);
+        $this->assertSame(2, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("2 shared folders have been found.", $json['message']);
+        $this->assertCount(2, $json['list']);
+        $this->assertSame($folder->id, $json['list'][0]['id']);
+        $this->assertSame($folder->email, $json['list'][0]['email']);
+        $this->assertSame($folder->name, $json['list'][0]['name']);
+        $this->assertSame($folder->type, $json['list'][0]['type']);
+        $this->assertArrayHasKey('isDeleted', $json['list'][0]);
+        $this->assertArrayHasKey('isActive', $json['list'][0]);
+        $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
+        $this->assertArrayHasKey('isImapReady', $json['list'][0]);
 
         // Test that another wallet controller has access to shared folders
         $response = $this->actingAs($ned)->get("/api/v4/shared-folders");
@@ -115,8 +123,12 @@ class SharedFoldersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(2, $json);
-        $this->assertSame($folder->email, $json[0]['email']);
+        $this->assertCount(4, $json);
+        $this->assertSame(2, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("2 shared folders have been found.", $json['message']);
+        $this->assertCount(2, $json['list']);
+        $this->assertSame($folder->email, $json['list'][0]['email']);
     }
 
     /**

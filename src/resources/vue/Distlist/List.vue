@@ -56,7 +56,7 @@
         created() {
             axios.get('/api/v4/groups', { loader: true })
                 .then(response => {
-                    this.lists = response.data
+                    this.lists = response.data.list
                 })
                 .catch(this.$root.errorHandler)
         }

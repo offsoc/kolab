@@ -116,7 +116,7 @@
             } else {
                 axios.get('/api/v4/domains', { loader: true })
                     .then(response => {
-                        this.domains = response.data
+                        this.domains = response.data.list
                         this.folder.domain = this.domains[0].namespace
                     })
                     .catch(this.$root.errorHandler)

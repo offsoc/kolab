@@ -55,7 +55,7 @@
         created() {
             axios.get('/api/v4/shared-folders', { loader: true })
                 .then(response => {
-                    this.folders = response.data
+                    this.folders = response.data.list
                 })
                 .catch(this.$root.errorHandler)
         }

@@ -180,7 +180,11 @@ class DomainsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame([], $json);
+        $this->assertCount(4, $json);
+        $this->assertSame(0, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("0 domains have been found.", $json['message']);
+        $this->assertSame([], $json['list']);
 
         // User with custom domain(s)
         $john = $this->getTestUser('john@kolab.org');
@@ -190,23 +194,28 @@ class DomainsTest extends TestCase
         $response->assertStatus(200);
 
         $json = $response->json();
-        $this->assertCount(1, $json);
-        $this->assertSame('kolab.org', $json[0]['namespace']);
+        $this->assertCount(4, $json);
+        $this->assertSame(1, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("1 domains have been found.", $json['message']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame('kolab.org', $json['list'][0]['namespace']);
         // Values below are tested by Unit tests
-        $this->assertArrayHasKey('isConfirmed', $json[0]);
-        $this->assertArrayHasKey('isDeleted', $json[0]);
-        $this->assertArrayHasKey('isVerified', $json[0]);
-        $this->assertArrayHasKey('isSuspended', $json[0]);
-        $this->assertArrayHasKey('isActive', $json[0]);
-        $this->assertArrayHasKey('isLdapReady', $json[0]);
+        $this->assertArrayHasKey('isConfirmed', $json['list'][0]);
+        $this->assertArrayHasKey('isDeleted', $json['list'][0]);
+        $this->assertArrayHasKey('isVerified', $json['list'][0]);
+        $this->assertArrayHasKey('isSuspended', $json['list'][0]);
+        $this->assertArrayHasKey('isActive', $json['list'][0]);
+        $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
 
         $response = $this->actingAs($ned)->get("api/v4/domains");
         $response->assertStatus(200);
 
         $json = $response->json();
 
-        $this->assertCount(1, $json);
-        $this->assertSame('kolab.org', $json[0]['namespace']);
+        $this->assertCount(4, $json);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame('kolab.org', $json['list'][0]['namespace']);
     }
 
     /**

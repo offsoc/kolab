@@ -51,7 +51,7 @@
         created() {
             axios.get('/api/v4/domains', { loader: true })
                 .then(response => {
-                    this.domains = response.data
+                    this.domains = response.data.list
                 })
                 .catch(this.$root.errorHandler)
         }

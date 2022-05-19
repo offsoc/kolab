@@ -93,7 +93,11 @@ class GroupsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(0, $json);
+        $this->assertCount(4, $json);
+        $this->assertSame(0, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("0 distribution lists have been found.", $json['message']);
+        $this->assertSame([], $json['list']);
 
         // Test a user with a single group
         $response = $this->actingAs($john)->get("/api/v4/groups");
@@ -101,14 +105,18 @@ class GroupsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(1, $json);
-        $this->assertSame($group->id, $json[0]['id']);
-        $this->assertSame($group->email, $json[0]['email']);
-        $this->assertSame($group->name, $json[0]['name']);
-        $this->assertArrayHasKey('isDeleted', $json[0]);
-        $this->assertArrayHasKey('isSuspended', $json[0]);
-        $this->assertArrayHasKey('isActive', $json[0]);
-        $this->assertArrayHasKey('isLdapReady', $json[0]);
+        $this->assertCount(4, $json);
+        $this->assertSame(1, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("1 distribution lists have been found.", $json['message']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($group->id, $json['list'][0]['id']);
+        $this->assertSame($group->email, $json['list'][0]['email']);
+        $this->assertSame($group->name, $json['list'][0]['name']);
+        $this->assertArrayHasKey('isDeleted', $json['list'][0]);
+        $this->assertArrayHasKey('isSuspended', $json['list'][0]);
+        $this->assertArrayHasKey('isActive', $json['list'][0]);
+        $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
 
         // Test that another wallet controller has access to groups
         $response = $this->actingAs($ned)->get("/api/v4/groups");
@@ -116,8 +124,12 @@ class GroupsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(1, $json);
-        $this->assertSame($group->email, $json[0]['email']);
+        $this->assertCount(4, $json);
+        $this->assertSame(1, $json['count']);
+        $this->assertSame(false, $json['hasMore']);
+        $this->assertSame("1 distribution lists have been found.", $json['message']);
+        $this->assertCount(1, $json['list']);
+        $this->assertSame($group->email, $json['list'][0]['email']);
     }
 
     /**

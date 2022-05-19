@@ -56,7 +56,7 @@
         created() {
             axios.get('/api/v4/resources', { loader: true })
                 .then(response => {
-                    this.resources = response.data
+                    this.resources = response.data.list
                 })
                 .catch(this.$root.errorHandler)
         }
