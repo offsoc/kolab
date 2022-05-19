@@ -175,9 +175,9 @@ class UserTest extends TestCaseDusk
                 });
 
             // Assert Shared folders tab
-            $browser->assertSeeIn('@nav #tab-shared-folders', 'Shared folders (0)')
-                ->click('@nav #tab-shared-folders')
-                ->with('@user-shared-folders', function (Browser $browser) {
+            $browser->assertSeeIn('@nav #tab-folders', 'Shared folders (0)')
+                ->click('@nav #tab-folders')
+                ->with('@user-folders', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no shared folders in this account.');
                 });
@@ -323,9 +323,9 @@ class UserTest extends TestCaseDusk
                 });
 
             // Assert Shared folders tab
-            $browser->assertSeeIn('@nav #tab-shared-folders', 'Shared folders (2)')
-                ->click('@nav #tab-shared-folders')
-                ->with('@user-shared-folders', function (Browser $browser) {
+            $browser->assertSeeIn('@nav #tab-folders', 'Shared folders (2)')
+                ->click('@nav #tab-folders')
+                ->with('@user-folders', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 2)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'Calendar')
                         ->assertSeeIn('table tbody tr:nth-child(1) td:nth-child(2)', 'Calendar')
@@ -422,9 +422,9 @@ class UserTest extends TestCaseDusk
                 });
 
             // Assert Shared folders tab
-            $browser->assertSeeIn('@nav #tab-shared-folders', 'Shared folders (0)')
-                ->click('@nav #tab-shared-folders')
-                ->with('@user-shared-folders', function (Browser $browser) {
+            $browser->assertSeeIn('@nav #tab-folders', 'Shared folders (0)')
+                ->click('@nav #tab-folders')
+                ->with('@user-folders', function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no shared folders in this account.');
                 });

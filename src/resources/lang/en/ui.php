@@ -430,7 +430,6 @@ return [
         'add-beta' => "Enable beta program",
         'address' => "Address",
         'aliases' => "Aliases",
-        'aliases-email' => "Email Aliases",
         'aliases-none' => "This user has no email aliases.",
         'add-bonus' => "Add bonus",
         'add-bonus-title' => "Add a bonus to the wallet",
@@ -455,6 +454,7 @@ return [
         'distlists' => "Distribution lists",
         'domains' => "Domains",
         'ext-email' => "External Email",
+        'email-aliases' => "Email Aliases",
         'finances' => "Finances",
         'greylisting' => "Greylisting",
         'greylisting-text' => "Greylisting is a method of defending users against spam. Any incoming mail from an unrecognized sender "

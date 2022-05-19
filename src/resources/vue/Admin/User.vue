@@ -86,55 +86,9 @@
                 </div>
             </div>
         </div>
-        <ul class="nav nav-tabs mt-3" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="tab-finances" href="#user-finances" role="tab" aria-controls="user-finances" aria-selected="true">
-                    {{ $t('user.finances') }}
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-aliases" href="#user-aliases" role="tab" aria-controls="user-aliases" aria-selected="false">
-                    {{ $t('user.aliases') }} ({{ user.aliases.length }})
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-subscriptions" href="#user-subscriptions" role="tab" aria-controls="user-subscriptions" aria-selected="false">
-                    {{ $t('user.subscriptions') }} ({{ skus.length }})
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-domains" href="#user-domains" role="tab" aria-controls="user-domains" aria-selected="false">
-                    {{ $t('user.domains') }} ({{ domains.length }})
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-users" href="#user-users" role="tab" aria-controls="user-users" aria-selected="false">
-                    {{ $t('user.users') }} ({{ users.length }})
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-distlists" href="#user-distlists" role="tab" aria-controls="user-distlists" aria-selected="false">
-                    {{ $t('user.distlists') }} ({{ distlists.length }})
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-resources" href="#user-resources" role="tab" aria-controls="user-resources" aria-selected="false">
-                    {{ $t('user.resources') }} ({{ resources.length }})
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-shared-folders" href="#user-shared-folders" role="tab" aria-controls="user-shared-folders" aria-selected="false">
-                    {{ $t('dashboard.shared-folders') }} ({{ folders.length }})
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-settings" href="#user-settings" role="tab" aria-controls="user-settings" aria-selected="false">
-                    {{ $t('form.settings') }}
-                </a>
-            </li>
-        </ul>
+        <tabs class="mt-3" :tabs="tabs" ref="tabs"></tabs>
         <div class="tab-content">
-            <div class="tab-pane show active" id="user-finances" role="tabpanel" aria-labelledby="tab-finances">
+            <div class="tab-pane show active" id="finances" role="tabpanel" aria-labelledby="tab-finances">
                 <div class="card-body">
                     <h2 class="card-title">
                         {{ $t('wallet.title') }}
@@ -181,14 +135,14 @@
                     <transaction-log v-if="wallet.id && !walletReload" class="card-text" :wallet-id="wallet.id" :is-admin="true"></transaction-log>
                 </div>
             </div>
-            <div class="tab-pane" id="user-aliases" role="tabpanel" aria-labelledby="tab-aliases">
+            <div class="tab-pane" id="aliases" role="tabpanel" aria-labelledby="tab-aliases">
                 <div class="card-body">
                     <div class="card-text">
                         <list-table :list="user.aliases" :setup="aliasesListSetup" class="mb-0"></list-table>
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="user-subscriptions" role="tabpanel" aria-labelledby="tab-subscriptions">
+            <div class="tab-pane" id="subscriptions" role="tabpanel" aria-labelledby="tab-subscriptions">
                 <div class="card-body">
                     <div class="card-text">
                         <list-table :list="skus" :setup="skusListSetup" class="mb-0"></list-table>
@@ -203,42 +157,42 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="user-domains" role="tabpanel" aria-labelledby="tab-domains">
+            <div class="tab-pane" id="domains" role="tabpanel" aria-labelledby="tab-domains">
                 <div class="card-body">
                     <div class="card-text">
                         <domain-list :list="domains" class="mb-0"></domain-list>
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="user-users" role="tabpanel" aria-labelledby="tab-users">
+            <div class="tab-pane" id="users" role="tabpanel" aria-labelledby="tab-users">
                 <div class="card-body">
                     <div class="card-text">
                         <user-list :list="users" :current="user" class="mb-0"></user-list>
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="user-distlists" role="tabpanel" aria-labelledby="tab-distlists">
+            <div class="tab-pane" id="distlists" role="tabpanel" aria-labelledby="tab-distlists">
                 <div class="card-body">
                     <div class="card-text">
                         <distlist-list :list="distlists" class="mb-0"></distlist-list>
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="user-resources" role="tabpanel" aria-labelledby="tab-resources">
+            <div class="tab-pane" id="resources" role="tabpanel" aria-labelledby="tab-resources">
                 <div class="card-body">
                     <div class="card-text">
                         <resource-list :list="resources" class="mb-0"></resource-list>
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="user-shared-folders" role="tabpanel" aria-labelledby="tab-shared-folders">
+            <div class="tab-pane" id="folders" role="tabpanel" aria-labelledby="tab-folders">
                 <div class="card-body">
                     <div class="card-text">
                         <shared-folder-list :list="folders" :with-email="true" class="mb-0"></shared-folder-list>
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="user-settings" role="tabpanel" aria-labelledby="tab-settings">
+            <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
                 <div class="card-body">
                     <div class="card-text">
                         <form class="read-only short">
@@ -379,6 +333,17 @@
                     footLabel: 'user.subscriptions-none',
                     model: 'sku'
                 },
+                tabs: [
+                    { label: 'user.finances' },
+                    { label: 'user.aliases', count: 0 },
+                    { label: 'user.subscriptions', count: 0 },
+                    { label: 'user.domains', count: 0 },
+                    { label: 'user.users', count: 0 },
+                    { label: 'user.distlists', count: 0 },
+                    { label: 'user.resources', count: 0 },
+                    { label: 'dashboard.shared-folders', count: 0 },
+                    { label: 'form.settings' }
+                ],
                 users: [],
                 user: {
                     aliases: [],
@@ -395,7 +360,7 @@
                 .then(response => {
                     this.user = response.data
 
-                    const loader = '#user-finances'
+                    const loader = '#finances'
                     const keys = ['first_name', 'last_name', 'external_email', 'billing_address', 'phone', 'organization']
 
                     let country = this.user.settings.country
@@ -409,6 +374,8 @@
 
                     this.discount = this.user.wallet.discount
                     this.discount_description = this.user.wallet.discount_description
+
+                    this.$refs.tabs.updateCounter('aliases', this.user.aliases.length)
 
                     // TODO: currencies, multi-wallets, accounts
                     // Get more info about the wallet (e.g. payment provider related)
@@ -447,6 +414,8 @@
                                     }
                                 }
                             })
+
+                            this.$refs.tabs.updateCounter('subscriptions', this.skus.length)
                         })
 
                     // Fetch users
@@ -454,37 +423,40 @@
                     axios.get('/api/v4/users?owner=' + user_id)
                         .then(response => {
                             this.users = response.data.list;
+                            this.$refs.tabs.updateCounter('users', this.users.length)
                         })
 
                     // Fetch domains
                     axios.get('/api/v4/domains?owner=' + user_id)
                         .then(response => {
                             this.domains = response.data.list
+                            this.$refs.tabs.updateCounter('domains', this.domains.length)
                         })
 
                     // Fetch distribution lists
                     axios.get('/api/v4/groups?owner=' + user_id)
                         .then(response => {
                             this.distlists = response.data.list
+                            this.$refs.tabs.updateCounter('distlists', this.distlists.length)
                         })
 
                     // Fetch resources lists
                     axios.get('/api/v4/resources?owner=' + user_id)
                         .then(response => {
                             this.resources = response.data.list
+                            this.$refs.tabs.updateCounter('resources', this.resources.length)
                         })
 
                     // Fetch shared folders lists
                     axios.get('/api/v4/shared-folders?owner=' + user_id)
                         .then(response => {
                             this.folders = response.data.list
+                            this.$refs.tabs.updateCounter('folders', this.folders.length)
                         })
                 })
                 .catch(this.$root.errorHandler)
         },
         mounted() {
-            $(this.$el).find('ul.nav-tabs a').on('click', this.$root.tab)
-
             this.$refs.discountDialog.events({
                 shown: () => {
                     // Note: Vue v-model is strict, convert null to a string
@@ -506,6 +478,8 @@
                                 cost: sku.cost,
                                 price: this.$root.priceLabel(sku.cost, this.discount)
                             })
+
+                            this.$refs.tabs.updateCounter('subscriptions', this.skus.length)
                         }
                     })
             },
@@ -561,6 +535,7 @@
                             this.$toast.success(response.data.message)
                             this.skus = this.skus.filter(sku => sku.id != this.sku2FA)
                             this.has2FA = false
+                            this.$refs.tabs.updateCounter('subscriptions', this.skus.length)
                         }
                     })
             },

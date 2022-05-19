@@ -7,18 +7,7 @@
                     <btn v-if="file.canDelete" class="btn-outline-danger button-delete float-end" @click="fileDelete" icon="trash-can">{{ $t('file.delete') }}</btn>
                 </div>
                 <div class="card-text">
-                    <ul class="nav nav-tabs mt-3" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="tab-general" href="#general" role="tab" aria-controls="general" aria-selected="true" @click="$root.tab">
-                                {{ $t('form.general') }}
-                            </a>
-                        </li>
-                        <li class="nav-item" v-if="file.isOwner">
-                            <a class="nav-link" id="tab-sharing" href="#sharing" role="tab" aria-controls="sharing" aria-selected="false" @click="$root.tab">
-                                {{ $t('file.sharing') }}
-                            </a>
-                        </li>
-                    </ul>
+                    <tabs class="mt-3" :tabs="file.isOwner ? ['form.general','file.sharing'] : ['form.general']"></tabs>
                     <div class="tab-content">
                         <form class="tab-pane show active card-body read-only short" id="general" role="tabpanel" aria-labelledby="tab-general">
                             <div class="row plaintext">

@@ -8,20 +8,9 @@
                     {{ $tc('distlist.list-title', 1) }}
                     <btn class="btn-outline-danger button-delete float-end" @click="deleteList()" icon="trash-can">{{ $t('distlist.delete') }}</btn>
                 </div>
-                <div class="card-title" v-if="list_id === 'new'">{{ $t('distlist.new') }}</div>
+                <div class="card-title" v-else>{{ $t('distlist.new') }}</div>
                 <div class="card-text">
-                    <ul class="nav nav-tabs mt-3" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="tab-general" href="#general" role="tab" aria-controls="general" aria-selected="true" @click="$root.tab">
-                                {{ $t('form.general') }}
-                            </a>
-                        </li>
-                        <li v-if="list_id !== 'new'" class="nav-item">
-                            <a class="nav-link" id="tab-settings" href="#settings" role="tab" aria-controls="settings" aria-selected="false" @click="$root.tab">
-                                {{ $t('form.settings') }}
-                            </a>
-                        </li>
-                    </ul>
+                    <tabs class="mt-3" :tabs="list_id === 'new' ? ['form.general'] : ['form.general','form.settings']"></tabs>
                     <div class="tab-content">
                         <div class="tab-pane show active" id="general" role="tabpanel" aria-labelledby="tab-general">
                             <form @submit.prevent="submit" class="card-body">

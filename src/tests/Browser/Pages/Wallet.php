@@ -42,8 +42,9 @@ class Wallet extends Page
             '@main' => '#wallet',
             '@payment-dialog' => '#payment-dialog',
             '@nav' => 'ul.nav-tabs',
-            '@history-tab' => '#wallet-history',
-            '@receipts-tab' => '#wallet-receipts',
+            '@history-tab' => '#history',
+            '@receipts-tab' => '#receipts',
+            '@payments-tab' => '#payments',
         ];
     }
 }

@@ -13,22 +13,9 @@
                 </div>
             </div>
         </div>
-
-        <ul class="nav nav-tabs mt-2" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="tab-qrcode" href="#companion-qrcode" role="tab" aria-controls="companion-qrcode" aria-selected="true" @click="$root.tab">
-                    {{ $t('companion.pair-new') }}
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-list" href="#companion-list" role="tab" aria-controls="companion-list" aria-selected="false" @click="$root.tab">
-                    {{ $t('companion.paired') }}
-                </a>
-            </li>
-        </ul>
-
+        <tabs class="mt-3" :tabs="['companion.pair-new','companion.paired']"></tabs>
         <div class="tab-content">
-            <div class="tab-pane active" id="companion-qrcode" role="tabpanel" aria-labelledby="tab-qrcode">
+            <div class="tab-pane active" id="new" role="tabpanel" aria-labelledby="tab-new">
                 <div class="card-body">
                     <div class="card-text">
                         <p>
@@ -40,13 +27,12 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="companion-list" role="tabpanel" aria-labelledby="tab-list">
+            <div class="tab-pane" id="paired" role="tabpanel" aria-labelledby="tab-paired">
                 <div class="card-body">
                     <companionapp-list class="card-text"></companionapp-list>
                 </div>
             </div>
         </div>
-
     </div>
 </template>
 

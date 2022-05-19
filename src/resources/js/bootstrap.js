@@ -27,15 +27,17 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Btn from '../vue/Widgets/Btn'
 import BtnRouter from '../vue/Widgets/BtnRouter'
+import Tabs from '../vue/Widgets/Tabs'
 import Toast from '../vue/Widgets/Toast'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { Tooltip } from 'bootstrap'
 
 window.Vue = Vue
 
-Vue.component('SvgIcon', FontAwesomeIcon)
 Vue.component('Btn', Btn)
 Vue.component('BtnRouter', BtnRouter)
+Vue.component('SvgIcon', FontAwesomeIcon)
+Vue.component('Tabs', Tabs)
 
 const vTooltip = (el, binding) => {
     let t = []
@@ -62,7 +64,6 @@ Vue.directive('tooltip', {
 })
 
 Vue.use(Toast)
-
 Vue.use(VueRouter)
 
 let vueRouterBase = '/'

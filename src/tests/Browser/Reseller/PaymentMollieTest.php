@@ -61,10 +61,10 @@ class PaymentMollieTest extends TestCaseDusk
                 ->click('@main button')
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Top up your wallet')
-                        ->waitFor('#payment-method-selection #creditcard')
-                        ->waitFor('#payment-method-selection #paypal')
-                        ->waitFor('#payment-method-selection #banktransfer')
-                        ->click('#creditcard');
+                        ->waitFor('#payment-method-selection .link-creditcard svg')
+                        ->waitFor('#payment-method-selection .link-paypal svg')
+                        ->waitFor('#payment-method-selection .link-banktransfer svg')
+                        ->click('#payment-method-selection .link-creditcard');
                 })
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Top up your wallet')

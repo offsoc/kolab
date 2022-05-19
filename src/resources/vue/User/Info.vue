@@ -11,18 +11,7 @@
                 </div>
                 <div class="card-title" v-if="user_id === 'new'">{{ $t('user.new') }}</div>
                 <div class="card-text">
-                    <ul class="nav nav-tabs mt-3" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="tab-general" href="#general" role="tab" aria-controls="general" aria-selected="true" @click="$root.tab">
-                                {{ $t('form.general') }}
-                            </a>
-                        </li>
-                        <li v-if="user_id !== 'new'" class="nav-item">
-                            <a class="nav-link" id="tab-settings" href="#settings" role="tab" aria-controls="settings" aria-selected="false" @click="$root.tab">
-                                {{ $t('form.settings') }}
-                            </a>
-                        </li>
-                    </ul>
+                    <tabs class="mt-3" :tabs="user_id === 'new' ? ['form.general'] : ['form.general','form.settings']"></tabs>
                     <div class="tab-content">
                         <div class="tab-pane show active" id="general" role="tabpanel" aria-labelledby="tab-general">
                             <form @submit.prevent="submit" class="card-body">
@@ -57,7 +46,7 @@
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <label for="aliases-input" class="col-sm-4 col-form-label">{{ $t('user.aliases-email') }}</label>
+                                    <label for="aliases-input" class="col-sm-4 col-form-label">{{ $t('user.email-aliases') }}</label>
                                     <div class="col-sm-8">
                                         <list-input id="aliases" :list="user.aliases"></list-input>
                                     </div>

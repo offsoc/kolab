@@ -47,15 +47,9 @@
                 </div>
             </div>
         </div>
-        <ul class="nav nav-tabs mt-3" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="tab-settings" href="#distlist-settings" role="tab" aria-controls="distlist-settings" aria-selected="false" @click="$root.tab">
-                    {{ $t('form.settings') }}
-                </a>
-            </li>
-        </ul>
+        <tabs class="mt-3" :tabs="['form.settings']"></tabs>
         <div class="tab-content">
-            <div class="tab-pane show active" id="distlist-settings" role="tabpanel" aria-labelledby="tab-settings">
+            <div class="tab-pane show active" id="settings" role="tabpanel" aria-labelledby="tab-settings">
                 <div class="card-body">
                     <div class="card-text">
                         <form class="read-only short">

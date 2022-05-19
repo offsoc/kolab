@@ -37,20 +37,9 @@
                 </div>
             </div>
         </div>
-        <ul class="nav nav-tabs mt-3" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="tab-settings" href="#folder-settings" role="tab" aria-controls="folder-settings" aria-selected="false" @click="$root.tab">
-                    {{ $t('form.settings') }}
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-aliases" href="#folder-aliases" role="tab" aria-controls="folder-aliases" aria-selected="false" @click="$root.tab">
-                    {{ $t('user.aliases-email') }} ({{ folder.aliases.length }})
-                </a>
-            </li>
-        </ul>
+        <tabs class="mt-3" :tabs="tabs" ref="tabs"></tabs>
         <div class="tab-content">
-            <div class="tab-pane show active" id="folder-settings" role="tabpanel" aria-labelledby="tab-settings">
+            <div class="tab-pane show active" id="settings" role="tabpanel" aria-labelledby="tab-settings">
                 <div class="card-body">
                     <div class="card-text">
                         <form class="read-only short">
@@ -71,7 +60,7 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="folder-aliases" role="tabpanel" aria-labelledby="tab-aliases">
+            <div class="tab-pane" id="aliases" role="tabpanel" aria-labelledby="tab-aliases">
                 <div class="card-body">
                     <div class="card-text">
                         <list-table :list="folder.aliases" :setup="aliasesListSetup" class="mb-0"></list-table>
@@ -100,13 +89,18 @@
                     ],
                     footLabel: 'shf.aliases-none'
                 },
-                folder: { config: {}, aliases: [] }
+                folder: { config: {}, aliases: [] },
+                tabs: [
+                    { label: 'form.settings' },
+                    { label: 'user.email-aliases', count: 0 }
+                ]
             }
         },
         created() {
             axios.get('/api/v4/shared-folders/' + this.$route.params.folder, { loader: true })
                 .then(response => {
                     this.folder = response.data
+                    this.tabs[1].count = this.folder.aliases.length
                 })
                 .catch(this.$root.errorHandler)
         }

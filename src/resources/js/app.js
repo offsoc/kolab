@@ -9,7 +9,6 @@ require('./bootstrap')
 import AppComponent from '../vue/App'
 import MenuComponent from '../vue/Widgets/Menu'
 import SupportForm from '../vue/Widgets/SupportForm'
-import { Tab } from 'bootstrap'
 import { loadLangAsync, i18n } from './locale'
 import { clearFormValidation, pick, startLoading, stopLoading } from './utils'
 
@@ -169,10 +168,6 @@ const app = new Vue({
         pick,
         startLoading,
         stopLoading,
-        tab(e) {
-            e.preventDefault()
-            new Tab(e.target).show()
-        },
         errorPage(code, msg, hint) {
             // Until https://github.com/vuejs/vue-router/issues/977 is implemented
             // we can't really use router to display error page as it has two side
@@ -206,6 +201,10 @@ const app = new Vue({
                     this.logoutUser(false)
                 }
             } else {
+                if (!error.response) {
+                    console.error(error)
+                }
+
                 this.errorPage(status, message)
             }
         },

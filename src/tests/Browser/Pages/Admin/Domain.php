@@ -52,8 +52,8 @@ class Domain extends Page
             '@app' => '#app',
             '@domain-info' => '#domain-info',
             '@nav' => 'ul.nav-tabs',
-            '@domain-config' => '#domain-config',
-            '@domain-settings' => '#domain-settings',
+            '@domain-config' => '#config',
+            '@domain-settings' => '#settings',
         ];
     }
 }

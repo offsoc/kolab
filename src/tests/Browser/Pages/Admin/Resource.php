@@ -51,7 +51,7 @@ class Resource extends Page
         return [
             '@app' => '#app',
             '@resource-info' => '#resource-info',
-            '@resource-settings' => '#resource-settings',
+            '@resource-settings' => '#settings',
         ];
     }
 }

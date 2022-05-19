@@ -70,9 +70,9 @@ class SharedFolderTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->visit($user_page)
                 ->on($user_page)
-                ->click('@nav #tab-shared-folders')
+                ->click('@nav #tab-folders')
                 ->pause(1000)
-                ->click('@user-shared-folders table tbody tr:first-child td:first-child a')
+                ->click('@user-folders table tbody tr:first-child td:first-child a')
                 ->on($folder_page)
                 ->assertSeeIn('@folder-info .card-title', $folder->email)
                 ->with('@folder-info form', function (Browser $browser) use ($folder) {

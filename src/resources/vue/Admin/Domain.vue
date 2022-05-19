@@ -35,20 +35,9 @@
                 </div>
             </div>
         </div>
-        <ul class="nav nav-tabs mt-3" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="tab-config" href="#domain-config" role="tab" aria-controls="domain-config" aria-selected="true" @click="$root.tab">
-                    {{ $t('form.config') }}
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-settings" href="#domain-settings" role="tab" aria-controls="domain-settings" aria-selected="false" @click="$root.tab">
-                    {{ $t('form.settings') }}
-                </a>
-            </li>
-        </ul>
+        <tabs class="mt-3" :tabs="['form.config', 'form.settings']"></tabs>
         <div class="tab-content">
-            <div class="tab-pane show active" id="domain-config" role="tabpanel" aria-labelledby="tab-config">
+            <div class="tab-pane show active" id="config" role="tabpanel" aria-labelledby="tab-config">
                 <div class="card-body">
                     <div class="card-text">
                         <p>{{ $t('domain.dns-verify') }}</p>
@@ -58,7 +47,7 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="domain-settings" role="tabpanel" aria-labelledby="tab-settings">
+            <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
                 <div class="card-body">
                     <div class="card-text">
                         <form class="read-only short">

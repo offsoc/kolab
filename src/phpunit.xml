@@ -23,24 +23,7 @@
 
         <testsuite name="Browser">
             <directory suffix="Test.php">tests/Browser</directory>
-            <exclude>tests/Browser/Reseller/DashboardTest.php</exclude>
-            <exclude>tests/Browser/Reseller/DistlistTest.php</exclude>
-            <exclude>tests/Browser/Reseller/DomainTest.php</exclude>
-            <exclude>tests/Browser/Reseller/InvitationsTest.php</exclude>
-            <exclude>tests/Browser/Reseller/LogonTest.php</exclude>
-            <exclude>tests/Browser/Reseller/PaymentMollieTest.php</exclude>
-            <exclude>tests/Browser/Reseller/ResourceTest.php</exclude>
-            <exclude>tests/Browser/Reseller/SharedFolderTest.php</exclude>
-            <exclude>tests/Browser/Reseller/StatsTest.php</exclude>
-            <exclude>tests/Browser/Reseller/UserTest.php</exclude>
-            <exclude>tests/Browser/Reseller/WalletTest.php</exclude>
-            <exclude>tests/Browser/Reseller/UserFinancesTest.php</exclude>
-            <exclude>tests/Browser/LogonTest.php</exclude>
-            <exclude>tests/Browser/SignupTest.php</exclude>
             <exclude>tests/Browser/PaymentStripeTest.php</exclude>
-            <exclude>tests/Browser/Meet/RoomSetupTest.php</exclude>
-            <exclude>tests/Browser/Meet/RoomControlsTest.php</exclude>
-            <exclude>tests/Browser/Meet/RoomModeratorTest.php</exclude>
         </testsuite>
     </testsuites>
     <coverage processUncoveredFiles="true">

@@ -41,25 +41,10 @@
             </div>
         </div>
 
-        <ul class="nav nav-tabs mt-3" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="tab-receipts" href="#wallet-receipts" role="tab" aria-controls="wallet-receipts" aria-selected="true">
-                    {{ $t('wallet.receipts') }}
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab-history" href="#wallet-history" role="tab" aria-controls="wallet-history" aria-selected="false">
-                    {{ $t('wallet.history') }}
-                </a>
-            </li>
-            <li v-if="showPendingPayments" class="nav-item">
-                <a class="nav-link" id="tab-payments" href="#wallet-payments" role="tab" aria-controls="wallet-payments" aria-selected="false">
-                    {{ $t('wallet.pending-payments') }}
-                </a>
-            </li>
-        </ul>
+        <tabs class="mt-3" ref="tabs" :tabs="tabs"></tabs>
+
         <div class="tab-content">
-            <div class="tab-pane active" id="wallet-receipts" role="tabpanel" aria-labelledby="tab-receipts">
+            <div class="tab-pane active" id="receipts" role="tabpanel" aria-labelledby="tab-receipts">
                 <div class="card-body">
                     <div class="card-text">
                         <p v-if="receipts.length">
@@ -77,12 +62,12 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="wallet-history" role="tabpanel" aria-labelledby="tab-history">
+            <div class="tab-pane" id="history" role="tabpanel" aria-labelledby="tab-history">
                 <div class="card-body">
                     <transaction-log v-if="walletId && loadTransactions" class="card-text" :wallet-id="walletId"></transaction-log>
                 </div>
             </div>
-            <div class="tab-pane" id="wallet-payments" role="tabpanel" aria-labelledby="tab-payments">
+            <div class="tab-pane" id="payments" role="tabpanel" aria-labelledby="tab-payments">
                 <div class="card-body">
                     <payment-log v-if="walletId && loadPayments" class="card-text" :wallet-id="walletId"></payment-log>
                 </div>
@@ -213,6 +198,13 @@
                 }
 
                 return [ button ]
+            },
+            tabs() {
+                let tabs = [ 'wallet.receipts', 'wallet.history' ]
+                if (this.showPendingPayments) {
+                    tabs.push('wallet.pending-payments')
+                }
+                return tabs
             }
         },
         mounted() {
@@ -224,7 +216,7 @@
                 .then(response => {
                     this.wallet = response.data
 
-                    axios.get('/api/v4/wallets/' + this.walletId + '/receipts', { loader: '#wallet-receipts' })
+                    axios.get('/api/v4/wallets/' + this.walletId + '/receipts', { loader: '#receipts' })
                         .then(response => {
                             this.receipts = response.data.list
                         })
@@ -241,17 +233,9 @@
                 .then(response => {
                     this.showPendingPayments = response.data.hasPending
                 })
-        },
-        updated() {
-            $(this.$el).find('ul.nav-tabs a').on('click', e => {
-                this.$root.tab(e)
 
-                if ($(e.target).is('#tab-history')) {
-                    this.loadTransactions = true
-                } else if ($(e.target).is('#tab-payments')) {
-                    this.loadPayments = true
-                }
-            })
+            this.$refs.tabs.clickHandler('history', () => { this.loadTransactions = true })
+            this.$refs.tabs.clickHandler('payments', () => { this.loadPayments = true })
         },
         methods: {
             loadMandate() {

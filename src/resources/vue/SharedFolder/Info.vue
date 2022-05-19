@@ -10,18 +10,7 @@
                 </div>
                 <div class="card-title" v-if="folder_id === 'new'">{{ $t('shf.new') }}</div>
                 <div class="card-text">
-                    <ul class="nav nav-tabs mt-3" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="tab-general" href="#general" role="tab" aria-controls="general" aria-selected="true" @click="$root.tab">
-                                {{ $t('form.general') }}
-                            </a>
-                        </li>
-                        <li v-if="folder_id !== 'new'" class="nav-item">
-                            <a class="nav-link" id="tab-settings" href="#settings" role="tab" aria-controls="settings" aria-selected="false" @click="$root.tab">
-                                {{ $t('form.settings') }}
-                            </a>
-                        </li>
-                    </ul>
+                    <tabs class="mt-3" :tabs="folder_id === 'new' ? ['form.general'] : ['form.general', 'form.settings']"></tabs>
                     <div class="tab-content">
                         <div class="tab-pane show active" id="general" role="tabpanel" aria-labelledby="tab-general">
                             <form @submit.prevent="submit" class="card-body">
