@@ -6,7 +6,7 @@
             <div class="card-body">
                 <div class="card-title" v-if="domain_id === 'new'">{{ $t('domain.new') }}</div>
                 <div class="card-title" v-else>{{ $t('form.domain') }}
-                    <btn class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()" icon="trash-can">{{ $t('domain.delete') }}</btn>
+                    <btn class="btn-outline-danger button-delete float-end" @click="$refs.deleteDialog.show()" icon="trash-can">{{ $t('domain.delete') }}</btn>
                 </div>
                 <div class="card-text">
                     <ul class="nav nav-tabs mt-3" role="tablist">
@@ -93,29 +93,18 @@
                 </div>
             </div>
         </div>
-        <div id="delete-warning" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $t('domain.delete-domain', { domain: domain.namespace }) }}</h5>
-                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ $t('domain.delete-text') }}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-danger modal-action" @click="deleteDomain()" icon="trash-can">{{ $t('btn.delete') }}</btn>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+        <modal-dialog id="delete-warning" ref="deleteDialog" @click="deleteDomain()" :buttons="['delete']" :cancel-focus="true"
+                      :title="$t('domain.delete-domain', { domain: domain.namespace })"
+        >
+            <p>{{ $t('domain.delete-text') }}</p>
+        </modal-dialog>
     </div>
 </template>
 
 <script>
-    import { Modal } from 'bootstrap'
     import ListInput from '../Widgets/ListInput'
+    import ModalDialog from '../Widgets/ModalDialog'
     import PackageSelect from '../Widgets/PackageSelect'
     import StatusComponent from '../Widgets/Status'
     import SubscriptionSelect from '../Widgets/SubscriptionSelect'
@@ -129,6 +118,7 @@
     export default {
         components: {
             ListInput,
+            ModalDialog,
             PackageSelect,
             StatusComponent,
             SubscriptionSelect
@@ -161,9 +151,6 @@
         },
         mounted() {
             $('#namespace').focus()
-            $('#delete-warning')[0].addEventListener('shown.bs.modal', event => {
-                $(event.target).find('button.modal-cancel').focus()
-            })
         },
         methods: {
             confirm() {
@@ -188,10 +175,6 @@
                             this.$router.push({ name: 'domains' })
                         }
                     })
-            },
-            showDeleteConfirmation() {
-                // Display the warning
-                new Modal('#delete-warning').show()
             },
             statusUpdate(domain) {
                 this.domain = Object.assign({}, this.domain, domain)

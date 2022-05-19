@@ -279,6 +279,7 @@ class Browser extends \Laravel\Dusk\Browser
                 if (
                     $entry['level'] != 'SEVERE'
                     || strpos($entry['message'], 'Failed to load resource: the server responded with a status of')
+                    || preg_match('/^\S+\.js [0-9]+:[0-9]+\s*$/', $entry['message'])
                 ) {
                     $console[$idx] = null;
                 }

@@ -257,7 +257,7 @@ const app = new Vue({
                 dialog = form.$el
             }
 
-            dialog.__vue__.showDialog()
+            dialog.__vue__.show()
         },
         statusClass(obj) {
             if (obj.isDeleted) {

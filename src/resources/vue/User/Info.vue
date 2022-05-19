@@ -111,29 +111,17 @@
                 </div>
             </div>
         </div>
-        <div id="delete-warning" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $t('user.delete-email', { email: user.email }) }}</h5>
-                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ $t('user.delete-text') }}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-danger modal-action" icon="trash-can" @click="deleteUser()">{{ $t('btn.delete') }}</btn>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <modal-dialog id="delete-warning" ref="deleteWarning" :buttons="['delete']" :cancel-focus="true" @click="deleteUser()"
+                      :title="$t('user.delete-email', { email: user.email })"
+        >
+            <p>{{ $t('user.delete-text') }}</p>
+        </modal-dialog>
     </div>
 </template>
 
 <script>
-    import { Modal } from 'bootstrap'
     import ListInput from '../Widgets/ListInput'
+    import ModalDialog from '../Widgets/ModalDialog'
     import PackageSelect from '../Widgets/PackageSelect'
     import PasswordInput from '../Widgets/PasswordInput'
     import StatusComponent from '../Widgets/Status'
@@ -148,6 +136,7 @@
     export default {
         components: {
             ListInput,
+            ModalDialog,
             PackageSelect,
             PasswordInput,
             StatusComponent,
@@ -195,9 +184,6 @@
         },
         mounted() {
             $('#first_name').focus()
-            $('#delete-warning')[0].addEventListener('shown.bs.modal', event => {
-                $(event.target).find('button.modal-cancel').focus()
-            })
         },
         methods: {
             passwordLinkCopy() {
@@ -314,7 +300,7 @@
                     this.$router.push({ name: 'profile-delete' })
                 } else {
                     // Display the warning
-                    new Modal('#delete-warning').show()
+                    this.$refs.deleteWarning.show()
                 }
             }
         }

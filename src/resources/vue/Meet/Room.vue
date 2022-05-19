@@ -39,7 +39,7 @@
                 <button class="btn link-fullscreen open hidden" @click="switchFullscreen" :title="$t('meet.menu-fullscreen-exit')">
                     <svg-icon icon="compress"></svg-icon>
                 </button>
-                <button class="btn link-options" v-if="isRoomOwner()" @click="roomOptions" :title="$t('meet.options')">
+                <button class="btn link-options" v-if="isRoomOwner()" @click="$refs.optionsDialog.show()" :title="$t('meet.options')">
                     <svg-icon icon="gear"></svg-icon>
                 </button>
                 <button class="btn link-logout" @click="logout" :title="$t('meet.menu-leave')">
@@ -121,70 +121,45 @@
 
         <logon-form id="meet-auth" class="hidden" :dashboard="false" @success="authSuccess"></logon-form>
 
-        <div id="leave-dialog" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $t('meet.leave-title') }}</h5>
-                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ $t('meet.leave-body') }}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <btn class="btn-danger modal-action" data-bs-dismiss="modal">{{ $t('btn.close') }}</btn>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <modal-dialog id="leave-dialog" ref="leaveDialog" :title="$t('meet.leave-title')">
+            <p>{{ $t('meet.leave-body') }}</p>
+        </modal-dialog>
 
-        <div id="media-setup-dialog" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $t('meet.media-title') }}</h5>
-                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
-                    </div>
-                    <div class="modal-body">
-                        <form class="media-setup-form">
-                            <div class="media-setup-preview"></div>
-                            <div class="input-group mt-2">
-                                <label for="setup-mic" class="input-group-text mb-0" :title="$t('meet.mic')">
-                                    <svg-icon icon="microphone"></svg-icon>
-                                </label>
-                                <select class="form-select" id="setup-mic" v-model="microphone" @change="setupMicrophoneChange">
-                                    <option value="">{{ $t('form.none') }}</option>
-                                    <option v-for="mic in setup.microphones" :value="mic.deviceId" :key="mic.deviceId">{{ mic.label }}</option>
-                                </select>
-                            </div>
-                            <div class="input-group mt-2">
-                                <label for="setup-cam" class="input-group-text mb-0" :title="$t('meet.cam')">
-                                    <svg-icon icon="video"></svg-icon>
-                                </label>
-                                <select class="form-select" id="setup-cam" v-model="camera" @change="setupCameraChange">
-                                    <option value="">{{ $t('form.none') }}</option>
-                                    <option v-for="cam in setup.cameras" :value="cam.deviceId" :key="cam.deviceId">{{ cam.label }}</option>
-                                </select>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <btn class="btn-secondary modal-action" data-bs-dismiss="modal">{{ $t('btn.close') }}</btn>
-                    </div>
+        <modal-dialog id="media-setup-dialog" ref="setupDialog" :title="$t('meet.media-title')">
+            <form class="media-setup-form">
+                <div class="media-setup-preview"></div>
+                <div class="input-group mt-2">
+                    <label for="setup-mic" class="input-group-text mb-0" :title="$t('meet.mic')">
+                        <svg-icon icon="microphone"></svg-icon>
+                    </label>
+                    <select class="form-select" id="setup-mic" v-model="microphone" @change="setupMicrophoneChange">
+                        <option value="">{{ $t('form.none') }}</option>
+                        <option v-for="mic in setup.microphones" :value="mic.deviceId" :key="mic.deviceId">{{ mic.label }}</option>
+                    </select>
                 </div>
-            </div>
-        </div>
+                <div class="input-group mt-2">
+                    <label for="setup-cam" class="input-group-text mb-0" :title="$t('meet.cam')">
+                        <svg-icon icon="video"></svg-icon>
+                    </label>
+                    <select class="form-select" id="setup-cam" v-model="camera" @change="setupCameraChange">
+                        <option value="">{{ $t('form.none') }}</option>
+                        <option v-for="cam in setup.cameras" :value="cam.deviceId" :key="cam.deviceId">{{ cam.label }}</option>
+                    </select>
+                </div>
+            </form>
+        </modal-dialog>
 
-        <room-options v-if="session.config" :config="session.config" :room="room" @config-update="configUpdate"></room-options>
-        <room-stats ref="roomStatsDialog" :stats="stats" :room="room"></room-stats>
+        <room-options v-if="session.config" :config="session.config" :room="room" @config-update="configUpdate" ref="optionsDialog"></room-options>
+        <room-stats ref="statsDialog" :room="room"></room-stats>
     </div>
 </template>
 
 <script>
-    import { Modal, Dropdown } from 'bootstrap'
+    import { Dropdown } from 'bootstrap'
     import { Media } from '../../js/meet/media.js'
     import { Room as Meet } from '../../js/meet/room.js'
     import { Roles } from '../../js/meet/constants.js'
+    import ModalDialog from '../Widgets/ModalDialog'
     import StatusMessage from '../Widgets/StatusMessage'
     import LogonForm from '../Login'
     import RoomOptions from './RoomOptions'
@@ -214,12 +189,12 @@
     )
 
     let roomRequest
-    let statsRequest
     const authHeader = 'X-Meet-Auth-Token'
 
     export default {
         components: {
             LogonForm,
+            ModalDialog,
             RoomOptions,
             RoomStats,
             StatusMessage
@@ -257,7 +232,6 @@
                     500: 'meet.status-500'
                 },
                 session: {},
-                stats: {},
                 audioActive: false,
                 videoActive: false,
                 chatActive: false,
@@ -279,22 +253,21 @@
             this.setupSession()
 
             // Configure dialog events
-            $('#leave-dialog')[0].addEventListener('hide.bs.modal', () => {
-                // FIXME: Where exactly the user should land? Currently he'll land
-                //        on dashboard (if he's logged in) or login form (if he's not).
-
-                this.$router.push({ name: 'dashboard' })
+            this.$refs.leaveDialog.events({
+                hide: () => {
+                    // FIXME: Where exactly the user should land? Currently he'll land
+                    //        on dashboard (if he's logged in) or login form (if he's not).
+                    this.$router.push({ name: 'dashboard' })
+                }
             })
 
-            const dialog = $('#media-setup-dialog')[0]
-            dialog.addEventListener('show.bs.modal', () => { this.setupSession() })
-            dialog.addEventListener('hide.bs.modal', () => { this.meet.setupStop() })
-
-            this.roomStatsDialog = new Modal('#room-stats-dialog')
+            this.$refs.setupDialog.events({
+                show: () => { this.setupSession() },
+                hide: () => { this.meet.setupStop() }
+            })
         },
         beforeDestroy() {
             clearTimeout(roomRequest)
-            clearInterval(statsRequest)
 
             $('#app').removeClass('meet')
 
@@ -316,10 +289,6 @@
             },
             configUpdate(config) {
                 this.session.config = Object.assign({}, this.session.config, config)
-            },
-            async refreshStats() {
-                let stats = await this.meet.getStats()
-                this.stats = stats
             },
             initSession(init) {
                 const button = $('#join-button').prop('disabled', true)
@@ -453,7 +422,6 @@
                 }
 
                 clearTimeout(roomRequest)
-                clearInterval(statsRequest)
 
                 this.session.nickname = this.nickname
                 this.session.languages = this.languages
@@ -474,15 +442,13 @@
                 this.session.onDestroy = event => {
                     // TODO: Display different message for every other reason
                     if (event.reason == 'session-closed' && !this.isRoomOwner()) {
-                        new Modal('#leave-dialog').show()
+                        this.$refs.leaveDialog.show()
                     }
                 }
                 this.session.onUpdate = data => { this.updateSession(data) }
                 this.session.onMediaSetup = () => { this.setupMedia() }
 
                 this.meet.joinRoom(this.session)
-
-                this.refreshStats()
 
                 this.keyboardShortcuts()
             },
@@ -500,7 +466,7 @@
                     }
                     // Show stats with '?' key
                     if (e.key == '?') {
-                        this.roomStats()
+                        this.$refs.statsDialog.toggle(this.meet)
                     }
                 })
             },
@@ -537,18 +503,6 @@
             roomOptions() {
                 new Modal('#room-options-dialog').show()
             },
-            roomStats() {
-                clearInterval(statsRequest)
-                if (this.roomStatsDialog.visible) {
-                    this.roomStatsDialog.hide()
-                } else {
-                    this.refreshStats()
-                    statsRequest = setInterval(() => {
-                        this.refreshStats()
-                    }, 3000)
-                    this.roomStatsDialog.show()
-                }
-            },
             setupMedia() {
                 const dialog = $('#media-setup-dialog')[0]
 
@@ -556,7 +510,7 @@
                     $('#meet-setup').find('video,div.volume').appendTo($('.media-setup-preview', dialog))
                 }
 
-                new Modal(dialog).show()
+                this.$refs.setupDialog.show()
             },
             async setupSession() {
                 this.meet.setupStart({

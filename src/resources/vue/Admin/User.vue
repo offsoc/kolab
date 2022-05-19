@@ -197,7 +197,7 @@
                             &sup1; {{ $t('user.discount-hint') }}: {{ discount }}% - {{ discount_description }}
                         </small>
                         <div class="mt-2 buttons">
-                            <btn class="btn-danger" id="reset2fa" v-if="has2FA" @click="reset2FADialog">{{ $t('user.reset-2fa') }}</btn>
+                            <btn class="btn-danger" id="reset2fa" v-if="has2FA" @click="$refs.reset2faDialog.show()">{{ $t('user.reset-2fa') }}</btn>
                             <btn class="btn-secondary" id="addbetasku" v-if="!hasBeta" @click="addBetaSku">{{ $t('user.add-beta') }}</btn>
                         </div>
                     </div>
@@ -257,102 +257,50 @@
             </div>
         </div>
 
-        <div id="discount-dialog" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $t('user.discount-title') }}</h5>
-                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
-                    </div>
-                    <div class="modal-body">
-                        <p>
-                            <select v-model="wallet.discount_id" class="form-select">
-                                <option value="">- {{ $t('form.none') }} -</option>
-                                <option v-for="item in discounts" :value="item.id" :key="item.id">{{ item.label }}</option>
-                            </select>
-                        </p>
-                    </div>
-                    <div class="modal-footer">
-                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-primary modal-action" @click="submitDiscount()" icon="check">{{ $t('btn.submit') }}</btn>
-                    </div>
-                </div>
+        <modal-dialog id="discount-dialog" ref="discountDialog" :title="$t('user.discount-title')" @click="submitDiscount()" :buttons="['submit']">
+            <div>
+                <select v-model="wallet.discount_id" class="form-select">
+                    <option value="">- {{ $t('form.none') }} -</option>
+                    <option v-for="item in discounts" :value="item.id" :key="item.id">{{ item.label }}</option>
+                </select>
             </div>
-        </div>
+        </modal-dialog>
 
-        <div id="email-dialog" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $t('user.ext-email') }}</h5>
-                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
-                    </div>
-                    <div class="modal-body">
-                        <p>
-                            <input v-model="external_email" name="external_email" class="form-control">
-                        </p>
-                    </div>
-                    <div class="modal-footer">
-                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-primary modal-action" @click="submitEmail()" icon="check">{{ $t('btn.submit') }}</btn>
-                    </div>
-                </div>
+        <modal-dialog id="email-dialog" ref="emailDialog" :title="$t('user.ext-email')" @click="submitEmail()" :buttons="['submit']">
+            <div>
+                <input v-model="external_email" name="external_email" class="form-control">
             </div>
-        </div>
+        </modal-dialog>
 
-        <div id="oneoff-dialog" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $t(oneoff_negative ? 'user.add-penalty-title' : 'user.add-bonus-title') }}</h5>
-                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
-                    </div>
-                    <div class="modal-body">
-                        <form data-validation-prefix="oneoff_">
-                            <div class="row mb-3">
-                                <label for="oneoff_amount" class="col-form-label">{{ $t('form.amount') }}</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="oneoff_amount" v-model="oneoff_amount" required>
-                                    <span class="input-group-text">{{ wallet.currency }}</span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <label for="oneoff_description" class="col-form-label">{{ $t('form.description') }}</label>
-                                <input class="form-control" id="oneoff_description" v-model="oneoff_description" required>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-primary modal-action" @click="submitOneOff()" icon="check">{{ $t('btn.submit') }}</btn>
+        <modal-dialog id="oneoff-dialog" ref="oneoffDialog" @click="submitOneOff()" :buttons="['submit']"
+                      :title="$t(oneoff_negative ? 'user.add-penalty-title' : 'user.add-bonus-title')"
+        >
+            <form data-validation-prefix="oneoff_">
+                <div class="mb-3">
+                    <label for="oneoff_amount" class="form-label">{{ $t('form.amount') }}</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="oneoff_amount" v-model="oneoff_amount" required>
+                        <span class="input-group-text">{{ wallet.currency }}</span>
                     </div>
                 </div>
-            </div>
-        </div>
+                <div>
+                    <label for="oneoff_description" class="form-label">{{ $t('form.description') }}</label>
+                    <input class="form-control" id="oneoff_description" v-model="oneoff_description" required>
+                </div>
+            </form>
+        </modal-dialog>
 
-        <div id="reset-2fa-dialog" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $t('user.reset-2fa-title') }}</h5>
-                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ $t('user.2fa-hint1') }}</p>
-                        <p>{{ $t('user.2fa-hint2') }}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-danger modal-action" @click="reset2FA()">{{ $t('btn.reset') }}</btn>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <modal-dialog id="reset-2fa-dialog" ref="reset2faDialog" :title="$t('user.reset-2fa-title')" @click="reset2FA()"
+                      :buttons="[{className: 'btn-danger modal-action', label: 'btn.reset'}]"
+        >
+            <p>{{ $t('user.2fa-hint1') }}</p>
+            <p>{{ $t('user.2fa-hint2') }}</p>
+        </modal-dialog>
     </div>
 </template>
 
 <script>
-    import { Modal } from 'bootstrap'
+    import ModalDialog from '../Widgets/ModalDialog'
     import TransactionLog from '../Widgets/TransactionLog'
     import { ListTable } from '../Widgets/ListTools'
     import { default as DistlistList } from '../Distlist/ListWidget'
@@ -375,6 +323,7 @@
             DistlistList,
             DomainList,
             ListTable,
+            ModalDialog,
             ResourceList,
             SharedFolderList,
             TransactionLog,
@@ -535,6 +484,13 @@
         },
         mounted() {
             $(this.$el).find('ul.nav-tabs a').on('click', this.$root.tab)
+
+            this.$refs.discountDialog.events({
+                shown: () => {
+                    // Note: Vue v-model is strict, convert null to a string
+                    this.wallet.discount_id = this.wallet.discount_id || ''
+                }
+            })
         },
         methods: {
             addBetaSku() {
@@ -560,19 +516,7 @@
                 this.oneOffDialog(false)
             },
             discountEdit() {
-                if (!this.discount_dialog) {
-                    const dialog = $('#discount-dialog')[0]
-
-                    dialog.addEventListener('shown.bs.modal', e => {
-                        $(dialog).find('select').focus()
-                        // Note: Vue v-model is strict, convert null to a string
-                        this.wallet.discount_id = this.wallet_discount_id || ''
-                    })
-
-                    this.discount_dialog = new Modal(dialog)
-                }
-
-                this.discount_dialog.show()
+                this.$refs.discountDialog.show()
 
                 if (!this.discounts.length) {
                     // Fetch discounts
@@ -585,18 +529,7 @@
             emailEdit() {
                 this.external_email = this.user.external_email
                 this.$root.clearFormValidation($('#email-dialog'))
-
-                if (!this.email_dialog) {
-                    const dialog = $('#email-dialog')[0]
-
-                    dialog.addEventListener('shown.bs.modal', e => {
-                        $(dialog).find('input').focus()
-                    })
-
-                    this.email_dialog = new Modal(dialog)
-                }
-
-                this.email_dialog.show()
+                this.$refs.emailDialog.show()
             },
             setMandateState() {
                 let mandate = this.wallet.mandate
@@ -610,19 +543,7 @@
             },
             oneOffDialog(negative) {
                 this.oneoff_negative = negative
-
-                if (!this.oneoff_dialog) {
-                    const dialog = $('#oneoff-dialog')[0]
-
-                    dialog.addEventListener('shown.bs.modal', () => {
-                        this.$root.clearFormValidation(dialog)
-                        $(dialog).find('#oneoff_amount').focus()
-                    })
-
-                    this.oneoff_dialog = new Modal(dialog)
-                }
-
-                this.oneoff_dialog.show()
+                this.$refs.oneoffDialog.show()
             },
             penalizeDialog() {
                 this.oneOffDialog(true)
@@ -633,7 +554,7 @@
                 this.$nextTick(() => { this.walletReload = false })
             },
             reset2FA() {
-                new Modal('#reset-2fa-dialog').hide()
+                this.$refs.reset2faDialog.hide()
                 axios.post('/api/v4/users/' + this.user.id + '/reset2FA')
                     .then(response => {
                         if (response.data.status == 'success') {
@@ -643,11 +564,8 @@
                         }
                     })
             },
-            reset2FADialog() {
-                new Modal('#reset-2fa-dialog').show()
-            },
             submitDiscount() {
-                this.discount_dialog.hide()
+                this.$refs.discountDialog.hide()
 
                 axios.put('/api/v4/wallets/' + this.user.wallets[0].id, { discount: this.wallet.discount_id })
                     .then(response => {
@@ -671,7 +589,7 @@
                 axios.put('/api/v4/users/' + this.user.id, { external_email: this.external_email })
                     .then(response => {
                         if (response.data.status == 'success') {
-                            this.email_dialog.hide()
+                            this.$refs.emailDialog.hide()
                             this.$toast.success(response.data.message)
                             this.user.external_email = this.external_email
                             this.external_email = null // required because of Vue
@@ -694,7 +612,7 @@
                 axios.post('/api/v4/wallets/' + wallet_id + '/one-off', post)
                     .then(response => {
                         if (response.data.status == 'success') {
-                            this.oneoff_dialog.hide()
+                            this.$refs.oneoffDialog.hide()
                             this.$toast.success(response.data.message)
                             this.wallet = Object.assign({}, this.wallet, {balance: response.data.balance})
                             this.oneoff_amount = ''

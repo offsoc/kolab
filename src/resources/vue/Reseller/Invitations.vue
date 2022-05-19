@@ -8,7 +8,7 @@
                 <div class="card-text">
                     <div class="mb-2 d-flex">
                         <list-search :placeholder="$t('invitation.search')" :on-search="searchInvitations"></list-search>
-                        <btn class="btn-success create-invite ms-1" @click="inviteUserDialog" icon="envelope-open-text">{{ $t('invitation.create') }}</btn>
+                        <btn class="btn-success create-invite ms-1" @click="$refs.createDialog.show()" icon="envelope-open-text">{{ $t('invitation.create') }}</btn>
                     </div>
 
                     <list-table id="invitations-list" :list="invitations" :setup="setup">
@@ -30,39 +30,27 @@
             </div>
         </div>
 
-        <div id="invite-create" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $t('invitation.create-title') }}</h5>
-                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
-                    </div>
-                    <div class="modal-body">
-                        <form>
-                            <p>{{ $t('invitation.create-email') }}</p>
-                            <div>
-                                <input id="email" type="text" class="form-control" name="email">
-                            </div>
-                            <div class="form-separator"><hr><span>{{ $t('form.or') }}</span></div>
-                            <p>{{ $t('invitation.create-csv') }}</p>
-                            <div>
-                                <input id="file" type="file" class="form-control" name="csv">
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-primary modal-action" icon="paper-plane" @click="inviteUser()">{{ $t('invitation.send') }}</btn>
-                    </div>
+        <modal-dialog id="invite-create" ref="createDialog" :title="$t('invitation.create-title')" @click="inviteUser()"
+                      :buttons="[{ className: 'btn-primary modal-action', icon: 'paper-plane', label: 'invitation.send' }]"
+        >
+            <form>
+                <p>{{ $t('invitation.create-email') }}</p>
+                <div>
+                    <input id="email" type="text" class="form-control" name="email">
                 </div>
-            </div>
-        </div>
+                <div class="form-separator"><hr><span>{{ $t('form.or') }}</span></div>
+                <p>{{ $t('invitation.create-csv') }}</p>
+                <div>
+                    <input id="file" type="file" class="form-control" name="csv">
+                </div>
+            </form>
+        </modal-dialog>
     </div>
 </template>
 
 <script>
-    import { Modal } from 'bootstrap'
     import ListTools from '../Widgets/ListTools'
+    import ModalDialog from '../Widgets/ModalDialog'
 
     import { library } from '@fortawesome/fontawesome-svg-core'
 
@@ -73,6 +61,9 @@
     )
 
     export default {
+        components: {
+            ModalDialog
+        },
         mixins: [ ListTools ],
         data() {
             return {
@@ -98,8 +89,12 @@
         mounted() {
             this.loadInvitations({ init: true })
 
-            $('#invite-create')[0].addEventListener('shown.bs.modal', event => {
-                $('input', event.target).first().focus()
+            this.$refs.createDialog.events({
+                show: (event) => {
+                    const form = $(event.target).find('form')
+                    form.get(0).reset()
+                    this.fileChange({ target: form.find('#file')[0] }) // resets file input label
+                }
             })
         },
         methods: {
@@ -146,24 +141,13 @@
                 axios.post('/api/v4/invitations', post, params)
                     .then(response => {
                         if (response.data.status == 'success') {
-                            this.dialog.hide()
+                            this.$refs.createDialog.hide()
                             this.$toast.success(response.data.message)
                             if (response.data.count) {
                                 this.loadInvitations({ reset: true })
                             }
                         }
                     })
-            },
-            inviteUserDialog() {
-                const dialog = $('#invite-create')[0]
-                const form = $('form', dialog)
-
-                form.get(0).reset()
-                this.fileChange({ target: form.find('#file')[0] }) // resets file input label
-                this.$root.clearFormValidation(form)
-
-                this.dialog = new Modal(dialog)
-                this.dialog.show()
             },
             loadInvitations(params) {
                 this.listSearch('invitations', '/api/v4/invitations', params)

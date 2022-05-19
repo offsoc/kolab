@@ -1,35 +1,26 @@
 <template>
     <div>
-        <btn icon="trash-can" class="btn-outline-danger button-delete float-end" @click="showDeleteConfirmation()">
+        <btn icon="trash-can" class="btn-outline-danger button-delete float-end" @click="$refs.deleteDialog.show()">
             {{ $t('companion.delete') }}
         </btn>
+
         <list-table class="m-0" :list="entries" :setup="setup"></list-table>
         <list-more v-if="hasMore" :on-click="loadMore"></list-more>
-        <div id="delete-warning" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $t('companion.remove-devices') }}</h5>
-                        <btn class="btn-close" data-bs-dismiss="modal" :aria-label="$t('btn.close')"></btn>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ $t('companion.remove-devices-text') }}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <btn class="btn-secondary modal-cancel" data-bs-dismiss="modal">{{ $t('btn.cancel') }}</btn>
-                        <btn class="btn-danger modal-action" data-bs-dismiss="modal" @click="removeDevices()" icon="trash-can">{{ $t('btn.delete') }}</btn>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+        <modal-dialog id="delete-warning" ref="deleteDialog" :title="$t('companion.remove-devices')" @click="removeDevices()" :buttons="['delete']" :cancel-focus="true">
+            <p>{{ $t('companion.remove-devices-text') }}</p>
+        </modal-dialog>
     </div>
 </template>
 
 <script>
-    import { Modal } from 'bootstrap'
     import ListTools from './ListTools'
+    import ModalDialog from './ModalDialog'
 
     export default {
+        components: {
+            ModalDialog
+        },
         mixins: [ ListTools ],
         data() {
             return {
@@ -51,9 +42,6 @@
         },
         mounted() {
             this.loadMore({ reset: true })
-            $('#delete-warning')[0].addEventListener('shown.bs.modal', event => {
-                $(event.target).find('button.modal-cancel').focus()
-            })
         },
         methods: {
             loadMore(params) {
@@ -68,11 +56,7 @@
                         this.loadMore({ reset: true })
                     })
                     .catch(this.$root.errorHandler)
-            },
-            showDeleteConfirmation() {
-                // Display the warning
-                new Modal('#delete-warning').show()
-            },
+            }
         }
     }
 </script>

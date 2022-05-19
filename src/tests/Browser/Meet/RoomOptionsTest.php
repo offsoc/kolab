@@ -49,7 +49,7 @@ class RoomOptionsTest extends TestCaseDusk
                 ->click('@menu button.link-options')
                 ->with(new Dialog('#room-options-dialog'), function (Browser $browser) use ($room) {
                     $browser->assertSeeIn('@title', 'Room options')
-                        ->assertSeeIn('@button-action', 'Close')
+                        ->assertSeeIn('@button-cancel', 'Close')
                         ->assertElementsCount('.modal-footer button', 1)
                         ->assertSeeIn('#password-input .label', 'Password:')
                         ->assertSeeIn('#password-input-text.text-muted', 'none')
@@ -71,7 +71,7 @@ class RoomOptionsTest extends TestCaseDusk
                         ->assertSeeIn('#password-input-text:not(.text-muted)', 'pass')
                         ->assertSeeIn('#password-clear-btn.btn-outline-danger', 'Clear password')
                         ->assertElementsCount('#password-input button', 1)
-                        ->click('@button-action');
+                        ->click('@button-cancel');
 
                     $this->assertSame('pass', $room->fresh()->getSetting('password'));
                 });
@@ -107,7 +107,7 @@ class RoomOptionsTest extends TestCaseDusk
                         ->assertSeeIn('#password-input-text.text-muted', 'none')
                         ->assertSeeIn('#password-set-btn', 'Set password')
                         ->assertElementsCount('#password-input button', 1)
-                        ->click('@button-action');
+                        ->click('@button-cancel');
 
                     $this->assertSame(null, $room->fresh()->getSetting('password'));
                 });
@@ -143,7 +143,7 @@ class RoomOptionsTest extends TestCaseDusk
                         // Test setting the lock
                         ->click('#room-lock input')
                         ->assertToast(Toast::TYPE_SUCCESS, "Room configuration updated successfully.")
-                        ->click('@button-action');
+                        ->click('@button-cancel');
 
                     $this->assertSame('true', $room->fresh()->getSetting('locked'));
                 });
@@ -217,7 +217,7 @@ class RoomOptionsTest extends TestCaseDusk
                         // Test setting the lock
                         ->click('#room-lock input')
                         ->assertToast(Toast::TYPE_SUCCESS, "Room configuration updated successfully.")
-                        ->click('@button-action');
+                        ->click('@button-cancel');
 
                     $this->assertSame('true', $room->fresh()->getSetting('locked'));
                 });
@@ -260,8 +260,8 @@ class RoomOptionsTest extends TestCaseDusk
             $guest->with(new Dialog('#leave-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Room closed')
                         ->assertSeeIn('@body', "The session has been closed by the room owner.")
-                        ->assertMissing('@button-cancel')
-                        ->assertSeeIn('@button-action', 'Close');
+                        ->assertMissing('@button-action')
+                        ->assertSeeIn('@button-cancel', 'Close');
             });
         });
     }
@@ -295,7 +295,7 @@ class RoomOptionsTest extends TestCaseDusk
                         // Test enabling the option
                         ->click('#room-nomedia input')
                         ->assertToast(Toast::TYPE_SUCCESS, "Room configuration updated successfully.")
-                        ->click('@button-action');
+                        ->click('@button-cancel');
 
                     $this->assertSame('true', $room->fresh()->getSetting('nomedia'));
                 });
@@ -317,7 +317,7 @@ class RoomOptionsTest extends TestCaseDusk
                         // Test enabling the option
                         ->click('#room-nomedia input')
                         ->assertToast(Toast::TYPE_SUCCESS, "Room configuration updated successfully.")
-                        ->click('@button-action');
+                        ->click('@button-cancel');
 
                     $this->assertSame(null, $room->fresh()->getSetting('nomedia'));
                 });

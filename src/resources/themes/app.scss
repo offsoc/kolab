@@ -277,6 +277,17 @@ table {
     }
 }
 
+.modal {
+    .modal-dialog,
+    .modal-content {
+        max-height: calc(100vh - 3.5rem);
+    }
+
+    .modal-body {
+        overflow: auto !important;
+    }
+}
+
 #status-box {
     background-color: lighten($green, 35);
 
