@@ -27,9 +27,11 @@ abstract class PaymentProvider
     public const METHOD_PAYPAL = 'paypal';
     public const METHOD_BANKTRANSFER = 'banktransfer';
     public const METHOD_DIRECTDEBIT = 'directdebit';
+    public const METHOD_BITCOIN = 'bitcoin';
 
     public const PROVIDER_MOLLIE = 'mollie';
     public const PROVIDER_STRIPE = 'stripe';
+    public const PROVIDER_COINBASE = 'coinbase';
 
     /** const int Minimum amount of money in a single payment (in cents) */
     public const MIN_AMOUNT = 1000;
@@ -37,7 +39,8 @@ abstract class PaymentProvider
     private static $paymentMethodIcons = [
         self::METHOD_CREDITCARD => ['prefix' => 'far', 'name' => 'credit-card'],
         self::METHOD_PAYPAL => ['prefix' => 'fab', 'name' => 'paypal'],
-        self::METHOD_BANKTRANSFER => ['prefix' => 'fas', 'name' => 'building-columns']
+        self::METHOD_BANKTRANSFER => ['prefix' => 'fas', 'name' => 'building-columns'],
+        self::METHOD_BITCOIN => ['prefix' => 'fab', 'name' => 'bitcoin'],
     ];
 
     /**
@@ -72,14 +75,20 @@ abstract class PaymentProvider
      *
      * @param \App\Wallet|string|null $provider_or_wallet
      */
-    public static function factory($provider_or_wallet = null)
+    public static function factory($provider_or_wallet = null, $currency = null)
     {
+        if (\strtolower($currency) == 'btc') {
+            return new \App\Providers\Payment\Coinbase();
+        }
         switch (self::providerName($provider_or_wallet)) {
             case self::PROVIDER_STRIPE:
                 return new \App\Providers\Payment\Stripe();
 
             case self::PROVIDER_MOLLIE:
                 return new \App\Providers\Payment\Mollie();
+
+            case self::PROVIDER_COINBASE:
+                return new \App\Providers\Payment\Coinbase();
 
             default:
                 throw new \Exception("Invalid payment provider: {$provider_or_wallet}");
@@ -355,6 +364,11 @@ abstract class PaymentProvider
 
         $provider = PaymentProvider::factory($providerName);
         $methods = $provider->providerPaymentMethods($type, $wallet->currency);
+
+        if (!empty(\config('services.coinbase.key'))) {
+            $coinbaseProvider = PaymentProvider::factory(self::PROVIDER_COINBASE);
+            $methods = array_merge($methods, $coinbaseProvider->providerPaymentMethods($type, $wallet->currency));
+        }
         $methods = self::applyMethodWhitelist($type, $methods);
 
         \Log::debug("Loaded payment methods" . var_export($methods, true));

@@ -87,8 +87,11 @@
                 </form>
             </div>
             <div id="manual-payment" v-if="paymentForm == 'manual'">
-                <p v-if="wallet.currency != selectedPaymentMethod.currency">
+                <p v-if="wallet.currency != selectedPaymentMethod.currency && selectedPaymentMethod.id != 'bitcoin'">
                     {{ $t('wallet.currency-conv', { wc: wallet.currency, pc: selectedPaymentMethod.currency }) }}
+                </p>
+                <p v-if="selectedPaymentMethod.id == 'bitcoin'">
+                    {{ $t('wallet.coinbase-hint', { wc: wallet.currency }) }}
                 </p>
                 <p v-if="selectedPaymentMethod.id == 'banktransfer'">
                     {{ $t('wallet.banktransfer-hint') }}
@@ -101,7 +104,7 @@
                         <input type="text" class="form-control" id="amount" v-model="amount" required>
                         <span class="input-group-text">{{ wallet.currency }}</span>
                     </div>
-                    <div v-if="wallet.currency != selectedPaymentMethod.currency && !isNaN(amount)" class="alert alert-warning m-0 mt-3">
+                    <div v-if="wallet.currency != selectedPaymentMethod.currency && !isNaN(amount) && selectedPaymentMethod.exchangeRate" class="alert alert-warning m-0 mt-3">
                         {{ $t('wallet.payment-warning', { price: $root.price(amount * selectedPaymentMethod.exchangeRate * 100, selectedPaymentMethod.currency) }) }}
                     </div>
                 </form>
@@ -153,6 +156,7 @@
         require('@fortawesome/free-brands-svg-icons/faPaypal').definition,
         require('@fortawesome/free-regular-svg-icons/faCreditCard').definition,
         require('@fortawesome/free-solid-svg-icons/faBuildingColumns').definition,
+        require('@fortawesome/free-brands-svg-icons/faBitcoin').definition,
     )
 
     export default {
@@ -282,6 +286,9 @@
                     .then(response => {
                         if (response.data.redirectUrl) {
                             location.href = response.data.redirectUrl
+                        } else if (response.data.newWindowUrl) {
+                            window.open(response.data.newWindowUrl, '_blank')
+                            this.$refs.paymentDialog.hide();
                         } else {
                             this.stripeCheckout(response.data)
                         }

@@ -510,6 +510,8 @@ return [
         'auto-payment-disabled-next' => "The auto-payment is disabled. Immediately after you submit new settings we'll enable it and attempt to top up your wallet.",
         'auto-payment-update' => "Update auto-payment",
         'banktransfer-hint' => "Please note that a bank transfer can take several days to complete.",
+        'coinbase-hint' => "Here is how it works: You specify the amount by which you want to top up your wallet in {wc}."
+            . " We will then create a charge on Coinbase for the specified amount that you can pay using Bitcoin.",
         'currency-conv' => "Here is how it works: You specify the amount by which you want to top up your wallet in {wc}."
             . " We will then convert this to {pc}, and on the next page you will be provided with the bank-details to transfer the amount in {pc}.",
         'fill-up' => "Fill up by",

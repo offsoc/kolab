@@ -46,6 +46,11 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
+    'coinbase' => [
+        'key' => env('COINBASE_KEY'),
+        'webhook_secret' => env('COINBASE_WEBHOOK_SECRET'),
+        'api_verify_tls' => env('COINBASE_VERIFY_TLS', true),
+    ],
 
     'openexchangerates' => [
         'api_key' => env('OPENEXCHANGERATES_API_KEY', null),

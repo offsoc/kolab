@@ -209,6 +209,9 @@ const app = new Vue({
             }
         },
         price(price, currency) {
+            if (currency.toLowerCase() == 'btc') {
+                return ((price || 0) / 100).toLocaleString('de-DE', { style: 'currency', currency: 'BTC', minimumFractionDigits: 6, maximumFractionDigits: 9})
+            }
             // TODO: Set locale argument according to the currently used locale
             return ((price || 0) / 100).toLocaleString('de-DE', { style: 'currency', currency: currency || 'CHF' })
         },

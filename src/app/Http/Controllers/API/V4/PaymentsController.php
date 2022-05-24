@@ -217,15 +217,17 @@ class PaymentsController extends Controller
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
+        $currency = $request->currency;
+
         $request = [
             'type' => PaymentProvider::TYPE_ONEOFF,
-            'currency' => $request->currency,
+            'currency' => $currency,
             'amount' => $amount,
             'methodId' => $request->methodId,
             'description' => Tenant::getConfig($user->tenant_id, 'app.name') . ' Payment',
         ];
 
-        $provider = PaymentProvider::factory($wallet);
+        $provider = PaymentProvider::factory($wallet, $currency);
 
         $result = $provider->payment($wallet, $request);
 

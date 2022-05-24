@@ -255,7 +255,7 @@ return [
     'password_policy' => env('PASSWORD_POLICY') ?: 'min:6,max:255',
 
     'payment' => [
-        'methods_oneoff' => env('PAYMENT_METHODS_ONEOFF', 'creditcard,paypal,banktransfer'),
+        'methods_oneoff' => env('PAYMENT_METHODS_ONEOFF', 'creditcard,paypal,banktransfer,bitcoin'),
         'methods_recurring' => env('PAYMENT_METHODS_RECURRING', 'creditcard'),
     ],
 
