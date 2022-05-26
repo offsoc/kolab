@@ -200,6 +200,7 @@ class SharedFoldersController extends RelationController
         $errors = [];
 
         if (empty($folder)) {
+            $name = $request->input('name');
             $domain = $request->input('domain');
             $rules = [
                 'name' => ['required', 'string', new SharedFolderName($owner, $domain)],
@@ -208,8 +209,9 @@ class SharedFoldersController extends RelationController
         } else {
             // On update validate the folder name (if changed)
             $name = $request->input('name');
+            $domain = explode('@', $folder->email, 2)[1];
+
             if ($name !== null && $name != $folder->name) {
-                $domain = explode('@', $folder->email, 2)[1];
                 $rules = ['name' => ['required', 'string', new SharedFolderName($owner, $domain)]];
             }
         }
@@ -237,7 +239,7 @@ class SharedFoldersController extends RelationController
                     // validate new aliases
                     if (
                         !in_array($alias, $existing_aliases)
-                        && ($error = UsersController::validateAlias($alias, $owner))
+                        && ($error = self::validateAlias($alias, $owner, $name, $domain))
                     ) {
                         if (!isset($errors['aliases'])) {
                             $errors['aliases'] = [];
@@ -258,5 +260,26 @@ class SharedFoldersController extends RelationController
         }
 
         return null;
+    }
+
+    /**
+     * Email address validation for use as a shared folder alias.
+     *
+     * @param string    $alias      Email address
+     * @param \App\User $owner      The account owner
+     * @param string    $folderName Folder name
+     * @param string    $domain     Folder domain
+     *
+     * @return ?string Error message on validation error
+     */
+    public static function validateAlias(string $alias, \App\User $owner, string $folderName, string $domain): ?string
+    {
+        $lmtp_alias = "shared+shared/{$folderName}@{$domain}";
+
+        if ($alias === $lmtp_alias) {
+            return null;
+        }
+
+        return UsersController::validateAlias($alias, $owner);
     }
 }

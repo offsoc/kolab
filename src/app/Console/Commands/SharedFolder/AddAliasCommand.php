@@ -3,7 +3,7 @@
 namespace App\Console\Commands\SharedFolder;
 
 use App\Console\Command;
-use App\Http\Controllers\API\V4\UsersController;
+use App\Http\Controllers\API\V4\SharedFoldersController;
 
 class AddAliasCommand extends Command
 {
@@ -44,7 +44,9 @@ class AddAliasCommand extends Command
         }
 
         // Validate the alias
-        $error = UsersController::validateAlias($alias, $folder->walletOwner());
+        $domain = explode('@', $folder->email, 2)[1];
+
+        $error = SharedFoldersController::validateAlias($alias, $folder->walletOwner(), $folder->name, $domain);
 
         if ($error) {
             if (!$this->option('force')) {

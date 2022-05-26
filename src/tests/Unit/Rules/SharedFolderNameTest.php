@@ -23,6 +23,12 @@ class SharedFolderNameTest extends TestCase
         $v = Validator::make(['name' => []], $rules);
         $this->assertSame(['name' => ["The specified name is invalid."]], $v->errors()->toArray());
 
+        $v = Validator::make(['name' => ['Resources']], $rules);
+        $this->assertSame(['name' => ["The specified name is invalid."]], $v->errors()->toArray());
+
+        $v = Validator::make(['name' => ['Resources/Test']], $rules);
+        $this->assertSame(['name' => ["The specified name is invalid."]], $v->errors()->toArray());
+
         // Forbidden chars
         $v = Validator::make(['name' => 'Test@'], $rules);
         $this->assertSame(['name' => ["The specified name is invalid."]], $v->errors()->toArray());
@@ -43,5 +49,18 @@ class SharedFolderNameTest extends TestCase
         $rules = ['name' => ['present', new SharedFolderName($user, 'kolabnow.com')]];
         $v = Validator::make(['name' => 'TestRule'], $rules);
         $this->assertSame(['name' => ["The specified domain is invalid."]], $v->errors()->toArray());
+
+        // Invalid subfolders
+        $rules = ['name' => ['present', new SharedFolderName($user, 'kolab.org')]];
+        $v = Validator::make(['name' => 'Test//Rule'], $rules);
+        $this->assertSame(['name' => ["The specified name is invalid."]], $v->errors()->toArray());
+        $v = Validator::make(['name' => '/TestRule'], $rules);
+        $this->assertSame(['name' => ["The specified name is invalid."]], $v->errors()->toArray());
+        $v = Validator::make(['name' => 'TestRule/'], $rules);
+        $this->assertSame(['name' => ["The specified name is invalid."]], $v->errors()->toArray());
+
+        // Valid subfolder
+        $v = Validator::make(['name' => 'Test/Rule/Folder'], $rules);
+        $this->assertSame([], $v->errors()->toArray());
     }
 }

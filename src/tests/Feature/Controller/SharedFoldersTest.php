@@ -18,7 +18,7 @@ class SharedFoldersTest extends TestCase
         parent::setUp();
 
         $this->deleteTestSharedFolder('folder-test@kolab.org');
-        SharedFolder::where('name', 'Test Folder')->delete();
+        SharedFolder::where('name', 'like', 'Test_Folder')->forceDelete();
     }
 
     /**
@@ -27,7 +27,7 @@ class SharedFoldersTest extends TestCase
     public function tearDown(): void
     {
         $this->deleteTestSharedFolder('folder-test@kolab.org');
-        SharedFolder::where('name', 'Test Folder')->delete();
+        SharedFolder::where('name', 'like', 'Test_Folder')->forceDelete();
 
         parent::tearDown();
     }
@@ -441,7 +441,7 @@ class SharedFoldersTest extends TestCase
         // Test successful folder creation
         $post['name'] = 'Test Folder';
         $post['type'] = 'event';
-        $post['aliases'] = ['folder-alias@kolab.org']; // expected to be ignored
+        $post['aliases'] = [];
 
         $response = $this->actingAs($john)->post("/api/v4/shared-folders", $post);
         $json = $response->json();
@@ -482,6 +482,20 @@ class SharedFoldersTest extends TestCase
 
         $folder = SharedFolder::where('name', $post['name'])->first();
         $this->assertSame(['folder-alias@kolab.org'], $folder->aliases()->pluck('alias')->all());
+
+        $folder->forceDelete();
+
+        // Test handling subfolders and lmtp alias email
+        $post['name'] = 'Test/Folder';
+        $post['type'] = 'mail';
+        $post['aliases'] = ['shared+shared/Test/Folder@kolab.org'];
+        $response = $this->actingAs($john)->post("/api/v4/shared-folders", $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $folder = SharedFolder::where('name', $post['name'])->first();
+        $this->assertSame(['shared+shared/Test/Folder@kolab.org'], $folder->aliases()->pluck('alias')->all());
     }
 
     /**

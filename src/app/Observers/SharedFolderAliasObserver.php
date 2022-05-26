@@ -17,7 +17,7 @@ class SharedFolderAliasObserver
      */
     public function creating(SharedFolderAlias $alias): bool
     {
-        $alias->alias = \strtolower($alias->alias);
+        $alias->alias = \App\Utils::emailToLower($alias->alias);
 
         $domainName = explode('@', $alias->alias)[1];
 
@@ -30,7 +30,7 @@ class SharedFolderAliasObserver
 
         if ($alias->sharedFolder) {
             if ($alias->sharedFolder->tenant_id != $domain->tenant_id) {
-                \Log::error("Reseller for folder '{$alias->sharedFolder->email}' and domain '{$domainName}' differ.");
+                \Log::error("Tenant for folder '{$alias->sharedFolder->email}' and domain '{$domainName}' differ.");
                 return false;
             }
         }

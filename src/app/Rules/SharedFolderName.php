@@ -12,7 +12,7 @@ class SharedFolderName implements Rule
     private $owner;
     private $domain;
 
-    private const FORBIDDEN_CHARS = '+/^%*!`@(){}|\\?<;"';
+    private const FORBIDDEN_CHARS = '+^%*!`@(){}|\\?<;"';
 
     /**
      * Class constructor.
@@ -36,14 +36,17 @@ class SharedFolderName implements Rule
      */
     public function passes($attribute, $name): bool
     {
-        if (empty($name) || !is_string($name) || $name == 'Resources') {
+        if (empty($name) || !is_string($name) || $name == 'Resources' || \str_starts_with($name, 'Resources/')) {
             $this->message = \trans('validation.nameinvalid');
             return false;
         }
 
-        if (strcspn($name, self::FORBIDDEN_CHARS) < strlen($name)) {
-            $this->message = \trans('validation.nameinvalid');
-            return false;
+        foreach (explode('/', $name) as $subfolder) {
+            $length = strlen($subfolder);
+            if (!$length || strcspn($subfolder, self::FORBIDDEN_CHARS) < $length) {
+                $this->message = \trans('validation.nameinvalid');
+                return false;
+            }
         }
 
         // Check the max length, according to the database column length

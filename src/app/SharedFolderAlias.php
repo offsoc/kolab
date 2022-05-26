@@ -24,7 +24,7 @@ class SharedFolderAlias extends Model
      */
     public function setAliasAttribute(string $alias)
     {
-        $this->attributes['alias'] = \strtolower($alias);
+        $this->attributes['alias'] = \App\Utils::emailToLower($alias);
     }
 
     /**

@@ -8,6 +8,16 @@ use Tests\TestCase;
 class UtilsTest extends TestCase
 {
     /**
+     * Test for Utils::emailToLower()
+     */
+    public function testEmailToLower(): void
+    {
+        $this->assertSame('test@test.tld', \App\Utils::emailToLower('test@Test.Tld'));
+        $this->assertSame('test@test.tld', \App\Utils::emailToLower('Test@Test.Tld'));
+        $this->assertSame('shared+shared/Test@test.tld', \App\Utils::emailToLower('shared+shared/Test@Test.Tld'));
+    }
+
+    /**
      * Test for Utils::normalizeAddress()
      */
     public function testNormalizeAddress(): void

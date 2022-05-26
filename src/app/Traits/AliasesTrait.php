@@ -2,8 +2,6 @@
 
 namespace App\Traits;
 
-use Illuminate\Support\Str;
-
 trait AliasesTrait
 {
     /**
@@ -29,7 +27,7 @@ trait AliasesTrait
             return false;
         }
 
-        $email = \strtolower($email);
+        $email = \App\Utils::emailToLower($email);
         $class = static::class . 'Alias';
 
         return $class::where('alias', $email)->count() > 0;
@@ -51,7 +49,7 @@ trait AliasesTrait
      */
     public function setAliases(array $aliases): void
     {
-        $aliases = array_map('strtolower', $aliases);
+        $aliases = array_map('\App\Utils::emailToLower', $aliases);
         $aliases = array_unique($aliases);
 
         $existing_aliases = [];
@@ -64,7 +62,6 @@ trait AliasesTrait
                 $existing_aliases[] = $alias->alias;
             }
         }
-
         foreach (array_diff($aliases, $existing_aliases) as $alias) {
             $this->aliases()->create(['alias' => $alias]);
         }

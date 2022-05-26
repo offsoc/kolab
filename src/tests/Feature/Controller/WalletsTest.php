@@ -71,7 +71,7 @@ class WalletsTest extends TestCase
         $wallet->balance = 990;
         $notice = $method->invoke($controller, $wallet);
 
-        $this->assertMatchesRegularExpression('/\((1 month)\)/', $notice);
+        $this->assertMatchesRegularExpression('/\((1 month|4 weeks)\)/', $notice);
 
         // test "2 months"
         $wallet->balance = 990 * 2.6;

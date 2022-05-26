@@ -122,6 +122,27 @@ class Utils
         fclose($fp);
     }
 
+    /**
+     * Converts an email address to lower case. Keeps the LMTP shared folder
+     * addresses character case intact.
+     *
+     * @param string $email Email address
+     *
+     * @return string Email address
+     */
+    public static function emailToLower(string $email): string
+    {
+        // For LMTP shared folder address lower case the domain part only
+        if (str_starts_with($email, 'shared+shared/')) {
+            $pos = strrpos($email, '@');
+            $domain = substr($email, $pos + 1);
+            $local = substr($email, 0, strlen($email) - strlen($domain) - 1);
+
+            return $local . '@' . strtolower($domain);
+        }
+
+        return strtolower($email);
+    }
 
     /**
      * Generate a passphrase. Not intended for use in production, so limited to environments that are not production.
@@ -301,7 +322,7 @@ class Utils
             return $asArray ? ['', ''] : '';
         }
 
-        $address = \strtolower($address);
+        $address = self::emailToLower($address);
 
         if (strpos($address, '@') === false) {
             return $asArray ? [$address, ''] : $address;
