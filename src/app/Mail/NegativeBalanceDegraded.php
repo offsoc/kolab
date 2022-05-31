@@ -56,7 +56,7 @@ class NegativeBalanceDegraded extends Mailable
                     'site' => $appName,
                     'subject' => $subject,
                     'username' => $this->user->name(true),
-                    'supportUrl' => $supportUrl,
+                    'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
                     'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
             ]);
 

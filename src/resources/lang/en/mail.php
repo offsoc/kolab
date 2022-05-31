@@ -107,4 +107,17 @@ return [
     'suspendeddebtor-middle' => "Settle up now to reactivate your account.",
     'suspendeddebtor-cancel' => "Don't want to be our customer anymore? "
         . "Here is how you can cancel your account:",
+
+    'trialend-subject' => ":site: Your trial phase has ended",
+    'trialend-intro' => "We hope you enjoyed the 30 days of free :site trial."
+        . " Your subscriptions become active after the first month of use and the fee is due after another month.",
+    'trialend-kb' => "You can read about how to pay the subscription fee in this knowledge base article:",
+    'trialend-body1' => "You can leave :site at any time, there is no contractual minimum period"
+        . " and your account will NOT be deleted automatically."
+        . " You can delete your account via the red [Delete account] button in your profile."
+        . " This will end your subscription and delete all relevant data.",
+    'trialend-body2' => "THIS OPERATION IS IRREVERSIBLE!",
+    'trialend-body3' => "When data is deleted it can not be recovered."
+        . " Please make sure that you have saved all data that you need before pressing the red button."
+        . " Do not hesitate to contact Support with any questions or concerns.",
 ];

@@ -40,7 +40,6 @@ class PasswordReset extends Mailable
     public function build()
     {
         $appName = Tenant::getConfig($this->code->user->tenant_id, 'app.name');
-        $supportUrl = Tenant::getConfig($this->code->user->tenant_id, 'app.support_url');
 
         $href = Utils::serviceUrl(
             sprintf('/password-reset/%s-%s', $this->code->short_code, $this->code->code),

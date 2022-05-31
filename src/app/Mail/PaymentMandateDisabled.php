@@ -56,7 +56,7 @@ class PaymentMandateDisabled extends Mailable
                     'subject' => $subject,
                     'username' => $this->user->name(true),
                     'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
-                    'supportUrl' => $supportUrl,
+                    'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
             ]);
 
         return $this;

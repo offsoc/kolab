@@ -230,6 +230,8 @@ return [
         'account_suspended' => env('KB_ACCOUNT_SUSPENDED'),
         // An article about a way to delete an owned account
         'account_delete' => env('KB_ACCOUNT_DELETE'),
+        // An article about the payment system
+        'payment_system' => env('KB_PAYMENT_SYSTEM'),
     ],
 
     'company' => [

@@ -44,7 +44,6 @@ class PasswordExpirationReminder extends Mailable
     public function build()
     {
         $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
-        $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
         $href = Utils::serviceUrl('profile', $this->user->tenant_id);
 
         $params = [

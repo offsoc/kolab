@@ -460,7 +460,7 @@ class Utils
     /**
      * Create self URL
      *
-     * @param string   $route    Route/Path
+     * @param string   $route    Route/Path/URL
      * @param int|null $tenantId Current tenant
      *
      * @todo Move this to App\Http\Controllers\Controller
@@ -469,6 +469,10 @@ class Utils
      */
     public static function serviceUrl(string $route, $tenantId = null): string
     {
+        if (preg_match('|^https?://|i', $route)) {
+            return $route;
+        }
+
         $url = \App\Tenant::getConfig($tenantId, 'app.public_url');
 
         if (!$url) {

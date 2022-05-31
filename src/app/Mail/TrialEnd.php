@@ -9,19 +9,19 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class SuspendedDebtor extends Mailable
+class TrialEnd extends Mailable
 {
     use Queueable;
     use SerializesModels;
 
-    /** @var \App\User A suspended user (account) */
+    /** @var \App\User An account owner (account) */
     protected $account;
 
 
     /**
      * Create a new message instance.
      *
-     * @param \App\User $account A suspended user (account)
+     * @param \App\User $account An account owner (account)
      *
      * @return void
      */
@@ -38,31 +38,20 @@ class SuspendedDebtor extends Mailable
     public function build()
     {
         $appName = Tenant::getConfig($this->account->tenant_id, 'app.name');
+        $paymentUrl = Tenant::getConfig($this->account->tenant_id, 'app.kb.payment_system');
         $supportUrl = Tenant::getConfig($this->account->tenant_id, 'app.support_url');
-        $cancelUrl = Tenant::getConfig($this->account->tenant_id, 'app.kb.account_delete');
 
-        $subject = \trans('mail.suspendeddebtor-subject', ['site' => $appName]);
+        $subject = \trans('mail.trialend-subject', ['site' => $appName]);
 
-        $moreInfoHtml = null;
-        $moreInfoText = null;
-        if ($moreInfoUrl = Tenant::getConfig($this->account->tenant_id, 'app.kb.account_suspended')) {
-            $moreInfoHtml = \trans('mail.more-info-html', ['href' => $moreInfoUrl]);
-            $moreInfoText = \trans('mail.more-info-text', ['href' => $moreInfoUrl]);
-        }
-
-        $this->view('emails.html.suspended_debtor')
-            ->text('emails.plain.suspended_debtor')
+        $this->view('emails.html.trial_end')
+            ->text('emails.plain.trial_end')
             ->subject($subject)
             ->with([
                     'site' => $appName,
                     'subject' => $subject,
                     'username' => $this->account->name(true),
-                    'cancelUrl' => $cancelUrl,
+                    'paymentUrl' => $paymentUrl,
                     'supportUrl' => Utils::serviceUrl($supportUrl, $this->account->tenant_id),
-                    'walletUrl' => Utils::serviceUrl('/wallet', $this->account->tenant_id),
-                    'moreInfoHtml' => $moreInfoHtml,
-                    'moreInfoText' => $moreInfoText,
-                    'days' => 14 // TODO: Configurable
             ]);
 
         return $this;
