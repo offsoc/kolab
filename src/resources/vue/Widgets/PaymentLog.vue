@@ -17,7 +17,7 @@
                     <td class="price text-success">{{ amount(payment) }}</td>
                 </tr>
             </tbody>
-            <list-foot :text="$t('wallet.pending-payments-none')" colspan="4"></list-foot>
+            <list-foot :text="$t('wallet.pending-payments-none')" :colspan="4"></list-foot>
         </table>
         <list-more v-if="hasMore" :on-click="loadLog"></list-more>
     </div>
