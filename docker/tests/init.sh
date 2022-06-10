@@ -1,10 +1,13 @@
 #!/bin/bash
-set -e
-cp -a /src/kolabsrc.orig /src/kolabsrc
+#set -e
+sudo cp -a /src/kolabsrc.orig /src/kolabsrc
+sudo chmod 777 -R /src/kolabsrc
 cd /src/kolabsrc
 
-rm -rf vendor/ composer.lock
+sudo rm -rf vendor/ composer.lock
 php -dmemory_limit=-1 $(command -v composer) install
+sudo rm -rf node_modules
+mkdir node_modules
 npm install
 find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan key:generate
@@ -32,23 +35,20 @@ fi
 
 npm run dev
 
-
-
-
-# Tests\Feature\Controller\PaymentsMollieEuroTest
 # /usr/bin/chromium-browser --no-sandbox --headless --disable-gpu --remote-debugging-port=9222 http://localhost &
 
 rm -rf database/database.sqlite
 ./artisan db:ping --wait
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
 ./artisan data:import || :
+./artisan queue:work --stop-when-empty
 # nohup ./artisan horizon >/dev/null 2>&1 &
 ./artisan octane:start --host=$(grep OCTANE_HTTP_HOST .env | tail -n1 | sed "s/OCTANE_HTTP_HOST=//") >/dev/null 2>&1 &
 
-# phpunit --verbose tests/Feature/Controller/PaymentsMollieEuroTest.php
 php \
     -dmemory_limit=-1 \
     vendor/bin/phpunit \
+    --exclude flaky \
     --verbose \
     --stop-on-defect \
     --stop-on-error \
@@ -58,6 +58,7 @@ php \
 php \
     -dmemory_limit=-1 \
     vendor/bin/phpunit \
+    --exclude flaky \
     --verbose \
     --stop-on-defect \
     --stop-on-error \
@@ -67,6 +68,7 @@ php \
 php \
     -dmemory_limit=-1 \
     vendor/bin/phpunit \
+    --exclude flaky \
     --verbose \
     --stop-on-defect \
     --stop-on-error \
