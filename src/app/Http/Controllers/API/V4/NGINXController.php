@@ -129,8 +129,6 @@ class NGINXController extends Controller
             X-Real-Ip:                 31.10.153.58
          */
 
-        \Log::debug("Authentication attempt\n{$request->headers}");
-
         $username = $this->normalizeUsername($request->headers->get('Php-Auth-User', ""));
         $password = $request->headers->get('Php-Auth-Pw', null);
 
@@ -185,8 +183,6 @@ class NGINXController extends Controller
          *  Auth-SSL-Fingerprint: 29d6a80a123d13355ed16b4b04605e29cb55a5ad
          */
 
-        \Log::debug("Authentication attempt\n{$request->headers}");
-
         $password = $request->headers->get('Auth-Pass', null);
 
         try {
@@ -236,8 +232,6 @@ class NGINXController extends Controller
             ]
         );
 
-        \Log::debug("Response with headers:\n{$response->headers}");
-
         return $response;
     }
 
@@ -260,8 +254,6 @@ class NGINXController extends Controller
             ]
         );
 
-        \Log::debug("Response with headers:\n{$response->headers}");
-
         return $response;
     }
 
@@ -282,8 +274,6 @@ class NGINXController extends Controller
                 "Auth-Wait" => 3
             ]
         );
-
-        \Log::debug("Response with headers:\n{$response->headers}");
 
         return $response;
     }
