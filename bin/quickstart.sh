@@ -7,9 +7,6 @@ function die() {
     exit 1
 }
 
-rpm -qv docker-compose >/dev/null 2>&1 || \
-    test ! -z "$(which docker-compose 2>/dev/null)" || \
-    die "Is docker-compose installed?"
 
 test ! -z "$(grep 'systemd.unified_cgroup_hierarchy=0' /proc/cmdline)" || \
     die "systemd containers only work with cgroupv1 (use 'grubby --update-kernel=ALL --args=\"systemd.unified_cgroup_hierarchy=0\"' and a reboot to fix)"
@@ -27,15 +24,15 @@ fi
 
 docker pull docker.io/kolab/centos7:latest
 
-docker-compose down --remove-orphans
+docker compose down --remove-orphans
 src/artisan octane:stop >/dev/null 2>&1 || :
 src/artisan horizon:terminate >/dev/null 2>&1 || :
 
-docker-compose build coturn kolab mariadb meet pdns-sql proxy redis nginx
+docker compose build coturn kolab mariadb meet pdns-sql proxy redis nginx
 
 bin/regen-certs
 
-docker-compose up -d coturn kolab mariadb meet pdns-sql proxy redis
+docker compose up -d coturn kolab mariadb meet pdns-sql proxy redis
 
 # Workaround until we have docker-compose --wait (https://github.com/docker/compose/pull/8777)
 function wait_for_container {
@@ -65,8 +62,8 @@ wait_for_container 'kolab-redis'
 
 if [ "$1" == "--nodev" ]; then
     echo "starting everything in containers"
-    docker-compose build swoole webapp
-    docker-compose up -d webapp nginx
+    docker compose build swoole webapp
+    docker compose up -d webapp nginx
     wait_for_container 'kolab-webapp'
     exit 0
 fi
@@ -128,7 +125,7 @@ fi
 npm run dev
 popd
 
-docker-compose up -d nginx
+docker compose up -d nginx
 
 pushd ${base_dir}/src/
 rm -rf database/database.sqlite

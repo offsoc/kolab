@@ -6,5 +6,5 @@
     - tig
     - tmux
     - docker
-    - docker-compose
+    - docker-compose-plugin
     - certbot
