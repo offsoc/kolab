@@ -245,6 +245,5 @@ services:
     image: kolab-meet
     volumes:
       - ./meet/server:/src/meet/:ro
-      - ./docker/meet/build/node_modules:/root/node_modules
       - ./docker/certs/meet.${APP_WEBSITE_DOMAIN}.cert:/etc/pki/tls/certs/meet.${APP_WEBSITE_DOMAIN}.cert
       - ./docker/certs/meet.${APP_WEBSITE_DOMAIN}.key:/etc/pki/tls/private/meet.${APP_WEBSITE_DOMAIN}.key
