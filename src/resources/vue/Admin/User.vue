@@ -397,7 +397,7 @@
                                         id: sku.id,
                                         name: sku.name,
                                         cost: cost,
-                                        price: this.$root.priceLabel(cost, this.discount)
+                                        price: this.$root.priceLabel(cost, this.discount, this.user.wallet.currency)
                                     }
 
                                     if (sku.range) {
@@ -476,7 +476,7 @@
                                 id: sku.id,
                                 name: sku.name,
                                 cost: sku.cost,
-                                price: this.$root.priceLabel(sku.cost, this.discount)
+                                price: this.$root.priceLabel(sku.cost, this.discount, this.wallet.currency)
                             })
 
                             this.$refs.tabs.updateCounter('subscriptions', this.skus.length)
@@ -554,7 +554,7 @@
                                 this.discount_description = this.wallet.discount_description
 
                                 this.skus.forEach(sku => {
-                                    sku.price = this.$root.priceLabel(sku.cost, this.discount)
+                                    sku.price = this.$root.priceLabel(sku.cost, this.discount, this.wallet.currency)
                                 })
                             }
                         }
