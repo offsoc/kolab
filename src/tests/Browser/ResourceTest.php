@@ -71,15 +71,15 @@ class ResourceTest extends TestCaseDusk
                 ->assertMissing('@links .link-resources');
         });
 
-        // Test that Resources lists page is not accessible without the 'beta-resources' entitlement
+        // Test that Resources lists page is not accessible without the 'beta' entitlement
         $this->browse(function (Browser $browser) {
             $browser->visit('/resources')
                 ->assertErrorPage(403);
         });
 
-        // Add beta+beta-resources entitlements
+        // Add beta entitlements
         $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john, 'beta-resources');
+        $this->addBetaEntitlement($john);
         // Make sure the first resource is active
         $resource = $this->getTestResource('resource-test1@kolab.org');
         $resource->status = Resource::STATUS_NEW | Resource::STATUS_ACTIVE
@@ -112,15 +112,15 @@ class ResourceTest extends TestCaseDusk
      */
     public function testCreateUpdateDelete(): void
     {
-        // Test that the page is not available accessible without the 'beta-resources' entitlement
+        // Test that the page is not available accessible without the 'beta' entitlement
         $this->browse(function (Browser $browser) {
             $browser->visit('/resource/new')
                 ->assertErrorPage(403);
         });
 
-        // Add beta+beta-resource entitlements
+        // Add beta entitlements
         $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john, 'beta-resources');
+        $this->addBetaEntitlement($john);
 
         $this->browse(function (Browser $browser) {
             // Create a resource
@@ -214,7 +214,7 @@ class ResourceTest extends TestCaseDusk
     public function testStatus(): void
     {
         $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john, 'beta-resources');
+        $this->addBetaEntitlement($john);
         $resource = $this->getTestResource('resource-test2@kolab.org');
         $resource->status = Resource::STATUS_NEW | Resource::STATUS_ACTIVE | Resource::STATUS_LDAP_READY;
         $resource->created_at = \now();
@@ -251,7 +251,7 @@ class ResourceTest extends TestCaseDusk
     public function testSettings(): void
     {
         $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john, 'beta-resources');
+        $this->addBetaEntitlement($john);
         $resource = $this->getTestResource('resource-test2@kolab.org');
         $resource->setSetting('invitation_policy', null);
 

@@ -160,7 +160,7 @@ class SkuSeeder extends Seeder
                 [
                     'title' => 'beta',
                     'name' => 'Private Beta (invitation only)',
-                    'description' => 'Access to the private beta program subscriptions',
+                    'description' => 'Access to the private beta program features',
                     'cost' => 0,
                     'units_free' => 0,
                     'period' => 'monthly',
@@ -204,72 +204,6 @@ class SkuSeeder extends Seeder
                     'active' => true,
                 ]
             );
-        }
-
-        // Check existence because migration might have added this already
-        $sku = Sku::where(['title' => 'beta-distlists', 'tenant_id' => \config('app.tenant_id')])->first();
-
-        if (!$sku) {
-            Sku::create(
-                [
-                    'title' => 'beta-distlists',
-                    'name' => 'Distribution lists',
-                    'description' => 'Access to mail distribution lists',
-                    'cost' => 0,
-                    'units_free' => 0,
-                    'period' => 'monthly',
-                    'handler_class' => 'App\Handlers\Beta\Distlists',
-                    'active' => true,
-                ]
-            );
-        }
-
-        // Check existence because migration might have added this already
-        $sku = Sku::where(['title' => 'beta-resources', 'tenant_id' => \config('app.tenant_id')])->first();
-
-        if (!$sku) {
-            Sku::create([
-                'title' => 'beta-resources',
-                'name' => 'Calendaring resources',
-                'description' => 'Access to calendaring resources',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Beta\Resources',
-                'active' => true,
-            ]);
-        }
-
-        // Check existence because migration might have added this already
-        $sku = Sku::where(['title' => 'beta-shared-folders', 'tenant_id' => \config('app.tenant_id')])->first();
-
-        if (!$sku) {
-            Sku::create([
-                'title' => 'beta-shared-folders',
-                'name' => 'Shared folders',
-                'description' => 'Access to shared folders',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Beta\SharedFolders',
-                'active' => true,
-            ]);
-        }
-
-        // Check existence because migration might have added this already
-        $sku = Sku::where(['title' => 'files', 'tenant_id' => \config('app.tenant_id')])->first();
-
-        if (!$sku) {
-            Sku::create([
-                'title' => 'files',
-                'name' => 'File storage',
-                'description' => 'Access to file storage',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Files',
-                'active' => true,
-            ]);
         }
 
         // for tenants that are not the configured tenant id

@@ -73,15 +73,15 @@ class DistlistTest extends TestCaseDusk
                 ->assertMissing('@links .link-distlists');
         });
 
-        // Test that Distribution lists page is not accessible without the 'beta-distlists' entitlement
+        // Test that Distribution lists page is not accessible without the 'beta' entitlement
         $this->browse(function (Browser $browser) {
             $browser->visit('/distlists')
                 ->assertErrorPage(403);
         });
 
-        // Create a single group, add beta+distlist entitlements
+        // Create a single group, add beta entitlement
         $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john, 'beta-distlists');
+        $this->addBetaEntitlement($john);
         $group = $this->getTestGroup('group-test@kolab.org', ['name' => 'Test Group']);
         $group->assignToWallet($john->wallets->first());
 
@@ -111,7 +111,7 @@ class DistlistTest extends TestCaseDusk
      */
     public function testCreateUpdateDelete(): void
     {
-        // Test that the page is not available accessible without the 'beta-distlists' entitlement
+        // Test that the page is not available accessible without the 'beta' entitlement
         $this->browse(function (Browser $browser) {
             $browser->visit('/distlist/new')
                 ->assertErrorPage(403);
@@ -119,7 +119,7 @@ class DistlistTest extends TestCaseDusk
 
         // Add beta+distlist entitlements
         $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john, 'beta-distlists');
+        $this->addBetaEntitlement($john);
 
         $this->browse(function (Browser $browser) {
             // Create a group
@@ -233,7 +233,7 @@ class DistlistTest extends TestCaseDusk
     public function testStatus(): void
     {
         $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john, 'beta-distlists');
+        $this->addBetaEntitlement($john, 'beta');
         $group = $this->getTestGroup('group-test@kolab.org');
         $group->assignToWallet($john->wallets->first());
         $group->status = Group::STATUS_NEW | Group::STATUS_ACTIVE;
@@ -270,7 +270,7 @@ class DistlistTest extends TestCaseDusk
     public function testSettings(): void
     {
         $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john, 'beta-distlists');
+        $this->addBetaEntitlement($john);
         $group = $this->getTestGroup('group-test@kolab.org');
         $group->assignToWallet($john->wallets->first());
         $group->status = Group::STATUS_NEW | Group::STATUS_ACTIVE;

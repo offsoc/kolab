@@ -163,9 +163,6 @@ trait TestCaseTrait
     {
         $beta_handlers = [
             'App\Handlers\Beta',
-            'App\Handlers\Beta\Distlists',
-            'App\Handlers\Beta\Resources',
-            'App\Handlers\Beta\SharedFolders',
         ];
 
         $betas = Sku::whereIn('handler_class', $beta_handlers)->pluck('id')->all();

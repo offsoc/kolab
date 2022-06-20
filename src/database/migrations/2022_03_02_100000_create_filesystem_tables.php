@@ -82,9 +82,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (\App\Sku::where('title', 'files')->first()) {
-            \App\Sku::where('title', 'files')->delete();
-        }
+        \App\Sku::where('title', 'files')->delete();
 
         Schema::dropIfExists('fs_properties');
         Schema::dropIfExists('fs_chunks');

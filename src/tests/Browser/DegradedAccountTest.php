@@ -56,7 +56,7 @@ class DegradedAccountTest extends TestCaseDusk
     {
         // Add beta+distlist entitlements
         $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john, ['beta-distlists', 'beta-resources', 'beta-shared-folders']);
+        $this->addBetaEntitlement($john);
 
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())

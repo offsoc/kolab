@@ -179,21 +179,24 @@ class UsersController extends RelationController
             ->values()
             ->all();
 
+        $hasBeta = in_array('beta', $skus);
+
         $result = [
             'skus' => $skus,
             // TODO: This will change when we enable all users to create domains
             'enableDomains' => $isController && $hasCustomDomain,
             // TODO: Make 'enableDistlists' working for wallet controllers that aren't account owners
-            'enableDistlists' => $isController && $hasCustomDomain && in_array('beta-distlists', $skus),
-            'enableFiles' => in_array('files', $skus),
+            'enableDistlists' => $isController && $hasCustomDomain && $hasBeta,
+            'enableFiles' => !$isDegraded && $hasBeta && \config('app.with_files'),
             // TODO: Make 'enableFolders' working for wallet controllers that aren't account owners
-            'enableFolders' => $isController && $hasCustomDomain && in_array('beta-shared-folders', $skus),
+            'enableFolders' => $isController && $hasCustomDomain && $hasBeta,
             // TODO: Make 'enableResources' working for wallet controllers that aren't account owners
-            'enableResources' => $isController && $hasCustomDomain && in_array('beta-resources', $skus),
+            'enableResources' => $isController && $hasCustomDomain && $hasBeta,
+            'enableRooms' => !$isDegraded,
             'enableSettings' => $isController,
             'enableUsers' => $isController,
             'enableWallets' => $isController,
-            'enableCompanionapps' => $isController && in_array('beta', $skus),
+            'enableCompanionapps' => $hasBeta,
         ];
 
         return array_merge($process, $result);
