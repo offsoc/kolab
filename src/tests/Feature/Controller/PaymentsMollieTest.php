@@ -1053,13 +1053,20 @@ class PaymentsMollieTest extends TestCase
         $response->assertStatus(200);
         $json = $response->json();
 
-        $this->assertCount(3, $json);
+        $hasCoinbase = !empty(\config('services.coinbase.key'));
+
+        $this->assertCount(3 + intval($hasCoinbase), $json);
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
         $this->assertSame('banktransfer', $json[2]['id']);
         $this->assertSame('CHF', $json[0]['currency']);
         $this->assertSame('CHF', $json[1]['currency']);
         $this->assertSame('EUR', $json[2]['currency']);
+
+        if ($hasCoinbase) {
+            $this->assertSame('bitcoin', $json[3]['id']);
+            $this->assertSame('BTC', $json[3]['currency']);
+        }
 
         $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
         $response->assertStatus(200);

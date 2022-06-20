@@ -728,9 +728,12 @@ class PaymentsStripeTest extends TestCase
         $response->assertStatus(200);
         $json = $response->json();
 
-        $this->assertCount(2, $json);
+        $hasCoinbase = !empty(\config('services.coinbase.key'));
+
+        $this->assertCount(2 + intval($hasCoinbase), $json);
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
+        $this->assertSame('bitcoin', $json[2]['id']);
 
         $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
         $response->assertStatus(200);

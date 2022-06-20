@@ -24,6 +24,7 @@ class UsersTest extends TestCase
     {
         parent::setUp();
 
+        $this->clearBetaEntitlements();
         $this->deleteTestUser('jane@kolabnow.com');
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('UsersControllerTest2@userscontroller.com');
@@ -53,6 +54,7 @@ class UsersTest extends TestCase
      */
     public function tearDown(): void
     {
+        $this->clearBetaEntitlements();
         $this->deleteTestUser('jane@kolabnow.com');
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('UsersControllerTest2@userscontroller.com');
@@ -381,7 +383,7 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(5, $json);
+        $this->assertCount(6, $json);
 
         $this->assertSkuElement('mailbox', $json[0], [
                 'prio' => 100,
@@ -430,6 +432,15 @@ class UsersTest extends TestCase
                 'forbidden' => ['Activesync'],
         ]);
 
+        $this->assertSkuElement('meet', $json[5], [
+                'prio' => 50,
+                'type' => 'user',
+                'handler' => 'Meet',
+                'enabled' => false,
+                'readonly' => false,
+                'required' => ['Groupware'],
+        ]);
+
         // Test inclusion of beta SKUs
         $sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
         $user->assignSku($sku);
@@ -438,9 +449,9 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(6, $json);
+        $this->assertCount(7, $json);
 
-        $this->assertSkuElement('beta', $json[5], [
+        $this->assertSkuElement('beta', $json[6], [
                 'prio' => 10,
                 'type' => 'user',
                 'handler' => 'Beta',

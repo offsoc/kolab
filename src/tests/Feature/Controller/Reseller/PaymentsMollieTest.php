@@ -250,9 +250,12 @@ class PaymentsMollieTest extends TestCase
         $response->assertStatus(200);
         $json = $response->json();
 
-        $this->assertCount(3, $json);
+        $hasCoinbase = !empty(\config('services.coinbase.key'));
+
+        $this->assertCount(3 + intval($hasCoinbase), $json);
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
         $this->assertSame('banktransfer', $json[2]['id']);
+        $this->assertSame('bitcoin', $json[3]['id']);
     }
 }
