@@ -31,7 +31,7 @@
                                 </div>
                                 <div v-if="domain.id" id="domain-skus" class="row">
                                     <label class="col-sm-4 col-form-label">{{ $t('user.subscriptions') }}</label>
-                                    <subscription-select v-if="domain.id" class="col-sm-8 pt-sm-1" type="domain" :object="domain" :readonly="true"></subscription-select>
+                                    <subscription-select v-if="domain.id" class="col-sm-8 pt-sm-1" ref="skus" type="domain" :object="domain" :readonly="true"></subscription-select>
                                 </div>
                                 <btn v-if="!domain.id" class="btn-primary mt-3" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>

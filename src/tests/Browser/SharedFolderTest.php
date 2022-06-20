@@ -156,6 +156,18 @@ class SharedFolderTest extends TestCaseDusk
                             $browser->assertListInputValue([])
                                 ->assertValue('@input', '');
                         })
+                        ->assertSeeIn('div.row:nth-child(5) label', 'Subscriptions')
+                        ->with('@skus', function ($browser) {
+                            $browser->assertElementsCount('tbody tr', 1)
+                                ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Shared Folder')
+                                ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,89 CHF/month')
+                                ->assertChecked('tbody tr:nth-child(1) td.selection input')
+                                ->assertDisabled('tbody tr:nth-child(1) td.selection input')
+                                ->assertTip(
+                                    'tbody tr:nth-child(1) td.buttons button',
+                                    'A shared folder'
+                                );
+                        })
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })
                 // Test error conditions
@@ -269,6 +281,17 @@ class SharedFolderTest extends TestCaseDusk
                         ->with(new ListInput('#aliases'), function (Browser $browser) {
                             $browser->assertListInputValue(['folder-alias1@kolab.org', 'folder-alias2@kolab.org'])
                                 ->assertValue('@input', '');
+                        })
+                        ->with('@skus', function ($browser) {
+                            $browser->assertElementsCount('tbody tr', 1)
+                                ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Shared Folder')
+                                ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,89 CHF/month')
+                                ->assertChecked('tbody tr:nth-child(1) td.selection input')
+                                ->assertDisabled('tbody tr:nth-child(1) td.selection input')
+                                ->assertTip(
+                                    'tbody tr:nth-child(1) td.buttons button',
+                                    'A shared folder'
+                                );
                         });
                 })
                 // change folder name, and remove one alias

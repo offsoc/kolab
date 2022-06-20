@@ -250,6 +250,43 @@ class GroupsTest extends TestCase
         $this->assertArrayHasKey('isActive', $json);
         $this->assertArrayHasKey('isLdapReady', $json);
         $this->assertSame(['sender_policy' => ['test']], $json['config']);
+        $this->assertCount(1, $json['skus']);
+    }
+
+    /**
+     * Test fetching SKUs list for a group (GET /groups/<id>/skus)
+     */
+    public function testSkus(): void
+    {
+        Queue::fake();
+
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+
+        $group = $this->getTestGroup('group-test@kolab.org');
+        $group->assignToWallet($john->wallets->first());
+
+        // Unauth access not allowed
+        $response = $this->get("api/v4/groups/{$group->id}/skus");
+        $response->assertStatus(401);
+
+        // Unauthorized access not allowed
+        $response = $this->actingAs($jack)->get("api/v4/groups/{$group->id}/skus");
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($john)->get("api/v4/groups/{$group->id}/skus");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSkuElement('group', $json[0], [
+                'prio' => 0,
+                'type' => 'group',
+                'handler' => 'Group',
+                'enabled' => true,
+                'readonly' => true,
+        ]);
     }
 
     /**

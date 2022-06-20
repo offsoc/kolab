@@ -5,6 +5,7 @@ namespace Tests\Feature\Controller;
 use App\Domain;
 use App\Entitlement;
 use App\Sku;
+use App\Tenant;
 use App\User;
 use App\Wallet;
 use Illuminate\Support\Facades\Queue;
@@ -24,6 +25,7 @@ class DomainsTest extends TestCase
         $this->deleteTestUser('test2@' . \config('app.domain'));
         $this->deleteTestUser('test1@domainscontroller.com');
         $this->deleteTestDomain('domainscontroller.com');
+        Sku::where('title', 'test')->delete();
     }
 
     public function tearDown(): void
@@ -32,6 +34,7 @@ class DomainsTest extends TestCase
         $this->deleteTestUser('test2@' . \config('app.domain'));
         $this->deleteTestUser('test1@domainscontroller.com');
         $this->deleteTestDomain('domainscontroller.com');
+        Sku::where('title', 'test')->delete();
 
         $domain = $this->getTestDomain('kolab.org');
         $domain->settings()->whereIn('key', ['spf_whitelist'])->delete();
@@ -369,6 +372,46 @@ class DomainsTest extends TestCase
         // Jack has no entitlement/control over kolab.org
         $response = $this->actingAs($jack)->get("api/v4/domains/{$domain->id}");
         $response->assertStatus(403);
+    }
+
+    /**
+     * Test fetching SKUs list for a domain (GET /domains/<id>/skus)
+     */
+    public function testSkus(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+        $domain = $this->getTestDomain('kolab.org');
+
+        // Unauth access not allowed
+        $response = $this->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(401);
+
+        // Create an sku for another tenant, to make sure it is not included in the result
+        $nsku = Sku::create([
+                'title' => 'test',
+                'name' => 'Test',
+                'description' => '',
+                'active' => true,
+                'cost' => 100,
+                'handler_class' => 'App\Handlers\Domain',
+        ]);
+        $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
+        $nsku->tenant_id = $tenant->id;
+        $nsku->save();
+
+        $response = $this->actingAs($user)->get("api/v4/domains/{$domain->id}/skus");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSkuElement('domain-hosting', $json[0], [
+                'prio' => 0,
+                'type' => 'domain',
+                'handler' => 'DomainHosting',
+                'enabled' => true,
+                'readonly' => true,
+        ]);
     }
 
     /**

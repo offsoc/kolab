@@ -132,6 +132,8 @@ class ResourcesController extends RelationController
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
+        // SkusController::updateEntitlements($resource, $request->skus);
+
         $resource->save();
 
         return response()->json([

@@ -184,6 +184,8 @@ class GroupsController extends RelationController
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
+        // SkusController::updateEntitlements($group, $request->skus);
+
         $group->members = $members;
         $group->save();
 

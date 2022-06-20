@@ -41,6 +41,7 @@ class ResourceInfo extends Page
             '@general' => '#general',
             '@nav' => 'ul.nav-tabs',
             '@settings' => '#settings',
+            '@skus' => '#resource-skus',
             '@status' => '#status-box',
         ];
     }

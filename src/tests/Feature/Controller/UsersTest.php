@@ -7,6 +7,7 @@ use App\Domain;
 use App\Http\Controllers\API\V4\UsersController;
 use App\Package;
 use App\Sku;
+use App\Tenant;
 use App\User;
 use App\Wallet;
 use Carbon\Carbon;
@@ -36,6 +37,7 @@ class UsersTest extends TestCase
         $this->deleteTestGroup('group-test@kolab.org');
         $this->deleteTestSharedFolder('folder-test@kolabnow.com');
         $this->deleteTestResource('resource-test@kolabnow.com');
+        Sku::where('title', 'test')->delete();
 
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
@@ -64,6 +66,7 @@ class UsersTest extends TestCase
         $this->deleteTestGroup('group-test@kolab.org');
         $this->deleteTestSharedFolder('folder-test@kolabnow.com');
         $this->deleteTestResource('resource-test@kolabnow.com');
+        Sku::where('title', 'test')->delete();
 
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
@@ -347,6 +350,103 @@ class UsersTest extends TestCase
         $this->assertSame([0], $json['skus'][$secondfactor_sku->id]['costs']);
 
         $this->assertSame([], $json['aliases']);
+    }
+
+    /**
+     * Test fetching SKUs list for a user (GET /users/<id>/skus)
+     */
+    public function testSkus(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+
+        // Unauth access not allowed
+        $response = $this->get("api/v4/users/{$user->id}/skus");
+        $response->assertStatus(401);
+
+        // Create an sku for another tenant, to make sure it is not included in the result
+        $nsku = Sku::create([
+                'title' => 'test',
+                'name' => 'Test',
+                'description' => '',
+                'active' => true,
+                'cost' => 100,
+                'handler_class' => 'Mailbox',
+        ]);
+        $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
+        $nsku->tenant_id = $tenant->id;
+        $nsku->save();
+
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(5, $json);
+
+        $this->assertSkuElement('mailbox', $json[0], [
+                'prio' => 100,
+                'type' => 'user',
+                'handler' => 'Mailbox',
+                'enabled' => true,
+                'readonly' => true,
+        ]);
+
+        $this->assertSkuElement('storage', $json[1], [
+                'prio' => 90,
+                'type' => 'user',
+                'handler' => 'Storage',
+                'enabled' => true,
+                'readonly' => true,
+                'range' => [
+                    'min' => 5,
+                    'max' => 100,
+                    'unit' => 'GB',
+                ]
+        ]);
+
+        $this->assertSkuElement('groupware', $json[2], [
+                'prio' => 80,
+                'type' => 'user',
+                'handler' => 'Groupware',
+                'enabled' => false,
+                'readonly' => false,
+        ]);
+
+        $this->assertSkuElement('activesync', $json[3], [
+                'prio' => 70,
+                'type' => 'user',
+                'handler' => 'Activesync',
+                'enabled' => false,
+                'readonly' => false,
+                'required' => ['Groupware'],
+        ]);
+
+        $this->assertSkuElement('2fa', $json[4], [
+                'prio' => 60,
+                'type' => 'user',
+                'handler' => 'Auth2F',
+                'enabled' => false,
+                'readonly' => false,
+                'forbidden' => ['Activesync'],
+        ]);
+
+        // Test inclusion of beta SKUs
+        $sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
+        $user->assignSku($sku);
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/skus");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(6, $json);
+
+        $this->assertSkuElement('beta', $json[5], [
+                'prio' => 10,
+                'type' => 'user',
+                'handler' => 'Beta',
+                'enabled' => false,
+                'readonly' => false,
+        ]);
     }
 
     /**

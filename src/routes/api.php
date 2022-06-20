@@ -77,7 +77,7 @@ Route::group(
 
         Route::apiResource('domains', API\V4\DomainsController::class);
         Route::get('domains/{id}/confirm', [API\V4\DomainsController::class, 'confirm']);
-        Route::get('domains/{id}/skus', [API\V4\SkusController::class, 'domainSkus']);
+        Route::get('domains/{id}/skus', [API\V4\DomainsController::class, 'skus']);
         Route::get('domains/{id}/status', [API\V4\DomainsController::class, 'status']);
         Route::post('domains/{id}/config', [API\V4\DomainsController::class, 'setConfig']);
 
@@ -95,6 +95,7 @@ Route::group(
         }
 
         Route::apiResource('groups', API\V4\GroupsController::class);
+        Route::get('groups/{id}/skus', [API\V4\GroupsController::class, 'skus']);
         Route::get('groups/{id}/status', [API\V4\GroupsController::class, 'status']);
         Route::post('groups/{id}/config', [API\V4\GroupsController::class, 'setConfig']);
 
@@ -106,10 +107,12 @@ Route::group(
             ->withoutMiddleware(['auth:api']);
 
         Route::apiResource('resources', API\V4\ResourcesController::class);
+        Route::get('resources/{id}/skus', [API\V4\ResourcesController::class, 'skus']);
         Route::get('resources/{id}/status', [API\V4\ResourcesController::class, 'status']);
         Route::post('resources/{id}/config', [API\V4\ResourcesController::class, 'setConfig']);
 
         Route::apiResource('shared-folders', API\V4\SharedFoldersController::class);
+        Route::get('shared-folders/{id}/skus', [API\V4\SharedFoldersController::class, 'skus']);
         Route::get('shared-folders/{id}/status', [API\V4\SharedFoldersController::class, 'status']);
         Route::post('shared-folders/{id}/config', [API\V4\SharedFoldersController::class, 'setConfig']);
 
@@ -117,7 +120,7 @@ Route::group(
 
         Route::apiResource('users', API\V4\UsersController::class);
         Route::post('users/{id}/config', [API\V4\UsersController::class, 'setConfig']);
-        Route::get('users/{id}/skus', [API\V4\SkusController::class, 'userSkus']);
+        Route::get('users/{id}/skus', [API\V4\UsersController::class, 'skus']);
         Route::get('users/{id}/status', [API\V4\UsersController::class, 'status']);
 
         Route::apiResource('wallets', API\V4\WalletsController::class);
@@ -181,7 +184,7 @@ if (\config('app.with_admin')) {
         ],
         function () {
             Route::apiResource('domains', API\V4\Admin\DomainsController::class);
-            Route::get('domains/{id}/skus', [API\V4\Admin\SkusController::class, 'domainSkus']);
+            Route::get('domains/{id}/skus', [API\V4\Admin\DomainsController::class, 'skus']);
             Route::post('domains/{id}/suspend', [API\V4\Admin\DomainsController::class, 'suspend']);
             Route::post('domains/{id}/unsuspend', [API\V4\Admin\DomainsController::class, 'unsuspend']);
 
@@ -196,7 +199,7 @@ if (\config('app.with_admin')) {
             Route::apiResource('users', API\V4\Admin\UsersController::class);
             Route::get('users/{id}/discounts', [API\V4\Reseller\DiscountsController::class, 'userDiscounts']);
             Route::post('users/{id}/reset2FA', [API\V4\Admin\UsersController::class, 'reset2FA']);
-            Route::get('users/{id}/skus', [API\V4\Admin\SkusController::class, 'userSkus']);
+            Route::get('users/{id}/skus', [API\V4\Admin\UsersController::class, 'skus']);
             Route::post('users/{id}/skus/{sku}', [API\V4\Admin\UsersController::class, 'setSku']);
             Route::post('users/{id}/suspend', [API\V4\Admin\UsersController::class, 'suspend']);
             Route::post('users/{id}/unsuspend', [API\V4\Admin\UsersController::class, 'unsuspend']);
@@ -219,7 +222,7 @@ if (\config('app.with_reseller')) {
         ],
         function () {
             Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
-            Route::get('domains/{id}/skus', [API\V4\Reseller\SkusController::class, 'domainSkus']);
+            Route::get('domains/{id}/skus', [API\V4\Reseller\DomainsController::class, 'skus']);
             Route::post('domains/{id}/suspend', [API\V4\Reseller\DomainsController::class, 'suspend']);
             Route::post('domains/{id}/unsuspend', [API\V4\Reseller\DomainsController::class, 'unsuspend']);
 
@@ -246,7 +249,7 @@ if (\config('app.with_reseller')) {
             Route::apiResource('users', API\V4\Reseller\UsersController::class);
             Route::get('users/{id}/discounts', [API\V4\Reseller\DiscountsController::class, 'userDiscounts']);
             Route::post('users/{id}/reset2FA', [API\V4\Reseller\UsersController::class, 'reset2FA']);
-            Route::get('users/{id}/skus', [API\V4\Reseller\SkusController::class, 'userSkus']);
+            Route::get('users/{id}/skus', [API\V4\Reseller\UsersController::class, 'skus']);
             Route::post('users/{id}/skus/{sku}', [API\V4\Admin\UsersController::class, 'setSku']);
             Route::post('users/{id}/suspend', [API\V4\Reseller\UsersController::class, 'suspend']);
             Route::post('users/{id}/unsuspend', [API\V4\Reseller\UsersController::class, 'unsuspend']);

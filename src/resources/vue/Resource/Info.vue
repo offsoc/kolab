@@ -40,6 +40,10 @@
                                         <input type="text" class="form-control" id="email" disabled v-model="resource.email">
                                     </div>
                                 </div>
+                                <div v-if="resource_id === 'new' || resource.id" id="resource-skus" class="row mb-3">
+                                    <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
+                                    <subscription-select class="col-sm-8 pt-sm-1" ref="skus" :object="resource" type="resource" :readonly="true"></subscription-select>
+                                </div>
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
@@ -73,10 +77,12 @@
 
 <script>
     import StatusComponent from '../Widgets/Status'
+    import SubscriptionSelect from '../Widgets/SubscriptionSelect'
 
     export default {
         components: {
-            StatusComponent
+            StatusComponent,
+            SubscriptionSelect
         },
         data() {
             return {
@@ -136,13 +142,14 @@
 
                 let method = 'post'
                 let location = '/api/v4/resources'
+                let post = this.$root.pick(this.resource, ['id', 'name', 'domain'])
 
                 if (this.resource_id !== 'new') {
                     method = 'put'
                     location += '/' + this.resource_id
                 }
 
-                const post = this.$root.pick(this.resource, ['id', 'name', 'domain'])
+                // post.skus = this.$refs.skus.getSkus()
 
                 axios[method](location, post)
                     .then(response => {

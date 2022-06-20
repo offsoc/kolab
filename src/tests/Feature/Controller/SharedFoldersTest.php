@@ -251,6 +251,47 @@ class SharedFoldersTest extends TestCase
         $this->assertArrayHasKey('isLdapReady', $json);
         $this->assertArrayHasKey('isImapReady', $json);
         $this->assertSame(['acl' => ['anyone, full']], $json['config']);
+        $this->assertCount(1, $json['skus']);
+    }
+
+    /**
+     * Test fetching SKUs list for a shared folder (GET /shared-folders/<id>/skus)
+     */
+    public function testSkus(): void
+    {
+        Queue::fake();
+
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+
+        $folder = $this->getTestSharedFolder('folder-test@kolab.org');
+        $folder->assignToWallet($john->wallets->first());
+
+        // Unauth access not allowed
+        $response = $this->get("api/v4/shared-folders/{$folder->id}/skus");
+        $response->assertStatus(401);
+
+        // Unauthorized access not allowed
+        $response = $this->actingAs($jack)->get("api/v4/shared-folders/{$folder->id}/skus");
+        $response->assertStatus(403);
+
+        // Non-existing folder
+        $response = $this->actingAs($john)->get("api/v4/shared-folders/non-existing/skus");
+        $response->assertStatus(404);
+
+        $response = $this->actingAs($john)->get("api/v4/shared-folders/{$folder->id}/skus");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSkuElement('shared-folder', $json[0], [
+                'prio' => 0,
+                'type' => 'sharedFolder',
+                'handler' => 'SharedFolder',
+                'enabled' => true,
+                'readonly' => true,
+        ]);
     }
 
     /**

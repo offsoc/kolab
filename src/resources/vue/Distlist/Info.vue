@@ -38,6 +38,10 @@
                                         <list-input id="members" :list="list.members"></list-input>
                                     </div>
                                 </div>
+                                <div v-if="list_id === 'new' || list.id" id="distlist-skus" class="row mb-3">
+                                    <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
+                                    <subscription-select class="col-sm-8 pt-sm-1" ref="skus" :object="list" type="group" :readonly="true"></subscription-select>
+                                </div>
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
@@ -65,11 +69,13 @@
 <script>
     import ListInput from '../Widgets/ListInput'
     import StatusComponent from '../Widgets/Status'
+    import SubscriptionSelect from '../Widgets/SubscriptionSelect'
 
     export default {
         components: {
             ListInput,
-            StatusComponent
+            StatusComponent,
+            SubscriptionSelect
         },
         data() {
             return {
@@ -111,13 +117,16 @@
 
                 let method = 'post'
                 let location = '/api/v4/groups'
+                let post = this.$root.pick(this.list, ['name', 'email', 'members'])
 
                 if (this.list_id !== 'new') {
                     method = 'put'
                     location += '/' + this.list_id
                 }
 
-                axios[method](location, this.list)
+                // post.skus = this.$refs.skus.getSkus()
+
+                axios[method](location, post)
                     .then(response => {
                         this.$toast.success(response.data.message)
                         this.$router.push({ name: 'distlists' })
@@ -125,7 +134,8 @@
             },
             submitSettings() {
                 this.$root.clearFormValidation($('#settings form'))
-                let post = this.list.config
+
+                const post = this.$root.pick(this.list.config, [ 'sender_policy' ])
 
                 axios.post('/api/v4/groups/' + this.list_id + '/config', post)
                     .then(response => {

@@ -21,8 +21,12 @@ class ResourceTest extends TestCaseDusk
     {
         parent::setUp();
 
-        Resource::whereNotIn('email', ['resource-test1@kolab.org', 'resource-test2@kolab.org'])->delete();
         $this->clearBetaEntitlements();
+        Resource::whereNotIn('email', ['resource-test1@kolab.org', 'resource-test2@kolab.org'])->delete();
+        // Remove leftover entitlements that might interfere with the tests
+        \App\Entitlement::where('entitleable_type', 'App\\Resource')
+            ->whereRaw('entitleable_id not in (select id from resources where deleted_at is null)')
+            ->forceDelete();
     }
 
     /**
@@ -30,6 +34,7 @@ class ResourceTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
+        \App\Sku::withEnvTenantContext()->where('title', 'resource')->update(['units_free' => 0]);
         Resource::whereNotIn('email', ['resource-test1@kolab.org', 'resource-test2@kolab.org'])->delete();
         $this->clearBetaEntitlements();
 
@@ -118,9 +123,11 @@ class ResourceTest extends TestCaseDusk
                 ->assertErrorPage(403);
         });
 
-        // Add beta entitlements
+        // Add beta entitlement
         $john = $this->getTestUser('john@kolab.org');
         $this->addBetaEntitlement($john);
+
+        \App\Sku::withEnvTenantContext()->where('title', 'resource')->update(['units_free' => 3]);
 
         $this->browse(function (Browser $browser) {
             // Create a resource
@@ -140,6 +147,18 @@ class ResourceTest extends TestCaseDusk
                         ->assertSeeIn('div.row:nth-child(2) label', 'Domain')
                         ->assertSelectHasOptions('div.row:nth-child(2) select', ['kolab.org'])
                         ->assertValue('div.row:nth-child(2) select', 'kolab.org')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Subscriptions')
+                        ->with('@skus', function ($browser) {
+                            $browser->assertElementsCount('tbody tr', 1)
+                                ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Resource')
+                                ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,00 CHF/month') // one free unit left
+                                ->assertChecked('tbody tr:nth-child(1) td.selection input')
+                                ->assertDisabled('tbody tr:nth-child(1) td.selection input')
+                                ->assertTip(
+                                    'tbody tr:nth-child(1) td.buttons button',
+                                    'Reservation taker'
+                                );
+                        })
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })
                 // Test error conditions
@@ -173,6 +192,17 @@ class ResourceTest extends TestCaseDusk
                             'value',
                             '/^resource-[0-9]+@kolab\.org$/'
                         )
+                        ->with('@skus', function ($browser) {
+                            $browser->assertElementsCount('tbody tr', 1)
+                                ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Resource')
+                                ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,00 CHF/month')
+                                ->assertChecked('tbody tr:nth-child(1) td.selection input')
+                                ->assertDisabled('tbody tr:nth-child(1) td.selection input')
+                                ->assertTip(
+                                    'tbody tr:nth-child(1) td.buttons button',
+                                    'Reservation taker'
+                                );
+                        })
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })
                 // Test error handling
@@ -203,6 +233,21 @@ class ResourceTest extends TestCaseDusk
                 ->assertElementsCount('@table tbody tr', 2);
 
             $this->assertNull(Resource::where('name', 'Test Resource Update')->first());
+        });
+
+        // Assert Subscription price for the case when there's no free units
+        \App\Sku::withEnvTenantContext()->where('title', 'resource')->update(['units_free' => 2]);
+
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/resource/new')
+                ->on(new ResourceInfo())
+                ->with('@skus', function ($browser) {
+                    $browser->assertElementsCount('tbody tr', 1)
+                        ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Resource')
+                        ->assertSeeIn('tbody tr:nth-child(1) td.price', '1,01 CHF/month')
+                        ->assertChecked('tbody tr:nth-child(1) td.selection input')
+                        ->assertDisabled('tbody tr:nth-child(1) td.selection input');
+                });
         });
     }
 

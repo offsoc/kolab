@@ -41,6 +41,7 @@ class DistlistInfo extends Page
             '@general' => '#general',
             '@nav' => 'ul.nav-tabs',
             '@settings' => '#settings',
+            '@skus' => '#distlist-skus',
             '@status' => '#status-box',
         ];
     }

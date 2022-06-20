@@ -144,6 +144,18 @@ class DistlistTest extends TestCaseDusk
                             $browser->assertListInputValue([])
                                 ->assertValue('@input', '');
                         })
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Subscriptions')
+                        ->with('@skus', function ($browser) {
+                            $browser->assertElementsCount('tbody tr', 1)
+                                ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Group')
+                                ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,00 CHF/month')
+                                ->assertChecked('tbody tr:nth-child(1) td.selection input')
+                                ->assertDisabled('tbody tr:nth-child(1) td.selection input')
+                                ->assertTip(
+                                    'tbody tr:nth-child(1) td.buttons button',
+                                    'Distribution list'
+                                );
+                        })
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })
                 // Test error conditions
@@ -186,6 +198,18 @@ class DistlistTest extends TestCaseDusk
                         ->with(new ListInput('#members'), function (Browser $browser) {
                             $browser->assertListInputValue(['test1@gmail.com', 'test2@gmail.com'])
                                 ->assertValue('@input', '');
+                        })
+                        ->assertSeeIn('div.row:nth-child(5) label', 'Subscriptions')
+                        ->with('@skus', function ($browser) {
+                            $browser->assertElementsCount('tbody tr', 1)
+                                ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Group')
+                                ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,00 CHF/month')
+                                ->assertChecked('tbody tr:nth-child(1) td.selection input')
+                                ->assertDisabled('tbody tr:nth-child(1) td.selection input')
+                                ->assertTip(
+                                    'tbody tr:nth-child(1) td.buttons button',
+                                    'Distribution list'
+                                );
                         })
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })

@@ -321,7 +321,34 @@ class RelationController extends ResourceController
             $response['aliases'] = $resource->aliases()->pluck('alias')->all();
         }
 
+        // Entitlements/Wallet info
+        if (method_exists($resource, 'wallet')) {
+            API\V4\SkusController::objectEntitlements($resource, $response);
+        }
+
         return response()->json($response);
+    }
+
+    /**
+     * Get a list of SKUs available to the resource.
+     *
+     * @param int $id Resource identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function skus($id)
+    {
+        $resource = $this->model::find($id);
+
+        if (!$this->checkTenant($resource)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canRead($resource)) {
+            return $this->errorResponse(403);
+        }
+
+        return API\V4\SkusController::objectSkus($resource);
     }
 
     /**

@@ -248,6 +248,43 @@ class ResourcesTest extends TestCase
         $this->assertArrayHasKey('isLdapReady', $json);
         $this->assertArrayHasKey('isImapReady', $json);
         $this->assertSame(['invitation_policy' => 'reject'], $json['config']);
+        $this->assertCount(1, $json['skus']);
+    }
+
+    /**
+     * Test fetching SKUs list for a resource (GET /resources/<id>/skus)
+     */
+    public function testSkus(): void
+    {
+        Queue::fake();
+
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+
+        $resource = $this->getTestResource('resource-test@kolab.org');
+        $resource->assignToWallet($john->wallets->first());
+
+        // Unauth access not allowed
+        $response = $this->get("api/v4/resources/{$resource->id}/skus");
+        $response->assertStatus(401);
+
+        // Unauthorized access not allowed
+        $response = $this->actingAs($jack)->get("api/v4/resources/{$resource->id}/skus");
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($john)->get("api/v4/resources/{$resource->id}/skus");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json);
+        $this->assertSkuElement('resource', $json[0], [
+                'prio' => 0,
+                'type' => 'resource',
+                'handler' => 'Resource',
+                'enabled' => true,
+                'readonly' => true,
+        ]);
     }
 
     /**

@@ -41,6 +41,7 @@ class SharedFolderInfo extends Page
             '@general' => '#general',
             '@nav' => 'ul.nav-tabs',
             '@settings' => '#settings',
+            '@skus' => '#folder-skus',
             '@status' => '#status-box',
         ];
     }

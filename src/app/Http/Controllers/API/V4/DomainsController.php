@@ -205,16 +205,8 @@ class DomainsController extends RelationController
         // Status info
         $response['statusInfo'] = self::statusInfo($domain);
 
-        // Entitlements info
-        $response['skus'] = \App\Entitlement::objectEntitlementsSummary($domain);
-
-        // Some basic information about the domain wallet
-        $wallet = $domain->wallet();
-        $response['wallet'] = $wallet->toArray();
-        if ($wallet->discount) {
-            $response['wallet']['discount'] = $wallet->discount->discount;
-            $response['wallet']['discount_description'] = $wallet->discount->description;
-        }
+        // Entitlements/Wallet info
+        SkusController::objectEntitlements($domain, $response);
 
         return response()->json($response);
     }

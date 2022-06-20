@@ -72,24 +72,36 @@
                 this.discount_description = this.object.wallet.discount_description
             }
 
-            axios.get('/api/v4/' + this.type + 's/' + this.object.id + '/skus', { loader: true })
+            let url = '/api/v4/' + this.type + 's/' + this.object.id + '/skus'
+
+            if (!this.object.id) {
+                url = '/api/v4/skus?type=' + this.type.replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+            }
+
+            axios.get(url, { loader: true })
                 .then(response => {
-                    if (this.readonly) {
+                    if (this.readonly && this.object.skus) {
                         response.data = response.data.filter(sku => { return sku.id in this.object.skus })
                     }
 
                     // "merge" SKUs with user entitlement-SKUs
                     this.skus = response.data
                         .map(sku => {
-                            const objSku = this.object.skus[sku.id]
+                            const objSku = this.object.skus ? this.object.skus[sku.id] : null
                             if (objSku) {
                                 sku.enabled = true
                                 sku.skuCost = sku.cost
                                 sku.cost = objSku.costs.reduce((sum, current) => sum + current)
                                 sku.value = objSku.count
                                 sku.costs = objSku.costs
-                            } else if (!sku.readonly) {
-                                sku.enabled = false
+                            } else {
+                                if ('nextCost' in sku) {
+                                    sku.cost = sku.nextCost
+                                }
+
+                                if (!sku.readonly) {
+                                    sku.enabled = false
+                                }
                             }
 
                             return sku

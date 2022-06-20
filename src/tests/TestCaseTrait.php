@@ -131,6 +131,33 @@ trait TestCaseTrait
         Assert::assertSame($expected, $skus);
     }
 
+    /**
+     * Assert content of the SKU element in an API response
+     *
+     * @param string $sku_title The SKU title
+     * @param array  $result    The result to assert
+     * @param array  $other     Other items the SKU itself does not include
+     */
+    protected function assertSkuElement($sku_title, $result, $other = []): void
+    {
+        $sku = Sku::withEnvTenantContext()->where('title', $sku_title)->first();
+
+        $this->assertSame($sku->id, $result['id']);
+        $this->assertSame($sku->title, $result['title']);
+        $this->assertSame($sku->name, $result['name']);
+        $this->assertSame($sku->description, $result['description']);
+        $this->assertSame($sku->cost, $result['cost']);
+        $this->assertSame($sku->units_free, $result['units_free']);
+        $this->assertSame($sku->period, $result['period']);
+        $this->assertSame($sku->active, $result['active']);
+
+        foreach ($other as $key => $value) {
+            $this->assertSame($value, $result[$key]);
+        }
+
+        $this->assertCount(8 + count($other), $result);
+    }
+
     protected function backdateEntitlements($entitlements, $targetDate, $targetCreatedDate = null)
     {
         $wallets = [];

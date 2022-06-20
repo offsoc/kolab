@@ -9,72 +9,45 @@ use Illuminate\Http\Request;
 class SkusController extends ResourceController
 {
     /**
-     * Get a list of SKUs available to the domain.
-     *
-     * @param int $id Domain identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function domainSkus($id)
-    {
-        $domain = \App\Domain::find($id);
-
-        if (!$this->checkTenant($domain)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($domain)) {
-            return $this->errorResponse(403);
-        }
-
-        return $this->objectSkus($domain);
-    }
-
-    /**
      * Get a list of active SKUs.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
+        $type = request()->input('type');
+
         // Note: Order by title for consistent ordering in tests
-        $skus = Sku::withSubjectTenantContext()->where('active', true)->orderBy('title')->get();
+        $response = Sku::withSubjectTenantContext()->where('active', true)->orderBy('title')
+            ->get()
+            ->transform(function ($sku) {
+                return $this->skuElement($sku);
+            })
+            ->filter(function ($sku) use ($type) {
+                return !$type || $sku['type'] === $type;
+            })
+            ->sortByDesc('prio')
+            ->values();
 
-        $response = [];
+        if ($type) {
+            $wallet = $this->guard()->user()->wallet();
 
-        foreach ($skus as $sku) {
-            if ($data = $this->skuElement($sku)) {
-                $response[] = $data;
-            }
+            // Figure out the cost for a new object of the specified type
+            $response = $response->map(function ($sku) use ($wallet) {
+                $sku['nextCost'] = $sku['cost'];
+                if ($sku['cost'] && $sku['units_free']) {
+                    $count = $wallet->entitlements()->where('sku_id', $sku['id'])->count();
+
+                    if ($count < $sku['units_free']) {
+                        $sku['nextCost'] = 0;
+                    }
+                }
+
+                return $sku;
+            });
         }
 
-        usort($response, function ($a, $b) {
-            return ($b['prio'] <=> $a['prio']);
-        });
-
-        return response()->json($response);
-    }
-
-    /**
-     * Get a list of SKUs available to the user.
-     *
-     * @param int $id User identifier
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function userSkus($id)
-    {
-        $user = \App\User::find($id);
-
-        if (!$this->checkTenant($user)) {
-            return $this->errorResponse(404);
-        }
-
-        if (!$this->guard()->user()->canRead($user)) {
-            return $this->errorResponse(403);
-        }
-
-        return $this->objectSkus($user);
+        return response()->json($response->all());
     }
 
     /**
@@ -84,9 +57,9 @@ class SkusController extends ResourceController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected static function objectSkus($object)
+    public static function objectSkus($object)
     {
-        $type = $object instanceof \App\Domain ? 'domain' : 'user';
+        $type = \lcfirst(\class_basename($object::class));
         $response = [];
 
         // Note: Order by title for consistent ordering in tests
@@ -115,6 +88,75 @@ class SkusController extends ResourceController
         });
 
         return response()->json($response);
+    }
+
+    /**
+     * Include SKUs/Wallet information in the object's response.
+     *
+     * @param object $object   User/Domain/etc object
+     * @param array  $response The response to put the data into
+     */
+    public static function objectEntitlements($object, &$response = []): void
+    {
+        // Object's entitlements information
+        $response['skus'] = \App\Entitlement::objectEntitlementsSummary($object);
+
+        // Some basic information about the object's wallet
+        $wallet = $object->wallet();
+        $response['wallet'] = $wallet->toArray();
+        if ($wallet->discount) {
+            $response['wallet']['discount'] = $wallet->discount->discount;
+            $response['wallet']['discount_description'] = $wallet->discount->description;
+        }
+    }
+
+    /**
+     * Update object entitlements.
+     *
+     * @param object $object The object for update
+     * @param array  $rSkus  List of SKU IDs requested for the user in the form [id=>qty]
+     */
+    public static function updateEntitlements($object, $rSkus): void
+    {
+        if (!is_array($rSkus)) {
+            return;
+        }
+
+        // list of skus, [id=>obj]
+        $skus = Sku::withEnvTenantContext()->get()->mapWithKeys(
+            function ($sku) {
+                return [$sku->id => $sku];
+            }
+        );
+
+        // existing entitlement's SKUs
+        $eSkus = [];
+
+        $object->entitlements()->groupBy('sku_id')
+            ->selectRaw('count(*) as total, sku_id')->each(
+                function ($e) use (&$eSkus) {
+                    $eSkus[$e->sku_id] = $e->total;
+                }
+            );
+
+        foreach ($skus as $skuID => $sku) {
+            $e = array_key_exists($skuID, $eSkus) ? $eSkus[$skuID] : 0;
+            $r = array_key_exists($skuID, $rSkus) ? $rSkus[$skuID] : 0;
+
+            if ($sku->handler_class == \App\Handlers\Mailbox::class) {
+                if ($r != 1) {
+                    throw new \Exception("Invalid quantity of mailboxes");
+                }
+            }
+
+            if ($e > $r) {
+                // remove those entitled more than existing
+                $object->removeSku($sku, ($e - $r));
+            } elseif ($e < $r) {
+                // add those requested more than entitled
+                $object->assignSku($sku, ($r - $e));
+            }
+        }
     }
 
     /**

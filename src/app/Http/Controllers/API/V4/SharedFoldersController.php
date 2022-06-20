@@ -118,6 +118,8 @@ class SharedFoldersController extends RelationController
 
         DB::beginTransaction();
 
+        // SkusController::updateEntitlements($folder, $request->skus);
+
         if ($name && $name != $folder->name) {
             $folder->name = $name;
         }

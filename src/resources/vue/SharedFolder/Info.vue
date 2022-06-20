@@ -48,6 +48,10 @@
                                         <list-input id="aliases" :list="folder.aliases"></list-input>
                                     </div>
                                 </div>
+                                <div v-if="folder_id === 'new' || folder.id" id="folder-skus" class="row mb-3">
+                                    <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
+                                    <subscription-select class="col-sm-8 pt-sm-1" ref="skus" :object="folder" type="shared-folder" :readonly="true"></subscription-select>
+                                </div>
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
@@ -76,12 +80,14 @@
     import AclInput from '../Widgets/AclInput'
     import ListInput from '../Widgets/ListInput'
     import StatusComponent from '../Widgets/Status'
+    import SubscriptionSelect from '../Widgets/SubscriptionSelect'
 
     export default {
         components: {
             AclInput,
             ListInput,
-            StatusComponent
+            StatusComponent,
+            SubscriptionSelect
         },
         data() {
             return {
@@ -132,17 +138,18 @@
 
                 let method = 'post'
                 let location = '/api/v4/shared-folders'
+                let post = this.$root.pick(this.folder, ['id', 'name', 'domain', 'type', 'aliases'])
 
                 if (this.folder_id !== 'new') {
                     method = 'put'
                     location += '/' + this.folder_id
                 }
 
-                const post = this.$root.pick(this.folder, ['id', 'name', 'domain', 'type', 'aliases'])
-
                 if (post.type != 'mail') {
                     delete post.aliases
                 }
+
+                // post.skus = this.$refs.skus.getSkus()
 
                 axios[method](location, post)
                     .then(response => {

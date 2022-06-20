@@ -165,6 +165,7 @@ class UsersController extends RelationController
 
         // Check if the user is a controller of his wallet
         $isController = $user->canDelete($user);
+        $isDegraded = $user->isDegraded();
         $hasCustomDomain = $user->wallet()->entitlements()
             ->where('entitleable_type', Domain::class)
             ->count() > 0;
@@ -301,7 +302,7 @@ class UsersController extends RelationController
 
         DB::beginTransaction();
 
-        $this->updateEntitlements($user, $request->skus);
+        SkusController::updateEntitlements($user, $request->skus);
 
         if (!empty($settings)) {
             $user->setSettings($settings);
@@ -331,55 +332,6 @@ class UsersController extends RelationController
         }
 
         return response()->json($response);
-    }
-
-    /**
-     * Update user entitlements.
-     *
-     * @param \App\User $user  The user
-     * @param array     $rSkus List of SKU IDs requested for the user in the form [id=>qty]
-     */
-    protected function updateEntitlements(User $user, $rSkus)
-    {
-        if (!is_array($rSkus)) {
-            return;
-        }
-
-        // list of skus, [id=>obj]
-        $skus = Sku::withEnvTenantContext()->get()->mapWithKeys(
-            function ($sku) {
-                return [$sku->id => $sku];
-            }
-        );
-
-        // existing entitlement's SKUs
-        $eSkus = [];
-
-        $user->entitlements()->groupBy('sku_id')
-            ->selectRaw('count(*) as total, sku_id')->each(
-                function ($e) use (&$eSkus) {
-                    $eSkus[$e->sku_id] = $e->total;
-                }
-            );
-
-        foreach ($skus as $skuID => $sku) {
-            $e = array_key_exists($skuID, $eSkus) ? $eSkus[$skuID] : 0;
-            $r = array_key_exists($skuID, $rSkus) ? $rSkus[$skuID] : 0;
-
-            if ($sku->handler_class == \App\Handlers\Mailbox::class) {
-                if ($r != 1) {
-                    throw new \Exception("Invalid quantity of mailboxes");
-                }
-            }
-
-            if ($e > $r) {
-                // remove those entitled more than existing
-                $user->removeSku($sku, ($e - $r));
-            } elseif ($e < $r) {
-                // add those requested more than entitled
-                $user->assignSku($sku, ($r - $e));
-            }
-        }
     }
 
     /**
