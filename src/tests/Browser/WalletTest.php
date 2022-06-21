@@ -25,7 +25,7 @@ class WalletTest extends TestCaseDusk
         $this->deleteTestUser('wallets-controller@kolabnow.com');
 
         $john = $this->getTestUser('john@kolab.org');
-        Wallet::where('user_id', $john->id)->update(['balance' => -1234]);
+        Wallet::where('user_id', $john->id)->update(['balance' => -1234, 'currency' => 'CHF']);
     }
 
     /**

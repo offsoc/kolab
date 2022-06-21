@@ -336,7 +336,7 @@
                 tabs: [
                     { label: 'user.finances' },
                     { label: 'user.aliases', count: 0 },
-                    { label: 'user.subscriptions', count: 0 },
+                    { label: 'form.subscriptions', count: 0 },
                     { label: 'user.domains', count: 0 },
                     { label: 'user.users', count: 0 },
                     { label: 'user.distlists', count: 0 },

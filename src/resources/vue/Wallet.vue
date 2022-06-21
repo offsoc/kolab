@@ -153,10 +153,11 @@
     import { library } from '@fortawesome/fontawesome-svg-core'
 
     library.add(
-        require('@fortawesome/free-brands-svg-icons/faPaypal').definition,
-        require('@fortawesome/free-regular-svg-icons/faCreditCard').definition,
-        require('@fortawesome/free-solid-svg-icons/faBuildingColumns').definition,
         require('@fortawesome/free-brands-svg-icons/faBitcoin').definition,
+        require('@fortawesome/free-solid-svg-icons/faBuildingColumns').definition,
+        require('@fortawesome/free-regular-svg-icons/faCreditCard').definition,
+        require('@fortawesome/free-solid-svg-icons/faDownload').definition,
+        require('@fortawesome/free-brands-svg-icons/faPaypal').definition
     )
 
     export default {

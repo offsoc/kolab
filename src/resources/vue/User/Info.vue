@@ -76,7 +76,7 @@
                                     <package-select class="col-sm-8 pt-sm-1"></package-select>
                                 </div>
                                 <div v-if="user_id !== 'new'" id="user-skus" class="row mb-3">
-                                    <label class="col-sm-4 col-form-label">{{ $t('user.subscriptions') }}</label>
+                                    <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
                                     <subscription-select v-if="user.id" class="col-sm-8 pt-sm-1" :object="user"></subscription-select>
                                 </div>
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>

@@ -79,6 +79,7 @@ class UsersTest extends TestCaseDusk
 
         $wallet = $john->wallets()->first();
         $wallet->discount()->dissociate();
+        $wallet->currency = 'CHF';
         $wallet->save();
 
         $this->clearBetaEntitlements();

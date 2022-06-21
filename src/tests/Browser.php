@@ -69,7 +69,7 @@ class Browser extends \Laravel\Dusk\Browser
             $browser->with(new Toast($type), function (Browser $browser) use ($title, $message) {
                 $browser->assertToastTitle($title)
                     ->assertToastMessage($message)
-                        ->closeToast();
+                    ->closeToast();
             });
         });
     }

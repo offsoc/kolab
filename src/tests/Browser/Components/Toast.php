@@ -97,6 +97,6 @@ class Toast extends BaseComponent
      */
     public function closeToast($browser)
     {
-        $this->element->findElements(WebDriverBy::cssSelector('.btn-close'))[0]->click();
+        $this->element->findElement(WebDriverBy::cssSelector('.btn-close'))->click();
     }
 }
