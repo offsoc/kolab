@@ -367,20 +367,17 @@ axios.interceptors.response.use(
         return response
     },
     error => {
-        if (error.config) {
-            let loader = error.config.loader
-            if (loader) {
-                stopLoading(loader)
-            }
+        if (error.config && error.config.loader) {
+            stopLoading(error.config.loader)
+        }
 
-            // Do not display the error in a toast message, pass the error as-is
-            if (axios.isCancel(error) || error.config.ignoreErrors) {
-                return Promise.reject(error)
-            }
+        // Do not display the error in a toast message, pass the error as-is
+        if (axios.isCancel(error) || (error.config && error.config.ignoreErrors)) {
+            return Promise.reject(error)
+        }
 
-            if (error.config.onFinish) {
-                error.config.onFinish()
-            }
+        if (error.config && error.config.onFinish) {
+            error.config.onFinish()
         }
 
         let error_msg
