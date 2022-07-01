@@ -5,7 +5,6 @@ namespace App;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Ramsey\Uuid\Uuid;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Small utility functions for App.

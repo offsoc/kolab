@@ -101,7 +101,5 @@ abstract class ObjectUpdateCommand extends ObjectCommand
         } else {
             $object->save();
         }
-
-        $this->cacheRefresh($object);
     }
 }

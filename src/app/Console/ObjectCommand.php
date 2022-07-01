@@ -52,29 +52,4 @@ abstract class ObjectCommand extends Command
      * @var array
      */
     protected $properties;
-
-    /**
-     * List of cache keys to refresh after updating/creating an object
-     *
-     * @var array
-     */
-    protected $cacheKeys = [];
-
-    /**
-     * Reset the cache for specified object using defined cacheKeys.
-     *
-     * @param object $object The object that was updated/created
-     */
-    protected function cacheRefresh($object): void
-    {
-        foreach ($this->cacheKeys as $cacheKey) {
-            foreach ($object->toArray() as $propKey => $propValue) {
-                if (!is_object($propValue)) {
-                    $cacheKey = str_replace('%' . $propKey . '%', $propValue, $cacheKey);
-                }
-            }
-
-            Cache::forget($cacheKey);
-        }
-    }
 }
