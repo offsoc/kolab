@@ -16,6 +16,7 @@ class AddMemberTest extends TestCase
         parent::setUp();
 
         $this->deleteTestGroup('group-test@kolabnow.com');
+        $this->deleteTestGroup('group-test@kolab.org');
     }
 
     /**
@@ -24,6 +25,7 @@ class AddMemberTest extends TestCase
     public function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolabnow.com');
+        $this->deleteTestGroup('group-test@kolab.org');
 
         parent::tearDown();
     }
@@ -79,5 +81,17 @@ class AddMemberTest extends TestCase
         $this->assertSame(1, $code);
         $this->assertSame("member@gmail.com: Already exists in the group.", $output);
         $this->assertSame(['member2@gmail.com', 'member@gmail.com'], $group->refresh()->members);
+
+        // Adding a local-domain member that does not exist
+        $john = $this->getTestUser('john@kolab.org');
+        $group = Group::create(['email' => 'group-test@kolab.org']);
+        $group->assignToWallet($john->wallet());
+
+        $code = \Artisan::call("group:add-member {$group->email} member-unknown@kolab.org");
+        $output = trim(\Artisan::output());
+
+        $this->assertSame(1, $code);
+        $this->assertSame("member-unknown@kolab.org: The specified email address does not exist.", $output);
+        $this->assertSame([], $group->refresh()->members);
     }
 }
