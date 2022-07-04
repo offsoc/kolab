@@ -62,7 +62,8 @@ wait_for_container 'kolab-redis'
 
 if [ "$1" == "--nodev" ]; then
     echo "starting everything in containers"
-    docker compose build swoole webapp
+    docker compose build swoole
+    docker compose build webapp
     docker compose up -d webapp nginx
     wait_for_container 'kolab-webapp'
     exit 0

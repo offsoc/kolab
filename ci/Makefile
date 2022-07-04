@@ -16,7 +16,7 @@ setup:
 	cd .. && bin/quickstart.sh --nodev
 
 build:
-	cd .. && docker compose build swoole tests && cd ci
+	cd .. && docker compose build swoole && docker compose build tests && cd ci
 
 lint:
 	docker run -v ${PWD}/../:/src/kolab.orig -t kolab-tests /lint.sh
