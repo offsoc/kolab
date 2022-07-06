@@ -117,7 +117,7 @@ class Storage
 
         $disk->writeStream($path, $stream);
 
-        $fileSize = $disk->fileSize($path);
+        $fileSize = $disk->size($path);
 
         if ($file->type & Item::TYPE_INCOMPLETE) {
             $file->type -= Item::TYPE_INCOMPLETE;
@@ -213,7 +213,7 @@ class Storage
             $upload['chunks'] = [];
         }
 
-        $chunkSize = $disk->fileSize($path);
+        $chunkSize = $disk->size($path);
 
         // Create the chunk record
         $file->chunks()->create([
@@ -269,16 +269,12 @@ class Storage
     {
         $disk = LaravelStorage::disk('files');
 
-        // TODO: If file is empty, detect the mimetype based on the extension?
-        try {
-            $mimetype = $disk->mimeType($path);
-            // The mimetype may contain e.g. "; charset=UTF-8", remove this
-            return preg_replace('/;.*$/', '', $mimetype);
-        } catch (\Exception $e) {
-            // do nothing
-        }
+        $mimetype = $disk->mimeType($path);
 
-        // TODO: If it fails detect the mimetype based on extension?
+        // The mimetype may contain e.g. "; charset=UTF-8", remove this
+        if ($mimetype) {
+            return explode(';', $mimetype)[0];
+        }
 
         return 'application/octet-stream';
     }
