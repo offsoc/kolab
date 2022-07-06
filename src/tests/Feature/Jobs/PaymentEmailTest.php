@@ -7,6 +7,7 @@ use App\Mail\PaymentFailure;
 use App\Mail\PaymentSuccess;
 use App\Payment;
 use App\Providers\PaymentProvider;
+use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -43,7 +44,8 @@ class PaymentEmailTest extends TestCase
      */
     public function testHandle()
     {
-        $user = $this->getTestUser('PaymentEmail@UserAccount.com');
+        $status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
+        $user = $this->getTestUser('PaymentEmail@UserAccount.com', ['status' => $status]);
         $user->setSetting('external_email', 'ext@email.tld');
         $wallet = $user->wallets()->first();
 

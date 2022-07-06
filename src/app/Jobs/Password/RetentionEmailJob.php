@@ -53,6 +53,11 @@ class RetentionEmailJob implements ShouldQueue
      */
     public function handle()
     {
+        if (!$this->user->isLdapReady() || !$this->user->isImapReady()) {
+            // The account isn't ready for mail delivery
+            return;
+        }
+
         // TODO: Should we check if the password didn't update since
         //       the job has been created?
 

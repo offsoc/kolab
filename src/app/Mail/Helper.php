@@ -110,12 +110,16 @@ class Helper
      */
     public static function userEmails(\App\User $user, bool $external = false): array
     {
-        $to = $user->email;
+        $active = $user->isLdapReady() && $user->isImapReady();
+
+        // Sending an email to non-(ldap|imap)-ready user will fail, skip it
+        // (or send to the external email only, when appropriate)
+        $to = $active ? $user->email : null;
         $cc = [];
 
         // If user has no mailbox entitlement we should not send
         // the email to his main address, but use external address, if defined
-        if (!$user->hasSku('mailbox')) {
+        if ($active && !$user->hasSku('mailbox')) {
             $to = $user->getSetting('external_email');
         } elseif ($external) {
             $ext_email = $user->getSetting('external_email');

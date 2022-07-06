@@ -4,6 +4,7 @@ namespace Tests\Feature\Jobs;
 
 use App\Jobs\TrialEndEmail;
 use App\Mail\TrialEnd;
+use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -40,7 +41,8 @@ class TrialEndEmailTest extends TestCase
      */
     public function testHandle()
     {
-        $user = $this->getTestUser('PaymentEmail@UserAccount.com');
+        $status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
+        $user = $this->getTestUser('PaymentEmail@UserAccount.com', ['status' => $status]);
         $user->setSetting('external_email', 'ext@email.tld');
 
         Mail::fake();

@@ -384,7 +384,8 @@ class WalletCheckTest extends TestCase
      */
     private function prepareTestUser(&$wallet)
     {
-        $user = $this->getTestUser('wallet-check@kolabnow.com');
+        $status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
+        $user = $this->getTestUser('wallet-check@kolabnow.com', ['status' => $status]);
         $user->setSetting('external_email', 'external@test.com');
         $wallet = $user->wallets()->first();
 

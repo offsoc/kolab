@@ -56,10 +56,13 @@ class TrialEndEmail implements ShouldQueue
      */
     public function handle()
     {
-        \App\Mail\Helper::sendMail(
-            new TrialEnd($this->account),
-            $this->account->tenant_id,
-            ['to' => $this->account->email]
-        );
+        //  Skip accounts that aren't ready for mail delivery
+        if ($this->account->isLdapReady() && $this->account->isImapReady()) {
+            \App\Mail\Helper::sendMail(
+                new TrialEnd($this->account),
+                $this->account->tenant_id,
+                ['to' => $this->account->email]
+            );
+        }
     }
 }

@@ -3,6 +3,7 @@
 namespace Tests\Unit\Mail;
 
 use App\Mail\Helper;
+use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -98,7 +99,8 @@ class HelperTest extends TestCase
      */
     public function testUserEmails(): void
     {
-        $user = $this->getTestUser('mail-helper-test@kolabnow.com');
+        $status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
+        $user = $this->getTestUser('mail-helper-test@kolabnow.com', ['status' => $status]);
 
         // User with no mailbox and no external email
         list($to, $cc) = Helper::userEmails($user);
@@ -148,5 +150,15 @@ class HelperTest extends TestCase
 
         $this->assertSame($user->email, $to);
         $this->assertSame([], $cc);
+
+        // Use with mailbox, but not ready
+        $user->setSetting('external_email', 'external@test.com');
+        $user->status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY;
+        $user->save();
+
+        list($to, $cc) = Helper::userEmails($user, true);
+
+        $this->assertSame(null, $to);
+        $this->assertSame(['external@test.com'], $cc);
     }
 }

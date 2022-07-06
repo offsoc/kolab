@@ -4,6 +4,7 @@ namespace Tests\Feature\Jobs;
 
 use App\Jobs\PaymentMandateDisabledEmail;
 use App\Mail\PaymentMandateDisabled;
+use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -40,7 +41,8 @@ class PaymentMandateDisabledEmailTest extends TestCase
      */
     public function testHandle()
     {
-        $user = $this->getTestUser('PaymentEmail@UserAccount.com');
+        $status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
+        $user = $this->getTestUser('PaymentEmail@UserAccount.com', ['status' => $status]);
         $user->setSetting('external_email', 'ext@email.tld');
         $wallet = $user->wallets()->first();
 

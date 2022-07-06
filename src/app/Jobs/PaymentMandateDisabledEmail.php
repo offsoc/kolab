@@ -67,7 +67,7 @@ class PaymentMandateDisabledEmail implements ShouldQueue
 
         list($to, $cc) = \App\Mail\Helper::userEmails($this->controller);
 
-        if (!empty($to)) {
+        if (!empty($to) || !empty($cc)) {
             $params = [
                 'to' => $to,
                 'cc' => $cc,

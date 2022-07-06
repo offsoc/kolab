@@ -4,6 +4,7 @@ namespace Tests\Feature\Jobs\Password;
 
 use App\Jobs\Password\RetentionEmailJob;
 use App\Mail\PasswordExpirationReminder;
+use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -40,7 +41,8 @@ class RetentionEmailJobTest extends TestCase
      */
     public function testHandle()
     {
-        $user = $this->getTestUser('PasswordRetention@UserAccount.com');
+        $status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
+        $user = $this->getTestUser('PasswordRetention@UserAccount.com', ['status' => $status]);
         $expiresOn = now()->copy()->addDays(7)->toDateString();
 
         Mail::fake();
