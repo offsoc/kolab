@@ -806,16 +806,10 @@ class SignupTest extends TestCase
             ['sales', $domain, false, ['login' => 'The specified login is not available.']],
             ['root', $domain, false, ['login' => 'The specified login is not available.']],
 
-            // TODO existing (public domain) user
-            // ['signuplogin', $domain, false, ['login' => 'The specified login is not available.']],
-
             // Domain account
             ['admin', 'kolabsys.com', true, null],
             ['testnonsystemdomain', 'invalid', true, ['domain' => 'The specified domain is invalid.']],
             ['testnonsystemdomain', '.com', true, ['domain' => 'The specified domain is invalid.']],
-
-            // existing custom domain
-            ['jack', 'kolab.org', true, ['domain' => 'The specified domain is not available.']],
         ];
     }
 
@@ -836,18 +830,61 @@ class SignupTest extends TestCase
 
     /**
      * Signup login/domain validation, more cases
-     *
-     * Note: Technically these include unit tests, but let's keep it here for now.
      */
     public function testValidateLoginMore(): void
     {
-        $group = $this->getTestGroup('group-test@kolabnow.com');
+        Queue::fake();
+
+        // Test registering for an email of an existing group
         $login = 'group-test';
         $domain = 'kolabnow.com';
+        $group = $this->getTestGroup("{$login}@{$domain}");
         $external = false;
 
         $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain, $external]);
 
         $this->assertSame(['login' => 'The specified login is not available.'], $result);
+
+        // Test registering for an email of an existing, but soft-deleted group
+        $group->delete();
+
+        $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain, $external]);
+
+        $this->assertSame(['login' => 'The specified login is not available.'], $result);
+
+        // Test registering for an email of an existing user
+        $domain = $this->getPublicDomain();
+        $login = 'signuplogin';
+        $user = $this->getTestUser("{$login}@{$domain}");
+        $external = false;
+
+        $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain, $external]);
+
+        $this->assertSame(['login' => 'The specified login is not available.'], $result);
+
+        // Test registering for an email of an existing, but soft-deleted user
+        $user->delete();
+
+        $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain, $external]);
+
+        $this->assertSame(['login' => 'The specified login is not available.'], $result);
+
+        // Test registering for a domain that exists
+        $external = true;
+        $domain = $this->getTestDomain(
+            'external.com',
+            ['status' => Domain::STATUS_NEW, 'type' => Domain::TYPE_EXTERNAL]
+        );
+
+        $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain->namespace, $external]);
+
+        $this->assertSame(['domain' => 'The specified domain is not available.'], $result);
+
+        // Test registering for a domain that exists but is soft-deleted
+        $domain->delete();
+
+        $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain->namespace, $external]);
+
+        $this->assertSame(['domain' => 'The specified domain is not available.'], $result);
     }
 }

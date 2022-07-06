@@ -428,7 +428,7 @@ class SignupController extends Controller
 
         // Check if domain is already registered with us
         if ($external) {
-            if (Domain::where('namespace', $domain)->first()) {
+            if (Domain::withTrashed()->where('namespace', $domain)->exists()) {
                 return ['domain' => \trans('validation.domainexists')];
             }
         }
