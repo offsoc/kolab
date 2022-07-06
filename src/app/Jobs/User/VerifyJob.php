@@ -19,6 +19,11 @@ class VerifyJob extends UserJob
             return;
         }
 
+        if ($user->role) {
+            // Admins/resellers don't reside in IMAP (for now)
+            return;
+        }
+
         // sanity checks
         if (!$user->hasSku('mailbox')) {
             $this->fail(new \Exception("User {$this->userId} has no mailbox SKU."));

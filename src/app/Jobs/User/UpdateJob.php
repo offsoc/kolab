@@ -19,6 +19,11 @@ class UpdateJob extends UserJob
             return;
         }
 
+        if ($user->role) {
+            // Admins/resellers don't reside in LDAP (for now)
+            return;
+        }
+
         if (!$user->isLdapReady()) {
             $this->delete();
             return;

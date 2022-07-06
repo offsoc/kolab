@@ -31,6 +31,11 @@ class CreateJob extends UserJob
             return;
         }
 
+        if ($user->role) {
+            // Admins/resellers don't reside in LDAP (for now)
+            return;
+        }
+
         // sanity checks
         if ($user->isDeleted()) {
             $this->fail(new \Exception("User {$this->userId} is marked as deleted."));

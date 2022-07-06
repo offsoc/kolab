@@ -25,6 +25,7 @@ use League\OAuth2\Server\Exception\OAuthServerException;
  * @property int    $id
  * @property string $password
  * @property string $password_ldap
+ * @property string $role
  * @property int    $status
  * @property int    $tenant_id
  */
