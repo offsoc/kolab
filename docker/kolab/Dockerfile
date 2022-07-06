@@ -40,10 +40,10 @@ RUN yum -y install \
 # Add the EPEL key.
 RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 
-RUN rpm --import https://mirror.kolabenterprise.com/maipo.asc
+RUN rpm --import https://mirror.apheleia-it.ch/repos/Kolab:/16/key.asc
 
-RUN yum -y install https://mirror.kolabenterprise.com/kolab-16-for-el7.rpm && \
-    yum -y install kolab-16-release-development patch && \
+RUN yum -y install https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el7.rpm && \
+    yum -y install kolab-16-release patch && \
         yum clean all
 
 RUN yum -y --setopt tsflags= install kolab roundcubemail-plugin-enigma
