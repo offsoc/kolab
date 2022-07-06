@@ -28,7 +28,7 @@ class StatusCommand extends Command
      */
     public function handle()
     {
-        $domain = $this->getDomain($this->argument('domain'));
+        $domain = $this->getDomain($this->argument('domain'), true);
 
         if (!$domain) {
             $this->error("Domain not found.");
@@ -39,17 +39,25 @@ class StatusCommand extends Command
             'active' => Domain::STATUS_ACTIVE,
             'suspended' => Domain::STATUS_SUSPENDED,
             'deleted' => Domain::STATUS_DELETED,
-            'ldapReady' => Domain::STATUS_LDAP_READY,
-            'verified' => Domain::STATUS_VERIFIED,
             'confirmed' => Domain::STATUS_CONFIRMED,
+            'verified' => Domain::STATUS_VERIFIED,
+            'ldapReady' => Domain::STATUS_LDAP_READY,
         ];
 
-        foreach ($statuses as $text => $bit) {
-            $func = 'is' . \ucfirst($text);
+        $domain_state = [];
 
-            $this->info(sprintf("%d %s: %s", $bit, $text, $domain->$func()));
+        foreach ($statuses as $text => $bit) {
+            if ($text == 'deleted') {
+                $status = $domain->trashed();
+            } else {
+                $status = $domain->{'is' . \ucfirst($text)}();
+            }
+
+            if ($status) {
+                $domain_state[] = "$text ($bit)";
+            }
         }
 
-        $this->info("In total: {$domain->status}");
+        $this->info("Status ({$domain->status}): " . \implode(', ', $domain_state));
     }
 }

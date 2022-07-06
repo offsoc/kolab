@@ -32,7 +32,6 @@ class StatusCommand extends Command
 
         if (!$user) {
             $this->error("User not found.");
-            $this->error("Try ./artisan scalpel:user:read --attr=email --attr=tenant_id " . $this->argument('user'));
             return 1;
         }
 
@@ -47,13 +46,18 @@ class StatusCommand extends Command
 
         $user_state = [];
 
-        foreach (\array_keys($statuses) as $state) {
-            $func = 'is' . \ucfirst($state);
-            if ($user->$func()) {
-                $user_state[] = $state;
+        foreach ($statuses as $text => $bit) {
+            if ($text == 'deleted') {
+                $status = $user->trashed();
+            } else {
+                $status = $user->{'is' . \ucfirst($text)}();
+            }
+
+            if ($status) {
+                $user_state[] = "$text ($bit)";
             }
         }
 
-        $this->info("Status: " . \implode(',', $user_state));
+        $this->info("Status ({$user->status}): " . \implode(', ', $user_state));
     }
 }
