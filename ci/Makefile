@@ -4,6 +4,7 @@ OPENEXCHANGERATES_API_KEY=dummy
 FIREBASE_API_KEY=dummy
 PWD=$(shell pwd)
 
+
 configure:
 	cd .. ; \
 	cp ci/env.local src/env.local ; \
@@ -16,7 +17,7 @@ setup:
 	cd .. && bin/quickstart.sh --nodev
 
 build:
-	cd .. && docker compose build swoole && docker compose build tests && cd ci
+	cd .. && DOCKER_BUILDKIT=0 docker compose build swoole && DOCKER_BUILDKIT=0 docker compose build tests && cd ci
 
 lint:
 	docker run -v ${PWD}/../:/src/kolab.orig -t kolab-tests /lint.sh

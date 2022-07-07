@@ -22,6 +22,8 @@ if [ -f "src/env.local" ]; then
     cat src/env.local >> src/.env
 fi
 
+export DOCKER_BUILDKIT=0
+
 docker pull docker.io/kolab/centos7:latest
 
 docker compose down --remove-orphans
