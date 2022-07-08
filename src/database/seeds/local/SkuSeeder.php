@@ -132,8 +132,8 @@ class SkuSeeder extends Seeder
             ],
             [
                 'title' => 'group',
-                'name' => 'Group',
-                'description' => 'Distribution list',
+                'name' => 'Distribution list',
+                'description' => 'Mail distribution list',
                 'cost' => 0,
                 'units_free' => 0,
                 'period' => 'monthly',

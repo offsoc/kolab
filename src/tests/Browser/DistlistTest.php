@@ -147,13 +147,13 @@ class DistlistTest extends TestCaseDusk
                         ->assertSeeIn('div.row:nth-child(4) label', 'Subscriptions')
                         ->with('@skus', function ($browser) {
                             $browser->assertElementsCount('tbody tr', 1)
-                                ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Group')
+                                ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Distribution list')
                                 ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,00 CHF/month')
                                 ->assertChecked('tbody tr:nth-child(1) td.selection input')
                                 ->assertDisabled('tbody tr:nth-child(1) td.selection input')
                                 ->assertTip(
                                     'tbody tr:nth-child(1) td.buttons button',
-                                    'Distribution list'
+                                    'Mail distribution list'
                                 );
                         })
                         ->assertSeeIn('button[type=submit]', 'Submit');
@@ -202,13 +202,13 @@ class DistlistTest extends TestCaseDusk
                         ->assertSeeIn('div.row:nth-child(5) label', 'Subscriptions')
                         ->with('@skus', function ($browser) {
                             $browser->assertElementsCount('tbody tr', 1)
-                                ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Group')
+                                ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Distribution list')
                                 ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,00 CHF/month')
                                 ->assertChecked('tbody tr:nth-child(1) td.selection input')
                                 ->assertDisabled('tbody tr:nth-child(1) td.selection input')
                                 ->assertTip(
                                     'tbody tr:nth-child(1) td.buttons button',
-                                    'Distribution list'
+                                    'Mail distribution list'
                                 );
                         })
                         ->assertSeeIn('button[type=submit]', 'Submit');
