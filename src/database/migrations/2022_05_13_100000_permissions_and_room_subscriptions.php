@@ -111,7 +111,6 @@ return new class extends Migration
                 $table->dropForeign('openvidu_rooms_tenant_id_foreign');
                 $table->dropColumn('tenant_id');
                 $table->dropColumn('description');
-                $table->dropSoftDeletes();
 
                 $table->bigInteger('user_id')->nullable();
                 $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
@@ -129,6 +128,13 @@ return new class extends Migration
             $room->user_id = $wallet->user_id; // @phpstan-ignore-line
             $room->save();
         }
+
+        Schema::table(
+            'openvidu_rooms',
+            function (Blueprint $table) {
+                $table->dropSoftDeletes();
+            }
+        );
 
         \App\Entitlement::where('entitleable_type', \App\Meet\Room::class)->forceDelete();
         \App\Sku::where('title', 'room')->delete();

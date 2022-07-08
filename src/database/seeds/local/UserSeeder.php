@@ -148,11 +148,7 @@ class UserSeeder extends Seeder
 
         $ned->assignSku($sku2fa);
 
-        try {
-            SecondFactor::seed('ned@kolab.org');
-        } catch (\Exception $e) {
-            // meh
-        }
+        SecondFactor::seed('ned@kolab.org');
 
         $joe = User::create(
             [
