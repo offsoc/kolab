@@ -466,102 +466,102 @@ class UserTest extends TestCase
      */
     public function testConfigTrait(): void
     {
-        $john = $this->getTestUser('john@kolab.org');
-        $john->setSetting('greylist_enabled', null);
-        $john->setSetting('password_policy', null);
-        $john->setSetting('max_password_age', null);
-        $john->setSetting('limit_geo', null);
+        $user = $this->getTestUser('UserAccountA@UserAccount.com');
+        $user->setSetting('greylist_enabled', null);
+        $user->setSetting('password_policy', null);
+        $user->setSetting('max_password_age', null);
+        $user->setSetting('limit_geo', null);
 
         // greylist_enabled
-        $this->assertSame(true, $john->getConfig()['greylist_enabled']);
+        $this->assertSame(true, $user->getConfig()['greylist_enabled']);
 
-        $result = $john->setConfig(['greylist_enabled' => false, 'unknown' => false]);
+        $result = $user->setConfig(['greylist_enabled' => false, 'unknown' => false]);
 
         $this->assertSame(['unknown' => "The requested configuration parameter is not supported."], $result);
-        $this->assertSame(false, $john->getConfig()['greylist_enabled']);
-        $this->assertSame('false', $john->getSetting('greylist_enabled'));
+        $this->assertSame(false, $user->getConfig()['greylist_enabled']);
+        $this->assertSame('false', $user->getSetting('greylist_enabled'));
 
-        $result = $john->setConfig(['greylist_enabled' => true]);
+        $result = $user->setConfig(['greylist_enabled' => true]);
 
         $this->assertSame([], $result);
-        $this->assertSame(true, $john->getConfig()['greylist_enabled']);
-        $this->assertSame('true', $john->getSetting('greylist_enabled'));
+        $this->assertSame(true, $user->getConfig()['greylist_enabled']);
+        $this->assertSame('true', $user->getSetting('greylist_enabled'));
 
         // max_apssword_age
-        $this->assertSame(null, $john->getConfig()['max_password_age']);
+        $this->assertSame(null, $user->getConfig()['max_password_age']);
 
-        $result = $john->setConfig(['max_password_age' => -1]);
-
-        $this->assertSame([], $result);
-        $this->assertSame(null, $john->getConfig()['max_password_age']);
-        $this->assertSame(null, $john->getSetting('max_password_age'));
-
-        $result = $john->setConfig(['max_password_age' => 12]);
+        $result = $user->setConfig(['max_password_age' => -1]);
 
         $this->assertSame([], $result);
-        $this->assertSame('12', $john->getConfig()['max_password_age']);
-        $this->assertSame('12', $john->getSetting('max_password_age'));
+        $this->assertSame(null, $user->getConfig()['max_password_age']);
+        $this->assertSame(null, $user->getSetting('max_password_age'));
+
+        $result = $user->setConfig(['max_password_age' => 12]);
+
+        $this->assertSame([], $result);
+        $this->assertSame('12', $user->getConfig()['max_password_age']);
+        $this->assertSame('12', $user->getSetting('max_password_age'));
 
         // password_policy
-        $result = $john->setConfig(['password_policy' => true]);
+        $result = $user->setConfig(['password_policy' => true]);
 
         $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
-        $this->assertSame(null, $john->getConfig()['password_policy']);
-        $this->assertSame(null, $john->getSetting('password_policy'));
+        $this->assertSame(null, $user->getConfig()['password_policy']);
+        $this->assertSame(null, $user->getSetting('password_policy'));
 
-        $result = $john->setConfig(['password_policy' => 'min:-1']);
-
-        $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
-
-        $result = $john->setConfig(['password_policy' => 'min:-1']);
+        $result = $user->setConfig(['password_policy' => 'min:-1']);
 
         $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
 
-        $result = $john->setConfig(['password_policy' => 'min:10,unknown']);
+        $result = $user->setConfig(['password_policy' => 'min:-1']);
+
+        $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
+
+        $result = $user->setConfig(['password_policy' => 'min:10,unknown']);
 
         $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
 
         \config(['app.password_policy' => 'min:5,max:100']);
-        $result = $john->setConfig(['password_policy' => 'min:4,max:255']);
+        $result = $user->setConfig(['password_policy' => 'min:4,max:255']);
 
         $this->assertSame(['password_policy' => "Minimum password length cannot be less than 5."], $result);
 
         \config(['app.password_policy' => 'min:5,max:100']);
-        $result = $john->setConfig(['password_policy' => 'min:10,max:255']);
+        $result = $user->setConfig(['password_policy' => 'min:10,max:255']);
 
         $this->assertSame(['password_policy' => "Maximum password length cannot be more than 100."], $result);
 
         \config(['app.password_policy' => 'min:5,max:255']);
-        $result = $john->setConfig(['password_policy' => 'min:10,max:255']);
+        $result = $user->setConfig(['password_policy' => 'min:10,max:255']);
 
         $this->assertSame([], $result);
-        $this->assertSame('min:10,max:255', $john->getConfig()['password_policy']);
-        $this->assertSame('min:10,max:255', $john->getSetting('password_policy'));
+        $this->assertSame('min:10,max:255', $user->getConfig()['password_policy']);
+        $this->assertSame('min:10,max:255', $user->getSetting('password_policy'));
 
         // limit_geo
-        $this->assertSame([], $john->getConfig()['limit_geo']);
+        $this->assertSame([], $user->getConfig()['limit_geo']);
 
-        $result = $john->setConfig(['limit_geo' => '']);
+        $result = $user->setConfig(['limit_geo' => '']);
 
         $err = "Specified configuration is invalid. Expected a list of two-letter country codes.";
         $this->assertSame(['limit_geo' => $err], $result);
-        $this->assertSame(null, $john->getSetting('limit_geo'));
+        $this->assertSame(null, $user->getSetting('limit_geo'));
 
-        $result = $john->setConfig(['limit_geo' => ['usa']]);
+        $result = $user->setConfig(['limit_geo' => ['usa']]);
 
         $this->assertSame(['limit_geo' => $err], $result);
-        $this->assertSame(null, $john->getSetting('limit_geo'));
+        $this->assertSame(null, $user->getSetting('limit_geo'));
 
-        $result = $john->setConfig(['limit_geo' => []]);
-
-        $this->assertSame([], $result);
-        $this->assertSame(null, $john->getSetting('limit_geo'));
-
-        $result = $john->setConfig(['limit_geo' => ['US', 'ru']]);
+        $result = $user->setConfig(['limit_geo' => []]);
 
         $this->assertSame([], $result);
-        $this->assertSame(['US', 'RU'], $john->getConfig()['limit_geo']);
-        $this->assertSame('["US","RU"]', $john->getSetting('limit_geo'));
+        $this->assertSame(null, $user->getSetting('limit_geo'));
+
+        $result = $user->setConfig(['limit_geo' => ['US', 'ru']]);
+
+        $this->assertSame([], $result);
+        $this->assertSame(['US', 'RU'], $user->getConfig()['limit_geo']);
+        $this->assertSame('["US","RU"]', $user->getSetting('limit_geo'));
     }
 
     /**
