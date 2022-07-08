@@ -42,6 +42,7 @@ class DashboardTest extends TestCaseDusk
 
     /**
      * Test user search
+     * @group skipci
      */
     public function testSearch(): void
     {
@@ -110,6 +111,7 @@ class DashboardTest extends TestCaseDusk
 
     /**
      * Test user search deleted user/domain
+     * @group skipci
      */
     public function testSearchDeleted(): void
     {
