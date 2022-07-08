@@ -38,9 +38,9 @@ services:
       - DB_KOLAB_PASSWORD=Welcome2KolabSystems
       - DB_RC_USERNAME=roundcube
       - DB_RC_PASSWORD=Welcome2KolabSystems
-      - SSL_CERTIFICATE=/etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/cert.pem
-      - SSL_CERTIFICATE_FULLCHAIN=/etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/fullchain.pem
-      - SSL_CERTIFICATE_KEY=/etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/privkey.pem
+      - SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE:?err}
+      - SSL_CERTIFICATE_FULLCHAIN=${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?err}
+      - SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY:?err}
       - IMAP_HOST=127.0.0.1
       - IMAP_PORT=11993
       - MAIL_HOST=127.0.0.1
@@ -88,8 +88,8 @@ services:
       context: ./docker/nginx/
       args:
         APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
-        SSL_CERTIFICATE: /etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/fullchain.pem
-        SSL_CERTIFICATE_KEY: /etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/privkey.pem
+        SSL_CERTIFICATE: ${NGINX_SSL_CERTIFICATE:?err}
+        SSL_CERTIFICATE_KEY: ${NGINX_SSL_CERTIFICATE_KEY:?err}
     depends_on:
       kolab:
         condition: service_healthy
@@ -135,8 +135,8 @@ services:
       context: ./docker/proxy/
       args:
         APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
-        SSL_CERTIFICATE: /etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/fullchain.pem
-        SSL_CERTIFICATE_KEY: /etc/letsencrypt/live/${APP_WEBSITE_DOMAIN:?err}/privkey.pem
+        SSL_CERTIFICATE: ${PROXY_SSL_CERTIFICATE:?err}
+        SSL_CERTIFICATE_KEY: ${PROXY_SSL_CERTIFICATE_KEY:?err}
     healthcheck:
       interval: 10s
       test: "kill -0 $$(cat /run/nginx.pid)"
