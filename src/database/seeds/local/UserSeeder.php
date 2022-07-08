@@ -132,7 +132,6 @@ class UserSeeder extends Seeder
                 'last_name' => 'Flanders',
                 'currency' => 'USD',
                 'country' => 'US',
-                // 'limit_geo' => json_encode(["CH"]),
                 'guam_enabled' => false,
             ]
         );

@@ -41,6 +41,7 @@ class NGINXController extends Controller
 
         // TODO: validate the user's domain is A-OK (active, confirmed, not suspended, ldapready)
         // TODO: validate the user is A-OK (active, not suspended, ldapready, imapready)
+        // TODO: we could use User::findAndAuthenticate() with some modifications here
 
         if (!Hash::check($password, $user->password)) {
             $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
@@ -54,21 +55,12 @@ class NGINXController extends Controller
         }
 
         // validate country of origin against restrictions, otherwise bye bye
-        $countryCodes = json_decode($user->getSetting('limit_geo', "[]"));
-
-        \Log::debug("Countries for {$user->email}: " . var_export($countryCodes, true));
-
-        if (!empty($countryCodes)) {
-            $country = \App\Utils::countryForIP($clientIP);
-            if (!in_array($country, $countryCodes)) {
-                \Log::info(
-                    "Failed authentication attempt due to country code mismatch ({$country}) for user: {$login}"
-                );
-                $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
-                $attempt->deny(\App\AuthAttempt::REASON_GEOLOCATION);
-                $attempt->notify();
-                throw new \Exception("Country code mismatch");
-            }
+        if (!$user->validateLocation($clientIP)) {
+            \Log::info("Failed authentication attempt due to country code mismatch for user: {$login}");
+            $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+            $attempt->deny(\App\AuthAttempt::REASON_GEOLOCATION);
+            $attempt->notify();
+            throw new \Exception("Country code mismatch");
         }
 
         // TODO: Apply some sort of limit for Auth-Login-Attempt -- docs say it is the number of
@@ -81,6 +73,7 @@ class NGINXController extends Controller
                 throw new \Exception("2fa failed");
             }
         }
+
         return $user;
     }
 

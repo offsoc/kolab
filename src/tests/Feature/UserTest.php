@@ -470,6 +470,7 @@ class UserTest extends TestCase
         $john->setSetting('greylist_enabled', null);
         $john->setSetting('password_policy', null);
         $john->setSetting('max_password_age', null);
+        $john->setSetting('limit_geo', null);
 
         // greylist_enabled
         $this->assertSame(true, $john->getConfig()['greylist_enabled']);
@@ -536,6 +537,31 @@ class UserTest extends TestCase
         $this->assertSame([], $result);
         $this->assertSame('min:10,max:255', $john->getConfig()['password_policy']);
         $this->assertSame('min:10,max:255', $john->getSetting('password_policy'));
+
+        // limit_geo
+        $this->assertSame([], $john->getConfig()['limit_geo']);
+
+        $result = $john->setConfig(['limit_geo' => '']);
+
+        $err = "Specified configuration is invalid. Expected a list of two-letter country codes.";
+        $this->assertSame(['limit_geo' => $err], $result);
+        $this->assertSame(null, $john->getSetting('limit_geo'));
+
+        $result = $john->setConfig(['limit_geo' => ['usa']]);
+
+        $this->assertSame(['limit_geo' => $err], $result);
+        $this->assertSame(null, $john->getSetting('limit_geo'));
+
+        $result = $john->setConfig(['limit_geo' => []]);
+
+        $this->assertSame([], $result);
+        $this->assertSame(null, $john->getSetting('limit_geo'));
+
+        $result = $john->setConfig(['limit_geo' => ['US', 'ru']]);
+
+        $this->assertSame([], $result);
+        $this->assertSame(['US', 'RU'], $john->getConfig()['limit_geo']);
+        $this->assertSame('["US","RU"]', $john->getSetting('limit_geo'));
     }
 
     /**

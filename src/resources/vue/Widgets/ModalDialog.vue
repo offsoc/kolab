@@ -42,6 +42,11 @@
             label: 'btn.submit',
             icon: 'check'
         },
+        save: {
+            className: 'btn-primary modal-action',
+            label: 'btn.save',
+            icon: 'check'
+        }
     }
 
     export default {
@@ -65,7 +70,7 @@
         },
         methods: {
             btnProperty(button, property) {
-                const isString = typeof button == 'string' 
+                const isString = typeof button == 'string'
                 if (!isString && property in button) {
                     return button[property]
                 }

@@ -8,6 +8,7 @@ use App\Sku;
 use App\User;
 use App\UserAlias;
 use Tests\Browser;
+use Tests\Browser\Components\CountrySelect;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\ListInput;
 use Tests\Browser\Components\QuotaInput;
@@ -361,6 +362,7 @@ class UsersTest extends TestCaseDusk
     {
         $john = $this->getTestUser('john@kolab.org');
         $john->setSetting('greylist_enabled', null);
+        $john->setSetting('limit_geo', null);
 
         $this->browse(function (Browser $browser) use ($john) {
             $browser->visit('/user/' . $john->id)
@@ -371,13 +373,45 @@ class UsersTest extends TestCaseDusk
                 ->click('@nav #tab-settings')
                 ->with('#settings form', function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
+                        ->assertMissing('div.row:nth-child(2)') // geo-lockin setting is hidden
                         ->click('div.row:nth-child(1) input[type=checkbox]:checked')
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
                 });
         });
 
-        $this->assertSame('false', $john->fresh()->getSetting('greylist_enabled'));
+        $this->assertSame('false', $john->getSetting('greylist_enabled'));
+
+        $this->addBetaEntitlement($john);
+
+        $this->browse(function (Browser $browser) use ($john) {
+            $browser->refresh()
+                ->on(new UserInfo())
+                ->click('@nav #tab-settings')
+                ->with('#settings form', function (Browser $browser) use ($john) {
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Geo-lockin')
+                        ->with(new CountrySelect('#limit_geo'), function ($browser) {
+                            $browser->assertCountries([])
+                                ->setCountries(['DE', 'PL'])
+                                ->assertCountries(['DE', 'PL']);
+                        })
+                        ->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
+
+                    $this->assertSame('["DE","PL"]', $john->getSetting('limit_geo'));
+
+                    $browser
+                        ->with(new CountrySelect('#limit_geo'), function ($browser) {
+                            $browser->setCountries([])
+                                ->assertCountries([]);
+                        })
+                        ->click('button[type=submit]')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
+
+                    $this->assertSame(null, $john->getSetting('limit_geo'));
+                });
+        });
     }
 
     /**

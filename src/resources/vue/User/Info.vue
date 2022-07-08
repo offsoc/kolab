@@ -93,6 +93,18 @@
                                         </small>
                                     </div>
                                 </div>
+                                <div v-if="$root.hasPermission('beta')" class="row mb-3">
+                                    <label for="limit_geo" class="col-sm-4 col-form-label">
+                                        {{ $t('user.geolimit') }}
+                                        <sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup>
+                                    </label>
+                                    <div class="col-sm-8 pt-2">
+                                        <country-select id="limit_geo" v-model="user.config.limit_geo"></country-select>
+                                        <small id="geolimit-hint" class="text-muted">
+                                            {{ $t('user.geolimit-text') }}
+                                        </small>
+                                    </div>
+                                </div>
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
@@ -109,6 +121,7 @@
 </template>
 
 <script>
+    import CountrySelect from '../Widgets/CountrySelect'
     import ListInput from '../Widgets/ListInput'
     import ModalDialog from '../Widgets/ModalDialog'
     import PackageSelect from '../Widgets/PackageSelect'
@@ -124,6 +137,7 @@
 
     export default {
         components: {
+            CountrySelect,
             ListInput,
             ModalDialog,
             PackageSelect,
@@ -255,7 +269,10 @@
             },
             submitSettings() {
                 this.$root.clearFormValidation($('#settings form'))
-                let post = { greylist_enabled: $('#greylist_enabled').prop('checked') ? 1 : 0 }
+
+                let post = this.$root.pick(this.user.config, ['limit_geo'])
+
+                post.greylist_enabled = $('#greylist_enabled').prop('checked') ? 1 : 0
 
                 axios.post('/api/v4/users/' + this.user_id + '/config', post)
                     .then(response => {

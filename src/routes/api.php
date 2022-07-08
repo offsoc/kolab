@@ -28,6 +28,7 @@ Route::group(
             function () {
                 Route::get('info', [API\AuthController::class, 'info']);
                 Route::post('info', [API\AuthController::class, 'info']);
+                Route::get('location', [API\AuthController::class, 'location']);
                 Route::post('logout', [API\AuthController::class, 'logout']);
                 Route::post('refresh', [API\AuthController::class, 'refresh']);
             }
@@ -201,6 +202,7 @@ if (\config('app.with_admin')) {
             Route::apiResource('users', API\V4\Admin\UsersController::class);
             Route::get('users/{id}/discounts', [API\V4\Reseller\DiscountsController::class, 'userDiscounts']);
             Route::post('users/{id}/reset2FA', [API\V4\Admin\UsersController::class, 'reset2FA']);
+            Route::post('users/{id}/resetGeoLock', [API\V4\Admin\UsersController::class, 'resetGeoLock']);
             Route::get('users/{id}/skus', [API\V4\Admin\UsersController::class, 'skus']);
             Route::post('users/{id}/skus/{sku}', [API\V4\Admin\UsersController::class, 'setSku']);
             Route::post('users/{id}/suspend', [API\V4\Admin\UsersController::class, 'suspend']);
@@ -251,6 +253,7 @@ if (\config('app.with_reseller')) {
             Route::apiResource('users', API\V4\Reseller\UsersController::class);
             Route::get('users/{id}/discounts', [API\V4\Reseller\DiscountsController::class, 'userDiscounts']);
             Route::post('users/{id}/reset2FA', [API\V4\Reseller\UsersController::class, 'reset2FA']);
+            Route::post('users/{id}/resetGeoLock', [API\V4\Reseller\UsersController::class, 'resetGeoLock']);
             Route::get('users/{id}/skus', [API\V4\Reseller\UsersController::class, 'skus']);
             Route::post('users/{id}/skus/{sku}', [API\V4\Admin\UsersController::class, 'setSku']);
             Route::post('users/{id}/suspend', [API\V4\Reseller\UsersController::class, 'suspend']);

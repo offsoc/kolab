@@ -673,6 +673,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Validate request location regarding geo-lockin
+     *
+     * @param string $ip IP address to check, usually request()->ip()
+     *
+     * @return bool
+     */
+    public function validateLocation($ip): bool
+    {
+        $countryCodes = json_decode($this->getSetting('limit_geo', "[]"));
+
+        if (empty($countryCodes)) {
+            return true;
+        }
+
+        return in_array(\App\Utils::countryForIP($ip), $countryCodes);
+    }
+
+    /**
      * Retrieve and authenticate a user
      *
      * @param string $username     The username.
@@ -685,12 +703,19 @@ class User extends Authenticatable
     {
         $user = User::where('email', $username)->first();
 
+        // TODO: 'reason' below could be AuthAttempt::REASON_*
+        // TODO: $secondFactor argument is not used anywhere
+
         if (!$user) {
             return ['reason' => 'notfound', 'errorMessage' => "User not found."];
         }
 
         if (!$user->validateCredentials($username, $password)) {
             return ['reason' => 'credentials', 'errorMessage' => "Invalid password."];
+        }
+
+        if (!$user->validateLocation(request()->ip())) {
+            return ['reason' => 'geolocation', 'errorMessage' => "Country code mismatch."];
         }
 
         if (!$secondFactor) {
@@ -720,6 +745,8 @@ class User extends Authenticatable
         $result = self::findAndAuthenticate($username, $password);
 
         if (isset($result['reason'])) {
+            // TODO: Shouldn't we create AuthAttempt record here?
+
             if ($result['reason'] == 'secondfactor') {
                 // This results in a json response of {'error': 'secondfactor', 'error_description': '$errorMessage'}
                 throw new OAuthServerException($result['errorMessage'], 6, 'secondfactor', 401);

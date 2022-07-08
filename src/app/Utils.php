@@ -45,9 +45,12 @@ class Utils
     /**
      * Return the country ISO code for an IP address.
      *
+     * @param string $ip       IP address
+     * @param string $fallback Fallback country code
+     *
      * @return string
      */
-    public static function countryForIP($ip)
+    public static function countryForIP($ip, $fallback = 'CH')
     {
         if (strpos($ip, ':') === false) {
             $net = \App\IP4Net::getNet($ip);
@@ -55,7 +58,7 @@ class Utils
             $net = \App\IP6Net::getNet($ip);
         }
 
-        return $net && $net->country ? $net->country : 'CH';
+        return $net && $net->country ? $net->country : $fallback;
     }
 
     /**

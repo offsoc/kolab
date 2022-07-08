@@ -205,6 +205,15 @@
                                     </span>
                                 </div>
                             </div>
+                            <div class="row plaintext">
+                                <label for="limit_geo" class="col-sm-4 col-form-label">{{ $t('user.geolimit') }}</label>
+                                <div class="col-sm-8">
+                                    <span class="form-control-plaintext" id="limit_geo">
+                                        {{ $root.countriesText(user.config.limit_geo) }}
+                                    </span>
+                                    <btn v-if="user.config.limit_geo && user.config.limit_geo.length" class="btn-secondary btn-sm ms-2" @click="resetGeoLock">{{ $t('btn.reset') }}</btn>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -536,6 +545,15 @@
                             this.skus = this.skus.filter(sku => sku.id != this.sku2FA)
                             this.has2FA = false
                             this.$refs.tabs.updateCounter('subscriptions', this.skus.length)
+                        }
+                    })
+            },
+            resetGeoLock() {
+                axios.post('/api/v4/users/' + this.user.id + '/resetGeoLock')
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.user.config.limit_geo = []
                         }
                     })
             },

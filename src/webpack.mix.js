@@ -22,15 +22,18 @@ mix.options({
     }
 })
 
+// Prepare some resources before compilation
+mix.before(() => {
+    spawn('php', ['resources/build/before.php'], { stdio: 'inherit' })
+})
+
+// Compile the Vue/js resources
 mix.js('resources/js/user/app.js', 'public/js/user.js')
     .js('resources/js/admin/app.js', 'public/js/admin.js')
     .js('resources/js/reseller/app.js', 'public/js/reseller.js')
     .vue()
 
-mix.before(() => {
-    spawn('php', ['resources/build/before.php'], { stdio: 'inherit' })
-})
-
+// Compile the themes/css resources
 glob.sync('resources/themes/*/', {}).forEach(fromDir => {
     const toDir = fromDir.replace('resources/themes/', 'public/themes/')
 

@@ -77,6 +77,24 @@ const app = new Vue({
     },
     methods: {
         clearFormValidation,
+        countriesText(list) {
+            if (list && list.length) {
+                let result = []
+
+                list.forEach(code => {
+                    let country = window.config.countries[code]
+                    if (country) {
+                        result.push(country[1])
+                    } else {
+                        console.warn(`Unknown country code: ${code}`)
+                    }
+                })
+
+                return result.join(', ')
+            }
+
+            return this.$t('form.norestrictions')
+        },
         hasPermission(type) {
             const key = 'enable' + type.charAt(0).toUpperCase() + type.slice(1)
             return !!(this.authInfo && this.authInfo.statusInfo[key])

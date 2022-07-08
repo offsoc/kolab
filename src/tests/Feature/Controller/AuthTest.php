@@ -41,6 +41,11 @@ class AuthTest extends TestCase
         $this->deleteTestDomain('userscontroller.com');
 
         $this->expectedExpiry = \config('auth.token_expiry_minutes') * 60;
+
+        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
+
+        $user = $this->getTestUser('john@kolab.org');
+        $user->setSetting('limit_geo', null);
     }
 
     /**
@@ -50,6 +55,11 @@ class AuthTest extends TestCase
     {
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestDomain('userscontroller.com');
+
+        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
+
+        $user = $this->getTestUser('john@kolab.org');
+        $user->setSetting('limit_geo', null);
 
         parent::tearDown();
     }
@@ -64,6 +74,9 @@ class AuthTest extends TestCase
                 'status' => Domain::STATUS_NEW,
                 'type' => Domain::TYPE_PUBLIC,
         ]);
+
+        $response = $this->get("api/auth/info");
+        $response->assertStatus(401);
 
         $response = $this->actingAs($user)->get("api/auth/info");
         $response->assertStatus(200);
@@ -99,10 +112,52 @@ class AuthTest extends TestCase
     }
 
     /**
+     * Test fetching current user location (/api/auth/location)
+     */
+    public function testLocation(): void
+    {
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+
+        // Authentication required
+        $response = $this->get("api/auth/location");
+        $response->assertStatus(401);
+
+        $headers = ['X-Client-IP' => '127.0.0.2'];
+
+        $response = $this->actingAs($user)->withHeaders($headers)->get("api/auth/location");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('127.0.0.2', $json['ipAddress']);
+        $this->assertSame('', $json['countryCode']);
+
+        \App\IP4Net::create([
+                'net_number' => '127.0.0.0',
+                'net_broadcast' => '127.255.255.255',
+                'net_mask' => 8,
+                'country' => 'US',
+                'rir_name' => 'test',
+                'serial' => 1,
+        ]);
+
+
+        $response = $this->actingAs($user)->withHeaders($headers)->get("api/auth/location");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('127.0.0.2', $json['ipAddress']);
+        $this->assertSame('US', $json['countryCode']);
+    }
+
+    /**
      * Test /api/auth/login
      */
     public function testLogin(): string
     {
+        $user = $this->getTestUser('john@kolab.org');
+
         // Request with no data
         $response = $this->post("api/auth/login", []);
         $response->assertStatus(422);
@@ -124,7 +179,6 @@ class AuthTest extends TestCase
         $this->assertSame('Invalid username or password.', $json['message']);
 
         // Valid user+password
-        $user = $this->getTestUser('john@kolab.org');
         $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
         $response = $this->post("api/auth/login", $post);
         $json = $response->json();
@@ -157,6 +211,43 @@ class AuthTest extends TestCase
         // TODO: We have browser tests for 2FA but we should probably also test it here
 
         return $json['access_token'];
+    }
+
+    /**
+     * Test /api/auth/login with geo-lockin
+     */
+    public function testLoginGeoLock(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+        $user->setConfig(['limit_geo' => ['US']]);
+
+        $headers['X-Client-IP'] = '127.0.0.2';
+        $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
+
+        $response = $this->withHeaders($headers)->post("api/auth/login", $post);
+        $response->assertStatus(401);
+
+        $json = $response->json();
+
+        $this->assertSame("Invalid username or password.", $json['message']);
+        $this->assertSame('error', $json['status']);
+
+        \App\IP4Net::create([
+                'net_number' => '127.0.0.0',
+                'net_broadcast' => '127.255.255.255',
+                'net_mask' => 8,
+                'country' => 'US',
+                'rir_name' => 'test',
+                'serial' => 1,
+        ]);
+
+        $response = $this->withHeaders($headers)->post("api/auth/login", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertTrue(!empty($json['access_token']));
+        $this->assertEquals($user->id, $json['id']);
     }
 
     /**

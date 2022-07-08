@@ -47,6 +47,13 @@ class PasswordResetController extends Controller
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
+        // Geo-lockin check
+        if (!$user->validateLocation($request->ip())) {
+            // FIXME: Or maybe we should just throw some more generic error response/code?
+            $errors = ['email' => \trans('validation.geolockinerror')];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
         // Generate the verification code
         $code = new VerificationCode(['mode' => 'password-reset']);
         $user->verificationcodes()->save($code);

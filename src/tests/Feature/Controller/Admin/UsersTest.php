@@ -356,6 +356,33 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test reseting Geo-Lock (POST /api/v4/users/<user-id>/resetGeoLock)
+     */
+    public function testResetGeoLock(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $user->setConfig(['limit_geo' => ['US']]);
+
+        // Test unauthorized access to admin API
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/resetGeoLock", []);
+        $response->assertStatus(403);
+
+        // Test reseting Geo-Lock
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/resetGeoLock", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("Geo-lockin setup reset successfully.", $json['message']);
+        $this->assertCount(2, $json);
+        $this->assertNull($user->getSetting('limit_geo'));
+    }
+
+    /**
      * Test adding beta SKU (POST /api/v4/users/<user-id>/skus/beta)
      */
     public function testAddBetaSku(): void

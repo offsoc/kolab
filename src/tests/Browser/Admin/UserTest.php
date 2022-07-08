@@ -40,6 +40,7 @@ class UserTest extends TestCaseDusk
 
         Entitlement::where('cost', '>=', 5000)->delete();
         $this->deleteTestGroup('group-test@kolab.org');
+        $this->deleteTestUser('userstest1@kolabnow.com');
     }
 
     /**
@@ -61,6 +62,7 @@ class UserTest extends TestCaseDusk
 
         Entitlement::where('cost', '>=', 5000)->delete();
         $this->deleteTestGroup('group-test@kolab.org');
+        $this->deleteTestUser('userstest1@kolabnow.com');
 
         parent::tearDown();
     }
@@ -84,6 +86,8 @@ class UserTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $jack = $this->getTestUser('jack@kolab.org');
+            $jack->setSetting('limit_geo', null);
+
             $page = new UserPage($jack->id);
 
             $browser->visit(new Home())
@@ -187,9 +191,12 @@ class UserTest extends TestCaseDusk
             $browser->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
                 ->whenAvailable('@user-settings form', function (Browser $browser) {
-                    $browser->assertElementsCount('.row', 1)
+                    $browser->assertElementsCount('.row', 2)
                         ->assertSeeIn('.row:first-child label', 'Greylisting')
-                        ->assertSeeIn('.row:first-child .text-success', 'enabled');
+                        ->assertSeeIn('.row:first-child .text-success', 'enabled')
+                        ->assertSeeIn('.row:nth-child(2) label', 'Geo-lockin')
+                        ->assertSeeIn('.row:nth-child(2) #limit_geo', 'No restrictions')
+                        ->assertMissing('#limit_geo + button');
                 });
         });
     }
@@ -458,7 +465,7 @@ class UserTest extends TestCaseDusk
             $browser->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
                 ->whenAvailable('@user-settings form', function (Browser $browser) {
-                    $browser->assertElementsCount('.row', 1)
+                    $browser->assertElementsCount('.row', 2)
                         ->assertSeeIn('.row:first-child label', 'Greylisting')
                         ->assertSeeIn('.row:first-child .text-danger', 'disabled');
                 });
@@ -549,7 +556,6 @@ class UserTest extends TestCaseDusk
     public function testReset2FA(): void
     {
         $this->browse(function (Browser $browser) {
-            $this->deleteTestUser('userstest1@kolabnow.com');
             $user = $this->getTestUser('userstest1@kolabnow.com');
             $sku2fa = Sku::withEnvTenantContext()->where('title', '2fa')->first();
             $user->assignSku($sku2fa);
@@ -576,12 +582,33 @@ class UserTest extends TestCaseDusk
     }
 
     /**
+     * Test resetting Geo-Lock for the user
+     */
+    public function testResetGeoLock(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $user = $this->getTestUser('userstest1@kolabnow.com');
+            $user->setSetting('limit_geo', '["PL","DE"]');
+
+            $browser->visit(new UserPage($user->id))
+                ->click('@nav #tab-settings')
+                ->whenAvailable('@user-settings form', function (Browser $browser) {
+                    $browser->assertSeeIn('.row:nth-child(2) label', 'Geo-lockin')
+                        ->assertSeeIn('.row:nth-child(2) #limit_geo', 'Poland, Germany')
+                        ->assertSeeIn('#limit_geo + button', 'Reset')
+                        ->click('#limit_geo + button');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, 'Geo-lockin setup reset successfully.')
+                ->assertMissing('#limit_geo + button');
+        });
+    }
+
+    /**
      * Test adding the beta SKU for the user
      */
     public function testAddBetaSku(): void
     {
         $this->browse(function (Browser $browser) {
-            $this->deleteTestUser('userstest1@kolabnow.com');
             $user = $this->getTestUser('userstest1@kolabnow.com');
             $sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
 

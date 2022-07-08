@@ -179,6 +179,34 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
     }
 
     /**
+     * Reset Geo-Lockin for the user
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @param string                   $id      User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function resetGeoLock(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$this->checkTenant($user)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canUpdate($user)) {
+            return $this->errorResponse(403);
+        }
+
+        $user->setConfig(['limit_geo' => []]);
+
+        return response()->json([
+                'status' => 'success',
+                'message' => \trans('app.user-reset-geo-lock-success'),
+        ]);
+    }
+
+    /**
      * Set/Add a SKU for the user
      *
      * @param \Illuminate\Http\Request $request The API request.

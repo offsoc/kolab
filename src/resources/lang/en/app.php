@@ -99,6 +99,7 @@ return [
     'user-suspend-success' => 'User suspended successfully.',
     'user-unsuspend-success' => 'User unsuspended successfully.',
     'user-reset-2fa-success' => '2-Factor authentication reset successfully.',
+    'user-reset-geo-lock-success' => 'Geo-lockin setup reset successfully.',
     'user-setconfig-success' => 'User settings updated successfully.',
     'user-set-sku-success' => 'The subscription added successfully.',
     'user-set-sku-already-exists' => 'The subscription already exists.',

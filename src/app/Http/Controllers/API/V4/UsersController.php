@@ -184,6 +184,7 @@ class UsersController extends RelationController
 
         $result = [
             'skus' => $skus,
+            'enableBeta' => in_array('beta', $skus),
             // TODO: This will change when we enable all users to create domains
             'enableDomains' => $isController && $hasCustomDomain,
             // TODO: Make 'enableDistlists' working for wallet controllers that aren't account owners

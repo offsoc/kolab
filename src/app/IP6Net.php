@@ -3,7 +3,6 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class IP6Net extends Model
 {
@@ -21,9 +20,17 @@ class IP6Net extends Model
         'updated_at'
     ];
 
+    /**
+     * Get IP network by IP address
+     *
+     * @param string $ip IPv6 address
+     *
+     * @return ?\App\IP6Net IPv6 network record, Null if not found
+     */
     public static function getNet($ip)
     {
         $where = 'INET6_ATON(net_number) <= INET6_ATON(?) and INET6_ATON(net_broadcast) >= INET6_ATON(?)';
+
         return IP6Net::whereRaw($where, [$ip, $ip])
             ->orderByRaw('INET6_ATON(net_number), net_mask DESC')
             ->first();

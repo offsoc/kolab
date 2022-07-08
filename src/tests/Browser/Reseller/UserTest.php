@@ -38,6 +38,7 @@ class UserTest extends TestCaseDusk
         $wallet->save();
 
         $this->deleteTestGroup('group-test@kolab.org');
+        $this->deleteTestUser('userstest1@kolabnow.com');
     }
 
     /**
@@ -58,6 +59,7 @@ class UserTest extends TestCaseDusk
         $wallet->save();
 
         $this->deleteTestGroup('group-test@kolab.org');
+        $this->deleteTestUser('userstest1@kolabnow.com');
 
         parent::tearDown();
     }
@@ -81,6 +83,7 @@ class UserTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $jack = $this->getTestUser('jack@kolab.org');
+            $jack->setSetting('limit_geo', null);
             $page = new UserPage($jack->id);
 
             $browser->visit(new Home())
@@ -184,9 +187,12 @@ class UserTest extends TestCaseDusk
             $browser->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
                 ->whenAvailable('@user-settings form', function (Browser $browser) {
-                    $browser->assertElementsCount('.row', 1)
+                    $browser->assertElementsCount('.row', 2)
                         ->assertSeeIn('.row:first-child label', 'Greylisting')
-                        ->assertSeeIn('.row:first-child .text-success', 'enabled');
+                        ->assertSeeIn('.row:first-child .text-success', 'enabled')
+                        ->assertSeeIn('.row:nth-child(2) label', 'Geo-lockin')
+                        ->assertSeeIn('.row:nth-child(2) #limit_geo', 'No restrictions')
+                        ->assertMissing('#limit_geo + button');
                 });
         });
     }
@@ -431,7 +437,7 @@ class UserTest extends TestCaseDusk
             $browser->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
                 ->whenAvailable('@user-settings form', function (Browser $browser) {
-                    $browser->assertElementsCount('.row', 1)
+                    $browser->assertElementsCount('.row', 2)
                         ->assertSeeIn('.row:first-child label', 'Greylisting')
                         ->assertSeeIn('.row:first-child .text-danger', 'disabled');
                 });
@@ -522,7 +528,6 @@ class UserTest extends TestCaseDusk
     public function testReset2FA(): void
     {
         $this->browse(function (Browser $browser) {
-            $this->deleteTestUser('userstest1@kolabnow.com');
             $user = $this->getTestUser('userstest1@kolabnow.com');
             $sku2fa = Sku::withEnvTenantContext()->where(['title' => '2fa'])->first();
             $user->assignSku($sku2fa);
@@ -554,7 +559,6 @@ class UserTest extends TestCaseDusk
     public function testAddBetaSku(): void
     {
         $this->browse(function (Browser $browser) {
-            $this->deleteTestUser('userstest1@kolabnow.com');
             $user = $this->getTestUser('userstest1@kolabnow.com');
             $sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
 

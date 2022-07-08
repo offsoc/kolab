@@ -174,6 +174,15 @@ class Browser extends \Laravel\Dusk\Browser
     }
 
     /**
+     * Execute javascript code ignoring it's result
+     */
+    public function execScript($script)
+    {
+        $this->script($script);
+        return $this;
+    }
+
+    /**
      * Check if in Phone mode
      */
     public static function isPhone()

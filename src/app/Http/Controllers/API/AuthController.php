@@ -86,6 +86,23 @@ class AuthController extends Controller
     }
 
     /**
+     * Get the user (geo) location
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function location()
+    {
+        $ip = request()->ip();
+
+        $response = [
+            'ipAddress' => $ip,
+            'countryCode' => \App\Utils::countryForIP($ip, ''),
+        ];
+
+        return response()->json($response);
+    }
+
+    /**
      * Log the user out (Invalidate the token)
      *
      * @return \Illuminate\Http\JsonResponse

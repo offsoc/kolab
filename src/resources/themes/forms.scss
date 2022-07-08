@@ -198,3 +198,56 @@
         color: $main-color;
     }
 }
+
+.world-map {
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    overflow: auto;
+
+    svg {
+        height: 100%;
+
+        .bg {
+            fill: $gray-600;
+        }
+
+        [cc] {
+            fill: white;
+            stroke: $gray-600;
+            stroke-width: 0.25px;
+            cursor: pointer;
+        }
+
+        [cc][aria-selected="true"] {
+            fill: $main-color;
+            stroke: #fff;
+        }
+
+        [cc][data-location] {
+            fill: $success;
+            stroke: #fff;
+        }
+
+        [cc]:focus, [cc]:hover {
+            fill: lighten($main-color, 20%) !important;
+            stroke: $main-color !important;
+        }
+    }
+
+    & + .tools {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(211, 211, 211, 0.9);
+    }
+
+    & + .tools + .location {
+        position: absolute;
+        top: 0;
+        background-color: rgba(211, 211, 211, 0.9);
+        max-width: calc(100% - 1em);
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}

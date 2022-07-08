@@ -16,27 +16,29 @@ class NGINXTest extends TestCase
         $john = $this->getTestUser('john@kolab.org');
         \App\CompanionApp::where('user_id', $john->id)->delete();
         \App\AuthAttempt::where('user_id', $john->id)->delete();
-        $john->setSettings(
-            [
-                // 'limit_geo' => json_encode(["CH"]),
+        $john->setSettings([
+                'limit_geo' => null,
                 'guam_enabled' => false,
-            ]
-        );
+        ]);
+        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
+
         $this->useServicesUrl();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
-
         $john = $this->getTestUser('john@kolab.org');
         \App\CompanionApp::where('user_id', $john->id)->delete();
         \App\AuthAttempt::where('user_id', $john->id)->delete();
-        $john->setSettings(
-            [
-                // 'limit_geo' => json_encode(["CH"]),
+        $john->setSettings([
+                'limit_geo' => null,
                 'guam_enabled' => false,
-            ]
-        );
+        ]);
+        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
+
         parent::tearDown();
     }
 
@@ -129,11 +131,7 @@ class NGINXTest extends TestCase
 
 
         // Guam
-        $john->setSettings(
-            [
-                'guam_enabled' => true,
-            ]
-        );
+        $john->setSettings(['guam_enabled' => true]);
 
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
@@ -171,6 +169,37 @@ class NGINXTest extends TestCase
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
+
+
+        // Geo-lockin (failure)
+        $john->setSettings(['limit_geo' => '["PL","US"]']);
+
+        $headers['Auth-Protocol'] = 'imap';
+        $headers['Client-Ip'] = '127.0.0.1';
+
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'authentication failure');
+
+        $authAttempt = \App\AuthAttempt::where('ip', $headers['Client-Ip'])->where('user_id', $john->id)->first();
+        $this->assertSame('geolocation', $authAttempt->reason);
+        \App\AuthAttempt::where('user_id', $john->id)->delete();
+
+        // Geo-lockin (success)
+        \App\IP4Net::create([
+                'net_number' => '127.0.0.0',
+                'net_broadcast' => '127.255.255.255',
+                'net_mask' => 8,
+                'country' => 'US',
+                'rir_name' => 'test',
+                'serial' => 1,
+        ]);
+
+        $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'OK');
+
+        $this->assertCount(0, \App\AuthAttempt::where('user_id', $john->id)->get());
     }
 
     /**

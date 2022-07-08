@@ -17,6 +17,8 @@ class PasswordResetTest extends TestCase
         parent::setUp();
 
         $this->deleteTestUser('passwordresettest@' . \config('app.domain'));
+
+        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
     }
 
     /**
@@ -25,6 +27,8 @@ class PasswordResetTest extends TestCase
     public function tearDown(): void
     {
         $this->deleteTestUser('passwordresettest@' . \config('app.domain'));
+
+        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
 
         parent::tearDown();
     }
@@ -75,9 +79,7 @@ class PasswordResetTest extends TestCase
         $this->assertArrayHasKey('email', $json['errors']);
 
         // Data with valid email af an existing user with no external email
-        $data = [
-            'email' => 'passwordresettest@' . \config('app.domain'),
-        ];
+        $data = ['email' => 'passwordresettest@' . \config('app.domain')];
 
         $response = $this->post('/api/auth/password-reset/init', $data);
         $json = $response->json();
@@ -130,6 +132,47 @@ class PasswordResetTest extends TestCase
         return [
             'code' => $code
         ];
+    }
+
+    /**
+     * Test password-reset/init with geo-lockin
+     */
+    public function testPasswordResetInitGeoLock(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
+        $user->setConfig(['limit_geo' => ['US']]);
+        $user->setSetting('external_email', 'ext@email.com');
+
+        $headers['X-Client-IP'] = '127.0.0.2';
+        $post = ['email' => 'passwordresettest@' . \config('app.domain')];
+
+        $response = $this->withHeaders($headers)->post('/api/auth/password-reset/init', $post);
+        $json = $response->json();
+
+        $response->assertStatus(422);
+
+        $this->assertCount(2, $json);
+        $this->assertSame('error', $json['status']);
+        $this->assertSame("The request location is not allowed.", $json['errors']['email']);
+
+        \App\IP4Net::create([
+                'net_number' => '127.0.0.0',
+                'net_broadcast' => '127.255.255.255',
+                'net_mask' => 8,
+                'country' => 'US',
+                'rir_name' => 'test',
+                'serial' => 1,
+        ]);
+
+        $response = $this->withHeaders($headers)->post('/api/auth/password-reset/init', $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertCount(2, $json);
+        $this->assertSame('success', $json['status']);
+        $this->assertNotEmpty($json['code']);
     }
 
     /**
