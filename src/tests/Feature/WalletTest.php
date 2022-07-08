@@ -31,6 +31,7 @@ class WalletTest extends TestCase
     {
         parent::setUp();
 
+        Carbon::setTestNow(Carbon::createFromDate(2022, 02, 02));
         foreach ($this->users as $user) {
             $this->deleteTestUser($user);
         }

@@ -59,6 +59,7 @@ class DomainTest extends TestCaseDusk
 
     /**
      * Test domain info page (non-existing domain id)
+     * @group skipci
      */
     public function testDomainInfo404(): void
     {
@@ -78,6 +79,7 @@ class DomainTest extends TestCaseDusk
      * Test domain info page (existing domain)
      *
      * @depends testDomainInfo404
+     * @group skipci
      */
     public function testDomainInfo(): void
     {
@@ -135,6 +137,7 @@ class DomainTest extends TestCaseDusk
 
     /**
      * Test domain settings
+     * @group skipci
      */
     public function testDomainSettings(): void
     {
@@ -178,6 +181,7 @@ class DomainTest extends TestCaseDusk
      * Test domains list page
      *
      * @depends testDomainListUnauth
+     * @group skipci
      */
     public function testDomainList(): void
     {
@@ -237,6 +241,7 @@ class DomainTest extends TestCaseDusk
 
     /**
      * Test domain creation page
+     * @group skipci
      */
     public function testDomainCreate(): void
     {
@@ -297,6 +302,7 @@ class DomainTest extends TestCaseDusk
 
     /**
      * Test domain deletion
+     * @group skipci
      */
     public function testDomainDelete(): void
     {

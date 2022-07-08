@@ -44,6 +44,7 @@ class DomainsTest extends TestCase
 
     /**
      * Test domain confirm request
+     * @group skipci
      */
     public function testConfirm(): void
     {

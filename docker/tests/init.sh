@@ -48,7 +48,7 @@ php -dmemory_limit=512M ./artisan migrate:refresh --seed
 php \
     -dmemory_limit=-1 \
     vendor/bin/phpunit \
-    --exclude flaky \
+    --exclude-group skipci \
     --verbose \
     --stop-on-defect \
     --stop-on-error \
@@ -58,7 +58,7 @@ php \
 php \
     -dmemory_limit=-1 \
     vendor/bin/phpunit \
-    --exclude flaky \
+    --exclude-group skipci \
     --verbose \
     --stop-on-defect \
     --stop-on-error \
@@ -68,7 +68,7 @@ php \
 php \
     -dmemory_limit=-1 \
     vendor/bin/phpunit \
-    --exclude flaky \
+    --exclude-group skipci,coinbase,mollie,stripe,meet,dns \
     --verbose \
     --stop-on-defect \
     --stop-on-error \
