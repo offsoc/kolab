@@ -55,7 +55,6 @@ class UsersTest extends TestCaseDusk
         $wallet->save();
 
         $this->clearBetaEntitlements();
-        $this->clearMeetEntitlements();
     }
 
     /**
@@ -83,7 +82,6 @@ class UsersTest extends TestCaseDusk
         $wallet->save();
 
         $this->clearBetaEntitlements();
-        $this->clearMeetEntitlements();
 
         parent::tearDown();
     }
@@ -202,7 +200,7 @@ class UsersTest extends TestCaseDusk
                 $browser->assertSeeIn('div.row:nth-child(8) label', 'Subscriptions')
                     ->assertVisible('@skus.row:nth-child(8)')
                     ->with('@skus', function ($browser) {
-                        $browser->assertElementsCount('tbody tr', 6)
+                        $browser->assertElementsCount('tbody tr', 5)
                             // Mailbox SKU
                             ->assertSeeIn('tbody tr:nth-child(1) td.name', 'User Mailbox')
                             ->assertSeeIn('tbody tr:nth-child(1) td.price', '5,00 CHF/month')
@@ -252,15 +250,6 @@ class UsersTest extends TestCaseDusk
                                 'tbody tr:nth-child(5) td.buttons button',
                                 'Two factor authentication for webmail and administration panel'
                             )
-                            // Meet SKU
-                            ->assertSeeIn('tbody tr:nth-child(6) td.name', 'Voice & Video Conferencing (public beta)')
-                            ->assertSeeIn('tbody tr:nth-child(6) td.price', '0,00 CHF/month')
-                            ->assertNotChecked('tbody tr:nth-child(6) td.selection input')
-                            ->assertEnabled('tbody tr:nth-child(6) td.selection input')
-                            ->assertTip(
-                                'tbody tr:nth-child(6) td.buttons button',
-                                'Video conferencing tool'
-                            )
                             ->click('tbody tr:nth-child(4) td.selection input');
                     })
                     ->assertMissing('@skus table + .hint')
@@ -289,11 +278,6 @@ class UsersTest extends TestCaseDusk
                         ->assertDialogOpened('Activesync requires Groupware Features.')
                         ->acceptDialog()
                         ->assertNotChecked('#sku-input-activesync')
-                        // Check 'meet', expect an alert
-                        ->click('#sku-input-meet')
-                        ->assertDialogOpened('Voice & Video Conferencing (public beta) requires Groupware Features.')
-                        ->acceptDialog()
-                        ->assertNotChecked('#sku-input-meet')
                         // Check '2FA', expect 'activesync' unchecked and readonly
                         ->click('#sku-input-2fa')
                         ->assertChecked('#sku-input-2fa')
@@ -640,7 +624,7 @@ class UsersTest extends TestCaseDusk
                     $browser->whenAvailable('@skus', function (Browser $browser) {
                         $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
                         $browser->waitFor('tbody tr')
-                            ->assertElementsCount('tbody tr', 6)
+                            ->assertElementsCount('tbody tr', 5)
                             // Mailbox SKU
                             ->assertSeeIn('tbody tr:nth-child(1) td.price', '4,50 CHF/month¹')
                             // Storage SKU
@@ -649,7 +633,7 @@ class UsersTest extends TestCaseDusk
                                 $browser->setQuotaValue(100);
                             })
                             ->assertSeeIn('tr:nth-child(2) td.price', '21,37 CHF/month¹')
-                            // groupware SKU
+                            // Groupware SKU
                             ->assertSeeIn('tbody tr:nth-child(3) td.price', '4,41 CHF/month¹')
                             // ActiveSync SKU
                             ->assertSeeIn('tbody tr:nth-child(4) td.price', '0,00 CHF/month¹')
@@ -704,7 +688,7 @@ class UsersTest extends TestCaseDusk
                         $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
                         $browser->waitFor('tbody tr')
                             // Beta SKU
-                            ->assertSeeIn('tbody tr:nth-child(7) td.price', '45,09 CHF/month¹')
+                            ->assertSeeIn('tbody tr:nth-child(6) td.price', '45,09 CHF/month¹')
                             // Storage SKU
                             ->assertSeeIn('tr:nth-child(2) td.price', '45,00 CHF/month¹')
                             ->with($quota_input, function (Browser $browser) {
@@ -755,7 +739,7 @@ class UsersTest extends TestCaseDusk
                     $browser->whenAvailable('@skus', function (Browser $browser) {
                         $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
                         $browser->waitFor('tbody tr')
-                            ->assertElementsCount('tbody tr', 6)
+                            ->assertElementsCount('tbody tr', 5)
                             // Mailbox SKU
                             ->assertSeeIn('tbody tr:nth-child(1) td.price', '5,00 €/month')
                             // Storage SKU

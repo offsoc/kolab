@@ -74,6 +74,9 @@ return [
     'resource-delete-success' => "Ressource suprimmée avec succès.",
     'resource-setconfig-success' => "Les paramètres des ressources ont été mis à jour avec succès.",
 
+    'room-setconfig-success' => 'La configuration de la salle a été actualisée avec succès.',
+    'room-unsupported-option-error' => 'Option de configuration de la salle invalide.',
+
     'shared-folder-update-success' => "Dossier partagé mis à jour avec succès.",
     'shared-folder-create-success' => "Dossier partagé créé avec succès.",
     'shared-folder-delete-success' => "Dossier partagé supprimé avec succès.",

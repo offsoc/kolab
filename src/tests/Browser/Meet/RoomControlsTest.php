@@ -15,7 +15,7 @@ class RoomControlsTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
-        $this->setupTestRoom();
+        $this->resetTestRoom();
     }
 
     public function tearDown(): void

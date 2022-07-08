@@ -49,7 +49,7 @@ class Sessions extends Command
         foreach ($sessions as $session) {
             $room = \App\Meet\Room::where('session_id', $session['roomId'])->first();
             if ($room) {
-                $owner = $room->owner->email;
+                $owner = $room->wallet()->owner->email;
                 $roomName = $room->name;
             } else {
                 $owner = '(none)';

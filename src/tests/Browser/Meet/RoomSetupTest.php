@@ -17,7 +17,7 @@ class RoomSetupTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
-        $this->setupTestRoom();
+        $this->resetTestRoom();
     }
 
     public function tearDown(): void
@@ -264,9 +264,8 @@ class RoomSetupTest extends TestCaseDusk
             $guest->with(new Dialog('#leave-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Room closed')
                         ->assertSeeIn('@body', "The session has been closed by the room owner.")
-                        ->assertMissing('@button-cancel')
-                        ->assertSeeIn('@button-action', 'Close')
-                        ->click('@button-action');
+                        ->assertSeeIn('@button-cancel', 'Close')
+                        ->click('@button-cancel');
             })
                 ->assertMissing('#leave-dialog')
                 ->waitForLocation('/login');
@@ -461,7 +460,7 @@ class RoomSetupTest extends TestCaseDusk
             $guest1
                 ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Media setup')
-                        ->click('@button-action');
+                        ->click('@button-cancel');
                 })
                 ->waitFor('@session .meet-video.self')
                 ->assertElementsCount('@session div.meet-video', 2)
@@ -495,7 +494,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->waitUntilMissing('@session .meet-subscriber.self')
                 ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Media setup')
-                        ->click('@button-action');
+                        ->click('@button-cancel');
                 })
                 ->waitFor('@session div.meet-video.self')
                 ->assertElementsCount('@session div.meet-video', 2)
@@ -546,9 +545,8 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertVisible('form > div:nth-child(3) svg')
                         ->assertAttribute('form > div:nth-child(3) .input-group-text', 'title', 'Camera')
                         ->assertVisible('form > div:nth-child(3) select')
-                        ->assertMissing('@button-cancel')
-                        ->assertSeeIn('@button-action', 'Close')
-                        ->click('@button-action');
+                        ->assertSeeIn('@button-cancel', 'Close')
+                        ->click('@button-cancel');
                 })
                 ->assertMissing('#media-setup-dialog')
                 // Test mute audio and video
@@ -556,7 +554,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
                     $browser->select('form > div:nth-child(2) select', '')
                         ->select('form > div:nth-child(3) select', '')
-                        ->click('@button-action');
+                        ->click('@button-cancel');
                 })
                 ->assertMissing('#media-setup-dialog')
                 ->assertVisible('@session .meet-video .status .status-audio')

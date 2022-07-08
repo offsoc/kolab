@@ -101,8 +101,10 @@ Route::group(
 
         Route::apiResource('packages', API\V4\PackagesController::class);
 
-        Route::get('meet/rooms', [API\V4\MeetController::class, 'index']);
-        Route::post('meet/rooms/{id}/config', [API\V4\MeetController::class, 'setRoomConfig']);
+        Route::apiResource('rooms', API\V4\RoomsController::class);
+        Route::post('rooms/{id}/config', [API\V4\RoomsController::class, 'setConfig']);
+        Route::get('rooms/{id}/skus', [API\V4\RoomsController::class, 'skus']);
+
         Route::post('meet/rooms/{id}', [API\V4\MeetController::class, 'joinRoom'])
             ->withoutMiddleware(['auth:api']);
 

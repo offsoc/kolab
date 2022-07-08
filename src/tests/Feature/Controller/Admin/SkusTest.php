@@ -18,7 +18,6 @@ class SkusTest extends TestCase
         Sku::where('title', 'test')->delete();
 
         $this->clearBetaEntitlements();
-        $this->clearMeetEntitlements();
     }
 
     /**
@@ -29,7 +28,6 @@ class SkusTest extends TestCase
         Sku::where('title', 'test')->delete();
 
         $this->clearBetaEntitlements();
-        $this->clearMeetEntitlements();
 
         parent::tearDown();
     }
@@ -82,7 +80,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(10, $json);
+        $this->assertCount(11, $json);
 
         $this->assertSame(100, $json[0]['prio']);
         $this->assertSame($sku->id, $json[0]['id']);
@@ -118,7 +116,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(6, $json);
+        $this->assertCount(5, $json);
         // Note: Details are tested where we test API\V4\SkusController
     }
 }

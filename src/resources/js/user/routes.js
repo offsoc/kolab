@@ -16,9 +16,10 @@ const DomainInfoComponent = () => import(/* webpackChunkName: "../user/pages" */
 const DomainListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Domain/List')
 const FileInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/File/Info')
 const FileListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/File/List')
-const MeetComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Rooms')
 const ResourceInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/Info')
 const ResourceListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/List')
+const RoomInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Room/Info')
+const RoomListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Room/List')
 const SettingsComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Settings')
 const SharedFolderInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/SharedFolder/Info')
 const SharedFolderListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/SharedFolder/List')
@@ -27,7 +28,7 @@ const UserListComponent = () => import(/* webpackChunkName: "../user/pages" */ '
 const UserProfileComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/Profile')
 const UserProfileDeleteComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/ProfileDelete')
 const WalletComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Wallet')
-const RoomComponent = () => import(/* webpackChunkName: "../user/meet" */ '../../vue/Meet/Room.vue')
+const MeetComponent = () => import(/* webpackChunkName: "../user/meet" */ '../../vue/Meet/Room.vue')
 
 const routes = [
     {
@@ -89,6 +90,12 @@ const routes = [
         component: LogoutComponent
     },
     {
+        name: 'meet',
+        path: '/meet/:room',
+        component: MeetComponent,
+        meta: { loading: true }
+    },
+    {
         path: '/password-reset/:code?',
         name: 'password-reset',
         component: PasswordResetComponent
@@ -118,16 +125,16 @@ const routes = [
         meta: { requiresAuth: true, perm: 'resources' }
     },
     {
-        component: RoomComponent,
+        path: '/room/:room',
         name: 'room',
-        path: '/meet/:room',
-        meta: { loading: true }
+        component: RoomInfoComponent,
+        meta: { requiresAuth: true, perm: 'rooms'  }
     },
     {
         path: '/rooms',
         name: 'rooms',
-        component: MeetComponent,
-        meta: { requiresAuth: true }
+        component: RoomListComponent,
+        meta: { requiresAuth: true, perm: 'rooms'  }
     },
     {
         path: '/settings',

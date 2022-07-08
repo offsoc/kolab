@@ -215,31 +215,6 @@ return [
     ],
 
     'meet' => [
-        'title' => "Voice & Video Conferencing",
-        'welcome' => "Welcome to our beta program for Voice & Video Conferencing.",
-        'url' => "You have a room of your own at the URL below. This room is only open when you yourself are in attendance. Use this URL to invite people to join you.",
-        'notice' => "This is a work in progress and more features will be added over time. Current features include:",
-        'sharing' => "Screen Sharing",
-        'sharing-text' => "Share your screen for presentations or show-and-tell.",
-        'security' => "Room Security",
-        'security-text' => "Increase the room security by setting a password that attendees will need to know"
-            . " before they can enter, or lock the door so attendees will have to knock, and a moderator can accept or deny those requests.",
-        'qa-title' => "Raise Hand (Q&A)",
-        'qa-text' => "Silent audience members can raise their hand to facilitate a Question & Answer session with the panel members.",
-        'moderation' => "Moderator Delegation",
-        'moderation-text' => "Delegate moderator authority for the session, so that a speaker is not needlessly"
-            . " interrupted with attendees knocking and other moderator duties.",
-        'eject' => "Eject Attendees",
-        'eject-text' => "Eject attendees from the session in order to force them to reconnect, or address policy"
-            . " violations. Click the user icon for effective dismissal.",
-        'silent' => "Silent Audience Members",
-        'silent-text' => "For a webinar-style session, configure the room to force all new attendees to be silent audience members.",
-        'interpreters' => "Language Specific Audio Channels",
-        'interpreters-text' => "Designate a participant to interpret the original audio to a target language, for sessions"
-            . " with multi-lingual attendees. The interpreter is expected to be able to relay the original audio, and override it.",
-        'beta-notice' => "Keep in mind that this is still in beta and might come with some issues."
-            . " Should you encounter any on your way, let us know by contacting support.",
-
         // Room options dialog
         'options' => "Room options",
         'password' => "Password",
@@ -353,6 +328,22 @@ return [
         'list-title' => "Resource | Resources",
         'list-empty' => "There are no resources in this account.",
         'new' => "New resource",
+    ],
+
+    'room' => [
+        'create' => "Create room",
+        'delete' => "Delete room",
+        'description-hint' => "This is an optional short description for the room, so you can find it more easily on the list.",
+        'goto' => "Enter the room",
+        'list-empty' => "There are no conference rooms in this account.",
+        'list-empty-nocontroller' => "Do you need a room? Ask your account owner to create one and share it with you.",
+        'list-title' => "Voice & video conferencing rooms",
+        'moderators' => "Moderators",
+        'moderators-text' => "You can share your room with other users. They will become the room moderators with all moderator powers and ability to open the room without your presence.",
+        'new' => "New room",
+        'new-hint' => "We'll generate a unique name for the room that will then allow you to access the room.",
+        'title' => "Room: {name}",
+        'url' => "You can access the room at the URL below. Use this URL to invite people to join you. This room is only open when you (or another room moderator) is in attendance.",
     ],
 
     'settings' => [

@@ -383,7 +383,7 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(6, $json);
+        $this->assertCount(5, $json);
 
         $this->assertSkuElement('mailbox', $json[0], [
                 'prio' => 100,
@@ -432,15 +432,6 @@ class UsersTest extends TestCase
                 'forbidden' => ['Activesync'],
         ]);
 
-        $this->assertSkuElement('meet', $json[5], [
-                'prio' => 50,
-                'type' => 'user',
-                'handler' => 'Meet',
-                'enabled' => false,
-                'readonly' => false,
-                'required' => ['Groupware'],
-        ]);
-
         // Test inclusion of beta SKUs
         $sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
         $user->assignSku($sku);
@@ -449,9 +440,9 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(7, $json);
+        $this->assertCount(6, $json);
 
-        $this->assertSkuElement('beta', $json[6], [
+        $this->assertSkuElement('beta', $json[5], [
                 'prio' => 10,
                 'type' => 'user',
                 'handler' => 'Beta',
@@ -620,17 +611,11 @@ class UsersTest extends TestCase
 
         $this->assertSame(['beta'], $result['skus']);
 
-        $user->assignSku(Sku::withEnvTenantContext()->where('title', 'meet')->first());
+        $user->assignSku(Sku::withEnvTenantContext()->where('title', 'groupware')->first());
 
         $result = UsersController::statusInfo($user);
 
-        $this->assertSame(['beta', 'meet'], $result['skus']);
-
-        $user->assignSku(Sku::withEnvTenantContext()->where('title', 'meet')->first());
-
-        $result = UsersController::statusInfo($user);
-
-        $this->assertSame(['beta', 'meet'], $result['skus']);
+        $this->assertSame(['beta', 'groupware'], $result['skus']);
     }
 
     /**

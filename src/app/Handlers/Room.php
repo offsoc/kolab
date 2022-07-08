@@ -2,7 +2,7 @@
 
 namespace App\Handlers;
 
-class Meet extends Base
+class Room extends Base
 {
     /**
      * The entitleable class for this handler.
@@ -11,7 +11,7 @@ class Meet extends Base
      */
     public static function entitleableClass(): string
     {
-        return \App\User::class;
+        return \App\Meet\Room::class;
     }
 
     /**
@@ -25,7 +25,8 @@ class Meet extends Base
     {
         $data = parent::metadata($sku);
 
-        $data['required'] = ['Groupware'];
+        $data['enabled'] = true;
+        $data['exclusive'] = ['GroupRoom'];
 
         return $data;
     }
@@ -38,6 +39,6 @@ class Meet extends Base
      */
     public static function priority(): int
     {
-        return 50;
+        return 10;
     }
 }

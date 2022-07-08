@@ -153,6 +153,7 @@ return [
     'spf-entry-invalid' => 'The entry format is invalid. Expected a domain name starting with a dot.',
     'sp-entry-invalid' => 'The entry format is invalid. Expected an email, domain, or part of it.',
     'acl-entry-invalid' => 'The entry format is invalid. Expected an email address.',
+    'acl-permission-invalid' => 'The specified permission is invalid.',
     'file-perm-exists' => 'File permission already exists.',
     'file-perm-invalid' => 'The file permission is invalid.',
     'file-name-exists' => 'The file name already exists.',

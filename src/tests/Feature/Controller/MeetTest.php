@@ -15,54 +15,19 @@ class MeetTest extends TestCase
     {
         parent::setUp();
 
-        $this->clearMeetEntitlements();
         $room = Room::where('name', 'john')->first();
         $room->setSettings(['password' => null, 'locked' => null, 'nomedia' => null]);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
-        $this->clearMeetEntitlements();
         $room = Room::where('name', 'john')->first();
         $room->setSettings(['password' => null, 'locked' => null, 'nomedia' => null]);
 
         parent::tearDown();
-    }
-
-    /**
-     * Test listing user rooms
-     *
-     * @group meet
-     */
-    public function testIndex(): void
-    {
-        $john = $this->getTestUser('john@kolab.org');
-        $jack = $this->getTestUser('jack@kolab.org');
-        Room::where('user_id', $jack->id)->delete();
-
-        // Unauth access not allowed
-        $response = $this->get("api/v4/meet/rooms");
-        $response->assertStatus(401);
-
-        // John has one room
-        $response = $this->actingAs($john)->get("api/v4/meet/rooms");
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertSame(1, $json['count']);
-        $this->assertCount(1, $json['list']);
-        $this->assertSame('john', $json['list'][0]['name']);
-
-        // Jack has no room, but it will be auto-created
-        $response = $this->actingAs($jack)->get("api/v4/meet/rooms");
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertSame(1, $json['count']);
-        $this->assertCount(1, $json['list']);
-        $this->assertMatchesRegularExpression('/^[0-9a-z-]{11}$/', $json['list'][0]['name']);
     }
 
     /**
@@ -77,8 +42,6 @@ class MeetTest extends TestCase
         $room = Room::where('name', 'john')->first();
         $room->session_id = null;
         $room->save();
-
-        $this->assignMeetEntitlement($john);
 
         // Unauth access, no session yet
         $response = $this->post("api/v4/meet/rooms/{$room->name}");
@@ -203,6 +166,16 @@ class MeetTest extends TestCase
 
         $json = $response->json();
         $this->assertSame(Room::ROLE_PUBLISHER & $json['role'], 0);
+
+        // Test opening the session as a sharee of a room
+        $room = Room::where('name', 'shared')->first();
+        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}", ['init' => 1]);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame(Room::ROLE_SUBSCRIBER | Room::ROLE_MODERATOR | Room::ROLE_OWNER, $json['role']);
+        $this->assertMatchesRegularExpression('|^wss?://|', $json['token']);
     }
 
     /**
@@ -218,8 +191,6 @@ class MeetTest extends TestCase
         $room->session_id = null;
         $room->save();
         $room->setSettings(['password' => null, 'locked' => 'true']);
-
-        $this->assignMeetEntitlement($john);
 
         // Create the session (also makes sure the owner can access a locked room)
         $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}", ['init' => 1]);
@@ -300,8 +271,6 @@ class MeetTest extends TestCase
      */
     public function testJoinRoomGuest(): void
     {
-        $this->assignMeetEntitlement('john@kolab.org');
-
         // There's no easy way to logout the user in the same test after
         // using actingAs(). That's why this is moved to a separate test
         $room = Room::where('name', 'john')->first();
@@ -318,92 +287,12 @@ class MeetTest extends TestCase
     }
 
     /**
-     * Test configuring the room (session)
-     *
-     * @group meet
-     */
-    public function testSetRoomConfig(): void
-    {
-        $john = $this->getTestUser('john@kolab.org');
-        $jack = $this->getTestUser('jack@kolab.org');
-        $room = Room::where('name', 'john')->first();
-
-        // Unauth access not allowed
-        $response = $this->post("api/v4/meet/rooms/{$room->name}/config", []);
-        $response->assertStatus(401);
-
-        // Non-existing room name
-        $response = $this->actingAs($john)->post("api/v4/meet/rooms/non-existing/config", []);
-        $response->assertStatus(404);
-
-        // TODO: Test a room with a deleted owner
-
-        // Non-owner
-        $response = $this->actingAs($jack)->post("api/v4/meet/rooms/{$room->name}/config", []);
-        $response->assertStatus(403);
-
-        // Room owner
-        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}/config", []);
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertCount(2, $json);
-        $this->assertSame('success', $json['status']);
-        $this->assertSame("Room configuration updated successfully.", $json['message']);
-
-        // Set password and room lock
-        $post = ['password' => 'aaa', 'locked' => 1];
-        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}/config", $post);
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertCount(2, $json);
-        $this->assertSame('success', $json['status']);
-        $this->assertSame("Room configuration updated successfully.", $json['message']);
-        $room->refresh();
-        $this->assertSame('aaa', $room->getSetting('password'));
-        $this->assertSame('true', $room->getSetting('locked'));
-
-        // Unset password and room lock
-        $post = ['password' => '', 'locked' => 0];
-        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}/config", $post);
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertCount(2, $json);
-        $this->assertSame('success', $json['status']);
-        $this->assertSame("Room configuration updated successfully.", $json['message']);
-        $room->refresh();
-        $this->assertSame(null, $room->getSetting('password'));
-        $this->assertSame(null, $room->getSetting('locked'));
-
-        // Test invalid option error
-        $post = ['password' => 'eee', 'unknown' => 0];
-        $response = $this->actingAs($john)->post("api/v4/meet/rooms/{$room->name}/config", $post);
-        $response->assertStatus(422);
-
-        $json = $response->json();
-
-        $this->assertCount(2, $json);
-        $this->assertSame('error', $json['status']);
-        $this->assertSame("Invalid room configuration option.", $json['errors']['unknown']);
-
-        $room->refresh();
-        $this->assertSame(null, $room->getSetting('password'));
-    }
-
-    /**
      * Test the webhook
      *
      * @group meet
      */
     public function testWebhook(): void
     {
-        $this->assignMeetEntitlement('john@kolab.org');
-
         $john = $this->getTestUser('john@kolab.org');
         $room = Room::where('name', 'john')->first();
         $headers = ['X-Auth-Token' => \config('meet.webhook_token')];

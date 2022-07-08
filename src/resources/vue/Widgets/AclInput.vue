@@ -6,7 +6,7 @@
                 <option value="anyone">{{ $t('form.anyone') }}</option>
             </select>
             <input :id="id + '-input'" type="text" class="form-control main-input" :placeholder="$t('form.email')" @keydown="keyDown">
-            <select class="form-select acl" v-model="perm">
+            <select v-if="types.length > 1" class="form-select acl" v-model="perm">
                 <option v-for="t in types" :key="t" :value="t">{{ $t('form.acl-' + t) }}</option>
             </select>
             <a href="#" class="btn btn-outline-secondary" @click.prevent="addItem">
@@ -15,7 +15,7 @@
         </div>
         <div class="input-group" v-for="(item, index) in list" :key="index">
             <input type="text" class="form-control" :value="aclIdent(item)" :readonly="aclIdent(item) == 'anyone'" :placeholder="$t('form.email')">
-            <select class="form-select acl">
+            <select v-if="types.length > 1" class="form-select acl">
                 <option v-for="t in types" :key="t" :value="t" :selected="aclPerm(item) == t">{{ $t('form.acl-' + t) }}</option>
             </select>
             <a href="#" class="btn btn-outline-secondary" @click.prevent="deleteItem(index)">
@@ -26,17 +26,19 @@
 </template>
 
 <script>
+    const DEFAULT_TYPES = [ 'read-only', 'read-write', 'full' ]
+
     export default {
         props: {
             list: { type: Array, default: () => [] },
             id: { type: String, default: '' },
+            types: { type: Array, default: () => DEFAULT_TYPES },
             useronly: { type: Boolean, default: false }
         },
         data() {
             return {
                 mod: 'user',
                 perm: 'read-only',
-                types: [ 'read-only', 'read-write', 'full' ]
             }
         },
         mounted() {
@@ -68,7 +70,9 @@
                         value = 'anyone'
                     }
 
-                    this.$set(this.list, this.list.length, value + ', ' + this.perm)
+                    const perm = this.types.length > 1 ? this.perm : this.types[0]
+
+                    this.$set(this.list, this.list.length, value + ', ' + perm)
 
                     this.input.classList.remove('is-invalid')
                     this.input.value = ''
@@ -109,7 +113,7 @@
             updateList() {
                 // Update this.list to the current state of the html elements
                 $(this.$el).children('.input-group:not(:first-child)').each((index, elem) => {
-                    const perm = $(elem).find('select.acl').val()
+                    const perm = this.types.length > 1 ? $(elem).find('select.acl').val() : this.types[0]
                     const value = $(elem).find('input').val()
                     this.$set(this.list, index, value + ', ' + perm)
                 })

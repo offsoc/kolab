@@ -355,6 +355,18 @@ class Wallet extends Model
     }
 
     /**
+     * Check if the specified user is a controller to this wallet.
+     *
+     * @param \App\User $user The user object.
+     *
+     * @return bool True if the user is one of the wallet controllers (including user), False otherwise
+     */
+    public function isController(User $user): bool
+    {
+        return $user->id == $this->user_id || $this->controllers->contains($user);
+    }
+
+    /**
      * A helper to display human-readable amount of money using
      * the wallet currency and specified locale.
      *

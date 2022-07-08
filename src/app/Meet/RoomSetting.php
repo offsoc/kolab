@@ -14,10 +14,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class RoomSetting extends Model
 {
-    protected $fillable = [
-        'room_id', 'key', 'value'
-    ];
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = ['room_id', 'key', 'value'];
 
+    /** @var string Database table name */
     protected $table = 'openvidu_room_settings';
 
     /**
@@ -27,6 +27,6 @@ class RoomSetting extends Model
      */
     public function room()
     {
-        return $this->belongsTo('\App\Meet\Room', 'room_id', 'id');
+        return $this->belongsTo(Room::class);
     }
 }

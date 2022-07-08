@@ -6,46 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Meet\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 class MeetController extends Controller
 {
-    /**
-     * Listing of rooms that belong to the authenticated user.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        $user = Auth::guard()->user();
-
-        $rooms = Room::where('user_id', $user->id)->orderBy('name')->get();
-
-        if (count($rooms) == 0) {
-            // Create a room for the user (with a random and unique name)
-            while (true) {
-                $name = strtolower(\App\Utils::randStr(3, 3, '-'));
-                if (!Room::where('name', $name)->count()) {
-                    break;
-                }
-            }
-
-            $room = Room::create([
-                    'name' => $name,
-                    'user_id' => $user->id
-            ]);
-
-            $rooms = collect([$room]);
-        }
-
-        $result = [
-            'list' => $rooms,
-            'count' => count($rooms),
-        ];
-
-        return response()->json($result);
-    }
-
     /**
      * Join the room session. Each room has one owner, and the room isn't open until the owner
      * joins (and effectively creates the session).
@@ -59,17 +22,14 @@ class MeetController extends Controller
         $room = Room::where('name', $id)->first();
 
         // Room does not exist, or the owner is deleted
-        if (!$room || !$room->owner || $room->owner->isDegraded(true)) {
-            return $this->errorResponse(404, \trans('meet.room-not-found'));
-        }
-
-        // Check if there's still a valid meet entitlement for the room owner
-        if (!$room->owner->hasSku('meet')) {
+        if (!$room || !($wallet = $room->wallet()) || !$wallet->owner || $wallet->owner->isDegraded(true)) {
             return $this->errorResponse(404, \trans('meet.room-not-found'));
         }
 
         $user = Auth::guard()->user();
-        $isOwner = $user && $user->id == $room->user_id;
+        $isOwner = $user && (
+            $user->id == $wallet->owner->id || $room->permissions()->where('user', $user->email)->exists()
+        );
         $init = !empty(request()->input('init'));
 
         // There's no existing session
@@ -178,69 +138,6 @@ class MeetController extends Controller
         }
 
         return response()->json($response, $response_code);
-    }
-
-    /**
-     * Set the domain configuration.
-     *
-     * @param string $id Room identifier (name)
-     *
-     * @return \Illuminate\Http\JsonResponse|void
-     */
-    public function setRoomConfig($id)
-    {
-        $room = Room::where('name', $id)->first();
-
-        // Room does not exist, or the owner is deleted
-        if (!$room || !$room->owner || $room->owner->isDegraded(true)) {
-            return $this->errorResponse(404);
-        }
-
-        $user = Auth::guard()->user();
-
-        // Only room owner can configure the room
-        if ($user->id != $room->user_id) {
-            return $this->errorResponse(403);
-        }
-
-        $input = request()->input();
-        $errors = [];
-
-        foreach ($input as $key => $value) {
-            switch ($key) {
-                case 'password':
-                    if ($value === null || $value === '') {
-                        $input[$key] = null;
-                    } else {
-                        // TODO: Do we have to validate the password in any way?
-                    }
-                    break;
-
-                case 'locked':
-                    $input[$key] = $value ? 'true' : null;
-                    break;
-
-                case 'nomedia':
-                    $input[$key] = $value ? 'true' : null;
-                    break;
-
-                default:
-                    $errors[$key] = \trans('meet.room-unsupported-option-error');
-            }
-        }
-
-        if (!empty($errors)) {
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
-        }
-
-        if (!empty($input)) {
-            $room->setSettings($input);
-        }
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans('meet.room-setconfig-success'),
-        ]);
     }
 
     /**

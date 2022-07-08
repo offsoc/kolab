@@ -11,6 +11,9 @@ use Tests\TestCase;
 
 class UserTest extends TestCase
 {
+    /**
+     * {@inheritDoc}
+     */
     public function setUp(): void
     {
         parent::setUp();
@@ -26,6 +29,9 @@ class UserTest extends TestCase
         $this->deleteTestDomain('UserAccountAdd.com');
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function tearDown(): void
     {
         \App\TenantSetting::truncate();
@@ -855,6 +861,14 @@ class UserTest extends TestCase
                 return $userId == $user->id && $userEmail === $user->email;
             }
         );
+    }
+
+    /**
+     * Test user deletion vs. rooms
+     */
+    public function testDeleteWithRooms(): void
+    {
+        $this->markTestIncomplete();
     }
 
     /**

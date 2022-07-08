@@ -739,7 +739,6 @@ function Room(container)
 
         // TODO: This probably could be better done with css
         let elements = {
-            '.dropdown-menu': withMenu,
             '.permissions': withPerm,
             '.interpreting': withPerm && rolePublisher,
             'svg.moderator': roleModerator,

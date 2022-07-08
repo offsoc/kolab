@@ -14,7 +14,7 @@ class SkuSeeder extends Seeder
      */
     public function run()
     {
-        Sku::create(
+        $skus = [
             [
                 'title' => 'mailbox',
                 'name' => 'User Mailbox',
@@ -24,10 +24,7 @@ class SkuSeeder extends Seeder
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Mailbox',
                 'active' => true,
-            ]
-        );
-
-        Sku::create(
+            ],
             [
                 'title' => 'domain',
                 'name' => 'Hosted Domain',
@@ -36,10 +33,7 @@ class SkuSeeder extends Seeder
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Domain',
                 'active' => false,
-            ]
-        );
-
-        Sku::create(
+            ],
             [
                 'title' => 'domain-registration',
                 'name' => 'Domain Registration',
@@ -48,10 +42,7 @@ class SkuSeeder extends Seeder
                 'period' => 'yearly',
                 'handler_class' => 'App\Handlers\DomainRegistration',
                 'active' => false,
-            ]
-        );
-
-        Sku::create(
+            ],
             [
                 'title' => 'domain-hosting',
                 'name' => 'External Domain',
@@ -61,10 +52,7 @@ class SkuSeeder extends Seeder
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\DomainHosting',
                 'active' => true,
-            ]
-        );
-
-        Sku::create(
+            ],
             [
                 'title' => 'domain-relay',
                 'name' => 'Domain Relay',
@@ -73,10 +61,7 @@ class SkuSeeder extends Seeder
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\DomainRelay',
                 'active' => false,
-            ]
-        );
-
-        Sku::create(
+            ],
             [
                 'title' => 'storage',
                 'name' => 'Storage Quota',
@@ -86,10 +71,7 @@ class SkuSeeder extends Seeder
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Storage',
                 'active' => true,
-            ]
-        );
-
-        Sku::create(
+            ],
             [
                 'title' => 'groupware',
                 'name' => 'Groupware Features',
@@ -99,10 +81,7 @@ class SkuSeeder extends Seeder
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Groupware',
                 'active' => true,
-            ]
-        );
-
-        Sku::create(
+            ],
             [
                 'title' => 'resource',
                 'name' => 'Resource',
@@ -111,10 +90,7 @@ class SkuSeeder extends Seeder
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Resource',
                 'active' => true,
-            ]
-        );
-
-        Sku::create(
+            ],
             [
                 'title' => 'shared-folder',
                 'name' => 'Shared Folder',
@@ -123,10 +99,7 @@ class SkuSeeder extends Seeder
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\SharedFolder',
                 'active' => false,
-            ]
-        );
-
-        Sku::create(
+            ],
             [
                 'title' => '2fa',
                 'name' => '2-Factor Authentication',
@@ -136,10 +109,7 @@ class SkuSeeder extends Seeder
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Auth2F',
                 'active' => true,
-            ]
-        );
-
-        Sku::create(
+            ],
             [
                 'title' => 'activesync',
                 'name' => 'Activesync',
@@ -149,55 +119,54 @@ class SkuSeeder extends Seeder
                 'period' => 'monthly',
                 'handler_class' => 'App\Handlers\Activesync',
                 'active' => true,
-            ]
-        );
+            ],
+            [
+                'title' => 'beta',
+                'name' => 'Private Beta (invitation only)',
+                'description' => 'Access to the private beta program subscriptions',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Beta',
+                'active' => false,
+            ],
+            [
+                'title' => 'group',
+                'name' => 'Group',
+                'description' => 'Distribution list',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Group',
+                'active' => true,
+            ],
+            [
+                'title' => 'group-room',
+                'name' => 'Group conference room',
+                'description' => 'Shareable audio & video conference room',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\GroupRoom',
+                'active' => true,
+            ],
+            [
+               'title' => 'room',
+                'name' => 'Standard conference room',
+                'description' => 'Audio & video conference room',
+                'cost' => 0,
+                'units_free' => 0,
+                'period' => 'monthly',
+                'handler_class' => 'App\Handlers\Room',
+                'active' => true,
+            ],
+        ];
 
-        // Check existence because migration might have added this already
-        if (!Sku::where('title', 'beta')->first()) {
-            Sku::create(
-                [
-                    'title' => 'beta',
-                    'name' => 'Private Beta (invitation only)',
-                    'description' => 'Access to the private beta program subscriptions',
-                    'cost' => 0,
-                    'units_free' => 0,
-                    'period' => 'monthly',
-                    'handler_class' => 'App\Handlers\Beta',
-                    'active' => false,
-                ]
-            );
-        }
-
-        // Check existence because migration might have added this already
-        if (!Sku::where('title', 'meet')->first()) {
-            Sku::create(
-                [
-                    'title' => 'meet',
-                    'name' => 'Voice & Video Conferencing (public beta)',
-                    'description' => 'Video conferencing tool',
-                    'cost' => 0,
-                    'units_free' => 0,
-                    'period' => 'monthly',
-                    'handler_class' => 'App\Handlers\Meet',
-                    'active' => true,
-                ]
-            );
-        }
-
-        // Check existence because migration might have added this already
-        if (!Sku::where('title', 'group')->first()) {
-            Sku::create(
-                [
-                    'title' => 'group',
-                    'name' => 'Group',
-                    'description' => 'Distribution list',
-                    'cost' => 0,
-                    'units_free' => 0,
-                    'period' => 'monthly',
-                    'handler_class' => 'App\Handlers\Group',
-                    'active' => true,
-                ]
-            );
+        foreach ($skus as $sku) {
+            // Check existence because migration might have added this already
+            if (!Sku::where('title', $sku['title'])->first()) {
+                Sku::create($sku);
+            }
         }
     }
 }

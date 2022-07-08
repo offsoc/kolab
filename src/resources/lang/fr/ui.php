@@ -131,6 +131,7 @@ return [
         'phone' => "Téléphone",
         'shared-folder' => "Dossier partagé",
         'status' => "État",
+        'subscriptions' => "Subscriptions",
         'surname' => "Nom de famille",
         'type' => "Type",
         'user' => "Utilisateur",
@@ -176,9 +177,7 @@ return [
     ],
 
     'meet' => [
-        'title' => "Voix et vidéo-conférence",
         'welcome' => "Bienvenue dans notre programme bêta pour les conférences vocales et vidéo.",
-        'url' => "Vous disposez d'une salle avec l'URL ci-dessous. Cette salle ouvre uniquement quand vous y êtes vous-même. Utilisez cette URL pour inviter des personnes à vous rejoindre.",
         'notice' => "Il s'agit d'un travail en évolution et d'autres fonctions seront ajoutées au fil du temps. Les fonctions actuelles sont les suivantes:",
         'sharing' => "Partage d'écran",
         'sharing-text' => "Partagez votre écran pour des présentations ou des exposés.",
@@ -438,7 +437,6 @@ return [
         'search-pl' => "ID utilisateur, e-mail ou domamine",
         'skureq' => "{sku} demande {list}.",
         'subscription' => "Subscription",
-        'subscriptions' => "Subscriptions",
         'subscriptions-none' => "Cet utilisateur n'a pas de subscriptions.",
         'users' => "Utilisateurs",
     ],

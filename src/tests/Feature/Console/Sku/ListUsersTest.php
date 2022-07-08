@@ -34,7 +34,7 @@ class ListUsersTest extends TestCase
     {
         // Warning: We're not using artisan() here, as this will not
         // allow us to test "empty output" cases
-        $code = \Artisan::call('sku:list-users meet');
+        $code = \Artisan::call('sku:list-users domain-registration');
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
         $this->assertSame('', $output);
@@ -68,21 +68,5 @@ class ListUsersTest extends TestCase
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
         $this->assertSame("john@kolab.org", $output);
-
-        $sku = \App\Sku::where('title', 'meet')->first();
-        $user = $this->getTestUser('sku-list-users@kolabnow.com');
-        $user->assignSku($sku);
-
-        $code = \Artisan::call('sku:list-users meet');
-        $output = trim(\Artisan::output());
-        $this->assertSame(0, $code);
-        $this->assertSame($user->email, $output);
-
-        $user->assignSku($sku);
-
-        $code = \Artisan::call('sku:list-users meet');
-        $output = trim(\Artisan::output());
-        $this->assertSame(0, $code);
-        $this->assertSame($user->email, $output);
     }
 }

@@ -132,11 +132,11 @@ class TransactionTest extends TestCase
         $this->assertSame(13, $transactions[4]->amount);
         $this->assertSame(Transaction::ENTITLEMENT_CREATED, $transactions[4]->type);
         $this->assertSame(
-            "test@test.com created mailbox for " . $ent->entitleableTitle(),
+            "test@test.com created mailbox for " . $ent->entitleable->toString(),
             $transactions[4]->toString()
         );
         $this->assertSame(
-            "Added mailbox for " . $ent->entitleableTitle(),
+            "Added mailbox for " . $ent->entitleable->toString(),
             $transactions[4]->shortDescription()
         );
 
@@ -144,11 +144,11 @@ class TransactionTest extends TestCase
         $this->assertSame(14, $transactions[5]->amount);
         $this->assertSame(Transaction::ENTITLEMENT_BILLED, $transactions[5]->type);
         $this->assertSame(
-            sprintf("%s for %s is billed at 0,14 CHF", $ent->sku->title, $ent->entitleableTitle()),
+            sprintf("%s for %s is billed at 0,14 CHF", $ent->sku->title, $ent->entitleable->toString()),
             $transactions[5]->toString()
         );
         $this->assertSame(
-            sprintf("Billed %s for %s", $ent->sku->title, $ent->entitleableTitle()),
+            sprintf("Billed %s for %s", $ent->sku->title, $ent->entitleable->toString()),
             $transactions[5]->shortDescription()
         );
 
@@ -156,11 +156,11 @@ class TransactionTest extends TestCase
         $this->assertSame(15, $transactions[6]->amount);
         $this->assertSame(Transaction::ENTITLEMENT_DELETED, $transactions[6]->type);
         $this->assertSame(
-            sprintf("test@test.com deleted %s for %s", $ent->sku->title, $ent->entitleableTitle()),
+            sprintf("test@test.com deleted %s for %s", $ent->sku->title, $ent->entitleable->toString()),
             $transactions[6]->toString()
         );
         $this->assertSame(
-            sprintf("Deleted %s for %s", $ent->sku->title, $ent->entitleableTitle()),
+            sprintf("Deleted %s for %s", $ent->sku->title, $ent->entitleable->toString()),
             $transactions[6]->shortDescription()
         );
     }

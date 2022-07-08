@@ -28,11 +28,11 @@
                 <svg-icon icon="wallet"></svg-icon><span>{{ $t('dashboard.wallet') }}</span>
                 <span v-if="balance < 0" class="badge bg-danger">{{ $root.price(balance, currency) }}</span>
             </router-link>
-            <router-link v-if="$root.hasSKU('meet') && !$root.isDegraded()" class="card link-chat" :to="{ name: 'rooms' }">
+            <router-link v-if="status.enableRooms" class="card link-chat" :to="{ name: 'rooms' }">
                 <svg-icon icon="comments"></svg-icon><span>{{ $t('dashboard.chat') }}</span>
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>
-            <router-link v-if="status.enableFiles && !$root.isDegraded()" class="card link-files" :to="{ name: 'files' }">
+            <router-link v-if="status.enableFiles" class="card link-files" :to="{ name: 'files' }">
                 <svg-icon icon="folder-closed"></svg-icon><span>{{ $t('dashboard.files') }}</span>
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>

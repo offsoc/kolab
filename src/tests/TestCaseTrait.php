@@ -351,6 +351,24 @@ trait TestCaseTrait
     }
 
     /**
+     * Delete a test room whatever it takes.
+     *
+     * @coversNothing
+     */
+    protected function deleteTestRoom($name)
+    {
+        Queue::fake();
+
+        $room = \App\Meet\Room::withTrashed()->where('name', $name)->first();
+
+        if (!$room) {
+            return;
+        }
+
+        $room->forceDelete();
+    }
+
+    /**
      * Delete a test shared folder whatever it takes.
      *
      * @coversNothing
@@ -477,6 +495,27 @@ trait TestCaseTrait
     }
 
     /**
+     * Get Room object by name, create it if needed.
+     *
+     * @coversNothing
+     */
+    protected function getTestRoom($name, $wallet = null, $attrib = [], $config = [], $title = null)
+    {
+        $attrib['name'] = $name;
+        $room = \App\Meet\Room::create($attrib);
+
+        if ($wallet) {
+            $room->assignToWallet($wallet, $title);
+        }
+
+        if (!empty($config)) {
+            $room->setConfig($config);
+        }
+
+        return $room;
+    }
+
+    /**
      * Get SharedFolder object by email, create it if needed.
      * Skip LDAP jobs.
      */
@@ -590,6 +629,26 @@ trait TestCaseTrait
             'html' => $result[0],
             'subject' => $mail->subject,
         ];
+    }
+
+    /**
+     * Reset a room after tests
+     */
+    public function resetTestRoom(string $room_name = 'john', $config = [])
+    {
+        $room = \App\Meet\Room::where('name', $room_name)->first();
+        $room->setSettings(['password' => null, 'locked' => null, 'nomedia' => null]);
+
+        if ($room->session_id) {
+            $room->session_id = null;
+            $room->save();
+        }
+
+        if (!empty($config)) {
+            $room->setConfig($config);
+        }
+
+        return $room;
     }
 
     protected function setUpTest()

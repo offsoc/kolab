@@ -99,7 +99,7 @@
                                     sku.cost = sku.nextCost
                                 }
 
-                                if (!sku.readonly) {
+                                if (!sku.readonly && this.object.skus) {
                                     sku.enabled = false
                                 }
                             }
@@ -107,9 +107,16 @@
                             return sku
                         })
 
-                    // Update all range inputs (and price)
                     this.$nextTick(() => {
+                        // Update all range inputs (and price)
                         $(this.$el).find('input[type=range]').each((idx, elem) => { this.rangeUpdate(elem) })
+
+                        // Mark 'exclusive' SKUs as readonly, they can't be unchecked
+                        this.skus.forEach(item => {
+                            if (item.exclusive && item.enabled) {
+                                $('#s' + item.id).find('input[type=checkbox]')[0].readOnly = true
+                            }
+                        })
                     })
                 })
                 .catch(this.$root.errorHandler)
@@ -141,9 +148,9 @@
 
                 if (input.checked) {
                     // Check if a required SKU is selected, alert the user if not
-                    (sku.required || []).forEach(requiredHandler => {
+                    (sku.required || []).forEach(handler => {
                         this.skus.forEach(item => {
-                            if (item.handler == requiredHandler) {
+                            if (item.handler == handler) {
                                 if (!$('#s' + item.id).find('input[type=checkbox]:checked').length) {
                                     required.push(item.name)
                                 }
@@ -154,6 +161,20 @@
                     if (required.length) {
                         input.checked = false
                         return alert(this.$t('user.skureq', { sku: sku.name, list: required.join(', ') }))
+                    }
+
+                    // Make sure there must be only one of 'exclusive' SKUs
+                    if (sku.exclusive) {
+                        input.readOnly = true
+
+                        this.skus.forEach(item => {
+                            if (sku.exclusive.includes(item.handler)) {
+                                $('#s' + item.id).find('input[type=checkbox]').prop({
+                                        checked: false,
+                                        readonly: false
+                                })
+                            }
+                        })
                     }
                 } else {
                     // Uncheck all dependent SKUs, e.g. when unchecking Groupware we also uncheck Activesync
@@ -166,10 +187,10 @@
                 }
 
                 // Uncheck+lock/unlock conflicting SKUs
-                (sku.forbidden || []).forEach(forbiddenHandler => {
+                (sku.forbidden || []).forEach(handler => {
                     this.skus.forEach(item => {
                         let checkbox
-                        if (item.handler == forbiddenHandler && (checkbox = $('#s' + item.id).find('input[type=checkbox]')[0])) {
+                        if (item.handler == handler && (checkbox = $('#s' + item.id).find('input[type=checkbox]')[0])) {
                             if (input.checked) {
                                 checkbox.checked = false
                                 checkbox.readOnly = true
@@ -208,6 +229,18 @@
 
                 // Update the price
                 record.find('.price').text(this.$root.priceLabel(cost, this.discount, this.currency))
+            },
+            getSkus() {
+                let skus = {}
+
+                $(this.$el).find('input[type=checkbox]:checked').each((idx, input) => {
+                    let id = $(input).val()
+                    let range = $(input).parents('tr').first().find('input[type=range]').val()
+
+                    skus[id] = range || 1
+                })
+
+                return skus
             }
         }
     }

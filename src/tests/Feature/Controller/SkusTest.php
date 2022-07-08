@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\V4\SkusController;
 use App\Sku;
 use App\Tenant;
 use Tests\TestCase;
@@ -18,7 +17,6 @@ class SkusTest extends TestCase
 
         $this->deleteTestUser('jane@kolabnow.com');
         $this->clearBetaEntitlements();
-        $this->clearMeetEntitlements();
         Sku::where('title', 'test')->delete();
     }
 
@@ -29,7 +27,6 @@ class SkusTest extends TestCase
     {
         $this->deleteTestUser('jane@kolabnow.com');
         $this->clearBetaEntitlements();
-        $this->clearMeetEntitlements();
         Sku::where('title', 'test')->delete();
 
         parent::tearDown();
@@ -66,7 +63,7 @@ class SkusTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertCount(10, $json);
+        $this->assertCount(11, $json);
 
         $this->assertSame(100, $json[0]['prio']);
         $this->assertSame($sku->id, $json[0]['id']);
@@ -96,7 +93,6 @@ class SkusTest extends TestCase
         $jane->assignPackage($kolab);
 
         $response = $this->actingAs($jane)->get("api/v4/skus?type=domain");
-        $response->assertStatus(200);
 
         $json = $response->json();
 

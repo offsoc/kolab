@@ -125,6 +125,8 @@ class RelationController extends ResourceController
     {
         if ($full) {
             $result = $object->toArray();
+
+            unset($result['tenant_id']);
         } else {
             $result = ['id' => $object->id];
 

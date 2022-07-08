@@ -158,7 +158,7 @@ class Transaction extends Model
             $discount = $entitlement->wallet->getDiscountRate();
 
             $result['entitlement_cost'] = $cost * $discount;
-            $result['object'] = $entitlement->entitleableTitle();
+            $result['object'] = $entitlement->entitleable->toString();
             $result['sku_title'] = $entitlement->sku->title;
         } else {
             $wallet = $this->wallet();

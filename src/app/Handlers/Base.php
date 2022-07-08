@@ -19,8 +19,8 @@ abstract class Base
      * to the user/domain when either it is active or there's already an
      * active entitlement.
      *
-     * @param \App\Sku              $sku    The SKU object
-     * @param \App\User|\App\Domain $object The user or domain object
+     * @param \App\Sku  $sku    The SKU
+     * @param object    $object The entitleable object
      *
      * @return bool
      */

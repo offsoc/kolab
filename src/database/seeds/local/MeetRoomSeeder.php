@@ -2,7 +2,6 @@
 
 namespace Database\Seeds\Local;
 
-use App\Meet\Room;
 use Illuminate\Database\Seeder;
 
 class MeetRoomSeeder extends Seeder
@@ -15,20 +14,26 @@ class MeetRoomSeeder extends Seeder
     public function run()
     {
         $john = \App\User::where('email', 'john@kolab.org')->first();
-        $jack = \App\User::where('email', 'jack@kolab.org')->first();
+        $wallet = $john->wallets()->first();
 
-        \App\Meet\Room::create(
+        $rooms = [
             [
-                'user_id' => $john->id,
-                'name' => 'john'
+                'name' => 'john',
+                'description' => "Standard room"
+            ],
+            [
+                'name' => 'shared',
+                'description' => "Shared room"
             ]
-        );
+        ];
 
-        \App\Meet\Room::create(
-            [
-                'user_id' => $jack->id,
-                'name' => strtolower(\App\Utils::randStr(3, 3, '-'))
-            ]
-        );
+        foreach ($rooms as $idx => $room) {
+            $room = \App\Meet\Room::create($room);
+            $rooms[$idx] = $room;
+        }
+
+        $rooms[0]->assignToWallet($wallet, 'room');
+        $rooms[1]->assignToWallet($wallet, 'group-room');
+        $rooms[1]->setConfig(['acl' => 'jack@kolab.org, full']);
     }
 }

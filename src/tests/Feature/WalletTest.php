@@ -277,6 +277,22 @@ class WalletTest extends TestCase
     }
 
     /**
+     * Test Wallet::isController()
+     */
+    public function testIsController(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $ned = $this->getTestUser('ned@kolab.org');
+
+        $wallet = $jack->wallet();
+
+        $this->assertTrue($wallet->isController($john));
+        $this->assertTrue($wallet->isController($ned));
+        $this->assertFalse($wallet->isController($jack));
+    }
+
+    /**
      * Verify controllers can also be removed from wallets.
      */
     public function testRemoveWalletController(): void

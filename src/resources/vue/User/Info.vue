@@ -77,7 +77,7 @@
                                 </div>
                                 <div v-if="user_id !== 'new'" id="user-skus" class="row mb-3">
                                     <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
-                                    <subscription-select v-if="user.id" class="col-sm-8 pt-sm-1" :object="user"></subscription-select>
+                                    <subscription-select v-if="user.id" class="col-sm-8 pt-sm-1" :object="user" ref="skus"></subscription-select>
                                 </div>
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
@@ -231,15 +231,7 @@
                 if (this.user_id !== 'new') {
                     method = 'put'
                     location += '/' + this.user_id
-
-                    let skus = {}
-                    $('#user-skus input[type=checkbox]:checked').each((idx, input) => {
-                        let id = $(input).val()
-                        let range = $(input).parents('tr').first().find('input[type=range]').val()
-
-                        skus[id] = range || 1
-                    })
-                    post.skus = skus
+                    post.skus = this.$refs.skus.getSkus()
                 } else {
                     post.package = $('#user-packages input:checked').val()
                 }

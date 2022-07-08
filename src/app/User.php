@@ -436,6 +436,19 @@ class User extends Authenticatable
     }
 
     /**
+     * Return rooms controlled by the current user.
+     *
+     * @param bool $with_accounts Include rooms assigned to wallets
+     *                            the current user controls but not owns.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     */
+    public function rooms($with_accounts = true)
+    {
+        return $this->entitleables(Meet\Room::class, $with_accounts);
+    }
+
+    /**
      * Return shared folders controlled by the current user.
      *
      * @param bool $with_accounts Include folders assigned to wallets

@@ -327,6 +327,16 @@ class Domain extends Model
     }
 
     /**
+     * Returns domain's namespace (required by the EntitleableTrait).
+     *
+     * @return string|null Domain namespace
+     */
+    public function toString(): ?string
+    {
+        return $this->namespace;
+    }
+
+    /**
      * Unsuspend this domain.
      *
      * The domain is unsuspended through either of the following courses of actions;

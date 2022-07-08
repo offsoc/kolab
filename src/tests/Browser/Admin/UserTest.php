@@ -40,7 +40,6 @@ class UserTest extends TestCaseDusk
 
         Entitlement::where('cost', '>=', 5000)->delete();
         $this->deleteTestGroup('group-test@kolab.org');
-        $this->clearMeetEntitlements();
     }
 
     /**
@@ -62,7 +61,6 @@ class UserTest extends TestCaseDusk
 
         Entitlement::where('cost', '>=', 5000)->delete();
         $this->deleteTestGroup('group-test@kolab.org');
-        $this->clearMeetEntitlements();
 
         parent::tearDown();
     }

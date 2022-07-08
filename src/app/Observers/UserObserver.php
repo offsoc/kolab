@@ -95,6 +95,9 @@ class UserObserver
                 }
             });
         }
+
+        // TODO: Remove Permission records for the user
+        // TODO: Remove file permissions for the user
     }
 
     /**
@@ -260,6 +263,10 @@ class UserObserver
             ->each(function ($entitlement) use ($user, $force) {
                 // Skip the current user (infinite recursion loop)
                 if ($entitlement->entitleable_type == User::class && $entitlement->entitleable_id == $user->id) {
+                    return;
+                }
+
+                if (!$entitlement->entitleable) {
                     return;
                 }
 

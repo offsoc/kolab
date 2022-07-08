@@ -47,9 +47,10 @@ class RoomCreate extends Command
             return 1;
         }
 
-        \App\Meet\Room::create([
+        $room = \App\Meet\Room::create([
                 'name' => $roomName,
-                'user_id' => $user->id
         ]);
+
+        $room->assignToWallet($user->wallets()->first());
     }
 }

@@ -171,7 +171,7 @@ class EntitlementTest extends TestCase
     }
 
     /**
-     * Test Entitlement::entitlementTitle()
+     * Test EntitleableTrait::toString()
      */
     public function testEntitleableTitle(): void
     {
@@ -202,24 +202,24 @@ class EntitlementTest extends TestCase
         $entitlement = Entitlement::where('wallet_id', $wallet->id)
             ->where('sku_id', $sku_mailbox->id)->first();
 
-        $this->assertSame($user->email, $entitlement->entitleableTitle());
+        $this->assertSame($user->email, $entitlement->entitleable->toString());
 
         $entitlement = Entitlement::where('wallet_id', $wallet->id)
             ->where('sku_id', $sku_group->id)->first();
 
-        $this->assertSame($group->email, $entitlement->entitleableTitle());
+        $this->assertSame($group->email, $entitlement->entitleable->toString());
 
         $entitlement = Entitlement::where('wallet_id', $wallet->id)
             ->where('sku_id', $sku_domain->id)->first();
 
-        $this->assertSame($domain->namespace, $entitlement->entitleableTitle());
+        $this->assertSame($domain->namespace, $entitlement->entitleable->toString());
 
         // Make sure it still works if the entitleable is deleted
         $domain->delete();
 
         $entitlement->refresh();
 
-        $this->assertSame($domain->namespace, $entitlement->entitleableTitle());
+        $this->assertSame($domain->namespace, $entitlement->entitleable->toString());
         $this->assertNotNull($entitlement->entitleable);
     }
 }

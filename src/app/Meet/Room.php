@@ -2,21 +2,34 @@
 
 namespace App\Meet;
 
+use App\Traits\BelongsToTenantTrait;
+use App\Traits\EntitleableTrait;
+use App\Traits\Meet\RoomConfigTrait;
+use App\Traits\PermissibleTrait;
 use App\Traits\SettingsTrait;
+use Dyrynda\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 
 /**
  * The eloquent definition of a Room.
  *
- * @property int     $id         Room identifier
- * @property string  $name       Room name
- * @property int     $user_id    Room owner
- * @property ?string $session_id Meet session identifier
+ * @property int     $id          Room identifier
+ * @property ?string $description Description
+ * @property string  $name        Room name
+ * @property int     $tenant_id   Tenant identifier
+ * @property ?string $session_id  Meet session identifier
  */
 class Room extends Model
 {
+    use BelongsToTenantTrait;
+    use EntitleableTrait;
+    use RoomConfigTrait;
+    use NullableFields;
     use SettingsTrait;
+    use PermissibleTrait;
+    use SoftDeletes;
 
     public const ROLE_SUBSCRIBER = 1 << 0;
     public const ROLE_PUBLISHER = 1 << 1;
@@ -27,8 +40,18 @@ class Room extends Model
     public const REQUEST_ACCEPTED = 'accepted';
     public const REQUEST_DENIED = 'denied';
 
+    /** @var array<string, string> The attributes that should be cast */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
+    ];
+
     /** @var array<int, string> The attributes that are mass assignable */
-    protected $fillable = ['user_id', 'name'];
+    protected $fillable = ['name', 'description'];
+
+    /** @var array<int, string> The attributes that can be not set */
+    protected $nullable = ['description'];
 
     /** @var string Database table name */
     protected $table = 'openvidu_rooms';
@@ -181,16 +204,6 @@ class Room extends Model
     }
 
     /**
-     * The room owner.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function owner()
-    {
-        return $this->belongsTo('\App\User', 'user_id', 'id');
-    }
-
-    /**
      * Accept the join request.
      *
      * @param string $id Request identifier
@@ -260,16 +273,6 @@ class Room extends Model
     }
 
     /**
-     * Any (additional) properties of this room.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function settings()
-    {
-        return $this->hasMany('App\Meet\RoomSetting', 'room_id');
-    }
-
-    /**
      * Send a signal to the Meet session participants (peers)
      *
      * @param string $name   Signal name (type)
@@ -297,6 +300,28 @@ class Room extends Model
         $this->logError("Failed to send a signal to the meet session", $response);
 
         return $response->getStatusCode() == 200;
+    }
+
+    /**
+     * Returns a map of supported ACL labels.
+     *
+     * @return array Map of supported permission rights/ACL labels
+     */
+    protected function supportedACL(): array
+    {
+        return [
+            'full' => \App\Permission::READ | \App\Permission::WRITE | \App\Permission::ADMIN,
+        ];
+    }
+
+    /**
+     * Returns room name (required by the EntitleableTrait).
+     *
+     * @return string|null Room name
+     */
+    public function toString(): ?string
+    {
+        return $this->name;
     }
 
     /**

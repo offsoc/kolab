@@ -39,21 +39,26 @@ trait EntitleableTrait
     }
 
     /**
-     * Assign a Sku to an entitleable object.
+     * Assign a SKU to an entitleable object.
      *
-     * @param \App\Sku $sku   The sku to assign.
-     * @param int      $count Count of entitlements to add
+     * @param \App\Sku     $sku    The sku to assign.
+     * @param int          $count  Count of entitlements to add
+     * @param ?\App\Wallet $wallet The wallet to use when objects's wallet is unknown
      *
      * @return $this
      * @throws \Exception
      */
-    public function assignSku(Sku $sku, int $count = 1)
+    public function assignSku(Sku $sku, int $count = 1, $wallet = null)
     {
-        // TODO: I guess wallet could be parametrized in future
-        $wallet = $this->wallet();
-        $exists = $this->entitlements()->where('sku_id', $sku->id)->count();
+        if (!$wallet) {
+            $wallet = $this->wallet();
+        }
 
-        // TODO: Make sure the SKU can be assigned to the object
+        if (!$wallet) {
+            throw new \Exception("No wallet specified for the new entitlement");
+        }
+
+        $exists = $this->entitlements()->where('sku_id', $sku->id)->count();
 
         while ($count > 0) {
             Entitlement::create([
@@ -76,11 +81,12 @@ trait EntitleableTrait
      * Assign the object to a wallet.
      *
      * @param \App\Wallet $wallet The wallet
+     * @param ?string     $title  Optional SKU title
      *
      * @return $this
      * @throws \Exception
      */
-    public function assignToWallet(Wallet $wallet)
+    public function assignToWallet(Wallet $wallet, $title = null)
     {
         if (empty($this->id)) {
             throw new \Exception("Object not yet exists");
@@ -92,9 +98,11 @@ trait EntitleableTrait
 
         // Find the SKU title, e.g. \App\SharedFolder -> shared-folder
         // Note: it does not work with User/Domain model (yet)
-        $title = Str::kebab(\class_basename(self::class));
+        if (!$title) {
+            $title = Str::kebab(\class_basename(self::class));
+        }
 
-        $sku = Sku::withObjectTenantContext($this)->where('title', $title)->first();
+        $sku = $this->skuByTitle($title);
         $exists = $wallet->entitlements()->where('sku_id', $sku->id)->count();
 
         Entitlement::create([
@@ -168,7 +176,7 @@ trait EntitleableTrait
      */
     public function hasSku(string $title): bool
     {
-        $sku = Sku::withObjectTenantContext($this)->where('title', $title)->first();
+        $sku = $this->skuByTitle($title);
 
         if (!$sku) {
             return false;
@@ -232,6 +240,30 @@ trait EntitleableTrait
             // on deletion, so we don't have to re-calculate it again.
             // TODO: We should probably re-calculate the cost
         }
+    }
+
+    /**
+     * Find the SKU object by title. Use current object's tenant context.
+     *
+     * @param string $title SKU title.
+     *
+     * @return ?\App\Sku A SKU object
+     */
+    protected function skuByTitle(string $title): ?Sku
+    {
+        return Sku::withObjectTenantContext($this)->where('title', $title)->first();
+    }
+
+    /**
+     * Returns entitleable object title (e.g. email or domain name).
+     *
+     * @return string|null An object title/name
+     */
+    public function toString(): ?string
+    {
+        // This method should be overloaded by the model class
+        // if the object has not email attribute
+        return $this->email;
     }
 
     /**

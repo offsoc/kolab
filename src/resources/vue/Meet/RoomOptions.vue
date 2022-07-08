@@ -57,7 +57,7 @@
             configSave(name, value, callback) {
                 const post = { [name]: value }
 
-                axios.post('/api/v4/meet/rooms/' + this.room + '/config', post)
+                axios.post('/api/v4/rooms/' + this.room + '/config', post)
                     .then(response => {
                         this.$set(this.config, name, value)
                         if (callback) {

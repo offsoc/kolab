@@ -38,7 +38,6 @@ class UserTest extends TestCaseDusk
         $wallet->save();
 
         $this->deleteTestGroup('group-test@kolab.org');
-        $this->clearMeetEntitlements();
     }
 
     /**
@@ -59,7 +58,6 @@ class UserTest extends TestCaseDusk
         $wallet->save();
 
         $this->deleteTestGroup('group-test@kolab.org');
-        $this->clearMeetEntitlements();
 
         parent::tearDown();
     }

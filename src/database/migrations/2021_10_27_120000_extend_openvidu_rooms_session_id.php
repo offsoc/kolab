@@ -32,7 +32,7 @@ class ExtendOpenviduRoomsSessionId extends Migration
         Schema::table(
             'openvidu_rooms',
             function (Blueprint $table) {
-                $table->string('session_id', 16)->change();
+                // $table->string('session_id', 16)->change();
             }
         );
     }

@@ -82,6 +82,12 @@ return [
     'resource-delete-success' => 'Resource deleted successfully.',
     'resource-setconfig-success' => 'Resource settings updated successfully.',
 
+    'room-update-success' => 'Room updated successfully.',
+    'room-create-success' => 'Room created successfully.',
+    'room-delete-success' => 'Room deleted successfully.',
+    'room-setconfig-success' => 'Room configuration updated successfully.',
+    'room-unsupported-option-error' => 'Invalid room configuration option.',
+
     'shared-folder-update-success' => 'Shared folder updated successfully.',
     'shared-folder-create-success' => 'Shared folder created successfully.',
     'shared-folder-delete-success' => 'Shared folder deleted successfully.',

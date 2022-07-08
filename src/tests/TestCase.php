@@ -8,7 +8,6 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 abstract class TestCase extends BaseTestCase
 {
     use TestCaseTrait;
-    use TestCaseMeetTrait;
 
     /**
      * {@inheritDoc}

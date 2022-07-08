@@ -31,7 +31,7 @@ class AssignSkuTest extends TestCase
      */
     public function testHandle(): void
     {
-        $sku = \App\Sku::where('title', 'meet')->first();
+        $sku = \App\Sku::withEnvTenantContext()->where('title', 'groupware')->first();
         $user = $this->getTestUser('add-entitlement@kolabnow.com');
 
         $this->artisan('user:assign-sku unknown@unknown.org ' . $sku->id)

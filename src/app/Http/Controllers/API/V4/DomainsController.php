@@ -165,7 +165,7 @@ class DomainsController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => __('app.domain-create-success'),
+                'message' => \trans('app.domain-create-success'),
         ]);
     }
 

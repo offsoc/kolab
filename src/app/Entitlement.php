@@ -101,20 +101,6 @@ class Entitlement extends Model
     }
 
     /**
-     * Returns entitleable object title (e.g. email or domain name).
-     *
-     * @return string|null An object title/name
-     */
-    public function entitleableTitle(): ?string
-    {
-        if ($this->entitleable instanceof Domain) {
-            return $this->entitleable->namespace;
-        }
-
-        return $this->entitleable->email;
-    }
-
-    /**
      * Simplified Entitlement/SKU information for a specified entitleable object
      *
      * @param object $object Entitleable object

@@ -16,8 +16,6 @@ return [
     'connection-not-found' => 'La connexion n´existe pas.',
     'connection-dismiss-error' => 'Échec du rejet de la connexion.',
     'room-not-found' => 'La salle n´existe pas.',
-    'room-setconfig-success' => 'La configuration de la salle a été actualisée avec succès.',
-    'room-unsupported-option-error' => 'Option de configuration de la salle invalide.',
     'session-not-found' => 'La session n\'existe pas.',
     'session-create-error' => 'Échec de la création de la session.',
     'session-join-error' => 'Échec de se joindre à la session.',

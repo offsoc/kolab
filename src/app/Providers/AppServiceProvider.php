@@ -48,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);
         \App\Group::observe(\App\Observers\GroupObserver::class);
         \App\GroupSetting::observe(\App\Observers\GroupSettingObserver::class);
+        \App\Meet\Room::observe(\App\Observers\Meet\RoomObserver::class);
         \App\PackageSku::observe(\App\Observers\PackageSkuObserver::class);
         \App\PlanPackage::observe(\App\Observers\PlanPackageObserver::class);
         \App\Resource::observe(\App\Observers\ResourceObserver::class);

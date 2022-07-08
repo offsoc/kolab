@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API\V4;
 use App\Http\Controllers\ResourceController;
 use App\Sku;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class SkusController extends ResourceController
 {
@@ -51,15 +53,14 @@ class SkusController extends ResourceController
     }
 
     /**
-     * Return SKUs available to the specified user/domain.
+     * Return SKUs available to the specified entitleable object.
      *
-     * @param object $object User or Domain object
+     * @param object $object Entitleable object
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public static function objectSkus($object)
     {
-        $type = \lcfirst(\class_basename($object::class));
         $response = [];
 
         // Note: Order by title for consistent ordering in tests
@@ -70,13 +71,20 @@ class SkusController extends ResourceController
                 continue;
             }
 
+            if ($object::class != $sku->handler_class::entitleableClass()) {
+                continue;
+            }
+
             if (!$sku->handler_class::isAvailable($sku, $object)) {
                 continue;
             }
 
             if ($data = self::skuElement($sku)) {
-                if ($type != $data['type']) {
-                    continue;
+                if (!empty($data['controllerOnly'])) {
+                    $user = Auth::guard()->user();
+                    if (!$user->wallet()->isController($user)) {
+                        continue;
+                    }
                 }
 
                 $response[] = $data;
@@ -113,10 +121,11 @@ class SkusController extends ResourceController
     /**
      * Update object entitlements.
      *
-     * @param object $object The object for update
-     * @param array  $rSkus  List of SKU IDs requested for the user in the form [id=>qty]
+     * @param object       $object The object for update
+     * @param array        $rSkus  List of SKU IDs requested for the object in the form [id=>qty]
+     * @param ?\App\Wallet $wallet The target wallet
      */
-    public static function updateEntitlements($object, $rSkus): void
+    public static function updateEntitlements($object, $rSkus, $wallet = null): void
     {
         if (!is_array($rSkus)) {
             return;
@@ -143,6 +152,10 @@ class SkusController extends ResourceController
             $e = array_key_exists($skuID, $eSkus) ? $eSkus[$skuID] : 0;
             $r = array_key_exists($skuID, $rSkus) ? $rSkus[$skuID] : 0;
 
+            if (!is_a($object, $sku->handler_class::entitleableClass())) {
+                continue;
+            }
+
             if ($sku->handler_class == \App\Handlers\Mailbox::class) {
                 if ($r != 1) {
                     throw new \Exception("Invalid quantity of mailboxes");
@@ -154,7 +167,7 @@ class SkusController extends ResourceController
                 $object->removeSku($sku, ($e - $r));
             } elseif ($e < $r) {
                 // add those requested more than entitled
-                $object->assignSku($sku, ($r - $e));
+                $object->assignSku($sku, ($r - $e), $wallet);
             }
         }
     }
