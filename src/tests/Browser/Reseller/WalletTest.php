@@ -106,6 +106,8 @@ class WalletTest extends TestCaseDusk
         $user = $this->getTestUser('reseller@' . \config('app.domain'));
         $wallet = $user->wallets()->first();
         $wallet->payments()->delete();
+        $user->created_at = Carbon::now();
+        $user->save();
 
         // Assert Receipts tab content when there's no receipts available
         $this->browse(function (Browser $browser) {
