@@ -62,9 +62,14 @@ class CountrySelect extends BaseComponent
             $browser->assertSeeIn('@link', 'No restrictions')
                 ->click('@link')
                 ->with(new Dialog('@dialog'), function ($browser) {
-                    $browser->waitFor('.world-map > svg')
-                        ->assertElementsCount('.world-map [aria-selected="true"]', 1)
-                        ->click('@button-cancel');
+                    $browser->waitFor('.world-map > svg', 10);
+                    $selected = $browser->elements('.world-map [aria-selected="true"]');
+
+                    // There can be one country selected if current location has been
+                    // recognized (i.e. the geo-location database is imported)
+                    PHPUnit::assertTrue(count($selected) <= 1);
+
+                    $browser->click('@button-cancel');
                 });
 
             return;
@@ -73,8 +78,12 @@ class CountrySelect extends BaseComponent
         $browser->assertSeeIn('@link', $this->countriesText($list))
             ->click('@link')
             ->with(new Dialog('@dialog'), function ($browser) use ($list) {
-                $browser->waitFor('.world-map > svg')
-                    ->assertElementsCount('.world-map [aria-selected="true"]', count($list) + 1);
+                $browser->waitFor('.world-map > svg', 10);
+                $selected = $browser->elements('.world-map [aria-selected="true"]');
+
+                // There can be one extra country selected if current location has been
+                // recognized (i.e. the geo-location database is imported)
+                PHPUnit::assertTrue(count($selected) == count($list) || count($selected) == count($list) + 1);
 
                 foreach ($list as $code) {
                     $browser->assertVisible('.world-map [cc="' . $code . '"]');
