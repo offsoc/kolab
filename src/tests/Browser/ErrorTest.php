@@ -18,20 +18,16 @@ class ErrorTest extends TestCaseDusk
             $browser->visit('/unknown')
                 ->waitFor('#app > #error-page')
                 ->assertVisible('#app > #header-menu')
-                ->assertVisible('#app > #footer-menu');
-
-            $this->assertSame('404', $browser->text('#error-page .code'));
-            $this->assertSame('Not found', $browser->text('#error-page .message'));
+                ->assertVisible('#app > #footer-menu')
+                ->assertErrorPage(404);
         });
 
         $this->browse(function (Browser $browser) {
             $browser->visit('/login/unknown')
                 ->waitFor('#app > #error-page')
                 ->assertVisible('#app > #header-menu')
-                ->assertVisible('#app > #footer-menu');
-
-            $this->assertSame('404', $browser->text('#error-page .code'));
-            $this->assertSame('Not found', $browser->text('#error-page .message'));
+                ->assertVisible('#app > #footer-menu')
+                ->assertErrorPage(404);
         });
     }
 }

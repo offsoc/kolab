@@ -17,6 +17,7 @@ class WalletCheckTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
+        Carbon::setTestNow(Carbon::createFromDate(2022, 02, 02));
 
         $this->deleteTestUser('wallet-check@kolabnow.com');
     }
