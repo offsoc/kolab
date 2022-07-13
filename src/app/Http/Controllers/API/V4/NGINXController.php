@@ -125,6 +125,11 @@ class NGINXController extends Controller
         $username = $this->normalizeUsername($request->headers->get('Php-Auth-User', ""));
         $password = $request->headers->get('Php-Auth-Pw', null);
 
+        if (empty($username)) {
+            //Allow unauthenticated requests
+            return response("");
+        }
+
         if (empty($password)) {
             \Log::debug("Authentication attempt failed: Empty password provided.");
             return response("", 401);
