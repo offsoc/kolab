@@ -23,17 +23,22 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Serialize a bindings array to a string.
-     *
-     * @return string
      */
-    private static function serializeSQLBindings(array $array): string
+    private static function serializeSQLBindings(array $array, string $sql): string
     {
-        $serialized = array_map(function ($entry) {
+        $ipv = preg_match('/ip([46])nets/', $sql, $m) ? $m[1] : null;
+
+        $serialized = array_map(function ($entry) use ($ipv) {
             if ($entry instanceof \DateTime) {
                 return $entry->format('Y-m-d h:i:s');
+            } elseif ($ipv && is_string($entry) && strlen($entry) == ($ipv == 6 ? 16 : 4)) {
+                // binary IP address? use HEX representation
+                return '0x' . bin2hex($entry);
             }
+
             return $entry;
         }, $array);
+
         return implode(', ', $serialized);
     }
 
@@ -77,7 +82,7 @@ class AppServiceProvider extends ServiceProvider
                     sprintf(
                         '[SQL] %s [%s]: %.4f sec.',
                         $query->sql,
-                        self::serializeSQLBindings($query->bindings),
+                        self::serializeSQLBindings($query->bindings, $query->sql),
                         $query->time / 1000
                     )
                 );

@@ -57,7 +57,7 @@ class IP6NetsCommand extends Command
                 continue;
             }
 
-            $bar = $this->createProgressBar($numLines, "Importing IPv6 Networks from {$file}");
+            $bar = $this->createProgressBar($numLines, "Importing IPv6 Networks from {$rir}-{$today}");
 
             $fp = fopen($file, 'r');
 
@@ -84,7 +84,7 @@ class IP6NetsCommand extends Command
                     continue;
                 }
 
-                if ($items[1] == "*") {
+                if ($items[1] == "*" || $items[1] == "" || $items[1] == "ZZ") {
                     continue;
                 }
 
@@ -96,19 +96,15 @@ class IP6NetsCommand extends Command
                     $items[5] = "19700102";
                 }
 
-                if ($items[1] == "" || $items[1] == "ZZ") {
-                    continue;
-                }
-
                 $bar->advance();
 
                 $broadcast = \App\Utils::ip6Broadcast($items[3], (int)$items[4]);
 
                 $net = \App\IP6Net::where(
                     [
-                        'net_number' => $items[3],
+                        'net_number' => inet_pton($items[3]),
                         'net_mask' => (int)$items[4],
-                        'net_broadcast' => $broadcast
+                        'net_broadcast' => inet_pton($broadcast),
                     ]
                 )->first();
 
@@ -130,9 +126,9 @@ class IP6NetsCommand extends Command
 
                 $nets[] = [
                     'rir_name' => $rir,
-                    'net_number' => $items[3],
+                    'net_number' => inet_pton($items[3]),
                     'net_mask' => (int)$items[4],
-                    'net_broadcast' => $broadcast,
+                    'net_broadcast' => inet_pton($broadcast),
                     'country' => $items[1],
                     'serial' => $serial,
                     'created_at' => Carbon::parse($items[5], 'UTC'),

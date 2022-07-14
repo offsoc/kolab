@@ -2,37 +2,8 @@
 
 namespace App;
 
-use Illuminate\Database\Eloquent\Model;
-
-class IP6Net extends Model
+class IP6Net extends IP4Net
 {
+    /** @var string Database table name */
     protected $table = "ip6nets";
-
-    /** @var array<int, string> The attributes that are mass assignable */
-    protected $fillable = [
-        'rir_name',
-        'net_number',
-        'net_mask',
-        'net_broadcast',
-        'country',
-        'serial',
-        'created_at',
-        'updated_at'
-    ];
-
-    /**
-     * Get IP network by IP address
-     *
-     * @param string $ip IPv6 address
-     *
-     * @return ?\App\IP6Net IPv6 network record, Null if not found
-     */
-    public static function getNet($ip)
-    {
-        $where = 'INET6_ATON(net_number) <= INET6_ATON(?) and INET6_ATON(net_broadcast) >= INET6_ATON(?)';
-
-        return IP6Net::whereRaw($where, [$ip, $ip])
-            ->orderByRaw('INET6_ATON(net_number), net_mask DESC')
-            ->first();
-    }
 }

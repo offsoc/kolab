@@ -8,13 +8,54 @@ use Tests\TestCase;
 class UtilsTest extends TestCase
 {
     /**
+     * Test for Utils::countryForIP()
+     */
+    public function testCountryForIP(): void
+    {
+        // Create some network records, the tables might be empty
+        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        \App\IP6Net::where('net_number', inet_pton('2001:db8::ff00:42:0'))->delete();
+
+        $this->assertSame('', Utils::countryForIP('127.0.0.1', ''));
+        $this->assertSame('CH', Utils::countryForIP('127.0.0.1'));
+        $this->assertSame('', Utils::countryForIP('2001:db8::ff00:42:1', ''));
+        $this->assertSame('CH', Utils::countryForIP('2001:db8::ff00:42:1'));
+
+        \App\IP4Net::create([
+                'net_number' => '127.0.0.0',
+                'net_broadcast' => '127.255.255.255',
+                'net_mask' => 8,
+                'country' => 'US',
+                'rir_name' => 'test',
+                'serial' => 1,
+        ]);
+
+        \App\IP6Net::create([
+                'net_number' => '2001:db8::ff00:42:0',
+                'net_broadcast' => \App\Utils::ip6Broadcast('2001:db8::ff00:42:0', 8),
+                'net_mask' => 8,
+                'country' => 'PL',
+                'rir_name' => 'test',
+                'serial' => 1,
+        ]);
+
+        $this->assertSame('US', Utils::countryForIP('127.0.0.1', ''));
+        $this->assertSame('US', Utils::countryForIP('127.0.0.1'));
+        $this->assertSame('PL', Utils::countryForIP('2001:db8::ff00:42:1', ''));
+        $this->assertSame('PL', Utils::countryForIP('2001:db8::ff00:42:1'));
+
+        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        \App\IP6Net::where('net_number', inet_pton('2001:db8::ff00:42:0'))->delete();
+    }
+
+    /**
      * Test for Utils::emailToLower()
      */
     public function testEmailToLower(): void
     {
-        $this->assertSame('test@test.tld', \App\Utils::emailToLower('test@Test.Tld'));
-        $this->assertSame('test@test.tld', \App\Utils::emailToLower('Test@Test.Tld'));
-        $this->assertSame('shared+shared/Test@test.tld', \App\Utils::emailToLower('shared+shared/Test@Test.Tld'));
+        $this->assertSame('test@test.tld', Utils::emailToLower('test@Test.Tld'));
+        $this->assertSame('test@test.tld', Utils::emailToLower('Test@Test.Tld'));
+        $this->assertSame('shared+shared/Test@test.tld', Utils::emailToLower('shared+shared/Test@Test.Tld'));
     }
 
     /**
@@ -22,17 +63,17 @@ class UtilsTest extends TestCase
      */
     public function testNormalizeAddress(): void
     {
-        $this->assertSame('', \App\Utils::normalizeAddress(''));
-        $this->assertSame('', \App\Utils::normalizeAddress(null));
-        $this->assertSame('test', \App\Utils::normalizeAddress('TEST'));
-        $this->assertSame('test@domain.tld', \App\Utils::normalizeAddress('Test@Domain.TLD'));
-        $this->assertSame('test@domain.tld', \App\Utils::normalizeAddress('Test+Trash@Domain.TLD'));
+        $this->assertSame('', Utils::normalizeAddress(''));
+        $this->assertSame('', Utils::normalizeAddress(null));
+        $this->assertSame('test', Utils::normalizeAddress('TEST'));
+        $this->assertSame('test@domain.tld', Utils::normalizeAddress('Test@Domain.TLD'));
+        $this->assertSame('test@domain.tld', Utils::normalizeAddress('Test+Trash@Domain.TLD'));
 
-        $this->assertSame(['', ''], \App\Utils::normalizeAddress('', true));
-        $this->assertSame(['', ''], \App\Utils::normalizeAddress(null, true));
-        $this->assertSame(['test', ''], \App\Utils::normalizeAddress('TEST', true));
-        $this->assertSame(['test', 'domain.tld'], \App\Utils::normalizeAddress('Test@Domain.TLD', true));
-        $this->assertSame(['test', 'domain.tld'], \App\Utils::normalizeAddress('Test+Trash@Domain.TLD', true));
+        $this->assertSame(['', ''], Utils::normalizeAddress('', true));
+        $this->assertSame(['', ''], Utils::normalizeAddress(null, true));
+        $this->assertSame(['test', ''], Utils::normalizeAddress('TEST', true));
+        $this->assertSame(['test', 'domain.tld'], Utils::normalizeAddress('Test@Domain.TLD', true));
+        $this->assertSame(['test', 'domain.tld'], Utils::normalizeAddress('Test+Trash@Domain.TLD', true));
     }
 
     /**
@@ -42,14 +83,14 @@ class UtilsTest extends TestCase
     {
         $set = [];
 
-        $result = \App\Utils::powerSet($set);
+        $result = Utils::powerSet($set);
 
         $this->assertIsArray($result);
         $this->assertCount(0, $result);
 
         $set = ["a1"];
 
-        $result = \App\Utils::powerSet($set);
+        $result = Utils::powerSet($set);
 
         $this->assertIsArray($result);
         $this->assertCount(1, $result);
@@ -57,7 +98,7 @@ class UtilsTest extends TestCase
 
         $set = ["a1", "a2"];
 
-        $result = \App\Utils::powerSet($set);
+        $result = Utils::powerSet($set);
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
@@ -67,7 +108,7 @@ class UtilsTest extends TestCase
 
         $set = ["a1", "a2", "a3"];
 
-        $result = \App\Utils::powerSet($set);
+        $result = Utils::powerSet($set);
 
         $this->assertIsArray($result);
         $this->assertCount(7, $result);

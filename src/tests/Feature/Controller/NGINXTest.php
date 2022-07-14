@@ -20,7 +20,7 @@ class NGINXTest extends TestCase
                 'limit_geo' => null,
                 'guam_enabled' => false,
         ]);
-        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
+        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
         $this->useServicesUrl();
     }
@@ -37,7 +37,7 @@ class NGINXTest extends TestCase
                 'limit_geo' => null,
                 'guam_enabled' => false,
         ]);
-        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
+        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
         parent::tearDown();
     }
