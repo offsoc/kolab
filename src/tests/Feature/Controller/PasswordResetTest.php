@@ -18,7 +18,7 @@ class PasswordResetTest extends TestCase
 
         $this->deleteTestUser('passwordresettest@' . \config('app.domain'));
 
-        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
+        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
     }
 
     /**
@@ -28,7 +28,7 @@ class PasswordResetTest extends TestCase
     {
         $this->deleteTestUser('passwordresettest@' . \config('app.domain'));
 
-        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
+        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
         parent::tearDown();
     }

@@ -19,7 +19,7 @@ class IP4NetsCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Update IP4 Networks';
+    protected $description = 'Import IP4 Networks';
 
     /**
      * Execute the console command.
@@ -57,7 +57,7 @@ class IP4NetsCommand extends Command
                 continue;
             }
 
-            $bar = $this->createProgressBar($numLines, "Importing IPv4 Networks from {$file}");
+            $bar = $this->createProgressBar($numLines, "Importing IPv4 Networks from {$rir}-{$today}");
 
             $fp = fopen($file, 'r');
 
@@ -84,7 +84,7 @@ class IP4NetsCommand extends Command
                     continue;
                 }
 
-                if ($items[1] == "*") {
+                if ($items[1] == "*" || $items[1] == "" || $items[1] == "ZZ") {
                     continue;
                 }
 
@@ -96,19 +96,16 @@ class IP4NetsCommand extends Command
                     $items[5] = "19700102";
                 }
 
-                if ($items[1] == "" || $items[1] == "ZZ") {
-                    continue;
-                }
-
                 $bar->advance();
 
                 $mask = 32 - log($items[4], 2);
+                $broadcast = long2ip((ip2long($items[3]) + 2 ** (32 - $mask)) - 1);
 
                 $net = \App\IP4Net::where(
                     [
-                        'net_number' => $items[3],
+                        'net_number' => inet_pton($items[3]),
                         'net_mask' => $mask,
-                        'net_broadcast' => long2ip((ip2long($items[3]) + 2 ** (32 - $mask)) - 1)
+                        'net_broadcast' => inet_pton($broadcast),
                     ]
                 )->first();
 
@@ -130,9 +127,9 @@ class IP4NetsCommand extends Command
 
                 $nets[] = [
                     'rir_name' => $rir,
-                    'net_number' => $items[3],
+                    'net_number' => inet_pton($items[3]),
                     'net_mask' => $mask,
-                    'net_broadcast' => long2ip((ip2long($items[3]) + 2 ** (32 - $mask)) - 1),
+                    'net_broadcast' => inet_pton($broadcast),
                     'country' => $items[1],
                     'serial' => $serial,
                     'created_at' => Carbon::parse($items[5], 'UTC'),

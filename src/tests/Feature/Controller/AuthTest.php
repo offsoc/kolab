@@ -42,7 +42,7 @@ class AuthTest extends TestCase
 
         $this->expectedExpiry = \config('auth.token_expiry_minutes') * 60;
 
-        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
+        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
         $user = $this->getTestUser('john@kolab.org');
         $user->setSetting('limit_geo', null);
@@ -56,7 +56,7 @@ class AuthTest extends TestCase
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestDomain('userscontroller.com');
 
-        \App\IP4Net::where('net_number', '127.0.0.0')->delete();
+        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
         $user = $this->getTestUser('john@kolab.org');
         $user->setSetting('limit_geo', null);
