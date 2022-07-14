@@ -342,11 +342,6 @@ class Mollie extends \App\Providers\PaymentProvider
         // TODO: Consider https://github.com/mollie/mollie-api-php/issues/502 when it's fixed
         $mollie_payment = mollie()->payments()->get($payment_id);
 
-        if (empty($mollie_payment)) {
-            // Mollie recommends to return "200 OK" even if the payment does not exist
-            return 200;
-        }
-
         $refunds = [];
 
         if ($mollie_payment->isPaid()) {
