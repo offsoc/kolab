@@ -17,12 +17,12 @@ class AuthAttempt extends Model
     use NullableFields;
     use UuidStrKeyTrait;
 
-    // No specific reason
     public const REASON_NONE = '';
-    // Password mismatch
     public const REASON_PASSWORD = 'password';
-    // Geolocation whitelist mismatch
     public const REASON_GEOLOCATION = 'geolocation';
+    public const REASON_NOTFOUND = 'notfound';
+    public const REASON_2FA = '2fa';
+    public const REASON_2FA_GENERIC = '2fa-generic';
 
     private const STATUS_ACCEPTED  = 'ACCEPTED';
     private const STATUS_DENIED  = 'DENIED';
