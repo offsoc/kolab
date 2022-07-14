@@ -34,7 +34,7 @@ RUN sed -i -e '/tsflags=nodocs/d' /etc/yum.conf
 
 # Add EPEL.
 RUN yum -y install \
-        epel-release && \
+        epel-release yum-plugin-priorities && \
     yum clean all
 
 # Add the EPEL key.
