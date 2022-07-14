@@ -18,4 +18,10 @@ return [
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
     'logoutsuccess' => 'Successfully logged out.',
 
+    'error.password' => "Invalid password",
+    'error.geolocation' => "Country code mismatch",
+    'error.nofound' => "User not found",
+    'error.2fa' => "Second factor failure",
+    'error.2fa-generic' => "Second factor failure",
+
 ];

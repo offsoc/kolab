@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\AuthAttempt;
 use App\Traits\AliasesTrait;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
@@ -657,16 +658,11 @@ class User extends Authenticatable
         }
 
         if ($authenticated) {
-            \Log::info("Successful authentication for {$this->email}");
-
             // TODO: update last login time
             if ($updatePassword && (empty($this->password) || empty($this->password_ldap))) {
                 $this->password = $password;
                 $this->save();
             }
-        } else {
-            // TODO: Try actual LDAP?
-            \Log::info("Authentication failed for {$this->email}");
         }
 
         return $authenticated;
@@ -693,42 +689,72 @@ class User extends Authenticatable
     /**
      * Retrieve and authenticate a user
      *
-     * @param string $username     The username.
-     * @param string $password     The password in plain text.
-     * @param string $secondFactor The second factor (secondfactor from current request is used as fallback).
+     * @param string  $username The username
+     * @param string  $password The password in plain text
+     * @param ?string $clientIP The IP address of the client
      *
      * @return array ['user', 'reason', 'errorMessage']
      */
-    public static function findAndAuthenticate($username, $password, $secondFactor = null): ?array
+    public static function findAndAuthenticate($username, $password, $clientIP = null): array
     {
+        $error = null;
+
+        if (!$clientIP) {
+            $clientIP = request()->ip();
+        }
+
         $user = User::where('email', $username)->first();
 
-        // TODO: 'reason' below could be AuthAttempt::REASON_*
-        // TODO: $secondFactor argument is not used anywhere
-
         if (!$user) {
-            return ['reason' => 'notfound', 'errorMessage' => "User not found."];
+            $error = AuthAttempt::REASON_NOTFOUND;
         }
 
-        if (!$user->validateCredentials($username, $password)) {
-            return ['reason' => 'credentials', 'errorMessage' => "Invalid password."];
+        // Check user password
+        if (!$error && !$user->validateCredentials($username, $password)) {
+            $error = AuthAttempt::REASON_PASSWORD;
         }
 
-        if (!$user->validateLocation(request()->ip())) {
-            return ['reason' => 'geolocation', 'errorMessage' => "Country code mismatch."];
+        // Check user (request) location
+        if (!$error && !$user->validateLocation($clientIP)) {
+            $error = AuthAttempt::REASON_GEOLOCATION;
         }
 
-        if (!$secondFactor) {
-            // Check the request if there is a second factor provided
-            // as fallback.
-            $secondFactor = request()->secondfactor;
+        // Check 2FA
+        if (!$error) {
+            try {
+                (new \App\Auth\SecondFactor($user))->validate(request()->secondfactor);
+            } catch (\Exception $e) {
+                $error = AuthAttempt::REASON_2FA_GENERIC;
+                $message = $e->getMessage();
+            }
         }
 
-        try {
-            (new \App\Auth\SecondFactor($user))->validate($secondFactor);
-        } catch (\Exception $e) {
-            return ['reason' => 'secondfactor', 'errorMessage' => $e->getMessage()];
+        // Check 2FA - Companion App
+        if (!$error && \App\CompanionApp::where('user_id', $user->id)->exists()) {
+            $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+            if (!$attempt->waitFor2FA()) {
+                $error = AuthAttempt::REASON_2FA;
+            }
         }
+
+        if ($error) {
+            if ($user && empty($attempt)) {
+                $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+                if (!$attempt->isAccepted()) {
+                    $attempt->deny($error);
+                    $attempt->save();
+                    $attempt->notify();
+                }
+            }
+
+            if ($user) {
+                \Log::info("Authentication failed for {$user->email}");
+            }
+
+            return ['reason' => $error, 'errorMessage' => $message ?? \trans("auth.error.{$error}")];
+        }
+
+        \Log::info("Successful authentication for {$user->email}");
 
         return ['user' => $user];
     }
@@ -740,17 +766,17 @@ class User extends Authenticatable
      *
      * @return \App\User User model object if found
      */
-    public function findAndValidateForPassport($username, $password): User
+    public static function findAndValidateForPassport($username, $password): User
     {
         $result = self::findAndAuthenticate($username, $password);
 
         if (isset($result['reason'])) {
-            // TODO: Shouldn't we create AuthAttempt record here?
-
-            if ($result['reason'] == 'secondfactor') {
+            if ($result['reason'] == AuthAttempt::REASON_2FA_GENERIC) {
                 // This results in a json response of {'error': 'secondfactor', 'error_description': '$errorMessage'}
                 throw new OAuthServerException($result['errorMessage'], 6, 'secondfactor', 401);
             }
+
+            // TODO: Display specific error message if 2FA via Companion App was expected?
 
             throw OAuthServerException::invalidCredentials();
         }
