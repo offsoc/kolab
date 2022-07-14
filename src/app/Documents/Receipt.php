@@ -48,7 +48,7 @@ class Receipt
      */
     public static function fakeRender(string $type = 'html'): string
     {
-        $wallet = new Wallet();
+        $wallet = new Wallet(['currency' => 'CHF']);
         $wallet->id = \App\Utils::uuidStr();
         $wallet->owner = new User(['id' => 123456789]);
 
