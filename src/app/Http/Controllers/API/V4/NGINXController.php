@@ -12,7 +12,7 @@ class NGINXController extends Controller
     /**
      * Authorize with the provided credentials.
      *
-     * @param string $login The login name
+     * @param string $login    The login name
      * @param string $password The password
      * @param string $clientIP The client ip
      *
@@ -34,47 +34,18 @@ class NGINXController extends Controller
             throw new \Exception("No client ip");
         }
 
-        $user = \App\User::where('email', $login)->first();
-        if (!$user) {
-            throw new \Exception("User not found");
+        $result = \App\User::findAndAuthenticate($login, $password, $clientIP);
+
+        if (empty($result['user'])) {
+            throw new \Exception($result['errorMessage'] ?? "Unknown error");
         }
 
         // TODO: validate the user's domain is A-OK (active, confirmed, not suspended, ldapready)
         // TODO: validate the user is A-OK (active, not suspended, ldapready, imapready)
-        // TODO: we could use User::findAndAuthenticate() with some modifications here
-
-        if (!Hash::check($password, $user->password)) {
-            $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
-            // Avoid setting a password failure reason if we previously accepted the location.
-            if (!$attempt->isAccepted()) {
-                $attempt->reason = \App\AuthAttempt::REASON_PASSWORD;
-                $attempt->save();
-                $attempt->notify();
-            }
-            throw new \Exception("Password mismatch");
-        }
-
-        // validate country of origin against restrictions, otherwise bye bye
-        if (!$user->validateLocation($clientIP)) {
-            \Log::info("Failed authentication attempt due to country code mismatch for user: {$login}");
-            $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
-            $attempt->deny(\App\AuthAttempt::REASON_GEOLOCATION);
-            $attempt->notify();
-            throw new \Exception("Country code mismatch");
-        }
-
         // TODO: Apply some sort of limit for Auth-Login-Attempt -- docs say it is the number of
-        // attempts over the same authAttempt.
+        //       attempts over the same authAttempt.
 
-        // Check 2fa
-        if (\App\CompanionApp::where('user_id', $user->id)->exists()) {
-            $authAttempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
-            if (!$authAttempt->waitFor2FA()) {
-                throw new \Exception("2fa failed");
-            }
-        }
-
-        return $user;
+        return $result['user'];
     }
 
 
@@ -208,7 +179,7 @@ class NGINXController extends Controller
     * Create an imap authentication response.
     *
     * @param \Illuminate\Http\Request $request The API request.
-    * @param bool $prefGuam Wether or not guam is enabled.
+    * @param bool   $prefGuam Whether or not Guam is enabled.
     * @param string $password The password to include in the response.
     *
     * @return \Illuminate\Http\Response The response
