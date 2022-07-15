@@ -11,3 +11,24 @@ sed -i -r -e "s|$config\['enigma_multihost'\] = .*$|$config['enigma_multihost'] 
 
 echo "\$config['enigma_woat'] = true;" >> /etc/roundcubemail/enigma.inc.php
 
+# Run it over nginx for 2fa. We need to use startls because otherwise the proxy protocol doesn't work.
+sed -i -r -e "s|$config\['default_host'\] = .*$|$config['default_host'] = 'tls://127.0.0.1';|g" /etc/roundcubemail/config.inc.php
+sed -i -r -e "s|$config\['default_port'\] = .*$|$config['default_port'] = 144;|g" /etc/roundcubemail/config.inc.php
+
+# So we can just append
+sed -i "s/?>//g" /etc/roundcubemail/config.inc.php
+
+# Enable the PROXY protocol
+cat << EOF >> /etc/roundcubemail/config.inc.php
+    \$config['imap_conn_options'] = Array(
+            'ssl' => Array(
+                    'verify_peer_name' => false,
+                    'verify_peer' => false,
+                    'allow_self_signed' => true
+                ),
+            'proxy_protocol' => 2
+        );
+    \$config['proxy_whitelist'] = array('127.0.0.1');
+EOF
+
+echo "?>" >> /etc/roundcubemail/config.inc.php
