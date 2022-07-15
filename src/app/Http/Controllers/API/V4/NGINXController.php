@@ -177,12 +177,18 @@ class NGINXController extends Controller
          */
 
         $password = $request->headers->get('Auth-Pass', null);
+        $username = $request->headers->get('Auth-User', null);
+        $ip = $request->headers->get('Client-Ip', null);
+        $proxy_ip = $request->headers->get('Proxy-Protocol-Addr', null);
+        if ($proxy_ip) {
+            $ip = $proxy_ip;
+        }
 
         try {
             $user = $this->authorizeRequest(
-                $request->headers->get('Auth-User', null),
+                $username,
                 $password,
-                $request->headers->get('Client-Ip', null),
+                $ip,
             );
         } catch (\Exception $e) {
             return $this->byebye($request, $e->getMessage());
