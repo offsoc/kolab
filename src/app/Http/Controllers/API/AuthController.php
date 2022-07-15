@@ -49,6 +49,7 @@ class AuthController extends Controller
             'scopes' => '[*]',
             'secondfactor' => $secondFactor
         ]);
+        $proxyRequest->headers->set('X-Client-IP', request()->ip());
 
         $tokenResponse = app()->handle($proxyRequest);
 
