@@ -188,11 +188,6 @@ return [
         Illuminate\View\ViewServiceProvider::class,
 
         /*
-         * Package Service Providers...
-         */
-        Barryvdh\DomPDF\ServiceProvider::class,
-
-        /*
          * Application Service Providers...
          */
         App\Providers\AppServiceProvider::class,
@@ -215,9 +210,7 @@ return [
     |
     */
 
-    'aliases' => \Illuminate\Support\Facades\Facade::defaultAliases()->merge([
-        'PDF' => Barryvdh\DomPDF\Facade::class,
-    ])->toArray(),
+    'aliases' => \Illuminate\Support\Facades\Facade::defaultAliases()->toArray(),
 
     'headers' => [
         'csp' => env('APP_HEADER_CSP', ""),

@@ -6,6 +6,7 @@ use App\Payment;
 use App\Providers\PaymentProvider;
 use App\User;
 use App\Wallet;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
 class Receipt
@@ -106,7 +107,7 @@ class Receipt
         // there are no Unicode characters used, e.g. only ASCII or Latin.
 
         // Load PDF generator
-        $pdf = \PDF::loadHTML($html)->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
 
         return $pdf->output();
     }
