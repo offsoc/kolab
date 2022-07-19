@@ -4,7 +4,7 @@ MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
 
 USER root
 
-RUN dnf -y install findutils
+RUN dnf -y install findutils gnupg2
 
 EXPOSE 8000
 
