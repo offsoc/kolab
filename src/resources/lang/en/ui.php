@@ -215,6 +215,7 @@ return [
         'forgot_password' => "Forgot password?",
         'header' => "Please sign in",
         'sign_in' => "Sign in",
+        'signing_in' => "Signing in...",
         'webmail' => "Webmail"
     ],
 

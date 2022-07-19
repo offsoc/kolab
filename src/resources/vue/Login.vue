@@ -28,7 +28,9 @@
                             <small class="text-muted mt-2">{{ $t('login.2fa_desc') }}</small>
                         </div>
                         <div class="text-center">
-                            <btn class="btn-primary" type="submit" icon="right-to-bracket">{{ $t('login.sign_in') }}</btn>
+                            <btn class="btn-primary" type="submit" icon="right-to-bracket" :is-loading="loading">
+                                {{ $t(loading ? 'login.signing_in' : 'login.sign_in') }}
+                            </btn>
                         </div>
                     </form>
                 </div>
@@ -59,7 +61,8 @@
                 email: '',
                 password: '',
                 secondfactor: '',
-                webmailURL: window.config['app.webmail_url']
+                webmailURL: window.config['app.webmail_url'],
+                loading: false
             }
         },
         methods: {
@@ -68,13 +71,18 @@
 
                 const post = this.$root.pick(this, ['email', 'password', 'secondfactor'])
 
+                this.loading = true
+
                 axios.post('/api/auth/login', post)
                     .then(response => {
                         // login user and redirect to dashboard
                         this.$root.loginUser(response.data, this.dashboard)
                         this.$emit('success')
                     })
-                    .catch(e => {})
+                    .catch(() => {})
+                    .finally(() => {
+                        this.loading = false
+                    })
             }
         }
     }
