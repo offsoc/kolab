@@ -22,6 +22,7 @@ services:
     build:
       context: ./docker/kolab/
     container_name: kolab
+    privileged: true
     depends_on:
       mariadb:
         condition: service_healthy
@@ -119,6 +120,11 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
+    healthcheck:
+      interval: 10s
+      test: "systemctl status pdns || exit 1"
+      timeout: 5s
+      retries: 30
     hostname: pdns-sql
     image: apheleia/kolab-pdns-sql
     network_mode: host

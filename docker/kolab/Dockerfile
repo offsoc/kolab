@@ -46,7 +46,7 @@ RUN yum -y install https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el
     yum -y install kolab-16-release patch && \
         yum clean all
 
-RUN yum -y --setopt tsflags= install kolab roundcubemail-plugin-enigma
+RUN yum -y --setopt tsflags= install kolab roundcubemail-plugin-enigma dnsmasq
 RUN mkdir /var/lib/roundcubemail/plugins/enigma && chmod 777 /var/lib/roundcubemail/plugins/enigma && chown apache:apache /var/lib/roundcubemail/plugins/enigma && chmod +x /var/lib/roundcubemail/plugins && chmod +x /var/lib/roundcubemail
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
