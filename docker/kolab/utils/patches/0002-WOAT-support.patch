@@ -102,14 +102,14 @@ index 4dbb464a5..45c98caef 100644
              ) {
 -                $ret = $key;
 -                break;
-+                $found[$subkey->get_creation_date(true)] = $key;
++                $found[] = $key; //$found[$subkey->get_creation_date(true)] = $key;
              }
          }
  
 +        // Use the most recent one
-+        if (count($found) > 1) {
-+            ksort($found, SORT_NUMERIC);
-+        }
++        //if (count($found) > 1) {
++            //ksort($found, SORT_NUMERIC);
++        //}
 +
 +        $ret = count($found) > 0 ? array_pop($found) : null;
 +
