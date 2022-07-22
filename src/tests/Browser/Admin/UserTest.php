@@ -87,6 +87,7 @@ class UserTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $jack = $this->getTestUser('jack@kolab.org');
             $jack->setSetting('limit_geo', null);
+            $jack->setSetting('guam_enabled', null);
 
             $page = new UserPage($jack->id);
 
@@ -191,11 +192,13 @@ class UserTest extends TestCaseDusk
             $browser->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
                 ->whenAvailable('@user-settings form', function (Browser $browser) {
-                    $browser->assertElementsCount('.row', 2)
+                    $browser->assertElementsCount('.row', 3)
                         ->assertSeeIn('.row:first-child label', 'Greylisting')
                         ->assertSeeIn('.row:first-child .text-success', 'enabled')
-                        ->assertSeeIn('.row:nth-child(2) label', 'Geo-lockin')
-                        ->assertSeeIn('.row:nth-child(2) #limit_geo', 'No restrictions')
+                        ->assertSeeIn('.row:nth-child(2) label', 'IMAP proxy')
+                        ->assertSeeIn('.row:nth-child(2) .text-danger', 'disabled')
+                        ->assertSeeIn('.row:nth-child(3) label', 'Geo-lockin')
+                        ->assertSeeIn('.row:nth-child(3) #limit_geo', 'No restrictions')
                         ->assertMissing('#limit_geo + button');
                 });
         });
@@ -465,7 +468,7 @@ class UserTest extends TestCaseDusk
             $browser->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
                 ->whenAvailable('@user-settings form', function (Browser $browser) {
-                    $browser->assertElementsCount('.row', 2)
+                    $browser->assertElementsCount('.row', 3)
                         ->assertSeeIn('.row:first-child label', 'Greylisting')
                         ->assertSeeIn('.row:first-child .text-danger', 'disabled');
                 });
@@ -593,8 +596,8 @@ class UserTest extends TestCaseDusk
             $browser->visit(new UserPage($user->id))
                 ->click('@nav #tab-settings')
                 ->whenAvailable('@user-settings form', function (Browser $browser) {
-                    $browser->assertSeeIn('.row:nth-child(2) label', 'Geo-lockin')
-                        ->assertSeeIn('.row:nth-child(2) #limit_geo', 'Poland, Germany')
+                    $browser->assertSeeIn('.row:nth-child(3) label', 'Geo-lockin')
+                        ->assertSeeIn('.row:nth-child(3) #limit_geo', 'Poland, Germany')
                         ->assertSeeIn('#limit_geo + button', 'Reset')
                         ->click('#limit_geo + button');
                 })

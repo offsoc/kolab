@@ -27,6 +27,7 @@ class UsersTest extends TestCaseDusk
         'first_name' => 'John',
         'last_name' => 'Doe',
         'organization' => 'Kolab Developers',
+        'limit_geo' => null,
     ];
 
     /**
@@ -362,6 +363,7 @@ class UsersTest extends TestCaseDusk
     {
         $john = $this->getTestUser('john@kolab.org');
         $john->setSetting('greylist_enabled', null);
+        $john->setSetting('guam_enabled', null);
         $john->setSetting('limit_geo', null);
 
         $this->browse(function (Browser $browser) use ($john) {
@@ -373,7 +375,7 @@ class UsersTest extends TestCaseDusk
                 ->click('@nav #tab-settings')
                 ->with('#settings form', function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
-                        ->assertMissing('div.row:nth-child(2)') // geo-lockin setting is hidden
+                        ->assertMissing('div.row:nth-child(2)') // guam and geo-lockin settings are hidden
                         ->click('div.row:nth-child(1) input[type=checkbox]:checked')
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
@@ -390,26 +392,32 @@ class UsersTest extends TestCaseDusk
                 ->click('@nav #tab-settings')
                 ->with('#settings form', function (Browser $browser) use ($john) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
-                        ->assertSeeIn('div.row:nth-child(2) label', 'Geo-lockin')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'IMAP proxy')
+                        ->assertNotChecked('div.row:nth-child(2) input')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Geo-lockin')
                         ->with(new CountrySelect('#limit_geo'), function ($browser) {
                             $browser->assertCountries([])
                                 ->setCountries(['DE', 'PL'])
                                 ->assertCountries(['DE', 'PL']);
                         })
+                        ->click('div.row:nth-child(2) input')
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
 
                     $this->assertSame('["DE","PL"]', $john->getSetting('limit_geo'));
+                    $this->assertSame('true', $john->getSetting('guam_enabled'));
 
                     $browser
                         ->with(new CountrySelect('#limit_geo'), function ($browser) {
                             $browser->setCountries([])
                                 ->assertCountries([]);
                         })
+                        ->click('div.row:nth-child(2) input')
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
 
                     $this->assertSame(null, $john->getSetting('limit_geo'));
+                    $this->assertSame(null, $john->getSetting('guam_enabled'));
                 });
         });
     }

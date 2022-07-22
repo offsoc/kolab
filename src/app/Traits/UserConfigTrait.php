@@ -11,10 +11,17 @@ trait UserConfigTrait
      */
     public function getConfig(): array
     {
-        $settings = $this->getSettings(['greylist_enabled', 'password_policy', 'max_password_age', 'limit_geo']);
+        $settings = $this->getSettings([
+                'greylist_enabled',
+                'guam_enabled',
+                'password_policy',
+                'max_password_age',
+                'limit_geo'
+        ]);
 
         $config = [
             'greylist_enabled' => $settings['greylist_enabled'] !== 'false',
+            'guam_enabled' => $settings['guam_enabled'] === 'true',
             'limit_geo' => $settings['limit_geo'] ? json_decode($settings['limit_geo'], true) : [],
             'max_password_age' => $settings['max_password_age'],
             'password_policy' => $settings['password_policy'],
@@ -37,6 +44,8 @@ trait UserConfigTrait
         foreach ($config as $key => $value) {
             if ($key == 'greylist_enabled') {
                 $this->setSetting($key, $value ? 'true' : 'false');
+            } elseif ($key == 'guam_enabled') {
+                $this->setSetting($key, $value ? 'true' : null);
             } elseif ($key == 'limit_geo') {
                 if (!is_array($value)) {
                     $errors[$key] = \trans('validation.invalid-limit-geo');
