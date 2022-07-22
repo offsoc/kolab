@@ -134,7 +134,6 @@ const app = new Vue({
 
             localStorage.setItem('token', response.access_token)
             localStorage.setItem('refreshToken', response.refresh_token)
-            axios.defaults.headers.common.Authorization = 'Bearer ' + response.access_token
 
             if (response.email) {
                 this.authInfo = response
@@ -159,7 +158,7 @@ const app = new Vue({
             //       while the token is being refreshed
 
             this.refreshTimeout = setTimeout(() => {
-                axios.post('api/auth/refresh', { refresh_token: response.refresh_token }).then(response => {
+                axios.post('api/auth/refresh', { refresh_token: localStorage.getItem('refreshToken') }).then(response => {
                     this.loginUser(response.data, false, true)
                 })
             }, timeout * 1000)
@@ -356,6 +355,14 @@ axios.interceptors.request.use(
         // This is the only way I found to change configuration options
         // on a running application. We need this for browser testing.
         config.headers['X-Test-Payment-Provider'] = window.config.paymentProvider
+
+        // Set the Authorization header. Note that some request might force
+        // empty Authorization header therefore we check if the header is already set,
+        // not whether it's empty
+        const token = localStorage.getItem('token')
+        if (token && !('Authorization' in config.headers)) {
+            config.headers.Authorization = 'Bearer ' + token
+        }
 
         let loader = config.loader
         if (loader) {

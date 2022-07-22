@@ -29,8 +29,6 @@
             const token = localStorage.getItem('token')
 
             if (token) {
-                axios.defaults.headers.common.Authorization = 'Bearer ' + token
-
                 const post = { refresh_token: localStorage.getItem("refreshToken") }
 
                 axios.post('/api/auth/info?refresh=1', post, { ignoreErrors: true, loader: true })
