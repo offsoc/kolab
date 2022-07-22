@@ -10,6 +10,7 @@ class StatsController extends \App\Http\Controllers\API\V4\Admin\StatsController
     protected $charts = [
         'discounts',
         // 'income',
+        'payers',
         'users',
         'users-all',
         'vouchers',

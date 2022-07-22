@@ -17,6 +17,7 @@ return [
     'chart-discounts' => 'Discounts',
     'chart-vouchers' => 'Vouchers',
     'chart-income' => 'Income in :currency - last 8 weeks',
+    'chart-payers' => 'Payers - last year',
     'chart-users' => 'Users - last 8 weeks',
 
     'companion-deleteall-success' => 'All companion apps have been removed.',

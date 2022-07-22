@@ -18,10 +18,13 @@ class StatsController extends \App\Http\Controllers\Controller
     public const COLOR_BLUE_DARK = '#0056b3';
     public const COLOR_ORANGE = '#f1a539';
 
+    public const TYPE_PAYERS = 1;
+
     /** @var array List of enabled charts */
     protected $charts = [
         'discounts',
         'income',
+        'payers',
         'users',
         'users-all',
         'vouchers',
@@ -173,6 +176,39 @@ class StatsController extends \App\Http\Controllers\Controller
                         'label' => sprintf('average = %.2f', $avg),
                         'value' => $avg,
                         'options' => [ 'labelPos' => 'left' ] // default: 'right'
+                    ]
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get payers chart
+     */
+    protected function chartPayers(): array
+    {
+        list($labels, $stats) = $this->getCollectedStats(self::TYPE_PAYERS, 54, fn($v) => intval($v));
+
+        // See https://frappe.io/charts/docs for format/options description
+
+        return [
+            'title' => \trans('app.chart-payers'),
+            'type' => 'line',
+            'colors' => [self::COLOR_GREEN],
+            'axisOptions' => [
+                'xIsSeries' => true,
+                'xAxisMode' => 'tick',
+            ],
+            'lineOptions' => [
+                'hideDots' => true,
+                'regionFill' => true,
+            ],
+            'data' => [
+                'labels' => $labels,
+                'datasets' => [
+                    [
+                        // 'name' => 'Existing',
+                        'values' => $stats
                     ]
                 ]
             ]
@@ -424,5 +460,55 @@ class StatsController extends \App\Http\Controllers\Controller
 
         // System currency for others
         return \config('app.currency');
+    }
+
+    /**
+     * Get collected stats for a specific type/period
+     *
+     * @param int       $type         Chart
+     * @param int       $weeks        Number of weeks back from now
+     * @param ?callable $itemCallback A callback to execute on every stat item
+     *
+     * @return array [ labels, stats ]
+     */
+    protected function getCollectedStats(int $type, int $weeks, $itemCallback = null): array
+    {
+        $start = Carbon::now();
+        $labels = [];
+
+        while ($weeks > 0) {
+            $labels[] = $start->format('Y-W');
+            $weeks--;
+            if ($weeks) {
+                $start->subWeeks(1);
+            }
+        }
+
+        $labels = array_reverse($labels);
+        $start->startOfWeek(Carbon::MONDAY);
+
+        // Get the stats grouped by tenant and week
+        $stats = DB::table('stats')
+            ->selectRaw("tenant_id, date_format(created_at, '%Y-%v') as period, avg(value) as cnt")
+            ->where('type', $type)
+            ->where('created_at', '>=', $start->toDateString())
+            ->groupByRaw('1,2');
+
+        // Get the query result and sum up per-tenant stats
+        $result = [];
+        $this->applyTenantScope($stats)->get()
+            ->each(function ($item) use (&$result) {
+                $result[$item->period] = ($result[$item->period] ?? 0) + $item->cnt;
+            });
+
+        // Process the result, e.g. convert values to int
+        if ($itemCallback) {
+            $result = array_map($itemCallback, $result);
+        }
+
+        // Fill the missing weeks with zeros
+        $result = array_values(array_merge(array_fill_keys($labels, 0), $result));
+
+        return [$labels, $result];
     }
 }

@@ -30,6 +30,9 @@ class Kernel extends ConsoleKernel
 
         // This notifies users about an end of the trial period
         $schedule->command('wallet:trial-end')->dailyAt('07:00');
+
+        // This collects some statistics into the database
+        $schedule->command('data:stats:collector')->dailyAt('23:00');
     }
 
     /**
