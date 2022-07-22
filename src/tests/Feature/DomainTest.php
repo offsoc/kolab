@@ -7,6 +7,7 @@ use App\Entitlement;
 use App\Sku;
 use App\User;
 use App\Tenant;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -29,6 +30,7 @@ class DomainTest extends TestCase
     {
         parent::setUp();
 
+        Carbon::setTestNow(Carbon::createFromDate(2022, 02, 02));
         foreach ($this->domains as $domain) {
             $this->deleteTestDomain($domain);
         }

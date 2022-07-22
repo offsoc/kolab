@@ -19,6 +19,7 @@ class SignupCodeTest extends TestCase
             'email' => 'User@email.org',
         ];
 
+        Carbon::setTestNow(Carbon::createFromDate(2022, 02, 02));
         $now = Carbon::now();
 
         $code = SignupCode::create($data);
