@@ -41,6 +41,7 @@ rm -rf database/database.sqlite
 ./artisan db:ping --wait
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
 ./artisan data:import || :
+./artisan queue:work --stop-when-empty
 # nohup ./artisan horizon >/dev/null 2>&1 &
 ./artisan octane:start --host=$(grep OCTANE_HTTP_HOST .env | tail -n1 | sed "s/OCTANE_HTTP_HOST=//") >/dev/null 2>&1 &
 
