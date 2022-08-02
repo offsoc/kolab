@@ -338,95 +338,99 @@ class Mollie extends \App\Providers\PaymentProvider
             return 200;
         }
 
-        // Get the payment details from Mollie
-        // TODO: Consider https://github.com/mollie/mollie-api-php/issues/502 when it's fixed
-        $mollie_payment = mollie()->payments()->get($payment_id);
+        try {
+            // Get the payment details from Mollie
+            // TODO: Consider https://github.com/mollie/mollie-api-php/issues/502 when it's fixed
+            $mollie_payment = mollie()->payments()->get($payment_id);
 
-        $refunds = [];
+            $refunds = [];
 
-        if ($mollie_payment->isPaid()) {
-            // The payment is paid. Update the balance, and notify the user
-            if ($payment->status != self::STATUS_PAID && $payment->amount > 0) {
-                $credit = true;
-                $notify = $payment->type == self::TYPE_RECURRING;
-            }
+            if ($mollie_payment->isPaid()) {
+                // The payment is paid. Update the balance, and notify the user
+                if ($payment->status != self::STATUS_PAID && $payment->amount > 0) {
+                    $credit = true;
+                    $notify = $payment->type == self::TYPE_RECURRING;
+                }
 
-            // The payment has been (partially) refunded.
-            // Let's process refunds with status "refunded".
-            if ($mollie_payment->hasRefunds()) {
-                foreach ($mollie_payment->refunds() as $refund) {
-                    if ($refund->isTransferred() && $refund->amount->value) {
-                        $refunds[] = [
-                            'id' => $refund->id,
-                            'description' => $refund->description,
-                            'amount' => round(floatval($refund->amount->value) * 100),
-                            'type' => self::TYPE_REFUND,
-                            'currency' => $refund->amount->currency
-                        ];
+                // The payment has been (partially) refunded.
+                // Let's process refunds with status "refunded".
+                if ($mollie_payment->hasRefunds()) {
+                    foreach ($mollie_payment->refunds() as $refund) {
+                        if ($refund->isTransferred() && $refund->amount->value) {
+                            $refunds[] = [
+                                'id' => $refund->id,
+                                'description' => $refund->description,
+                                'amount' => round(floatval($refund->amount->value) * 100),
+                                'type' => self::TYPE_REFUND,
+                                'currency' => $refund->amount->currency
+                            ];
+                        }
                     }
+                }
+
+                // The payment has been (partially) charged back.
+                // Let's process chargebacks (they have no states as refunds)
+                if ($mollie_payment->hasChargebacks()) {
+                    foreach ($mollie_payment->chargebacks() as $chargeback) {
+                        if ($chargeback->amount->value) {
+                            $refunds[] = [
+                                'id' => $chargeback->id,
+                                'amount' => round(floatval($chargeback->amount->value) * 100),
+                                'type' => self::TYPE_CHARGEBACK,
+                                'currency' => $chargeback->amount->currency
+                            ];
+                        }
+                    }
+                }
+
+                // In case there were multiple auto-payment setup requests (e.g. caused by a double
+                // form submission) we end up with multiple payment records and mollie_mandate_id
+                // pointing to the one from the last payment not the successful one.
+                // We make sure to use mandate id from the successful "first" payment.
+                if (
+                    $payment->type == self::TYPE_MANDATE
+                    && $mollie_payment->mandateId
+                    && $mollie_payment->sequenceType == Types\SequenceType::SEQUENCETYPE_FIRST
+                ) {
+                    $payment->wallet->setSetting('mollie_mandate_id', $mollie_payment->mandateId);
+                }
+            } elseif ($mollie_payment->isFailed()) {
+                // Note: I didn't find a way to get any description of the problem with a payment
+                \Log::info(sprintf('Mollie payment failed (%s)', $payment->id));
+
+                // Disable the mandate
+                if ($payment->type == self::TYPE_RECURRING) {
+                    $notify = true;
+                    $payment->wallet->setSetting('mandate_disabled', 1);
                 }
             }
 
-            // The payment has been (partially) charged back.
-            // Let's process chargebacks (they have no states as refunds)
-            if ($mollie_payment->hasChargebacks()) {
-                foreach ($mollie_payment->chargebacks() as $chargeback) {
-                    if ($chargeback->amount->value) {
-                        $refunds[] = [
-                            'id' => $chargeback->id,
-                            'amount' => round(floatval($chargeback->amount->value) * 100),
-                            'type' => self::TYPE_CHARGEBACK,
-                            'currency' => $chargeback->amount->currency
-                        ];
-                    }
-                }
+            DB::beginTransaction();
+
+            // This is a sanity check, just in case the payment provider api
+            // sent us open -> paid -> open -> paid. So, we lock the payment after
+            // recivied a "final" state.
+            $pending_states = [self::STATUS_OPEN, self::STATUS_PENDING, self::STATUS_AUTHORIZED];
+            if (in_array($payment->status, $pending_states)) {
+                $payment->status = $mollie_payment->status;
+                $payment->save();
             }
 
-            // In case there were multiple auto-payment setup requests (e.g. caused by a double
-            // form submission) we end up with multiple payment records and mollie_mandate_id
-            // pointing to the one from the last payment not the successful one.
-            // We make sure to use mandate id from the successful "first" payment.
-            if (
-                $payment->type == self::TYPE_MANDATE
-                && $mollie_payment->mandateId
-                && $mollie_payment->sequenceType == Types\SequenceType::SEQUENCETYPE_FIRST
-            ) {
-                $payment->wallet->setSetting('mollie_mandate_id', $mollie_payment->mandateId);
+            if (!empty($credit)) {
+                self::creditPayment($payment, $mollie_payment);
             }
-        } elseif ($mollie_payment->isFailed()) {
-            // Note: I didn't find a way to get any description of the problem with a payment
-            \Log::info(sprintf('Mollie payment failed (%s)', $payment->id));
 
-            // Disable the mandate
-            if ($payment->type == self::TYPE_RECURRING) {
-                $notify = true;
-                $payment->wallet->setSetting('mandate_disabled', 1);
+            foreach ($refunds as $refund) {
+                $this->storeRefund($payment->wallet, $refund);
             }
-        }
 
-        DB::beginTransaction();
+            DB::commit();
 
-        // This is a sanity check, just in case the payment provider api
-        // sent us open -> paid -> open -> paid. So, we lock the payment after
-        // recivied a "final" state.
-        $pending_states = [self::STATUS_OPEN, self::STATUS_PENDING, self::STATUS_AUTHORIZED];
-        if (in_array($payment->status, $pending_states)) {
-            $payment->status = $mollie_payment->status;
-            $payment->save();
-        }
-
-        if (!empty($credit)) {
-            self::creditPayment($payment, $mollie_payment);
-        }
-
-        foreach ($refunds as $refund) {
-            $this->storeRefund($payment->wallet, $refund);
-        }
-
-        DB::commit();
-
-        if (!empty($notify)) {
-            \App\Jobs\PaymentEmail::dispatch($payment);
+            if (!empty($notify)) {
+                \App\Jobs\PaymentEmail::dispatch($payment);
+            }
+        } catch (\Mollie\Api\Exceptions\ApiException $e) {
+            \Log::warning(sprintf('Mollie api call failed (%s)', $e->getMessage()));
         }
 
         return 200;
