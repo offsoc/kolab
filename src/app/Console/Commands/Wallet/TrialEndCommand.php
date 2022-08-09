@@ -27,19 +27,30 @@ class TrialEndCommand extends Command
      */
     public function handle()
     {
-        // Get all wallets, excluding deleted/inactive accounts
-        // created precisely a month ago
+        // Get all wallets...
         $wallets = \App\Wallet::select('wallets.*')
             ->join('users', 'users.id', '=', 'wallets.user_id')
-            ->leftJoin('wallet_settings', function ($join) {
-                $join->on('wallet_settings.wallet_id', '=', 'wallets.id')
-                    ->where('wallet_settings.key', 'trial_end_notice');
-            })
             ->withEnvTenantContext('users')
+            // exclude deleted accounts
             ->whereNull('users.deleted_at')
+            // exclude "inactive" accounts
             ->where('users.status', '&', \App\User::STATUS_IMAP_READY)
+            // consider only these created 1 to 2 months ago
             ->where('users.created_at', '>', \now()->subMonthsNoOverflow(2))
-            ->whereNull('wallet_settings.value')
+            ->where('users.created_at', '<=', \now()->subMonthsNoOverflow(1))
+            // skip wallets with the notification already sent
+            ->whereNotExists(function ($query) {
+                $query->from('wallet_settings')
+                    ->where('wallet_settings.key', 'trial_end_notice')
+                    ->whereColumn('wallet_settings.wallet_id', 'wallets.id');
+            })
+            // skip users that aren't account owners
+            ->whereExists(function ($query) {
+                $query->from('entitlements')
+                    ->where('entitlements.entitleable_type', \App\User::class)
+                    ->whereColumn('entitlements.entitleable_id', 'wallets.user_id')
+                    ->whereColumn('entitlements.wallet_id', 'wallets.id');
+            })
             ->cursor();
 
         foreach ($wallets as $wallet) {

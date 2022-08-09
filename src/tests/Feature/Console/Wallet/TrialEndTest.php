@@ -16,7 +16,8 @@ class TrialEndTest extends TestCase
     {
         parent::setUp();
 
-        $this->deleteTestUser('wallets-controller@kolabnow.com');
+        $this->deleteTestUser('test-user1@kolabnow.com');
+        $this->deleteTestUser('test-user22@kolabnow.com');
     }
 
     /**
@@ -24,7 +25,8 @@ class TrialEndTest extends TestCase
      */
     public function tearDown(): void
     {
-        $this->deleteTestUser('wallets-controller@kolabnow.com');
+        $this->deleteTestUser('test-user1@kolabnow.com');
+        $this->deleteTestUser('test-user22@kolabnow.com');
 
         parent::tearDown();
     }
@@ -36,20 +38,30 @@ class TrialEndTest extends TestCase
     {
         Queue::fake();
 
-        $user = $this->getTestUser('wallets-controller@kolabnow.com', [
+        $package = \App\Package::withEnvTenantContext()->where('title', 'lite')->first();
+        $user = $this->getTestUser('test-user1@kolabnow.com', [
                 'status' => User::STATUS_IMAP_READY | User::STATUS_LDAP_READY | User::STATUS_ACTIVE,
         ]);
         $wallet = $user->wallets()->first();
+        $user->assignPackage($package);
 
         DB::table('users')->update(['created_at' => \now()->clone()->subMonthsNoOverflow(2)->subHours(1)]);
 
-        // Expect no wallets in after-trial state
+        // No wallets in after-trial state, no email sent
+        Queue::fake();
+        $code = \Artisan::call("wallet:trial-end");
+        Queue::assertNothingPushed();
+
+        // Expect no email sent (out of time boundaries)
+        $user->created_at = \now()->clone()->subMonthsNoOverflow(1)->addHour();
+        $user->save();
+
         Queue::fake();
         $code = \Artisan::call("wallet:trial-end");
         Queue::assertNothingPushed();
 
         // Test an email sent
-        $user->created_at = \now()->clone()->subMonthNoOverflow();
+        $user->created_at = \now()->clone()->subMonthsNoOverflow(1);
         $user->save();
 
         Queue::fake();
@@ -87,5 +99,17 @@ class TrialEndTest extends TestCase
         Queue::assertNothingPushed();
 
         $this->assertNull($wallet->getSetting('trial_end_notice'));
+
+        // Make sure the non-controller users are omitted
+        $user2 = $this->getTestUser('test-user2@kolabnow.com', [
+                'status' => User::STATUS_IMAP_READY | User::STATUS_LDAP_READY | User::STATUS_ACTIVE,
+        ]);
+        $user->assignPackage($package, $user2);
+        $user2->created_at = \now()->clone()->subMonthsNoOverflow(1);
+        $user2->save();
+
+        Queue::fake();
+        $code = \Artisan::call("wallet:trial-end");
+        Queue::assertNothingPushed();
     }
 }
