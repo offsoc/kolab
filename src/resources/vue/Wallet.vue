@@ -108,6 +108,9 @@
                         {{ $t('wallet.payment-warning', { price: $root.price(amount * selectedPaymentMethod.exchangeRate * 100, selectedPaymentMethod.currency) }) }}
                     </div>
                 </form>
+                <div class="alert alert-warning m-0 mt-3">
+                    {{ $t('wallet.norefund') }}
+                </div>
             </div>
             <div id="auto-payment" v-if="paymentForm == 'auto'">
                 <form data-validation-prefix="mandate_">
@@ -139,6 +142,9 @@
                         {{ $t('wallet.auto-payment-disabled-next') }}
                     </div>
                 </form>
+                <div class="alert alert-warning m-0 mt-3">
+                    {{ $t('wallet.norefund') }}
+                </div>
             </div>
         </modal-dialog>
     </div>

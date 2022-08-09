@@ -516,6 +516,7 @@ return [
         'history' => "History",
         'month' => "month",
         'noperm' => "Only account owners can access a wallet.",
+        'norefund' => "The money in your wallet is non-refundable.",
         'payment-amount-hint' => "Choose the amount by which you want to top up your wallet.",
         'payment-method' => "Method of payment: {method}",
         'payment-warning' => "You will be charged for {price}.",
