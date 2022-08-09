@@ -337,6 +337,7 @@ return [
     'room' => [
         'create' => "Create room",
         'delete' => "Delete room",
+        'copy-location' => "Copy room location",
         'description-hint' => "This is an optional short description for the room, so you can find it more easily on the list.",
         'goto' => "Enter the room",
         'list-empty' => "There are no conference rooms in this account.",

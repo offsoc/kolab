@@ -75,16 +75,18 @@ class RoomsTest extends TestCaseDusk
                         ->with('tbody tr:nth-child(1)', function ($browser) {
                             $browser->assertSeeIn('td:nth-child(1) a', 'john')
                                 ->assertSeeIn('td:nth-child(2) a', "Standard room")
-                                ->assertVisible('td.buttons button')
-                                ->assertAttribute('td.buttons button', 'title', 'Enter the room');
+                                ->assertElementsCount('td.buttons button', 2)
+                                ->assertAttribute('td.buttons button:nth-child(1)', 'title', 'Copy room location')
+                                ->assertAttribute('td.buttons button:nth-child(2)', 'title', 'Enter the room');
                         })
                         ->with('tbody tr:nth-child(2)', function ($browser) {
                             $browser->assertSeeIn('td:nth-child(1) a', 'shared')
                                 ->assertSeeIn('td:nth-child(2) a', "Shared room")
-                                ->assertVisible('td.buttons button')
-                                ->assertAttribute('td.buttons button', 'title', 'Enter the room');
+                                ->assertElementsCount('td.buttons button', 2)
+                                ->assertAttribute('td.buttons button:nth-child(1)', 'title', 'Copy room location')
+                                ->assertAttribute('td.buttons button:nth-child(2)', 'title', 'Enter the room');
                         })
-                        ->click('tbody tr:nth-child(1) button');
+                        ->click('tbody tr:nth-child(1) button:nth-child(2)');
                 });
 
             $newWindow = collect($browser->driver->getWindowHandles())->last();

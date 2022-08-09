@@ -127,6 +127,10 @@ table {
         white-space: nowrap;
     }
 
+    td .btn-link {
+        vertical-align: initial;
+    }
+
     td.email,
     td.price,
     td.datetime,

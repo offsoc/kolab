@@ -12,7 +12,8 @@
                 <div class="card-text">
                     <list-table :list="rooms" :setup="setup">
                         <template #buttons="{ item }">
-                            <btn class="btn-link p-0 ms-1 lh-1" @click="goto(item)" icon="arrow-up-right-from-square" :title="$t('room.goto')"></btn>
+                            <btn class="btn-link p-0 lh-1" @click="roomLinkCopy(item)" :icon="['far', 'clipboard']" :title="$t('room.copy-location')"></btn>
+                            <btn class="btn-link p-0 lh-1 ms-2" @click="goto(item)" icon="arrow-up-right-from-square" :title="$t('room.goto')"></btn>
                         </template>
                     </list-table>
                 </div>
@@ -26,6 +27,7 @@
     import { library } from '@fortawesome/fontawesome-svg-core'
 
     library.add(
+        require('@fortawesome/free-regular-svg-icons/faClipboard').definition,
         require('@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare').definition,
         require('@fortawesome/free-solid-svg-icons/faComments').definition
     )
@@ -48,7 +50,8 @@
                         {
                             prop: 'name',
                             icon: 'comments',
-                            link: true
+                            link: true,
+                            className: 'text-nowrap'
                         },
                         {
                             prop: 'description',
@@ -73,8 +76,13 @@
         },
         methods: {
             goto(room) {
-                const location = window.config['app.url'] + '/meet/' + encodeURI(room.name)
-                window.open(location, '_blank')
+                window.open(this.roomLocation(room), '_blank')
+            },
+            roomLinkCopy(room) {
+                navigator.clipboard.writeText(this.roomLocation(room));
+            },
+            roomLocation(room) {
+                return window.config['app.url'] + '/meet/' + encodeURI(room.name)
             }
         }
     }
