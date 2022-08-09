@@ -167,9 +167,8 @@ const app = new Vue({
         logoutUser(redirect) {
             routerState.isLoggedIn = true
             this.authInfo = null
-            localStorage.setItem('token', '')
-            localStorage.setItem('refreshToken', '')
-            delete axios.defaults.headers.common.Authorization
+            localStorage.removeItem('token')
+            localStorage.removeItem('refreshToken')
 
             if (redirect !== false) {
                 this.$router.push({ name: 'login' })

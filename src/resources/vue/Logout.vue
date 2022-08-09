@@ -7,9 +7,9 @@
                 .then(response => {
                     this.$toast.success(response.data.message)
                 })
-                .finally(() => {})
-
-            this.$root.logoutUser()
+                .finally(() => {
+                    this.$root.logoutUser()
+                })
         }
     }
 </script>
