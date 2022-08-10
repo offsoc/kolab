@@ -39,6 +39,13 @@ class MandateCommand extends Command
 
         if (!empty($mandate['id'])) {
             $disabled = $mandate['isDisabled'] ? 'Yes' : 'No';
+            $status = 'invalid';
+
+            if ($mandate['isPending']) {
+                $status = 'pending';
+            } elseif ($mandate['isValid']) {
+                $status = 'valid';
+            }
 
             if ($this->option('disable') && $disabled == 'No') {
                 $wallet->setSetting('mandate_disabled', 1);
@@ -50,7 +57,7 @@ class MandateCommand extends Command
 
             $this->info("Auto-payment: {$mandate['method']}");
             $this->info("    id: {$mandate['id']}");
-            $this->info("    status: " . ($mandate['isPending'] ? 'pending' : 'valid'));
+            $this->info("    status: {$status}");
             $this->info("    amount: {$mandate['amount']} {$wallet->currency}");
             $this->info("    min-balance: {$mandate['balance']} {$wallet->currency}");
             $this->info("    disabled: $disabled");

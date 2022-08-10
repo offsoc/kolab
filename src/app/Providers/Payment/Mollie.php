@@ -256,6 +256,7 @@ class Mollie extends \App\Providers\PaymentProvider
         $mandate = self::mollieMandate($wallet);
 
         if (empty($mandate) || !$mandate->isValid() || $mandate->isPending()) {
+            \Log::debug("Recurring payment for {$wallet->id}: no valid Mollie mandate");
             return null;
         }
 
@@ -279,6 +280,8 @@ class Mollie extends \App\Providers\PaymentProvider
             'method' => $payment['methodId'],
             'mandateId' => $mandate->id
         ];
+
+        \Log::debug("Recurring payment for {$wallet->id}: " . json_encode($request));
 
         // Create the payment in Mollie
         $response = mollie()->payments()->create($request);

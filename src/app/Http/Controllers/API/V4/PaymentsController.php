@@ -299,7 +299,10 @@ class PaymentsController extends Controller
     {
         $settings = $wallet->getSettings(['mandate_disabled', 'mandate_balance', 'mandate_amount']);
 
+        \Log::debug("Requested top-up for wallet {$wallet->id}");
+
         if (!empty($settings['mandate_disabled'])) {
+            \Log::debug("Top-up for wallet {$wallet->id}: mandate disabled");
             return false;
         }
 
@@ -316,6 +319,7 @@ class PaymentsController extends Controller
         $mandate = (array) $provider->getMandate($wallet);
 
         if (empty($mandate['isValid'])) {
+            \Log::debug("Top-up for wallet {$wallet->id}: mandate invalid");
             return false;
         }
 
@@ -368,7 +372,6 @@ class PaymentsController extends Controller
 
         return $mandate;
     }
-
 
     /**
      * List supported payment methods.
