@@ -43,7 +43,7 @@ class CollectorCommand extends Command
 
         // A subquery to get the all wallets with a successful payment
         $payments = DB::table('payments')
-            ->distinct('wallet_id')
+            ->selectRaw('distinct wallet_id')
             ->where('status', PaymentProvider::STATUS_PAID);
 
         // A subquery to get users' wallets (by entitlement) - one record per user
