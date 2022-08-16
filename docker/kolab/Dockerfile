@@ -1,53 +1,30 @@
-FROM centos:7
+FROM quay.io/centos/centos:stream8
 
-LABEL maintainer="contact@kolabsystems.com"
-LABEL dist=centos7
+LABEL maintainer="contact@apheleia-it.ch"
+LABEL dist=centos8
 LABEL tier=${TIER}
 
-ENV container docker
 ENV SYSTEMD_PAGER=''
-ENV DISTRO=centos7
+ENV DISTRO=centos8
 ENV LANG=en_US.utf8
 ENV LC_ALL=en_US.utf8
 
-RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
-    rm -f /lib/systemd/system/multi-user.target.wants/*; \
-    rm -f /etc/systemd/system/*.wants/*; \
-    rm -f /lib/systemd/system/local-fs.target.wants/*; \
-    rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
-    rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
-    rm -f /lib/systemd/system/basic.target.wants/*; \
-    rm -f /lib/systemd/system/anaconda.target.wants/*;
-
-# To speed things up, disable fastestmirror.
-RUN sed -r -i \
-        -e 's/^enabled.*$/enabled = 0/g' \
-        /etc/yum/pluginconf.d/fastestmirror.conf
-
-# Avoid using a mirrorlist (use a transparent proxy and cache everything instead).
-RUN sed -r -i \
-        -e 's/^mirrorlist/#mirrorlist/g' \
-        -e 's/^#baseurl/baseurl/g' \
-        /etc/yum.repos.d/*.repo
-
-RUN sed -i -e '/tsflags=nodocs/d' /etc/yum.conf
-
 # Add EPEL.
-RUN yum -y install \
-        epel-release yum-plugin-priorities && \
-    yum clean all
+RUN dnf config-manager --set-enabled powertools && \
+    dnf -y install \
+        epel-release epel-next-release && \
+    dnf -y module enable 389-directory-server:stable/default && \
+    dnf -y module enable mariadb:10.3 && \
+    dnf clean all
+RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
 
-# Add the EPEL key.
-RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
-
-RUN rpm --import https://mirror.apheleia-it.ch/repos/Kolab:/16/key.asc
-
-RUN yum -y install https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el7.rpm && \
-    yum -y install kolab-16-release patch && \
-        yum clean all
-
-RUN yum -y --setopt tsflags= install kolab roundcubemail-plugin-enigma dnsmasq
-RUN mkdir /var/lib/roundcubemail/plugins/enigma && chmod 777 /var/lib/roundcubemail/plugins/enigma && chown apache:apache /var/lib/roundcubemail/plugins/enigma && chmod +x /var/lib/roundcubemail/plugins && chmod +x /var/lib/roundcubemail
+# Install kolab
+RUN rpm --import https://mirror.apheleia-it.ch/repos/Kolab:/16/key.asc && \
+    rpm -Uvh https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el8stream.rpm
+RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
+    dnf config-manager --enable kolab-16-testing &&\
+    dnf -y --setopt tsflags= install kolab dnsmasq patch &&\
+    dnf clean all
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
 COPY kolab-setenv.service /etc/systemd/system/kolab-setenv.service
