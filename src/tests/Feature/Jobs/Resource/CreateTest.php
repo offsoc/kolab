@@ -35,6 +35,7 @@ class CreateTest extends TestCase
         Queue::fake();
 
         // Test unknown resource
+        $this->expectException(\Exception::class);
         $job = new \App\Jobs\Resource\CreateJob(123);
         $job->handle();
 

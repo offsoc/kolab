@@ -115,6 +115,10 @@ abstract class CommonJob implements ShouldQueue
         // @phpstan-ignore-next-line
         if ($this->job) {
             $this->job->release($delay);
+        } else {
+            // $this->job is only set when the job is dispatched, not if manually executed by calling handle().
+            // When manually executed, release() does nothing, and we thus throw an exception.
+            throw new \Exception("Attempted to release a manually executed job");
         }
     }
 

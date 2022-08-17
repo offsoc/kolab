@@ -65,6 +65,7 @@ class CreateTest extends TestCase
         );
 
         // Test job releasing on unknown identifier
+        $this->expectException(\Exception::class);
         $job = new \App\Jobs\Domain\CreateJob(123);
         $job->handle();
 

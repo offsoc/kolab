@@ -35,6 +35,7 @@ class CreateTest extends TestCase
         Queue::fake();
 
         // Test unknown folder
+        $this->expectException(\Exception::class);
         $job = new \App\Jobs\SharedFolder\CreateJob(123);
         $job->handle();
 

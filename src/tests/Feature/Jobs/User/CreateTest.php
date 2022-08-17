@@ -69,6 +69,7 @@ class CreateTest extends TestCase
 
         // TODO: Test failures on domain sanity checks
 
+        $this->expectException(\Exception::class);
         $job = new \App\Jobs\User\CreateJob(123);
         $job->handle();
 
