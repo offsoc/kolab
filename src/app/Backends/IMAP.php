@@ -31,6 +31,19 @@ class IMAP
     }
 
     /**
+     * Check if we can connect to the imap server
+     *
+     * @return bool True on success
+     */
+    public static function healthcheck(): bool
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config);
+        $imap->closeConnection();
+        return true;
+    }
+
+    /**
      * Check if a shared folder is set up.
      *
      * @param string $folder Folder name, e.g. shared/Resources/Name@domain.tld

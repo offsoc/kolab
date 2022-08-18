@@ -65,6 +65,30 @@ class LDAP
     }
 
     /**
+     * Validates that ldap is available as configured.
+     *
+     * @throws \Exception
+     */
+    public static function healthcheck(): void
+    {
+        $config = self::getConfig('admin');
+        $ldap = self::initLDAP($config);
+
+        $mgmtRootDN = \config('ldap.admin.root_dn');
+        $hostedRootDN = \config('ldap.hosted.root_dn');
+
+        $result = $ldap->search($mgmtRootDN, '', 'base');
+        if (!$result || $result->count() != 1) {
+            self::throwException($ldap, "Failed to find the configured management domain $mgmtRootDN");
+        }
+
+        $result = $ldap->search($hostedRootDN, '', 'base');
+        if (!$result || $result->count() != 1) {
+            self::throwException($ldap, "Failed to find the configured hosted domain $hostedRootDN");
+        }
+    }
+
+    /**
      * Create a domain in LDAP.
      *
      * @param \App\Domain $domain The domain to create.
