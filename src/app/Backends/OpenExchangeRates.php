@@ -49,4 +49,25 @@ class OpenExchangeRates
 
         throw new \Exception("Failed to retrieve exchange rates");
     }
+
+    /**
+     * Validates that openexchange is available as configured.
+     *
+     * @throws \Exception
+     */
+    public static function validate(): void
+    {
+        $apiKey       = \config('services.openexchangerates.api_key');
+        if (!empty($apiKey)) {
+            $query        = http_build_query(['app_id' => $apiKey]);
+            $url          = 'https://openexchangerates.org/api/usage.json' . $query;
+            $html = file_get_contents($url, false);
+
+            if ($html && ($result = json_decode($html, true)) && !empty($result['status'])) {
+                print($result);
+            }
+
+            throw new \Exception("Failed to retrieve exchange rates status");
+        }
+    }
 }

@@ -34,6 +34,18 @@ class Mollie extends \App\Providers\PaymentProvider
     }
 
     /**
+    * Validates that mollie available.
+    *
+    * @throws \Mollie\Api\Exceptions\ApiException on failure
+    * @return boolean true on success
+    */
+    public static function validate()
+    {
+        mollie()->methods()->allActive();
+        return true;
+    }
+
+    /**
      * Create a new auto-payment mandate for a wallet.
      *
      * @param \App\Wallet $wallet  The wallet
