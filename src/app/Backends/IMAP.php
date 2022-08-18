@@ -459,6 +459,19 @@ class IMAP
     }
 
     /**
+     * Check if we can connect to the imap server
+     *
+     * @return bool True on success
+     */
+    public static function healthcheck(): bool
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config);
+        $imap->closeConnection();
+        return true;
+    }
+
+    /**
      * Remove ACL for a specified user/group anywhere in the IMAP
      *
      * @param string $ident  ACL identifier (user email or e.g. group name)
