@@ -12,7 +12,10 @@
     echo "inetdomainbasedn: ${hosted_domain_rootdn}"
     echo ""
 
-    echo "dn: cn=$(echo ${hosted_domain_rootdn} | sed -e 's/=/\\3D/g' -e 's/,/\\2D/g'),cn=mapping tree,cn=config"
+    #On centos7
+    #echo "dn: cn=$(echo ${hosted_domain_rootdn} | sed -e 's/=/\\3D/g' -e 's/,/\\2D/g'),cn=mapping tree,cn=config"
+    #On centos8
+    echo "dn: cn=\"${hosted_domain_rootdn}\",cn=mapping tree,cn=config"
     echo "objectClass: top"
     echo "objectClass: extensibleObject"
     echo "objectClass: nsMappingTree"
