@@ -144,7 +144,7 @@
                         }
 
                         this.hasMore = response.data.hasMore
-                        this.page = response.data.page || 1
+                        this.page = get.page || 1
                     })
             }
         }
