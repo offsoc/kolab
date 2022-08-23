@@ -2,16 +2,34 @@
 
 . ./settings.sh
 
-(
-    echo "dn: associateddomain=${hosted_domain},${domain_base_dn}"
-    echo "objectclass: top"
-    echo "objectclass: domainrelatedobject"
-    echo "objectclass: inetdomain"
-    echo "inetdomainstatus: active"
-    echo "associateddomain: ${hosted_domain}"
-    echo "inetdomainbasedn: ${hosted_domain_rootdn}"
-    echo ""
+ (
+     echo "dn: associateddomain=${hosted_domain},${domain_base_dn}"
+     echo "objectclass: top"
+     echo "objectclass: domainrelatedobject"
+     echo "objectclass: inetdomain"
+     echo "inetdomainstatus: active"
+     echo "associateddomain: ${hosted_domain}"
+     echo "inetdomainbasedn: ${hosted_domain_rootdn}"
+     echo ""
+ ) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
 
+ (
+     echo "dn: cn=$(echo ${hosted_domain} | sed -e 's/\./_/g'),cn=ldbm database,cn=plugins,cn=config"
+     echo "objectClass: top"
+     echo "objectClass: extensibleobject"
+     echo "objectClass: nsbackendinstance"
+     echo "cn: $(echo ${hosted_domain} | sed -e 's/\./_/g')"
+     echo "nsslapd-suffix: ${hosted_domain_rootdn}"
+     echo "nsslapd-cachesize: -1"
+     echo "nsslapd-cachememsize: 10485760"
+     echo "nsslapd-readonly: off"
+     echo "nsslapd-require-index: off"
+     echo "nsslapd-directory: /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME:-$(hostname -s)}/db/$(echo ${hosted_domain} | sed -e 's/\./_/g')"
+     echo "nsslapd-dncachememsize: 10485760"
+     echo ""
+ ) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
+
+(
     #On centos7
     #echo "dn: cn=$(echo ${hosted_domain_rootdn} | sed -e 's/=/\\3D/g' -e 's/,/\\2D/g'),cn=mapping tree,cn=config"
     #On centos8
@@ -23,21 +41,6 @@
     echo "cn: ${hosted_domain_rootdn}"
     echo "nsslapd-backend: $(echo ${hosted_domain} | sed -e 's/\./_/g')"
     echo ""
-
-    echo "dn: cn=$(echo ${hosted_domain} | sed -e 's/\./_/g'),cn=ldbm database,cn=plugins,cn=config"
-    echo "objectClass: top"
-    echo "objectClass: extensibleobject"
-    echo "objectClass: nsbackendinstance"
-    echo "cn: $(echo ${hosted_domain} | sed -e 's/\./_/g')"
-    echo "nsslapd-suffix: ${hosted_domain_rootdn}"
-    echo "nsslapd-cachesize: -1"
-    echo "nsslapd-cachememsize: 10485760"
-    echo "nsslapd-readonly: off"
-    echo "nsslapd-require-index: off"
-    echo "nsslapd-directory: /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME:-$(hostname -s)}/db/$(echo ${hosted_domain} | sed -e 's/\./_/g')"
-    echo "nsslapd-dncachememsize: 10485760"
-    echo ""
-
 ) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
 
 (
