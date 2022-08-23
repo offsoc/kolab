@@ -27,6 +27,5 @@ api_url = http://127.0.0.1:9080/kolab-webadmin/api" \
 webmail_url = https://%(domain)s/roundcubemail" \
     /etc/kolab/kolab.conf
 
-service kolabd restart
-service kolab-saslauthd restart
-
+systemctl restart kolabd
+systemctl restart kolab-saslauthd
