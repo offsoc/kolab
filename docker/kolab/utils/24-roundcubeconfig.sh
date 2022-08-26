@@ -36,6 +36,7 @@ echo "?>" >> /etc/roundcubemail/config.inc.php
 
 # Send dns queries over powerdns
 echo "server=/_woat.kolab.org/127.0.0.1#9953" >> /etc/dnsmasq.conf
+echo "port=5353" >> /etc/dnsmasq.conf
 systemctl start dnsmasq
-rm /etc/resolv.conf
-echo "nameserver 127.0.0.1" > /etc/resolv.conf
+rm -f /etc/resolv.conf
+echo "nameserver 127.0.0.1:5353" > /etc/resolv.conf
