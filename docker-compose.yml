@@ -111,9 +111,8 @@ services:
       - /var/tmp
     tty: true
     volumes:
+      - ./docker/certs/:/etc/certs/:ro
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
-      - ./docker/certs/imap.hosted.com.cert:/etc/pki/tls/certs/imap.hosted.com.cert
-      - ./docker/certs/imap.hosted.com.key:/etc/pki/tls/private/imap.hosted.com.key
   pdns-sql:
     build:
       context: ./docker/pdns-sql/
@@ -162,7 +161,6 @@ services:
     volumes:
       - ./docker/certs/:/etc/certs/:ro
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
   redis:
     build:
       context: ./docker/redis/
