@@ -1,4 +1,4 @@
-FROM fedora:33
+FROM fedora:35
 
 ENV container docker
 ENV SYSTEMD_PAGER=''
