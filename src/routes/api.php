@@ -170,6 +170,7 @@ if (\config('app.with_services')) {
         ],
         function () {
             Route::get('nginx', [API\V4\NGINXController::class, 'authenticate']);
+            Route::get('nginx-roundcube', [API\V4\NGINXController::class, 'authenticateRoundcube']);
             Route::get('nginx-httpauth', [API\V4\NGINXController::class, 'httpauth']);
             Route::post('policy/greylist', [API\V4\PolicyController::class, 'greylist']);
             Route::post('policy/ratelimit', [API\V4\PolicyController::class, 'ratelimit']);
