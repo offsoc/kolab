@@ -155,10 +155,6 @@ class NGINXController extends Controller
         $password = $request->headers->get('Auth-Pass', null);
         $username = $request->headers->get('Auth-User', null);
         $ip = $request->headers->get('Client-Ip', null);
-        $proxy_ip = $request->headers->get('Proxy-Protocol-Addr', null);
-        if ($proxy_ip) {
-            $ip = $proxy_ip;
-        }
 
         try {
             $user = $this->authorizeRequest(
@@ -180,6 +176,57 @@ class NGINXController extends Controller
                 return $this->byebye($request, "unknown protocol in request");
         }
     }
+
+    /**
+     * Authentication request for roundcube imap.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\Response The response
+     */
+    public function authenticateRoundcube(Request $request)
+    {
+        /**
+         *  Auth-Login-Attempt: 1
+         *  Auth-Method:        plain
+         *  Auth-Pass:          simple123
+         *  Auth-Protocol:      imap
+         *  Auth-Ssl:           on
+         *  Auth-User:          john@kolab.org
+         *  Client-Ip:          127.0.0.1
+         *  Host:               127.0.0.1
+         *
+         *  Auth-SSL: on
+         *  Auth-SSL-Verify: SUCCESS
+         *  Auth-SSL-Subject: /CN=example.com
+         *  Auth-SSL-Issuer: /CN=example.com
+         *  Auth-SSL-Serial: C07AD56B846B5BFF
+         *  Auth-SSL-Fingerprint: 29d6a80a123d13355ed16b4b04605e29cb55a5ad
+         */
+
+        $password = $request->headers->get('Auth-Pass', null);
+        $username = $request->headers->get('Auth-User', null);
+        $ip = $request->headers->get('Proxy-Protocol-Addr', null);
+
+        try {
+            $user = $this->authorizeRequest(
+                $username,
+                $password,
+                $ip,
+            );
+        } catch (\Exception $e) {
+            return $this->byebye($request, $e->getMessage());
+        }
+
+        // All checks passed
+        switch ($request->headers->get('Auth-Protocol')) {
+            case "imap":
+                return $this->authenticateIMAP($request, false, $password);
+            default:
+                return $this->byebye($request, "unknown protocol in request");
+        }
+    }
+
 
     /**
     * Create an imap authentication response.
