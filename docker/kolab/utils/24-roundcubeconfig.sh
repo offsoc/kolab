@@ -11,9 +11,9 @@ sed -i -r -e "s|$config\['enigma_multihost'\] = .*$|$config['enigma_multihost'] 
 
 echo "\$config['enigma_woat'] = true;" >> /etc/roundcubemail/enigma.inc.php
 
-# Run it over nginx for 2fa. We need to use startls because otherwise the proxy protocol doesn't work.
+# Run it over haproxy then nginx for 2fa. We need to use startls because otherwise the proxy protocol doesn't work.
 sed -i -r -e "s|$config\['default_host'\] = .*$|$config['default_host'] = 'tls://127.0.0.1';|g" /etc/roundcubemail/config.inc.php
-sed -i -r -e "s|$config\['default_port'\] = .*$|$config['default_port'] = 144;|g" /etc/roundcubemail/config.inc.php
+sed -i -r -e "s|$config\['default_port'\] = .*$|$config['default_port'] = 145;|g" /etc/roundcubemail/config.inc.php
 
 # So we can just append
 sed -i "s/?>//g" /etc/roundcubemail/config.inc.php
