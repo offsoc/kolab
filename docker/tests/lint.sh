@@ -10,11 +10,11 @@ sudo rm -rf node_modules
 mkdir node_modules
 npm install
 
-php -dmemory_limit=500M \
+php -dmemory_limit=-1 \
     vendor/bin/phpcs \
     -s
 
-php -dmemory_limit=500M \
+php -dmemory_limit=-1 \
     vendor/bin/phpstan \
     analyse
 
