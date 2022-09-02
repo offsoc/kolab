@@ -49,7 +49,7 @@ class IP4Net extends Model
         }
 
         return static::where('net_number', '<=', $ip)
-            ->where('net_broadcast',  '>=', $ip)
+            ->where('net_broadcast', '>=', $ip)
             ->orderByRaw('net_number, net_mask DESC')
             ->first();
     }
