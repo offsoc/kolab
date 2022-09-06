@@ -23,9 +23,9 @@ services:
       context: ./docker/kolab/
     container_name: kolab
     privileged: true
-    depends_on:
-      mariadb:
-        condition: service_healthy
+    # depends_on:
+    #   mariadb:
+    #     condition: service_healthy
     extra_hosts:
       - "kolab.mgmt.com:127.0.0.1"
     environment:
@@ -39,9 +39,9 @@ services:
       - DB_KOLAB_PASSWORD=Welcome2KolabSystems
       - DB_RC_USERNAME=roundcube
       - DB_RC_PASSWORD=Welcome2KolabSystems
-      - SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE:?err}
-      - SSL_CERTIFICATE_FULLCHAIN=${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?err}
-      - SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY:?err}
+      - SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE}
+      - SSL_CERTIFICATE_FULLCHAIN=${KOLAB_SSL_CERTIFICATE_FULLCHAIN}
+      - SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY}
       - IMAP_HOST=127.0.0.1
       - IMAP_PORT=11993
       - MAIL_HOST=127.0.0.1
@@ -107,9 +107,9 @@ services:
     build:
       context: ./docker/pdns/
     container_name: kolab-pdns
-    depends_on:
-      mariadb:
-        condition: service_healthy
+    # depends_on:
+    #   mariadb:
+    #     condition: service_healthy
     healthcheck:
       interval: 10s
       test: "systemctl status pdns || exit 1"
@@ -130,16 +130,16 @@ services:
     build:
       context: ./docker/proxy/
       args:
-        APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
-        SSL_CERTIFICATE: ${PROXY_SSL_CERTIFICATE:?err}
-        SSL_CERTIFICATE_KEY: ${PROXY_SSL_CERTIFICATE_KEY:?err}
+        APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN}
+        SSL_CERTIFICATE: ${PROXY_SSL_CERTIFICATE}
+        SSL_CERTIFICATE_KEY: ${PROXY_SSL_CERTIFICATE_KEY}
     healthcheck:
       interval: 10s
       test: "kill -0 $$(cat /run/nginx.pid)"
       timeout: 5s
       retries: 30
     container_name: kolab-proxy
-    hostname: ${APP_WEBSITE_DOMAIN:?err}
+    hostname: ${APP_WEBSITE_DOMAIN}
     image: kolab-proxy
     network_mode: host
     tmpfs:
@@ -180,9 +180,9 @@ services:
       test: "/src/kolabsrc/artisan octane:status || exit 1"
       timeout: 5s
       retries: 30
-    depends_on:
-      kolab:
-        condition: service_healthy
+    # depends_on:
+    #   kolab:
+    #     condition: service_healthy
     network_mode: host
     volumes:
       - ./src:/src/kolabsrc.orig:ro
@@ -191,9 +191,9 @@ services:
       context: ./docker/tests/
     container_name: kolab-tests
     image: kolab-tests
-    depends_on:
-      kolab:
-        condition: service_healthy
+    # depends_on:
+    #   kolab:
+    #     condition: service_healthy
     network_mode: host
     volumes:
       - ./src:/src/kolabsrc.orig:ro
@@ -201,8 +201,8 @@ services:
     build:
       context: ./docker/worker/
     container_name: kolab-worker
-    depends_on:
-      - kolab
+    # depends_on:
+    #   - kolab
     hostname: worker
     image: kolab-worker
     network_mode: host
@@ -224,17 +224,17 @@ services:
       timeout: 5s
       retries: 30
     environment:
-      - WEBRTC_LISTEN_IP=${MEET_WEBRTC_LISTEN_IP:?err}
-      - PUBLIC_DOMAIN=${MEET_PUBLIC_DOMAIN:?err}
+      - WEBRTC_LISTEN_IP=${MEET_WEBRTC_LISTEN_IP}
+      - PUBLIC_DOMAIN=${MEET_PUBLIC_DOMAIN}
       - LISTENING_HOST=0.0.0.0
       - LISTENING_PORT=12443
       - TURN_SERVER=${MEET_TURN_SERVER}
       - TURN_STATIC_SECRET=${COTURN_STATIC_SECRET}
-      - AUTH_TOKEN=${MEET_SERVER_TOKEN:?err}
-      - WEBHOOK_TOKEN=${MEET_WEBHOOK_TOKEN:?err}
-      - WEBHOOK_URL=${APP_PUBLIC_URL:?err}/api/webhooks/meet
-      - SSL_CERT=/etc/pki/tls/certs/meet.${APP_WEBSITE_DOMAIN:?err}.cert
-      - SSL_KEY=/etc/pki/tls/private/meet.${APP_WEBSITE_DOMAIN:?err}.key
+      - AUTH_TOKEN=${MEET_SERVER_TOKEN}
+      - WEBHOOK_TOKEN=${MEET_WEBHOOK_TOKEN}
+      - WEBHOOK_URL=${APP_PUBLIC_URL}/api/webhooks/meet
+      - SSL_CERT=/etc/pki/tls/certs/meet.${APP_WEBSITE_DOMAIN}.cert
+      - SSL_KEY=/etc/pki/tls/private/meet.${APP_WEBSITE_DOMAIN}.key
     network_mode: host
     container_name: kolab-meet
     image: kolab-meet
