@@ -12,7 +12,7 @@ services:
     environment:
       - TURN_PUBLIC_IP=${COTURN_PUBLIC_IP}
       - TURN_LISTEN_PORT=3478
-      - TURN_STATIC_SECRET==${COTURN_STATIC_SECRET}
+      - TURN_STATIC_SECRET=${COTURN_STATIC_SECRET}
     hostname: sturn.mgmt.com
     image: kolab-coturn
     network_mode: host
