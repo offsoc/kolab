@@ -71,7 +71,6 @@ services:
       - ./docker/certs/kolab.mgmt.com.cert:/etc/pki/tls/certs/kolab.mgmt.com.cert
       - ./docker/certs/kolab.mgmt.com.key:/etc/pki/tls/certs/kolab.mgmt.com.key
       - ./docker/kolab/utils:/root/utils:ro
-      - ./src/.env:/.dockerenv:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
   mariadb:
     container_name: kolab-mariadb
