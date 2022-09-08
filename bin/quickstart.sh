@@ -33,7 +33,7 @@ docker-compose down --remove-orphans
 src/artisan octane:stop >/dev/null 2>&1 || :
 src/artisan horizon:terminate >/dev/null 2>&1 || :
 
-docker-compose build coturn kolab mariadb meet pdns-sql proxy redis nginx haproxy
+docker-compose build coturn kolab mariadb meet pdns-sql proxy redis haproxy
 
 bin/regen-certs
 
@@ -69,7 +69,7 @@ if [ "$1" == "--nodev" ]; then
     echo "starting everything in containers"
     docker-compose build swoole
     docker-compose build webapp
-    docker-compose up -d webapp nginx
+    docker-compose up -d webapp proxy
     wait_for_container 'kolab-webapp'
     exit 0
 fi
@@ -130,8 +130,6 @@ fi
 
 npm run dev
 popd
-
-docker-compose up -d nginx
 
 pushd ${base_dir}/src/
 rm -rf database/database.sqlite

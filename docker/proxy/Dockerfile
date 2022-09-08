@@ -6,7 +6,8 @@ ENV container docker
 
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
-        nginx && \
+        nginx \
+        nginx-mod-mail && \
     dnf clean all
 
 COPY rootfs/ /
@@ -25,4 +26,4 @@ STOPSIGNAL SIGTERM
 
 CMD ["nginx", "-g", "daemon off;"]
 
-EXPOSE 80/tcp 443/tcp
+EXPOSE 80/tcp 443/tcp 110/tcp 143/tcp 993/tcp 995/tcp
