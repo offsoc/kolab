@@ -152,6 +152,48 @@ class NGINXController extends Controller
 
 
     /**
+     * Authentication request from the cyrus sasl
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\Response The response
+     */
+    public function cyrussasl(Request $request)
+    {
+        //FIXME not sure this is how we get to the POST data
+        $data = $request->all();
+        // Assumes "%u|%p|%r" as form data in the cyrus sasl config file
+        // FIXME: not sure which character is safe as separator.
+        $array = explode('|', $data);
+        if (count($array) != 3) {
+            \Log::debug("Authentication attempt failed: invalid data provided.");
+            return response("", 403);
+        }
+        $username = $array[0];
+        $password = $array[1];
+
+        if (empty($password)) {
+            \Log::debug("Authentication attempt failed: Empty password provided.");
+            return response("", 403);
+        }
+
+        try {
+            $this->authorizeRequest(
+                $username,
+                $password,
+                $request->headers->get('X-Real-Ip', null),
+            );
+        } catch (\Exception $e) {
+            \Log::debug("Authentication attempt failed: {$e->getMessage()}");
+            return response("", 403);
+        }
+
+        \Log::debug("Authentication attempt succeeded");
+        return response("");
+    }
+
+
+    /**
      * Authentication request.
      *
      * @todo: Separate IMAP(+STARTTLS) from IMAPS, same for SMTP/submission. =>
