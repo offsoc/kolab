@@ -9,6 +9,41 @@ use Illuminate\Support\Str;
 
 class NGINXController extends Controller
 {
+
+
+    /**
+     * Authorize with the provided credentials.
+     *
+     * @param string $login The login name
+     * @param string $password The password
+     *
+     * @return \App\User The user
+     *
+     * @throws \Exception If the authorization fails.
+     */
+    private function authorizeRequestCredentialsOnly($login, $password)
+    {
+        if (empty($login)) {
+            throw new \Exception("Empty login");
+        }
+
+        if (empty($password)) {
+            throw new \Exception("Empty password");
+        }
+
+        $user = \App\User::where('email', $login)->first();
+        if (!$user) {
+            throw new \Exception("User not found");
+        }
+
+        if (!Hash::check($password, $user->password)) {
+            throw new \Exception("Password mismatch");
+        }
+
+        return $user;
+    }
+
+
     /**
      * Authorize with the provided credentials.
      *
@@ -147,6 +182,50 @@ class NGINXController extends Controller
         }
 
         \Log::debug("Authentication attempt succeeded");
+        return response("");
+    }
+
+
+    /**
+     * Authentication request from the cyrus sasl
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\Response The response
+     */
+    public function cyrussasl(Request $request)
+    {
+        $data = $request->getContent();
+        // Assumes "%u %r %p" as form data in the cyrus sasl config file
+        $array = explode(' ', rawurldecode($data));
+        if (count($array) != 3) {
+            \Log::debug("Authentication attempt failed: invalid data provided.");
+            return response("", 403);
+        }
+        $username = $array[0];
+        $realm = $array[1];
+        $password = $array[2];
+
+        if (!empty($realm)) {
+            $username = "$username@$realm";
+        }
+
+        if (empty($password)) {
+            \Log::debug("Authentication attempt failed: Empty password provided.");
+            return response("", 403);
+        }
+
+        try {
+            $this->authorizeRequestCredentialsOnly(
+                $username,
+                $password
+            );
+        } catch (\Exception $e) {
+            \Log::debug("Authentication attempt failed for $username: {$e->getMessage()}");
+            return response("", 403);
+        }
+
+        \Log::debug("Authentication attempt succeeded for $username");
         return response("");
     }
 
