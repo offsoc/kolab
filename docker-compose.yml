@@ -103,10 +103,10 @@ services:
     volumes:
       - ./docker/certs/:/etc/certs/:ro
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
-  pdns-sql:
+  pdns:
     build:
-      context: ./docker/pdns-sql/
-    container_name: kolab-pdns-sql
+      context: ./docker/pdns/
+    container_name: kolab-pdns
     depends_on:
       mariadb:
         condition: service_healthy
@@ -115,8 +115,8 @@ services:
       test: "systemctl status pdns || exit 1"
       timeout: 5s
       retries: 30
-    hostname: pdns-sql
-    image: apheleia/kolab-pdns-sql
+    hostname: pdns
+    image: apheleia/kolab-pdns
     network_mode: host
     tmpfs:
       - /run

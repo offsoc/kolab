@@ -33,11 +33,11 @@ docker-compose down --remove-orphans
 src/artisan octane:stop >/dev/null 2>&1 || :
 src/artisan horizon:terminate >/dev/null 2>&1 || :
 
-docker-compose build coturn kolab mariadb meet pdns-sql proxy redis haproxy
+docker-compose build coturn kolab mariadb meet pdns proxy redis haproxy
 
 bin/regen-certs
 
-docker-compose up -d coturn kolab mariadb meet pdns-sql proxy redis haproxy
+docker-compose up -d coturn kolab mariadb meet pdns proxy redis haproxy
 
 # Workaround until we have docker-compose --wait (https://github.com/docker/compose/pull/8777)
 function wait_for_container {
