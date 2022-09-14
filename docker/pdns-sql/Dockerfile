@@ -1,7 +1,6 @@
 FROM fedora:35
 
 ENV container docker
-ENV SYSTEMD_PAGER=''
 
 RUN dnf -y install \
     --setopt 'tsflags=nodocs' \
@@ -21,8 +20,11 @@ RUN dnf -y install \
 
 COPY pdns.conf /etc/pdns/pdns.conf
 
-RUN systemctl enable pdns
+ENV PDNS_guardian=yes \
+    PDNS_setuid=pdns \
+    PDNS_setgid=pdns \
+    PDNS_launch=gmysql
 
-WORKDIR /root/
+CMD ["/usr/sbin/pdns_server", "--guardian=no", "--daemon=no", "--disable-syslog", "--log-timestamp=no", "--write-pid=no"]
 
-CMD ["/lib/systemd/systemd", "--system"]
+EXPOSE 9953 9953/udp
