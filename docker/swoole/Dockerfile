@@ -2,7 +2,7 @@ FROM fedora:35
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
 
-ARG SWOOLE_VERSION=v4.8.7
+ARG SWOOLE_VERSION=v4.11.1
 ENV HOME=/opt/app-root/src
 
 LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
@@ -29,7 +29,7 @@ RUN dnf -y install \
         php-mysqlnd \
         re2c \
         wget && \
-    git clone https://github.com/swoole/swoole-src.git/ /swoole-src.git/ && \
+    git clone https://github.com/openswoole/swoole-src.git/ /swoole-src.git/ && \
         cd /swoole-src.git/ && \
         git checkout -f ${SWOOLE_VERSION} && \
         git clean -d -f -x && \
@@ -52,8 +52,8 @@ RUN dnf -y install \
         php-devel \
         re2c && \
     dnf clean all && \
-    echo "extension=swoole.so" >> /etc/php.d/swoole.ini && \
-    php -m 2>&1 | grep -q swoole
+    echo "extension=openswoole.so" >> /etc/php.d/openswoole.ini && \
+    php -m 2>&1 | grep -q openswoole
 
 RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/ -u 1001 -g 1001 default)
 
