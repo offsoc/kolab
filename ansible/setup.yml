@@ -108,6 +108,11 @@
         state: enabled
         zone: FedoraServer
 
+    - name: Always restart docker before deploy (because of potential network issues otherwise)
+      ansible.builtin.service:
+        name: docker
+        state: restarted
+
     - name: Run bin/deploy
       become: true
       become_user: kolab
