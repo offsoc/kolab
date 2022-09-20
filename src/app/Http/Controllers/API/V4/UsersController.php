@@ -165,7 +165,9 @@ class UsersController extends RelationController
 
         // Check if the user is a controller of his wallet
         $isController = $user->canDelete($user);
+
         $isDegraded = $user->isDegraded();
+        $hasMeet = !$isDegraded && Sku::withObjectTenantContext($user)->where('title', 'room')->exists();
         $hasCustomDomain = $user->wallet()->entitlements()
             ->where('entitleable_type', Domain::class)
             ->count() > 0;
@@ -194,7 +196,7 @@ class UsersController extends RelationController
             'enableFolders' => $isController && $hasCustomDomain && $hasBeta,
             // TODO: Make 'enableResources' working for wallet controllers that aren't account owners
             'enableResources' => $isController && $hasCustomDomain && $hasBeta,
-            'enableRooms' => !$isDegraded,
+            'enableRooms' => $hasMeet,
             'enableSettings' => $isController,
             'enableUsers' => $isController,
             'enableWallets' => $isController,

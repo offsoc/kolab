@@ -557,6 +557,8 @@ class UsersTest extends TestCase
         $this->assertSame('user-imap-ready', $result['process'][2]['label']);
         $this->assertSame(false, $result['process'][2]['state']);
         $this->assertSame('running', $result['processState']);
+        $this->assertTrue($result['enableRooms']);
+        $this->assertFalse($result['enableBeta']);
 
         $user->created_at = Carbon::now()->subSeconds(181);
         $user->save();
@@ -610,12 +612,30 @@ class UsersTest extends TestCase
         $result = UsersController::statusInfo($user);
 
         $this->assertSame(['beta'], $result['skus']);
+        $this->assertTrue($result['enableBeta']);
 
         $user->assignSku(Sku::withEnvTenantContext()->where('title', 'groupware')->first());
 
         $result = UsersController::statusInfo($user);
 
         $this->assertSame(['beta', 'groupware'], $result['skus']);
+
+        // Degraded user
+        $user->status |= User::STATUS_DEGRADED;
+        $user->save();
+
+        $result = UsersController::statusInfo($user);
+        $this->assertTrue($result['enableBeta']);
+        $this->assertFalse($result['enableRooms']);
+
+        // User in a tenant without 'room' SKU
+        $user->status = User::STATUS_LDAP_READY | User::STATUS_IMAP_READY | User::STATUS_ACTIVE;
+        $user->tenant_id = Tenant::where('title', 'Sample Tenant')->first()->id;
+        $user->save();
+
+        $result = UsersController::statusInfo($user);
+        $this->assertTrue($result['enableBeta']);
+        $this->assertFalse($result['enableRooms']);
     }
 
     /**
