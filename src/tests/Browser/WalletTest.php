@@ -89,6 +89,8 @@ class WalletTest extends TestCaseDusk
     public function testReceipts(): void
     {
         $user = $this->getTestUser('wallets-controller@kolabnow.com', ['password' => 'simple123']);
+        $plan = \App\Plan::withObjectTenantContext($user)->where('title', 'individual')->first();
+        $user->assignPlan($plan);
         $wallet = $user->wallets()->first();
         $wallet->payments()->delete();
 

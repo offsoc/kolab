@@ -104,8 +104,10 @@ class WalletTest extends TestCaseDusk
     public function testReceipts(): void
     {
         $user = $this->getTestUser('reseller@' . \config('app.domain'));
+        $plan = \App\Plan::withObjectTenantContext($user)->where('title', 'individual')->first();
         $wallet = $user->wallets()->first();
         $wallet->payments()->delete();
+        $user->assignPlan($plan);
         $user->created_at = Carbon::now();
         $user->save();
 
