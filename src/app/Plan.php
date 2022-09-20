@@ -18,6 +18,7 @@ use Spatie\Translatable\HasTranslations;
  * @property string         $description
  * @property int            $discount_qty
  * @property int            $discount_rate
+ * @property int            $free_months
  * @property string         $id
  * @property string         $mode           Plan signup mode (email|token)
  * @property string         $name
@@ -48,6 +49,8 @@ class Plan extends Model
         'discount_qty',
         // the rate of the discount for this plan
         'discount_rate',
+        // number of free months (trial)
+        'free_months',
     ];
 
     /** @var array<string, string> The attributes that should be cast */
@@ -55,7 +58,8 @@ class Plan extends Model
         'promo_from' => 'datetime:Y-m-d H:i:s',
         'promo_to' => 'datetime:Y-m-d H:i:s',
         'discount_qty' => 'integer',
-        'discount_rate' => 'integer'
+        'discount_rate' => 'integer',
+        'free_months' => 'integer'
     ];
 
     /** @var array<int, string> Translatable properties */

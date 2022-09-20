@@ -37,8 +37,8 @@ class WalletsTest extends TestCase
     public function testGetWalletNotice(): void
     {
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
-        $package = \App\Package::withObjectTenantContext($user)->where('title', 'kolab')->first();
-        $user->assignPackage($package);
+        $plan = \App\Plan::withObjectTenantContext($user)->where('title', 'individual')->first();
+        $user->assignPlan($plan);
         $wallet = $user->wallets()->first();
 
         $controller = new WalletsController();
@@ -50,7 +50,7 @@ class WalletsTest extends TestCase
 
         $this->assertSame('You are in your free trial period.', $notice);
 
-        $wallet->owner->created_at = Carbon::now()->subDays(15);
+        $wallet->owner->created_at = Carbon::now()->subWeeks(3);
         $wallet->owner->save();
 
         $notice = $method->invoke($controller, $wallet);
@@ -64,8 +64,8 @@ class WalletsTest extends TestCase
         $this->assertSame('You are out of credit, top up your balance now.', $notice);
 
         // User/entitlements created slightly more than a month ago, balance=9,99 CHF (monthly)
-        $wallet->owner->created_at = Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1);
-        $wallet->owner->save();
+        $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1));
+        $wallet->refresh();
 
         // test "1 month"
         $wallet->balance = 990;
@@ -77,7 +77,7 @@ class WalletsTest extends TestCase
         $wallet->balance = 990 * 2.6;
         $notice = $method->invoke($controller, $wallet);
 
-        $this->assertMatchesRegularExpression('/\(2 months 2 weeks\)/', $notice);
+        $this->assertMatchesRegularExpression('/\(1 month 4 weeks\)/', $notice);
 
         // Change locale to make sure the text is localized by Carbon
         \app()->setLocale('de');
@@ -86,7 +86,7 @@ class WalletsTest extends TestCase
         $wallet->balance = 990 * 23.5;
         $notice = $method->invoke($controller, $wallet);
 
-        $this->assertMatchesRegularExpression('/\(1 Jahr 11 Monate\)/', $notice);
+        $this->assertMatchesRegularExpression('/\(1 Jahr 10 Monate\)/', $notice);
 
         // Old entitlements, 100% discount
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));

@@ -40,28 +40,6 @@ class EntitlementTest extends TestCase
     }
 
     /**
-     * Test for Entitlement::costsPerDay()
-     */
-    public function testCostsPerDay(): void
-    {
-        // 500
-        // 28 days: 17.86
-        // 31 days: 16.129
-        $user = $this->getTestUser('entitlement-test@kolabnow.com');
-        $package = Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $mailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
-
-        $user->assignPackage($package);
-
-        $entitlement = $user->entitlements->where('sku_id', $mailbox->id)->first();
-
-        $costsPerDay = $entitlement->costsPerDay();
-
-        $this->assertTrue($costsPerDay < 17.86);
-        $this->assertTrue($costsPerDay > 16.12);
-    }
-
-    /**
      * Tests for entitlements
      * @todo This really should be in User or Wallet tests file
      */

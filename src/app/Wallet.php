@@ -75,83 +75,77 @@ class Wallet extends Model
      */
     public function chargeEntitlements($apply = true): int
     {
-        // This wallet has been created less than a month ago, this is the trial period
-        if ($this->owner->created_at >= Carbon::now()->subMonthsWithoutOverflow(1)) {
-            // Move all the current entitlement's updated_at timestamps forward to one month after
-            // this wallet was created.
-            $freeMonthEnds = $this->owner->created_at->copy()->addMonthsWithoutOverflow(1);
-
-            foreach ($this->entitlements()->get()->fresh() as $entitlement) {
-                if ($entitlement->updated_at < $freeMonthEnds) {
-                    $entitlement->updated_at = $freeMonthEnds;
-                    $entitlement->save();
-                }
-            }
-
-            return 0;
-        }
-
+        $transactions = [];
         $profit = 0;
         $charges = 0;
         $discount = $this->getDiscountRate();
         $isDegraded = $this->owner->isDegraded();
+        $trial = $this->trialInfo();
 
         if ($apply) {
             DB::beginTransaction();
         }
 
-        // used to parent individual entitlement billings to the wallet debit.
-        $entitlementTransactions = [];
-
-        foreach ($this->entitlements()->get() as $entitlement) {
-            // This entitlement has been created less than or equal to 14 days ago (this is at
+        // Get all entitlements...
+        $entitlements = $this->entitlements()
+            // Skip entitlements created less than or equal to 14 days ago (this is at
             // maximum the fourteenth 24-hour period).
-            if ($entitlement->created_at > Carbon::now()->subDays(14)) {
-                continue;
-            }
+            // ->where('created_at', '<=', Carbon::now()->subDays(14))
+            // Skip entitlements created, or billed last, less than a month ago.
+            ->where('updated_at', '<=', Carbon::now()->subMonthsWithoutOverflow(1))
+            ->get();
 
-            // This entitlement was created, or billed last, less than a month ago.
-            if ($entitlement->updated_at > Carbon::now()->subMonthsWithoutOverflow(1)) {
-                continue;
-            }
-
-            // updated last more than a month ago -- was it billed?
-            if ($entitlement->updated_at <= Carbon::now()->subMonthsWithoutOverflow(1)) {
-                $diff = $entitlement->updated_at->diffInMonths(Carbon::now());
-
-                $cost = (int) ($entitlement->cost * $discount * $diff);
-                $fee = (int) ($entitlement->fee * $diff);
-
-                if ($isDegraded) {
-                    $cost = 0;
-                }
-
-                $charges += $cost;
-                $profit += $cost - $fee;
-
+        foreach ($entitlements as $entitlement) {
+            // If in trial, move entitlement's updated_at timestamps forward to the trial end.
+            if (
+                !empty($trial)
+                && $entitlement->updated_at < $trial['end']
+                && in_array($entitlement->sku_id, $trial['skus'])
+            ) {
+                // TODO: Consider not updating the updated_at to a future date, i.e. bump it
+                // as many months as possible, but not into the future
                 // if we're in dry-run, you know...
-                if (!$apply) {
-                    continue;
+                if ($apply) {
+                    $entitlement->updated_at = $trial['end'];
+                    $entitlement->save();
                 }
 
-                $entitlement->updated_at = $entitlement->updated_at->copy()
-                    ->addMonthsWithoutOverflow($diff);
-
-                $entitlement->save();
-
-                if ($cost == 0) {
-                    continue;
-                }
-
-                $entitlementTransactions[] = $entitlement->createTransaction(
-                    Transaction::ENTITLEMENT_BILLED,
-                    $cost
-                );
+                continue;
             }
+
+            $diff = $entitlement->updated_at->diffInMonths(Carbon::now());
+
+            if ($diff <= 0) {
+                continue;
+            }
+
+            $cost = (int) ($entitlement->cost * $discount * $diff);
+            $fee = (int) ($entitlement->fee * $diff);
+
+            if ($isDegraded) {
+                $cost = 0;
+            }
+
+            $charges += $cost;
+            $profit += $cost - $fee;
+
+            // if we're in dry-run, you know...
+            if (!$apply) {
+                continue;
+            }
+
+            $entitlement->updated_at = $entitlement->updated_at->copy()->addMonthsWithoutOverflow($diff);
+            $entitlement->save();
+
+            if ($cost == 0) {
+                continue;
+            }
+
+            $transactions[] = $entitlement->createTransaction(Transaction::ENTITLEMENT_BILLED, $cost);
         }
 
         if ($apply) {
-            $this->debit($charges, '', $entitlementTransactions);
+            $this->debit($charges, '', $transactions);
 
             // Credit/debit the reseller
             if ($profit != 0 && $this->owner->tenant) {
@@ -182,26 +176,53 @@ class Wallet extends Model
             return null;
         }
 
-        // retrieve any expected charges
-        $expectedCharge = $this->expectedCharges();
+        $balance = $this->balance;
+        $discount = $this->getDiscountRate();
+        $trial = $this->trialInfo();
 
-        // get the costs per day for all entitlements billed against this wallet
-        $costsPerDay = $this->costsPerDay();
+        // Get all entitlements...
+        $entitlements = $this->entitlements()->orderBy('updated_at')->get()
+            ->filter(function ($entitlement) {
+                return $entitlement->cost > 0;
+            })
+            ->map(function ($entitlement) {
+                return [
+                    'date' => $entitlement->updated_at ?: $entitlement->created_at,
+                    'cost' => $entitlement->cost,
+                    'sku_id' => $entitlement->sku_id,
+                ];
+            })
+            ->all();
 
-        if (!$costsPerDay) {
+        $max = 12 * 25;
+        while ($max > 0) {
+            foreach ($entitlements as &$entitlement) {
+                $until = $entitlement['date'] = $entitlement['date']->addMonthsWithoutOverflow(1);
+
+                if (
+                    !empty($trial)
+                    && $entitlement['date'] < $trial['end']
+                    && in_array($entitlement['sku_id'], $trial['skus'])
+                ) {
+                    continue;
+                }
+
+                $balance -= (int) ($entitlement['cost'] * $discount);
+
+                if ($balance < 0) {
+                    break 2;
+                }
+            }
+
+            $max--;
+        }
+
+        if (empty($until)) {
             return null;
         }
 
-        // the number of days this balance, minus the expected charges, would last
-        $daysDelta = floor(($this->balance - $expectedCharge) / $costsPerDay);
-
-        // calculate from the last entitlement billed
-        $entitlement = $this->entitlements()->orderBy('updated_at', 'desc')->first();
-
-        $until = $entitlement->updated_at->copy()->addDays($daysDelta);
-
         // Don't return dates from the past
-        if ($until < Carbon::now() && !$until->isToday()) {
+        if ($until <= Carbon::now() && !$until->isToday()) {
             return null;
         }
 
@@ -221,22 +242,6 @@ class Wallet extends Model
             'wallet_id',      // The local foreign key
             'user_id'         // The remote foreign key
         );
-    }
-
-    /**
-     * Retrieve the costs per day of everything charged to this wallet.
-     *
-     * @return float
-     */
-    public function costsPerDay()
-    {
-        $costs = (float) 0;
-
-        foreach ($this->entitlements as $entitlement) {
-            $costs += $entitlement->costsPerDay();
-        }
-
-        return $costs;
     }
 
     /**
@@ -406,6 +411,18 @@ class Wallet extends Model
     }
 
     /**
+     * Plan of the wallet.
+     *
+     * @return ?\App\Plan
+     */
+    public function plan()
+    {
+        $planId = $this->owner->getSetting('plan_id');
+
+        return $planId ? Plan::find($planId) : null;
+    }
+
+    /**
      * Remove a controller from this wallet.
      *
      * @param \App\User $user The user to remove as a controller from this wallet.
@@ -426,12 +443,50 @@ class Wallet extends Model
      */
     public function transactions()
     {
-        return Transaction::where(
-            [
-                'object_id' => $this->id,
-                'object_type' => Wallet::class
-            ]
-        );
+        return Transaction::where('object_id', $this->id)->where('object_type', Wallet::class);
+    }
+
+    /**
+     * Returns trial related information.
+     *
+     * @return ?array Plan ID, plan SKUs, trial end date, number of free months (planId, skus, end, months)
+     */
+    public function trialInfo(): ?array
+    {
+        $plan = $this->plan();
+        $freeMonths = $plan ? $plan->free_months : 0;
+        $trialEnd = $freeMonths ? $this->owner->created_at->copy()->addMonthsWithoutOverflow($freeMonths) : null;
+
+        if ($trialEnd) {
+            // Get all SKUs assigned to the plan (they are free in trial)
+            // TODO: We could store the list of plan's SKUs in the wallet settings, for two reasons:
+            //       - performance
+            //       - if we change plan definition at some point in time, the old users would use
+            //         the old definition, instead of the current one
+            // TODO: The same for plan's free_months value
+            $trialSkus = \App\Sku::select('id')
+                ->whereIn('id', function ($query) use ($plan) {
+                    $query->select('sku_id')
+                        ->from('package_skus')
+                        ->whereIn('package_id', function ($query) use ($plan) {
+                            $query->select('package_id')
+                                ->from('plan_packages')
+                                ->where('plan_id', $plan->id);
+                        });
+                })
+                ->whereNot('title', 'storage')
+                ->pluck('id')
+                ->all();
+
+            return [
+                'end' => $trialEnd,
+                'skus' => $trialSkus,
+                'planId' => $plan->id,
+                'months' => $freeMonths,
+            ];
+        }
+
+        return null;
     }
 
     /**

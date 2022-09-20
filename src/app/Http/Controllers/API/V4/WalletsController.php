@@ -232,10 +232,14 @@ class WalletsController extends ResourceController
             return null;
         }
 
-        // the owner was created less than a month ago
-        if ($wallet->owner->created_at > Carbon::now()->subMonthsWithoutOverflow(1)) {
-            // but more than two weeks ago, notice of trial ending
-            if ($wallet->owner->created_at <= Carbon::now()->subWeeks(2)) {
+        $plan = $wallet->plan();
+        $freeMonths = $plan ? $plan->free_months : 0;
+        $trialEnd = $freeMonths ? $wallet->owner->created_at->copy()->addMonthsWithoutOverflow($freeMonths) : null;
+
+        // the owner is still in the trial period
+        if ($trialEnd && $trialEnd > Carbon::now()) {
+            // notice of trial ending if less than 2 weeks left
+            if ($trialEnd < Carbon::now()->addWeeks(2)) {
                 return \trans('app.wallet-notice-trial-end');
             }
 

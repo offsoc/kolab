@@ -54,6 +54,12 @@ class TrialEndCommand extends Command
             ->cursor();
 
         foreach ($wallets as $wallet) {
+            // Skip accounts with no trial period, or a period longer than a month
+            $plan = $wallet->plan();
+            if (!$plan || $plan->free_months != 1) {
+                continue;
+            }
+
             // Send the email asynchronously
             \App\Jobs\TrialEndEmail::dispatch($wallet->owner);
 

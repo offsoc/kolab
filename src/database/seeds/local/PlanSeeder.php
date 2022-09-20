@@ -32,6 +32,7 @@ EOD;
                 'title' => 'individual',
                 'name' => 'Individual Account',
                 'description' => $description,
+                'free_months' => 1,
                 'discount_qty' => 0,
                 'discount_rate' => 0
             ]
@@ -59,6 +60,7 @@ EOD;
                 'title' => 'group',
                 'name' => 'Group Account',
                 'description' => $description,
+                'free_months' => 1,
                 'discount_qty' => 0,
                 'discount_rate' => 0
             ]
@@ -91,6 +93,7 @@ EOD;
                 [
                     'title' => 'individual',
                     'name' => 'Individual Account',
+                    'free_months' => 1,
                     'description' => $description,
                     'discount_qty' => 0,
                     'discount_rate' => 0
@@ -122,6 +125,7 @@ EOD;
                     'title' => 'group',
                     'name' => 'Group Account',
                     'description' => $description,
+                    'free_months' => 1,
                     'discount_qty' => 0,
                     'discount_rate' => 0
                 ]

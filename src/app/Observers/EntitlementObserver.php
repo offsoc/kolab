@@ -114,14 +114,21 @@ class EntitlementObserver
             return;
         }
 
-        // Determine if we're still within the free first month
-        $freeMonthEnds = $owner->created_at->copy()->addMonthsWithoutOverflow(1);
-
-        if ($freeMonthEnds >= Carbon::now()) {
-            return;
-        }
-
         $now = Carbon::now();
+
+        // Determine if we're still within the trial period
+        $trial = $entitlement->wallet->trialInfo();
+        if (
+            !empty($trial)
+            && $entitlement->updated_at < $trial['end']
+            && in_array($entitlement->sku_id, $trial['skus'])
+        ) {
+            if ($trial['end'] >= $now) {
+                return;
+            }
+
+            $entitlement->updated_at = $trial['end'];
+        }
 
         // get the discount rate applied to the wallet.
         $discount = $entitlement->wallet->getDiscountRate();
@@ -167,6 +174,8 @@ class EntitlementObserver
         if ($cost == 0) {
             return;
         }
+
+        // FIXME: Shouldn't we create per-entitlement transaction record?
 
         $entitlement->wallet->debit($cost);
     }

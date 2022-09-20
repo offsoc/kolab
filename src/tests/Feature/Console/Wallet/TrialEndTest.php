@@ -38,12 +38,12 @@ class TrialEndTest extends TestCase
     {
         Queue::fake();
 
-        $package = \App\Package::withEnvTenantContext()->where('title', 'lite')->first();
+        $plan = \App\Plan::withEnvTenantContext()->where('title', 'individual')->first();
         $user = $this->getTestUser('test-user1@kolabnow.com', [
                 'status' => User::STATUS_IMAP_READY | User::STATUS_LDAP_READY | User::STATUS_ACTIVE,
         ]);
         $wallet = $user->wallets()->first();
-        $user->assignPackage($package);
+        $user->assignPlan($plan);
 
         DB::table('users')->update(['created_at' => \now()->clone()->subMonthsNoOverflow(2)->subHours(1)]);
 
@@ -104,6 +104,7 @@ class TrialEndTest extends TestCase
         $user2 = $this->getTestUser('test-user2@kolabnow.com', [
                 'status' => User::STATUS_IMAP_READY | User::STATUS_LDAP_READY | User::STATUS_ACTIVE,
         ]);
+        $package = \App\Package::withEnvTenantContext()->where('title', 'lite')->first();
         $user->assignPackage($package, $user2);
         $user2->created_at = \now()->clone()->subMonthsNoOverflow(1);
         $user2->save();
