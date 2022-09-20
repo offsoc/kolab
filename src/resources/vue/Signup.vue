@@ -20,7 +20,7 @@
 
         <div class="card d-none" id="step1" v-if="!invitation">
             <div class="card-body">
-                <h4 class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: 1, n: 3 }) }}</h4>
+                <h4 class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: 1, n: steps }) }}</h4>
                 <p class="card-text">
                     {{ $t('signup.step1') }}
                 </p>
@@ -31,7 +31,11 @@
                             <input type="text" class="form-control rounded-end" id="signup_last_name" :placeholder="$t('form.surname')" v-model="last_name">
                         </div>
                     </div>
-                    <div class="mb-3">
+                    <div v-if="mode == 'token'" class="mb-3">
+                        <label for="signup_token" class="visually-hidden">{{ $t('signup.token') }}</label>
+                        <input type="text" class="form-control" id="signup_token" :placeholder="$t('signup.token')" required v-model="token">
+                    </div>
+                    <div v-else class="mb-3">
                         <label for="signup_email" class="visually-hidden">{{ $t('signup.email') }}</label>
                         <input type="text" class="form-control" id="signup_email" :placeholder="$t('signup.email')" required v-model="email">
                     </div>
@@ -43,7 +47,7 @@
 
         <div class="card d-none" id="step2" v-if="!invitation">
             <div class="card-body">
-                <h4 class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: 2, n: 3 }) }}</h4>
+                <h4 class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: 2, n: steps }) }}</h4>
                 <p class="card-text">
                     {{ $t('signup.step2') }}
                 </p>
@@ -61,7 +65,7 @@
 
         <div class="card d-none" id="step3">
             <div class="card-body">
-                <h4 v-if="!invitation" class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: 3, n: 3 }) }}</h4>
+                <h4 v-if="!invitation" class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: steps, n: steps }) }}</h4>
                 <p class="card-text">
                     {{ $t('signup.step3') }}
                 </p>
@@ -105,7 +109,8 @@
     import { library } from '@fortawesome/fontawesome-svg-core'
 
     library.add(
-        require('@fortawesome/free-solid-svg-icons/faUsers').definition,
+        require('@fortawesome/free-solid-svg-icons/faMobileRetro').definition,
+        require('@fortawesome/free-solid-svg-icons/faUsers').definition
     )
 
     export default {
@@ -125,13 +130,21 @@
                 domains: [],
                 invitation: null,
                 is_domain: false,
+                mode: 'email',
                 plan: null,
                 plan_icons: {
                     individual: 'user',
-                    group: 'users'
+                    group: 'users',
+                    phone: 'mobile-retro'
                 },
                 plans: [],
+                token: '',
                 voucher: ''
+            }
+        },
+        computed: {
+            steps() {
+                return this.mode == 'token' ? 2 : 3
             }
         },
         mounted() {
@@ -165,8 +178,7 @@
                     this.submitStep2(true)
                 } else if (/^([a-zA-Z_]+)$/.test(param)) {
                     // Plan title provided, save it and display Step 1
-                    this.plan = param
-                    this.displayForm(1, true)
+                    this.step0(param)
                 } else {
                     this.$root.errorPage(404)
                 }
@@ -177,30 +189,48 @@
         methods: {
             selectPlan(plan) {
                 this.$router.push({path: '/signup/' + plan})
-                this.plan = plan
-                this.displayForm(1, true)
+                this.selectPlanByTitle(plan)
             },
             // Composes plan selection page
-            step0() {
+            selectPlanByTitle(title) {
+                const plan = this.plans.filter(plan => plan.title == title)[0]
+                if (plan) {
+                    this.plan = title
+                    this.mode = plan.mode
+                    this.displayForm(1, true)
+                }
+            },
+            step0(plan) {
                 if (!this.plans.length) {
                     axios.get('/api/auth/signup/plans', { loader: true }).then(response => {
                         this.plans = response.data.plans
+                        this.selectPlanByTitle(plan)
                     })
                     .catch(error => {
                         this.$root.errorHandler(error)
                     })
+                } else {
+                    this.selectPlanByTitle(plan)
                 }
             },
             // Submits data to the API, validates and gets verification code
             submitStep1() {
                 this.$root.clearFormValidation($('#step1 form'))
 
-                const post = this.$root.pick(this, ['email', 'last_name', 'first_name', 'plan', 'voucher'])
+                const post = this.$root.pick(this, ['email', 'last_name', 'first_name', 'plan', 'token', 'voucher'])
 
                 axios.post('/api/auth/signup/init', post)
                     .then(response => {
-                        this.displayForm(2, true)
                         this.code = response.data.code
+                        this.short_code = response.data.short_code
+                        this.mode = response.data.mode
+                        this.is_domain = response.data.is_domain
+                        this.displayForm(this.mode == 'token' ? 3 : 2, true)
+
+                        // Fill the domain selector with available domains
+                        if (!this.is_domain) {
+                            this.setDomain(response.data)
+                        }
                     })
             },
             // Submits the code to the API for verification
@@ -222,6 +252,7 @@
                         this.email = response.data.email
                         this.is_domain = response.data.is_domain
                         this.voucher = response.data.voucher
+                        this.domain = ''
 
                         // Fill the domain selector with available domains
                         if (!this.is_domain) {
@@ -262,12 +293,20 @@
             },
             // Moves the user a step back in registration form
             stepBack(e) {
-                var card = $(e.target).closest('.card')
+                const card = $(e.target).closest('.card')
+                let step = card.attr('id').replace('step', '')
 
-                card.prev().removeClass('d-none').find('input').first().focus()
                 card.addClass('d-none').find('form')[0].reset()
 
-                if (card.attr('id') == 'step1') {
+                step -= 1
+
+                if (step == 2 && this.mode == 'token') {
+                    step = 1
+                }
+
+                $('#step' + step).removeClass('d-none').find('input').first().focus()
+
+                if (!step) {
                     this.step0()
                     this.$router.replace({path: '/signup'})
                 }
@@ -281,7 +320,7 @@
                     return this.step0()
                 }
 
-                $('#step' + step).removeClass('d-none')
+                $('#step' + step).removeClass('d-none').find('form')[0].reset()
 
                 if (focus) {
                     $('#step' + step).find('input').first().focus()

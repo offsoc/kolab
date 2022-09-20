@@ -204,7 +204,7 @@ class SignupTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $this->assertSame("The specified email address is invalid.", $json['errors']['email']);
+        $this->assertSame(["The specified email address is invalid."], $json['errors']['email']);
 
         SignupCode::truncate();
 
@@ -231,7 +231,7 @@ class SignupTest extends TestCase
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
         // TODO: This probably should be a different message?
-        $this->assertSame("The specified email address is invalid.", $json['errors']['email']);
+        $this->assertSame(["The specified email address is invalid."], $json['errors']['email']);
 
         // IP address limit check
         $data = [
@@ -258,7 +258,7 @@ class SignupTest extends TestCase
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
         // TODO: This probably should be a different message?
-        $this->assertSame("The specified email address is invalid.", $json['errors']['email']);
+        $this->assertSame(["The specified email address is invalid."], $json['errors']['email']);
 
         // TODO: Test phone validation
     }
@@ -284,8 +284,10 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(2, $json);
+
+        $this->assertCount(3, $json);
         $this->assertSame('success', $json['status']);
+        $this->assertSame('email', $json['mode']);
         $this->assertNotEmpty($json['code']);
 
         // Assert the email sending job was pushed once
@@ -309,8 +311,9 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(2, $json);
+        $this->assertCount(3, $json);
         $this->assertSame('success', $json['status']);
+        $this->assertSame('email', $json['mode']);
         $this->assertNotEmpty($json['code']);
 
         // Assert the job has proper data assigned
@@ -629,8 +632,9 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(2, $json);
+        $this->assertCount(3, $json);
         $this->assertSame('success', $json['status']);
+        $this->assertSame('email', $json['mode']);
         $this->assertNotEmpty($json['code']);
 
         // Assert the email sending job was pushed once

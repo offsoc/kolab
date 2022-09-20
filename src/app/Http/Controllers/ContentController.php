@@ -27,8 +27,6 @@ class ContentController extends Controller
             abort(404);
         }
 
-        self::loadLocale($theme);
-
         return view($view)->with('env', \App\Utils::uiEnv());
     }
 
@@ -63,8 +61,6 @@ class ContentController extends Controller
 
         // Localization
         if (!empty($faq)) {
-            self::loadLocale($theme_name);
-
             foreach ($faq as $idx => $item) {
                 if (!empty($item['label'])) {
                     $faq[$idx]['title'] = \trans('theme::faq.' . $item['label']);
@@ -157,17 +153,5 @@ class ContentController extends Controller
         }
 
         return $menu;
-    }
-
-    /**
-     * Register localization files from the theme.
-     *
-     * @param string $theme Theme name
-     */
-    protected static function loadLocale(string $theme): void
-    {
-        $path = resource_path(sprintf('themes/%s/lang', $theme));
-
-        \app('translator')->addNamespace('theme', $path);
     }
 }

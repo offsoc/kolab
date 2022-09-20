@@ -4,6 +4,7 @@ namespace Tests\Browser;
 
 use App\Discount;
 use App\Domain;
+use App\Plan;
 use App\SignupCode;
 use App\SignupInvitation;
 use App\User;
@@ -27,6 +28,8 @@ class SignupTest extends TestCaseDusk
         $this->deleteTestUser('signuptestdusk@' . \config('app.domain'));
         $this->deleteTestUser('admin@user-domain-signup.com');
         $this->deleteTestDomain('user-domain-signup.com');
+
+        Plan::where('mode', 'token')->update(['mode' => 'email']);
     }
 
     /**
@@ -38,6 +41,10 @@ class SignupTest extends TestCaseDusk
         $this->deleteTestUser('admin@user-domain-signup.com');
         $this->deleteTestDomain('user-domain-signup.com');
         SignupInvitation::truncate();
+
+        Plan::where('mode', 'token')->update(['mode' => 'email']);
+
+        @unlink(storage_path('signup-tokens.txt'));
 
         parent::tearDown();
     }
@@ -125,6 +132,7 @@ class SignupTest extends TestCaseDusk
 
             $browser->waitForLocation('/signup/individual')
                 ->assertVisible('@step1')
+                ->assertSeeIn('.card-title', 'Sign Up - Step 1/3')
                 ->assertMissing('@step0')
                 ->assertMissing('@step2')
                 ->assertMissing('@step3')
@@ -162,7 +170,8 @@ class SignupTest extends TestCaseDusk
 
             // Here we expect two text inputs and Back and Continue buttons
             $browser->with('@step1', function ($step) {
-                $step->assertVisible('#signup_last_name')
+                $step->waitFor('#signup_last_name')
+                    ->assertSeeIn('.card-title', 'Sign Up - Step 1/3')
                     ->assertVisible('#signup_first_name')
                     ->assertFocused('#signup_first_name')
                     ->assertVisible('#signup_email')
@@ -221,6 +230,7 @@ class SignupTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->assertVisible('@step2')
+                ->assertSeeIn('@step2 .card-title', 'Sign Up - Step 2/3')
                 ->assertMissing('@step0')
                 ->assertMissing('@step1')
                 ->assertMissing('@step3');
@@ -506,6 +516,109 @@ class SignupTest extends TestCaseDusk
                 $browser->clickMenuItem('logout');
             });
         });
+    }
+
+    /**
+     * Test signup with a token plan
+     */
+    public function testSignupToken(): void
+    {
+        // Test the individual plan
+        Plan::where('title', 'individual')->update(['mode' => 'token']);
+
+        // Register some valid tokens
+        $tokens = ['1234567890', 'abcdefghijk'];
+        file_put_contents(storage_path('signup-tokens.txt'), implode("\n", $tokens));
+
+        $this->browse(function (Browser $browser) use ($tokens) {
+            $browser->visit(new Signup())
+                ->waitFor('@step0 .plan-individual button')
+                ->click('@step0 .plan-individual button')
+                // Step 1
+                ->whenAvailable('@step1', function ($browser) use ($tokens) {
+                    $browser->assertSeeIn('.card-title', 'Sign Up - Step 1/2')
+                        ->type('#signup_first_name', 'Test')
+                        ->type('#signup_last_name', 'User')
+                        ->assertMissing('#signup_email')
+                        ->type('#signup_token', '1234')
+                        // invalid token
+                        ->click('[type=submit]')
+                        ->waitFor('#signup_token.is-invalid')
+                        ->assertVisible('#signup_token + .invalid-feedback')
+                        ->assertFocused('#signup_token')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        // valid token
+                        ->type('#signup_token', $tokens[0])
+                        ->click('[type=submit]');
+                })
+                // Step 2
+                ->whenAvailable('@step3', function ($browser) {
+                    $domains = Domain::getPublicDomains();
+                    $domains_count = count($domains);
+
+                    $browser->assertSeeIn('.card-title', 'Sign Up - Step 2/2')
+                        ->assertElementsCount('select#signup_domain option', $domains_count, false)
+                        ->assertText('select#signup_domain option:nth-child(1)', $domains[0])
+                        ->assertValue('select#signup_domain option:nth-child(1)', $domains[0])
+                        ->type('#signup_login', 'signuptestdusk')
+                        ->type('#signup_password', '12345678')
+                        ->type('#signup_password_confirmation', '12345678')
+                        ->click('[type=submit]');
+                })
+                ->waitUntilMissing('@step3')
+                ->on(new Dashboard())
+                ->within(new Menu(), function ($browser) {
+                    $browser->clickMenuItem('logout');
+                });
+        });
+
+        $user = User::where('email', 'signuptestdusk@' . \config('app.domain'))->first();
+        $this->assertSame($tokens[0], $user->getSetting('signup_token'));
+        $this->assertSame(null, $user->getSetting('external_email'));
+
+        // Test the group plan
+        Plan::where('title', 'group')->update(['mode' => 'token']);
+
+        $this->browse(function (Browser $browser) use ($tokens) {
+            $browser->visit(new Signup())
+                ->waitFor('@step0 .plan-group button')
+                ->click('@step0 .plan-group button')
+                // Step 1
+                ->whenAvailable('@step1', function ($browser) use ($tokens) {
+                    $browser->assertSeeIn('.card-title', 'Sign Up - Step 1/2')
+                        ->type('#signup_first_name', 'Test')
+                        ->type('#signup_last_name', 'User')
+                        ->assertMissing('#signup_email')
+                        ->type('#signup_token', '1234')
+                        // invalid token
+                        ->click('[type=submit]')
+                        ->waitFor('#signup_token.is-invalid')
+                        ->assertVisible('#signup_token + .invalid-feedback')
+                        ->assertFocused('#signup_token')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        // valid token
+                        ->type('#signup_token', $tokens[1])
+                        ->click('[type=submit]');
+                })
+                // Step 2
+                ->whenAvailable('@step3', function ($browser) {
+                    $browser->assertSeeIn('.card-title', 'Sign Up - Step 2/2')
+                        ->type('input#signup_domain', 'user-domain-signup.com')
+                        ->type('#signup_login', 'admin')
+                        ->type('#signup_password', '12345678')
+                        ->type('#signup_password_confirmation', '12345678')
+                        ->click('[type=submit]');
+                })
+                ->waitUntilMissing('@step3')
+                ->on(new Dashboard())
+                ->within(new Menu(), function ($browser) {
+                    $browser->clickMenuItem('logout');
+                });
+        });
+
+        $user = User::where('email', 'admin@user-domain-signup.com')->first();
+        $this->assertSame($tokens[1], $user->getSetting('signup_token'));
+        $this->assertSame(null, $user->getSetting('external_email'));
     }
 
     /**

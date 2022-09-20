@@ -64,6 +64,10 @@ class Locale
             app()->setLocale($lang);
         }
 
+        // Allow skins to define/overwrite some localization
+        $theme = \config('app.theme');
+        \app('translator')->addNamespace('theme', \resource_path("themes/{$theme}/lang"));
+
         return $next($request);
     }
 }

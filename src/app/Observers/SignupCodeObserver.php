@@ -47,7 +47,7 @@ class SignupCodeObserver
         $code->expires_at = Carbon::now()->addHours($exp_hours);
         $code->ip_address = request()->ip();
 
-        if ($code->email) {
+        if ($code->email && strpos($code->email, '@')) {
             $parts = explode('@', $code->email);
 
             $code->local_part = $parts[0];

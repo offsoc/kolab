@@ -4,11 +4,11 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SignupVerificationEmail;
-use App\Jobs\SignupVerificationSMS;
 use App\Discount;
 use App\Domain;
 use App\Plan;
 use App\Rules\SignupExternalEmail;
+use App\Rules\SignupToken;
 use App\Rules\Password;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
@@ -39,11 +39,18 @@ class SignupController extends Controller
         // Use reverse order just to have individual on left, group on right ;)
         Plan::withEnvTenantContext()->orderByDesc('title')->get()
             ->map(function ($plan) use (&$plans) {
+                // Allow themes to set custom button label
+                $button = \trans('theme::app.planbutton-' . $plan->title);
+                if ($button == 'theme::app.planbutton-' . $plan->title) {
+                    $button = \trans('app.planbutton', ['plan' => $plan->name]);
+                }
+
                 $plans[] = [
                     'title' => $plan->title,
                     'name' => $plan->name,
-                    'button' => \trans('app.planbutton', ['plan' => $plan->name]),
+                    'button' => $button,
                     'description' => $plan->description,
+                    'mode' => $plan->mode ?: 'email',
                 ];
             });
 
@@ -62,49 +69,55 @@ class SignupController extends Controller
      */
     public function init(Request $request)
     {
-        // Check required fields
-        $v = Validator::make(
-            $request->all(),
-            [
-                'email' => 'required',
-                'first_name' => 'max:128',
-                'last_name' => 'max:128',
-                'plan' => 'nullable|alpha_num|max:128',
-                'voucher' => 'max:32',
-            ]
-        );
+        $rules = [
+            'first_name' => 'max:128',
+            'last_name' => 'max:128',
+            'voucher' => 'max:32',
+        ];
 
-        $is_phone = false;
-        $errors = $v->fails() ? $v->errors()->toArray() : [];
+        $plan = $this->getPlan();
 
-        // Validate user email (or phone)
-        if (empty($errors['email'])) {
-            if ($error = $this->validatePhoneOrEmail($request->email, $is_phone)) {
-                $errors['email'] = $error;
-            }
+        if ($plan->mode == 'token') {
+            $rules['token'] = ['required', 'string', new SignupToken()];
+        } else {
+            $rules['email'] = ['required', 'string', new SignupExternalEmail()];
         }
 
-        if (!empty($errors)) {
-            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        // Check required fields, validate input
+        $v = Validator::make($request->all(), $rules);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()->toArray()], 422);
         }
 
         // Generate the verification code
         $code = SignupCode::create([
-                'email' => $request->email,
+                'email' => $plan->mode == 'token' ? $request->token : $request->email,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
-                'plan' => $request->plan,
+                'plan' => $plan->title,
                 'voucher' => $request->voucher,
         ]);
 
-        // Send email/sms message
-        if ($is_phone) {
-            SignupVerificationSMS::dispatch($code);
+        $response = [
+            'status' => 'success',
+            'code' => $code->code,
+            'mode' => $plan->mode ?: 'email',
+        ];
+
+        if ($plan->mode == 'token') {
+            // Token verification, jump to the last step
+            $has_domain = $plan->hasDomain();
+
+            $response['short_code'] = $code->short_code;
+            $response['is_domain'] = $has_domain;
+            $response['domains'] = $has_domain ? [] : Domain::getPublicDomains();
         } else {
+            // External email verification, send an email message
             SignupVerificationEmail::dispatch($code);
         }
 
-        return response()->json(['status' => 'success', 'code' => $code->code]);
+        return response()->json($response);
     }
 
     /**
@@ -251,10 +264,15 @@ class SignupController extends Controller
             $code_data = $v->getData();
 
             $settings = [
-                'external_email' => $code_data->email,
                 'first_name' => $code_data->first_name,
                 'last_name' => $code_data->last_name,
             ];
+
+            if ($this->getPlan()->mode == 'token') {
+                $settings['signup_token'] = $code_data->email;
+            } else {
+                $settings['external_email'] = $code_data->email;
+            }
         }
 
         // Find the voucher discount
@@ -343,6 +361,8 @@ class SignupController extends Controller
             // Get the plan if specified and exists...
             if ($request->code && $request->code->plan) {
                 $plan = Plan::withEnvTenantContext()->where('title', $request->code->plan)->first();
+            } elseif ($request->plan) {
+                $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
             }
 
             // ...otherwise use the default plan
@@ -355,40 +375,6 @@ class SignupController extends Controller
         }
 
         return $request->plan;
-    }
-
-    /**
-     * Checks if the input string is a valid email address or a phone number
-     *
-     * @param string $input    Email address or phone number
-     * @param bool   $is_phone Will have been set to True if the string is valid phone number
-     *
-     * @return string Error message on validation error
-     */
-    protected static function validatePhoneOrEmail($input, &$is_phone = false): ?string
-    {
-        $is_phone = false;
-
-        $v = Validator::make(
-            ['email' => $input],
-            ['email' => ['required', 'string', new SignupExternalEmail()]]
-        );
-
-        if ($v->fails()) {
-            return $v->errors()->toArray()['email'][0];
-        }
-
-        // TODO: Phone number support
-/*
-        $input = str_replace(array('-', ' '), '', $input);
-
-        if (!preg_match('/^\+?[0-9]{9,12}$/', $input)) {
-            return \trans('validation.noemailorphone');
-        }
-
-        $is_phone = true;
-*/
-        return null;
     }
 
     /**

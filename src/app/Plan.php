@@ -19,6 +19,7 @@ use Spatie\Translatable\HasTranslations;
  * @property int            $discount_qty
  * @property int            $discount_rate
  * @property string         $id
+ * @property string         $mode           Plan signup mode (email|token)
  * @property string         $name
  * @property \App\Package[] $packages
  * @property datetime       $promo_from
@@ -37,6 +38,7 @@ class Plan extends Model
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'title',
+        'mode',
         'name',
         'description',
         // a start and end datetime for this promotion

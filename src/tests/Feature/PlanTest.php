@@ -107,6 +107,9 @@ class PlanTest extends TestCase
         $this->assertTrue($plan->cost() == $package_costs);
     }
 
+    /**
+     * Tests for Plan::tenant()
+     */
     public function testTenant(): void
     {
         $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
