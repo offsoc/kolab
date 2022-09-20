@@ -93,6 +93,18 @@
                                         </small>
                                     </div>
                                 </div>
+                                <div v-if="$root.hasPermission('beta')" class="row checkbox mb-3">
+                                    <label for="guam_enabled" class="col-sm-4 col-form-label">
+                                        {{ $t('user.imapproxy') }}
+                                        <sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup>
+                                    </label>
+                                    <div class="col-sm-8 pt-2">
+                                        <input type="checkbox" id="guam_enabled" name="guam_enabled" value="1" class="form-check-input d-block mb-2" :checked="user.config.guam_enabled">
+                                        <small id="guam-hint" class="text-muted">
+                                            {{ $t('user.imapproxy-text') }}
+                                        </small>
+                                    </div>
+                                </div>
                                 <div v-if="$root.hasPermission('beta')" class="row mb-3">
                                     <label for="limit_geo" class="col-sm-4 col-form-label">
                                         {{ $t('user.geolimit') }}
@@ -272,7 +284,12 @@
 
                 let post = this.$root.pick(this.user.config, ['limit_geo'])
 
-                post.greylist_enabled = $('#greylist_enabled').prop('checked') ? 1 : 0
+                const checklist = ['greylist_enabled', 'guam_enabled']
+                checklist.forEach(name => {
+                    if ($('#' + name).length) {
+                        post[name] = $('#' + name).prop('checked') ? 1 : 0
+                    }
+                })
 
                 axios.post('/api/v4/users/' + this.user_id + '/config', post)
                     .then(response => {

@@ -193,7 +193,7 @@ class NGINXController extends Controller
         // All checks passed
         switch ($request->headers->get('Auth-Protocol')) {
             case "imap":
-                return $this->authenticateIMAP($request, $user->getSetting('guam_enabled', false), $password);
+                return $this->authenticateIMAP($request, (bool) $user->getSetting('guam_enabled'), $password);
             case "smtp":
                 return $this->authenticateSMTP($request, $password);
             default:

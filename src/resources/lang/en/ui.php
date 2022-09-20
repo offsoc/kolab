@@ -461,6 +461,8 @@ return [
         'greylisting-text' => "Greylisting is a method of defending users against spam. Any incoming mail from an unrecognized sender "
             . "is temporarily rejected. The originating server should try again after a delay. "
             . "This time the email will be accepted. Spammers usually do not reattempt mail delivery.",
+        'imapproxy' => "IMAP proxy",
+        'imapproxy-text' => "Enables IMAP proxy that filters out non-mail groupware folders, so your IMAP clients do not see them.",
         'list-title' => "User accounts",
         'list-empty' => "There are no users in this account.",
         'managed-by' => "Managed by",

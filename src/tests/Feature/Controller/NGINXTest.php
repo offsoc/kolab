@@ -18,7 +18,7 @@ class NGINXTest extends TestCase
         \App\AuthAttempt::where('user_id', $john->id)->delete();
         $john->setSettings([
                 'limit_geo' => null,
-                'guam_enabled' => false,
+                'guam_enabled' => null,
         ]);
         \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
@@ -35,7 +35,7 @@ class NGINXTest extends TestCase
         \App\AuthAttempt::where('user_id', $john->id)->delete();
         $john->setSettings([
                 'limit_geo' => null,
-                'guam_enabled' => false,
+                'guam_enabled' => null,
         ]);
         \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
@@ -131,7 +131,7 @@ class NGINXTest extends TestCase
 
 
         // Guam
-        $john->setSettings(['guam_enabled' => true]);
+        $john->setSettings(['guam_enabled' => 'true']);
 
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);

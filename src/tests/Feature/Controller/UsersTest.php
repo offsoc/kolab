@@ -45,6 +45,7 @@ class UsersTest extends TestCase
         $wallet->discount()->dissociate();
         $wallet->settings()->whereIn('key', ['mollie_id', 'stripe_id'])->delete();
         $wallet->save();
+        $user->settings()->whereIn('key', ['greylist_enabled', 'guam_enabled'])->delete();
         $user->status |= User::STATUS_IMAP_READY;
         $user->save();
     }
@@ -75,7 +76,7 @@ class UsersTest extends TestCase
         $wallet->discount()->dissociate();
         $wallet->settings()->whereIn('key', ['mollie_id', 'stripe_id'])->delete();
         $wallet->save();
-        $user->settings()->whereIn('key', ['greylist_enabled'])->delete();
+        $user->settings()->whereIn('key', ['greylist_enabled', 'guam_enabled'])->delete();
         $user->status |= User::STATUS_IMAP_READY;
         $user->save();
 
@@ -297,6 +298,7 @@ class UsersTest extends TestCase
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue($json['config']['greylist_enabled']);
+        $this->assertFalse($json['config']['guam_enabled']);
         $this->assertSame([], $json['skus']);
         $this->assertSame([], $json['aliases']);
         // Values below are tested by Unit tests
@@ -647,6 +649,7 @@ class UsersTest extends TestCase
         $john = $this->getTestUser('john@kolab.org');
 
         $john->setSetting('greylist_enabled', null);
+        $john->setSetting('guam_enabled', null);
         $john->setSetting('password_policy', null);
         $john->setSetting('max_password_age', null);
 
@@ -686,6 +689,7 @@ class UsersTest extends TestCase
         // Test some valid data
         $post = [
             'greylist_enabled' => 1,
+            'guam_enabled' => 1,
             'password_policy' => 'min:10,max:255,upper,lower,digit,special',
             'max_password_age' => 6,
         ];
@@ -700,12 +704,13 @@ class UsersTest extends TestCase
         $this->assertSame('User settings updated successfully.', $json['message']);
 
         $this->assertSame('true', $john->getSetting('greylist_enabled'));
+        $this->assertSame('true', $john->getSetting('guam_enabled'));
         $this->assertSame('min:10,max:255,upper,lower,digit,special', $john->getSetting('password_policy'));
         $this->assertSame('6', $john->getSetting('max_password_age'));
 
         // Test some valid data, acting as another account controller
         $ned = $this->getTestUser('ned@kolab.org');
-        $post = ['greylist_enabled' => 0, 'password_policy' => 'min:10,max:255,upper,last:1'];
+        $post = ['greylist_enabled' => 0, 'guam_enabled' => 0, 'password_policy' => 'min:10,max:255,upper,last:1'];
         $response = $this->actingAs($ned)->post("/api/v4/users/{$john->id}/config", $post);
         $response->assertStatus(200);
 
@@ -716,6 +721,7 @@ class UsersTest extends TestCase
         $this->assertSame('User settings updated successfully.', $json['message']);
 
         $this->assertSame('false', $john->fresh()->getSetting('greylist_enabled'));
+        $this->assertSame(null, $john->fresh()->getSetting('guam_enabled'));
         $this->assertSame('min:10,max:255,upper,last:1', $john->fresh()->getSetting('password_policy'));
     }
 
