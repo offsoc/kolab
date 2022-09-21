@@ -1,0 +1,7 @@
+#!/bin/bash
+
+MYSQL_PWD=$MARIADB_ROOT_PASSWORD mysql --protocol=socket -uroot -hlocalhost --socket="/run/mysqld/mysqld.sock" << EOF
+CREATE DATABASE IF NOT EXISTS ${DB_HKCCP_DATABASE};
+GRANT ALL PRIVILEGES ON ${DB_HKCCP_DATABASE}.* TO '${DB_HKCCP_USERNAME}'@'%' IDENTIFIED BY '${DB_HKCCP_PASSWORD}';
+FLUSH PRIVILEGES;
+EOF

@@ -73,15 +73,20 @@ services:
   mariadb:
     container_name: kolab-mariadb
     environment:
-      MYSQL_ROOT_PASSWORD: Welcome2KolabSystems
-      TZ: "+02:00"
+      - MARIADB_ROOT_PASSWORD=Welcome2KolabSystems
+      - TZ="+02:00"
+      - DB_HKCCP_DATABASE=${DB_DATABASE}
+      - DB_HKCCP_USERNAME=${DB_USERNAME}
+      - DB_HKCCP_PASSWORD=${DB_PASSWORD}
     healthcheck:
       interval: 10s
       test: test -e /var/run/mysqld/mysqld.sock
       timeout: 5s
       retries: 30
-    image: mariadb
-    network_mode: host
+    image: mariadb:latest
+    volumes:
+      - ./docker/mariadb/mysql-init/:/docker-entrypoint-initdb.d/
+      - mariadb:/var/lib/mysql
   haproxy:
     build:
       context: ./docker/haproxy/
@@ -242,3 +247,5 @@ services:
       - ./meet/server:/src/meet/:ro
       - ./docker/certs/meet.${APP_WEBSITE_DOMAIN}.cert:/etc/pki/tls/certs/meet.${APP_WEBSITE_DOMAIN}.cert
       - ./docker/certs/meet.${APP_WEBSITE_DOMAIN}.key:/etc/pki/tls/private/meet.${APP_WEBSITE_DOMAIN}.key
+volumes:
+  mariadb:

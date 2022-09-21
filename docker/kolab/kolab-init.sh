@@ -13,7 +13,6 @@ pushd /root/utils/
 ./03-setup-kolab.sh && echo "03 done"
 ./04-reset-mysql-kolab-password.sh && echo "04 done"
 ./05-replace-localhost.sh && echo "05 done"
-./06-mysql-for-kolabdev.sh && echo "06 done"
 ./07-adjust-base-dns.sh && echo "07 done"
 ./08-disable-amavisd.sh && echo "08 done"
 ./09-enable-debugging.sh && echo "09 done"
