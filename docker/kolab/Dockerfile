@@ -63,8 +63,15 @@ RUN mkdir -p /imapdata/{spool,lib} && \
     ln -s /imapdata/lib /var/lib/imap && \
     chmod -R 777 /imapdata
 
+RUN mkdir -p /ldapdata/{config,ssca,run} /var/run/dirsrv && \
+    ln -s /ldapdata/config /etc/dirsrv/slapd-localhost && \
+    ln -s /ldapdata/ssca /etc/dirsrv/ssca && \
+    ln -s /ldapdata/run /var/run/dirsrv && \
+    chmod -R 777 /ldapdata /etc/dirsrv
+
 VOLUME [ "/sys/fs/cgroup" ]
 VOLUME [ "/imapdata" ]
+VOLUME [ "/ldapdata" ]
 
 WORKDIR /root/
 
