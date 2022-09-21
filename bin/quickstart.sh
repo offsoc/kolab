@@ -30,8 +30,13 @@ export DOCKER_BUILDKIT=0
 docker pull docker.io/kolab/centos7:latest
 
 docker-compose down --remove-orphans
-src/artisan octane:stop >/dev/null 2>&1 || :
-src/artisan horizon:terminate >/dev/null 2>&1 || :
+docker volume rm kolab_mariadb || :
+docker volume rm kolab_imap || :
+docker volume rm kolab_ldap || :
+
+# FIXME needs access to redis I think
+# src/artisan octane:stop >/dev/null 2>&1 || :
+# src/artisan horizon:terminate >/dev/null 2>&1 || :
 
 docker-compose build coturn kolab mariadb meet pdns proxy redis haproxy
 
