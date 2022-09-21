@@ -66,9 +66,9 @@ services:
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
       - ./docker/certs/ca.cert:/etc/pki/tls/certs/ca.cert:ro
       - ./docker/certs/ca.cert:/etc/pki/ca-trust/source/anchors/ca.cert:ro
-      - ./docker/certs/kolab.hosted.com.cert:/etc/pki/tls/certs/kolab.hosted.com.cert
-      - ./docker/certs/kolab.hosted.com.chain.pem:/etc/pki/tls/certs/kolab.hosted.com.chain.pem
-      - ./docker/certs/kolab.hosted.com.key:/etc/pki/tls/certs/kolab.hosted.com.key
+      - ./docker/certs/kolab.hosted.com.cert:${KOLAB_SSL_CERTIFICATE:?err}
+      - ./docker/certs/kolab.hosted.com.chain.pem:${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?err}
+      - ./docker/certs/kolab.hosted.com.key:${KOLAB_SSL_CERTIFICATE_KEY:?err}
       - ./docker/kolab/utils:/root/utils:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - imap:/imapdata
