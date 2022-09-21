@@ -39,6 +39,8 @@ RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && 
     ln -s /etc/systemd/system/kolab-vlv.service \
         /etc/systemd/system/multi-user.target.wants/kolab-vlv.service
 
+RUN dnf -y install iputils vim-enhanced
+
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
 
 RUN sed -i -r -e 's/^Listen 80$/Listen 9080/g' /etc/httpd/conf/httpd.conf
@@ -49,7 +51,20 @@ RUN chmod 750 /usr/local/sbin/kolab-init.sh
 COPY kolab-vlv.sh /usr/local/sbin/
 RUN chmod 750 /usr/local/sbin/kolab-vlv.sh
 
+COPY kolab.conf /etc/kolab/kolab.conf
+COPY cyrus.conf /etc/cyrus.conf
+COPY imapd.conf /etc/imapd.conf
+COPY imapd.annotations.conf /etc/imapd.annotations.conf
+COPY guam.conf /etc/guam/sys.config
+
+
+RUN mkdir -p /imapdata/{spool,lib} && \
+    ln -s /imapdata/spool /var/spool/imap && \
+    ln -s /imapdata/lib /var/lib/imap && \
+    chmod -R 777 /imapdata
+
 VOLUME [ "/sys/fs/cgroup" ]
+VOLUME [ "/imapdata" ]
 
 WORKDIR /root/
 

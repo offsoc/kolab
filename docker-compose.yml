@@ -29,7 +29,7 @@ services:
     extra_hosts:
       - "kolab.mgmt.com:127.0.0.1"
     environment:
-      - DB_HOST=${DB_HOST}
+      - DB_HOST=mariadb
       - DB_ROOT_PASSWORD=Welcome2KolabSystems
       - DB_HKCCP_DATABASE=${DB_DATABASE}
       - DB_HKCCP_USERNAME=${DB_USERNAME}
@@ -53,7 +53,8 @@ services:
       retries: 30
     hostname: kolab.mgmt.com
     image: kolab
-    network_mode: host
+    networks:
+      - kolab
     tmpfs:
       - /run
       - /tmp
@@ -70,6 +71,7 @@ services:
       - ./docker/certs/kolab.hosted.com.key:/etc/pki/tls/certs/kolab.hosted.com.key
       - ./docker/kolab/utils:/root/utils:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - imap:/imapdata
   mariadb:
     container_name: kolab-mariadb
     environment:
@@ -84,6 +86,8 @@ services:
       timeout: 5s
       retries: 30
     image: mariadb:latest
+    networks:
+      - kolab
     volumes:
       - ./docker/mariadb/mysql-init/:/docker-entrypoint-initdb.d/
       - mariadb:/var/lib/mysql
@@ -122,7 +126,8 @@ services:
       retries: 30
     hostname: pdns
     image: apheleia/kolab-pdns
-    network_mode: host
+    networks:
+      - kolab
     tmpfs:
       - /run
       - /tmp
@@ -146,7 +151,8 @@ services:
     container_name: kolab-proxy
     hostname: ${APP_WEBSITE_DOMAIN:?err}
     image: kolab-proxy
-    network_mode: host
+    networks:
+      - kolab
     tmpfs:
       - /run
       - /tmp
@@ -156,6 +162,8 @@ services:
     volumes:
       - ./docker/certs/:/etc/certs/:ro
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
+    ports:
+      - "443:443"
   redis:
     build:
       context: ./docker/redis/
@@ -167,9 +175,12 @@ services:
     container_name: kolab-redis
     hostname: redis
     image: redis
-    network_mode: host
+    networks:
+      - kolab
     volumes:
       - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    # ports:
+    #   - "6379:6379"
   swoole:
     build:
       context: ./docker/swoole/
@@ -188,9 +199,14 @@ services:
     depends_on:
       kolab:
         condition: service_healthy
-    network_mode: host
+      redis:
+        condition: service_healthy
+    networks:
+      - kolab
     volumes:
       - ./src:/src/kolabsrc.orig:ro
+    ports:
+      - "8000:8000"
   tests:
     build:
       context: ./docker/tests/
@@ -199,7 +215,8 @@ services:
     depends_on:
       kolab:
         condition: service_healthy
-    network_mode: host
+    networks:
+      - kolab
     volumes:
       - ./src:/src/kolabsrc.orig:ro
   worker:
@@ -210,7 +227,8 @@ services:
       - kolab
     hostname: worker
     image: kolab-worker
-    network_mode: host
+    networks:
+      - kolab
     tmpfs:
       - /run
       - /tmp
@@ -247,5 +265,10 @@ services:
       - ./meet/server:/src/meet/:ro
       - ./docker/certs/meet.${APP_WEBSITE_DOMAIN}.cert:/etc/pki/tls/certs/meet.${APP_WEBSITE_DOMAIN}.cert
       - ./docker/certs/meet.${APP_WEBSITE_DOMAIN}.key:/etc/pki/tls/private/meet.${APP_WEBSITE_DOMAIN}.key
+networks:
+  kolab:
+    driver: bridge
 volumes:
   mariadb:
+  imap:
+  ldap:

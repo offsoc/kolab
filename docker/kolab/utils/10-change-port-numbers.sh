@@ -7,31 +7,8 @@ cp /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem /etc/pki/tls/private/postfix.pem
 chown postfix:mail /etc/pki/tls/private/postfix.pem
 chmod 655 /etc/pki/tls/private/postfix.pem
 
-sed -i "s/tls_server_cert:.*/tls_server_cert: \/etc\/pki\/cyrus-imapd\/cyrus-imapd.bundle.pem/" /etc/imapd.conf
-sed -i "s/tls_server_key:.*/tls_server_key: \/etc\/pki\/cyrus-imapd\/cyrus-imapd.bundle.pem/" /etc/imapd.conf
-sed -i "s/tls_server_ca_file:.*/tls_server_ca_file: \/etc\/pki\/cyrus-imapd\/cyrus-imapd.bundle.pem/" /etc/imapd.conf
-
 sed -i "s/smtpd_tls_key_file =.*/smtpd_tls_key_file = \/etc\/pki\/tls\/private\/postfix.pem/" /etc/postfix/main.cf
 sed -i "s/smtpd_tls_cert_file =.*/smtpd_tls_cert_file = \/etc\/pki\/tls\/private\/postfix.pem/" /etc/postfix/main.cf
-
-sed -i -r \
-    -e '/allowplaintext/ a\
-guam_allowplaintext: yes' \
-    -e '/allowplaintext/ a\
-nginx_allowplaintext: yes' \
-    /etc/imapd.conf
-
-sed -i \
-    -e '/SERVICES/ a\
-    nginx cmd="imapd" listen=127.0.0.1:12143 prefork=1' \
-    -e '/SERVICES/ a\
-    guam cmd="imapd" listen=127.0.0.1:13143 prefork=1' \
-    -e '/SERVICES/ a\
-    imap cmd="imapd" listen=127.0.0.1:11143 prefork=1' \
-    -e 's/listen="127.0.0.1:9993"/listen=127.0.0.1:11993/g' \
-    /etc/cyrus.conf
-
-systemctl restart cyrus-imapd
 
 # Remove the submission block, by matching from submission until the next empty line
 sed -i -e '/submission          inet/,/^$/d' /etc/postfix/master.cf
@@ -67,97 +44,3 @@ cat >> /etc/postfix/master.cf << EOF
 EOF
 
 systemctl restart postfix
-
-cat > /etc/guam/sys.config << EOF
-%% Example configuration for Guam.
-[
-    {
-        kolab_guam, [
-            {
-                imap_servers, [
-                    {
-                        imap, [
-                            { host, "127.0.0.1" },
-                            { port, 13143 },
-                            { tls, no }
-                        ]
-                    },
-                    {
-                        imaps, [
-                            { host, "127.0.0.1" },
-                            { port, 11993 },
-                            { tls, true }
-                        ]
-                    }
-                ]
-            },
-            {
-                listeners, [
-                    {
-                        imap, [
-                            { port, 9143 },
-                            { imap_server, imap },
-                            {
-                                rules, [
-                                    { filter_groupware, [] }
-                                ]
-                            },
-                            {
-                                tls_config, [
-                                    { certfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" },
-                                    { keyfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" },
-                                    { cacertfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        imaps, [
-                            { port, 9993 },
-                            { implicit_tls, true },
-                            { imap_server, imaps },
-                            {
-                                rules, [
-                                    { filter_groupware, [] }
-                                ]
-                            },
-                            {
-                                tls_config, [
-                                    { certfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" },
-                                    { keyfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" },
-                                    { cacertfile, "/etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem" }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    },
-
-    {
-        lager, [
-            {
-                handlers, [
-                    { lager_console_backend, warning },
-                    { lager_file_backend, [ { file, "log/error.log"}, { level, error } ] },
-                    { lager_file_backend, [ { file, "log/console.log"}, { level, info } ] }
-                ]
-            }
-        ]
-    },
-
-    %% SASL config
-    {
-        sasl, [
-            { sasl_error_logger, { file, "log/sasl-error.log" } },
-            { errlog_type, error },
-            { error_logger_mf_dir, "log/sasl" },      % Log directory
-            { error_logger_mf_maxbytes, 10485760 },   % 10 MB max file size
-            { error_logger_mf_maxfiles, 5 }           % 5 files max
-        ]
-    }
-].
-EOF
-
-systemctl restart guam
