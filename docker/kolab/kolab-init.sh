@@ -15,15 +15,7 @@ pushd /root/utils/
 ./05-adjust-configs.sh && echo "05 done"
 ./10-reset-kolab-service-password.sh && echo "10 done"
 ./11-reset-cyrus-admin-password.sh && echo "11 done"
-./12-create-hosted-kolab-service.sh && echo "12 done"
-./13-create-ou-domains.sh && echo "13 done"
-./14-create-management-domain.sh && echo "14 done"
-./15-create-hosted-domain.sh && echo "15 done"
-./16-remove-cn-kolab-cn-config.sh && echo "16 done"
-./17-remove-hosted-service-access-from-mgmt-domain.sh && echo "17 done"
-./20-add-alias-attribute-index.sh && echo "20 done"
-# FIXME we can only create the resource once the owner exists
-#./22-create-resource.sh && echo "22 done"
+./13-setup-ldap.sh && echo "13 done"
 ./23-patch-system.sh && echo "23 done"
 
 touch /tmp/kolab-init.done

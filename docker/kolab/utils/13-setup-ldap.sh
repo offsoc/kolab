@@ -2,6 +2,44 @@
 
 . ./settings.sh
 
+# Create hosted kolab service
+(
+    echo "dn: uid=hosted-kolab-service,ou=Special Users,${rootdn}"
+    echo "objectclass: top"
+    echo "objectclass: inetorgperson"
+    echo "objectclass: person"
+    echo "uid: hosted-kolab-service"
+    echo "cn: Hosted Kolab Service Account"
+    echo "sn: Service Account"
+    echo "givenname: Hosted Kolab"
+    echo "userpassword: ${hosted_kolab_service_pw}"
+    echo ""
+) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
+
+# Create ou domain
+(
+    echo "dn: ou=Domains,${rootdn}"
+    echo "ou: Domains"
+    echo "objectClass: top"
+    echo "objectClass: organizationalunit"
+    echo ""
+) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
+
+# Create management domain
+(
+    echo "dn: associateddomain=${domain},${domain_base_dn}"
+    echo "aci: (targetattr = \"*\")(version 3.0;acl \"Deny Rest\";deny (all)(userdn != \"ldap:///uid=kolab-service,ou=Special Users,${rootdn} || ldap:///${rootdn}??sub?(objectclass=*)\");)"
+    echo "aci: (targetattr = \"*\")(version 3.0;acl \"Deny Hosted Kolab\";deny (all)(userdn = \"ldap:///uid=hosted-kolab-service,ou=Special Users,${rootdn}\");)"
+    echo "inetDomainStatus: active"
+    echo "objectClass: top"
+    echo "objectClass: domainrelatedobject"
+    echo "objectClass: inetdomain"
+    echo "associatedDomain: ${domain}"
+    echo ""
+) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
+
+
+# Create hosted domains
  (
      echo "dn: associateddomain=${hosted_domain},${domain_base_dn}"
      echo "objectclass: top"
@@ -114,3 +152,76 @@
     echo ""
 
 ) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
+
+
+# Remove cn kolab cn config
+(
+    echo "associateddomain=${domain},cn=kolab,cn=config"
+    echo "cn=kolab,cn=config"
+) | ldapdelete -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}" -c
+
+
+# Remove hosted service access from mgmt domain
+(
+    echo "dn: associateddomain=${domain},ou=Domains,${rootdn}"
+    echo "changetype: modify"
+    echo "replace: aci"
+    echo "aci: (targetattr = \"*\")(version 3.0;acl \"Deny Rest\";deny (all)(userdn != \"ldap:///uid=kolab-service,ou=Special Users,${rootdn} || ldap:///${rootdn}??sub?(objectclass=*)\");)"
+    echo "aci: (targetattr = \"*\")(version 3.0;acl \"Deny Hosted Kolab\";deny (all)(userdn = \"ldap:///uid=hosted-kolab-service,ou=Special Users,${rootdn}\");)"
+    echo ""
+) | ldapmodify -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
+
+
+# Add alias attribute index
+#
+export index_attr=alias
+
+(
+    echo "dn: cn=${index_attr},cn=index,cn=${hosted_domain_db},cn=ldbm database,cn=plugins,cn=config"
+    echo "objectclass: top"
+    echo "objectclass: nsindex"
+    echo "cn: ${index_attr}"
+    echo "nsSystemIndex: false"
+    echo "nsindextype: pres"
+    echo "nsindextype: eq"
+    echo "nsindextype: sub"
+
+) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}" -c
+
+
+(
+    echo "dn: cn=${hosted_domain_db} ${index_attr} index,cn=index,cn=tasks,cn=config"
+    echo "objectclass: top"
+    echo "objectclass: extensibleObject"
+    echo "cn: ${hosted_domain_db} ${index_attr} index"
+    echo "nsinstance: ${hosted_domain_db}"
+    echo "nsIndexAttribute: ${index_attr}:pres"
+    echo "nsIndexAttribute: ${index_attr}:eq"
+    echo "nsIndexAttribute: ${index_attr}:sub"
+    echo ""
+) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}" -c
+
+ldap_complete=0
+
+while [ ${ldap_complete} -ne 1 ]; do
+    result=$(
+            ldapsearch \
+                -x \
+                -h "${ldap_host}" \
+                -D "${ldap_binddn}" \
+                -w "${ldap_bindpw}" \
+                -c \
+                -LLL \
+                -b "cn=${hosted_domain_db} ${index_attr} index,cn=index,cn=tasks,cn=config" \
+                '(!(nstaskexitcode=0))' \
+                -s base 2>/dev/null
+        )
+    if [ -z "$result" ]; then
+        ldap_complete=1
+        echo ""
+    else
+        echo -n "."
+        sleep 1
+    fi
+done
+
