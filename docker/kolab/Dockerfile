@@ -15,6 +15,7 @@ RUN dnf config-manager --set-enabled powertools && \
         epel-release epel-next-release && \
     dnf -y module enable 389-directory-server:stable/default && \
     dnf -y module enable mariadb:10.3 && \
+    dnf -y install iputils vim-enhanced bind-utils && \
     dnf clean all
 RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
 
@@ -28,28 +29,44 @@ RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
 COPY kolab-setenv.service /etc/systemd/system/kolab-setenv.service
-COPY kolab-vlv.service /etc/systemd/system/kolab-vlv.service
 COPY utils /root/utils
 
 RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && \
     ln -s /etc/systemd/system/kolab-init.service \
         /etc/systemd/system/multi-user.target.wants/kolab-init.service && \
     ln -s /etc/systemd/system/kolab-setenv.service \
-        /etc/systemd/system/multi-user.target.wants/kolab-setenv.service && \
-    ln -s /etc/systemd/system/kolab-vlv.service \
-        /etc/systemd/system/multi-user.target.wants/kolab-vlv.service
+        /etc/systemd/system/multi-user.target.wants/kolab-setenv.service
+
 
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
-
 RUN sed -i -r -e 's/^Listen 80$/Listen 9080/g' /etc/httpd/conf/httpd.conf
 #RUN sed -i -r -e 's/^Listen 443$/Listen 9443/g' /etc/httpd/conf/httpd.conf
 
 COPY kolab-init.sh /usr/local/sbin/
 RUN chmod 750 /usr/local/sbin/kolab-init.sh
-COPY kolab-vlv.sh /usr/local/sbin/
-RUN chmod 750 /usr/local/sbin/kolab-vlv.sh
+
+COPY kolab.conf /etc/kolab/kolab.conf
+COPY cyrus.conf /etc/cyrus.conf
+COPY imapd.conf /etc/imapd.conf
+COPY imapd.annotations.conf /etc/imapd.annotations.conf
+COPY guam.conf /etc/guam/sys.config
+
+
+RUN mkdir -p /imapdata/{spool,lib} && \
+    rm -rf /var/spool/imap && ln -s /imapdata/spool /var/spool/imap && \
+    mv /var/lib/imap /var/lib/imap-bak && ln -s /imapdata/lib /var/lib/imap && \
+    chmod -R 777 /imapdata && \
+    chown cyrus:mail /var/spool/imap /var/lib/imap
+
+RUN mkdir -p /ldapdata/{config,ssca,run} /var/run/dirsrv && \
+    ln -s /ldapdata/config /etc/dirsrv/slapd-kolab && \
+    ln -s /ldapdata/ssca /etc/dirsrv/ssca && \
+    ln -s /ldapdata/run /var/run/dirsrv && \
+    chmod -R 777 /ldapdata /etc/dirsrv
 
 VOLUME [ "/sys/fs/cgroup" ]
+VOLUME [ "/imapdata" ]
+VOLUME [ "/ldapdata" ]
 
 WORKDIR /root/
 

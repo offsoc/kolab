@@ -1,7 +1,6 @@
-FROM fedora:34
+FROM fedora:35
 
 ENV container docker
-ENV SYSTEMD_PAGER=''
 
 RUN dnf -y install \
     --setopt 'tsflags=nodocs' \
@@ -12,16 +11,15 @@ RUN dnf -y install \
     net-tools \
     procps-ng \
     redis \
-    suricata \
     vim-enhanced \
     wget \
     which && \
     dnf clean all
 
-COPY redis.conf /etc/redis.conf
-
-RUN systemctl enable redis
+COPY redis.conf /etc/redis/redis.conf
 
 WORKDIR /root/
 
-CMD ["/usr/bin/redis-server"]
+CMD ["/usr/bin/redis-server", "/etc/redis/redis.conf"]
+
+EXPOSE 6379/tcp

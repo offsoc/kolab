@@ -3,13 +3,13 @@
 export rootdn=${LDAP_ADMIN_ROOT_DN:-"dc=mgmt,dc=com"}
 export domain=${DOMAIN:-"mgmt.com"}
 export domain_db=${DOMAIN_DB:-"mgmt_com"}
-export ldap_host=${LDAP_HOST:-"127.0.0.1"}
+export ldap_host=${LDAP_HOST}
 export ldap_binddn=${LDAP_ADMIN_BIND_DN:-"cn=Directory Manager"}
 export ldap_bindpw=${LDAP_ADMIN_BIND_PW:-"Welcome2KolabSystems"}
 
 export cyrus_admin=${IMAP_ADMIN_LOGIN:-"cyrus-admin"}
 
-export imap_host=${IMAP_HOST:-"127.0.0.1"}
+export imap_host=${IMAP_HOST}
 export cyrus_admin_pw=${IMAP_ADMIN_PASSWORD:-"Welcome2KolabSystems"}
 
 export kolab_service_pw=${LDAP_SERVICE_BIND_PW:-"Welcome2KolabSystems"}

@@ -26,4 +26,4 @@ STOPSIGNAL SIGTERM
 
 CMD ["nginx", "-g", "daemon off;"]
 
-EXPOSE 80/tcp 443/tcp 110/tcp 143/tcp 993/tcp 995/tcp
+EXPOSE 80/tcp 443/tcp 465/tcp 587/tcp 143/tcp 144/tcp 993/tcp

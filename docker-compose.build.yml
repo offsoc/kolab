@@ -1,0 +1,12 @@
+version: '3'
+services:
+  swoole:
+    build:
+      context: ./docker/swoole/
+    container_name: kolab-swoole
+    image: apheleia/swoole:4.8.x
+  tests:
+    build:
+      context: ./docker/tests/
+    container_name: kolab-tests
+    image: kolab-tests
