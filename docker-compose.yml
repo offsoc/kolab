@@ -29,6 +29,9 @@ services:
     extra_hosts:
       - "kolab.mgmt.com:127.0.0.1"
     environment:
+      - LDAP_HOST=127.0.0.1
+      - LDAP_ADMIN_BIND_DN="cn=Directory Manager"
+      - LDAP_ADMIN_BIND_PW=Welcome2KolabSystems
       - DB_HOST=mariadb
       - DB_ROOT_PASSWORD=Welcome2KolabSystems
       - DB_HKCCP_DATABASE=${DB_DATABASE}
