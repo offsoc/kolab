@@ -14,6 +14,15 @@ class CreatePowerDNSTables extends Migration
      */
     public function up()
     {
+        //Drop the tables from the mysql initialization
+        Schema::dropIfExists('powerdns_domains');
+        Schema::dropIfExists('powerdns_records');
+        Schema::dropIfExists('powerdns_masters');
+        Schema::dropIfExists('powerdns_comments');
+        Schema::dropIfExists('powerdns_domain_settings');
+        Schema::dropIfExists('powerdns_cryptokeys');
+        Schema::dropIfExists('powerdns_tsigkeys');
+
         Schema::create(
             'powerdns_domains',
             function (Blueprint $table) {
