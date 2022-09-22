@@ -6,9 +6,9 @@ ENV SYSTEMD_PAGER=''
 RUN dnf -y install \
     --setopt 'tsflags=nodocs' \
     bind-utils \
-    cronie \
     iproute \
     iptables \
+    iputils \
     net-tools \
     pdns \
     pdns-backend-mysql \
@@ -23,7 +23,7 @@ RUN dnf -y install \
 COPY pdns.conf /etc/pdns/pdns.conf
 COPY recursor.conf /etc/pdns-recursor/recursor.conf
 
-RUN systemctl enable pdns  && systemctl enable pdns-recursor
+RUN systemctl disable systemd-resolved && systemctl enable pdns  && systemctl enable pdns-recursor
 
 # This is how we could run pdns without systemd
 # ENV PDNS_guardian=yes \
@@ -34,4 +34,4 @@ RUN systemctl enable pdns  && systemctl enable pdns-recursor
 # CMD ["/usr/sbin/pdns_server", "--guardian=no", "--daemon=no", "--disable-syslog", "--log-timestamp=no", "--write-pid=no"]
 CMD ["/lib/systemd/systemd", "--system"]
 
-EXPOSE 9953 9953/udp
+EXPOSE 53 53/udp

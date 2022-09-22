@@ -26,6 +26,8 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
+      pdns:
+        condition: service_healthy
     extra_hosts:
       - "kolab.mgmt.com:127.0.0.1"
     environment:
@@ -54,6 +56,9 @@ services:
       test: test -f /tmp/kolab-init.done
       timeout: 5s
       retries: 30
+    # This makes docker's dns, resolve via pdns for this container.
+    # Please note it does not affect /etc/resolv.conf
+    dns: 172.18.0.11
     hostname: kolab.mgmt.com
     image: kolab
     networks:
@@ -121,6 +126,7 @@ services:
     build:
       context: ./docker/pdns/
     container_name: kolab-pdns
+    hostname: pdns
     depends_on:
       mariadb:
         condition: service_healthy
@@ -129,10 +135,10 @@ services:
       test: "systemctl status pdns || exit 1"
       timeout: 5s
       retries: 30
-    hostname: pdns
-    image: apheleia/kolab-pdns
+    image: kolab-pdns
     networks:
-      - kolab
+      kolab:
+        ipv4_address: 172.18.0.11
     tmpfs:
       - /run
       - /tmp
@@ -273,6 +279,9 @@ services:
 networks:
   kolab:
     driver: bridge
+    ipam:
+      config:
+        - subnet: "172.18.0.0/24"
 volumes:
   mariadb:
   imap:
