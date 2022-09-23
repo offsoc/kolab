@@ -1,9 +1,0 @@
-[Unit]
-Description=Kolab VLV and SSS Service
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/sbin/kolab-vlv.sh
-
-[Install]
-WantedBy=multi-user.target

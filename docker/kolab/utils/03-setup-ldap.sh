@@ -239,5 +239,9 @@ else
             sleep 1
         fi
     done
+
+    ./50-add-vlv-searches.sh
+    ./51-add-vlv-indexes.sh
+    ./52-run-vlv-index-tasks.sh
 fi
 
