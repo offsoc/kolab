@@ -162,6 +162,8 @@ services:
     container_name: kolab-proxy
     hostname: ${APP_WEBSITE_DOMAIN:?err}
     image: kolab-proxy
+    extra_hosts:
+      - "meet:${MEET_LISTENING_HOST}"
     networks:
       - kolab
     tmpfs:
@@ -174,7 +176,12 @@ services:
       - ./docker/certs/:/etc/certs/:ro
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
     ports:
+      # - "80:80"
       - "443:443"
+      - "465:465"
+      - "587:587"
+      - "143:143"
+      - "993:993"
   redis:
     build:
       context: ./docker/redis/
@@ -254,13 +261,13 @@ services:
       context: ./docker/meet/
     healthcheck:
       interval: 10s
-      test: "curl --insecure -H 'X-AUTH-TOKEN: ${MEET_SERVER_TOKEN}' --fail https://localhost:12443/meetmedia/api/health || exit 1"
+      test: "curl --insecure -H 'X-AUTH-TOKEN: ${MEET_SERVER_TOKEN}' --fail https://${MEET_LISTENING_HOST}:12443/meetmedia/api/health || exit 1"
       timeout: 5s
       retries: 30
     environment:
       - WEBRTC_LISTEN_IP=${MEET_WEBRTC_LISTEN_IP:?err}
       - PUBLIC_DOMAIN=${MEET_PUBLIC_DOMAIN:?err}
-      - LISTENING_HOST=0.0.0.0
+      - LISTENING_HOST=${MEET_LISTENING_HOST:?err}
       - LISTENING_PORT=12443
       - TURN_SERVER=${MEET_TURN_SERVER}
       - TURN_STATIC_SECRET=${COTURN_STATIC_SECRET}
