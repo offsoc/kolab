@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cp -av /bin/true /usr/sbin/ds_systemd_ask_password_acl
-
 pushd /root/utils/
 
 ./01-reverse-etc-hosts.sh && echo "01 done"

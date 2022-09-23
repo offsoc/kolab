@@ -2,6 +2,8 @@
 
 . ./settings.sh
 
+cp -av /bin/true /usr/sbin/ds_systemd_ask_password_acl
+
 if [ -d "/var/lib/dirsrv/slapd-kolab/" ]; then
     echo "LDAP directory exists, nothing to do"
 else
