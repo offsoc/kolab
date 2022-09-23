@@ -237,25 +237,6 @@ services:
       - kolab
     volumes:
       - ./src:/src/kolabsrc.orig:ro
-  worker:
-    build:
-      context: ./docker/worker/
-    container_name: kolab-worker
-    depends_on:
-      - kolab
-    hostname: worker
-    image: kolab-worker
-    networks:
-      - kolab
-    tmpfs:
-      - /run
-      - /tmp
-      - /var/run
-      - /var/tmp
-    tty: true
-    volumes:
-      - ./src:/home/worker/src.orig:ro
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
   meet:
     build:
       context: ./docker/meet/
