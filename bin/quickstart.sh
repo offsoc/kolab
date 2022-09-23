@@ -33,9 +33,10 @@ docker volume rm kolab_mariadb || :
 docker volume rm kolab_imap || :
 docker volume rm kolab_ldap || :
 
-# FIXME needs access to redis I think
-# src/artisan octane:stop >/dev/null 2>&1 || :
-# src/artisan horizon:terminate >/dev/null 2>&1 || :
+if [ "$1" != "--nodev" ]; then
+    src/artisan octane:stop >/dev/null 2>&1 || :
+    src/artisan horizon:terminate >/dev/null 2>&1 || :
+fi
 
 docker-compose build coturn kolab mariadb meet pdns proxy redis haproxy
 
