@@ -160,7 +160,7 @@ cat << EOF >> /etc/roundcubemail/config.inc.php
                 ),
             'proxy_protocol' => 2
         );
-    \$config['proxy_whitelist'] = array('127.0.0.1');
+    \$config['proxy_whitelist'] = array('127.0.0.1', '172.18.0.7');
 EOF
 
 echo "?>" >> /etc/roundcubemail/config.inc.php

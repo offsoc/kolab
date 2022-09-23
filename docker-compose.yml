@@ -62,7 +62,10 @@ services:
     hostname: kolab.mgmt.com
     image: kolab
     networks:
-      - kolab
+      kolab:
+        ipv4_address: 172.18.0.5
+    ports:
+      - "12143:12143"
     tmpfs:
       - /run
       - /tmp
@@ -165,7 +168,8 @@ services:
     extra_hosts:
       - "meet:${MEET_LISTENING_HOST}"
     networks:
-      - kolab
+      kolab:
+        ipv4_address: 172.18.0.7
     tmpfs:
       - /run
       - /tmp
