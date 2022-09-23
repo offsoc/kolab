@@ -27,7 +27,6 @@ fi
 
 export DOCKER_BUILDKIT=0
 
-docker pull docker.io/kolab/centos7:latest
 
 docker-compose down --remove-orphans
 src/artisan octane:stop >/dev/null 2>&1 || :
