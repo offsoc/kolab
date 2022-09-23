@@ -35,7 +35,7 @@ RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && 
     ln -s /etc/systemd/system/kolab-init.service \
         /etc/systemd/system/multi-user.target.wants/kolab-init.service && \
     ln -s /etc/systemd/system/kolab-setenv.service \
-        /etc/systemd/system/multi-user.target.wants/kolab-setenv.service && \
+        /etc/systemd/system/multi-user.target.wants/kolab-setenv.service
 
 
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
