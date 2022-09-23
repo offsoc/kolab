@@ -59,6 +59,9 @@ user=root
 password=${DB_ROOT_PASSWORD}
 EOF
 
+# Configure roundcube and setup db
+# The db setup will just fail if the db already exists,
+# but no harm done
 CMD="$(which setup-kolab) roundcube \
     --default"
 ${CMD} 2>&1 | tee -a /root/setup-kolab.log
