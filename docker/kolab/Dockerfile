@@ -15,6 +15,7 @@ RUN dnf config-manager --set-enabled powertools && \
         epel-release epel-next-release && \
     dnf -y module enable 389-directory-server:stable/default && \
     dnf -y module enable mariadb:10.3 && \
+    dnf -y install iputils vim-enhanced bind-utils && \
     dnf clean all
 RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
 
@@ -39,10 +40,8 @@ RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && 
     ln -s /etc/systemd/system/kolab-vlv.service \
         /etc/systemd/system/multi-user.target.wants/kolab-vlv.service
 
-RUN dnf -y install iputils vim-enhanced
 
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
-
 RUN sed -i -r -e 's/^Listen 80$/Listen 9080/g' /etc/httpd/conf/httpd.conf
 #RUN sed -i -r -e 's/^Listen 443$/Listen 9443/g' /etc/httpd/conf/httpd.conf
 
@@ -63,11 +62,11 @@ RUN mkdir -p /imapdata/{spool,lib} && \
     ln -s /imapdata/lib /var/lib/imap && \
     chmod -R 777 /imapdata
 
-# RUN mkdir -p /ldapdata/{config,ssca,run} /var/run/dirsrv && \
-#     ln -s /ldapdata/config /etc/dirsrv/slapd-kolab && \
-#     ln -s /ldapdata/ssca /etc/dirsrv/ssca && \
-#     ln -s /ldapdata/run /var/run/dirsrv && \
-#     chmod -R 777 /ldapdata /etc/dirsrv
+RUN mkdir -p /ldapdata/{config,ssca,run} /var/run/dirsrv && \
+    ln -s /ldapdata/config /etc/dirsrv/slapd-kolab && \
+    ln -s /ldapdata/ssca /etc/dirsrv/ssca && \
+    ln -s /ldapdata/run /var/run/dirsrv && \
+    chmod -R 777 /ldapdata /etc/dirsrv
 
 VOLUME [ "/sys/fs/cgroup" ]
 VOLUME [ "/imapdata" ]
