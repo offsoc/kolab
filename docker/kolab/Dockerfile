@@ -29,7 +29,6 @@ RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
 COPY kolab-setenv.service /etc/systemd/system/kolab-setenv.service
-COPY kolab-vlv.service /etc/systemd/system/kolab-vlv.service
 COPY utils /root/utils
 
 RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && \
@@ -37,8 +36,6 @@ RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && 
         /etc/systemd/system/multi-user.target.wants/kolab-init.service && \
     ln -s /etc/systemd/system/kolab-setenv.service \
         /etc/systemd/system/multi-user.target.wants/kolab-setenv.service && \
-    ln -s /etc/systemd/system/kolab-vlv.service \
-        /etc/systemd/system/multi-user.target.wants/kolab-vlv.service
 
 
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
@@ -47,8 +44,6 @@ RUN sed -i -r -e 's/^Listen 80$/Listen 9080/g' /etc/httpd/conf/httpd.conf
 
 COPY kolab-init.sh /usr/local/sbin/
 RUN chmod 750 /usr/local/sbin/kolab-init.sh
-COPY kolab-vlv.sh /usr/local/sbin/
-RUN chmod 750 /usr/local/sbin/kolab-vlv.sh
 
 COPY kolab.conf /etc/kolab/kolab.conf
 COPY cyrus.conf /etc/cyrus.conf
