@@ -1,0 +1,96 @@
+#
+# BEGIN COPYRIGHT BLOCK
+# Copyright (C) 2001 Sun Microsystems, Inc. Used by permission.
+# Copyright (C) 2005 Red Hat, Inc.
+# All rights reserved.
+#
+# License: GPL (version 3 or any later version).
+# See LICENSE for details.
+# END COPYRIGHT BLOCK
+#
+#
+# Note: %rootdn% (Directory Manager) has all rights on every entry by nature.
+# Thus, it is not needed to give any acis.  This template has several
+# groupOfUniqueNames objects which MUST have uniqueMember.  At this moment,
+# there is no entry which could be a uniqueMember.  Just to satisfy the
+# objectclass, set %rootdn% to uniqueMember of the objectclass.
+#
+dn: %ds_suffix%
+changetype: modify
+add: aci
+aci: (targetattr ="*")(version 3.0;
+ acl "Directory Administrators Group";allow (all) (groupdn = "ldap:///
+ cn=Directory Administrators, %ds_suffix%");)
+
+dn: cn=Directory Administrators, %ds_suffix%
+objectClass: top
+objectClass: groupofuniquenames
+cn: Directory Administrators
+uniqueMember: %rootdn%
+
+dn: ou=Groups, %ds_suffix%
+objectclass: top
+objectclass: organizationalunit
+ou: Groups
+
+dn: ou=People, %ds_suffix%
+objectclass: top
+objectclass: organizationalunit
+ou: People
+aci: (targetattr ="userpassword || te
+ lephonenumber || facsimiletelephonenumber")(version 3.0;acl "Allow self entry
+ modification";allow (write)(userdn = "ldap:///self");)
+aci: (targetattr !="cn || sn || uid")(t
+ argetfilter ="(ou=Accounting)")(version 3.0;acl "Accounting Managers G
+ roup Permissions";allow (write)(groupdn = "ldap:///cn=Accounting Managers,ou
+ =groups,%ds_suffix%");)
+aci: (targetattr !="cn || sn || uid")(t
+ argetfilter ="(ou=Human Resources)")(version 3.0;acl "HR Group Permiss
+ ions";allow (write)(groupdn = "ldap:///cn=HR Managers,ou=groups,%ds_suffix%
+ ");)
+aci: (targetattr !="cn ||sn || uid")(t
+ argetfilter ="(ou=Product Testing)")(version 3.0;acl "QA Group Permiss
+ ions";allow (write)(groupdn = "ldap:///cn=QA Managers,ou=groups,%ds_suffix%
+ ");)
+aci: (targetattr !="cn || sn || uid")(t
+ argetfilter ="(ou=Product Development)")(version 3.0;acl "Engineering
+ Group Permissions";allow (write)(groupdn = "ldap:///cn=PD Managers,ou=groups
+ ,%ds_suffix%");)
+
+dn: ou=Special Users,%ds_suffix%
+objectclass: top
+objectclass: organizationalUnit
+ou: Special Users
+description: Special Administrative Accounts
+
+dn: cn=Accounting Managers,ou=groups,%ds_suffix%
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: Accounting Managers
+ou: groups
+description: People who can manage accounting entries
+uniqueMember: %rootdn%
+
+dn: cn=HR Managers,ou=groups,%ds_suffix%
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: HR Managers
+ou: groups
+description: People who can manage HR entries
+uniqueMember: %rootdn%
+
+dn: cn=QA Managers,ou=groups,%ds_suffix%
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: QA Managers
+ou: groups
+description: People who can manage QA entries
+uniqueMember: %rootdn%
+
+dn: cn=PD Managers,ou=groups,%ds_suffix%
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: PD Managers
+ou: groups
+description: People who can manage engineer entries
+uniqueMember: %rootdn%

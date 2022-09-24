@@ -1,41 +1,23 @@
-FROM centos/centos7:latest
+FROM fedora:35
 
-MAINTAINER Liutauras Adomaitis <adomaitis@kolabsys.com>
+RUN dnf -y install --setopt=install_weak_deps=False \
+        389-ds-base python3-lib389 && \
+    dnf -y clean all
 
-RUN yum -y install \
-        epel-release \
-        389-ds-base \
-        389-adminutil \
-        gettext && \
-    yum clean all
+RUN mkdir -p /data/{config,ssca,run} /var/run/dirsrv && \
+    ln -s /data/config /etc/dirsrv/slapd-localhost && \
+    ln -s /data/ssca /etc/dirsrv/ssca && \
+    ln -s /data/run /var/run/dirsrv && \
+    chmod -R 777 /data /etc/dirsrv
 
-COPY *.tpl /
-COPY kolab-schema.ldif /etc/dirsrv/schema/99kolab-schema.ldif
+HEALTHCHECK --start-period=5m --timeout=5s --interval=5s --retries=2 \
+    CMD /usr/lib/dirsrv/dscontainer -H
 
-RUN for F in $(ls *.tpl); do eval "echo \"$(cat $F)\"" | tee ${F%%.tpl}; done
+VOLUME /data
 
-RUN rm -fr /var/lock /usr/lib/systemd/system && \
-    setup-ds.pl -ddd --silent --file /ds_setup.inf && \
-    chown nobody.nobody -R /var/lib/dirsrv/ && \
-    mv mgmt_com-install.ldif ${DOMAIN_DB}-install.ldif && \
-    mv hosted_com-install.ldif ${HOSTED_DOMAIN_DB}-install.ldif && \
-    mv *.ldif /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/.
+# ADD init.sh /init.sh
+# CMD ["/init.sh"]
 
-# This only copies another kolab-schema.ldif
-#COPY *.ldif /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/
+CMD ["/usr/libexec/dirsrv/dscontainer", "-r"]
 
-EXPOSE 389
-
-CMD cd /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/ && \
-    for ldif in $(ls *-import.ldif || ls *-install.ldif || true); do \
-        sed -r -i -e 's/mailHost: .*$/mailHost: localhost/g' ${ldif}; \
-        chmod 644 ${ldif}; \
-        namespace=$(echo "${ldif}" | sed -e 's/-import.ldif$//' -e 's/-install.ldif$//'); \
-        /usr/lib64/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif2db \
-            -Z ${DS_INSTANCE_NAME} \
-            -n ${namespace} \
-            -i /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/ldif/${ldif}; \
-    done && \
-  /usr/lib64/dirsrv/slapd-hkccp/start-slapd && \
-  tail -F /var/log/dirsrv/slapd-${DS_INSTANCE_NAME}/{access,audit,errors}
-
+EXPOSE 3389 3636

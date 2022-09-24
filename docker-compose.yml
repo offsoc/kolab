@@ -84,6 +84,26 @@ services:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - imap:/imapdata
       - ldap:/ldapdata
+  ldap:
+    build:
+      context: ./docker/ds389/
+    container_name: kolab-ldap
+    environment:
+      - DS_DM_PASSWORD=Welcome2KolabSystems
+      - DS_SUFFIX_NAME="dc=mgmt,dc=com"
+    healthcheck:
+      interval: 10s
+      test: /usr/libexec/dirsrv/dscontainer -H
+      timeout: 5s
+      retries: 30
+    image: kolab-ldap
+    ports:
+      - "3389:3389"
+      - "3636:3636"
+    networks:
+      - kolab
+    volumes:
+      - ldap2:/data
   mariadb:
     container_name: kolab-mariadb
     environment:
@@ -278,3 +298,4 @@ volumes:
   mariadb:
   imap:
   ldap:
+  ldap2:
