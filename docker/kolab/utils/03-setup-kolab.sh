@@ -11,12 +11,13 @@ while ! mysqladmin -u root ping > /dev/null 2>&1 ; do
 done | tee -a /root/setup-kolab.log
 echo "OK!" | tee -a /root/setup-kolab.log
 
-echo -n "Wait for DS389 container: " | tee -a /root/setup-kolab.log
-while ! ldapsearch -h ${LDAP_HOST} -D "${LDAP_ADMIN_BIND_DN}" -w "${LDAP_ADMIN_BIND_PW}" -b "" -s base > /dev/null 2>&1 ; do
-        echo -n '.'
-        sleep 3
-done | tee -a /root/setup-kolab.log
-echo "OK!" | tee -a /root/setup-kolab.log
+# No need to wait if we start ldap on the same host
+# echo -n "Wait for DS389 container: " | tee -a /root/setup-kolab.log
+# while ! ldapsearch -h ${LDAP_HOST} -D "${LDAP_ADMIN_BIND_DN}" -w "${LDAP_ADMIN_BIND_PW}" -b "" -s base > /dev/null 2>&1 ; do
+#         echo -n '.'
+#         sleep 3
+# done | tee -a /root/setup-kolab.log
+# echo "OK!" | tee -a /root/setup-kolab.log
 
 
 cat > /tmp/kolab-setup-my.cnf << EOF
