@@ -163,7 +163,7 @@ services:
       timeout: 5s
       retries: 30
     container_name: kolab-proxy
-    hostname: ${APP_WEBSITE_DOMAIN:?err}
+    hostname: proxy
     image: kolab-proxy
     extra_hosts:
       - "meet:${MEET_LISTENING_HOST}"
