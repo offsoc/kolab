@@ -1,7 +1,7 @@
 [Unit]
 Description=Kolab Setup Service
 Requires=kolab-setenv.service
-After=kolab-setenv.service
+After=kolab-setenv.service ldapdata.mount imapdata.mount
 
 [Service]
 Type=oneshot

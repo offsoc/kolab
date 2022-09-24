@@ -4,8 +4,20 @@
 
 cp -av /bin/true /usr/sbin/ds_systemd_ask_password_acl
 
-if [ -d "/etc/dirsrv/slapd-kolab/" ]; then
+if [ -f "/etc/dirsrv/slapd-kolab/dse.ldif" ]; then
     echo "LDAP directory exists, nothing to do"
+
+    mkdir -p /var/log/dirsrv/slapd-kolab/
+    chmod 777 /var/log/dirsrv/slapd-kolab/
+    systemctl start dirsrv@kolab
+    mkdir /run/dirsrv
+    chmod 777 /run/dirsrv
+    mkdir -p /run/lock/dirsrv/slapd-kolab/
+    chmod 777 /run/lock/dirsrv/slapd-kolab/
+    mkdir -p /var/lib/dirsrv/slapd-kolab
+    chown dirsrv:dirsrv /var/lib/dirsrv/slapd-kolab
+
+    systemctl start dirsrv@kolab
 else
     sed -i -e 's/sys.exit/print("exit") #sys.exit/' /usr/lib/python3.6/site-packages/pykolab/setup/setup_ldap.py
 
