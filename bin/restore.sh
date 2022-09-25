@@ -6,7 +6,7 @@ function restore_volume {
   backup_destination=$2
 
   echo "Restoring $volume_name from $backup_destination"
-  docker run --rm -v $volume_name:/data -v $backup_destination:/backup quay.io/centos/centos:stream8 tar xvf /backup/$volume_name.tar -C /data --strip 1
+  docker run --rm -v $volume_name:/data -v $backup_destination:/backup quay.io/centos/centos:stream8 bash -c "rm -rf /data/* && tar xvf /backup/$volume_name.tar -C /data --strip 1"
 }
 
 echo "Stopping containers"
