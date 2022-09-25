@@ -53,7 +53,7 @@ services:
       - MAIL_PORT=10587
     healthcheck:
       interval: 10s
-      test: "systemctl status || exit 1"
+      test: "systemctl is-active kolab-init || exit 1"
       timeout: 5s
       retries: 30
     # This makes docker's dns, resolve via pdns for this container.
