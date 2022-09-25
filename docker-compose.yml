@@ -104,6 +104,9 @@ services:
       - ./docker/mariadb/mysql-init/:/docker-entrypoint-initdb.d/
       - mariadb:/var/lib/mysql
   haproxy:
+    depends_on:
+      proxy:
+        condition: service_healthy
     build:
       context: ./docker/haproxy/
     healthcheck:
@@ -151,6 +154,11 @@ services:
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
   proxy:
+    depends_on:
+      kolab:
+        condition: service_healthy
+      webapp:
+        condition: service_healthy
     build:
       context: ./docker/proxy/
       args:
