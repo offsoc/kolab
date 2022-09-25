@@ -53,9 +53,10 @@ COPY guam.conf /etc/guam/sys.config
 
 
 RUN mkdir -p /imapdata/{spool,lib} && \
-    ln -s /imapdata/spool /var/spool/imap && \
-    ln -s /imapdata/lib /var/lib/imap && \
-    chmod -R 777 /imapdata
+    rm -rf /var/spool/imap && ln -s /imapdata/spool /var/spool/imap && \
+    mv /var/lib/imap /var/lib/imap-bak && ln -s /imapdata/lib /var/lib/imap && \
+    chmod -R 777 /imapdata && \
+    chown cyrus:mail /var/spool/imap /var/lib/imap
 
 RUN mkdir -p /ldapdata/{config,ssca,run} /var/run/dirsrv && \
     ln -s /ldapdata/config /etc/dirsrv/slapd-kolab && \

@@ -39,6 +39,13 @@ CMD="$(which setup-kolab) php \
 ${CMD} 2>&1 | tee -a /root/setup-kolab.log
 
 # setup imap
+if [ -f "/var/lib/imap/db" ]; then
+    echo "IMAP directory exists, nothing to do"
+else
+    echo "Initializing IMAP volume"
+    cp -ar /var/lib/imap-bak/* /var/lib/imap/
+    systemctl start cyrus-imapd
+fi
 systemctl stop saslauthd
 systemctl start kolab-saslauthd
 systemctl enable kolab-saslauthd
