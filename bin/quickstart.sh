@@ -66,10 +66,6 @@ function wait_for_container {
     done;
 }
 
-# Ensure the containers we depend on are fully started
-wait_for_container 'kolab'
-wait_for_container 'kolab-redis'
-
 if [ "$1" == "--nodev" ]; then
     echo "starting everything in containers"
     docker-compose -f docker-compose.build.yml build swoole
@@ -102,6 +98,10 @@ rpm -qv php-mysqlnd >/dev/null 2>&1 || \
 
 test ! -z "$(php --modules | grep swoole)" || \
     die "Is swoole installed?"
+
+# Ensure the containers we depend on are fully started
+wait_for_container 'kolab'
+wait_for_container 'kolab-redis'
 
 pushd ${base_dir}/src/
 
