@@ -23,7 +23,10 @@ lint:
 	docker run -v ${PWD}/../:/src/kolab.orig -t kolab-tests /lint.sh
 
 test:
-	docker run --network=kolab_kolab -v ${PWD}/../src:/src/kolabsrc.orig -t kolab-tests /init.sh
+	docker run --network=kolab_kolab -v ${PWD}/../src:/src/kolabsrc.orig -t kolab-tests /init.sh testsuite
+
+shell:
+	docker run --network=kolab_kolab -v ${PWD}/../src:/src/kolabsrc.orig -ti kolab-tests /init.sh shell
 
 all: configure setup build lint test
 
