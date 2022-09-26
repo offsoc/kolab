@@ -10,10 +10,3 @@ services:
       context: ./docker/tests/
     container_name: kolab-tests
     image: kolab-tests
-    depends_on:
-      kolab:
-        condition: service_healthy
-    networks:
-      - kolab
-    volumes:
-      - ./src:/src/kolabsrc.orig:ro
