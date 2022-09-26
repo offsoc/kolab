@@ -42,35 +42,39 @@ rm -rf database/database.sqlite
 php -dmemory_limit=512M ./artisan migrate:refresh --seed
 ./artisan data:import || :
 ./artisan queue:work --stop-when-empty
-# nohup ./artisan horizon >/dev/null 2>&1 &
 ./artisan octane:start --host=$(grep OCTANE_HTTP_HOST .env | tail -n1 | sed "s/OCTANE_HTTP_HOST=//") >/dev/null 2>&1 &
 
-php \
-    -dmemory_limit=-1 \
-    vendor/bin/phpunit \
-    --exclude-group skipci \
-    --verbose \
-    --stop-on-defect \
-    --stop-on-error \
-    --stop-on-failure \
-    --testsuite Unit
+if [ "$1" == "testsuite" ]; then
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group skipci \
+        --verbose \
+        --stop-on-defect \
+        --stop-on-error \
+        --stop-on-failure \
+        --testsuite Unit
 
-php \
-    -dmemory_limit=-1 \
-    vendor/bin/phpunit \
-    --exclude-group skipci \
-    --verbose \
-    --stop-on-defect \
-    --stop-on-error \
-    --stop-on-failure \
-    --testsuite Functional
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group skipci \
+        --verbose \
+        --stop-on-defect \
+        --stop-on-error \
+        --stop-on-failure \
+        --testsuite Functional
 
-php \
-    -dmemory_limit=-1 \
-    vendor/bin/phpunit \
-    --exclude-group skipci,coinbase,mollie,stripe,meet,dns \
-    --verbose \
-    --stop-on-defect \
-    --stop-on-error \
-    --stop-on-failure \
-    --testsuite Feature
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group skipci,coinbase,mollie,stripe,meet,dns \
+        --verbose \
+        --stop-on-defect \
+        --stop-on-error \
+        --stop-on-failure \
+        --testsuite Feature
+fi
+if [ "$1" == "shell" ]; then
+    exec /bin/bash
+fi
