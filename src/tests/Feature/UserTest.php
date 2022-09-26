@@ -312,6 +312,7 @@ class UserTest extends TestCase
 
         $domain = \config('app.domain');
 
+        \App\Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', 0);
         $user = User::create([
                 'email' => 'USER-test@' . \strtoupper($domain),
                 'password' => 'test',
