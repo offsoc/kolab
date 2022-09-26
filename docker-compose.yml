@@ -211,11 +211,6 @@ services:
       - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     # ports:
     #   - "6379:6379"
-  swoole:
-    build:
-      context: ./docker/swoole/
-    container_name: kolab-swoole
-    image: apheleia/swoole:4.8.x
   webapp:
     build:
       context: ./docker/webapp/
@@ -237,18 +232,6 @@ services:
       - ./src:/src/kolabsrc.orig:ro
     ports:
       - "8000:8000"
-  tests:
-    build:
-      context: ./docker/tests/
-    container_name: kolab-tests
-    image: kolab-tests
-    depends_on:
-      kolab:
-        condition: service_healthy
-    networks:
-      - kolab
-    volumes:
-      - ./src:/src/kolabsrc.orig:ro
   meet:
     build:
       context: ./docker/meet/

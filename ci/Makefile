@@ -17,13 +17,13 @@ setup:
 	cd .. && bin/quickstart.sh --nodev
 
 build:
-	cd .. && DOCKER_BUILDKIT=0 docker compose build swoole && DOCKER_BUILDKIT=0 docker compose build tests && cd ci
+	cd .. && DOCKER_BUILDKIT=0 docker compose build swoole && DOCKER_BUILDKIT=0 docker compose -f docker-compose.yml -f docker-compose.build.yml build tests && cd ci
 
 lint:
 	docker run -v ${PWD}/../:/src/kolab.orig -t kolab-tests /lint.sh
 
 test:
-	docker run --network=host -v ${PWD}/../src:/src/kolabsrc.orig -t kolab-tests /init.sh
+	docker run --network=container:kolab -v ${PWD}/../src:/src/kolabsrc.orig -t kolab-tests /init.sh
 
 all: configure setup build lint test
 
