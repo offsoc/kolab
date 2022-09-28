@@ -198,7 +198,7 @@ class NGINXController extends Controller
     {
         $data = $request->getContent();
         // Assumes "%u %p" as form data in the cyrus sasl config file
-        $array = explode(' ', $data);
+        $array = explode(' ', rawurldecode($data));
         if (count($array) != 2) {
             \Log::debug("Authentication attempt failed: invalid data provided.");
             return response("", 403);
