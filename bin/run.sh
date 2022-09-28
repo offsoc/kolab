@@ -9,6 +9,9 @@ function die() {
 
 base_dir=$(dirname $(dirname $0))
 
+src/artisan octane:stop >/dev/null 2>&1 || :
+src/artisan horizon:terminate >/dev/null 2>&1 || :
+
 # Always reset .env with .env.example
 cp src/.env.example src/.env
 
