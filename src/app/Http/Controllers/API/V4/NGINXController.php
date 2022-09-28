@@ -162,10 +162,9 @@ class NGINXController extends Controller
     {
         //FIXME not sure this is how we get to the POST data
         $data = $request->all();
-        // Assumes "%u|%p|%r" as form data in the cyrus sasl config file
-        // FIXME: not sure which character is safe as separator.
-        $array = explode('|', $data);
-        if (count($array) != 3) {
+        // Assumes "%u %p" as form data in the cyrus sasl config file
+        $array = explode(' ', $data);
+        if (count($array) != 2) {
             \Log::debug("Authentication attempt failed: invalid data provided.");
             return response("", 403);
         }
