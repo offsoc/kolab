@@ -9,6 +9,42 @@ use Illuminate\Support\Str;
 
 class NGINXController extends Controller
 {
+
+
+    /**
+     * Authorize with the provided credentials.
+     *
+     * @param string $login The login name
+     * @param string $password The password
+     *
+     * @return \App\User The user
+     *
+     * @throws \Exception If the authorization fails.
+     */
+    private function authorizeRequestCredentialsOnly($login, $password)
+    {
+
+        if (empty($login)) {
+            throw new \Exception("Empty login");
+        }
+
+        if (empty($password)) {
+            throw new \Exception("Empty password");
+        }
+
+        $user = \App\User::where('email', $login)->first();
+        if (!$user) {
+            throw new \Exception("User not found");
+        }
+
+        if (!Hash::check($password, $user->password)) {
+            throw new \Exception("Password mismatch");
+        }
+
+        return $user;
+    }
+
+
     /**
      * Authorize with the provided credentials.
      *
@@ -160,8 +196,7 @@ class NGINXController extends Controller
      */
     public function cyrussasl(Request $request)
     {
-        //FIXME not sure this is how we get to the POST data
-        $data = $request->all();
+        $data = $request->getContent();
         // Assumes "%u %p" as form data in the cyrus sasl config file
         $array = explode(' ', $data);
         if (count($array) != 2) {
@@ -177,10 +212,9 @@ class NGINXController extends Controller
         }
 
         try {
-            $this->authorizeRequest(
+            $this->authorizeRequestCredentialsOnly(
                 $username,
-                $password,
-                $request->headers->get('X-Real-Ip', null),
+                $password
             );
         } catch (\Exception $e) {
             \Log::debug("Authentication attempt failed: {$e->getMessage()}");
