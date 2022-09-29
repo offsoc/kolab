@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Backends\LDAP;
 use App\UserSetting;
 
 class UserSettingObserver
@@ -16,9 +15,7 @@ class UserSettingObserver
      */
     public function created(UserSetting $userSetting)
     {
-        if (in_array($userSetting->key, LDAP::USER_SETTINGS)) {
-            \App\Jobs\User\UpdateJob::dispatch($userSetting->user_id);
-        }
+        $this->dispatchUpdateJob($userSetting);
     }
 
     /**
@@ -30,9 +27,7 @@ class UserSettingObserver
      */
     public function updated(UserSetting $userSetting)
     {
-        if (in_array($userSetting->key, LDAP::USER_SETTINGS)) {
-            \App\Jobs\User\UpdateJob::dispatch($userSetting->user_id);
-        }
+        $this->dispatchUpdateJob($userSetting);
     }
 
     /**
@@ -44,7 +39,19 @@ class UserSettingObserver
      */
     public function deleted(UserSetting $userSetting)
     {
-        if (in_array($userSetting->key, LDAP::USER_SETTINGS)) {
+        $this->dispatchUpdateJob($userSetting);
+    }
+
+    /**
+     * Dispatch the user update job (if needed).
+     *
+     * @param \App\UserSetting $userSetting Settings object
+     */
+    private function dispatchUpdateJob(UserSetting $userSetting): void
+    {
+        if ((\config('app.with_ldap') && in_array($userSetting->key, \App\Backends\LDAP::USER_SETTINGS))
+            || in_array($userSetting->key, \App\Backends\IMAP::USER_SETTINGS)
+        ) {
             \App\Jobs\User\UpdateJob::dispatch($userSetting->user_id);
         }
     }

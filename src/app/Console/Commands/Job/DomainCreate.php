@@ -3,7 +3,6 @@
 namespace App\Console\Commands\Job;
 
 use App\Console\Command;
-use App\Domain;
 
 class DomainCreate extends Command
 {
@@ -19,7 +18,7 @@ class DomainCreate extends Command
      *
      * @var string
      */
-    protected $description = "Execute the DomainCreate job (again).";
+    protected $description = "Execute the domain creation job (again).";
 
     /**
      * Execute the console command.

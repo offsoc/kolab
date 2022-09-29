@@ -495,29 +495,8 @@ class UsersTest extends TestCase
         $domain->status |= Domain::STATUS_CONFIRMED;
         $domain->save();
 
-        // Now "reboot" the process and verify the user in imap synchronously
-        $response = $this->actingAs($john)->get("/api/v4/users/{$john->id}/status?refresh=1");
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertTrue($json['isImapReady']);
-        $this->assertTrue($json['isReady']);
-        $this->assertCount(7, $json['process']);
-        $this->assertSame('user-imap-ready', $json['process'][2]['label']);
-        $this->assertSame(true, $json['process'][2]['state']);
-        $this->assertSame('success', $json['status']);
-        $this->assertSame('Setup process finished successfully.', $json['message']);
-
-        Queue::size(1);
-
-        // Test case for when the verify job is dispatched to the worker
-        $john->refresh();
-        $john->status ^= User::STATUS_IMAP_READY;
-        $john->save();
-
-        \config(['imap.admin_password' => null]);
-
+        // Now "reboot" the process
+        Queue::fake();
         $response = $this->actingAs($john)->get("/api/v4/users/{$john->id}/status?refresh=1");
         $response->assertStatus(200);
 
@@ -525,11 +504,13 @@ class UsersTest extends TestCase
 
         $this->assertFalse($json['isImapReady']);
         $this->assertFalse($json['isReady']);
+        $this->assertCount(7, $json['process']);
+        $this->assertSame('user-imap-ready', $json['process'][2]['label']);
+        $this->assertSame(false, $json['process'][2]['state']);
         $this->assertSame('success', $json['status']);
-        $this->assertSame('waiting', $json['processState']);
         $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
 
-        Queue::assertPushed(\App\Jobs\User\VerifyJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
     }
 
     /**

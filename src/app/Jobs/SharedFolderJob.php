@@ -28,15 +28,24 @@ abstract class SharedFolderJob extends CommonJob
     protected $folderEmail;
 
     /**
+     * Old values of the shared folder properties on update (key -> value)
+     *
+     * @var array
+     */
+    protected $properties = [];
+
+    /**
      * Create a new job instance.
      *
-     * @param int $folderId The ID for the shared folder to process.
+     * @param int   $folderId   The ID for the shared folder to process
+     * @param array $properties Old values of the shared folder properties on update (key -> value)
      *
      * @return void
      */
-    public function __construct(int $folderId)
+    public function __construct(int $folderId, array $properties = [])
     {
         $this->folderId = $folderId;
+        $this->properties = $properties;
 
         $folder = $this->getSharedFolder();
 

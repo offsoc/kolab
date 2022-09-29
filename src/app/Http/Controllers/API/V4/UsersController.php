@@ -532,30 +532,10 @@ class UsersController extends RelationController
 
             switch ($step) {
                 case 'user-ldap-ready':
-                    // User not in LDAP, create it
-                    $job = new \App\Jobs\User\CreateJob($user->id);
-                    $job->handle();
-
-                    $user->refresh();
-
-                    return $user->isLdapReady();
-
                 case 'user-imap-ready':
-                    // User not in IMAP? Verify again
-                    // Do it synchronously if the imap admin credentials are available
-                    // otherwise let the worker do the job
-                    if (!\config('imap.admin_password')) {
-                        \App\Jobs\User\VerifyJob::dispatch($user->id);
-
-                        return null;
-                    }
-
-                    $job = new \App\Jobs\User\VerifyJob($user->id);
-                    $job->handle();
-
-                    $user->refresh();
-
-                    return $user->isImapReady();
+                    // Use worker to do the job, frontend might not have the IMAP admin credentials
+                    \App\Jobs\User\CreateJob::dispatch($user->id);
+                    return null;
             }
         } catch (\Exception $e) {
             \Log::error($e);

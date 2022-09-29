@@ -25,18 +25,22 @@ class DeleteJob extends SharedFolderJob
             return;
         }
 
-        \App\Backends\LDAP::deleteSharedFolder($folder);
+        if (\config('app.with_ldap') && $folder->isLdapReady()) {
+            \App\Backends\LDAP::deleteSharedFolder($folder);
 
-        $folder->status |= \App\SharedFolder::STATUS_DELETED;
-
-        if ($folder->isLdapReady()) {
             $folder->status ^= \App\SharedFolder::STATUS_LDAP_READY;
+            $folder->save();
         }
 
         if ($folder->isImapReady()) {
+            if (!\App\Backends\IMAP::deleteSharedFolder($folder)) {
+                throw new \Exception("Failed to delete mailbox for shared folder {$this->folderId}.");
+            }
+
             $folder->status ^= \App\SharedFolder::STATUS_IMAP_READY;
         }
 
+        $folder->status |= \App\SharedFolder::STATUS_DELETED;
         $folder->save();
     }
 }

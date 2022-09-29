@@ -33,6 +33,7 @@ class UpdateTest extends TestCase
      * Test job handle
      *
      * @group ldap
+     * @group imap
      */
     public function testHandle(): void
     {
@@ -45,29 +46,28 @@ class UpdateTest extends TestCase
         $this->assertTrue($job->hasFailed());
         $this->assertSame("Shared folder 123 could not be found in the database.", $job->failureMessage);
 
-        $folder = $this->getTestSharedFolder('folder-test@' . \config('app.domain'));
+        $folder = $this->getTestSharedFolder(
+            'folder-test@' . \config('app.domain'),
+            ['status' => SharedFolder::STATUS_NEW]
+        );
 
         // Create the folder in LDAP
         $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
         $job->handle();
 
-        $job = new \App\Jobs\SharedFolder\UpdateJob($folder->id);
-        $job->handle();
-
-        $this->assertTrue(is_array(LDAP::getSharedFolder($folder->email)));
-
-        // Test that the job is being deleted if the folder is not ldap ready or is deleted
         $folder->refresh();
-        $folder->status = SharedFolder::STATUS_NEW | SharedFolder::STATUS_ACTIVE;
-        $folder->save();
 
+        $this->assertTrue($folder->isLdapReady());
+        $this->assertTrue($folder->isImapReady());
+
+        // Run the update job
         $job = new \App\Jobs\SharedFolder\UpdateJob($folder->id);
         $job->handle();
 
-        $this->assertTrue($job->isDeleted());
+        // TODO: Assert that it worked on both LDAP and IMAP side
 
-        $folder->status = SharedFolder::STATUS_NEW | SharedFolder::STATUS_ACTIVE
-            | SharedFolder::STATUS_LDAP_READY | SharedFolder::STATUS_DELETED;
+        // Test handling deleted folder
+        $folder->status |= SharedFolder::STATUS_DELETED;
         $folder->save();
 
         $job = new \App\Jobs\SharedFolder\UpdateJob($folder->id);

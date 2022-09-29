@@ -69,7 +69,7 @@ class AuthTest extends TestCase
      */
     public function testInfo(): void
     {
-        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com', ['status' => User::STATUS_NEW]);
         $domain = $this->getTestDomain('userscontroller.com', [
                 'status' => Domain::STATUS_NEW,
                 'type' => Domain::TYPE_PUBLIC,
@@ -85,7 +85,7 @@ class AuthTest extends TestCase
 
         $this->assertEquals($user->id, $json['id']);
         $this->assertEquals($user->email, $json['email']);
-        $this->assertEquals(User::STATUS_NEW | User::STATUS_ACTIVE, $json['status']);
+        $this->assertEquals(User::STATUS_NEW, $json['status']);
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue(!isset($json['access_token']));

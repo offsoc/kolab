@@ -321,7 +321,7 @@ class UserTest extends TestCase
 
         $this->assertSame("user-test@$domain", $result->email);
         $this->assertSame($user->id, $result->id);
-        $this->assertSame(User::STATUS_NEW | User::STATUS_ACTIVE, $result->status);
+        $this->assertSame(User::STATUS_NEW, $result->status);
         $this->assertSame(0, $user->passwords()->count());
 
         Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
@@ -337,28 +337,6 @@ class UserTest extends TestCase
                     && $userId === $user->id;
             }
         );
-
-        Queue::assertPushedWithChain(
-            \App\Jobs\User\CreateJob::class,
-            [
-                \App\Jobs\User\VerifyJob::class,
-            ]
-        );
-/*
-        FIXME: Looks like we can't really do detailed assertions on chained jobs
-               Another thing to consider is if we maybe should run these jobs
-               independently (not chained) and make sure there's no race-condition
-               in status update
-
-        Queue::assertPushed(\App\Jobs\User\VerifyJob::class, 1);
-        Queue::assertPushed(\App\Jobs\User\VerifyJob::class, function ($job) use ($user) {
-            $userEmail = TestCase::getObjectProperty($job, 'userEmail');
-            $userId = TestCase::getObjectProperty($job, 'userId');
-
-            return $userEmail === $user->email
-                && $userId === $user->id;
-        });
-*/
 
         // Test invoking KeyCreateJob
         $this->deleteTestUser("user-test@$domain");
@@ -973,7 +951,7 @@ class UserTest extends TestCase
     }
 
     /**
-     * Test User::hasSku() method
+     * Test User::hasSku() and countEntitlementsBySku() methods
      */
     public function testHasSku(): void
     {
@@ -983,6 +961,11 @@ class UserTest extends TestCase
         $this->assertTrue($john->hasSku('storage'));
         $this->assertFalse($john->hasSku('beta'));
         $this->assertFalse($john->hasSku('unknown'));
+
+        $this->assertSame(0, $john->countEntitlementsBySku('unknown'));
+        $this->assertSame(0, $john->countEntitlementsBySku('2fa'));
+        $this->assertSame(1, $john->countEntitlementsBySku('mailbox'));
+        $this->assertSame(5, $john->countEntitlementsBySku('storage'));
     }
 
     /**
@@ -1164,12 +1147,6 @@ class UserTest extends TestCase
             function ($job) use ($userA) {
                 return $userA->id === TestCase::getObjectProperty($job, 'userId');
             }
-        );
-        Queue::assertPushedWithChain(
-            \App\Jobs\User\CreateJob::class,
-            [
-                \App\Jobs\User\VerifyJob::class,
-            ]
         );
     }
 

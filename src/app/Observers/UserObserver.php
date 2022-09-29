@@ -20,8 +20,7 @@ class UserObserver
     {
         $user->email = \strtolower($user->email);
 
-        // only users that are not imported get the benefit of the doubt.
-        $user->status |= User::STATUS_NEW | User::STATUS_ACTIVE;
+        $user->status |= User::STATUS_NEW;
     }
 
     /**
@@ -64,12 +63,8 @@ class UserObserver
 
         $user->wallets()->create();
 
-        // Create user record in LDAP, then check if the account is created in IMAP
-        $chain = [
-            new \App\Jobs\User\VerifyJob($user->id),
-        ];
-
-        \App\Jobs\User\CreateJob::withChain($chain)->dispatch($user->id);
+        // Create user record in the backend (LDAP and IMAP)
+        \App\Jobs\User\CreateJob::dispatch($user->id);
 
         if (\App\Tenant::getConfig($user->tenant_id, 'pgp.enable')) {
             \App\Jobs\PGP\KeyCreateJob::dispatch($user->id, $user->email);
@@ -183,12 +178,8 @@ class UserObserver
 
         // FIXME: Should we reset user aliases? or re-validate them in any way?
 
-        // Create user record in LDAP, then run the verification process
-        $chain = [
-            new \App\Jobs\User\VerifyJob($user->id),
-        ];
-
-        \App\Jobs\User\CreateJob::withChain($chain)->dispatch($user->id);
+        // Create user record in the backend (LDAP and IMAP)
+        \App\Jobs\User\CreateJob::dispatch($user->id);
     }
 
     /**

@@ -30,10 +30,7 @@ class CreateJob extends SharedFolderJob
             return;
         }
 
-        if ($folder->isLdapReady()) {
-            $this->fail(new \Exception("Shared folder {$this->folderId} is already marked as ldap-ready."));
-            return;
-        }
+        $withLdap = \config('app.with_ldap');
 
         // see if the domain is ready
         $domain = $folder->domain();
@@ -48,14 +45,27 @@ class CreateJob extends SharedFolderJob
             return;
         }
 
-        if (!$domain->isLdapReady()) {
+        if ($withLdap && !$domain->isLdapReady()) {
             $this->release(60);
             return;
         }
 
-        \App\Backends\LDAP::createSharedFolder($folder);
+        if ($withLdap && !$folder->isLdapReady()) {
+            \App\Backends\LDAP::createSharedFolder($folder);
 
-        $folder->status |= \App\SharedFolder::STATUS_LDAP_READY;
+            $folder->status |= \App\SharedFolder::STATUS_LDAP_READY;
+            $folder->save();
+        }
+
+        if (!$folder->isImapReady()) {
+            if (!\App\Backends\IMAP::createSharedFolder($folder)) {
+                throw new \Exception("Failed to create mailbox for shared folder {$this->folderId}.");
+            }
+
+            $folder->status |= \App\SharedFolder::STATUS_IMAP_READY;
+        }
+
+        $folder->status |= \App\SharedFolder::STATUS_ACTIVE;
         $folder->save();
     }
 }

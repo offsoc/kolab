@@ -4,21 +4,21 @@ namespace App\Console\Commands\Job;
 
 use App\Console\Command;
 
-class DomainUpdate extends Command
+class ResourceUpdate extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'job:domainupdate {domain}';
+    protected $signature = 'job:resourceupdate {resource}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = "Execute the domain update job (again).";
+    protected $description = "Execute the resource update job (again).";
 
     /**
      * Execute the console command.
@@ -27,13 +27,13 @@ class DomainUpdate extends Command
      */
     public function handle()
     {
-        $domain = $this->getDomain($this->argument('domain'));
+        $resource = $this->getResource($this->argument('resource'));
 
-        if (!$domain) {
+        if (!$resource) {
             return 1;
         }
 
-        $job = new \App\Jobs\Domain\UpdateJob($domain->id);
+        $job = new \App\Jobs\Resource\UpdateJob($resource->id);
         $job->handle();
     }
 }

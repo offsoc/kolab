@@ -3,7 +3,6 @@
 namespace App\Console\Commands\Job;
 
 use App\Console\Command;
-use App\User;
 
 class UserUpdate extends Command
 {
@@ -19,7 +18,7 @@ class UserUpdate extends Command
      *
      * @var string
      */
-    protected $description = "Execute the UserUpdate job (again).";
+    protected $description = "Execute the user update job (again).";
 
     /**
      * Execute the console command.

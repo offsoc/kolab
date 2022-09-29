@@ -196,6 +196,18 @@ class Roundcube
     }
 
     /**
+     * Delete a Roundcube user.
+     *
+     * @param string $email User email address
+     */
+    public static function deleteUser(string $email): void
+    {
+        $db = self::dbh();
+
+        $db->table(self::USERS_TABLE)->where('username', \strtolower($email))->delete();
+    }
+
+    /**
      * Find the Roundcube user identifier for the specified user.
      *
      * @param string $email  User email address

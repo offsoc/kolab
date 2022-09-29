@@ -25,14 +25,17 @@ class DeleteJob extends GroupJob
             return;
         }
 
-        \App\Backends\LDAP::deleteGroup($group);
+        if (\config('app.with_ldap') && $group->isLdapReady()) {
+            \App\Backends\LDAP::deleteGroup($group);
 
-        $group->status |= \App\Group::STATUS_DELETED;
-
-        if ($group->isLdapReady()) {
             $group->status ^= \App\Group::STATUS_LDAP_READY;
         }
-
+/*
+        if (!\App\Backends\IMAP::deleteGroup($group)) {
+            throw new \Exception("Failed to delete group {$this->groupId} from IMAP.");
+        }
+*/
+        $group->status |= \App\Group::STATUS_DELETED;
         $group->save();
     }
 }

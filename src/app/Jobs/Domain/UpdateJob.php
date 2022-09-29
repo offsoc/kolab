@@ -19,7 +19,7 @@ class UpdateJob extends DomainJob
             return;
         }
 
-        if (!$domain->isLdapReady()) {
+        if (!\config('app.with_ldap') || !$domain->isLdapReady()) {
             $this->delete();
             return;
         }

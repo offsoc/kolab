@@ -19,12 +19,20 @@ class UpdateJob extends ResourceJob
             return;
         }
 
-        // Cancel the update if the resource is deleted or not yet in LDAP
-        if (!$resource->isLdapReady() || $resource->isDeleted()) {
+        // Cancel the update if the resource is deleted
+        if ($resource->isDeleted()) {
             $this->delete();
             return;
         }
 
-        \App\Backends\LDAP::updateResource($resource);
+        if (\config('app.with_ldap') && $resource->isLdapReady()) {
+            \App\Backends\LDAP::updateResource($resource);
+        }
+
+        if ($resource->isImapReady()) {
+            if (!\App\Backends\IMAP::updateResource($resource, $this->properties)) {
+                throw new \Exception("Failed to update mailbox for resource {$this->resourceId}.");
+            }
+        }
     }
 }

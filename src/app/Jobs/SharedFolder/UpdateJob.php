@@ -19,12 +19,20 @@ class UpdateJob extends SharedFolderJob
             return;
         }
 
-        // Cancel the update if the folder is deleted or not yet in LDAP
-        if (!$folder->isLdapReady() || $folder->isDeleted()) {
+        // Cancel the update if the folder is deleted
+        if ($folder->isDeleted()) {
             $this->delete();
             return;
         }
 
-        \App\Backends\LDAP::updateSharedFolder($folder);
+        if (\config('app.with_ldap') && $folder->isLdapReady()) {
+            \App\Backends\LDAP::updateSharedFolder($folder);
+        }
+
+        if ($folder->isImapReady()) {
+            if (!\App\Backends\IMAP::updateSharedFolder($folder, $this->properties)) {
+                throw new \Exception("Failed to update mailbox for shared folder {$this->folderId}.");
+            }
+        }
     }
 }

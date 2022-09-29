@@ -157,6 +157,24 @@ trait EntitleableTrait
     }
 
     /**
+     * Count entitlements for the specified SKU.
+     *
+     * @param string $title The SKU title
+     *
+     * @return int Numer of entitlements
+     */
+    public function countEntitlementsBySku(string $title): int
+    {
+        $sku = $this->skuByTitle($title);
+
+        if (!$sku) {
+            return 0;
+        }
+
+        return $this->entitlements()->where('sku_id', $sku->id)->count();
+    }
+
+    /**
      * Entitlements for this object.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -176,13 +194,7 @@ trait EntitleableTrait
      */
     public function hasSku(string $title): bool
     {
-        $sku = $this->skuByTitle($title);
-
-        if (!$sku) {
-            return false;
-        }
-
-        return $this->entitlements()->where('sku_id', $sku->id)->count() > 0;
+        return $this->countEntitlementsBySku($title) > 0;
     }
 
     /**

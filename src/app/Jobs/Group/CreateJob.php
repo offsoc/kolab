@@ -19,11 +19,13 @@ class CreateJob extends GroupJob
             return;
         }
 
-        if (!$group->isLdapReady()) {
+        if (\config('app.with_ldap') && !$group->isLdapReady()) {
             \App\Backends\LDAP::createGroup($group);
 
             $group->status |= \App\Group::STATUS_LDAP_READY;
-            $group->save();
         }
+
+        $group->status |= \App\Group::STATUS_ACTIVE;
+        $group->save();
     }
 }

@@ -32,7 +32,7 @@ class RoundcubeTest extends TestCase
      *
      * @group roundcube
      */
-    public function testUserCreation(): void
+    public function testUserCreationAndDeletion(): void
     {
         $user = $this->getTestUser('roundcube@' . \config('app.domain'));
         $user->setSetting('first_name', 'First');
@@ -57,5 +57,11 @@ class RoundcubeTest extends TestCase
         $this->assertSame($user->email, $rcidentity->email);
         $this->assertSame('First Last', $rcidentity->name);
         $this->assertSame(1, $rcidentity->standard);
+
+        // Delete the user
+        Roundcube::deleteUser($user->email);
+
+        $this->assertNull($db->table('users')->where('username', $user->email)->first());
+        $this->assertNull($db->table('identities')->where('user_id', $rcuser->user_id)->first());
     }
 }

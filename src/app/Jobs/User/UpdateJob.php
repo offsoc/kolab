@@ -24,11 +24,14 @@ class UpdateJob extends UserJob
             return;
         }
 
-        if (!$user->isLdapReady()) {
-            $this->delete();
-            return;
+        if (\config('app.with_ldap') && $user->isLdapReady()) {
+            \App\Backends\LDAP::updateUser($user);
         }
 
-        \App\Backends\LDAP::updateUser($user);
+        if ($user->isImapReady()) {
+            if (!\App\Backends\IMAP::updateUser($user)) {
+                throw new \Exception("Failed to update mailbox for user {$this->userId}.");
+            }
+        }
     }
 }

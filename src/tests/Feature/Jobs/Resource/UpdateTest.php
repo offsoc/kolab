@@ -33,6 +33,7 @@ class UpdateTest extends TestCase
      * Test job handle
      *
      * @group ldap
+     * @group imap
      */
     public function testHandle(): void
     {
@@ -45,12 +46,16 @@ class UpdateTest extends TestCase
         $this->assertTrue($job->hasFailed());
         $this->assertSame("Resource 123 could not be found in the database.", $job->failureMessage);
 
-        $resource = $this->getTestResource('resource-test@' . \config('app.domain'));
+        $resource = $this->getTestResource(
+            'resource-test@' . \config('app.domain'),
+            ['status' => Resource::STATUS_NEW]
+        );
 
         // Create the resource in LDAP
         $job = new \App\Jobs\Resource\CreateJob($resource->id);
         $job->handle();
 
+        // Run the update with some new config
         $resource->setConfig(['invitation_policy' => 'accept']);
 
         $job = new \App\Jobs\Resource\UpdateJob($resource->id);
@@ -60,18 +65,11 @@ class UpdateTest extends TestCase
 
         $this->assertSame('ACT_ACCEPT', $ldap_resource['kolabinvitationpolicy']);
 
+        // TODO: Assert IMAP change worked
+
         // Test that the job is being deleted if the resource is not ldap ready or is deleted
         $resource->refresh();
-        $resource->status = Resource::STATUS_NEW | Resource::STATUS_ACTIVE;
-        $resource->save();
-
-        $job = new \App\Jobs\Resource\UpdateJob($resource->id);
-        $job->handle();
-
-        $this->assertTrue($job->isDeleted());
-
-        $resource->status = Resource::STATUS_NEW | Resource::STATUS_ACTIVE
-            | Resource::STATUS_LDAP_READY | Resource::STATUS_DELETED;
+        $resource->status |= Resource::STATUS_DELETED;
         $resource->save();
 
         $job = new \App\Jobs\Resource\UpdateJob($resource->id);

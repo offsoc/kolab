@@ -29,6 +29,7 @@ class DeleteTest extends TestCase
      * Test job handle
      *
      * @group ldap
+     * @group imap
      */
     public function testHandle(): void
     {
@@ -52,11 +53,10 @@ class DeleteTest extends TestCase
         $folder->refresh();
 
         $this->assertTrue($folder->isLdapReady());
+        $this->assertTrue($folder->isImapReady());
+        $this->assertFalse($folder->isDeleted());
 
         // Test successful deletion
-        $folder->status |= SharedFolder::STATUS_IMAP_READY;
-        $folder->save();
-
         $job = new \App\Jobs\SharedFolder\DeleteJob($folder->id);
         $job->handle();
 
