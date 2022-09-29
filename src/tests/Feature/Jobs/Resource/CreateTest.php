@@ -29,6 +29,7 @@ class CreateTest extends TestCase
      * Test job handle
      *
      * @group ldap
+     * @group imap
      */
     public function testHandle(): void
     {
@@ -42,24 +43,27 @@ class CreateTest extends TestCase
         $this->assertTrue($job->isReleased());
         $this->assertFalse($job->hasFailed());
 
-        $resource = $this->getTestResource('resource-test@' . \config('app.domain'));
+        $resource = $this->getTestResource(
+            'resource-test@' . \config('app.domain'),
+            ['status' => Resource::STATUS_NEW]
+        );
 
         $this->assertFalse($resource->isLdapReady());
+        $this->assertFalse($resource->isImapReady());
+        $this->assertFalse($resource->isActive());
 
         // Test resource creation
         $job = new \App\Jobs\Resource\CreateJob($resource->id);
         $job->handle();
 
-        $this->assertTrue($resource->fresh()->isLdapReady());
+        $resource->refresh();
+
         $this->assertFalse($job->hasFailed());
+        $this->assertTrue($resource->isLdapReady());
+        $this->assertTrue($resource->isImapReady());
+        $this->assertTrue($resource->isActive());
 
         // Test job failures
-        $job = new \App\Jobs\Resource\CreateJob($resource->id);
-        $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Resource {$resource->id} is already marked as ldap-ready.", $job->failureMessage);
-
         $resource->status |= Resource::STATUS_DELETED;
         $resource->save();
 
@@ -80,5 +84,6 @@ class CreateTest extends TestCase
         $this->assertSame("Resource {$resource->id} is actually deleted.", $job->failureMessage);
 
         // TODO: Test failures on domain sanity checks
+        // TODO: Test partial execution, i.e. only IMAP or only LDAP
     }
 }

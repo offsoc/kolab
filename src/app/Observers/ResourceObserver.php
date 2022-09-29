@@ -15,7 +15,7 @@ class ResourceObserver
      */
     public function creating(Resource $resource): void
     {
-        $resource->status |= Resource::STATUS_NEW | Resource::STATUS_ACTIVE;
+        $resource->status |= Resource::STATUS_NEW;
     }
 
     /**
@@ -45,12 +45,8 @@ class ResourceObserver
         // Note: This is a single multi-insert query
         $resource->settings()->insert(array_values($settings));
 
-        // Create resource record in LDAP, then check if it is created in IMAP
-        $chain = [
-            new \App\Jobs\Resource\VerifyJob($resource->id),
-        ];
-
-        \App\Jobs\Resource\CreateJob::withChain($chain)->dispatch($resource->id);
+        // Create the resource in the backend (LDAP and IMAP)
+        \App\Jobs\Resource\CreateJob::dispatch($resource->id);
     }
 
     /**

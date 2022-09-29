@@ -9,8 +9,6 @@ use Illuminate\Support\Str;
 
 class NGINXController extends Controller
 {
-
-
     /**
      * Authorize with the provided credentials.
      *

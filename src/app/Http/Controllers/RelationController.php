@@ -151,9 +151,21 @@ class RelationController extends ResourceController
     protected static function processStateInfo($object, array $steps): array
     {
         $process = [];
+        $withLdap = \config('app.with_ldap');
+        $withImap = \config('app.with_imap');
 
         // Create a process check list
         foreach ($steps as $step_name => $state) {
+            // Remove LDAP related steps if the backend is disabled
+            if (!$withLdap && strpos($step_name, '-ldap-')) {
+                continue;
+            }
+
+            // Remove IMAP related steps if the backend is disabled
+            if (!$withImap && strpos($step_name, '-imap-')) {
+                continue;
+            }
+
             $step = [
                 'label' => $step_name,
                 'title' => \trans("app.process-{$step_name}"),

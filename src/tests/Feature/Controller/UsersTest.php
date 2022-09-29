@@ -484,9 +484,13 @@ class UsersTest extends TestCase
 
         $this->assertFalse($json['isImapReady']);
         $this->assertFalse($json['isReady']);
-        $this->assertCount(7, $json['process']);
-        $this->assertSame('user-imap-ready', $json['process'][2]['label']);
-        $this->assertSame(false, $json['process'][2]['state']);
+        if (\config('app.with_imap')) {
+            $this->assertCount(6, $json['process']);
+            $this->assertSame('user-imap-ready', $json['process'][2]['label']);
+            $this->assertSame(false, $json['process'][2]['state']);
+        } else {
+            $this->assertCount(7, $json['process']);
+        }
         $this->assertTrue(empty($json['status']));
         $this->assertTrue(empty($json['message']));
 
@@ -495,29 +499,8 @@ class UsersTest extends TestCase
         $domain->status |= Domain::STATUS_CONFIRMED;
         $domain->save();
 
-        // Now "reboot" the process and verify the user in imap synchronously
-        $response = $this->actingAs($john)->get("/api/v4/users/{$john->id}/status?refresh=1");
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertTrue($json['isImapReady']);
-        $this->assertTrue($json['isReady']);
-        $this->assertCount(7, $json['process']);
-        $this->assertSame('user-imap-ready', $json['process'][2]['label']);
-        $this->assertSame(true, $json['process'][2]['state']);
-        $this->assertSame('success', $json['status']);
-        $this->assertSame('Setup process finished successfully.', $json['message']);
-
-        Queue::size(1);
-
-        // Test case for when the verify job is dispatched to the worker
-        $john->refresh();
-        $john->status ^= User::STATUS_IMAP_READY;
-        $john->save();
-
-        \config(['imap.admin_password' => null]);
-
+        // Now "reboot" the process
+        Queue::fake();
         $response = $this->actingAs($john)->get("/api/v4/users/{$john->id}/status?refresh=1");
         $response->assertStatus(200);
 
@@ -525,11 +508,17 @@ class UsersTest extends TestCase
 
         $this->assertFalse($json['isImapReady']);
         $this->assertFalse($json['isReady']);
+        if (\config('app.with_imap')) {
+            $this->assertCount(7, $json['process']);
+            $this->assertSame('user-imap-ready', $json['process'][2]['label']);
+            $this->assertSame(false, $json['process'][2]['state']);
+        } else {
+            $this->assertCount(6, $json['process']);
+        }
         $this->assertSame('success', $json['status']);
-        $this->assertSame('waiting', $json['processState']);
         $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
 
-        Queue::assertPushed(\App\Jobs\User\VerifyJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
     }
 
     /**
@@ -551,13 +540,19 @@ class UsersTest extends TestCase
 
         $this->assertFalse($result['isReady']);
         $this->assertSame([], $result['skus']);
-        $this->assertCount(3, $result['process']);
+        if (\config('app.with_imap')) {
+            $this->assertCount(3, $result['process']);
+        } else {
+            $this->assertCount(2, $result['process']);
+        }
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
         $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
         $this->assertSame(false, $result['process'][1]['state']);
-        $this->assertSame('user-imap-ready', $result['process'][2]['label']);
-        $this->assertSame(false, $result['process'][2]['state']);
+        if (\config('app.with_imap')) {
+            $this->assertSame('user-imap-ready', $result['process'][2]['label']);
+            $this->assertSame(false, $result['process'][2]['state']);
+        }
         $this->assertSame('running', $result['processState']);
         $this->assertTrue($result['enableRooms']);
         $this->assertFalse($result['enableBeta']);
@@ -575,13 +570,19 @@ class UsersTest extends TestCase
         $result = UsersController::statusInfo($user);
 
         $this->assertTrue($result['isReady']);
-        $this->assertCount(3, $result['process']);
+        if (\config('app.with_imap')) {
+            $this->assertCount(3, $result['process']);
+        } else {
+            $this->assertCount(2, $result['process']);
+        }
         $this->assertSame('user-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
         $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
         $this->assertSame(true, $result['process'][1]['state']);
-        $this->assertSame('user-imap-ready', $result['process'][2]['label']);
-        $this->assertSame(true, $result['process'][2]['state']);
+        if (\config('app.with_imap')) {
+            $this->assertSame('user-imap-ready', $result['process'][2]['label']);
+            $this->assertSame(true, $result['process'][2]['state']);
+        }
         $this->assertSame('done', $result['processState']);
 
         $domain->status |= Domain::STATUS_VERIFIED;
@@ -592,21 +593,38 @@ class UsersTest extends TestCase
 
         $this->assertFalse($result['isReady']);
         $this->assertSame([], $result['skus']);
-        $this->assertCount(7, $result['process']);
-        $this->assertSame('user-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
-        $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
-        $this->assertSame(true, $result['process'][1]['state']);
-        $this->assertSame('user-imap-ready', $result['process'][2]['label']);
-        $this->assertSame(true, $result['process'][2]['state']);
-        $this->assertSame('domain-new', $result['process'][3]['label']);
-        $this->assertSame(true, $result['process'][3]['state']);
-        $this->assertSame('domain-ldap-ready', $result['process'][4]['label']);
-        $this->assertSame(false, $result['process'][4]['state']);
-        $this->assertSame('domain-verified', $result['process'][5]['label']);
-        $this->assertSame(true, $result['process'][5]['state']);
-        $this->assertSame('domain-confirmed', $result['process'][6]['label']);
-        $this->assertSame(false, $result['process'][6]['state']);
+
+        if (\config('app.with_imap')) {
+            $this->assertCount(7, $result['process']);
+            $this->assertSame('user-new', $result['process'][0]['label']);
+            $this->assertSame(true, $result['process'][0]['state']);
+            $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
+            $this->assertSame(true, $result['process'][1]['state']);
+            $this->assertSame('user-imap-ready', $result['process'][2]['label']);
+            $this->assertSame(true, $result['process'][2]['state']);
+            $this->assertSame('domain-new', $result['process'][3]['label']);
+            $this->assertSame(true, $result['process'][3]['state']);
+            $this->assertSame('domain-ldap-ready', $result['process'][4]['label']);
+            $this->assertSame(false, $result['process'][4]['state']);
+            $this->assertSame('domain-verified', $result['process'][5]['label']);
+            $this->assertSame(true, $result['process'][5]['state']);
+            $this->assertSame('domain-confirmed', $result['process'][6]['label']);
+            $this->assertSame(false, $result['process'][6]['state']);
+        } else {
+            $this->assertCount(6, $result['process']);
+            $this->assertSame('user-new', $result['process'][0]['label']);
+            $this->assertSame(true, $result['process'][0]['state']);
+            $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
+            $this->assertSame(true, $result['process'][1]['state']);
+            $this->assertSame('domain-new', $result['process'][2]['label']);
+            $this->assertSame(true, $result['process'][2]['state']);
+            $this->assertSame('domain-ldap-ready', $result['process'][3]['label']);
+            $this->assertSame(false, $result['process'][3]['state']);
+            $this->assertSame('domain-verified', $result['process'][4]['label']);
+            $this->assertSame(true, $result['process'][4]['state']);
+            $this->assertSame('domain-confirmed', $result['process'][5]['label']);
+            $this->assertSame(false, $result['process'][5]['state']);
+        }
 
         // Test 'skus' property
         $user->assignSku(Sku::withEnvTenantContext()->where('title', 'beta')->first());

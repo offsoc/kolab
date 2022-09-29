@@ -3,7 +3,6 @@
 namespace App\Console\Commands\Job;
 
 use App\Console\Command;
-use App\User;
 
 class UserCreate extends Command
 {
@@ -19,7 +18,7 @@ class UserCreate extends Command
      *
      * @var string
      */
-    protected $description = "Execute the UserCreate job (again).";
+    protected $description = "Execute the user creation job (again).";
 
     /**
      * Execute the console command.

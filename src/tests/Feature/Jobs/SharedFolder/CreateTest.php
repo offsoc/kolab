@@ -29,6 +29,7 @@ class CreateTest extends TestCase
      * Test job handle
      *
      * @group ldap
+     * @group imap
      */
     public function testHandle(): void
     {
@@ -42,24 +43,27 @@ class CreateTest extends TestCase
         $this->assertTrue($job->isReleased());
         $this->assertFalse($job->hasFailed());
 
-        $folder = $this->getTestSharedFolder('folder-test@' . \config('app.domain'));
+        $folder = $this->getTestSharedFolder(
+            'folder-test@' . \config('app.domain'),
+            ['status' => SharedFolder::STATUS_NEW]
+        );
 
         $this->assertFalse($folder->isLdapReady());
+        $this->assertFalse($folder->isImapReady());
+        $this->assertFalse($folder->isActive());
 
         // Test shared folder creation
         $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
         $job->handle();
 
-        $this->assertTrue($folder->fresh()->isLdapReady());
+        $folder->refresh();
+
         $this->assertFalse($job->hasFailed());
+        $this->assertTrue($folder->isLdapReady());
+        $this->assertTrue($folder->isImapReady());
+        $this->assertTrue($folder->isActive());
 
         // Test job failures
-        $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
-        $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Shared folder {$folder->id} is already marked as ldap-ready.", $job->failureMessage);
-
         $folder->status |= SharedFolder::STATUS_DELETED;
         $folder->save();
 
@@ -80,5 +84,6 @@ class CreateTest extends TestCase
         $this->assertSame("Shared folder {$folder->id} is actually deleted.", $job->failureMessage);
 
         // TODO: Test failures on domain sanity checks
+        // TODO: Test partial execution, i.e. only IMAP or only LDAP
     }
 }

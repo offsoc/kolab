@@ -156,30 +156,10 @@ class SharedFoldersController extends RelationController
 
             switch ($step) {
                 case 'shared-folder-ldap-ready':
-                    // Shared folder not in LDAP, create it
-                    $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
-                    $job->handle();
-
-                    $folder->refresh();
-
-                    return $folder->isLdapReady();
-
                 case 'shared-folder-imap-ready':
-                    // Shared folder not in IMAP? Verify again
-                    // Do it synchronously if the imap admin credentials are available
-                    // otherwise let the worker do the job
-                    if (!\config('imap.admin_password')) {
-                        \App\Jobs\SharedFolder\VerifyJob::dispatch($folder->id);
-
-                        return null;
-                    }
-
-                    $job = new \App\Jobs\SharedFolder\VerifyJob($folder->id);
-                    $job->handle();
-
-                    $folder->refresh();
-
-                    return $folder->isImapReady();
+                    // Use worker to do the job, frontend might not have the IMAP admin credentials
+                    \App\Jobs\SharedFolder\CreateJob::dispatch($folder->id);
+                    return null;
             }
         } catch (\Exception $e) {
             \Log::error($e);

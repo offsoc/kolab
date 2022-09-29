@@ -25,14 +25,13 @@ class DeleteJob extends DomainJob
             return;
         }
 
-        \App\Backends\LDAP::deleteDomain($domain);
+        if (\config('app.with_ldap') && $domain->isLdapReady()) {
+            \App\Backends\LDAP::deleteDomain($domain);
 
-        $domain->status |= \App\Domain::STATUS_DELETED;
-
-        if ($domain->isLdapReady()) {
             $domain->status ^= \App\Domain::STATUS_LDAP_READY;
         }
 
+        $domain->status |= \App\Domain::STATUS_DELETED;
         $domain->save();
     }
 }

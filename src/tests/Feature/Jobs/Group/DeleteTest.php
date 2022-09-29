@@ -3,6 +3,7 @@
 namespace Tests\Feature\Jobs\Group;
 
 use App\Group;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DeleteTest extends TestCase
@@ -42,6 +43,8 @@ class DeleteTest extends TestCase
 
         $this->assertTrue($group->fresh()->isLdapReady());
 
+        Queue::fake();
+
         $job = new \App\Jobs\Group\DeleteJob($group->id);
         $job->handle();
 
@@ -49,7 +52,17 @@ class DeleteTest extends TestCase
 
         $this->assertFalse($group->isLdapReady());
         $this->assertTrue($group->isDeleted());
-
+/*
+        Queue::assertPushed(\App\Jobs\IMAP\AclCleanupJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\IMAP\AclCleanupJob::class,
+            function ($job) {
+                $ident = TestCase::getObjectProperty($job, 'ident');
+                $domain = TestCase::getObjectProperty($job, 'domain');
+                return $ident == 'group' && $domain === 'kolab.org';
+            }
+        );
+*/
         // Test non-existing group ID
         $job = new \App\Jobs\Group\DeleteJob(123);
         $job->handle();

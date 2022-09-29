@@ -42,15 +42,12 @@ class CreateJob extends UserJob
             return;
         }
 
-        if ($user->deleted_at) {
+        if ($user->trashed()) {
             $this->fail(new \Exception("User {$this->userId} is actually deleted."));
             return;
         }
 
-        if ($user->isLdapReady()) {
-            $this->fail(new \Exception("User {$this->userId} is already marked as ldap-ready."));
-            return;
-        }
+        $withLdap = \config('app.with_ldap');
 
         // see if the domain is ready
         $domain = $user->domain();
@@ -65,7 +62,7 @@ class CreateJob extends UserJob
             return;
         }
 
-        if (!$domain->isLdapReady()) {
+        if ($withLdap && !$domain->isLdapReady()) {
             $this->release(60);
             return;
         }
@@ -78,9 +75,28 @@ class CreateJob extends UserJob
             }
         }
 
-        \App\Backends\LDAP::createUser($user);
+        if ($withLdap && !$user->isLdapReady()) {
+            \App\Backends\LDAP::createUser($user);
 
-        $user->status |= \App\User::STATUS_LDAP_READY;
+            $user->status |= \App\User::STATUS_LDAP_READY;
+            $user->save();
+        }
+
+        if (!$user->isImapReady()) {
+            if (\config('app.with_imap')) {
+                if (!\App\Backends\IMAP::createUser($user)) {
+                    throw new \Exception("Failed to create mailbox for user {$this->userId}.");
+                }
+            } else {
+                if (!\App\Backends\IMAP::verifyAccount($user->email)) {
+                    throw new \Exception("Failed to find the mailbox for user {$this->userId}.");
+                }
+            }
+
+            $user->status |= \App\User::STATUS_IMAP_READY;
+        }
+
+        $user->status |= \App\User::STATUS_ACTIVE;
         $user->save();
     }
 }

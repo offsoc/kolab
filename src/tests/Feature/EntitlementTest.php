@@ -40,6 +40,48 @@ class EntitlementTest extends TestCase
     }
 
     /**
+     * Tests for EntitlementObserver
+     */
+    public function testEntitlementObserver(): void
+    {
+        $skuStorage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $skuMailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $user = $this->getTestUser('entitlement-test@kolabnow.com');
+        $wallet = $user->wallets->first();
+
+        // Test dispatching update jobs for the user, on quota update
+        Queue::fake();
+        $user->assignSku($skuMailbox, 1, $wallet);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+
+        Queue::fake();
+        $user->assignSku($skuStorage, 1, $wallet);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\User\UpdateJob::class,
+            function ($job) use ($user) {
+                return $user->id === TestCase::getObjectProperty($job, 'userId');
+            }
+        );
+
+        Queue::fake();
+        $user->entitlements()->where('sku_id', $skuMailbox->id)->first()->delete();
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+
+        Queue::fake();
+        $user->entitlements()->where('sku_id', $skuStorage->id)->first()->delete();
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\User\UpdateJob::class,
+            function ($job) use ($user) {
+                return $user->id === TestCase::getObjectProperty($job, 'userId');
+            }
+        );
+
+        // TODO: Test all events in the observer in more detail
+    }
+
+    /**
      * Tests for entitlements
      * @todo This really should be in User or Wallet tests file
      */

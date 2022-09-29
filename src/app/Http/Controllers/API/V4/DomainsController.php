@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Domain;
 use App\Http\Controllers\RelationController;
-use App\Backends\LDAP;
 use App\Rules\UserEmailDomain;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -299,20 +298,17 @@ class DomainsController extends RelationController
      * @param \App\Domain $domain Domain object
      * @param string      $step   Step identifier (as in self::statusInfo())
      *
-     * @return bool True if the execution succeeded, False otherwise
+     * @return bool|null True if the execution succeeded, False if not, Null when
+     *                   the job has been sent to the worker (result unknown)
      */
-    public static function execProcessStep(Domain $domain, string $step): bool
+    public static function execProcessStep(Domain $domain, string $step): ?bool
     {
         try {
             switch ($step) {
                 case 'domain-ldap-ready':
-                    // Domain not in LDAP, create it
-                    if (!$domain->isLdapReady()) {
-                        LDAP::createDomain($domain);
-                        $domain->status |= Domain::STATUS_LDAP_READY;
-                        $domain->save();
-                    }
-                    return $domain->isLdapReady();
+                    // Use worker to do the job
+                    \App\Jobs\Domain\CreateJob::dispatch($domain->id);
+                    return null;
 
                 case 'domain-verified':
                     // Domain existence not verified

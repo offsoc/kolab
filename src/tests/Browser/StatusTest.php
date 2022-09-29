@@ -112,7 +112,7 @@ class StatusTest extends TestCaseDusk
             $browser->waitUntilMissing('@status', 10);
         });
 
-        // Test  the Refresh button
+        // Test the Refresh button
         if ($domain->isConfirmed()) {
             $domain->status ^= Domain::STATUS_CONFIRMED;
             $domain->save();
@@ -134,17 +134,15 @@ class StatusTest extends TestCaseDusk
                         ->assertVisible('@refresh-button')
                         ->assertVisible('@refresh-text');
 
-                    if ($john->refresh()->isImapReady()) {
-                        $john->status ^= User::STATUS_IMAP_READY;
-                        $john->save();
-                    }
+                    $browser->click('@refresh-button')
+                        ->assertToast(Toast::TYPE_SUCCESS, 'Setup process has been pushed. Please wait.');
+
+                    $john->status |= User::STATUS_IMAP_READY;
+                    $john->save();
                     $domain->status |= Domain::STATUS_CONFIRMED;
                     $domain->save();
-
-                    $browser->click('@refresh-button')
-                        ->assertToast(Toast::TYPE_SUCCESS, 'Setup process finished successfully.');
                 })
-                ->assertMissing('@status');
+                ->waitUntilMissing('@status', 10);
         });
     }
 

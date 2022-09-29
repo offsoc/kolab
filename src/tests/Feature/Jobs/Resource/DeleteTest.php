@@ -29,6 +29,7 @@ class DeleteTest extends TestCase
      * Test job handle
      *
      * @group ldap
+     * @group imap
      */
     public function testHandle(): void
     {
@@ -52,11 +53,12 @@ class DeleteTest extends TestCase
         $resource->refresh();
 
         $this->assertTrue($resource->isLdapReady());
+        if (\config('app.with_imap')) {
+            $this->assertTrue($resource->isImapReady());
+        }
+        $this->assertFalse($resource->isDeleted());
 
         // Test successful deletion
-        $resource->status |= Resource::STATUS_IMAP_READY;
-        $resource->save();
-
         $job = new \App\Jobs\Resource\DeleteJob($resource->id);
         $job->handle();
 

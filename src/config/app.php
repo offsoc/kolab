@@ -71,6 +71,8 @@ return [
 
     'currency' => \strtoupper(env('APP_CURRENCY', 'CHF')),
 
+    'backends' => env('BACKENDS', 'imap,ldap'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Domain
@@ -252,6 +254,10 @@ return [
         'methods_oneoff' => env('PAYMENT_METHODS_ONEOFF', 'creditcard,paypal,banktransfer,bitcoin'),
         'methods_recurring' => env('PAYMENT_METHODS_RECURRING', 'creditcard'),
     ],
+
+
+    'with_ldap' => (bool) env('APP_LDAP', true),
+    'with_imap' => (bool) env('APP_IMAP', false),
 
     'with_admin' => (bool) env('APP_WITH_ADMIN', false),
     'with_files' => (bool) env('APP_WITH_FILES', false),

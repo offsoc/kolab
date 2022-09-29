@@ -113,7 +113,7 @@ class ResourceTest extends TestCase
         $this->assertMatchesRegularExpression('/^resource-[0-9]{1,20}@kolabnow\.com$/', $resource->email);
         $this->assertSame('Reśo', $resource->name);
         $this->assertTrue($resource->isNew());
-        $this->assertTrue($resource->isActive());
+        $this->assertFalse($resource->isActive());
         $this->assertFalse($resource->isDeleted());
         $this->assertFalse($resource->isLdapReady());
         $this->assertFalse($resource->isImapReady());
@@ -132,13 +132,6 @@ class ResourceTest extends TestCase
                 return $resourceEmail === $resource->email
                     && $resourceId === $resource->id;
             }
-        );
-
-        Queue::assertPushedWithChain(
-            \App\Jobs\Resource\CreateJob::class,
-            [
-                \App\Jobs\Resource\VerifyJob::class,
-            ]
         );
     }
 
@@ -225,6 +218,13 @@ class ResourceTest extends TestCase
         $resource->setSetting('invitation_policy', 'accept');
 
         Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\Resource\UpdateJob::class,
+            function ($job) use ($resource) {
+                return $resource->id === TestCase::getObjectProperty($job, 'resourceId')
+                    && ['invitation_policy' => null] === TestCase::getObjectProperty($job, 'properties');
+            }
+        );
 
         // Note: We test both current resource as well as fresh resource object
         //       to make sure cache works as expected
@@ -242,6 +242,13 @@ class ResourceTest extends TestCase
         $resource->setSetting('invitation_policy', 'reject');
 
         Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\Resource\UpdateJob::class,
+            function ($job) use ($resource) {
+                return $resource->id === TestCase::getObjectProperty($job, 'resourceId')
+                    && ['invitation_policy' => 'accept'] === TestCase::getObjectProperty($job, 'properties');
+            }
+        );
 
         $this->assertSame('test1', $resource->getSetting('unknown'));
         $this->assertSame('reject', $resource->fresh()->getSetting('invitation_policy'));
@@ -257,6 +264,13 @@ class ResourceTest extends TestCase
         $resource->setSetting('invitation_policy', null);
 
         Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\Resource\UpdateJob::class,
+            function ($job) use ($resource) {
+                return $resource->id === TestCase::getObjectProperty($job, 'resourceId')
+                    && ['invitation_policy' => 'reject'] === TestCase::getObjectProperty($job, 'properties');
+            }
+        );
 
         $this->assertSame(null, $resource->getSetting('unknown'));
         $this->assertSame(null, $resource->fresh()->getSetting('invitation_policy'));

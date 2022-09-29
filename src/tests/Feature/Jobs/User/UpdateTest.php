@@ -32,6 +32,7 @@ class UpdateTest extends TestCase
      * Test job handle
      *
      * @group ldap
+     * @group imap
      */
     public function testHandle(): void
     {
@@ -90,5 +91,7 @@ class UpdateTest extends TestCase
 
         $this->assertTrue($job->hasFailed());
         $this->assertSame("User 123 could not be found in the database.", $job->failureMessage);
+
+        // TODO: Test IMAP, e.g. quota change
     }
 }

@@ -19,7 +19,7 @@ class SharedFolderObserver
             $folder->type = 'mail';
         }
 
-        $folder->status |= SharedFolder::STATUS_NEW | SharedFolder::STATUS_ACTIVE;
+        $folder->status |= SharedFolder::STATUS_NEW;
     }
 
     /**
@@ -49,12 +49,8 @@ class SharedFolderObserver
         // Note: This is a single multi-insert query
         $folder->settings()->insert(array_values($settings));
 
-        // Create folder record in LDAP, then check if it is created in IMAP
-        $chain = [
-            new \App\Jobs\SharedFolder\VerifyJob($folder->id),
-        ];
-
-        \App\Jobs\SharedFolder\CreateJob::withChain($chain)->dispatch($folder->id);
+        // Create the shared folder in the backend (LDAP and IMAP)
+        \App\Jobs\SharedFolder\CreateJob::dispatch($folder->id);
     }
 
     /**

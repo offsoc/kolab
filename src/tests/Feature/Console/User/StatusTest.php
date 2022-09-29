@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Console\User;
 
+use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -41,14 +42,20 @@ class StatusTest extends TestCase
         $this->assertSame(1, $code);
         $this->assertSame("User not found.", $output);
 
+        $user = $this->getTestUser(
+            'user@force-delete.com',
+            ['status' => User::STATUS_NEW | User::STATUS_ACTIVE | User::STATUS_IMAP_READY | User::STATUS_LDAP_READY]
+        );
+
         // Existing user
-        $code = \Artisan::call("user:status john@kolab.org");
+        $code = \Artisan::call("user:status {$user->email}");
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
         $this->assertSame("Status (51): active (2), ldapReady (16), imapReady (32)", $output);
 
-        $user = $this->getTestUser('user@force-delete.com');
+        $user->status = User::STATUS_ACTIVE;
+        $user->save();
         $user->delete();
 
         // Deleted user
@@ -56,6 +63,6 @@ class StatusTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertSame("Status (3): active (2), deleted (8)", $output);
+        $this->assertSame("Status (2): active (2), deleted (8)", $output);
     }
 }

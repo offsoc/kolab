@@ -79,7 +79,7 @@ class GroupTest extends TestCase
         $this->assertMatchesRegularExpression('/^[0-9]{1,20}$/', $group->id);
         $this->assertSame([], $group->members);
         $this->assertTrue($group->isNew());
-        $this->assertTrue($group->isActive());
+        $this->assertFalse($group->isActive());
 
         Queue::assertPushed(
             \App\Jobs\Group\CreateJob::class,

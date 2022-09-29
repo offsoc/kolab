@@ -14,6 +14,13 @@ namespace App\Jobs;
 abstract class ResourceJob extends CommonJob
 {
     /**
+     * Old values of the resource properties on update (key -> value)
+     *
+     * @var array
+     */
+    protected $properties = [];
+
+    /**
      * The ID for the \App\Resource. This is the shortest globally unique identifier and saves Redis space
      * compared to a serialized version of the complete \App\Resource object.
      *
@@ -31,13 +38,15 @@ abstract class ResourceJob extends CommonJob
     /**
      * Create a new job instance.
      *
-     * @param int $resourceId The ID for the resource to process.
+     * @param int   $resourceId The ID for the resource to process.
+     * @param array $properties Old values of the resource properties on update
      *
      * @return void
      */
-    public function __construct(int $resourceId)
+    public function __construct(int $resourceId, array $properties = [])
     {
         $this->resourceId = $resourceId;
+        $this->properties = $properties;
 
         $resource = $this->getResource();
 

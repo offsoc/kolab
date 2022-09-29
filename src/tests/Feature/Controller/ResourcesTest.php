@@ -323,7 +323,11 @@ class ResourcesTest extends TestCase
         $this->assertFalse($json['isReady']);
         $this->assertFalse($json['isDeleted']);
         $this->assertTrue($json['isActive']);
-        $this->assertCount(7, $json['process']);
+        if (\config('app.with_imap')) {
+            $this->assertCount(7, $json['process']);
+        } else {
+            $this->assertCount(6, $json['process']);
+        }
         $this->assertSame('resource-new', $json['process'][0]['label']);
         $this->assertSame(true, $json['process'][0]['state']);
         $this->assertSame('resource-ldap-ready', $json['process'][1]['label']);
@@ -339,25 +343,35 @@ class ResourcesTest extends TestCase
         $resource->status |= Resource::STATUS_IMAP_READY;
         $resource->save();
 
-        // Now "reboot" the process and get the resource status
+        // Now "reboot" the process
+        Queue::fake();
         $response = $this->actingAs($john)->get("/api/v4/resources/{$resource->id}/status?refresh=1");
         $response->assertStatus(200);
 
         $json = $response->json();
 
-        $this->assertTrue($json['isLdapReady']);
+        $this->assertFalse($json['isLdapReady']);
         $this->assertTrue($json['isImapReady']);
-        $this->assertTrue($json['isReady']);
-        $this->assertCount(7, $json['process']);
+        $this->assertFalse($json['isReady']);
+        if (\config('app.with_imap')) {
+            $this->assertCount(7, $json['process']);
+        } else {
+            $this->assertCount(6, $json['process']);
+        }
         $this->assertSame('resource-ldap-ready', $json['process'][1]['label']);
-        $this->assertSame(true, $json['process'][1]['state']);
-        $this->assertSame('resource-imap-ready', $json['process'][2]['label']);
+        $this->assertSame(false, $json['process'][1]['state']);
+        if (\config('app.with_imap')) {
+            $this->assertSame('resource-imap-ready', $json['process'][2]['label']);
+        }
         $this->assertSame(true, $json['process'][2]['state']);
         $this->assertSame('success', $json['status']);
-        $this->assertSame('Setup process finished successfully.', $json['message']);
-        $this->assertSame('done', $json['processState']);
+        $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
+        $this->assertSame('waiting', $json['processState']);
+
+        Queue::assertPushed(\App\Jobs\Resource\CreateJob::class, 1);
 
         // Test a case when a domain is not ready
+        Queue::fake();
         $domain->status ^= \App\Domain::STATUS_CONFIRMED;
         $domain->save();
 
@@ -366,13 +380,20 @@ class ResourcesTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertTrue($json['isLdapReady']);
-        $this->assertTrue($json['isReady']);
-        $this->assertCount(7, $json['process']);
+        $this->assertFalse($json['isLdapReady']);
+        $this->assertFalse($json['isReady']);
+        if (\config('app.with_imap')) {
+            $this->assertCount(7, $json['process']);
+        } else {
+            $this->assertCount(6, $json['process']);
+        }
         $this->assertSame('resource-ldap-ready', $json['process'][1]['label']);
-        $this->assertSame(true, $json['process'][1]['state']);
+        $this->assertSame(false, $json['process'][1]['state']);
         $this->assertSame('success', $json['status']);
-        $this->assertSame('Setup process finished successfully.', $json['message']);
+        $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
+        $this->assertSame('waiting', $json['processState']);
+
+        Queue::assertPushed(\App\Jobs\Resource\CreateJob::class, 1);
     }
 
     /**
@@ -392,7 +413,11 @@ class ResourcesTest extends TestCase
         $result = ResourcesController::statusInfo($resource);
 
         $this->assertFalse($result['isReady']);
-        $this->assertCount(7, $result['process']);
+        if (\config('app.with_imap')) {
+            $this->assertCount(7, $result['process']);
+        } else {
+            $this->assertCount(6, $result['process']);
+        }
         $this->assertSame('resource-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
         $this->assertSame('resource-ldap-ready', $result['process'][1]['label']);
@@ -412,7 +437,11 @@ class ResourcesTest extends TestCase
         $result = ResourcesController::statusInfo($resource);
 
         $this->assertTrue($result['isReady']);
-        $this->assertCount(7, $result['process']);
+        if (\config('app.with_imap')) {
+            $this->assertCount(7, $result['process']);
+        } else {
+            $this->assertCount(6, $result['process']);
+        }
         $this->assertSame('resource-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
         $this->assertSame('resource-ldap-ready', $result['process'][1]['label']);

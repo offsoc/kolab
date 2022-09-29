@@ -30,18 +30,28 @@ class DeleteJob extends UserJob
             return;
         }
 
-        \App\Backends\LDAP::deleteUser($user);
+        if (\config('app.with_ldap') && $user->isLdapReady()) {
+            \App\Backends\LDAP::deleteUser($user);
 
-        $user->status |= \App\User::STATUS_DELETED;
-
-        if ($user->isLdapReady()) {
             $user->status ^= \App\User::STATUS_LDAP_READY;
+            $user->save();
         }
 
         if ($user->isImapReady()) {
+            if (\config('app.with_imap')) {
+                if (!\App\Backends\IMAP::deleteUser($user)) {
+                    throw new \Exception("Failed to delete mailbox for user {$this->userId}.");
+                }
+            }
+
             $user->status ^= \App\User::STATUS_IMAP_READY;
         }
 
+        if (\config('database.connections.roundcube')) {
+            \App\Backends\Roundcube::deleteUser($user->email);
+        }
+
+        $user->status |= \App\User::STATUS_DELETED;
         $user->save();
     }
 }

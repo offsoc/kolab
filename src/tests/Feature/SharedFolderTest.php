@@ -177,7 +177,7 @@ class SharedFolderTest extends TestCase
         $this->assertMatchesRegularExpression('/^mail-[0-9]{1,20}@kolabnow\.com$/', $folder->email);
         $this->assertSame('Reśo', $folder->name);
         $this->assertTrue($folder->isNew());
-        $this->assertTrue($folder->isActive());
+        $this->assertFalse($folder->isActive());
         $this->assertFalse($folder->isDeleted());
         $this->assertFalse($folder->isLdapReady());
         $this->assertFalse($folder->isImapReady());
@@ -196,13 +196,6 @@ class SharedFolderTest extends TestCase
                 return $folderEmail === $folder->email
                     && $folderId === $folder->id;
             }
-        );
-
-        Queue::assertPushedWithChain(
-            \App\Jobs\SharedFolder\CreateJob::class,
-            [
-                \App\Jobs\SharedFolder\VerifyJob::class,
-            ]
         );
     }
 
@@ -289,6 +282,13 @@ class SharedFolderTest extends TestCase
         $folder->setSetting('acl', 'test');
 
         Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\SharedFolder\UpdateJob::class,
+            function ($job) use ($folder) {
+                return $folder->id === TestCase::getObjectProperty($job, 'folderId')
+                    && ['acl' => null] === TestCase::getObjectProperty($job, 'properties');
+            }
+        );
 
         // Note: We test both current folder as well as fresh folder object
         //       to make sure cache works as expected
@@ -306,6 +306,13 @@ class SharedFolderTest extends TestCase
         $folder->setSetting('acl', 'test1');
 
         Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\SharedFolder\UpdateJob::class,
+            function ($job) use ($folder) {
+                return $folder->id === TestCase::getObjectProperty($job, 'folderId')
+                    && ['acl' => 'test'] === TestCase::getObjectProperty($job, 'properties');
+            }
+        );
 
         $this->assertSame('test1', $folder->getSetting('unknown'));
         $this->assertSame('test1', $folder->fresh()->getSetting('acl'));
@@ -321,6 +328,13 @@ class SharedFolderTest extends TestCase
         $folder->setSetting('acl', null);
 
         Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\SharedFolder\UpdateJob::class,
+            function ($job) use ($folder) {
+                return $folder->id === TestCase::getObjectProperty($job, 'folderId')
+                    && ['acl' => 'test1'] === TestCase::getObjectProperty($job, 'properties');
+            }
+        );
 
         $this->assertSame(null, $folder->getSetting('unknown'));
         $this->assertSame(null, $folder->fresh()->getSetting('acl'));

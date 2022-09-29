@@ -61,6 +61,11 @@ class EntitlementObserver
         $entitlement->entitleable->save();
 
         $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_CREATED);
+
+        // Update the user IMAP mailbox quota
+        if ($entitlement->sku->title == 'storage') {
+            \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
+        }
     }
 
     /**
@@ -72,6 +77,13 @@ class EntitlementObserver
      */
     public function deleted(Entitlement $entitlement)
     {
+        if (!$entitlement->entitleable->trashed()) {
+            $entitlement->entitleable->updated_at = Carbon::now();
+            $entitlement->entitleable->save();
+
+            $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_DELETED);
+        }
+
         // Remove all configured 2FA methods from Roundcube database
         if ($entitlement->sku->title == '2fa') {
             // FIXME: Should that be an async job?
@@ -79,11 +91,9 @@ class EntitlementObserver
             $sf->removeFactors();
         }
 
-        if (!$entitlement->entitleable->trashed()) {
-            $entitlement->entitleable->updated_at = Carbon::now();
-            $entitlement->entitleable->save();
-
-            $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_DELETED);
+        // Update the user IMAP mailbox quota
+        if ($entitlement->sku->title == 'storage') {
+            \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
         }
     }
 

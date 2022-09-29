@@ -160,30 +160,10 @@ class ResourcesController extends RelationController
 
             switch ($step) {
                 case 'resource-ldap-ready':
-                    // Resource not in LDAP, create it
-                    $job = new \App\Jobs\Resource\CreateJob($resource->id);
-                    $job->handle();
-
-                    $resource->refresh();
-
-                    return $resource->isLdapReady();
-
                 case 'resource-imap-ready':
-                    // Resource not in IMAP? Verify again
-                    // Do it synchronously if the imap admin credentials are available
-                    // otherwise let the worker do the job
-                    if (!\config('imap.admin_password')) {
-                        \App\Jobs\Resource\VerifyJob::dispatch($resource->id);
-
-                        return null;
-                    }
-
-                    $job = new \App\Jobs\Resource\VerifyJob($resource->id);
-                    $job->handle();
-
-                    $resource->refresh();
-
-                    return $resource->isImapReady();
+                    // Use worker to do the job, frontend might not have the IMAP admin credentials
+                    \App\Jobs\Resource\CreateJob::dispatch($resource->id);
+                    return null;
             }
         } catch (\Exception $e) {
             \Log::error($e);

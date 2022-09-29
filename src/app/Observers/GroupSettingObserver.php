@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Backends\LDAP;
 use App\GroupSetting;
 
 class GroupSettingObserver
@@ -16,9 +15,7 @@ class GroupSettingObserver
      */
     public function created(GroupSetting $groupSetting)
     {
-        if (in_array($groupSetting->key, LDAP::GROUP_SETTINGS)) {
-            \App\Jobs\Group\UpdateJob::dispatch($groupSetting->group_id);
-        }
+        $this->dispatchUpdateJob($groupSetting);
     }
 
     /**
@@ -30,9 +27,7 @@ class GroupSettingObserver
      */
     public function updated(GroupSetting $groupSetting)
     {
-        if (in_array($groupSetting->key, LDAP::GROUP_SETTINGS)) {
-            \App\Jobs\Group\UpdateJob::dispatch($groupSetting->group_id);
-        }
+        $this->dispatchUpdateJob($groupSetting);
     }
 
     /**
@@ -44,7 +39,20 @@ class GroupSettingObserver
      */
     public function deleted(GroupSetting $groupSetting)
     {
-        if (in_array($groupSetting->key, LDAP::GROUP_SETTINGS)) {
+        $this->dispatchUpdateJob($groupSetting);
+    }
+
+    /**
+     * Dispatch group update job (if needed).
+     *
+     * @param \App\GroupSetting $groupSetting Settings object
+     */
+    private function dispatchUpdateJob(GroupSetting $groupSetting): void
+    {
+        if (
+            (\config('app.with_ldap') && in_array($groupSetting->key, \App\Backends\LDAP::GROUP_SETTINGS))
+            || (\config('app.with_imap') && in_array($groupSetting->key, \App\Backends\IMAP::GROUP_SETTINGS))
+        ) {
             \App\Jobs\Group\UpdateJob::dispatch($groupSetting->group_id);
         }
     }

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Jobs\User;
 
 use App\User;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class CreateTest extends TestCase
@@ -28,26 +29,28 @@ class CreateTest extends TestCase
      * Test job handle
      *
      * @group ldap
+     * @group imap
      */
     public function testHandle(): void
     {
-        $user = $this->getTestUser('new-job-user@' . \config('app.domain'));
+        Queue::fake();
+        $user = $this->getTestUser('new-job-user@' . \config('app.domain'), ['status' => User::STATUS_NEW]);
 
         $this->assertFalse($user->isLdapReady());
+        $this->assertFalse($user->isImapReady());
+        $this->assertFalse($user->isActive());
 
         $job = new \App\Jobs\User\CreateJob($user->id);
         $job->handle();
 
-        $this->assertTrue($user->fresh()->isLdapReady());
+        $user->refresh();
+
+        $this->assertTrue($user->isLdapReady());
+        $this->assertTrue($user->isImapReady());
+        $this->assertTrue($user->isActive());
         $this->assertFalse($job->hasFailed());
 
-        // Test job failures
-        $job = new \App\Jobs\User\CreateJob($user->id);
-        $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("User {$user->id} is already marked as ldap-ready.", $job->failureMessage);
-
+        // Test job failure (user deleted)
         $user->status |= User::STATUS_DELETED;
         $user->save();
 
@@ -57,6 +60,7 @@ class CreateTest extends TestCase
         $this->assertTrue($job->hasFailed());
         $this->assertSame("User {$user->id} is marked as deleted.", $job->failureMessage);
 
+        // Test job failure (user removed)
         $user->status ^= User::STATUS_DELETED;
         $user->save();
         $user->delete();
@@ -67,13 +71,14 @@ class CreateTest extends TestCase
         $this->assertTrue($job->hasFailed());
         $this->assertSame("User {$user->id} is actually deleted.", $job->failureMessage);
 
-        // TODO: Test failures on domain sanity checks
-
-        $this->expectException(\Exception::class);
+        // Test job failure (user unknown)
         $job = new \App\Jobs\User\CreateJob(123);
         $job->handle();
 
         $this->assertTrue($job->isReleased());
         $this->assertFalse($job->hasFailed());
+
+        // TODO: Test failures on domain sanity checks
+        // TODO: Test partial execution, i.e. only IMAP or only LDAP
     }
 }
