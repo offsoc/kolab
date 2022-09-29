@@ -1,0 +1,14 @@
+[Unit]
+Description=Kolab Octane
+
+[Service]
+User=mollekopf
+Group=mollekopf
+Restart=on-failure
+ExecStart=/usr/bin/php /home/kolab/kolab/src/artisan octane:start --host=127.0.0.1
+ExecReload=/usr/bin/php /home/kolab/kolab/src/artisan octane:reload
+ExecStop=/usr/bin/php /home/kolab/kolab/src/artisan octane:stop
+SuccessExitStatus=137
+
+[Install]
+WantedBy=multi-user.target
