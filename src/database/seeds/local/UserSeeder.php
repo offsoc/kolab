@@ -238,5 +238,13 @@ class UserSeeder extends Seeder
                 $user->assignPackage($packageKolab);
             }
         }
+
+        # Create imap admin service account
+        User::create(
+            [
+                'email' => \config('imap.admin_login'),
+                'password' => \config('imap.admin_password')
+            ]
+        );
     }
 }

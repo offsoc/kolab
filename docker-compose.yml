@@ -30,7 +30,9 @@ services:
         condition: service_healthy
     extra_hosts:
       - "kolab.mgmt.com:127.0.0.1"
+      - "services.${APP_DOMAIN}:172.18.0.4"
     environment:
+      - APP_DOMAIN=${APP_DOMAIN}
       - LDAP_HOST=127.0.0.1
       - LDAP_ADMIN_BIND_DN="cn=Directory Manager"
       - LDAP_ADMIN_BIND_PW=Welcome2KolabSystems
@@ -229,7 +231,8 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - kolab
+      kolab:
+        ipv4_address: 172.18.0.4
     volumes:
       - ./src:/src/kolabsrc.orig:ro
     ports:

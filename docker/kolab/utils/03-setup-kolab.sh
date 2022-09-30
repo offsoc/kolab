@@ -46,9 +46,20 @@ else
     cp -ar /var/lib/imap-bak/* /var/lib/imap/
     systemctl start cyrus-imapd
 fi
-systemctl stop saslauthd
-systemctl start kolab-saslauthd
-systemctl enable kolab-saslauthd
+
+
+# Setup httpform auth against kolab
+sed -i "s/MECH=.*/MECH=httpform/" /etc/sysconfig/saslauthd
+
+cat > /etc/saslauthd.conf << EOF
+httpform_host: services.${APP_DOMAIN}
+httpform_port: 8000
+httpform_uri: /api/webhooks/cyrus-sasl
+httpform_data: %u %r %p
+EOF
+
+systemctl restart saslauthd
+
 #Setup guam
 systemctl start guam
 systemctl enable guam
