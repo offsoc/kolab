@@ -197,14 +197,19 @@ class NGINXController extends Controller
     public function cyrussasl(Request $request)
     {
         $data = $request->getContent();
-        // Assumes "%u %p" as form data in the cyrus sasl config file
+        // Assumes "%u %r %p" as form data in the cyrus sasl config file
         $array = explode(' ', rawurldecode($data));
-        if (count($array) != 2) {
+        if (count($array) != 3) {
             \Log::debug("Authentication attempt failed: invalid data provided.");
             return response("", 403);
         }
         $username = $array[0];
-        $password = $array[1];
+        $realm = $array[1];
+        $password = $array[2];
+
+        if (!empty($realm)) {
+            $username = "$username@$realm";
+        }
 
         if (empty($password)) {
             \Log::debug("Authentication attempt failed: Empty password provided.");
@@ -217,11 +222,11 @@ class NGINXController extends Controller
                 $password
             );
         } catch (\Exception $e) {
-            \Log::debug("Authentication attempt failed: {$e->getMessage()}");
+            \Log::debug("Authentication attempt failed for $username: {$e->getMessage()}");
             return response("", 403);
         }
 
-        \Log::debug("Authentication attempt succeeded");
+        \Log::debug("Authentication attempt succeeded for $username");
         return response("");
     }
 
