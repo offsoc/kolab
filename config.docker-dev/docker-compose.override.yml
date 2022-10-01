@@ -1,0 +1,224 @@
+version: '3'
+services:
+  haproxy:
+    depends_on:
+      proxy:
+        condition: service_healthy
+  proxy:
+    depends_on:
+      kolab:
+        condition: service_healthy
+      webapp:
+        condition: service_healthy
+    build:
+      context: ./docker/proxy/
+      args:
+        APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
+        SSL_CERTIFICATE: ${PROXY_SSL_CERTIFICATE:?err}
+        SSL_CERTIFICATE_KEY: ${PROXY_SSL_CERTIFICATE_KEY:?err}
+    healthcheck:
+      interval: 10s
+      test: "kill -0 $$(cat /run/nginx.pid)"
+      timeout: 5s
+      retries: 30
+    container_name: kolab-proxy
+    restart: on-failure
+    hostname: proxy
+    image: kolab-proxy
+    extra_hosts:
+      - "meet:${MEET_LISTENING_HOST}"
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.7
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - ./docker/certs/:/etc/certs/:ro
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+    ports:
+      # - "80:80"
+      - "443:443"
+      - "465:465"
+      - "587:587"
+      - "143:143"
+      - "993:993"
+  imap-legacy:
+    build:
+      context: ./docker/imap-legacy/
+      args:
+        IMAP_ADMIN_LOGIN: ${IMAP_ADMIN_LOGIN}
+        IMAP_ADMIN_PASSWORD: ${IMAP_ADMIN_PASSWORD}
+    container_name: imap-legacy
+    privileged: true
+    depends_on:
+      pdns:
+        condition: service_healthy
+    # This makes docker's dns, resolve via pdns for this container.
+    # Please note it does not affect /etc/resolv.conf
+    dns: 172.18.0.11
+    image: imap-legacy
+    extra_hosts:
+      - "services.${APP_DOMAIN}:172.18.0.4"
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.19
+    ports:
+      - "9993:993"
+      - "9143:143"
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+      - ./docker/certs/ca.cert:/etc/pki/tls/certs/ca.cert:ro
+      - ./docker/certs/ca.cert:/etc/pki/ca-trust/source/anchors/ca.cert:ro
+      - ./docker/certs/kolab.hosted.com.cert:${KOLAB_SSL_CERTIFICATE:?err}
+      - ./docker/certs/kolab.hosted.com.chain.pem:${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?err}
+      - ./docker/certs/kolab.hosted.com.key:${KOLAB_SSL_CERTIFICATE_KEY:?err}
+      - ./docker/kolab/utils:/root/utils:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  imap-backend:
+    build:
+      context: ./docker/imap-backend/
+      args:
+        IMAP_ADMIN_LOGIN: ${IMAP_ADMIN_LOGIN}
+        IMAP_ADMIN_PASSWORD: ${IMAP_ADMIN_PASSWORD}
+    container_name: imap-backend
+    privileged: true
+    depends_on:
+      pdns:
+        condition: service_healthy
+      imap-mupdate:
+        condition: service_healthy
+    # This makes docker's dns, resolve via pdns for this container.
+    # Please note it does not affect /etc/resolv.conf
+    dns: 172.18.0.11
+    healthcheck:
+      interval: 10s
+      test: "systemctl status cyrus-imapd || exit 1"
+      timeout: 5s
+      retries: 30
+    image: imap-backend
+    extra_hosts:
+      - "services.${APP_DOMAIN}:172.18.0.4"
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.20
+    ports:
+      - "8993:993"
+      - "8143:143"
+      - "8080:80"
+      - "8443:443"
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+      - ./docker/certs/ca.cert:/etc/pki/tls/certs/ca.cert:ro
+      - ./docker/certs/ca.cert:/etc/pki/ca-trust/source/anchors/ca.cert:ro
+      - ./docker/certs/kolab.hosted.com.cert:${KOLAB_SSL_CERTIFICATE:?err}
+      - ./docker/certs/kolab.hosted.com.chain.pem:${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?err}
+      - ./docker/certs/kolab.hosted.com.key:${KOLAB_SSL_CERTIFICATE_KEY:?err}
+      - ./docker/kolab/utils:/root/utils:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /home/mollekopf/src/cyrus-imapd:/root/cyrus-imapd
+  imap-frontend:
+    build:
+      context: ./docker/imap-frontend/
+      args:
+        IMAP_ADMIN_LOGIN: ${IMAP_ADMIN_LOGIN}
+        IMAP_ADMIN_PASSWORD: ${IMAP_ADMIN_PASSWORD}
+    container_name: imap-frontend
+    privileged: true
+    depends_on:
+      pdns:
+        condition: service_healthy
+    # This makes docker's dns, resolve via pdns for this container.
+    # Please note it does not affect /etc/resolv.conf
+    dns: 172.18.0.11
+    healthcheck:
+      interval: 10s
+      test: "systemctl status cyrus-imapd || exit 1"
+      timeout: 5s
+      retries: 30
+    image: imap-frontend
+    extra_hosts:
+      - "services.${APP_DOMAIN}:172.18.0.4"
+      # Somehow necessary for caldav because it connects to the backend not via imap-backend but the full hostname imap.backend.${APP_DOMAIN}
+      - "imap-backend.${APP_DOMAIN}:172.18.0.20"
+      - "imap-frontend.${APP_DOMAIN}:172.18.0.21"
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.21
+    ports:
+      - "7993:993"
+      - "7143:143"
+      - "7080:80"
+      - "7443:443"
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+      - ./docker/certs/ca.cert:/etc/pki/tls/certs/ca.cert:ro
+      - ./docker/certs/ca.cert:/etc/pki/ca-trust/source/anchors/ca.cert:ro
+      - ./docker/certs/kolab.hosted.com.cert:${KOLAB_SSL_CERTIFICATE:?err}
+      - ./docker/certs/kolab.hosted.com.chain.pem:${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?err}
+      - ./docker/certs/kolab.hosted.com.key:${KOLAB_SSL_CERTIFICATE_KEY:?err}
+      - ./docker/kolab/utils:/root/utils:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /home/mollekopf/src/cyrus-imapd:/root/cyrus-imapd
+  imap-mupdate:
+    build:
+      context: ./docker/imap-mupdate/
+      args:
+        IMAP_ADMIN_LOGIN: ${IMAP_ADMIN_LOGIN}
+        IMAP_ADMIN_PASSWORD: ${IMAP_ADMIN_PASSWORD}
+    container_name: imap-mupdate
+    privileged: true
+    depends_on:
+      pdns:
+        condition: service_healthy
+    # This makes docker's dns, resolve via pdns for this container.
+    # Please note it does not affect /etc/resolv.conf
+    dns: 172.18.0.11
+    healthcheck:
+      interval: 10s
+      test: "systemctl status cyrus-imapd || exit 1"
+      timeout: 5s
+      retries: 30
+    image: imap-mupdate
+    extra_hosts:
+      - "services.${APP_DOMAIN}:172.18.0.4"
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.22
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+      - ./docker/certs/ca.cert:/etc/pki/tls/certs/ca.cert:ro
+      - ./docker/certs/ca.cert:/etc/pki/ca-trust/source/anchors/ca.cert:ro
+      - ./docker/certs/kolab.hosted.com.cert:${KOLAB_SSL_CERTIFICATE:?err}
+      - ./docker/certs/kolab.hosted.com.chain.pem:${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?err}
+      - ./docker/certs/kolab.hosted.com.key:${KOLAB_SSL_CERTIFICATE_KEY:?err}
+      - ./docker/kolab/utils:/root/utils:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /home/mollekopf/src/cyrus-imapd:/root/cyrus-imapd

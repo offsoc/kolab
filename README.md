@@ -15,6 +15,15 @@ and afterwards 'bin/deploy.sh' again.
 
 Please note that bin/deploy.sh will remove any existing data.
 
+## Alternative configurations
+
+Everything but config.prod is for development or demo purposes:
+* config.dev: Run only dependencies in docker with ports exposed, and expect kolab4 to be run locally.
+* config.docker-dev: A development environment with everything running in docker. Includes a cyrus-murder.
+* config.demo: A docker environment with demo data included.
+* config.prod: A docker environment with just an admin account prepared. A starting point for a production environment.
+
+
 # Use the ansible setup
 
 The ansible/ directory contains setup scripts to setup a fresh Fedora system with a kolab deployment.

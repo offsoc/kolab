@@ -38,6 +38,10 @@ bin/regen-certs
 
 docker-compose build
 
+# Build the murder setup if configured
+if grep -q "imap-frontend" docker-compose.override.yml; then
+    docker-compose build imap-frontend imap-backend imap-mupdate
+fi
 if grep -q "ldap" docker-compose.override.yml; then
     docker-compose up -d ldap
 fi
@@ -51,6 +55,10 @@ fi
 if grep -q "postfix" docker-compose.override.yml; then
     docker-compose up -d postfix
 fi
+if grep -q "imap-frontend" docker-compose.override.yml; then
+    docker-compose up -d imap-frontend imap-backend imap-mupdate
+fi
+
 docker-compose up -d coturn mariadb meet pdns redis roundcube minio
 
 # Workaround until we have docker-compose --wait (https://github.com/docker/compose/pull/8777)
