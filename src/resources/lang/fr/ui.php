@@ -365,7 +365,6 @@ return [
     'support' => [
         'title' => "Contacter Support",
         'id' => "Numéro de client ou adresse é-mail que vous avez chez nous.",
-        'id-pl' => "e.g. 12345678 ou john@kolab.org",
         'id-hint' => "Laissez vide si vous n'êtes pas encore client",
         'name' => "Nom",
         'name-pl' => "comment nous devons vous adresser dans notre réponse",
