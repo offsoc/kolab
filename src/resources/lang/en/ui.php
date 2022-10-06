@@ -412,7 +412,7 @@ return [
     'support' => [
         'title' => "Contact Support",
         'id' => "Customer number or email address you have with us",
-        'id-pl' => "e.g. 12345678 or john@kolab.org",
+        'id-pl' => "e.g. 12345678 or the affected email address",
         'id-hint' => "Leave blank if you are not a customer yet",
         'name' => "Name",
         'name-pl' => "how we should call you in our reply",
