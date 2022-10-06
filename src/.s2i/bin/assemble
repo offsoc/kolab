@@ -20,13 +20,6 @@ pushd /opt/app-root/src
 
 fix-permissions ./
 
-if [ -f ".env.local" ]; then
-    # Ensure there's a line ending
-    echo "---->> Append .env.local"
-    echo "" >> .env
-    cat .env.local >> .env
-fi
-
 if [ -f "composer.json" ]; then
     echo "--->> Detected composer.json, running install"
     composer_install

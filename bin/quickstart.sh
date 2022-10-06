@@ -16,41 +16,25 @@ test ! -z "$(grep 'systemd.unified_cgroup_hierarchy=0' /proc/cmdline)" || \
 
 base_dir=$(dirname $(dirname $0))
 
-# Always reset .env with .env.example
-cp src/.env.example src/.env
 
-if [ -f "src/env.local" ]; then
-    # Ensure there's a line ending
-    echo "" >> src/.env
-    cat src/env.local >> src/.env
-fi
 
 export DOCKER_BUILDKIT=0
-
-COMPOSE_ARGS=
-if [ "$1" != "--nodev" ]; then
-    COMPOSE_ARGS="-f docker-compose.yml -f docker-compose.local.yml"
-fi
 
 docker-compose down --remove-orphans
 docker volume rm kolab_mariadb || :
 docker volume rm kolab_imap || :
 docker volume rm kolab_ldap || :
 
-if [ "$1" != "--nodev" ]; then
-    src/artisan octane:stop >/dev/null 2>&1 || :
-    src/artisan horizon:terminate >/dev/null 2>&1 || :
-else
-    # If we switch from an existing development setup to a compose deployment,
-    # we don't have a nice way to terminate octane/horizon.
-    # We can't use the artisan command because it will just block if redis is,
-    # no longer available, so we just kill all artisan processes running.
-    pkill -9 -f artisan || :
-fi
+# We can't use the following artisan commands because it will just block if redis is unavailable:
+# src/artisan octane:stop >/dev/null 2>&1 || :
+# src/artisan horizon:terminate >/dev/null 2>&1 || :
+# we therefore just kill all artisan processes running.
+pkill -9 -f artisan || :
+pkill -9 -f swoole || :
 
 bin/regen-certs
 docker-compose build coturn kolab mariadb meet pdns proxy redis haproxy
-docker-compose ${COMPOSE_ARGS} up -d coturn kolab mariadb meet pdns redis
+docker-compose up -d coturn kolab mariadb meet pdns redis
 
 # Workaround until we have docker-compose --wait (https://github.com/docker/compose/pull/8777)
 function wait_for_container {
@@ -154,4 +138,4 @@ nohup ./artisan horizon > horizon.out &
 
 popd
 
-docker-compose ${COMPOSE_ARGS} up --no-deps -d proxy haproxy
+docker-compose up --no-deps -d proxy haproxy

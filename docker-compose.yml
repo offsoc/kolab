@@ -34,23 +34,27 @@ services:
     environment:
       - APP_DOMAIN=${APP_DOMAIN}
       - LDAP_HOST=127.0.0.1
-      - LDAP_ADMIN_BIND_DN="cn=Directory Manager"
-      - LDAP_ADMIN_BIND_PW=Welcome2KolabSystems
+      - LDAP_ADMIN_BIND_DN=${LDAP_ADMIN_BIND_DN}
+      - LDAP_ADMIN_BIND_PW=${LDAP_ADMIN_BIND_PW}
+      - LDAP_SERVICE_BIND_PW=${LDAP_SERVICE_BIND_PW}
+      - LDAP_HOSTED_BIND_PW=${LDAP_HOSTED_BIND_PW}
       - DB_HOST=mariadb
-      - DB_ROOT_PASSWORD=Welcome2KolabSystems
+      - DB_ROOT_PASSWORD=${DB_PASSWORD}
       - DB_HKCCP_DATABASE=${DB_DATABASE}
       - DB_HKCCP_USERNAME=${DB_USERNAME}
       - DB_HKCCP_PASSWORD=${DB_PASSWORD}
       - DB_KOLAB_DATABASE=kolab
       - DB_KOLAB_USERNAME=kolab
-      - DB_KOLAB_PASSWORD=Welcome2KolabSystems
+      - DB_KOLAB_PASSWORD=${DB_PASSWORD}
       - DB_RC_USERNAME=roundcube
-      - DB_RC_PASSWORD=Welcome2KolabSystems
+      - DB_RC_PASSWORD=${DB_PASSWORD}
       - SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE:?err}
       - SSL_CERTIFICATE_FULLCHAIN=${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?err}
       - SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY:?err}
       - IMAP_HOST=127.0.0.1
       - IMAP_PORT=11993
+      - IMAP_ADMIN_LOGIN=${IMAP_ADMIN_LOGIN}
+      - IMAP_ADMIN_PASSWORD=${IMAP_ADMIN_PASSWORD}
       - MAIL_HOST=127.0.0.1
       - MAIL_PORT=10587
     healthcheck:
@@ -90,7 +94,7 @@ services:
   mariadb:
     container_name: kolab-mariadb
     environment:
-      - MARIADB_ROOT_PASSWORD=Welcome2KolabSystems
+      - MARIADB_ROOT_PASSWORD=${DB_PASSWORD}
       - TZ="+02:00"
       - DB_HKCCP_DATABASE=${DB_DATABASE}
       - DB_HKCCP_USERNAME=${DB_USERNAME}
@@ -107,9 +111,6 @@ services:
       - ./docker/mariadb/mysql-init/:/docker-entrypoint-initdb.d/
       - mariadb:/var/lib/mysql
   haproxy:
-    depends_on:
-      proxy:
-        condition: service_healthy
     build:
       context: ./docker/haproxy/
     healthcheck:
@@ -134,6 +135,11 @@ services:
   pdns:
     build:
       context: ./docker/pdns/
+      args:
+        DB_HOST: ${DB_HOST:?err}
+        DB_DATABASE: ${DB_DATABASE:?err}
+        DB_USERNAME: ${DB_USERNAME:?err}
+        DB_PASSWORD: ${DB_PASSWORD:?err}
     container_name: kolab-pdns
     hostname: pdns
     depends_on:
@@ -156,47 +162,6 @@ services:
     tty: true
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
-  proxy:
-    depends_on:
-      kolab:
-        condition: service_healthy
-      webapp:
-        condition: service_healthy
-    build:
-      context: ./docker/proxy/
-      args:
-        APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
-        SSL_CERTIFICATE: ${PROXY_SSL_CERTIFICATE:?err}
-        SSL_CERTIFICATE_KEY: ${PROXY_SSL_CERTIFICATE_KEY:?err}
-    healthcheck:
-      interval: 10s
-      test: "kill -0 $$(cat /run/nginx.pid)"
-      timeout: 5s
-      retries: 30
-    container_name: kolab-proxy
-    hostname: proxy
-    image: kolab-proxy
-    extra_hosts:
-      - "meet:${MEET_LISTENING_HOST}"
-    networks:
-      kolab:
-        ipv4_address: 172.18.0.7
-    tmpfs:
-      - /run
-      - /tmp
-      - /var/run
-      - /var/tmp
-    tty: true
-    volumes:
-      - ./docker/certs/:/etc/certs/:ro
-      - /etc/letsencrypt/:/etc/letsencrypt/:ro
-    ports:
-      # - "80:80"
-      - "443:443"
-      - "465:465"
-      - "587:587"
-      - "143:143"
-      - "993:993"
   redis:
     build:
       context: ./docker/redis/
@@ -212,8 +177,6 @@ services:
       - kolab
     volumes:
       - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
-    # ports:
-    #   - "6379:6379"
   webapp:
     build:
       context: ./docker/webapp/

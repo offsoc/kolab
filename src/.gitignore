@@ -24,4 +24,6 @@ yarn-error.log
 composer.lock
 resources/countries.php
 resources/build/js/
+database/seeds/
+src/public/themes/active
 cache

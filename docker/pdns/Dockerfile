@@ -23,6 +23,17 @@ RUN dnf -y install \
 COPY pdns.conf /etc/pdns/pdns.conf
 COPY recursor.conf /etc/pdns-recursor/recursor.conf
 
+ARG DB_HOST
+ARG DB_DATABASE
+ARG DB_USERNAME
+ARG DB_PASSWORD
+RUN sed -i -r \
+    -e "s|DB_HOST|$DB_HOST|g" \
+    -e "s|DB_DATABASE|$DB_DATABASE|g" \
+    -e "s|DB_USERNAME|$DB_USERNAME|g" \
+    -e "s|DB_PASSWORD|$DB_PASSWORD|g" \
+    /etc/pdns/pdns.conf
+
 RUN systemctl disable systemd-resolved && systemctl enable pdns  && systemctl enable pdns-recursor
 
 # This is how we could run pdns without systemd

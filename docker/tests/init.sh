@@ -1,5 +1,6 @@
 #!/bin/bash
 #set -e
+rm -rf /src/kolabsrc
 sudo cp -a /src/kolabsrc.orig /src/kolabsrc
 sudo chmod 777 -R /src/kolabsrc
 cd /src/kolabsrc

@@ -38,54 +38,32 @@ return new class extends Migration
         );
 
         // Create the new SKUs
-        if (!\App\Sku::where('title', 'room')->first()) {
-            $sku = \App\Sku::create([
-                    'title' => 'group-room',
-                    'name' => 'Group conference room',
-                    'description' => 'Shareable audio & video conference room',
-                    'cost' => 0,
-                    'units_free' => 0,
-                    'period' => 'monthly',
-                    'handler_class' => 'App\Handlers\GroupRoom',
-                    'active' => true,
-            ]);
+        $sku = \App\Sku::where('title', 'room')->first();
 
-            $sku = \App\Sku::create([
-                    'title' => 'room',
-                    'name' => 'Standard conference room',
-                    'description' => 'Audio & video conference room',
-                    'cost' => 0,
-                    'units_free' => 0,
-                    'period' => 'monthly',
-                    'handler_class' => 'App\Handlers\Room',
-                    'active' => true,
-            ]);
-
-            // Create the entitlement for every existing room
-            foreach (\App\Meet\Room::get() as $room) {
-                $user = \App\User::find($room->user_id); // @phpstan-ignore-line
-                if (!$user) {
-                    $room->forceDelete();
-                    continue;
-                }
-
-                // Set tenant_id
-                if ($user->tenant_id) {
-                    $room->tenant_id = $user->tenant_id;
-                    $room->save();
-                }
-
-                $wallet = $user->wallets()->first();
-
-                \App\Entitlement::create([
-                        'wallet_id' => $wallet->id,
-                        'sku_id' => $sku->id,
-                        'cost' => 0,
-                        'fee' => 0,
-                        'entitleable_id' => $room->id,
-                        'entitleable_type' => \App\Meet\Room::class
-                ]);
+        // Create the entitlement for every existing room
+        foreach (\App\Meet\Room::get() as $room) {
+            $user = \App\User::find($room->user_id); // @phpstan-ignore-line
+            if (!$user) {
+                $room->forceDelete();
+                continue;
             }
+
+            // Set tenant_id
+            if ($user->tenant_id) {
+                $room->tenant_id = $user->tenant_id;
+                $room->save();
+            }
+
+            $wallet = $user->wallets()->first();
+
+            \App\Entitlement::create([
+                    'wallet_id' => $wallet->id,
+                    'sku_id' => $sku->id,
+                    'cost' => 0,
+                    'fee' => 0,
+                    'entitleable_id' => $room->id,
+                    'entitleable_type' => \App\Meet\Room::class
+            ]);
         }
 
         // Remove 'meet' SKU/entitlements
@@ -137,19 +115,6 @@ return new class extends Migration
         );
 
         \App\Entitlement::where('entitleable_type', \App\Meet\Room::class)->forceDelete();
-        \App\Sku::where('title', 'room')->delete();
-        \App\Sku::where('title', 'group-room')->delete();
-
-        \App\Sku::create([
-                'title' => 'meet',
-                'name' => 'Voice & Video Conferencing (public beta)',
-                'description' => 'Video conferencing tool',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Meet',
-                'active' => true,
-        ]);
 
         Schema::dropIfExists('permissions');
     }

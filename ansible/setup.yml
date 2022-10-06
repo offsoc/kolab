@@ -46,18 +46,19 @@
         version: "{{ git_branch }}"
         force: yes
 
-    - name: "kolab env.local"
-      vars:
-        host: "{{ hostname }}"
-        openexchangerates_api_key: "{{ openexchangerates_api_key }}"
-        firebase_api_key: "{{ firebase_api_key }}"
-        public_ip: "{{ public_ip }}"
-      ansible.builtin.template:
-        src: env.local
-        dest: /home/kolab/kolab/src/env.local
-        owner: kolab
-        group: kolab
-        mode: '0766'
+    - name: Run bin/configure
+      become: true
+      become_user: kolab
+      ansible.builtin.command: bin/configure.sh config.production
+      args:
+        chdir: /home/kolab/kolab
+      environment:
+        HOSTNAME: "{{ hostname }}"
+        OPENEXCHANGERATES_API_KEY: "{{ openexchangerates_api_key }}"
+        FIREBASE_API_KEY: "{{ firebase_api_key }}"
+        PUBLIC_IP: "{{ public_ip }}"
+        ADMIN_PASSWORD: "{{ admin_password }}"
+
 
     - name: Permit receiving mail
       firewalld:
