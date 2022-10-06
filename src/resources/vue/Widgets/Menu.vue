@@ -43,7 +43,7 @@
                     </li>
                 </ul>
                 <div v-if="mode == 'footer'" class="footer">
-                    <div id="footer-copyright">@ Apheleia IT AG, {{ buildYear }}</div>
+                    <div id="footer-copyright">@ {{ copyright }}, {{ buildYear }}</div>
                     <div v-if="footer" id="footer-company">{{ footer }}</div>
                 </div>
             </div>
@@ -63,6 +63,7 @@
         data() {
             return {
                 buildYear: buildDate.getFullYear(),
+                copyright: window.config['app.company.copyright'] || '',
                 languages: window.config['languages'] || [],
                 menuList: []
             }

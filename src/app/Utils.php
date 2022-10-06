@@ -504,6 +504,7 @@ class Utils
             'app.theme',
             'app.webmail_url',
             'app.support_email',
+            'app.company.copyright',
             'mail.from.address'
         ];
 
