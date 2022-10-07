@@ -67,7 +67,7 @@
             <div class="card-body">
                 <h4 v-if="!invitation" class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: steps, n: steps }) }}</h4>
                 <p class="card-text">
-                    {{ $t('signup.step3') }}
+                    {{ $t('signup.step3', { app: $root.appName }) }}
                 </p>
                 <form @submit.prevent="submitStep3" data-validation-prefix="signup_">
                     <div class="mb-3" v-if="invitation">

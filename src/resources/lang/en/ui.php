@@ -380,7 +380,7 @@ return [
         'title' => "Sign Up",
         'step1' => "Sign up to start your free month.",
         'step2' => "We sent out a confirmation code to your email address. Enter the code we sent you, or click the link in the message.",
-        'step3' => "Create your Kolab identity (you can choose additional addresses later).",
+        'step3' => "Create your {app} identity (you can choose additional addresses later).",
         'token' => "Signup authorization token",
         'voucher' => "Voucher Code",
     ],

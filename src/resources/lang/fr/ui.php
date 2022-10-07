@@ -334,7 +334,7 @@ return [
         'title' => "S'inscrire",
         'step1' => "Inscrivez-vous pour commencer votre mois gratuit.",
         'step2' => "Nous avons envoyé un code de confirmation à votre adresse e-mail. Entrez le code que nous vous avons envoyé, ou cliquez sur le lien dans le message.",
-        'step3' => "Créez votre identité Kolab (vous pourrez choisir des adresses supplémentaires plus tard).",
+        'step3' => "Créez votre identité {app} (vous pourrez choisir des adresses supplémentaires plus tard).",
         'voucher' => "Coupon Code",
     ],
 
