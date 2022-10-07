@@ -43,7 +43,7 @@
                     </li>
                 </ul>
                 <div v-if="mode == 'footer'" class="footer">
-                    <div id="footer-copyright">@ {{ copyright }}, {{ buildYear }}</div>
+                    <div id="footer-copyright">&copy; {{ copyright }}, {{ buildYear }}</div>
                     <div v-if="footer" id="footer-company">{{ footer }}</div>
                 </div>
             </div>
