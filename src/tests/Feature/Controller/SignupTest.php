@@ -280,7 +280,7 @@ class SignupTest extends TestCase
             'plan' => 'individual',
         ];
 
-        $response = $this->post('/api/auth/signup/init', $data);
+        $response = $this->post('/api/auth/signup/init', $data, ['REMOTE_ADDR' => '10.1.1.2']);
         $json = $response->json();
 
         $response->assertStatus(200);
@@ -289,6 +289,12 @@ class SignupTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame('email', $json['mode']);
         $this->assertNotEmpty($json['code']);
+
+        $code = SignupCode::find($json['code']);
+
+        $this->assertSame('10.1.1.2', $code->ip_address);
+        $this->assertSame(null, $code->verify_ip_address);
+        $this->assertSame(null, $code->submit_ip_address);
 
         // Assert the email sending job was pushed once
         Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
@@ -395,12 +401,14 @@ class SignupTest extends TestCase
     public function testSignupVerifyValidInput(array $result): array
     {
         $code = SignupCode::find($result['code']);
+        $code->ip_address = '10.1.1.2';
+        $code->save();
         $data = [
             'code' => $code->code,
             'short_code' => $code->short_code,
         ];
 
-        $response = $this->post('/api/auth/signup/verify', $data);
+        $response = $this->post('/api/auth/signup/verify', $data, ['REMOTE_ADDR' => '10.1.1.3']);
         $json = $response->json();
 
         $response->assertStatus(200);
@@ -412,6 +420,12 @@ class SignupTest extends TestCase
         $this->assertSame($result['voucher'], $json['voucher']);
         $this->assertSame(false, $json['is_domain']);
         $this->assertTrue(is_array($json['domains']) && !empty($json['domains']));
+
+        $code->refresh();
+
+        $this->assertSame('10.1.1.2', $code->ip_address);
+        $this->assertSame('10.1.1.3', $code->verify_ip_address);
+        $this->assertSame(null, $code->submit_ip_address);
 
         return $result;
     }
@@ -560,6 +574,9 @@ class SignupTest extends TestCase
         $domain = $this->getPublicDomain();
         $identity = \strtolower('SignupLogin@') . $domain;
         $code = SignupCode::find($result['code']);
+        $code->ip_address = '10.1.1.2';
+        $code->verify_ip_address = '10.1.1.3';
+        $code->save();
         $data = [
             'login' => 'SignupLogin',
             'domain' => $domain,
@@ -570,7 +587,7 @@ class SignupTest extends TestCase
             'voucher' => 'TEST',
         ];
 
-        $response = $this->post('/api/auth/signup', $data);
+        $response = $this->post('/api/auth/signup', $data, ['REMOTE_ADDR' => '10.1.1.4']);
         $json = $response->json();
 
         $response->assertStatus(200);
@@ -590,14 +607,20 @@ class SignupTest extends TestCase
             }
         );
 
-        // Check if the code has been removed
-        $this->assertNull(SignupCode::where('code', $result['code'])->first());
+        $code->refresh();
 
         // Check if the user has been created
         $user = User::where('email', $identity)->first();
 
         $this->assertNotEmpty($user);
         $this->assertSame($identity, $user->email);
+
+        // Check if the code has been updated and soft-deleted
+        $this->assertTrue($code->trashed());
+        $this->assertSame('10.1.1.2', $code->ip_address);
+        $this->assertSame('10.1.1.3', $code->verify_ip_address);
+        $this->assertSame('10.1.1.4', $code->submit_ip_address);
+        $this->assertSame($user->id, $code->user_id);
 
         // Check user settings
         $this->assertSame($result['first_name'], $user->getSetting('first_name'));

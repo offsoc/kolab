@@ -151,10 +151,11 @@ class SignupController extends Controller
      * Validation of the verification code.
      *
      * @param \Illuminate\Http\Request $request HTTP request
+     * @param bool                     $update  Update the signup code record
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
-    public function verify(Request $request)
+    public function verify(Request $request, $update = true)
     {
         // Validate the request args
         $v = Validator::make(
@@ -182,8 +183,13 @@ class SignupController extends Controller
         }
 
         // For signup last-step mode remember the code object, so we can delete it
-        // with single SQL query (->delete()) instead of two (::destroy())
+        // with single SQL query (->delete()) instead of two
         $request->code = $code;
+
+        if ($update) {
+            $code->verify_ip_address = $request->ip();
+            $code->save();
+        }
 
         $has_domain = $this->getPlan()->hasDomain();
 
@@ -255,7 +261,7 @@ class SignupController extends Controller
             ];
         } else {
             // Validate verification codes (again)
-            $v = $this->verify($request);
+            $v = $this->verify($request, false);
             if ($v->status() !== 200) {
                 return $v;
             }
@@ -338,9 +344,13 @@ class SignupController extends Controller
             $invitation->save();
         }
 
-        // Remove the verification code
+        // Soft-delete the verification code, and store some more info with it
         if ($request->code) {
-            $request->code->delete();
+            $request->code->user_id = $user->id;
+            $request->code->submit_ip_address = $request->ip();
+            $request->code->deleted_at = \now();
+            $request->code->timestamps = false;
+            $request->code->save();
         }
 
         DB::commit();

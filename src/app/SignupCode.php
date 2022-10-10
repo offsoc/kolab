@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\BelongsToUserTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,11 +23,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property ?string        $plan        Plan title
  * @property string         $short_code  Short validation code
  * @property \Carbon\Carbon $updated_at  The update timestamp
+ * @property string         $submit_ip_address IP address the final signup submit request came from
+ * @property string         $verify_ip_address IP address the code verify request came from
  * @property ?string        $voucher     Voucher discount code
  */
 class SignupCode extends Model
 {
     use SoftDeletes;
+    use BelongsToUserTrait;
 
     public const SHORTCODE_LENGTH  = 5;
     public const CODE_LENGTH       = 32;
@@ -58,6 +62,9 @@ class SignupCode extends Model
 
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
         'expires_at' => 'datetime:Y-m-d H:i:s',
         'headers' => 'array'
     ];
