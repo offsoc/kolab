@@ -37,6 +37,7 @@ return new class extends Migration
         Schema::table(
             'signup_codes',
             function (Blueprint $table) {
+                $table->dropForeign(['user_id']);
                 $table->dropColumn('user_id');
                 $table->dropColumn('verify_ip_address');
                 $table->dropColumn('submit_ip_address');
