@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+rm -rf /src/kolabsrc
 cp -a /src/kolabsrc.orig /src/kolabsrc
 cd /src/kolabsrc
 

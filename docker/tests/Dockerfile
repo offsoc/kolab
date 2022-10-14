@@ -16,6 +16,9 @@ USER default
 
 EXPOSE 8000
 
+WORKDIR /src/
+
 COPY init.sh /init.sh
 COPY lint.sh /lint.sh
+COPY refresh.sh /refresh.sh
 CMD [ "/init.sh" ]
