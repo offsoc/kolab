@@ -70,6 +70,14 @@ class CreateJob extends UserJob
             return;
         }
 
+        if (\config('services.abuse_check.suspend_enabled')) {
+            $code = \Artisan::call("user:abuse-check {$this->userId}");
+            if ($code == 2) {
+                \Log::info("Suspending user due to suspected abuse: {$this->userId} {$user->email}");
+                $user->status |= \App\User::STATUS_SUSPENDED;
+            }
+        }
+
         \App\Backends\LDAP::createUser($user);
 
         $user->status |= \App\User::STATUS_LDAP_READY;
