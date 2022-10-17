@@ -72,6 +72,8 @@ class CreateTest extends TestCase
         $this->assertSame("User {$user->id} is actually deleted.", $job->failureMessage);
 
         // Test job failure (user unknown)
+        // The job will be released
+        $this->expectException(\Exception::class);
         $job = new \App\Jobs\User\CreateJob(123);
         $job->handle();
 
