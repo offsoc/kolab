@@ -296,7 +296,7 @@ const app = new Vue({
                 return 'text-warning'
             }
 
-            if (obj.isImapReady === false || obj.isLdapReady === false || obj.isVerified === false || obj.isConfirmed === false) {
+            if (!obj.isReady) {
                 return 'text-danger'
             }
 
@@ -315,7 +315,7 @@ const app = new Vue({
                 return this.$t('status.suspended')
             }
 
-            if (obj.isImapReady === false || obj.isLdapReady === false || obj.isVerified === false || obj.isConfirmed === false) {
+            if (!obj.isReady) {
                 return this.$t('status.notready')
             }
 

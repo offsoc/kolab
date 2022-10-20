@@ -228,8 +228,13 @@ class UsersTest extends TestCase
         $this->assertArrayHasKey('isAccountDegraded', $json['list'][0]);
         $this->assertArrayHasKey('isSuspended', $json['list'][0]);
         $this->assertArrayHasKey('isActive', $json['list'][0]);
-        $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
-        $this->assertArrayHasKey('isImapReady', $json['list'][0]);
+        $this->assertArrayHasKey('isReady', $json['list'][0]);
+        if (\config('app.with_ldap')) {
+            $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
+        }
+        if (\config('app.with_imap')) {
+            $this->assertArrayHasKey('isImapReady', $json['list'][0]);
+        }
 
         $response = $this->actingAs($ned)->get("/api/v4/users");
         $response->assertStatus(200);
@@ -307,8 +312,13 @@ class UsersTest extends TestCase
         $this->assertArrayHasKey('isAccountDegraded', $json);
         $this->assertArrayHasKey('isSuspended', $json);
         $this->assertArrayHasKey('isActive', $json);
-        $this->assertArrayHasKey('isLdapReady', $json);
-        $this->assertArrayHasKey('isImapReady', $json);
+        $this->assertArrayHasKey('isReady', $json);
+        if (\config('app.with_ldap')) {
+            $this->assertArrayHasKey('isLdapReady', $json);
+        }
+        if (\config('app.with_imap')) {
+            $this->assertArrayHasKey('isImapReady', $json);
+        }
 
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
@@ -471,10 +481,9 @@ class UsersTest extends TestCase
         $response = $this->actingAs($jack)->get("/api/v4/users/{$john->id}/status");
         $response->assertStatus(403);
 
-        if ($john->isImapReady()) {
-            $john->status ^= User::STATUS_IMAP_READY;
-            $john->save();
-        }
+        $john->status &= ~User::STATUS_IMAP_READY;
+        $john->status &= ~User::STATUS_LDAP_READY;
+        $john->save();
 
         // Get user status
         $response = $this->actingAs($john)->get("/api/v4/users/{$john->id}/status");
@@ -482,14 +491,20 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertFalse($json['isImapReady']);
         $this->assertFalse($json['isReady']);
-        if (\config('app.with_imap')) {
-            $this->assertCount(6, $json['process']);
-            $this->assertSame('user-imap-ready', $json['process'][2]['label']);
-            $this->assertSame(false, $json['process'][2]['state']);
+
+        if (\config('app.with_ldap')) {
+            $this->assertFalse($json['isLdapReady']);
         } else {
-            $this->assertCount(7, $json['process']);
+            $this->assertArrayNotHasKey('isLdapReady', $json);
+        }
+
+        if (\config('app.with_imap')) {
+            $this->assertFalse($json['isImapReady']);
+            $this->assertSame('user-imap-ready', $json['process'][2]['label']);
+            $this->assertFalse($json['process'][2]['state']);
+        } else {
+            $this->assertArrayNotHasKey('isImapReady', $json);
         }
         $this->assertTrue(empty($json['status']));
         $this->assertTrue(empty($json['message']));
@@ -507,13 +522,11 @@ class UsersTest extends TestCase
         $json = $response->json();
 
         $this->assertFalse($json['isImapReady']);
+        $this->assertFalse($json['isLdapReady']);
         $this->assertFalse($json['isReady']);
         if (\config('app.with_imap')) {
-            $this->assertCount(7, $json['process']);
             $this->assertSame('user-imap-ready', $json['process'][2]['label']);
             $this->assertSame(false, $json['process'][2]['state']);
-        } else {
-            $this->assertCount(6, $json['process']);
         }
         $this->assertSame('success', $json['status']);
         $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);

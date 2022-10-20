@@ -210,7 +210,12 @@ class DomainsTest extends TestCase
         $this->assertArrayHasKey('isVerified', $json['list'][0]);
         $this->assertArrayHasKey('isSuspended', $json['list'][0]);
         $this->assertArrayHasKey('isActive', $json['list'][0]);
-        $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
+        if (\config('app.with_ldap')) {
+            $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
+        } else {
+            $this->assertArrayNotHasKey('isLdapReady', $json['list'][0]);
+        }
+        $this->assertArrayHasKey('isReady', $json['list'][0]);
 
         $response = $this->actingAs($ned)->get("api/v4/domains");
         $response->assertStatus(200);
@@ -346,7 +351,12 @@ class DomainsTest extends TestCase
         $this->assertArrayHasKey('isVerified', $json);
         $this->assertArrayHasKey('isSuspended', $json);
         $this->assertArrayHasKey('isActive', $json);
-        $this->assertArrayHasKey('isLdapReady', $json);
+        if (\config('app.with_ldap')) {
+            $this->assertArrayHasKey('isLdapReady', $json);
+        } else {
+            $this->assertArrayNotHasKey('isLdapReady', $json);
+        }
+        $this->assertArrayHasKey('isReady', $json);
         $this->assertCount(1, $json['skus']);
         $this->assertSame(1, $json['skus'][$sku_domain->id]['count']);
         $this->assertSame([0], $json['skus'][$sku_domain->id]['costs']);

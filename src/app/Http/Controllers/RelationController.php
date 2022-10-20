@@ -106,6 +106,21 @@ class RelationController extends ResourceController
             }
         }
 
+        $with_imap = \config('app.with_imap');
+        $with_ldap = \config('app.with_ldap');
+
+        $state['isReady'] = (!$with_imap || !isset($state['isImapReady']) || $state['isImapReady'])
+            && (!$with_ldap || !isset($state['isLdapReady']) || $state['isLdapReady'])
+            && (!isset($state['isVerified']) || $state['isVerified'])
+            && (!isset($state['isConfirmed']) || $state['isConfirmed']);
+
+        if (!$with_imap) {
+            unset($state['isImapReady']);
+        }
+        if (!$with_ldap) {
+            unset($state['isLdapReady']);
+        }
+
         if (empty($state['isDeleted']) && method_exists($resource, 'trashed')) {
             $state['isDeleted'] = $resource->trashed();
         }
