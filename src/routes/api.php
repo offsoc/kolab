@@ -165,7 +165,7 @@ Route::group(
 if (\config('app.with_services')) {
     Route::group(
         [
-            'domain' => 'services.' . \config('app.website_domain'),
+            'domain' => \config('app.services_domain'),
             'prefix' => 'webhooks'
         ],
         function () {

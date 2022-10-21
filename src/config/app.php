@@ -84,6 +84,11 @@ return [
 
     'website_domain' => env('APP_WEBSITE_DOMAIN', env('APP_DOMAIN', 'domain.tld')),
 
+    'services_domain' => env(
+        'APP_SERVICES_DOMAIN',
+        "services." . env('APP_WEBSITE_DOMAIN', env('APP_DOMAIN', 'domain.tld'))
+    ),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
