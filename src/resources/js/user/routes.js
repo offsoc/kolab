@@ -8,7 +8,8 @@ import SignupComponent from '../../vue/Signup'
 // Note: you can pack multiple components into the same chunk, webpackChunkName
 // is also used to get a sensible file name instead of numbers
 
-const CompanionAppComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/CompanionApp')
+const CompanionAppInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/CompanionApp/Info')
+const CompanionAppListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/CompanionApp/List')
 const DashboardComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Dashboard')
 const DistlistInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Distlist/Info')
 const DistlistListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Distlist/List')
@@ -50,9 +51,15 @@ const routes = [
         meta: { requiresAuth: true, perm: 'distlists' }
     },
     {
-        path: '/companion',
+        path: '/companion/:companion',
         name: 'companion',
-        component: CompanionAppComponent,
+        component: CompanionAppInfoComponent,
+        meta: { requiresAuth: true, perm: 'companionapps' }
+    },
+    {
+        path: '/companions',
+        name: 'companions',
+        component: CompanionAppListComponent,
         meta: { requiresAuth: true, perm: 'companionapps' }
     },
     {

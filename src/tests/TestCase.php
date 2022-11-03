@@ -4,6 +4,8 @@ namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Laravel\Passport\Passport;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -18,6 +20,18 @@ abstract class TestCase extends BaseTestCase
 
         // Disable throttling
         $this->withoutMiddleware(ThrottleRequests::class);
+    }
+
+    /**
+     * Set the user as which we want to authenticate
+     */
+    public function actingAs(Authenticatable $user, $guard = null)
+    {
+        Passport::actingAs(
+            $user,
+            ['api']
+        );
+        return parent::actingAs($user, $guard);
     }
 
     /**

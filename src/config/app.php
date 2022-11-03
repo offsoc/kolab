@@ -275,5 +275,9 @@ return [
     'woat_ns1' => env('WOAT_NS1', 'ns01.' . env('APP_DOMAIN')),
     'woat_ns2' => env('WOAT_NS2', 'ns02.' . env('APP_DOMAIN')),
 
-    'ratelimit_whitelist' => explode(',', env('RATELIMIT_WHITELIST', ''))
+    'ratelimit_whitelist' => explode(',', env('RATELIMIT_WHITELIST', '')),
+    'companion_download_link' => env(
+        'COMPANION_DOWNLOAD_LINK',
+        "https://mirror.apheleia-it.ch/pub/companion-app-beta.apk"
+    )
 ];

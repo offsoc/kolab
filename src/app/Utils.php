@@ -505,6 +505,7 @@ class Utils
             'app.webmail_url',
             'app.support_email',
             'app.company.copyright',
+            'app.companion_download_link',
             'mail.from.address'
         ];
 

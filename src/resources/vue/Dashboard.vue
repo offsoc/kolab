@@ -42,7 +42,7 @@
             <a v-if="webmailURL" class="card link-webmail" :href="webmailURL">
                 <svg-icon icon="envelope"></svg-icon><span>{{ $t('dashboard.webmail') }}</span>
             </a>
-            <router-link v-if="status.enableCompanionapps" class="card link-companionapp" :to="{ name: 'companion' }">
+            <router-link v-if="status.enableCompanionapps" class="card link-companionapp" :to="{ name: 'companions' }">
                 <svg-icon icon="mobile-screen"></svg-icon><span>{{ $t('dashboard.companion') }}</span>
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>

@@ -20,7 +20,8 @@ return [
     'chart-payers' => 'Payers - last year',
     'chart-users' => 'Users - last 8 weeks',
 
-    'companion-deleteall-success' => 'All companion apps have been removed.',
+    'companion-create-success' => 'Companion app has been created.',
+    'companion-delete-success' => 'Companion app has been removed.',
 
     'mandate-delete-success' => 'The auto-payment has been removed.',
     'mandate-update-success' => 'The auto-payment has been updated.',

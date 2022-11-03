@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\UuidStrKeyTrait;
 
 /**
  * The eloquent definition of a CompanionApp.
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class CompanionApp extends Model
 {
+    use UuidStrKeyTrait;
+
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'name',
@@ -80,5 +83,33 @@ class CompanionApp extends Model
 
         self::pushFirebaseNotification($notificationTokens, $data);
         return true;
+    }
+
+    /**
+     * Returns whether this companion app is paired with a device.
+     *
+     * @return bool
+     */
+    public function isPaired(): bool
+    {
+        return !empty($this->device_id);
+    }
+
+    /**
+     * The PassportClient of this CompanionApp
+     *
+     * @return \App\Auth\PassportClient|null
+     */
+    public function passportClient()
+    {
+        return \App\Auth\PassportClient::find($this->oauth_client_id);
+    }
+
+    /**
+     * Set the PassportClient of this CompanionApp
+     */
+    public function setPassportClient(\App\Auth\PassportClient $client)
+    {
+        return $this->oauth_client_id = $client->id;
     }
 }

@@ -5,15 +5,83 @@ namespace App\Http\Controllers\API\V4;
 use App\Http\Controllers\ResourceController;
 use App\Utils;
 use App\Tenant;
-use Laravel\Passport\Token;
-use Laravel\Passport\TokenRepository;
-use Laravel\Passport\RefreshTokenRepository;
+use Laravel\Passport\Passport;
+use Laravel\Passport\ClientRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use BaconQrCode;
 
 class CompanionAppsController extends ResourceController
 {
+    /**
+     * Remove the specified companion app.
+     *
+     * @param string $id Companion app identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy($id)
+    {
+        $companion = \App\CompanionApp::find($id);
+        if (!$companion) {
+            return $this->errorResponse(404);
+        }
+
+        $user = $this->guard()->user();
+        if ($user->id != $companion->user_id) {
+            return $this->errorResponse(403);
+        }
+
+        // Revoke client and tokens
+        $client = $companion->passportClient();
+        if ($client) {
+            $clientRepository = app(ClientRepository::class);
+            $clientRepository->delete($client);
+        }
+
+        $companion->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => \trans('app.companion-delete-success'),
+        ]);
+    }
+
+    /**
+     * Create a companion app.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function store(Request $request)
+    {
+        $user = $this->guard()->user();
+
+        $v = Validator::make(
+            $request->all(),
+            [
+                'name' => 'required|string|max:512',
+            ]
+        );
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        $app = \App\CompanionApp::create([
+            'name' => $request->name,
+            'user_id' =>  $user->id,
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => \trans('app.companion-create-success'),
+            'id' => $app->id
+        ]);
+    }
+
     /**
     * Register a companion app.
     *
@@ -28,9 +96,10 @@ class CompanionAppsController extends ResourceController
         $v = Validator::make(
             $request->all(),
             [
-                'notificationToken' => 'required|min:4|max:512',
-                'deviceId' => 'required|min:4|max:64',
-                'name' => 'required|max:512',
+                'notificationToken' => 'required|string|min:4|max:512',
+                'deviceId' => 'required|string|min:4|max:64',
+                'companionId' => 'required|max:64',
+                'name' => 'required|string|max:512',
             ]
         );
 
@@ -40,31 +109,29 @@ class CompanionAppsController extends ResourceController
 
         $notificationToken = $request->notificationToken;
         $deviceId = $request->deviceId;
+        $companionId = $request->companionId;
         $name = $request->name;
 
         \Log::info("Registering app. Notification token: {$notificationToken} Device id: {$deviceId} Name: {$name}");
 
-        $app = \App\CompanionApp::where('device_id', $deviceId)->first();
+        $app = \App\CompanionApp::find($companionId);
         if (!$app) {
-            $app = new \App\CompanionApp();
-            $app->user_id = $user->id;
-            $app->device_id = $deviceId;
-            $app->mfa_enabled = true;
-            $app->name = $name;
-        } else {
-            //FIXME this allows a user to probe for another users deviceId
-            if ($app->user_id != $user->id) {
-                \Log::warning("User mismatch on device registration. Expected {$user->id} but found {$app->user_id}");
-                return $this->errorResponse(403);
-            }
+            return $this->errorResponse(404);
         }
 
+        if ($app->user_id != $user->id) {
+            \Log::warning("User mismatch on device registration. Expected {$user->id} but found {$app->user_id}");
+            return $this->errorResponse(403);
+        }
+
+        $app->device_id = $deviceId;
+        $app->mfa_enabled = true;
+        $app->name = $name;
         $app->notification_token = $notificationToken;
         $app->save();
 
         return response()->json(['status' => 'success']);
     }
-
 
     /**
      * Generate a QR-code image for a string
@@ -81,34 +148,6 @@ class CompanionAppsController extends ResourceController
         $writer   = new BaconQrCode\Writer($renderer);
 
         return 'data:image/svg+xml;base64,' . base64_encode($writer->writeString($data));
-    }
-
-    /**
-     * Revoke all companion app devices.
-     *
-     * @return \Illuminate\Http\JsonResponse The response
-     */
-    public function revokeAll()
-    {
-        $user = $this->guard()->user();
-        \App\CompanionApp::where('user_id', $user->id)->delete();
-
-        // Revoke all companion app tokens
-        $clientIdentifier = \App\Tenant::getConfig($user->tenant_id, 'auth.companion_app.client_id');
-        $tokens = Token::where('user_id', $user->id)->where('client_id', $clientIdentifier)->get();
-
-        $tokenRepository = app(TokenRepository::class);
-        $refreshTokenRepository = app(RefreshTokenRepository::class);
-
-        foreach ($tokens as $token) {
-            $tokenRepository->revokeAccessToken($token->id);
-            $refreshTokenRepository->revokeRefreshTokensByAccessTokenId($token->id);
-        }
-
-        return response()->json([
-                'status' => 'success',
-                'message' => \trans("app.companion-deleteall-success"),
-        ]);
     }
 
     /**
@@ -139,7 +178,9 @@ class CompanionAppsController extends ResourceController
         // Process the result
         $result = $result->map(
             function ($device) {
-                return $device->toArray();
+                return array_merge($device->toArray(), [
+                    'isReady' => $device->isPaired()
+                ]);
             }
         );
 
@@ -171,7 +212,11 @@ class CompanionAppsController extends ResourceController
             return $this->errorResponse(403);
         }
 
-        return response()->json($result->toArray());
+        return response()->json(array_merge($result->toArray(), [
+            'statusInfo' => [
+                'isReady' => $result->isPaired()
+            ]
+        ]));
     }
 
     /**
@@ -179,22 +224,42 @@ class CompanionAppsController extends ResourceController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function pairing()
+    public function pairing($id)
     {
-        $user = $this->guard()->user();
-
-        $clientIdentifier = \App\Tenant::getConfig($user->tenant_id, 'auth.companion_app.client_id');
-        $clientSecret = \App\Tenant::getConfig($user->tenant_id, 'auth.companion_app.client_secret');
-        if (empty($clientIdentifier) || empty($clientSecret)) {
-            \Log::warning("Empty client identifier or secret. Can't generate qr-code.");
-            return $this->errorResponse(500);
+        $result = \App\CompanionApp::find($id);
+        if (!$result) {
+            return $this->errorResponse(404);
         }
 
+        $user = $this->guard()->user();
+        if ($user->id != $result->user_id) {
+            return $this->errorResponse(403);
+        }
+
+        $client = $result->passportClient();
+        if (!$client) {
+            $client = Passport::client()->forceFill([
+                'user_id' => $user->id,
+                'name' => "CompanionApp Password Grant Client",
+                'secret' => Str::random(40),
+                'provider' => 'users',
+                'redirect' => 'https://' . \config('app.website_domain'),
+                'personal_access_client' => 0,
+                'password_client' => 1,
+                'revoked' => false,
+                'allowed_scopes' => "mfa"
+            ]);
+            $client->save();
+
+            $result->setPassportClient($client);
+            $result->save();
+        }
         $response['qrcode'] = self::generateQRCode(
             json_encode([
                 "serverUrl" => Utils::serviceUrl('', $user->tenant_id),
-                "clientIdentifier" => \App\Tenant::getConfig($user->tenant_id, 'auth.companion_app.client_id'),
-                "clientSecret" => \App\Tenant::getConfig($user->tenant_id, 'auth.companion_app.client_secret'),
+                "clientIdentifier" => $client->id,
+                "clientSecret" => $client->secret,
+                "companionId" => $id,
                 "username" => $user->email
             ])
         );

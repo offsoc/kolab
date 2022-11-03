@@ -687,6 +687,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if multi factor verification is enabled
+     *
+     * @return bool
+     */
+    public function mfaEnabled(): bool
+    {
+        return \App\CompanionApp::where('user_id', $this->id)
+            ->where('mfa_enabled', true)
+            ->exists();
+    }
+
+    /**
      * Retrieve and authenticate a user
      *
      * @param string  $username The username
@@ -695,7 +707,7 @@ class User extends Authenticatable
      *
      * @return array ['user', 'reason', 'errorMessage']
      */
-    public static function findAndAuthenticate($username, $password, $clientIP = null): array
+    public static function findAndAuthenticate($username, $password, $clientIP = null, $verifyMFA = true): array
     {
         $error = null;
 
@@ -714,26 +726,28 @@ class User extends Authenticatable
             $error = AuthAttempt::REASON_PASSWORD;
         }
 
-        // Check user (request) location
-        if (!$error && !$user->validateLocation($clientIP)) {
-            $error = AuthAttempt::REASON_GEOLOCATION;
-        }
-
-        // Check 2FA
-        if (!$error) {
-            try {
-                (new \App\Auth\SecondFactor($user))->validate(request()->secondfactor);
-            } catch (\Exception $e) {
-                $error = AuthAttempt::REASON_2FA_GENERIC;
-                $message = $e->getMessage();
+        if ($verifyMFA) {
+            // Check user (request) location
+            if (!$error && !$user->validateLocation($clientIP)) {
+                $error = AuthAttempt::REASON_GEOLOCATION;
             }
-        }
 
-        // Check 2FA - Companion App
-        if (!$error && \App\CompanionApp::where('user_id', $user->id)->exists()) {
-            $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
-            if (!$attempt->waitFor2FA()) {
-                $error = AuthAttempt::REASON_2FA;
+            // Check 2FA
+            if (!$error) {
+                try {
+                    (new \App\Auth\SecondFactor($user))->validate(request()->secondfactor);
+                } catch (\Exception $e) {
+                    $error = AuthAttempt::REASON_2FA_GENERIC;
+                    $message = $e->getMessage();
+                }
+            }
+
+            // Check 2FA - Companion App
+            if (!$error && $user->mfaEnabled()) {
+                $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+                if (!$attempt->waitFor2FA()) {
+                    $error = AuthAttempt::REASON_2FA;
+                }
             }
         }
 
@@ -768,7 +782,14 @@ class User extends Authenticatable
      */
     public static function findAndValidateForPassport($username, $password): User
     {
-        $result = self::findAndAuthenticate($username, $password);
+        $verifyMFA = true;
+        if (request()->scope == "mfa") {
+            \Log::info("Not validating MFA because this is a request for an mfa scope.");
+            // Don't verify MFA if this is only an mfa token.
+            // If we didn't do this, we couldn't pair backup devices.
+            $verifyMFA = false;
+        }
+        $result = self::findAndAuthenticate($username, $password, null, $verifyMFA);
 
         if (isset($result['reason'])) {
             if ($result['reason'] == AuthAttempt::REASON_2FA_GENERIC) {

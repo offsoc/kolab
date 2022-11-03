@@ -60,21 +60,30 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.website_domain'),
-        'middleware' => 'auth:api',
+        'middleware' => ['auth:api', 'scope:mfa,api'],
         'prefix' => 'v4'
     ],
     function () {
-        Route::post('companion/register', [API\V4\CompanionAppsController::class, 'register']);
-
         Route::post('auth-attempts/{id}/confirm', [API\V4\AuthAttemptsController::class, 'confirm']);
         Route::post('auth-attempts/{id}/deny', [API\V4\AuthAttemptsController::class, 'deny']);
         Route::get('auth-attempts/{id}/details', [API\V4\AuthAttemptsController::class, 'details']);
         Route::get('auth-attempts', [API\V4\AuthAttemptsController::class, 'index']);
 
-        Route::get('companion/pairing', [API\V4\CompanionAppsController::class, 'pairing']);
-        Route::apiResource('companion', API\V4\CompanionAppsController::class);
         Route::post('companion/register', [API\V4\CompanionAppsController::class, 'register']);
-        Route::post('companion/revoke', [API\V4\CompanionAppsController::class, 'revokeAll']);
+    }
+);
+
+Route::group(
+    [
+        'domain' => \config('app.website_domain'),
+        'middleware' => ['auth:api', 'scope:api'],
+        'prefix' => 'v4'
+    ],
+    function () {
+        Route::apiResource('companions', API\V4\CompanionAppsController::class);
+        // This must not be accessible with the 2fa token,
+        // to prevent an attacker from pairing a new device with a stolen token.
+        Route::get('companions/{id}/pairing', [API\V4\CompanionAppsController::class, 'pairing']);
 
         Route::apiResource('domains', API\V4\DomainsController::class);
         Route::get('domains/{id}/confirm', [API\V4\DomainsController::class, 'confirm']);
@@ -89,10 +98,10 @@ Route::group(
             Route::put('files/{fileId}/permissions/{id}', [API\V4\FilesController::class, 'updatePermission']);
             Route::delete('files/{fileId}/permissions/{id}', [API\V4\FilesController::class, 'deletePermission']);
             Route::post('files/uploads/{id}', [API\V4\FilesController::class, 'upload'])
-                ->withoutMiddleware(['auth:api'])
+                ->withoutMiddleware(['auth:api', 'scope:api'])
                 ->middleware(['api']);
             Route::get('files/downloads/{id}', [API\V4\FilesController::class, 'download'])
-                ->withoutMiddleware(['auth:api']);
+                ->withoutMiddleware(['auth:api', 'scope:api']);
         }
 
         Route::apiResource('groups', API\V4\GroupsController::class);
@@ -107,7 +116,7 @@ Route::group(
         Route::get('rooms/{id}/skus', [API\V4\RoomsController::class, 'skus']);
 
         Route::post('meet/rooms/{id}', [API\V4\MeetController::class, 'joinRoom'])
-            ->withoutMiddleware(['auth:api']);
+            ->withoutMiddleware(['auth:api', 'scope:api']);
 
         Route::apiResource('resources', API\V4\ResourcesController::class);
         Route::get('resources/{id}/skus', [API\V4\ResourcesController::class, 'skus']);
@@ -146,7 +155,7 @@ Route::group(
         Route::get('payments/has-pending', [API\V4\PaymentsController::class, 'hasPayments']);
 
         Route::post('support/request', [API\V4\SupportController::class, 'request'])
-            ->withoutMiddleware(['auth:api'])
+            ->withoutMiddleware(['auth:api', 'scope:api'])
             ->middleware(['api']);
     }
 );

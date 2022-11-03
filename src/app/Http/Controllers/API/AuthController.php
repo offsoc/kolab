@@ -46,7 +46,7 @@ class AuthController extends Controller
             'grant_type' => 'password',
             'client_id' => \config('auth.proxy.client_id'),
             'client_secret' => \config('auth.proxy.client_secret'),
-            'scopes' => '[*]',
+            'scope' => 'api',
             'secondfactor' => $secondFactor
         ]);
         $proxyRequest->headers->set('X-Client-IP', request()->ip());
