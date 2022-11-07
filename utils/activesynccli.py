@@ -226,7 +226,13 @@ class ActiveSync:
 
         assert response.status == 200
 
-        result = wbxml.wbxml_to_xml(response.read())
+        data = response.read()
+        if not data:
+            if self.verbose:
+                print("Empty response, no changes on server")
+            return
+
+        result = wbxml.wbxml_to_xml(data)
 
         if self.verbose:
             print(result)
@@ -264,7 +270,7 @@ class ActiveSync:
 
         # Fetch after the initial sync
         if sync_key == "1":
-            print("after initial sync")
+            print("after initial sync", collection_id, sync_key)
             self.fetch(collection_id, sync_key)
 
         # Fetch more
@@ -337,7 +343,6 @@ def main():
 
     if 'func' in options:
         options.func(options)
-
 
 
 if __name__ == "__main__":
