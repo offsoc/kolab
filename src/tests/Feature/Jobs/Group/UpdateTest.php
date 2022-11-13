@@ -75,6 +75,7 @@ class UpdateTest extends TestCase
 
         /** @var array */
         $ldapGroup = LDAP::getGroup($group->email);
+        $this->assertNotNull($ldapGroup);
         $this->assertSame($group->email, $ldapGroup['mail']);
         $this->assertSame('uid=test1@gmail.com,ou=People,ou=kolab.org,' . $root_dn, $ldapGroup['uniquemember']);
     }
