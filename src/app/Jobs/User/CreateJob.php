@@ -36,6 +36,11 @@ class CreateJob extends UserJob
             return;
         }
 
+        if ($user->email == \config('imap.admin_login')) {
+            // Ignore Cyrus admin account
+            return;
+        }
+
         // sanity checks
         if ($user->isDeleted()) {
             $this->fail(new \Exception("User {$this->userId} is marked as deleted."));

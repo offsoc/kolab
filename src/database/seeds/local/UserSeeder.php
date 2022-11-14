@@ -239,7 +239,7 @@ class UserSeeder extends Seeder
             }
         }
 
-        # Create imap admin service account
+        // Create imap admin service account
         User::create(
             [
                 'email' => \config('imap.admin_login'),
