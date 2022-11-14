@@ -4,7 +4,7 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Ramsey\Uuid\Uuid;
+use Illuminate\Support\Str;
 
 /**
  * Small utility functions for App.
@@ -413,11 +413,11 @@ class Utils
     /**
      * Returns a UUID in the form of an integer.
      *
-     * @return integer
+     * @return int
      */
     public static function uuidInt(): int
     {
-        $hex = Uuid::uuid4();
+        $hex = self::uuidStr();
         $bin = pack('h*', str_replace('-', '', $hex));
         $ids = unpack('L', $bin);
         $id = array_shift($ids);
@@ -432,7 +432,7 @@ class Utils
      */
     public static function uuidStr(): string
     {
-        return Uuid::uuid4()->toString();
+        return (string) Str::uuid();
     }
 
     private static function combine($input, $r, $index, $data, $i, &$output): void

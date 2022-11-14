@@ -73,6 +73,7 @@ class UpdateTest extends TestCase
         $job = new \App\Jobs\Group\UpdateJob($group->id);
         $job->handle();
 
+        /** @var array */
         $ldapGroup = LDAP::getGroup($group->email);
         $this->assertSame($group->email, $ldapGroup['mail']);
         $this->assertSame('uid=test1@gmail.com,ou=People,ou=kolab.org,' . $root_dn, $ldapGroup['uniquemember']);

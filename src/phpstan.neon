@@ -3,7 +3,6 @@ includes:
 parameters:
     ignoreErrors:
         - '#Access to an undefined property [a-zA-Z\\]+::\$pivot#'
-        - '#Access to undefined constant static\(App\\[a-zA-Z]+\)::STATUS_[A-Z_]+#'
         - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withEnvTenantContext\(\)#'
         - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withObjectTenantContext\(\)#'
         - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withSubjectTenantContext\(\)#'

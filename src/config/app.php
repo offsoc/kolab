@@ -71,8 +71,6 @@ return [
 
     'currency' => \strtoupper(env('APP_CURRENCY', 'CHF')),
 
-    'backends' => env('BACKENDS', 'imap,ldap'),
-
     /*
     |--------------------------------------------------------------------------
     | Application Domain

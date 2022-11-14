@@ -521,10 +521,10 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertFalse($json['isImapReady']);
         $this->assertFalse($json['isLdapReady']);
         $this->assertFalse($json['isReady']);
         if (\config('app.with_imap')) {
+            $this->assertFalse($json['isImapReady']);
             $this->assertSame('user-imap-ready', $json['process'][2]['label']);
             $this->assertSame(false, $json['process'][2]['state']);
         }

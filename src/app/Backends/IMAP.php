@@ -445,20 +445,18 @@ class IMAP
     public static function verifyAccount(string $username): bool
     {
         $config = self::getConfig();
-        $imap = self::initIMAP($config, $username);
+        $imap = self::initIMAP($config);
 
-        # List the mailbox so we don't verify if shared folders are existing.
-        $folders = $imap->listMailboxes('', "INBOX");
+        $mailbox = self::toUTF7('user/' . $username);
 
-        \Log::debug("Verify account output" . var_export($folders, true));
-
-        $imap->closeConnection();
-
-        if (!is_array($folders)) {
-            return false;
+        // Mailbox already exists
+        if (self::folderExists($imap, $mailbox)) {
+            $imap->closeConnection();
+            return true;
         }
 
-        return count($folders) > 0;
+        $imap->closeConnection();
+        return false;
     }
 
     /**

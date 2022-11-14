@@ -106,7 +106,7 @@ class IMAPTest extends TestCase
         // Create the mailbox
         $result = IMAP::createUser($user);
         $this->assertTrue($result);
-        // $this->assertTrue(IMAP::verifyAccount($user->email));
+        $this->assertTrue(IMAP::verifyAccount($user->email));
 
         $imap = $this->getImap();
         $quota = $imap->getQuota('user/' . $user->email);
@@ -126,7 +126,6 @@ class IMAPTest extends TestCase
         $result = IMAP::deleteUser($user);
         $this->assertTrue($result);
 
-        // $this->expectException(\Exception::class);
         $result = IMAP::verifyAccount($user->email);
         $this->assertFalse($result);
     }

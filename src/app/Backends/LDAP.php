@@ -1166,7 +1166,7 @@ class LDAP
      * @param string     $email Group email (mail)
      * @param string     $dn    Reference to group DN
      *
-     * @return null|array Group entry, False on error, NULL if not found
+     * @return null|array Group entry, NULL if not found
      */
     private static function getGroupEntry($ldap, $email, &$dn = null)
     {
@@ -1234,7 +1234,7 @@ class LDAP
      * @param string     $dn    Reference to user DN
      * @param bool       $full  Get extra attributes, e.g. nsroledn
      *
-     * @return ?array User entry, NULL if not found
+     * @return null|array User entry, NULL if not found
      */
     private static function getUserEntry($ldap, $email, &$dn = null, $full = false)
     {

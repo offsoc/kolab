@@ -115,7 +115,9 @@ class SharedFoldersTest extends TestCase
         $this->assertArrayHasKey('isDeleted', $json['list'][0]);
         $this->assertArrayHasKey('isActive', $json['list'][0]);
         $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
-        $this->assertArrayHasKey('isImapReady', $json['list'][0]);
+        if (\config('app.with_imap')) {
+            $this->assertArrayHasKey('isImapReady', $json['list'][0]);
+        }
 
         // Test that another wallet controller has access to shared folders
         $response = $this->actingAs($ned)->get("/api/v4/shared-folders");
@@ -249,7 +251,9 @@ class SharedFoldersTest extends TestCase
         $this->assertArrayHasKey('isDeleted', $json);
         $this->assertArrayHasKey('isActive', $json);
         $this->assertArrayHasKey('isLdapReady', $json);
-        $this->assertArrayHasKey('isImapReady', $json);
+        if (\config('app.with_imap')) {
+            $this->assertArrayHasKey('isImapReady', $json);
+        }
         $this->assertSame(['acl' => ['anyone, full']], $json['config']);
         $this->assertCount(1, $json['skus']);
     }
@@ -326,11 +330,11 @@ class SharedFoldersTest extends TestCase
         $json = $response->json();
 
         $this->assertFalse($json['isLdapReady']);
-        $this->assertFalse($json['isImapReady']);
         $this->assertFalse($json['isReady']);
         $this->assertFalse($json['isDeleted']);
         $this->assertTrue($json['isActive']);
         if (\config('app.with_imap')) {
+            $this->assertFalse($json['isImapReady']);
             $this->assertCount(7, $json['process']);
         } else {
             $this->assertCount(6, $json['process']);
@@ -358,9 +362,9 @@ class SharedFoldersTest extends TestCase
         $json = $response->json();
 
         $this->assertFalse($json['isLdapReady']);
-        $this->assertTrue($json['isImapReady']);
         $this->assertFalse($json['isReady']);
         if (\config('app.with_imap')) {
+            $this->assertTrue($json['isImapReady']);
             $this->assertCount(7, $json['process']);
         } else {
             $this->assertCount(6, $json['process']);
