@@ -22,7 +22,8 @@ class LogonTest extends TestCaseDusk
             $browser->visit(new Home())
                 ->within(new Menu(), function ($browser) {
                     $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang'])
-                        ->assertSeeIn('#footer-copyright', '@ Apheleia IT AG, ' . date('Y'));
+                        ->assertSeeIn('#footer-copyright', \config('app.company.copyright'))
+                        ->assertSeeIn('#footer-copyright', date('Y'));
                 });
 
             if ($browser->isDesktop()) {
