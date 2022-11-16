@@ -26,6 +26,18 @@ import ssl
 import wbxml
 
 
+# def track_memory_usage():
+#     from pympler import muppy, summary
+#     import pandas as pd
+#     all_objects = muppy.get_objects()
+#     sum1 = summary.summarize(all_objects)  # Prints out a summary of the large objects
+#     summary.print_(sum1)  # Get references to certain types of objects
+#     dataframes = [ao for ao in all_objects if isinstance(ao, pd.DataFrame)]
+#     for d in dataframes:
+#         print(d.columns.values)
+#         print(len(d))
+
+
 def decode_timezone(tz):
     decoded = base64.b64decode(tz)
     bias, standardName, standardDate, standardBias, daylightName, daylightDate, daylightBias = struct.unpack('i64s16si64s16si', decoded)
@@ -195,7 +207,7 @@ class ActiveSync:
         return success
 
 
-    def fetch(self, collection_id, sync_key = 0):
+    def do_fetch(self, collection_id, sync_key = 0):
         request = """
         <?xml version="1.0" encoding="utf-8"?>
         <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
@@ -265,20 +277,17 @@ class ActiveSync:
                 print(f"  TimeZone bias: {bias}min")
             print("")
 
-
         print("\n")
 
-        # Fetch after the initial sync
-        if sync_key == "1":
-            print("after initial sync", collection_id, sync_key)
-            self.fetch(collection_id, sync_key)
+        return [sync_key, more_available]
 
-        # Fetch more
-        if more_available:
-            print("more available")
-            print(root.findall(f".//{{{xmlns}}}MoreAvailable"))
-            self.fetch(collection_id, sync_key)
 
+    def fetch(self, collection_id, sync_key = 0):
+        while True:
+            [sync_key, more_available] = self.do_fetch(collection_id, sync_key)
+            # track_memory_usage()
+            if sync_key != "1" and not more_available:
+                break
 
 
     def list(self):
