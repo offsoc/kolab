@@ -452,6 +452,7 @@ class DomainsTest extends TestCase
 
         $this->assertFalse($json['isVerified']);
         $this->assertFalse($json['isReady']);
+        $this->assertFalse($json['isDone']);
         $this->assertCount(4, $json['process']);
         $this->assertSame('domain-verified', $json['process'][2]['label']);
         $this->assertSame(false, $json['process'][2]['state']);
@@ -466,6 +467,7 @@ class DomainsTest extends TestCase
 
         $this->assertTrue($json['isVerified']);
         $this->assertTrue($json['isReady']);
+        $this->assertTrue($json['isDone']);
         $this->assertCount(4, $json['process']);
         $this->assertSame('domain-verified', $json['process'][2]['label']);
         $this->assertSame(true, $json['process'][2]['state']);

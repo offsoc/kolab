@@ -383,7 +383,7 @@ class GroupsTest extends TestCase
 
         $result = GroupsController::statusInfo($group);
 
-        $this->assertFalse($result['isReady']);
+        $this->assertFalse($result['isDone']);
         $this->assertCount(6, $result['process']);
         $this->assertSame('distlist-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
@@ -403,7 +403,7 @@ class GroupsTest extends TestCase
 
         $result = GroupsController::statusInfo($group);
 
-        $this->assertTrue($result['isReady']);
+        $this->assertTrue($result['isDone']);
         $this->assertCount(6, $result['process']);
         $this->assertSame('distlist-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);

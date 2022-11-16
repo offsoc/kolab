@@ -59,7 +59,7 @@ class CreateTest extends TestCase
         $resource->refresh();
 
         $this->assertFalse($job->hasFailed());
-        $this->assertTrue($resource->isLdapReady());
+        $this->assertSame(\config('app.with_ldap'), $resource->isLdapReady());
         $this->assertTrue($resource->isImapReady());
         $this->assertTrue($resource->isActive());
 

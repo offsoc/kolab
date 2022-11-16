@@ -29,7 +29,7 @@ class StatusTest extends TestCaseDusk
         $domain_status = Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED;
         DB::statement("UPDATE domains SET status = (status | {$domain_status})"
             . " WHERE namespace = 'kolab.org'");
-        DB::statement("UPDATE users SET status = (status | " . User::STATUS_IMAP_READY . ")"
+        DB::statement("UPDATE users SET status = (status | " . (User::STATUS_IMAP_READY | User::STATUS_LDAP_READY) . ")"
             . " WHERE email = 'john@kolab.org'");
     }
 

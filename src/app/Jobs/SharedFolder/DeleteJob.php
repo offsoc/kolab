@@ -34,8 +34,10 @@ class DeleteJob extends SharedFolderJob
         }
 
         if ($folder->isImapReady()) {
-            if (!\App\Backends\IMAP::deleteSharedFolder($folder)) {
-                throw new \Exception("Failed to delete mailbox for shared folder {$this->folderId}.");
+            if (\config('app.with_imap')) {
+                if (!\App\Backends\IMAP::deleteSharedFolder($folder)) {
+                    throw new \Exception("Failed to delete mailbox for shared folder {$this->folderId}.");
+                }
             }
 
             $folder->status ^= \App\SharedFolder::STATUS_IMAP_READY;

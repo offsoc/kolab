@@ -31,7 +31,6 @@ class CreateJob extends SharedFolderJob
         }
 
         $withLdap = \config('app.with_ldap');
-        $withImap = \config('app.with_imap');
 
         // see if the domain is ready
         $domain = $folder->domain();
@@ -58,9 +57,18 @@ class CreateJob extends SharedFolderJob
             $folder->save();
         }
 
-        if ($withImap && !$folder->isImapReady()) {
-            if (!\App\Backends\IMAP::createSharedFolder($folder)) {
-                throw new \Exception("Failed to create mailbox for shared folder {$this->folderId}.");
+        if (!$folder->isImapReady()) {
+            if (\config('app.with_imap')) {
+                if (!\App\Backends\IMAP::createSharedFolder($folder)) {
+                    throw new \Exception("Failed to create mailbox for shared folder {$this->folderId}.");
+                }
+            } else {
+                $folderName = $folder->getSetting('folder');
+
+                if ($folderName && !\App\Backends\IMAP::verifySharedFolder($folderName)) {
+                    $this->release(15);
+                    return;
+                }
             }
 
             $folder->status |= \App\SharedFolder::STATUS_IMAP_READY;

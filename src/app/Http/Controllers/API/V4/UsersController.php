@@ -524,10 +524,7 @@ class UsersController extends RelationController
     {
         try {
             if (strpos($step, 'domain-') === 0) {
-                list ($local, $domain) = explode('@', $user->email);
-                $domain = Domain::where('namespace', $domain)->first();
-
-                return DomainsController::execProcessStep($domain, $step);
+                return DomainsController::execProcessStep($user->domain(), $step);
             }
 
             switch ($step) {

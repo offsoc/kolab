@@ -64,7 +64,7 @@ class SignupCodeObserver
      */
     public function updating(SignupCode $code)
     {
-        if ($code->email) {
+        if ($code->email && strpos($code->email, '@')) {
             $parts = explode('@', $code->email);
 
             $code->local_part = $parts[0];

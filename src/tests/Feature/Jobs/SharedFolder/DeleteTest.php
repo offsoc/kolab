@@ -46,16 +46,18 @@ class DeleteTest extends TestCase
                 'status' => SharedFolder::STATUS_NEW
         ]);
 
+        // Force with_imap=true, otherwise the folder creation job may fail
+        // TODO: Make the test working with various with_imap/with_ldap combinations
+        \config(['app.with_imap' => true]);
+
         // create the shared folder first
         $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
         $job->handle();
 
         $folder->refresh();
 
-        $this->assertTrue($folder->isLdapReady());
-        if (\config('app.with_imap')) {
-            $this->assertTrue($folder->isImapReady());
-        }
+        $this->assertSame(\config('app.with_ldap'), $folder->isLdapReady());
+        $this->assertTrue($folder->isImapReady());
         $this->assertFalse($folder->isDeleted());
 
         // Test successful deletion
@@ -65,9 +67,7 @@ class DeleteTest extends TestCase
         $folder->refresh();
 
         $this->assertFalse($folder->isLdapReady());
-        if (\config('app.with_imap')) {
-            $this->assertFalse($folder->isImapReady());
-        }
+        $this->assertFalse($folder->isImapReady());
         $this->assertTrue($folder->isDeleted());
 
         // Test deleting already deleted folder

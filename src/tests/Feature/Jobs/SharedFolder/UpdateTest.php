@@ -51,16 +51,18 @@ class UpdateTest extends TestCase
             ['status' => SharedFolder::STATUS_NEW]
         );
 
-        // Create the folder in LDAP
+        // Force with_imap=true, otherwise the folder creation job may fail
+        // TODO: Make the test working with various with_imap=false
+        \config(['app.with_imap' => true]);
+
+        // Create the folder in LDAP/IMAP
         $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
         $job->handle();
 
         $folder->refresh();
 
-        $this->assertTrue($folder->isLdapReady());
-        if (\config('app.with_imap')) {
-            $this->assertTrue($folder->isImapReady());
-        }
+        $this->assertSame(\config('app.with_ldap'), $folder->isLdapReady());
+        $this->assertTrue($folder->isImapReady());
 
         // Run the update job
         $job = new \App\Jobs\SharedFolder\UpdateJob($folder->id);

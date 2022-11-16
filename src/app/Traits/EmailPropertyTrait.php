@@ -48,8 +48,10 @@ trait EmailPropertyTrait
     {
         if (empty($this->email) && isset($this->domainName)) {
             $domainName = $this->domainName;
-        } else {
+        } else if (strpos($this->email, '@')) {
             list($local, $domainName) = explode('@', $this->email);
+        } else {
+            return null;
         }
 
         return \App\Domain::withTrashed()->where('namespace', $domainName)->first();

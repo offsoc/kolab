@@ -72,7 +72,7 @@ class CreateJob extends UserJob
             return;
         }
 
-        if (\config('abuse.suspend_enabled')) {
+        if (\config('abuse.suspend_enabled') && !$user->isSuspended()) {
             $code = \Artisan::call("user:abuse-check {$this->userId}");
             if ($code == 2) {
                 \Log::info("Suspending user due to suspected abuse: {$this->userId} {$user->email}");
@@ -94,7 +94,8 @@ class CreateJob extends UserJob
                 }
             } else {
                 if (!\App\Backends\IMAP::verifyAccount($user->email)) {
-                    throw new \Exception("Failed to find the mailbox for user {$this->userId}.");
+                    $this->release(15);
+                    return;
                 }
             }
 

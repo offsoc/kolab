@@ -106,17 +106,13 @@ class RelationController extends ResourceController
             }
         }
 
-        $with_imap = \config('app.with_imap');
         $with_ldap = \config('app.with_ldap');
 
-        $state['isReady'] = (!$with_imap || !isset($state['isImapReady']) || $state['isImapReady'])
+        $state['isReady'] = (!isset($state['isImapReady']) || $state['isImapReady'])
             && (!$with_ldap || !isset($state['isLdapReady']) || $state['isLdapReady'])
             && (!isset($state['isVerified']) || $state['isVerified'])
             && (!isset($state['isConfirmed']) || $state['isConfirmed']);
 
-        if (!$with_imap) {
-            unset($state['isImapReady']);
-        }
         if (!$with_ldap) {
             unset($state['isLdapReady']);
         }
@@ -167,17 +163,11 @@ class RelationController extends ResourceController
     {
         $process = [];
         $withLdap = \config('app.with_ldap');
-        $withImap = \config('app.with_imap');
 
         // Create a process check list
         foreach ($steps as $step_name => $state) {
             // Remove LDAP related steps if the backend is disabled
             if (!$withLdap && strpos($step_name, '-ldap-')) {
-                continue;
-            }
-
-            // Remove IMAP related steps if the backend is disabled
-            if (!$withImap && strpos($step_name, '-imap-')) {
                 continue;
             }
 
@@ -223,7 +213,7 @@ class RelationController extends ResourceController
         return [
             'process' => $process,
             'processState' => $state,
-            'isReady' => $all === $checked,
+            'isDone' => $all === $checked,
         ];
     }
 
@@ -265,7 +255,7 @@ class RelationController extends ResourceController
                 $response = $this->statusInfo($object);
             }
 
-            $success = $response['isReady'];
+            $success = $response['isDone'];
             $suffix = $success ? 'success' : 'error-' . $last_step;
 
             $response['status'] = $success ? 'success' : 'error';

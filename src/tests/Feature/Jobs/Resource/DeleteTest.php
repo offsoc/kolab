@@ -52,10 +52,8 @@ class DeleteTest extends TestCase
 
         $resource->refresh();
 
-        $this->assertTrue($resource->isLdapReady());
-        if (\config('app.with_imap')) {
-            $this->assertTrue($resource->isImapReady());
-        }
+        $this->assertSame(\config('app.with_ldap'), $resource->isLdapReady());
+        $this->assertTrue($resource->isImapReady());
         $this->assertFalse($resource->isDeleted());
 
         // Test successful deletion

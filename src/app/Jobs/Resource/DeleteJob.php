@@ -32,9 +32,11 @@ class DeleteJob extends ResourceJob
             $resource->save();
         }
 
-        if (\config('app.with_imap') && $resource->isImapReady()) {
-            if (!\App\Backends\IMAP::deleteResource($resource)) {
-                throw new \Exception("Failed to delete mailbox for resource {$this->resourceId}.");
+        if ($resource->isImapReady()) {
+            if (\config('app.with_imap')) {
+                if (!\App\Backends\IMAP::deleteResource($resource)) {
+                    throw new \Exception("Failed to delete mailbox for resource {$this->resourceId}.");
+                }
             }
 
             $resource->status ^= \App\Resource::STATUS_IMAP_READY;

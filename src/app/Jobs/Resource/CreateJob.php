@@ -57,9 +57,18 @@ class CreateJob extends ResourceJob
             $resource->save();
         }
 
-        if (\config('app.with_imap') && !$resource->isImapReady()) {
-            if (!\App\Backends\IMAP::createResource($resource)) {
-                throw new \Exception("Failed to create mailbox for resource {$this->resourceId}.");
+        if (!$resource->isImapReady()) {
+            if (\config('app.with_imap')) {
+                if (!\App\Backends\IMAP::createResource($resource)) {
+                    throw new \Exception("Failed to create mailbox for resource {$this->resourceId}.");
+                }
+            } else {
+                $folder = $resource->getSetting('folder');
+
+                if ($folder && !\App\Backends\IMAP::verifySharedFolder($folder)) {
+                    $this->release(15);
+                    return;
+                }
             }
 
             $resource->status |= \App\Resource::STATUS_IMAP_READY;

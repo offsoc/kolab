@@ -114,9 +114,9 @@ class SharedFoldersTest extends TestCase
         $this->assertSame($folder->type, $json['list'][0]['type']);
         $this->assertArrayHasKey('isDeleted', $json['list'][0]);
         $this->assertArrayHasKey('isActive', $json['list'][0]);
-        $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
-        if (\config('app.with_imap')) {
-            $this->assertArrayHasKey('isImapReady', $json['list'][0]);
+        $this->assertArrayHasKey('isImapReady', $json['list'][0]);
+        if (\config('app.with_ldap')) {
+            $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
         }
 
         // Test that another wallet controller has access to shared folders
@@ -250,9 +250,9 @@ class SharedFoldersTest extends TestCase
         $this->assertTrue(!empty($json['statusInfo']));
         $this->assertArrayHasKey('isDeleted', $json);
         $this->assertArrayHasKey('isActive', $json);
-        $this->assertArrayHasKey('isLdapReady', $json);
-        if (\config('app.with_imap')) {
-            $this->assertArrayHasKey('isImapReady', $json);
+        $this->assertArrayHasKey('isImapReady', $json);
+        if (\config('app.with_ldap')) {
+            $this->assertArrayHasKey('isLdapReady', $json);
         }
         $this->assertSame(['acl' => ['anyone, full']], $json['config']);
         $this->assertCount(1, $json['skus']);
@@ -329,23 +329,20 @@ class SharedFoldersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertFalse($json['isLdapReady']);
+        $this->assertFalse($json['isImapReady']);
         $this->assertFalse($json['isReady']);
         $this->assertFalse($json['isDeleted']);
         $this->assertTrue($json['isActive']);
-        if (\config('app.with_imap')) {
-            $this->assertFalse($json['isImapReady']);
-            $this->assertCount(7, $json['process']);
-        } else {
-            $this->assertCount(6, $json['process']);
-        }
-        $this->assertSame('shared-folder-new', $json['process'][0]['label']);
-        $this->assertSame(true, $json['process'][0]['state']);
-        $this->assertSame('shared-folder-ldap-ready', $json['process'][1]['label']);
-        $this->assertSame(false, $json['process'][1]['state']);
+        $this->assertSame('running', $json['processState']);
         $this->assertTrue(empty($json['status']));
         $this->assertTrue(empty($json['message']));
-        $this->assertSame('running', $json['processState']);
+        $this->assertSame('shared-folder-new', $json['process'][0]['label']);
+        $this->assertSame(true, $json['process'][0]['state']);
+        if (\config('app.with_ldap')) {
+            $this->assertFalse($json['isLdapReady']);
+            $this->assertSame('shared-folder-ldap-ready', $json['process'][1]['label']);
+            $this->assertSame(false, $json['process'][1]['state']);
+        }
 
         // Make sure the domain is confirmed (other test might unset that status)
         $domain = $this->getTestDomain('kolab.org');
@@ -361,19 +358,17 @@ class SharedFoldersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertFalse($json['isLdapReady']);
+        $this->assertTrue($json['isImapReady']);
         $this->assertFalse($json['isReady']);
-        if (\config('app.with_imap')) {
-            $this->assertTrue($json['isImapReady']);
-            $this->assertCount(7, $json['process']);
-        } else {
-            $this->assertCount(6, $json['process']);
-        }
-        $this->assertSame('shared-folder-ldap-ready', $json['process'][1]['label']);
-        $this->assertSame(false, $json['process'][1]['state']);
-        if (\config('app.with_imap')) {
+        if (\config('app.with_ldap')) {
+            $this->assertFalse($json['isLdapReady']);
+            $this->assertSame('shared-folder-ldap-ready', $json['process'][1]['label']);
+            $this->assertSame(false, $json['process'][1]['state']);
             $this->assertSame('shared-folder-imap-ready', $json['process'][2]['label']);
             $this->assertSame(true, $json['process'][2]['state']);
+        } else {
+            $this->assertSame('shared-folder-imap-ready', $json['process'][1]['label']);
+            $this->assertSame(true, $json['process'][1]['state']);
         }
         $this->assertSame('success', $json['status']);
         $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
@@ -391,15 +386,16 @@ class SharedFoldersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertFalse($json['isLdapReady']);
+        $this->assertTrue($json['isImapReady']);
         $this->assertFalse($json['isReady']);
-        if (\config('app.with_imap')) {
-            $this->assertCount(7, $json['process']);
+        if (\config('app.with_ldap')) {
+            $this->assertFalse($json['isLdapReady']);
+            $this->assertSame('shared-folder-ldap-ready', $json['process'][1]['label']);
+            $this->assertSame(false, $json['process'][1]['state']);
         } else {
-            $this->assertCount(6, $json['process']);
+            $this->assertSame('shared-folder-imap-ready', $json['process'][1]['label']);
+            $this->assertSame(true, $json['process'][1]['state']);
         }
-        $this->assertSame('shared-folder-ldap-ready', $json['process'][1]['label']);
-        $this->assertSame(false, $json['process'][1]['state']);
         $this->assertSame('success', $json['status']);
         $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
         $this->assertSame('waiting', $json['processState']);
@@ -423,17 +419,14 @@ class SharedFoldersTest extends TestCase
 
         $result = SharedFoldersController::statusInfo($folder);
 
-        $this->assertFalse($result['isReady']);
-        if (\config('app.with_imap')) {
-            $this->assertCount(7, $result['process']);
-        } else {
-            $this->assertCount(6, $result['process']);
-        }
+        $this->assertFalse($result['isDone']);
+        $this->assertSame('running', $result['processState']);
         $this->assertSame('shared-folder-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
-        $this->assertSame('shared-folder-ldap-ready', $result['process'][1]['label']);
-        $this->assertSame(false, $result['process'][1]['state']);
-        $this->assertSame('running', $result['processState']);
+        if (\config('app.with_ldap')) {
+            $this->assertSame('shared-folder-ldap-ready', $result['process'][1]['label']);
+            $this->assertSame(false, $result['process'][1]['state']);
+        }
 
         $folder->created_at = Carbon::now()->subSeconds(181);
         $folder->save();
@@ -447,19 +440,19 @@ class SharedFoldersTest extends TestCase
 
         $result = SharedFoldersController::statusInfo($folder);
 
-        $this->assertTrue($result['isReady']);
-        if (\config('app.with_imap')) {
-            $this->assertCount(7, $result['process']);
-        } else {
-            $this->assertCount(6, $result['process']);
-        }
+        $this->assertTrue($result['isDone']);
+        $this->assertSame('done', $result['processState']);
         $this->assertSame('shared-folder-new', $result['process'][0]['label']);
         $this->assertSame(true, $result['process'][0]['state']);
-        $this->assertSame('shared-folder-ldap-ready', $result['process'][1]['label']);
-        $this->assertSame(true, $result['process'][1]['state']);
-        $this->assertSame('shared-folder-ldap-ready', $result['process'][1]['label']);
-        $this->assertSame(true, $result['process'][1]['state']);
-        $this->assertSame('done', $result['processState']);
+        if (\config('app.with_ldap')) {
+            $this->assertSame('shared-folder-ldap-ready', $result['process'][1]['label']);
+            $this->assertSame(true, $result['process'][1]['state']);
+            $this->assertSame('shared-folder-imap-ready', $result['process'][2]['label']);
+            $this->assertSame(true, $result['process'][2]['state']);
+        } else {
+            $this->assertSame('shared-folder-imap-ready', $result['process'][1]['label']);
+            $this->assertSame(true, $result['process'][1]['state']);
+        }
     }
 
     /**

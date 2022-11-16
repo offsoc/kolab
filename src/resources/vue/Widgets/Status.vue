@@ -1,5 +1,5 @@
 <template>
-    <div v-if="!state.isReady" id="status-box" :class="'p-4 mb-3 rounded process-' + className">
+    <div v-if="!state.isDone" id="status-box" :class="'p-4 mb-3 rounded process-' + className">
         <div v-if="state.step != 'domain-confirmed'" class="d-flex align-items-start">
             <p id="status-body" class="flex-grow-1">
                 <span>{{ $t('status.prepare-' + scopeLabel()) }}</span>
@@ -54,7 +54,7 @@
                 refresh: false,
                 delay: 5000,
                 scope: 'user',
-                state: { isReady: true },
+                state: { isDone: true },
                 waiting: 0,
             }
         },
@@ -79,7 +79,7 @@
             // Displays account status information
             parseStatusInfo(info) {
                 if (info) {
-                    if (!info.isReady) {
+                    if (!info.isDone) {
                         let failedCount = 0
                         let allCount = info.process.length
 
@@ -126,7 +126,7 @@
 
                 // Update status process info every 5,6,7,8,9,... seconds
                 clearTimeout(window.infoRequest)
-                if ((!this.refresh || this.waiting > 0) && (!info || !info.isReady)) {
+                if ((!this.refresh || this.waiting > 0) && (!info || !info.isDone)) {
                     window.infoRequest = setTimeout(() => {
                         delete window.infoRequest
                         // Stop updates after user logged out
