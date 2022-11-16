@@ -274,14 +274,16 @@ class LDAP
             ],
         ];
 
-        self::setGroupAttributes($ldap, $group, $entry);
+        if (!self::getGroupEntry($ldap, $group->email)) {
+            self::setGroupAttributes($ldap, $group, $entry);
 
-        self::addEntry(
-            $ldap,
-            $dn,
-            $entry,
-            "Failed to create group {$group->email} in LDAP (" . __LINE__ . ")"
-        );
+            self::addEntry(
+                $ldap,
+                $dn,
+                $entry,
+                "Failed to create group {$group->email} in LDAP (" . __LINE__ . ")"
+            );
+        }
 
         if (empty(self::$ldap)) {
             $ldap->close();
@@ -315,14 +317,16 @@ class LDAP
             'kolabfoldertype' => 'event',
         ];
 
-        self::setResourceAttributes($ldap, $resource, $entry);
+        if (!self::getResourceEntry($ldap, $resource->email)) {
+            self::setResourceAttributes($ldap, $resource, $entry);
 
-        self::addEntry(
-            $ldap,
-            $dn,
-            $entry,
-            "Failed to create resource {$resource->email} in LDAP (" . __LINE__ . ")"
-        );
+            self::addEntry(
+                $ldap,
+                $dn,
+                $entry,
+                "Failed to create resource {$resource->email} in LDAP (" . __LINE__ . ")"
+            );
+        }
 
         if (empty(self::$ldap)) {
             $ldap->close();
@@ -354,14 +358,16 @@ class LDAP
             ],
         ];
 
-        self::setSharedFolderAttributes($ldap, $folder, $entry);
+        if (!self::getSharedFolderEntry($ldap, $folder->email)) {
+            self::setSharedFolderAttributes($ldap, $folder, $entry);
 
-        self::addEntry(
-            $ldap,
-            $dn,
-            $entry,
-            "Failed to create shared folder {$folder->id} in LDAP (" . __LINE__ . ")"
-        );
+            self::addEntry(
+                $ldap,
+                $dn,
+                $entry,
+                "Failed to create shared folder {$folder->id} in LDAP (" . __LINE__ . ")"
+            );
+        }
 
         if (empty(self::$ldap)) {
             $ldap->close();
