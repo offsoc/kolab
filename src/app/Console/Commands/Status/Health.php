@@ -155,53 +155,28 @@ class Health extends Command
      */
     public function handle()
     {
-        $this->line("Checking DB...");
-        if ($this->checkDB()) {
-            $this->info("OK");
-        } else {
-            $this->error("Not found");
+        $result = 0;
+        $steps = [
+            'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'Mollie', 'OpenExchangeRates',
+        ];
+
+        if (\config('app.with_ldap')) {
+            array_unshift($steps, 'LDAP');
         }
-        $this->line("Checking Redis...");
-        if ($this->checkRedis()) {
-            $this->info("OK");
-        } else {
-            $this->error("Not found");
+
+        foreach ($steps as $step) {
+            $func = "check{$step}";
+
+            $this->line("Checking {$step}...");
+
+            if ($this->{$func}()) {
+                $this->info("OK");
+            } else {
+                $this->error("Not found");
+                $result = 1;
+            }
         }
-        $this->line("Checking LDAP...");
-        if ($this->checkLDAP()) {
-            $this->info("OK");
-        } else {
-            $this->error("Not found");
-        }
-        $this->line("Checking IMAP...");
-        if ($this->checkIMAP()) {
-            $this->info("OK");
-        } else {
-            $this->error("Not found");
-        }
-        $this->line("Checking Roundcube...");
-        if ($this->checkRoundcube()) {
-            $this->info("OK");
-        } else {
-            $this->error("Not found");
-        }
-        $this->line("Checking Meet...");
-        if ($this->checkMeet()) {
-            $this->info("OK");
-        } else {
-            $this->error("Not found");
-        }
-        $this->line("Checking OpenExchangeRates...");
-        if ($this->checkOpenExchangeRates()) {
-            $this->info("OK");
-        } else {
-            $this->error("Not found");
-        }
-        $this->line("Checking Mollie...");
-        if ($this->checkMollie()) {
-            $this->info("OK");
-        } else {
-            $this->error("Not found");
-        }
+
+        return $result;
     }
 }
