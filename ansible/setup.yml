@@ -49,7 +49,7 @@
     - name: Run bin/configure
       become: true
       become_user: kolab
-      ansible.builtin.command: bin/configure.sh config.production
+      ansible.builtin.command: bin/configure.sh {{ config }}
       args:
         chdir: /home/kolab/kolab
       environment:

@@ -57,10 +57,10 @@ fi
 
 # Customize configuration
 sed -i \
-    -e "s/{{ host }}/${HOSTNAME}/g" \
+    -e "s/{{ host }}/${HOSTNAME:-kolab.local}/g" \
     -e "s/{{ openexchangerates_api_key }}/${OPENEXCHANGERATES_API_KEY}/g" \
     -e "s/{{ firebase_api_key }}/${FIREBASE_API_KEY}/g" \
-    -e "s/{{ public_ip }}/${PUBLIC_IP}/g" \
+    -e "s/{{ public_ip }}/${PUBLIC_IP:-172.18.0.1}/g" \
     -e "s/{{ admin_password }}/${ADMIN_PASSWORD}/g" \
     src/.env
 
