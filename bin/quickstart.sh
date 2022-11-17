@@ -106,16 +106,6 @@ find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan cache:clear
 ./artisan horizon:install
 
-if [ ! -f storage/oauth-public.key -o ! -f storage/oauth-private.key ]; then
-    ./artisan passport:keys --force
-fi
-
-cat >> .env << EOF
-PASSPORT_PRIVATE_KEY="$(cat storage/oauth-private.key)"
-PASSPORT_PUBLIC_KEY="$(cat storage/oauth-public.key)"
-EOF
-
-
 if rpm -qv chromium 2>/dev/null; then
     chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
     ./artisan dusk:chrome-driver ${chver}

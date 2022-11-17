@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
+            Seeds\AppKeySeeder::class,
+            Seeds\PassportSeeder::class,
             Seeds\IP4NetSeeder::class,
             Seeds\TenantSeeder::class,
             Seeds\DiscountSeeder::class,
