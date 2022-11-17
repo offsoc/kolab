@@ -92,7 +92,6 @@ class CompanionAppsTest extends TestCase
             'revoked' => false,
             'allowed_scopes' => ["mfa"]
         ]);
-        print(var_export($client, true));
         $client->save();
         $companionApp->oauth_client_id = $client->id;
         $companionApp->save();
@@ -133,7 +132,6 @@ class CompanionAppsTest extends TestCase
             ->where('revoked', false)->count();
         $this->assertSame(0, $tokenCount);
     }
-
 
     /**
      * Test listing apps
@@ -178,7 +176,6 @@ class CompanionAppsTest extends TestCase
         $this->assertCount(0, $json['list']);
     }
 
-
     /**
      * Test showing the app
      */
@@ -203,7 +200,6 @@ class CompanionAppsTest extends TestCase
         $response = $this->actingAs($user2)->get("api/v4/companions/{$companionApp->id}");
         $response->assertStatus(403);
     }
-
 
     /**
      * Test registering the app
@@ -289,7 +285,6 @@ class CompanionAppsTest extends TestCase
         );
         $response->assertStatus(403);
     }
-
 
     /**
      * Test getting the pairing info

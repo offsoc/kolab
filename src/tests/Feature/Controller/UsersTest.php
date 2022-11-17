@@ -46,7 +46,7 @@ class UsersTest extends TestCase
         $wallet->settings()->whereIn('key', ['mollie_id', 'stripe_id'])->delete();
         $wallet->save();
         $user->settings()->whereIn('key', ['greylist_enabled', 'guam_enabled'])->delete();
-        $user->status |= User::STATUS_IMAP_READY;
+        $user->status |= User::STATUS_IMAP_READY | User::STATUS_LDAP_READY;
         $user->save();
     }
 
@@ -77,7 +77,7 @@ class UsersTest extends TestCase
         $wallet->settings()->whereIn('key', ['mollie_id', 'stripe_id'])->delete();
         $wallet->save();
         $user->settings()->whereIn('key', ['greylist_enabled', 'guam_enabled'])->delete();
-        $user->status |= User::STATUS_IMAP_READY;
+        $user->status |= User::STATUS_IMAP_READY | User::STATUS_LDAP_READY;
         $user->save();
 
         parent::tearDown();

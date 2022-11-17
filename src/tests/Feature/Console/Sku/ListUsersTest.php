@@ -59,7 +59,6 @@ class ListUsersTest extends TestCase
             "joe@kolab.org",
             "john@kolab.org",
             "ned@kolab.org",
-            "reseller@" . \config('app.domain')
         ];
 
         $this->assertSame(implode("\n", $expected), $output);

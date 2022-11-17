@@ -20,6 +20,8 @@ class StatsTest extends TestCase
 
         Payment::truncate();
         DB::table('wallets')->update(['discount_id' => null]);
+
+        $this->deleteTestUser('test-stats@' . \config('app.domain'));
     }
 
     /**
@@ -29,6 +31,8 @@ class StatsTest extends TestCase
     {
         Payment::truncate();
         DB::table('wallets')->update(['discount_id' => null]);
+
+        $this->deleteTestUser('test-stats@' . \config('app.domain'));
 
         parent::tearDown();
     }

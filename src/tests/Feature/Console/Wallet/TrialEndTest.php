@@ -17,7 +17,7 @@ class TrialEndTest extends TestCase
         parent::setUp();
 
         $this->deleteTestUser('test-user1@kolabnow.com');
-        $this->deleteTestUser('test-user22@kolabnow.com');
+        $this->deleteTestUser('test-user2@kolabnow.com');
     }
 
     /**
@@ -26,7 +26,7 @@ class TrialEndTest extends TestCase
     public function tearDown(): void
     {
         $this->deleteTestUser('test-user1@kolabnow.com');
-        $this->deleteTestUser('test-user22@kolabnow.com');
+        $this->deleteTestUser('test-user2@kolabnow.com');
 
         parent::tearDown();
     }

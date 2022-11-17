@@ -196,8 +196,6 @@ class UserSeeder extends Seeder
         $reseller->role = 'reseller';
         $reseller->save();
 
-        $reseller->assignPackage($packageKolab);
-
         // for tenants that are not the configured tenant id
         $tenants = \App\Tenant::where('id', '!=', \config('app.tenant_id'))->get();
 
@@ -222,8 +220,6 @@ class UserSeeder extends Seeder
                 $reseller->role = 'reseller';
                 $reseller->tenant_id = $tenant->id;
                 $reseller->save();
-
-                $reseller->assignPackage($packageKolab);
 
                 $user = User::create(
                     [
