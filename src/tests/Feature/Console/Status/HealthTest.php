@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Console\Status\Health;
+namespace Tests\Feature\Console\Status;
 
 use Tests\TestCase;
 
