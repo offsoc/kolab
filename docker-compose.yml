@@ -21,6 +21,10 @@ services:
   kolab:
     build:
       context: ./docker/kolab/
+      args:
+        DB_KOLAB_DATABASE: kolab
+        DB_KOLAB_USERNAME: kolab
+        DB_KOLAB_PASSWORD: ${DB_PASSWORD:?"DB_PASSWORD is missing"}
     container_name: kolab
     privileged: true
     depends_on:
@@ -39,18 +43,18 @@ services:
       - LDAP_SERVICE_BIND_PW=${LDAP_SERVICE_BIND_PW}
       - LDAP_HOSTED_BIND_PW=${LDAP_HOSTED_BIND_PW}
       - DB_HOST=mariadb
-      - DB_ROOT_PASSWORD=${DB_PASSWORD}
+      - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - DB_HKCCP_DATABASE=${DB_DATABASE}
       - DB_HKCCP_USERNAME=${DB_USERNAME}
-      - DB_HKCCP_PASSWORD=${DB_PASSWORD}
+      - DB_HKCCP_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
       - DB_KOLAB_DATABASE=kolab
       - DB_KOLAB_USERNAME=kolab
-      - DB_KOLAB_PASSWORD=${DB_PASSWORD}
+      - DB_KOLAB_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
       - DB_RC_USERNAME=roundcube
-      - DB_RC_PASSWORD=${DB_PASSWORD}
-      - SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE:?err}
-      - SSL_CERTIFICATE_FULLCHAIN=${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?err}
-      - SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY:?err}
+      - DB_RC_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
+      - SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE:?"KOLAB_SSL_CERTIFICATE is missing"}
+      - SSL_CERTIFICATE_FULLCHAIN=${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?"KOLAB_SSL_CERTIFICATE_FULLCHAIN is missing"}
+      - SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY:?"KOLAB_SSL_CERTIFICATE_KEY is missing"}
       - IMAP_HOST=127.0.0.1
       - IMAP_PORT=11993
       - IMAP_ADMIN_LOGIN=${IMAP_ADMIN_LOGIN}
@@ -94,7 +98,7 @@ services:
   mariadb:
     container_name: kolab-mariadb
     environment:
-      - MARIADB_ROOT_PASSWORD=${DB_PASSWORD}
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - TZ="+02:00"
       - DB_HKCCP_DATABASE=${DB_DATABASE}
       - DB_HKCCP_USERNAME=${DB_USERNAME}
@@ -137,9 +141,9 @@ services:
       context: ./docker/pdns/
       args:
         DB_HOST: mariadb
-        DB_DATABASE: ${DB_DATABASE:?err}
-        DB_USERNAME: ${DB_USERNAME:?err}
-        DB_PASSWORD: ${DB_PASSWORD:?err}
+        DB_DATABASE: ${DB_DATABASE:?DB_DATABASE}
+        DB_USERNAME: ${DB_USERNAME:?DB_USERNAME}
+        DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD}
     container_name: kolab-pdns
     hostname: pdns
     depends_on:

@@ -51,6 +51,14 @@ COPY imapd.conf /etc/imapd.conf
 COPY imapd.annotations.conf /etc/imapd.annotations.conf
 COPY guam.conf /etc/guam/sys.config
 
+ARG DB_KOLAB_DATABASE
+ARG DB_KOLAB_USERNAME
+ARG DB_KOLAB_PASSWORD
+RUN sed -i -r \
+    -e "s|DB_KOLAB_DATABASE|$DB_KOLAB_DATABASE|g" \
+    -e "s|DB_KOLAB_USERNAME|$DB_KOLAB_USERNAME|g" \
+    -e "s|DB_KOLAB_PASSWORD|$DB_KOLAB_PASSWORD|g" \
+    /etc/kolab/kolab.conf
 
 RUN mkdir -p /imapdata/{spool,lib} && \
     rm -rf /var/spool/imap && ln -s /imapdata/spool /var/spool/imap && \
