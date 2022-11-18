@@ -15,7 +15,6 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        // 'App\Model' => 'App\Policies\ModelPolicy',
     ];
 
     /**
@@ -26,21 +25,6 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
-
-        // Hashes all secrets and thus makes them non-recoverable
-        /* Passport::hashClientSecrets(); */
-        // Only enable routes for access tokens
-        Passport::routes(
-            function ($router) {
-                $router->forAccessTokens();
-
-                // Override the default route to avoid rate-limiting.
-                Route::post('/token', [
-                    'uses' => 'AccessTokenController@issueToken',
-                    'as' => 'passport.token',
-                ]);
-            }
-        );
 
         Passport::tokensCan([
             'api' => 'Access API',

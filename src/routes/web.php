@@ -29,3 +29,30 @@ Route::group(
         );
     }
 );
+
+Route::group(
+    [
+        'prefix' => 'oauth'
+    ],
+    function () {
+        // We manually specify a subset of endpoints from https://github.com/laravel/passport/blob/11.x/routes/web.php
+        // after having disabled automatic routes via Passport::ignoreRoutes()
+        Route::post('/token', [
+            'uses' => '\Laravel\Passport\Http\Controllers\AccessTokenController@issueToken',
+            'as' => 'token',
+            // 'middleware' => 'throttle',
+        ]);
+
+        Route::middleware(['web', 'auth'])->group(function () {
+            Route::get('/tokens', [
+                'uses' => '\Laravel\Passport\Http\Controllers\AuthorizedAccessTokenController@forUser',
+                'as' => 'tokens.index',
+            ]);
+
+            Route::delete('/tokens/{token_id}', [
+                'uses' => '\Laravel\Passport\Http\Controllers\AuthorizedAccessTokenController@destroy',
+                'as' => 'tokens.destroy',
+            ]);
+        });
+    }
+);
