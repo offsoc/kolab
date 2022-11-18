@@ -136,7 +136,7 @@ services:
     build:
       context: ./docker/pdns/
       args:
-        DB_HOST: ${DB_HOST:?err}
+        DB_HOST: mariadb
         DB_DATABASE: ${DB_DATABASE:?err}
         DB_USERNAME: ${DB_USERNAME:?err}
         DB_PASSWORD: ${DB_PASSWORD:?err}
