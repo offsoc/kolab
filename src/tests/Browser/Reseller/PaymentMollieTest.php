@@ -84,33 +84,13 @@ class PaymentMollieTest extends TestCaseDusk
                 })
                 ->on(new PaymentMollie())
                 ->assertSeeIn('@title', $user->tenant->title . ' Payment')
-                ->assertSeeIn('@amount', 'CHF 12.34');
-
-            $this->assertSame(1, $wallet->payments()->count());
-
-            // Looks like the Mollie testing mode is limited.
-            // We'll select credit card method and mark the payment as paid
-            // We can't do much more, we have to trust Mollie their page works ;)
-
-            // For some reason I don't get the method selection form, it
-            // immediately jumps to the next step. Let's detect that
-            if ($browser->element('@methods')) {
-                $browser->click('@methods button.grid-button-creditcard')
-                    ->waitFor('button.form__button');
-            }
-
-            $browser->click('@status-table input[value="paid"]')
-                ->click('button.form__button');
-
-            // Now it should redirect back to wallet page and in background
-            // use the webhook to update payment status (and balance).
-
-            // Looks like in test-mode the webhook is executed before redirect
-            // so we can expect balance updated on the wallet page
-
-            $browser->waitForLocation('/wallet')
+                ->assertSeeIn('@amount', 'CHF 12.34')
+                ->submitPayment()
+                ->waitForLocation('/wallet')
                 ->on(new WalletPage())
                 ->assertSeeIn('@main .card-title', 'Account balance 12,34 CHF');
+
+            $this->assertSame(1, $wallet->payments()->count());
         });
     }
 }

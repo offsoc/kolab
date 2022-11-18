@@ -562,7 +562,7 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertSame(2010, $transaction->amount);
         $this->assertSame(
-            "Auto-payment transaction {$payment->id} using Mastercard (**** **** **** 6787)",
+            "Auto-payment transaction {$payment->id} using Mastercard (**** **** **** 9399)",
             $transaction->description
         );
 
@@ -958,10 +958,11 @@ class PaymentsMollieTest extends TestCase
         // There's no easy way to confirm a created mandate.
         // The only way seems to be to fire up Chrome on checkout page
         // and do actions with use of Dusk browser.
-        $this->startBrowser()
-            ->visit($json['redirectUrl'])
-            ->click('input[value="paid"]')
-            ->click('button.form__button');
+        $this->startBrowser()->visit($json['redirectUrl']);
+
+        $molliePage = new \Tests\Browser\Pages\PaymentMollie();
+        $molliePage->assert($this->browser);
+        $molliePage->submitPayment($this->browser, 'paid');
 
         $this->stopBrowser();
     }
