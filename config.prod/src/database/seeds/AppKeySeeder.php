@@ -59,4 +59,3 @@ class AppKeySeeder extends Seeder
         return "/^APP_KEY{$escaped}/m";
     }
 }
-
