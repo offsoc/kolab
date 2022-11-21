@@ -24,7 +24,7 @@ RUN rpm --import https://mirror.apheleia-it.ch/repos/Kolab:/16/key.asc && \
     rpm -Uvh https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el8stream.rpm
 RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
     dnf config-manager --enable kolab-16-testing &&\
-    dnf -y --setopt tsflags= install kolab dnsmasq patch &&\
+    dnf -y --setopt tsflags= install kolab kolab-autoconf dnsmasq patch &&\
     dnf clean all
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
