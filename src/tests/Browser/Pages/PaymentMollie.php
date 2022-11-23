@@ -55,19 +55,19 @@ class PaymentMollie extends Page
         // https://docs.mollie.com/components/testing
 
         if ($browser->element('form#body iframe')) {
-            $browser->withinFrame('#card-number iframe', function($browser) {
-                    $browser->type('#cardNumber', '2223 0000 1047 9399'); // Mastercard
-                })
-                ->withinFrame('#card-holder-name iframe', function($browser) {
-                    $browser->type('#cardHolder', 'Test');
-                })
-                ->withinFrame('#expiry-date iframe', function($browser) {
-                    $browser->type('#expiryDate', '12/' . (date('y') + 1));
-                })
-                ->withinFrame('#cvv iframe', function($browser) {
-                    $browser->type('#verificationCode', '123');
-                })
-                ->click('#submit-button');
+            $browser->withinFrame('#card-number iframe', function ($browser) {
+                $browser->type('#cardNumber', '2223 0000 1047 9399'); // Mastercard
+            })
+            ->withinFrame('#card-holder-name iframe', function ($browser) {
+                $browser->type('#cardHolder', 'Test');
+            })
+            ->withinFrame('#expiry-date iframe', function ($browser) {
+                $browser->type('#expiryDate', '12/' . (date('y') + 1));
+            })
+            ->withinFrame('#cvv iframe', function ($browser) {
+                $browser->type('#verificationCode', '123');
+            })
+            ->click('#submit-button');
         }
 
         $browser->waitFor('input[value="' . $status . '"]')
