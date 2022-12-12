@@ -20,10 +20,6 @@ if [ -z "$@" ]; then
         unset APP_KEY
     fi
 
-    if [ -z "${JWT_SECRET}" ]; then
-        ./artisan jwt:secret -f
-    fi
-
     ./artisan clear-compiled
 
     # This should not occur in production

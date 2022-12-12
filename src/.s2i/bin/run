@@ -13,11 +13,6 @@ if [ -z ${APP_KEY} ]; then
     unset APP_KEY
 fi
 
-if [ -z ${JWT_SECRET} ]; then
-    echo "----> Run artisan jwt:secret"
-    ./artisan jwt:secret --always-no
-fi
-
 echo "----> Run artisan clear-compiled"
 ./artisan clear-compiled
 
