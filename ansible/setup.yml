@@ -53,7 +53,7 @@
       args:
         chdir: /home/kolab/kolab
       environment:
-        HOSTNAME: "{{ hostname }}"
+        HOST: "{{ hostname }}"
         OPENEXCHANGERATES_API_KEY: "{{ openexchangerates_api_key }}"
         FIREBASE_API_KEY: "{{ firebase_api_key }}"
         PUBLIC_IP: "{{ public_ip }}"

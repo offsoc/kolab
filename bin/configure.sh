@@ -57,20 +57,20 @@ fi
 
 # Customize configuration
 sed -i \
-    -e "s/{{ host }}/${HOSTNAME:-kolab.local}/g" \
+    -e "s/{{ host }}/${HOST:-kolab.local}/g" \
     -e "s/{{ openexchangerates_api_key }}/${OPENEXCHANGERATES_API_KEY}/g" \
     -e "s/{{ firebase_api_key }}/${FIREBASE_API_KEY}/g" \
     -e "s/{{ public_ip }}/${PUBLIC_IP:-172.18.0.1}/g" \
     -e "s/{{ admin_password }}/${ADMIN_PASSWORD}/g" \
     src/.env
 
-if [ -f /etc/letsencrypt/live/${HOSTNAME}/cert.pem ]; then
-    echo "Using the available letsencrypt certificate for ${HOSTNAME}"
+if [ -f /etc/letsencrypt/live/${HOST}/cert.pem ]; then
+    echo "Using the available letsencrypt certificate for ${HOST}"
     cat >> .env << EOF
-KOLAB_SSL_CERTIFICATE=/etc/letsencrypt/live/${HOSTNAME}/cert.pem
-KOLAB_SSL_CERTIFICATE_FULLCHAIN=/etc/letsencrypt/live/${HOSTNAME}/fullchain.pem
-KOLAB_SSL_CERTIFICATE_KEY=/etc/letsencrypt/live/${HOSTNAME}/privkey.pem
-PROXY_SSL_CERTIFICATE=/etc/letsencrypt/live/${HOSTNAME}/fullchain.pem
-PROXY_SSL_CERTIFICATE_KEY=/etc/letsencrypt/live/${HOSTNAME}/privkey.pem
+KOLAB_SSL_CERTIFICATE=/etc/letsencrypt/live/${HOST}/cert.pem
+KOLAB_SSL_CERTIFICATE_FULLCHAIN=/etc/letsencrypt/live/${HOST}/fullchain.pem
+KOLAB_SSL_CERTIFICATE_KEY=/etc/letsencrypt/live/${HOST}/privkey.pem
+PROXY_SSL_CERTIFICATE=/etc/letsencrypt/live/${HOST}/fullchain.pem
+PROXY_SSL_CERTIFICATE_KEY=/etc/letsencrypt/live/${HOST}/privkey.pem
 EOF
 fi
