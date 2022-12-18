@@ -67,7 +67,6 @@ abstract class CommonJob implements ShouldQueue
         // We need this for testing purposes
         $this->isDeleted = true;
 
-        // @phpstan-ignore-next-line
         if ($this->job) {
             $this->job->delete();
         }
@@ -85,7 +84,6 @@ abstract class CommonJob implements ShouldQueue
         // Save the message, for testing purposes
         $this->failureMessage = $e->getMessage();
 
-        // @phpstan-ignore-next-line
         if ($this->job) {
             $this->job->fail($e);
         }
@@ -112,7 +110,6 @@ abstract class CommonJob implements ShouldQueue
         // We need this for testing purposes
         $this->isReleased = true;
 
-        // @phpstan-ignore-next-line
         if ($this->job) {
             $this->job->release($delay);
         } else {
