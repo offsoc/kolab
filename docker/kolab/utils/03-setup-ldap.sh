@@ -13,6 +13,7 @@ if [ -f "/etc/dirsrv/slapd-kolab/dse.ldif" ]; then
     mkdir /run/dirsrv
     chmod 777 /run/dirsrv
     mkdir -p /run/lock/dirsrv/slapd-kolab/
+    chown dirsrv:dirsrv /run/lock/dirsrv/slapd-kolab/
     chmod 777 /run/lock/dirsrv/slapd-kolab/
     mkdir -p /var/lib/dirsrv/slapd-kolab
     chown dirsrv:dirsrv /var/lib/dirsrv/slapd-kolab
