@@ -120,3 +120,10 @@
       ansible.builtin.command: bin/deploy.sh
       args:
         chdir: /home/kolab/kolab
+
+    - name: Set admin password
+      become: true
+      become_user: kolab
+      ansible.builtin.command: docker exec -w /src/kolabsrc/ kolab-webapp ./artisan user:password admin@{{ hostname }} {{ admin_password|quote }}
+      args:
+        chdir: /home/kolab/kolab
