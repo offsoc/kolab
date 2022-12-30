@@ -14,7 +14,6 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            Seeds\AppKeySeeder::class,
             Seeds\PassportSeeder::class,
             Seeds\PowerDNSSeeder::class,
             Seeds\SkuSeeder::class,

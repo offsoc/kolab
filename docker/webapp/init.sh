@@ -10,7 +10,6 @@ mkdir -p storage/framework/{sessions,views,cache}
 php -dmemory_limit=-1 $(command -v composer) install
 npm install
 find bootstrap/cache/ -type f ! -name ".gitignore" -delete
-./artisan key:generate
 ./artisan storage:link
 ./artisan clear-compiled
 ./artisan cache:clear

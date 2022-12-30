@@ -55,6 +55,11 @@ if ! grep -q "MEET_SERVER_TOKEN" .env; then
     echo "MEET_SERVER_TOKEN=${MEET_SERVER_TOKEN}" >> src/.env
 fi
 
+if ! grep -q "APP_KEY=base64:" .env; then
+    APP_KEY=$(openssl rand -base64 32);
+    echo "APP_KEY=base64:${APP_KEY}" >> src/.env
+fi
+
 # Customize configuration
 sed -i \
     -e "s/{{ host }}/${HOST:-kolab.local}/g" \
