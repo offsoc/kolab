@@ -202,6 +202,8 @@ services:
         ipv4_address: 172.18.0.4
     volumes:
       - ./src:/src/kolabsrc.orig:ro
+      - ./src/storage:/storage
+      - ./src/.env:/.env
     ports:
       - "8000:8000"
   meet:
