@@ -24,7 +24,6 @@ class DatabaseSeeder extends Seeder
             Seeds\PlanSeeder::class,
             Seeds\PowerDNSSeeder::class,
             Seeds\UserSeeder::class,
-            Seeds\OauthClientSeeder::class,
             Seeds\ResourceSeeder::class,
             Seeds\SharedFolderSeeder::class,
             Seeds\MeetRoomSeeder::class,

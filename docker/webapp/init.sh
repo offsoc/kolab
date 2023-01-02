@@ -3,10 +3,6 @@ set -e
 rm -rf /src/kolabsrc
 cp -a /src/kolabsrc.orig /src/kolabsrc
 cd /src/kolabsrc
-rm -R storage
-ln -s /storage storage
-rm .env
-ln -s /.env .env
 
 rm -rf vendor/ composer.lock .npm storage/framework
 mkdir -p storage/framework/{sessions,views,cache}

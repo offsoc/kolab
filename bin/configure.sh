@@ -60,6 +60,24 @@ if ! grep -q "APP_KEY=base64:" .env; then
     echo "APP_KEY=base64:${APP_KEY}" >> src/.env
 fi
 
+if ! grep -q "PASSPORT_PROXY_OAUTH_CLIENT_ID=" .env; then
+    PASSPORT_PROXY_OAUTH_CLIENT_ID=$(uuidgen);
+    echo "PASSPORT_PROXY_OAUTH_CLIENT_ID=${PASSPORT_PROXY_OAUTH_CLIENT_ID}" >> src/.env
+fi
+
+if ! grep -q "PASSPORT_PROXY_OAUTH_CLIENT_SECRET=" .env; then
+    PASSPORT_PROXY_OAUTH_CLIENT_SECRET=$(openssl rand -base64 32);
+    echo "PASSPORT_PROXY_OAUTH_CLIENT_SECRET=${PASSPORT_PROXY_OAUTH_CLIENT_SECRET}" >> src/.env
+fi
+
+if ! grep -q "PASSPORT_PUBLIC_KEY=|PASSPORT_PRIVATE_KEY=" .env; then
+    PASSPORT_PRIVATE_KEY=$(openssl genrsa 4096);
+    echo "PASSPORT_PRIVATE_KEY=\"${PASSPORT_PRIVATE_KEY}\"" >> src/.env
+
+    PASSPORT_PUBLIC_KEY=$(echo "$PASSPORT_PRIVATE_KEY" | openssl rsa -pubout 2>/dev/null)
+    echo "PASSPORT_PUBLIC_KEY=\"${PASSPORT_PUBLIC_KEY}\"" >> src/.env
+fi
+
 # Customize configuration
 sed -i \
     -e "s/{{ host }}/${HOST:-kolab.local}/g" \
