@@ -739,7 +739,8 @@ class SignupTest extends TestCase
         );
 
         // Check if the code has been removed
-        $this->assertNull(SignupCode::find($code->id));
+        $code->refresh();
+        $this->assertTrue($code->trashed());
 
         // Check if the user has been created
         $user = User::where('email', $login . '@' . $domain)->first();
