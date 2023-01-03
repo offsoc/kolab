@@ -50,8 +50,6 @@ services:
       - DB_KOLAB_DATABASE=kolab
       - DB_KOLAB_USERNAME=kolab
       - DB_KOLAB_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
-      - DB_RC_USERNAME=roundcube
-      - DB_RC_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
       - SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE:?"KOLAB_SSL_CERTIFICATE is missing"}
       - SSL_CERTIFICATE_FULLCHAIN=${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?"KOLAB_SSL_CERTIFICATE_FULLCHAIN is missing"}
       - SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY:?"KOLAB_SSL_CERTIFICATE_KEY is missing"}
@@ -95,6 +93,57 @@ services:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - imap:/imapdata
       - ldap:/ldapdata
+  roundcube:
+    build:
+      context: ./docker/roundcube/
+    container_name: roundcube
+    hostname: roundcube.hosted.com
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      pdns:
+        condition: service_healthy
+      kolab:
+        condition: service_healthy
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN}
+      - LDAP_HOST=kolab
+      - LDAP_ADMIN_BIND_DN=${LDAP_ADMIN_BIND_DN}
+      - LDAP_ADMIN_BIND_PW=${LDAP_ADMIN_BIND_PW}
+      - LDAP_SERVICE_BIND_PW=${LDAP_SERVICE_BIND_PW}
+      - LDAP_HOSTED_BIND_PW=${LDAP_HOSTED_BIND_PW}
+      - DB_HOST=mariadb
+      - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - DB_RC_DATABASE=roundcube
+      - DB_RC_USERNAME=roundcube
+      - DB_RC_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
+      - IMAP_HOST=tls://haproxy
+      - IMAP_PORT=145
+      - IMAP_ADMIN_LOGIN=${IMAP_ADMIN_LOGIN}
+      - IMAP_ADMIN_PASSWORD=${IMAP_ADMIN_PASSWORD}
+      - MAIL_HOST=tls://kolab
+      - MAIL_PORT=10587
+    healthcheck:
+      interval: 10s
+      test: "kill -0 $$(cat /run/httpd/httpd.pid)"
+      timeout: 5s
+      retries: 30
+    # This makes docker's dns, resolve via pdns for this container.
+    # Please note it does not affect /etc/resolv.conf
+    dns: 172.18.0.11
+    image: roundcube
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.9
+    ports:
+      - "8001:80"
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    volumes:
+      - ./ext/:/src.orig/:ro
   mariadb:
     container_name: kolab-mariadb
     environment:
@@ -196,6 +245,8 @@ services:
       kolab:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      roundcube:
         condition: service_healthy
     networks:
       kolab:
