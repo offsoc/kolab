@@ -33,8 +33,8 @@ pkill -9 -f artisan || :
 pkill -9 -f swoole || :
 
 bin/regen-certs
-docker-compose build coturn kolab mariadb meet pdns proxy redis haproxy
-docker-compose up -d coturn kolab mariadb meet pdns redis
+docker-compose build coturn kolab mariadb meet pdns proxy redis haproxy roundcube
+docker-compose up -d coturn kolab mariadb meet pdns redis roundcube
 
 # Workaround until we have docker-compose --wait (https://github.com/docker/compose/pull/8777)
 function wait_for_container {
