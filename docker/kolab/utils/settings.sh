@@ -8,8 +8,6 @@ export ldap_binddn=${LDAP_ADMIN_BIND_DN}
 export ldap_bindpw=${LDAP_ADMIN_BIND_PW}
 
 export cyrus_admin=${IMAP_ADMIN_LOGIN}
-
-export imap_host=${IMAP_HOST}
 export cyrus_admin_pw=${IMAP_ADMIN_PASSWORD}
 
 export kolab_service_pw=${LDAP_SERVICE_BIND_PW}

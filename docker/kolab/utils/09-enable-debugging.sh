@@ -10,8 +10,6 @@ fi
 
 systemctl restart cyrus-imapd
 
-sed -i -r -e "s/_debug'] = (.*);/_debug'] = true;/g" /etc/roundcubemail/config.inc.php
-
 if ! grep -q "FLAGS=\"--fork -l debug -d 8\"" /etc/sysconfig/wallace; then
     echo "FLAGS=\"--fork -l debug -d 8\"" > /etc/sysconfig/wallace
 fi

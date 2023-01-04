@@ -1,21 +1,6 @@
 #!/bin/bash
 
-# Replace localhost
-sed -i -e "/hosts/s/localhost/${LDAP_HOST}/" /etc/iRony/dav.inc.php
-sed -i -e "/host/s/localhost/${LDAP_HOST}/g" \
-       -e "/fbsource/s/localhost/${IMAP_HOST}/g" /etc/kolab-freebusy/config.ini
 #sed -i -e "s/server_host.*/server_host = ${LDAP_HOST}/g" /etc/postfix/ldap/*
-sed -i -e "/password_ldap_host/s/localhost/${LDAP_HOST}/" /etc/roundcubemail/password.inc.php
-sed -i -e "/hosts/s/localhost/${LDAP_HOST}/" /etc/roundcubemail/kolab_auth.inc.php
-sed -i -e "s#.*db_dsnw.*#    \$config['db_dsnw'] = 'mysql://${DB_RC_USERNAME}:${DB_RC_PASSWORD}@${DB_HOST}/roundcube';#" \
-       -e "/default_host/s|= .*$|= 'ssl://${IMAP_HOST}';|" \
-       -e "/default_port/s|= .*$|= ${IMAP_PORT};|" \
-       -e "/smtp_server/s|= .*$|= 'tls://${MAIL_HOST}';|" \
-       -e "/smtp_port/s/= .*$/= ${MAIL_PORT};/" \
-       -e "/hosts/s/localhost/${LDAP_HOST}/" /etc/roundcubemail/config.inc.php
-sed -i -e "/hosts/s/localhost/${LDAP_HOST}/" /etc/roundcubemail/calendar.inc.php
-
-
 . ./settings.sh
 
 #Adjust basedn
@@ -29,11 +14,7 @@ sed -i -r \
     -e "s/(\s+)'search_base_dn'(\s+)=> '.*',/\1'search_base_dn'\2=> '${hosted_domain_rootdn}',/g" \
     -e "s/(\s+)'user_specific'(\s+)=> false,/\1'user_specific'\2=> true,/g" \
     /etc/amavisd/amavisd.conf \
-    /etc/kolab-freebusy/config.ini \
-    /etc/postfix/ldap/*.cf \
-    /etc/roundcubemail/config.inc.php \
-    /etc/roundcubemail/calendar.inc.php \
-    /etc/roundcubemail/kolab_auth.inc.php
+    /etc/postfix/ldap/*.cf
 
 sed -i -r \
     -e "s/^search_base = .*$/search_base = ${domain_base_dn}/g" \
@@ -95,14 +76,6 @@ cat >> /etc/postfix/master.cf << EOF
 EOF
 
 
-sed -i -r \
-    -e "s/'vlv'(\s+)=> false,/'vlv'\1=> true,/g" \
-    -e "s/'vlv_search'(\s+)=> false,/'vlv_search'\1=> true,/g" \
-    -e "s/inetOrgPerson/inetorgperson/g" \
-    -e "s/kolabInetOrgPerson/inetorgperson/g" \
-    /etc/roundcubemail/*.inc.php
-
-
 # Adjust postfix
 
 # new: (inetdomainstatus:1.2.840.113556.1.4.803:=1)
@@ -129,39 +102,3 @@ sed -i -r \
     /etc/postfix/ldap/local_recipient_maps.cf
 
 systemctl restart postfix
-
-
-
-sed -i -r -e "s|$config\['kolab_files_url'\] = .*$|$config['kolab_files_url'] = 'https://' \. \$_SERVER['HTTP_HOST'] . '/chwala/';|g" /etc/roundcubemail/kolab_files.inc.php
-sed -i -r -e "/^.*kolab_files_url.*/a \$config['kolab_files_server_url'] = 'http://127.0.0.1:9080/chwala/';" /etc/roundcubemail/kolab_files.inc.php
-
-sed -i -r -e "s|$config\['kolab_invitation_calendars'\] = .*$|$config['kolab_invitation_calendars'] = true;|g" /etc/roundcubemail/calendar.inc.php
-
-sed -i -r -e "/^.*'contextmenu',$/a 'enigma'," /etc/roundcubemail/config.inc.php
-
-sed -i -r -e "s|$config\['enigma_passwordless'\] = .*$|$config['enigma_passwordless'] = true;|g" /etc/roundcubemail/enigma.inc.php
-sed -i -r -e "s|$config\['enigma_multihost'\] = .*$|$config['enigma_multihost'] = true;|g" /etc/roundcubemail/enigma.inc.php
-
-echo "\$config['enigma_woat'] = true;" >> /etc/roundcubemail/enigma.inc.php
-
-# Run it over haproxy then nginx for 2fa. We need to use startls because otherwise the proxy protocol doesn't work.
-sed -i -r -e "s|$config\['default_host'\] = .*$|$config['default_host'] = 'tls://haproxy';|g" /etc/roundcubemail/config.inc.php
-sed -i -r -e "s|$config\['default_port'\] = .*$|$config['default_port'] = 145;|g" /etc/roundcubemail/config.inc.php
-
-# So we can just append
-sed -i "s/?>//g" /etc/roundcubemail/config.inc.php
-
-# Enable the PROXY protocol
-cat << EOF >> /etc/roundcubemail/config.inc.php
-    \$config['imap_conn_options'] = Array(
-            'ssl' => Array(
-                    'verify_peer_name' => false,
-                    'verify_peer' => false,
-                    'allow_self_signed' => true
-                ),
-            'proxy_protocol' => 2
-        );
-    \$config['proxy_whitelist'] = array('127.0.0.1', '172.18.0.7');
-EOF
-
-echo "?>" >> /etc/roundcubemail/config.inc.php

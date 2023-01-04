@@ -32,12 +32,6 @@ CMD="$(which setup-kolab) mta \
 ${CMD} 2>&1 | tee -a /root/setup-kolab.log
 
 
-
-CMD="$(which setup-kolab) php \
-    --default \
-    --timezone=Europe/Zurich"
-${CMD} 2>&1 | tee -a /root/setup-kolab.log
-
 # setup imap
 if [ -f "/var/lib/imap/db" ]; then
     echo "IMAP directory exists, nothing to do"
@@ -63,35 +57,3 @@ systemctl restart saslauthd
 #Setup guam
 systemctl start guam
 systemctl enable guam
-
-
-#TODO just add /etc/kolab-freebusy/
-# CMD="$(which setup-kolab) freebusy \
-#     --default"
-# ${CMD} 2>&1 | tee -a /root/setup-kolab.log
-
-cat > /tmp/kolab-setup-my.cnf << EOF
-[client]
-host=${DB_HOST}
-user=root
-password=${DB_ROOT_PASSWORD}
-EOF
-
-# Configure roundcube and setup db
-# The db setup will just fail if the db already exists,
-# but no harm done
-CMD="$(which setup-kolab) roundcube \
-    --default"
-${CMD} 2>&1 | tee -a /root/setup-kolab.log
-
-cat > /tmp/kolab-setup-my.cnf << EOF
-[client]
-host=${DB_HOST}
-user=root
-password=${DB_ROOT_PASSWORD}
-EOF
-
-CMD="$(which setup-kolab) syncroton \
-    --default"
-${CMD} 2>&1 | tee -a /root/setup-kolab.log
-

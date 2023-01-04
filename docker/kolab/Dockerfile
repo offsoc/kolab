@@ -24,7 +24,7 @@ RUN rpm --import https://mirror.apheleia-it.ch/repos/Kolab:/16/key.asc && \
     rpm -Uvh https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el8stream.rpm
 RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
     dnf config-manager --enable kolab-16-testing &&\
-    dnf -y --setopt tsflags= install kolab kolab-autoconf dnsmasq patch &&\
+    dnf -y --setopt tsflags= install kolab patch &&\
     dnf clean all
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
@@ -39,8 +39,6 @@ RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && 
 
 
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
-RUN sed -i -r -e 's/^Listen 80$/Listen 9080/g' /etc/httpd/conf/httpd.conf
-#RUN sed -i -r -e 's/^Listen 443$/Listen 9443/g' /etc/httpd/conf/httpd.conf
 
 COPY kolab-init.sh /usr/local/sbin/
 RUN chmod 750 /usr/local/sbin/kolab-init.sh
@@ -80,4 +78,4 @@ WORKDIR /root/
 
 CMD ["/lib/systemd/systemd"]
 
-EXPOSE 21/tcp 22/tcp 25/tcp 53/tcp 53/udp 80/tcp 110/tcp 389/tcp 443/tcp 995/tcp 5353/udp 8880/tcp 8443/tcp 8447/tcp 10143/tcp 10465/tcp 10587/tcp 11143/tcp 11993/tcp
+EXPOSE 21/tcp 22/tcp 25/tcp 53/tcp 53/udp 110/tcp 389/tcp 443/tcp 995/tcp 10143/tcp 10465/tcp 10587/tcp 11143/tcp 11993/tcp
