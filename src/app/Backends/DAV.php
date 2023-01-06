@@ -26,7 +26,7 @@ class DAV
      */
     public function __construct($user, $password)
     {
-        $this->url      = \config('dav.uri');
+        $this->url      = \config('services.dav.uri');
         $this->user     = $user;
         $this->password = $password;
     }

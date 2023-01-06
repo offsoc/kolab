@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Backends\IMAP;
 use App\Backends\LDAP;
 use App\CompanionApp;
 use App\Domain;
@@ -403,7 +404,12 @@ trait TestCaseTrait
             return;
         }
 
-        LDAP::deleteUser($user);
+        if (\config('app.with_imap')) {
+            IMAP::deleteUser($user);
+        }
+        if (\config('app.with_ldap')) {
+            LDAP::deleteUser($user);
+        }
 
         $user->forceDelete();
     }
@@ -553,10 +559,12 @@ trait TestCaseTrait
      *
      * @coversNothing
      */
-    protected function getTestUser($email, $attrib = [])
+    protected function getTestUser($email, $attrib = [], $createInBackends = false)
     {
         // Disable jobs (i.e. skip LDAP oprations)
-        Queue::fake();
+        if (!$createInBackends) {
+            Queue::fake();
+        }
         $user = User::firstOrCreate(['email' => $email], $attrib);
 
         if ($user->trashed()) {

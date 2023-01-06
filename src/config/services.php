@@ -54,6 +54,21 @@ return [
 
     'openexchangerates' => [
         'api_key' => env('OPENEXCHANGERATES_API_KEY', null),
-    ]
+    ],
 
+    'dav' => [
+        'uri' => env('DAV_URI', 'https://proxy/'),
+    ],
+
+    'activesync' => [
+        'uri' => env('ACTIVESYNC_URI', 'https://proxy/Microsoft-Server-ActiveSync'),
+    ],
+
+    'wopi' => [
+        'uri' => env('WOPI_URI', 'http://roundcube/chwala/'),
+    ],
+
+    'webmail' => [
+        'uri' => env('WEBMAIL_URI', 'http://roundcube/roundcubemail/'),
+    ]
 ];
