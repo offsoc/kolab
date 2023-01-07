@@ -19,18 +19,14 @@ done | tee -a /root/setup-kolab.log
 echo "OK!" | tee -a /root/setup-kolab.log
 
 
-cat > /tmp/kolab-setup-my.cnf << EOF
-[client]
-host=${DB_HOST}
-user=root
-password=${DB_ROOT_PASSWORD}
-EOF
+cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
+chown cyrus:mail /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
 
-
-CMD="$(which setup-kolab) mta \
-    --default"
-${CMD} 2>&1 | tee -a /root/setup-kolab.log
-
+cp /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem /etc/pki/tls/private/postfix.pem
+chown postfix:mail /etc/pki/tls/private/postfix.pem
+chmod 655 /etc/pki/tls/private/postfix.pem
+systemctl enable --now postfix
+systemctl enable --now wallace
 
 # setup imap
 if [ -f "/var/lib/imap/db" ]; then
@@ -54,6 +50,4 @@ EOF
 
 systemctl restart saslauthd
 
-#Setup guam
-systemctl start guam
-systemctl enable guam
+systemctl enable --now guam
