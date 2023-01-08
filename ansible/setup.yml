@@ -114,12 +114,19 @@
         name: docker
         state: restarted
 
-    - name: Run bin/deploy
-      become: true
-      become_user: kolab
-      ansible.builtin.command: bin/deploy.sh
-      args:
-        chdir: /home/kolab/kolab
+    - name: Deploy
+      block:
+        - name: Run bin/deploy
+          become: true
+          become_user: kolab
+          ansible.builtin.command: bin/deploy.sh
+          args:
+            chdir: /home/kolab/kolab
+          register: result
+      always:
+        - name: Print output from previous task with newlines
+          ansible.builtin.debug:
+            msg="{{result.stdout_lines}}"
 
     - name: Set admin password
       become: true
