@@ -56,7 +56,7 @@ class PaymentsController extends Controller
         $mandate = [
             'currency' => $wallet->currency,
             'description' => Tenant::getConfig($user->tenant_id, 'app.name') . ' Auto-Payment Setup',
-            'methodId' => $request->methodId
+            'methodId' => $request->methodId ?: PaymentProvider::METHOD_CREDITCARD,
         ];
 
         // Normally the auto-payment setup operation is 0, if the balance is below the threshold
@@ -223,7 +223,7 @@ class PaymentsController extends Controller
             'type' => PaymentProvider::TYPE_ONEOFF,
             'currency' => $currency,
             'amount' => $amount,
-            'methodId' => $request->methodId,
+            'methodId' => $request->methodId ?: PaymentProvider::METHOD_CREDITCARD,
             'description' => Tenant::getConfig($user->tenant_id, 'app.name') . ' Payment',
         ];
 

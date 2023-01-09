@@ -53,7 +53,6 @@ class PaymentMollie extends Page
     {
         // https://docs.mollie.com/overview/testing
         // https://docs.mollie.com/components/testing
-
         if ($browser->element('form#body iframe')) {
             $browser->withinFrame('#card-number iframe', function ($browser) {
                 $browser->type('#cardNumber', '2223 0000 1047 9399'); // Mastercard

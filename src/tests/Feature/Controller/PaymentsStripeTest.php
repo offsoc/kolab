@@ -122,7 +122,7 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame("The specified amount does not cover the balance on the account.", $json['errors']['amount']);
 
         // Test creating a mandate (valid input)
-        $post = ['amount' => 20.10, 'balance' => 0];
+        $post = ['amount' => 20.10, 'balance' => 0, 'methodId' => PaymentProvider::METHOD_CREDITCARD];
         $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
         $response->assertStatus(200);
 
