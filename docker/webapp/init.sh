@@ -1,16 +1,23 @@
 #!/bin/bash
 set -e
-rm -rf /src/kolabsrc
-cp -a /src/kolabsrc.orig /src/kolabsrc
+set -x
+
+rsync -av \
+    --exclude=vendor \
+    --exclude=composer.lock \
+    --exclude=node_modules \
+    --exclude="resources/build" \
+    --exclude="bootstrap/cache" \
+    --exclude=".gitignore" \
+    /src/kolabsrc.orig/ /src/kolabsrc
 cd /src/kolabsrc
 
-rm -rf vendor/ composer.lock .npm storage/framework
+rm -rf storage/framework
 mkdir -p storage/framework/{sessions,views,cache}
 
-php -dmemory_limit=-1 $(command -v composer) install
-npm install
+php -dmemory_limit=-1 $(command -v composer) update
+/usr/local/bin/npm install
 find bootstrap/cache/ -type f ! -name ".gitignore" -delete
-./artisan storage:link
 ./artisan clear-compiled
 ./artisan cache:clear
 ./artisan horizon:install
@@ -19,7 +26,7 @@ if [ ! -f 'resources/countries.php' ]; then
     ./artisan data:countries
 fi
 
-npm run dev
+/usr/local/bin/npm run dev
 
 ./artisan db:ping --wait
 php -dmemory_limit=512M ./artisan migrate --force
