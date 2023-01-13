@@ -17,7 +17,6 @@ services:
     image: kolab-coturn
     network_mode: host
     restart: on-failure
-    tty: true
   kolab:
     build:
       context: ./docker/kolab/
@@ -27,6 +26,7 @@ services:
         DB_KOLAB_PASSWORD: ${DB_PASSWORD:?"DB_PASSWORD is missing"}
     container_name: kolab
     privileged: true
+    restart: on-failure
     depends_on:
       mariadb:
         condition: service_healthy
@@ -80,7 +80,6 @@ services:
       - /tmp
       - /var/run
       - /var/tmp
-    tty: true
     volumes:
       - ./ext/:/src/:ro
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
@@ -98,6 +97,7 @@ services:
       context: ./docker/roundcube/
     container_name: roundcube
     hostname: roundcube.hosted.com
+    restart: on-failure
     depends_on:
       mariadb:
         condition: service_healthy
@@ -146,6 +146,7 @@ services:
       - ./ext/:/src.orig/:ro
   mariadb:
     container_name: kolab-mariadb
+    restart: on-failure
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - TZ="+02:00"
@@ -172,6 +173,7 @@ services:
       timeout: 5s
       retries: 30
     container_name: kolab-haproxy
+    restart: on-failure
     hostname: haproxy.hosted.com
     image: kolab-haproxy
     networks:
@@ -181,7 +183,6 @@ services:
       - /tmp
       - /var/run
       - /var/tmp
-    tty: true
     volumes:
       - ./docker/certs/:/etc/certs/:ro
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
@@ -194,6 +195,7 @@ services:
         DB_USERNAME: ${DB_USERNAME:?DB_USERNAME}
         DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD}
     container_name: kolab-pdns
+    restart: on-failure
     hostname: pdns
     depends_on:
       mariadb:
@@ -212,7 +214,6 @@ services:
       - /tmp
       - /var/run
       - /var/tmp
-    tty: true
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
   redis:
@@ -224,6 +225,7 @@ services:
       timeout: 5s
       retries: 30
     container_name: kolab-redis
+    restart: on-failure
     hostname: redis
     image: redis
     networks:
@@ -234,6 +236,7 @@ services:
     build:
       context: ./docker/webapp/
     container_name: kolab-webapp
+    restart: on-failure
     image: kolab-webapp
     healthcheck:
       interval: 10s
@@ -258,6 +261,8 @@ services:
   meet:
     build:
       context: ./docker/meet/
+    container_name: kolab-meet
+    restart: on-failure
     healthcheck:
       interval: 10s
       test: "curl --insecure -H 'X-AUTH-TOKEN: ${MEET_SERVER_TOKEN}' --fail https://${MEET_LISTENING_HOST}:12443/meetmedia/api/health || exit 1"

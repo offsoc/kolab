@@ -38,6 +38,7 @@ services:
       timeout: 5s
       retries: 30
     container_name: kolab-proxy
+    restart: on-failure
     hostname: proxy
     image: kolab-proxy
     extra_hosts:
