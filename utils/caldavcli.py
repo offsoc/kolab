@@ -149,8 +149,9 @@ class CalDAV:
         print(minidom.parseString(ET.tostring(root)).toprettyxml(indent="   "))
 
     def fetch(self, href):
+        parsed_url = urllib.parse.urlparse(f"https://{self.host}")
         response = self.send_request(
-            f"https://{self.host}{href}",
+            urllib.parse.urlunparse(parsed_url._replace(path=href)),
             "PROPFIND"
         )
 
