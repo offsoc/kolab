@@ -16,7 +16,25 @@ echo "---> Installing application source..."
 rm -fR /tmp/src/.git
 mv /tmp/src/* ./
 
-pushd /opt/app-root/src
+pushd /opt/app-root/
+
+if [ -d "config.${LARAVEL_ENV:-prod}/src/" ]; then
+    find -L "config.${LARAVEL_ENV:-prod}/src/" -type f | while read file; do
+        dir=$(dirname $file | sed -r -e "s|config.${LARAVEL_ENV:-prod}/src|src|g")
+
+        if [ ! -d "${dir}" ]; then
+            mkdir -p ${dir}
+        fi
+
+        cp -av ${file} ${dir}/.
+    done
+fi
+
+rm -rf config.*/
+
+pushd /opt/app-root/src/
+
+rm -rf .env
 
 fix-permissions ./
 
