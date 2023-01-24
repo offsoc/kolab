@@ -5,10 +5,11 @@ namespace App\Console\Commands\Status;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
-use App\Backends\LDAP;
+use App\Backends\DAV;
 use App\Backends\IMAP;
-use App\Backends\Roundcube;
+use App\Backends\LDAP;
 use App\Backends\OpenExchangeRates;
+use App\Backends\Roundcube;
 use App\Providers\Payment\Mollie;
 
 //TODO stripe
@@ -56,6 +57,17 @@ class Health extends Command
     {
         try {
             return Mollie::healthcheck();
+        } catch (\Exception $exception) {
+            $this->line($exception);
+            return false;
+        }
+    }
+
+    private function checkDAV()
+    {
+        try {
+            DAV::healthcheck();
+            return true;
         } catch (\Exception $exception) {
             $this->line($exception);
             return false;
@@ -157,7 +169,7 @@ class Health extends Command
     {
         $result = 0;
         $steps = [
-            'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'Mollie', 'OpenExchangeRates',
+            'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates',
         ];
 
         if (\config('app.with_ldap')) {
