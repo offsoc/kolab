@@ -38,14 +38,37 @@ class ActivesyncTest extends TestCase
     {
         parent::setUp();
 
-        if (!self::$user) {
-            self::$user = $this->getTestUser('activesynctest@kolab.org', ['password' => 'simple123'], true);
-        }
         if (!self::$deviceId) {
             // By always creating a new device we force syncroton to initialize.
             // Otherwise we work against uninitialized metadata (subscription states),
             // because the account has been removed, but syncroton doesn't reinitalize the metadata for known devices.
             self::$deviceId = (string) Str::uuid();
+        }
+
+        $deviceId = self::$deviceId;
+        \config(['imap.default_folders' => [
+            'Drafts' => [
+                'metadata' => [
+                    '/private/vendor/kolab/folder-type' => 'mail.drafts',
+                    '/private/vendor/kolab/activesync' => "{\"FOLDER\":{\"{$deviceId}\":{\"S\":1}}}"
+                ],
+            ],
+            'Calendar' => [
+                'metadata' => [
+                    '/private/vendor/kolab/folder-type' => 'event.default',
+                    '/private/vendor/kolab/activesync' => "{\"FOLDER\":{\"{$deviceId}\":{\"S\":1}}}"
+                ],
+            ],
+            'Contacts' => [
+                'metadata' => [
+                    '/private/vendor/kolab/folder-type' => 'contact.default',
+                    '/private/vendor/kolab/activesync' => "{\"FOLDER\":{\"{$deviceId}\":{\"S\":1}}}"
+                ],
+            ],
+        ]]);
+
+        if (!self::$user) {
+            self::$user = $this->getTestUser('activesynctest@kolab.org', ['password' => 'simple123'], true);
         }
         if (!self::$client) {
             self::$client = new \GuzzleHttp\Client([
@@ -103,12 +126,9 @@ class ActivesyncTest extends TestCase
         // The hash is based on the name, so it's always the same
         $inboxId = '38b950ebd62cd9a66929c89615d0fc04';
         $this->assertStringContainsString($inboxId, $xml);
-        //TODO for this to work we need to create the default folders in IMAP::createUser
-        // $this->assertStringContainsString('Drafts', $result);
-        // $this->assertStringContainsString('Sent', $result);
-        // $this->assertStringContainsString('Trash', $result);
-        // $this->assertStringContainsString('Calendar', $result);
-        // $this->assertStringContainsString('Contacts', $result);
+        $this->assertStringContainsString('Drafts', $xml);
+        $this->assertStringContainsString('Calendar', $xml);
+        $this->assertStringContainsString('Contacts', $xml);
 
         // Find the inbox for the next step
         // $collectionIds = $dom->getElementsByTagName('ServerId');
