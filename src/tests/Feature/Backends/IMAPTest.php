@@ -107,6 +107,7 @@ class IMAPTest extends TestCase
         $result = IMAP::createUser($user);
         $this->assertTrue($result);
         $this->assertTrue(IMAP::verifyAccount($user->email));
+        $this->assertTrue(IMAP::verifyDefaultFolders($user->email));
 
         $imap = $this->getImap();
         $quota = $imap->getQuota('user/' . $user->email);
@@ -128,6 +129,7 @@ class IMAPTest extends TestCase
 
         $result = IMAP::verifyAccount($user->email);
         $this->assertFalse($result);
+        $this->assertFalse(IMAP::verifyDefaultFolders($user->email));
     }
 
     /**

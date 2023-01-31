@@ -2,7 +2,6 @@
 
 namespace App\Backends;
 
-use App\Domain;
 use App\Group;
 use App\Resource;
 use App\SharedFolder;
@@ -76,6 +75,7 @@ class IMAP
         // Mailbox already exists
         if (self::folderExists($imap, $mailbox)) {
             $imap->closeConnection();
+            self::createDefaultFolders($user);
             return true;
         }
 
@@ -107,9 +107,34 @@ class IMAP
             $imap->setQuota($mailbox, ['storage' => $quota]);
         }
 
+        self::createDefaultFolders($user);
+
         $imap->closeConnection();
 
         return true;
+    }
+
+    /**
+     * Create default folders for the user.
+     *
+     * @param \App\User $user User
+     */
+    public static function createDefaultFolders(User $user): void
+    {
+        if ($defaultFolders = \config('imap.default_folders')) {
+            $config = self::getConfig();
+            // Log in as user to set private annotations and subscription state
+            $imap = self::initIMAP($config, $user->email);
+            foreach ($defaultFolders as $name => $folderconfig) {
+                try {
+                    $mailbox = self::toUTF7($name);
+                    self::createFolder($imap, $mailbox, true, $folderconfig['metadata']);
+                } catch (\Exception $e) {
+                    \Log::warning("Failed to create the default folder" . $e->getMessage());
+                }
+            }
+            $imap->closeConnection();
+        }
     }
 
     /**
@@ -184,28 +209,13 @@ class IMAP
         $settings = $resource->getSettings(['invitation_policy', 'folder']);
         $mailbox = self::toUTF7($settings['folder']);
 
-        // Mailbox already exists
-        if (self::folderExists($imap, $mailbox)) {
-            $imap->closeConnection();
-            return true;
-        }
-
-        // Create the shared folder
-        if (!$imap->createFolder($mailbox)) {
-            \Log::error("Failed to create mailbox {$mailbox}");
-            $imap->closeConnection();
-            return false;
-        }
-
-        // Set folder type
-        $imap->setMetadata($mailbox, ['/shared/vendor/kolab/folder-type' => 'event']);
-
-        // Set ACL
+        $acl = null;
         if (!empty($settings['invitation_policy'])) {
             if (preg_match('/^manual:(\S+@\S+)$/', $settings['invitation_policy'], $m)) {
-                self::aclUpdate($imap, $mailbox, ["{$m[1]}, full"]);
+                $acl = ["{$m[1]}, full"];
             }
         }
+        self::createFolder($imap, $mailbox, false, ['/shared/vendor/kolab/folder-type' => 'event'], $acl);
 
         $imap->closeConnection();
 
@@ -299,24 +309,7 @@ class IMAP
         $acl = !empty($settings['acl']) ? json_decode($settings['acl'], true) : null;
         $mailbox = self::toUTF7($settings['folder']);
 
-        // Mailbox already exists
-        if (self::folderExists($imap, $mailbox)) {
-            $imap->closeConnection();
-            return true;
-        }
-
-        // Create the mailbox
-        if (!$imap->createFolder($mailbox)) {
-            \Log::error("Failed to create mailbox {$mailbox}");
-            $imap->closeConnection();
-            return false;
-        }
-
-        // Set folder type
-        $imap->setMetadata($mailbox, ['/shared/vendor/kolab/folder-type' => $folder->type]);
-
-        // Set ACL
-        self::aclUpdate($imap, $mailbox, $acl);
+        self::createFolder($imap, $mailbox, false, ['/shared/vendor/kolab/folder-type' => $folder->type], $acl);
 
         $imap->closeConnection();
 
@@ -460,6 +453,30 @@ class IMAP
     }
 
     /**
+     * Check if an account is set up
+     *
+     * @param string $username User login (email address)
+     *
+     * @return bool True if an account exists and is set up, False otherwise
+     */
+    public static function verifyDefaultFolders(string $username): bool
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config, $username);
+
+        foreach (\config('imap.default_folders') as $mb => $_metadata) {
+            $mailbox = self::toUTF7($mb);
+            if (!self::folderExists($imap, $mailbox)) {
+                $imap->closeConnection();
+                return false;
+            }
+        }
+
+        $imap->closeConnection();
+        return true;
+    }
+
+    /**
      * Check if we can connect to the imap server
      *
      * @return bool True on success
@@ -513,6 +530,43 @@ class IMAP
         array_walk($folders, $callback);
 
         $imap->closeConnection();
+    }
+
+    /**
+     * Create a folder and set some default properties
+     *
+     * @param \rcube_imap_generic $imap The imap instance
+     * @param string $mailbox Mailbox name
+     * @param bool $subscribe Subscribe to the folder
+     * @param array $metadata Metadata to set on the folder
+     * @param array $acl Acl to set on the folder
+     *
+     * @return bool True when having a folder created, False if it already existed.
+     * @throws \Exception
+     */
+    private static function createFolder($imap, string $mailbox, $subscribe = false, $metadata = null, $acl = null)
+    {
+        if (self::folderExists($imap, $mailbox)) {
+            return false;
+        }
+
+        if (!$imap->createFolder($mailbox)) {
+            throw new \Exception("Failed to create mailbox {$mailbox}");
+        }
+
+        if ($acl) {
+            self::aclUpdate($imap, $mailbox, $acl, true);
+        }
+
+        if ($subscribe) {
+            $imap->subscribe($mailbox);
+        }
+
+        foreach ($metadata as $key => $value) {
+            $imap->setMetadata($mailbox, [$key => $value]);
+        }
+
+        return true;
     }
 
     /**
