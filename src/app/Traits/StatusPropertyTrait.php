@@ -101,34 +101,10 @@ trait StatusPropertyTrait
      */
     public function setStatusAttribute($status)
     {
-        $new_status = 0;
-
-        $allowed_states = [
-            'STATUS_NEW',
-            'STATUS_ACTIVE',
-            'STATUS_SUSPENDED',
-            'STATUS_DELETED',
-            'STATUS_LDAP_READY',
-            'STATUS_IMAP_READY',
-        ];
-
-        foreach ($allowed_states as $const) {
-            if (!defined("static::$const")) {
-                continue;
-            }
-
-            $value = constant("static::$const");
-
-            if ($status & $value) {
-                $new_status |= $value;
-                $status ^= $value;
-            }
-        }
-
-        if ($status > 0) {
+        if ($status & ~$this->allowed_states) {
             throw new \Exception("Invalid status: {$status}");
         }
 
-        $this->attributes['status'] = $new_status;
+        $this->attributes['status'] = $status;
     }
 }

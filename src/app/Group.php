@@ -44,6 +44,13 @@ class Group extends Model
     // group has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 4;
 
+    /** @var int The allowed states for this object used in StatusPropertyTrait */
+    private int $allowed_states = self::STATUS_NEW |
+        self::STATUS_ACTIVE |
+        self::STATUS_SUSPENDED |
+        self::STATUS_DELETED |
+        self::STATUS_LDAP_READY;
+
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'created_at' => 'datetime:Y-m-d H:i:s',

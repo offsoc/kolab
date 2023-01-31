@@ -45,6 +45,13 @@ class Resource extends Model
     // resource has been created in IMAP
     public const STATUS_IMAP_READY = 1 << 8;
 
+    /** @var int The allowed states for this object used in StatusPropertyTrait */
+    private int $allowed_states = self::STATUS_NEW |
+        self::STATUS_ACTIVE |
+        self::STATUS_DELETED |
+        self::STATUS_LDAP_READY |
+        self::STATUS_IMAP_READY;
+
     // A template for the email attribute on a resource creation
     public const EMAIL_TEMPLATE = 'resource-{id}@{domainName}';
 

@@ -61,6 +61,16 @@ class User extends Authenticatable
     // a restricted user
     public const STATUS_RESTRICTED = 1 << 7;
 
+    /** @var int The allowed states for this object used in StatusPropertyTrait */
+    private int $allowed_states = self::STATUS_NEW |
+        self::STATUS_ACTIVE |
+        self::STATUS_SUSPENDED |
+        self::STATUS_DELETED |
+        self::STATUS_LDAP_READY |
+        self::STATUS_IMAP_READY |
+        self::STATUS_DEGRADED |
+        self::STATUS_RESTRICTED;
+
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'id',
@@ -619,40 +629,6 @@ class User extends Authenticatable
     public function setPasswordLdapAttribute($password)
     {
         $this->setPasswordAttribute($password);
-    }
-
-    /**
-     * User status mutator
-     *
-     * @throws \Exception
-     */
-    public function setStatusAttribute($status)
-    {
-        $new_status = 0;
-
-        $allowed_values = [
-            self::STATUS_NEW,
-            self::STATUS_ACTIVE,
-            self::STATUS_SUSPENDED,
-            self::STATUS_DELETED,
-            self::STATUS_LDAP_READY,
-            self::STATUS_IMAP_READY,
-            self::STATUS_DEGRADED,
-            self::STATUS_RESTRICTED,
-        ];
-
-        foreach ($allowed_values as $value) {
-            if ($status & $value) {
-                $new_status |= $value;
-                $status ^= $value;
-            }
-        }
-
-        if ($status > 0) {
-            throw new \Exception("Invalid user status: {$status}");
-        }
-
-        $this->attributes['status'] = $new_status;
     }
 
     /**

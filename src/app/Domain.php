@@ -44,6 +44,15 @@ class Domain extends Model
     // domain has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 6;
 
+    /** @var int The allowed states for this object used in StatusPropertyTrait */
+    private int $allowed_states = self::STATUS_NEW |
+        self::STATUS_ACTIVE |
+        self::STATUS_SUSPENDED |
+        self::STATUS_DELETED |
+        self::STATUS_CONFIRMED |
+        self::STATUS_VERIFIED |
+        self::STATUS_LDAP_READY;
+
     // open for public registration
     public const TYPE_PUBLIC       = 1 << 0;
     // zone hosted with us
@@ -170,28 +179,12 @@ class Domain extends Model
      */
     public function setStatusAttribute($status)
     {
-        $new_status = 0;
-
-        $allowed_values = [
-            self::STATUS_NEW,
-            self::STATUS_ACTIVE,
-            self::STATUS_SUSPENDED,
-            self::STATUS_DELETED,
-            self::STATUS_CONFIRMED,
-            self::STATUS_VERIFIED,
-            self::STATUS_LDAP_READY,
-        ];
-
-        foreach ($allowed_values as $value) {
-            if ($status & $value) {
-                $new_status |= $value;
-                $status ^= $value;
-            }
-        }
-
-        if ($status > 0) {
+        // Detect invalid flags
+        if ($status & ~$this->allowed_states) {
             throw new \Exception("Invalid domain status: {$status}");
         }
+
+        $new_status = $status;
 
         if ($this->isPublic()) {
             $this->attributes['status'] = $new_status;
