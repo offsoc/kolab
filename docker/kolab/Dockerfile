@@ -80,4 +80,4 @@ WORKDIR /root/
 
 CMD ["/lib/systemd/systemd"]
 
-EXPOSE 21/tcp 22/tcp 25/tcp 53/tcp 53/udp 110/tcp 389/tcp 443/tcp 995/tcp 10143/tcp 10465/tcp 10587/tcp 11143/tcp 11993/tcp
+EXPOSE 10143/tcp 10465/tcp 10587/tcp 11143/tcp 11993/tcp

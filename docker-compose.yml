@@ -160,7 +160,8 @@ services:
       retries: 30
     image: mariadb:latest
     networks:
-      - kolab
+      kolab:
+        ipv4_address: 172.18.0.3
     volumes:
       - ./docker/mariadb/mysql-init/:/docker-entrypoint-initdb.d/
       - mariadb:/var/lib/mysql
@@ -177,7 +178,8 @@ services:
     hostname: haproxy.hosted.com
     image: kolab-haproxy
     networks:
-      - kolab
+      kolab:
+        ipv4_address: 172.18.0.6
     tmpfs:
       - /run
       - /tmp
