@@ -96,7 +96,7 @@ services:
   roundcube:
     build:
       context: ./docker/roundcube/
-    container_name: roundcube
+    container_name: kolab-roundcube
     hostname: roundcube.hosted.com
     restart: on-failure
     depends_on:
