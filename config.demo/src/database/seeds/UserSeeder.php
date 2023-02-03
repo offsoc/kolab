@@ -4,12 +4,10 @@ namespace Database\Seeds;
 
 use App\Auth\SecondFactor;
 use App\Domain;
-use App\Entitlement;
 use App\User;
 use App\Sku;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use App\Wallet;
 
 class UserSeeder extends Seeder
 {
@@ -52,8 +50,6 @@ class UserSeeder extends Seeder
         );
 
         $john->setAliases(['john.doe@kolab.org']);
-
-        $wallet = $john->wallets->first();
 
         $packageDomain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $packageKolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
@@ -159,8 +155,7 @@ class UserSeeder extends Seeder
 
         $john->assignPackage($packageLite, $joe);
 
-        //$john->assignSku(Sku::firstOrCreate(['title' => 'beta']));
-        //$john->assignSku(Sku::firstOrCreate(['title' => 'meet']));
+        $john->assignSku(Sku::firstOrCreate(['title' => 'beta']));
 
         $joe->setAliases(['joe.monster@kolab.org']);
 
