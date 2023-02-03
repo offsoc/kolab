@@ -72,14 +72,15 @@ class DavTest extends TestCase
      */
     public function testShortlogin()
     {
-        $this->markTestSkipped(
-            'Shortlogins dont work with the nginx proxy.'
-        );
+        $this->markTestSkipped('Shortlogins dont work with the nginx proxy.');
+
+        // @phpstan-ignore-next-line "Code above always terminates"
         $body = "<d:propfind xmlns:d='DAV:'><d:prop><d:current-user-principal/></d:prop></d:propfind>";
         $response = self::$client->request('PROPFIND', '/iRony/', [
             'body' => $body,
             'auth' => ['davtest', 'simple123']
         ]);
+
         $this->assertEquals(207, $response->getStatusCode());
     }
 
