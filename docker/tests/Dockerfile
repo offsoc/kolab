@@ -1,4 +1,4 @@
-FROM apheleia/swoole:4.8.x
+FROM apheleia/swoole:latest
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
 
