@@ -91,7 +91,7 @@ class ResyncTest extends TestCase
         ]);
 
         // Remove all deleted users except one, to not interfere
-        User::withTrashed()->whereNotIn('id', [$user->id])->forceDelete();
+        User::withTrashed()->whereNotNull('deleted_at')->whereNotIn('id', [$user->id])->forceDelete();
 
         // Test run for all deleted users
         $code = \Artisan::call("user:resync --deleted-only");

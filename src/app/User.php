@@ -58,6 +58,8 @@ class User extends Authenticatable
     public const STATUS_IMAP_READY = 1 << 5;
     // user in "limited feature-set" state
     public const STATUS_DEGRADED   = 1 << 6;
+    // a restricted user
+    public const STATUS_RESTRICTED = 1 << 7;
 
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
@@ -154,7 +156,7 @@ class User extends Authenticatable
      */
     public function canDelete($object): bool
     {
-        if (!method_exists($object, 'wallet')) {
+        if (!is_object($object) || !method_exists($object, 'wallet')) {
             return false;
         }
 
@@ -394,6 +396,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Returns whether this user is restricted.
+     *
+     * @return bool
+     */
+    public function isRestricted(): bool
+    {
+        return ($this->status & self::STATUS_RESTRICTED) > 0;
+    }
+
+    /**
      * A shortcut to get the user name.
      *
      * @param bool $fallback Return "<aa.name> User" if there's no name
@@ -421,6 +433,21 @@ class User extends Authenticatable
     public function passwords()
     {
         return $this->hasMany(UserPassword::class);
+    }
+
+    /**
+     * Restrict this user.
+     *
+     * @return void
+     */
+    public function restrict(): void
+    {
+        if ($this->isRestricted()) {
+            return;
+        }
+
+        $this->status |= User::STATUS_RESTRICTED;
+        $this->save();
     }
 
     /**
@@ -518,6 +545,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Un-restrict this user.
+     *
+     * @return void
+     */
+    public function unrestrict(): void
+    {
+        if (!$this->isRestricted()) {
+            return;
+        }
+
+        $this->status ^= User::STATUS_RESTRICTED;
+        $this->save();
+    }
+
+    /**
      * Return users controlled by the current user.
      *
      * @param bool $with_accounts Include users assigned to wallets
@@ -596,6 +638,7 @@ class User extends Authenticatable
             self::STATUS_LDAP_READY,
             self::STATUS_IMAP_READY,
             self::STATUS_DEGRADED,
+            self::STATUS_RESTRICTED,
         ];
 
         foreach ($allowed_values as $value) {

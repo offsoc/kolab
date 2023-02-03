@@ -1152,6 +1152,42 @@ class UserTest extends TestCase
     }
 
     /**
+     * Test user account restrict() and unrestrict()
+     */
+    public function testRestrictAndUnrestrict(): void
+    {
+        Queue::fake();
+
+        // Test an account with users, domain
+        $user = $this->getTestUser('UserAccountA@UserAccount.com');
+
+        $this->assertFalse($user->isRestricted());
+
+        $user->restrict();
+
+        $this->assertTrue($user->fresh()->isRestricted());
+
+        Queue::assertPushed(
+            \App\Jobs\User\UpdateJob::class,
+            function ($job) use ($user) {
+                return TestCase::getObjectProperty($job, 'userId') == $user->id;
+            });
+
+        Queue::fake(); // reset queue state
+
+        $user->refresh();
+        $user->unrestrict();
+
+        $this->assertFalse($user->fresh()->isRestricted());
+
+        Queue::assertPushed(
+            \App\Jobs\User\UpdateJob::class,
+            function ($job) use ($user) {
+                return TestCase::getObjectProperty($job, 'userId') == $user->id;
+            });
+    }
+
+    /**
      * Tests for AliasesTrait::setAliases()
      */
     public function testSetAliases(): void

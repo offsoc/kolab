@@ -315,7 +315,6 @@ class SignupController extends Controller
         if ($is_domain) {
             $domain = Domain::create([
                     'namespace' => $domain_name,
-                    'status' => Domain::STATUS_NEW,
                     'type' => Domain::TYPE_EXTERNAL,
             ]);
         }
@@ -324,6 +323,7 @@ class SignupController extends Controller
         $user = User::create([
                 'email' => $login . '@' . $domain_name,
                 'password' => $request->password,
+                'status' => User::STATUS_RESTRICTED,
         ]);
 
         if (!empty($discount)) {

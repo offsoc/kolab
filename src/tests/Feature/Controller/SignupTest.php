@@ -614,6 +614,7 @@ class SignupTest extends TestCase
 
         $this->assertNotEmpty($user);
         $this->assertSame($identity, $user->email);
+        $this->assertTrue($user->isRestricted());
 
         // Check if the code has been updated and soft-deleted
         $this->assertTrue($code->trashed());
@@ -746,6 +747,7 @@ class SignupTest extends TestCase
         $user = User::where('email', $login . '@' . $domain)->first();
 
         $this->assertNotEmpty($user);
+        $this->assertTrue($user->isRestricted());
 
         // Check user settings
         $this->assertSame($user_data['email'], $user->getSetting('external_email'));

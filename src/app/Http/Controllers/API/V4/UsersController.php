@@ -249,6 +249,7 @@ class UsersController extends RelationController
         $user = User::create([
                 'email' => $request->email,
                 'password' => $request->password,
+                'status' => $owner->isRestricted() ? User::STATUS_RESTRICTED : 0,
         ]);
 
         $this->activatePassCode($user);

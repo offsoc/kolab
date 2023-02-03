@@ -86,6 +86,35 @@ class WalletTest extends TestCase
         $this->assertFalse($user->isDegraded());
         $this->assertNull($wallet->getSetting('balance_negative_since'));
 
+        // Test un-restricting users on balance change
+        $this->deleteTestUser('UserWallet1@UserWallet.com');
+        $owner = $this->getTestUser('UserWallet1@UserWallet.com');
+        $user1 = $this->getTestUser('UserWallet2@UserWallet.com');
+        $user2 = $this->getTestUser('UserWallet3@UserWallet.com');
+        $package = Package::withEnvTenantContext()->where('title', 'lite')->first();
+        $owner->assignPackage($package, $user1);
+        $owner->assignPackage($package, $user2);
+        $wallet = $owner->wallets()->first();
+
+        $owner->restrict();
+        $user1->restrict();
+        $user2->restrict();
+
+        $this->assertTrue($owner->isRestricted());
+        $this->assertTrue($user1->isRestricted());
+        $this->assertTrue($user2->isRestricted());
+
+        Queue::fake();
+
+        $wallet->balance = 100;
+        $wallet->save();
+
+        $this->assertFalse($owner->fresh()->isRestricted());
+        $this->assertFalse($user1->fresh()->isRestricted());
+        $this->assertFalse($user2->fresh()->isRestricted());
+
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 3);
+
         // TODO: Test group account and unsuspending domain/members/groups
     }
 

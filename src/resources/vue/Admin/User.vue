@@ -26,6 +26,7 @@
                             <div class="col-sm-8">
                                 <span class="form-control-plaintext" id="status">
                                     <span :class="$root.statusClass(user)">{{ $root.statusText(user) }}</span>
+                                    <span v-if="user.isRestricted" class="badge bg-primary rounded-pill ms-1">{{ $t('status.restricted') }}</span>
                                 </span>
                             </div>
                         </div>

@@ -107,6 +107,7 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(2) #userid', "{$jack->id} ({$jack->created_at})")
                         ->assertSeeIn('.row:nth-child(3) label', 'Status')
                         ->assertSeeIn('.row:nth-child(3) #status span.text-success', 'Active')
+                        ->assertDontSeeIn('.row:nth-child(3) #status', 'Restricted')
                         ->assertSeeIn('.row:nth-child(4) label', 'First Name')
                         ->assertSeeIn('.row:nth-child(4) #first_name', 'Jack')
                         ->assertSeeIn('.row:nth-child(5) label', 'Last Name')
@@ -562,9 +563,11 @@ class UserTest extends TestCaseDusk
             $user = $this->getTestUser('userstest1@kolabnow.com');
             $sku2fa = Sku::withEnvTenantContext()->where('title', '2fa')->first();
             $user->assignSku($sku2fa);
+            $user->restrict();
             SecondFactor::seed('userstest1@kolabnow.com');
 
             $browser->visit(new UserPage($user->id))
+                ->assertSeeIn('@user-info #status', 'Restricted')
                 ->click('@nav #tab-subscriptions')
                 ->with('@user-subscriptions', function (Browser $browser) use ($sku2fa) {
                     $browser->waitFor('#reset2fa')

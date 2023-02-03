@@ -330,7 +330,8 @@ class UsersTest extends TestCaseDusk
                         ->assertMissing('#password_confirmation')
                         ->waitFor('#password-link code')
                         ->assertSeeIn('#password-link code', $link)
-                        ->assertSeeIn('#password-link div.form-text', "Press Submit to activate the link");
+                        ->assertSeeIn('#password-link div.form-text', "Press Submit to activate the link")
+                        ->pause(100);
 
                     // Test copy to clipboard
                     /* TODO: Figure out how to give permission to do this operation

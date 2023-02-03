@@ -893,6 +893,7 @@ class UsersTest extends TestCase
         $this->assertSame('John2', $user->getSetting('first_name'));
         $this->assertSame('Doe2', $user->getSetting('last_name'));
         $this->assertSame('TestOrg', $user->getSetting('organization'));
+        $this->assertFalse($user->isRestricted());
         /** @var \App\UserAlias[] $aliases */
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
@@ -963,6 +964,29 @@ class UsersTest extends TestCase
 
         $response = $this->actingAs($user)->post("/api/v4/users", []);
         $response->assertStatus(403);
+
+        // Test that creating a user in a restricted account creates a restricted user
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $owner = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $domain = $this->getTestDomain(
+            'userscontroller.com',
+            ['status' => Domain::STATUS_NEW, 'type' => Domain::TYPE_EXTERNAL]
+        );
+        $domain->assignPackage($package_domain, $owner);
+        $owner->restrict();
+
+        $post = [
+            'password' => 'simple123',
+            'password_confirmation' => 'simple123',
+            'email' => 'UsersControllerTest2@userscontroller.com',
+            'package' => $package_kolab->id,
+        ];
+
+        $response = $this->actingAs($owner)->post("/api/v4/users", $post);
+        $response->assertStatus(200);
+
+        $user = User::where('email', 'UsersControllerTest1@userscontroller.com')->first();
+        $this->assertTrue($user->isRestricted());
     }
 
     /**

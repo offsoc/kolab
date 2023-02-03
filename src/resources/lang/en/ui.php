@@ -424,6 +424,7 @@ return [
         'verify-domain' => "Verify domain",
         'degraded' => "Degraded",
         'deleted' => "Deleted",
+        'restricted' => "Restricted",
         'suspended' => "Suspended",
         'notready' => "Not Ready",
         'active' => "Active",

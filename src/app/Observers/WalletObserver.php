@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\User;
 use App\Wallet;
 
 /**
@@ -106,6 +107,16 @@ class WalletObserver
                     $entitlement->entitleable->unsuspend();
                 }
             }
+        }
+
+        // Remove RESTRICTED flag from the wallet owner and all users in the wallet
+        if ($wallet->balance > $wallet->getOriginal('balance') && $wallet->owner && $wallet->owner->isRestricted()) {
+            $wallet->owner->unrestrict();
+
+            User::whereIn('id', $wallet->entitlements()->select('entitleable_id')->where('entitleable_type', User::class))
+                ->each(function ($user) {
+                    $user->unrestrict();
+                });
         }
     }
 }
