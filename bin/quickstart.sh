@@ -24,6 +24,7 @@ docker-compose down -t 1 --remove-orphans
 docker volume rm kolab_mariadb || :
 docker volume rm kolab_imap || :
 docker volume rm kolab_ldap || :
+docker volume rm kolab_minio || :
 
 # We can't use the following artisan commands because it will just block if redis is unavailable:
 # src/artisan octane:stop >/dev/null 2>&1 || :
@@ -34,7 +35,7 @@ pkill -9 -f swoole || :
 
 bin/regen-certs
 docker-compose build coturn ldap kolab mariadb meet pdns proxy redis haproxy roundcube
-docker-compose up -d coturn ldap kolab mariadb meet pdns redis roundcube
+docker-compose up -d coturn ldap kolab mariadb meet pdns redis roundcube minio
 
 # Workaround until we have docker-compose --wait (https://github.com/docker/compose/pull/8777)
 function wait_for_container {

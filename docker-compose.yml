@@ -337,6 +337,29 @@ services:
       - ./meet/server:/src/meet/:ro
       - ./docker/certs/meet.${APP_WEBSITE_DOMAIN}.cert:/etc/pki/tls/certs/meet.${APP_WEBSITE_DOMAIN}.cert
       - ./docker/certs/meet.${APP_WEBSITE_DOMAIN}.key:/etc/pki/tls/private/meet.${APP_WEBSITE_DOMAIN}.key
+  minio:
+    container_name: kolab-minio
+    restart: on-failure
+    healthcheck:
+      interval: 10s
+      test: "curl -f http://127.0.0.1:9000/minio/health/live || exit 1"
+      timeout: 5s
+      retries: 30
+      start_period: 5m
+    environment:
+      - MINIO_ROOT_USER=${MINIO_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
+    image: minio/minio
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.14
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    entrypoint: sh
+    command: -c 'mkdir -p /data/${MINIO_BUCKET} && minio server /data --console-address ":9001"'
+    volumes:
+      - minio:/data
 networks:
   kolab:
     driver: bridge
@@ -347,3 +370,4 @@ volumes:
   mariadb:
   imap:
   ldap:
+  minio:

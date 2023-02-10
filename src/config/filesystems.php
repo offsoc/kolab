@@ -52,6 +52,16 @@ return [
             'visibility' => 'public',
         ],
 
+        'minio' => [
+            'driver' => 's3',
+            'key' => env('MINIO_USER'),
+            'secret' => env('MINIO_PASSWORD'),
+            'region' => 'local',
+            'bucket' => env('MINIO_BUCKET'),
+            'endpoint' => 'http://minio:9000',
+            'use_path_style_endpoint' => true,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

@@ -25,7 +25,7 @@ class Storage
      */
     public static function fileDelete(Item $file): void
     {
-        $disk = LaravelStorage::disk('files');
+        $disk = LaravelStorage::disk(\config('filesystems.default'));
 
         $path = $file->path . '/' . $file->id;
 
@@ -45,7 +45,7 @@ class Storage
      */
     public static function fileChunkDelete(Chunk $chunk): void
     {
-        $disk = LaravelStorage::disk('files');
+        $disk = LaravelStorage::disk(\config('filesystems.default'));
 
         $path = self::chunkLocation($chunk->chunk_id, $chunk->item);
 
@@ -79,7 +79,7 @@ class Storage
 
         $response->setCallback(function () use ($file) {
             $file->chunks()->orderBy('sequence')->get()->each(function ($chunk) use ($file) {
-                $disk = LaravelStorage::disk('files');
+                $disk = LaravelStorage::disk(\config('filesystems.default'));
                 $path = Storage::chunkLocation($chunk->chunk_id, $file);
 
                 $stream = $disk->readStream($path);
@@ -108,7 +108,7 @@ class Storage
             return self::fileInputResumable($stream, $params, $file);
         }
 
-        $disk = LaravelStorage::disk('files');
+        $disk = LaravelStorage::disk(\config('filesystems.default'));
 
         $chunkId = \App\Utils::uuidStr();
 
@@ -197,8 +197,8 @@ class Storage
             throw new \Exception("Invalid 'from' parameter for resumable file upload.");
         }
 
-        $disk = LaravelStorage::disk('files');
 
+        $disk = LaravelStorage::disk(\config('filesystems.default'));
         $chunkId = \App\Utils::uuidStr();
 
         $path = self::chunkLocation($chunkId, $file);
@@ -266,7 +266,7 @@ class Storage
      */
     protected static function mimetype(string $path): string
     {
-        $disk = LaravelStorage::disk('files');
+        $disk = LaravelStorage::disk(\config('filesystems.default'));
 
         $mimetype = $disk->mimeType($path);
 
