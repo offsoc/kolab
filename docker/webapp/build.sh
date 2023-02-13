@@ -5,7 +5,11 @@ set -x
 mkdir /src
 cd /src
 
-git clone https://git.kolab.org/source/kolab.git kolab
+git clone --branch $GIT_REF https://git.kolab.org/source/kolab.git kolab
+pushd kolab
+git reset --hard $GIT_REF
+popd
+
 cp -a kolab/src /src/kolabsrc
 cd /src/kolabsrc
 

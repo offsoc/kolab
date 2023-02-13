@@ -78,6 +78,10 @@ if ! grep -q "PASSPORT_PUBLIC_KEY=|PASSPORT_PRIVATE_KEY=" .env; then
     echo "PASSPORT_PUBLIC_KEY=\"${PASSPORT_PUBLIC_KEY}\"" >> src/.env
 fi
 
+if ! grep -q "KOLAB_GIT_REF=" .env; then
+    echo "KOLAB_GIT_REF=${KOLAB_GIT_REF:-master}" >> src/.env
+fi
+
 # Customize configuration
 sed -i \
     -e "s/{{ host }}/${HOST:-kolab.local}/g" \

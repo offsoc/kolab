@@ -239,6 +239,8 @@ services:
   webapp:
     build:
       context: ./docker/webapp/
+      args:
+        GIT_REF: ${KOLAB_GIT_REF:-master}
     container_name: kolab-webapp
     restart: on-failure
     image: kolab-webapp
@@ -265,6 +267,8 @@ services:
   meet:
     build:
       context: ./docker/meet/
+      args:
+        GIT_REF: ${KOLAB_GIT_REF:-master}
     container_name: kolab-meet
     restart: on-failure
     healthcheck:

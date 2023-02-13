@@ -7,6 +7,7 @@ RUN dnf -y install \
         npm nodejs python3 python3-pip meson ninja-build make gcc g++ git && \
     dnf clean all
 
+ARG GIT_REF=master
 COPY build.sh /build.sh
 RUN /build.sh
 COPY init.sh /init.sh

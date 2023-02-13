@@ -58,6 +58,7 @@
         FIREBASE_API_KEY: "{{ firebase_api_key }}"
         PUBLIC_IP: "{{ public_ip }}"
         ADMIN_PASSWORD: "{{ admin_password }}"
+        KOLAB_GIT_REF: "{{ git_branch }}"
 
 
     - name: Permit receiving mail
