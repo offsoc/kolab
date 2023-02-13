@@ -11,6 +11,26 @@ use Laravel\Passport\Bridge;
 class PassportServiceProvider extends \Laravel\Passport\PassportServiceProvider
 {
     /**
+     * Register any authentication / authorization services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Passport::tokensCan([
+            'api' => 'Access API',
+            'mfa' => 'Access MFA API',
+        ]);
+
+        Passport::tokensExpireIn(now()->addMinutes(\config('auth.token_expiry_minutes')));
+        Passport::refreshTokensExpireIn(now()->addMinutes(\config('auth.refresh_token_expiry_minutes')));
+        Passport::personalAccessTokensExpireIn(now()->addMonths(6));
+
+        Passport::useClientModel(\App\Auth\PassportClient::class);
+        Passport::tokenModel()::observe(\App\Observers\Passport\TokenObserver::class);
+    }
+
+    /**
      * Make the authorization service instance.
      *
      * @return \League\OAuth2\Server\AuthorizationServer
