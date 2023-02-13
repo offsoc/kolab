@@ -247,7 +247,7 @@ class CompanionAppsController extends ResourceController
                 'personal_access_client' => 0,
                 'password_client' => 1,
                 'revoked' => false,
-                'allowed_scopes' => "mfa"
+                'allowed_scopes' => ["mfa", "fs"]
             ]);
             $client->save();
 

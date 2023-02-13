@@ -82,7 +82,7 @@ const routes = [
         meta: { requiresAuth: true /*, perm: 'files' */ }
     },
     {
-        path: '/files',
+        path: '/files/:parent?',
         name: 'files',
         component: FileListComponent,
         meta: { requiresAuth: true, perm: 'files' }

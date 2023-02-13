@@ -94,7 +94,7 @@ function FileAPI(params = {})
 
             // A "recursive" function to upload the file in chunks (if needed)
             const uploadFn = (start = 0, uploadId) => {
-                let url = 'api/v4/files'
+                let url = 'api/v4/fs'
                 let body = ''
 
                 if (file.size <= maxChunkSize) {
@@ -103,15 +103,21 @@ function FileAPI(params = {})
                     // the file is uploading, but the risk is quite small.
                     body = file
                     start += maxChunkSize
+                    if (params.parent) {
+                        url = url + '?parent=' + params.parent
+                    }
                 } else if (!uploadId) {
                     // The file is big, first send a request for the upload location
                     // The upload location does not require authentication, which means
                     // there should be no problem with expired auth token, etc.
                     config.params.media = 'resumable'
                     config.params.size = file.size
+                    if (params.parent) {
+                        config.params.parent = params.parent
+                    }
                 } else {
                     // Upload a chunk of the file to the upload location
-                    url = 'api/v4/files/uploads/' + uploadId
+                    url = 'api/v4/fs/uploads/' + uploadId
                     body = file.slice(start, start + maxChunkSize, file.type)
 
                     config.params = { from: start }
@@ -154,7 +160,7 @@ function FileAPI(params = {})
      * Download a file. Starts downloading using a hidden link trick.
      */
     this.fileDownload = (id) => {
-        axios.get('api/v4/files/' + id + '?downloadUrl=1')
+        axios.get('api/v4/fs/' + id + '?downloadUrl=1')
             .then(response => {
                 // Create a dummy link element and click it
                 if (response.data.downloadUrl) {
@@ -167,7 +173,7 @@ function FileAPI(params = {})
      * Rename a file.
      */
     this.fileRename = (id, name) => {
-        axios.put('api/v4/files/' + id, { name })
+        axios.put('api/v4/fs/' + id, { name })
             .then(response => {
 
             })

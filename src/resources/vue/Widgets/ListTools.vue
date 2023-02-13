@@ -99,6 +99,7 @@
         data() {
             return {
                 currentSearch: '',
+                currentParent: '',
                 hasMore: false,
                 page: 1
             }
@@ -124,6 +125,14 @@
                         get.search = this.currentSearch
                     }
 
+
+                    if ('parent' in params) {
+                        get.parent = params.parent
+                        this.currentParent = params.parent
+                    } else {
+                        get.parent = this.currentParent
+                    }
+
                     if (!params.init) {
                         loader = $(this.$el).find('.more-loader')
                         if (!loader.length || get.page == 1) {
@@ -134,6 +143,7 @@
                     }
                 } else {
                     this.currentSearch = null
+                    this.currentParent = null
                 }
 
                 axios.get(url, { params: get, loader })

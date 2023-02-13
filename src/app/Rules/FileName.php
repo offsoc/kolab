@@ -3,23 +3,10 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class FileName implements Rule
 {
     private $message;
-    private $owner;
-
-    /**
-     * Class constructor.
-     *
-     * @param \App\User $owner  The file owner
-     */
-    public function __construct($owner)
-    {
-        $this->owner = $owner;
-    }
 
     /**
      * Determine if the validation rule passes.
@@ -55,18 +42,6 @@ class FileName implements Rule
         }
 
         // FIXME: Should we require a dot?
-
-        // Check if the name is unique
-        $exists = $this->owner->fsItems()
-            ->join('fs_properties', 'fs_items.id', '=', 'fs_properties.item_id')
-            ->where('key', 'name')
-            ->where('value', $name)
-            ->exists();
-
-        if ($exists) {
-            $this->message = \trans('validation.file-name-exists');
-            return false;
-        }
 
         return true;
     }

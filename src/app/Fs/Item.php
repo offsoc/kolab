@@ -24,7 +24,7 @@ class Item extends Model
     use UuidStrKeyTrait;
 
     public const TYPE_FILE       = 1;
-    public const TYPE_FOLDER     = 2;
+    public const TYPE_COLLECTION = 2;
     public const TYPE_INCOMPLETE = 4;
 
     /** @var array<int, string> The attributes that are mass assignable */
@@ -166,5 +166,39 @@ class Item extends Model
                 ['value' => $value]
             );
         }
+    }
+
+    /**
+     * All relations for this item
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function relations()
+    {
+        return $this->hasMany(Relation::class);
+    }
+
+    /**
+     * Child relations for this item
+     *
+     * Used to retrieve all items in a collection.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function children()
+    {
+        return $this->belongsToMany(Item::class, 'fs_relations', 'item_id', 'related_id');
+    }
+
+    /**
+     * Parent relations for this item
+     *
+     * Used to retrieve all collections of an item.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function parents()
+    {
+        return $this->belongsToMany(Item::class, 'fs_relations', 'related_id', 'item_id');
     }
 }

@@ -165,6 +165,12 @@ return [
             . "to the file via a unique link.",
     ],
 
+    'collection' => [
+        'create' => "Create collection",
+        'new' => "New Collection",
+        'name' => "Name",
+    ],
+
     'form' => [
         'acl' => "Access rights",
         'acl-full' => "All",

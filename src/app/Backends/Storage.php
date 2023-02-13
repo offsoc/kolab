@@ -126,7 +126,8 @@ class Storage
         // Update the file type and size information
         $file->setProperties([
                 'size' => $fileSize,
-                'mimetype' => self::mimetype($path),
+                // Pick the client-supplied mimetype if available, otherwise detect.
+                'mimetype' => !empty($params['mimetype']) ? $params['mimetype'] : self::mimetype($path),
         ]);
 
         // Assign the node to the file, "unlink" any old nodes of this file

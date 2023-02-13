@@ -86,6 +86,35 @@ Route::group(
     }
 );
 
+if (\config('app.with_files')) {
+    Route::group(
+        [
+            'domain' => \config('app.website_domain'),
+            'middleware' => ['auth:api', 'scope:fs,api'],
+            'prefix' => 'v4'
+        ],
+        function () {
+                Route::apiResource('fs', API\V4\FsController::class);
+                Route::get('fs/{itemId}/permissions', [API\V4\FsController::class, 'getPermissions']);
+                Route::post('fs/{itemId}/permissions', [API\V4\FsController::class, 'createPermission']);
+                Route::put('fs/{itemId}/permissions/{id}', [API\V4\FsController::class, 'updatePermission']);
+                Route::delete('fs/{itemId}/permissions/{id}', [API\V4\FsController::class, 'deletePermission']);
+        }
+    );
+    Route::group(
+        [
+            'domain' => \config('app.website_domain'),
+            'middleware' => [],
+            'prefix' => 'v4'
+        ],
+        function () {
+                Route::post('fs/uploads/{id}', [API\V4\FsController::class, 'upload'])
+                    ->middleware(['api']);
+                Route::get('fs/downloads/{id}', [API\V4\FsController::class, 'download']);
+        }
+    );
+}
+
 Route::group(
     [
         'domain' => \config('app.website_domain'),
@@ -103,19 +132,6 @@ Route::group(
         Route::get('domains/{id}/skus', [API\V4\DomainsController::class, 'skus']);
         Route::get('domains/{id}/status', [API\V4\DomainsController::class, 'status']);
         Route::post('domains/{id}/config', [API\V4\DomainsController::class, 'setConfig']);
-
-        if (\config('app.with_files')) {
-            Route::apiResource('files', API\V4\FilesController::class);
-            Route::get('files/{fileId}/permissions', [API\V4\FilesController::class, 'getPermissions']);
-            Route::post('files/{fileId}/permissions', [API\V4\FilesController::class, 'createPermission']);
-            Route::put('files/{fileId}/permissions/{id}', [API\V4\FilesController::class, 'updatePermission']);
-            Route::delete('files/{fileId}/permissions/{id}', [API\V4\FilesController::class, 'deletePermission']);
-            Route::post('files/uploads/{id}', [API\V4\FilesController::class, 'upload'])
-                ->withoutMiddleware(['auth:api', 'scope:api'])
-                ->middleware(['api']);
-            Route::get('files/downloads/{id}', [API\V4\FilesController::class, 'download'])
-                ->withoutMiddleware(['auth:api', 'scope:api']);
-        }
 
         Route::apiResource('groups', API\V4\GroupsController::class);
         Route::get('groups/{id}/skus', [API\V4\GroupsController::class, 'skus']);

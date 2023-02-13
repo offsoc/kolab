@@ -13,10 +13,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 
-class FilesController extends RelationController
+class FsController extends RelationController
 {
     protected const READ = 'r';
     protected const WRITE = 'w';
+
+    protected const TYPE_COLLECTION = 'collection';
+    protected const TYPE_FILE = 'file';
+    protected const TYPE_UNKNOWN = 'unknown';
 
     /** @var string Resource localization label */
     protected $label = 'file';
@@ -35,7 +39,7 @@ class FilesController extends RelationController
     public function destroy($id)
     {
         // Only the file owner can do that, for now
-        $file = $this->inputFile($id, null);
+        $file = $this->inputItem($id, null);
 
         if (is_int($file)) {
             return $this->errorResponse($file);
@@ -44,6 +48,13 @@ class FilesController extends RelationController
         // Here we're just marking the file as deleted, it will be removed from the
         // storage later with the fs:expunge command
         $file->delete();
+
+        if ($file->type & Item::TYPE_COLLECTION) {
+            return response()->json([
+                    'status' => 'success',
+                    'message' => self::trans('app.collection-delete-success'),
+            ]);
+        }
 
         return response()->json([
                 'status' => 'success',
@@ -85,7 +96,7 @@ class FilesController extends RelationController
     public function getPermissions($fileId)
     {
         // Only the file owner can do that, for now
-        $file = $this->inputFile($fileId, null);
+        $file = $this->inputItem($fileId, null);
 
         if (is_int($file)) {
             return $this->errorResponse($file);
@@ -113,7 +124,7 @@ class FilesController extends RelationController
     public function createPermission($fileId)
     {
         // Only the file owner can do that, for now
-        $file = $this->inputFile($fileId, null);
+        $file = $this->inputItem($fileId, null);
 
         if (is_int($file)) {
             return $this->errorResponse($file);
@@ -174,7 +185,7 @@ class FilesController extends RelationController
     public function deletePermission($fileId, $id)
     {
         // Only the file owner can do that, for now
-        $file = $this->inputFile($fileId, null);
+        $file = $this->inputItem($fileId, null);
 
         if (is_int($file)) {
             return $this->errorResponse($file);
@@ -206,7 +217,7 @@ class FilesController extends RelationController
     public function updatePermission(Request $request, $fileId, $id)
     {
         // Only the file owner can do that, for now
-        $file = $this->inputFile($fileId, null);
+        $file = $this->inputItem($fileId, null);
 
         if (is_int($file)) {
             return $this->errorResponse($file);
@@ -264,15 +275,35 @@ class FilesController extends RelationController
     {
         $search = trim(request()->input('search'));
         $page = intval(request()->input('page')) ?: 1;
+        $parent = request()->input('parent');
+        $type = request()->input('type');
         $pageSize = 100;
         $hasMore = false;
 
         $user = $this->guard()->user();
 
-        $result = $user->fsItems()->select('fs_items.*', 'fs_properties.value as name')
-            ->join('fs_properties', 'fs_items.id', '=', 'fs_properties.item_id')
-            ->whereNot('type', '&', Item::TYPE_INCOMPLETE)
-            ->where('key', 'name');
+        $result = $user->fsItems()->select('fs_items.*', 'fs_properties.value as name');
+
+        if ($parent) {
+            $result->join('fs_relations', 'fs_items.id', '=', 'fs_relations.related_id')
+                ->where('fs_relations.item_id', $parent);
+        } else {
+            $result->leftJoin('fs_relations', 'fs_items.id', '=', 'fs_relations.related_id')
+                ->whereNull('fs_relations.related_id');
+        }
+
+        // Add properties
+        $result->join('fs_properties', 'fs_items.id', '=', 'fs_properties.item_id')
+                ->whereNot('type', '&', Item::TYPE_INCOMPLETE)
+                ->where('key', 'name');
+
+        if ($type) {
+            if ($type == self::TYPE_COLLECTION) {
+                $result->where('type', '&', Item::TYPE_COLLECTION);
+            } else {
+                $result->where('type', '&', Item::TYPE_FILE);
+            }
+        }
 
         if (strlen($search)) {
             $result->whereLike('fs_properties.value', $search);
@@ -316,7 +347,7 @@ class FilesController extends RelationController
      */
     public function show($id)
     {
-        $file = $this->inputFile($id, self::READ);
+        $file = $this->inputItem($id, self::READ);
 
         if (is_int($file)) {
             return $this->errorResponse($file);
@@ -328,7 +359,7 @@ class FilesController extends RelationController
             // Generate a download URL (that does not require authentication)
             $downloadId = Utils::uuidStr();
             Cache::add('download:' . $downloadId, $file->id, 60);
-            $response['downloadUrl'] = Utils::serviceUrl('api/v4/files/downloads/' . $downloadId);
+            $response['downloadUrl'] = Utils::serviceUrl('api/v4/fs/downloads/' . $downloadId);
         } elseif (request()->input('download')) {
             // Return the file content
             return Storage::fileDownload($file);
@@ -345,6 +376,92 @@ class FilesController extends RelationController
         return response()->json($response);
     }
 
+    private function deduplicateOrCreate(Request $request, $type)
+    {
+        $user = $this->guard()->user();
+        $item = null;
+        if ($request->has('deduplicate-property')) {
+            //query for item by deduplicate-value
+            $result = $user->fsItems()->select('fs_items.*');
+            $result->join('fs_properties', function ($join) use ($request) {
+                $join->on('fs_items.id', '=', 'fs_properties.item_id')
+                ->where('fs_properties.key', $request->input('deduplicate-property'));
+            })
+            ->where('type', '&', $type);
+
+            $result->whereLike('fs_properties.value', $request->input('deduplicate-value'));
+            $item = $result->first();
+        }
+
+        if (!$item) {
+            $item = $user->fsItems()->create(['type' => $type]);
+        }
+        return $item;
+    }
+
+    /**
+     * Create a new collection.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    private function createCollection(Request $request)
+    {
+        // Validate file name input
+        $v = Validator::make($request->all(), [
+            'name' => ['required', new FileName()],
+            'deviceId' => ['max:255'],
+            'collectionType' => ['max:255'],
+        ]);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        $properties = [
+            'name' => $request->input('name'),
+            'deviceId' => $request->input('deviceId'),
+            'collectionType' => $request->input('collectionType'),
+        ];
+
+        foreach ($request->all() as $key => $value) {
+            if (str_starts_with($key, "property-")) {
+                $propertyKey = substr($key, 9);
+                if (strlen($propertyKey) > 191) {
+                    return response()->json([
+                        'status' => 'error',
+                        'errors' => [self::trans('validation.max.string', ['attribute' => $propertyKey, 'max' => 191])]
+                    ], 422);
+                }
+                if (!preg_match('/^[a-zA-Z0-9_-]+$/', $propertyKey)) {
+                    return response()->json([
+                        'status' => 'error',
+                        'errors' => [self::trans('validation.regex_format', [
+                            'attribute' => $propertyKey,
+                            'format' => "a-zA-Z0-9_-"
+                        ])]
+                    ], 422);
+                }
+                $properties[$propertyKey] = $value;
+            }
+        }
+
+        $item = $this->deduplicateOrCreate($request, Item::TYPE_COLLECTION);
+        $item->setProperties($properties);
+
+        if ($parent = $request->input('parent')) {
+            $item->parents()->sync([$parent]);
+        }
+
+        $response = [];
+        $response['status'] = 'success';
+        $response['id'] = $item->id;
+        $response['message'] = self::trans('app.collection-create-success');
+
+        return response()->json($response);
+    }
+
     /**
      * Create a new file.
      *
@@ -354,10 +471,13 @@ class FilesController extends RelationController
      */
     public function store(Request $request)
     {
-        $user = $this->guard()->user();
+        $type = $request->input('type');
+        if ($type == self::TYPE_COLLECTION) {
+            return $this->createCollection($request);
+        }
 
         // Validate file name input
-        $v = Validator::make($request->all(), ['name' => ['required', new FileName($user)]]);
+        $v = Validator::make($request->all(), ['name' => ['required', new FileName()]]);
 
         if ($v->fails()) {
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
@@ -366,12 +486,8 @@ class FilesController extends RelationController
         $filename = $request->input('name');
         $media = $request->input('media');
 
-        // FIXME: Normally people just drag and drop/upload files.
-        // The client side will not know whether the file with the same name
-        // already exists or not. So, in such a case should we throw
-        // an error or accept the request as an update?
-
         $params = [];
+        $params['mimetype'] = $request->headers->get('Content-Type', null);
 
         if ($media == 'resumable') {
             $params['uploadId'] = 'resumable';
@@ -380,9 +496,41 @@ class FilesController extends RelationController
         }
 
         // TODO: Delete the existing incomplete file with the same name?
+        $properties = ['name' => $filename];
 
-        $file = $user->fsItems()->create(['type' => Item::TYPE_INCOMPLETE | Item::TYPE_FILE]);
-        $file->setProperty('name', $filename);
+        foreach ($request->all() as $key => $value) {
+            if (str_starts_with($key, "property-")) {
+                $propertyKey = substr($key, 9);
+                if (strlen($propertyKey) > 191) {
+                    return response()->json([
+                        'status' => 'error',
+                        'errors' => [self::trans('validation.max.string', ['attribute' => $propertyKey, 'max' => 191])]
+                    ], 422);
+                }
+                if (!preg_match('/^[a-zA-Z0-9_-]+$/', $propertyKey)) {
+                    return response()->json([
+                        'status' => 'error',
+                        'errors' => [self::trans('validation.regex_format', [
+                            'attribute' => $propertyKey,
+                            'format' => "a-zA-Z0-9_-"
+                        ])]
+                    ], 422);
+                }
+                $properties[$propertyKey] = $value;
+            }
+        }
+
+        $file = $this->deduplicateOrCreate($request, Item::TYPE_INCOMPLETE | Item::TYPE_FILE);
+        $file->setProperties($properties);
+
+        if ($parentHeader = $request->headers->get('X-Kolab-Parents', null)) {
+            $parents = explode(',', $parentHeader);
+            $file->parents()->sync($parents);
+        }
+
+        if ($parent = $request->input('parent')) {
+            $file->parents()->sync([$parent]);
+        }
 
         try {
             $response = Storage::fileInput($request->getContent(true), $params, $file);
@@ -412,7 +560,7 @@ class FilesController extends RelationController
      */
     public function update(Request $request, $id)
     {
-        $file = $this->inputFile($id, self::WRITE);
+        $file = $this->inputItem($id, self::WRITE);
 
         if (is_int($file)) {
             return $this->errorResponse($file);
@@ -425,7 +573,7 @@ class FilesController extends RelationController
 
             // Validate file name input
             if ($filename != $file->getProperty('name')) {
-                $v = Validator::make($request->all(), ['name' => [new FileName($file->user)]]);
+                $v = Validator::make($request->all(), ['name' => [new FileName()]]);
 
                 if ($v->fails()) {
                     return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
@@ -434,7 +582,21 @@ class FilesController extends RelationController
                 $file->setProperty('name', $filename);
             }
 
-            // $file->save();
+
+            if ($parentHeader = $request->headers->get('X-Kolab-Parents', null)) {
+                $parents = explode(',', $parentHeader);
+                $file->parents()->sync($parents);
+            }
+            if ($parentHeader = $request->headers->get('X-Kolab-Add-Parents', null)) {
+                $parents = explode(',', $parentHeader);
+                $file->parents()->syncWithoutDetaching($parents);
+            }
+            if ($parentHeader = $request->headers->get('X-Kolab-Remove-Parents', null)) {
+                $parents = explode(',', $parentHeader);
+                $file->parents()->detach($parents);
+            }
+
+            $file->save();
         } elseif ($media == 'resumable' || $media == 'content') {
             $params = [];
 
@@ -548,7 +710,7 @@ class FilesController extends RelationController
      *
      * @return \App\Fs\Item|int File object or error code
      */
-    protected function inputFile($fileId, $permission)
+    protected function inputItem($fileId, $permission)
     {
         $user = $this->guard()->user();
         $isShare = str_starts_with($fileId, 'share-');
@@ -572,12 +734,16 @@ class FilesController extends RelationController
 
         $file = Item::find($fileId);
 
-        if (!$file || !($file->type & Item::TYPE_FILE) || ($file->type & Item::TYPE_INCOMPLETE)) {
+        if (!$file) {
             return 404;
         }
 
         if (!$isShare && $user->id != $file->user_id) {
             return 403;
+        }
+
+        if ($file->type & Item::TYPE_FILE &&  $file->type & Item::TYPE_INCOMPLETE) {
+            return 404;
         }
 
         return $file;
@@ -594,6 +760,13 @@ class FilesController extends RelationController
     protected function objectToClient($object, bool $full = false): array
     {
         $result = ['id' => $object->id];
+        if ($object->type & Item::TYPE_COLLECTION) {
+            $result['type'] = self::TYPE_COLLECTION;
+        } elseif ($object->type & Item::TYPE_FILE) {
+            $result['type'] = self::TYPE_FILE;
+        } else {
+            $result['type'] = self::TYPE_UNKNOWN;
+        }
 
         if ($full) {
             $props = array_filter($object->getProperties(['name', 'size', 'mimetype']));

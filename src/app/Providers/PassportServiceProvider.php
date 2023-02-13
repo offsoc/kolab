@@ -20,6 +20,7 @@ class PassportServiceProvider extends \Laravel\Passport\PassportServiceProvider
         Passport::tokensCan([
             'api' => 'Access API',
             'mfa' => 'Access MFA API',
+            'fs' => 'Access Files API',
         ]);
 
         Passport::tokensExpireIn(now()->addMinutes(\config('auth.token_expiry_minutes')));

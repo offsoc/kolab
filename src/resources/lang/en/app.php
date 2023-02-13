@@ -83,6 +83,10 @@ return [
     'file-permissions-update-success' => 'File permissions updated successfully.',
     'file-permissions-delete-success' => 'File permissions deleted successfully.',
 
+    'collection-create-success' => 'Collection created successfully.',
+    'collection-delete-success' => 'Collection deleted successfully.',
+    'collection-update-success' => 'Collection updated successfully.',
+
     'payment-status-paid' => 'The payment has been completed successfully.',
     'payment-status-canceled' => 'The payment has been canceled.',
     'payment-status-failed' => 'The payment failed.',

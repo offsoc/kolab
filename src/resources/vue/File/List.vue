@@ -2,12 +2,25 @@
     <div class="container">
         <div class="card" id="files">
             <div class="card-body">
-                <div class="card-title">
+                <div class="card-title" v-if="collectionId">
+                    {{ $t('dashboard.files') + ' - ' + collection.name }}
+                    <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
+                    <div id="drop-area" class="file-drop-area float-end">
+                        <svg-icon icon="upload"></svg-icon> Click or drop file(s) here
+                    </div>
+                    <btn-router v-if="!$root.isDegraded()" class="float-end" :to="`/file/newCollection?parent=${collectionId}`" icon="folder">
+                        {{ $t('collection.create') }}
+                    </btn-router>
+                </div>
+                <div class="card-title" v-else>
                     {{ $t('dashboard.files') }}
                     <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
                     <div id="drop-area" class="file-drop-area float-end">
                         <svg-icon icon="upload"></svg-icon> Click or drop file(s) here
                     </div>
+                    <btn-router v-if="!$root.isDegraded()" class="float-end" to="/file/newCollection" icon="folder">
+                        {{ $t('collection.create') }}
+                    </btn-router>
                 </div>
                 <div class="card-text pt-4">
                     <div class="mb-2 d-flex w-100">
@@ -22,11 +35,18 @@
                         </thead>
                         <tbody>
                             <tr v-for="file in files" :key="file.id" @click="$root.clickRecord">
-                                <td class="name">
-                                    <svg-icon icon="file"></svg-icon>
-                                    <router-link :to="{ path: 'file/' + file.id }">{{ file.name }}</router-link>
+                                <td class="name" v-if="file.type === 'collection'">
+                                    <svg-icon icon="folder"></svg-icon>
+                                    <router-link :to="{ path: '/file/' + file.id }">{{ file.name }}</router-link>
                                 </td>
-                                <td class="buttons">
+                                <td class="name" v-else>
+                                    <svg-icon icon="file"></svg-icon>
+                                    <router-link :to="{ path: '/file/' + file.id }">{{ file.name }}</router-link>
+                                </td>
+                                <td class="buttons" v-if="file.type === 'collection'">
+                                    <btn class="button-delete text-danger p-0 ms-1" @click="fileDelete(file)" icon="trash-can" :title="$t('btn.delete')"></btn>
+                                </td>
+                                <td class="buttons" v-else>
                                     <btn class="button-download p-0 ms-1" @click="fileDownload(file)" icon="download" :title="$t('btn.download')"></btn>
                                     <btn class="button-delete text-danger p-0 ms-1" @click="fileDelete(file)" icon="trash-can" :title="$t('btn.delete')"></btn>
                                 </td>
@@ -49,24 +69,47 @@
 
     library.add(
         require('@fortawesome/free-solid-svg-icons/faFile').definition,
+        require('@fortawesome/free-solid-svg-icons/faFolder').definition,
         require('@fortawesome/free-solid-svg-icons/faDownload').definition,
         require('@fortawesome/free-solid-svg-icons/faUpload').definition,
     )
 
     export default {
         mixins: [ ListTools ],
+        beforeRouteUpdate (to, from, next) {
+            this.collectionId = this.$route.params.parent
+            // An event called when the route that renders this component has changed,
+            // but this component is reused in the new route.
+            // Required to handle links from /file/XXX to /file/YYY
+            next()
+            this.$parent.routerReload()
+        },
         data() {
             return {
                 api: {},
-                files: []
+                collection: {},
+                files: [],
+                collectionId: null
+            }
+        },
+        created() {
+            this.collectionId = this.$route.params.parent
+            if (this.collectionId) {
+                axios.get('/api/v4/fs/' + this.collectionId, { loader: true })
+                    .then(response => {
+                        this.collection = response.data
+                    })
+                    .catch(this.$root.errorHandler)
             }
         },
         mounted() {
             this.uploads = {}
 
+            this.collectionId = this.$route.params.parent
             this.api = new FileAPI({
                     dropArea: '#drop-area',
-                    eventHandler: this.eventHandler
+                    eventHandler: this.eventHandler,
+                    parent: this.collectionId
             })
 
             this.loadFiles({ init: true })
@@ -81,7 +124,7 @@
                 }
             },
             fileDelete(file) {
-                axios.delete('api/v4/files/' + file.id)
+                axios.delete('api/v4/fs/' + file.id)
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
@@ -93,14 +136,17 @@
             fileDownload(file) {
                 // This is not an appropriate method for big files, we can consider
                 // using it still for very small files.
-                // downloadFile('api/v4/files/' + file.id + '?download=1', file.name)
+                // downloadFile('api/v4/fs/' + file.id + '?download=1', file.name)
 
                 // This method first makes a request to the API to get the download URL (which does not
                 // require authentication) and then use it to download the file.
                 this.api.fileDownload(file.id)
             },
             loadFiles(params) {
-                this.listSearch('files', 'api/v4/files', params)
+                if (this.collectionId) {
+                    params['parent'] = this.collectionId
+                }
+                this.listSearch('files', 'api/v4/fs', params)
             },
             searchFiles(search) {
                 this.loadFiles({ reset: true, search })
