@@ -169,9 +169,10 @@ class UsersController extends RelationController
 
         $isDegraded = $user->isDegraded();
         $hasMeet = !$isDegraded && Sku::withObjectTenantContext($user)->where('title', 'room')->exists();
+        // Enable all features if there are no skus for domain-hosting
         $hasCustomDomain = $user->wallet()->entitlements()
             ->where('entitleable_type', Domain::class)
-            ->count() > 0;
+            ->count() > 0 || !Sku::withObjectTenantContext($user)->where('title', 'domain-hosting')->exists();
 
         // Get user's entitlements titles
         $skus = $user->entitlements()->select('skus.title')
@@ -183,13 +184,13 @@ class UsersController extends RelationController
             ->values()
             ->all();
 
-        $hasBeta = in_array('beta', $skus);
+        $hasBeta = in_array('beta', $skus) || !Sku::withObjectTenantContext($user)->where('title', 'beta')->exists();
 
         $plan = $isController ? $user->wallet()->plan() : null;
 
         $result = [
             'skus' => $skus,
-            'enableBeta' => in_array('beta', $skus),
+            'enableBeta' => $hasBeta,
             // TODO: This will change when we enable all users to create domains
             'enableDomains' => $isController && $hasCustomDomain,
             // TODO: Make 'enableDistlists' working for wallet controllers that aren't account owners

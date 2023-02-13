@@ -45,24 +45,6 @@ class CreateResourcesTables extends Migration
                 $table->unique(['resource_id', 'key']);
             }
         );
-
-        \App\Sku::where('title', 'resource')->update([
-                'active' => true,
-                'cost' => 0,
-        ]);
-
-        if (!\App\Sku::where('title', 'beta-resources')->first()) {
-            \App\Sku::create([
-                'title' => 'beta-resources',
-                'name' => 'Calendaring resources',
-                'description' => 'Access to calendaring resources',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Beta\Resources',
-                'active' => true,
-            ]);
-        }
     }
 
     /**

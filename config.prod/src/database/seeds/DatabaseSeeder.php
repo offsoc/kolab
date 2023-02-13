@@ -16,8 +16,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             Seeds\PassportSeeder::class,
             Seeds\PowerDNSSeeder::class,
-            Seeds\SkuSeeder::class,
             Seeds\AdminSeeder::class,
+            Seeds\ImapAdminSeeder::class,
         ]);
     }
 }

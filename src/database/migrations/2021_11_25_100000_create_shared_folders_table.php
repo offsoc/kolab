@@ -47,25 +47,6 @@ class CreateSharedFoldersTable extends Migration
                 $table->unique(['shared_folder_id', 'key']);
             }
         );
-
-        \App\Sku::where('title', 'shared_folder')->update([
-                'active' => true,
-                'cost' => 0,
-                'title' => 'shared-folder',
-        ]);
-
-        if (!\App\Sku::where('title', 'beta-shared-folders')->first()) {
-            \App\Sku::create([
-                'title' => 'beta-shared-folders',
-                'name' => 'Shared folders',
-                'description' => 'Access to shared folders',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Beta\SharedFolders',
-                'active' => true,
-            ]);
-        }
     }
 
     /**

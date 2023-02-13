@@ -62,19 +62,6 @@ return new class extends Migration
                     ->onUpdate('cascade')->onDelete('cascade');
             }
         );
-
-        if (\config('app.with_files') && !\App\Sku::where('title', 'files')->first()) {
-            \App\Sku::create([
-                'title' => 'files',
-                'name' => 'File storage',
-                'description' => 'Access to file storage',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Files',
-                'active' => true,
-            ]);
-        }
     }
 
     /**
@@ -82,8 +69,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        \App\Sku::where('title', 'files')->delete();
-
         Schema::dropIfExists('fs_properties');
         Schema::dropIfExists('fs_chunks');
         Schema::dropIfExists('fs_items');
