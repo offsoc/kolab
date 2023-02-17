@@ -352,10 +352,10 @@ def test_dns(host, verbose = False):
             print('  autodiscover CNAME', rdata.target)
     except dns.resolver.NXDOMAIN:
         success = False
-        print("  ERROR on autodiscover. CNAME entry")
+        print(f"  ERROR on autodiscover.{host} CNAME entry")
     except dns.resolver.NoAnswer:
         success = False
-        print("  ERROR on autodiscover. CNAME entry")
+        print(f"  ERROR on autodiscover.{host} CNAME entry")
 
     srv_records = [
         f"_autodiscover._tcp.{host}",
