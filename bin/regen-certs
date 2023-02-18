@@ -30,7 +30,7 @@ else
     exit 1
 fi
 
-export $(cat ${base_dir}/src/.env | xargs) >/dev/null 2>&1
+APP_DOMAIN=$(grep APP_DOMAIN .env | tail -n1 | sed "s/APP_DOMAIN=//")
 
 for name in kolab.mgmt.com kolab.hosted.com imap.hosted.com {{admin,meet}.,}${APP_DOMAIN}; do
     openssl genrsa -out ${cert_dir}/${name}.key 4096
