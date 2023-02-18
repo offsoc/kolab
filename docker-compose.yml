@@ -27,6 +27,7 @@ services:
     container_name: kolab
     privileged: true
     restart: on-failure
+    tty: true
     depends_on:
       mariadb:
         condition: service_healthy
@@ -198,6 +199,7 @@ services:
         DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD}
     container_name: kolab-pdns
     restart: on-failure
+    tty: true
     hostname: pdns
     depends_on:
       mariadb:
