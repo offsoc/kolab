@@ -21,6 +21,11 @@ class ContentSecurityPolicy
             'xfo' => 'X-Frame-Options',
         ];
 
+        //Exclude horizon routes, per https://github.com/laravel/horizon/issues/576
+        if ($request->is('horizon*')) {
+            $headers = [];
+        }
+
         $next = $next($request);
 
         foreach ($headers as $opt => $header) {
