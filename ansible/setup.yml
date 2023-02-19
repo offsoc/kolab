@@ -122,15 +122,10 @@
           ansible.builtin.command: bin/deploy.sh
           args:
             chdir: /home/kolab/kolab
+          environment:
+            ADMIN_PASSWORD: "{{ admin_password }}"
           register: result
       always:
         - name: Print output from previous task with newlines
           ansible.builtin.debug:
             msg="{{result.stdout_lines}}"
-
-    - name: Set admin password
-      become: true
-      become_user: kolab
-      ansible.builtin.command: docker exec -w /src/kolabsrc/ kolab-webapp ./artisan user:password admin@{{ hostname }} {{ admin_password|quote }}
-      args:
-        chdir: /home/kolab/kolab

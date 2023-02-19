@@ -3,8 +3,7 @@
 * Make sure you have docker and docker-compose available.
 * Change to the base directory of this repository.
 * Run 'HOST=kolab.local ADMIN_PASSWORD="simple123" bin/configure.sh config.prod' to configure this deployment.
-* Run 'bin/deploy.sh' to start the deployment.
-* Run 'docker exec -w /src/kolabsrc/ kolab-webapp ./artisan user:password admin@kolab.local simple123' to set your admin password
+* Run 'env ADMIN_PASSWORD="simple123" bin/deploy.sh' to start the deployment.
 * Add an /etc/hosts entry  "127.0.0.1 kolab.local"
 * navigate to https://kolab.local
 * login as "admin@kolab.local" with password "simple123" (or whatever you have set), and create your users.
