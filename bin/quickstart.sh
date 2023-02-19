@@ -20,7 +20,7 @@ base_dir=$(dirname $(dirname $0))
 
 export DOCKER_BUILDKIT=0
 
-docker-compose down --remove-orphans
+docker-compose down -t 1 --remove-orphans
 docker volume rm kolab_mariadb || :
 docker volume rm kolab_imap || :
 docker volume rm kolab_ldap || :
