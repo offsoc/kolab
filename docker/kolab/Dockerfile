@@ -54,10 +54,18 @@ COPY guam.conf /etc/guam/sys.config
 ARG DB_KOLAB_DATABASE
 ARG DB_KOLAB_USERNAME
 ARG DB_KOLAB_PASSWORD
+ARG LDAP_HOST
+ARG LDAP_ADMIN_BIND_DN
+ARG LDAP_ADMIN_BIND_PW
+ARG LDAP_SERVICE_BIND_PW
 RUN sed -i -r \
     -e "s|DB_KOLAB_DATABASE|$DB_KOLAB_DATABASE|g" \
     -e "s|DB_KOLAB_USERNAME|$DB_KOLAB_USERNAME|g" \
     -e "s|DB_KOLAB_PASSWORD|$DB_KOLAB_PASSWORD|g" \
+    -e "s|LDAP_HOST|$LDAP_HOST|g" \
+    -e "s|LDAP_ADMIN_BIND_DN|$LDAP_ADMIN_BIND_DN|g" \
+    -e "s|LDAP_ADMIN_BIND_PW|$LDAP_ADMIN_BIND_PW|g" \
+    -e "s|LDAP_SERVICE_BIND_PW|$LDAP_SERVICE_BIND_PW|g" \
     /etc/kolab/kolab.conf
 
 RUN mkdir -p /imapdata/{spool,lib} && \
@@ -66,15 +74,8 @@ RUN mkdir -p /imapdata/{spool,lib} && \
     chmod -R 777 /imapdata && \
     chown cyrus:mail /var/spool/imap /var/lib/imap
 
-RUN mkdir -p /ldapdata/{config,ssca,run} /var/run/dirsrv && \
-    ln -s /ldapdata/config /etc/dirsrv/slapd-kolab && \
-    ln -s /ldapdata/ssca /etc/dirsrv/ssca && \
-    ln -s /ldapdata/run /var/run/dirsrv && \
-    chmod -R 777 /ldapdata /etc/dirsrv
-
 VOLUME [ "/sys/fs/cgroup" ]
 VOLUME [ "/imapdata" ]
-VOLUME [ "/ldapdata" ]
 
 WORKDIR /root/
 

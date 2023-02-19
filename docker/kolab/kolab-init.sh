@@ -4,7 +4,6 @@ pushd /root/utils/
 
 ./01-reverse-etc-hosts.sh && echo "01 done"
 ./02-write-my.cnf.sh && echo "02 done"
-./03-setup-ldap.sh && echo "03 ldap done"
 ./03-setup-kolab.sh && echo "03 kolab done"
 ./04-reset-mysql-kolab-password.sh && echo "04 done"
 ./05-adjust-configs.sh && echo "05 done"

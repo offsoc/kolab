@@ -11,7 +11,6 @@ export cyrus_admin=${IMAP_ADMIN_LOGIN}
 export cyrus_admin_pw=${IMAP_ADMIN_PASSWORD}
 
 export kolab_service_pw=${LDAP_SERVICE_BIND_PW}
-export hosted_kolab_service_pw=${LDAP_HOSTED_BIND_PW}
 
 export hosted_domain=${HOSTED_DOMAIN:-"hosted.com"}
 export hosted_domain_db=${HOSTED_DOMAIN_DB:-"hosted_com"}

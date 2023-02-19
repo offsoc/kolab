@@ -24,6 +24,10 @@ services:
         DB_KOLAB_DATABASE: kolab
         DB_KOLAB_USERNAME: kolab
         DB_KOLAB_PASSWORD: ${DB_PASSWORD:?"DB_PASSWORD is missing"}
+        LDAP_HOST: ldap
+        LDAP_ADMIN_BIND_DN: ${LDAP_ADMIN_BIND_DN}
+        LDAP_ADMIN_BIND_PW: ${LDAP_ADMIN_BIND_PW}
+        LDAP_SERVICE_BIND_PW: ${LDAP_SERVICE_BIND_PW}
     container_name: kolab
     privileged: true
     restart: on-failure
@@ -33,16 +37,17 @@ services:
         condition: service_healthy
       pdns:
         condition: service_healthy
+      ldap:
+        condition: service_healthy
     extra_hosts:
       - "kolab.mgmt.com:127.0.0.1"
       - "services.${APP_DOMAIN}:172.18.0.4"
     environment:
       - APP_DOMAIN=${APP_DOMAIN}
-      - LDAP_HOST=127.0.0.1
+      - LDAP_HOST=ldap
       - LDAP_ADMIN_BIND_DN=${LDAP_ADMIN_BIND_DN}
       - LDAP_ADMIN_BIND_PW=${LDAP_ADMIN_BIND_PW}
       - LDAP_SERVICE_BIND_PW=${LDAP_SERVICE_BIND_PW}
-      - LDAP_HOSTED_BIND_PW=${LDAP_HOSTED_BIND_PW}
       - DB_HOST=mariadb
       - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - DB_HKCCP_DATABASE=${DB_DATABASE}
@@ -92,6 +97,40 @@ services:
       - ./docker/kolab/utils:/root/utils:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - imap:/imapdata
+
+  ldap:
+    build:
+      context: ./docker/ldap/
+    container_name: kolab-ldap
+    restart: on-failure
+    tty: true
+    hostname: ldap
+    privileged: true
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN}
+      - LDAP_ADMIN_ROOT_DN=${LDAP_ADMIN_ROOT_DN}
+      - LDAP_ADMIN_BIND_DN=${LDAP_ADMIN_BIND_DN}
+      - LDAP_ADMIN_BIND_PW=${LDAP_ADMIN_BIND_PW}
+      - LDAP_SERVICE_BIND_PW=${LDAP_SERVICE_BIND_PW}
+      - LDAP_HOSTED_BIND_PW=${LDAP_HOSTED_BIND_PW}
+      - IMAP_ADMIN_PASSWORD=${IMAP_ADMIN_PASSWORD}
+    healthcheck:
+      interval: 10s
+      test: "systemctl status dirsrv@kolab || exit 1"
+      timeout: 5s
+      retries: 30
+      start_period: 5m
+    image: kolab-ldap
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.12
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - ldap:/ldapdata
   roundcube:
     build:
@@ -108,7 +147,7 @@ services:
         condition: service_healthy
     environment:
       - APP_DOMAIN=${APP_DOMAIN}
-      - LDAP_HOST=kolab
+      - LDAP_HOST=ldap
       - LDAP_ADMIN_BIND_DN=${LDAP_ADMIN_BIND_DN}
       - LDAP_ADMIN_BIND_PW=${LDAP_ADMIN_BIND_PW}
       - LDAP_SERVICE_BIND_PW=${LDAP_SERVICE_BIND_PW}

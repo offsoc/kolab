@@ -2,7 +2,6 @@ version: '3'
 services:
   kolab:
     ports:
-      - "389:389"
       - "8880:8880"
       - "8443:8443"
       - "10143:10143"
@@ -13,6 +12,9 @@ services:
   mariadb:
     ports:
       - "3306:3306"
+  ldap:
+    ports:
+      - "389:389"
   redis:
     ports:
       - "6379:6379"
