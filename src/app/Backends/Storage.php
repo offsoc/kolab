@@ -73,7 +73,6 @@ class Storage
         $disposition = $response->headers->makeDisposition('attachment', $props['name'], $fallbackName);
 
         $response->headers->replace([
-                'Content-Length' => $props['size'] ?: 0,
                 'Content-Type' => $props['mimetype'],
                 'Content-Disposition' => $disposition,
         ]);
