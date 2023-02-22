@@ -34,8 +34,6 @@ class UnsuspendCommand extends Command
             return 1;
         }
 
-        $this->info("Found domain {$domain->id}");
-
         $domain->unsuspend();
     }
 }

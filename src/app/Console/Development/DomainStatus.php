@@ -30,8 +30,6 @@ class DomainStatus extends Command
     {
         $domain = Domain::where('namespace', $this->argument('domain'))->firstOrFail();
 
-        $this->info("Found domain: {$domain->id}");
-
         $statuses = [
             'active' => Domain::STATUS_ACTIVE,
             'suspended' => Domain::STATUS_SUSPENDED,

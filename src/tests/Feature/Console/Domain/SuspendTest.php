@@ -48,7 +48,7 @@ class SuspendTest extends TestCase
         $code = \Artisan::call("domain:suspend {$domain->namespace}");
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
-        $this->assertSame("Found domain {$domain->id}", $output);
+        $this->assertSame("", $output);
 
         $this->assertTrue($domain->fresh()->isSuspended());
     }

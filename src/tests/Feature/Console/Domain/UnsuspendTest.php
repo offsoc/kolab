@@ -50,7 +50,7 @@ class UnsuspendTest extends TestCase
         $code = \Artisan::call("domain:unsuspend {$domain->namespace}");
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
-        $this->assertSame("Found domain {$domain->id}", $output);
+        $this->assertSame("", $output);
 
         $this->assertFalse($domain->fresh()->isSuspended());
     }

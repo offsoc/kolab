@@ -34,8 +34,6 @@ class SuspendCommand extends Command
             return 1;
         }
 
-        $this->info("Found domain {$domain->id}");
-
         $domain->suspend();
     }
 }
