@@ -42,6 +42,7 @@ class StatusCommand extends Command
             'ldapReady' => User::STATUS_LDAP_READY,
             'imapReady' => User::STATUS_IMAP_READY,
             'degraded' => User::STATUS_DEGRADED,
+            'restricted' => User::STATUS_RESTRICTED,
         ];
 
         $user_state = [];
