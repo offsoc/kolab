@@ -13,7 +13,7 @@ build:
 
 lint:
 	docker kill kolab-tests || : ; \
-	kolab rm kolab-tests || : ; \
+	docker rm kolab-tests || : ; \
 	docker run -v ${PWD}/../:/src/kolab.orig -t kolab-tests /lint.sh
 
 test:
