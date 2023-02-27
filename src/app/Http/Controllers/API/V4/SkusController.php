@@ -26,7 +26,7 @@ class SkusController extends ResourceController
                 return $this->skuElement($sku);
             })
             ->filter(function ($sku) use ($type) {
-                return !$type || $sku['type'] === $type;
+                return $sku && (!$type || $sku['type'] === $type);
             })
             ->sortByDesc('prio')
             ->values();
@@ -152,7 +152,7 @@ class SkusController extends ResourceController
             $e = array_key_exists($skuID, $eSkus) ? $eSkus[$skuID] : 0;
             $r = array_key_exists($skuID, $rSkus) ? $rSkus[$skuID] : 0;
 
-            if (!is_a($object, $sku->handler_class::entitleableClass())) {
+            if (!class_exists($sku->handler_class) || !is_a($object, $sku->handler_class::entitleableClass())) {
                 continue;
             }
 
@@ -183,6 +183,7 @@ class SkusController extends ResourceController
     protected static function skuElement($sku): ?array
     {
         if (!class_exists($sku->handler_class)) {
+            \Log::warning("Missing handler {$sku->handler_class}");
             return null;
         }
 
@@ -190,6 +191,7 @@ class SkusController extends ResourceController
 
         // ignore incomplete handlers
         if (empty($data['type'])) {
+            \Log::warning("Incomplete handler {$sku->handler_class}");
             return null;
         }
 
