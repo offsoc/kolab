@@ -33,7 +33,7 @@ class CommonObject
 
             // Extract UID from the URL
             $href_parts = explode('/', $object->href);
-            $object->uid = preg_replace('/\.[a-z]+$/', '', $href_parts[count($href_parts)-1]);
+            $object->uid = preg_replace('/\.[a-z]+$/', '', $href_parts[count($href_parts) - 1]);
         }
 
         if ($etag = $element->getElementsByTagName('getetag')->item(0)) {

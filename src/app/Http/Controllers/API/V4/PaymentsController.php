@@ -503,16 +503,16 @@ class PaymentsController extends Controller
             $request['vat_rate_id'] = $rate->id;
 
             switch (\config('app.vat.mode')) {
-            case 1:
-                // In this mode tax is added on top of the payment. The amount
-                // to pay grows, but we keep wallet balance without tax.
-                $request['amount'] = $request['amount'] + round($request['amount'] * $rate->rate / 100);
-                break;
+                case 1:
+                    // In this mode tax is added on top of the payment. The amount
+                    // to pay grows, but we keep wallet balance without tax.
+                    $request['amount'] = $request['amount'] + round($request['amount'] * $rate->rate / 100);
+                    break;
 
-            default:
-                // In this mode tax is "swallowed" by the vendor. The payment
-                // amount does not change
-                break;
+                default:
+                    // In this mode tax is "swallowed" by the vendor. The payment
+                    // amount does not change
+                    break;
             }
         }
     }

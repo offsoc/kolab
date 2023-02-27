@@ -14,7 +14,11 @@ class FolderTest extends TestCase
     {
         $xml = <<<XML
 <?xml version="1.0" encoding="utf-8"?>
-<d:multistatus xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/" xmlns:k="Kolab:">
+        <d:multistatus xmlns:d="DAV:"
+        xmlns:cs="http://calendarserver.org/ns/"
+        xmlns:c="urn:ietf:params:xml:ns:caldav"
+        xmlns:a="http://apple.com/ns/ical/"
+        xmlns:k="Kolab:">
   <d:response>
     <d:href>/dav/calendars/user/alec@aphy.io/Default/</d:href>
     <d:propstat>

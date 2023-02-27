@@ -108,87 +108,85 @@ class Vevent extends CommonObject
             }
 
             switch ($prop->name) {
-            case 'DTSTART':
-            case 'DTEND':
-            case 'DUE':
-            case 'CREATED':
-            case 'LAST-MODIFIED':
-            case 'DTSTAMP':
-                $key = Str::camel(strtolower($prop->name));
-                // These are of type Sabre\VObject\Property\ICalendar\DateTime
-                $this->{$key} = $prop;
-                break;
+                case 'DTSTART':
+                case 'DTEND':
+                case 'DUE':
+                case 'CREATED':
+                case 'LAST-MODIFIED':
+                case 'DTSTAMP':
+                    $key = Str::camel(strtolower($prop->name));
+                    // These are of type Sabre\VObject\Property\ICalendar\DateTime
+                    $this->{$key} = $prop;
+                    break;
 
-            case 'RRULE':
-                $params = !empty($this->recurrence) ? $this->recurrence : [];
+                case 'RRULE':
+                    $params = !empty($this->recurrence) ? $this->recurrence : [];
 
-                foreach ($prop->getParts() as $k => $v) {
-                    $params[Str::camel(strtolower($k))] = is_array($v) ? implode(',', $v) : $v;
-                }
-
-                if (!empty($params['until'])) {
-                    $params['until'] = new \DateTime($params['until']);
-                }
-
-                if (empty($params['interval'])) {
-                    $params['interval'] = 1;
-                }
-
-                $this->recurrence = array_filter($params);
-                break;
-
-            case 'EXDATE':
-            case 'RDATE':
-                $key = strtolower($prop->name);
-                $dates = []; // TODO
-
-                if (!empty($this->recurrence[$key])) {
-                    $this->recurrence[$key] = array_merge($this->recurrence[$key], $dates);
-                }
-                else {
-                    $this->recurrence[$key] = $dates;
-                }
-
-                break;
-
-            case 'ATTENDEE':
-            case 'ORGANIZER':
-                $attendee = [
-                    'rsvp' => false,
-                    'email' => preg_replace('!^mailto:!i', '', (string) $prop),
-                ];
-
-                $attendeeProps = ['CN', 'PARTSTAT', 'ROLE', 'CUTYPE', 'RSVP', 'DELEGATED-FROM', 'DELEGATED-TO',
-                    'SCHEDULE-STATUS', 'SCHEDULE-AGENT', 'SENT-BY'];
-
-                foreach ($prop->parameters() as $name => $value) {
-                    $key = Str::camel(strtolower($name));
-                    switch ($name) {
-                        case 'RSVP':
-                            $params[$key] = strtolower($value) == 'true';
-                            break;
-                        case 'CN':
-                            $params[$key] = str_replace('\,', ',', strval($value));
-                            break;
-                        default:
-                            if (in_array($name, $attendeeProps)) {
-                                $params[$key] = strval($value);
-                            }
-                            break;
+                    foreach ($prop->getParts() as $k => $v) {
+                        $params[Str::camel(strtolower($k))] = is_array($v) ? implode(',', $v) : $v;
                     }
-                }
 
-                if ($prop->name == 'ORGANIZER') {
-                    $attendee['role'] = 'ORGANIZER';
-                    $attendee['partstat'] = 'ACCEPTED';
+                    if (!empty($params['until'])) {
+                        $params['until'] = new \DateTime($params['until']);
+                    }
 
-                    $this->organizer = $attendee;
-                }
-                else if (empty($this->organizer) || $attendee['email'] != $this->organizer['email']) {
-                    $this->attendees[] = $attendee;
-                }
+                    if (empty($params['interval'])) {
+                        $params['interval'] = 1;
+                    }
 
-                break;
+                    $this->recurrence = array_filter($params);
+                    break;
+
+                case 'EXDATE':
+                case 'RDATE':
+                    $key = strtolower($prop->name);
+                    $dates = []; // TODO
+
+                    if (!empty($this->recurrence[$key])) {
+                        $this->recurrence[$key] = array_merge($this->recurrence[$key], $dates);
+                    } else {
+                        $this->recurrence[$key] = $dates;
+                    }
+
+                    break;
+
+                case 'ATTENDEE':
+                case 'ORGANIZER':
+                    $attendee = [
+                        'rsvp' => false,
+                        'email' => preg_replace('!^mailto:!i', '', (string) $prop),
+                    ];
+
+                    $attendeeProps = ['CN', 'PARTSTAT', 'ROLE', 'CUTYPE', 'RSVP', 'DELEGATED-FROM', 'DELEGATED-TO',
+                        'SCHEDULE-STATUS', 'SCHEDULE-AGENT', 'SENT-BY'];
+
+                    foreach ($prop->parameters() as $name => $value) {
+                        $key = Str::camel(strtolower($name));
+                        switch ($name) {
+                            case 'RSVP':
+                                $params[$key] = strtolower($value) == 'true';
+                                break;
+                            case 'CN':
+                                $params[$key] = str_replace('\,', ',', strval($value));
+                                break;
+                            default:
+                                if (in_array($name, $attendeeProps)) {
+                                    $params[$key] = strval($value);
+                                }
+                                break;
+                        }
+                    }
+
+                    if ($prop->name == 'ORGANIZER') {
+                        $attendee['role'] = 'ORGANIZER';
+                        $attendee['partstat'] = 'ACCEPTED';
+
+                        $this->organizer = $attendee;
+                    } elseif (empty($this->organizer) || $attendee['email'] != $this->organizer['email']) {
+                        $this->attendees[] = $attendee;
+                    }
+
+                    break;
             }
         }
 
@@ -217,47 +215,46 @@ class Vevent extends CommonObject
                 $value = strval($prop);
 
                 switch ($prop->name) {
-                case 'TRIGGER':
-                    foreach ($prop->parameters as $param) {
-                        if ($param->name == 'VALUE' && $param->getValue() == 'DATE-TIME') {
-                            $trigger = '@' . $prop->getDateTime()->format('U');
-                            $alarm['trigger'] = $prop->getDateTime();
+                    case 'TRIGGER':
+                        foreach ($prop->parameters as $param) {
+                            if ($param->name == 'VALUE' && $param->getValue() == 'DATE-TIME') {
+                                $trigger = '@' . $prop->getDateTime()->format('U');
+                                $alarm['trigger'] = $prop->getDateTime();
+                            } elseif ($param->name == 'RELATED') {
+                                $alarm['related'] = $param->getValue();
+                            }
                         }
-                        else if ($param->name == 'RELATED') {
-                            $alarm['related'] = $param->getValue();
+    /*
+                        if (!$trigger && ($values = libcalendaring::parse_alarm_value($value))) {
+                            $trigger = $values[2];
                         }
-                    }
-/*
-                    if (!$trigger && ($values = libcalendaring::parse_alarm_value($value))) {
-                        $trigger = $values[2];
-                    }
-*/
-                    if (empty($alarm['trigger'])) {
-                        $alarm['trigger'] = rtrim(preg_replace('/([A-Z])0[WDHMS]/', '\\1', $value), 'T');
-                        // if all 0-values have been stripped, assume 'at time'
-                        if ($alarm['trigger'] == 'P') {
-                            $alarm['trigger'] = 'PT0S';
+    */
+                        if (empty($alarm['trigger'])) {
+                            $alarm['trigger'] = rtrim(preg_replace('/([A-Z])0[WDHMS]/', '\\1', $value), 'T');
+                            // if all 0-values have been stripped, assume 'at time'
+                            if ($alarm['trigger'] == 'P') {
+                                $alarm['trigger'] = 'PT0S';
+                            }
                         }
-                    }
-                    break;
+                        break;
 
-                case 'ACTION':
-                    $action = $alarm['action'] = strtoupper($value);
-                    break;
+                    case 'ACTION':
+                        $action = $alarm['action'] = strtoupper($value);
+                        break;
 
-                case 'SUMMARY':
-                case 'DESCRIPTION':
-                case 'DURATION':
-                    $alarm[strtolower($prop->name)] = $value;
-                    break;
+                    case 'SUMMARY':
+                    case 'DESCRIPTION':
+                    case 'DURATION':
+                        $alarm[strtolower($prop->name)] = $value;
+                        break;
 
-                case 'REPEAT':
-                    $alarm['repeat'] = (int) $value;
-                    break;
+                    case 'REPEAT':
+                        $alarm['repeat'] = (int) $value;
+                        break;
 
-                case 'ATTENDEE':
-                    $alarm['attendees'][] = preg_replace('!^mailto:!i', '', $value);
-                    break;
+                    case 'ATTENDEE':
+                        $alarm['attendees'][] = preg_replace('!^mailto:!i', '', $value);
+                        break;
                 }
             }
 

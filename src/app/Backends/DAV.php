@@ -184,7 +184,8 @@ class DAV
             $folder = DAV\Folder::fromDomElement($element);
 
             // Note: Addressbooks don't have 'type' specified
-            if (($component == self::TYPE_VCARD && in_array('addressbook', $folder->types))
+            if (
+                ($component == self::TYPE_VCARD && in_array('addressbook', $folder->types))
                 || in_array($component, $folder->components)
             ) {
                 $folders[] = $folder;
@@ -303,7 +304,7 @@ class DAV
         //       could fetch "an index" but also any of object's data.
 
         $body = '<?xml version="1.0" encoding="utf-8"?>'
-            .' <c:' . $queries[$component] . ' xmlns:d="DAV:" xmlns:c="' . self::NAMESPACES[$component] . '">'
+            . ' <c:' . $queries[$component] . ' xmlns:d="DAV:" xmlns:c="' . self::NAMESPACES[$component] . '">'
                 . '<d:prop>'
                     . '<d:getetag />'
                 . '</d:prop>'
@@ -359,7 +360,7 @@ class DAV
         ];
 
         $body = '<?xml version="1.0" encoding="utf-8"?>'
-            .' <c:' . $queries[$component] . ' xmlns:d="DAV:" xmlns:c="' . self::NAMESPACES[$component] . '">'
+            . ' <c:' . $queries[$component] . ' xmlns:d="DAV:" xmlns:c="' . self::NAMESPACES[$component] . '">'
                 . '<d:prop>'
                     . '<d:getetag />'
                     . '<c:' . $types[$component] . ' />'

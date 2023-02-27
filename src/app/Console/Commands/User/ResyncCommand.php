@@ -45,8 +45,9 @@ class ResyncCommand extends Command
 
             if ($deleted_only) {
                 $users->whereNotNull('deleted_at')
-                    ->where(function($query) {
-                        $query->where('status', '&', User::STATUS_IMAP_READY)->orWhere('status', '&', User::STATUS_LDAP_READY);
+                    ->where(function ($query) {
+                        $query->where('status', '&', User::STATUS_IMAP_READY)
+                            ->orWhere('status', '&', User::STATUS_LDAP_READY);
                     });
             }
 
@@ -88,7 +89,7 @@ class ResyncCommand extends Command
                     }
 
                     \App\Jobs\User\CreateJob::dispatch($user->id);
-                } else if (!empty($req_user)) {
+                } elseif (!empty($req_user)) {
                     if ($dry_run) {
                         $this->info("{$user->email}: will be pushed");
                         continue;

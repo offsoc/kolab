@@ -113,10 +113,12 @@ class WalletObserver
         if ($wallet->balance > $wallet->getOriginal('balance') && $wallet->owner && $wallet->owner->isRestricted()) {
             $wallet->owner->unrestrict();
 
-            User::whereIn('id', $wallet->entitlements()->select('entitleable_id')->where('entitleable_type', User::class))
-                ->each(function ($user) {
-                    $user->unrestrict();
-                });
+            User::whereIn(
+                'id',
+                $wallet->entitlements()->select('entitleable_id')->where('entitleable_type', User::class)
+            )->each(function ($user) {
+                $user->unrestrict();
+            });
         }
     }
 }

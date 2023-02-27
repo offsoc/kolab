@@ -61,7 +61,7 @@ return new class extends Migration
                                 ->from('user_settings')
                                 ->where('key', 'country')
                                 ->where('value', $country);
-                    });
+                        });
                 })
                 ->update(['vat_rate_id' => $vatRate->id]);
             }

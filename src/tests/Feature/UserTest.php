@@ -1171,7 +1171,8 @@ class UserTest extends TestCase
             \App\Jobs\User\UpdateJob::class,
             function ($job) use ($user) {
                 return TestCase::getObjectProperty($job, 'userId') == $user->id;
-            });
+            }
+        );
 
         Queue::fake(); // reset queue state
 
@@ -1184,7 +1185,8 @@ class UserTest extends TestCase
             \App\Jobs\User\UpdateJob::class,
             function ($job) use ($user) {
                 return TestCase::getObjectProperty($job, 'userId') == $user->id;
-            });
+            }
+        );
     }
 
     /**
