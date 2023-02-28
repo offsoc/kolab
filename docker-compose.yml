@@ -28,6 +28,8 @@ services:
         LDAP_ADMIN_BIND_DN: ${LDAP_ADMIN_BIND_DN}
         LDAP_ADMIN_BIND_PW: ${LDAP_ADMIN_BIND_PW}
         LDAP_SERVICE_BIND_PW: ${LDAP_SERVICE_BIND_PW}
+        IMAP_ADMIN_LOGIN: ${IMAP_ADMIN_LOGIN}
+        IMAP_ADMIN_PASSWORD: ${IMAP_ADMIN_PASSWORD}
     container_name: kolab
     privileged: true
     restart: on-failure
