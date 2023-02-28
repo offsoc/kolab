@@ -1,4 +1,4 @@
-FROM apheleia/swoole:latest
+FROM kolab-webapp:latest
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
 
@@ -6,19 +6,11 @@ USER root
 
 RUN dnf -y install findutils php-phpunit-PHPUnit chromium php-xdebug
 
-RUN mkdir /src/ && chown 1001:100 /src/
 
-RUN usermod -G wheel default
-RUN echo '%wheel  ALL=(ALL)       NOPASSWD: ALL' >> /etc/sudoers
-RUN chmod 777 /opt/app-root/src
 
-USER default
 
-EXPOSE 8000
 
-WORKDIR /src/
 
 COPY init.sh /init.sh
 COPY lint.sh /lint.sh
-COPY refresh.sh /refresh.sh
 CMD [ "/init.sh" ]

@@ -6,10 +6,13 @@ rsync -av \
     --exclude=vendor \
     --exclude=composer.lock \
     --exclude=node_modules \
-    --exclude="resources/build" \
-    --exclude="bootstrap/cache" \
-    --exclude=".gitignore" \
-    /src/kolabsrc.orig/ /src/kolabsrc
+    --exclude=package-lock.json \
+    --exclude=public \
+    --exclude=storage \
+    --exclude=resources/build \
+    --exclude=bootstrap \
+    --exclude=.gitignore \
+    /src/kolabsrc.orig/ /src/kolabsrc/ | tee /tmp/rsync.output
 cd /src/kolabsrc
 
 rm -rf storage/framework

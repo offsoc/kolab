@@ -1,17 +1,24 @@
 #!/bin/bash
 #set -e
-rm -rf /src/kolabsrc
-sudo cp -a /src/kolabsrc.orig /src/kolabsrc
-sudo chmod 777 -R /src/kolabsrc
+rsync -av \
+    --exclude=vendor \
+    --exclude=composer.lock \
+    --exclude=node_modules \
+    --exclude=package-lock.json \
+    --exclude=public \
+    --exclude=storage \
+    --exclude=resources/build \
+    --exclude=bootstrap \
+    --exclude=.gitignore \
+    /src/kolabsrc.orig/ /src/kolabsrc/ | tee /tmp/rsync.output
 cd /src/kolabsrc
 
-sudo rm -rf vendor/ composer.lock
-php -dmemory_limit=-1 $(command -v composer) install
-sudo rm -rf node_modules
-mkdir node_modules
-npm install
+rm -rf storage/framework
+mkdir -p storage/framework/{sessions,views,cache}
+
+php -dmemory_limit=-1 $(command -v composer) update
+/usr/local/bin/npm install
 find bootstrap/cache/ -type f ! -name ".gitignore" -delete
-./artisan storage:link
 ./artisan clear-compiled
 ./artisan cache:clear
 ./artisan horizon:install
