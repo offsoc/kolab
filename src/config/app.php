@@ -247,8 +247,7 @@ return [
     ],
 
     'vat' => [
-        'countries' => env('VAT_COUNTRIES'),
-        'rate' => (float) env('VAT_RATE'),
+        'mode' => (int) env('VAT_MODE', 0),
     ],
 
     'password_policy' => env('PASSWORD_POLICY') ?: 'min:6,max:255',

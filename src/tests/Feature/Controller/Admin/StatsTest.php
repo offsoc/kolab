@@ -18,7 +18,7 @@ class StatsTest extends TestCase
         parent::setUp();
         self::useAdminUrl();
 
-        Payment::truncate();
+        Payment::query()->delete();
         DB::table('wallets')->update(['discount_id' => null]);
 
         $this->deleteTestUser('test-stats@' . \config('app.domain'));
@@ -29,7 +29,7 @@ class StatsTest extends TestCase
      */
     public function tearDown(): void
     {
-        Payment::truncate();
+        Payment::query()->delete();
         DB::table('wallets')->update(['discount_id' => null]);
 
         $this->deleteTestUser('test-stats@' . \config('app.domain'));
@@ -133,7 +133,8 @@ class StatsTest extends TestCase
                 'id' => 'test1',
                 'description' => '',
                 'status' => PaymentProvider::STATUS_PAID,
-                'amount' => 1000, // EUR
+                'amount' => 1000,
+                'credit_amount' => 1000,
                 'type' => PaymentProvider::TYPE_ONEOFF,
                 'wallet_id' => $wallet->id,
                 'provider' => 'mollie',
@@ -144,7 +145,8 @@ class StatsTest extends TestCase
                 'id' => 'test2',
                 'description' => '',
                 'status' => PaymentProvider::STATUS_PAID,
-                'amount' => 2000, // EUR
+                'amount' => 2000,
+                'credit_amount' => 2000,
                 'type' => PaymentProvider::TYPE_RECURRING,
                 'wallet_id' => $wallet->id,
                 'provider' => 'mollie',
@@ -155,7 +157,8 @@ class StatsTest extends TestCase
                 'id' => 'test3',
                 'description' => '',
                 'status' => PaymentProvider::STATUS_PAID,
-                'amount' => 3000, // CHF
+                'amount' => 3000,
+                'credit_amount' => 3000,
                 'type' => PaymentProvider::TYPE_ONEOFF,
                 'wallet_id' => $johns_wallet->id,
                 'provider' => 'mollie',
@@ -166,7 +169,8 @@ class StatsTest extends TestCase
                 'id' => 'test4',
                 'description' => '',
                 'status' => PaymentProvider::STATUS_PAID,
-                'amount' => 4000, // CHF
+                'amount' => 4000,
+                'credit_amount' => 4000,
                 'type' => PaymentProvider::TYPE_RECURRING,
                 'wallet_id' => $johns_wallet->id,
                 'provider' => 'mollie',
@@ -177,7 +181,8 @@ class StatsTest extends TestCase
                 'id' => 'test5',
                 'description' => '',
                 'status' => PaymentProvider::STATUS_OPEN,
-                'amount' => 5000, // CHF
+                'amount' => 5000,
+                'credit_amount' => 5000,
                 'type' => PaymentProvider::TYPE_ONEOFF,
                 'wallet_id' => $johns_wallet->id,
                 'provider' => 'mollie',
@@ -188,7 +193,8 @@ class StatsTest extends TestCase
                 'id' => 'test6',
                 'description' => '',
                 'status' => PaymentProvider::STATUS_FAILED,
-                'amount' => 6000, // CHF
+                'amount' => 6000,
+                'credit_amount' => 6000,
                 'type' => PaymentProvider::TYPE_ONEOFF,
                 'wallet_id' => $johns_wallet->id,
                 'provider' => 'mollie',

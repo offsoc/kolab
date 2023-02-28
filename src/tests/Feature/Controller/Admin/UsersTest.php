@@ -24,6 +24,9 @@ class UsersTest extends TestCase
 
         $jack = $this->getTestUser('jack@kolab.org');
         $jack->setSetting('external_email', null);
+
+        \App\SharedFolderAlias::truncate();
+        \App\Payment::query()->delete();
     }
 
     /**
@@ -39,6 +42,7 @@ class UsersTest extends TestCase
         $jack->setSetting('external_email', null);
 
         \App\SharedFolderAlias::truncate();
+        \App\Payment::query()->delete();
 
         parent::tearDown();
     }
@@ -236,6 +240,7 @@ class UsersTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'status' => 'paid',
                 'amount' => 1337,
+                'credit_amount' => 1337,
                 'description' => 'nonsense transaction for testing',
                 'provider' => 'self',
                 'type' => 'oneoff',

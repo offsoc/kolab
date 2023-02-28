@@ -37,6 +37,7 @@ class Package extends Model
     use HasTranslations;
     use UuidStrKeyTrait;
 
+    /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
     /** @var array<int, string> The attributes that are mass assignable */

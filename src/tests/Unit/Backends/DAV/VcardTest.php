@@ -27,7 +27,7 @@ FN:Test Test
 N:;;;;
 UID:$uid
 END:VCARD
-]]></c:calendar-data>
+]]></c:address-data>
       </d:prop>
       <d:status>HTTP/1.1 200 OK</d:status>
     </d:propstat>

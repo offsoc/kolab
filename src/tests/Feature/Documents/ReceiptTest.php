@@ -7,19 +7,19 @@ use App\Payment;
 use App\Providers\PaymentProvider;
 use App\User;
 use App\Wallet;
+use App\VatRate;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 
 class ReceiptTest extends TestCase
 {
-    private $paymentIDs = ['AAA1', 'AAA2', 'AAA3', 'AAA4', 'AAA5', 'AAA6', 'AAA7'];
-
     public function setUp(): void
     {
         parent::setUp();
 
-        Payment::whereIn('id', $this->paymentIDs)->delete();
+        Payment::query()->delete();
+        VatRate::query()->delete();
     }
 
     /**
@@ -29,7 +29,8 @@ class ReceiptTest extends TestCase
     {
         $this->deleteTestUser('receipt-test@kolabnow.com');
 
-        Payment::whereIn('id', $this->paymentIDs)->delete();
+        Payment::query()->delete();
+        VatRate::query()->delete();
 
         parent::tearDown();
     }
@@ -121,9 +122,6 @@ class ReceiptTest extends TestCase
      */
     public function testHtmlOutputVat(): void
     {
-        \config(['app.vat.rate' => 7.7]);
-        \config(['app.vat.countries' => 'ch']);
-
         $appName = \config('app.name');
         $wallet = $this->getTestData('CH');
         $receipt = new Receipt($wallet, 2020, 5);
@@ -214,6 +212,15 @@ class ReceiptTest extends TestCase
 
         $wallet = $user->wallets()->first();
 
+        $vat = null;
+        if ($country) {
+            $vat = VatRate::create([
+                    'country' => $country,
+                    'rate' => 7.7,
+                    'start' => now(),
+            ])->id;
+        }
+
         // Create two payments out of the 2020-05 period
         // and three in it, plus one in the period but unpaid,
         // and one with amount 0, and an extra refund and chanrgeback
@@ -226,6 +233,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 1111,
+                'credit_amount' => 1111,
+                'vat_rate_id' => $vat,
                 'currency' => 'CHF',
                 'currency_amount' => 1111,
         ]);
@@ -240,6 +249,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 2222,
+                'credit_amount' => 2222,
+                'vat_rate_id' => $vat,
                 'currency' => 'CHF',
                 'currency_amount' => 2222,
         ]);
@@ -254,6 +265,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 0,
+                'credit_amount' => 0,
+                'vat_rate_id' => $vat,
                 'currency' => 'CHF',
                 'currency_amount' => 0,
         ]);
@@ -268,6 +281,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 990,
+                'credit_amount' => 990,
+                'vat_rate_id' => $vat,
                 'currency' => 'CHF',
                 'currency_amount' => 990,
         ]);
@@ -283,6 +298,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 1234,
+                'credit_amount' => 1234,
+                'vat_rate_id' => $vat,
                 'currency' => 'CHF',
                 'currency_amount' => 1234,
         ]);
@@ -297,6 +314,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 1,
+                'credit_amount' => 1,
+                'vat_rate_id' => $vat,
                 'currency' => 'CHF',
                 'currency_amount' => 1,
         ]);
@@ -311,6 +330,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 100,
+                'credit_amount' => 100,
+                'vat_rate_id' => $vat,
                 'currency' => 'CHF',
                 'currency_amount' => 100,
         ]);
@@ -325,6 +346,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => -100,
+                'credit_amount' => -100,
+                'vat_rate_id' => $vat,
                 'currency' => 'CHF',
                 'currency_amount' => -100,
         ]);
@@ -339,6 +362,8 @@ class ReceiptTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => -10,
+                'credit_amount' => -10,
+                'vat_rate_id' => $vat,
                 'currency' => 'CHF',
                 'currency_amount' => -10,
         ]);

@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Payment;
 use App\Package;
 use App\Plan;
 use App\User;
 use App\Sku;
 use App\Transaction;
 use App\Wallet;
+use App\VatRate;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -41,6 +43,8 @@ class WalletTest extends TestCase
         }
 
         Sku::select()->update(['fee' => 0]);
+        Payment::query()->delete();
+        VatRate::query()->delete();
     }
 
     /**
@@ -53,6 +57,8 @@ class WalletTest extends TestCase
         }
 
         Sku::select()->update(['fee' => 0]);
+        Payment::query()->delete();
+        VatRate::query()->delete();
 
         parent::tearDown();
     }
@@ -558,10 +564,77 @@ class WalletTest extends TestCase
     }
 
     /**
+     * Tests for award() and penalty()
+     */
+    public function testAwardAndPenalty(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    /**
+     * Tests for chargeback() and refund()
+     */
+    public function testChargebackAndRefund(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    /**
+     * Tests for chargeEntitlement()
+     */
+    public function testChargeEntitlement(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    /**
      * Tests for updateEntitlements()
      */
     public function testUpdateEntitlements(): void
     {
         $this->markTestIncomplete();
+    }
+
+    /**
+     * Tests for vatRate()
+     */
+    public function testVatRate(): void
+    {
+        $rate1 = VatRate::create([
+                'start' => now()->subDay(),
+                'country' => 'US',
+                'rate' => 7.5,
+        ]);
+        $rate2 = VatRate::create([
+                'start' => now()->subDay(),
+                'country' => 'DE',
+                'rate' => 10.0,
+        ]);
+
+        $user = $this->getTestUser('UserWallet1@UserWallet.com');
+        $wallet = $user->wallets()->first();
+
+        $user->setSetting('country', null);
+        $this->assertSame(null, $wallet->vatRate());
+
+        $user->setSetting('country', 'PL');
+        $this->assertSame(null, $wallet->vatRate());
+
+        $user->setSetting('country', 'US');
+        $this->assertSame($rate1->id, $wallet->vatRate()->id); // @phpstan-ignore-line
+
+        $user->setSetting('country', 'DE');
+        $this->assertSame($rate2->id, $wallet->vatRate()->id); // @phpstan-ignore-line
+
+        // Test $start argument
+        $rate3 = VatRate::create([
+                'start' => now()->subYear(),
+                'country' => 'DE',
+                'rate' => 5.0,
+        ]);
+
+        $this->assertSame($rate2->id, $wallet->vatRate()->id); // @phpstan-ignore-line
+        $this->assertSame($rate3->id, $wallet->vatRate(now()->subMonth())->id);
+        $this->assertSame(null, $wallet->vatRate(now()->subYears(2)));
     }
 }

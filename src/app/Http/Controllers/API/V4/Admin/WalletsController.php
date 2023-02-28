@@ -80,29 +80,17 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
         }
 
         $amount = (int) ($request->amount * 100);
-        $type = $amount > 0 ? Transaction::WALLET_AWARD : Transaction::WALLET_PENALTY;
+        $method = $amount > 0 ? 'award' : 'penalty';
 
         DB::beginTransaction();
 
-        $wallet->balance += $amount;
-        $wallet->save();
-
-        Transaction::create(
-            [
-                'user_email' => \App\Utils::userEmailOrNull(),
-                'object_id' => $wallet->id,
-                'object_type' => Wallet::class,
-                'type' => $type,
-                'amount' => $amount,
-                'description' => $request->description
-            ]
-        );
+        $wallet->{$method}(abs($amount), $request->description);
 
         if ($user->role == 'reseller') {
             if ($user->tenant && ($tenant_wallet = $user->tenant->wallet())) {
                 $desc = ($amount > 0 ? 'Awarded' : 'Penalized') . " user {$wallet->owner->email}";
-                $method = $amount > 0 ? 'debit' : 'credit';
-                $tenant_wallet->{$method}(abs($amount), $desc);
+                $tenant_method = $amount > 0 ? 'debit' : 'credit';
+                $tenant_wallet->{$tenant_method}(abs($amount), $desc);
             }
         }
 
@@ -110,7 +98,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
 
         $response = [
             'status' => 'success',
-            'message' => \trans("app.wallet-{$type}-success"),
+            'message' => \trans("app.wallet-{$method}-success"),
             'balance' => $wallet->balance
         ];
 

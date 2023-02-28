@@ -19,10 +19,14 @@ class RateLimitTest extends TestCase
 
         $this->setUpTest();
         $this->useServicesUrl();
+
+        \App\Payment::query()->delete();
     }
 
     public function tearDown(): void
     {
+        \App\Payment::query()->delete();
+
         parent::tearDown();
     }
 
@@ -169,6 +173,7 @@ class RateLimitTest extends TestCase
             'wallet_id' => $wallet->id,
             'provider' => 'stripe',
             'amount' => 1111,
+            'credit_amount' => 1111,
             'currency_amount' => 1111,
             'currency' => 'CHF',
         ];
@@ -256,6 +261,7 @@ class RateLimitTest extends TestCase
             'wallet_id' => $wallet->id,
             'provider' => 'stripe',
             'amount' => 1111,
+            'credit_amount' => 1111,
             'currency_amount' => 1111,
             'currency' => 'CHF',
         ];
@@ -399,6 +405,7 @@ class RateLimitTest extends TestCase
             'wallet_id' => $wallet->id,
             'provider' => 'stripe',
             'amount' => 1111,
+            'credit_amount' => 1111,
             'currency_amount' => 1111,
             'currency' => 'CHF',
         ];

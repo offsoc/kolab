@@ -128,7 +128,6 @@ class Receipt
         $company = $this->companyData();
 
         if (self::$fakeMode) {
-            $country = 'CH';
             $customer = [
                 'id' => $this->wallet->owner->id,
                 'wallet_id' => $this->wallet->id,
@@ -153,10 +152,15 @@ class Receipt
                     'updated_at' => $start->copy()->next()->next()->next(),
                 ],
             ]);
+
+            $items = $items->map(function ($payment) {
+                $payment->vatRate = new \App\VatRate();
+                $payment->vatRate->rate = 7.7;
+                $payment->credit_amount = $payment->amount + round($payment->amount * $payment->vatRate->rate / 100);
+                return $payment;
+            });
         } else {
             $customer = $this->customerData();
-            $country = $this->wallet->owner->getSetting('country');
-
             $items = $this->wallet->payments()
                 ->where('status', PaymentProvider::STATUS_PAID)
                 ->where('updated_at', '>=', $start)
@@ -166,22 +170,18 @@ class Receipt
                 ->get();
         }
 
-        $vatRate = \config('app.vat.rate');
-        $vatCountries = explode(',', \config('app.vat.countries'));
-        $vatCountries = array_map('strtoupper', array_map('trim', $vatCountries));
-
-        if (!$country || !in_array(strtoupper($country), $vatCountries)) {
-            $vatRate = 0;
-        }
-
+        $vatRate = 0;
         $totalVat = 0;
-        $total = 0;
-        $items = $items->map(function ($item) use (&$total, &$totalVat, $appName, $vatRate) {
+        $total = 0; // excluding VAT
+
+        $items = $items->map(function ($item) use (&$total, &$totalVat, &$vatRate, $appName) {
             $amount = $item->amount;
 
-            if ($vatRate > 0) {
-                $amount = round($amount * ((100 - $vatRate) / 100));
-                $totalVat += $item->amount - $amount;
+            if ($item->vatRate && $item->vatRate->rate > 0) {
+                $vat = round($item->credit_amount * $item->vatRate->rate / 100);
+                $amount -= $vat;
+                $totalVat += $vat;
+                $vatRate = $item->vatRate->rate; // TODO: Multiple rates
             }
 
             $total += $amount;

@@ -53,6 +53,7 @@ class CollectorTest extends TestCase
                 'description' => '',
                 'status' => PaymentProvider::STATUS_PAID,
                 'amount' => 1000,
+                'credit_amount' => 1000,
                 'type' => PaymentProvider::TYPE_ONEOFF,
                 'wallet_id' => $wallet->id,
                 'provider' => 'mollie',

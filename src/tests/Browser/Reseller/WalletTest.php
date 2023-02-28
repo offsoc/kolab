@@ -138,6 +138,7 @@ class WalletTest extends TestCaseDusk
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 1111,
+                'credit_amount' => 1111,
                 'currency_amount' => 1111,
                 'currency' => 'CHF',
         ]);
@@ -154,6 +155,7 @@ class WalletTest extends TestCaseDusk
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 1111,
+                'credit_amount' => 1111,
                 'currency_amount' => 1111,
                 'currency' => 'CHF',
         ]);

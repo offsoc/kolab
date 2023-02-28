@@ -83,7 +83,9 @@ class Stripe extends \App\Providers\PaymentProvider
         $session = StripeAPI\Checkout\Session::create($request);
 
         $payment['amount'] = 0;
+        $payment['credit_amount'] = 0;
         $payment['currency_amount'] = 0;
+        $payment['vat_rate_id'] = null;
         $payment['id'] = $session->setup_intent;
         $payment['type'] = self::TYPE_MANDATE;
 
@@ -181,7 +183,6 @@ class Stripe extends \App\Providers\PaymentProvider
 
         // Register the user in Stripe, if not yet done
         $customer_id = self::stripeCustomerId($wallet, true);
-
 
         $amount = $this->exchange($payment['amount'], $wallet->currency, $payment['currency']);
         $payment['currency_amount'] = $amount;
@@ -454,7 +455,7 @@ class Stripe extends \App\Providers\PaymentProvider
         $description = $payment->type == self::TYPE_RECURRING ? 'Auto-payment' : 'Payment';
         $description .= " transaction {$payment->id} using {$method}";
 
-        $payment->wallet->credit($payment->amount, $description);
+        $payment->wallet->credit($payment, $description);
 
         // Unlock the disabled auto-payment mandate
         if ($payment->wallet->balance >= 0) {

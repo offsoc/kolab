@@ -657,6 +657,7 @@ class PaymentsMollieEuroTest extends TestCase
                 'id' => 'tr_123456',
                 'status' => PaymentProvider::STATUS_PAID,
                 'amount' => 123,
+                'credit_amount' => 123,
                 'currency_amount' => 123,
                 'currency' => 'EUR',
                 'type' => PaymentProvider::TYPE_ONEOFF,

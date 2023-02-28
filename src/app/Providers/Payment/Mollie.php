@@ -436,7 +436,7 @@ class Mollie extends \App\Providers\PaymentProvider
             }
 
             foreach ($refunds as $refund) {
-                $this->storeRefund($payment->wallet, $refund);
+                $payment->refund($refund);
             }
 
             DB::commit();
@@ -517,7 +517,7 @@ class Mollie extends \App\Providers\PaymentProvider
         $description = $payment->type == self::TYPE_RECURRING ? 'Auto-payment' : 'Payment';
         $description .= " transaction {$payment->id} using {$method}";
 
-        $payment->wallet->credit($payment->amount, $description);
+        $payment->wallet->credit($payment, $description);
 
         // Unlock the disabled auto-payment mandate
         if ($payment->wallet->balance >= 0) {

@@ -8,6 +8,7 @@ use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
 use App\WalletSetting;
+use App\VatRate;
 use App\Utils;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Bus;
@@ -29,11 +30,15 @@ class PaymentsMollieTest extends TestCase
 
         // All tests in this file use Mollie
         \config(['services.payment_provider' => 'mollie']);
-
+        \config(['app.vat.mode' => 0]);
         Utils::setTestExchangeRates(['EUR' => '0.90503424978382']);
+
+        $this->deleteTestUser('payment-test@' . \config('app.domain'));
+
         $john = $this->getTestUser('john@kolab.org');
         $wallet = $john->wallets()->first();
-        Payment::where('wallet_id', $wallet->id)->delete();
+        Payment::query()->delete();
+        VatRate::query()->delete();
         Wallet::where('id', $wallet->id)->update(['balance' => 0]);
         WalletSetting::where('wallet_id', $wallet->id)->delete();
         $types = [
@@ -49,9 +54,12 @@ class PaymentsMollieTest extends TestCase
      */
     public function tearDown(): void
     {
+        $this->deleteTestUser('payment-test@' . \config('app.domain'));
+
         $john = $this->getTestUser('john@kolab.org');
         $wallet = $john->wallets()->first();
-        Payment::where('wallet_id', $wallet->id)->delete();
+        Payment::query()->delete();
+        VatRate::query()->delete();
         Wallet::where('id', $wallet->id)->update(['balance' => 0]);
         WalletSetting::where('wallet_id', $wallet->id)->delete();
         $types = [
@@ -537,8 +545,7 @@ class PaymentsMollieTest extends TestCase
 
         // Expect a recurring payment as we have a valid mandate at this point
         // and the balance is below the threshold
-        $result = PaymentsController::topUpWallet($wallet);
-        $this->assertTrue($result);
+        $this->assertTrue(PaymentsController::topUpWallet($wallet));
 
         // Check that the payments table contains a new record with proper amount.
         // There should be two records, one for the mandate payment and another for
@@ -697,6 +704,70 @@ class PaymentsMollieTest extends TestCase
     }
 
     /**
+     * Test payment/top-up with VAT_MODE=1
+     *
+     * @group mollie
+     */
+    public function testPaymentsWithVatModeOne(): void
+    {
+        \config(['app.vat.mode' => 1]);
+
+        $user = $this->getTestUser('payment-test@' . \config('app.domain'));
+        $user->setSetting('country', 'US');
+        $wallet = $user->wallets()->first();
+        $vatRate = VatRate::create([
+                'country' => 'US',
+                'rate' => 5.0,
+                'start' => now()->subDay(),
+        ]);
+
+        // Payment
+        $post = ['amount' => '10', 'currency' => 'CHF', 'methodId' => 'creditcard'];
+        $response = $this->actingAs($user)->post("api/v4/payments", $post);
+        $response->assertStatus(200);
+
+        // Check that the payments table contains a new record with proper amount(s)
+        $payment = $wallet->payments()->first();
+        $this->assertSame(1000 + intval(round(1000 * $vatRate->rate / 100)), $payment->amount);
+        $this->assertSame(1000, $payment->credit_amount);
+        $this->assertSame($payment->amount, $payment->currency_amount);
+        $this->assertSame('CHF', $payment->currency);
+        $this->assertSame($vatRate->id, $payment->vat_rate_id);
+        $this->assertSame('open', $payment->status);
+
+        $wallet->payments()->delete();
+        $wallet->balance = -1000;
+        $wallet->save();
+
+        // Top-up (mandate creation)
+        // Create a valid mandate first (expect an extra payment)
+        $this->createMandate($wallet, ['amount' => 20.10, 'balance' => 0]);
+
+        // Check that the payments table contains a new record with proper amount(s)
+        $payment = $wallet->payments()->first();
+        $this->assertSame(2010 + intval(round(2010 * $vatRate->rate / 100)), $payment->amount);
+        $this->assertSame(2010, $payment->credit_amount);
+        $this->assertSame($payment->amount, $payment->currency_amount);
+        $this->assertSame($vatRate->id, $payment->vat_rate_id);
+
+        $wallet->payments()->delete();
+        $wallet->balance = -1000;
+        $wallet->save();
+
+        // Top-up (recurring payment)
+        // Expect a recurring payment as we have a valid mandate at this point
+        // and the balance is below the threshold
+        $this->assertTrue(PaymentsController::topUpWallet($wallet));
+
+        // Check that the payments table contains a new record with proper amount(s)
+        $payment = $wallet->payments()->first();
+        $this->assertSame(2010 + intval(round(2010 * $vatRate->rate / 100)), $payment->amount);
+        $this->assertSame(2010, $payment->credit_amount);
+        $this->assertSame($payment->amount, $payment->currency_amount);
+        $this->assertSame($vatRate->id, $payment->vat_rate_id);
+    }
+
+    /**
      * Test refund/chargeback handling by the webhook
      *
      * @group mollie
@@ -716,6 +787,7 @@ class PaymentsMollieTest extends TestCase
                 'id' => 'tr_123456',
                 'status' => PaymentProvider::STATUS_PAID,
                 'amount' => 123,
+                'credit_amount' => 123,
                 'currency_amount' => 123,
                 'currency' => 'CHF',
                 'type' => PaymentProvider::TYPE_ONEOFF,
@@ -874,6 +946,7 @@ class PaymentsMollieTest extends TestCase
                 'id' => 'tr_123456',
                 'status' => PaymentProvider::STATUS_PAID,
                 'amount' => 1234,
+                'credit_amount' => 1234,
                 'currency_amount' => 1117,
                 'currency' => 'EUR',
                 'type' => PaymentProvider::TYPE_ONEOFF,
@@ -966,7 +1039,6 @@ class PaymentsMollieTest extends TestCase
 
         $this->stopBrowser();
     }
-
 
     /**
      * Test listing a pending payment

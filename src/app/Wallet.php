@@ -67,6 +67,109 @@ class Wallet extends Model
     }
 
     /**
+     * Add an award to this wallet's balance.
+     *
+     * @param int|\App\Payment $amount      The amount of award (in cents) or Payment object
+     * @param string           $description The transaction description
+     *
+     * @return Wallet Self
+     */
+    public function award(int|Payment $amount, string $description = ''): Wallet
+    {
+        return $this->balanceUpdate(Transaction::WALLET_AWARD, $amount, $description);
+    }
+
+    /**
+     * Charge a specific entitlement (for use on entitlement delete).
+     *
+     * @param \App\Entitlement $entitlement The entitlement.
+     */
+    public function chargeEntitlement(Entitlement $entitlement): void
+    {
+        // Sanity checks
+        if ($entitlement->trashed() || $entitlement->wallet->id != $this->id || !$this->owner) {
+            return;
+        }
+
+        // Start calculating the costs for the consumption of this entitlement if the
+        // existing consumption spans >= 14 days.
+        //
+        // Effect is that anything's free for the first 14 days
+        if ($entitlement->created_at >= Carbon::now()->subDays(14)) {
+            return;
+        }
+
+        if ($this->owner->isDegraded()) {
+            return;
+        }
+
+        $now = Carbon::now();
+
+        // Determine if we're still within the trial period
+        $trial = $this->trialInfo();
+        if (
+            !empty($trial)
+            && $entitlement->updated_at < $trial['end']
+            && in_array($entitlement->sku_id, $trial['skus'])
+        ) {
+            if ($trial['end'] >= $now) {
+                return;
+            }
+
+            $entitlement->updated_at = $trial['end'];
+        }
+
+        // get the discount rate applied to the wallet.
+        $discount = $this->getDiscountRate();
+
+        // just in case this had not been billed yet, ever
+        $diffInMonths = $entitlement->updated_at->diffInMonths($now);
+        $cost = (int) ($entitlement->cost * $discount * $diffInMonths);
+        $fee = (int) ($entitlement->fee * $diffInMonths);
+
+        // this moves the hypothetical updated at forward to however many months past the original
+        $updatedAt = $entitlement->updated_at->copy()->addMonthsWithoutOverflow($diffInMonths);
+
+        // now we have the diff in days since the last "billed" period end.
+        // This may be an entitlement paid up until February 28th, 2020, with today being March
+        // 12th 2020. Calculating the costs for the entitlement is based on the daily price
+
+        // the price per day is based on the number of days in the last month
+        // or the current month if the period does not overlap with the previous month
+        // FIXME: This really should be simplified to $daysInMonth=30
+
+        $diffInDays = $updatedAt->diffInDays($now);
+
+        if ($now->day >= $diffInDays) {
+            $daysInMonth = $now->daysInMonth;
+        } else {
+            $daysInMonth = \App\Utils::daysInLastMonth();
+        }
+
+        $pricePerDay = $entitlement->cost / $daysInMonth;
+        $feePerDay = $entitlement->fee / $daysInMonth;
+
+        $cost += (int) (round($pricePerDay * $discount * $diffInDays, 0));
+        $fee += (int) (round($feePerDay * $diffInDays, 0));
+
+        $profit = $cost - $fee;
+
+        if ($profit != 0 && $this->owner->tenant && ($wallet = $this->owner->tenant->wallet())) {
+            $desc = "Charged user {$this->owner->email}";
+            $method = $profit > 0 ? 'credit' : 'debit';
+            $wallet->{$method}(abs($profit), $desc);
+        }
+
+        if ($cost == 0) {
+            return;
+        }
+
+        // TODO: Create per-entitlement transaction record?
+
+        $this->debit($cost);
+    }
+
+    /**
      * Charge entitlements in the wallet
      *
      * @param bool $apply Set to false for a dry-run mode
@@ -230,6 +333,19 @@ class Wallet extends Model
     }
 
     /**
+     * Chargeback an amount of pecunia from this wallet's balance.
+     *
+     * @param int|\App\Payment $amount      The amount of pecunia to charge back (in cents) or Payment object
+     * @param string           $description The transaction description
+     *
+     * @return Wallet Self
+     */
+    public function chargeback(int|Payment $amount, string $description = ''): Wallet
+    {
+        return $this->balanceUpdate(Transaction::WALLET_CHARGEBACK, $amount, $description);
+    }
+
+    /**
      * Controllers of this wallet.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
@@ -247,64 +363,28 @@ class Wallet extends Model
     /**
      * Add an amount of pecunia to this wallet's balance.
      *
-     * @param int    $amount      The amount of pecunia to add (in cents).
-     * @param string $description The transaction description
+     * @param int|\App\Payment $amount      The amount of pecunia to add (in cents) or Payment object
+     * @param string           $description The transaction description
      *
      * @return Wallet Self
      */
-    public function credit(int $amount, string $description = ''): Wallet
+    public function credit(int|Payment $amount, string $description = ''): Wallet
     {
-        $this->balance += $amount;
-
-        $this->save();
-
-        Transaction::create(
-            [
-                'object_id' => $this->id,
-                'object_type' => Wallet::class,
-                'type' => Transaction::WALLET_CREDIT,
-                'amount' => $amount,
-                'description' => $description
-            ]
-        );
-
-        return $this;
+        return $this->balanceUpdate(Transaction::WALLET_CREDIT, $amount, $description);
     }
 
     /**
      * Deduct an amount of pecunia from this wallet's balance.
      *
-     * @param int    $amount      The amount of pecunia to deduct (in cents).
-     * @param string $description The transaction description
-     * @param array  $eTIDs       List of transaction IDs for the individual entitlements
-     *                            that make up this debit record, if any.
+     * @param int|\App\Payment $amount      The amount of pecunia to deduct (in cents) or Payment object
+     * @param string           $description The transaction description
+     * @param array            $eTIDs       List of transaction IDs for the individual entitlements
+     *                                      that make up this debit record, if any.
      * @return Wallet Self
      */
-    public function debit(int $amount, string $description = '', array $eTIDs = []): Wallet
+    public function debit(int|Payment $amount, string $description = '', array $eTIDs = []): Wallet
     {
-        if ($amount == 0) {
-            return $this;
-        }
-
-        $this->balance -= $amount;
-
-        $this->save();
-
-        $transaction = Transaction::create(
-            [
-                'object_id' => $this->id,
-                'object_type' => Wallet::class,
-                'type' => Transaction::WALLET_DEBIT,
-                'amount' => $amount * -1,
-                'description' => $description
-            ]
-        );
-
-        if (!empty($eTIDs)) {
-            Transaction::whereIn('id', $eTIDs)->update(['transaction_id' => $transaction->id]);
-        }
-
-        return $this;
+        return $this->balanceUpdate(Transaction::WALLET_DEBIT, $amount, $description, $eTIDs);
     }
 
     /**
@@ -411,6 +491,19 @@ class Wallet extends Model
     }
 
     /**
+     * Add a penalty to this wallet's balance.
+     *
+     * @param int|\App\Payment $amount      The amount of penalty (in cents) or Payment object
+     * @param string           $description The transaction description
+     *
+     * @return Wallet Self
+     */
+    public function penalty(int|Payment $amount, string $description = ''): Wallet
+    {
+        return $this->balanceUpdate(Transaction::WALLET_PENALTY, $amount, $description);
+    }
+
+    /**
      * Plan of the wallet.
      *
      * @return ?\App\Plan
@@ -434,6 +527,49 @@ class Wallet extends Model
         if ($this->controllers->contains($user)) {
             $this->controllers()->detach($user);
         }
+    }
+
+    /**
+     * Refund an amount of pecunia from this wallet's balance.
+     *
+     * @param int|\App\Payment $amount      The amount of pecunia to refund (in cents) or Payment object
+     * @param string           $description The transaction description
+     *
+     * @return Wallet Self
+     */
+    public function refund($amount, string $description = ''): Wallet
+    {
+        return $this->balanceUpdate(Transaction::WALLET_REFUND, $amount, $description);
+    }
+
+    /**
+     * Get the VAT rate for the wallet owner country.
+     *
+     * @param ?\DateTime $start Get the rate valid for the specified date-time,
+     *                          without it the current rate will be returned (if exists).
+     *
+     * @return ?\App\VatRate VAT rate
+     */
+    public function vatRate(\DateTime $start = null): ?VatRate
+    {
+        $owner = $this->owner;
+
+        // Make it working with deleted accounts too
+        if (!$owner) {
+            $owner = $this->owner()->withTrashed()->first();
+        }
+
+        $country = $owner->getSetting('country');
+
+        if (!$country) {
+            return null;
+        }
+
+        return VatRate::where('country', $country)
+            ->where('start', '<=', ($start ?: now())->format('Y-m-d h:i:s'))
+            ->orderByDesc('start')
+            ->limit(1)
+            ->first();
     }
 
     /**
@@ -555,5 +691,43 @@ class Wallet extends Model
         DB::commit();
 
         return $charges;
+    }
+
+    /**
+     * Update the wallet balance, and create a transaction record
+     */
+    protected function balanceUpdate(string $type, int|Payment $amount, $description = null, array $eTIDs = [])
+    {
+        if ($amount instanceof Payment) {
+            $amount = $amount->credit_amount;
+        }
+
+        if ($amount === 0) {
+            return $this;
+        }
+
+        if (in_array($type, [Transaction::WALLET_CREDIT, Transaction::WALLET_AWARD])) {
+            $amount = abs($amount);
+        } else {
+            $amount = abs($amount) * -1;
+        }
+
+        $this->balance += $amount;
+        $this->save();
+
+        $transaction = Transaction::create([
+                'user_email' => \App\Utils::userEmailOrNull(),
+                'object_id' => $this->id,
+                'object_type' => Wallet::class,
+                'type' => $type,
+                'amount' => $amount,
+                'description' => $description,
+        ]);
+
+        if (!empty($eTIDs)) {
+            Transaction::whereIn('id', $eTIDs)->update(['transaction_id' => $transaction->id]);
+        }
+
+        return $this;
     }
 }

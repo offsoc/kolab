@@ -180,6 +180,7 @@ class WalletsTest extends TestCase
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
                 'amount' => 1111,
+                'credit_amount' => 1111,
                 'currency' => 'CHF',
                 'currency_amount' => 1111,
         ]);

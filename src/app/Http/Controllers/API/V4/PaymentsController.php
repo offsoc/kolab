@@ -63,6 +63,8 @@ class PaymentsController extends Controller
         // we'll top-up the wallet with the configured auto-payment amount
         if ($wallet->balance < intval($request->balance * 100)) {
             $mandate['amount'] = intval($request->amount * 100);
+
+            self::addTax($wallet, $mandate);
         }
 
         $provider = PaymentProvider::factory($wallet);
@@ -227,6 +229,8 @@ class PaymentsController extends Controller
             'description' => Tenant::getConfig($user->tenant_id, 'app.name') . ' Payment',
         ];
 
+        self::addTax($wallet, $request);
+
         $provider = PaymentProvider::factory($wallet, $currency);
 
         $result = $provider->payment($wallet, $request);
@@ -339,6 +343,8 @@ class PaymentsController extends Controller
             'methodId' => PaymentProvider::METHOD_CREDITCARD,
             'description' => Tenant::getConfig($wallet->owner->tenant_id, 'app.name') . ' Recurring Payment',
         ];
+
+        self::addTax($wallet, $request);
 
         $result = $provider->payment($wallet, $request);
 
@@ -483,5 +489,31 @@ class PaymentsController extends Controller
             'hasMore' => $hasMore,
             'page' => $page,
         ]);
+    }
+
+    /**
+     * Calculates tax for the payment, fills the request with additional properties
+     */
+    protected static function addTax(Wallet $wallet, array &$request): void
+    {
+        $request['vat_rate_id'] = null;
+        $request['credit_amount'] = $request['amount'];
+
+        if ($rate = $wallet->vatRate()) {
+            $request['vat_rate_id'] = $rate->id;
+
+            switch (\config('app.vat.mode')) {
+            case 1:
+                // In this mode tax is added on top of the payment. The amount
+                // to pay grows, but we keep wallet balance without tax.
+                $request['amount'] = $request['amount'] + round($request['amount'] * $rate->rate / 100);
+                break;
+
+            default:
+                // In this mode tax is "swallowed" by the vendor. The payment
+                // amount does not change
+                break;
+            }
+        }
     }
 }

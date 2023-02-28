@@ -352,7 +352,7 @@ class Coinbase extends \App\Providers\PaymentProvider
         $description = 'Payment';
         $description .= " transaction {$payment->id} using Coinbase";
 
-        $payment->wallet->credit($payment->amount, $description);
+        $payment->wallet->credit($payment, $description);
     }
 
     /**

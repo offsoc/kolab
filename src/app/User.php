@@ -787,7 +787,7 @@ class User extends Authenticatable
 
             // Check 2FA - Companion App
             if (!$error && $user->mfaEnabled()) {
-                $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+                $attempt = AuthAttempt::recordAuthAttempt($user, $clientIP);
                 if (!$attempt->waitFor2FA()) {
                     $error = AuthAttempt::REASON_2FA;
                 }
@@ -796,7 +796,7 @@ class User extends Authenticatable
 
         if ($error) {
             if ($user && empty($attempt)) {
-                $attempt = \App\AuthAttempt::recordAuthAttempt($user, $clientIP);
+                $attempt = AuthAttempt::recordAuthAttempt($user, $clientIP);
                 if (!$attempt->isAccepted()) {
                     $attempt->deny($error);
                     $attempt->save();

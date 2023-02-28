@@ -111,7 +111,7 @@ class StatsController extends \App\Http\Controllers\Controller
         //       as I believe this way we have more precise amounts for this use-case (and default currency)
 
         $query = DB::table('payments')
-            ->selectRaw("date_format(updated_at, '%Y-%v') as period, sum(amount) as amount, wallets.currency")
+            ->selectRaw("date_format(updated_at, '%Y-%v') as period, sum(credit_amount) as amount, wallets.currency")
             ->join('wallets', 'wallets.id', '=', 'wallet_id')
             ->where('updated_at', '>=', $start->toDateString())
             ->where('status', PaymentProvider::STATUS_PAID)

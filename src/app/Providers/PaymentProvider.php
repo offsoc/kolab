@@ -100,7 +100,9 @@ abstract class PaymentProvider
      *
      * @param \App\Wallet $wallet  The wallet
      * @param array       $payment Payment data:
-     *                             - amount: Value in cents
+     *                             - amount: Value in cents (wallet currency)
+     *                             - credit_amount: Balance'able base amount in cents (wallet currency)
+     *                             - vat_rate_id: VAT rate id
      *                             - currency: The operation currency
      *                             - description: Operation desc.
      *                             - methodId: Payment method
@@ -155,7 +157,9 @@ abstract class PaymentProvider
      *
      * @param \App\Wallet $wallet  The wallet
      * @param array       $payment Payment data:
-     *                             - amount: Value in cents
+     *                             - amount: Value in cents (wallet currency)
+     *                             - credit_amount: Balance'able base amount in cents (wallet currency)
+     *                             - vat_rate_id: Vat rate id
      *                             - currency: The operation currency
      *                             - type: first/oneoff/recurring
      *                             - description: Operation description
@@ -184,19 +188,10 @@ abstract class PaymentProvider
      */
     protected function storePayment(array $payment, $wallet_id): Payment
     {
-        $db_payment = new Payment();
-        $db_payment->id = $payment['id'];
-        $db_payment->description = $payment['description'] ?? '';
-        $db_payment->status = $payment['status'] ?? self::STATUS_OPEN;
-        $db_payment->amount = $payment['amount'] ?? 0;
-        $db_payment->type = $payment['type'];
-        $db_payment->wallet_id = $wallet_id;
-        $db_payment->provider = $this->name();
-        $db_payment->currency = $payment['currency'];
-        $db_payment->currency_amount = $payment['currency_amount'];
-        $db_payment->save();
+        $payment['wallet_id'] = $wallet_id;
+        $payment['provider'] = $this->name();
 
-        return $db_payment;
+        return Payment::createFromArray($payment);
     }
 
     /**
@@ -211,53 +206,6 @@ abstract class PaymentProvider
     protected function exchange(int $amount, string $sourceCurrency, string $targetCurrency): int
     {
         return intval(round($amount * \App\Utils::exchangeRate($sourceCurrency, $targetCurrency)));
-    }
-
-    /**
-     * Deduct an amount of pecunia from the wallet.
-     * Creates a payment and transaction records for the refund/chargeback operation.
-     *
-     * @param \App\Wallet $wallet A wallet object
-     * @param array       $refund A refund or chargeback data (id, type, amount, description)
-     *
-     * @return void
-     */
-    protected function storeRefund(Wallet $wallet, array $refund): void
-    {
-        if (empty($refund) || empty($refund['amount'])) {
-            return;
-        }
-
-        // Preserve originally refunded amount
-        $refund['currency_amount'] = $refund['amount'] * -1;
-
-        // Convert amount to wallet currency
-        // TODO We should possibly be using the same exchange rate as for the original payment?
-        $amount = $this->exchange($refund['amount'], $refund['currency'], $wallet->currency);
-
-        $wallet->balance -= $amount;
-        $wallet->save();
-
-        if ($refund['type'] == self::TYPE_CHARGEBACK) {
-            $transaction_type = Transaction::WALLET_CHARGEBACK;
-        } else {
-            $transaction_type = Transaction::WALLET_REFUND;
-        }
-
-        Transaction::create([
-                'object_id' => $wallet->id,
-                'object_type' => Wallet::class,
-                'type' => $transaction_type,
-                'amount' => $amount * -1,
-                'description' => $refund['description'] ?? '',
-        ]);
-
-        $refund['status'] = self::STATUS_PAID;
-        $refund['amount'] = -1 * $amount;
-
-        // FIXME: Refunds/chargebacks are out of the reseller comissioning for now
-
-        $this->storePayment($refund, $wallet->id);
     }
 
     /**

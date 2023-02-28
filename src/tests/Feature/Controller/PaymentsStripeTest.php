@@ -8,6 +8,7 @@ use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
 use App\WalletSetting;
+use App\VatRate;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
@@ -26,14 +27,18 @@ class PaymentsStripeTest extends TestCase
 
         // All tests in this file use Stripe
         \config(['services.payment_provider' => 'stripe']);
+        \config(['app.vat.mode' => 0]);
+
+        $this->deleteTestUser('payment-test@' . \config('app.domain'));
 
         $john = $this->getTestUser('john@kolab.org');
         $wallet = $john->wallets()->first();
-        Payment::where('wallet_id', $wallet->id)->delete();
         Wallet::where('id', $wallet->id)->update(['balance' => 0]);
         WalletSetting::where('wallet_id', $wallet->id)->delete();
         Transaction::where('object_id', $wallet->id)
             ->where('type', Transaction::WALLET_CREDIT)->delete();
+        Payment::query()->delete();
+        VatRate::query()->delete();
     }
 
     /**
@@ -41,13 +46,16 @@ class PaymentsStripeTest extends TestCase
      */
     public function tearDown(): void
     {
+        $this->deleteTestUser('payment-test@' . \config('app.domain'));
+
         $john = $this->getTestUser('john@kolab.org');
         $wallet = $john->wallets()->first();
-        Payment::where('wallet_id', $wallet->id)->delete();
         Wallet::where('id', $wallet->id)->update(['balance' => 0]);
         WalletSetting::where('wallet_id', $wallet->id)->delete();
         Transaction::where('object_id', $wallet->id)
             ->where('type', Transaction::WALLET_CREDIT)->delete();
+        Payment::query()->delete();
+        VatRate::query()->delete();
 
         parent::tearDown();
     }
@@ -699,18 +707,109 @@ class PaymentsStripeTest extends TestCase
     }
 
     /**
-     * Generate Stripe-Signature header for a webhook payload
+     * Test payment/top-up with VAT_MODE=1
+     *
+     * @group stripe
      */
-    protected function webhookRequest($post)
+    public function testPaymentsWithVatModeOne(): void
     {
-        $secret = \config('services.stripe.webhook_secret');
-        $ts = time();
+        \config(['app.vat.mode' => 1]);
 
-        $payload = "$ts." . json_encode($post);
-        $sig = sprintf('t=%d,v1=%s', $ts, \hash_hmac('sha256', $payload, $secret));
+        $user = $this->getTestUser('payment-test@' . \config('app.domain'));
+        $user->setSetting('country', 'US');
+        $wallet = $user->wallets()->first();
+        $vatRate = VatRate::create([
+                'country' => 'US',
+                'rate' => 5.0,
+                'start' => now()->subDay(),
+        ]);
 
-        return $this->withHeaders(['Stripe-Signature' => $sig])
-            ->json('POST', "api/webhooks/payment/stripe", $post);
+        // Payment
+        $post = ['amount' => '10', 'currency' => 'CHF', 'methodId' => 'creditcard'];
+        $response = $this->actingAs($user)->post("api/v4/payments", $post);
+        $response->assertStatus(200);
+
+        // Check that the payments table contains a new record with proper amount(s)
+        $payment = $wallet->payments()->first();
+        $this->assertSame(1000 + intval(round(1000 * $vatRate->rate / 100)), $payment->amount);
+        $this->assertSame(1000, $payment->credit_amount);
+        $this->assertSame($payment->amount, $payment->currency_amount);
+        $this->assertSame('CHF', $payment->currency);
+        $this->assertSame($vatRate->id, $payment->vat_rate_id);
+        $this->assertSame('open', $payment->status);
+
+        $wallet->payments()->delete();
+        $wallet->balance = -1000;
+        $wallet->save();
+
+        // Top-up (mandate creation)
+        // Create a valid mandate first (expect an extra payment)
+        $post = ['amount' => 20.10, 'balance' => 0, 'methodId' => PaymentProvider::METHOD_CREDITCARD];
+        $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
+        $response->assertStatus(200);
+
+        // Check that the payments table contains a new record with proper amount(s)
+        // Stripe mandates always use amount=0
+        $payment = $wallet->payments()->first();
+        $this->assertSame(0, $payment->amount);
+        $this->assertSame(0, $payment->credit_amount);
+        $this->assertSame(0, $payment->currency_amount);
+        $this->assertSame(null, $payment->vat_rate_id);
+
+        $wallet->payments()->delete();
+        $wallet->balance = -1000;
+        $wallet->save();
+
+        // Top-up (recurring payment)
+        // Expect a recurring payment as we have a valid mandate at this point
+        // and the balance is below the threshold
+        $wallet->setSettings(['stripe_mandate_id' => 'AAA']);
+        $setupIntent = json_encode([
+                "id" => "AAA",
+                "object" => "setup_intent",
+                "created" => 123456789,
+                "payment_method" => "pm_YYY",
+                "status" => "succeeded",
+                "usage" => "off_session",
+                "customer" => null
+        ]);
+
+        $paymentMethod = json_encode([
+                "id" => "pm_YYY",
+                "object" => "payment_method",
+                "card" => [
+                    "brand" => "visa",
+                    "country" => "US",
+                    "last4" => "4242"
+                ],
+                "created" => 123456789,
+                "type" => "card"
+        ]);
+
+        $paymentIntent = json_encode([
+                "id" => "pi_XX",
+                "object" => "payment_intent",
+                "created" => 123456789,
+                "amount" => 2010 + intval(round(2010 * $vatRate->rate / 100)),
+                "currency" => "chf",
+                "description" => "Recurring Payment"
+        ]);
+
+        $client = $this->mockStripe();
+        $client->addResponse($setupIntent);
+        $client->addResponse($paymentMethod);
+        $client->addResponse($setupIntent);
+        $client->addResponse($paymentIntent);
+
+        $result = PaymentsController::topUpWallet($wallet);
+        $this->assertTrue($result);
+
+        // Check that the payments table contains a new record with proper amount(s)
+        $payment = $wallet->payments()->first();
+        $this->assertSame(2010 + intval(round(2010 * $vatRate->rate / 100)), $payment->amount);
+        $this->assertSame(2010, $payment->credit_amount);
+        $this->assertSame($payment->amount, $payment->currency_amount);
+        $this->assertSame($vatRate->id, $payment->vat_rate_id);
     }
 
     /**
@@ -741,5 +840,20 @@ class PaymentsStripeTest extends TestCase
 
         $this->assertCount(1, $json);
         $this->assertSame('creditcard', $json[0]['id']);
+    }
+
+    /**
+     * Generate Stripe-Signature header for a webhook payload
+     */
+    protected function webhookRequest($post)
+    {
+        $secret = \config('services.stripe.webhook_secret');
+        $ts = time();
+
+        $payload = "$ts." . json_encode($post);
+        $sig = sprintf('t=%d,v1=%s', $ts, \hash_hmac('sha256', $payload, $secret));
+
+        return $this->withHeaders(['Stripe-Signature' => $sig])
+            ->json('POST', "api/webhooks/payment/stripe", $post);
     }
 }
