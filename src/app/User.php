@@ -148,6 +148,9 @@ class User extends Authenticatable
 
         foreach ($plan->packages as $package) {
             if ($package->isDomain()) {
+                if (!$domain) {
+                    throw new \Exception("Attempted to assign a domain package without passing a domain.");
+                }
                 $domain->assignPackage($package, $this);
             } else {
                 $this->assignPackage($package);
