@@ -140,7 +140,7 @@ const app = new Vue({
             }
 
             if (dashboard !== false) {
-                this.$router.push(routerState.afterLogin || { name: 'dashboard' })
+                this.$router.push(routerState.afterLogin || { name: response.redirect || 'dashboard' })
             }
 
             routerState.afterLogin = null
