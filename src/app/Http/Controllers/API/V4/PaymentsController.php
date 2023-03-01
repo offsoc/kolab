@@ -385,6 +385,11 @@ class PaymentsController extends Controller
         }
         $mandate['minAmount'] = 100; // test
 
+        // Unrestrict the wallet owner if mandate is valid
+        if (!empty($mandate['isValid']) && $wallet->owner->isRestricted()) {
+            $wallet->owner->unrestrict();
+        }
+
         return $mandate;
     }
 
