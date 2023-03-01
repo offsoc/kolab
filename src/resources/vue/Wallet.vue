@@ -378,6 +378,10 @@
                     axios.get('/api/v4/payments/methods', { params: { type }, loader })
                         .then(response => {
                             this.paymentMethods = response.data
+                            if (this.paymentMethods.length == 1) {
+                                this.nextForm = 'auto';
+                                this.selectPaymentMethod(this.paymentMethods[0]);
+                            }
                         })
                 })
             },
