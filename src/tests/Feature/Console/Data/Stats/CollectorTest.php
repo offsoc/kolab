@@ -3,7 +3,7 @@
 namespace Tests\Feature\Console\Data\Stats;
 
 use App\Http\Controllers\API\V4\Admin\StatsController;
-use App\Providers\PaymentProvider;
+use App\Payment;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -51,10 +51,10 @@ class CollectorTest extends TestCase
         \App\Payment::create([
                 'id' => 'test1',
                 'description' => '',
-                'status' => PaymentProvider::STATUS_PAID,
+                'status' => Payment::STATUS_PAID,
                 'amount' => 1000,
                 'credit_amount' => 1000,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'type' => Payment::TYPE_ONEOFF,
                 'wallet_id' => $wallet->id,
                 'provider' => 'mollie',
                 'currency' => $wallet->currency,

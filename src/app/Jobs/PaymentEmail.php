@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Payment;
-use App\Providers\PaymentProvider;
 use App\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -65,12 +64,12 @@ class PaymentEmail implements ShouldQueue
             return;
         }
 
-        if ($this->payment->status == PaymentProvider::STATUS_PAID) {
+        if ($this->payment->status == Payment::STATUS_PAID) {
             $mail = new \App\Mail\PaymentSuccess($this->payment, $this->controller);
             $label = "Success";
         } elseif (
-            $this->payment->status == PaymentProvider::STATUS_EXPIRED
-            || $this->payment->status == PaymentProvider::STATUS_FAILED
+            $this->payment->status == Payment::STATUS_EXPIRED
+            || $this->payment->status == Payment::STATUS_FAILED
         ) {
             $mail = new \App\Mail\PaymentFailure($this->payment, $this->controller);
             $label = "Failure";

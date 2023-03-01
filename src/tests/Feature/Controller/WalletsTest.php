@@ -4,7 +4,6 @@ namespace Tests\Feature\Controller;
 
 use App\Http\Controllers\API\V4\WalletsController;
 use App\Payment;
-use App\Providers\PaymentProvider;
 use App\Transaction;
 use Carbon\Carbon;
 use Tests\TestCase;
@@ -174,8 +173,8 @@ class WalletsTest extends TestCase
         $date = Carbon::create(intval(date('Y')) - 1, 4, 30);
         $payment = Payment::create([
                 'id' => 'AAA1',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_ONEOFF,
                 'description' => 'Paid in April',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',

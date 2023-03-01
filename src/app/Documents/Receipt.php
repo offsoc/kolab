@@ -3,7 +3,6 @@
 namespace App\Documents;
 
 use App\Payment;
-use App\Providers\PaymentProvider;
 use App\User;
 use App\Wallet;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -162,7 +161,7 @@ class Receipt
         } else {
             $customer = $this->customerData();
             $items = $this->wallet->payments()
-                ->where('status', PaymentProvider::STATUS_PAID)
+                ->where('status', Payment::STATUS_PAID)
                 ->where('updated_at', '>=', $start)
                 ->where('updated_at', '<', $end)
                 ->where('amount', '<>', 0)
@@ -188,9 +187,9 @@ class Receipt
 
             $type = $item->type ?? null;
 
-            if ($type == PaymentProvider::TYPE_REFUND) {
+            if ($type == Payment::TYPE_REFUND) {
                 $description = \trans('documents.receipt-refund');
-            } elseif ($type == PaymentProvider::TYPE_CHARGEBACK) {
+            } elseif ($type == Payment::TYPE_CHARGEBACK) {
                 $description = \trans('documents.receipt-chargeback');
             } else {
                 $description = \trans('documents.receipt-item-desc', ['site' => $appName]);

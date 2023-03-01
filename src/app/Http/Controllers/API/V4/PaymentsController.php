@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
+use App\Payment;
 use App\Providers\PaymentProvider;
 use App\Tenant;
 use App\Wallet;
-use App\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -169,14 +169,14 @@ class PaymentsController extends Controller
         // It has to be at least minimum payment amount and must cover current debt
         if (
             $wallet->balance < 0
-            && $wallet->balance <= PaymentProvider::MIN_AMOUNT * -1
+            && $wallet->balance <= Payment::MIN_AMOUNT * -1
             && $wallet->balance + $amount < 0
         ) {
             return ['amount' => \trans('validation.minamountdebt')];
         }
 
-        if ($amount < PaymentProvider::MIN_AMOUNT) {
-            $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
+        if ($amount < Payment::MIN_AMOUNT) {
+            $min = $wallet->money(Payment::MIN_AMOUNT);
             return ['amount' => \trans('validation.minamount', ['amount' => $min])];
         }
 
@@ -213,8 +213,8 @@ class PaymentsController extends Controller
         $amount = (int) ($request->amount * 100);
 
         // Validate the minimum value
-        if ($amount < PaymentProvider::MIN_AMOUNT) {
-            $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
+        if ($amount < Payment::MIN_AMOUNT) {
+            $min = $wallet->money(Payment::MIN_AMOUNT);
             $errors = ['amount' => \trans('validation.minamount', ['amount' => $min])];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
@@ -222,7 +222,7 @@ class PaymentsController extends Controller
         $currency = $request->currency;
 
         $request = [
-            'type' => PaymentProvider::TYPE_ONEOFF,
+            'type' => Payment::TYPE_ONEOFF,
             'currency' => $currency,
             'amount' => $amount,
             'methodId' => $request->methodId ?: PaymentProvider::METHOD_CREDITCARD,
@@ -337,7 +337,7 @@ class PaymentsController extends Controller
         }
 
         $request = [
-            'type' => PaymentProvider::TYPE_RECURRING,
+            'type' => Payment::TYPE_RECURRING,
             'currency' => $wallet->currency,
             'amount' => $amount,
             'methodId' => PaymentProvider::METHOD_CREDITCARD,
@@ -366,7 +366,7 @@ class PaymentsController extends Controller
         // Get the Mandate info
         $mandate = (array) $provider->getMandate($wallet);
 
-        $mandate['amount'] = (int) (PaymentProvider::MIN_AMOUNT / 100);
+        $mandate['amount'] = (int) (Payment::MIN_AMOUNT / 100);
         $mandate['balance'] = 0;
         $mandate['isDisabled'] = !empty($mandate['id']) && $settings['mandate_disabled'];
 
@@ -415,11 +415,11 @@ class PaymentsController extends Controller
         $wallet = $user->wallets()->first();
 
         $exists = Payment::where('wallet_id', $wallet->id)
-            ->where('type', PaymentProvider::TYPE_ONEOFF)
+            ->where('type', Payment::TYPE_ONEOFF)
             ->whereIn('status', [
-                    PaymentProvider::STATUS_OPEN,
-                    PaymentProvider::STATUS_PENDING,
-                    PaymentProvider::STATUS_AUTHORIZED
+                    Payment::STATUS_OPEN,
+                    Payment::STATUS_PENDING,
+                    Payment::STATUS_AUTHORIZED
             ])
             ->exists();
 
@@ -447,11 +447,11 @@ class PaymentsController extends Controller
         $page = intval(request()->input('page')) ?: 1;
         $hasMore = false;
         $result = Payment::where('wallet_id', $wallet->id)
-            ->where('type', PaymentProvider::TYPE_ONEOFF)
+            ->where('type', Payment::TYPE_ONEOFF)
             ->whereIn('status', [
-                    PaymentProvider::STATUS_OPEN,
-                    PaymentProvider::STATUS_PENDING,
-                    PaymentProvider::STATUS_AUTHORIZED
+                    Payment::STATUS_OPEN,
+                    Payment::STATUS_PENDING,
+                    Payment::STATUS_AUTHORIZED
             ])
             ->orderBy('created_at', 'desc')
             ->limit($pageSize + 1)

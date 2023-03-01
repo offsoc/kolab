@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Stories;
 
+use App\Payment;
 use App\Policy\RateLimit;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -20,12 +21,12 @@ class RateLimitTest extends TestCase
         $this->setUpTest();
         $this->useServicesUrl();
 
-        \App\Payment::query()->delete();
+        Payment::query()->delete();
     }
 
     public function tearDown(): void
     {
-        \App\Payment::query()->delete();
+        Payment::query()->delete();
 
         parent::tearDown();
     }
@@ -163,12 +164,12 @@ class RateLimitTest extends TestCase
         $wallet = $this->publicDomainUser->wallets()->first();
 
         // Ensure there are no payments for the wallet
-        \App\Payment::where('wallet_id', $wallet->id)->delete();
+        Payment::where('wallet_id', $wallet->id)->delete();
 
         $payment = [
             'id' => \App\Utils::uuidInt(),
-            'status' => \App\Providers\PaymentProvider::STATUS_PAID,
-            'type' => \App\Providers\PaymentProvider::TYPE_ONEOFF,
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
             'description' => 'Paid in March',
             'wallet_id' => $wallet->id,
             'provider' => 'stripe',
@@ -178,7 +179,7 @@ class RateLimitTest extends TestCase
             'currency' => 'CHF',
         ];
 
-        \App\Payment::create($payment);
+        Payment::create($payment);
         $wallet->credit(1111);
 
         $request = [
@@ -201,7 +202,7 @@ class RateLimitTest extends TestCase
 
         // create a second payment
         $payment['id'] = \App\Utils::uuidInt();
-        \App\Payment::create($payment);
+        Payment::create($payment);
         $wallet->credit(1111);
 
         // the tenth request should now be allowed
@@ -251,12 +252,12 @@ class RateLimitTest extends TestCase
         $wallet = $this->publicDomainUser->wallets()->first();
 
         // Ensure there are no payments for the wallet
-        \App\Payment::where('wallet_id', $wallet->id)->delete();
+        Payment::where('wallet_id', $wallet->id)->delete();
 
         $payment = [
             'id' => \App\Utils::uuidInt(),
-            'status' => \App\Providers\PaymentProvider::STATUS_PAID,
-            'type' => \App\Providers\PaymentProvider::TYPE_ONEOFF,
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
             'description' => 'Paid in March',
             'wallet_id' => $wallet->id,
             'provider' => 'stripe',
@@ -266,7 +267,7 @@ class RateLimitTest extends TestCase
             'currency' => 'CHF',
         ];
 
-        \App\Payment::create($payment);
+        Payment::create($payment);
         $wallet->credit(1111);
 
         $request = [
@@ -300,7 +301,7 @@ class RateLimitTest extends TestCase
 
         $payment['id'] = \App\Utils::uuidInt();
 
-        \App\Payment::create($payment);
+        Payment::create($payment);
         $wallet->credit(1111);
 
         // the tenth request should now be allowed
@@ -395,12 +396,12 @@ class RateLimitTest extends TestCase
         $wallet = $this->domainOwner->wallets()->first();
 
         // Ensure there are no payments for the wallet
-        \App\Payment::where('wallet_id', $wallet->id)->delete();
+        Payment::where('wallet_id', $wallet->id)->delete();
 
         $payment = [
             'id' => \App\Utils::uuidInt(),
-            'status' => \App\Providers\PaymentProvider::STATUS_PAID,
-            'type' => \App\Providers\PaymentProvider::TYPE_ONEOFF,
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
             'description' => 'Paid in March',
             'wallet_id' => $wallet->id,
             'provider' => 'stripe',
@@ -410,7 +411,7 @@ class RateLimitTest extends TestCase
             'currency' => 'CHF',
         ];
 
-        \App\Payment::create($payment);
+        Payment::create($payment);
         $wallet->credit(1111);
 
         $request = [
@@ -443,7 +444,7 @@ class RateLimitTest extends TestCase
 
         // create a second payment
         $payment['id'] = \App\Utils::uuidInt();
-        \App\Payment::create($payment);
+        Payment::create($payment);
 
         $response = $this->post('api/webhooks/policy/ratelimit', $request);
         $response->assertStatus(200);

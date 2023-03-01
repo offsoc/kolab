@@ -4,7 +4,6 @@ namespace Tests\Feature\Controller\Reseller;
 
 use App\Http\Controllers\API\V4\Reseller\PaymentsController;
 use App\Payment;
-use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
 use App\WalletSetting;
@@ -90,7 +89,7 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame(2010, $payment->amount);
         $this->assertSame($wallet->id, $payment->wallet_id);
         $this->assertSame($reseller->tenant->title . " Auto-Payment Setup", $payment->description);
-        $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
+        $this->assertSame(Payment::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information
         $response = $this->actingAs($reseller)->get("api/v4/payments/mandate");
@@ -246,7 +245,7 @@ class PaymentsMollieTest extends TestCase
 
         $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
 
-        $response = $this->actingAs($reseller)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_ONEOFF);
+        $response = $this->actingAs($reseller)->get('api/v4/payments/methods?type=' . Payment::TYPE_ONEOFF);
         $response->assertStatus(200);
         $json = $response->json();
 

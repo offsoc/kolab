@@ -6,7 +6,6 @@ use App\Jobs\PaymentEmail;
 use App\Mail\PaymentFailure;
 use App\Mail\PaymentSuccess;
 use App\Payment;
-use App\Providers\PaymentProvider;
 use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -56,10 +55,10 @@ class PaymentEmailTest extends TestCase
         $payment->credit_amount = 100;
         $payment->currency_amount = 100;
         $payment->currency = 'CHF';
-        $payment->status = PaymentProvider::STATUS_PAID;
+        $payment->status = Payment::STATUS_PAID;
         $payment->description = 'test';
         $payment->provider = 'stripe';
-        $payment->type = PaymentProvider::TYPE_ONEOFF;
+        $payment->type = Payment::TYPE_ONEOFF;
         $payment->save();
 
         Mail::fake();
@@ -78,7 +77,7 @@ class PaymentEmailTest extends TestCase
             return $mail->hasTo('ext@email.tld') && !$mail->hasCc('ext@email.tld');
         });
 
-        $payment->status = PaymentProvider::STATUS_FAILED;
+        $payment->status = Payment::STATUS_FAILED;
         $payment->save();
 
         $job = new PaymentEmail($payment);
@@ -92,7 +91,7 @@ class PaymentEmailTest extends TestCase
             return $mail->hasTo('ext@email.tld') && !$mail->hasCc('ext@email.tld');
         });
 
-        $payment->status = PaymentProvider::STATUS_EXPIRED;
+        $payment->status = Payment::STATUS_EXPIRED;
         $payment->save();
 
         $job = new PaymentEmail($payment);
@@ -105,10 +104,10 @@ class PaymentEmailTest extends TestCase
         Mail::fake();
 
         $states = [
-            PaymentProvider::STATUS_OPEN,
-            PaymentProvider::STATUS_CANCELED,
-            PaymentProvider::STATUS_PENDING,
-            PaymentProvider::STATUS_AUTHORIZED,
+            Payment::STATUS_OPEN,
+            Payment::STATUS_CANCELED,
+            Payment::STATUS_PENDING,
+            Payment::STATUS_AUTHORIZED,
         ];
 
         foreach ($states as $state) {

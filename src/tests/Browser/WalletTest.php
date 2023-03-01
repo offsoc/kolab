@@ -3,7 +3,6 @@
 namespace Tests\Browser;
 
 use App\Payment;
-use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
 use Carbon\Carbon;
@@ -125,8 +124,8 @@ class WalletTest extends TestCaseDusk
         $date = Carbon::create(intval(date('Y')) - 1, 3, 30);
         $payment = Payment::create([
                 'id' => 'AAA1',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_ONEOFF,
                 'description' => 'Paid in March',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
@@ -142,8 +141,8 @@ class WalletTest extends TestCaseDusk
         $date = Carbon::create(intval(date('Y')) - 1, 4, 30);
         $payment = Payment::create([
                 'id' => 'AAA2',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_ONEOFF,
                 'description' => 'Paid in April',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',

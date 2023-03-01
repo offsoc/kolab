@@ -3,7 +3,7 @@
 namespace App\Console\Commands\Data\Stats;
 
 use App\Http\Controllers\API\V4\Admin\StatsController;
-use App\Providers\PaymentProvider;
+use App\Payment;
 use App\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -44,7 +44,7 @@ class CollectorCommand extends Command
         // A subquery to get the all wallets with a successful payment
         $payments = DB::table('payments')
             ->selectRaw('distinct wallet_id')
-            ->where('status', PaymentProvider::STATUS_PAID);
+            ->where('status', Payment::STATUS_PAID);
 
         // A subquery to get users' wallets (by entitlement) - one record per user
         $wallets = DB::table('entitlements')

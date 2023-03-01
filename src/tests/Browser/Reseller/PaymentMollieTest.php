@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Reseller;
 
-use App\Providers\PaymentProvider;
 use App\Wallet;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;

@@ -94,13 +94,13 @@ class PaymentsMollieEuroTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
+        $min = $wallet->money(Payment::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
         $this->assertMatchesRegularExpression("/[0-9.,]+ €\.$/", $json['errors']['amount']);
 
         // Test creating a mandate (negative balance, amount too small)
         Wallet::where('id', $wallet->id)->update(['balance' => -2000]);
-        $post = ['amount' => PaymentProvider::MIN_AMOUNT / 100, 'balance' => 0];
+        $post = ['amount' => Payment::MIN_AMOUNT / 100, 'balance' => 0];
         $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
         $response->assertStatus(422);
 
@@ -125,7 +125,7 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertSame(2010, $payment->amount);
         $this->assertSame($wallet->id, $payment->wallet_id);
         $this->assertSame($user->tenant->title . " Auto-Payment Setup", $payment->description);
-        $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
+        $this->assertSame(Payment::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information
         $response = $this->actingAs($user)->get("api/v4/payments/mandate");
@@ -335,7 +335,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
+        $min = $wallet->money(Payment::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
         $this->assertMatchesRegularExpression("/[0-9.,]+ €\.$/", $json['errors']['amount']);
 
@@ -387,7 +387,7 @@ class PaymentsMollieEuroTest extends TestCase
         $response = $this->post("api/webhooks/payment/mollie", $post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         $transaction = $wallet->transactions()
@@ -411,7 +411,7 @@ class PaymentsMollieEuroTest extends TestCase
         $response = $this->post("api/webhooks/payment/mollie", $post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         $mollie_response['status'] = 'paid';
@@ -421,14 +421,14 @@ class PaymentsMollieEuroTest extends TestCase
         $response = $this->post("api/webhooks/payment/mollie", $post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         // Test for payment failure
         Bus::fake();
 
         $payment->refresh();
-        $payment->status = PaymentProvider::STATUS_OPEN;
+        $payment->status = Payment::STATUS_OPEN;
         $payment->save();
 
         $mollie_response = [
@@ -494,7 +494,7 @@ class PaymentsMollieEuroTest extends TestCase
         // PaymentIntent already sets the status to 'paid', so we can test
         // immediately the balance update
         // Assert that email notification job has been dispatched
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->status);
         $this->assertEquals(2010, $wallet->fresh()->balance);
         $transaction = $wallet->transactions()
             ->where('type', Transaction::WALLET_CREDIT)->get()->last();
@@ -557,7 +557,7 @@ class PaymentsMollieEuroTest extends TestCase
         Bus::fake();
 
         $payment->refresh();
-        $payment->status = PaymentProvider::STATUS_OPEN;
+        $payment->status = Payment::STATUS_OPEN;
         $payment->save();
 
         $mollie_response = [
@@ -578,7 +578,7 @@ class PaymentsMollieEuroTest extends TestCase
         $response = $this->post("api/webhooks/payment/mollie", $post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(2010, $wallet->fresh()->balance);
 
         $transaction = $wallet->transactions()
@@ -601,7 +601,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         // Test for payment failure
         $payment->refresh();
-        $payment->status = PaymentProvider::STATUS_OPEN;
+        $payment->status = Payment::STATUS_OPEN;
         $payment->save();
 
         $wallet->setSetting('mollie_mandate_id', 'xxx');
@@ -621,7 +621,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         $wallet->refresh();
 
-        $this->assertSame(PaymentProvider::STATUS_FAILED, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_FAILED, $payment->fresh()->status);
         $this->assertEquals(2010, $wallet->balance);
         $this->assertTrue(!empty($wallet->getSetting('mandate_disabled')));
 
@@ -655,12 +655,12 @@ class PaymentsMollieEuroTest extends TestCase
         // Create a paid payment
         $payment = Payment::create([
                 'id' => 'tr_123456',
-                'status' => PaymentProvider::STATUS_PAID,
+                'status' => Payment::STATUS_PAID,
                 'amount' => 123,
                 'credit_amount' => 123,
                 'currency_amount' => 123,
                 'currency' => 'EUR',
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'type' => Payment::TYPE_ONEOFF,
                 'wallet_id' => $wallet->id,
                 'provider' => 'mollie',
                 'description' => 'test',
@@ -729,8 +729,8 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertCount(1, $payments);
         $this->assertSame(-101, $payments[0]->amount);
         $this->assertSame(-101, $payments[0]->currency_amount);
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payments[0]->status);
-        $this->assertSame(PaymentProvider::TYPE_REFUND, $payments[0]->type);
+        $this->assertSame(Payment::STATUS_PAID, $payments[0]->status);
+        $this->assertSame(Payment::TYPE_REFUND, $payments[0]->type);
         $this->assertSame("mollie", $payments[0]->provider);
         $this->assertSame("refund desc", $payments[0]->description);
 
@@ -786,8 +786,8 @@ class PaymentsMollieEuroTest extends TestCase
 
         $this->assertCount(1, $payments);
         $this->assertSame(-15, $payments[0]->amount);
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payments[0]->status);
-        $this->assertSame(PaymentProvider::TYPE_CHARGEBACK, $payments[0]->type);
+        $this->assertSame(Payment::STATUS_PAID, $payments[0]->status);
+        $this->assertSame(Payment::TYPE_CHARGEBACK, $payments[0]->type);
         $this->assertSame("mollie", $payments[0]->provider);
         $this->assertSame('', $payments[0]->description);
 
@@ -860,9 +860,9 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertSame(1, $json['page']);
         $this->assertSame(false, $json['hasMore']);
         $this->assertCount(1, $json['list']);
-        $this->assertSame(PaymentProvider::STATUS_OPEN, $json['list'][0]['status']);
+        $this->assertSame(Payment::STATUS_OPEN, $json['list'][0]['status']);
         $this->assertSame('EUR', $json['list'][0]['currency']);
-        $this->assertSame(PaymentProvider::TYPE_ONEOFF, $json['list'][0]['type']);
+        $this->assertSame(Payment::TYPE_ONEOFF, $json['list'][0]['type']);
         $this->assertSame(1234, $json['list'][0]['amount']);
 
         $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
@@ -875,7 +875,7 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertCount(1, $payments);
         $payment = $payments[0];
 
-        $payment->status = PaymentProvider::STATUS_PAID;
+        $payment->status = Payment::STATUS_PAID;
         $payment->save();
 
         // They payment should be gone from the pending list now
@@ -904,7 +904,7 @@ class PaymentsMollieEuroTest extends TestCase
         $wallet->currency = 'EUR';
         $wallet->save();
 
-        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_ONEOFF);
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . Payment::TYPE_ONEOFF);
         $response->assertStatus(200);
         $json = $response->json();
 
@@ -926,7 +926,7 @@ class PaymentsMollieEuroTest extends TestCase
             $this->assertSame('BTC', $json[3]['currency']);
         }
 
-        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . Payment::TYPE_RECURRING);
         $response->assertStatus(200);
         $json = $response->json();
 

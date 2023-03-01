@@ -2,7 +2,7 @@
 
 namespace Tests\Browser;
 
-use App\Providers\PaymentProvider;
+use App\Payment;
 use App\Wallet;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
@@ -125,7 +125,7 @@ class PaymentStripeTest extends TestCaseDusk
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
                         ->assertSeeIn('@body label[for="mandate_amount"]', 'Fill up by')
-                        ->assertValue('@body #mandate_amount', PaymentProvider::MIN_AMOUNT / 100)
+                        ->assertValue('@body #mandate_amount', Payment::MIN_AMOUNT / 100)
                         ->assertSeeIn('@body label[for="mandate_balance"]', 'when account balance is below') // phpcs:ignore
                         ->assertValue('@body #mandate_balance', '0')
                         ->assertSeeIn('@button-cancel', 'Cancel')

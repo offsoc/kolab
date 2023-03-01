@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
-use App\Providers\PaymentProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;

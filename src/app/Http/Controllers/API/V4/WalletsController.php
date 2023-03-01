@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V4;
 
+use App\Payment;
 use App\Transaction;
 use App\Wallet;
 use App\Http\Controllers\ResourceController;
@@ -36,7 +37,7 @@ class WalletsController extends ResourceController
 
         $result = $wallet->toArray();
 
-        $provider = \App\Providers\PaymentProvider::factory($wallet);
+        $provider = PaymentProvider::factory($wallet);
 
         $result['provider'] = $provider->name();
         $result['notice'] = $this->getWalletNotice($wallet);
@@ -116,7 +117,7 @@ class WalletsController extends ResourceController
 
         $result = $wallet->payments()
             ->selectRaw('distinct date_format(updated_at, "%Y-%m") as ident')
-            ->where('status', PaymentProvider::STATUS_PAID)
+            ->where('status', Payment::STATUS_PAID)
             ->where('amount', '<>', 0)
             ->orderBy('ident', 'desc')
             ->get()

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Payment;
-use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
 use App\VatRate;
@@ -37,6 +36,64 @@ class PaymentTest extends TestCase
     }
 
     /**
+     * Test credit() method
+     */
+    public function testCredit(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('jane@kolabnow.com');
+        $wallet = $user->wallets()->first();
+
+        $wallet->setSetting('mandate_disabled', 1);
+
+        $payment1 = Payment::createFromArray([
+            'id' => 'test-payment1',
+            'amount' => 10750,
+            'currency' => $wallet->currency,
+            'currency_amount' => 10750,
+            'type' => Payment::TYPE_ONEOFF,
+            'wallet_id' => $wallet->id,
+            'status' => Payment::STATUS_PAID,
+        ]);
+
+        $payment2 = Payment::createFromArray([
+            'id' => 'test-payment2',
+            'amount' => 1075,
+            'currency' => $wallet->currency,
+            'currency_amount' => 1075,
+            'type' => Payment::TYPE_RECURRING,
+            'wallet_id' => $wallet->id,
+            'status' => Payment::STATUS_PAID,
+        ]);
+
+        // Credit the 1st payment
+        $payment1->credit('Test1');
+        $wallet->refresh();
+        $transaction = $wallet->transactions()->first();
+
+        $this->assertSame($payment1->credit_amount, $wallet->balance);
+        $this->assertNull($wallet->getSetting('mandate_disabled'));
+        $this->assertSame($payment1->credit_amount, $transaction->amount);
+        $this->assertSame("Payment transaction {$payment1->id} using Test1", $transaction->description);
+
+        $wallet->transactions()->delete();
+        $wallet->setSetting('mandate_disabled', 1);
+        $wallet->balance = -5000;
+        $wallet->save();
+
+        // Credit the 2nd payment
+        $payment2->credit('Test2');
+        $wallet->refresh();
+        $transaction = $wallet->transactions()->first();
+
+        $this->assertSame($payment2->credit_amount - 5000, $wallet->balance);
+        $this->assertSame('1', $wallet->getSetting('mandate_disabled'));
+        $this->assertSame($payment2->credit_amount, $transaction->amount);
+        $this->assertSame("Auto-payment transaction {$payment2->id} using Test2", $transaction->description);
+    }
+
+    /**
      * Test createFromArray() and refund() methods
      */
     public function testCreateAndRefund(): void
@@ -58,7 +115,7 @@ class PaymentTest extends TestCase
             'amount' => 10750,
             'currency' => 'USD',
             'currency_amount' => 9000,
-            'type' => PaymentProvider::TYPE_ONEOFF,
+            'type' => Payment::TYPE_ONEOFF,
             'wallet_id' => $wallet->id,
         ];
 
@@ -73,7 +130,7 @@ class PaymentTest extends TestCase
         $this->assertSame($payment1Array['currency_amount'], $payment1->currency_amount);
         $this->assertSame($payment1Array['currency'], $payment1->currency);
         $this->assertSame($payment1Array['type'], $payment1->type);
-        $this->assertSame(PaymentProvider::STATUS_OPEN, $payment1->status);
+        $this->assertSame(Payment::STATUS_OPEN, $payment1->status);
         $this->assertSame($payment1Array['wallet_id'], $payment1->wallet_id);
         $this->assertCount(1, Payment::where('id', $payment1->id)->get());
 
@@ -87,8 +144,8 @@ class PaymentTest extends TestCase
             'credit_amount' => 10000,
             'currency' => $wallet->currency,
             'currency_amount' => 10750,
-            'type' => PaymentProvider::TYPE_ONEOFF,
-            'status' => PaymentProvider::STATUS_OPEN,
+            'type' => Payment::TYPE_ONEOFF,
+            'status' => Payment::STATUS_OPEN,
             'wallet_id' => $wallet->id,
         ];
 
@@ -110,7 +167,7 @@ class PaymentTest extends TestCase
 
         $refundArray = [
             'id' => 'test-refund',
-            'type' => PaymentProvider::TYPE_CHARGEBACK,
+            'type' => Payment::TYPE_CHARGEBACK,
             'description' => 'test refund desc',
         ];
 
@@ -128,7 +185,7 @@ class PaymentTest extends TestCase
         $this->assertSame(-4651, $refund->credit_amount);
         $this->assertSame(-5000, $refund->currency_amount);
         $this->assertSame($refundArray['type'], $refund->type);
-        $this->assertSame(PaymentProvider::STATUS_PAID, $refund->status);
+        $this->assertSame(Payment::STATUS_PAID, $refund->status);
         $this->assertSame($payment2->currency, $refund->currency);
         $this->assertSame($payment2->provider, $refund->provider);
         $this->assertSame($payment2->wallet_id, $refund->wallet_id);
@@ -145,7 +202,7 @@ class PaymentTest extends TestCase
         // Test non-wallet currency
         $refundArray['id'] = 'test-refund-2';
         $refundArray['amount'] = 9000;
-        $refundArray['type'] = PaymentProvider::TYPE_REFUND;
+        $refundArray['type'] = Payment::TYPE_REFUND;
 
         $refund = $payment1->refund($refundArray);
 
@@ -155,7 +212,7 @@ class PaymentTest extends TestCase
         $this->assertSame(-10750, $refund->credit_amount);
         $this->assertSame(-9000, $refund->currency_amount);
         $this->assertSame($refundArray['type'], $refund->type);
-        $this->assertSame(PaymentProvider::STATUS_PAID, $refund->status);
+        $this->assertSame(Payment::STATUS_PAID, $refund->status);
         $this->assertSame($payment1->currency, $refund->currency);
         $this->assertSame($payment1->provider, $refund->provider);
         $this->assertSame($payment1->wallet_id, $refund->wallet_id);

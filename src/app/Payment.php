@@ -2,7 +2,6 @@
 
 namespace App;
 
-use App\Providers\PaymentProvider;
 use Dyrynda\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +21,23 @@ use Illuminate\Database\Eloquent\Model;
 class Payment extends Model
 {
     use NullableFields;
+
+    public const STATUS_OPEN = 'open';
+    public const STATUS_CANCELED = 'canceled';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_AUTHORIZED = 'authorized';
+    public const STATUS_EXPIRED = 'expired';
+    public const STATUS_FAILED = 'failed';
+    public const STATUS_PAID = 'paid';
+
+    public const TYPE_ONEOFF = 'oneoff';
+    public const TYPE_RECURRING = 'recurring';
+    public const TYPE_MANDATE = 'mandate';
+    public const TYPE_REFUND = 'refund';
+    public const TYPE_CHARGEBACK = 'chargeback';
+
+    /** const int Minimum amount of money in a single payment (in cents) */
+    public const MIN_AMOUNT = 1000;
 
     /** @var bool Indicates that the model should be timestamped or not */
     public $incrementing = false;
@@ -69,7 +85,7 @@ class Payment extends Model
         $db_payment = new Payment();
         $db_payment->id = $payment['id'];
         $db_payment->description = $payment['description'] ?? '';
-        $db_payment->status = $payment['status'] ?? PaymentProvider::STATUS_OPEN;
+        $db_payment->status = $payment['status'] ?? self::STATUS_OPEN;
         $db_payment->amount = $payment['amount'] ?? 0;
         $db_payment->credit_amount = $payment['credit_amount'] ?? ($payment['amount'] ?? 0);
         $db_payment->vat_rate_id = $payment['vat_rate_id'] ?? null;
@@ -81,6 +97,26 @@ class Payment extends Model
         $db_payment->save();
 
         return $db_payment;
+    }
+
+    /**
+     * Apply the successful payment's pecunia to the wallet
+     *
+     * @param string $method Payment method name
+     */
+    public function credit($method): void
+    {
+        // TODO: Possibly we should sanity check that payment is paid, and not negative?
+        // TODO: Localization?
+        $description = $this->type == self::TYPE_RECURRING ? 'Auto-payment' : 'Payment';
+        $description .= " transaction {$this->id} using {$method}";
+
+        $this->wallet->credit($this, $description);
+
+        // Unlock the disabled auto-payment mandate
+        if ($this->wallet->balance >= 0) {
+            $this->wallet->setSetting('mandate_disabled', null);
+        }
     }
 
     /**
@@ -108,7 +144,7 @@ class Payment extends Model
         }
 
         // Apply the refund to the wallet balance
-        $method = $refund['type'] == PaymentProvider::TYPE_CHARGEBACK ? 'chargeback' : 'refund';
+        $method = $refund['type'] == self::TYPE_CHARGEBACK ? 'chargeback' : 'refund';
 
         $this->wallet->{$method}($credit_amount, $refund['description'] ?? '');
 
@@ -119,7 +155,7 @@ class Payment extends Model
         $refund['wallet_id'] = $this->wallet_id;
         $refund['provider'] = $this->provider;
         $refund['vat_rate_id'] = $this->vat_rate_id;
-        $refund['status'] = PaymentProvider::STATUS_PAID;
+        $refund['status'] = self::STATUS_PAID;
 
         // FIXME: Refunds/chargebacks are out of the reseller comissioning for now
 

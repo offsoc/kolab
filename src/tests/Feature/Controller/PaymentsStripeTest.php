@@ -114,12 +114,12 @@ class PaymentsStripeTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
+        $min = $wallet->money(Payment::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
         // Test creating a mandate (negative balance, amount too small)
         Wallet::where('id', $wallet->id)->update(['balance' => -2000]);
-        $post = ['amount' => PaymentProvider::MIN_AMOUNT / 100, 'balance' => 0];
+        $post = ['amount' => Payment::MIN_AMOUNT / 100, 'balance' => 0];
         $response = $this->actingAs($user)->post("api/v4/payments/mandate", $post);
         $response->assertStatus(422);
 
@@ -144,7 +144,7 @@ class PaymentsStripeTest extends TestCase
         $payment = Payment::where('wallet_id', $wallet->id)->first();
         $this->assertSame(0, $payment->amount);
         $this->assertSame($user->tenant->title . " Auto-Payment Setup", $payment->description);
-        $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
+        $this->assertSame(Payment::TYPE_MANDATE, $payment->type);
 
         // Test fetching the mandate information
         $response = $this->actingAs($user)->get("api/v4/payments/mandate");
@@ -312,7 +312,7 @@ class PaymentsStripeTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
+        $min = $wallet->money(Payment::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
         // Invalid currency
@@ -373,7 +373,7 @@ class PaymentsStripeTest extends TestCase
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         $transaction = $wallet->transactions()
@@ -393,12 +393,12 @@ class PaymentsStripeTest extends TestCase
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         // Test for payment failure ('failed' status)
         $payment->refresh();
-        $payment->status = PaymentProvider::STATUS_OPEN;
+        $payment->status = Payment::STATUS_OPEN;
         $payment->save();
 
         $post['type'] = "payment_intent.payment_failed";
@@ -407,7 +407,7 @@ class PaymentsStripeTest extends TestCase
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_FAILED, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_FAILED, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         // Assert that email notification job wasn't dispatched,
@@ -416,7 +416,7 @@ class PaymentsStripeTest extends TestCase
 
         // Test for payment failure ('canceled' status)
         $payment->refresh();
-        $payment->status = PaymentProvider::STATUS_OPEN;
+        $payment->status = Payment::STATUS_OPEN;
         $payment->save();
 
         $post['type'] = "payment_intent.canceled";
@@ -425,7 +425,7 @@ class PaymentsStripeTest extends TestCase
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_CANCELED, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_CANCELED, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         // Assert that email notification job wasn't dispatched,
@@ -451,8 +451,8 @@ class PaymentsStripeTest extends TestCase
 
         $payment = $wallet->payments()->first();
 
-        $this->assertSame(PaymentProvider::STATUS_OPEN, $payment->status);
-        $this->assertSame(PaymentProvider::TYPE_MANDATE, $payment->type);
+        $this->assertSame(Payment::STATUS_OPEN, $payment->status);
+        $this->assertSame(Payment::TYPE_MANDATE, $payment->type);
         $this->assertSame(0, $payment->amount);
 
         $post = [
@@ -483,7 +483,7 @@ class PaymentsStripeTest extends TestCase
 
         $payment->refresh();
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->status);
         $this->assertSame($payment->id, $wallet->fresh()->getSetting('stripe_mandate_id'));
 
         // Expect a WalletCharge job if the balance is negative
@@ -639,7 +639,7 @@ class PaymentsStripeTest extends TestCase
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(2010, $wallet->fresh()->balance);
         $transaction = $wallet->transactions()
             ->where('type', Transaction::WALLET_CREDIT)->get()->last();
@@ -661,7 +661,7 @@ class PaymentsStripeTest extends TestCase
 
         // Test for payment failure ('failed' status)
         $payment->refresh();
-        $payment->status = PaymentProvider::STATUS_OPEN;
+        $payment->status = Payment::STATUS_OPEN;
         $payment->save();
 
         $wallet->setSetting('mandate_disabled', null);
@@ -674,7 +674,7 @@ class PaymentsStripeTest extends TestCase
 
         $wallet->refresh();
 
-        $this->assertSame(PaymentProvider::STATUS_FAILED, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_FAILED, $payment->fresh()->status);
         $this->assertEquals(2010, $wallet->balance);
         $this->assertTrue(!empty($wallet->getSetting('mandate_disabled')));
 
@@ -689,7 +689,7 @@ class PaymentsStripeTest extends TestCase
 
         // Test for payment failure ('canceled' status)
         $payment->refresh();
-        $payment->status = PaymentProvider::STATUS_OPEN;
+        $payment->status = Payment::STATUS_OPEN;
         $payment->save();
 
         $post['type'] = "payment_intent.canceled";
@@ -698,7 +698,7 @@ class PaymentsStripeTest extends TestCase
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_CANCELED, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_CANCELED, $payment->fresh()->status);
         $this->assertEquals(2010, $wallet->fresh()->balance);
 
         // Assert that email notification job wasn't dispatched,
@@ -823,7 +823,7 @@ class PaymentsStripeTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
 
-        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_ONEOFF);
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . Payment::TYPE_ONEOFF);
         $response->assertStatus(200);
         $json = $response->json();
 
@@ -834,7 +834,7 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame('paypal', $json[1]['id']);
         $this->assertSame('bitcoin', $json[2]['id']);
 
-        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . Payment::TYPE_RECURRING);
         $response->assertStatus(200);
         $json = $response->json();
 

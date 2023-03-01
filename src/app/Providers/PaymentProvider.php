@@ -2,27 +2,13 @@
 
 namespace App\Providers;
 
-use App\Transaction;
 use App\Payment;
+use App\Transaction;
 use App\Wallet;
 use Illuminate\Support\Facades\Cache;
 
 abstract class PaymentProvider
 {
-    public const STATUS_OPEN = 'open';
-    public const STATUS_CANCELED = 'canceled';
-    public const STATUS_PENDING = 'pending';
-    public const STATUS_AUTHORIZED = 'authorized';
-    public const STATUS_EXPIRED = 'expired';
-    public const STATUS_FAILED = 'failed';
-    public const STATUS_PAID = 'paid';
-
-    public const TYPE_ONEOFF = 'oneoff';
-    public const TYPE_RECURRING = 'recurring';
-    public const TYPE_MANDATE = 'mandate';
-    public const TYPE_REFUND = 'refund';
-    public const TYPE_CHARGEBACK = 'chargeback';
-
     public const METHOD_CREDITCARD = 'creditcard';
     public const METHOD_PAYPAL = 'paypal';
     public const METHOD_BANKTRANSFER = 'banktransfer';
@@ -32,9 +18,6 @@ abstract class PaymentProvider
     public const PROVIDER_MOLLIE = 'mollie';
     public const PROVIDER_STRIPE = 'stripe';
     public const PROVIDER_COINBASE = 'coinbase';
-
-    /** const int Minimum amount of money in a single payment (in cents) */
-    public const MIN_AMOUNT = 1000;
 
     private static $paymentMethodIcons = [
         self::METHOD_CREDITCARD => ['prefix' => 'far', 'name' => 'credit-card'],
@@ -248,10 +231,10 @@ abstract class PaymentProvider
     {
         $methods = [];
         switch ($type) {
-            case self::TYPE_ONEOFF:
+            case Payment::TYPE_ONEOFF:
                 $methods = explode(',', \config('app.payment.methods_oneoff'));
                 break;
-            case PaymentProvider::TYPE_RECURRING:
+            case Payment::TYPE_RECURRING:
                 $methods = explode(',', \config('app.payment.methods_recurring'));
                 break;
             default:

@@ -95,7 +95,7 @@ class Mollie extends \App\Providers\PaymentProvider
         // Store the payment reference in database
         $payment['status'] = $response->status;
         $payment['id'] = $response->id;
-        $payment['type'] = self::TYPE_MANDATE;
+        $payment['type'] = Payment::TYPE_MANDATE;
 
         $this->storePayment($payment, $wallet->id);
 
@@ -186,7 +186,7 @@ class Mollie extends \App\Providers\PaymentProvider
      */
     public function payment(Wallet $wallet, array $payment): ?array
     {
-        if ($payment['type'] == self::TYPE_RECURRING) {
+        if ($payment['type'] == Payment::TYPE_RECURRING) {
             return $this->paymentRecurring($wallet, $payment);
         }
 
@@ -232,7 +232,6 @@ class Mollie extends \App\Providers\PaymentProvider
         ];
     }
 
-
     /**
      * Cancel a pending payment.
      *
@@ -251,7 +250,6 @@ class Mollie extends \App\Providers\PaymentProvider
 
         return true;
     }
-
 
     /**
      * Create a new automatic payment operation.
@@ -362,9 +360,9 @@ class Mollie extends \App\Providers\PaymentProvider
 
             if ($mollie_payment->isPaid()) {
                 // The payment is paid. Update the balance, and notify the user
-                if ($payment->status != self::STATUS_PAID && $payment->amount > 0) {
+                if ($payment->status != Payment::STATUS_PAID && $payment->amount > 0) {
                     $credit = true;
-                    $notify = $payment->type == self::TYPE_RECURRING;
+                    $notify = $payment->type == Payment::TYPE_RECURRING;
                 }
 
                 // The payment has been (partially) refunded.
@@ -376,7 +374,7 @@ class Mollie extends \App\Providers\PaymentProvider
                                 'id' => $refund->id,
                                 'description' => $refund->description,
                                 'amount' => round(floatval($refund->amount->value) * 100),
-                                'type' => self::TYPE_REFUND,
+                                'type' => Payment::TYPE_REFUND,
                                 'currency' => $refund->amount->currency
                             ];
                         }
@@ -391,7 +389,7 @@ class Mollie extends \App\Providers\PaymentProvider
                             $refunds[] = [
                                 'id' => $chargeback->id,
                                 'amount' => round(floatval($chargeback->amount->value) * 100),
-                                'type' => self::TYPE_CHARGEBACK,
+                                'type' => Payment::TYPE_CHARGEBACK,
                                 'currency' => $chargeback->amount->currency
                             ];
                         }
@@ -403,7 +401,7 @@ class Mollie extends \App\Providers\PaymentProvider
                 // pointing to the one from the last payment not the successful one.
                 // We make sure to use mandate id from the successful "first" payment.
                 if (
-                    $payment->type == self::TYPE_MANDATE
+                    $payment->type == Payment::TYPE_MANDATE
                     && $mollie_payment->mandateId
                     && $mollie_payment->sequenceType == Types\SequenceType::SEQUENCETYPE_FIRST
                 ) {
@@ -414,7 +412,7 @@ class Mollie extends \App\Providers\PaymentProvider
                 \Log::info(sprintf('Mollie payment failed (%s)', $payment->id));
 
                 // Disable the mandate
-                if ($payment->type == self::TYPE_RECURRING) {
+                if ($payment->type == Payment::TYPE_RECURRING) {
                     $notify = true;
                     $payment->wallet->setSetting('mandate_disabled', 1);
                 }
@@ -425,7 +423,7 @@ class Mollie extends \App\Providers\PaymentProvider
             // This is a sanity check, just in case the payment provider api
             // sent us open -> paid -> open -> paid. So, we lock the payment after
             // recivied a "final" state.
-            $pending_states = [self::STATUS_OPEN, self::STATUS_PENDING, self::STATUS_AUTHORIZED];
+            $pending_states = [Payment::STATUS_OPEN, Payment::STATUS_PENDING, Payment::STATUS_AUTHORIZED];
             if (in_array($payment->status, $pending_states)) {
                 $payment->status = $mollie_payment->status;
                 $payment->save();
@@ -513,16 +511,7 @@ class Mollie extends \App\Providers\PaymentProvider
         // Extract the payment method for transaction description
         $method = self::paymentMethod($mollie_payment, 'Mollie');
 
-        // TODO: Localization?
-        $description = $payment->type == self::TYPE_RECURRING ? 'Auto-payment' : 'Payment';
-        $description .= " transaction {$payment->id} using {$method}";
-
-        $payment->wallet->credit($payment, $description);
-
-        // Unlock the disabled auto-payment mandate
-        if ($payment->wallet->balance >= 0) {
-            $payment->wallet->setSetting('mandate_disabled', null);
-        }
+        $payment->credit($method);
     }
 
     /**

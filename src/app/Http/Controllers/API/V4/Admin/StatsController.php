@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\API\V4\Admin;
 
-use App\Providers\PaymentProvider;
+use App\Payment;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -114,8 +114,8 @@ class StatsController extends \App\Http\Controllers\Controller
             ->selectRaw("date_format(updated_at, '%Y-%v') as period, sum(credit_amount) as amount, wallets.currency")
             ->join('wallets', 'wallets.id', '=', 'wallet_id')
             ->where('updated_at', '>=', $start->toDateString())
-            ->where('status', PaymentProvider::STATUS_PAID)
-            ->whereIn('type', [PaymentProvider::TYPE_ONEOFF, PaymentProvider::TYPE_RECURRING])
+            ->where('status', Payment::STATUS_PAID)
+            ->whereIn('type', [Payment::TYPE_ONEOFF, Payment::TYPE_RECURRING])
             ->groupByRaw('period, wallets.currency');
 
         $addTenantScope = function ($builder, $tenantId) {

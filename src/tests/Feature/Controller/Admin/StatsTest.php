@@ -4,7 +4,6 @@ namespace Tests\Feature\Controller\Admin;
 
 use App\Http\Controllers\API\V4\Admin\StatsController;
 use App\Payment;
-use App\Providers\PaymentProvider;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -132,10 +131,10 @@ class StatsTest extends TestCase
         Payment::create([
                 'id' => 'test1',
                 'description' => '',
-                'status' => PaymentProvider::STATUS_PAID,
+                'status' => Payment::STATUS_PAID,
                 'amount' => 1000,
                 'credit_amount' => 1000,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'type' => Payment::TYPE_ONEOFF,
                 'wallet_id' => $wallet->id,
                 'provider' => 'mollie',
                 'currency' => 'EUR',
@@ -144,10 +143,10 @@ class StatsTest extends TestCase
         Payment::create([
                 'id' => 'test2',
                 'description' => '',
-                'status' => PaymentProvider::STATUS_PAID,
+                'status' => Payment::STATUS_PAID,
                 'amount' => 2000,
                 'credit_amount' => 2000,
-                'type' => PaymentProvider::TYPE_RECURRING,
+                'type' => Payment::TYPE_RECURRING,
                 'wallet_id' => $wallet->id,
                 'provider' => 'mollie',
                 'currency' => 'EUR',
@@ -156,10 +155,10 @@ class StatsTest extends TestCase
         Payment::create([
                 'id' => 'test3',
                 'description' => '',
-                'status' => PaymentProvider::STATUS_PAID,
+                'status' => Payment::STATUS_PAID,
                 'amount' => 3000,
                 'credit_amount' => 3000,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'type' => Payment::TYPE_ONEOFF,
                 'wallet_id' => $johns_wallet->id,
                 'provider' => 'mollie',
                 'currency' => 'EUR',
@@ -168,10 +167,10 @@ class StatsTest extends TestCase
         Payment::create([
                 'id' => 'test4',
                 'description' => '',
-                'status' => PaymentProvider::STATUS_PAID,
+                'status' => Payment::STATUS_PAID,
                 'amount' => 4000,
                 'credit_amount' => 4000,
-                'type' => PaymentProvider::TYPE_RECURRING,
+                'type' => Payment::TYPE_RECURRING,
                 'wallet_id' => $johns_wallet->id,
                 'provider' => 'mollie',
                 'currency' => 'CHF',
@@ -180,10 +179,10 @@ class StatsTest extends TestCase
         Payment::create([
                 'id' => 'test5',
                 'description' => '',
-                'status' => PaymentProvider::STATUS_OPEN,
+                'status' => Payment::STATUS_OPEN,
                 'amount' => 5000,
                 'credit_amount' => 5000,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'type' => Payment::TYPE_ONEOFF,
                 'wallet_id' => $johns_wallet->id,
                 'provider' => 'mollie',
                 'currency' => 'CHF',
@@ -192,10 +191,10 @@ class StatsTest extends TestCase
         Payment::create([
                 'id' => 'test6',
                 'description' => '',
-                'status' => PaymentProvider::STATUS_FAILED,
+                'status' => Payment::STATUS_FAILED,
                 'amount' => 6000,
                 'credit_amount' => 6000,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'type' => Payment::TYPE_ONEOFF,
                 'wallet_id' => $johns_wallet->id,
                 'provider' => 'mollie',
                 'currency' => 'CHF',

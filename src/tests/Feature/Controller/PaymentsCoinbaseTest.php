@@ -4,7 +4,6 @@ namespace Tests\Feature\Controller;
 
 use App\Http\Controllers\API\V4\PaymentsController;
 use App\Payment;
-use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
 use App\WalletSetting;
@@ -89,7 +88,7 @@ class PaymentsCoinbaseTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $min = $wallet->money(PaymentProvider::MIN_AMOUNT);
+        $min = $wallet->money(Payment::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
 
         // Invalid currency
@@ -178,7 +177,7 @@ class PaymentsCoinbaseTest extends TestCase
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         $transaction = $wallet->transactions()
@@ -208,7 +207,7 @@ class PaymentsCoinbaseTest extends TestCase
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         $post = [
@@ -225,14 +224,14 @@ class PaymentsCoinbaseTest extends TestCase
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         // Test for payment failure
         Bus::fake();
 
         $payment->refresh();
-        $payment->status = PaymentProvider::STATUS_OPEN;
+        $payment->status = Payment::STATUS_OPEN;
         $payment->save();
 
         $post = [
@@ -313,7 +312,7 @@ class PaymentsCoinbaseTest extends TestCase
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
-        $this->assertSame(PaymentProvider::STATUS_PAID, $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
     }
 
@@ -389,9 +388,9 @@ class PaymentsCoinbaseTest extends TestCase
         $this->assertSame(1, $json['page']);
         $this->assertSame(false, $json['hasMore']);
         $this->assertCount(1, $json['list']);
-        $this->assertSame(PaymentProvider::STATUS_OPEN, $json['list'][0]['status']);
+        $this->assertSame(Payment::STATUS_OPEN, $json['list'][0]['status']);
         $this->assertSame('CHF', $json['list'][0]['currency']);
-        $this->assertSame(PaymentProvider::TYPE_ONEOFF, $json['list'][0]['type']);
+        $this->assertSame(Payment::TYPE_ONEOFF, $json['list'][0]['type']);
         $this->assertSame(1234, $json['list'][0]['amount']);
 
         $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
@@ -404,7 +403,7 @@ class PaymentsCoinbaseTest extends TestCase
         $this->assertCount(1, $payments);
         $payment = $payments[0];
 
-        $payment->status = PaymentProvider::STATUS_PAID;
+        $payment->status = Payment::STATUS_PAID;
         $payment->save();
 
         // They payment should be gone from the pending list now
@@ -430,7 +429,7 @@ class PaymentsCoinbaseTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
 
-        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_ONEOFF);
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . Payment::TYPE_ONEOFF);
         $response->assertStatus(200);
         $json = $response->json();
 
@@ -438,7 +437,7 @@ class PaymentsCoinbaseTest extends TestCase
         $this->assertSame('bitcoin', $json[3]['id']);
         $this->assertSame('BTC', $json[3]['currency']);
 
-        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . PaymentProvider::TYPE_RECURRING);
+        $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . Payment::TYPE_RECURRING);
         $response->assertStatus(200);
         $json = $response->json();
 

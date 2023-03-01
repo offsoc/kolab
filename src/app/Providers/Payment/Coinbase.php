@@ -141,7 +141,7 @@ class Coinbase extends \App\Providers\PaymentProvider
      */
     public function payment(Wallet $wallet, array $payment): ?array
     {
-        if ($payment['type'] == self::TYPE_RECURRING) {
+        if ($payment['type'] == Payment::TYPE_RECURRING) {
             throw new \Exception("not supported");
         }
 
@@ -175,7 +175,7 @@ class Coinbase extends \App\Providers\PaymentProvider
         $json = json_decode($response->getBody(), true);
 
         // Store the payment reference in database
-        $payment['status'] = self::STATUS_OPEN;
+        $payment['status'] = Payment::STATUS_OPEN;
         //We take the code instead of the id because it fits into our current db schema and the id doesn't
         $payment['id'] = $json['data']['code'];
         //We store in satoshis (the database stores it as INTEGER type)
@@ -229,7 +229,7 @@ class Coinbase extends \App\Providers\PaymentProvider
 
         if ($response->getStatusCode() == 200) {
             $db_payment = Payment::find($paymentId);
-            $db_payment->status = self::STATUS_CANCELED;
+            $db_payment->status = Payment::STATUS_CANCELED;
             $db_payment->save();
         } else {
             $this->logError("Failed to cancel payment", $response);
@@ -308,19 +308,19 @@ class Coinbase extends \App\Providers\PaymentProvider
             return 200;
         }
 
-        $newStatus = self::STATUS_PENDING;
+        $newStatus = Payment::STATUS_PENDING;
 
         // Even if we receive the payment delayed, we still have the money, and therefore credit it.
         if ($type == 'charge:resolved' || $type == 'charge:delayed') {
             // The payment is paid. Update the balance
-            if ($payment->status != self::STATUS_PAID && $payment->amount > 0) {
+            if ($payment->status != Payment::STATUS_PAID && $payment->amount > 0) {
                 $credit = true;
             }
-            $newStatus = self::STATUS_PAID;
+            $newStatus = Payment::STATUS_PAID;
         } elseif ($type == 'charge:failed') {
             // Note: I didn't find a way to get any description of the problem with a payment
             \Log::info(sprintf('Coinbase payment failed (%s)', $payment->id));
-            $newStatus = self::STATUS_FAILED;
+            $newStatus = Payment::STATUS_FAILED;
         }
 
         DB::beginTransaction();
@@ -328,31 +328,19 @@ class Coinbase extends \App\Providers\PaymentProvider
         // This is a sanity check, just in case the payment provider api
         // sent us open -> paid -> open -> paid. So, we lock the payment after
         // recivied a "final" state.
-        $pending_states = [self::STATUS_OPEN, self::STATUS_PENDING, self::STATUS_AUTHORIZED];
+        $pending_states = [Payment::STATUS_OPEN, Payment::STATUS_PENDING, Payment::STATUS_AUTHORIZED];
         if (in_array($payment->status, $pending_states)) {
             $payment->status = $newStatus;
             $payment->save();
         }
 
         if (!empty($credit)) {
-            self::creditPayment($payment);
+            $payment->credit('Coinbase');
         }
 
         DB::commit();
 
         return 200;
-    }
-
-    /**
-     * Apply the successful payment's pecunia to the wallet
-     */
-    protected static function creditPayment($payment)
-    {
-        // TODO: Localization?
-        $description = 'Payment';
-        $description .= " transaction {$payment->id} using Coinbase";
-
-        $payment->wallet->credit($payment, $description);
     }
 
     /**
@@ -373,7 +361,7 @@ class Coinbase extends \App\Providers\PaymentProvider
     {
         $availableMethods = [];
 
-        if ($type == self::TYPE_ONEOFF) {
+        if ($type == Payment::TYPE_ONEOFF) {
             $availableMethods['bitcoin'] = [
                 'id' => 'bitcoin',
                 'name' => "Bitcoin",

@@ -87,7 +87,7 @@ class Stripe extends \App\Providers\PaymentProvider
         $payment['currency_amount'] = 0;
         $payment['vat_rate_id'] = null;
         $payment['id'] = $session->setup_intent;
-        $payment['type'] = self::TYPE_MANDATE;
+        $payment['type'] = Payment::TYPE_MANDATE;
 
         $this->storePayment($payment, $wallet->id);
 
@@ -177,7 +177,7 @@ class Stripe extends \App\Providers\PaymentProvider
      */
     public function payment(Wallet $wallet, array $payment): ?array
     {
-        if ($payment['type'] == self::TYPE_RECURRING) {
+        if ($payment['type'] == Payment::TYPE_RECURRING) {
             return $this->paymentRecurring($wallet, $payment);
         }
 
@@ -292,26 +292,26 @@ class Stripe extends \App\Providers\PaymentProvider
                 $intent = $event->data->object; // @phpstan-ignore-line
                 $payment = Payment::find($intent->id);
 
-                if (empty($payment) || $payment->type == self::TYPE_MANDATE) {
+                if (empty($payment) || $payment->type == Payment::TYPE_MANDATE) {
                     return 404;
                 }
 
                 switch ($intent->status) {
                     case StripeAPI\PaymentIntent::STATUS_CANCELED:
-                        $status = self::STATUS_CANCELED;
+                        $status = Payment::STATUS_CANCELED;
                         break;
                     case StripeAPI\PaymentIntent::STATUS_SUCCEEDED:
-                        $status = self::STATUS_PAID;
+                        $status = Payment::STATUS_PAID;
                         break;
                     default:
-                        $status = self::STATUS_FAILED;
+                        $status = Payment::STATUS_FAILED;
                 }
 
                 DB::beginTransaction();
 
-                if ($status == self::STATUS_PAID) {
+                if ($status == Payment::STATUS_PAID) {
                     // Update the balance, if it wasn't already
-                    if ($payment->status != self::STATUS_PAID) {
+                    if ($payment->status != Payment::STATUS_PAID) {
                         $this->creditPayment($payment, $intent);
                     }
                 } else {
@@ -325,13 +325,13 @@ class Stripe extends \App\Providers\PaymentProvider
                     }
                 }
 
-                if ($payment->status != self::STATUS_PAID) {
+                if ($payment->status != Payment::STATUS_PAID) {
                     $payment->status = $status;
                     $payment->save();
 
-                    if ($status != self::STATUS_CANCELED && $payment->type == self::TYPE_RECURRING) {
+                    if ($status != Payment::STATUS_CANCELED && $payment->type == Payment::TYPE_RECURRING) {
                         // Disable the mandate
-                        if ($status == self::STATUS_FAILED) {
+                        if ($status == Payment::STATUS_FAILED) {
                             $payment->wallet->setSetting('mandate_disabled', 1);
                         }
 
@@ -350,27 +350,27 @@ class Stripe extends \App\Providers\PaymentProvider
                 $intent = $event->data->object; // @phpstan-ignore-line
                 $payment = Payment::find($intent->id);
 
-                if (empty($payment) || $payment->type != self::TYPE_MANDATE) {
+                if (empty($payment) || $payment->type != Payment::TYPE_MANDATE) {
                     return 404;
                 }
 
                 switch ($intent->status) {
                     case StripeAPI\SetupIntent::STATUS_CANCELED:
-                        $status = self::STATUS_CANCELED;
+                        $status = Payment::STATUS_CANCELED;
                         break;
                     case StripeAPI\SetupIntent::STATUS_SUCCEEDED:
-                        $status = self::STATUS_PAID;
+                        $status = Payment::STATUS_PAID;
                         break;
                     default:
-                        $status = self::STATUS_FAILED;
+                        $status = Payment::STATUS_FAILED;
                 }
 
-                if ($status == self::STATUS_PAID) {
+                if ($status == Payment::STATUS_PAID) {
                     $payment->wallet->setSetting('stripe_mandate_id', $intent->id);
                     $threshold = intval((float) $payment->wallet->getSetting('mandate_balance') * 100);
 
                     // Top-up the wallet if balance is below the threshold
-                    if ($payment->wallet->balance < $threshold && $payment->status != self::STATUS_PAID) {
+                    if ($payment->wallet->balance < $threshold && $payment->status != Payment::STATUS_PAID) {
                         \App\Jobs\WalletCharge::dispatch($payment->wallet);
                     }
                 }
@@ -451,16 +451,7 @@ class Stripe extends \App\Providers\PaymentProvider
             $method = self::paymentMethod($pm);
         }
 
-        // TODO: Localization?
-        $description = $payment->type == self::TYPE_RECURRING ? 'Auto-payment' : 'Payment';
-        $description .= " transaction {$payment->id} using {$method}";
-
-        $payment->wallet->credit($payment, $description);
-
-        // Unlock the disabled auto-payment mandate
-        if ($payment->wallet->balance >= 0) {
-            $payment->wallet->setSetting('mandate_disabled', null);
-        }
+        $payment->credit($method);
     }
 
     /**
@@ -500,30 +491,30 @@ class Stripe extends \App\Providers\PaymentProvider
         //TODO get this from the stripe API?
         $availableMethods = [];
         switch ($type) {
-            case self::TYPE_ONEOFF:
+            case Payment::TYPE_ONEOFF:
                 $availableMethods = [
                     self::METHOD_CREDITCARD => [
                         'id' => self::METHOD_CREDITCARD,
                         'name' => "Credit Card",
-                        'minimumAmount' => self::MIN_AMOUNT,
+                        'minimumAmount' => Payment::MIN_AMOUNT,
                         'currency' => $currency,
                         'exchangeRate' => 1.0
                     ],
                     self::METHOD_PAYPAL => [
                         'id' => self::METHOD_PAYPAL,
                         'name' => "PayPal",
-                        'minimumAmount' => self::MIN_AMOUNT,
+                        'minimumAmount' => Payment::MIN_AMOUNT,
                         'currency' => $currency,
                         'exchangeRate' => 1.0
                     ]
                 ];
                 break;
-            case self::TYPE_RECURRING:
+            case Payment::TYPE_RECURRING:
                 $availableMethods = [
                     self::METHOD_CREDITCARD => [
                         'id' => self::METHOD_CREDITCARD,
                         'name' => "Credit Card",
-                        'minimumAmount' => self::MIN_AMOUNT, // Converted to cents,
+                        'minimumAmount' => Payment::MIN_AMOUNT, // Converted to cents,
                         'currency' => $currency,
                         'exchangeRate' => 1.0
                     ]

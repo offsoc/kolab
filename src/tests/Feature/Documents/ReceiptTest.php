@@ -4,7 +4,6 @@ namespace Tests\Feature\Documents;
 
 use App\Documents\Receipt;
 use App\Payment;
-use App\Providers\PaymentProvider;
 use App\User;
 use App\Wallet;
 use App\VatRate;
@@ -227,8 +226,8 @@ class ReceiptTest extends TestCase
 
         $payment = Payment::create([
                 'id' => 'AAA1',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_ONEOFF,
                 'description' => 'Paid in April',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
@@ -243,8 +242,8 @@ class ReceiptTest extends TestCase
 
         $payment = Payment::create([
                 'id' => 'AAA2',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_ONEOFF,
                 'description' => 'Paid in June',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
@@ -259,8 +258,8 @@ class ReceiptTest extends TestCase
 
         $payment = Payment::create([
                 'id' => 'AAA3',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_ONEOFF,
                 'description' => 'Auto-Payment Setup',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
@@ -275,8 +274,8 @@ class ReceiptTest extends TestCase
 
         $payment = Payment::create([
                 'id' => 'AAA4',
-                'status' => PaymentProvider::STATUS_OPEN,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'status' => Payment::STATUS_OPEN,
+                'type' => Payment::TYPE_ONEOFF,
                 'description' => 'Payment not yet paid',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
@@ -292,8 +291,8 @@ class ReceiptTest extends TestCase
         // ... so we expect the five three on the receipt
         $payment = Payment::create([
                 'id' => 'AAA5',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_ONEOFF,
                 'description' => 'Payment OK',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
@@ -308,8 +307,8 @@ class ReceiptTest extends TestCase
 
         $payment = Payment::create([
                 'id' => 'AAA6',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_ONEOFF,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_ONEOFF,
                 'description' => 'Payment OK',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
@@ -324,8 +323,8 @@ class ReceiptTest extends TestCase
 
         $payment = Payment::create([
                 'id' => 'AAA7',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_RECURRING,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_RECURRING,
                 'description' => 'Payment OK',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
@@ -340,8 +339,8 @@ class ReceiptTest extends TestCase
 
         $payment = Payment::create([
                 'id' => 'ref1',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_REFUND,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_REFUND,
                 'description' => 'refund desc',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
@@ -356,8 +355,8 @@ class ReceiptTest extends TestCase
 
         $payment = Payment::create([
                 'id' => 'chback1',
-                'status' => PaymentProvider::STATUS_PAID,
-                'type' => PaymentProvider::TYPE_CHARGEBACK,
+                'status' => Payment::STATUS_PAID,
+                'type' => Payment::TYPE_CHARGEBACK,
                 'description' => '',
                 'wallet_id' => $wallet->id,
                 'provider' => 'stripe',
