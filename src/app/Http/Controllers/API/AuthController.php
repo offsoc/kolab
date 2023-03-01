@@ -192,15 +192,6 @@ class AuthController extends Controller
         $response['token_type'] = 'bearer';
         $response['expires_in'] = $data->expires_in;
 
-        // TODO
-        /*
-        if ($user && ($wallet = $user->wallet()) && ($plan = $wallet->plan()) && $plan->mode == 'mandate'
-            // && there's no valid mandate
-        ) {
-            $response['redirect'] = 'wallet';
-        }
-        */
-
         return response()->json($response);
     }
 }

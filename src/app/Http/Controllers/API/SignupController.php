@@ -371,7 +371,16 @@ class SignupController extends Controller
 
         DB::commit();
 
-        return AuthController::logonResponse($user, $request->password);
+        $response = AuthController::logonResponse($user, $request->password);
+
+        // Redirect the user to the Wallet page (when in the mandate mode)
+        if ($plan->mode == 'mandate') {
+            $data = $response->getData(true);
+            $data['redirect'] = 'wallet';
+            $response->setData($data);
+        }
+
+        return $response;
     }
 
     /**
