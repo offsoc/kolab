@@ -184,7 +184,7 @@ class UsersController extends RelationController
 
         $hasBeta = in_array('beta', $skus);
 
-        $plan = $isController ? $user->plan() : null;
+        $plan = $isController ? $user->wallet()->plan() : null;
 
         $result = [
             'skus' => $skus,

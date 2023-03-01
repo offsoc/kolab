@@ -171,8 +171,9 @@ class PaymentsController extends Controller
         $min = Payment::MIN_AMOUNT;
         $label = 'minamount';
 
-        if ($plan = $wallet->owner->plan()) {
-            // TODO: $min = 
+        // FIXME: Should we do this for months=1 too?
+        if ($plan = $wallet->plan() && $plan->months >= 1) {
+            $min = (int) ($plan->cost() * $plan->months);
         }
 
         if ($wallet->balance < 0 && $wallet->balance < $min * -1) {
@@ -370,7 +371,7 @@ class PaymentsController extends Controller
         // Get the Mandate info
         $mandate = (array) $provider->getMandate($wallet);
 
-        $mandate['amount'] = (int) (Payment::MIN_AMOUNT / 100);
+        $mandate['amount'] = $mandate['minAmount'] = (int) (Payment::MIN_AMOUNT / 100);
         $mandate['balance'] = 0;
         $mandate['isDisabled'] = !empty($mandate['id']) && $settings['mandate_disabled'];
 
@@ -380,10 +381,11 @@ class PaymentsController extends Controller
             }
         }
 
-        if (($plan = $wallet->owner->plan()) /* && $plan->months > 0*/) {
-            // TODO $mandate['minAmount'] = 100;
+        // If this is a multi-month plan, we calculate the expected amount to be payed.
+        // FIXME: We actually could also do the calculation for months=1
+        if (($plan = $wallet->plan()) && $plan->months >= 1) {
+            $mandate['minAmount'] = (int) (($plan->cost() * $plan->months) / 100);
         }
-        $mandate['minAmount'] = 100; // test
 
         // Unrestrict the wallet owner if mandate is valid
         if (!empty($mandate['isValid']) && $wallet->owner->isRestricted()) {

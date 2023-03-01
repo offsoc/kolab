@@ -49,6 +49,8 @@ class Plan extends Model
         'discount_qty',
         // the rate of the discount for this plan
         'discount_rate',
+        // minimum number of months this plan is for
+        'months',
         // number of free months (trial)
         'free_months',
     ];
@@ -59,6 +61,7 @@ class Plan extends Model
         'promo_to' => 'datetime:Y-m-d H:i:s',
         'discount_qty' => 'integer',
         'discount_rate' => 'integer',
+        'months' => 'integer',
         'free_months' => 'integer'
     ];
 
