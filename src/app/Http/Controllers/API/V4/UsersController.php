@@ -184,6 +184,8 @@ class UsersController extends RelationController
 
         $hasBeta = in_array('beta', $skus);
 
+        $plan = $user->plan();
+
         $result = [
             'skus' => $skus,
             'enableBeta' => in_array('beta', $skus),
@@ -200,6 +202,8 @@ class UsersController extends RelationController
             'enableSettings' => $isController,
             'enableUsers' => $isController,
             'enableWallets' => $isController,
+            'enableWalletMandates' => true,
+            'enableWalletPayments' => !$plan || $plan->mode != 'mandate',
             'enableCompanionapps' => $hasBeta,
         ];
 

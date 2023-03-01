@@ -436,6 +436,19 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user plan.
+     *
+     * @return ?\App\Plan
+     */
+    public function plan(): ?\App\Plan
+    {
+        // TODO: it should be user's wallet owner
+        $planId = $this->getSetting('plan_id');
+
+        return $planId ? Plan::find($planId) : null;
+    }
+
+    /**
      * Restrict this user.
      *
      * @return void

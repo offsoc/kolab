@@ -51,10 +51,23 @@ class SignupController extends Controller
                     'button' => $button,
                     'description' => $plan->description,
                     'mode' => $plan->mode ?: 'email',
+                    'isDomain' => $plan->hasDomain(),
                 ];
             });
 
         return response()->json(['status' => 'success', 'plans' => $plans]);
+    }
+
+    /**
+     * Returns list of public domains for signup.
+     *
+     * @param \Illuminate\Http\Request $request HTTP request
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response
+     */
+    public function domains(Request $request)
+    {
+        return response()->json(['status' => 'success', 'domains' => Domain::getPublicDomains()]);
     }
 
     /**
@@ -230,6 +243,9 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
+        $plan = $this->getPlan();
+        $settings = [];
+
         // Signup via invitation
         if ($request->invitation) {
             $invitation = SignupInvitation::withEnvTenantContext()->find($request->invitation);
@@ -244,7 +260,6 @@ class SignupController extends Controller
                 [
                     'first_name' => 'max:128',
                     'last_name' => 'max:128',
-                    'voucher' => 'max:32',
                 ]
             );
 
@@ -259,7 +274,7 @@ class SignupController extends Controller
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
             ];
-        } else {
+        } elseif ($plan->mode != 'mandate') {
             // Validate verification codes (again)
             $v = $this->verify($request, false);
             if ($v->status() !== 200) {
@@ -274,7 +289,7 @@ class SignupController extends Controller
                 'last_name' => $code_data->last_name,
             ];
 
-            if ($this->getPlan()->mode == 'token') {
+            if ($plan->mode == 'token') {
                 $settings['signup_token'] = $code_data->email;
             } else {
                 $settings['external_email'] = $code_data->email;
@@ -292,10 +307,11 @@ class SignupController extends Controller
             }
         }
 
-        // Get the plan
-        $plan = $this->getPlan();
-        $is_domain = $plan->hasDomain();
+        if (empty($plan)) {
+            $plan = $this->getPlan();
+        }
 
+        $is_domain = $plan->hasDomain();
         $login = $request->login;
         $domain_name = $request->domain;
 

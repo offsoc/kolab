@@ -49,6 +49,7 @@ Route::group(
         Route::post('password-reset/verify', [API\PasswordResetController::class, 'verify']);
         Route::post('password-reset', [API\PasswordResetController::class, 'reset']);
 
+        Route::get('signup/domains', [API\SignupController::class, 'domains']);
         Route::post('signup/init', [API\SignupController::class, 'init']);
         Route::get('signup/invitations/{id}', [API\SignupController::class, 'invitation']);
         Route::get('signup/plans', [API\SignupController::class, 'plans']);

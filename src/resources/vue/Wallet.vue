@@ -9,10 +9,10 @@
                     <div v-if="showPendingPayments" class="alert alert-warning">
                         {{ $t('wallet.pending-payments-warning') }}
                     </div>
-                    <p>
+                    <p v-if="$root.hasPermission('walletPayments')">
                         <btn class="btn-primary" @click="paymentMethodForm('manual')">{{ $t('wallet.add-credit') }}</btn>
                     </p>
-                    <div id="mandate-form" v-if="!mandate.isValid && !mandate.isPending">
+                    <div id="mandate-form" v-if="!mandate.isValid && !mandate.isPending && $root.hasPermission('walletMandates')">
                         <template v-if="mandate.id && !mandate.isValid">
                             <div class="alert alert-danger">
                                 {{ $t('wallet.auto-payment-failed') }}
@@ -21,7 +21,7 @@
                         </template>
                         <btn class="btn-primary" @click="paymentMethodForm('auto')">{{ $t('wallet.auto-payment-setup') }}</btn>
                     </div>
-                    <div id="mandate-info" v-else>
+                    <div id="mandate-info" v-else-if="$root.hasPermission('walletMandates')">
                         <div v-if="mandate.isDisabled" class="disabled-mandate alert alert-danger">
                             {{ $t('wallet.auto-payment-disabled') }}
                         </div>
@@ -258,6 +258,12 @@
                     axios.get('/api/v4/payments/mandate', { loader })
                         .then(response => {
                             this.mandate = response.data
+
+                            if (this.mandate.minAmount) {
+                                if (this.mandate.minAmount > this.mandate.amount) {
+                                    this.mandate.amount = this.mandate.minAmount
+                                }
+                            }
                         })
                 }
             },

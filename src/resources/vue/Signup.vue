@@ -65,7 +65,7 @@
 
         <div class="card d-none" id="step3">
             <div class="card-body">
-                <h4 v-if="!invitation" class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: steps, n: steps }) }}</h4>
+                <h4 v-if="!invitation && steps > 1" class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: steps, n: steps }) }}</h4>
                 <p class="card-text">
                     {{ $t('signup.step3', { app: $root.appName }) }}
                 </p>
@@ -144,7 +144,15 @@
         },
         computed: {
             steps() {
-                return this.mode == 'token' ? 2 : 3
+                switch (this.mode) {
+                    case 'token':
+                        return 2
+                    case 'mandate':
+                        return 1
+                    case 'email':
+                    default:
+                        return 3
+                }
             }
         },
         mounted() {
@@ -197,7 +205,24 @@
                 if (plan) {
                     this.plan = title
                     this.mode = plan.mode
-                    this.displayForm(1, true)
+                    this.is_domain = plan.isDomain
+                    this.domain = ''
+
+                    let step = 1
+
+                    if (plan.mode == 'mandate') {
+                        step = 3
+                        if (!plan.isDomain || !this.domains.length) {
+                            axios.get('/api/auth/signup/domains')
+                                .then(response => {
+                                    this.displayForm(step, true)
+                                    this.setDomain(response.data)
+                                })
+                            return
+                        }
+                    }
+
+                    this.displayForm(step, true)
                 }
             },
             step0(plan) {
@@ -302,6 +327,10 @@
 
                 if (step == 2 && this.mode == 'token') {
                     step = 1
+                }
+
+                if (this.mode == 'mandate') {
+                    step = 0
                 }
 
                 $('#step' + step).removeClass('d-none').find('input').first().focus()

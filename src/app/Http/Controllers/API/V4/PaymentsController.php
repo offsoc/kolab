@@ -166,18 +166,22 @@ class PaymentsController extends Controller
         $amount = (int) ($request->amount * 100);
 
         // Validate the minimum value
-        // It has to be at least minimum payment amount and must cover current debt
-        if (
-            $wallet->balance < 0
-            && $wallet->balance <= Payment::MIN_AMOUNT * -1
-            && $wallet->balance + $amount < 0
-        ) {
-            return ['amount' => \trans('validation.minamountdebt')];
+        // It has to be at least minimum payment amount and must cover current debt,
+        // and must be more than a yearly/monthly payment (according to the plan)
+        $min = Payment::MIN_AMOUNT;
+        $label = 'minamount';
+
+        if ($plan = $wallet->owner->plan()) {
+            // TODO: $min = 
         }
 
-        if ($amount < Payment::MIN_AMOUNT) {
-            $min = $wallet->money(Payment::MIN_AMOUNT);
-            return ['amount' => \trans('validation.minamount', ['amount' => $min])];
+        if ($wallet->balance < 0 && $wallet->balance < $min * -1) {
+            $min = $wallet->balance * -1;
+            $label = 'minamountdebt';
+        }
+
+        if ($amount < $min) {
+            return ['amount' => \trans("validation.{$label}", ['amount' => $wallet->money($min)])];
         }
 
         return null;
@@ -375,6 +379,11 @@ class PaymentsController extends Controller
                 $mandate[$key] = $value;
             }
         }
+
+        if (($plan = $wallet->owner->plan()) /* && $plan->months > 0*/) {
+            // TODO $mandate['minAmount'] = 100;
+        }
+        $mandate['minAmount'] = 100; // test
 
         return $mandate;
     }
