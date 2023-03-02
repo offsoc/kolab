@@ -6,7 +6,7 @@
                     <div :class="'card bg-light plan-' + item.title">
                         <div class="card-header plan-header">
                             <div class="plan-ico text-center">
-                                <svg-icon :icon="plan_icons[item.title]"></svg-icon>
+                                <svg-icon :icon="plan_icons[item.title] || 'user'"></svg-icon>
                             </div>
                         </div>
                         <div class="card-body text-center">
