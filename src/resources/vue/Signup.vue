@@ -297,13 +297,12 @@
                 this.$root.clearFormValidation($('#step3 form'))
 
                 let post = {
-                    ...this.$root.pick(this, ['login', 'domain', 'voucher']),
+                    ...this.$root.pick(this, ['login', 'domain', 'voucher', 'plan']),
                     ...this.pass
                 }
 
                 if (this.invitation) {
                     post.invitation = this.invitation.id
-                    post.plan = this.plan
                     post.first_name = this.first_name
                     post.last_name = this.last_name
                 } else {
