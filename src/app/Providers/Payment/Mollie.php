@@ -360,7 +360,7 @@ class Mollie extends \App\Providers\PaymentProvider
 
             if ($mollie_payment->isPaid()) {
                 // The payment is paid. Update the balance, and notify the user
-                if ($payment->status != Payment::STATUS_PAID && $payment->amount > 0) {
+                if ($payment->status != Payment::STATUS_PAID && $payment->amount >= 0) {
                     $credit = true;
                     $notify = $payment->type == Payment::TYPE_RECURRING;
                 }

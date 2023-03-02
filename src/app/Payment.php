@@ -117,6 +117,11 @@ class Payment extends Model
         if ($this->wallet->balance >= 0) {
             $this->wallet->setSetting('mandate_disabled', null);
         }
+
+        // Remove RESTRICTED flag from the wallet owner and all users in the wallet
+        if ($wallet->owner && $wallet->owner->isRestricted()) {
+            $wallet->owner->unrestrict(true);
+        }
     }
 
     /**

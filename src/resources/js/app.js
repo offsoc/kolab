@@ -14,7 +14,8 @@ import { clearFormValidation, pick, startLoading, stopLoading } from './utils'
 
 const routerState = {
     afterLogin: null,
-    isLoggedIn: !!localStorage.getItem('token')
+    isLoggedIn: !!localStorage.getItem('token'),
+    isLocked: false
 }
 
 let loadingRoute
@@ -29,7 +30,12 @@ window.router.beforeEach((to, from, next) => {
 
         // redirect to login page
         next({ name: 'login' })
+        return
+    }
 
+    if (routerState.isLocked && to.meta.requiresAuth && !['login', 'wallet'].includes(to.name)) {
+        // redirect to the wallet page
+        next({ name: 'wallet' })
         return
     }
 
@@ -139,8 +145,13 @@ const app = new Vue({
                 this.authInfo = response
             }
 
+            routerState.isLocked = this.authInfo && this.authInfo.isLocked
+
             if (dashboard !== false) {
                 this.$router.push(routerState.afterLogin || { name: response.redirect || 'dashboard' })
+            } else if (routerState.isLocked && this.$route.name != 'wallet' && this.$route.meta.requiresAuth) {
+                // Always redirect locked user, here we can be after router's beforeEach handler
+                this.$router.push({ name: 'wallet' })
             }
 
             routerState.afterLogin = null
@@ -320,6 +331,10 @@ const app = new Vue({
             }
 
             return this.$t('status.active')
+        },
+        unlock() {
+            routerState.isLocked = this.authInfo.isLocked = false
+            this.$router.push({ name: 'dashboard' })
         },
         // Append some wallet properties to the object
         userWalletProps(object) {

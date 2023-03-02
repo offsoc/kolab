@@ -218,6 +218,9 @@
                 return tabs
             }
         },
+        beforeDestroyed() {
+            clearTimeout(this.refreshRequest)
+        },
         mounted() {
             $('#wallet button').focus()
 
@@ -249,19 +252,28 @@
             this.$refs.tabs.clickHandler('payments', () => { this.loadPayments = true })
         },
         methods: {
-            loadMandate() {
+            loadMandate(refresh) {
                 const loader = '#mandate-form'
 
                 this.$root.stopLoading(loader)
 
-                if (!this.mandate.id || this.mandate.isPending) {
-                    axios.get('/api/v4/payments/mandate', { loader })
+                if (!this.mandate.id || this.mandate.isPending || refresh) {
+                    axios.get('/api/v4/payments/mandate', refresh ? {} : { loader })
                         .then(response => {
                             this.mandate = response.data
 
                             if (this.mandate.minAmount) {
                                 if (this.mandate.minAmount > this.mandate.amount) {
                                     this.mandate.amount = this.mandate.minAmount
+                                }
+                            }
+
+                            if (this.$root.authInfo.isLocked) {
+                                if (this.mandate.isValid) {
+                                    this.$root.unlock()
+                                } else {
+                                    clearTimeout(this.refreshRequest)
+                                    this.refreshRequest = setTimeout(() => { this.loadMandate(true) }, 10 * 1000)
                                 }
                             }
                         })

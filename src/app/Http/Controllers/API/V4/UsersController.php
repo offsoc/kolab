@@ -353,6 +353,11 @@ class UsersController extends RelationController
     {
         $response = array_merge($user->toArray(), self::objectState($user));
 
+        $wallet = $user->wallet();
+
+        // IsLocked flag to lock the user to the Wallet page only
+        $response['isLocked'] = ($user->isRestricted() && ($plan = $wallet->plan()) && $plan->mode == 'mandate');
+
         // Settings
         $response['settings'] = [];
         foreach ($user->settings()->whereIn('key', self::USER_SETTINGS)->get() as $item) {
@@ -384,7 +389,7 @@ class UsersController extends RelationController
         // Information about wallets and accounts for access checks
         $response['wallets'] = $user->wallets->map($map_func)->toArray();
         $response['accounts'] = $user->accounts->map($map_func)->toArray();
-        $response['wallet'] = $map_func($user->wallet());
+        $response['wallet'] = $map_func($wallet);
 
         return $response;
     }

@@ -373,12 +373,10 @@ class SignupController extends Controller
 
         $response = AuthController::logonResponse($user, $request->password);
 
-        // Redirect the user to the Wallet page (when in the mandate mode)
-        if ($plan->mode == 'mandate') {
-            $data = $response->getData(true);
-            $data['redirect'] = 'wallet';
-            $response->setData($data);
-        }
+        // Redirect the user to the specified page
+        // $data = $response->getData(true);
+        // $data['redirect'] = 'wallet';
+        // $response->setData($data);
 
         return $response;
     }
