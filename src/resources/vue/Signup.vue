@@ -2,7 +2,7 @@
     <div class="container">
         <div id="step0" v-if="!invitation">
             <div class="plan-selector row row-cols-sm-2 g-3">
-                <div v-for="item in plans" :key="item.id">
+                <div v-for="item in plans" :key="item.id" :id="'plan-' + item.title">
                     <div :class="'card bg-light plan-' + item.title">
                         <div class="card-header plan-header">
                             <div class="plan-ico text-center">

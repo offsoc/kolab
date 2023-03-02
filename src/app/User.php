@@ -553,12 +553,10 @@ class User extends Authenticatable
      */
     public function unrestrict(bool $deep = false): void
     {
-        if (!$this->isRestricted()) {
-            return;
+        if ($this->isRestricted()) {
+            $this->status ^= User::STATUS_RESTRICTED;
+            $this->save();
         }
-
-        $this->status ^= User::STATUS_RESTRICTED;
-        $this->save();
 
         // Remove the flag from all users in the user's wallets
         if ($deep) {
