@@ -360,7 +360,14 @@
                     this.domains = response.domains
                 }
 
-                this.domain = response.domain || window.config['app.domain']
+                this.domain = response.domain
+
+                if (!this.domain) {
+                    this.domain = window.config['app.domain']
+                    if (this.domains.length && !this.domains.includes(this.domain)) {
+                        this.domain = this.domains[0]
+                    }
+                }
             }
         }
     }
