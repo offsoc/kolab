@@ -171,7 +171,7 @@ class PaymentsController extends Controller
         $min = Payment::MIN_AMOUNT;
         $label = 'minamount';
 
-        if ($plan = $wallet->plan() && $plan->months >= 1) {
+        if (($plan = $wallet->plan()) && $plan->months >= 1) {
             $planCost = (int) ceil($plan->cost() * $plan->months);
             if ($planCost > $min) {
                 $min = $planCost;
