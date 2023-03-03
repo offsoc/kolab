@@ -21,10 +21,10 @@
                             {{ item.title }}
                         </router-link>
                     </li>
-                    <li class="nav-item" v-if="!loggedIn && $root.isUser">
+                    <li class="nav-item" v-if="!loggedIn && $root.isUser && !hasMenuItem('signup')">
                         <router-link class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">{{ $t('menu.signup') }}</router-link>
                     </li>
-                    <li class="nav-item" v-if="loggedIn">
+                    <li class="nav-item" v-if="loggedIn && !hasMenuItem('dashboard')">
                         <router-link class="nav-link link-dashboard" active-class="active" :to="{name: 'dashboard'}">{{ $t('menu.cockpit') }}</router-link>
                     </li>
                     <li class="nav-item" v-if="loggedIn">
@@ -70,7 +70,13 @@
         },
         computed: {
             loggedIn() { return !!this.$root.authInfo },
-            menu() { return this.menuList.filter(item => !item.footer || this.mode == 'footer') },
+            menu() {
+                // Filter menu by its position on the page, and user authentication state
+                return this.menuList.filter(item => {
+                    return (!item.footer || this.mode == 'footer')
+                        && (!('authenticated' in item) || this.loggedIn === item.authenticated)
+                })
+            },
             route() { return this.$route.name }
         },
         mounted() {
@@ -90,8 +96,6 @@
                         return
                     }
 
-                    // TODO: Different menu for different loggedIn state
-
                     if (item.location.match(/^https?:/)) {
                         item.href = item.location
                     } else {
@@ -99,12 +103,15 @@
                     }
 
                     item.exact = item.location == '/'
-                    item.index = item.page || item.title.toLowerCase().replace(/\s+/g, '')
+                    item.index = item.label || item.title.toLowerCase().replace(/\s+/g, '')
 
                     menu.push(item)
                 })
 
                 return menu
+            },
+            hasMenuItem(page) {
+                return this.menuList.find(item => item.index == page)
             },
             getLang() {
                 return getLang()
