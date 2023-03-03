@@ -34,9 +34,7 @@ const setI18nLanguage = (lang) => {
     document.cookie = 'language=' + lang + '; max-age=' + age + '; path=/; secure'
 
     // Load additional localization from the theme
-    loadThemeLang(lang)
-
-    return lang
+    return loadThemeLang(lang)
 }
 
 const loadThemeLang = (lang) => {
@@ -47,7 +45,7 @@ const loadThemeLang = (lang) => {
     const theme = window.config['app.theme']
 
     if (theme && theme != 'default') {
-        import(/* webpackChunkName: "locale/[request]" */ `../build/js/${theme}-${lang}.json`)
+        return import(/* webpackChunkName: "locale/[request]" */ `../build/js/${theme}-${lang}.json`)
             .then(messages => {
                 i18n.mergeLocaleMessage(lang, messages.default)
                 loadedThemeLanguages.push(lang)
@@ -82,6 +80,6 @@ export function loadLangAsync() {
         .then(messages => {
             i18n.setLocaleMessage(lang, messages.default)
             loadedLanguages.push(lang)
-            return setI18nLanguage(lang)
+            return Promise.resolve(setI18nLanguage(lang))
         })
 }
