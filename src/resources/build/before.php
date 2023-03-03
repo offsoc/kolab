@@ -37,6 +37,20 @@ foreach (glob("{$rootDir}/resources/lang/*/ui.php") as $file) {
     }
 }
 
+foreach (glob("{$rootDir}/resources/themes/*/lang/*/ui.php") as $file) {
+    $content = include $file;
+
+    if (is_array($content)) {
+        preg_match('|([a-zA-Z]+)/lang/([a-z]+)/ui\.php$|', $file, $matches);
+
+        $theme = $matches[1];
+        $file = "{$rootDir}/resources/build/js/{$theme}-{$matches[2]}.json";
+        $opts = JSON_PRETTY_PRINT | JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE;
+
+        file_put_contents($file, json_encode($content, $opts));
+    }
+}
+
 echo "OK\n";
 
 // Move some theme-specific resources from resources/themes/ to public/themes/
