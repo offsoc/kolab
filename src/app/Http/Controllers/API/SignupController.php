@@ -37,7 +37,8 @@ class SignupController extends Controller
         $plans = [];
 
         // Use reverse order just to have individual on left, group on right ;)
-        Plan::withEnvTenantContext()->orderByDesc('title')->get()
+        // But prefer monthly on left, yearly on right
+        Plan::withEnvTenantContext()->orderBy('months')->orderByDesc('title')->get()
             ->map(function ($plan) use (&$plans) {
                 // Allow themes to set custom button label
                 $button = \trans('theme::app.planbutton-' . $plan->title);

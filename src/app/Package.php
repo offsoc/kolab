@@ -67,7 +67,7 @@ class Package extends Model
             $units = $sku->pivot->qty - $sku->units_free;
 
             if ($units < 0) {
-                \Log::debug("Package {$this->id} is misconfigured for more free units than qty.");
+                \Log::warning("Package {$this->id} is misconfigured for more free units than qty.");
                 $units = 0;
             }
 
