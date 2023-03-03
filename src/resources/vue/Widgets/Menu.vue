@@ -10,15 +10,15 @@
             </button>
             <div :id="mode + '-menu-navbar'" :class="mode == 'header' ? 'collapse navbar-collapse justify-content-end' : ''">
                 <ul class="navbar-nav justify-content-end">
-                    <li class="nav-item" v-for="item in menu" :key="item.index">
-                        <a v-if="item.href" :class="'nav-link link-' + item.index" :href="item.href">{{ item.title }}</a>
+                    <li class="nav-item" v-for="item in menu" :key="item.label">
+                        <a v-if="item.href" :class="'nav-link link-' + item.index" :href="item.href">{{ menuItemTitle(item) }}</a>
                         <router-link v-if="item.to"
-                                     :class="'nav-link link-' + item.index"
+                                     :class="'nav-link link-' + item.label"
                                      active-class="active"
                                      :to="item.to"
                                      :exact="item.exact"
                         >
-                            {{ item.title }}
+                            {{ menuItemTitle(item) }}
                         </router-link>
                     </li>
                     <li class="nav-item" v-if="!loggedIn && $root.isUser && !hasMenuItem('signup')">
@@ -85,13 +85,10 @@
         methods: {
             loadMenu() {
                 let menu = []
-                const lang = this.getLang()
                 const loggedIn = this.loggedIn
 
                 window.config.menu.forEach(item => {
-                    item.title = item['title-' + lang] || item['title-en'] || item.title
-
-                    if (!item.location || !item.title) {
+                    if (!item.location || !item.label) {
                         console.error("Invalid menu entry", item)
                         return
                     }
@@ -103,22 +100,24 @@
                     }
 
                     item.exact = item.location == '/'
-                    item.index = item.label || item.title.toLowerCase().replace(/\s+/g, '')
 
                     menu.push(item)
                 })
 
                 return menu
             },
-            hasMenuItem(page) {
-                return this.menuList.find(item => item.index == page)
+            hasMenuItem(label) {
+                return this.menuList.find(item => item.label == label)
+            },
+            menuItemTitle(item) {
+                const lang = this.getLang()
+                return item['title-' + lang] || item['title-en'] || item.title || this.$t('menu.' + item.label)
             },
             getLang() {
                 return getLang()
             },
             setLang(language) {
                 setLang(language)
-                this.menuList = this.loadMenu()
             }
         }
     }
