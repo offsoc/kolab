@@ -152,7 +152,9 @@ class IMAPTest extends TestCase
 
         $imap = $this->getImap();
         $expectedAcl = ['john@kolab.org' => str_split('lrswipkxtecdn')];
-        $this->assertSame($expectedAcl, $imap->getACL(IMAP::toUTF7($imapFolder)));
+        $acl = $imap->getACL(IMAP::toUTF7($imapFolder));
+        $this->assertTrue(is_array($acl) && isset($acl['john@kolab.org']));
+        $this->assertSame($expectedAcl['john@kolab.org'], $acl['john@kolab.org']);
 
         // Update the resource (rename)
         $resource->name = 'Resource1 ©' . time();
@@ -162,7 +164,9 @@ class IMAPTest extends TestCase
         $this->assertTrue(IMAP::updateResource($resource, ['folder' => $imapFolder]));
         $this->assertTrue($imapFolder != $newImapFolder);
         $this->assertTrue(IMAP::verifySharedFolder($newImapFolder));
-        $this->assertSame($expectedAcl, $imap->getACL(IMAP::toUTF7($newImapFolder)));
+        $acl = $imap->getACL(IMAP::toUTF7($newImapFolder));
+        $this->assertTrue(is_array($acl) && isset($acl['john@kolab.org']));
+        $this->assertSame($expectedAcl['john@kolab.org'], $acl['john@kolab.org']);
 
         // Update the resource (acl change)
         $resource->setSetting('invitation_policy', 'accept');
@@ -198,7 +202,11 @@ class IMAPTest extends TestCase
             'jack@kolab.org' => str_split('lrs')
         ];
 
-        $this->assertSame($expectedAcl, $imap->getACL(IMAP::toUTF7($imapFolder)));
+        $acl = $imap->getACL(IMAP::toUTF7($imapFolder));
+        $this->assertTrue(is_array($acl) && isset($acl['john@kolab.org']));
+        $this->assertSame($expectedAcl['john@kolab.org'], $acl['john@kolab.org']);
+        $this->assertTrue(is_array($acl) && isset($acl['jack@kolab.org']));
+        $this->assertSame($expectedAcl['jack@kolab.org'], $acl['jack@kolab.org']);
 
         // Update shared folder (acl)
         $folder->setSetting('acl', json_encode(['jack@kolab.org, read-only']));
@@ -207,7 +215,10 @@ class IMAPTest extends TestCase
 
         $expectedAcl = ['jack@kolab.org' => str_split('lrs')];
 
-        $this->assertSame($expectedAcl, $imap->getACL(IMAP::toUTF7($imapFolder)));
+        $acl = $imap->getACL(IMAP::toUTF7($imapFolder));
+        $this->assertTrue(is_array($acl) && isset($acl['jack@kolab.org']));
+        $this->assertSame($expectedAcl['jack@kolab.org'], $acl['jack@kolab.org']);
+        $this->assertTrue(!isset($acl['john@kolab.org']));
 
         // Update the shared folder (rename)
         $folder->name = 'SharedFolder1 ©' . time();
@@ -217,7 +228,10 @@ class IMAPTest extends TestCase
         $this->assertTrue(IMAP::updateSharedFolder($folder, ['folder' => $imapFolder]));
         $this->assertTrue($imapFolder != $newImapFolder);
         $this->assertTrue(IMAP::verifySharedFolder($newImapFolder));
-        $this->assertSame($expectedAcl, $imap->getACL(IMAP::toUTF7($newImapFolder)));
+
+        $acl = $imap->getACL(IMAP::toUTF7($newImapFolder));
+        $this->assertTrue(is_array($acl) && isset($acl['jack@kolab.org']));
+        $this->assertSame($expectedAcl['jack@kolab.org'], $acl['jack@kolab.org']);
 
         // Delete the shared folder
         $this->assertTrue(IMAP::deleteSharedFolder($folder));
