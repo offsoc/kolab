@@ -38,7 +38,6 @@ RUN dnf -y install \
         ./configure \
             --enable-sockets \
             --disable-mysqlnd \
-            --enable-http2 \
             --enable-openssl && \
         make -j4 && \
         make install && \
