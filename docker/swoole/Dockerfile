@@ -1,4 +1,4 @@
-FROM fedora:35
+FROM fedora:37
 
 MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
 
