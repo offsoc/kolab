@@ -158,6 +158,14 @@ class IMAP
         // Delete the mailbox (no need to delete subfolders?)
         $result = $imap->deleteFolder($mailbox);
 
+        if (!$result) {
+            // Ignore the error if the folder doesn't exist (maybe it was removed already).
+            if (!self::folderExists($imap, $mailbox)) {
+                \Log::info("The mailbox to delete was already removed: $mailbox");
+                $result = true;
+            }
+        }
+
         $imap->closeConnection();
 
         // Cleanup ACL
