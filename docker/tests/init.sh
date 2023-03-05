@@ -46,7 +46,62 @@ fi
 ./artisan queue:work --stop-when-empty
 ./artisan octane:start --host=$(grep OCTANE_HTTP_HOST .env | tail -n1 | sed "s/OCTANE_HTTP_HOST=//") >/dev/null 2>&1 &
 
+
+
+if [ "$1" == "suite-Functional" ]; then
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group skipci \
+        --verbose \
+        --testsuite Unit
+
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group skipci \
+        --verbose \
+        --testsuite Functional
+fi
+if [ "$1" == "suite-Feature" ]; then
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group skipci,coinbase,mollie,stripe,meet,dns \
+        --verbose \
+        --testsuite Feature
+fi
+if [ "$1" == "suite-Browser" ]; then
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group skipci \
+        --verbose \
+        --testsuite Browser
+fi
 if [ "$1" == "testsuite" ]; then
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group skipci \
+        --verbose \
+        --testsuite Unit
+
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group skipci \
+        --verbose \
+        --testsuite Functional
+
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group skipci,coinbase,mollie,stripe,meet,dns \
+        --verbose \
+        --testsuite Feature
+fi
+if [ "$1" == "quicktest" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
