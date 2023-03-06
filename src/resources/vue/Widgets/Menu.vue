@@ -11,7 +11,7 @@
             <div :id="mode + '-menu-navbar'" :class="mode == 'header' ? 'collapse navbar-collapse justify-content-end' : ''">
                 <ul class="navbar-nav justify-content-end">
                     <li class="nav-item" v-for="item in menu" :key="item.label">
-                        <a v-if="item.href" :class="'nav-link link-' + item.index" :href="item.href">{{ menuItemTitle(item) }}</a>
+                        <a v-if="item.href" :class="'nav-link link-' + item.label" :href="item.href">{{ menuItemTitle(item) }}</a>
                         <router-link v-if="item.to"
                                      :class="'nav-link link-' + item.label"
                                      active-class="active"
