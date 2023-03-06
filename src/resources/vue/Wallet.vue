@@ -1,5 +1,8 @@
 <template>
     <div class="container" dusk="wallet-component">
+        <p v-if="$root.authInfo.isLocked" id="lock-alert" class="alert alert-warning">
+            {{ $t('wallet.locked-text') }}
+        </p>
         <div v-if="wallet.id" id="wallet" class="card">
             <div class="card-body">
                 <div class="card-title">{{ $t('wallet.title') }} <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'">{{ $root.price(wallet.balance, wallet.currency) }}</span></div>
