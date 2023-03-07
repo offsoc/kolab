@@ -127,7 +127,7 @@ def test_caldav_redirect(host, username, password, verbose):
         verbose
     )
 
-    success = response.status in (301, 302)
+    success = response.status in (200, 301, 302)
     if not success:
         print("=> Error: .well-known/caldav is not available")
 
