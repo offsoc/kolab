@@ -244,7 +244,10 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        $plan = $this->getPlan();
+        if (!empty($request->plan) && empty($request->code)) {
+            $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
+        }
+
         $settings = [];
 
         // Signup via invitation
@@ -275,12 +278,14 @@ class SignupController extends Controller
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
             ];
-        } elseif ($plan->mode != 'mandate') {
+        } elseif (empty($plan) || $plan->mode != 'mandate') {
             // Validate verification codes (again)
             $v = $this->verify($request, false);
             if ($v->status() !== 200) {
                 return $v;
             }
+
+            $plan = $this->getPlan();
 
             // Get user name/email from the verification code database
             $code_data = $v->getData();
@@ -393,7 +398,7 @@ class SignupController extends Controller
 
         if (!$request->plan || !$request->plan instanceof Plan) {
             // Get the plan if specified and exists...
-            if ($request->code && $request->code->plan) {
+            if (($request->code instanceof SignupCode) && $request->code->plan) {
                 $plan = Plan::withEnvTenantContext()->where('title', $request->code->plan)->first();
             } elseif ($request->plan) {
                 $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();

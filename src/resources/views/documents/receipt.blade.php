@@ -27,7 +27,7 @@
                 </td>
                 <td class="idents">
                     {{--<span class="gray">{{ __('documents.account-id') }}</span> {{ $customer['wallet_id'] }}<br>--}}
-                    <nobr><span class="gray">{{ __('documents.customer-no') }}</span> {{ $customer['id'] }}</nobr>
+                    <span class="gray">{{ __('documents.customer-no') }}</span> {{ $customer['id'] }}
                 </td>
             </tr>
         </table>

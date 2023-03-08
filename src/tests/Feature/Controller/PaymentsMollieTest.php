@@ -569,7 +569,7 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertSame(2010, $transaction->amount);
         $this->assertSame(
-            "Auto-payment transaction {$payment->id} using Mastercard (**** **** **** 9399)",
+            "Auto-payment transaction {$payment->id} using Mastercard (**** **** **** 6787)",
             $transaction->description
         );
 
