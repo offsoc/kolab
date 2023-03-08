@@ -5,6 +5,8 @@ namespace Tests\Feature\Controller;
 use App\Http\Controllers\API\SignupController;
 use App\Discount;
 use App\Domain;
+use App\Plan;
+use App\Package;
 use App\SignupCode;
 use App\SignupInvitation as SI;
 use App\User;
@@ -36,6 +38,7 @@ class SignupTest extends TestCase
 
         $this->deleteTestGroup('group-test@kolabnow.com');
         SI::truncate();
+        Plan::where('title', 'test')->delete();
     }
 
     /**
@@ -53,6 +56,7 @@ class SignupTest extends TestCase
 
         $this->deleteTestGroup('group-test@kolabnow.com');
         SI::truncate();
+        Plan::where('title', 'test')->delete();
 
         parent::tearDown();
     }
@@ -759,6 +763,62 @@ class SignupTest extends TestCase
         // TODO: Check SKUs/Plan
 
         // TODO: Check if the access token works
+    }
+
+    /**
+     * Test signup with mode=mandate
+     */
+    public function testSignupMandateMode(): void
+    {
+        Queue::fake();
+
+        $plan = Plan::create([
+                'title' => 'test',
+                'name' => 'Test Account',
+                'description' => 'Test',
+                'free_months' => 1,
+                'discount_qty' => 0,
+                'discount_rate' => 0,
+                'mode' => 'mandate',
+        ]);
+
+        $packages = [
+            Package::where(['title' => 'kolab', 'tenant_id' => \config('app.tenant_id')])->first()
+        ];
+
+        $plan->packages()->saveMany($packages);
+
+        $post = [
+            'plan' => 'abc',
+            'login' => 'test-inv',
+            'domain' => 'kolabnow.com',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
+        ];
+
+        // Test invalid plan identifier
+        $response = $this->post('/api/auth/signup', $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame("The selected plan is invalid.", $json['errors']['plan']);
+
+        // Test valid input
+        $post['plan'] = $plan->title;
+        $response = $this->post('/api/auth/signup', $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertSame('success', $json['status']);
+        $this->assertNotEmpty($json['access_token']);
+        $this->assertSame('test-inv@kolabnow.com', $json['email']);
+        $this->assertTrue($json['isLocked']);
+        $user = User::where('email', 'test-inv@kolabnow.com')->first();
+        $this->assertNotEmpty($user);
+        $this->assertSame($plan->id, $user->getSetting('plan_id'));
     }
 
     /**

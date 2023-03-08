@@ -244,14 +244,19 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        if (!empty($request->plan) && empty($request->code)) {
-            $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
-        }
 
         $settings = [];
 
-        // Signup via invitation
-        if ($request->invitation) {
+        // Plan parameter is required/allowed in mandate mode
+        if (!empty($request->plan) && empty($request->code) && empty($request->invitation)) {
+            $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
+
+            if (!$plan || $plan->mode != 'mandate') {
+                $msg = \trans('validation.exists', ['attribute' => 'plan']);
+                return response()->json(['status' => 'error', 'errors' => ['plan' => $msg]], 422);
+            }
+        } elseif ($request->invitation) {
+            // Signup via invitation
             $invitation = SignupInvitation::withEnvTenantContext()->find($request->invitation);
 
             if (empty($invitation) || $invitation->isCompleted()) {
@@ -278,7 +283,7 @@ class SignupController extends Controller
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
             ];
-        } elseif (empty($plan) || $plan->mode != 'mandate') {
+        } else {
             // Validate verification codes (again)
             $v = $this->verify($request, false);
             if ($v->status() !== 200) {
