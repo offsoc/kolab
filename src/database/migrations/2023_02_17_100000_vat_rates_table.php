@@ -78,6 +78,7 @@ return new class extends Migration
         Schema::table(
             'payments',
             function (Blueprint $table) {
+                $table->dropForeign(['vat_rate_id']);
                 $table->dropColumn('vat_rate_id');
                 $table->dropColumn('credit_amount');
             }
