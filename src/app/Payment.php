@@ -119,8 +119,8 @@ class Payment extends Model
         }
 
         // Remove RESTRICTED flag from the wallet owner and all users in the wallet
-        if ($wallet->owner && $wallet->owner->isRestricted()) {
-            $wallet->owner->unrestrict(true);
+        if ($this->wallet->owner && $this->wallet->owner->isRestricted()) {
+            $this->wallet->owner->unrestrict(true);
         }
     }
 
