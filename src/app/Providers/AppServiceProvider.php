@@ -46,17 +46,17 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Load the override config and apply it
      *
-     * To use create a config/override.php file, and add values including the toplevel config name.
-     * E.g. To override the 'uri' value in imap.php, set ['imap' => ['uri' => 'overrideValue']] in config/override.php.
-     *
-     * @return void
+     * Create a config/override.php file with content like this:
+     * return [
+     *   'imap.uri' => 'overrideValue1',
+     *   'queue.connections.database.table' => 'overrideValue2',
+     * ];
      */
-    private function applyOverrideConfig()
+    private function applyOverrideConfig(): void
     {
-        $overrideConfig = $this->app['config']->get('override', []);
+        $overrideConfig = (array) \config('override');
         foreach (array_keys($overrideConfig) as $key) {
-            $config = $this->app['config']->get($key, []);
-            $this->app['config']->set($key, array_merge($config, $overrideConfig[$key]));
+            \config([$key => $overrideConfig[$key]]);
         }
     }
 
