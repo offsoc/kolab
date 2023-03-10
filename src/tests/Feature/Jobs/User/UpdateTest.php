@@ -41,9 +41,12 @@ class UpdateTest extends TestCase
 
         $user = $this->getTestUser('new-job-user@' . \config('app.domain'));
 
-        // Create the user in LDAP
-        $job = new \App\Jobs\User\CreateJob($user->id);
-        $job->handle();
+        try {
+            $job = new \App\Jobs\User\CreateJob($user->id);
+            $job->handle();
+        } catch (\Exception $e) {
+            // Ignore "Attempted to release a manually executed job" exception
+        }
 
         // Test setting two aliases
         $aliases = [

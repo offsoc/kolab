@@ -94,6 +94,11 @@ class IMAPTest extends TestCase
         $storage = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
         $user->assignSku($storage, 1, $user->wallets->first());
 
+        // User must be in ldap, so imap auth works
+        if (\config('app.with_ldap')) {
+            LDAP::createUser($user);
+        }
+
         $expectedQuota = [
             'user/' . $user->email => [
                 'storage' => [

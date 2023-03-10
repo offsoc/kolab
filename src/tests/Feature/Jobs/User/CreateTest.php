@@ -35,6 +35,9 @@ class CreateTest extends TestCase
     {
         Queue::fake();
         $user = $this->getTestUser('new-job-user@' . \config('app.domain'), ['status' => User::STATUS_NEW]);
+        $domain = \App\Domain::where('namespace', \config('app.domain'))->first();
+        $domain->status |= \App\Domain::STATUS_LDAP_READY;
+        $domain->save();
 
         $this->assertFalse($user->isLdapReady());
         $this->assertFalse($user->isImapReady());

@@ -45,9 +45,12 @@ class DeleteTest extends TestCase
         $user = $this->getTestUser('new-job-user@' . \config('app.domain'));
         $rcuser = Roundcube::userId($user->email);
 
-        // Create the user in LDAP+IMAP
-        $job = new \App\Jobs\User\CreateJob($user->id);
-        $job->handle();
+        try {
+            $job = new \App\Jobs\User\CreateJob($user->id);
+            $job->handle();
+        } catch (\Exception $e) {
+            // Ignore "Attempted to release a manually executed job" exception
+        }
 
         $user->refresh();
 
