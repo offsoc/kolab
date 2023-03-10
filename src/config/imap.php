@@ -33,27 +33,32 @@ return [
 
         'Calendar' => [
             'metadata' => [
-                '/private/vendor/kolab/folder-type' => 'event.default'
+                '/private/vendor/kolab/folder-type' => 'event.default',
+                '/shared/vendor/kolab/folder-type' => 'event',
             ],
         ],
         'Contacts' => [
             'metadata' => [
                 '/private/vendor/kolab/folder-type' => 'contact.default',
+                '/shared/vendor/kolab/folder-type' => 'event',
             ],
         ],
         'Tasks' => [
             'metadata' => [
                 '/private/vendor/kolab/folder-type' => 'task.default',
+                '/shared/vendor/kolab/folder-type' => 'task',
             ],
         ],
         'Notes' => [
             'metadata' => [
                 '/private/vendor/kolab/folder-type' => 'note.default',
+                '/shared/vendor/kolab/folder-type' => 'note',
             ],
         ],
         'Files' => [
             'metadata' => [
                 '/private/vendor/kolab/folder-type' => 'file.default',
+                '/shared/vendor/kolab/folder-type' => 'file',
             ],
         ],
     ]
