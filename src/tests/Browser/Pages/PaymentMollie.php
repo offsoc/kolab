@@ -25,7 +25,7 @@ class PaymentMollie extends Page
      */
     public function assert($browser)
     {
-        $browser->waitFor('form#body table, form#body iframe');
+        $browser->waitFor('form#body table, form#body iframe', 10);
     }
 
     /**
@@ -64,7 +64,7 @@ class PaymentMollie extends Page
                 $browser->type('#expiryDate', '12/' . (date('y') + 1));
             })
             ->withinFrame('#cvv iframe', function ($browser) {
-                $browser->type('#verificationCode', '123');
+                $browser->click('#verificationCode')->type('#verificationCode', '123');
             })
             ->click('#submit-button');
         }

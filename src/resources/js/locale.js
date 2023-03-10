@@ -17,6 +17,7 @@ export const i18n = new VueI18n({
 let currentLanguage
 
 const loadedLanguages = ['en'] // our default language that is preloaded
+const loadedThemeLanguages = []
 
 const setI18nLanguage = (lang) => {
     i18n.locale = lang
@@ -32,7 +33,25 @@ const setI18nLanguage = (lang) => {
     const age = 10 * 60 * 60 * 24 * 365
     document.cookie = 'language=' + lang + '; max-age=' + age + '; path=/; secure'
 
-    return lang
+    // Load additional localization from the theme
+    return loadThemeLang(lang)
+}
+
+const loadThemeLang = (lang) => {
+    if (loadedThemeLanguages.includes(lang)) {
+        return
+    }
+
+    const theme = window.config['app.theme']
+
+    if (theme && theme != 'default') {
+        return import(/* webpackChunkName: "locale/[request]" */ `../build/js/${theme}-${lang}.json`)
+            .then(messages => {
+                i18n.mergeLocaleMessage(lang, messages.default)
+                loadedThemeLanguages.push(lang)
+            })
+            .catch(error => { /* ignore errors */ })
+    }
 }
 
 export const getLang = () => {
@@ -61,6 +80,6 @@ export function loadLangAsync() {
         .then(messages => {
             i18n.setLocaleMessage(lang, messages.default)
             loadedLanguages.push(lang)
-            return setI18nLanguage(lang)
+            return Promise.resolve(setI18nLanguage(lang))
         })
 }

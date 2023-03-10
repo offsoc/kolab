@@ -147,7 +147,7 @@ class ContentController extends Controller
             }
 
             // Unset properties that we don't need on the client side
-            unset($item['admin'], $item['label']);
+            unset($item['admin']);
 
             $menu[$idx] = $item;
         }

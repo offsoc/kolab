@@ -4,6 +4,7 @@ namespace Tests\Feature\Controller;
 
 use App\Http\Controllers\API\V4\PaymentsController;
 use App\Payment;
+use App\Plan;
 use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
@@ -47,6 +48,7 @@ class PaymentsMollieTest extends TestCase
             Transaction::WALLET_CHARGEBACK,
         ];
         Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
+        Plan::withEnvTenantContext()->where('title', 'individual')->update(['mode' => 'email', 'months' => 1]);
     }
 
     /**
@@ -68,6 +70,7 @@ class PaymentsMollieTest extends TestCase
             Transaction::WALLET_CHARGEBACK,
         ];
         Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
+        Plan::withEnvTenantContext()->where('title', 'individual')->update(['mode' => 'email', 'months' => 1]);
         Utils::setTestExchangeRates([]);
 
         parent::tearDown();
@@ -338,6 +341,44 @@ class PaymentsMollieTest extends TestCase
     }
 
     /**
+     * Test fetching an outo-payment mandate parameters
+     *
+     * @group mollie
+     */
+    public function testMandateParams(): void
+    {
+        $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
+        $user = $this->getTestUser('payment-test@' . \config('app.domain'));
+        $wallet = $user->wallets()->first();
+
+        $response = $this->actingAs($user)->get("api/v4/payments/mandate");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame((int) ceil(Payment::MIN_AMOUNT / 100), $json['amount']);
+        $this->assertSame($json['amount'], $json['minAmount']);
+        $this->assertSame(0, $json['balance']);
+        $this->assertFalse($json['isValid']);
+        $this->assertFalse($json['isDisabled']);
+
+        $plan->months = 12;
+        $plan->save();
+        $user->setSetting('plan_id', $plan->id);
+
+        $response = $this->actingAs($user)->get("api/v4/payments/mandate");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame((int) ceil(Payment::MIN_AMOUNT / 100), $json['amount']);
+        $this->assertSame((int) ceil(($plan->cost() * $plan->months) / 100), $json['minAmount']);
+
+        // TODO: Test more cases
+        // TODO: Test user unrestricting if mandate is valid
+    }
+
+    /**
      * Test creating a payment and receiving a status via webhook
      *
      * @group mollie
@@ -569,7 +610,7 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertSame(2010, $transaction->amount);
         $this->assertSame(
-            "Auto-payment transaction {$payment->id} using Mastercard (**** **** **** 9399)",
+            "Auto-payment transaction {$payment->id} using Mastercard (**** **** **** 6787)",
             $transaction->description
         );
 

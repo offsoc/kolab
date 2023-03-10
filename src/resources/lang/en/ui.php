@@ -539,6 +539,7 @@ return [
             . " We will then convert this to {pc}, and on the next page you will be provided with the bank-details to transfer the amount in {pc}.",
         'fill-up' => "Fill up by",
         'history' => "History",
+        'locked-text' => "The account is locked until you set up auto-payment successfully.",
         'month' => "month",
         'noperm' => "Only account owners can access a wallet.",
         'norefund' => "The money in your wallet is non-refundable.",

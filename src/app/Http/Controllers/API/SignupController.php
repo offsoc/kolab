@@ -37,7 +37,8 @@ class SignupController extends Controller
         $plans = [];
 
         // Use reverse order just to have individual on left, group on right ;)
-        Plan::withEnvTenantContext()->orderByDesc('title')->get()
+        // But prefer monthly on left, yearly on right
+        Plan::withEnvTenantContext()->orderBy('months')->orderByDesc('title')->get()
             ->map(function ($plan) use (&$plans) {
                 // Allow themes to set custom button label
                 $button = \trans('theme::app.planbutton-' . $plan->title);
@@ -51,10 +52,23 @@ class SignupController extends Controller
                     'button' => $button,
                     'description' => $plan->description,
                     'mode' => $plan->mode ?: 'email',
+                    'isDomain' => $plan->hasDomain(),
                 ];
             });
 
         return response()->json(['status' => 'success', 'plans' => $plans]);
+    }
+
+    /**
+     * Returns list of public domains for signup.
+     *
+     * @param \Illuminate\Http\Request $request HTTP request
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response
+     */
+    public function domains(Request $request)
+    {
+        return response()->json(['status' => 'success', 'domains' => Domain::getPublicDomains()]);
     }
 
     /**
@@ -230,8 +244,19 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        // Signup via invitation
-        if ($request->invitation) {
+
+        $settings = [];
+
+        // Plan parameter is required/allowed in mandate mode
+        if (!empty($request->plan) && empty($request->code) && empty($request->invitation)) {
+            $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
+
+            if (!$plan || $plan->mode != 'mandate') {
+                $msg = \trans('validation.exists', ['attribute' => 'plan']);
+                return response()->json(['status' => 'error', 'errors' => ['plan' => $msg]], 422);
+            }
+        } elseif ($request->invitation) {
+            // Signup via invitation
             $invitation = SignupInvitation::withEnvTenantContext()->find($request->invitation);
 
             if (empty($invitation) || $invitation->isCompleted()) {
@@ -244,7 +269,6 @@ class SignupController extends Controller
                 [
                     'first_name' => 'max:128',
                     'last_name' => 'max:128',
-                    'voucher' => 'max:32',
                 ]
             );
 
@@ -266,6 +290,8 @@ class SignupController extends Controller
                 return $v;
             }
 
+            $plan = $this->getPlan();
+
             // Get user name/email from the verification code database
             $code_data = $v->getData();
 
@@ -274,7 +300,7 @@ class SignupController extends Controller
                 'last_name' => $code_data->last_name,
             ];
 
-            if ($this->getPlan()->mode == 'token') {
+            if ($plan->mode == 'token') {
                 $settings['signup_token'] = $code_data->email;
             } else {
                 $settings['external_email'] = $code_data->email;
@@ -292,10 +318,11 @@ class SignupController extends Controller
             }
         }
 
-        // Get the plan
-        $plan = $this->getPlan();
-        $is_domain = $plan->hasDomain();
+        if (empty($plan)) {
+            $plan = $this->getPlan();
+        }
 
+        $is_domain = $plan->hasDomain();
         $login = $request->login;
         $domain_name = $request->domain;
 
@@ -355,7 +382,14 @@ class SignupController extends Controller
 
         DB::commit();
 
-        return AuthController::logonResponse($user, $request->password);
+        $response = AuthController::logonResponse($user, $request->password);
+
+        // Redirect the user to the specified page
+        // $data = $response->getData(true);
+        // $data['redirect'] = 'wallet';
+        // $response->setData($data);
+
+        return $response;
     }
 
     /**
@@ -369,7 +403,7 @@ class SignupController extends Controller
 
         if (!$request->plan || !$request->plan instanceof Plan) {
             // Get the plan if specified and exists...
-            if ($request->code && $request->code->plan) {
+            if (($request->code instanceof SignupCode) && $request->code->plan) {
                 $plan = Plan::withEnvTenantContext()->where('title', $request->code->plan)->first();
             } elseif ($request->plan) {
                 $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();

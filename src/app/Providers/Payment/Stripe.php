@@ -369,6 +369,9 @@ class Stripe extends \App\Providers\PaymentProvider
                     $payment->wallet->setSetting('stripe_mandate_id', $intent->id);
                     $threshold = intval((float) $payment->wallet->getSetting('mandate_balance') * 100);
 
+                    // Call credit() so wallet/account state is updated
+                    $this->creditPayment($payment, $intent);
+
                     // Top-up the wallet if balance is below the threshold
                     if ($payment->wallet->balance < $threshold && $payment->status != Payment::STATUS_PAID) {
                         \App\Jobs\WalletCharge::dispatch($payment->wallet);

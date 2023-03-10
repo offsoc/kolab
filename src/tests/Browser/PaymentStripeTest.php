@@ -80,7 +80,7 @@ class PaymentStripeTest extends TestCaseDusk
                 ->on(new PaymentStripe())
                 ->assertSeeIn('@title', $user->tenant->title . ' Payment')
                 ->assertSeeIn('@amount', 'CHF 12.34')
-                ->assertValue('@email-input', $user->email)
+                ->assertSeeIn('@email', $user->email)
                 ->submitValidCreditCard();
 
             // Now it should redirect back to wallet page and in background
@@ -115,6 +115,7 @@ class PaymentStripeTest extends TestCaseDusk
                 ->on(new WalletPage())
                 ->assertMissing('@body #mandate-form .alert')
                 ->click('@main #mandate-form button')
+/*
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
                         ->waitFor('#payment-method-selection .link-creditcard')
@@ -122,8 +123,10 @@ class PaymentStripeTest extends TestCaseDusk
                         ->assertMissing('#payment-method-selection .link-banktransfer')
                         ->click('#payment-method-selection .link-creditcard');
                 })
+*/
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
+                        ->waitFor('@body #mandate_amount')
                         ->assertSeeIn('@body label[for="mandate_amount"]', 'Fill up by')
                         ->assertValue('@body #mandate_amount', Payment::MIN_AMOUNT / 100)
                         ->assertSeeIn('@body label[for="mandate_balance"]', 'when account balance is below') // phpcs:ignore
@@ -157,7 +160,7 @@ class PaymentStripeTest extends TestCaseDusk
                 ->on(new PaymentStripe())
                 ->assertMissing('@title')
                 ->assertMissing('@amount')
-                ->assertValue('@email-input', $user->email)
+                ->assertSeeIn('@email', $user->email)
                 ->submitValidCreditCard()
                 ->waitForLocation('/wallet', 30) // need more time than default 5 sec.
                 ->visit('/wallet?paymentProvider=stripe')

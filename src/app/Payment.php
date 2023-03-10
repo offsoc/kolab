@@ -106,7 +106,15 @@ class Payment extends Model
      */
     public function credit($method): void
     {
-        // TODO: Possibly we should sanity check that payment is paid, and not negative?
+        if (empty($this->wallet)) {
+            throw new \Exception("Cannot credit a payment not assigned to a wallet");
+        }
+
+        if ($this->credit_amount < 0) {
+            throw new \Exception("Cannot credit a payment with negative amount");
+        }
+
+        // TODO: Possibly we should sanity check that payment is paid?
         // TODO: Localization?
         $description = $this->type == self::TYPE_RECURRING ? 'Auto-payment' : 'Payment';
         $description .= " transaction {$this->id} using {$method}";
@@ -116,6 +124,11 @@ class Payment extends Model
         // Unlock the disabled auto-payment mandate
         if ($this->wallet->balance >= 0) {
             $this->wallet->setSetting('mandate_disabled', null);
+        }
+
+        // Remove RESTRICTED flag from the wallet owner and all users in the wallet
+        if ($this->wallet->owner && $this->wallet->owner->isRestricted()) {
+            $this->wallet->owner->unrestrict(true);
         }
     }
 

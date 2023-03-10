@@ -12,7 +12,9 @@ use Tests\Browser;
 use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
+use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\Signup;
+use Tests\Browser\Pages\Wallet;
 use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
@@ -29,7 +31,7 @@ class SignupTest extends TestCaseDusk
         $this->deleteTestUser('admin@user-domain-signup.com');
         $this->deleteTestDomain('user-domain-signup.com');
 
-        Plan::where('mode', 'token')->update(['mode' => 'email']);
+        Plan::whereIn('mode', ['token', 'mandate'])->update(['mode' => 'email']);
     }
 
     /**
@@ -42,7 +44,7 @@ class SignupTest extends TestCaseDusk
         $this->deleteTestDomain('user-domain-signup.com');
         SignupInvitation::truncate();
 
-        Plan::where('mode', 'token')->update(['mode' => 'email']);
+        Plan::whereIn('mode', ['token', 'mandate'])->update(['mode' => 'email']);
 
         @unlink(storage_path('signup-tokens.txt'));
 
@@ -515,6 +517,67 @@ class SignupTest extends TestCaseDusk
             $browser->within(new Menu(), function ($browser) {
                 $browser->clickMenuItem('logout');
             });
+        });
+    }
+
+    /**
+     * Test signup with a mandate plan, also the wallet lock
+     */
+    public function testSignupMandate(): void
+    {
+        // Test the individual plan
+        $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
+        $plan->mode = 'mandate';
+        $plan->save();
+
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new Signup())
+                ->waitFor('@step0 .plan-individual button')
+                ->click('@step0 .plan-individual button')
+                // Test Back button
+                ->whenAvailable('@step3', function ($browser) {
+                    $browser->click('button[type=button]');
+                })
+                ->whenAvailable('@step0', function ($browser) {
+                    $browser->click('.plan-individual button');
+                })
+                // Test submit
+                ->whenAvailable('@step3', function ($browser) {
+                    $domains = Domain::getPublicDomains();
+                    $domains_count = count($domains);
+
+                    $browser->assertMissing('.card-title')
+                        ->assertElementsCount('select#signup_domain option', $domains_count, false)
+                        ->assertText('select#signup_domain option:nth-child(1)', $domains[0])
+                        ->assertValue('select#signup_domain option:nth-child(1)', $domains[0])
+                        ->type('#signup_login', 'signuptestdusk')
+                        ->type('#signup_password', '12345678')
+                        ->type('#signup_password_confirmation', '12345678')
+                        ->click('[type=submit]');
+                })
+                ->waitUntilMissing('@step3')
+                ->on(new Wallet())
+                ->assertSeeIn('#lock-alert', "The account is locked")
+                ->within(new Menu(), function ($browser) {
+                    $browser->clickMenuItem('logout');
+                });
+        });
+
+        $user = User::where('email', 'signuptestdusk@' . \config('app.domain'))->first();
+        $this->assertSame($plan->id, $user->getSetting('plan_id'));
+
+        // Login again and see that the account is still locked
+        $this->browse(function (Browser $browser) use ($user) {
+            $browser->on(new Home())
+                ->submitLogon($user->email, '12345678', false)
+                ->waitForLocation('/wallet')
+                ->on(new Wallet())
+                ->assertSeeIn('#lock-alert', "The account is locked")
+                ->within(new Menu(), function ($browser) {
+                    $browser->clickMenuItem('logout');
+                });
+
+            // TODO: Test automatic UI unlock after creating a valid auto-payment mandate
         });
     }
 

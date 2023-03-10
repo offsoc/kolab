@@ -1,5 +1,8 @@
 <template>
     <div class="container" dusk="wallet-component">
+        <p v-if="$root.authInfo.isLocked" id="lock-alert" class="alert alert-warning">
+            {{ $t('wallet.locked-text') }}
+        </p>
         <div v-if="wallet.id" id="wallet" class="card">
             <div class="card-body">
                 <div class="card-title">{{ $t('wallet.title') }} <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'">{{ $root.price(wallet.balance, wallet.currency) }}</span></div>
@@ -9,10 +12,10 @@
                     <div v-if="showPendingPayments" class="alert alert-warning">
                         {{ $t('wallet.pending-payments-warning') }}
                     </div>
-                    <p>
+                    <p v-if="$root.hasPermission('walletPayments')">
                         <btn class="btn-primary" @click="paymentMethodForm('manual')">{{ $t('wallet.add-credit') }}</btn>
                     </p>
-                    <div id="mandate-form" v-if="!mandate.isValid && !mandate.isPending">
+                    <div id="mandate-form" v-if="!mandate.isValid && !mandate.isPending && $root.hasPermission('walletMandates')">
                         <template v-if="mandate.id && !mandate.isValid">
                             <div class="alert alert-danger">
                                 {{ $t('wallet.auto-payment-failed') }}
@@ -21,7 +24,7 @@
                         </template>
                         <btn class="btn-primary" @click="paymentMethodForm('auto')">{{ $t('wallet.auto-payment-setup') }}</btn>
                     </div>
-                    <div id="mandate-info" v-else>
+                    <div id="mandate-info" v-else-if="$root.hasPermission('walletMandates')">
                         <div v-if="mandate.isDisabled" class="disabled-mandate alert alert-danger">
                             {{ $t('wallet.auto-payment-disabled') }}
                         </div>
@@ -218,6 +221,9 @@
                 return tabs
             }
         },
+        beforeDestroyed() {
+            clearTimeout(this.refreshRequest)
+        },
         mounted() {
             $('#wallet button').focus()
 
@@ -249,15 +255,30 @@
             this.$refs.tabs.clickHandler('payments', () => { this.loadPayments = true })
         },
         methods: {
-            loadMandate() {
+            loadMandate(refresh) {
                 const loader = '#mandate-form'
 
                 this.$root.stopLoading(loader)
 
-                if (!this.mandate.id || this.mandate.isPending) {
-                    axios.get('/api/v4/payments/mandate', { loader })
+                if (!this.mandate.id || this.mandate.isPending || refresh) {
+                    axios.get('/api/v4/payments/mandate', refresh ? {} : { loader })
                         .then(response => {
                             this.mandate = response.data
+
+                            if (this.mandate.minAmount) {
+                                if (this.mandate.minAmount > this.mandate.amount) {
+                                    this.mandate.amount = this.mandate.minAmount
+                                }
+                            }
+
+                            if (this.$root.authInfo.isLocked) {
+                                if (this.mandate.isValid) {
+                                    this.$root.unlock()
+                                } else {
+                                    clearTimeout(this.refreshRequest)
+                                    this.refreshRequest = setTimeout(() => { this.loadMandate(true) }, 10 * 1000)
+                                }
+                            }
                         })
                 }
             },
@@ -372,6 +393,10 @@
                     axios.get('/api/v4/payments/methods', { params: { type }, loader })
                         .then(response => {
                             this.paymentMethods = response.data
+                            if (this.paymentMethods.length == 1) {
+                                this.nextForm = 'auto';
+                                this.selectPaymentMethod(this.paymentMethods[0]);
+                            }
                         })
                 })
             },

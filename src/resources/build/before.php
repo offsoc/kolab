@@ -37,6 +37,20 @@ foreach (glob("{$rootDir}/resources/lang/*/ui.php") as $file) {
     }
 }
 
+foreach (glob("{$rootDir}/resources/themes/*/lang/*/ui.php") as $file) {
+    $content = include $file;
+
+    if (is_array($content)) {
+        preg_match('|([a-zA-Z]+)/lang/([a-z]+)/ui\.php$|', $file, $matches);
+
+        $theme = $matches[1];
+        $file = "{$rootDir}/resources/build/js/{$theme}-{$matches[2]}.json";
+        $opts = JSON_PRETTY_PRINT | JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE;
+
+        file_put_contents($file, json_encode($content, $opts));
+    }
+}
+
 echo "OK\n";
 
 // Move some theme-specific resources from resources/themes/ to public/themes/
@@ -54,14 +68,19 @@ foreach (glob("{$rootDir}/resources/themes/*", GLOB_ONLYDIR) as $file) {
         mkdir("{$rootDir}/public/themes/{$theme}");
     }
 
-    if (!file_exists("{$rootDir}/public/themes/{$theme}/images")) {
-        mkdir("{$rootDir}/public/themes/{$theme}/images");
-    }
+    // TODO: Public dirs (glob patterns) should be in theme's meta.json
 
-    foreach (glob("{$file}/images/*") as $file) {
-        $path = explode('/', $file);
-        $image = $path[count($path)-1];
-        copy($file, "{$rootDir}/public/themes/{$theme}/images/{$image}");
+    foreach (['images', 'fonts'] as $subDir) {
+        if (file_exists("{$rootDir}/resources/themes/{$theme}/{$subDir}")) {
+            if (!file_exists("{$rootDir}/public/themes/{$theme}/{$subDir}")) {
+                mkdir("{$rootDir}/public/themes/{$theme}/{$subDir}");
+            }
+
+            foreach (glob("{$rootDir}/resources/themes/{$theme}/{$subDir}/*") as $file) {
+                $filename = pathinfo($file, PATHINFO_BASENAME);
+                copy($file, "{$rootDir}/public/themes/{$theme}/{$subDir}/{$filename}");
+            }
+        }
     }
 }
 

@@ -1160,12 +1160,42 @@ class UserTest extends TestCase
 
         // Test an account with users, domain
         $user = $this->getTestUser('UserAccountA@UserAccount.com');
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $domain = $this->getTestDomain('UserAccount.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_HOSTED,
+        ]);
+        $user->assignPackage($package_kolab);
+        $domain->assignPackage($package_domain, $user);
+        $user->assignPackage($package_kolab, $userB);
 
         $this->assertFalse($user->isRestricted());
+        $this->assertFalse($userB->isRestricted());
 
         $user->restrict();
 
         $this->assertTrue($user->fresh()->isRestricted());
+        $this->assertFalse($userB->fresh()->isRestricted());
+
+        Queue::assertPushed(
+            \App\Jobs\User\UpdateJob::class,
+            function ($job) use ($user) {
+                return TestCase::getObjectProperty($job, 'userId') == $user->id;
+            }
+        );
+
+        $userB->restrict();
+        $this->assertTrue($userB->fresh()->isRestricted());
+
+        Queue::fake(); // reset queue state
+
+        $user->refresh();
+        $user->unrestrict();
+
+        $this->assertFalse($user->fresh()->isRestricted());
+        $this->assertTrue($userB->fresh()->isRestricted());
 
         Queue::assertPushed(
             \App\Jobs\User\UpdateJob::class,
@@ -1176,15 +1206,15 @@ class UserTest extends TestCase
 
         Queue::fake(); // reset queue state
 
-        $user->refresh();
-        $user->unrestrict();
+        $user->unrestrict(true);
 
         $this->assertFalse($user->fresh()->isRestricted());
+        $this->assertFalse($userB->fresh()->isRestricted());
 
         Queue::assertPushed(
             \App\Jobs\User\UpdateJob::class,
-            function ($job) use ($user) {
-                return TestCase::getObjectProperty($job, 'userId') == $user->id;
+            function ($job) use ($userB) {
+                return TestCase::getObjectProperty($job, 'userId') == $userB->id;
             }
         );
     }

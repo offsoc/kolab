@@ -6,6 +6,7 @@ use App\Discount;
 use App\Domain;
 use App\Http\Controllers\API\V4\UsersController;
 use App\Package;
+use App\Plan;
 use App\Sku;
 use App\Tenant;
 use App\User;
@@ -47,7 +48,10 @@ class UsersTest extends TestCase
         $wallet->save();
         $user->settings()->whereIn('key', ['greylist_enabled', 'guam_enabled'])->delete();
         $user->status |= User::STATUS_IMAP_READY | User::STATUS_LDAP_READY;
+        $user->status &= ~User::STATUS_RESTRICTED;
         $user->save();
+        Plan::withEnvTenantContext()->where('title', 'individual')->update(['mode' => 'email']);
+        $user->setSettings(['plan_id' => null]);
     }
 
     /**
@@ -78,7 +82,10 @@ class UsersTest extends TestCase
         $wallet->save();
         $user->settings()->whereIn('key', ['greylist_enabled', 'guam_enabled'])->delete();
         $user->status |= User::STATUS_IMAP_READY | User::STATUS_LDAP_READY;
+        $user->status &= ~User::STATUS_RESTRICTED;
         $user->save();
+        Plan::withEnvTenantContext()->where('title', 'individual')->update(['mode' => 'email']);
+        $user->setSettings(['plan_id' => null]);
 
         parent::tearDown();
     }
@@ -1372,14 +1379,15 @@ class UsersTest extends TestCase
     public function testUserResponse(): void
     {
         $provider = \config('services.payment_provider') ?: 'mollie';
-        $user = $this->getTestUser('john@kolab.org');
-        $wallet = $user->wallets()->first();
+        $john = $this->getTestUser('john@kolab.org');
+        $wallet = $john->wallets()->first();
         $wallet->setSettings(['mollie_id' => null, 'stripe_id' => null]);
-        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
+        $wallet->owner->setSettings(['plan_id' => null]);
+        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$john]);
 
-        $this->assertEquals($user->id, $result['id']);
-        $this->assertEquals($user->email, $result['email']);
-        $this->assertEquals($user->status, $result['status']);
+        $this->assertEquals($john->id, $result['id']);
+        $this->assertEquals($john->email, $result['email']);
+        $this->assertEquals($john->status, $result['status']);
         $this->assertTrue(is_array($result['statusInfo']));
 
         $this->assertTrue(is_array($result['settings']));
@@ -1392,13 +1400,20 @@ class UsersTest extends TestCase
         $this->assertCount(1, $result['wallets']);
         $this->assertSame($wallet->id, $result['wallet']['id']);
         $this->assertArrayNotHasKey('discount', $result['wallet']);
+        $this->assertFalse($result['isLocked']);
 
         $this->assertTrue($result['statusInfo']['enableDomains']);
         $this->assertTrue($result['statusInfo']['enableWallets']);
+        $this->assertTrue($result['statusInfo']['enableWalletMandates']);
+        $this->assertTrue($result['statusInfo']['enableWalletPayments']);
         $this->assertTrue($result['statusInfo']['enableUsers']);
         $this->assertTrue($result['statusInfo']['enableSettings']);
 
         // Ned is John's wallet controller
+        $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
+        $plan->mode = 'mandate';
+        $plan->save();
+        $wallet->owner->setSettings(['plan_id' => $plan->id]);
         $ned = $this->getTestUser('ned@kolab.org');
         $ned_wallet = $ned->wallets()->first();
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$ned]);
@@ -1414,9 +1429,12 @@ class UsersTest extends TestCase
         $this->assertSame($ned_wallet->id, $result['wallets'][0]['id']);
         $this->assertSame($provider, $result['wallet']['provider']);
         $this->assertSame($provider, $result['wallets'][0]['provider']);
+        $this->assertFalse($result['isLocked']);
 
         $this->assertTrue($result['statusInfo']['enableDomains']);
         $this->assertTrue($result['statusInfo']['enableWallets']);
+        $this->assertTrue($result['statusInfo']['enableWalletMandates']);
+        $this->assertFalse($result['statusInfo']['enableWalletPayments']);
         $this->assertTrue($result['statusInfo']['enableUsers']);
         $this->assertTrue($result['statusInfo']['enableSettings']);
 
@@ -1426,11 +1444,11 @@ class UsersTest extends TestCase
         $wallet->save();
         $mod_provider = $provider == 'mollie' ? 'stripe' : 'mollie';
         $wallet->setSetting($mod_provider . '_id', 123);
-        $user->refresh();
+        $john->refresh();
 
-        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$user]);
+        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$john]);
 
-        $this->assertEquals($user->id, $result['id']);
+        $this->assertEquals($john->id, $result['id']);
         $this->assertSame($discount->id, $result['wallet']['discount_id']);
         $this->assertSame($discount->discount, $result['wallet']['discount']);
         $this->assertSame($discount->description, $result['wallet']['discount_description']);
@@ -1439,6 +1457,7 @@ class UsersTest extends TestCase
         $this->assertSame($discount->discount, $result['wallets'][0]['discount']);
         $this->assertSame($discount->description, $result['wallets'][0]['discount_description']);
         $this->assertSame($mod_provider, $result['wallets'][0]['provider']);
+        $this->assertFalse($result['isLocked']);
 
         // Jack is not a John's wallet controller
         $jack = $this->getTestUser('jack@kolab.org');
@@ -1446,8 +1465,17 @@ class UsersTest extends TestCase
 
         $this->assertFalse($result['statusInfo']['enableDomains']);
         $this->assertFalse($result['statusInfo']['enableWallets']);
+        $this->assertFalse($result['statusInfo']['enableWalletMandates']);
+        $this->assertFalse($result['statusInfo']['enableWalletPayments']);
         $this->assertFalse($result['statusInfo']['enableUsers']);
         $this->assertFalse($result['statusInfo']['enableSettings']);
+        $this->assertFalse($result['isLocked']);
+
+        // Test locked user
+        $john->restrict();
+        $result = $this->invokeMethod(new UsersController(), 'userResponse', [$john]);
+
+        $this->assertTrue($result['isLocked']);
     }
 
     /**

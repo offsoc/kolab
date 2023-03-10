@@ -2,11 +2,11 @@
     <div class="container">
         <div id="step0" v-if="!invitation">
             <div class="plan-selector row row-cols-sm-2 g-3">
-                <div v-for="item in plans" :key="item.id">
+                <div v-for="item in plans" :key="item.id" :id="'plan-' + item.title">
                     <div :class="'card bg-light plan-' + item.title">
                         <div class="card-header plan-header">
                             <div class="plan-ico text-center">
-                                <svg-icon :icon="plan_icons[item.title]"></svg-icon>
+                                <svg-icon :icon="plan_icons[item.title] || 'user'"></svg-icon>
                             </div>
                         </div>
                         <div class="card-body text-center">
@@ -65,7 +65,7 @@
 
         <div class="card d-none" id="step3">
             <div class="card-body">
-                <h4 v-if="!invitation" class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: steps, n: steps }) }}</h4>
+                <h4 v-if="!invitation && steps > 1" class="card-title">{{ $t('signup.title') }} - {{ $t('nav.step', { i: steps, n: steps }) }}</h4>
                 <p class="card-text">
                     {{ $t('signup.step3', { app: $root.appName }) }}
                 </p>
@@ -144,7 +144,15 @@
         },
         computed: {
             steps() {
-                return this.mode == 'token' ? 2 : 3
+                switch (this.mode) {
+                    case 'token':
+                        return 2
+                    case 'mandate':
+                        return 1
+                    case 'email':
+                    default:
+                        return 3
+                }
             }
         },
         mounted() {
@@ -197,7 +205,24 @@
                 if (plan) {
                     this.plan = title
                     this.mode = plan.mode
-                    this.displayForm(1, true)
+                    this.is_domain = plan.isDomain
+                    this.domain = ''
+
+                    let step = 1
+
+                    if (plan.mode == 'mandate') {
+                        step = 3
+                        if (!plan.isDomain || !this.domains.length) {
+                            axios.get('/api/auth/signup/domains')
+                                .then(response => {
+                                    this.displayForm(step, true)
+                                    this.setDomain(response.data)
+                                })
+                            return
+                        }
+                    }
+
+                    this.displayForm(step, true)
                 }
             },
             step0(plan) {
@@ -272,13 +297,12 @@
                 this.$root.clearFormValidation($('#step3 form'))
 
                 let post = {
-                    ...this.$root.pick(this, ['login', 'domain', 'voucher']),
+                    ...this.$root.pick(this, ['login', 'domain', 'voucher', 'plan']),
                     ...this.pass
                 }
 
                 if (this.invitation) {
                     post.invitation = this.invitation.id
-                    post.plan = this.plan
                     post.first_name = this.first_name
                     post.last_name = this.last_name
                 } else {
@@ -302,6 +326,10 @@
 
                 if (step == 2 && this.mode == 'token') {
                     step = 1
+                }
+
+                if (this.mode == 'mandate') {
+                    step = 0
                 }
 
                 $('#step' + step).removeClass('d-none').find('input').first().focus()
@@ -331,7 +359,14 @@
                     this.domains = response.domains
                 }
 
-                this.domain = response.domain || window.config['app.domain']
+                this.domain = response.domain
+
+                if (!this.domain) {
+                    this.domain = window.config['app.domain']
+                    if (this.domains.length && !this.domains.includes(this.domain)) {
+                        this.domain = this.domains[0]
+                    }
+                }
             }
         }
     }

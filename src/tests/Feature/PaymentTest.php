@@ -82,7 +82,8 @@ class PaymentTest extends TestCase
         $wallet->balance = -5000;
         $wallet->save();
 
-        // Credit the 2nd payment
+        // Credit the 2nd payment (restricted user)
+        $user->restrict();
         $payment2->credit('Test2');
         $wallet->refresh();
         $transaction = $wallet->transactions()->first();
@@ -91,6 +92,7 @@ class PaymentTest extends TestCase
         $this->assertSame('1', $wallet->getSetting('mandate_disabled'));
         $this->assertSame($payment2->credit_amount, $transaction->amount);
         $this->assertSame("Auto-payment transaction {$payment2->id} using Test2", $transaction->description);
+        $this->assertFalse($user->refresh()->isRestricted());
     }
 
     /**

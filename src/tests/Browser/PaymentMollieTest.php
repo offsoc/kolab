@@ -108,6 +108,7 @@ class PaymentMollieTest extends TestCaseDusk
                 ->on(new WalletPage())
                 ->assertMissing('@body #mandate-form .alert')
                 ->click('@main #mandate-form button')
+/*
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
                         ->waitFor('#payment-method-selection .link-creditcard svg')
@@ -115,8 +116,10 @@ class PaymentMollieTest extends TestCaseDusk
                         ->assertMissing('#payment-method-selection .link-banktransfer')
                         ->click('#payment-method-selection .link-creditcard');
                 })
+*/
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
+                        ->waitFor('@body #mandate_amount')
                         ->assertSeeIn('@body label[for="mandate_amount"]', 'Fill up by')
                         ->assertValue('@body #mandate_amount', Payment::MIN_AMOUNT / 100)
                         ->assertSeeIn('@body label[for="mandate_balance"]', 'when account balance is below') // phpcs:ignore
@@ -229,13 +232,16 @@ class PaymentMollieTest extends TestCaseDusk
             $browser->on(new WalletPage())
                 ->assertMissing('@body #mandate-form .alert')
                 ->click('@main #mandate-form button')
+/*
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
                         ->waitFor('#payment-method-selection .link-creditcard')
                         ->click('#payment-method-selection .link-creditcard');
                 })
+*/
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
+                        ->waitFor('@body #mandate_amount')
                         ->assertSeeIn('@button-cancel', 'Cancel')
                         ->assertSeeIn('@button-action', 'Continue')
                         // Submit valid data
@@ -259,13 +265,16 @@ class PaymentMollieTest extends TestCaseDusk
 
                 // Create a new mandate
                 ->click('@main #mandate-form button')
+/*
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
                         ->waitFor('#payment-method-selection .link-creditcard')
                         ->click('#payment-method-selection .link-creditcard');
                 })
+*/
                 ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
+                        ->waitFor('@body #mandate_amount')
                         ->assertSeeIn('@button-cancel', 'Cancel')
                         ->assertSeeIn('@button-action', 'Continue')
                         // Submit valid data

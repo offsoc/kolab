@@ -40,7 +40,7 @@ class PaymentStripe extends Page
             '@title' => '.App-Overview .ProductSummary',
             '@amount' => '#ProductSummary-totalAmount',
             '@description' => '#ProductSummary-Description',
-            '@email-input' => '.App-Payment #email',
+            '@email' => '.App-Payment .ReadOnlyFormField-email .ReadOnlyFormField-content',
             '@cardnumber-input' => '.App-Payment #cardNumber',
             '@cardexpiry-input' => '.App-Payment #cardExpiry',
             '@cardcvc-input' => '.App-Payment #cardCvc',

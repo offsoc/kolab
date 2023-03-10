@@ -557,16 +557,27 @@ class User extends Authenticatable
     /**
      * Un-restrict this user.
      *
+     * @param bool $deep Unrestrict also all users in the account
+     *
      * @return void
      */
-    public function unrestrict(): void
+    public function unrestrict(bool $deep = false): void
     {
-        if (!$this->isRestricted()) {
-            return;
+        if ($this->isRestricted()) {
+            $this->status ^= User::STATUS_RESTRICTED;
+            $this->save();
         }
 
-        $this->status ^= User::STATUS_RESTRICTED;
-        $this->save();
+        // Remove the flag from all users in the user's wallets
+        if ($deep) {
+            $this->wallets->each(function ($wallet) {
+                User::whereIn('id', $wallet->entitlements()->select('entitleable_id')
+                    ->where('entitleable_type', User::class))
+                    ->each(function ($user) {
+                        $user->unrestrict();
+                    });
+            });
+        }
     }
 
     /**
