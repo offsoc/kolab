@@ -3,8 +3,8 @@ FIREBASE_API_KEY=
 HOSTNAME=
 PUBLIC_IP=
 ADMIN_PASSWORD=simple123
-GIT_BRANCH=beta-release
-CONFIG=config.demo
+GIT_BRANCH=master
+CONFIG=config.prod
 
 setup:
 	touch ./hosts
