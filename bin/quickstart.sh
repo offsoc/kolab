@@ -62,8 +62,9 @@ if [ "$1" == "--nodev" ]; then
     echo "starting everything in containers"
     docker-compose -f docker-compose.build.yml build swoole
     docker-compose build webapp
-    docker-compose up -d webapp proxy haproxy
+    docker-compose up -d webapp
     wait_for_container 'kolab-webapp'
+    docker-compose up --no-deps -d proxy haproxy
     exit 0
 fi
 echo "Starting the development environment"
