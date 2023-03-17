@@ -55,6 +55,7 @@ ConfigDirectoryLdapURL = ldap://ldap.mgmt.com:389/o=NetscapeRoot
 ConfigDirectoryAdminID = admin
 ConfigDirectoryAdminPwd = $GRAPHICAL_ADMIN_PASSWORD
 full_machine_name = ldap.mgmt.com
+selinux = false
 
 [slapd]
 SlapdConfigForMC = Yes
@@ -69,6 +70,8 @@ AddSampleEntries = No
 instance_name = $DS_INSTANCE_NAME
 root_password = $LDAP_ADMIN_BIND_PW
 create_suffix_entry = True
+db_home_dir = /run/dirsrv/dbhome/
+db_dir = /run/dirsrv/db/
 
 [backend-userroot]
 suffix = $LDAP_ADMIN_ROOT_DN
