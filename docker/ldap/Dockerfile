@@ -10,7 +10,8 @@ ENV LANG=en_US.utf8
 ENV LC_ALL=en_US.utf8
 
 # Add EPEL.
-RUN dnf config-manager --set-enabled powertools && \
+RUN dnf -y install 'dnf-command(config-manager)' && \
+    dnf config-manager --set-enabled powertools && \
     dnf -y install \
         epel-release epel-next-release && \
     dnf -y module enable 389-directory-server:stable/default && \
