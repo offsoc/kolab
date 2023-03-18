@@ -32,12 +32,7 @@ COPY kolab-init.service /etc/systemd/system/kolab-init.service
 COPY kolab-setenv.service /etc/systemd/system/kolab-setenv.service
 COPY utils /root/utils
 
-RUN rm -rf /etc/systemd/system/multi-user.target.wants/{avahi-daemon,sshd}.* && \
-    ln -s /etc/systemd/system/kolab-init.service \
-        /etc/systemd/system/multi-user.target.wants/kolab-init.service && \
-    ln -s /etc/systemd/system/kolab-setenv.service \
-        /etc/systemd/system/multi-user.target.wants/kolab-setenv.service
-
+RUN systemctl disable dnf-makecache.timer dbus; systemctl enable kolab-setenv kolab-init
 
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
 

@@ -34,7 +34,10 @@ RUN sed -i -r \
     -e "s|DB_PASSWORD|$DB_PASSWORD|g" \
     /etc/pdns/pdns.conf
 
-RUN systemctl disable systemd-resolved && systemctl enable pdns  && systemctl enable pdns-recursor
+RUN systemctl disable systemd-resolved; \
+    systemctl disable dnf-makecache.timer; \
+    systemctl enable pdns; \
+    systemctl enable pdns-recursor
 
 # This is how we could run pdns without systemd
 # ENV PDNS_guardian=yes \
