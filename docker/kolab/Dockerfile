@@ -1,4 +1,4 @@
-FROM quay.io/centos/centos:stream8
+FROM almalinux:8
 
 LABEL maintainer="contact@apheleia-it.ch"
 LABEL dist=centos8
@@ -10,11 +10,10 @@ ENV LANG=en_US.utf8
 ENV LC_ALL=en_US.utf8
 
 # Add EPEL.
-RUN dnf -y install 'dnf-command(config-manager)' && \
+RUN dnf -y install dnf-plugin-config-manager && \
     dnf config-manager --set-enabled powertools && \
-    dnf -y install \
-        epel-release epel-next-release && \
-    dnf -y module enable 389-directory-server:stable/default && \
+    dnf -y install epel-release && \
+    dnf -y module enable 389-ds:1.4/default && \
     dnf -y module enable mariadb:10.3 && \
     dnf -y install iputils vim-enhanced bind-utils && \
     dnf clean all
@@ -22,7 +21,7 @@ RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
 
 # Install kolab
 RUN rpm --import https://mirror.apheleia-it.ch/repos/Kolab:/16/key.asc && \
-    rpm -Uvh https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el8stream.rpm
+    rpm -Uvh https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el8.rpm
 RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
     dnf config-manager --enable kolab-16-testing &&\
     dnf -y --setopt tsflags= install kolab patch &&\
