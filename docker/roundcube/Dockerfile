@@ -9,7 +9,6 @@ LABEL io.k8s.description="Platform for serving PHP roundcube applications" \
       io.openshift.expose-services="80:http" \
       io.openshift.tags="builder,php,apache"
 
-#FIXME switch to centos9 because we need the php extensions for libkolabxml and libkolab
 RUN dnf -y update
 
 # Add EPEL.
