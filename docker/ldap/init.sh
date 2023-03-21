@@ -44,6 +44,7 @@ GRAPHICAL_ADMIN_PASSWORD="-22F_EjHut5JCcd"
 DS_INSTANCE_NAME="kolab"
 DOMAIN="mgmt.com"
 FQDN="ldap.mgmt.com"
+DB_DIR="/var/lib/dirsrv/slapd-$DS_INSTANCE_NAME/db"
 
 cat << EOF > /tmp/dscreateinput
 [general]
@@ -70,8 +71,8 @@ AddSampleEntries = No
 instance_name = $DS_INSTANCE_NAME
 root_password = $LDAP_ADMIN_BIND_PW
 create_suffix_entry = True
-db_home_dir = /run/dirsrv/dbhome/
-db_dir = /run/dirsrv/db/
+db_dir = $DB_DIR
+db_home_dir = $DB_DIR
 
 [backend-userroot]
 suffix = $LDAP_ADMIN_ROOT_DN
@@ -410,7 +411,7 @@ export domain_base_dn=${LDAP_DOMAIN_BASE_DN:-"ou=Domains,dc=mgmt,dc=com"}
     echo "nsslapd-cachememsize: 10485760"
     echo "nsslapd-readonly: off"
     echo "nsslapd-require-index: off"
-    echo "nsslapd-directory: /var/lib/dirsrv/slapd-${DS_INSTANCE_NAME}/db/$(echo ${hosted_domain} | sed -e 's/\./_/g')"
+    echo "nsslapd-directory: $DB_DIR/$(echo ${hosted_domain} | sed -e 's/\./_/g')"
     echo "nsslapd-dncachememsize: 10485760"
     echo ""
 ) | ldapadd -x -h ${ldap_host} -D "${ldap_binddn}" -w "${ldap_bindpw}"
