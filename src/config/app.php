@@ -239,7 +239,7 @@ return [
         'email' => env('COMPANY_EMAIL'),
         'logo' => env('COMPANY_LOGO'),
         'footer' => env('COMPANY_FOOTER', env('COMPANY_DETAILS')),
-        'copyright' => env('COMPANY_COPYRIGHT', env('COMPANY_NAME', 'Apheleia IT AG')),
+        'copyright' => 'Apheleia IT AG',
     ],
 
     'storage' => [

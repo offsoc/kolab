@@ -21,14 +21,14 @@ class LogonTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang'])
+                    $browser->assertMenuItems(['signup', 'support', 'login', 'lang'])
                         ->assertSeeIn('#footer-copyright', \config('app.company.copyright'))
                         ->assertSeeIn('#footer-copyright', date('Y'));
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'tos', 'login']);
+                    $browser->assertMenuItems(['signup', 'support', 'login']);
                 });
             } else {
                 $browser->assertMissing('#footer-menu .navbar-nav');
@@ -139,12 +139,12 @@ class LogonTest extends TestCaseDusk
                 ->assertVisible('@links a.link-wallet')
                 ->assertVisible('@links a.link-webmail')
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout', 'lang']);
+                    $browser->assertMenuItems(['support', 'dashboard', 'logout', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'dashboard', 'logout']);
+                    $browser->assertMenuItems(['support', 'dashboard', 'logout']);
                 });
             } else {
                 $browser->assertMissing('#footer-menu .navbar-nav');
@@ -191,7 +191,7 @@ class LogonTest extends TestCaseDusk
 
             // with default menu
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang']);
+                $browser->assertMenuItems(['signup', 'support', 'login', 'lang']);
             });
 
             // Success toast message
@@ -218,7 +218,7 @@ class LogonTest extends TestCaseDusk
 
             // with default menu
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang']);
+                $browser->assertMenuItems(['signup', 'support', 'login', 'lang']);
             });
 
             // Success toast message

@@ -17,7 +17,7 @@ class FaqTest extends TestCaseDusk
             $browser->visit(new Signup())
                 ->whenAvailable('#faq', function ($browser) {
                     $browser->assertSeeIn('h5', 'FAQ')
-                        ->assertElementsCount('ul > li', 4)
+                        ->assertElementsCount('ul > li', 1)
                         ->assertSeeIn('li:last-child a', 'Need support?')
                         ->click('li:last-child a');
                 })
