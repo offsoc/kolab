@@ -19,7 +19,11 @@ abstract class TestCaseDusk extends BaseTestCase
      */
     public static function prepare()
     {
-        static::startChromeDriver();
+        static::startChromeDriver([
+            // For troubleshooting
+            // '--verbose',
+            // '--log-path=/tmp/chromedriver.log',
+        ]);
     }
 
     /**
