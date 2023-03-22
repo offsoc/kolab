@@ -203,7 +203,7 @@ class UsersController extends RelationController
             'enableRooms' => $hasMeet,
             'enableSettings' => $isController,
             'enableUsers' => $isController,
-            'enableWallets' => $isController,
+            'enableWallets' => $isController && \config('app.with_wallet'),
             'enableWalletMandates' => $isController,
             'enableWalletPayments' => $isController && (!$plan || $plan->mode != Plan::MODE_MANDATE),
             'enableCompanionapps' => $hasBeta,
