@@ -21,7 +21,7 @@
                             {{ menuItemTitle(item) }}
                         </router-link>
                     </li>
-                    <li class="nav-item" v-if="!loggedIn && $root.isUser && !hasMenuItem('signup')">
+                    <li class="nav-item" v-if="signupEnabled && !loggedIn && $root.isUser && !hasMenuItem('signup')">
                         <router-link class="nav-link link-signup" active-class="active" :to="{name: 'signup'}">{{ $t('menu.signup') }}</router-link>
                     </li>
                     <li class="nav-item" v-if="loggedIn && !hasMenuItem('dashboard')">
@@ -65,6 +65,7 @@
                 buildYear: buildDate.getFullYear(),
                 copyright: window.config['app.company.copyright'] || '',
                 languages: window.config['languages'] || [],
+                signupEnabled: window.config['app.with_signup'] || false,
                 menuList: []
             }
         },

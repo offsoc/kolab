@@ -266,6 +266,7 @@ return [
     'with_reseller' => (bool) env('APP_WITH_RESELLER', false),
     'with_services' => (bool) env('APP_WITH_SERVICES', false),
     'with_wallet' => (bool) env('APP_WITH_WALLET', true),
+    'with_signup' => (bool) env('APP_WITH_SIGNUP', true),
 
     'signup' => [
         'email_limit' => (int) env('SIGNUP_LIMIT_EMAIL', 0),

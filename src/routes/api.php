@@ -48,16 +48,27 @@ Route::group(
         Route::post('password-reset/init', [API\PasswordResetController::class, 'init']);
         Route::post('password-reset/verify', [API\PasswordResetController::class, 'verify']);
         Route::post('password-reset', [API\PasswordResetController::class, 'reset']);
-
-        Route::get('signup/domains', [API\SignupController::class, 'domains']);
-        Route::post('signup/init', [API\SignupController::class, 'init']);
-        Route::get('signup/invitations/{id}', [API\SignupController::class, 'invitation']);
-        Route::get('signup/plans', [API\SignupController::class, 'plans']);
-        Route::post('signup/validate', [API\SignupController::class, 'signupValidate']);
-        Route::post('signup/verify', [API\SignupController::class, 'verify']);
-        Route::post('signup', [API\SignupController::class, 'signup']);
     }
 );
+
+if (\config('app.with_signup')) {
+    Route::group(
+        [
+            'domain' => \config('app.website_domain'),
+            'middleware' => 'api',
+            'prefix' => 'auth'
+        ],
+        function () {
+            Route::get('signup/domains', [API\SignupController::class, 'domains']);
+            Route::post('signup/init', [API\SignupController::class, 'init']);
+            Route::get('signup/invitations/{id}', [API\SignupController::class, 'invitation']);
+            Route::get('signup/plans', [API\SignupController::class, 'plans']);
+            Route::post('signup/validate', [API\SignupController::class, 'signupValidate']);
+            Route::post('signup/verify', [API\SignupController::class, 'verify']);
+            Route::post('signup', [API\SignupController::class, 'signup']);
+        }
+    );
+}
 
 Route::group(
     [

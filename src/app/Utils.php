@@ -506,6 +506,7 @@ class Utils
             'app.support_email',
             'app.company.copyright',
             'app.companion_download_link',
+            'app.with_signup',
             'mail.from.address'
         ];
 
