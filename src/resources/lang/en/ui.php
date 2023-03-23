@@ -65,6 +65,7 @@ return [
         'print' => "Print for backup",
         'pairing-instructions' => "Pair your device using the following QR-Code.",
         'recovery-device' => "Recovery Device",
+        'new-device' => "New Device",
         'deviceid' => "Device ID",
         'list-empty' => "There are currently no devices",
         'delete' => "Delete/Unpair",

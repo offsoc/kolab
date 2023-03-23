@@ -5,9 +5,10 @@
                 <div class="card-title">
                     {{ $t('companion.title') }}
                     <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
-                    <btn-router v-if="!$root.isDegraded()" class="btn-success float-end" to="companion/new" icon="mobile-screen">
+
+                    <btn class="btn-success float-end" @click="createDevice($t('companion.new-device'))" icon="mobile-screen">
                         {{ $t('companion.create') }}
-                    </btn-router>
+                    </btn>
                 </div>
                 <div class="card-text">
                     <p>
@@ -22,9 +23,9 @@
                             {{ $t('companion.description-warning') }}
                         </p>
                         <div>
-                            <btn-router class="btn-success" to="companion/recovery" icon="mobile-screen">
+                            <btn class="btn-success" @click="createDevice($t('companion.recovery-device'))" icon="mobile-screen">
                                 {{ $t('companion.create-recovery-device') }}
-                            </btn-router>
+                            </btn>
                         </div>
                     </div>
                 </div>
@@ -60,6 +61,23 @@
                     this.companions = response.data.list
                 })
                 .catch(this.$root.errorHandler)
+        },
+        methods: {
+            createDevice(name) {
+                // If we already have a device for this purpose, just show that.
+                for (let device of this.companions) {
+                    if (device.name == name) {
+                        this.$router.push({ name: 'companion' , params: { companion: device.id }})
+                        return
+                    }
+                }
+
+                axios.post('/api/v4/companions', {'name': name})
+                    .then(response => {
+                        this.$toast.success(response.data.message)
+                        this.$router.push({ name: 'companion' , params: { companion: response.data.id }})
+                    })
+            }
         }
     }
 </script>

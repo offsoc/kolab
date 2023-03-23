@@ -2,9 +2,7 @@
     <div class="container">
         <div class="card">
             <div class="card-body">
-                <div class="card-title" v-if="companion_id === 'new'">{{ $t('companion.new') }}</div>
-                <div class="card-title" v-else-if="companion_id === 'recovery'">{{ $t('companion.recovery') }}</div>
-                <div class="card-title" v-else>{{ $t('form.companion') }}
+                <div class="card-title">{{ $t('form.companion') }}
                     <btn class="btn-outline-danger button-delete float-end" @click="$refs.deleteDialog.show()" icon="trash-can">{{ $t('companion.delete') }}</btn>
                 </div>
                 <div class="card-text">
@@ -84,22 +82,18 @@
         created() {
             this.companion_id = this.$route.params.companion
 
-            if (this.companion_id !== 'new' && this.companion_id !== 'recovery') {
-                axios.get('/api/v4/companions/' + this.companion_id, { loader: true })
-                    .then(response => {
-                        this.companion = response.data
-                        this.status = response.data.statusInfo
-                    })
-                    .catch(this.$root.errorHandler)
+            axios.get('/api/v4/companions/' + this.companion_id, { loader: true })
+                .then(response => {
+                    this.companion = response.data
+                    this.status = response.data.statusInfo
+                })
+                .catch(this.$root.errorHandler)
 
-                axios.get('/api/v4/companions/' + this.companion_id + '/pairing/', { loader: true })
-                    .then(response => {
-                        this.qrcode = response.data.qrcode
-                    })
-                    .catch(this.$root.errorHandler)
-            } else if (this.companion_id == 'recovery') {
-                this.companion = { name: this.$t("companion.recovery-device") }
-            }
+            axios.get('/api/v4/companions/' + this.companion_id + '/pairing/', { loader: true })
+                .then(response => {
+                    this.qrcode = response.data.qrcode
+                })
+                .catch(this.$root.errorHandler)
         },
         methods: {
             printQRCode() {
