@@ -13,8 +13,9 @@ use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
+use Tests\Browser\Pages\PaymentMollie;
+use Tests\Browser\Pages\PaymentStatus;
 use Tests\Browser\Pages\Signup;
-use Tests\Browser\Pages\Wallet;
 use Tests\TestCaseDusk;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
@@ -31,7 +32,7 @@ class SignupTest extends TestCaseDusk
         $this->deleteTestUser('admin@user-domain-signup.com');
         $this->deleteTestDomain('user-domain-signup.com');
 
-        Plan::whereIn('mode', ['token', 'mandate'])->update(['mode' => 'email']);
+        Plan::whereNot('mode', Plan::MODE_EMAIL)->update(['mode' => Plan::MODE_EMAIL]);
     }
 
     /**
@@ -44,7 +45,7 @@ class SignupTest extends TestCaseDusk
         $this->deleteTestDomain('user-domain-signup.com');
         SignupInvitation::truncate();
 
-        Plan::whereIn('mode', ['token', 'mandate'])->update(['mode' => 'email']);
+        Plan::whereNot('mode', Plan::MODE_EMAIL)->update(['mode' => Plan::MODE_EMAIL]);
 
         @unlink(storage_path('signup-tokens.txt'));
 
@@ -521,17 +522,22 @@ class SignupTest extends TestCaseDusk
     }
 
     /**
-     * Test signup with a mandate plan, also the wallet lock
+     * Test signup with a mandate plan, also the UI lock
+     *
+     * @group mollie
      */
     public function testSignupMandate(): void
     {
         // Test the individual plan
         $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
-        $plan->mode = 'mandate';
+        $plan->mode = Plan::MODE_MANDATE;
         $plan->save();
 
         $this->browse(function (Browser $browser) {
+            $config = ['paymentProvider' => 'mollie'];
             $browser->visit(new Signup())
+                // Force Mollie
+                ->execScript(sprintf('Object.assign(window.config, %s)', \json_encode($config)))
                 ->waitFor('@step0 .plan-individual button')
                 ->click('@step0 .plan-individual button')
                 // Test Back button
@@ -555,30 +561,57 @@ class SignupTest extends TestCaseDusk
                         ->type('#signup_password_confirmation', '12345678')
                         ->click('[type=submit]');
                 })
-                ->waitUntilMissing('@step3')
-                ->on(new Wallet())
-                ->assertSeeIn('#lock-alert', "The account is locked")
-                ->within(new Menu(), function ($browser) {
-                    $browser->clickMenuItem('logout');
-                });
+                ->whenAvailable('@step4', function ($browser) {
+                    $browser->assertSeeIn('.card-text', 'The account is about to be created!')
+                        ->assertSeeIn('.card-text', 'You signed up for an account')
+                        ->assertSeeIn('button.btn-primary', 'Continue')
+                        ->assertSeeIn('button.btn-secondary', 'Back')
+                        ->click('button.btn-secondary');
+                })
+                ->whenAvailable('@step3', function ($browser) {
+                    $browser->assertValue('#signup_login', 'signuptestdusk')
+                        ->click('[type=submit]');
+                })
+                ->whenAvailable('@step4', function ($browser) {
+                    $browser->click('button.btn-primary');
+                })
+                ->on(new PaymentMollie())
+                ->assertSeeIn('@title', 'Auto-Payment Setup')
+                ->assertMissing('@amount')
+                ->submitPayment('open')
+                ->on(new PaymentStatus())
+                ->assertSeeIn('@lock-alert', 'The account is locked')
+                ->assertSeeIn('@content', 'Checking the status...')
+                ->assertSeeIn('@button', 'Try again');
         });
 
         $user = User::where('email', 'signuptestdusk@' . \config('app.domain'))->first();
         $this->assertSame($plan->id, $user->getSetting('plan_id'));
+        $this->assertFalse($user->isActive());
 
-        // Login again and see that the account is still locked
+        // Refresh and see that the account is still locked
         $this->browse(function (Browser $browser) use ($user) {
-            $browser->on(new Home())
-                ->submitLogon($user->email, '12345678', false)
-                ->waitForLocation('/wallet')
-                ->on(new Wallet())
-                ->assertSeeIn('#lock-alert', "The account is locked")
+            $browser->visit('/dashboard')
+                ->on(new PaymentStatus())
+                ->assertSeeIn('@lock-alert', 'The account is locked')
+                ->assertSeeIn('@content', 'Checking the status...');
+
+            // Mark the payment paid, and activate the user in background,
+            // expect unlock and redirect to the dashboard
+            // TODO: Move this to a separate tests file for PaymentStatus page
+            $payment = $user->wallets()->first()->payments()->first();
+            $payment->credit('Test');
+            $payment->status = \App\Payment::STATUS_PAID;
+            $payment->save();
+            $this->assertTrue($user->fresh()->isActive());
+
+            $browser->waitForLocation('/dashboard', 10)
                 ->within(new Menu(), function ($browser) {
                     $browser->clickMenuItem('logout');
                 });
-
-            // TODO: Test automatic UI unlock after creating a valid auto-payment mandate
         });
+
+        // TODO: Test the 'Try again' button on /payment/status page
     }
 
     /**
@@ -587,7 +620,7 @@ class SignupTest extends TestCaseDusk
     public function testSignupToken(): void
     {
         // Test the individual plan
-        Plan::where('title', 'individual')->update(['mode' => 'token']);
+        Plan::where('title', 'individual')->update(['mode' => Plan::MODE_TOKEN]);
 
         // Register some valid tokens
         $tokens = ['1234567890', 'abcdefghijk'];
@@ -640,7 +673,7 @@ class SignupTest extends TestCaseDusk
         $this->assertSame(null, $user->getSetting('external_email'));
 
         // Test the group plan
-        Plan::where('title', 'group')->update(['mode' => 'token']);
+        Plan::where('title', 'group')->update(['mode' => Plan::MODE_TOKEN]);
 
         $this->browse(function (Browser $browser) use ($tokens) {
             $browser->visit(new Signup())

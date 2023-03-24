@@ -59,6 +59,7 @@ class Stripe extends \App\Providers\PaymentProvider
      *                             - amount: Value in cents (not used)
      *                             - currency: The operation currency
      *                             - description: Operation desc.
+     *                             - redirectUrl: The location to goto after checkout
      *
      * @return array Provider payment/session data:
      *               - id: Session identifier
@@ -70,8 +71,8 @@ class Stripe extends \App\Providers\PaymentProvider
 
         $request = [
             'customer' => $customer_id,
-            'cancel_url' => self::redirectUrl(), // required
-            'success_url' => self::redirectUrl(), // required
+            'cancel_url' => $payment['redirectUrl'] ?? self::redirectUrl(), // required
+            'success_url' => $payment['redirectUrl'] ?? self::redirectUrl(), // required
             'payment_method_types' => ['card'], // required
             'locale' => 'en',
             'mode' => 'setup',

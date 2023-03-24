@@ -79,6 +79,15 @@ return [
     'file-permissions-update-success' => 'File permissions updated successfully.',
     'file-permissions-delete-success' => 'File permissions deleted successfully.',
 
+    'payment-status-paid' => 'The payment has been completed successfully.',
+    'payment-status-canceled' => 'The payment has been canceled.',
+    'payment-status-failed' => 'The payment failed.',
+    'payment-status-expired' => 'The payment expired.',
+    'payment-status-checking' => "The payment hasn't been completed yet. Checking the status...",
+
+    'period-year' => 'year',
+    'period-month' => 'month',
+
     'resource-update-success' => 'Resource updated successfully.',
     'resource-create-success' => 'Resource created successfully.',
     'resource-delete-success' => 'Resource deleted successfully.',
@@ -112,6 +121,10 @@ return [
     'search-foundxshared-folders' => ':x shared folders have been found.',
     'search-foundxusers' => ':x user accounts have been found.',
 
+    'signup-account-tobecreated' => 'The account is about to be created!',
+    'signup-account-mandate' => 'Now it is required to provide your credit card details.'
+        . ' This way you agree to charge you with an appropriate amount of money according to the plan you signed up for.',
+    'signup-account-summary' => 'You signed up for an account with a base cost of :cost per :period.',
     'signup-invitations-created' => 'The invitation has been created.|:count invitations has been created.',
     'signup-invitations-csv-empty' => 'Failed to find any valid email addresses in the uploaded file.',
     'signup-invitations-csv-invalid-email' => 'Found an invalid email address (:email) on line :line.',

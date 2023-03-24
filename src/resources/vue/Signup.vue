@@ -100,6 +100,16 @@
                 </form>
             </div>
         </div>
+
+        <div class="card d-none" id="step4">
+            <div class="card-body">
+                <div class="card-text mb-4" v-html="checkout.content"></div>
+                <form>
+                    <btn class="btn-secondary me-2" @click="stepBack">{{ $t('btn.back') }}</btn>
+                    <btn class="btn-primary" @click="submitStep4">{{ $t('btn.continue') }}</btn>
+                </form>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -119,6 +129,7 @@
         },
         data() {
             return {
+                checkout: {},
                 email: '',
                 first_name: '',
                 last_name: '',
@@ -296,23 +307,34 @@
             submitStep3() {
                 this.$root.clearFormValidation($('#step3 form'))
 
-                let post = {
-                    ...this.$root.pick(this, ['login', 'domain', 'voucher', 'plan']),
-                    ...this.pass
-                }
+                const post = this.lastStepPostData()
 
-                if (this.invitation) {
-                    post.invitation = this.invitation.id
-                    post.first_name = this.first_name
-                    post.last_name = this.last_name
+                if (this.mode == 'mandate') {
+                    axios.post('/api/auth/signup/validate', post).then(response => {
+                        this.checkout = response.data
+                        this.displayForm(4)
+                    })
                 } else {
-                    post.code = this.code
-                    post.short_code = this.short_code
+                    axios.post('/api/auth/signup', post).then(response => {
+                        // auto-login and goto dashboard
+                        this.$root.loginUser(response.data)
+                    })
                 }
+            },
+            submitStep4() {
+                const post = this.lastStepPostData()
 
                 axios.post('/api/auth/signup', post).then(response => {
-                    // auto-login and goto dashboard
-                    this.$root.loginUser(response.data)
+                    // auto-login and goto to the payment checkout
+                    this.$root.loginUser(response.data, false)
+
+                    let checkout = response.data.checkout
+
+                    if (checkout.redirectUrl) {
+                        location.href = checkout.redirectUrl
+                    } else if (checkout.id) {
+                        // TODO: this.stripeCheckout(checkout)
+                    }
                 })
             },
             // Moves the user a step back in registration form
@@ -328,7 +350,7 @@
                     step = 1
                 }
 
-                if (this.mode == 'mandate') {
+                if (this.mode == 'mandate' && step < 3) {
                     step = 0
                 }
 
@@ -340,7 +362,7 @@
                 }
             },
             displayForm(step, focus) {
-                [0, 1, 2, 3].filter(value => value != step).forEach(value => {
+                [0, 1, 2, 3, 4].filter(value => value != step).forEach(value => {
                     $('#step' + value).addClass('d-none')
                 })
 
@@ -353,6 +375,23 @@
                 if (focus) {
                     $('#step' + step).find('input').first().focus()
                 }
+            },
+            lastStepPostData() {
+                let post = {
+                    ...this.$root.pick(this, ['login', 'domain', 'voucher', 'plan']),
+                    ...this.pass
+                }
+
+                if (this.invitation) {
+                    post.invitation = this.invitation.id
+                    post.first_name = this.first_name
+                    post.last_name = this.last_name
+                } else {
+                    post.code = this.code
+                    post.short_code = this.short_code
+                }
+
+                return post
             },
             setDomain(response) {
                 if (response.domains) {

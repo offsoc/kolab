@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\RelationController;
 use App\Domain;
+use App\Plan;
 use App\Rules\Password;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
@@ -203,7 +204,7 @@ class UsersController extends RelationController
             'enableUsers' => $isController,
             'enableWallets' => $isController,
             'enableWalletMandates' => $isController,
-            'enableWalletPayments' => $isController && (!$plan || $plan->mode != 'mandate'),
+            'enableWalletPayments' => $isController && (!$plan || $plan->mode != Plan::MODE_MANDATE),
             'enableCompanionapps' => $hasBeta,
         ];
 
@@ -356,7 +357,7 @@ class UsersController extends RelationController
         $wallet = $user->wallet();
 
         // IsLocked flag to lock the user to the Wallet page only
-        $response['isLocked'] = ($user->isRestricted() && ($plan = $wallet->plan()) && $plan->mode == 'mandate');
+        $response['isLocked'] = (!$user->isActive() && ($plan = $wallet->plan()) && $plan->mode == Plan::MODE_MANDATE);
 
         // Settings
         $response['settings'] = [];

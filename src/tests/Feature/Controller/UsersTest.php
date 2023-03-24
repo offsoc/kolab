@@ -47,8 +47,7 @@ class UsersTest extends TestCase
         $wallet->settings()->whereIn('key', ['mollie_id', 'stripe_id'])->delete();
         $wallet->save();
         $user->settings()->whereIn('key', ['greylist_enabled', 'guam_enabled'])->delete();
-        $user->status |= User::STATUS_IMAP_READY | User::STATUS_LDAP_READY;
-        $user->status &= ~User::STATUS_RESTRICTED;
+        $user->status |= User::STATUS_IMAP_READY | User::STATUS_LDAP_READY | User::STATUS_ACTIVE;
         $user->save();
         Plan::withEnvTenantContext()->where('title', 'individual')->update(['mode' => 'email']);
         $user->setSettings(['plan_id' => null]);
@@ -81,8 +80,7 @@ class UsersTest extends TestCase
         $wallet->settings()->whereIn('key', ['mollie_id', 'stripe_id'])->delete();
         $wallet->save();
         $user->settings()->whereIn('key', ['greylist_enabled', 'guam_enabled'])->delete();
-        $user->status |= User::STATUS_IMAP_READY | User::STATUS_LDAP_READY;
-        $user->status &= ~User::STATUS_RESTRICTED;
+        $user->status |= User::STATUS_IMAP_READY | User::STATUS_LDAP_READY | User::STATUS_ACTIVE;
         $user->save();
         Plan::withEnvTenantContext()->where('title', 'individual')->update(['mode' => 'email']);
         $user->setSettings(['plan_id' => null]);
@@ -1411,7 +1409,7 @@ class UsersTest extends TestCase
 
         // Ned is John's wallet controller
         $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
-        $plan->mode = 'mandate';
+        $plan->mode = Plan::MODE_MANDATE;
         $plan->save();
         $wallet->owner->setSettings(['plan_id' => $plan->id]);
         $ned = $this->getTestUser('ned@kolab.org');
@@ -1472,7 +1470,8 @@ class UsersTest extends TestCase
         $this->assertFalse($result['isLocked']);
 
         // Test locked user
-        $john->restrict();
+        $john->status &= ~User::STATUS_ACTIVE;
+        $john->save();
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$john]);
 
         $this->assertTrue($result['isLocked']);

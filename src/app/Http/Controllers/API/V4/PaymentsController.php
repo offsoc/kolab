@@ -140,6 +140,36 @@ class PaymentsController extends Controller
     }
 
     /**
+     * Reset the auto-payment mandate, create a new payment for it.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function mandateReset(Request $request)
+    {
+        $user = $this->guard()->user();
+
+        // TODO: Wallet selection
+        $wallet = $user->wallets()->first();
+
+        $mandate = [
+            'currency' => $wallet->currency,
+            'description' => Tenant::getConfig($user->tenant_id, 'app.name') . ' Auto-Payment Setup',
+            'methodId' => $request->methodId ?: PaymentProvider::METHOD_CREDITCARD,
+            'redirectUrl' => \App\Utils::serviceUrl('/payment/status', $user->tenant_id),
+        ];
+
+        $provider = PaymentProvider::factory($wallet);
+
+        $result = $provider->createMandate($wallet, $mandate);
+
+        $result['status'] = 'success';
+
+        return response()->json($result);
+    }
+
+    /**
      * Validate an auto-payment mandate request.
      *
      * @param \Illuminate\Http\Request $request The API request.
@@ -172,7 +202,7 @@ class PaymentsController extends Controller
         $label = 'minamount';
 
         if (($plan = $wallet->plan()) && $plan->months >= 1) {
-            $planCost = (int) ceil($plan->cost() * $plan->months);
+            $planCost = $plan->cost() * $plan->months;
             if ($planCost > $min) {
                 $min = $planCost;
             }
@@ -188,6 +218,39 @@ class PaymentsController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Get status of the last payment.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function paymentStatus()
+    {
+        $user = $this->guard()->user();
+        $wallet = $user->wallets()->first();
+
+        $payment = $wallet->payments()->orderBy('created_at', 'desc')->first();
+
+        if (empty($payment)) {
+            return $this->errorResponse(404);
+        }
+
+        $done = [Payment::STATUS_PAID, Payment::STATUS_CANCELED, Payment::STATUS_FAILED, Payment::STATUS_EXPIRED];
+
+        if (in_array($payment->status, $done)) {
+            $label = "app.payment-status-{$payment->status}";
+        } else {
+            $label = "app.payment-status-checking";
+        }
+
+        return response()->json([
+                'id' => $payment->id,
+                'status' => $payment->status,
+                'type' => $payment->type,
+                'statusMessage' => \trans($label),
+                'description' => $payment->description,
+        ]);
     }
 
     /**
@@ -386,7 +449,7 @@ class PaymentsController extends Controller
 
         // If this is a multi-month plan, we calculate the expected amount to be payed.
         if (($plan = $wallet->plan()) && $plan->months >= 1) {
-            $planCost = (int) ceil(($plan->cost() * $plan->months) / 100);
+            $planCost = round($plan->cost() * $plan->months / 100, 2);
             if ($planCost > $mandate['minAmount']) {
                 $mandate['minAmount'] = $planCost;
             }
@@ -514,6 +577,9 @@ class PaymentsController extends Controller
 
     /**
      * Calculates tax for the payment, fills the request with additional properties
+     *
+     * @param \App\Wallet $wallet  The wallet
+     * @param array       $request The request data with the payment amount
      */
     protected static function addTax(Wallet $wallet, array &$request): void
     {

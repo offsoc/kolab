@@ -4,7 +4,7 @@ namespace Tests\Browser\Pages;
 
 use Laravel\Dusk\Page;
 
-class Signup extends Page
+class PaymentStatus extends Page
 {
     /**
      * Get the URL for the page.
@@ -13,7 +13,7 @@ class Signup extends Page
      */
     public function url(): string
     {
-        return '/signup';
+        return '/payment/status';
     }
 
     /**
@@ -25,12 +25,8 @@ class Signup extends Page
      */
     public function assert($browser)
     {
-        $browser->assertPathIs('/signup')
-            ->waitUntilMissing('.app-loader')
-            ->assertPresent('@step0')
-            ->assertPresent('@step1')
-            ->assertPresent('@step2')
-            ->assertPresent('@step3');
+        $browser->waitForLocation($this->url())
+            ->waitUntilMissing('@app .app-loader');
     }
 
     /**
@@ -42,11 +38,9 @@ class Signup extends Page
     {
         return [
             '@app' => '#app',
-            '@step0' => '#step0',
-            '@step1' => '#step1',
-            '@step2' => '#step2',
-            '@step3' => '#step3',
-            '@step4' => '#step4',
+            '@content' => '.card .card-text',
+            '@lock-alert' => '#lock-alert',
+            '@button' => '.card button.btn-primary',
         ];
     }
 }

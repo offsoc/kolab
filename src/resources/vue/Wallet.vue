@@ -1,8 +1,5 @@
 <template>
     <div class="container" dusk="wallet-component">
-        <p v-if="$root.authInfo.isLocked" id="lock-alert" class="alert alert-warning">
-            {{ $t('wallet.locked-text') }}
-        </p>
         <div v-if="wallet.id" id="wallet" class="card">
             <div class="card-body">
                 <div class="card-title">{{ $t('wallet.title') }} <span :class="wallet.balance < 0 ? 'text-danger' : 'text-success'">{{ $root.price(wallet.balance, wallet.currency) }}</span></div>
@@ -221,9 +218,6 @@
                 return tabs
             }
         },
-        beforeDestroyed() {
-            clearTimeout(this.refreshRequest)
-        },
         mounted() {
             $('#wallet button').focus()
 
@@ -255,32 +249,21 @@
             this.$refs.tabs.clickHandler('payments', () => { this.loadPayments = true })
         },
         methods: {
-            loadMandate(refresh) {
+            loadMandate() {
                 const loader = '#mandate-form'
 
                 this.$root.stopLoading(loader)
 
-                if (!this.mandate.id || this.mandate.isPending || refresh) {
-                    axios.get('/api/v4/payments/mandate', refresh ? {} : { loader })
-                        .then(response => {
-                            this.mandate = response.data
+                axios.get('/api/v4/payments/mandate', { loader })
+                    .then(response => {
+                        this.mandate = response.data
 
-                            if (this.mandate.minAmount) {
-                                if (this.mandate.minAmount > this.mandate.amount) {
-                                    this.mandate.amount = this.mandate.minAmount
-                                }
+                        if (this.mandate.minAmount) {
+                            if (this.mandate.minAmount > this.mandate.amount) {
+                                this.mandate.amount = this.mandate.minAmount
                             }
-
-                            if (this.$root.authInfo.isLocked) {
-                                if (this.mandate.isValid) {
-                                    this.$root.unlock()
-                                } else {
-                                    clearTimeout(this.refreshRequest)
-                                    this.refreshRequest = setTimeout(() => { this.loadMandate(true) }, 10 * 1000)
-                                }
-                            }
-                        })
-                }
+                        }
+                    })
             },
             selectPaymentMethod(method) {
                 this.formLock = false

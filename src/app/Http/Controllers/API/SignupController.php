@@ -7,6 +7,7 @@ use App\Jobs\SignupVerificationEmail;
 use App\Discount;
 use App\Domain;
 use App\Plan;
+use App\Providers\PaymentProvider;
 use App\Rules\SignupExternalEmail;
 use App\Rules\SignupToken;
 use App\Rules\Password;
@@ -34,27 +35,25 @@ class SignupController extends Controller
      */
     public function plans(Request $request)
     {
-        $plans = [];
-
         // Use reverse order just to have individual on left, group on right ;)
         // But prefer monthly on left, yearly on right
-        Plan::withEnvTenantContext()->orderBy('months')->orderByDesc('title')->get()
-            ->map(function ($plan) use (&$plans) {
-                // Allow themes to set custom button label
-                $button = \trans('theme::app.planbutton-' . $plan->title);
-                if ($button == 'theme::app.planbutton-' . $plan->title) {
-                    $button = \trans('app.planbutton', ['plan' => $plan->name]);
+        $plans = Plan::withEnvTenantContext()->orderBy('months')->orderByDesc('title')->get()
+            ->map(function ($plan) {
+                $button = self::trans("app.planbutton-{$plan->title}");
+                if (strpos($button, 'app.planbutton') !== false) {
+                    $button = self::trans('app.planbutton', ['plan' => $plan->name]);
                 }
 
-                $plans[] = [
+                return [
                     'title' => $plan->title,
                     'name' => $plan->name,
                     'button' => $button,
                     'description' => $plan->description,
-                    'mode' => $plan->mode ?: 'email',
+                    'mode' => $plan->mode ?: Plan::MODE_EMAIL,
                     'isDomain' => $plan->hasDomain(),
                 ];
-            });
+            })
+            ->all();
 
         return response()->json(['status' => 'success', 'plans' => $plans]);
     }
@@ -91,7 +90,7 @@ class SignupController extends Controller
 
         $plan = $this->getPlan();
 
-        if ($plan->mode == 'token') {
+        if ($plan->mode == Plan::MODE_TOKEN) {
             $rules['token'] = ['required', 'string', new SignupToken()];
         } else {
             $rules['email'] = ['required', 'string', new SignupExternalEmail()];
@@ -106,7 +105,7 @@ class SignupController extends Controller
 
         // Generate the verification code
         $code = SignupCode::create([
-                'email' => $plan->mode == 'token' ? $request->token : $request->email,
+                'email' => $plan->mode == Plan::MODE_TOKEN ? $request->token : $request->email,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'plan' => $plan->title,
@@ -119,7 +118,7 @@ class SignupController extends Controller
             'mode' => $plan->mode ?: 'email',
         ];
 
-        if ($plan->mode == 'token') {
+        if ($plan->mode == Plan::MODE_TOKEN) {
             // Token verification, jump to the last step
             $has_domain = $plan->hasDomain();
 
@@ -221,13 +220,13 @@ class SignupController extends Controller
     }
 
     /**
-     * Finishes the signup process by creating the user account.
+     * Validates the input to the final signup request.
      *
      * @param \Illuminate\Http\Request $request HTTP request
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
-    public function signup(Request $request)
+    public function signupValidate(Request $request)
     {
         // Validate input
         $v = Validator::make(
@@ -244,14 +243,13 @@ class SignupController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-
         $settings = [];
 
         // Plan parameter is required/allowed in mandate mode
         if (!empty($request->plan) && empty($request->code) && empty($request->invitation)) {
             $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
 
-            if (!$plan || $plan->mode != 'mandate') {
+            if (!$plan || $plan->mode != Plan::MODE_MANDATE) {
                 $msg = \trans('validation.exists', ['attribute' => 'plan']);
                 return response()->json(['status' => 'error', 'errors' => ['plan' => $msg]], 422);
             }
@@ -300,7 +298,7 @@ class SignupController extends Controller
                 'last_name' => $code_data->last_name,
             ];
 
-            if ($plan->mode == 'token') {
+            if ($plan->mode == Plan::MODE_TOKEN) {
                 $settings['signup_token'] = $code_data->email;
             } else {
                 $settings['external_email'] = $code_data->email;
@@ -323,17 +321,46 @@ class SignupController extends Controller
         }
 
         $is_domain = $plan->hasDomain();
-        $login = $request->login;
-        $domain_name = $request->domain;
 
         // Validate login
-        if ($errors = self::validateLogin($login, $domain_name, $is_domain)) {
+        if ($errors = self::validateLogin($request->login, $request->domain, $is_domain)) {
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
+        // Set some properties for signup() method
+        $request->settings = $settings;
+        $request->plan = $plan;
+        $request->discount = $discount ?? null;
+        $request->invitation = $invitation ?? null;
+
+        $result = [];
+
+        if ($plan->mode == Plan::MODE_MANDATE) {
+            $result = $this->mandateForPlan($plan, $request->discount);
+        }
+
+        return response()->json($result);
+    }
+
+    /**
+     * Finishes the signup process by creating the user account.
+     *
+     * @param \Illuminate\Http\Request $request HTTP request
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response
+     */
+    public function signup(Request $request)
+    {
+        $v = $this->signupValidate($request);
+        if ($v->status() !== 200) {
+            return $v;
+        }
+
+        $is_domain = $request->plan->hasDomain();
+
         // We allow only ASCII, so we can safely lower-case the email address
-        $login = Str::lower($login);
-        $domain_name = Str::lower($domain_name);
+        $login = Str::lower($request->login);
+        $domain_name = Str::lower($request->domain);
         $domain = null;
 
         DB::beginTransaction();
@@ -353,22 +380,22 @@ class SignupController extends Controller
                 'status' => User::STATUS_RESTRICTED,
         ]);
 
-        if (!empty($discount)) {
+        if ($request->discount) {
             $wallet = $user->wallets()->first();
-            $wallet->discount()->associate($discount);
+            $wallet->discount()->associate($request->discount);
             $wallet->save();
         }
 
-        $user->assignPlan($plan, $domain);
+        $user->assignPlan($request->plan, $domain);
 
         // Save the external email and plan in user settings
-        $user->setSettings($settings);
+        $user->setSettings($request->settings);
 
         // Update the invitation
-        if (!empty($invitation)) {
-            $invitation->status = SignupInvitation::STATUS_COMPLETED;
-            $invitation->user_id = $user->id;
-            $invitation->save();
+        if ($request->invitation) {
+            $request->invitation->status = SignupInvitation::STATUS_COMPLETED;
+            $request->invitation->user_id = $user->id;
+            $request->invitation->save();
         }
 
         // Soft-delete the verification code, and store some more info with it
@@ -384,12 +411,65 @@ class SignupController extends Controller
 
         $response = AuthController::logonResponse($user, $request->password);
 
-        // Redirect the user to the specified page
-        // $data = $response->getData(true);
-        // $data['redirect'] = 'wallet';
-        // $response->setData($data);
+        if ($request->plan->mode == Plan::MODE_MANDATE) {
+            $data = $response->getData(true);
+            $data['checkout'] = $this->mandateForPlan($request->plan, $request->discount, $user);
+            $response->setData($data);
+        }
 
         return $response;
+    }
+
+    /**
+     * Collects some content to display to the user before redirect to a checkout page.
+     * Optionally creates a recurrent payment mandate for specified user/plan.
+     */
+    protected function mandateForPlan(Plan $plan, Discount $discount = null, User $user = null): array
+    {
+        $result = [];
+
+        $min = \App\Payment::MIN_AMOUNT;
+        $planCost = $plan->cost() * $plan->months;
+
+        if ($discount) {
+            $planCost -= ceil($planCost * (100 - $discount->discount) / 100);
+        }
+
+        if ($planCost > $min) {
+            $min = $planCost;
+        }
+
+        if ($user) {
+            $wallet = $user->wallets()->first();
+            $wallet->setSettings([
+                'mandate_amount' => sprintf('%.2f', round($min / 100, 2)),
+                'mandate_balance' => 0,
+            ]);
+
+            $mandate = [
+                'currency' => $wallet->currency,
+                'description' => \App\Tenant::getConfig($user->tenant_id, 'app.name') . ' Auto-Payment Setup',
+                'methodId' => PaymentProvider::METHOD_CREDITCARD,
+                'redirectUrl' => \App\Utils::serviceUrl('/payment/status', $user->tenant_id),
+            ];
+
+            $provider = PaymentProvider::factory($wallet);
+
+            $result = $provider->createMandate($wallet, $mandate);
+        }
+
+        $params = [
+            'cost' => \App\Utils::money($planCost, \config('app.currency')),
+            'period' => \trans($plan->months == 12 ? 'app.period-year' : 'app.period-month'),
+        ];
+
+        $content = '<b>' . self::trans('app.signup-account-tobecreated') . '</b><br><br>'
+            . self::trans('app.signup-account-summary', $params) . '<br><br>'
+            . self::trans('app.signup-account-mandate', $params);
+
+        $result['content'] = $content;
+
+        return $result;
     }
 
     /**

@@ -35,6 +35,7 @@ return [
         'signup' => "Sign Up",
         'submit' => "Submit",
         'suspend' => "Suspend",
+        'tryagain' => "Try again",
         'unsuspend' => "Unsuspend",
         'verify' => "Verify",
     ],

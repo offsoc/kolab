@@ -371,8 +371,8 @@ class PaymentsMollieTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame((int) ceil(Payment::MIN_AMOUNT / 100), $json['amount']);
-        $this->assertSame((int) ceil(($plan->cost() * $plan->months) / 100), $json['minAmount']);
+        $this->assertEquals(round(Payment::MIN_AMOUNT / 100, 2), $json['amount']);
+        $this->assertEquals(round($plan->cost() * $plan->months / 100, 2), $json['minAmount']);
 
         // TODO: Test more cases
         // TODO: Test user unrestricting if mandate is valid

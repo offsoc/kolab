@@ -59,6 +59,18 @@ class UtilsTest extends TestCase
     }
 
     /**
+     * Test for Utils::money()
+     */
+    public function testMoney(): void
+    {
+        $this->assertSame('-0,01 CHF', Utils::money(-1, 'CHF'));
+        $this->assertSame('0,00 CHF', Utils::money(0, 'CHF'));
+        $this->assertSame('1,11 €', Utils::money(111, 'EUR'));
+        $this->assertSame('1,00 CHF', Utils::money(100, 'CHF'));
+        $this->assertSame('€0.00', Utils::money(0, 'EUR', 'en_US'));
+    }
+
+    /**
      * Test for Utils::normalizeAddress()
      */
     public function testNormalizeAddress(): void

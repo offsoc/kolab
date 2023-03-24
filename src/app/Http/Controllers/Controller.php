@@ -81,4 +81,20 @@ class Controller extends BaseController
     {
         return Auth::guard();
     }
+
+    /**
+     * A wrapper for \trans() with theme localization support.
+     *
+     * @param string $label  Localization label
+     * @param array  $params Translation parameters
+     */
+    public static function trans(string $label, array $params = []): string
+    {
+        $result = \trans("theme::{$label}", $params);
+        if ($result === "theme::{$label}") {
+            $result = \trans($label, $params);
+        }
+
+        return $result;
+    }
 }

@@ -803,7 +803,7 @@ class SignupTest extends TestCase
                 'free_months' => 1,
                 'discount_qty' => 0,
                 'discount_rate' => 0,
-                'mode' => 'mandate',
+                'mode' => Plan::MODE_MANDATE,
         ]);
 
         $packages = [

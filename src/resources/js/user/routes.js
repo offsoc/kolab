@@ -17,6 +17,7 @@ const DomainInfoComponent = () => import(/* webpackChunkName: "../user/pages" */
 const DomainListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Domain/List')
 const FileInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/File/Info')
 const FileListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/File/List')
+const PaymentStatusComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Payment/Status')
 const ResourceInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/Info')
 const ResourceListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/List')
 const RoomInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Room/Info')
@@ -106,6 +107,12 @@ const routes = [
         path: '/password-reset/:code?',
         name: 'password-reset',
         component: PasswordResetComponent
+    },
+    {
+        path: '/payment/status',
+        name: 'payment-status',
+        component: PaymentStatusComponent,
+        meta: { requiresAuth: true }
     },
     {
         path: '/profile',

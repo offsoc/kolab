@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int         $credit_amount     Amount of money in cents of system currency (wallet balance)
  * @property string      $description       Payment description
  * @property string      $id                Mollie's Payment ID
+ * @property string      $status            Payment status (Payment::STATUS_*)
+ * @property string      $type              Payment type (Payment::TYPE_*)
  * @property ?string     $vat_rate_id       VAT rate identifier
  * @property \App\Wallet $wallet            The wallet
  * @property string      $wallet_id         The ID of the wallet
@@ -126,9 +128,16 @@ class Payment extends Model
             $this->wallet->setSetting('mandate_disabled', null);
         }
 
-        // Remove RESTRICTED flag from the wallet owner and all users in the wallet
-        if ($this->wallet->owner && $this->wallet->owner->isRestricted()) {
-            $this->wallet->owner->unrestrict(true);
+        if ($owner = $this->wallet->owner) {
+            // Remove RESTRICTED flag from the wallet owner and all users in the wallet
+            if ($owner->isRestricted()) {
+                $owner->unrestrict(true);
+            }
+            // Activate the inactive user
+            if (!$owner->isActive()) {
+                $owner->status |= User::STATUS_ACTIVE;
+                $owner->save();
+            }
         }
     }
 

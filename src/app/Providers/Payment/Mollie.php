@@ -54,6 +54,7 @@ class Mollie extends \App\Providers\PaymentProvider
      *                             - currency: The operation currency
      *                             - description: Operation desc.
      *                             - methodId: Payment method
+     *                             - redirectUrl: The location to goto after checkout
      *
      * @return array Provider payment data:
      *               - id: Operation identifier
@@ -80,7 +81,7 @@ class Mollie extends \App\Providers\PaymentProvider
             'sequenceType' => 'first',
             'description' => $payment['description'],
             'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
-            'redirectUrl' => self::redirectUrl(),
+            'redirectUrl' => $payment['redirectUrl'] ?? self::redirectUrl(),
             'locale' => 'en_US',
             'method' => $payment['methodId']
         ];

@@ -33,9 +33,9 @@ window.router.beforeEach((to, from, next) => {
         return
     }
 
-    if (routerState.isLocked && to.meta.requiresAuth && !['login', 'wallet'].includes(to.name)) {
-        // redirect to the wallet page
-        next({ name: 'wallet' })
+    if (routerState.isLocked && to.meta.requiresAuth && !['login', 'payment-status'].includes(to.name)) {
+        // redirect to the payment-status page
+        next({ name: 'payment-status' })
         return
     }
 
@@ -149,9 +149,9 @@ const app = new Vue({
 
             if (dashboard !== false) {
                 this.$router.push(routerState.afterLogin || { name: response.redirect || 'dashboard' })
-            } else if (routerState.isLocked && this.$route.name != 'wallet' && this.$route.meta.requiresAuth) {
+            } else if (routerState.isLocked && this.$route.meta.requiresAuth && this.$route.name != 'payment-status') {
                 // Always redirect locked user, here we can be after router's beforeEach handler
-                this.$router.push({ name: 'wallet' })
+                this.$router.push({ name: 'payment-status' })
             }
 
             routerState.afterLogin = null

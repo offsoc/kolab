@@ -53,6 +53,7 @@ Route::group(
         Route::post('signup/init', [API\SignupController::class, 'init']);
         Route::get('signup/invitations/{id}', [API\SignupController::class, 'invitation']);
         Route::get('signup/plans', [API\SignupController::class, 'plans']);
+        Route::post('signup/validate', [API\SignupController::class, 'signupValidate']);
         Route::post('signup/verify', [API\SignupController::class, 'verify']);
         Route::post('signup', [API\SignupController::class, 'signup']);
     }
@@ -151,9 +152,11 @@ Route::group(
         Route::post('payments/mandate', [API\V4\PaymentsController::class, 'mandateCreate']);
         Route::put('payments/mandate', [API\V4\PaymentsController::class, 'mandateUpdate']);
         Route::delete('payments/mandate', [API\V4\PaymentsController::class, 'mandateDelete']);
+        Route::post('payments/mandate/reset', [API\V4\PaymentsController::class, 'mandateReset']);
         Route::get('payments/methods', [API\V4\PaymentsController::class, 'paymentMethods']);
         Route::get('payments/pending', [API\V4\PaymentsController::class, 'payments']);
         Route::get('payments/has-pending', [API\V4\PaymentsController::class, 'hasPayments']);
+        Route::get('payments/status', [API\V4\PaymentsController::class, 'paymentStatus']);
 
         Route::post('support/request', [API\V4\SupportController::class, 'request'])
             ->withoutMiddleware(['auth:api', 'scope:api'])

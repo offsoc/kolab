@@ -20,7 +20,7 @@ use Spatie\Translatable\HasTranslations;
  * @property int            $discount_rate
  * @property int            $free_months
  * @property string         $id
- * @property string         $mode           Plan signup mode (email|token)
+ * @property string         $mode           Plan signup mode (Plan::MODE_*)
  * @property string         $name
  * @property \App\Package[] $packages
  * @property datetime       $promo_from
@@ -34,6 +34,11 @@ class Plan extends Model
     use HasTranslations;
     use UuidStrKeyTrait;
 
+    public const MODE_EMAIL = 'email';
+    public const MODE_TOKEN = 'token';
+    public const MODE_MANDATE = 'mandate';
+
+    /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
     /** @var array<int, string> The attributes that are mass assignable */

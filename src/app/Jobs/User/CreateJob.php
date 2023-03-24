@@ -102,7 +102,14 @@ class CreateJob extends UserJob
             $user->status |= \App\User::STATUS_IMAP_READY;
         }
 
-        $user->status |= \App\User::STATUS_ACTIVE;
+        // Make user active in non-mandate mode only
+        if (!($wallet = $user->wallet())
+            || !($plan = $user->wallet()->plan())
+            || $plan->mode != \App\Plan::MODE_MANDATE
+        ) {
+            $user->status |= \App\User::STATUS_ACTIVE;
+        }
+
         $user->save();
     }
 }

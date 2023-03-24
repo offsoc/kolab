@@ -462,12 +462,7 @@ class Wallet extends Model
      */
     public function money(int $amount, $locale = 'de_DE')
     {
-        $amount = round($amount / 100, 2);
-
-        $nf = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-        $result = $nf->formatCurrency($amount, $this->currency);
-        // Replace non-breaking space
-        return str_replace("\xC2\xA0", " ", $result);
+        return \App\Utils::money($amount, $this->currency, $locale);
     }
 
     /**

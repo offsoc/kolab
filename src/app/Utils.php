@@ -576,4 +576,25 @@ class Utils
 
         return floatval($rates[$targetCurrency]);
     }
+
+    /**
+     * A helper to display human-readable amount of money using
+     * for specified currency and locale.
+     *
+     * @param int    $amount   Amount of money (in cents)
+     * @param string $currency Currency code
+     * @param string $locale   Output locale
+     *
+     * @return string String representation, e.g. "9.99 CHF"
+     */
+    public static function money(int $amount, $currency, $locale = 'de_DE'): string
+    {
+        $amount = round($amount / 100, 2);
+
+        $nf = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+        $result = $nf->formatCurrency($amount, $currency);
+
+        // Replace non-breaking space
+        return str_replace("\xC2\xA0", " ", $result);
+    }
 }

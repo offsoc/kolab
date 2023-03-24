@@ -89,6 +89,7 @@ abstract class PaymentProvider
      *                             - currency: The operation currency
      *                             - description: Operation desc.
      *                             - methodId: Payment method
+     *                             - redirectUrl: The location to goto after checkout
      *
      * @return array Provider payment data:
      *               - id: Operation identifier
