@@ -28,19 +28,6 @@ class CreateGroupsTable extends Migration
                 $table->primary('id');
             }
         );
-
-        if (!\App\Sku::where('title', 'group')->first()) {
-            \App\Sku::create([
-                'title' => 'group',
-                'name' => 'Group',
-                'description' => 'Distribution list',
-                'cost' => 0,
-                'units_free' => 0,
-                'period' => 'monthly',
-                'handler_class' => 'App\Handlers\Group',
-                'active' => true,
-            ]);
-        }
     }
 
     /**
