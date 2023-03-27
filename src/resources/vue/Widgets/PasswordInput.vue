@@ -77,6 +77,7 @@
                             this.policy = response.data.list
                         }
                     })
+                    .catch(() => {})
             },
             onInput(event) {
                 this.checkPolicy(event.target.value)
