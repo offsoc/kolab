@@ -2,7 +2,7 @@
 
 namespace Tests;
 
-use Facebook\WebDriver\WebDriverKeys;
+use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Assert;
 use Tests\Browser\Components\Error;
 use Tests\Browser\Components\Toast;
@@ -304,6 +304,20 @@ class Browser extends \Laravel\Dusk\Browser
             }
         }
 
+        return $this;
+    }
+
+    /**
+     * Store custom config values in the cache to be picked up in the DevelConfig middleware on the next request.
+     *
+     * This allows to propagte custom config values to the server that interacts with the browser.
+     *
+     * @param  array  $config
+     * @return $this
+     */
+    public function withConfig(array $config)
+    {
+        Cache::put('duskconfig', json_encode($config));
         return $this;
     }
 }

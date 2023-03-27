@@ -15,6 +15,7 @@ use App\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Assert;
 
 trait TestCaseTrait
@@ -732,6 +733,8 @@ trait TestCaseTrait
         );
 
         $this->publicDomainUser->assignPackage($packageKolab);
+
+        Cache::forget('duskconfig');
     }
 
     public function tearDown(): void
@@ -755,6 +758,8 @@ trait TestCaseTrait
         if ($this->publicDomainUser) {
             $this->deleteTestUser($this->publicDomainUser->email);
         }
+
+        Cache::forget('duskconfig');
 
         parent::tearDown();
     }

@@ -16,14 +16,18 @@ class SupportTest extends TestCaseDusk
     public function testSupportForm(): void
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/')
+            $browser->withConfig(['app.support_email' => ""])
+                ->visit('/')
                 ->within(new Menu(), function ($browser) {
                     $browser->clickMenuItem('support');
                 })
                 ->waitFor('#support')
-                ->assertSeeIn('.card-title', 'Contact Support')
-                ->assertSeeIn('a.btn-primary', 'Contact Support')
-                ->click('a.btn-primary')
+                ->assertElementsCount('.card-title', 2)
+                ->with('.row .col:last-child', function ($card) {
+                    $card->assertSeeIn('.card-title', 'Contact Support')
+                    ->assertSeeIn('.btn-primary', 'Contact Support')
+                    ->click('.btn-primary');
+                })
                 ->with(new Dialog('#support-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Contact Support')
                         ->assertFocused('#support-user')
@@ -39,7 +43,9 @@ class SupportTest extends TestCaseDusk
                         ->click('@button-cancel');
                 })
                 ->assertMissing('#support-dialog')
-                ->click('a.btn-primary')
+                ->with('.row .col:last-child', function ($card) {
+                    $card->click('.btn-primary');
+                })
                 ->with(new Dialog('#support-dialog'), function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Contact Support')
                         ->assertFocused('#support-user')
@@ -48,9 +54,26 @@ class SupportTest extends TestCaseDusk
                         ->assertValue('#support-body', 'Body')
                         ->click('@button-action');
                 })
-                // Note: This line assumes SUPPORT_EMAIL is not set in config
                 ->assertToast(Toast::TYPE_ERROR, 'Failed to submit the support request')
                 ->assertVisible('#support-dialog');
+        });
+    }
+
+    /**
+     * Test disabled support contact form
+     */
+    public function testNoSupportForm(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->withConfig(['app.support_email' => null])
+                ->visit('/')
+                ->within(new Menu(), function ($browser) {
+                    $browser->clickMenuItem('support');
+                })
+                ->waitFor('#support')
+                ->assertElementsCount('.card-title', 1)
+                ->assertSeeIn('.card-title', 'Documentation')
+                ->assertSeeIn('.btn-primary', 'Search Knowledgebase');
         });
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Support\Facades\Cache;
 
 class DevelConfig
 {
@@ -30,6 +31,19 @@ class DevelConfig
 
             if (!empty($provider)) {
                 \config(['services.payment_provider' => $provider]);
+            }
+
+            // Pick up config set in Tests\Browser::withConfig
+            // This wouldn't technically need to be in a middleware,
+            // but this way we ensure it's propagated during the next request.
+            if (Cache::has('duskconfig')) {
+                $configJson = Cache::get('duskconfig');
+                $configValues = json_decode($configJson, true);
+                if (!empty($configValues)) {
+                    foreach ($configValues as $key => $value) {
+                        \config([$key => $value]);
+                    }
+                }
             }
         }
 
