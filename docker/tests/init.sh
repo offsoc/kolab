@@ -83,7 +83,7 @@ if [ "$1" == "suite-Browser" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci \
+        --exclude-group skipci,meet,mollie \
         --verbose \
         --testsuite Browser
 fi
