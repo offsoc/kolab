@@ -120,7 +120,7 @@ class SignupTest extends TestCaseDusk
                 ->assertMissing('@step3');
 
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang'], 'signup');
+                $browser->assertMenuItems(['support', 'signup', 'login', 'lang'], 'signup');
             });
 
             $browser->waitFor('@step0 .plan-selector .card');
@@ -191,7 +191,7 @@ class SignupTest extends TestCaseDusk
             });
 
             $browser->within(new Menu(), function ($browser) {
-                $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang'], 'signup');
+                $browser->assertMenuItems(['support', 'signup', 'login', 'lang'], 'signup');
             });
 
             // Submit invalid email, and first_name
