@@ -121,11 +121,12 @@ class Health extends Command
 
     private function checkMeet()
     {
-        try {
-            $urls = \config('meet.api_urls');
-            foreach ($urls as $url) {
-                $this->line("Checking $url");
+        $urls = \config('meet.api_urls');
+        $success = true;
+        foreach ($urls as $url) {
+            $this->line("Checking $url");
 
+            try {
                 $client = new \GuzzleHttp\Client(
                     [
                         'http_errors' => false, // No exceptions from Guzzle
@@ -149,15 +150,16 @@ class Health extends Command
 
                 $response = $client->request('GET', "ping");
                 if ($response->getStatusCode() != 200) {
-                    $this->line("Backend not available: " . var_export($response, true));
-                    return false;
+                    $this->line("Backend {$url} not available. Status: {$response->getStatusCode()} Reason: {$response->getReasonPhrase()}");
+                    $success = false;
                 }
+            } catch (\Exception $exception) {
+                $this->line("Backend {$url} not available:");
+                $this->line($exception);
+                $success = false;
             }
-            return true;
-        } catch (\Exception $exception) {
-            $this->line($exception);
-            return false;
         }
+        return $success;
     }
 
     /**
