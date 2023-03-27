@@ -11,7 +11,7 @@ class TransactionsCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'wallet:transactions {--detail} {wallet}';
+    protected $signature = 'wallet:transactions {--detail} {--balance} {wallet}';
 
     /**
      * The console command description.
@@ -34,7 +34,15 @@ class TransactionsCommand extends Command
             return 1;
         }
 
-        $wallet->transactions()->orderBy('created_at')->each(function ($transaction) {
+        $withDetail = $this->option('detail');
+        $balanceMode = $this->option('balance');
+        $balance = 0;
+
+        $transactions = $wallet->transactions()->orderBy('created_at')->cursor();
+
+        foreach ($transactions as $transaction) {
+            $balance += $transaction->amount;
+
             $this->info(
                 sprintf(
                     "%s: %s %s",
@@ -42,9 +50,10 @@ class TransactionsCommand extends Command
                     $transaction->created_at,
                     $transaction->toString()
                 )
+                . ($balanceMode ? sprintf(' (balance: %s)', $wallet->money($balance)) : '')
             );
 
-            if ($this->option('detail')) {
+            if ($withDetail) {
                 $elements = \App\Transaction::where('transaction_id', $transaction->id)
                     ->orderBy('created_at')->get();
 
@@ -58,6 +67,6 @@ class TransactionsCommand extends Command
                     );
                 }
             }
-        });
+        }
     }
 }
