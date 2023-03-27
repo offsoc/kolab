@@ -252,7 +252,8 @@ class PolicyController extends Controller
             return response()->json(
                 [
                     'response' => 'DEFER_IF_PERMIT',
-                    'reason' => 'Temporary error. Please try again later.'
+                    'reason' => 'Temporary error. Please try again later.',
+                    'log' => ["SPF: Request without client_address: " . json_encode($data)]
                 ],
                 403
             );
@@ -267,7 +268,8 @@ class PolicyController extends Controller
             return response()->json(
                 [
                     'response' => 'DEFER_IF_PERMIT',
-                    'reason' => 'Temporary error. Please try again later.'
+                    'reason' => 'Temporary error. Please try again later.',
+                    'log' => ["SPF: Request without recognizable network: " . json_encode($data)]
                 ],
                 403
             );
