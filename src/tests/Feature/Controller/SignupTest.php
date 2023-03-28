@@ -848,7 +848,7 @@ class SignupTest extends TestCase
     /**
      * Test signup via invitation
      */
-    public function testSignupViaInvitation(): void
+    public function testSignupInvitation(): void
     {
         Queue::fake();
 
@@ -896,6 +896,82 @@ class SignupTest extends TestCase
         $this->assertTrue($invitation->isCompleted());
 
         // TODO: Test POST params validation
+    }
+
+    /**
+     * Test signup validation (POST /signup/validate)
+     */
+    public function testSignupValidate(): void
+    {
+        Queue::fake();
+
+        $plan = Plan::create([
+                'title' => 'test',
+                'name' => 'Test Account',
+                'description' => 'Test',
+                'free_months' => 1,
+                'months' => 12,
+                'discount_qty' => 0,
+                'discount_rate' => 0,
+                'mode' => Plan::MODE_MANDATE,
+        ]);
+
+        $packages = [
+            Package::where(['title' => 'kolab', 'tenant_id' => \config('app.tenant_id')])->first()
+        ];
+
+        $plan->packages()->saveMany($packages);
+
+        $post = [
+            'login' => 'i',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest1',
+            'voucher' => str_repeat('a', 33),
+        ];
+
+        // Test basic input validation
+        $response = $this->post('/api/auth/signup/validate', $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(4, $json['errors']);
+        $this->assertSame(["The login must be at least 2 characters."], $json['errors']['login']);
+        $this->assertSame(["The password confirmation does not match."], $json['errors']['password']);
+        $this->assertSame(["The domain field is required."], $json['errors']['domain']);
+        $this->assertSame(["The voucher may not be greater than 32 characters."], $json['errors']['voucher']);
+
+        // Test with mode=mandate plan, but invalid voucher code
+        $post = [
+            'login' => 'test-inv',
+            'domain' => 'kolabnow.com',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
+            'plan' => $plan->title,
+            'voucher' => 'non-existing',
+        ];
+
+        $response = $this->post('/api/auth/signup/validate', $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(1, $json['errors']);
+        $this->assertSame("The voucher code is invalid or expired.", $json['errors']['voucher']);
+
+        // Test with mode=mandate plan, and valid voucher code
+        $post['voucher'] = 'TEST';
+        $response = $this->post('/api/auth/signup/validate', $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertStringContainsString('106,92 CHF', $json['content']);
+
+        // TODO: Test other plan modes
     }
 
     /**

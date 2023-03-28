@@ -339,7 +339,7 @@ class SignupController extends Controller
             $result = $this->mandateForPlan($plan, $request->discount);
         }
 
-        return response()->json($result);
+        return response()->json($result + ['status' => 'success']);
     }
 
     /**
@@ -432,7 +432,7 @@ class SignupController extends Controller
         $planCost = $plan->cost() * $plan->months;
 
         if ($discount) {
-            $planCost -= ceil($planCost * (100 - $discount->discount) / 100);
+            $planCost = (int) ($planCost * (100 - $discount->discount) / 100);
         }
 
         if ($planCost > $min) {
