@@ -13,7 +13,7 @@ class ContentController extends Controller
      */
     public function pageContent(string $page)
     {
-        if (empty($page) || !preg_match('/^[a-z\/]+$/', $page)) {
+        if (empty($page) || !preg_match('/^[a-zA-Z0-9\/]+$/', $page)) {
             abort(404);
         }
 
