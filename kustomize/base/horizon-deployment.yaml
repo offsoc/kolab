@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    alpha.image.policy.openshift.io/resolve-names: '*'
+    app.openshift.io/connects-to: '[{"apiVersion":"apps.openshift.io/v1","kind":"DeploymentConfig","name":"mariadb"}]'
+    app.openshift.io/route-disabled: "false"
+    image.openshift.io/triggers: >-
+      [{"from":{"kind":"ImageStreamTag","name":"kolab:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"kolab\")].image"}]
+  labels:
+    app: horizon
+    app.kubernetes.io/component: horizon
+    app.kubernetes.io/instance: horizon
+    app.kubernetes.io/name: horizon
+    app.kubernetes.io/part-of: kolab-app
+    app.openshift.io/runtime: php
+    app.openshift.io/runtime-version: latest
+  name: horizon
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: horizon
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      timeoutSeconds: 120
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: horizon
+        deployment: horizon
+    spec:
+      containers:
+      - envFrom:
+        - secretRef:
+            name: kolab
+        - configMapRef:
+            name: kolab
+        image: kolab:latest
+        imagePullPolicy: IfNotPresent
+        readinessProbe:
+          failureThreshold: 3
+          exec:
+            command:
+            - ./artisan
+            - status:health
+            - --check=DB
+            - --check=Redis
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        livenessProbe:
+          failureThreshold: 3
+          exec:
+            command:
+            - ./artisan
+            - horizon:status
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: kolab
+        env:
+          - name: KOLAB_ROLE
+            value: horizon
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                key: database-host
+                name: mariadb
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: database-user
+                name: mariadb
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: mariadb
+          - name: DB_DATABASE
+            valueFrom:
+              secretKeyRef:
+                key: database-name
+                name: mariadb
+          - name: REDIS_HOST
+            value: redis
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: redis
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30

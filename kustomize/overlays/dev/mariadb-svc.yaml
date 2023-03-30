@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    template.openshift.io/expose-uri: mysql://{.spec.clusterIP}:{.spec.ports[?(.name=="mariadb")].port}
+  labels:
+    template: mariadb-ephemeral-template
+    template.openshift.io/template-instance-owner: bfb774ba-6fdd-49d0-95e1-676a82425e3f
+  name: mariadb
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: mariadb
+    port: 3306
+  selector:
+    name: mariadb

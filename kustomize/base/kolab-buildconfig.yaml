@@ -1,0 +1,30 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: kolab
+spec:
+  failedBuildsHistoryLimit: 5
+  nodeSelector: null
+  output:
+    to:
+      kind: ImageStreamTag
+      name: kolab:latest
+  runPolicy: Serial
+  source:
+    git:
+      ref: dev/mollekopf
+      uri: https://git.kolab.org/source/kolab.git
+    type: Git
+  strategy:
+    sourceStrategy:
+      env:
+      - name: LARAVEL_ENV
+        value: prod
+      from:
+        kind: ImageStreamTag
+        name: swoole:latest
+    type: Source
+  successfulBuildsHistoryLimit: 5
+  triggers:
+  - type: ImageChange
+  - type: ConfigChange

@@ -1,0 +1,24 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    app.openshift.io/connects-to: '[{"apiVersion":"apps.openshift.io/v1","kind":"DeploymentConfig","name":"mariadb"}]'
+    openshift.io/host.generated: "true"
+  labels:
+    app: kolab
+    app.kubernetes.io/component: kolab
+    app.kubernetes.io/instance: kolab
+    app.kubernetes.io/name: kolab
+    app.kubernetes.io/part-of: kolab-app
+  name: kolab
+spec:
+  port:
+    targetPort: 8000-tcp
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: kolab
+    weight: 100
+  wildcardPolicy: None

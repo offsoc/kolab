@@ -1,0 +1,21 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: kolab
+    app.kubernetes.io/component: kolab
+    app.kubernetes.io/instance: kolab
+    app.kubernetes.io/name: kolab
+    app.kubernetes.io/part-of: kolab-app
+  name: kolab-admin
+spec:
+  subdomain: admin.kolab-kolab-dev
+  port:
+    targetPort: 8000-tcp
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: kolab
+    weight: 100

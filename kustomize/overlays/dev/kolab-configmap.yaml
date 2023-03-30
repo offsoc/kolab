@@ -1,0 +1,26 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kolab
+  namespace: kolab-dev
+immutable: false
+data:
+  APP_DOMAIN: 'kolab-kolab-dev.apps.ocp04.ait-msp-infra.net'
+  ASSET_URL: 'https://kolab-kolab-dev.apps.ocp04.ait-msp-infra.net'
+  APP_NAME: 'Kolab'
+  APP_URL: 'https://kolab-kolab-dev.apps.ocp04.ait-msp-infra.net'
+  APP_PUBLIC_URL: 'https://kolab-kolab-dev.apps.ocp04.ait-msp-infra.net'
+  APP_WITH_SERVICES: 'true'
+  APP_WITH_WALLET: 'false'
+  APP_WITH_SIGNUP: 'true'
+  APP_LDAP: 'false'
+  APP_IMAP: 'false'
+  APP_DEBUG: 'true'
+  APP_ENV: 'local'
+  LOG_CHANNEL: 'stdout'
+  LOG_SLOW_REQUESTS: '5'
+  LOG_LEVEL: 'debug'
+  QUEUE_CONNECTION: 'redis'
+  PASSPORT_PROXY_OAUTH_CLIENT_ID: '942edef5-3dbd-4a14-8e3e-d5d59b727bee'
+  PASSPORT_PROXY_OAUTH_CLIENT_SECRET: 'L6L0n56ecvjjK0cJMjeeV1pPAeffUBO0YSSH63wf'
+

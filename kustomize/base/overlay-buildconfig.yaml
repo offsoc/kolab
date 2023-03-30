@@ -1,0 +1,25 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: overlay
+spec:
+  failedBuildsHistoryLimit: 5
+  nodeSelector: null
+  output:
+    to:
+      kind: ImageStreamTag
+      name: overlay:latest
+  runPolicy: Serial
+  strategy:
+    sourceStrategy:
+      env:
+      - name: LARAVEL_ENV
+        value: prod
+      from:
+        kind: ImageStreamTag
+        name: kolab:latest
+    type: Source
+  successfulBuildsHistoryLimit: 5
+  triggers:
+  - type: ImageChange
+  - type: ConfigChange

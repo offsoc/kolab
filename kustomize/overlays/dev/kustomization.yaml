@@ -1,0 +1,13 @@
+namespace: kolab-dev
+bases:
+  - ../../base
+resources:
+  - namespace.yaml
+  - kolab-secret.yaml
+  - kolab-configmap.yaml
+  - mariadb-deploymentconfig.yaml
+  - mariadb-secret.yaml
+  - mariadb-svc.yaml
+  - redis-deploymentconfig.yaml
+  - redis-secret.yaml
+  - redis-svc.yaml
