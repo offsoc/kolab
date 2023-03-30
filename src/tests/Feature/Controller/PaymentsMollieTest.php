@@ -88,6 +88,8 @@ class PaymentsMollieTest extends TestCase
         $response->assertStatus(401);
         $response = $this->post("api/v4/payments/mandate", []);
         $response->assertStatus(401);
+        $response = $this->post("api/v4/payments/mandate/reset", []);
+        $response->assertStatus(401);
         $response = $this->put("api/v4/payments/mandate", []);
         $response->assertStatus(401);
         $response = $this->delete("api/v4/payments/mandate");
@@ -293,6 +295,16 @@ class PaymentsMollieTest extends TestCase
         });
 
         $this->unmockMollie();
+
+        // Test mandate reset
+        $wallet->payments()->delete();
+        $response = $this->actingAs($user)->post("api/v4/payments/mandate/reset", []);
+        $response->assertStatus(200);
+
+        $payment = $wallet->payments()->first();
+        $this->assertSame(0, $payment->amount);
+        $this->assertSame($user->tenant->title . " Auto-Payment Setup", $payment->description);
+        $this->assertSame(Payment::TYPE_MANDATE, $payment->type);
 
         // Delete mandate
         $response = $this->actingAs($user)->delete("api/v4/payments/mandate");

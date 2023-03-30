@@ -74,6 +74,8 @@ class PaymentsStripeTest extends TestCase
         $response->assertStatus(401);
         $response = $this->post("api/v4/payments/mandate", []);
         $response->assertStatus(401);
+        $response = $this->post("api/v4/payments/mandate/reset", []);
+        $response->assertStatus(401);
         $response = $this->put("api/v4/payments/mandate", []);
         $response->assertStatus(401);
         $response = $this->delete("api/v4/payments/mandate");
@@ -141,7 +143,7 @@ class PaymentsStripeTest extends TestCase
 
         // Assert the proper payment amount has been used
         // Stripe in 'setup' mode does not allow to set the amount
-        $payment = Payment::where('wallet_id', $wallet->id)->first();
+        $payment = $wallet->payments()->first();
         $this->assertSame(0, $payment->amount);
         $this->assertSame($user->tenant->title . " Auto-Payment Setup", $payment->description);
         $this->assertSame(Payment::TYPE_MANDATE, $payment->type);
@@ -282,10 +284,32 @@ class PaymentsStripeTest extends TestCase
             return $job_wallet->id === $wallet->id;
         });
 
-
         $this->unmockStripe();
 
-        // TODO: Delete mandate
+        // Test mandate reset
+        $wallet->payments()->delete();
+        $response = $this->actingAs($user)->post("api/v4/payments/mandate/reset", []);
+        $response->assertStatus(200);
+
+        $payment = $wallet->payments()->first();
+        $this->assertSame(0, $payment->amount);
+        $this->assertSame($user->tenant->title . " Auto-Payment Setup", $payment->description);
+        $this->assertSame(Payment::TYPE_MANDATE, $payment->type);
+
+        // Delete mandate
+        $wallet->setSetting('mandate_disabled', 1);
+        $client = $this->mockStripe();
+        $client->addResponse($setupIntent);
+        $client->addResponse($paymentMethod);
+        $client->addResponse($paymentMethod);
+
+        $response = $this->actingAs($user)->delete("api/v4/payments/mandate");
+        $response->assertStatus(200);
+
+        $this->assertNull($wallet->getSetting('mandate_disabled'));
+        $this->assertNull($wallet->getSetting('stripe_mandate_id'));
+
+        $this->unmockStripe();
     }
 
     /**
