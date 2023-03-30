@@ -20,6 +20,10 @@ RUN dnf -y install \
         npm \
         openssl-devel \
         patch \
+        iputils \
+        bind-utils \
+        mariadb \
+        procps-ng \
         php-cli \
         php-common \
         php-devel \
