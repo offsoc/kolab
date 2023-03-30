@@ -33,9 +33,6 @@ if [ ! -f 'resources/countries.php' ]; then
     ./artisan data:countries
 fi
 
-rm -rvf bootstrap/cache/
-mkdir -vp bootstrap/cache/
-chown default bootstrap/cache
 
 ./artisan db:ping --wait || exit 1
 
