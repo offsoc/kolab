@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Discount;
 use App\Payment;
 use App\Package;
 use App\Plan;
@@ -59,6 +60,7 @@ class WalletTest extends TestCase
         Sku::select()->update(['fee' => 0]);
         Payment::query()->delete();
         VatRate::query()->delete();
+        Plan::withEnvTenantContext()->where('title', 'individual')->update(['months' => 1]);
 
         parent::tearDown();
     }
@@ -279,7 +281,7 @@ class WalletTest extends TestCase
     /**
      * Verify a wallet can be assigned a controller.
      */
-    public function testAddWalletController(): void
+    public function testAddController(): void
     {
         $userA = $this->getTestUser('WalletControllerA@WalletController.com');
         $userB = $this->getTestUser('WalletControllerB@WalletController.com');
@@ -296,6 +298,35 @@ class WalletTest extends TestCase
         $bAccount = $userB->accounts()->first();
 
         $this->assertTrue($bAccount->id === $aWallet->id);
+    }
+
+    /**
+     * Test Wallet::getMinMandateAmount()
+     */
+    public function testGetMinMandateAmount(): void
+    {
+        $user = $this->getTestUser('WalletControllerA@WalletController.com');
+        $user->setSetting('plan_id', null);
+        $wallet = $user->wallets()->first();
+
+        // No plan assigned
+        $this->assertSame(Payment::MIN_AMOUNT, $wallet->getMinMandateAmount());
+
+        // Plan assigned
+        $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
+        $plan->months = 12;
+        $plan->save();
+
+        $user->setSetting('plan_id', $plan->id);
+
+        $this->assertSame(990 * 12, $wallet->getMinMandateAmount());
+
+        // Plan and discount
+        $discount = Discount::where('discount', 30)->first();
+        $wallet->discount()->associate($discount);
+        $wallet->save();
+
+        $this->assertSame((int) (990 * 12 * 0.70), $wallet->getMinMandateAmount());
     }
 
     /**

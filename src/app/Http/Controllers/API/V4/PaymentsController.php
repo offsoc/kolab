@@ -198,15 +198,8 @@ class PaymentsController extends Controller
         // Validate the minimum value
         // It has to be at least minimum payment amount and must cover current debt,
         // and must be more than a yearly/monthly payment (according to the plan)
-        $min = Payment::MIN_AMOUNT;
+        $min = $wallet->getMinMandateAmount();
         $label = 'minamount';
-
-        if (($plan = $wallet->plan()) && $plan->months >= 1) {
-            $planCost = $plan->cost() * $plan->months;
-            if ($planCost > $min) {
-                $min = $planCost;
-            }
-        }
 
         if ($wallet->balance < 0 && $wallet->balance < $min * -1) {
             $min = $wallet->balance * -1;
@@ -436,7 +429,7 @@ class PaymentsController extends Controller
         // Get the Mandate info
         $mandate = (array) $provider->getMandate($wallet);
 
-        $mandate['amount'] = $mandate['minAmount'] = (int) ceil(Payment::MIN_AMOUNT / 100);
+        $mandate['amount'] = $mandate['minAmount'] = round($wallet->getMinMandateAmount() / 100, 2);
         $mandate['balance'] = 0;
         $mandate['isDisabled'] = !empty($mandate['id']) && $settings['mandate_disabled'];
         $mandate['isValid'] = !empty($mandate['isValid']);
@@ -444,14 +437,6 @@ class PaymentsController extends Controller
         foreach (['amount', 'balance'] as $key) {
             if (($value = $settings["mandate_{$key}"]) !== null) {
                 $mandate[$key] = $value;
-            }
-        }
-
-        // If this is a multi-month plan, we calculate the expected amount to be payed.
-        if (($plan = $wallet->plan()) && $plan->months >= 1) {
-            $planCost = round($plan->cost() * $plan->months / 100, 2);
-            if ($planCost > $mandate['minAmount']) {
-                $mandate['minAmount'] = $planCost;
             }
         }
 

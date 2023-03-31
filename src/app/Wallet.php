@@ -420,11 +420,9 @@ class Wallet extends Model
     /**
      * Return the exact, numeric version of the discount to be applied.
      *
-     * Ranges from 0 - 100.
-     *
-     * @return int
+     * @return int Discount in percent, ranges from 0 - 100.
      */
-    public function getDiscount()
+    public function getDiscount(): int
     {
         return $this->discount ? $this->discount->discount : 0;
     }
@@ -432,11 +430,31 @@ class Wallet extends Model
     /**
      * The actual discount rate for use in multiplication
      *
-     * Ranges from 0.00 to 1.00.
+     * @return float Discount rate, ranges from 0.00 to 1.00.
      */
-    public function getDiscountRate()
+    public function getDiscountRate(): float
     {
         return (100 - $this->getDiscount()) / 100;
+    }
+
+    /**
+     * The minimum amount of an auto-payment mandate
+     *
+     * @return int Amount in cents
+     */
+    public function getMinMandateAmount(): int
+    {
+        $min = Payment::MIN_AMOUNT;
+
+        if ($plan = $this->plan()) {
+            $planCost = (int) ($plan->cost() * $plan->months * $this->getDiscountRate());
+
+            if ($planCost > $min) {
+                $min = $planCost;
+            }
+        }
+
+        return $min;
     }
 
     /**
