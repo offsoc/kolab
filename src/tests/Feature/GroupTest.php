@@ -163,11 +163,16 @@ class GroupTest extends TestCase
         Queue::fake();
 
         $user = $this->getTestUser('user-test@kolabnow.com');
-        $group = $this->getTestGroup('group-test@kolabnow.com');
+        $group = $this->getTestGroup('group-test@kolabnow.com', [
+                'status' => Group::STATUS_ACTIVE | Group::STATUS_LDAP_READY | Group::STATUS_SUSPENDED,
+        ]);
         $group->assignToWallet($user->wallets->first());
 
         $entitlements = \App\Entitlement::where('entitleable_id', $group->id);
 
+        $this->assertTrue($group->isSuspended());
+        $this->assertTrue($group->isLdapReady());
+        $this->assertTrue($group->isActive());
         $this->assertSame(1, $entitlements->count());
 
         $group->delete();
@@ -185,7 +190,8 @@ class GroupTest extends TestCase
         $this->assertFalse($group->isDeleted());
         $this->assertFalse($group->isSuspended());
         $this->assertFalse($group->isLdapReady());
-        $this->assertTrue($group->isActive());
+        $this->assertFalse($group->isActive());
+        $this->assertTrue($group->isNew());
 
         $this->assertSame(1, $entitlements->count());
         $entitlements->get()->each(function ($ent) {

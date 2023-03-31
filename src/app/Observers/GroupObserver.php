@@ -72,18 +72,8 @@ class GroupObserver
      */
     public function restoring(Group $group)
     {
-        // Make sure it's not DELETED/LDAP_READY/SUSPENDED anymore
-        if ($group->isDeleted()) {
-            $group->status ^= Group::STATUS_DELETED;
-        }
-        if ($group->isLdapReady()) {
-            $group->status ^= Group::STATUS_LDAP_READY;
-        }
-        if ($group->isSuspended()) {
-            $group->status ^= Group::STATUS_SUSPENDED;
-        }
-
-        $group->status |= Group::STATUS_ACTIVE;
+        // Reset the status
+        $group->status = Group::STATUS_NEW;
 
         // Note: $group->save() is invoked between 'restoring' and 'restored' events
     }

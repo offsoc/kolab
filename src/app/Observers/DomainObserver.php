@@ -89,19 +89,8 @@ class DomainObserver
      */
     public function restoring(Domain $domain)
     {
-        // Make sure it's not DELETED/LDAP_READY/SUSPENDED
-        if ($domain->isDeleted()) {
-            $domain->status ^= Domain::STATUS_DELETED;
-        }
-        if ($domain->isLdapReady()) {
-            $domain->status ^= Domain::STATUS_LDAP_READY;
-        }
-        if ($domain->isSuspended()) {
-            $domain->status ^= Domain::STATUS_SUSPENDED;
-        }
-        if ($domain->isConfirmed() && $domain->isVerified()) {
-            $domain->status |= Domain::STATUS_ACTIVE;
-        }
+        // Reset the status
+        $domain->status = Domain::STATUS_NEW;
 
         // Note: $domain->save() is invoked between 'restoring' and 'restored' events
     }

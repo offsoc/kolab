@@ -108,7 +108,8 @@ class RelationController extends ResourceController
 
         $with_ldap = \config('app.with_ldap');
 
-        $state['isReady'] = (!isset($state['isImapReady']) || $state['isImapReady'])
+        $state['isReady'] = (!isset($state['isActive']) || $state['isActive'])
+            && (!isset($state['isImapReady']) || $state['isImapReady'])
             && (!$with_ldap || !isset($state['isLdapReady']) || $state['isLdapReady'])
             && (!isset($state['isVerified']) || $state['isVerified'])
             && (!isset($state['isConfirmed']) || $state['isConfirmed']);

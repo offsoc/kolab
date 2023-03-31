@@ -191,24 +191,20 @@ class Domain extends Model
             return;
         }
 
+        // if we have confirmed ownership of or management access to the domain, then we have
+        // also confirmed the domain exists in DNS.
         if ($new_status & self::STATUS_CONFIRMED) {
-            // if we have confirmed ownership of or management access to the domain, then we have
-            // also confirmed the domain exists in DNS.
-            $new_status |= self::STATUS_VERIFIED;
-            $new_status |= self::STATUS_ACTIVE;
+            $new_status |= self::STATUS_VERIFIED | self::STATUS_ACTIVE;
         }
 
-        if ($new_status & self::STATUS_DELETED && $new_status & self::STATUS_ACTIVE) {
-            $new_status ^= self::STATUS_ACTIVE;
-        }
-
-        if ($new_status & self::STATUS_SUSPENDED && $new_status & self::STATUS_ACTIVE) {
-            $new_status ^= self::STATUS_ACTIVE;
+        // it can't be deleted-or-suspended and active
+        if ($new_status & self::STATUS_DELETED || $new_status & self::STATUS_SUSPENDED) {
+            $new_status &= ~self::STATUS_ACTIVE;
         }
 
         // if the domain is now active, it is not new anymore.
-        if ($new_status & self::STATUS_ACTIVE && $new_status & self::STATUS_NEW) {
-            $new_status ^= self::STATUS_NEW;
+        if ($new_status & self::STATUS_ACTIVE) {
+            $new_status &= ~self::STATUS_NEW;
         }
 
         $this->attributes['status'] = $new_status;

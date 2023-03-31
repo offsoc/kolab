@@ -1121,7 +1121,8 @@ class UserTest extends TestCase
         $this->assertFalse($userA->isSuspended());
         $this->assertFalse($userA->isLdapReady());
         $this->assertFalse($userA->isImapReady());
-        $this->assertTrue($userA->isActive());
+        $this->assertFalse($userA->isActive());
+        $this->assertTrue($userA->isNew());
 
         $this->assertTrue($userB->fresh()->trashed());
         $this->assertTrue($domainB->fresh()->trashed());

@@ -328,8 +328,9 @@ class DomainTest extends TestCase
         $this->assertFalse($domain->isDeleted());
         $this->assertFalse($domain->isSuspended());
         $this->assertFalse($domain->isLdapReady());
-        $this->assertTrue($domain->isActive());
-        $this->assertTrue($domain->isConfirmed());
+        $this->assertFalse($domain->isActive());
+        $this->assertFalse($domain->isConfirmed());
+        $this->assertTrue($domain->isNew());
 
         // Assert entitlements
         $this->assertTrue($ent2->fresh()->trashed());

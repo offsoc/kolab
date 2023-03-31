@@ -140,21 +140,8 @@ class UserObserver
      */
     public function restoring(User $user)
     {
-        // Make sure it's not DELETED/LDAP_READY/IMAP_READY/SUSPENDED anymore
-        if ($user->isDeleted()) {
-            $user->status ^= User::STATUS_DELETED;
-        }
-        if ($user->isLdapReady()) {
-            $user->status ^= User::STATUS_LDAP_READY;
-        }
-        if ($user->isImapReady()) {
-            $user->status ^= User::STATUS_IMAP_READY;
-        }
-        if ($user->isSuspended()) {
-            $user->status ^= User::STATUS_SUSPENDED;
-        }
-
-        $user->status |= User::STATUS_ACTIVE;
+        // Reset the status
+        $user->status = User::STATUS_NEW;
 
         // Note: $user->save() is invoked between 'restoring' and 'restored' events
     }
