@@ -18,7 +18,7 @@ class ContentController extends Controller
         }
 
         $theme = \config('app.theme');
-        $page = str_replace('/', '.', $page);
+        $page = mb_strtolower(str_replace('/', '.', $page));
 
         $file = "themes/{$theme}/pages/{$page}.blade.php";
         $view = "{$theme}.pages.{$page}";

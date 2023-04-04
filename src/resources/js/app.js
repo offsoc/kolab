@@ -355,7 +355,7 @@ const app = new Vue({
         updateBodyClass(name) {
             // Add 'class' attribute to the body, different for each page
             // so, we can apply page-specific styles
-            document.body.className = 'page-' + (name || this.pageName()).replace(/\/.*$/, '')
+            document.body.className = 'page-' + (name || this.pageName()).replace(/\/.*$/, '').toLowerCase()
         }
     }
 })
