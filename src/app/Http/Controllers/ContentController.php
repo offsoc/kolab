@@ -43,6 +43,7 @@ class ContentController extends Controller
             return $this->errorResponse(404);
         }
 
+        $page = mb_strtolower($page);
         $faq = [];
 
         $theme_name = \config('app.theme');
