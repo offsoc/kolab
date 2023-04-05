@@ -845,7 +845,7 @@ class User extends Authenticatable
             }
 
             if ($user) {
-                \Log::info("Authentication failed for {$user->email}");
+                \Log::info("Authentication failed for {$user->email}. Error: $error");
             }
 
             return ['reason' => $error, 'errorMessage' => $message ?? \trans("auth.error.{$error}")];

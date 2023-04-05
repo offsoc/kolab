@@ -83,6 +83,7 @@ class AuthController extends Controller
         $user = \App\User::where('email', $request->email)->first();
 
         if (!$user) {
+            \Log::debug("[Auth] User not found on login: {$request->email}");
             return response()->json(['status' => 'error', 'message' => self::trans('auth.failed')], 401);
         }
 
@@ -262,6 +263,7 @@ class AuthController extends Controller
                 return response()->json(['status' => 'error', 'errors' => $errors], 422);
             }
 
+            \Log::warning("Failed to request a token: " . strval($tokenResponse));
             return response()->json(['status' => 'error', 'message' => self::trans('auth.failed')], 401);
         }
 
