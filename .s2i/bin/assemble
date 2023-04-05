@@ -12,12 +12,9 @@ function composer_install () {
 shopt -s dotglob
 echo "--->> $(rm -vrf vendor/ composer.lock)"
 
-echo "---> Installing application source..."
-rm -fR /tmp/src/.git
-mv /tmp/src/* ./
+pushd /tmp/src/
 
-pushd /opt/app-root/
-
+echo "---> Configuring config.${LARAVEL_ENV:-prod}..."
 if [ -d "config.${LARAVEL_ENV:-prod}/src/" ]; then
     find -L "config.${LARAVEL_ENV:-prod}/src/" -type f | while read file; do
         dir=$(dirname $file | sed -r -e "s|config.${LARAVEL_ENV:-prod}/src|src|g")
@@ -28,12 +25,19 @@ if [ -d "config.${LARAVEL_ENV:-prod}/src/" ]; then
 
         cp -av ${file} ${dir}/.
     done
+else
+    echo "---> Configuring directory config.${LARAVEL_ENV:-prod} is missing."
 fi
 
-rm -rf config.*/
+popd
+
+echo "---> Installing application source..."
+rm -fR /tmp/src/src/.git
+mv /tmp/src/src/* ./
 
 pushd /opt/app-root/src/
 
+rm -rf /tmp/src/
 rm -rf .env
 
 fix-permissions ./
