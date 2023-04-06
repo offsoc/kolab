@@ -101,13 +101,28 @@
             </div>
         </div>
 
-        <div class="card d-none" id="step4">
-            <div class="card-body">
-                <div class="card-text mb-4" v-html="checkout.content"></div>
-                <form>
-                    <btn class="btn-secondary me-2" @click="stepBack">{{ $t('btn.back') }}</btn>
-                    <btn class="btn-primary" @click="submitStep4">{{ $t('btn.continue') }}</btn>
-                </form>
+        <div class="card d-none border-0" id="step4">
+            <div class="card-body row row-cols-lg-2 align-items-center">
+                <h4 class="card-title text-center mb-4 col-lg-5">{{ $t('signup.created') }}</h4>
+                <div class="card-text mb-4 col-lg-7">
+                    <div class="card internal" id="summary">
+                        <div class="card-body">
+                            <div class="card-text">
+                                <h5>{{ checkout.title }}</h5>
+                                <p id="summary-content">{{ checkout.content }}</p>
+                                <p id="summary-cc">
+                                    <svg-icon :icon="['fab', 'cc-visa']"></svg-icon>
+                                    <svg-icon :icon="['fab', 'cc-mastercard']"></svg-icon>
+                                </p>
+                                <div id="summary-summary" class="mb-4" v-if="checkout.summary" v-html="checkout.summary"></div>
+                                <form>
+                                    <btn class="btn-secondary me-2" @click="stepBack">{{ $t('btn.back') }}</btn>
+                                    <btn class="btn-primary" @click="submitStep4">{{ $t('btn.continue') }}</btn>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -119,6 +134,8 @@
     import { library } from '@fortawesome/fontawesome-svg-core'
 
     library.add(
+        require('@fortawesome/free-brands-svg-icons/faCcVisa').definition,
+        require('@fortawesome/free-brands-svg-icons/faCcMastercard').definition,
         require('@fortawesome/free-solid-svg-icons/faMobileRetro').definition,
         require('@fortawesome/free-solid-svg-icons/faUsers').definition
     )
@@ -339,7 +356,7 @@
             },
             // Moves the user a step back in registration form
             stepBack(e) {
-                const card = $(e.target).closest('.card')
+                const card = $(e.target).closest('.card[id^="step"]')
                 let step = card.attr('id').replace('step', '')
 
                 card.addClass('d-none').find('form')[0].reset()

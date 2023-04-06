@@ -56,6 +56,8 @@ return [
     'process-shared-folder-imap-ready' => 'Creating a shared folder...',
     'process-shared-folder-ldap-ready' => 'Creating a shared folder...',
 
+    'discount-code' => 'Discount: :code',
+
     'distlist-update-success' => 'Distribution list updated successfully.',
     'distlist-create-success' => 'Distribution list created successfully.',
     'distlist-delete-success' => 'Distribution list deleted successfully.',
@@ -121,10 +123,12 @@ return [
     'search-foundxshared-folders' => ':x shared folders have been found.',
     'search-foundxusers' => ':x user accounts have been found.',
 
-    'signup-account-tobecreated' => 'The account is about to be created!',
     'signup-account-mandate' => 'Now it is required to provide your credit card details.'
         . ' This way you agree to charge you with an appropriate amount of money according to the plan you signed up for.',
-    'signup-account-summary' => 'You signed up for an account with a base cost of :cost per :period.',
+    'signup-plan-monthly' => 'You are choosing a monthly subscription.',
+    'signup-plan-yearly' => 'You are choosing a yearly subscription.',
+    'signup-subscription-monthly' => 'Monthly subscription',
+    'signup-subscription-yearly' => 'Yearly subscription',
     'signup-invitations-created' => 'The invitation has been created.|:count invitations has been created.',
     'signup-invitations-csv-empty' => 'Failed to find any valid email addresses in the uploaded file.',
     'signup-invitations-csv-invalid-email' => 'Found an invalid email address (:email) on line :line.',
@@ -135,6 +139,7 @@ return [
     'support-request-error' => 'Failed to submit the support request.',
 
     'siteuser' => ':site User',
+    'total' => 'Total',
 
     'wallet-award-success' => 'The bonus has been added to the wallet successfully.',
     'wallet-penalty-success' => 'The penalty has been added to the wallet successfully.',
@@ -154,4 +159,7 @@ return [
     'wallet-notice-today' => 'You will run out of credit today, top up your balance now.',
     'wallet-notice-trial' => 'You are in your free trial period.',
     'wallet-notice-trial-end' => 'Your free trial is about to end, top up to continue.',
+
+    'vat-incl' => 'Incl. VAT :vat (:rate of :cost)',
+
 ];

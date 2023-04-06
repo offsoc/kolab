@@ -791,10 +791,14 @@ class SignupTest extends TestCase
 
     /**
      * Test signup with mode=mandate
+     *
+     * @group mollie
      */
     public function testSignupMandateMode(): void
     {
         Queue::fake();
+
+        \config(['services.payment_provider' => 'mollie']);
 
         $plan = Plan::create([
                 'title' => 'test',
@@ -843,6 +847,8 @@ class SignupTest extends TestCase
         $user = User::where('email', 'test-inv@kolabnow.com')->first();
         $this->assertNotEmpty($user);
         $this->assertSame($plan->id, $user->getSetting('plan_id'));
+        $this->assertSame('You are choosing a monthly subscription.', $json['checkout']['title']);
+        $this->assertTrue(!empty($json['checkout']['id']));
     }
 
     /**
@@ -969,7 +975,19 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $this->assertSame('success', $json['status']);
-        $this->assertStringContainsString('106,92 CHF', $json['content']);
+        $this->assertTrue(empty($json['id']));
+        $this->assertTrue(!empty($json['content']));
+        $this->assertSame('You are choosing a yearly subscription.', $json['title']);
+        $this->assertSame(
+            '<table>'
+            . '<tr class="subscription"><td>Yearly subscription</td><td class="money">118,80 CHF</td></tr>'
+            . '<tr class="discount"><td>Discount: TEST</td><td class="money">-11,88 CHF</td></tr>'
+            . '<tr class="sep"><td colspan="2"></td></tr>'
+            . '<tr class="total"><td>Total</td><td class="money">106,92 CHF</td></tr>'
+            . '<tr class="vat-summary"><td colspan="2">*Incl. VAT 8,23 CHF (7,7 % of 98,69 CHF)</td></tr>'
+            . '</table>',
+            $json['summary']
+        );
 
         // TODO: Test other plan modes
     }

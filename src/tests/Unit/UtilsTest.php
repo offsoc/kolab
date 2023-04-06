@@ -71,6 +71,16 @@ class UtilsTest extends TestCase
     }
 
     /**
+     * Test for Utils::percent()
+     */
+    public function testPercent(): void
+    {
+        $this->assertSame('0 %', Utils::percent(0));
+        $this->assertSame('10 %', Utils::percent(10.0));
+        $this->assertSame('10,12 %', Utils::percent(10.12));
+    }
+
+    /**
      * Test for Utils::normalizeAddress()
      */
     public function testNormalizeAddress(): void

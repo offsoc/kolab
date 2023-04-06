@@ -562,8 +562,11 @@ class SignupTest extends TestCaseDusk
                         ->click('[type=submit]');
                 })
                 ->whenAvailable('@step4', function ($browser) {
-                    $browser->assertSeeIn('.card-text', 'The account is about to be created!')
-                        ->assertSeeIn('.card-text', 'You signed up for an account')
+                    $browser->assertSeeIn('h4', 'The account is about to be created!')
+                        ->assertSeeIn('h5', 'You are choosing a monthly subscription')
+                        ->assertVisible('#summary-content')
+                        ->assertElementsCount('#summary-cc svg', 2)
+                        ->assertElementsCount('#summary-summary tr', 4)
                         ->assertSeeIn('button.btn-primary', 'Continue')
                         ->assertSeeIn('button.btn-secondary', 'Back')
                         ->click('button.btn-secondary');

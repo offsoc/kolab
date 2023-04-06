@@ -16,6 +16,8 @@ use App\Rules\UserEmailLocal;
 use App\SignupCode;
 use App\SignupInvitation;
 use App\User;
+use App\Utils;
+use App\VatRate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -429,10 +431,12 @@ class SignupController extends Controller
         $result = [];
 
         $min = \App\Payment::MIN_AMOUNT;
-        $planCost = $plan->cost() * $plan->months;
+        $planCost = $cost = $plan->cost() * $plan->months;
+        $disc = 0;
 
         if ($discount) {
             $planCost = (int) ($planCost * (100 - $discount->discount) / 100);
+            $disc = $cost - $planCost;
         }
 
         if ($planCost > $min) {
@@ -450,7 +454,7 @@ class SignupController extends Controller
                 'currency' => $wallet->currency,
                 'description' => \App\Tenant::getConfig($user->tenant_id, 'app.name') . ' Auto-Payment Setup',
                 'methodId' => PaymentProvider::METHOD_CREDITCARD,
-                'redirectUrl' => \App\Utils::serviceUrl('/payment/status', $user->tenant_id),
+                'redirectUrl' => Utils::serviceUrl('/payment/status', $user->tenant_id),
             ];
 
             $provider = PaymentProvider::factory($wallet);
@@ -458,16 +462,54 @@ class SignupController extends Controller
             $result = $provider->createMandate($wallet, $mandate);
         }
 
+        $country = Utils::countryForRequest();
+        $period = $plan->months == 12 ? 'yearly' : 'monthly';
+        $currency = \config('app.currency');
+        $rate = VatRate::where('country', $country)
+            ->where('start', '<=', now()->format('Y-m-d h:i:s'))
+            ->orderByDesc('start')
+            ->limit(1)
+            ->first();
+
+        $summary = '<tr class="subscription">'
+                . '<td>' . self::trans("app.signup-subscription-{$period}") . '</td>'
+                . '<td class="money">' . Utils::money($cost, $currency) . '</td>'
+            . '</tr>';
+
+        if ($discount) {
+            $summary .= '<tr class="discount">'
+                . '<td>' . self::trans('app.discount-code', ['code' => $discount->code]) . '</td>'
+                . '<td class="money">' . Utils::money(-$disc, $currency) . '</td>'
+            . '</tr>';
+        }
+
+        $summary .= '<tr class="sep"><td colspan="2"></td></tr>'
+            . '<tr class="total">'
+                . '<td>' . self::trans('app.total') . '</td>'
+                . '<td class="money">' . Utils::money($planCost, $currency) . '</td>'
+            . '</tr>';
+
+        if ($rate && $rate->rate > 0) {
+            // TODO: app.vat.mode
+            $vat = round($planCost * $rate->rate / 100);
+            $content = self::trans('app.vat-incl', [
+                    'rate' => Utils::percent($rate->rate),
+                    'cost' => Utils::money($planCost - $vat, $currency),
+                    'vat' => Utils::money($vat, $currency),
+            ]);
+
+            $summary .= '<tr class="vat-summary"><td colspan="2">*' . $content . '</td></tr>';
+        }
+
+        $trialEnd = $plan->free_months ? now()->copy()->addMonthsWithoutOverflow($plan->free_months) : now();
         $params = [
-            'cost' => \App\Utils::money($planCost, \config('app.currency')),
-            'period' => \trans($plan->months == 12 ? 'app.period-year' : 'app.period-month'),
+            'cost' => Utils::money($planCost, $currency),
+            'date' => $trialEnd->toDateString(),
         ];
 
-        $content = '<b>' . self::trans('app.signup-account-tobecreated') . '</b><br><br>'
-            . self::trans('app.signup-account-summary', $params) . '<br><br>'
-            . self::trans('app.signup-account-mandate', $params);
-
-        $result['content'] = $content;
+        $result['title'] = self::trans("app.signup-plan-{$period}");
+        $result['content'] = self::trans('app.signup-account-mandate', $params);
+        $result['summary'] = '<table>' . $summary . '</table>';
 
         return $result;
     }

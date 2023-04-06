@@ -590,12 +590,32 @@ class Utils
      */
     public static function money(int $amount, $currency, $locale = 'de_DE'): string
     {
-        $amount = round($amount / 100, 2);
-
         $nf = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-        $result = $nf->formatCurrency($amount, $currency);
+        $result = $nf->formatCurrency(round($amount / 100, 2), $currency);
 
         // Replace non-breaking space
         return str_replace("\xC2\xA0", " ", $result);
+    }
+
+    /**
+     * A helper to display human-readable percent value
+     * for specified currency and locale.
+     *
+     * @param int|float $percent Percent value (0 to 100)
+     * @param string    $locale  Output locale
+     *
+     * @return string String representation, e.g. "0 %", "7.7 %"
+     */
+    public static function percent(int|float $amount, $locale = 'de_DE'): string
+    {
+        $nf = new \NumberFormatter($locale, \NumberFormatter::PERCENT);
+        $sep = $nf->getSymbol(\NumberFormatter::DECIMAL_SEPARATOR_SYMBOL);
+
+        $result = sprintf('%.2f', $amount);
+        $result = preg_replace('/\.00/', '', $result);
+        $result = preg_replace('/(\.[0-9])0/', '\\1', $result);
+        $result = str_replace('.', $sep, $result);
+
+        return $result . ' %';
     }
 }

@@ -423,6 +423,41 @@ table {
     }
 }
 
+#summary-cc {
+    svg {
+        height: 2.5em;
+        width: 2.5em;
+        margin-right: 0.5em;
+    }
+}
+
+#summary-summary {
+    padding: 0.5rem;
+
+    table {
+        width: 100%;
+    }
+
+    tr {
+        &.total {
+            font-weight: bold;
+        }
+
+        &.vat-summary {
+            font-size: small;
+        }
+    }
+
+    td {
+        padding: 0.25em;
+
+        &.money {
+            white-space: nowrap;
+            text-align: right;
+        }
+    }
+}
+
 #logon-form {
     flex-basis: auto; // Bootstrap issue? See logon page with width < 992
 }
