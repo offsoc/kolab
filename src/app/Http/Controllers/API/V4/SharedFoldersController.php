@@ -84,7 +84,7 @@ class SharedFoldersController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.shared-folder-create-success'),
+                'message' => self::trans('app.shared-folder-create-success'),
         ]);
     }
 
@@ -134,7 +134,7 @@ class SharedFoldersController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.shared-folder-update-success'),
+                'message' => self::trans('app.shared-folder-update-success'),
         ]);
     }
 

@@ -209,7 +209,7 @@ class InvitationsController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans_choice('app.signup-invitations-created', $count, ['count' => $count]),
+                'message' => self::trans_choice('app.signup-invitations-created', $count, ['count' => $count]),
                 'count' => $count,
         ]);
     }

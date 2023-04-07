@@ -49,14 +49,14 @@ class DomainsController extends RelationController
         if (!$domain->confirm()) {
             return response()->json([
                     'status' => 'error',
-                    'message' => \trans('app.domain-verify-error'),
+                    'message' => self::trans('app.domain-verify-error'),
             ]);
         }
 
         return response()->json([
                 'status' => 'success',
                 'statusInfo' => self::statusInfo($domain),
-                'message' => \trans('app.domain-verify-success'),
+                'message' => self::trans('app.domain-verify-success'),
         ]);
     }
 
@@ -81,7 +81,7 @@ class DomainsController extends RelationController
 
         // It is possible to delete domain only if there are no users/aliases/groups using it.
         if (!$domain->isEmpty()) {
-            $response = ['status' => 'error', 'message' => \trans('app.domain-notempty-error')];
+            $response = ['status' => 'error', 'message' => self::trans('app.domain-notempty-error')];
             return response()->json($response, 422);
         }
 
@@ -89,7 +89,7 @@ class DomainsController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.domain-delete-success'),
+                'message' => self::trans('app.domain-delete-success'),
         ]);
     }
 
@@ -130,18 +130,18 @@ class DomainsController extends RelationController
                 && $wallet->owner && $wallet->owner->id == $owner->id;
 
             if (!$deleteBeforeCreate) {
-                $errors = ['namespace' => \trans('validation.domainnotavailable')];
+                $errors = ['namespace' => self::trans('validation.domainnotavailable')];
                 return response()->json(['status' => 'error', 'errors' => $errors], 422);
             }
         }
 
         if (empty($request->package) || !($package = \App\Package::withEnvTenantContext()->find($request->package))) {
-            $errors = ['package' => \trans('validation.packagerequired')];
+            $errors = ['package' => self::trans('validation.packagerequired')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
         if (!$package->isDomain()) {
-            $errors = ['package' => \trans('validation.packageinvalid')];
+            $errors = ['package' => self::trans('validation.packageinvalid')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
@@ -164,7 +164,7 @@ class DomainsController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.domain-create-success'),
+                'message' => self::trans('app.domain-create-success'),
         ]);
     }
 

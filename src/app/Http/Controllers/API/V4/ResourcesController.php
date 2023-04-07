@@ -83,7 +83,7 @@ class ResourcesController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.resource-create-success'),
+                'message' => self::trans('app.resource-create-success'),
         ]);
     }
 
@@ -138,7 +138,7 @@ class ResourcesController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.resource-update-success'),
+                'message' => self::trans('app.resource-update-success'),
         ]);
     }
 

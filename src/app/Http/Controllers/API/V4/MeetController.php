@@ -23,7 +23,7 @@ class MeetController extends Controller
 
         // Room does not exist, or the owner is deleted
         if (!$room || !($wallet = $room->wallet()) || !$wallet->owner || $wallet->owner->isDegraded(true)) {
-            return $this->errorResponse(404, \trans('meet.room-not-found'));
+            return $this->errorResponse(404, self::trans('meet.room-not-found'));
         }
 
         $user = Auth::guard()->user();
@@ -36,18 +36,18 @@ class MeetController extends Controller
         if (!$room->hasSession()) {
             // Participants can't join the room until the session is created by the owner
             if (!$isOwner) {
-                return $this->errorResponse(422, \trans('meet.session-not-found'), ['code' => 323]);
+                return $this->errorResponse(422, self::trans('meet.session-not-found'), ['code' => 323]);
             }
 
             // The room owner can create the session on request
             if (!$init) {
-                return $this->errorResponse(422, \trans('meet.session-not-found'), ['code' => 324]);
+                return $this->errorResponse(422, self::trans('meet.session-not-found'), ['code' => 324]);
             }
 
             $session = $room->createSession();
 
             if (empty($session)) {
-                return $this->errorResponse(500, \trans('meet.session-create-error'));
+                return $this->errorResponse(500, self::trans('meet.session-create-error'));
             }
         }
 
@@ -67,7 +67,7 @@ class MeetController extends Controller
         if (!$isOwner && strlen($password)) {
             $request_password = request()->input('password');
             if ($request_password !== $password) {
-                return $this->errorResponse(422, \trans('meet.session-password-error'), $response + ['code' => 325]);
+                return $this->errorResponse(422, self::trans('meet.session-password-error'), $response + ['code' => 325]);
             }
         }
 
@@ -79,7 +79,7 @@ class MeetController extends Controller
 
             $request = $requestId ? $room->requestGet($requestId) : null;
 
-            $error = \trans('meet.session-room-locked-error');
+            $error = self::trans('meet.session-room-locked-error');
 
             // Request already has been processed (not accepted yet, but it could be denied)
             if (empty($request['status']) || $request['status'] != Room::REQUEST_ACCEPTED) {
@@ -126,7 +126,7 @@ class MeetController extends Controller
             $response = $room->getSessionToken($role);
 
             if (empty($response)) {
-                return $this->errorResponse(500, \trans('meet.session-join-error'));
+                return $this->errorResponse(500, self::trans('meet.session-join-error'));
             }
 
             $response_code = 200;

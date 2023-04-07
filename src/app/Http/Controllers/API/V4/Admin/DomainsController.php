@@ -60,7 +60,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
         $result = [
             'list' => $result,
             'count' => count($result),
-            'message' => \trans('app.search-foundxdomains', ['x' => count($result)]),
+            'message' => self::trans('app.search-foundxdomains', ['x' => count($result)]),
         ];
 
         return response()->json($result);
@@ -98,7 +98,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.domain-suspend-success'),
+                'message' => self::trans('app.domain-suspend-success'),
         ]);
     }
 
@@ -122,7 +122,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.domain-unsuspend-success'),
+                'message' => self::trans('app.domain-unsuspend-success'),
         ]);
     }
 }

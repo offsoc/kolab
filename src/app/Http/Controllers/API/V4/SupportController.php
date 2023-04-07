@@ -39,7 +39,7 @@ class SupportController extends Controller
 
         if (empty($to)) {
             \Log::error("Failed to send a support request. SUPPORT_EMAIL not set");
-            return $this->errorResponse(500, \trans('app.support-request-error'));
+            return $this->errorResponse(500, self::trans('app.support-request-error'));
         }
 
         $content = sprintf(
@@ -63,7 +63,7 @@ class SupportController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.support-request-success'),
+                'message' => self::trans('app.support-request-success'),
         ]);
     }
 }

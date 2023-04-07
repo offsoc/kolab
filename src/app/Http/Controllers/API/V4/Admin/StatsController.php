@@ -84,7 +84,7 @@ class StatsController extends \App\Http\Controllers\Controller
             return $item . '%';
         }, $labels);
 
-        return $this->donutChart(\trans('app.chart-discounts'), $labels, $discounts);
+        return $this->donutChart(self::trans('app.chart-discounts'), $labels, $discounts);
     }
 
     /**
@@ -157,7 +157,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // See https://frappe.io/charts/docs for format/options description
 
         return [
-            'title' => \trans('app.chart-income', ['currency' => $currency]),
+            'title' => self::trans('app.chart-income', ['currency' => $currency]),
             'type' => 'bar',
             'colors' => [self::COLOR_BLUE],
             'axisOptions' => [
@@ -192,7 +192,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // See https://frappe.io/charts/docs for format/options description
 
         return [
-            'title' => \trans('app.chart-payers'),
+            'title' => self::trans('app.chart-payers'),
             'type' => 'line',
             'colors' => [self::COLOR_GREEN],
             'axisOptions' => [
@@ -260,7 +260,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // See https://frappe.io/charts/docs for format/options description
 
         return [
-            'title' => \trans('app.chart-users'),
+            'title' => self::trans('app.chart-users'),
             'type' => 'bar', // Required to fix https://github.com/frappe/charts/issues/294
             'colors' => [self::COLOR_GREEN, self::COLOR_RED],
             'axisOptions' => [
@@ -270,19 +270,19 @@ class StatsController extends \App\Http\Controllers\Controller
                 'labels' => $labels,
                 'datasets' => [
                     [
-                        'name' => \trans('app.chart-created'),
+                        'name' => self::trans('app.chart-created'),
                         'chartType' => 'bar',
                         'values' => $created
                     ],
                     [
-                        'name' => \trans('app.chart-deleted'),
+                        'name' => self::trans('app.chart-deleted'),
                         'chartType' => 'line',
                         'values' => $deleted
                     ]
                 ],
                 'yMarkers' => [
                     [
-                        'label' => sprintf('%s = %.1f', \trans('app.chart-average'), $avg),
+                        'label' => sprintf('%s = %.1f', self::trans('app.chart-average'), $avg),
                         'value' => collect($created)->avg(),
                         'options' => [ 'labelPos' => 'left' ] // default: 'right'
                     ]
@@ -345,7 +345,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // See https://frappe.io/charts/docs for format/options description
 
         return [
-            'title' => \trans('app.chart-allusers'),
+            'title' => self::trans('app.chart-allusers'),
             'type' => 'line',
             'colors' => [self::COLOR_GREEN],
             'axisOptions' => [
@@ -397,7 +397,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // $labels = ["TEST", "NEW", "OTHER", "US"];
         // $vouchers = [100, 120, 30, 50];
 
-        return $this->donutChart(\trans('app.chart-vouchers'), $labels, $vouchers);
+        return $this->donutChart(self::trans('app.chart-vouchers'), $labels, $vouchers);
     }
 
     protected static function donutChart($title, $labels, $data): array

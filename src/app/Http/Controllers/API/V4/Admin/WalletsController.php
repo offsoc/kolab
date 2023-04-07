@@ -98,7 +98,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
 
         $response = [
             'status' => 'success',
-            'message' => \trans("app.wallet-{$method}-success"),
+            'message' => self::trans("app.wallet-{$method}-success"),
             'balance' => $wallet->balance
         ];
 
@@ -139,7 +139,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
         }
 
         $response['status'] = 'success';
-        $response['message'] = \trans('app.wallet-update-success');
+        $response['message'] = self::trans('app.wallet-update-success');
 
         return response()->json($response);
     }

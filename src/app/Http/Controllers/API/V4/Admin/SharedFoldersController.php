@@ -39,7 +39,7 @@ class SharedFoldersController extends \App\Http\Controllers\API\V4\SharedFolders
         $result = [
             'list' => $result,
             'count' => count($result),
-            'message' => \trans('app.search-foundxshared-folders', ['x' => count($result)]),
+            'message' => self::trans('app.search-foundxshared-folders', ['x' => count($result)]),
         ];
 
         return response()->json($result);

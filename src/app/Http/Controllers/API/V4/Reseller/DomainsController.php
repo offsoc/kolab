@@ -47,7 +47,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\Admin\DomainsContro
         $result = [
             'list' => $result,
             'count' => count($result),
-            'message' => \trans('app.search-foundxdomains', ['x' => count($result)]),
+            'message' => self::trans('app.search-foundxdomains', ['x' => count($result)]),
         ];
 
         return response()->json($result);

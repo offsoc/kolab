@@ -96,7 +96,7 @@ class PaymentsController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.mandate-delete-success'),
+                'message' => self::trans('app.mandate-delete-success'),
         ]);
     }
 
@@ -134,7 +134,7 @@ class PaymentsController extends Controller
 
         $result = self::walletMandate($wallet);
         $result['status'] = 'success';
-        $result['message'] = \trans('app.mandate-update-success');
+        $result['message'] = self::trans('app.mandate-update-success');
 
         return response()->json($result);
     }
@@ -207,7 +207,7 @@ class PaymentsController extends Controller
         }
 
         if ($amount < $min) {
-            return ['amount' => \trans("validation.{$label}", ['amount' => $wallet->money($min)])];
+            return ['amount' => self::trans("validation.{$label}", ['amount' => $wallet->money($min)])];
         }
 
         return null;
@@ -241,7 +241,7 @@ class PaymentsController extends Controller
                 'id' => $payment->id,
                 'status' => $payment->status,
                 'type' => $payment->type,
-                'statusMessage' => \trans($label),
+                'statusMessage' => self::trans($label),
                 'description' => $payment->description,
         ]);
     }
@@ -278,7 +278,7 @@ class PaymentsController extends Controller
         // Validate the minimum value
         if ($amount < Payment::MIN_AMOUNT) {
             $min = $wallet->money(Payment::MIN_AMOUNT);
-            $errors = ['amount' => \trans('validation.minamount', ['amount' => $min])];
+            $errors = ['amount' => self::trans('validation.minamount', ['amount' => $min])];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 

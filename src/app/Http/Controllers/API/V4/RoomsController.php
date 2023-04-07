@@ -42,7 +42,7 @@ class RoomsController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans("app.room-delete-success"),
+                'message' => self::trans("app.room-delete-success"),
         ]);
     }
 
@@ -110,7 +110,7 @@ class RoomsController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans("app.room-setconfig-success"),
+                'message' => self::trans("app.room-setconfig-success"),
         ]);
     }
 
@@ -220,7 +220,7 @@ class RoomsController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans("app.room-create-success"),
+                'message' => self::trans("app.room-create-success"),
         ]);
     }
 
@@ -268,7 +268,7 @@ class RoomsController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans("app.room-update-success"),
+                'message' => self::trans("app.room-update-success"),
         ]);
     }
 

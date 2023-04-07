@@ -106,7 +106,7 @@ class UsersController extends \App\Http\Controllers\API\V4\Admin\UsersController
         $result = [
             'list' => $result,
             'count' => count($result),
-            'message' => \trans('app.search-foundxusers', ['x' => count($result)]),
+            'message' => self::trans('app.search-foundxusers', ['x' => count($result)]),
         ];
 
         return response()->json($result);

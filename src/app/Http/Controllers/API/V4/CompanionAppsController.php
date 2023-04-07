@@ -44,7 +44,7 @@ class CompanionAppsController extends ResourceController
 
         return response()->json([
             'status' => 'success',
-            'message' => \trans('app.companion-delete-success'),
+            'message' => self::trans('app.companion-delete-success'),
         ]);
     }
 
@@ -77,7 +77,7 @@ class CompanionAppsController extends ResourceController
 
         return response()->json([
             'status' => 'success',
-            'message' => \trans('app.companion-create-success'),
+            'message' => self::trans('app.companion-create-success'),
             'id' => $app->id
         ]);
     }

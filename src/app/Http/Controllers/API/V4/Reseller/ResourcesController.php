@@ -38,7 +38,7 @@ class ResourcesController extends \App\Http\Controllers\API\V4\Admin\ResourcesCo
         $result = [
             'list' => $result,
             'count' => count($result),
-            'message' => \trans('app.search-foundxresources', ['x' => count($result)]),
+            'message' => self::trans('app.search-foundxresources', ['x' => count($result)]),
         ];
 
         return response()->json($result);

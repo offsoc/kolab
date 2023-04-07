@@ -38,7 +38,7 @@ class GroupsController extends \App\Http\Controllers\API\V4\Admin\GroupsControll
         $result = [
             'list' => $result,
             'count' => count($result),
-            'message' => \trans('app.search-foundxdistlists', ['x' => count($result)]),
+            'message' => self::trans('app.search-foundxdistlists', ['x' => count($result)]),
         ];
 
         return response()->json($result);

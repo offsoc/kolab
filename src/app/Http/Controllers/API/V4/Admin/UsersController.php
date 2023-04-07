@@ -138,7 +138,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         $result = [
             'list' => $result,
             'count' => count($result),
-            'message' => \trans('app.search-foundxusers', ['x' => count($result)]),
+            'message' => self::trans('app.search-foundxusers', ['x' => count($result)]),
         ];
 
         return response()->json($result);
@@ -174,7 +174,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.user-reset-2fa-success'),
+                'message' => self::trans('app.user-reset-2fa-success'),
         ]);
     }
 
@@ -202,7 +202,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.user-reset-geo-lock-success'),
+                'message' => self::trans('app.user-reset-geo-lock-success'),
         ]);
     }
 
@@ -239,7 +239,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         }
 
         if ($user->entitlements()->where('sku_id', $sku->id)->first()) {
-            return $this->errorResponse(422, \trans('app.user-set-sku-already-exists'));
+            return $this->errorResponse(422, self::trans('app.user-set-sku-already-exists'));
         }
 
         $user->assignSku($sku);
@@ -249,7 +249,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.user-set-sku-success'),
+                'message' => self::trans('app.user-set-sku-success'),
                 'sku' => [
                     'cost' => $entitlement->cost,
                     'name' => $sku->name,
@@ -294,7 +294,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.user-suspend-success'),
+                'message' => self::trans('app.user-suspend-success'),
         ]);
     }
 
@@ -322,7 +322,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.user-unsuspend-success'),
+                'message' => self::trans('app.user-unsuspend-success'),
         ]);
     }
 
@@ -370,7 +370,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.user-update-success'),
+                'message' => self::trans('app.user-update-success'),
         ]);
     }
 }

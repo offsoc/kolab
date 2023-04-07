@@ -84,14 +84,14 @@ class GroupsController extends RelationController
 
         // Validate members' email addresses
         if (empty($members) || !is_array($members)) {
-            $errors['members'] = \trans('validation.listmembersrequired');
+            $errors['members'] = self::trans('validation.listmembersrequired');
         } else {
             foreach ($members as $i => $member) {
                 if (is_string($member) && !empty($member)) {
                     if ($error = GroupsController::validateMemberEmail($member, $owner)) {
                         $errors['members'][$i] = $error;
                     } elseif (\strtolower($member) === \strtolower($email)) {
-                        $errors['members'][$i] = \trans('validation.memberislist');
+                        $errors['members'][$i] = self::trans('validation.memberislist');
                     }
                 } else {
                     unset($members[$i]);
@@ -118,7 +118,7 @@ class GroupsController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.distlist-create-success'),
+                'message' => self::trans('app.distlist-create-success'),
         ]);
     }
 
@@ -165,14 +165,14 @@ class GroupsController extends RelationController
 
         // Validate members' email addresses
         if (empty($members) || !is_array($members)) {
-            $errors['members'] = \trans('validation.listmembersrequired');
+            $errors['members'] = self::trans('validation.listmembersrequired');
         } else {
             foreach ((array) $members as $i => $member) {
                 if (is_string($member) && !empty($member)) {
                     if ($error = GroupsController::validateMemberEmail($member, $owner)) {
                         $errors['members'][$i] = $error;
                     } elseif (\strtolower($member) === $group->email) {
-                        $errors['members'][$i] = \trans('validation.memberislist');
+                        $errors['members'][$i] = self::trans('validation.memberislist');
                     }
                 } else {
                     unset($members[$i]);
@@ -191,7 +191,7 @@ class GroupsController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.distlist-update-success'),
+                'message' => self::trans('app.distlist-update-success'),
         ]);
     }
 
@@ -239,31 +239,31 @@ class GroupsController extends RelationController
     public static function validateGroupEmail($email, \App\User $user): ?string
     {
         if (empty($email)) {
-            return \trans('validation.required', ['attribute' => 'email']);
+            return self::trans('validation.required', ['attribute' => 'email']);
         }
 
         if (strpos($email, '@') === false) {
-            return \trans('validation.entryinvalid', ['attribute' => 'email']);
+            return self::trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
         list($login, $domain) = explode('@', \strtolower($email));
 
         if (strlen($login) === 0 || strlen($domain) === 0) {
-            return \trans('validation.entryinvalid', ['attribute' => 'email']);
+            return self::trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
         // Check if domain exists
         $domain = Domain::where('namespace', $domain)->first();
 
         if (empty($domain)) {
-            return \trans('validation.domaininvalid');
+            return self::trans('validation.domaininvalid');
         }
 
         $wallet = $domain->wallet();
 
         // The domain must be owned by the user
         if (!$wallet || !$user->wallets()->find($wallet->id)) {
-            return \trans('validation.domainnotavailable');
+            return self::trans('validation.domainnotavailable');
         }
 
         // Validate login part alone
@@ -278,16 +278,16 @@ class GroupsController extends RelationController
 
         // Check if a user with specified address already exists
         if (User::emailExists($email)) {
-            return \trans('validation.entryexists', ['attribute' => 'email']);
+            return self::trans('validation.entryexists', ['attribute' => 'email']);
         }
 
         // Check if an alias with specified address already exists.
         if (User::aliasExists($email)) {
-            return \trans('validation.entryexists', ['attribute' => 'email']);
+            return self::trans('validation.entryexists', ['attribute' => 'email']);
         }
 
         if (Group::emailExists($email)) {
-            return \trans('validation.entryexists', ['attribute' => 'email']);
+            return self::trans('validation.entryexists', ['attribute' => 'email']);
         }
 
         return null;
@@ -320,7 +320,7 @@ class GroupsController extends RelationController
 
             // We return an error only if the domain belongs to the group owner
             if ($domain && ($wallet = $domain->wallet()) && $user->wallets()->find($wallet->id)) {
-                return \trans('validation.notalocaluser');
+                return self::trans('validation.notalocaluser');
             }
         }
 

@@ -235,12 +235,12 @@ class UsersController extends RelationController
         }
 
         if (empty($request->package) || !($package = \App\Package::withEnvTenantContext()->find($request->package))) {
-            $errors = ['package' => \trans('validation.packagerequired')];
+            $errors = ['package' => self::trans('validation.packagerequired')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
         if ($package->isDomain()) {
-            $errors = ['package' => \trans('validation.packageinvalid')];
+            $errors = ['package' => self::trans('validation.packageinvalid')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
@@ -274,7 +274,7 @@ class UsersController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.user-create-success'),
+                'message' => self::trans('app.user-create-success'),
         ]);
     }
 
@@ -333,7 +333,7 @@ class UsersController extends RelationController
 
         $response = [
             'status' => 'success',
-            'message' => \trans('app.user-update-success'),
+            'message' => self::trans('app.user-update-success'),
         ];
 
         // For self-update refresh the statusInfo in the UI
@@ -475,7 +475,7 @@ class UsersController extends RelationController
             $email = $request->email;
 
             if (empty($email)) {
-                $errors['email'] = \trans('validation.required', ['attribute' => 'email']);
+                $errors['email'] = self::trans('validation.required', ['attribute' => 'email']);
             } elseif ($error = self::validateEmail($email, $controller, $this->deleteBeforeCreate)) {
                 $errors['email'] = $error;
             }
@@ -568,20 +568,20 @@ class UsersController extends RelationController
         $deleted = null;
 
         if (strpos($email, '@') === false) {
-            return \trans('validation.entryinvalid', ['attribute' => 'email']);
+            return self::trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
         list($login, $domain) = explode('@', Str::lower($email));
 
         if (strlen($login) === 0 || strlen($domain) === 0) {
-            return \trans('validation.entryinvalid', ['attribute' => 'email']);
+            return self::trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
         // Check if domain exists
         $domain = Domain::withObjectTenantContext($user)->where('namespace', $domain)->first();
 
         if (empty($domain)) {
-            return \trans('validation.domaininvalid');
+            return self::trans('validation.domaininvalid');
         }
 
         // Validate login part alone
@@ -596,7 +596,7 @@ class UsersController extends RelationController
 
         // Check if it is one of domains available to the user
         if (!$domain->isPublic() && $user->id != $domain->walletOwner()->id) {
-            return \trans('validation.entryexists', ['attribute' => 'domain']);
+            return self::trans('validation.entryexists', ['attribute' => 'domain']);
         }
 
         // Check if a user/group/resource/shared folder with specified address already exists
@@ -611,13 +611,13 @@ class UsersController extends RelationController
             if (!$domain->isPublic() && $existing->trashed()) {
                 $deleted = $existing;
             } else {
-                return \trans('validation.entryexists', ['attribute' => 'email']);
+                return self::trans('validation.entryexists', ['attribute' => 'email']);
             }
         }
 
         // Check if an alias with specified address already exists.
         if (User::aliasExists($email) || \App\SharedFolder::aliasExists($email)) {
-            return \trans('validation.entryexists', ['attribute' => 'email']);
+            return self::trans('validation.entryexists', ['attribute' => 'email']);
         }
 
         return null;
@@ -634,20 +634,20 @@ class UsersController extends RelationController
     public static function validateAlias(string $email, \App\User $user): ?string
     {
         if (strpos($email, '@') === false) {
-            return \trans('validation.entryinvalid', ['attribute' => 'alias']);
+            return self::trans('validation.entryinvalid', ['attribute' => 'alias']);
         }
 
         list($login, $domain) = explode('@', Str::lower($email));
 
         if (strlen($login) === 0 || strlen($domain) === 0) {
-            return \trans('validation.entryinvalid', ['attribute' => 'alias']);
+            return self::trans('validation.entryinvalid', ['attribute' => 'alias']);
         }
 
         // Check if domain exists
         $domain = Domain::withObjectTenantContext($user)->where('namespace', $domain)->first();
 
         if (empty($domain)) {
-            return \trans('validation.domaininvalid');
+            return self::trans('validation.domaininvalid');
         }
 
         // Validate login part alone
@@ -662,14 +662,14 @@ class UsersController extends RelationController
 
         // Check if it is one of domains available to the user
         if (!$domain->isPublic() && $user->id != $domain->walletOwner()->id) {
-            return \trans('validation.entryexists', ['attribute' => 'domain']);
+            return self::trans('validation.entryexists', ['attribute' => 'domain']);
         }
 
         // Check if a user with specified address already exists
         if ($existing_user = User::emailExists($email, true)) {
             // Allow an alias in a custom domain to an address that was a user before
             if ($domain->isPublic() || !$existing_user->trashed()) {
-                return \trans('validation.entryexists', ['attribute' => 'alias']);
+                return self::trans('validation.entryexists', ['attribute' => 'alias']);
             }
         }
 
@@ -679,7 +679,7 @@ class UsersController extends RelationController
             || \App\Resource::emailExists($email)
             || \App\SharedFolder::emailExists($email)
         ) {
-            return \trans('validation.entryexists', ['attribute' => 'alias']);
+            return self::trans('validation.entryexists', ['attribute' => 'alias']);
         }
 
         // Check if an alias with specified address already exists
@@ -687,7 +687,7 @@ class UsersController extends RelationController
             // Allow assigning the same alias to a user in the same group account,
             // but only for non-public domains
             if ($domain->isPublic()) {
-                return \trans('validation.entryexists', ['attribute' => 'alias']);
+                return self::trans('validation.entryexists', ['attribute' => 'alias']);
             }
         }
 

@@ -47,7 +47,7 @@ class FilesController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.file-delete-success'),
+                'message' => self::trans('app.file-delete-success'),
         ]);
     }
 
@@ -130,7 +130,7 @@ class FilesController extends RelationController
         $acl = self::inputAcl(request()->input('permissions'));
 
         if (empty($errors['permissions']) && empty($acl)) {
-            $errors['permissions'] = \trans('validation.file-perm-invalid');
+            $errors['permissions'] = self::trans('validation.file-perm-invalid');
         }
 
         $user = \strtolower(request()->input('user'));
@@ -138,7 +138,7 @@ class FilesController extends RelationController
         // Check if it already exists
         if (empty($errors['user'])) {
             if ($file->properties()->where('key', 'like', 'share-%')->where('value', 'like', "$user:%")->exists()) {
-                $errors['user'] = \trans('validation.file-perm-exists');
+                $errors['user'] = self::trans('validation.file-perm-exists');
             }
         }
 
@@ -159,7 +159,7 @@ class FilesController extends RelationController
 
         return response()->json($result + [
                 'status' => 'success',
-                'message' => \trans('app.file-permissions-create-success'),
+                'message' => self::trans('app.file-permissions-create-success'),
         ]);
     }
 
@@ -190,7 +190,7 @@ class FilesController extends RelationController
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.file-permissions-delete-success'),
+                'message' => self::trans('app.file-permissions-delete-success'),
         ]);
     }
 
@@ -229,14 +229,14 @@ class FilesController extends RelationController
         $acl = self::inputAcl($request->input('permissions'));
 
         if (empty($errors['permissions']) && empty($acl)) {
-            $errors['permissions'] = \trans('validation.file-perm-invalid');
+            $errors['permissions'] = self::trans('validation.file-perm-invalid');
         }
 
         $user = \strtolower($request->input('user'));
 
         if (empty($errors['user']) && strpos($property->value, "$user:") !== 0) {
             if ($file->properties()->where('key', 'like', 'share-%')->where('value', 'like', "$user:%")->exists()) {
-                $errors['user'] = \trans('validation.file-perm-exists');
+                $errors['user'] = self::trans('validation.file-perm-exists');
             }
         }
 
@@ -251,7 +251,7 @@ class FilesController extends RelationController
 
         return response()->json($result + [
                 'status' => 'success',
-                'message' => \trans('app.file-permissions-update-success'),
+                'message' => self::trans('app.file-permissions-update-success'),
         ]);
     }
 
@@ -391,7 +391,7 @@ class FilesController extends RelationController
 
             if (!empty($response['id'])) {
                 $response += $this->objectToClient($file, true);
-                $response['message'] = \trans('app.file-create-success');
+                $response['message'] = self::trans('app.file-create-success');
             }
         } catch (\Exception $e) {
             \Log::error($e);
@@ -451,7 +451,7 @@ class FilesController extends RelationController
                 return $this->errorResponse(500);
             }
         } else {
-            $errors = ['media' => \trans('validation.entryinvalid', ['attribute' => 'media'])];
+            $errors = ['media' => self::trans('validation.entryinvalid', ['attribute' => 'media'])];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
@@ -459,7 +459,7 @@ class FilesController extends RelationController
 
         if ($media == 'metadata' || !empty($response['id'])) {
             $response += $this->objectToClient($file, true);
-            $response['message'] = \trans('app.file-update-success');
+            $response['message'] = self::trans('app.file-update-success');
         }
 
         return response()->json($response);
@@ -487,7 +487,7 @@ class FilesController extends RelationController
 
             if (!empty($response['id'])) {
                 $response += $this->objectToClient(Item::find($response['id']), true);
-                $response['message'] = \trans('app.file-upload-success');
+                $response['message'] = self::trans('app.file-upload-success');
             }
         } catch (\Exception $e) {
             \Log::error($e);

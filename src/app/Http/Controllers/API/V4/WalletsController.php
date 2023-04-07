@@ -81,7 +81,7 @@ class WalletsController extends ResourceController
             'site' => \config('app.name')
         ];
 
-        $filename = \trans('documents.receipt-filename', $params);
+        $filename = self::trans('documents.receipt-filename', $params);
 
         $receipt = new \App\Documents\Receipt($wallet, (int) $year, (int) $month);
 
@@ -225,7 +225,7 @@ class WalletsController extends ResourceController
     {
         // there is no credit
         if ($wallet->balance < 0) {
-            return \trans('app.wallet-notice-nocredit');
+            return self::trans('app.wallet-notice-nocredit');
         }
 
         // the discount is 100%, no credit is needed
@@ -241,15 +241,15 @@ class WalletsController extends ResourceController
         if ($trialEnd && $trialEnd > Carbon::now()) {
             // notice of trial ending if less than 2 weeks left
             if ($trialEnd < Carbon::now()->addWeeks(2)) {
-                return \trans('app.wallet-notice-trial-end');
+                return self::trans('app.wallet-notice-trial-end');
             }
 
-            return \trans('app.wallet-notice-trial');
+            return self::trans('app.wallet-notice-trial');
         }
 
         if ($until = $wallet->balanceLastsUntil()) {
             if ($until->isToday()) {
-                return \trans('app.wallet-notice-today');
+                return self::trans('app.wallet-notice-today');
             }
 
             // Once in a while we got e.g. "3 weeks" instead of expected "4 weeks".
@@ -271,7 +271,7 @@ class WalletsController extends ResourceController
                 'days' => $now->diffForHumans($until, $diffOptions),
             ];
 
-            return \trans('app.wallet-notice-date', $params);
+            return self::trans('app.wallet-notice-date', $params);
         }
 
         return null;
