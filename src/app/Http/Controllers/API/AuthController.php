@@ -80,7 +80,7 @@ class AuthController extends Controller
         $user = \App\User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['status' => 'error', 'message' => \trans('auth.failed')], 401);
+            return response()->json(['status' => 'error', 'message' => self::trans('auth.failed')], 401);
         }
 
         return self::logonResponse($user, $request->password, $request->secondfactor);
@@ -123,7 +123,7 @@ class AuthController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('auth.logoutsuccess')
+                'message' => self::trans('auth.logoutsuccess')
         ]);
     }
 
@@ -177,7 +177,7 @@ class AuthController extends Controller
                 return response()->json(['status' => 'error', 'errors' => $errors], 422);
             }
 
-            return response()->json(['status' => 'error', 'message' => \trans('auth.failed')], 401);
+            return response()->json(['status' => 'error', 'message' => self::trans('auth.failed')], 401);
         }
 
         if ($user) {

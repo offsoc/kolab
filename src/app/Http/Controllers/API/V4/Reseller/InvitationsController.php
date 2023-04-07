@@ -38,7 +38,7 @@ class InvitationsController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => trans('app.signup-invitation-delete-success'),
+                'message' => self::trans('app.signup-invitation-delete-success'),
         ]);
     }
 
@@ -122,7 +122,7 @@ class InvitationsController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => trans('app.signup-invitation-resend-success'),
+                'message' => self::trans('app.signup-invitation-resend-success'),
                 'invitation' => $this->invitationToArray($invitation),
         ]);
     }
@@ -163,7 +163,7 @@ class InvitationsController extends Controller
 
                             if ($v->fails()) {
                                 $args = ['email' => $email, 'line' => $line_number];
-                                $error = trans('app.signup-invitations-csv-invalid-email', $args);
+                                $error = self::trans('app.signup-invitations-csv-invalid-email', $args);
                                 break;
                             }
 
@@ -177,7 +177,7 @@ class InvitationsController extends Controller
                 if ($error) {
                     $errors = ['file' => $error];
                 } elseif (empty($invitations)) {
-                    $errors = ['file' => trans('app.signup-invitations-csv-empty')];
+                    $errors = ['file' => self::trans('app.signup-invitations-csv-empty')];
                 }
             }
         } else {
@@ -209,7 +209,7 @@ class InvitationsController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => self::trans_choice('app.signup-invitations-created', $count, ['count' => $count]),
+                'message' => \trans_choice('app.signup-invitations-created', $count, ['count' => $count]),
                 'count' => $count,
         ]);
     }

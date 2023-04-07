@@ -252,7 +252,7 @@ class SignupController extends Controller
             $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
 
             if (!$plan || $plan->mode != Plan::MODE_MANDATE) {
-                $msg = \trans('validation.exists', ['attribute' => 'plan']);
+                $msg = self::trans('validation.exists', ['attribute' => 'plan']);
                 return response()->json(['status' => 'error', 'errors' => ['plan' => $msg]], 422);
             }
         } elseif ($request->invitation) {
@@ -313,7 +313,7 @@ class SignupController extends Controller
                 ->where('active', true)->first();
 
             if (!$discount) {
-                $errors = ['voucher' => \trans('validation.voucherinvalid')];
+                $errors = ['voucher' => self::trans('validation.voucherinvalid')];
                 return response()->json(['status' => 'error', 'errors' => $errors], 422);
             }
         }
@@ -581,14 +581,14 @@ class SignupController extends Controller
         // Check if domain is already registered with us
         if ($external) {
             if (Domain::withTrashed()->where('namespace', $domain)->exists()) {
-                return ['domain' => \trans('validation.domainexists')];
+                return ['domain' => self::trans('validation.domainexists')];
             }
         }
 
         // Check if user with specified login already exists
         $email = $login . '@' . $domain;
         if (User::emailExists($email) || User::aliasExists($email) || \App\Group::emailExists($email)) {
-            return ['login' => \trans('validation.loginexists')];
+            return ['login' => self::trans('validation.loginexists')];
         }
 
         return null;

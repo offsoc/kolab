@@ -38,19 +38,19 @@ class PasswordResetController extends Controller
         $user = User::findByEmail($request->email);
 
         if (!$user) {
-            $errors = ['email' => \trans('validation.usernotexists')];
+            $errors = ['email' => self::trans('validation.usernotexists')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
         if (!$user->getSetting('external_email')) {
-            $errors = ['email' => \trans('validation.noextemail')];
+            $errors = ['email' => self::trans('validation.noextemail')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
         // Geo-lockin check
         if (!$user->validateLocation($request->ip())) {
             // FIXME: Or maybe we should just throw some more generic error response/code?
-            $errors = ['email' => \trans('validation.geolockinerror')];
+            $errors = ['email' => self::trans('validation.geolockinerror')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
@@ -205,7 +205,7 @@ class PasswordResetController extends Controller
 
         return response()->json([
                 'status' => 'success',
-                'message' => \trans('app.password-reset-code-delete-success'),
+                'message' => self::trans('app.password-reset-code-delete-success'),
         ]);
     }
 }
