@@ -20,6 +20,8 @@ class PackageSku extends Pivot
     protected $fillable = [
         'package_id',
         'sku_id',
+        // to set the costs here overrides the sku->cost and package->discount_rate, see function
+        // cost() for more detail
         'cost',
         'qty'
     ];
@@ -43,9 +45,20 @@ class PackageSku extends Pivot
             $units = 0;
         }
 
-        // FIXME: Why package_skus.cost value is not used anywhere?
-
-        $ppu = $this->sku->cost * ((100 - $this->package->discount_rate) / 100);
+        // one way is to set a very nice looking price in the package_sku->cost
+        // this should not be modified by a discount_rate or else there is no purpose to choose
+        // that nicely looking pricepoint
+        //
+        // the other way is to take the sku list price, but sell the package with a percentage
+        // discount; this way a nice list price of 1399 with a 15% discount ends up with an "ugly"
+        // 1189.15 that needs to be rounded and ends up 1189
+        //
+        // additional discounts could come from discount vouchers
+        if ($this->cost > 0) {
+            $ppu = $this->cost;
+        } else {
+            $ppu = $this->sku->cost * ((100 - $this->package->discount_rate) / 100);
+        }
 
         return $units * $ppu;
     }

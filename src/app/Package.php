@@ -55,7 +55,12 @@ class Package extends Model
     ];
 
     /**
-     * The costs of this package at its pre-defined, existing configuration.
+     * The total monthly costs of this package at either the configured level of the individual
+     * SKUs in this package (in the PackageSku table), or the list price PPU for the SKU (free
+     * units notwithstanding) with the discount rate for this package applied.
+     *
+     * NOTE: This results in the overall list price and foregoes additional wallet discount
+     * deductions.
      *
      * @return int The costs in cents.
      */
@@ -64,16 +69,7 @@ class Package extends Model
         $costs = 0;
 
         foreach ($this->skus as $sku) {
-            $units = $sku->pivot->qty - $sku->units_free;
-
-            if ($units < 0) {
-                \Log::warning("Package {$this->id} is misconfigured for more free units than qty.");
-                $units = 0;
-            }
-
-            $ppu = $sku->cost * ((100 - $this->discount_rate) / 100);
-
-            $costs += $units * $ppu;
+            $costs += $sku->pivot->cost();
         }
 
         return $costs;
