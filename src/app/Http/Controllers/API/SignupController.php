@@ -452,7 +452,10 @@ class SignupController extends Controller
 
             $mandate = [
                 'currency' => $wallet->currency,
-                'description' => \App\Tenant::getConfig($user->tenant_id, 'app.name') . ' Auto-Payment Setup',
+
+                'description' => \App\Tenant::getConfig($user->tenant_id, 'app.name')
+                    . ' ' . self::trans('app.mandate-description-suffix'),
+
                 'methodId' => PaymentProvider::METHOD_CREDITCARD,
                 'redirectUrl' => Utils::serviceUrl('/payment/status', $user->tenant_id),
             ];

@@ -55,7 +55,10 @@ class PaymentsController extends Controller
 
         $mandate = [
             'currency' => $wallet->currency,
-            'description' => Tenant::getConfig($user->tenant_id, 'app.name') . ' Auto-Payment Setup',
+
+            'description' => Tenant::getConfig($user->tenant_id, 'app.name')
+                . ' ' . self::trans('app.mandate-description-suffix'),
+
             'methodId' => $request->methodId ?: PaymentProvider::METHOD_CREDITCARD,
         ];
 
@@ -155,7 +158,10 @@ class PaymentsController extends Controller
 
         $mandate = [
             'currency' => $wallet->currency,
-            'description' => Tenant::getConfig($user->tenant_id, 'app.name') . ' Auto-Payment Setup',
+
+            'description' => Tenant::getConfig($user->tenant_id, 'app.name')
+                . ' ' . self::trans('app.mandate-description-suffix'),
+
             'methodId' => $request->methodId ?: PaymentProvider::METHOD_CREDITCARD,
             'redirectUrl' => \App\Utils::serviceUrl('/payment/status', $user->tenant_id),
         ];

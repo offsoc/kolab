@@ -26,6 +26,8 @@ return [
     'mandate-delete-success' => 'The auto-payment has been removed.',
     'mandate-update-success' => 'The auto-payment has been updated.',
 
+    'mandate-description-suffix' => ' Auto-Payment Setup',
+
     'planbutton' => 'Choose :plan',
 
     'process-async' => 'Setup process has been pushed. Please wait.',
