@@ -15,15 +15,17 @@ class WalletsTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(1, $code);
-        $this->assertSame("User not found.", $output);
+        $this->assertSame("No such user unknown", $output);
 
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
+        $wallet->balance = -100;
+        $wallet->save();
 
-        $code = \Artisan::call("user:wallets john@kolab.org");
+        $code = \Artisan::call("user:wallets john@kolab.org --attr=balance --attr=user_id");
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertSame(trim("{$wallet->id} {$wallet->description}"), $output);
+        $this->assertSame("{$wallet->id} {$wallet->balance} {$user->id}", $output);
     }
 }
