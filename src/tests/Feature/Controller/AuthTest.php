@@ -141,7 +141,6 @@ class AuthTest extends TestCase
                 'serial' => 1,
         ]);
 
-
         $response = $this->actingAs($user)->withHeaders($headers)->get("api/auth/location");
         $response->assertStatus(200);
 

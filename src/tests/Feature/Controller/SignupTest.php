@@ -5,11 +5,13 @@ namespace Tests\Feature\Controller;
 use App\Http\Controllers\API\SignupController;
 use App\Discount;
 use App\Domain;
+use App\IP4Net;
 use App\Plan;
 use App\Package;
 use App\SignupCode;
 use App\SignupInvitation as SI;
 use App\User;
+use App\VatRate;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -39,6 +41,8 @@ class SignupTest extends TestCase
         $this->deleteTestGroup('group-test@kolabnow.com');
         SI::truncate();
         Plan::where('title', 'test')->delete();
+        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        VatRate::query()->delete();
     }
 
     /**
@@ -57,6 +61,8 @@ class SignupTest extends TestCase
         $this->deleteTestGroup('group-test@kolabnow.com');
         SI::truncate();
         Plan::where('title', 'test')->delete();
+        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        VatRate::query()->delete();
 
         parent::tearDown();
     }
@@ -967,9 +973,26 @@ class SignupTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $this->assertSame("The voucher code is invalid or expired.", $json['errors']['voucher']);
 
+        // Prepare VAT rate and network entries, so we can test the VAT related output
+        VatRate::create([
+                'country' => 'CH',
+                'rate' => 7.7,
+                'start' => now()->subSecond(),
+        ]);
+
+        IP4Net::create([
+                'net_number' => '127.0.0.0',
+                'net_broadcast' => '127.255.255.255',
+                'net_mask' => 8,
+                'country' => 'CH',
+                'rir_name' => 'test',
+                'serial' => 1,
+        ]);
+
         // Test with mode=mandate plan, and valid voucher code
         $post['voucher'] = 'TEST';
-        $response = $this->post('/api/auth/signup/validate', $post);
+        $headers = ['X-Client-IP' => '127.0.0.2'];
+        $response = $this->withHeaders($headers)->post('/api/auth/signup/validate', $post);
         $response->assertStatus(200);
 
         $json = $response->json();
