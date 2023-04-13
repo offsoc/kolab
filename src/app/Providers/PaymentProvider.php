@@ -303,7 +303,7 @@ abstract class PaymentProvider
         }
         $methods = self::applyMethodWhitelist($type, $methods);
 
-        \Log::debug("Loaded payment methods" . var_export($methods, true));
+        \Log::debug("Loaded payment methods " . var_export($methods, true));
 
         Cache::put($cacheKey, $methods, now()->addHours(1));
 

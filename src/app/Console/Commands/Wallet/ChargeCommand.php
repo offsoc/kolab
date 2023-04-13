@@ -44,7 +44,7 @@ class ChargeCommand extends Command
             $wallets = [$wallet];
         } else {
             // Get all wallets, excluding deleted accounts
-            $wallets = \App\Wallet::select('wallets.*')
+            $wallets = \App\Wallet::select('wallets.id')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
                 ->withEnvTenantContext('users')
                 ->whereNull('users.deleted_at')
@@ -52,6 +52,16 @@ class ChargeCommand extends Command
         }
 
         foreach ($wallets as $wallet) {
+            // This is a long-running process. Because another process might have modified
+            // the wallet balance in meantime we have to refresh it.
+            // Note: This is needed despite the use of cursor() above.
+            $wallet->refresh();
+
+            // Sanity check after refresh (owner deleted in meantime)
+            if (!$wallet->owner) {
+                continue;
+            }
+
             $charge = $wallet->chargeEntitlements();
 
             if ($charge > 0) {

@@ -599,7 +599,28 @@ class WalletTest extends TestCase
      */
     public function testAwardAndPenalty(): void
     {
-        $this->markTestIncomplete();
+        $user = $this->getTestUser('UserWallet1@UserWallet.com');
+        $wallet = $user->wallets()->first();
+
+        // Test award
+        $this->assertSame($wallet->id, $wallet->award(100, 'test')->id);
+        $this->assertSame(100, $wallet->balance);
+        $this->assertSame(100, $wallet->fresh()->balance);
+        $transaction = $wallet->transactions()->first();
+        $this->assertSame(100, $transaction->amount);
+        $this->assertSame(Transaction::WALLET_AWARD, $transaction->type);
+        $this->assertSame('test', $transaction->description);
+
+        $wallet->transactions()->delete();
+
+        // Test penalty
+        $this->assertSame($wallet->id, $wallet->penalty(100, 'test')->id);
+        $this->assertSame(0, $wallet->balance);
+        $this->assertSame(0, $wallet->fresh()->balance);
+        $transaction = $wallet->transactions()->first();
+        $this->assertSame(-100, $transaction->amount);
+        $this->assertSame(Transaction::WALLET_PENALTY, $transaction->type);
+        $this->assertSame('test', $transaction->description);
     }
 
     /**
