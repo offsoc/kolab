@@ -311,6 +311,17 @@ table {
     }
 }
 
+.credit-cards {
+    img {
+        width: 4em;
+        height: 2.8em;
+        padding: 0.4em;
+        border: 1px solid lightgrey;
+        border-radius: 0.4em;
+        margin-right: 0.5em;
+    }
+}
+
 #status-box {
     background-color: lighten($green, 35);
 
@@ -420,14 +431,6 @@ table {
 
     .link-banktransfer svg {
         transform: scale(.8);
-    }
-}
-
-#summary-cc {
-    svg {
-        height: 2.5em;
-        width: 2.5em;
-        margin-right: 0.5em;
     }
 }
 

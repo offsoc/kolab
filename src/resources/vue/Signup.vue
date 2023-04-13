@@ -110,9 +110,9 @@
                             <div class="card-text">
                                 <h5>{{ checkout.title }}</h5>
                                 <p id="summary-content">{{ checkout.content }}</p>
-                                <p id="summary-cc">
-                                    <svg-icon :icon="['fab', 'cc-visa']"></svg-icon>
-                                    <svg-icon :icon="['fab', 'cc-mastercard']"></svg-icon>
+                                <p class="credit-cards">
+                                    <img src="/themes/default/images/visa.svg" alt="Visa" />
+                                    <img src="/themes/default/images/mastercard.svg" alt="Mastercard" />
                                 </p>
                                 <div id="summary-summary" class="mb-4" v-if="checkout.summary" v-html="checkout.summary"></div>
                                 <form>
@@ -134,8 +134,6 @@
     import { library } from '@fortawesome/fontawesome-svg-core'
 
     library.add(
-        require('@fortawesome/free-brands-svg-icons/faCcVisa').definition,
-        require('@fortawesome/free-brands-svg-icons/faCcMastercard').definition,
         require('@fortawesome/free-solid-svg-icons/faMobileRetro').definition,
         require('@fortawesome/free-solid-svg-icons/faUsers').definition
     )
