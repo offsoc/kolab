@@ -34,6 +34,7 @@ return [
         'share' => "Share",
         'signup' => "Sign Up",
         'submit' => "Submit",
+        'subscribe' => "Subscribe",
         'suspend' => "Suspend",
         'tryagain' => "Try again",
         'unsuspend' => "Unsuspend",

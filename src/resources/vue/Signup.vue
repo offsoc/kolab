@@ -117,7 +117,7 @@
                                 <div id="summary-summary" class="mb-4" v-if="checkout.summary" v-html="checkout.summary"></div>
                                 <form>
                                     <btn class="btn-secondary me-2" @click="stepBack">{{ $t('btn.back') }}</btn>
-                                    <btn class="btn-primary" @click="submitStep4">{{ $t('btn.continue') }}</btn>
+                                    <btn class="btn-primary" @click="submitStep4">{{ $t('btn.subscribe') }}</btn>
                                 </form>
                             </div>
                         </div>
