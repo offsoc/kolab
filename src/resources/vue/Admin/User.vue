@@ -77,11 +77,11 @@
                         </div>
                     </form>
                     <div class="mt-2 buttons">
-                        <btn v-if="!user.isSuspended" id="button-suspend" class="btn-warning" @click="suspendUser">
-                            {{ $t('btn.suspend') }}
+                        <btn :id="'button-' + (user.isSuspended ? 'unsuspend' : 'suspend')" class="btn-outline-primary" @click="setSuspendState">
+                            {{ $t(user.isSuspended ? 'btn.unsuspend' : 'btn.suspend') }}
                         </btn>
-                        <btn v-if="user.isSuspended" id="button-unsuspend" class="btn-warning" @click="unsuspendUser">
-                            {{ $t('btn.unsuspend') }}
+                        <btn id="button-resync" class="btn-outline-primary" @click="resyncUser">
+                            {{ $t('btn.resync') }}
                         </btn>
                     </div>
                 </div>
@@ -567,6 +567,14 @@
                         }
                     })
             },
+            resyncUser() {
+                axios.post('/api/v4/users/' + this.user.id + '/resync')
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                        }
+                    })
+            },
             submitDiscount() {
                 this.$refs.discountDialog.hide()
 
@@ -624,21 +632,12 @@
                         }
                     })
             },
-            suspendUser() {
-                axios.post('/api/v4/users/' + this.user.id + '/suspend')
+            setSuspendState() {
+                axios.post('/api/v4/users/' + this.user.id + '/' + (this.user.isSuspended ? 'unsuspend' : 'suspend'))
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
-                            this.user = Object.assign({}, this.user, { isSuspended: true })
-                        }
-                    })
-            },
-            unsuspendUser() {
-                axios.post('/api/v4/users/' + this.user.id + '/unsuspend')
-                    .then(response => {
-                        if (response.data.status == 'success') {
-                            this.$toast.success(response.data.message)
-                            this.user = Object.assign({}, this.user, { isSuspended: false })
+                            this.user = Object.assign({}, this.user, { isSuspended: !this.user.isSuspended })
                         }
                     })
             }

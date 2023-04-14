@@ -207,6 +207,37 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
     }
 
     /**
+     * Resync the user
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @param string                   $id      User identifier
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function resync(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$this->checkTenant($user)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canUpdate($user)) {
+            return $this->errorResponse(403);
+        }
+
+        if (\Artisan::call('user:resync', ['user' => $user->id])) {
+            return $this->errorResponse(500);
+        }
+
+        return response()->json([
+                'status' => 'success',
+                'message' => self::trans('app.user-resync-success'),
+        ]);
+    }
+
+
+    /**
      * Set/Add a SKU for the user
      *
      * @param \Illuminate\Http\Request $request The API request.

@@ -606,12 +606,12 @@ class Utils
      *
      * @return string String representation, e.g. "0 %", "7.7 %"
      */
-    public static function percent(int|float $amount, $locale = 'de_DE'): string
+    public static function percent(int|float $percent, $locale = 'de_DE'): string
     {
         $nf = new \NumberFormatter($locale, \NumberFormatter::PERCENT);
         $sep = $nf->getSymbol(\NumberFormatter::DECIMAL_SEPARATOR_SYMBOL);
 
-        $result = sprintf('%.2f', $amount);
+        $result = sprintf('%.2f', $percent);
         $result = preg_replace('/\.00/', '', $result);
         $result = preg_replace('/(\.[0-9])0/', '\\1', $result);
         $result = str_replace('.', $sep, $result);

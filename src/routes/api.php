@@ -229,6 +229,7 @@ if (\config('app.with_admin')) {
             Route::get('users/{id}/discounts', [API\V4\Reseller\DiscountsController::class, 'userDiscounts']);
             Route::post('users/{id}/reset2FA', [API\V4\Admin\UsersController::class, 'reset2FA']);
             Route::post('users/{id}/resetGeoLock', [API\V4\Admin\UsersController::class, 'resetGeoLock']);
+            Route::post('users/{id}/resync', [API\V4\Admin\UsersController::class, 'resync']);
             Route::get('users/{id}/skus', [API\V4\Admin\UsersController::class, 'skus']);
             Route::post('users/{id}/skus/{sku}', [API\V4\Admin\UsersController::class, 'setSku']);
             Route::post('users/{id}/suspend', [API\V4\Admin\UsersController::class, 'suspend']);
@@ -280,6 +281,7 @@ if (\config('app.with_reseller')) {
             Route::get('users/{id}/discounts', [API\V4\Reseller\DiscountsController::class, 'userDiscounts']);
             Route::post('users/{id}/reset2FA', [API\V4\Reseller\UsersController::class, 'reset2FA']);
             Route::post('users/{id}/resetGeoLock', [API\V4\Reseller\UsersController::class, 'resetGeoLock']);
+            Route::post('users/{id}/resync', [API\V4\Reseller\UsersController::class, 'resync']);
             Route::get('users/{id}/skus', [API\V4\Reseller\UsersController::class, 'skus']);
             Route::post('users/{id}/skus/{sku}', [API\V4\Admin\UsersController::class, 'setSku']);
             Route::post('users/{id}/suspend', [API\V4\Reseller\UsersController::class, 'suspend']);

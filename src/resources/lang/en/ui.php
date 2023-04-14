@@ -29,6 +29,7 @@ return [
         'refresh' => "Refresh",
         'reset' => "Reset",
         'resend' => "Resend",
+        'resync' => "Resync",
         'save' => "Save",
         'search' => "Search",
         'share' => "Share",

@@ -366,6 +366,46 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test resync (POST /api/v4/users/<user-id>/resync)
+     */
+    public function testResync(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+        $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
+        $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
+
+        // Test unauthorized access to admin API
+        // Test unauthorized access
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/resync", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/resync", []);
+        $response->assertStatus(403);
+
+        $response = $this->actingAs($reseller2)->post("/api/v4/users/{$user->id}/resync", []);
+        $response->assertStatus(404);
+
+        // Touching admins is forbidden
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$admin->id}/resync", []);
+        $response->assertStatus(403);
+
+        // Test resync
+        \Artisan::shouldReceive('call')->once()->with('user:resync', ['user' => $user->id]);
+
+        $response = $this->actingAs($reseller1)->post("/api/v4/users/{$user->id}/resync", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User synchronization have been started.", $json['message']);
+    }
+
+    /**
      * Test adding beta SKU (POST /api/v4/users/<user-id>/skus/beta)
      */
     public function testAddBetaSku(): void

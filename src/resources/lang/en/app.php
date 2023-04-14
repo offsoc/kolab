@@ -111,6 +111,7 @@ return [
     'user-update-success' => 'User data updated successfully.',
     'user-create-success' => 'User created successfully.',
     'user-delete-success' => 'User deleted successfully.',
+    'user-resync-success' => 'User synchronization have been started.',
     'user-suspend-success' => 'User suspended successfully.',
     'user-unsuspend-success' => 'User unsuspended successfully.',
     'user-reset-2fa-success' => '2-Factor authentication reset successfully.',

@@ -388,6 +388,33 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test resync (POST /api/v4/users/<user-id>/resync)
+     */
+    public function testResync(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        // Test unauthorized access to admin API
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/resync", []);
+        $response->assertStatus(403);
+
+        // Test resync
+        \Artisan::shouldReceive('call')->once()->with('user:resync', ['user' => $user->id]);
+
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/resync", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(2, $json);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("User synchronization have been started.", $json['message']);
+    }
+
+    /**
      * Test adding beta SKU (POST /api/v4/users/<user-id>/skus/beta)
      */
     public function testAddBetaSku(): void

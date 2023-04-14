@@ -555,6 +555,21 @@ class UserTest extends TestCaseDusk
     }
 
     /**
+     * Test the Resync button
+     */
+    public function testResync(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $john = $this->getTestUser('john@kolab.org');
+
+            $browser->visit(new UserPage($john->id))
+                ->assertSeeIn('@user-info #button-resync', 'Resync')
+                ->click('@user-info #button-resync')
+                ->assertToast(Toast::TYPE_SUCCESS, "User synchronization have been started.");
+        });
+    }
+
+    /**
      * Test resetting 2FA for the user
      */
     public function testReset2FA(): void
