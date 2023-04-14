@@ -89,15 +89,11 @@ abstract class ObjectDeleteCommand extends ObjectCommand
         }
 
         if ($this->commandPrefix == 'scalpel') {
-            $this->objectClass::withoutEvents(
-                function () use ($object) {
-                    if ($object->deleted_at) {
-                        $object->forceDelete();
-                    } else {
-                        $object->delete();
-                    }
-                }
-            );
+            if ($object->deleted_at) {
+                $object->forceDeleteQuietly();
+            } else {
+                $object->deleteQuietly();
+            }
         } else {
             if ($object->deleted_at) {
                 $object->forceDelete();

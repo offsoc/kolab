@@ -93,11 +93,7 @@ abstract class ObjectUpdateCommand extends ObjectCommand
         $object->timestamps = false;
 
         if ($this->commandPrefix == 'scalpel') {
-            $this->objectClass::withoutEvents(
-                function () use ($object) {
-                    $object->save();
-                }
-            );
+            $object->saveQuietly();
         } else {
             $object->save();
         }

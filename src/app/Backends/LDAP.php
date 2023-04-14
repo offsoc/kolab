@@ -998,9 +998,7 @@ class LDAP
         // skip model events to not invoke another update job
         if ($group->members !== $validMembers) {
             $group->members = $validMembers;
-            Group::withoutEvents(function () use ($group) {
-                $group->save();
-            });
+            $group->saveQuietly();
         }
     }
 
