@@ -32,17 +32,29 @@ class PackageSku extends Pivot
         'qty' => 'integer'
     ];
 
+    /** @var array<int, string> The attributes that can be not set */
+    protected $nullable = [
+        'cost',
+    ];
+
+    /** @var string Database table name */
+    protected $table = 'package_skus';
+
+    /** @var bool Indicates if the model should be timestamped. */
+    public $timestamps = false;
+
+
     /**
      * Under this package, how much does this SKU cost?
      *
      * @return int The costs of this SKU under this package in cents.
      */
-    public function cost()
+    public function cost(): int
     {
         $units = $this->qty - $this->sku->units_free;
 
         if ($units < 0) {
-            $units = 0;
+            return 0;
         }
 
         // one way is to set a very nice looking price in the package_sku->cost
@@ -54,10 +66,14 @@ class PackageSku extends Pivot
         // 1189.15 that needs to be rounded and ends up 1189
         //
         // additional discounts could come from discount vouchers
-        if ($this->cost > 0) {
+
+        // Side-note: Package's discount_rate is on a higher level, so conceptually
+        // I wouldn't be surprised if one would expect it to apply to package_sku.cost.
+
+        if ($this->cost !== null) {
             $ppu = $this->cost;
         } else {
-            $ppu = $this->sku->cost * ((100 - $this->package->discount_rate) / 100);
+            $ppu = round($this->sku->cost * ((100 - $this->package->discount_rate) / 100));
         }
 
         return $units * $ppu;

@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Domain;
 use App\Group;
+use App\Package;
+use App\PackageSku;
+use App\Sku;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
@@ -27,6 +30,7 @@ class UserTest extends TestCase
         $this->deleteTestSharedFolder('test-folder@UserAccount.com');
         $this->deleteTestDomain('UserAccount.com');
         $this->deleteTestDomain('UserAccountAdd.com');
+        Package::where('title', 'test-package')->delete();
     }
 
     /**
@@ -35,6 +39,7 @@ class UserTest extends TestCase
     public function tearDown(): void
     {
         \App\TenantSetting::truncate();
+        Package::where('title', 'test-package')->delete();
         $this->deleteTestUser('user-test@' . \config('app.domain'));
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
@@ -55,22 +60,51 @@ class UserTest extends TestCase
     {
         $user = $this->getTestUser('user-test@' . \config('app.domain'));
         $wallet = $user->wallets()->first();
+        $skuGroupware = Sku::withEnvTenantContext()->where('title', 'groupware')->first();  // cost: 490
+        $skuMailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();      // cost: 500
+        $skuStorage = Sku::withEnvTenantContext()->where('title', 'storage')->first();      // cost: 25
+        $package = Package::create([
+                'title' => 'test-package',
+                'name' => 'Test Account',
+                'description' => 'Test account.',
+                'discount_rate' => 0,
+        ]);
 
-        $package = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        // WARNING: saveMany() sets package_skus.cost = skus.cost
+        $package->skus()->saveMany([
+                $skuMailbox,
+                $skuGroupware,
+                $skuStorage
+        ]);
+
+        $package->skus()->updateExistingPivot($skuStorage, ['qty' => 2, 'cost' => null], false);
+        $package->skus()->updateExistingPivot($skuMailbox, ['cost' => null], false);
+        $package->skus()->updateExistingPivot($skuGroupware, ['cost' => 100], false);
 
         $user->assignPackage($package);
 
-        $sku = \App\Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $this->assertCount(4, $user->entitlements()->get()); // mailbox + groupware + 2 x storage
 
-        $entitlement = \App\Entitlement::where('wallet_id', $wallet->id)
-            ->where('sku_id', $sku->id)->first();
-
-        $this->assertNotNull($entitlement);
-        $this->assertSame($sku->id, $entitlement->sku->id);
+        $entitlement = $wallet->entitlements()->where('sku_id', $skuMailbox->id)->first();
+        $this->assertSame($skuMailbox->id, $entitlement->sku->id);
         $this->assertSame($wallet->id, $entitlement->wallet->id);
-        $this->assertEquals($user->id, $entitlement->entitleable->id);
+        $this->assertEquals($user->id, $entitlement->entitleable_id);
         $this->assertTrue($entitlement->entitleable instanceof \App\User);
-        $this->assertCount(7, $user->entitlements()->get());
+        $this->assertSame($skuMailbox->cost, $entitlement->cost);
+
+        $entitlement = $wallet->entitlements()->where('sku_id', $skuGroupware->id)->first();
+        $this->assertSame($skuGroupware->id, $entitlement->sku->id);
+        $this->assertSame($wallet->id, $entitlement->wallet->id);
+        $this->assertEquals($user->id, $entitlement->entitleable_id);
+        $this->assertTrue($entitlement->entitleable instanceof \App\User);
+        $this->assertSame(100, $entitlement->cost);
+
+        $entitlement = $wallet->entitlements()->where('sku_id', $skuStorage->id)->first();
+        $this->assertSame($skuStorage->id, $entitlement->sku->id);
+        $this->assertSame($wallet->id, $entitlement->wallet->id);
+        $this->assertEquals($user->id, $entitlement->entitleable_id);
+        $this->assertTrue($entitlement->entitleable instanceof \App\User);
+        $this->assertSame(0, $entitlement->cost);
     }
 
     /**
@@ -86,7 +120,36 @@ class UserTest extends TestCase
      */
     public function testAssignSku(): void
     {
-        $this->markTestIncomplete();
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+        $wallet = $user->wallets()->first();
+        $skuStorage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $skuMailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+
+        $user->assignSku($skuMailbox);
+
+        $this->assertCount(1, $user->entitlements()->get());
+        $entitlement = $wallet->entitlements()->where('sku_id', $skuMailbox->id)->first();
+        $this->assertSame($skuMailbox->id, $entitlement->sku->id);
+        $this->assertSame($wallet->id, $entitlement->wallet->id);
+        $this->assertEquals($user->id, $entitlement->entitleable_id);
+        $this->assertTrue($entitlement->entitleable instanceof \App\User);
+        $this->assertSame($skuMailbox->cost, $entitlement->cost);
+
+        // Test units_free handling
+        for ($x = 0; $x < 5; $x++) {
+            $user->assignSku($skuStorage);
+        }
+
+        $entitlements = $user->entitlements()->where('sku_id', $skuStorage->id)
+            ->where('cost', 0)
+            ->get();
+        $this->assertCount(5, $entitlements);
+
+        $user->assignSku($skuStorage);
+        $entitlements = $user->entitlements()->where('sku_id', $skuStorage->id)
+            ->where('cost', $skuStorage->cost)
+            ->get();
+        $this->assertCount(1, $entitlements);
     }
 
     /**

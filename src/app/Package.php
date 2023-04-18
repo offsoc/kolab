@@ -69,6 +69,7 @@ class Package extends Model
         $costs = 0;
 
         foreach ($this->skus as $sku) {
+            // Note: This cost already takes package's discount_rate
             $costs += $sku->pivot->cost();
         }
 
@@ -98,6 +99,6 @@ class Package extends Model
     {
         return $this->belongsToMany(Sku::class, 'package_skus')
             ->using(PackageSku::class)
-            ->withPivot(['qty']);
+            ->withPivot(['qty', 'cost']);
     }
 }

@@ -65,9 +65,7 @@ class ChargeCommand extends Command
             $charge = $wallet->chargeEntitlements();
 
             if ($charge > 0) {
-                $this->info(
-                    "Charged wallet {$wallet->id} for user {$wallet->owner->email} with {$charge}"
-                );
+                $this->info("Charged wallet {$wallet->id} for user {$wallet->owner->email} with {$charge}");
 
                 // Top-up the wallet if auto-payment enabled for the wallet
                 \App\Jobs\WalletCharge::dispatch($wallet);

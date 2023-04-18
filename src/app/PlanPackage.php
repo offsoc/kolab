@@ -40,13 +40,15 @@ class PlanPackage extends Pivot
     ];
 
     /**
-     * Calculate the costs for this plan.
+     * Calculate the costs for this package.
      *
-     * @return integer
+     * @return int The costs in cents
      */
     public function cost()
     {
         $costs = 0;
+
+        // TODO: consider discount_qty/discount_rate here?
 
         if ($this->qty_min > 0) {
             $costs += $this->package->cost() * $this->qty_min;

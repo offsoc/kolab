@@ -77,19 +77,23 @@ class Plan extends Model
     ];
 
     /**
-     * The list price for this package at the minimum configuration.
+     * The list price for this plan at the minimum configuration.
      *
      * @return int The costs in cents.
      */
-    public function cost()
+    public function cost(): int
     {
         $costs = 0;
+
+        // TODO: What about plan's discount_qty/discount_rate?
 
         foreach ($this->packages as $package) {
             $costs += $package->pivot->cost();
         }
 
-        return $costs;
+        // TODO: What about plan's free_months?
+
+        return $costs * $this->months;
     }
 
     /**

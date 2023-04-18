@@ -447,7 +447,7 @@ class Wallet extends Model
         $min = Payment::MIN_AMOUNT;
 
         if ($plan = $this->plan()) {
-            $planCost = (int) ($plan->cost() * $plan->months * $this->getDiscountRate());
+            $planCost = (int) ($plan->cost() * $this->getDiscountRate());
 
             if ($planCost > $min) {
                 $min = $planCost;

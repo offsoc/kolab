@@ -86,25 +86,23 @@ class PlanTest extends TestCase
      */
     public function testCost(): void
     {
-        $plan = Plan::where('title', 'individual')->first();
+        $orig_plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
+        $plan = Plan::create([
+            'title' => 'test-plan',
+            'description' => 'Test',
+            'name' => 'Test',
+        ]);
 
-        $package_costs = 0;
+        $plan->packages()->saveMany($orig_plan->packages);
+        $plan->refresh();
 
-        foreach ($plan->packages as $package) {
-            $package_costs += $package->cost();
-        }
+        $this->assertSame(990, $plan->cost());
 
-        $this->assertTrue(
-            $package_costs == 990,
-            "The total costs of all packages for this plan is not 9.90"
-        );
+        // Test plan months != 1
+        $plan->months = 12;
+        $plan->save();
 
-        $this->assertTrue(
-            $plan->cost() == 990,
-            "The total costs for this plan is not 9.90"
-        );
-
-        $this->assertTrue($plan->cost() == $package_costs);
+        $this->assertSame(990 * 12, $plan->cost());
     }
 
     /**

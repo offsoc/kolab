@@ -431,7 +431,7 @@ class SignupController extends Controller
         $result = [];
 
         $min = \App\Payment::MIN_AMOUNT;
-        $planCost = $cost = $plan->cost() * $plan->months;
+        $planCost = $cost = $plan->cost();
         $disc = 0;
 
         if ($discount) {
