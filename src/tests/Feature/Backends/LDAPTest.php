@@ -163,13 +163,13 @@ class LDAPTest extends TestCase
         // Update members
         $group->members = ['member3@testldap.com'];
         $group->save();
-        $group->setSetting('sender_policy', '["test.com","-"]');
+        $group->setSetting('sender_policy', '["test.com","Test.com","-"]');
 
         LDAP::updateGroup($group);
 
         // TODO: Should we force this to be always an array?
         $expected['uniquemember'] = 'uid=member3@testldap.com,ou=People,ou=kolab.org,' . $root_dn;
-        $expected['kolaballowsmtpsender'] = ['test.com', '-'];
+        $expected['kolaballowsmtpsender'] = ['test.com', '-']; // duplicates removed
 
         $ldap_group = LDAP::getGroup($group->email);
 

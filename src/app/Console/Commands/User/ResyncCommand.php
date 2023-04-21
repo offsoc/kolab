@@ -89,6 +89,8 @@ class ResyncCommand extends Command
                     }
 
                     \App\Jobs\User\CreateJob::dispatch($user->id);
+
+                    $this->info("{$user->email}: pushed");
                 } elseif (!empty($req_user)) {
                     if ($dry_run) {
                         $this->info("{$user->email}: will be pushed");

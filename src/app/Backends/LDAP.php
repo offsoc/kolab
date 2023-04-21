@@ -954,7 +954,12 @@ class LDAP
     {
         $settings = $group->getSettings(['sender_policy']);
 
-        $entry['kolaballowsmtpsender'] = json_decode($settings['sender_policy'] ?: '[]', true);
+        // Make sure the policy does not contain duplicates, they aren't allowed
+        // by the ldap definition of kolabAllowSMTPSender attribute
+        $sender_policy = json_decode($settings['sender_policy'] ?: '[]', true);
+        $sender_policy = array_values(array_unique(array_map('strtolower', $sender_policy)));
+
+        $entry['kolaballowsmtpsender'] = $sender_policy;
         $entry['cn'] = $group->name;
         $entry['uniquemember'] = [];
 
