@@ -45,6 +45,7 @@ def decode_timezone(tz):
     print(f"  Standard Name: {standardName.decode()}")
     year, month, day, week, hour, minute, second, millis = struct.unpack('hhhhhhhh', standardDate)
     print(f"  Standard Date: Year: {year} Month: {month} Day: {day} Week: {week} Hour: {hour} Minute: {minute} Second: {second} Millisecond: {millis}")
+    print(f"  Standard Bias: {standardBias}min")
     print(f"  Daylight Name: {daylightName.decode()}")
     year, month, day, week, hour, minute, second, millis = struct.unpack('hhhhhhhh', daylightDate)
     print(f"  Daylight Date: Year: {year} Month: {month} Day: {day} Week: {week} Hour: {hour} Minute: {minute} Second: {second} Millisecond: {millis}")
@@ -148,6 +149,11 @@ class ActiveSync:
         else:
             self.folder = None
 
+        if hasattr(options, 'sync_key') and options.sync_key:
+            self.sync_key = options.sync_key
+        else:
+            self.sync_key = 0
+
 
     def send_request(self, command, request, extra_args = None):
         body = wbxml.xml_to_wbxml(request)
@@ -242,7 +248,7 @@ class ActiveSync:
         if not data:
             if self.verbose:
                 print("Empty response, no changes on server")
-            return
+            return [sync_key, False]
 
         result = wbxml.wbxml_to_xml(data)
 
@@ -286,7 +292,7 @@ class ActiveSync:
         while True:
             [sync_key, more_available] = self.do_fetch(collection_id, sync_key)
             # track_memory_usage()
-            if sync_key != "1" and not more_available:
+            if not more_available:
                 break
 
 
@@ -310,9 +316,9 @@ class ActiveSync:
 
         root = ET.fromstring(result)
         xmlns = "http://synce.org/formats/airsync_wm5/folderhierarchy"
-        sync_key = root.find(f".//{{{xmlns}}}SyncKey").text
+        folder_sync_key = root.find(f".//{{{xmlns}}}SyncKey").text
         if self.verbose:
-            print("Current SyncKey:", sync_key)
+            print("Current SyncKey:", folder_sync_key)
 
         for add in root.findall(f".//{{{xmlns}}}Add"):
             displayName = add.find(f"{{{xmlns}}}DisplayName").text
@@ -321,7 +327,7 @@ class ActiveSync:
             print("DisplayName", displayName)
 
             if self.folder and displayName == self.folder:
-                self.fetch(serverId)
+                self.fetch(serverId, self.sync_key)
 
 
 
@@ -343,6 +349,7 @@ def main():
 
     parser_list = subparsers.add_parser('list')
     parser_list.add_argument("--folder", help="Folder")
+    parser_list.add_argument("--sync_key", help="Sync key to start from")
     parser_list.set_defaults(func=lambda args: ActiveSync(args).list())
 
     parser_check = subparsers.add_parser('check')
