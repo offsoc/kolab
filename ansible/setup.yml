@@ -37,6 +37,11 @@
 
     - import_tasks: certbot.yml
 
+    - name: Delete kolab content & directory
+      ansible.builtin.file:
+        state: absent
+        path: /home/kolab/kolab/
+
     - name: get kolab git repo
       become: true
       become_user: kolab
