@@ -83,16 +83,17 @@ abstract class Command extends \Illuminate\Console\Command
     /**
      * Find an object.
      *
-     * @param string $objectClass      The name of the class
-     * @param string $objectIdOrTitle  The name of a database field to match.
-     * @param string|null $objectTitle An additional database field to match.
-     * @param bool        $withDeleted Act as if --with-deleted was used
+     * @param string      $objectClass     The name of the class
+     * @param string      $objectIdOrTitle The name of a database field to match.
+     * @param string|null $objectTitle     An additional database field to match.
+     * @param bool        $withDeleted     Act as if --with-deleted was used
      *
      * @return mixed
      */
     public function getObject($objectClass, $objectIdOrTitle, $objectTitle = null, $withDeleted = false)
     {
         if (!$withDeleted) {
+            // @phpstan-ignore-next-line
             $withDeleted = $this->hasOption('with-deleted') && $this->option('with-deleted');
         }
 
@@ -239,6 +240,7 @@ abstract class Command extends \Illuminate\Console\Command
             $entry->{$entry->getKeyName()}
         ];
 
+        // @phpstan-ignore-next-line
         foreach ($this->option('attr') as $attr) {
             if ($attr == $entry->getKeyName()) {
                 $this->warn("Specifying {$attr} is not useful.");

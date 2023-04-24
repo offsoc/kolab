@@ -33,7 +33,7 @@ class MergeCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'discount:merge {source} {target} {--description*}';
+    protected $signature = 'discount:merge {source} {target} {--description=}';
 
     /**
      * The console command description.
@@ -75,8 +75,8 @@ class MergeCommand extends Command
             $wallet->save();
         }
 
-        if ($this->option('description')) {
-            $target->description = $this->option('description');
+        if ($description = $this->option('description')) {
+            $target->description = $description;
             $target->save();
         }
 
