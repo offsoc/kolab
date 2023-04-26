@@ -39,7 +39,7 @@ class Payment extends Model
     public const TYPE_CHARGEBACK = 'chargeback';
 
     /** const int Minimum amount of money in a single payment (in cents) */
-    public const MIN_AMOUNT = 1000;
+    public const MIN_AMOUNT = 100;
 
     /** @var bool Indicates that the model should be timestamped or not */
     public $incrementing = false;
