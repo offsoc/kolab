@@ -30,4 +30,31 @@ class HealthController extends Controller
         $response->noLogging = true; // @phpstan-ignore-line
         return $response;
     }
+
+    /**
+     * Run a health status check
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function status()
+    {
+        $code = \Artisan::call("status:health --check=DB --check=Redis");
+        if ($code != 0) {
+            \Log::info("Healthcheck failed");
+
+            $result = [
+                'status' => 'error',
+                'output' => \Artisan::output()
+            ];
+
+            return response()->json($result, 500);
+        }
+
+        $result = [
+            'status' => 'ok',
+            'output' => \Artisan::output()
+        ];
+
+        return response()->json($result, 200);
+    }
 }
