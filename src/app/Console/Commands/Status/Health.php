@@ -22,7 +22,7 @@ class Health extends Command
      *
      * @var string
      */
-    protected $signature = 'status:health';
+    protected $signature = 'status:health {--check=*: Valid checks are DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates}';
 
     /**
      * The console command description.
@@ -170,12 +170,14 @@ class Health extends Command
     public function handle()
     {
         $result = 0;
-        $steps = [
-            'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates',
-        ];
-
-        if (\config('app.with_ldap')) {
-            array_unshift($steps, 'LDAP');
+        $steps = $this->option('check');
+        if (empty($steps)) {
+            $steps = [
+                'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates',
+            ];
+            if (\config('app.with_ldap')) {
+                array_unshift($steps, 'LDAP');
+            }
         }
 
         foreach ($steps as $step) {
