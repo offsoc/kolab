@@ -230,6 +230,7 @@ if (\config('app.with_services')) {
             Route::post('policy/ratelimit', [API\V4\PolicyController::class, 'ratelimit']);
             Route::post('policy/spf', [API\V4\PolicyController::class, 'senderPolicyFramework']);
             Route::post('policy/mail/filter', [API\V4\PolicyController::class, 'mailfilter']);
+            Route::get('health/status', [API\V4\HealthController::class, 'status']);
         }
     );
 }
