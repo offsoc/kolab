@@ -23,6 +23,7 @@ import urllib.parse
 import struct
 import xml.etree.ElementTree as ET
 import ssl
+import time
 import wbxml
 
 
@@ -154,6 +155,16 @@ class ActiveSync:
         else:
             self.sync_key = 0
 
+        if hasattr(options, 'poll') and options.poll:
+            self.poll = options.poll
+        else:
+            self.poll = False
+
+        if hasattr(options, 'profile') and options.profile:
+            self.profile = options.profile
+        else:
+            self.profile = False
+
 
     def send_request(self, command, request, extra_args = None):
         body = wbxml.xml_to_wbxml(request)
@@ -173,8 +184,12 @@ class ActiveSync:
         if extra_args is None:
             extra_args = ""
 
+        profile = ""
+        if self.profile:
+            profile = "XDEBUG_TRIGGER=StartProfileForMe&"
+
         return http_request(
-            f"https://{self.host}/Microsoft-Server-ActiveSync?Cmd={command}&User={self.username}&DeviceId={self.deviceid}&DeviceType={self.devicetype}{extra_args}",
+            f"https://{self.host}/Microsoft-Server-ActiveSync?{profile}Cmd={command}&User={self.username}&DeviceId={self.deviceid}&DeviceType={self.devicetype}{extra_args}",
             "POST",
             None,
             headers,
@@ -213,11 +228,46 @@ class ActiveSync:
         return success
 
 
-    def do_fetch(self, collection_id, sync_key = 0):
+    def add(self):
+        request = """
+        <Add xmlns:default="uri:Email" xmlns:default1="uri:AirSyncBase">
+            <Class>Tasks</Class>
+            <ClientId>30858234-494C-42FB-9352-009FA305762B</ClientId>
+            <ApplicationData>
+                <Subject xmlns="uri:Tasks">{subject}</Subject>
+                <Importance xmlns="uri:Tasks">1</Importance>
+                <Categories xmlns="uri:Tasks"/>
+                <Complete xmlns="uri:Tasks">0</Complete>
+                <ReminderSet xmlns="uri:Tasks">0</ReminderSet>
+                <Sensitivity xmlns="uri:Tasks">0</Sensitivity>
+                <DueDate xmlns="uri:Tasks">2020-11-04T00:00:00.000Z</DueDate>
+                <UTCDueDate xmlns="uri:Tasks">2020-11-03T23:00:00.000Z</UTCDueDate>
+            </ApplicationData>
+        </Add>
+        """.replace('        ', '').replace('      ', '').replace('    ', '').replace('  ', '').replace('\n', '').format(
+            subject="subject"
+        )
+        return request
+
+
+    def do_sync(self, collection_id, sync_key = 0, upload_count = None):
+        start = time.time();
+        commands = ""
+
+        if upload_count is not None:
+            add_commands = ""
+            for i in range(upload_count):
+                add_commands = add_commands + self.add()
+            commands = """
+        <Commands>
+            {add_commands}
+        </Commands>
+        """.replace('    ', '').replace('\n', '').format(add_commands=add_commands)
+
         request = """
         <?xml version="1.0" encoding="utf-8"?>
         <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
-        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Email="uri:Email" xmlns:Tasks="uri:Tasks" >
             <Collections>
                 <Collection>
                     <SyncKey>{sync_key}</SyncKey>
@@ -234,13 +284,14 @@ class ActiveSync:
                             <AllOrNone>1</AllOrNone>
                         </BodyPreference>
                     </Options>
+                    {commands}
                 </Collection>
             </Collections>
             <WindowSize>512</WindowSize>
         </Sync>
-        """.replace('    ', '').replace('\n', '')
+        """.replace('    ', '').replace('\n', '').format(collection_id=collection_id, sync_key=sync_key, commands=commands)
 
-        response = self.send_request('Sync', request.format(collection_id=collection_id, sync_key=sync_key))
+        response = self.send_request('Sync', request)
 
         assert response.status == 200
 
@@ -257,8 +308,12 @@ class ActiveSync:
 
         root = ET.fromstring(result)
         xmlns = "http://synce.org/formats/airsync_wm5/airsync"
+
+        status = root.find(f".//{{{xmlns}}}Status")
+        if status is not None and status.text != "1":
+            raise Exception(f'Sync failed with status code {status.text}')
+
         sync_key = root.find(f".//{{{xmlns}}}SyncKey").text
-        more_available = (len(root.findall(f".//{{{xmlns}}}MoreAvailable")) == 1)
         if self.verbose:
             print("Current SyncKey:", sync_key)
 
@@ -266,6 +321,8 @@ class ActiveSync:
             serverId = add.find(f"{{{xmlns}}}ServerId").text
             print("  ServerId", serverId)
             applicationData = add.find(f"{{{xmlns}}}ApplicationData")
+            if applicationData is None:
+                continue
 
             calxmlns = "http://synce.org/formats/airsync_wm5/calendar"
             subject = applicationData.find(f"{{{calxmlns}}}Subject")
@@ -283,16 +340,42 @@ class ActiveSync:
                 print(f"  TimeZone bias: {bias}min")
             print("")
 
+        end = time.time();
+        print("Elapsed: " + str(end - start))
         print("\n")
 
+        more_available = (len(root.findall(f".//{{{xmlns}}}MoreAvailable")) == 1)
         return [sync_key, more_available]
 
 
-    def fetch(self, collection_id, sync_key = 0):
+    def sync(self, collection_id, sync_key = 0, uploads = None):
+        if self.sync_key is not None:
+            sync_key = self.sync_key
+
+        if uploads is not None:
+            uploads = int(uploads)
+
+        # Initial sync if required
+        if sync_key == 0:
+            # Required for new devices
+            folders = self.list()
+            # Translate name to id if applicable
+            try:
+                idFromName = list(folders.keys())[list(folders.values()).index(collection_id)]
+                if idFromName is not None:
+                    collection_id = idFromName
+            except:
+                pass
+            [sync_key, _] = self.do_sync(collection_id, sync_key, None)
+        # Fetch until there is no more to fetch
         while True:
-            [sync_key, more_available] = self.do_fetch(collection_id, sync_key)
+            [sync_key, more_available] = self.do_sync(collection_id, sync_key, uploads)
+            uploads = None
             # track_memory_usage()
             if not more_available:
+                if self.poll:
+                    time.sleep(2)
+                    continue
                 break
 
 
@@ -320,14 +403,16 @@ class ActiveSync:
         if self.verbose:
             print("Current SyncKey:", folder_sync_key)
 
+        folders = {}
         for add in root.findall(f".//{{{xmlns}}}Add"):
             displayName = add.find(f"{{{xmlns}}}DisplayName").text
             serverId = add.find(f"{{{xmlns}}}ServerId").text
+
+            folders[serverId] = displayName
             print("ServerId", serverId)
             print("DisplayName", displayName)
 
-            if self.folder and displayName == self.folder:
-                self.fetch(serverId, self.sync_key)
+        return folders
 
 
 
@@ -338,6 +423,7 @@ def main():
     parser.add_argument("--user", help="Username")
     parser.add_argument("--password", help="User password")
     parser.add_argument("--verbose", action='store_true', help="Verbose output")
+    parser.add_argument("--profile", action='store_true', help="Send the XDEBUG_TRIGGER")
     parser.add_argument("--deviceid", help="Device identifier ")
     parser.add_argument("--devicetype", help="devicetype (WindowsOutlook15, iphone)")
 
@@ -351,6 +437,13 @@ def main():
     parser_list.add_argument("--folder", help="Folder")
     parser_list.add_argument("--sync_key", help="Sync key to start from")
     parser_list.set_defaults(func=lambda args: ActiveSync(args).list())
+
+    parser_list = subparsers.add_parser('sync')
+    parser_list.add_argument("collectionId", help="Collection Id")
+    parser_list.add_argument("--upload", help="Upload N messages", default=None)
+    parser_list.add_argument("--sync_key", help="Sync key to start from")
+    parser_list.add_argument("--poll", action='store_true', help="Keep syncing every 2 seconds")
+    parser_list.set_defaults(func=lambda args: ActiveSync(args).sync(args.collectionId, 0, args.upload))
 
     parser_check = subparsers.add_parser('check')
     parser_check.set_defaults(func=lambda args: ActiveSync(args).check())
