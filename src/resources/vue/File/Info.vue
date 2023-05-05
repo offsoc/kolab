@@ -2,7 +2,7 @@
     <div class="container">
         <div class="card" id="file-info">
             <div class="card-body" v-if="fileId === 'newCollection'">
-                <div class="card-title" >{{ $t('collection.new') }}</div>
+                <div class="card-title">{{ $t('collection.new') }}</div>
                 <div class="card-text">
                     <form @submit.prevent="submit" class="card-body">
                         <div class="row mb-3">
