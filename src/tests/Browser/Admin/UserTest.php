@@ -565,7 +565,7 @@ class UserTest extends TestCaseDusk
             $browser->visit(new UserPage($john->id))
                 ->assertSeeIn('@user-info #button-resync', 'Resync')
                 ->click('@user-info #button-resync')
-                ->assertToast(Toast::TYPE_SUCCESS, "User synchronization have been started.");
+                ->assertToast(Toast::TYPE_SUCCESS, "User synchronization has been started.");
         });
     }
 
