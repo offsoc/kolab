@@ -411,7 +411,7 @@ class UsersTest extends TestCase
 
         $this->assertCount(2, $json);
         $this->assertSame('success', $json['status']);
-        $this->assertSame("User synchronization have been started.", $json['message']);
+        $this->assertSame("User synchronization has been started.", $json['message']);
     }
 
     /**
