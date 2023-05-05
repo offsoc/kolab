@@ -37,7 +37,7 @@ class SignupCodeObserver
         $code->headers = collect(request()->headers->all())
             ->filter(function ($value, $key) {
                 // remove some headers we don't care about
-                return !in_array($key, ['cookie', 'referer', 'x-test-payment-provider', 'origin']);
+                return !in_array($key, ['cookie', 'referer', 'origin']);
             })
             ->map(function ($value) {
                 return is_array($value) && count($value) == 1 ? $value[0] : $value;

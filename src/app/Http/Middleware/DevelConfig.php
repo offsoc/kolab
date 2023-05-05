@@ -19,20 +19,6 @@ class DevelConfig
     {
         // Only in testing/local environment...
         if (\App::environment('local')) {
-            // This is the only way I found to change configuration
-            // on a running application. We need this to browser-test both
-            // Mollie and Stripe providers without .env file modification
-            // and artisan restart
-            if ($request->getMethod() == 'GET' && isset($request->paymentProvider)) {
-                $provider = $request->paymentProvider;
-            } else {
-                $provider = $request->headers->get('X-TEST-PAYMENT-PROVIDER');
-            }
-
-            if (!empty($provider)) {
-                \config(['services.payment_provider' => $provider]);
-            }
-
             // Pick up config set in Tests\Browser::withConfig
             // This wouldn't technically need to be in a middleware,
             // but this way we ensure it's propagated during the next request.

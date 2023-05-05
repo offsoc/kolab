@@ -534,10 +534,8 @@ class SignupTest extends TestCaseDusk
         $plan->save();
 
         $this->browse(function (Browser $browser) {
-            $config = ['paymentProvider' => 'mollie'];
-            $browser->visit(new Signup())
-                // Force Mollie
-                ->execScript(sprintf('Object.assign(window.config, %s)', \json_encode($config)))
+            $browser->withConfig(['services.payment_provider' => 'mollie'])
+                ->visit(new Signup())
                 ->waitFor('@step0 .plan-individual button')
                 ->click('@step0 .plan-individual button')
                 // Test Back button

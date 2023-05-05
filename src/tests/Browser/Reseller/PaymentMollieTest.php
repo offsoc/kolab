@@ -51,8 +51,9 @@ class PaymentMollieTest extends TestCaseDusk
             $wallet->balance = 0;
             $wallet->save();
 
-            $browser->visit(new Home())
-                ->submitLogon($user->email, \App\Utils::generatePassphrase(), true, ['paymentProvider' => 'mollie'])
+            $browser->withConfig(['services.payment_provider' => 'mollie'])
+                ->visit(new Home())
+                ->submitLogon($user->email, \App\Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())

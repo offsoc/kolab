@@ -47,8 +47,9 @@ class PaymentStripeTest extends TestCaseDusk
         ]);
 
         $this->browse(function (Browser $browser) use ($user) {
-            $browser->visit(new Home())
-                ->submitLogon('payment-test@kolabnow.com', 'simple123', true, ['paymentProvider' => 'stripe'])
+            $browser->withConfig(['services.payment_provider' => 'stripe'])
+                ->visit(new Home())
+                ->submitLogon('payment-test@kolabnow.com', 'simple123', true)
                 ->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
@@ -108,8 +109,9 @@ class PaymentStripeTest extends TestCaseDusk
 
         // Test creating auto-payment
         $this->browse(function (Browser $browser) use ($user) {
-            $browser->visit(new Home())
-                ->submitLogon('payment-test@kolabnow.com', 'simple123', true, ['paymentProvider' => 'stripe'])
+            $browser->withConfig(['services.payment_provider' => 'stripe'])
+                ->visit(new Home())
+                ->submitLogon('payment-test@kolabnow.com', 'simple123', true)
                 ->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
@@ -163,7 +165,7 @@ class PaymentStripeTest extends TestCaseDusk
                 ->assertSeeIn('@email', $user->email)
                 ->submitValidCreditCard()
                 ->waitForLocation('/wallet', 30) // need more time than default 5 sec.
-                ->visit('/wallet?paymentProvider=stripe')
+                ->visit('/wallet')
                 ->waitFor('#mandate-info')
                 ->assertPresent('#mandate-info p:first-child')
                 ->assertSeeIn(

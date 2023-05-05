@@ -46,7 +46,7 @@ class PaymentCoinbaseTest extends TestCaseDusk
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser->visit(new Home())
-                ->submitLogon('payment-test@kolabnow.com', 'simple123', true, ['paymentProvider' => 'mollie'])
+                ->submitLogon('payment-test@kolabnow.com', 'simple123', true)
                 ->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())

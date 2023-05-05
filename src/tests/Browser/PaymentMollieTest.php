@@ -47,8 +47,9 @@ class PaymentMollieTest extends TestCaseDusk
         ]);
 
         $this->browse(function (Browser $browser) use ($user) {
-            $browser->visit(new Home())
-                ->submitLogon('payment-test@kolabnow.com', 'simple123', true, ['paymentProvider' => 'mollie'])
+            $browser->withConfig(['services.payment_provider' => 'mollie'])
+                ->visit(new Home())
+                ->submitLogon('payment-test@kolabnow.com', 'simple123', true)
                 ->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
@@ -101,8 +102,9 @@ class PaymentMollieTest extends TestCaseDusk
         ]);
 
         $this->browse(function (Browser $browser) use ($user) {
-            $browser->visit(new Home())
-                ->submitLogon('payment-test@kolabnow.com', 'simple123', true, ['paymentProvider' => 'mollie'])
+            $browser->withConfig(['services.payment_provider' => 'mollie'])
+                ->visit(new Home())
+                ->submitLogon('payment-test@kolabnow.com', 'simple123', true)
                 ->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
@@ -155,7 +157,7 @@ class PaymentMollieTest extends TestCaseDusk
                 ->assertMissing('@amount')
                 ->submitPayment()
                 ->waitForLocation('/wallet')
-                ->visit('/wallet?paymentProvider=mollie')
+                ->visit('/wallet')
                 ->waitFor('#mandate-info')
                 ->assertPresent('#mandate-info p:first-child')
                 ->assertSeeIn(
@@ -252,7 +254,7 @@ class PaymentMollieTest extends TestCaseDusk
                 ->on(new PaymentMollie())
                 ->submitPayment('open')
                 ->waitForLocation('/wallet')
-                ->visit('/wallet?paymentProvider=mollie')
+                ->visit('/wallet')
                 ->on(new WalletPage())
                 ->assertSeeIn(
                     '#mandate-info .alert-warning',
@@ -285,7 +287,7 @@ class PaymentMollieTest extends TestCaseDusk
                 ->on(new PaymentMollie())
                 ->submitPayment('failed')
                 ->waitForLocation('/wallet')
-                ->visit('/wallet?paymentProvider=mollie')
+                ->visit('/wallet')
                 ->on(new WalletPage())
                 ->waitFor('#mandate-form .alert-danger')
                 ->assertSeeIn(

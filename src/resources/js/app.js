@@ -366,10 +366,6 @@ loadLangAsync().then(() => app.$mount('#app'))
 // Add a axios request interceptor
 axios.interceptors.request.use(
     config => {
-        // This is the only way I found to change configuration options
-        // on a running application. We need this for browser testing.
-        config.headers['X-Test-Payment-Provider'] = window.config.paymentProvider
-
         // Set the Authorization header. Note that some request might force
         // empty Authorization header therefore we check if the header is already set,
         // not whether it's empty
