@@ -5,6 +5,7 @@ for repo in roundcubemail syncroton iRony chwala autoconf freebusy
 do
     if [ -d /src.orig/$directory ]; then
         rsync -av \
+            --no-links \
             --exclude=vendor \
             --exclude=temp \
             --exclude=config \
