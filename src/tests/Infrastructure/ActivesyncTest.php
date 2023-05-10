@@ -2,6 +2,7 @@
 
 namespace Tests\Infrastructure;
 
+use App\Backends\Roundcube;
 use Tests\TestCase;
 use Illuminate\Support\Str;
 
@@ -31,6 +32,33 @@ class ActivesyncTest extends TestCase
         return $decoder->decode();
     }
 
+    private function request($request, $cmd)
+    {
+        $user = self::$user;
+        $deviceId = self::$deviceId;
+        $body = self::toWbxml($request);
+        return self::$client->request(
+            'POST',
+            "?Cmd={$cmd}&User={$user->email}&DeviceId={$deviceId}&DeviceType=iphone",
+            [
+                'headers' => [
+                    "Content-Type" => "application/vnd.ms-sync.wbxml",
+                    'MS-ASProtocolVersion' => "14.0"
+                ],
+                'body' => $body
+            ]
+        );
+    }
+
+    private function xpath($dom)
+    {
+        $xpath = new \DOMXpath($dom);
+        $xpath->registerNamespace("ns", $dom->documentElement->namespaceURI);
+        $xpath->registerNamespace("Tasks", "uri:Tasks");
+        return $xpath;
+    }
+
+
     /**
      * {@inheritDoc}
      */
@@ -59,6 +87,12 @@ class ActivesyncTest extends TestCase
                     '/private/vendor/kolab/activesync' => "{\"FOLDER\":{\"{$deviceId}\":{\"S\":1}}}"
                 ],
             ],
+            'Tasks' => [
+                'metadata' => [
+                    '/private/vendor/kolab/folder-type' => 'task.default',
+                    '/private/vendor/kolab/activesync' => "{\"FOLDER\":{\"{$deviceId}\":{\"S\":1}}}"
+                ],
+            ],
             'Contacts' => [
                 'metadata' => [
                     '/private/vendor/kolab/folder-type' => 'contact.default',
@@ -69,6 +103,8 @@ class ActivesyncTest extends TestCase
 
         if (!self::$user) {
             self::$user = $this->getTestUser('activesynctest@kolab.org', ['password' => 'simple123'], true);
+            //FIXME this shouldn't be required, but it seems to be.
+            Roundcube::dbh()->table('kolab_cache_task')->truncate();
         }
         if (!self::$client) {
             self::$client = new \GuzzleHttp\Client([
@@ -97,8 +133,6 @@ class ActivesyncTest extends TestCase
 
     public function testList()
     {
-        $user = self::$user;
-        $deviceId = self::$deviceId;
         $request = <<<EOF
         <?xml version="1.0" encoding="utf-8"?>
         <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
@@ -106,18 +140,8 @@ class ActivesyncTest extends TestCase
             <SyncKey>0</SyncKey>
         </FolderSync>
         EOF;
-        $body = self::toWbxml($request);
-        $response = self::$client->request(
-            'POST',
-            "?Cmd=FolderSync&User={$user->email}&DeviceId={$deviceId}&DeviceType=iphone",
-            [
-                'headers' => [
-                    "Content-Type" => "application/vnd.ms-sync.wbxml",
-                    'MS-ASProtocolVersion' => "14.0"
-                ],
-                'body' => $body
-            ]
-        );
+
+        $response = $this->request($request, 'FolderSync');
         $this->assertEquals(200, $response->getStatusCode());
         $dom = self::fromWbxml($response->getBody());
         $xml = $dom->saveXML();
@@ -128,6 +152,7 @@ class ActivesyncTest extends TestCase
         $this->assertStringContainsString($inboxId, $xml);
         $this->assertStringContainsString('Drafts', $xml);
         $this->assertStringContainsString('Calendar', $xml);
+        $this->assertStringContainsString('Tasks', $xml);
         $this->assertStringContainsString('Contacts', $xml);
 
         // Find the inbox for the next step
@@ -142,8 +167,6 @@ class ActivesyncTest extends TestCase
     */
     public function testInitialSync($inboxId)
     {
-        $user = self::$user;
-        $deviceId = self::$deviceId;
         $request = <<<EOF
         <?xml version="1.0" encoding="utf-8"?>
         <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
@@ -167,18 +190,8 @@ class ActivesyncTest extends TestCase
             <WindowSize>16</WindowSize>
         </Sync>
         EOF;
-        $body = self::toWbxml($request);
-        $response = self::$client->request(
-            'POST',
-            "?Cmd=Sync&User={$user->email}&DeviceId={$deviceId}&DeviceType=iphone",
-            [
-                'headers' => [
-                    "Content-Type" => "application/vnd.ms-sync.wbxml",
-                    'MS-ASProtocolVersion' => "14.0"
-                ],
-                'body' => $body
-            ]
-        );
+
+        $response = $this->request($request, 'Sync');
         $this->assertEquals(200, $response->getStatusCode());
         $dom = self::fromWbxml($response->getBody());
         $status = $dom->getElementsByTagName('Status');
@@ -192,6 +205,430 @@ class ActivesyncTest extends TestCase
         $this->assertEquals("1", $collection->childNodes->item(1)->nodeValue);
         $this->assertEquals("Status", $collection->childNodes->item(3)->nodeName);
         $this->assertEquals("1", $collection->childNodes->item(3)->nodeValue);
+        return $inboxId;
+    }
+
+    /**
+    * @depends testInitialSync
+    */
+    public function testAdd($inboxId)
+    {
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>1</SyncKey>
+                    <CollectionId>{$inboxId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>0</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+        // We expect an empty response without a change
+        $this->assertEquals(0, $response->getBody()->getSize());
+    }
+
+    /**
+    * @depends testList
+    */
+    public function testSyncTasks()
+    {
+        $tasksId = "90335880f65deff6e521acea2b71a773";
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>0</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>0</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>1</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>0</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        return $tasksId;
+    }
+
+    /**
+    * @depends testSyncTasks
+    */
+    public function testAddTask($tasksId)
+    {
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Tasks="uri:Tasks">
+            <Collections>
+                <Collection>
+                    <SyncKey>1</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <Commands>
+                        <Add>
+                            <ClientId>clientId1</ClientId>
+                            <ApplicationData>
+                                <Subject xmlns="uri:Tasks">task1</Subject>
+                                <Complete xmlns="uri:Tasks">0</Complete>
+                                <DueDate xmlns="uri:Tasks">2020-11-04T00:00:00.000Z</DueDate>
+                                <UtcDueDate xmlns="uri:Tasks">2020-11-03T23:00:00.000Z</UtcDueDate>
+                            </ApplicationData>
+                        </Add>
+                    </Commands>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        $status = $dom->getElementsByTagName('Status');
+        $this->assertEquals("1", $status[0]->nodeValue);
+        $collections = $dom->getElementsByTagName('Collection');
+        $this->assertEquals(1, $collections->length);
+        $collection = $collections->item(0);
+        $this->assertEquals("Class", $collection->childNodes->item(0)->nodeName);
+        $this->assertEquals("Tasks", $collection->childNodes->item(0)->nodeValue);
+
+        $this->assertEquals("SyncKey", $collection->childNodes->item(1)->nodeName);
+        $this->assertEquals("2", $collection->childNodes->item(1)->nodeValue);
+
+        $this->assertEquals("Status", $collection->childNodes->item(3)->nodeName);
+        $this->assertEquals("1", $collection->childNodes->item(3)->nodeValue);
+
+        $xpath = $this->xpath($dom);
+        $add = $xpath->query("//ns:Responses/ns:Add");
+        $this->assertEquals(1, $add->length);
+        $this->assertEquals("clientId1", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(0)->nodeValue);
+        $this->assertEquals(0, $xpath->query("//ns:Commands")->length);
+        return [
+            'collectionId' => $tasksId,
+            'serverId1' => $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(0)->nodeValue
+        ];
+    }
+
+    /**
+    * Re-issuing the same command should not result in the sync key being invalidated.
+    *
+    * @depends testAddTask
+    */
+    public function testReAddTask($result)
+    {
+        $tasksId = $result['collectionId'];
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Tasks="uri:Tasks">
+            <Collections>
+                <Collection>
+                    <SyncKey>1</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <Commands>
+                        <Add>
+                            <ClientId>clientId1</ClientId>
+                            <ApplicationData>
+                                <Subject xmlns="uri:Tasks">task1</Subject>
+                                <Complete xmlns="uri:Tasks">0</Complete>
+                                <DueDate xmlns="uri:Tasks">2020-11-04T00:00:00.000Z</DueDate>
+                                <UtcDueDate xmlns="uri:Tasks">2020-11-03T23:00:00.000Z</UtcDueDate>
+                            </ApplicationData>
+                        </Add>
+                    </Commands>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        $status = $dom->getElementsByTagName('Status');
+        $this->assertEquals("1", $status[0]->nodeValue);
+        $collections = $dom->getElementsByTagName('Collection');
+        $this->assertEquals(1, $collections->length);
+        $collection = $collections->item(0);
+        $this->assertEquals("Class", $collection->childNodes->item(0)->nodeName);
+        $this->assertEquals("Tasks", $collection->childNodes->item(0)->nodeValue);
+
+        $this->assertEquals("SyncKey", $collection->childNodes->item(1)->nodeName);
+        $this->assertEquals("2", $collection->childNodes->item(1)->nodeValue);
+
+        $this->assertEquals("Status", $collection->childNodes->item(3)->nodeName);
+        $this->assertEquals("1", $collection->childNodes->item(3)->nodeValue);
+
+        $xpath = $this->xpath($dom);
+        $add = $xpath->query("//ns:Responses/ns:Add");
+        $this->assertEquals(1, $add->length);
+        $this->assertEquals("clientId1", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(0)->nodeValue);
+        $this->assertEquals(0, $xpath->query("//ns:Commands")->length);
+        return [
+            'collectionId' => $tasksId,
+            'serverId1' => $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(0)->nodeValue
+        ];
+    }
+
+    /**
+    * Make sure we can continue with the sync after the previous hickup, also include a modification.
+    *
+    * @depends testAddTask
+    */
+    public function testAddTaskContinued($result)
+    {
+        $tasksId = $result['collectionId'];
+        $serverId = $result['serverId1'];
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Tasks="uri:Tasks">
+            <Collections>
+                <Collection>
+                    <SyncKey>2</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <Commands>
+                        <Add>
+                            <ClientId>clientId2</ClientId>
+                            <ApplicationData>
+                                <Subject xmlns="uri:Tasks">task2</Subject>
+                                <Complete xmlns="uri:Tasks">0</Complete>
+                                <DueDate xmlns="uri:Tasks">2020-11-04T00:00:00.000Z</DueDate>
+                                <UtcDueDate xmlns="uri:Tasks">2020-11-03T23:00:00.000Z</UtcDueDate>
+                            </ApplicationData>
+                        </Add>
+                        <Add>
+                            <ClientId>clientId3</ClientId>
+                            <ApplicationData>
+                                <Subject xmlns="uri:Tasks">task3</Subject>
+                                <Complete xmlns="uri:Tasks">0</Complete>
+                                <DueDate xmlns="uri:Tasks">2020-11-04T00:00:00.000Z</DueDate>
+                                <UtcDueDate xmlns="uri:Tasks">2020-11-03T23:00:00.000Z</UtcDueDate>
+                            </ApplicationData>
+                        </Add>
+                        <Change>
+                            <ServerId>{$serverId}</ServerId>
+                            <ApplicationData>
+                                <Subject xmlns="uri:Tasks">task4</Subject>
+                            </ApplicationData>
+                        </Change>
+                    </Commands>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        $status = $dom->getElementsByTagName('Status');
+        $this->assertEquals("1", $status[0]->nodeValue);
+        $collections = $dom->getElementsByTagName('Collection');
+        $this->assertEquals(1, $collections->length);
+        $collection = $collections->item(0);
+        $this->assertEquals("Class", $collection->childNodes->item(0)->nodeName);
+        $this->assertEquals("Tasks", $collection->childNodes->item(0)->nodeValue);
+
+        $this->assertEquals("SyncKey", $collection->childNodes->item(1)->nodeName);
+        $this->assertEquals("3", $collection->childNodes->item(1)->nodeValue);
+
+        $this->assertEquals("Status", $collection->childNodes->item(3)->nodeName);
+        $this->assertEquals("1", $collection->childNodes->item(3)->nodeValue);
+
+        $xpath = $this->xpath($dom);
+        $add = $xpath->query("//ns:Responses/ns:Add");
+        $this->assertEquals(2, $add->length);
+        $this->assertEquals("clientId2", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(0)->nodeValue);
+        $this->assertEquals("clientId3", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(1)->nodeValue);
+        $this->assertEquals(0, $xpath->query("//ns:Commands")->length);
+
+        // The server does not have to inform about a successful change
+        $change = $xpath->query("//ns:Responses/ns:Change");
+        $this->assertEquals(0, $change->length);
+
+        return [
+            'collectionId' => $tasksId,
+            'serverId1' => $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(0)->nodeValue,
+            'serverId2' => $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(1)->nodeValue
+        ];
+    }
+
+    /**
+    * Perform another duplicate request.
+    *
+    * @depends testAddTaskContinued
+    */
+    public function testAddTaskContinuedAgain($result)
+    {
+        $tasksId = $result['collectionId'];
+        $serverId = $result['serverId1'];
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Tasks="uri:Tasks">
+            <Collections>
+                <Collection>
+                    <SyncKey>2</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <Commands>
+                        <Add>
+                            <ClientId>clientId2</ClientId>
+                            <ApplicationData>
+                                <Subject xmlns="uri:Tasks">task2</Subject>
+                                <Complete xmlns="uri:Tasks">0</Complete>
+                                <DueDate xmlns="uri:Tasks">2020-11-04T00:00:00.000Z</DueDate>
+                                <UtcDueDate xmlns="uri:Tasks">2020-11-03T23:00:00.000Z</UtcDueDate>
+                            </ApplicationData>
+                        </Add>
+                        <Add>
+                            <ClientId>clientId3</ClientId>
+                            <ApplicationData>
+                                <Subject xmlns="uri:Tasks">task3</Subject>
+                                <Complete xmlns="uri:Tasks">0</Complete>
+                                <DueDate xmlns="uri:Tasks">2020-11-04T00:00:00.000Z</DueDate>
+                                <UtcDueDate xmlns="uri:Tasks">2020-11-03T23:00:00.000Z</UtcDueDate>
+                            </ApplicationData>
+                        </Add>
+                        <Change>
+                            <ServerId>{$serverId}</ServerId>
+                            <ApplicationData>
+                                <Subject xmlns="uri:Tasks">task4</Subject>
+                            </ApplicationData>
+                        </Change>
+                    </Commands>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        $status = $dom->getElementsByTagName('Status');
+        $this->assertEquals("1", $status[0]->nodeValue);
+        $collections = $dom->getElementsByTagName('Collection');
+        $this->assertEquals(1, $collections->length);
+        $collection = $collections->item(0);
+        $this->assertEquals("Class", $collection->childNodes->item(0)->nodeName);
+        $this->assertEquals("Tasks", $collection->childNodes->item(0)->nodeValue);
+
+        $this->assertEquals("SyncKey", $collection->childNodes->item(1)->nodeName);
+        $this->assertEquals("3", $collection->childNodes->item(1)->nodeValue);
+
+        $this->assertEquals("Status", $collection->childNodes->item(3)->nodeName);
+        $this->assertEquals("1", $collection->childNodes->item(3)->nodeValue);
+
+        $xpath = $this->xpath($dom);
+        print($dom->saveXML());
+        $add = $xpath->query("//ns:Responses/ns:Add");
+        $this->assertEquals(2, $add->length);
+
+        $this->assertEquals("clientId2", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(0)->nodeValue);
+        $this->assertEquals($result['serverId1'], $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(0)->nodeValue);
+
+        $this->assertEquals("clientId3", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(1)->nodeValue);
+        $this->assertEquals($result['serverId2'], $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(1)->nodeValue);
+
+        // The server does not have to inform about a successful change
+        $change = $xpath->query("//ns:Responses/ns:Change");
+        $this->assertEquals(0, $change->length);
+
+        $this->assertEquals(0, $xpath->query("//ns:Commands")->length);
+        return $tasksId;
+    }
+
+    /**
+    * Test a sync key that shouldn't exist yet.
+    * @depends testSyncTasks
+    */
+    public function testInvalidSyncKey($tasksId)
+    {
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Tasks="uri:Tasks">
+            <Collections>
+                <Collection>
+                    <SyncKey>4</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <Commands>
+                        <Add>
+                            <ClientId>clientId999</ClientId>
+                            <ApplicationData>
+                                <Subject xmlns="uri:Tasks">task1</Subject>
+                                <Complete xmlns="uri:Tasks">0</Complete>
+                                <DueDate xmlns="uri:Tasks">2020-11-04T00:00:00.000Z</DueDate>
+                                <UtcDueDate xmlns="uri:Tasks">2020-11-03T23:00:00.000Z</UtcDueDate>
+                            </ApplicationData>
+                        </Add>
+                    </Commands>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        $status = $dom->getElementsByTagName('Status');
+        $this->assertEquals("3", $status[0]->nodeValue);
     }
 
     /**
