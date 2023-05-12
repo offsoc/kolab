@@ -364,6 +364,13 @@ class SignupController extends Controller
         $login = Str::lower($request->login);
         $domain_name = Str::lower($request->domain);
         $domain = null;
+        $user_status = User::STATUS_RESTRICTED;
+
+        if ($request->discount && $request->discount->discount == 100
+            && $request->plan->mode == Plan::MODE_MANDATE
+        ) {
+            $user_status = User::STATUS_ACTIVE;
+        }
 
         DB::beginTransaction();
 
@@ -379,7 +386,7 @@ class SignupController extends Controller
         $user = User::create([
                 'email' => $login . '@' . $domain_name,
                 'password' => $request->password,
-                'status' => User::STATUS_RESTRICTED,
+                'status' => $user_status,
         ]);
 
         if ($request->discount) {
@@ -435,6 +442,15 @@ class SignupController extends Controller
         $disc = 0;
 
         if ($discount) {
+            // Free accounts don't need the auto-payment mandate
+            // Note: This means the voucher code is the only point of user verification
+            if ($discount->discount == 100) {
+                return [
+                    'content' => self::trans('app.signup-account-free'),
+                    'cost' => 0,
+                ];
+            }
+
             $planCost = (int) ($planCost * (100 - $discount->discount) / 100);
             $disc = $cost - $planCost;
         }
@@ -513,6 +529,7 @@ class SignupController extends Controller
         $result['title'] = self::trans("app.signup-plan-{$period}");
         $result['content'] = self::trans('app.signup-account-mandate', $params);
         $result['summary'] = '<table>' . $summary . '</table>';
+        $result['cost'] = $planCost;
 
         return $result;
     }

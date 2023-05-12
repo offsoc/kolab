@@ -132,6 +132,7 @@ return [
 
     'signup-account-mandate' => 'Now it is required to provide your credit card details.'
         . ' This way you agree to charge you with an appropriate amount of money according to the plan you signed up for.',
+    'signup-account-free' => 'You are signing up for an account with 100% discount. You will be redirected immediately to your Dashboard.',
     'signup-plan-monthly' => 'You are choosing a monthly subscription.',
     'signup-plan-yearly' => 'You are choosing a yearly subscription.',
     'signup-subscription-monthly' => 'Monthly subscription',

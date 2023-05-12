@@ -102,7 +102,7 @@
         </div>
 
         <div class="card d-none border-0" id="step4">
-            <div class="card-body row row-cols-lg-2 align-items-center">
+            <div v-if="checkout.cost" class="card-body row row-cols-lg-2 align-items-center">
                 <h4 class="card-title text-center mb-4 col-lg-5">{{ $t('signup.created') }}</h4>
                 <div class="card-text mb-4 col-lg-7">
                     <div class="card internal" id="summary">
@@ -122,6 +122,16 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+            <div v-else class="card-body">
+                <h4 class="card-title mb-4">{{ $t('signup.created') }}</h4>
+                <div class="card-text mb-4" id="summary">
+                    <p id="summary-content">{{ checkout.content }}</p>
+                    <form>
+                       <btn class="btn-secondary me-2" @click="stepBack">{{ $t('btn.back') }}</btn>
+                       <btn class="btn-primary" @click="submitStep4">{{ $t('btn.subscribe') }}</btn>
+                    </form>
                 </div>
             </div>
         </div>
@@ -340,10 +350,10 @@
                 const post = this.lastStepPostData()
 
                 axios.post('/api/auth/signup', post).then(response => {
-                    // auto-login and goto to the payment checkout
-                    this.$root.loginUser(response.data, false)
-
                     let checkout = response.data.checkout
+
+                    // auto-login and goto to the payment checkout (or Dashboard for a free account)
+                    this.$root.loginUser(response.data, !checkout.id && !checkout.redirectUrl)
 
                     if (checkout.redirectUrl) {
                         location.href = checkout.redirectUrl

@@ -977,7 +977,7 @@ class SignupTest extends TestCase
         VatRate::create([
                 'country' => 'CH',
                 'rate' => 7.7,
-                'start' => now()->subSecond(),
+                'start' => now()->copy()->subDay(),
         ]);
 
         IP4Net::create([

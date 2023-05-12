@@ -46,6 +46,7 @@ class SignupTest extends TestCaseDusk
         SignupInvitation::truncate();
 
         Plan::whereNot('mode', Plan::MODE_EMAIL)->update(['mode' => Plan::MODE_EMAIL]);
+        Discount::where('discount', 100)->update(['code' => null]);
 
         @unlink(storage_path('signup-tokens.txt'));
 
@@ -563,9 +564,9 @@ class SignupTest extends TestCaseDusk
                     $browser->assertSeeIn('h4', 'The account is about to be created!')
                         ->assertSeeIn('h5', 'You are choosing a monthly subscription')
                         ->assertVisible('#summary-content')
-                        ->assertElementsCount('#summary-cc svg', 2)
-                        ->assertElementsCount('#summary-summary tr', 4)
-                        ->assertSeeIn('button.btn-primary', 'Continue')
+                        ->assertElementsCount('#summary-content + p.credit-cards img', 2)
+                        ->assertVisible('#summary-summary')
+                        ->assertSeeIn('button.btn-primary', 'Subscribe')
                         ->assertSeeIn('button.btn-secondary', 'Back')
                         ->click('button.btn-secondary');
                 })
@@ -613,6 +614,57 @@ class SignupTest extends TestCaseDusk
         });
 
         // TODO: Test the 'Try again' button on /payment/status page
+    }
+
+    /**
+     * Test signup with a mandate plan with a discount=100%
+     */
+    public function testSignupMandateDiscount100Percent(): void
+    {
+        // Test the individual plan
+        $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
+        $plan->mode = Plan::MODE_MANDATE;
+        $plan->save();
+
+        $discount = Discount::where('discount', 100)->first();
+        $discount->code = 'FREE';
+        $discount->save();
+
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new Signup())
+                ->waitFor('@step0 .plan-individual button')
+                ->click('@step0 .plan-individual button')
+                ->whenAvailable('@step0', function ($browser) {
+                    $browser->click('.plan-individual button');
+                })
+                ->whenAvailable('@step3', function ($browser) {
+                    $browser->type('#signup_login', 'signuptestdusk')
+                        ->type('#signup_password', '12345678')
+                        ->type('#signup_password_confirmation', '12345678')
+                        ->type('#signup_voucher', 'FREE')
+                        ->click('[type=submit]');
+                })
+                ->whenAvailable('@step4', function ($browser) {
+                    $browser->assertSeeIn('h4', 'The account is about to be created!')
+                        ->assertSeeIn('#summary-content', 'You are signing up for an account with 100% discount.')
+                        ->assertMissing('#summary-summary')
+                        ->assertSeeIn('button.btn-primary', 'Subscribe')
+                        ->assertSeeIn('button.btn-secondary', 'Back')
+                        ->click('button.btn-primary');
+                })
+                ->waitUntilMissing('@step4')
+                ->on(new Dashboard())
+                ->within(new Menu(), function ($browser) {
+                    $browser->clickMenuItem('logout');
+                });
+        });
+
+        $user = User::where('email', 'signuptestdusk@' . \config('app.domain'))->first();
+
+        $this->assertSame($plan->id, $user->getSetting('plan_id'));
+        $this->assertTrue($user->isActive());
+        $this->assertFalse($user->isRestricted());
+        $this->assertSame($discount->id, $user->wallets->first()->discount_id);
     }
 
     /**
