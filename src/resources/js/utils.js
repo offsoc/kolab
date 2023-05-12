@@ -125,9 +125,62 @@ const stopLoading = (element) => {
     }
 }
 
+let stripe = null
+
+const stripeInit = (callback) => {
+    let script = $('#stripe-script')
+
+    if (!script.length) {
+        script = document.createElement('script')
+
+        script.id = 'stripe-script'
+        script.src = 'https://js.stripe.com/v3/'
+        script.onload = () => {
+            stripe = Stripe(window.config.stripePK)
+            callback()
+        }
+
+        document.getElementsByTagName('head')[0].appendChild(script)
+    } else {
+        stripe = Stripe(window.config.stripePK)
+        callback()
+    }
+}
+
+/**
+ * Executes payment checkout.
+ *
+ * @param object Vue component object
+ * @param array  Payment request parameters (Response from the payments API)
+ *
+ * @return bool Returns false if no supported checkout method is requested, True otherwise
+ */
+const paymentCheckout = (component, data) => {
+    if (data.redirectUrl) {
+        location.href = data.redirectUrl
+    } else if (data.newWindowUrl) {
+        window.open(data.newWindowUrl, '_blank')
+    } else if (data.id) {
+        stripeInit(() => {
+            stripe.redirectToCheckout({ sessionId: data.id }).then(result => {
+                // If it fails due to a browser or network error,
+                // display the localized error message to the user
+                if (result.error) {
+                    component.$toast.error(result.error.message)
+                }
+            })
+        })
+    } else {
+        return false
+    }
+
+    return true
+}
+
 export {
     clearFormValidation,
     downloadFile,
+    paymentCheckout,
     pick,
     startLoading,
     stopLoading

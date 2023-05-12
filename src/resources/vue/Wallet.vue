@@ -154,7 +154,7 @@
     import ModalDialog from './Widgets/ModalDialog'
     import TransactionLog from './Widgets/TransactionLog'
     import PaymentLog from './Widgets/PaymentLog'
-    import { downloadFile } from '../js/utils'
+    import { downloadFile, paymentCheckout } from '../js/utils'
 
     import { library } from '@fortawesome/fontawesome-svg-core'
 
@@ -180,7 +180,6 @@
                 paymentForm: null,
                 nextForm: null,
                 receipts: [],
-                stripe: null,
                 loadTransactions: false,
                 loadPayments: false,
                 showPendingPayments: false,
@@ -231,10 +230,6 @@
                         .then(response => {
                             this.receipts = response.data.list
                         })
-
-                    if (this.wallet.provider == 'stripe') {
-                        this.stripeInit()
-                    }
                 })
                 .catch(this.$root.errorHandler)
 
@@ -295,14 +290,8 @@
 
                 axios.post('/api/v4/payments', post, { onFinish })
                     .then(response => {
-                        if (response.data.redirectUrl) {
-                            location.href = response.data.redirectUrl
-                        } else if (response.data.newWindowUrl) {
-                            window.open(response.data.newWindowUrl, '_blank')
-                            this.$refs.paymentDialog.hide();
-                        } else {
-                            this.stripeCheckout(response.data)
-                        }
+                        paymentCheckout(this, response.data)
+                        this.$refs.paymentDialog.hide();
                     })
             },
             autoPayment() {
@@ -333,11 +322,7 @@
                         if (method == 'post') {
                             this.mandate.id = null
                             // a new mandate, redirect to the chackout page
-                            if (response.data.redirectUrl) {
-                                location.href = response.data.redirectUrl
-                            } else if (response.data.id) {
-                                this.stripeCheckout(response.data)
-                            }
+                            paymentCheckout(this, response.data)
                         } else {
                             // an update
                             if (response.data.status == 'success') {
@@ -393,39 +378,6 @@
             receiptDownload() {
                 const receipt = $('#receipt-id').val()
                 downloadFile('/api/v4/wallets/' + this.walletId + '/receipts/' + receipt)
-            },
-            stripeInit() {
-                let script = $('#stripe-script')
-
-                if (!script.length) {
-                    script = document.createElement('script')
-
-                    script.onload = () => {
-                        this.stripe = Stripe(window.config.stripePK)
-                    }
-
-                    script.id = 'stripe-script'
-                    script.src = 'https://js.stripe.com/v3/'
-
-                    document.getElementsByTagName('head')[0].appendChild(script)
-                } else {
-                    this.stripe = Stripe(window.config.stripePK)
-                }
-            },
-            stripeCheckout(data) {
-                if (!this.stripe) {
-                    return
-                }
-
-                this.stripe.redirectToCheckout({
-                    sessionId: data.id
-                }).then(result => {
-                    // If it fails due to a browser or network error,
-                    // display the localized error message to the user
-                    if (result.error) {
-                        this.$toast.error(result.error.message)
-                    }
-                })
             }
         }
     }

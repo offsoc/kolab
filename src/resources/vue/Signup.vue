@@ -129,8 +129,8 @@
                 <div class="card-text mb-4" id="summary">
                     <p id="summary-content">{{ checkout.content }}</p>
                     <form>
-                       <btn class="btn-secondary me-2" @click="stepBack">{{ $t('btn.back') }}</btn>
-                       <btn class="btn-primary" @click="submitStep4">{{ $t('btn.subscribe') }}</btn>
+                        <btn class="btn-secondary me-2" @click="stepBack">{{ $t('btn.back') }}</btn>
+                        <btn class="btn-primary" @click="submitStep4">{{ $t('btn.subscribe') }}</btn>
                     </form>
                 </div>
             </div>
@@ -140,6 +140,7 @@
 
 <script>
     import PasswordInput from './Widgets/PasswordInput'
+    import { paymentCheckout } from '../js/utils'
 
     import { library } from '@fortawesome/fontawesome-svg-core'
 
@@ -353,13 +354,7 @@
                     let checkout = response.data.checkout
 
                     // auto-login and goto to the payment checkout (or Dashboard for a free account)
-                    this.$root.loginUser(response.data, !checkout.id && !checkout.redirectUrl)
-
-                    if (checkout.redirectUrl) {
-                        location.href = checkout.redirectUrl
-                    } else if (checkout.id) {
-                        // TODO: this.stripeCheckout(checkout)
-                    }
+                    this.$root.loginUser(response.data, !paymentCheckout(this, checkout))
                 })
             },
             // Moves the user a step back in registration form
