@@ -24,7 +24,7 @@ RUN rpm --import https://mirror.apheleia-it.ch/repos/Kolab:/16/key.asc && \
     rpm -Uvh https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el8.rpm
 RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
     dnf config-manager --enable kolab-16-testing &&\
-    dnf -y --setopt tsflags= install kolab patch &&\
+    dnf -y --setopt tsflags= install kolab kolab-webadmin patch &&\
     dnf clean all
 
 COPY kolab-init.service /etc/systemd/system/kolab-init.service
@@ -67,11 +67,19 @@ RUN sed -i -r \
     -e "s|IMAP_ADMIN_PASSWORD|$IMAP_ADMIN_PASSWORD|g" \
     /etc/kolab/kolab.conf
 
+RUN sed -i -r \
+    -e "s|LDAP_HOST|$LDAP_HOST|g" \
+    -e "s|LDAP_SERVICE_BIND_PW|$LDAP_SERVICE_BIND_PW|g" \
+    /etc/postfix/ldap/*
+
 RUN mkdir -p /imapdata/{spool,lib} && \
     rm -rf /var/spool/imap && ln -s /imapdata/spool /var/spool/imap && \
     mv /var/lib/imap /var/lib/imap-bak && ln -s /imapdata/lib /var/lib/imap && \
     chmod -R 777 /imapdata && \
     chown cyrus:mail /var/spool/imap /var/lib/imap
+
+RUN dnf -y install selinux-policy-minimum
+RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=disabled/g' /etc/selinux/config 2>/dev/null || :
 
 VOLUME [ "/sys/fs/cgroup" ]
 VOLUME [ "/imapdata" ]

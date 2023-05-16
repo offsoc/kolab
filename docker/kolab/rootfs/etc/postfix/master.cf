@@ -109,7 +109,7 @@ sender_policy_incoming unix     -       n       n       -       -       spawn
 submission_policy   unix        -       n       n       -       -       spawn
     user=kolab-n argv=/usr/libexec/postfix/kolab_smtp_access_policy --verify-sender --verify-recipient
 
-127.0.0.1:10587     inet        n       -       n       -       -       smtpd
+0.0.0.0:10587     inet        n       -       n       -       -       smtpd
     -o cleanup_service_name=cleanup_submission
     -o syslog_name=postfix/submission
     #-o smtpd_tls_security_level=encrypt
@@ -120,7 +120,7 @@ submission_policy   unix        -       n       n       -       -       spawn
     -o smtpd_recipient_restrictions=$submission_recipient_restrictions
     -o smtpd_sender_restrictions=$submission_sender_restrictions
 
-127.0.0.1:10465     inet        n       -       n       -       -       smtpd
+0.0.0.0:10465     inet        n       -       n       -       -       smtpd
     -o cleanup_service_name=cleanup_submission
     -o rewrite_service_name=rewrite_submission
     -o syslog_name=postfix/smtps

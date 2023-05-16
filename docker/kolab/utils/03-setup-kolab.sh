@@ -19,6 +19,25 @@ done | tee -a /root/setup-kolab.log
 echo "OK!" | tee -a /root/setup-kolab.log
 
 
+# Initialize the db
+cat > /tmp/kolab-setup-my.cnf << EOF
+[client]
+host=${DB_HOST}
+user=root
+password=${DB_ROOT_PASSWORD}
+EOF
+
+mysql --defaults-file=/tmp/kolab-setup-my.cnf <<EOF
+CREATE DATABASE IF NOT EXISTS $DB_KOLAB_DATABASE;
+CREATE USER IF NOT EXISTS $DB_KOLAB_USERNAME@'%' IDENTIFIED BY '$DB_KOLAB_PASSWORD';
+ALTER USER $DB_KOLAB_USERNAME@'%' IDENTIFIED BY '$DB_KOLAB_PASSWORD';
+GRANT ALL PRIVILEGES ON $DB_KOLAB_DATABASE.* TO $DB_KOLAB_USERNAME@'%';
+FLUSH PRIVILEGES;
+EOF
+
+# We need the webadmin package for this file
+cat /usr/share/doc/kolab-webadmin/kolab_wap.sql | mysql --defaults-file=/tmp/kolab-setup-my.cnf "$DB_KOLAB_DATABASE"
+
 cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
 chown cyrus:mail /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
 

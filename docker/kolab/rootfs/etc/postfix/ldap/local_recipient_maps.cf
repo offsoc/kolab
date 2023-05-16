@@ -1,5 +1,5 @@
 
-server_host = 127.0.0.1
+server_host = LDAP_HOST
 server_port = 389
 version = 3
 search_base = dc=hosted,dc=com
@@ -8,7 +8,7 @@ scope = sub
 domain = ldap:/etc/postfix/ldap/mydestination.cf
 
 bind_dn = uid=kolab-service,ou=Special Users,dc=mgmt,dc=com
-bind_pw = 
+bind_pw = LDAP_SERVICE_BIND_PW
 
 query_filter = (&(|(mail=%s)(alias=%s))(|(objectclass=kolabinetorgperson)(|(objectclass=kolabgroupofuniquenames)(objectclass=kolabgroupofurls))(|(|(objectclass=groupofuniquenames)(objectclass=groupofurls))(objectclass=kolabsharedfolder))(objectclass=kolabsharedfolder))(!(inetuserstatus:1.2.840.113556.1.4.803:=4)))
 result_attribute = mail
