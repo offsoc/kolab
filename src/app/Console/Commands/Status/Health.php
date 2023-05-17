@@ -22,7 +22,8 @@ class Health extends Command
      *
      * @var string
      */
-    protected $signature = 'status:health {--check=*: Valid checks are DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates}';
+    protected $signature = 'status:health
+                            {--check=*: One of DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates}';
 
     /**
      * The console command description.
@@ -123,6 +124,7 @@ class Health extends Command
     {
         $urls = \config('meet.api_urls');
         $success = true;
+
         foreach ($urls as $url) {
             $this->line("Checking $url");
 
@@ -150,13 +152,14 @@ class Health extends Command
 
                 $response = $client->request('GET', "ping");
                 if ($response->getStatusCode() != 200) {
-                    $this->line("Backend {$url} not available. Status: {$response->getStatusCode()} Reason: {$response->getReasonPhrase()}");
+                    $code = $response->getStatusCode();
+                    $reason = $response->getReasonPhrase();
                     $success = false;
+                    $this->line("Backend {$url} not available. Status: {$code} Reason: {$reason}");
                 }
             } catch (\Exception $exception) {
-                $this->line("Backend {$url} not available:");
-                $this->line($exception);
                 $success = false;
+                $this->line("Backend {$url} not available. Error: {$exception}");
             }
         }
         return $success;

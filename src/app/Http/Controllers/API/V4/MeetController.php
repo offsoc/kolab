@@ -67,7 +67,8 @@ class MeetController extends Controller
         if (!$isOwner && strlen($password)) {
             $request_password = request()->input('password');
             if ($request_password !== $password) {
-                return $this->errorResponse(422, self::trans('meet.session-password-error'), $response + ['code' => 325]);
+                $response['code'] = 325;
+                return $this->errorResponse(422, self::trans('meet.session-password-error'), $response);
             }
         }
 

@@ -103,7 +103,8 @@ class CreateJob extends UserJob
         }
 
         // Make user active in non-mandate mode only
-        if (!($wallet = $user->wallet())
+        if (
+            !($wallet = $user->wallet())
             || !($plan = $user->wallet()->plan())
             || $plan->mode != \App\Plan::MODE_MANDATE
         ) {
