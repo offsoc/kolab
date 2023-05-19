@@ -24,10 +24,6 @@ class DomainSetting extends Model
      */
     public function domain()
     {
-        return $this->belongsTo(
-            Domain::class,
-            'domain_id', /* local */
-            'id' /* remote */
-        );
+        return $this->belongsTo(Domain::class, 'domain_id', 'id');
     }
 }
