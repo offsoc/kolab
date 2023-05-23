@@ -38,7 +38,7 @@
                                         <list-input id="members" :list="list.members"></list-input>
                                     </div>
                                 </div>
-                                <div v-if="list_id === 'new' || list.id" id="distlist-skus" class="row mb-3">
+                                <div v-if="$root.hasPermission('subscriptions') && (list_id === 'new' || list.id)" id="distlist-skus" class="row mb-3">
                                     <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
                                     <subscription-select class="col-sm-8 pt-sm-1" ref="skus" :object="list" type="group" :readonly="true"></subscription-select>
                                 </div>

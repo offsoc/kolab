@@ -256,9 +256,7 @@ class RoomsController extends RelationController
         $room->description = request()->input('description');
         $room->save();
 
-        if (!empty($request->skus)) {
-            SkusController::updateEntitlements($room, $request->skus);
-        }
+        SkusController::updateEntitlements($room, $request->skus);
 
         if (!$room->hasSKU('group-room')) {
             $room->setSetting('acl', null);

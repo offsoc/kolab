@@ -202,6 +202,7 @@ class UsersController extends RelationController
             'enableResources' => $isController && $hasCustomDomain && $hasBeta,
             'enableRooms' => $hasMeet,
             'enableSettings' => $isController,
+            'enableSubscriptions' => $isController && \config('app.with_subscriptions'),
             'enableUsers' => $isController,
             'enableWallets' => $isController && \config('app.with_wallet'),
             'enableWalletMandates' => $isController,

@@ -81,7 +81,7 @@
                                     <label class="col-sm-4 col-form-label">{{ $t('user.package') }}</label>
                                     <package-select class="col-sm-8 pt-sm-1"></package-select>
                                 </div>
-                                <div v-if="user_id !== 'new' && isController" id="user-skus" class="row mb-3">
+                                <div v-if="user_id !== 'new' && $root.hasPermission('subscriptions')" id="user-skus" class="row mb-3">
                                     <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
                                     <subscription-select v-if="user.id" class="col-sm-8 pt-sm-1" :object="user" ref="skus"></subscription-select>
                                 </div>

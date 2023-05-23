@@ -131,23 +131,25 @@ class SkusController extends ResourceController
             return;
         }
 
-        // list of skus, [id=>obj]
-        $skus = Sku::withEnvTenantContext()->get()->mapWithKeys(
+        if (!\config('app.with_subscriptions')) {
+            throw new \Exception("Subscriptions disabled");
+        }
+
+        // available SKUs, [id => obj]
+        $skus = Sku::withObjectTenantContext($object)->get()->mapWithKeys(
             function ($sku) {
                 return [$sku->id => $sku];
             }
         );
 
-        // existing entitlement's SKUs
-        $eSkus = [];
+        // existing object SKUs, [id => total]
+        $eSkus = $object->entitlements()->groupBy('sku_id')->selectRaw('count(*) as total, sku_id')->get()->mapWithKeys(
+            function ($e) {
+                return [$e->sku_id => $e->total];
+            }
+        )->all();
 
-        $object->entitlements()->groupBy('sku_id')
-            ->selectRaw('count(*) as total, sku_id')->each(
-                function ($e) use (&$eSkus) {
-                    $eSkus[$e->sku_id] = $e->total;
-                }
-            );
-
+        // compare current and requested state and apply changes (add/remove entitlements)
         foreach ($skus as $skuID => $sku) {
             $e = array_key_exists($skuID, $eSkus) ? $eSkus[$skuID] : 0;
             $r = array_key_exists($skuID, $rSkus) ? $rSkus[$skuID] : 0;

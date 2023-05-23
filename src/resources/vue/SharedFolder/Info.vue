@@ -48,7 +48,7 @@
                                         <list-input id="aliases" :list="folder.aliases"></list-input>
                                     </div>
                                 </div>
-                                <div v-if="folder_id === 'new' || folder.id" id="folder-skus" class="row mb-3">
+                                <div v-if="$root.hasPermission('subscriptions') && (folder_id === 'new' || folder.id)" id="folder-skus" class="row mb-3">
                                     <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
                                     <subscription-select class="col-sm-8 pt-sm-1" ref="skus" :object="folder" type="shared-folder" :readonly="true"></subscription-select>
                                 </div>

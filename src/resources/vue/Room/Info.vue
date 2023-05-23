@@ -24,7 +24,7 @@
                                         <small class="form-text">{{ $t('room.description-hint') }}</small>
                                     </div>
                                 </div>
-                                <div v-if="room_id === 'new' || room.isOwner" id="room-skus" class="row mb-3">
+                                <div v-if="$root.hasPermission('subscriptions') && (room_id === 'new' || room.isOwner)" id="room-skus" class="row mb-3">
                                     <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
                                     <subscription-select class="col-sm-8 pt-sm-1" ref="skus" :object="room" type="room"></subscription-select>
                                 </div>

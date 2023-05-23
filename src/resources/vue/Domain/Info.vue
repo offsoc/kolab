@@ -29,7 +29,7 @@
                                     <label class="col-sm-4 col-form-label">{{ $t('user.package') }}</label>
                                     <package-select class="col-sm-8 pt-sm-1" type="domain"></package-select>
                                 </div>
-                                <div v-if="domain.id" id="domain-skus" class="row">
+                                <div v-if="$root.hasPermission('subscriptions') && domain.id" id="domain-skus" class="row">
                                     <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
                                     <subscription-select v-if="domain.id" class="col-sm-8 pt-sm-1" ref="skus" type="domain" :object="domain" :readonly="true"></subscription-select>
                                 </div>

@@ -40,7 +40,7 @@
                                         <input type="text" class="form-control" id="email" disabled v-model="resource.email">
                                     </div>
                                 </div>
-                                <div v-if="resource_id === 'new' || resource.id" id="resource-skus" class="row mb-3">
+                                <div v-if="$root.hasPermission('subscriptions') && (resource_id === 'new' || resource.id)" id="resource-skus" class="row mb-3">
                                     <label class="col-sm-4 col-form-label">{{ $t('form.subscriptions') }}</label>
                                     <subscription-select class="col-sm-8 pt-sm-1" ref="skus" :object="resource" type="resource" :readonly="true"></subscription-select>
                                 </div>

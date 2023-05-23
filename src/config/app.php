@@ -257,7 +257,6 @@ return [
         'methods_recurring' => env('PAYMENT_METHODS_RECURRING', 'creditcard'),
     ],
 
-
     'with_ldap' => (bool) env('APP_LDAP', true),
     'with_imap' => (bool) env('APP_IMAP', false),
 
@@ -265,8 +264,9 @@ return [
     'with_files' => (bool) env('APP_WITH_FILES', false),
     'with_reseller' => (bool) env('APP_WITH_RESELLER', false),
     'with_services' => (bool) env('APP_WITH_SERVICES', false),
-    'with_wallet' => (bool) env('APP_WITH_WALLET', true),
     'with_signup' => (bool) env('APP_WITH_SIGNUP', true),
+    'with_subscriptions' => (bool) env('APP_WITH_SUBSCRIPTIONS', true),
+    'with_wallet' => (bool) env('APP_WITH_WALLET', true),
 
     'signup' => [
         'email_limit' => (int) env('SIGNUP_LIMIT_EMAIL', 0),
