@@ -79,7 +79,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        $amount = (int) ($request->amount * 100);
+        $amount = (int) round($request->amount * 100);
         $method = $amount > 0 ? 'award' : 'penalty';
 
         DB::beginTransaction();

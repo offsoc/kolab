@@ -368,7 +368,7 @@ class Stripe extends \App\Providers\PaymentProvider
 
                 if ($status == Payment::STATUS_PAID) {
                     $payment->wallet->setSetting('stripe_mandate_id', $intent->id);
-                    $threshold = intval((float) $payment->wallet->getSetting('mandate_balance') * 100);
+                    $threshold = (int) round((float) $payment->wallet->getSetting('mandate_balance') * 100);
 
                     // Call credit() so wallet/account state is updated
                     $this->creditPayment($payment, $intent);

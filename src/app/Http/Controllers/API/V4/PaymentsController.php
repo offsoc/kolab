@@ -64,8 +64,8 @@ class PaymentsController extends Controller
 
         // Normally the auto-payment setup operation is 0, if the balance is below the threshold
         // we'll top-up the wallet with the configured auto-payment amount
-        if ($wallet->balance < intval($request->balance * 100)) {
-            $mandate['amount'] = intval($request->amount * 100);
+        if ($wallet->balance < round($request->balance * 100)) {
+            $mandate['amount'] = (int) round($request->amount * 100);
 
             self::addTax($wallet, $mandate);
         }
@@ -131,7 +131,7 @@ class PaymentsController extends Controller
         ]);
 
         // Trigger auto-payment if the balance is below the threshold
-        if ($wallet->balance < intval($request->balance * 100)) {
+        if ($wallet->balance < round($request->balance * 100)) {
             \App\Jobs\WalletCharge::dispatch($wallet);
         }
 
@@ -199,7 +199,7 @@ class PaymentsController extends Controller
             return $v->errors()->toArray();
         }
 
-        $amount = (int) ($request->amount * 100);
+        $amount = (int) round($request->amount * 100);
 
         // Validate the minimum value
         // It has to be at least minimum payment amount and must cover current debt,
@@ -279,7 +279,7 @@ class PaymentsController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        $amount = (int) ($request->amount * 100);
+        $amount = (int) round($request->amount * 100);
 
         // Validate the minimum value
         if ($amount < Payment::MIN_AMOUNT) {
@@ -379,8 +379,8 @@ class PaymentsController extends Controller
             return false;
         }
 
-        $min_balance = (int) (floatval($settings['mandate_balance']) * 100);
-        $amount = (int) (floatval($settings['mandate_amount']) * 100);
+        $min_balance = (int) round(floatval($settings['mandate_balance']) * 100);
+        $amount = (int) round(floatval($settings['mandate_amount']) * 100);
 
         // The wallet balance is greater than the auto-payment threshold
         if ($wallet->balance >= $min_balance) {

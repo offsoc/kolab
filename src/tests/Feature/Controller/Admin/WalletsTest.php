@@ -103,7 +103,7 @@ class WalletsTest extends TestCase
         $this->assertCount(2, $json['errors']);
 
         // Admin user - a valid bonus
-        $post = ['amount' => '50', 'description' => 'A bonus'];
+        $post = ['amount' => '17.40', 'description' => 'A bonus'];
         $response = $this->actingAs($admin)->post("api/v4/wallets/{$wallet->id}/one-off", $post);
         $response->assertStatus(200);
 
@@ -111,7 +111,7 @@ class WalletsTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame('The bonus has been added to the wallet successfully.', $json['message']);
-        $this->assertSame($balance += 5000, $json['balance']);
+        $this->assertSame($balance += 1740, $json['balance']);
         $this->assertSame($balance, $wallet->fresh()->balance);
         $this->assertSame($reseller_balance, $reseller_wallet->fresh()->balance);
 
@@ -119,11 +119,11 @@ class WalletsTest extends TestCase
             ->where('type', Transaction::WALLET_AWARD)->first();
 
         $this->assertSame($post['description'], $transaction->description);
-        $this->assertSame(5000, $transaction->amount);
+        $this->assertSame(1740, $transaction->amount);
         $this->assertSame($admin->email, $transaction->user_email);
 
         // Admin user - a valid penalty
-        $post = ['amount' => '-40', 'description' => 'A penalty'];
+        $post = ['amount' => '-17.40', 'description' => 'A penalty'];
         $response = $this->actingAs($admin)->post("api/v4/wallets/{$wallet->id}/one-off", $post);
         $response->assertStatus(200);
 
@@ -131,7 +131,7 @@ class WalletsTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame('The penalty has been added to the wallet successfully.', $json['message']);
-        $this->assertSame($balance -= 4000, $json['balance']);
+        $this->assertSame($balance -= 1740, $json['balance']);
         $this->assertSame($balance, $wallet->fresh()->balance);
         $this->assertSame($reseller_balance, $reseller_wallet->fresh()->balance);
 
@@ -139,7 +139,7 @@ class WalletsTest extends TestCase
             ->where('type', Transaction::WALLET_PENALTY)->first();
 
         $this->assertSame($post['description'], $transaction->description);
-        $this->assertSame(-4000, $transaction->amount);
+        $this->assertSame(-1740, $transaction->amount);
         $this->assertSame($admin->email, $transaction->user_email);
     }
 
