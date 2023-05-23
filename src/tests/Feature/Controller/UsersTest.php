@@ -693,7 +693,7 @@ class UsersTest extends TestCase
 
         $response->assertStatus(404);
 
-        // Test access by user not being a wallet controller
+        // Test access by user not being a wallet controller (controller's config change)
         $post = ['greylist_enabled' => 1];
         $response = $this->actingAs($jack)->post("/api/v4/users/{$john->id}/config", $post);
         $json = $response->json();
@@ -703,6 +703,10 @@ class UsersTest extends TestCase
         $this->assertSame('error', $json['status']);
         $this->assertSame("Access denied", $json['message']);
         $this->assertCount(2, $json);
+
+        // Test access by user not being a wallet controller (self config change)
+        $response = $this->actingAs($jack)->post("/api/v4/users/{$jack->id}/config", $post);
+        $response->assertStatus(403);
 
         // Test some invalid data
         $post = ['grey' => 1, 'password_policy' => 'min:1,max:255'];
@@ -1159,10 +1163,14 @@ class UsersTest extends TestCase
         $owner->assignPackage($package_kolab);
         $owner->assignPackage($package_lite, $user);
 
-        // Non-controller cannot update his own entitlements
+        // Non-controller cannot update his own entitlements, nor aliases
         $post = ['skus' => []];
         $response = $this->actingAs($user)->put("/api/v4/users/{$user->id}", $post);
-        $response->assertStatus(422);
+        $response->assertStatus(403);
+
+        $post = ['aliases' => []];
+        $response = $this->actingAs($user)->put("/api/v4/users/{$user->id}", $post);
+        $response->assertStatus(403);
 
         // Test updating entitlements
         $post = [

@@ -296,19 +296,17 @@ class UsersController extends RelationController
         }
 
         $current_user = $this->guard()->user();
+        $requires_controller = $request->skus !== null || $request->aliases !== null;
+        $can_update = $requires_controller ? $current_user->canDelete($user) : $current_user->canUpdate($user);
 
-        // TODO: Decide what attributes a user can change on his own profile
-        if (!$current_user->canUpdate($user)) {
+        // Only wallet controller can set subscriptions and aliases
+        // TODO: Consider changes in canUpdate() or introduce isController()
+        if (!$can_update) {
             return $this->errorResponse(403);
         }
 
         if ($error_response = $this->validateUserRequest($request, $user, $settings)) {
             return $error_response;
-        }
-
-        // Entitlements, only controller can do that
-        if ($request->skus !== null && !$current_user->canDelete($user)) {
-            return $this->errorResponse(422, "You have no permission to change entitlements");
         }
 
         DB::beginTransaction();

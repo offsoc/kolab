@@ -291,7 +291,9 @@ class RelationController extends ResourceController
             return $this->errorResponse(404);
         }
 
-        if (!$this->guard()->user()->canUpdate($resource)) {
+        // Only wallet controller can do this, therefor canDelete() not canUpdate()
+        // TODO: Consider changes in canUpdate() or introduce isController()
+        if (!$this->guard()->user()->canDelete($resource)) {
             return $this->errorResponse(403);
         }
 
