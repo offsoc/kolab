@@ -18,17 +18,15 @@ const DomainListComponent = () => import(/* webpackChunkName: "../user/pages" */
 const FileInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/File/Info')
 const FileListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/File/List')
 const PaymentStatusComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Payment/Status')
+const PoliciesComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Policies')
 const ResourceInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/Info')
 const ResourceListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Resource/List')
 const RoomInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Room/Info')
 const RoomListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Room/List')
-const SettingsComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Settings')
 const SharedFolderInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/SharedFolder/Info')
 const SharedFolderListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/SharedFolder/List')
 const UserInfoComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/Info')
 const UserListComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/List')
-const UserProfileComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/Profile')
-const UserProfileDeleteComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/User/ProfileDelete')
 const WalletComponent = () => import(/* webpackChunkName: "../user/pages" */ '../../vue/Wallet')
 const MeetComponent = () => import(/* webpackChunkName: "../user/meet" */ '../../vue/Meet/Room.vue')
 
@@ -115,18 +113,6 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
-        path: '/profile',
-        name: 'profile',
-        component: UserProfileComponent,
-        meta: { requiresAuth: true }
-    },
-    {
-        path: '/profile/delete',
-        name: 'profile-delete',
-        component: UserProfileDeleteComponent,
-        meta: { requiresAuth: true }
-    },
-    {
         path: '/resource/:resource',
         name: 'resource',
         component: ResourceInfoComponent,
@@ -151,10 +137,16 @@ const routes = [
         meta: { requiresAuth: true, perm: 'rooms'  }
     },
     {
+        path: '/policies',
+        name: 'policies',
+        component: PoliciesComponent,
+        meta: { requiresAuth: true, perm: 'settings' }
+    },
+    {
         path: '/settings',
         name: 'settings',
-        component: SettingsComponent,
-        meta: { requiresAuth: true, perm: 'settings' }
+        component: UserInfoComponent,
+        meta: { requiresAuth: true }
     },
     {
         path: '/shared-folder/:folder',

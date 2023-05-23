@@ -13,7 +13,6 @@ use Tests\Browser\Pages\DomainInfo;
 use Tests\Browser\Pages\DomainList;
 use Tests\Browser\Pages\Home;
 use Tests\TestCaseDusk;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class DomainTest extends TestCaseDusk
 {
@@ -223,7 +222,7 @@ class DomainTest extends TestCaseDusk
                 ->on(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
-                ->assertVisible('@links a.link-profile')
+                ->assertVisible('@links a.link-settings')
                 ->assertMissing('@links a.link-domains')
                 ->assertMissing('@links a.link-users')
                 ->assertMissing('@links a.link-wallet');

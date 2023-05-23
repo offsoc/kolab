@@ -86,9 +86,10 @@ return [
         'domains' => "Domains",
         'files' => "Files",
         'invitations' => "Invitations",
+        'myaccount' => "My account",
+        'policies' => "Policies",
         'profile' => "Your profile",
         'resources' => "Resources",
-        'settings' => "Settings",
         'shared-folders' => "Shared folders",
         'users' => "User accounts",
         'wallet' => "Wallet",
@@ -200,6 +201,7 @@ return [
         'or' => "or",
         'password' => "Password",
         'password-confirm' => "Confirm Password",
+        'personal' => "Personal information",
         'phone' => "Phone",
         'selectcountries' => "Select countries",
         'settings' => "Settings",
@@ -350,6 +352,12 @@ return [
             . " Enter the code we sent you, or click the link in the message.",
     ],
 
+    'policies' => [
+        'password-policy' => "Password Policy",
+        'password-retention' => "Password Retention",
+        'password-max-age' => "Require a password change every",
+    ],
+
     'resource' => [
         'create' => "Create resource",
         'delete' => "Delete resource",
@@ -380,12 +388,6 @@ return [
         'new-hint' => "We'll generate a unique name for the room that will then allow you to access the room.",
         'title' => "Room: {name}",
         'url' => "You can access the room at the URL below. Use this URL to invite people to join you. This room is only open when you (or another room moderator) is in attendance.",
-    ],
-
-    'settings' => [
-        'password-policy' => "Password Policy",
-        'password-retention' => "Password Retention",
-        'password-max-age' => "Require a password change every",
     ],
 
     'shf' => [
@@ -474,7 +476,6 @@ return [
         'degraded-warning' => "The account is degraded. Some features have been disabled.",
         'degraded-hint' => "Please, make a payment.",
         'delete' => "Delete user",
-        'delete-account' => "Delete this account?",
         'delete-email' => "Delete {email}",
         'delete-text' => "Do you really want to delete this user permanently?"
             . " This will delete all account data and withdraw the permission to access the email account."
@@ -507,7 +508,6 @@ return [
         'pass-link-hint' => "Press Submit to activate the link",
         'passwordpolicy' => "Password Policy",
         'price' => "Price",
-        'profile-title' => "Your profile",
         'profile-delete' => "Delete account",
         'profile-delete-title' => "Delete this account?",
         'profile-delete-text1' => "This will delete the account as well as all domains, users and aliases associated with this account.",

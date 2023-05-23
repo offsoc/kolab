@@ -4,7 +4,7 @@ namespace Tests\Browser\Pages;
 
 use Laravel\Dusk\Page;
 
-class Settings extends Page
+class Policies extends Page
 {
     /**
      * Get the URL for the page.
@@ -13,7 +13,7 @@ class Settings extends Page
      */
     public function url(): string
     {
-        return '/settings';
+        return '/policies';
     }
 
     /**
@@ -38,7 +38,7 @@ class Settings extends Page
     {
         return [
             '@app' => '#app',
-            '@form' => '#settings form',
+            '@form' => '#policies form',
         ];
     }
 }

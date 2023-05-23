@@ -17,7 +17,6 @@ use Tests\Browser\Pages\PaymentMollie;
 use Tests\Browser\Pages\PaymentStatus;
 use Tests\Browser\Pages\Signup;
 use Tests\TestCaseDusk;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class SignupTest extends TestCaseDusk
 {
@@ -410,7 +409,7 @@ class SignupTest extends TestCaseDusk
                 ->waitUntilMissing('.app-loader')
                 ->on(new Dashboard())
                 ->assertUser('signuptestdusk@' . \config('app.domain'))
-                ->assertVisible('@links a.link-profile')
+                ->assertVisible('@links a.link-settings')
                 ->assertMissing('@links a.link-domains')
                 ->assertVisible('@links a.link-users')
                 ->assertVisible('@links a.link-wallet');
@@ -511,7 +510,7 @@ class SignupTest extends TestCaseDusk
                 ->waitUntilMissing('.app-loader')
                 ->on(new Dashboard())
                 ->assertUser('admin@user-domain-signup.com')
-                ->assertVisible('@links a.link-profile')
+                ->assertVisible('@links a.link-settings')
                 ->assertVisible('@links a.link-domains')
                 ->assertVisible('@links a.link-users')
                 ->assertVisible('@links a.link-wallet');

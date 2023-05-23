@@ -7,9 +7,7 @@ use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
-use Tests\Browser\Pages\UserProfile;
 use Tests\TestCaseDusk;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class LogonTest extends TestCaseDusk
 {
@@ -133,7 +131,7 @@ class LogonTest extends TestCaseDusk
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 // Checks if we're really on Dashboard page
                 ->on(new Dashboard())
-                ->assertVisible('@links a.link-profile')
+                ->assertVisible('@links a.link-settings')
                 ->assertVisible('@links a.link-domains')
                 ->assertVisible('@links a.link-users')
                 ->assertVisible('@links a.link-wallet')
@@ -278,15 +276,17 @@ class LogonTest extends TestCaseDusk
     public function testAfterLogonRedirect(): void
     {
         $this->browse(function (Browser $browser) {
-            // User is logged in
-            $browser->visit(new UserProfile());
-
-            // Test redirect if the token is invalid
-            $browser->script("localStorage.setItem('token', '123')");
-            $browser->refresh()
+            // User is logged in, visit the My account page
+            $browser->visit('/settings')
+                // invalidate the session token
+                ->execScript("localStorage.setItem('token', '123')")
+                // refresh the page
+                ->refresh()
                 ->on(new Home())
+                // log in the user
                 ->submitLogon('john@kolab.org', 'simple123', false)
-                ->waitForLocation('/profile');
+                // wait for a "redirect" to the My account page
+                ->waitForLocation('/settings');
         });
     }
 }

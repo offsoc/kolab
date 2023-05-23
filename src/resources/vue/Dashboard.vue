@@ -3,8 +3,8 @@
         <status-component :status="status" @status-update="statusUpdate"></status-component>
 
         <div id="dashboard-nav">
-            <router-link class="card link-profile" :to="{ name: 'profile' }">
-                <svg-icon icon="user-gear"></svg-icon><span>{{ $t('dashboard.profile') }}</span>
+            <router-link class="card link-settings" :to="{ name: 'settings' }">
+                <svg-icon icon="user-gear"></svg-icon><span>{{ $t('dashboard.myaccount') }}</span>
             </router-link>
             <router-link v-if="status.enableDomains" class="card link-domains" :to="{ name: 'domains' }">
                 <svg-icon icon="globe"></svg-icon><span>{{ $t('dashboard.domains') }}</span>
@@ -36,8 +36,8 @@
                 <svg-icon icon="folder-closed"></svg-icon><span>{{ $t('dashboard.files') }}</span>
                 <span class="badge bg-primary">{{ $t('dashboard.beta') }}</span>
             </router-link>
-            <router-link v-if="status.enableSettings" class="card link-settings" :to="{ name: 'settings' }">
-                <svg-icon icon="sliders"></svg-icon><span>{{ $t('dashboard.settings') }}</span>
+            <router-link v-if="status.enableSettings" class="card link-policies" :to="{ name: 'policies' }">
+                <svg-icon icon="shield-halved"></svg-icon><span>{{ $t('dashboard.policies') }}</span>
             </router-link>
             <a v-if="webmailURL" class="card link-webmail" :href="webmailURL">
                 <svg-icon icon="envelope"></svg-icon><span>{{ $t('dashboard.webmail') }}</span>
@@ -64,6 +64,7 @@
         require('@fortawesome/free-solid-svg-icons/faGear').definition,
         require('@fortawesome/free-solid-svg-icons/faGlobe').definition,
         require('@fortawesome/free-solid-svg-icons/faMobileScreen').definition,
+        require('@fortawesome/free-solid-svg-icons/faShieldHalved').definition,
         require('@fortawesome/free-solid-svg-icons/faSliders').definition,
         require('@fortawesome/free-solid-svg-icons/faUserGear').definition,
         require('@fortawesome/free-solid-svg-icons/faUsers').definition,

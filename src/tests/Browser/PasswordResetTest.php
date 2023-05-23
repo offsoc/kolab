@@ -10,7 +10,6 @@ use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\PasswordReset;
 use Tests\TestCaseDusk;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class PasswordResetTest extends TestCaseDusk
 {

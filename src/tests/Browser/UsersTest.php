@@ -19,7 +19,6 @@ use Tests\Browser\Pages\UserInfo;
 use Tests\Browser\Pages\UserList;
 use Tests\Browser\Pages\Wallet as WalletPage;
 use Tests\TestCaseDusk;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class UsersTest extends TestCaseDusk
 {
@@ -28,6 +27,11 @@ class UsersTest extends TestCaseDusk
         'last_name' => 'Doe',
         'organization' => 'Kolab Developers',
         'limit_geo' => null,
+        'currency' => 'USD',
+        'country' => 'US',
+        'billing_address' => "601 13th Street NW\nSuite 900 South\nWashington, DC 20005",
+        'external_email' => 'john.doe.external@gmail.com',
+        'phone' => '+1 509-248-1111',
     ];
 
     /**
@@ -89,9 +93,9 @@ class UsersTest extends TestCaseDusk
     }
 
     /**
-     * Test user account editing page (not profile page)
+     * Test user page - General tab
      */
-    public function testInfo(): void
+    public function testUserGeneralTab(): void
     {
         $this->browse(function (Browser $browser) {
             $john = $this->getTestUser('john@kolab.org');
@@ -106,45 +110,28 @@ class UsersTest extends TestCaseDusk
                 ->submitLogon('john@kolab.org', 'simple123', false)
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'User account')
+                ->assertSeeIn('@nav #tab-general', 'General')
                 ->with('@general', function (Browser $browser) {
-                    // Assert form content
+                    // Assert the General tab content
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Status')
                         ->assertSeeIn('div.row:nth-child(1) #status', 'Active')
-                        ->assertFocused('div.row:nth-child(2) input')
-                        ->assertSeeIn('div.row:nth-child(2) label', 'First Name')
-                        ->assertValue('div.row:nth-child(2) input[type=text]', $this->profile['first_name'])
-                        ->assertSeeIn('div.row:nth-child(3) label', 'Last Name')
-                        ->assertValue('div.row:nth-child(3) input[type=text]', $this->profile['last_name'])
-                        ->assertSeeIn('div.row:nth-child(4) label', 'Organization')
-                        ->assertValue('div.row:nth-child(4) input[type=text]', $this->profile['organization'])
-                        ->assertSeeIn('div.row:nth-child(5) label', 'Email')
-                        ->assertValue('div.row:nth-child(5) input[type=text]', 'john@kolab.org')
-                        ->assertDisabled('div.row:nth-child(5) input[type=text]')
-                        ->assertSeeIn('div.row:nth-child(6) label', 'Email Aliases')
-                        ->assertVisible('div.row:nth-child(6) .list-input')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Email')
+                        ->assertValue('div.row:nth-child(2) input[type=text]', 'john@kolab.org')
+                        ->assertDisabled('div.row:nth-child(2) input[type=text]')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Email Aliases')
+                        ->assertVisible('div.row:nth-child(3) .list-input')
                         ->with(new ListInput('#aliases'), function (Browser $browser) {
                             $browser->assertListInputValue(['john.doe@kolab.org'])
                                 ->assertValue('@input', '');
                         })
-                        ->assertSeeIn('div.row:nth-child(7) label', 'Password')
-                        ->assertValue('div.row:nth-child(7) input#password', '')
-                        ->assertValue('div.row:nth-child(7) input#password_confirmation', '')
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Password')
+                        ->assertValue('div.row:nth-child(4) input#password', '')
+                        ->assertValue('div.row:nth-child(4) input#password_confirmation', '')
                         ->assertAttribute('#password', 'placeholder', 'Password')
                         ->assertAttribute('#password_confirmation', 'placeholder', 'Confirm Password')
-                        ->assertMissing('div.row:nth-child(7) .btn-group')
-                        ->assertMissing('div.row:nth-child(7) #password-link')
-                        ->assertSeeIn('button[type=submit]', 'Submit')
-                        // Clear some fields and submit
-                        ->vueClear('#first_name')
-                        ->vueClear('#last_name')
-                        ->click('button[type=submit]');
-                })
-                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.')
-                ->on(new UserList())
-                ->click('@table tr:nth-child(3) a')
-                ->on(new UserInfo())
-                ->assertSeeIn('#user-info .card-title', 'User account')
-                ->with('@general', function (Browser $browser) {
+                        ->assertMissing('div.row:nth-child(4) .btn-group')
+                        ->assertMissing('div.row:nth-child(4) #password-link');
+
                     // Test error handling (password)
                     $browser->type('#password', 'aaaaaA')
                         ->vueClear('#password_confirmation')
@@ -176,17 +163,13 @@ class UsersTest extends TestCaseDusk
                         })
                         ->scrollTo('button[type=submit]')->pause(500)
                         ->click('button[type=submit]')
-                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
-
-                    $browser->with(new ListInput('#aliases'), function (Browser $browser) {
-                        $browser->assertFormError(2, 'The specified alias is invalid.', false);
-                    });
-
-                    // Test adding aliases
-                    $browser->with(new ListInput('#aliases'), function (Browser $browser) {
-                        $browser->removeListEntry(2)
-                            ->addListEntry('john.test@kolab.org');
-                    })
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                            $browser->assertFormError(2, 'The specified alias is invalid.', false)
+                                // Test adding aliases
+                                ->removeListEntry(2)
+                                ->addListEntry('john.test@kolab.org');
+                        })
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
                 })
@@ -199,8 +182,8 @@ class UsersTest extends TestCaseDusk
 
             // Test subscriptions
             $browser->with('@general', function (Browser $browser) {
-                $browser->assertSeeIn('div.row:nth-child(8) label', 'Subscriptions')
-                    ->assertVisible('@skus.row:nth-child(8)')
+                $browser->assertSeeIn('div.row:nth-child(5) label', 'Subscriptions')
+                    ->assertVisible('@skus.row:nth-child(5)')
                     ->with('@skus', function ($browser) {
                         $browser->assertElementsCount('tbody tr', 5)
                             // Mailbox SKU
@@ -301,7 +284,7 @@ class UsersTest extends TestCaseDusk
                 ->with('@general', function (Browser $browser) use ($jack, $john, $code) {
                     // Test displaying an existing password reset link
                     $link = Browser::$baseUrl . '/password-reset/' . $code->short_code . '-' . $code->code;
-                    $browser->assertSeeIn('div.row:nth-child(7) label', 'Password')
+                    $browser->assertSeeIn('div.row:nth-child(4) label', 'Password')
                         ->assertMissing('#password')
                         ->assertMissing('#password_confirmation')
                         ->assertMissing('#pass-mode-link:checked')
@@ -356,11 +339,76 @@ class UsersTest extends TestCaseDusk
     }
 
     /**
-     * Test user settings tab
+     * Test user page - General tab
      *
-     * @depends testInfo
+     * @depends testUserGeneralTab
      */
-    public function testUserSettings(): void
+    public function testUserPersonalTab(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $john = $this->getTestUser('john@kolab.org');
+            $jack = $this->getTestUser('jack@kolab.org');
+            $jack->setSetting('organization', null);
+
+            // Test the account controller
+            $browser->visit('/user/' . $john->id)
+                ->on(new UserInfo())
+                ->assertSeeIn('@nav #tab-personal', 'Personal information')
+                ->click('#tab-personal')
+                ->with('@personal', function (Browser $browser) {
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'First Name')
+                        ->assertValue('div.row:nth-child(1) input[type=text]', $this->profile['first_name'])
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Last Name')
+                        ->assertValue('div.row:nth-child(2) input[type=text]', $this->profile['last_name'])
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Organization')
+                        ->assertValue('div.row:nth-child(3) input[type=text]', $this->profile['organization'])
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Phone')
+                        ->assertValue('div.row:nth-child(4) input[type=text]', $this->profile['phone'])
+                        ->assertSeeIn('div.row:nth-child(5) label', 'External Email')
+                        ->assertValue('div.row:nth-child(5) input[type=text]', $this->profile['external_email'])
+                        ->assertSeeIn('div.row:nth-child(6) label', 'Address')
+                        ->assertValue('div.row:nth-child(6) textarea', $this->profile['billing_address'])
+                        ->assertSeeIn('div.row:nth-child(7) label', 'Country')
+                        ->assertValue('div.row:nth-child(7) select', $this->profile['country'])
+                        // Set some fields and submit
+                        ->type('#first_name', 'Arnie')
+                        ->vueClear('#last_name')
+                        ->click('button[type=submit]');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.')
+                ->on(new UserList());
+
+            $this->assertSame('Arnie', $john->getSetting('first_name'));
+            $this->assertSame(null, $john->getSetting('last_name'));
+
+            // Test the non-controller user
+            $browser->visit('/user/' . $jack->id)
+                ->on(new UserInfo())
+                ->click('#tab-personal')
+                ->with('@personal', function (Browser $browser) {
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'First Name')
+                        ->assertValue('div.row:nth-child(1) input[type=text]', 'Jack')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Last Name')
+                        ->assertValue('div.row:nth-child(2) input[type=text]', 'Daniels')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Organization')
+                        ->assertValue('div.row:nth-child(3) input[type=text]', '')
+                        // Set some fields and submit
+                        ->type('#organization', 'Test')
+                        ->click('button[type=submit]');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.')
+                ->on(new UserList());
+
+            $this->assertSame('Test', $jack->getSetting('organization'));
+        });
+    }
+
+    /**
+     * Test user page - Settings tab
+     *
+     * @depends testUserPersonalTab
+     */
+    public function testUserSettingsTab(): void
     {
         $john = $this->getTestUser('john@kolab.org');
         $john->setSetting('greylist_enabled', null);
@@ -370,11 +418,9 @@ class UsersTest extends TestCaseDusk
         $this->browse(function (Browser $browser) use ($john) {
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
-                ->assertElementsCount('@nav a', 2)
-                ->assertSeeIn('@nav #tab-general', 'General')
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
-                ->with('#settings form', function (Browser $browser) {
+                ->with('@settings', function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
                         ->assertMissing('div.row:nth-child(2)') // guam and geo-lockin settings are hidden
                         ->click('div.row:nth-child(1) input[type=checkbox]:checked')
@@ -391,7 +437,7 @@ class UsersTest extends TestCaseDusk
             $browser->refresh()
                 ->on(new UserInfo())
                 ->click('@nav #tab-settings')
-                ->with('#settings form', function (Browser $browser) use ($john) {
+                ->with('@settings', function (Browser $browser) use ($john) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
                         ->assertSeeIn('div.row:nth-child(2) label', 'IMAP proxy')
                         ->assertNotChecked('div.row:nth-child(2) input')
@@ -425,8 +471,6 @@ class UsersTest extends TestCaseDusk
 
     /**
      * Test user adding page
-     *
-     * @depends testInfo
      */
     public function testNewUser(): void
     {
@@ -439,6 +483,8 @@ class UsersTest extends TestCaseDusk
                 ->click('button.user-new')
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'New user account')
+                ->assertMissing('@nav #tab-settings')
+                ->assertMissing('@nav #tab-personal')
                 ->with('@general', function (Browser $browser) {
                     // Assert form content
                     $browser->assertFocused('div.row:nth-child(1) input')

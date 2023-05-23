@@ -378,8 +378,8 @@ table {
         // Some icons are too big, scale them down
         &.link-companionapp,
         &.link-domains,
+        &.link-policies,
         &.link-resources,
-        &.link-settings,
         &.link-wallet,
         &.link-invitations {
             svg {
@@ -389,6 +389,7 @@ table {
 
         &.link-distlists,
         &.link-files,
+        &.link-settings,
         &.link-shared-folders {
             svg {
                 transform: scale(0.9);

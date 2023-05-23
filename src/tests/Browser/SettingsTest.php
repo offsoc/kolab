@@ -2,16 +2,51 @@
 
 namespace Tests\Browser;
 
+use App\User;
 use Tests\Browser;
-use Tests\Browser\Components\Menu;
+use Tests\Browser\Components\Dialog;
+use Tests\Browser\Components\ListInput;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
-use Tests\Browser\Pages\Settings;
+use Tests\Browser\Pages\UserInfo;
 use Tests\TestCaseDusk;
 
 class SettingsTest extends TestCaseDusk
 {
+    private $profile = [
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'currency' => 'USD',
+        'country' => 'US',
+        'billing_address' => "601 13th Street NW\nSuite 900 South\nWashington, DC 20005",
+        'external_email' => 'john.doe.external@gmail.com',
+        'phone' => '+1 509-248-1111',
+        'organization' => 'Kolab Developers',
+    ];
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        User::where('email', 'john@kolab.org')->first()->setSettings($this->profile);
+        $this->deleteTestUser('profile-delete@kolabnow.com');
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function tearDown(): void
+    {
+        User::where('email', 'john@kolab.org')->first()->setSettings($this->profile);
+        $this->deleteTestUser('profile-delete@kolabnow.com');
+
+        parent::tearDown();
+    }
+
     /**
      * Test settings page (unauthenticated)
      */
@@ -24,97 +59,194 @@ class SettingsTest extends TestCaseDusk
     }
 
     /**
-     * Test settings "box" on Dashboard
+     * Test settings page (wallet controller)
      */
-    public function testDashboard(): void
+    public function testSettingsController(): void
     {
         $this->browse(function (Browser $browser) {
-            // Test a user that is not an account owner
-            $browser->visit(new Home())
-                ->submitLogon('jack@kolab.org', 'simple123', true)
-                ->on(new Dashboard())
-                ->assertMissing('@links .link-settings')
-                ->visit('/settings')
-                ->assertErrorPage(403)
-                ->within(new Menu(), function (Browser $browser) {
-                    $browser->clickMenuItem('logout');
-                });
+            $user = $this->getTestUser('john@kolab.org');
+            $user->setSetting('password_policy', 'min:10,upper,digit');
 
-            // Test the account owner
-            $browser->waitForLocation('/login')
-                ->on(new Home())
+            $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
-                ->assertSeeIn('@links .link-settings svg + span', 'Settings');
+                ->assertSeeIn('@links .link-settings', 'My account')
+                ->click('@links .link-settings')
+                ->on(new UserInfo())
+                ->assertSeeIn('#user-info button.button-delete', 'Delete account')
+                ->assertSeeIn('#user-info .card-title', 'My account')
+                ->assertSeeIn('@nav #tab-general', 'General')
+                ->with('@general', function (Browser $browser) use ($user) {
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Status (Customer No.)')
+                        ->assertSeeIn('div.row:nth-child(1) #status', 'Active')
+                        ->assertSeeIn('div.row:nth-child(1) #userid', "({$user->id})")
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Email')
+                        ->assertValue('div.row:nth-child(2) input[type=text]', $user->email)
+                        ->assertDisabled('div.row:nth-child(2) input[type=text]')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Email Aliases')
+                        ->assertVisible('div.row:nth-child(3) .list-input')
+                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                            $browser->assertListInputValue(['john.doe@kolab.org'])
+                                ->assertValue('@input', '');
+                        })
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Password')
+                        ->assertValue('div.row:nth-child(4) input#password', '')
+                        ->assertValue('div.row:nth-child(4) input#password_confirmation', '')
+                        ->assertAttribute('#password', 'placeholder', 'Password')
+                        ->assertAttribute('#password_confirmation', 'placeholder', 'Confirm Password')
+                        ->assertMissing('div.row:nth-child(4) .btn-group')
+                        ->assertMissing('div.row:nth-child(4) #password-link')
+                        ->assertSeeIn('div.row:nth-child(5) label', 'Subscriptions')
+                        ->assertVisible('div.row:nth-child(5) table');
+                })
+                ->assertSeeIn('@nav #tab-settings', 'Settings')
+                ->click('@nav #tab-settings')
+                ->with('@settings', function (Browser $browser) {
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
+                        ->click('div.row:nth-child(1) input[type=checkbox]');
+                })
+                ->assertSeeIn('@nav #tab-personal', 'Personal information')
+                ->click('@nav #tab-personal')
+                ->with('@personal', function (Browser $browser) {
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'First Name')
+                        ->assertValue('div.row:nth-child(1) input[type=text]', $this->profile['first_name'])
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Last Name')
+                        ->assertValue('div.row:nth-child(2) input[type=text]', $this->profile['last_name'])
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Organization')
+                        ->assertValue('div.row:nth-child(3) input[type=text]', $this->profile['organization'])
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Phone')
+                        ->assertValue('div.row:nth-child(4) input[type=text]', $this->profile['phone'])
+                        ->assertSeeIn('div.row:nth-child(5) label', 'External Email')
+                        ->assertValue('div.row:nth-child(5) input[type=text]', $this->profile['external_email'])
+                        ->assertSeeIn('div.row:nth-child(6) label', 'Address')
+                        ->assertValue('div.row:nth-child(6) textarea', $this->profile['billing_address'])
+                        ->assertSeeIn('div.row:nth-child(7) label', 'Country')
+                        ->assertValue('div.row:nth-child(7) select', $this->profile['country'])
+                        // Set some fields and submit
+                        ->type('#first_name', 'Arnie')
+                        ->vueClear('#last_name')
+                        ->click('button[type=submit]');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
         });
     }
 
     /**
-     * Test Settings page
-     *
-     * @depends testDashboard
+     * Test settings page (non-controller user)
      */
-    public function testSettings(): void
+    public function testProfileNonController(): void
     {
-        $john = $this->getTestUser('john@kolab.org');
-        $john->setSetting('password_policy', 'min:5,max:100,lower');
-        $john->setSetting('max_password_age', null);
+        $user = $this->getTestUser('john@kolab.org');
+        $user->setSetting('password_policy', 'min:10,upper,digit');
 
+        // Test acting as non-controller
         $this->browse(function (Browser $browser) {
-            $browser->click('@links .link-settings')
-                ->on(new Settings())
-                ->assertSeeIn('#settings .card-title', 'Settings')
-                // Password policy
-                ->assertSeeIn('@form .row:nth-child(1) > label', 'Password Policy')
-                ->with('@form #password_policy', function (Browser $browser) {
-                    $browser->assertElementsCount('li', 7)
-                        ->assertSeeIn('li:nth-child(1) label', 'Minimum password length')
-                        ->assertChecked('li:nth-child(1) input[type=checkbox]')
-                        ->assertDisabled('li:nth-child(1) input[type=checkbox]')
-                        ->assertValue('li:nth-child(1) input[type=text]', '5')
-                        ->assertSeeIn('li:nth-child(2) label', 'Maximum password length')
-                        ->assertChecked('li:nth-child(2) input[type=checkbox]')
-                        ->assertDisabled('li:nth-child(2) input[type=checkbox]')
-                        ->assertValue('li:nth-child(2) input[type=text]', '100')
-                        ->assertSeeIn('li:nth-child(3) label', 'Password contains a lower-case character')
-                        ->assertChecked('li:nth-child(3) input[type=checkbox]')
-                        ->assertMissing('li:nth-child(3) input[type=text]')
-                        ->assertSeeIn('li:nth-child(4) label', 'Password contains an upper-case character')
-                        ->assertNotChecked('li:nth-child(4) input[type=checkbox]')
-                        ->assertMissing('li:nth-child(4) input[type=text]')
-                        ->assertSeeIn('li:nth-child(5) label', 'Password contains a digit')
-                        ->assertNotChecked('li:nth-child(5) input[type=checkbox]')
-                        ->assertMissing('li:nth-child(5) input[type=text]')
-                        ->assertSeeIn('li:nth-child(6) label', 'Password contains a special character')
-                        ->assertNotChecked('li:nth-child(6) input[type=checkbox]')
-                        ->assertMissing('li:nth-child(6) input[type=text]')
-                        ->assertSeeIn('li:nth-child(7) label', 'Password cannot be the same as the last')
-                        ->assertNotChecked('li:nth-child(7) input[type=checkbox]')
-                        ->assertMissing('li:nth-child(7) input[type=text]')
-                        ->assertSelected('li:nth-child(7) select', 3)
-                        ->assertSelectHasOptions('li:nth-child(7) select', [1,2,3,4,5,6])
-                        // Change the policy
-                        ->type('li:nth-child(1) input[type=text]', '11')
-                        ->type('li:nth-child(2) input[type=text]', '120')
-                        ->click('li:nth-child(3) input[type=checkbox]')
-                        ->click('li:nth-child(4) input[type=checkbox]');
+            $browser->visit(new Home())
+                ->submitLogon('jack@kolab.org', 'simple123', true)
+                ->on(new Dashboard())
+                ->assertSeeIn('@links .link-settings', 'My account')
+                ->click('@links .link-settings')
+                ->on(new UserInfo())
+                ->assertMissing('#user-info button.button-delete')
+                ->assertSeeIn('#user-info .card-title', 'My account')
+                ->assertSeeIn('@nav #tab-general', 'General')
+                ->with('@general', function (Browser $browser) {
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Email')
+                        ->assertValue('div.row:nth-child(1) input[type=text]', 'jack@kolab.org')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Password')
+                        ->assertValue('div.row:nth-child(2) input#password', '')
+                        ->assertValue('div.row:nth-child(2) input#password_confirmation', '')
+                        ->assertAttribute('#password', 'placeholder', 'Password')
+                        ->assertAttribute('#password_confirmation', 'placeholder', 'Confirm Password')
+                        ->assertMissing('div.row:nth-child(2) .btn-group')
+                        ->assertMissing('div.row:nth-child(2) #password-link')
+                        ->assertMissing('div.row:nth-child(3)')
+                        ->whenAvailable('#password_policy', function (Browser $browser) {
+                            $browser->assertElementsCount('li', 3)
+                                ->assertMissing('li:nth-child(1) svg.text-success')
+                                ->assertSeeIn('li:nth-child(1) small', "Minimum password length: 10 characters")
+                                ->assertMissing('li:nth-child(2) svg.text-success')
+                                ->assertSeeIn('li:nth-child(2) small', "Password contains an upper-case character")
+                                ->assertMissing('li:nth-child(3) svg.text-success')
+                                ->assertSeeIn('li:nth-child(3) small', "Password contains a digit");
+                        });
                 })
-                ->assertSeeIn('@form .row:nth-child(2) > label', 'Password Retention')
-                ->with('@form #password_retention', function (Browser $browser) {
-                    $browser->assertElementsCount('li', 1)
-                        ->assertSeeIn('li:nth-child(1) label', 'Require a password change every')
-                        ->assertNotChecked('li:nth-child(1) input[type=checkbox]')
-                        ->assertSelected('li:nth-child(1) select', 3)
-                        ->assertSelectHasOptions('li:nth-child(1) select', [3, 6, 9, 12])
-                        // change the policy
-                        ->check('li:nth-child(1) input[type=checkbox]')
-                        ->select('li:nth-child(1) select', 6);
+                ->assertMissing('@nav #tab-settings')
+                ->assertSeeIn('@nav #tab-personal', 'Personal information')
+                ->click('@nav #tab-personal')
+                ->with('@personal', function (Browser $browser) {
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'First Name')
+                        ->assertValue('div.row:nth-child(1) input[type=text]', 'Jack')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Last Name')
+                        ->assertValue('div.row:nth-child(2) input[type=text]', 'Daniels')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'Organization')
+                        ->assertSeeIn('div.row:nth-child(4) label', 'Phone')
+                        ->assertSeeIn('div.row:nth-child(5) label', 'External Email')
+                        ->assertSeeIn('div.row:nth-child(6) label', 'Address')
+                        ->assertSeeIn('div.row:nth-child(7) label', 'Country')
+                        ->click('button[type=submit]');
                 })
-                ->click('button[type=submit]')
-                ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
         });
 
-        $this->assertSame('min:11,max:120,upper', $john->getSetting('password_policy'));
-        $this->assertSame('6', $john->getSetting('max_password_age'));
+        $user = $this->getTestUser('profile-delete@kolabnow.com', ['password' => 'simple123']);
+        $oldpassword = $user->password;
+
+        // Test password change
+        $this->browse(function (Browser $browser) use ($user) {
+            $browser->visit(new Home())
+                ->submitLogon($user->email, 'simple123', true)
+                ->on(new Dashboard())
+                ->click('@links .link-settings')
+                ->on(new UserInfo())
+                ->assertSeeIn('@nav #tab-general', 'General')
+                ->with('@general', function (Browser $browser) {
+                    $browser
+                        ->type('input#password', '12345678')
+                        ->type('input#password_confirmation', '12345678')
+                        ->click('button[type=submit]');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+        });
+
+        $this->assertTrue($oldpassword != $user->fresh()->password);
+    }
+
+    /**
+     * Test deleting an account
+     */
+    public function testAccountDelete(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $user = $this->getTestUser('profile-delete@kolabnow.com', ['password' => 'simple123']);
+
+            $browser->visit(new Home())
+                ->submitLogon('profile-delete@kolabnow.com', 'simple123', true)
+                ->on(new Dashboard())
+                ->assertSeeIn('@links .link-settings', 'My account')
+                ->click('@links .link-settings')
+                ->on(new UserInfo())
+                ->assertSeeIn('#user-info button.button-delete', 'Delete account')
+                ->click('#user-info button.button-delete')
+                ->with(new Dialog('#delete-warning'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Delete this account?')
+                        ->assertSeeIn('@body', 'This will delete the account as well as all domains')
+                        ->assertSeeIn('@body strong', 'This operation is irreversible')
+                        ->assertFocused('@button-cancel')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Delete account')
+                        ->click('@button-cancel');
+                })
+                ->waitUntilMissing('#delete-warning')
+                ->click('#user-info button.button-delete')
+                ->with(new Dialog('#delete-warning'), function (Browser $browser) {
+                    $browser->click('@button-action');
+                })
+                ->waitUntilMissing('#delete-warning')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User deleted successfully.')
+                ->on(new Home());
+
+            $this->assertTrue($user->fresh()->trashed());
+        });
     }
 }

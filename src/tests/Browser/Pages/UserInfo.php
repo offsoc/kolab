@@ -25,7 +25,7 @@ class UserInfo extends Page
      */
     public function assert($browser)
     {
-        $browser->waitFor('@form')
+        $browser->waitFor('@general form')
             ->waitUntilMissing('.app-loader');
     }
 
@@ -38,11 +38,11 @@ class UserInfo extends Page
     {
         return [
             '@app' => '#app',
-            '@form' => '#user-info form',
             '@nav' => 'ul.nav-tabs',
             '@packages' => '#user-packages',
             '@settings' => '#settings',
             '@general' => '#general',
+            '@personal' => '#personal',
             '@skus' => '#user-skus',
             '@status' => '#status-box',
         ];

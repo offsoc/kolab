@@ -130,7 +130,7 @@ class IMAP
                     $mailbox = self::toUTF7($name);
                     self::createFolder($imap, $mailbox, true, $folderconfig['metadata']);
                 } catch (\Exception $e) {
-                    \Log::warning("Failed to create the default folder" . $e->getMessage());
+                    \Log::warning("Failed to create the default folder. " . $e->getMessage());
                 }
             }
             $imap->closeConnection();

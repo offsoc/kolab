@@ -418,7 +418,6 @@ return [
         'org' => "Organisation",
         'package' => "Paquet",
         'price' => "Prix",
-        'profile-title' => "Votre profile",
         'profile-delete' => "Supprimer compte",
         'profile-delete-title' => "Supprimer ce compte?",
         'profile-delete-text1' => "Cela supprimera le compte ainsi que tous les domaines, utilisateurs et alias associés à ce compte.",

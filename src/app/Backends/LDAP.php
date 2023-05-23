@@ -1112,8 +1112,6 @@ class LDAP
         $roles = [];
 
         foreach ($user->entitlements as $entitlement) {
-            \Log::debug("Examining {$entitlement->sku->title}");
-
             switch ($entitlement->sku->title) {
                 case "mailbox":
                     break;
