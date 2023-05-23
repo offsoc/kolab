@@ -1355,6 +1355,49 @@ class UserTest extends TestCase
     }
 
     /**
+     * Tests for suspendAccount()
+     */
+    public function testSuspendAccount(): void
+    {
+        $user = $this->getTestUser('UserAccountA@UserAccount.com');
+        $wallet = $user->wallets()->first();
+
+        // No entitlements, expect the wallet owner to be suspended anyway
+        $user->suspendAccount();
+
+        $this->assertTrue($user->fresh()->isSuspended());
+
+        // Add entitlements and more suspendable objects into the wallet
+        $user->unsuspend();
+        $mailbox_sku = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $domain_sku = Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $group_sku = Sku::withEnvTenantContext()->where('title', 'group')->first();
+        $resource_sku = Sku::withEnvTenantContext()->where('title', 'resource')->first();
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+        $userB->assignSku($mailbox_sku, 1, $wallet);
+        $domain = $this->getTestDomain('UserAccount.com', ['type' => \App\Domain::TYPE_PUBLIC]);
+        $domain->assignSku($domain_sku, 1, $wallet);
+        $group = $this->getTestGroup('test-group@UserAccount.com');
+        $group->assignSku($group_sku, 1, $wallet);
+        $resource = $this->getTestResource('test-resource@UserAccount.com');
+        $resource->assignSku($resource_sku, 1, $wallet);
+
+        $this->assertFalse($user->isSuspended());
+        $this->assertFalse($userB->isSuspended());
+        $this->assertFalse($domain->isSuspended());
+        $this->assertFalse($group->isSuspended());
+        $this->assertFalse($resource->isSuspended());
+
+        $user->suspendAccount();
+
+        $this->assertTrue($user->fresh()->isSuspended());
+        $this->assertTrue($userB->fresh()->isSuspended());
+        $this->assertTrue($domain->fresh()->isSuspended());
+        $this->assertTrue($group->fresh()->isSuspended());
+        $this->assertFalse($resource->fresh()->isSuspended());
+    }
+
+    /**
      * Tests for UserSettingsTrait::setSettings() and getSetting() and getSettings()
      */
     public function testUserSettings(): void

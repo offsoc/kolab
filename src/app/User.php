@@ -646,6 +646,28 @@ class User extends Authenticatable
     }
 
     /**
+     * Suspend all users/domains/groups in this account.
+     */
+    public function suspendAccount(): void
+    {
+        $this->suspend();
+
+        foreach ($this->wallets as $wallet) {
+            $wallet->entitlements()->select('entitleable_id', 'entitleable_type')
+                ->distinct()
+                ->get()
+                ->each(function ($entitlement) {
+                    if (
+                        defined($entitlement->entitleable_type . '::STATUS_SUSPENDED')
+                        && $entitlement->entitleable
+                    ) {
+                        $entitlement->entitleable->suspend();
+                    }
+                });
+        }
+    }
+
+    /**
      * Validate the user credentials
      *
      * @param string $username       The username.

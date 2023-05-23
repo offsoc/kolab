@@ -9,6 +9,7 @@ class RateLimit extends Model
 {
     use BelongsToUserTrait;
 
+    /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'user_id',
         'owner_id',
@@ -16,10 +17,6 @@ class RateLimit extends Model
         'recipient_count'
     ];
 
+    /** @var string Database table name */
     protected $table = 'policy_ratelimit';
-
-    public function owner()
-    {
-        $this->belongsTo(\App\User::class);
-    }
 }

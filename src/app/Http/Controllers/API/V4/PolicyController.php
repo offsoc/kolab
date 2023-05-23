@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
+use App\Policy\RateLimit;
+use App\Policy\RateLimitWhitelist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -48,15 +50,13 @@ class PolicyController extends Controller
     {
         $data = \request()->input();
 
-        $sender = strtolower($data['sender']);
+        list($local, $domain) = \App\Utils::normalizeAddress($data['sender'], true);
 
-        if (strpos($sender, '+') !== false) {
-            list($local, $rest) = explode('+', $sender);
-            list($rest, $domain) = explode('@', $sender);
-            $sender = "{$local}@{$domain}";
+        if (empty($local) || empty($domain)) {
+            return response()->json(['response' => 'HOLD', 'reason' => 'Invalid sender email'], 403);
         }
 
-        list($local, $domain) = explode('@', $sender);
+        $sender = $local . '@' . $domain;
 
         if (in_array($sender, \config('app.ratelimit_whitelist', []), true)) {
             return response()->json(['response' => 'DUNNO'], 200);
@@ -78,7 +78,7 @@ class PolicyController extends Controller
             $user = $alias->user;
         }
 
-        if ($user->isDeleted() || $user->isSuspended()) {
+        if (empty($user) || $user->trashed() || $user->isSuspended()) {
             // use HOLD, so that it is silent (as opposed to REJECT)
             return response()->json(['response' => 'HOLD', 'reason' => 'Sender deleted or suspended'], 403);
         }
@@ -93,36 +93,18 @@ class PolicyController extends Controller
             return response()->json(['response' => 'DUNNO'], 200);
         }
 
-        if ($domain->isDeleted() || $domain->isSuspended()) {
+        if ($domain->trashed() || $domain->isSuspended()) {
             // use HOLD, so that it is silent (as opposed to REJECT)
             return response()->json(['response' => 'HOLD', 'reason' => 'Sender domain deleted or suspended'], 403);
         }
 
         // see if the user or domain is whitelisted
         // use ./artisan policy:ratelimit:whitelist:create <email|namespace>
-        $whitelist = \App\Policy\RateLimitWhitelist::where(
-            [
-                'whitelistable_type' => \App\User::class,
-                'whitelistable_id' => $user->id
-            ]
-        )->first();
-
-        if ($whitelist) {
+        if (RateLimitWhitelist::isListed($user) || RateLimitWhitelist::isListed($domain)) {
             return response()->json(['response' => 'DUNNO'], 200);
         }
 
-        $whitelist = \App\Policy\RateLimitWhitelist::where(
-            [
-                'whitelistable_type' => \App\Domain::class,
-                'whitelistable_id' => $domain->id
-            ]
-        )->first();
-
-        if ($whitelist) {
-            return response()->json(['response' => 'DUNNO'], 200);
-        }
-
-        // user nor domain whitelisted, continue scrutinizing request
+        // user nor domain whitelisted, continue scrutinizing the request
         $recipients = $data['recipients'];
         sort($recipients);
 
@@ -135,52 +117,47 @@ class PolicyController extends Controller
         $wallet = $user->wallet();
 
         // wait, there is no wallet?
-        if (!$wallet) {
+        if (!$wallet || !$wallet->owner) {
             return response()->json(['response' => 'HOLD', 'reason' => 'Sender without a wallet'], 403);
         }
 
         $owner = $wallet->owner;
 
         // find or create the request
-        $request = \App\Policy\RateLimit::where(
-            [
-                'recipient_hash' => $recipientHash,
-                'user_id' => $user->id
-            ]
-        )->where('updated_at', '>=', \Carbon\Carbon::now()->subHour())->first();
+        $request = RateLimit::where('recipient_hash', $recipientHash)
+            ->where('user_id', $user->id)
+            ->where('updated_at', '>=', \Carbon\Carbon::now()->subHour())
+            ->first();
 
         if (!$request) {
-            $request = \App\Policy\RateLimit::create(
-                [
+            $request = RateLimit::create([
                     'user_id' => $user->id,
                     'owner_id' => $owner->id,
                     'recipient_hash' => $recipientHash,
                     'recipient_count' => $recipientCount
-                ]
-            );
-
-        // ensure the request has an up to date timestamp
+            ]);
         } else {
+            // ensure the request has an up to date timestamp
             $request->updated_at = \Carbon\Carbon::now();
             $request->save();
         }
 
-        // excempt owners that have made at least two payments and currently maintain a positive balance.
-        $payments = $wallet->payments
-            ->where('amount', '>', 0)
-            ->where('status', 'paid');
+        // exempt owners that have made at least two payments and currently maintain a positive balance.
+        if ($wallet->balance > 0) {
+            $payments = $wallet->payments()->where('amount', '>', 0)->where('status', 'paid');
 
-        if ($payments->count() >= 2 && $wallet->balance > 0) {
-            return response()->json(['response' => 'DUNNO'], 200);
+            if ($payments->count() >= 2) {
+                return response()->json(['response' => 'DUNNO'], 200);
+            }
         }
 
         //
         // Examine the rates at which the owner (or its users) is sending
         //
-        $ownerRates = \App\Policy\RateLimit::where('owner_id', $owner->id)
+        $ownerRates = RateLimit::where('owner_id', $owner->id)
             ->where('updated_at', '>=', \Carbon\Carbon::now()->subHour());
 
-        if ($ownerRates->count() >= 10) {
+        if (($count = $ownerRates->count()) >= 10) {
             $result = [
                 'response' => 'DEFER_IF_PERMIT',
                 'reason' => 'The account is at 10 messages per hour, cool down.'
@@ -189,28 +166,14 @@ class PolicyController extends Controller
             // automatically suspend (recursively) if 2.5 times over the original limit and younger than two months
             $ageThreshold = \Carbon\Carbon::now()->subMonthsWithoutOverflow(2);
 
-            if ($ownerRates->count() >= 25 && $owner->created_at > $ageThreshold) {
-                $wallet->entitlements->each(
-                    function ($entitlement) {
-                        if ($entitlement->entitleable_type == \App\Domain::class) {
-                            $entitlement->entitleable->suspend();
-                        }
-
-                        if ($entitlement->entitleable_type == \App\User::class) {
-                            $entitlement->entitleable->suspend();
-                        }
-                    }
-                );
+            if ($count >= 25 && $owner->created_at > $ageThreshold) {
+                $owner->suspendAccount();
             }
 
             return response()->json($result, 403);
         }
 
-        $ownerRates = \App\Policy\RateLimit::where('owner_id', $owner->id)
-            ->where('updated_at', '>=', \Carbon\Carbon::now()->subHour())
-            ->sum('recipient_count');
-
-        if ($ownerRates >= 100) {
+        if (($recipientCount = $ownerRates->sum('recipient_count')) >= 100) {
             $result = [
                 'response' => 'DEFER_IF_PERMIT',
                 'reason' => 'The account is at 100 recipients per hour, cool down.'
@@ -219,31 +182,21 @@ class PolicyController extends Controller
             // automatically suspend if 2.5 times over the original limit and younger than two months
             $ageThreshold = \Carbon\Carbon::now()->subMonthsWithoutOverflow(2);
 
-            if ($ownerRates >= 250 && $owner->created_at > $ageThreshold) {
-                $wallet->entitlements->each(
-                    function ($entitlement) {
-                        if ($entitlement->entitleable_type == \App\Domain::class) {
-                            $entitlement->entitleable->suspend();
-                        }
-
-                        if ($entitlement->entitleable_type == \App\User::class) {
-                            $entitlement->entitleable->suspend();
-                        }
-                    }
-                );
+            if ($recipientCount >= 250 && $owner->created_at > $ageThreshold) {
+                $owner->suspendAccount();
             }
 
             return response()->json($result, 403);
         }
 
         //
-        // Examine the rates at which the user is sending (if not also the owner
+        // Examine the rates at which the user is sending (if not also the owner)
         //
         if ($user->id != $owner->id) {
-            $userRates = \App\Policy\RateLimit::where('user_id', $user->id)
+            $userRates = RateLimit::where('user_id', $user->id)
                 ->where('updated_at', '>=', \Carbon\Carbon::now()->subHour());
 
-            if ($userRates->count() >= 10) {
+            if (($count = $userRates->count()) >= 10) {
                 $result = [
                     'response' => 'DEFER_IF_PERMIT',
                     'reason' => 'User is at 10 messages per hour, cool down.'
@@ -252,18 +205,14 @@ class PolicyController extends Controller
                 // automatically suspend if 2.5 times over the original limit and younger than two months
                 $ageThreshold = \Carbon\Carbon::now()->subMonthsWithoutOverflow(2);
 
-                if ($userRates->count() >= 25 && $user->created_at > $ageThreshold) {
+                if ($count >= 25 && $user->created_at > $ageThreshold) {
                     $user->suspend();
                 }
 
                 return response()->json($result, 403);
             }
 
-            $userRates = \App\Policy\RateLimit::where('user_id', $user->id)
-                ->where('updated_at', '>=', \Carbon\Carbon::now()->subHour())
-                ->sum('recipient_count');
-
-            if ($userRates >= 100) {
+            if (($recipientCount = $userRates->sum('recipient_count')) >= 100) {
                 $result = [
                     'response' => 'DEFER_IF_PERMIT',
                     'reason' => 'User is at 100 recipients per hour, cool down.'
@@ -272,7 +221,7 @@ class PolicyController extends Controller
                 // automatically suspend if 2.5 times over the original limit
                 $ageThreshold = \Carbon\Carbon::now()->subMonthsWithoutOverflow(2);
 
-                if ($userRates >= 250 && $user->created_at > $ageThreshold) {
+                if ($recipientCount >= 250 && $user->created_at > $ageThreshold) {
                     $user->suspend();
                 }
 

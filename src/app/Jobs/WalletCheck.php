@@ -201,12 +201,7 @@ class WalletCheck implements ShouldQueue
         }
 
         // Suspend the account
-        $this->wallet->owner->suspend();
-        foreach ($this->wallet->entitlements as $entitlement) {
-            if (method_exists($entitlement->entitleable_type, 'suspend')) {
-                $entitlement->entitleable->suspend();
-            }
-        }
+        $this->wallet->owner->suspendAccount();
 
         $this->sendMail(\App\Mail\NegativeBalanceSuspended::class, true);
 
