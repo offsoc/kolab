@@ -248,7 +248,7 @@ class StatusTest extends TestCaseDusk
                 ->assertText('@table tbody tr:nth-child(3) td:first-child svg title', 'Not Ready')
                 ->click('@table tbody tr:nth-child(3) td:first-child a')
                 ->on(new UserInfo())
-                ->with('@form', function (Browser $browser) {
+                ->with('@general', function (Browser $browser) {
                     // Assert state in the user edit form
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Status')
                         ->assertSeeIn('div.row:nth-child(1) #status', 'Not Ready');

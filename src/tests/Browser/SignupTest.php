@@ -633,9 +633,6 @@ class SignupTest extends TestCaseDusk
             $browser->visit(new Signup())
                 ->waitFor('@step0 .plan-individual button')
                 ->click('@step0 .plan-individual button')
-                ->whenAvailable('@step0', function ($browser) {
-                    $browser->click('.plan-individual button');
-                })
                 ->whenAvailable('@step3', function ($browser) {
                     $browser->type('#signup_login', 'signuptestdusk')
                         ->type('#signup_password', '12345678')
