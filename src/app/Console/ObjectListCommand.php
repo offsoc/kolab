@@ -28,7 +28,8 @@ abstract class ObjectListCommand extends ObjectCommand
             $this->signature .= " {--with-deleted : Include deleted {$this->objectName}s}";
         }
 
-        $this->signature .= " {--attr=* : Attributes other than the primary unique key to include}";
+        $this->signature .= " {--attr=* : Attributes other than the primary unique key to include}"
+            . "{--filter=* : Additional filter(s) or a raw SQL WHERE clause}";
 
         parent::__construct();
     }
@@ -49,14 +50,65 @@ abstract class ObjectListCommand extends ObjectCommand
             $objects = new $this->objectClass();
         }
 
-        $objects->each(
-            function ($object) {
-                if ($object->deleted_at) {
-                    $this->info("{$this->toString($object)} (deleted at {$object->deleted_at}");
-                } else {
-                    $this->info("{$this->toString($object)}");
-                }
+        foreach ($this->option('filter') as $filter) {
+            $objects = $this->applyFilter($objects, $filter);
+        }
+
+        foreach ($objects->cursor() as $object) {
+            if ($object->deleted_at) {
+                $this->info("{$this->toString($object)} (deleted at {$object->deleted_at}");
+            } else {
+                $this->info("{$this->toString($object)}");
             }
-        );
+        }
+    }
+
+    /**
+     * Apply pre-configured filter or raw WHERE clause to the main query.
+     *
+     * @param object $query  Query builder
+     * @param string $filter Pre-defined filter identifier or raw SQL WHERE clause
+     *
+     * @return object Query builder
+     */
+    public function applyFilter($query, string $filter)
+    {
+        // Get objects marked as deleted, i.e. --filter=TRASHED
+        // Note: For use with --with-deleted option
+        if (strtolower($filter) === 'trashed') {
+            return $query->whereNotNull('deleted_at');
+        }
+
+        // Get objects with specified status, e.g. --filter=STATUS:SUSPENDED
+        if (preg_match('/^status:([a-z]+)$/i', $filter, $matches)) {
+            $status = strtoupper($matches[1]);
+            $const = "{$this->objectClass}::STATUS_{$status}";
+
+            if (defined($const)) {
+                return $query->where('status', '&', constant($const));
+            }
+
+            throw new \Exception("Unknown status in --filter={$filter}");
+        }
+
+        // Get objects older/younger than specified time, e.g. --filter=MIN-AGE:1Y
+        if (preg_match('/^(min|max)-age:([0-9]+)([mdy])$/i', $filter, $matches)) {
+            $operator = strtolower($matches[2]) == 'min' ? '<=' : '>=';
+            $count = $matches[2];
+            $period = strtolower($matches[3]);
+            $date = \Carbon\Carbon::now();
+
+            if ($period == 'y') {
+                $date->subYearsWithoutOverflow($count);
+            } elseif ($period == 'm') {
+                $date->subMonthsWithoutOverflow($count);
+            } else {
+                $date->subDays($count);
+            }
+
+            return $query->where('created_at', $operator, $date);
+        }
+
+        return $query->whereRaw($filter);
     }
 }
