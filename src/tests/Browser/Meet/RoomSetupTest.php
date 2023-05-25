@@ -36,12 +36,12 @@ class RoomSetupTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new RoomPage('unknown'))
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang']);
+                    $browser->assertMenuItems(['support', 'signup', 'login', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'tos', 'login']);
+                    $browser->assertMenuItems(['support', 'signup', 'login']);
                 });
             } else {
                 $browser->assertMissing('#footer-menu .navbar-nav');
@@ -70,12 +70,12 @@ class RoomSetupTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $browser->visit(new RoomPage('john'))
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'login', 'lang']);
+                    $browser->assertMenuItems(['support', 'signup', 'login', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['signup', 'explore', 'blog', 'support', 'tos', 'login']);
+                    $browser->assertMenuItems(['support', 'signup', 'login']);
                 });
             } else {
                 $browser->assertMissing('#footer-menu .navbar-nav');
@@ -150,12 +150,12 @@ class RoomSetupTest extends TestCaseDusk
                 ->submitLogon('john@kolab.org', 'simple123')
                 ->waitFor('@setup-form')
                 ->within(new Menu(), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'dashboard', 'logout', 'lang']);
+                    $browser->assertMenuItems(['support', 'dashboard', 'logout', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
                 $browser->within(new Menu('footer'), function ($browser) {
-                    $browser->assertMenuItems(['explore', 'blog', 'support', 'tos', 'dashboard', 'logout']);
+                    $browser->assertMenuItems(['support', 'dashboard', 'logout']);
                 });
             }
 

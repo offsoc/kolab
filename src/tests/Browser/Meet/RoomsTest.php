@@ -320,6 +320,8 @@ class RoomsTest extends TestCaseDusk
                 ->with('@general form', function ($browser) {
                     $browser->assertSeeIn('.row:nth-child(1) label', 'Description')
                         ->assertFocused('.row:nth-child(1) input')
+                        ->assertMissing('.row:nth-child(2)');
+                        /*
                         ->assertSeeIn('.row:nth-child(2) label', 'Subscriptions')
                         ->with(new SubscriptionSelect('@skus'), function ($browser) {
                             $browser->assertElementsCount('tbody tr', 1)
@@ -331,6 +333,7 @@ class RoomsTest extends TestCaseDusk
                                 )
                                 ->assertSubscriptionState(0, true);
                         });
+                        */
                 })
                 ->click('@nav li:last-child a')
                 ->with('@settings form', function ($browser) {
