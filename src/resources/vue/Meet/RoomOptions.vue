@@ -18,7 +18,7 @@
         <form id="room-options-lock">
             <div id="room-lock" class="mb-2">
                 <label for="room-lock-input">{{ $t('meet.lock') }}:</label>
-                <input type="checkbox" id="room-lock-input" name="lock" value="1" :checked="config.locked" @click="lockSave">
+                <input type="checkbox" id="room-lock-input" class="ms-2" value="1" :checked="config.locked" @click="lockSave">
             </div>
             <small class="text-muted">
                 {{ $t('meet.lock-text') }}
@@ -28,7 +28,7 @@
         <form id="room-options-nomedia">
             <div id="room-nomedia" class="mb-2">
                 <label for="room-nomedia-input">{{ $t('meet.nomedia') }}:</label>
-                <input type="checkbox" id="room-nomedia-input" name="lock" value="1" :checked="config.nomedia" @click="nomediaSave">
+                <input type="checkbox" id="room-nomedia-input" class="ms-2" value="1" :checked="config.nomedia" @click="nomediaSave">
             </div>
             <small class="text-muted">
                 {{ $t('meet.nomedia-text') }}
