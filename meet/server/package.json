@@ -23,7 +23,7 @@
         "mediasoup": "~3.10.5",
         "pidusage": "^2.0.17",
         "prom-client": ">=12.0.0",
-        "socket.io": "^4.4.1",
+        "socket.io": "^4.6.1",
         "spdy": "^4.0.1",
         "uuid": "^7.0.2"
     },
@@ -32,7 +32,7 @@
         "eslint": "^8.0.1",
         "mediasoup-client": "^3.6.37",
         "mocha": "^9.1.1",
-        "socket.io-client": "^4.3.2",
+        "socket.io-client": "^4.6.1",
         "superagent": "^6.1.0",
         "supertest": "^6.1.6"
     }
