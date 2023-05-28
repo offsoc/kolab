@@ -280,5 +280,9 @@ return [
     'companion_download_link' => env(
         'COMPANION_DOWNLOAD_LINK',
         "https://mirror.apheleia-it.ch/pub/companion-app-beta.apk"
-    )
+    ),
+
+    'vpn' => [
+        'signing_key' => env('VPN_TOKEN_SIGNING_KEY', 0),
+    ],
 ];

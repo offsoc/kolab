@@ -188,6 +188,8 @@ Route::group(
         Route::post('support/request', [API\V4\SupportController::class, 'request'])
             ->withoutMiddleware(['auth:api', 'scope:api'])
             ->middleware(['api']);
+
+        Route::get('vpn/token', [API\V4\VPNController::class, 'token']);
     }
 );
 
