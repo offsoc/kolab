@@ -4,7 +4,6 @@
             <div class="card-body">
                 <div class="card-title">
                     {{ $tc('shf.list-title', 2) }}
-                    <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
                     <btn-router v-if="!$root.isDegraded()" to="shared-folder/new" class="btn-success float-end" icon="folder-open">
                         {{ $t('shf.create') }}
                     </btn-router>
