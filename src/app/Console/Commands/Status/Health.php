@@ -23,7 +23,7 @@ class Health extends Command
      * @var string
      */
     protected $signature = 'status:health
-                            {--check=*: One of DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates}';
+                            {--check=* : One of DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates}';
 
     /**
      * The console command description.
