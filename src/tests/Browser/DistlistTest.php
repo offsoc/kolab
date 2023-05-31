@@ -3,7 +3,6 @@
 namespace Tests\Browser;
 
 use App\Group;
-use App\Sku;
 use Tests\Browser;
 use Tests\Browser\Components\ListInput;
 use Tests\Browser\Components\Status;
@@ -24,7 +23,6 @@ class DistlistTest extends TestCaseDusk
         parent::setUp();
 
         $this->deleteTestGroup('group-test@kolab.org');
-        $this->clearBetaEntitlements();
     }
 
     /**
@@ -33,7 +31,6 @@ class DistlistTest extends TestCaseDusk
     public function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolab.org');
-        $this->clearBetaEntitlements();
 
         parent::tearDown();
     }
@@ -65,22 +62,16 @@ class DistlistTest extends TestCaseDusk
      */
     public function testList(): void
     {
-        // Log on the user
-        $this->browse(function (Browser $browser) {
-            $browser->visit(new Home())
-                ->submitLogon('john@kolab.org', 'simple123', true)
-                ->on(new Dashboard())
-                ->assertMissing('@links .link-distlists');
-        });
-
         // Create a single group
         $john = $this->getTestUser('john@kolab.org');
         $group = $this->getTestGroup('group-test@kolab.org', ['name' => 'Test Group']);
         $group->assignToWallet($john->wallets->first());
 
-        // Test distribution lists page
+        // Log on the user
         $this->browse(function (Browser $browser) {
-            $browser->visit(new Dashboard())
+            $browser->visit(new Home())
+                ->submitLogon('john@kolab.org', 'simple123', true)
+                ->on(new Dashboard())
                 ->assertSeeIn('@links .link-distlists', 'Distribution lists')
                 ->click('@links .link-distlists')
                 ->on(new DistlistList())

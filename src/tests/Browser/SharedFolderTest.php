@@ -24,7 +24,6 @@ class SharedFolderTest extends TestCaseDusk
         parent::setUp();
 
         SharedFolder::whereNotIn('email', ['folder-event@kolab.org', 'folder-contact@kolab.org'])->delete();
-        $this->clearBetaEntitlements();
     }
 
     /**
@@ -33,7 +32,6 @@ class SharedFolderTest extends TestCaseDusk
     public function tearDown(): void
     {
         SharedFolder::whereNotIn('email', ['folder-event@kolab.org', 'folder-contact@kolab.org'])->delete();
-        $this->clearBetaEntitlements();
 
         parent::tearDown();
     }
@@ -65,23 +63,17 @@ class SharedFolderTest extends TestCaseDusk
      */
     public function testList(): void
     {
-        // Log on the user
-        $this->browse(function (Browser $browser) {
-            $browser->visit(new Home())
-                ->submitLogon('john@kolab.org', 'simple123', true)
-                ->on(new Dashboard())
-                ->assertMissing('@links .link-shared-folders');
-        });
-
         // Make sure the first folder is active
         $folder = $this->getTestSharedFolder('folder-event@kolab.org');
         $folder->status = SharedFolder::STATUS_NEW | SharedFolder::STATUS_ACTIVE
             | SharedFolder::STATUS_LDAP_READY | SharedFolder::STATUS_IMAP_READY;
         $folder->save();
 
-        // Test shared folders lists page
+        // Log on the user
         $this->browse(function (Browser $browser) {
-            $browser->visit(new Dashboard())
+            $browser->visit(new Home())
+                ->submitLogon('john@kolab.org', 'simple123', true)
+                ->on(new Dashboard())
                 ->assertSeeIn('@links .link-shared-folders', 'Shared folders')
                 ->click('@links .link-shared-folders')
                 ->on(new SharedFolderList())
