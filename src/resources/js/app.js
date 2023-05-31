@@ -145,7 +145,7 @@ const app = new Vue({
                 this.authInfo = response
             }
 
-            routerState.isLocked = this.authInfo && this.authInfo.isLocked
+            routerState.isLocked = this.isUser && this.authInfo && this.authInfo.isLocked
 
             if (dashboard !== false) {
                 this.$router.push(routerState.afterLogin || { name: response.redirect || 'dashboard' })
