@@ -73,15 +73,6 @@ class SharedFolderTest extends TestCaseDusk
                 ->assertMissing('@links .link-shared-folders');
         });
 
-        // Test that shared folders lists page is not accessible without the 'beta' entitlement
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/shared-folders')
-                ->assertErrorPage(403);
-        });
-
-        // Add beta entitlement
-        $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john);
         // Make sure the first folder is active
         $folder = $this->getTestSharedFolder('folder-event@kolab.org');
         $folder->status = SharedFolder::STATUS_NEW | SharedFolder::STATUS_ACTIVE
@@ -117,16 +108,6 @@ class SharedFolderTest extends TestCaseDusk
      */
     public function testCreateUpdateDelete(): void
     {
-        // Test that the page is not available accessible without the 'beta' entitlement
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/shared-folder/new')
-                ->assertErrorPage(403);
-        });
-
-        // Add beta entitlements
-        $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john);
-
         $this->browse(function (Browser $browser) {
             // Create a folder
             $browser->visit(new SharedFolderList())
@@ -315,8 +296,6 @@ class SharedFolderTest extends TestCaseDusk
      */
     public function testStatus(): void
     {
-        $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john);
         $folder = $this->getTestSharedFolder('folder-event@kolab.org');
         $folder->status = SharedFolder::STATUS_NEW | SharedFolder::STATUS_ACTIVE | SharedFolder::STATUS_LDAP_READY;
         $folder->created_at = \now();
@@ -352,8 +331,6 @@ class SharedFolderTest extends TestCaseDusk
      */
     public function testSettings(): void
     {
-        $john = $this->getTestUser('john@kolab.org');
-        $this->addBetaEntitlement($john);
         $folder = $this->getTestSharedFolder('folder-event@kolab.org');
         $folder->setSetting('acl', null);
 
