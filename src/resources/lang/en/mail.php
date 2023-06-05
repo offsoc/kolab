@@ -36,8 +36,6 @@ return [
     'negativebalancereminder-body' => "It has probably skipped your attention that you are behind on paying for your :site account. "
         . "Consider setting up an automatic payment to avoid messages like this in the future.",
     'negativebalancereminder-body-ext' => "Settle up to keep your account running:",
-    'negativebalancereminder-body-warning' => "Please, be aware that your account will be suspended "
-        . "if your account balance is not settled by :date.",
 
     'negativebalancereminderdegrade-body-warning' => "Please, be aware that your account will be degraded "
         . "if your account balance is not settled by :date.",
@@ -46,18 +44,6 @@ return [
     'negativebalancedegraded-body' => "Your :site account has been degraded for having a negative balance for too long. "
         . "Consider setting up an automatic payment to avoid messages like this in the future.",
     'negativebalancedegraded-body-ext' => "Settle up now to undegrade your account:",
-
-    'negativebalancesuspended-subject' => ":site Account Suspended",
-    'negativebalancesuspended-body' => "Your :site account has been suspended for having a negative balance for too long. "
-        . "Consider setting up an automatic payment to avoid messages like this in the future.",
-    'negativebalancesuspended-body-ext' => "Settle up now to unsuspend your account:",
-    'negativebalancesuspended-body-warning' => "Please, be aware that your account and all its data will be deleted "
-        . "if your account balance is not settled by :date.",
-
-    'negativebalancebeforedelete-subject' => ":site Final Warning",
-    'negativebalancebeforedelete-body' => "This is a final reminder to settle your :site account balance. "
-        . "Your account and all its data will be deleted if your account balance is not settled by :date.",
-    'negativebalancebeforedelete-body-ext' => "Settle up now to keep your account:",
 
     'passwordreset-subject' => ":site Password Reset",
     'passwordreset-body1' => "Someone recently asked to change your :site password.",
@@ -100,13 +86,6 @@ return [
     'signupinvitation-header' => "Hi,",
     'signupinvitation-body1' => "You have been invited to join :site. Click the link below to sign up.",
     'signupinvitation-body2' => "",
-
-    'suspendeddebtor-subject' => ":site Account Suspended",
-    'suspendeddebtor-body' => "You have been behind on paying for your :site account "
-        . "for over :days days. Your account has been suspended.",
-    'suspendeddebtor-middle' => "Settle up now to reactivate your account.",
-    'suspendeddebtor-cancel' => "Don't want to be our customer anymore? "
-        . "Here is how you can cancel your account:",
 
     'trialend-subject' => ":site: Your trial phase has ended",
     'trialend-intro' => "We hope you enjoyed the 30 days of free :site trial."

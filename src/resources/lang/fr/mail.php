@@ -36,20 +36,6 @@ return [
     'negativebalancereminder-body' => "Vous n'avez peut-être pas rendu compte que vous êtes en retard avec votre paiement pour :site compte."
         . " Veillez à mettre en place un auto-paiement pour éviter de tel avertissement comme celui-ci dans le future.",
     'negativebalancereminder-body-ext' => "Régler votre compte pour le maintenir en fontion:",
-    'negativebalancereminder-body-warning' => "Soyez conscient que votre compte sera suspendu si le"
-        . " solde de votre compte n'est réglé avant le :date.",
-
-    'negativebalancesuspended-subject' => ":site Compte Suspendu",
-    'negativebalancesuspended-body' => "Votre :site compte a été suspendu à la suite d'un solde négatif pendant trop longtemps."
-        . " Veillez nvisager de mettre en place un auto-paiement pour éviter de tel avertissement comme celui-ci dans le future.",
-    'negativebalancesuspended-body-ext' => "Régler votre compte pour le maintenir en fontion:",
-    'negativebalancesuspended-body-warning' => "Veuillez vous assurer que votre compte et toutes ses données seront supprimés"
-        . " si le solde de votre compte n'est pas réglé avant le :date.",
-
-    'negativebalancebeforedelete-subject' => ":site Dernier Avertissement",
-    'negativebalancebeforedelete-body' => "Ceci-ci est le dernier rappel pour régler votre :site solde de compte."
-        . " votre compte et toutes ses données seront supprimés si le solde de votre compte nest pas régler avant le :date.",
-    'negativebalancebeforedelete-body-ext' => "Régler votre compte immédiatement:",
 
     'negativebalancereminderdegrade-body-warning' => "Veuillez noter que votre compte sera dégradé"
         . " si le solde de votre compte n'est pas réglé avant le :date.",
@@ -97,12 +83,5 @@ return [
     'signupinvitation-header' => "Salut,",
     'signupinvitation-body1' => "Vous êtes invité à joindre :site. Cliquez sur le lien ci-dessous pour vous inscrire.",
     'signupinvitation-body2' => "",
-
-    'suspendeddebtor-subject' => ":site Compte Suspendu",
-    'suspendeddebtor-body' => "Vous êtes en retard avec le paiement de votre :site compte"
-        . " pour plus de :days jours. Votre compte est suspendu.",
-    'suspendeddebtor-middle' => "Réglez immédiatement pour réactiver votre compte.",
-    'suspendeddebtor-cancel' => "Vous ne souhaitez plus être notre client?"
-        . " Voici la démarche à suivre pour annuler votre compte:",
 
 ];
