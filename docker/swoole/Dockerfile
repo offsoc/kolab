@@ -28,9 +28,10 @@ RUN dnf -y install \
         php-common \
         php-devel \
         php-ldap \
+        php-mysqlnd \
         php-opcache \
         php-pecl-apcu \
-        php-mysqlnd \
+        php-sodium \
         re2c \
         wget && \
     git clone https://github.com/swoole/swoole-src.git/ /swoole-src.git/ && \
