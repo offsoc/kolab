@@ -43,7 +43,6 @@ abstract class ObjectListCommand extends ObjectCommand
     {
         $classes = class_uses_recursive($this->objectClass);
 
-        // @phpstan-ignore-next-line
         if (in_array(SoftDeletes::class, $classes) && $this->option('with-deleted')) {
             $objects = $this->objectClass::withTrashed();
         } else {

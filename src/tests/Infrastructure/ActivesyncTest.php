@@ -580,10 +580,16 @@ class ActivesyncTest extends TestCase
         $this->assertEquals(2, $add->length);
 
         $this->assertEquals("clientId2", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(0)->nodeValue);
-        $this->assertEquals($result['serverId1'], $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(0)->nodeValue);
+        $this->assertEquals(
+            $result['serverId1'],
+            $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(0)->nodeValue
+        );
 
         $this->assertEquals("clientId3", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(1)->nodeValue);
-        $this->assertEquals($result['serverId2'], $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(1)->nodeValue);
+        $this->assertEquals(
+            $result['serverId2'],
+            $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(1)->nodeValue
+        );
 
         // The server does not have to inform about a successful change
         $change = $xpath->query("//ns:Responses/ns:Change");
