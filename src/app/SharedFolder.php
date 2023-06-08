@@ -48,18 +48,18 @@ class SharedFolder extends Model
     // folder has been created in IMAP
     public const STATUS_IMAP_READY = 1 << 8;
 
+    /** @const array Supported folder type labels */
+    public const SUPPORTED_TYPES = ['mail', 'event', 'contact', 'task', 'note', 'file'];
+
+    /** @const string A template for the email attribute on a folder creation */
+    public const EMAIL_TEMPLATE = '{type}-{id}@{domainName}';
+
     /** @var int The allowed states for this object used in StatusPropertyTrait */
     private int $allowed_states = self::STATUS_NEW |
         self::STATUS_ACTIVE |
         self::STATUS_DELETED |
         self::STATUS_LDAP_READY |
         self::STATUS_IMAP_READY;
-
-    /** @const array Supported folder type labels */
-    public const SUPPORTED_TYPES = ['mail', 'event', 'contact', 'task', 'note', 'file'];
-
-    /** @const string A template for the email attribute on a folder creation */
-    public const EMAIL_TEMPLATE = '{type}-{id}@{domainName}';
 
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [

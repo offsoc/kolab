@@ -44,15 +44,6 @@ class Domain extends Model
     // domain has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 6;
 
-    /** @var int The allowed states for this object used in StatusPropertyTrait */
-    private int $allowed_states = self::STATUS_NEW |
-        self::STATUS_ACTIVE |
-        self::STATUS_SUSPENDED |
-        self::STATUS_DELETED |
-        self::STATUS_CONFIRMED |
-        self::STATUS_VERIFIED |
-        self::STATUS_LDAP_READY;
-
     // open for public registration
     public const TYPE_PUBLIC       = 1 << 0;
     // zone hosted with us
@@ -63,6 +54,15 @@ class Domain extends Model
     public const HASH_CODE = 1;
     public const HASH_TEXT = 2;
     public const HASH_CNAME = 3;
+
+    /** @var int The allowed states for this object used in StatusPropertyTrait */
+    private int $allowed_states = self::STATUS_NEW |
+        self::STATUS_ACTIVE |
+        self::STATUS_SUSPENDED |
+        self::STATUS_DELETED |
+        self::STATUS_CONFIRMED |
+        self::STATUS_VERIFIED |
+        self::STATUS_LDAP_READY;
 
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
