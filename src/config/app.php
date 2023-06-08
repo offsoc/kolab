@@ -283,6 +283,6 @@ return [
     ),
 
     'vpn' => [
-        'signing_key' => env('VPN_TOKEN_SIGNING_KEY', 0),
+        'token_signing_key' => env('VPN_TOKEN_SIGNING_KEY', 0),
     ],
 ];
