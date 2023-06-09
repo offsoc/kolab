@@ -14,9 +14,12 @@
         },
         methods: {
             className() {
-                let label = this.to.length ? this.to : this.to.name
+                let label = (this.to.length ? this.to : this.to.name)
+                    .replace(/\?.*$/, '')
+                    .replace('/', '-')
+                    .replace(/(^[^a-z]+)|([^a-z]+$)/g, '')
 
-                return ['btn', label.replace('/', '-')]
+                return label
             }
         }
     }

@@ -171,17 +171,16 @@
 }
 
 .file-drop-area {
-    display: inline;
-    background: $menu-bg-color;
     color: grey;
     font-size: 0.9rem;
     font-weight: normal;
     line-height: 2;
-    border: 1px solid #eee;
+    border: 1px dashed #bbb;
     border-radius: 0.5em;
     padding: 0.5em;
     cursor: pointer;
     position: relative;
+    margin-top: -0.5rem;
 
     input {
         position: absolute;

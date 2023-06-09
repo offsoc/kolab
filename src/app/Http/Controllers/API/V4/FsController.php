@@ -11,6 +11,7 @@ use App\User;
 use App\Utils;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class FsController extends RelationController
@@ -50,15 +51,12 @@ class FsController extends RelationController
         $file->delete();
 
         if ($file->type & Item::TYPE_COLLECTION) {
-            return response()->json([
-                    'status' => 'success',
-                    'message' => self::trans('app.collection-delete-success'),
-            ]);
+            $message = self::trans('app.collection-delete-success');
         }
 
         return response()->json([
                 'status' => 'success',
-                'message' => self::trans('app.file-delete-success'),
+                'message' => $message ?? self::trans('app.file-delete-success'),
         ]);
     }
 
@@ -376,92 +374,6 @@ class FsController extends RelationController
         return response()->json($response);
     }
 
-    private function deduplicateOrCreate(Request $request, $type)
-    {
-        $user = $this->guard()->user();
-        $item = null;
-        if ($request->has('deduplicate-property')) {
-            //query for item by deduplicate-value
-            $result = $user->fsItems()->select('fs_items.*');
-            $result->join('fs_properties', function ($join) use ($request) {
-                $join->on('fs_items.id', '=', 'fs_properties.item_id')
-                ->where('fs_properties.key', $request->input('deduplicate-property'));
-            })
-            ->where('type', '&', $type);
-
-            $result->whereLike('fs_properties.value', $request->input('deduplicate-value'));
-            $item = $result->first();
-        }
-
-        if (!$item) {
-            $item = $user->fsItems()->create(['type' => $type]);
-        }
-        return $item;
-    }
-
-    /**
-     * Create a new collection.
-     *
-     * @param \Illuminate\Http\Request $request The API request.
-     *
-     * @return \Illuminate\Http\JsonResponse The response
-     */
-    private function createCollection(Request $request)
-    {
-        // Validate file name input
-        $v = Validator::make($request->all(), [
-            'name' => ['required', new FileName()],
-            'deviceId' => ['max:255'],
-            'collectionType' => ['max:255'],
-        ]);
-
-        if ($v->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
-        }
-
-        $properties = [
-            'name' => $request->input('name'),
-            'deviceId' => $request->input('deviceId'),
-            'collectionType' => $request->input('collectionType'),
-        ];
-
-        foreach ($request->all() as $key => $value) {
-            if (str_starts_with($key, "property-")) {
-                $propertyKey = substr($key, 9);
-                if (strlen($propertyKey) > 191) {
-                    return response()->json([
-                        'status' => 'error',
-                        'errors' => [self::trans('validation.max.string', ['attribute' => $propertyKey, 'max' => 191])]
-                    ], 422);
-                }
-                if (!preg_match('/^[a-zA-Z0-9_-]+$/', $propertyKey)) {
-                    return response()->json([
-                        'status' => 'error',
-                        'errors' => [self::trans('validation.regex_format', [
-                            'attribute' => $propertyKey,
-                            'format' => "a-zA-Z0-9_-"
-                        ])]
-                    ], 422);
-                }
-                $properties[$propertyKey] = $value;
-            }
-        }
-
-        $item = $this->deduplicateOrCreate($request, Item::TYPE_COLLECTION);
-        $item->setProperties($properties);
-
-        if ($parent = $request->input('parent')) {
-            $item->parents()->sync([$parent]);
-        }
-
-        $response = [];
-        $response['status'] = 'success';
-        $response['id'] = $item->id;
-        $response['message'] = self::trans('app.collection-create-success');
-
-        return response()->json($response);
-    }
-
     /**
      * Create a new file.
      *
@@ -483,8 +395,39 @@ class FsController extends RelationController
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
+        $parents = $this->getInputParents($request);
+        if ($errorResponse = $this->validateParents($parents)) {
+            return $errorResponse;
+        }
+
         $filename = $request->input('name');
         $media = $request->input('media');
+
+        // TODO: Delete the existing incomplete file with the same name?
+        $properties = ['name' => $filename];
+
+        foreach ($request->all() as $key => $value) {
+            if (str_starts_with($key, 'property-')) {
+                $propertyKey = substr($key, 9);
+
+                if ($errorResponse = $this->validatePropertyName($propertyKey)) {
+                    return $errorResponse;
+                }
+
+                $properties[$propertyKey] = $value;
+            }
+        }
+
+        DB::beginTransaction();
+
+        $file = $this->deduplicateOrCreate($request, Item::TYPE_INCOMPLETE | Item::TYPE_FILE);
+        $file->setProperties($properties);
+
+        if (!empty($parents)) {
+            $file->parents()->sync($parents);
+        }
+
+        DB::commit();
 
         $params = [];
         $params['mimetype'] = $request->headers->get('Content-Type', null);
@@ -493,43 +436,6 @@ class FsController extends RelationController
             $params['uploadId'] = 'resumable';
             $params['size'] = $request->input('size');
             $params['from'] = $request->input('from') ?: 0;
-        }
-
-        // TODO: Delete the existing incomplete file with the same name?
-        $properties = ['name' => $filename];
-
-        foreach ($request->all() as $key => $value) {
-            if (str_starts_with($key, "property-")) {
-                $propertyKey = substr($key, 9);
-                if (strlen($propertyKey) > 191) {
-                    return response()->json([
-                        'status' => 'error',
-                        'errors' => [self::trans('validation.max.string', ['attribute' => $propertyKey, 'max' => 191])]
-                    ], 422);
-                }
-                if (!preg_match('/^[a-zA-Z0-9_-]+$/', $propertyKey)) {
-                    return response()->json([
-                        'status' => 'error',
-                        'errors' => [self::trans('validation.regex_format', [
-                            'attribute' => $propertyKey,
-                            'format' => "a-zA-Z0-9_-"
-                        ])]
-                    ], 422);
-                }
-                $properties[$propertyKey] = $value;
-            }
-        }
-
-        $file = $this->deduplicateOrCreate($request, Item::TYPE_INCOMPLETE | Item::TYPE_FILE);
-        $file->setProperties($properties);
-
-        if ($parentHeader = $request->headers->get('X-Kolab-Parents', null)) {
-            $parents = explode(',', $parentHeader);
-            $file->parents()->sync($parents);
-        }
-
-        if ($parent = $request->input('parent')) {
-            $file->parents()->sync([$parent]);
         }
 
         try {
@@ -566,6 +472,11 @@ class FsController extends RelationController
             return $this->errorResponse($file);
         }
 
+        if ($file->type == self::TYPE_COLLECTION) {
+            // Updating a collection is not supported yet
+            return $this->errorResponse(405);
+        }
+
         $media = $request->input('media') ?: 'metadata';
 
         if ($media == 'metadata') {
@@ -578,25 +489,42 @@ class FsController extends RelationController
                 if ($v->fails()) {
                     return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
                 }
+            }
 
+            $parents = [
+                'X-Kolab-Parents' => [],
+                'X-Kolab-Add-Parents' => [],
+                'X-Kolab-Remove-Parents' => [],
+            ];
+
+            // Collect and validate parents from the request headers
+            foreach (array_keys($parents) as $header) {
+                if ($value = $request->headers->get($header, null)) {
+                    $list = explode(',', $value);
+                    if ($errorResponse = $this->validateParents($list)) {
+                        return $errorResponse;
+                    }
+                    $parents[$header] = $list;
+                }
+            }
+
+            DB::beginTransaction();
+
+            if (count($parents['X-Kolab-Parents'])) {
+                $file->parents()->sync($parents['X-Kolab-Parents']);
+            }
+            if (count($parents['X-Kolab-Add-Parents'])) {
+                $file->parents()->syncWithoutDetaching($parents['X-Kolab-Add-Parents']);
+            }
+            if (count($parents['X-Kolab-Remove-Parents'])) {
+                $file->parents()->detach($parents['X-Kolab-Remove-Parents']);
+            }
+
+            if ($filename != $file->getProperty('name')) {
                 $file->setProperty('name', $filename);
             }
 
-
-            if ($parentHeader = $request->headers->get('X-Kolab-Parents', null)) {
-                $parents = explode(',', $parentHeader);
-                $file->parents()->sync($parents);
-            }
-            if ($parentHeader = $request->headers->get('X-Kolab-Add-Parents', null)) {
-                $parents = explode(',', $parentHeader);
-                $file->parents()->syncWithoutDetaching($parents);
-            }
-            if ($parentHeader = $request->headers->get('X-Kolab-Remove-Parents', null)) {
-                $parents = explode(',', $parentHeader);
-                $file->parents()->detach($parents);
-            }
-
-            $file->save();
+            DB::commit();
         } elseif ($media == 'resumable' || $media == 'content') {
             $params = [];
 
@@ -657,6 +585,96 @@ class FsController extends RelationController
         }
 
         return response()->json($response);
+    }
+
+    /**
+     * Create a new collection.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    protected function createCollection(Request $request)
+    {
+        // Validate file name input
+        $v = Validator::make($request->all(), [
+            'name' => ['required', new FileName()],
+            'deviceId' => ['max:255'],
+            'collectionType' => ['max:255'],
+        ]);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
+        $parents = $this->getInputParents($request);
+        if ($errorResponse = $this->validateParents($parents)) {
+            return $errorResponse;
+        }
+
+        $properties = [
+            'name' => $request->input('name'),
+            'deviceId' => $request->input('deviceId'),
+            'collectionType' => $request->input('collectionType'),
+        ];
+
+        foreach ($request->all() as $key => $value) {
+            if (str_starts_with($key, 'property-')) {
+                $propertyKey = substr($key, 9);
+
+                if ($errorResponse = $this->validatePropertyName($propertyKey)) {
+                    return $errorResponse;
+                }
+
+                $properties[$propertyKey] = $value;
+            }
+        }
+
+        DB::beginTransaction();
+
+        $item = $this->deduplicateOrCreate($request, Item::TYPE_COLLECTION);
+        $item->setProperties($properties);
+
+        if (!empty($parents)) {
+            $item->parents()->sync($parents);
+        }
+
+        DB::commit();
+
+        return response()->json([
+                'status' => 'success',
+                'id' => $item->id,
+                'message' => self::trans('app.collection-create-success'),
+        ]);
+    }
+
+    /**
+     * Find or create an item, using deduplicate parameters
+     */
+    protected function deduplicateOrCreate(Request $request, $type): Item
+    {
+        $user = $this->guard()->user();
+        $item = null;
+
+        if ($request->has('deduplicate-property')) {
+            // query for item by deduplicate-value
+            $item = $user->fsItems()->select('fs_items.*')
+                ->join('fs_properties', function ($join) use ($request) {
+                    $join->on('fs_items.id', '=', 'fs_properties.item_id')
+                        ->where('fs_properties.key', $request->input('deduplicate-property'));
+                })
+                ->where('type', '&', $type)
+                ->whereLike('fs_properties.value', $request->input('deduplicate-value'))
+                ->first();
+
+            // FIXME: Should we throw an error if there's more than one item?
+        }
+
+        if (!$item) {
+            $item = $user->fsItems()->create(['type' => $type]);
+        }
+
+        return $item;
     }
 
     /**
@@ -777,5 +795,60 @@ class FsController extends RelationController
         }
 
         return $result;
+    }
+
+    /**
+     * Validate parents list
+     */
+    protected function validateParents($parents)
+    {
+        $user = $this->guard()->user();
+        if (!empty($parents) && count($parents) != $user->fsItems()->whereIn('id', $parents)->count()) {
+            $error = self::trans('validation.fsparentunknown');
+            return response()->json(['status' => 'error', 'errors' => [$error]], 422);
+        }
+
+        return null;
+    }
+
+    /**
+     * Collect collection Ids from input
+     */
+    protected function getInputParents(Request $request): array
+    {
+        $parents = [];
+
+        if ($parentHeader = $request->headers->get('X-Kolab-Parents')) {
+            $parents = explode(',', $parentHeader);
+        }
+
+        if ($parent = $request->input('parent')) {
+            $parents = array_merge($parents, [$parent]);
+        }
+
+        return array_values(array_unique($parents));
+    }
+
+    /**
+     * Validate property name
+     */
+    protected function validatePropertyName(string $name)
+    {
+        if (strlen($name) > 191) {
+            $error = self::trans('validation.max.string', ['attribute' => $name, 'max' => 191]);
+            return response()->json(['status' => 'error', 'errors' => [$error]], 422);
+        }
+
+        if (preg_match('/^(name)$/i', $name)) {
+            $error = self::trans('validation.prohibited', ['attribute' => $name]);
+            return response()->json(['status' => 'error', 'errors' => [$error]], 422);
+        }
+
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $name)) {
+            $error = self::trans('validation.regex_format', ['attribute' => $name, 'format' => 'a-zA-Z0-9_-']);
+            return response()->json(['status' => 'error', 'errors' => [$error]], 422);
+        }
+
+        return null;
     }
 }

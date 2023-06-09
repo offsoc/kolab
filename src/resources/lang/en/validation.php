@@ -160,6 +160,7 @@ return [
     'file-name-exists' => 'The file name already exists.',
     'file-name-invalid' => 'The file name is invalid.',
     'file-name-toolong' => 'The file name is too long.',
+    'fsparentunknown' => 'Specified parent does not exist.',
     'geolockinerror' => 'The request location is not allowed.',
     'ipolicy-invalid' => 'The specified invitation policy is invalid.',
     'invalid-config-parameter' => 'The requested configuration parameter is not supported.',

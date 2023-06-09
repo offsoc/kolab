@@ -1,21 +1,7 @@
 <template>
     <div class="container">
         <div class="card" id="file-info">
-            <div class="card-body" v-if="fileId === 'newCollection'">
-                <div class="card-title">{{ $t('collection.new') }}</div>
-                <div class="card-text">
-                    <form @submit.prevent="submit" class="card-body">
-                        <div class="row mb-3">
-                            <label for="name" class="col-sm-4 col-form-label">{{ $t('collection.name') }}</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control" id="name" v-model="file.name" :disabled="file.id">
-                            </div>
-                        </div>
-                        <btn v-if="!file.id" class="btn-primary mt-3" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
-                    </form>
-                </div>
-            </div>
-            <div class="card-body" v-else>
+            <div class="card-body">
                 <div class="card-title">
                     {{ file.name }}
                     <btn v-if="file.canDelete" class="btn-outline-danger button-delete float-end" @click="fileDelete" icon="trash-can">{{ $t('file.delete') }}</btn>
@@ -107,22 +93,20 @@
             this.fileId = this.$route.params.file
             this.collectionId = this.$route.query.parent
 
-            if (this.fileId != 'newCollection') {
-                axios.get('/api/v4/fs/' + this.fileId, { loader: true })
-                    .then(response => {
-                        this.file = response.data
+            axios.get('/api/v4/fs/' + this.fileId, { loader: true })
+                .then(response => {
+                    this.file = response.data
 
-                        if (this.file.isOwner) {
-                            axios.get('api/v4/fs/' + this.fileId + '/permissions')
-                                .then(response => {
-                                    if (response.data.list) {
-                                        this.shares = response.data.list
-                                    }
-                                })
-                        }
-                    })
-                    .catch(this.$root.errorHandler)
-            }
+                    if (this.file.isOwner) {
+                        axios.get('api/v4/fs/' + this.fileId + '/permissions')
+                            .then(response => {
+                                if (response.data.list) {
+                                    this.shares = response.data.list
+                                }
+                            })
+                    }
+                })
+                .catch(this.$root.errorHandler)
         },
         methods: {
             copyLink(link) {
@@ -162,19 +146,6 @@
                             this.$toast.success(response.data.message)
                             this.$delete(this.shares, this.shares.findIndex(element => element.id == id))
                         }
-                    })
-            },
-            submit() {
-                this.$root.clearFormValidation($('#general form'))
-
-                let post = this.$root.pick(this.file, ['name'])
-                axios.post('/api/v4/fs', post, { params: {
-                        type: 'collection',
-                        parent: this.collectionId
-                    }})
-                    .then(response => {
-                        this.$toast.success(response.data.message)
-                        this.$router.replace({ name: 'files', params: { parent: this.collectionId }})
                     })
             }
         }

@@ -156,6 +156,7 @@ return [
     'file' => [
         'create' => "Create file",
         'delete' => "Delete file",
+        'drop' => "Click or drop file(s) here",
         'list-empty' => "There are no files in this account.",
         'mimetype' => "Mimetype",
         'mtime' => "Modified",

@@ -2,27 +2,17 @@
     <div class="container">
         <div class="card" id="files">
             <div class="card-body">
-                <div class="card-title" v-if="collectionId">
-                    {{ $t('dashboard.files') + ' - ' + collection.name }}
+                <div class="card-title">
+                    {{ $t('dashboard.files') }} <span v-if="collectionId" class="me-1">{{ ' - ' + collection.name }}</span>
                     <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
-                    <div id="drop-area" class="file-drop-area float-end">
-                        <svg-icon icon="upload"></svg-icon> Click or drop file(s) here
-                    </div>
-                    <btn-router v-if="!$root.isDegraded()" class="float-end" :to="`/file/newCollection?parent=${collectionId}`" icon="folder">
+                    <btn v-if="!$root.isDegraded()" class="float-end btn-outline-secondary" icon="folder" @click="createCollection">
                         {{ $t('collection.create') }}
-                    </btn-router>
-                </div>
-                <div class="card-title" v-else>
-                    {{ $t('dashboard.files') }}
-                    <small><sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup></small>
-                    <div id="drop-area" class="file-drop-area float-end">
-                        <svg-icon icon="upload"></svg-icon> Click or drop file(s) here
-                    </div>
-                    <btn-router v-if="!$root.isDegraded()" class="float-end" to="/file/newCollection" icon="folder">
-                        {{ $t('collection.create') }}
-                    </btn-router>
+                    </btn>
                 </div>
                 <div class="card-text pt-4">
+                    <div id="drop-area" class="file-drop-area text-center mb-3">
+                        <svg-icon icon="upload"></svg-icon> {{ $t('file.drop') }}
+                    </div>
                     <div class="mb-2 d-flex w-100">
                         <list-search :placeholder="$t('file.search')" :on-search="searchFiles"></list-search>
                     </div>
@@ -35,19 +25,14 @@
                         </thead>
                         <tbody>
                             <tr v-for="file in files" :key="file.id" @click="$root.clickRecord">
-                                <td class="name" v-if="file.type === 'collection'">
-                                    <svg-icon icon="folder"></svg-icon>
-                                    <router-link :to="{ path: '/file/' + file.id }">{{ file.name }}</router-link>
+                                <td class="name">
+                                    <router-link :to="(file.type === 'collection' ? '/files/' : '/file/') + `${file.id}`">
+                                        <svg-icon :icon="file.type === 'collection' ? 'folder' : 'file'" class="me-1"></svg-icon>
+                                        {{ file.name }}
+                                    </router-link>
                                 </td>
-                                <td class="name" v-else>
-                                    <svg-icon icon="file"></svg-icon>
-                                    <router-link :to="{ path: '/file/' + file.id }">{{ file.name }}</router-link>
-                                </td>
-                                <td class="buttons" v-if="file.type === 'collection'">
-                                    <btn class="button-delete text-danger p-0 ms-1" @click="fileDelete(file)" icon="trash-can" :title="$t('btn.delete')"></btn>
-                                </td>
-                                <td class="buttons" v-else>
-                                    <btn class="button-download p-0 ms-1" @click="fileDownload(file)" icon="download" :title="$t('btn.download')"></btn>
+                                <td class="buttons">
+                                    <btn v-if="file.type !== 'collection'" class="button-download p-0 ms-1" @click="fileDownload(file)" icon="download" :title="$t('btn.download')"></btn>
                                     <btn class="button-delete text-danger p-0 ms-1" @click="fileDelete(file)" icon="trash-can" :title="$t('btn.delete')"></btn>
                                 </td>
                             </tr>
@@ -58,12 +43,23 @@
                 </div>
             </div>
         </div>
+        <modal-dialog id="collection-dialog" ref="collectionDialog" :title="$t('collection.new')" @click="createCollectionSubmit" :buttons="['submit']">
+            <div>
+                <div class="row mb-3">
+                    <label for="name" class="col-sm-4 col-form-label">{{ $t('collection.name') }}</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="name" v-model="form.name">
+                    </div>
+                </div>
+            </div>
+        </modal-dialog>
     </div>
 </template>
 
 <script>
     import FileAPI from '../../js/files.js'
     import ListTools from '../Widgets/ListTools'
+    import ModalDialog from '../Widgets/ModalDialog'
 
     import { library } from '@fortawesome/fontawesome-svg-core'
 
@@ -75,6 +71,9 @@
     )
 
     export default {
+        components: {
+            ModalDialog
+        },
         mixins: [ ListTools ],
         beforeRouteUpdate (to, from, next) {
             this.collectionId = this.$route.params.parent
@@ -88,12 +87,15 @@
             return {
                 api: {},
                 collection: {},
+                collectionId: '',
                 files: [],
-                collectionId: null
+                form: {},
+                uploads: {},
             }
         },
         created() {
-            this.collectionId = this.$route.params.parent
+            this.collectionId = this.$route.params.parent || ''
+
             if (this.collectionId) {
                 axios.get('/api/v4/fs/' + this.collectionId, { loader: true })
                     .then(response => {
@@ -103,9 +105,6 @@
             }
         },
         mounted() {
-            this.uploads = {}
-
-            this.collectionId = this.$route.params.parent
             this.api = new FileAPI({
                     dropArea: '#drop-area',
                     eventHandler: this.eventHandler,
@@ -115,6 +114,21 @@
             this.loadFiles({ init: true })
         },
         methods: {
+            createCollection() {
+                this.form = { name: '', type: 'collection', parent: this.collectionId }
+                this.$root.clearFormValidation($('#collection-dialog'))
+                this.$refs.collectionDialog.show()
+            },
+            createCollectionSubmit() {
+                this.$root.clearFormValidation($('#collection-dialog'))
+
+                axios.post('/api/v4/fs', this.form)
+                    .then(response => {
+                        this.$refs.collectionDialog.hide()
+                        this.$toast.success(response.data.message)
+                        this.loadFiles({ reset: true })
+                    })
+            },
             eventHandler(name, params) {
                 const camelCase = name.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
                 const method = camelCase + 'Handler'
@@ -146,6 +160,7 @@
                 if (this.collectionId) {
                     params['parent'] = this.collectionId
                 }
+
                 this.listSearch('files', 'api/v4/fs', params)
             },
             searchFiles(search) {

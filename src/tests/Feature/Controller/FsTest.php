@@ -77,6 +77,25 @@ class FsTest extends TestCase
     }
 
     /**
+     * Test deleting collections (DELETE /api/v4/fs/<collection-id>)
+     */
+    public function testDeleteCollection(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $collection = $this->getTestCollection($john, 'Teśt content');
+
+        // File owner access
+        $response = $this->actingAs($john)->delete("api/v4/fs/{$collection->id}");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("Collection deleted successfully.", $json['message']);
+        $this->assertSame(null, Item::find($collection->id));
+    }
+
+    /**
      * Test file downloads (GET /api/v4/fs/downloads/<id>)
      */
     public function testDownload(): void
@@ -368,6 +387,44 @@ class FsTest extends TestCase
     }
 
     /**
+     * Test fetching file/folders list (GET /api/v4/fs)
+     */
+    public function testIndexChildren(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $file1 = $this->getTestFile($john, 'test1.txt', 'Teśt content1', ['mimetype' => 'plain/text']);
+        $file2 = $this->getTestFile($john, 'test2.txt', 'Teśt content2', ['mimetype' => 'plain/text']);
+        $collection = $this->getTestCollection($john, 'My Test Collection');
+        $collection->children()->attach($file1);
+
+        // List files in collection
+        $response = $this->actingAs($john)->get("api/v4/fs?parent={$collection->id}");
+        $response->assertStatus(200);
+        $json = $response->json();
+
+        $list = $json['list'];
+        $this->assertSame(1, count($list));
+        $this->assertSame($file1->id, $list[0]['id']);
+
+        // List files not in a collection
+        $response = $this->actingAs($john)->get("api/v4/fs?type=file");
+        $response->assertStatus(200);
+        $json = $response->json();
+
+        $list = $json['list'];
+        $this->assertSame(1, count($list));
+        $this->assertSame($file2->id, $list[0]['id']);
+
+        // Remove from collection
+        $collection->children()->detach($file1);
+
+        $response = $this->actingAs($john)->get("api/v4/fs?parent={$collection->id}");
+        $response->assertStatus(200);
+        $json = $response->json();
+        $this->assertSame(0, count($response->json()['list']));
+    }
+
+    /**
      * Test fetching file metadata (GET /api/v4/fs/<file-id>)
      */
     public function testShow(): void
@@ -451,10 +508,20 @@ class FsTest extends TestCase
         $this->assertSame('error', $json['status']);
         $this->assertSame(["The file name is invalid."], $json['errors']['name']);
 
+        $response = $this->sendRawBody($john, 'POST', "api/v4/fs?name=test.txt&parent=unknown", [], '');
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame(["Specified parent does not exist."], $json['errors']);
+
+        $parent = $this->getTestCollection($john, 'Parent');
+
         // Create a file - the simple method
         $body = "test content";
         $headers = [];
-        $response = $this->sendRawBody($john, 'POST', "api/v4/fs?name=test.txt", $headers, $body);
+        $response = $this->sendRawBody($john, 'POST', "api/v4/fs?name=test.txt&parent={$parent->id}", $headers, $body);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -472,6 +539,159 @@ class FsTest extends TestCase
         $this->assertSame($json['size'], (int) $file->getProperty('size'));
         $this->assertSame($json['name'], $file->getProperty('name'));
         $this->assertSame($body, $this->getTestFileContent($file));
+
+        $this->assertSame(1, $file->parents()->count());
+        $this->assertSame($parent->id, $file->parents()->first()->id);
+
+        // TODO: Test X-Kolab-Parents
+    }
+
+    /**
+     * Test creating collections (POST /api/v4/fs?type=collection)
+     */
+    public function testStoreCollection(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+
+        $params = [
+            'name' => "MyTestCollection",
+            'deviceId' => "myDeviceId",
+        ];
+
+        // Invalid parent
+        $response = $this->actingAs($john)->post("api/v4/fs?type=collection", $params + ['parent' => 'unknown']);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame(["Specified parent does not exist."], $json['errors']);
+
+        // Valid input
+        $response = $this->actingAs($john)->post("api/v4/fs?type=collection", $params);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+
+        $collection = Item::find($json['id']);
+
+        $this->assertSame(Item::TYPE_COLLECTION, $collection->type);
+        $this->assertSame($params['name'], $collection->getProperty('name'));
+        $this->assertSame($params['deviceId'], $collection->getProperty('deviceId'));
+    }
+
+    /**
+     * Test creating collections (POST /api/v4/fs?type=collection)
+     */
+    public function testStoreCollectionMetadata(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+
+        $params = [
+            'name' => "MyTestCollection",
+            'deviceId' => "myDeviceId",
+            'collectionType' => "photoalbum",
+            'deduplicate-property' => "localId",
+            'deduplicate-value' => "myDeviceId:localId",
+            'property-localId' => "myDeviceId:localId",
+        ];
+
+        $response = $this->actingAs($john)->post("api/v4/fs?type=collection", $params);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+
+        $collection = Item::find($json['id']);
+
+        $this->assertSame(Item::TYPE_COLLECTION, $collection->type);
+        $this->assertSame($params['name'], $collection->getProperty('name'));
+        $this->assertSame($params['deviceId'], $collection->getProperty('deviceId'));
+        $this->assertSame($params['collectionType'], $collection->getProperty('collectionType'));
+        $this->assertSame($params['property-localId'], $collection->getProperty('localId'));
+
+        // Deduplicate but update the name and parent
+        $parent = $this->getTestCollection($john, 'Parent');
+        $params = [
+            'name' => "MyTestCollection2",
+            'deviceId' => "myDeviceId",
+            'parent' => $parent->id,
+            'collectionType' => "photoalbum",
+            'deduplicate-property' => "localId",
+            'deduplicate-value' => "myDeviceId:localId",
+        ];
+
+        $response = $this->actingAs($john)->post("api/v4/fs?type=collection", $params);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame($collection->id, $json['id']);
+        $this->assertSame($params['name'], $collection->getProperty('name'));
+
+
+        // Deduplicate again, but without changes
+        $parent = $this->getTestCollection($john, 'Parent');
+        $response = $this->actingAs($john)->post("api/v4/fs?type=collection", $params);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+    }
+
+    /**
+     * Test store item relations (POST /api/v4/fs)
+     */
+    public function testStoreRelation(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $collection = $this->getTestCollection($john, 'My Test Collection');
+
+        $body = "test content";
+        $headers = ["X-Kolab-Parents" => implode(',', [$collection->id])];
+        $response = $this->sendRawBody($john, 'POST', "api/v4/fs?name=test.txt", $headers, $body);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+        $newItem = Item::find($json['id']);
+        $this->assertNotNull($newItem);
+        $this->assertSame(1, $newItem->parents()->count());
+        $this->assertSame($collection->id, $newItem->parents()->first()->id);
+
+
+        $collection2 = $this->getTestCollection($john, 'My Test Collection2');
+        $headers = ["X-Kolab-Parents" => implode(',', [$collection->id, $collection2->id])];
+        $response = $this->sendRawBody($john, 'POST', "api/v4/fs?name=test2.txt", $headers, $body);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+        $newItem = Item::find($json['id']);
+        $this->assertNotNull($newItem);
+        $this->assertSame(2, $newItem->parents()->count());
+    }
+
+    /**
+     * Test store item relations (POST /api/v4/fs)
+     */
+    public function testStoreRelationParameter(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $collection = $this->getTestCollection($john, 'My Test Collection');
+
+        $body = "test content";
+        $response = $this->sendRawBody($john, 'POST', "api/v4/fs?name=test.txt&parent={$collection->id}", [], $body);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+        $newItem = Item::find($json['id']);
+        $this->assertNotNull($newItem);
+        $this->assertSame(1, $newItem->parents()->count());
+        $this->assertSame($collection->id, $newItem->parents()->first()->id);
     }
 
     /**
@@ -611,6 +831,47 @@ class FsTest extends TestCase
     }
 
     /**
+     * Test update item relations (PUT /api/v4/fs/$itemid)
+     * Add/Remove/Set
+     */
+    public function testUpdateRelation(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $file = $this->getTestFile($john, 'test1.txt', 'Teśt content1', ['mimetype' => 'plain/text']);
+        $collection1 = $this->getTestCollection($john, 'My Test Collection');
+        $collection2 = $this->getTestCollection($john, 'My Test Collection2');
+
+        // Add parents
+        $headers = ["X-Kolab-Add-Parents" => implode(',', [$collection1->id])];
+        $response = $this->sendRawBody($john, 'PUT', "api/v4/fs/{$file->id}", $headers, '');
+        $response->assertStatus(200);
+        $this->assertSame('success', $response->json()['status']);
+
+        $parents = $file->parents()->get();
+        $this->assertSame(1, count($parents));
+        $this->assertSame($collection1->id, $parents->first()->id);
+
+        // Set parents
+        $headers = ["X-Kolab-Parents" => implode(',', [$collection1->id, $collection2->id])];
+        $response = $this->sendRawBody($john, 'PUT', "api/v4/fs/{$file->id}", $headers, '');
+        $response->assertStatus(200);
+        $this->assertSame('success', $response->json()['status']);
+
+        $parents = $file->parents()->get();
+        $this->assertSame(2, count($parents));
+
+        // Remove parents
+        $headers = ["X-Kolab-Remove-Parents" => implode(',', [$collection1->id])];
+        $response = $this->sendRawBody($john, 'PUT', "api/v4/fs/{$file->id}", $headers, '');
+        $response->assertStatus(200);
+        $this->assertSame('success', $response->json()['status']);
+
+        $parents = $file->parents()->get();
+        $this->assertSame(1, count($parents));
+        $this->assertSame($collection2->id, $parents->first()->id);
+    }
+
+    /**
      * Create a test file.
      *
      * @param \App\User    $user    File owner
@@ -743,238 +1004,5 @@ class FsTest extends TestCase
             // TODO: Make sure this does not use "acting user" set earlier
             return $this->call($method, $uri, [], $cookies, [], $server, $content);
         }
-    }
-
-
-    /**
-     * Test creating collections (POST /api/v4/fs?type=collection)
-     */
-    public function testStoreCollection(): void
-    {
-        $john = $this->getTestUser('john@kolab.org');
-
-        $params = [
-            'name' => "MyTestCollection",
-            'deviceId' => "myDeviceId",
-        ];
-        $response = $this->actingAs($john)->post("api/v4/fs?type=collection", $params);
-
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertSame('success', $json['status']);
-
-        $collection = Item::find($json['id']);
-
-        $this->assertSame(Item::TYPE_COLLECTION, $collection->type);
-        $this->assertSame($params['name'], $collection->getProperty('name'));
-        $this->assertSame($params['deviceId'], $collection->getProperty('deviceId'));
-    }
-
-    /**
-     * Test creating collections (POST /api/v4/fs?type=collection)
-     */
-    public function testStoreCollectionMetadata(): void
-    {
-        $john = $this->getTestUser('john@kolab.org');
-
-        $params = [
-            'name' => "MyTestCollection",
-            'deviceId' => "myDeviceId",
-            'collectionType' => "photoalbum",
-            'deduplicate-property' => "localId",
-            'deduplicate-value' => "myDeviceId:localId",
-            'property-localId' => "myDeviceId:localId",
-        ];
-        $response = $this->actingAs($john)->post("api/v4/fs?type=collection", $params);
-
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertSame('success', $json['status']);
-
-        $collection = Item::find($json['id']);
-
-        $this->assertSame(Item::TYPE_COLLECTION, $collection->type);
-        $this->assertSame($params['name'], $collection->getProperty('name'));
-        $this->assertSame($params['deviceId'], $collection->getProperty('deviceId'));
-        $this->assertSame($params['collectionType'], $collection->getProperty('collectionType'));
-        $this->assertSame($params['property-localId'], $collection->getProperty('localId'));
-
-        // Deduplicate but update the name and parent
-        $parent = $this->getTestCollection($john, 'Parent');
-        $params = [
-            'name' => "MyTestCollection2",
-            'deviceId' => "myDeviceId",
-            'parent' => $parent->id,
-            'collectionType' => "photoalbum",
-            'deduplicate-property' => "localId",
-            'deduplicate-value' => "myDeviceId:localId",
-        ];
-        $response = $this->actingAs($john)->post("api/v4/fs?type=collection", $params);
-
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertSame('success', $json['status']);
-        $this->assertSame($collection->id, $json['id']);
-        $this->assertSame($params['name'], $collection->getProperty('name'));
-
-
-        // Deduplicate again, but without changes
-        $parent = $this->getTestCollection($john, 'Parent');
-        $response = $this->actingAs($john)->post("api/v4/fs?type=collection", $params);
-        $response->assertStatus(200);
-
-        $json = $response->json();
-        $this->assertSame('success', $json['status']);
-    }
-
-    /**
-     * Test deleting collections (DELETE /api/v4/fs/<collection-id>)
-     */
-    public function testDeleteCollection(): void
-    {
-        $john = $this->getTestUser('john@kolab.org');
-        $collection = $this->getTestCollection($john, 'Teśt content');
-
-        // File owner access
-        $response = $this->actingAs($john)->delete("api/v4/fs/{$collection->id}");
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertSame('success', $json['status']);
-        $this->assertSame("Collection deleted successfully.", $json['message']);
-        $this->assertSame(null, Item::find($collection->id));
-    }
-
-    /**
-     * Test store item relations (POST /api/v4/fs)
-     */
-    public function testStoreRelation(): void
-    {
-        $john = $this->getTestUser('john@kolab.org');
-        $collection = $this->getTestCollection($john, 'My Test Collection');
-
-        $body = "test content";
-        $headers = ["X-Kolab-Parents" => implode(',', [$collection->id])];
-        $response = $this->sendRawBody($john, 'POST', "api/v4/fs?name=test.txt", $headers, $body);
-        $response->assertStatus(200);
-
-        $json = $response->json();
-        $newItem = Item::find($json['id']);
-        $this->assertNotNull($newItem);
-        $this->assertSame(1, $newItem->parents()->count());
-        $this->assertSame($collection->id, $newItem->parents()->first()->id);
-
-
-        $collection2 = $this->getTestCollection($john, 'My Test Collection2');
-        $headers = ["X-Kolab-Parents" => implode(',', [$collection->id, $collection2->id])];
-        $response = $this->sendRawBody($john, 'POST', "api/v4/fs?name=test2.txt", $headers, $body);
-        $response->assertStatus(200);
-
-        $json = $response->json();
-        $newItem = Item::find($json['id']);
-        $this->assertNotNull($newItem);
-        $this->assertSame(2, $newItem->parents()->count());
-    }
-
-    /**
-     * Test store item relations (POST /api/v4/fs)
-     */
-    public function testStoreRelationParameter(): void
-    {
-        $john = $this->getTestUser('john@kolab.org');
-        $collection = $this->getTestCollection($john, 'My Test Collection');
-
-        $body = "test content";
-        $response = $this->sendRawBody($john, 'POST', "api/v4/fs?name=test.txt&parent={$collection->id}", [], $body);
-        $response->assertStatus(200);
-
-        $json = $response->json();
-        $newItem = Item::find($json['id']);
-        $this->assertNotNull($newItem);
-        $this->assertSame(1, $newItem->parents()->count());
-        $this->assertSame($collection->id, $newItem->parents()->first()->id);
-    }
-
-    /**
-     * Test update item relations (PUT /api/v4/fs/$itemid)
-     * Add/Remove/Set
-     */
-    public function testUpdateRelation(): void
-    {
-        $john = $this->getTestUser('john@kolab.org');
-        $file = $this->getTestFile($john, 'test1.txt', 'Teśt content1', ['mimetype' => 'plain/text']);
-        $collection1 = $this->getTestCollection($john, 'My Test Collection');
-        $collection2 = $this->getTestCollection($john, 'My Test Collection2');
-
-        // Add parents
-        $headers = ["X-Kolab-Add-Parents" => implode(',', [$collection1->id])];
-        $response = $this->sendRawBody($john, 'PUT', "api/v4/fs/{$file->id}", $headers, '');
-        $response->assertStatus(200);
-        $this->assertSame('success', $response->json()['status']);
-
-        $parents = $file->parents()->get();
-        $this->assertSame(1, count($parents));
-        $this->assertSame($collection1->id, $parents->first()->id);
-
-        // Set parents
-        $headers = ["X-Kolab-Parents" => implode(',', [$collection1->id, $collection2->id])];
-        $response = $this->sendRawBody($john, 'PUT', "api/v4/fs/{$file->id}", $headers, '');
-        $response->assertStatus(200);
-        $this->assertSame('success', $response->json()['status']);
-
-        $parents = $file->parents()->get();
-        $this->assertSame(2, count($parents));
-
-        // Remove parents
-        $headers = ["X-Kolab-Remove-Parents" => implode(',', [$collection1->id])];
-        $response = $this->sendRawBody($john, 'PUT', "api/v4/fs/{$file->id}", $headers, '');
-        $response->assertStatus(200);
-        $this->assertSame('success', $response->json()['status']);
-
-        $parents = $file->parents()->get();
-        $this->assertSame(1, count($parents));
-        $this->assertSame($collection2->id, $parents->first()->id);
-    }
-
-    public function testListChildren(): void
-    {
-        $john = $this->getTestUser('john@kolab.org');
-        $file1 = $this->getTestFile($john, 'test1.txt', 'Teśt content1', ['mimetype' => 'plain/text']);
-        $file2 = $this->getTestFile($john, 'test2.txt', 'Teśt content2', ['mimetype' => 'plain/text']);
-        $collection = $this->getTestCollection($john, 'My Test Collection');
-        $collection->children()->attach($file1);
-
-        // List files in collection
-        $response = $this->actingAs($john)->get("api/v4/fs?parent={$collection->id}");
-        $response->assertStatus(200);
-        $json = $response->json();
-
-        $list = $json['list'];
-        $this->assertSame(1, count($list));
-        $this->assertSame($file1->id, $list[0]['id']);
-
-        // List files not in a collection
-        $response = $this->actingAs($john)->get("api/v4/fs?type=file");
-        $response->assertStatus(200);
-        $json = $response->json();
-
-        $list = $json['list'];
-        $this->assertSame(1, count($list));
-        $this->assertSame($file2->id, $list[0]['id']);
-
-        // Remove from collection
-        $collection->children()->detach($file1);
-
-        $response = $this->actingAs($john)->get("api/v4/fs?parent={$collection->id}");
-        $response->assertStatus(200);
-        $json = $response->json();
-        $this->assertSame(0, count($response->json()['list']));
     }
 }
