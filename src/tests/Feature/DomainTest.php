@@ -371,4 +371,30 @@ class DomainTest extends TestCase
 
         $this->assertSame(null, $domain->walletOwner());
     }
+
+    /**
+     * Test domain verifying
+     */
+    public function testVerify(): void
+    {
+        Queue::fake();
+
+        // A domain with DNS records
+        $domain = $this->getTestDomain('gmail.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_PUBLIC,
+        ]);
+
+        $this->assertTrue($domain->verify());
+        $this->assertTrue($domain->isVerified());
+
+        // A domain without DNS records
+        $domain = $this->getTestDomain('public-active.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_PUBLIC,
+        ]);
+
+        $this->assertFalse($domain->verify());
+        $this->assertFalse($domain->isVerified());
+    }
 }
