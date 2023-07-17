@@ -6,6 +6,8 @@ use App\Console\ObjectRelationListCommand;
 
 class SettingsCommand extends ObjectRelationListCommand
 {
+    protected $hidden = true;
+
     protected $commandPrefix = 'scalpel';
     protected $objectClass = \App\Wallet::class;
     protected $objectName = 'wallet';

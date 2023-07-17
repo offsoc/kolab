@@ -25,7 +25,7 @@ abstract class ObjectCreateCommand extends ObjectCommand
         parent::__construct();
     }
 
-    public function getProperties()
+    protected function getProperties()
     {
         if (!empty($this->properties)) {
             return $this->properties;
@@ -44,19 +44,13 @@ abstract class ObjectCreateCommand extends ObjectCommand
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
      */
     public function handle()
     {
-        $this->getProperties();
-
-        $class = new $this->objectClass();
-
-        $object = $this->objectClass::create($this->properties);
+        $object = $this->objectClass::create($this->getProperties());
 
         if ($object) {
-            $this->info($object->{$class->getKeyName()});
+            $this->info($object->{$object->getKeyName()});
         } else {
             $this->error("Object could not be created.");
         }

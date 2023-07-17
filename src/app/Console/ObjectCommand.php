@@ -2,8 +2,6 @@
 
 namespace App\Console;
 
-use Illuminate\Support\Facades\Cache;
-
 abstract class ObjectCommand extends Command
 {
     /**

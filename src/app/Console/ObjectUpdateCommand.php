@@ -2,9 +2,6 @@
 
 namespace App\Console;
 
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Schema;
-
 /**
  * This abstract class provides a means to treat objects in our model using CRUD.
  */
@@ -20,27 +17,64 @@ abstract class ObjectUpdateCommand extends ObjectCommand
             $this->objectName
         );
 
+        // This constructor is called for every ObjectUpdateCommand command,
+        // no matter which command is being executed. We should not use database
+        // access from here. And it should be as fast as possible.
+
         $class = new $this->objectClass();
 
-        try {
-            foreach (Schema::getColumnListing($class->getTable()) as $column) {
-                if ($column == "id") {
-                    continue;
-                }
-
-                $this->signature .= " {--{$column}=}";
+        foreach ($this->getClassProperties() as $property) {
+            if ($property == 'id') {
+                continue;
             }
-        } catch (\Exception $e) {
-            \Log::error("Could not extract options: {$e->getMessage()}");
+
+            $this->signature .= " {--{$property}=}";
         }
 
-        $classes = class_uses_recursive($this->objectClass);
-
-        if (in_array(SoftDeletes::class, $classes)) {
+        if (method_exists($class, 'restore')) {
             $this->signature .= " {--with-deleted : Include deleted {$this->objectName}s}";
         }
 
         parent::__construct();
+    }
+
+    /**
+     * Get all properties (sql table columns) of the model class
+     */
+    protected function getClassProperties(): array
+    {
+        // We are not using table information schema, because it makes
+        // all artisan commands slow. We depend on the @property definitions
+        // in the class documentation comment.
+
+        $reflector = new \ReflectionClass($this->objectClass);
+        $list = [];
+
+        if (preg_match_all('/@property\s+([^$\s]+)\s+\$([a-z_]+)/', $reflector->getDocComment(), $matches)) {
+            foreach ($matches[1] as $key => $type) {
+                $type = preg_replace('/[\?]/', '', $type);
+                if (preg_match('/^(int|string|float|bool|\\Carbon\\Carbon)$/', $type)) {
+                    $list[] = $matches[2][$key];
+                }
+            }
+        }
+
+        // Add created_at, updated_at, deleted_at where applicable
+        if ($this->commandPrefix == 'scalpel') {
+            $class = new $this->objectClass();
+
+            if ($class->timestamps && !in_array('created_at', $list)) {
+                $list[] = 'created_at';
+            }
+            if ($class->timestamps && !in_array('updated_at', $list)) {
+                $list[] = 'updated_at';
+            }
+            if (method_exists($class, 'restore') && !in_array('deleted_at', $list)) {
+                $list[] = 'deleted_at';
+            }
+        }
+
+        return $list;
     }
 
     public function getProperties()
@@ -53,13 +87,13 @@ abstract class ObjectUpdateCommand extends ObjectCommand
 
         $this->properties = [];
 
-        foreach (Schema::getColumnListing($class->getTable()) as $column) {
-            if ($column == "id") {
+        foreach ($this->getClassProperties() as $property) {
+            if ($property == 'id') {
                 continue;
             }
 
-            if (($value = $this->option($column)) !== null) {
-                $this->properties[$column] = $value;
+            if (($value = $this->option($property)) !== null) {
+                $this->properties[$property] = $value;
             }
         }
 
@@ -83,14 +117,12 @@ abstract class ObjectUpdateCommand extends ObjectCommand
         }
 
         foreach ($this->getProperties() as $property => $value) {
-            if ($property == "deleted_at" && $value == "null") {
+            if ($property == 'deleted_at' && $value === 'null') {
                 $value = null;
             }
 
             $object->{$property} = $value;
         }
-
-        $object->timestamps = false;
 
         if ($this->commandPrefix == 'scalpel') {
             $object->saveQuietly();

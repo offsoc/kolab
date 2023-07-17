@@ -199,6 +199,11 @@ abstract class Command extends \Illuminate\Console\Command
         return $this->getObject(\App\Wallet::class, $wallet, null);
     }
 
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
     public function handle()
     {
         if ($this->dangerous) {
