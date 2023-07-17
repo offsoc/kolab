@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Domain;
+use App\EventLog;
 use App\Group;
 use App\Package;
 use App\PackageSku;
@@ -836,6 +837,26 @@ class UserTest extends TestCase
         $this->assertCount(0, Group::withTrashed()->where('id', $group->id)->get());
         $this->assertCount(0, \App\Resource::withTrashed()->where('id', $resource->id)->get());
         $this->assertCount(0, \App\SharedFolder::withTrashed()->where('id', $folder->id)->get());
+    }
+
+    /**
+     * Test eventlog on user deletion
+     */
+    public function testDeleteAndEventLog(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+
+        EventLog::createFor($user, EventLog::TYPE_SUSPENDED, 'test');
+
+        $user->delete();
+
+        $this->assertCount(1, EventLog::where('object_id', $user->id)->where('object_type', User::class)->get());
+
+        $user->forceDelete();
+
+        $this->assertCount(0, EventLog::where('object_id', $user->id)->where('object_type', User::class)->get());
     }
 
     /**

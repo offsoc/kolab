@@ -11,7 +11,7 @@ class SuspendCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'domain:suspend {domain}';
+    protected $signature = 'domain:suspend {domain} {--comment=}';
 
     /**
      * The console command description.
@@ -35,5 +35,7 @@ class SuspendCommand extends Command
         }
 
         $domain->suspend();
+
+        \App\EventLog::createFor($domain, \App\EventLog::TYPE_SUSPENDED, $this->option('comment'));
     }
 }

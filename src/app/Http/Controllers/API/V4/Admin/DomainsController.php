@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Domain;
+use App\EventLog;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
 {
@@ -94,7 +96,15 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
             return $this->errorResponse(404);
         }
 
+        $v = Validator::make($request->all(), ['comment' => 'nullable|string|max:1024']);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
         $domain->suspend();
+
+        EventLog::createFor($domain, EventLog::TYPE_SUSPENDED, $request->comment);
 
         return response()->json([
                 'status' => 'success',
@@ -118,7 +128,15 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
             return $this->errorResponse(404);
         }
 
+        $v = Validator::make($request->all(), ['comment' => 'nullable|string|max:1024']);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
         $domain->unsuspend();
+
+        EventLog::createFor($domain, EventLog::TYPE_UNSUSPENDED, $request->comment);
 
         return response()->json([
                 'status' => 'success',

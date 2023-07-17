@@ -11,7 +11,7 @@ class UnsuspendCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'user:unsuspend {user}';
+    protected $signature = 'user:unsuspend {user} {--comment=}';
 
     /**
      * The console command description.
@@ -35,5 +35,7 @@ class UnsuspendCommand extends Command
         }
 
         $user->unsuspend();
+
+        \App\EventLog::createFor($user, \App\EventLog::TYPE_UNSUSPENDED, $this->option('comment'));
     }
 }

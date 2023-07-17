@@ -205,6 +205,31 @@ table {
             width: 50px;
         }
     }
+
+    &.eventlog {
+        .details,
+        .btn-less {
+            display: none;
+        }
+
+        tr.open {
+            .btn-more {
+                display: none;
+            }
+
+            .details {
+                display: block;
+            }
+
+            .btn-less {
+                display: initial;
+            }
+        }
+
+        td.description {
+            width: 98%;
+        }
+    }
 }
 
 .table > :not(:first-child) {

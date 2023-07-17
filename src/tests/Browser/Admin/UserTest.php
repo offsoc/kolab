@@ -5,6 +5,7 @@ namespace Tests\Browser\Admin;
 use App\Auth\SecondFactor;
 use App\Discount;
 use App\Entitlement;
+use App\EventLog;
 use App\Sku;
 use App\User;
 use Tests\Browser;
@@ -39,6 +40,8 @@ class UserTest extends TestCaseDusk
         $wallet->save();
 
         Entitlement::where('cost', '>=', 5000)->delete();
+        Eventlog::query()->delete();
+
         $this->deleteTestGroup('group-test@kolab.org');
         $this->deleteTestUser('userstest1@kolabnow.com');
     }
@@ -61,6 +64,8 @@ class UserTest extends TestCaseDusk
         $wallet->save();
 
         Entitlement::where('cost', '>=', 5000)->delete();
+        Eventlog::query()->delete();
+
         $this->deleteTestGroup('group-test@kolab.org');
         $this->deleteTestUser('userstest1@kolabnow.com');
 
@@ -91,6 +96,15 @@ class UserTest extends TestCaseDusk
                     'organization' => null,
                     'guam_enabled' => null,
             ]);
+
+            $event1 = EventLog::createFor($jack, EventLog::TYPE_SUSPENDED, 'Event 1');
+            $event2 = EventLog::createFor($jack, EventLog::TYPE_UNSUSPENDED, 'Event 2', ['test' => 'test-data']);
+            $event2->refresh();
+            $event1->created_at = (clone $event2->created_at)->subDay();
+            $event1->user_email = 'jeroen@jeroen.jeroen';
+            $event1->save();
+            $event2->user_email = 'test@test.com';
+            $event2->save();
 
             $page = new UserPage($jack->id);
 
@@ -123,7 +137,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 9);
+                ->assertElementsCount('@nav a', 10);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -205,6 +219,35 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(3) #limit_geo', 'No restrictions')
                         ->assertMissing('#limit_geo + button');
                 });
+
+            // Assert History tab
+            $browser->assertSeeIn('@nav #tab-history', 'History')
+                ->click('@nav #tab-history')
+                ->whenAvailable('@user-history table', function (Browser $browser) use ($event1, $event2) {
+                    $browser->waitFor('tbody tr')->assertElementsCount('tbody tr', 2)
+                        // row 1
+                        ->assertSeeIn('tr:nth-child(1) td:nth-child(1)', $event2->created_at->toDateTimeString())
+                        ->assertSeeIn('tr:nth-child(1) td:nth-child(2)', 'Unsuspended')
+                        ->assertSeeIn('tr:nth-child(1) td:nth-child(3)', $event2->comment)
+                        ->assertMissing('tr:nth-child(1) td:nth-child(3) div')
+                        ->assertMissing('tr:nth-child(1) td:nth-child(3) pre')
+                        ->assertMissing('tr:nth-child(1) td:nth-child(3) .btn-less')
+                        ->click('tr:nth-child(1) td:nth-child(3) .btn-more')
+                        ->assertSeeIn('tr:nth-child(1) td:nth-child(3) div.email', $event2->user_email)
+                        ->assertSeeIn('tr:nth-child(1) td:nth-child(3) pre', 'test-data')
+                        ->assertMissing('tr:nth-child(1) td:nth-child(3) .btn-more')
+                        ->click('tr:nth-child(1) td:nth-child(3) .btn-less')
+                        ->assertMissing('tr:nth-child(1) td:nth-child(3) div')
+                        ->assertMissing('tr:nth-child(1) td:nth-child(3) pre')
+                        ->assertMissing('tr:nth-child(1) td:nth-child(3) .btn-less')
+                        // row 2
+                        ->assertSeeIn('tr:nth-child(2) td:nth-child(1)', $event1->created_at->toDateTimeString())
+                        ->assertSeeIn('tr:nth-child(2) td:nth-child(2)', 'Suspended')
+                        ->assertSeeIn('tr:nth-child(2) td:nth-child(3)', $event1->comment)
+                        ->click('tr:nth-child(2) td:nth-child(3) .btn-more')
+                        ->assertSeeIn('tr:nth-child(2) td:nth-child(3) div.email', $event1->user_email)
+                        ->assertMissing('tr:nth-child(2) td:nth-child(3) pre');
+                });
         });
     }
 
@@ -260,7 +303,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 9);
+                ->assertElementsCount('@nav a', 10);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -351,6 +394,14 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', 'folder-contact@kolab.org')
                         ->assertMissing('table tfoot');
                 });
+
+            // Assert History tab
+            $browser->assertSeeIn('@nav #tab-history', 'History')
+                ->click('@nav #tab-history')
+                ->whenAvailable('@user-history table', function (Browser $browser) {
+                    $browser->assertElementsCount('tbody tr', 0)
+                        ->assertSeeIn('tfoot tr td', "There's no events in the log");
+                });
         });
 
         // Now we go to Ned's info page, he's a controller on John's wallet
@@ -392,7 +443,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 9);
+                ->assertElementsCount('@nav a', 10);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -546,14 +597,34 @@ class UserTest extends TestCaseDusk
                 ->assertVisible('@user-info #button-suspend')
                 ->assertMissing('@user-info #button-unsuspend')
                 ->click('@user-info #button-suspend')
+                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Suspend')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
+                        ->type('textarea', 'test suspend')
+                        ->click('@button-action');
+                })
                 ->assertToast(Toast::TYPE_SUCCESS, 'User suspended successfully.')
                 ->assertSeeIn('@user-info #status span.text-warning', 'Suspended')
-                ->assertMissing('@user-info #button-suspend')
-                ->click('@user-info #button-unsuspend')
+                ->assertMissing('@user-info #button-suspend');
+
+            $event = EventLog::where('type', EventLog::TYPE_SUSPENDED)->first();
+            $this->assertSame('test suspend', $event->comment);
+
+            $browser->click('@user-info #button-unsuspend')
+                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Unsuspend')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
+                        ->click('@button-action');
+                })
                 ->assertToast(Toast::TYPE_SUCCESS, 'User unsuspended successfully.')
                 ->assertSeeIn('@user-info #status span.text-success', 'Active')
                 ->assertVisible('@user-info #button-suspend')
                 ->assertMissing('@user-info #button-unsuspend');
+
+            $event = EventLog::where('type', EventLog::TYPE_UNSUSPENDED)->first();
+            $this->assertSame(null, $event->comment);
         });
     }
 

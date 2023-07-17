@@ -4,6 +4,7 @@ namespace Tests\Browser\Reseller;
 
 use App\Auth\SecondFactor;
 use App\Discount;
+use App\EventLog;
 use App\Sku;
 use App\User;
 use Tests\Browser;
@@ -117,7 +118,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 9);
+                ->assertElementsCount('@nav a', 10);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -253,7 +254,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 9);
+                ->assertElementsCount('@nav a', 10);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -344,6 +345,9 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', 'folder-contact@kolab.org')
                         ->assertMissing('table tfoot');
                 });
+
+            // Assert History tab
+            $browser->assertSeeIn('@nav #tab-history', 'History');
         });
 
         // Now we go to Ned's info page, he's a controller on John's wallet
@@ -365,7 +369,7 @@ class UserTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 9);
+                ->assertElementsCount('@nav a', 10);
 
             // Note: Finances tab is tested in UserFinancesTest.php
             $browser->assertSeeIn('@nav #tab-finances', 'Finances');
@@ -450,6 +454,9 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(3) label', 'Geo-lockin')
                         ->assertSeeIn('.row:nth-child(3) #limit_geo', 'No restrictions');
                 });
+
+            // Assert History tab
+            $browser->assertSeeIn('@nav #tab-history', 'History');
         });
     }
 
@@ -513,6 +520,8 @@ class UserTest extends TestCaseDusk
      */
     public function testSuspendAndUnsuspend(): void
     {
+        EventLog::query()->delete();
+
         $this->browse(function (Browser $browser) {
             $john = $this->getTestUser('john@kolab.org');
 
@@ -520,14 +529,34 @@ class UserTest extends TestCaseDusk
                 ->assertVisible('@user-info #button-suspend')
                 ->assertMissing('@user-info #button-unsuspend')
                 ->click('@user-info #button-suspend')
+                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Suspend')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
+                        ->type('textarea', 'test suspend')
+                        ->click('@button-action');
+                })
                 ->assertToast(Toast::TYPE_SUCCESS, 'User suspended successfully.')
                 ->assertSeeIn('@user-info #status span.text-warning', 'Suspended')
-                ->assertMissing('@user-info #button-suspend')
-                ->click('@user-info #button-unsuspend')
+                ->assertMissing('@user-info #button-suspend');
+
+            $event = EventLog::where('type', EventLog::TYPE_SUSPENDED)->first();
+            $this->assertSame('test suspend', $event->comment);
+
+            $browser->click('@user-info #button-unsuspend')
+                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Unsuspend')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
+                        ->click('@button-action');
+                })
                 ->assertToast(Toast::TYPE_SUCCESS, 'User unsuspended successfully.')
                 ->assertSeeIn('@user-info #status span.text-success', 'Active')
                 ->assertVisible('@user-info #button-suspend')
                 ->assertMissing('@user-info #button-unsuspend');
+
+            $event = EventLog::where('type', EventLog::TYPE_UNSUSPENDED)->first();
+            $this->assertSame(null, $event->comment);
         });
     }
 

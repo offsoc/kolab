@@ -62,7 +62,7 @@
                 if (this.cancelFocus) {
                     $(event.target).find('button.modal-cancel').focus()
                 } else {
-                    $(event.target).find('input,select').first().focus()
+                    $(event.target).find('input,select,textarea').first().focus()
                 }
             })
 

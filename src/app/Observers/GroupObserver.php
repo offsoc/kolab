@@ -45,6 +45,9 @@ class GroupObserver
     public function deleted(Group $group)
     {
         if ($group->isForceDeleting()) {
+            // Remove EventLog records
+            \App\EventLog::where('object_id', $group->id)->where('object_type', Group::class)->delete();
+
             return;
         }
 

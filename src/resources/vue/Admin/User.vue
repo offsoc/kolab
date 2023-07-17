@@ -77,8 +77,8 @@
                         </div>
                     </form>
                     <div class="mt-2 buttons">
-                        <btn :id="'button-' + (user.isSuspended ? 'unsuspend' : 'suspend')" class="btn-outline-primary" @click="setSuspendState">
-                            {{ $t(user.isSuspended ? 'btn.unsuspend' : 'btn.suspend') }}
+                        <btn :id="`button-${suspendAction}`" class="btn-outline-primary" @click="setSuspendState">
+                            {{ $t(`btn.${suspendAction}`) }}
                         </btn>
                         <btn id="button-resync" class="btn-outline-primary" @click="resyncUser">
                             {{ $t('btn.resync') }}
@@ -228,21 +228,26 @@
                     </div>
                 </div>
             </div>
+            <div class="tab-pane" id="history" role="tabpanel" aria-labelledby="tab-history">
+                <div class="card-body">
+                    <event-log v-if="loadEventLog" :object-id="user.id" object-type="user" ref="eventLog" class="card-text mb-0"></event-log>
+                </div>
+            </div>
         </div>
 
         <modal-dialog id="discount-dialog" ref="discountDialog" :title="$t('user.discount-title')" @click="submitDiscount()" :buttons="['submit']">
-            <div>
-                <select v-model="wallet.discount_id" class="form-select">
-                    <option value="">- {{ $t('form.none') }} -</option>
-                    <option v-for="item in discounts" :value="item.id" :key="item.id">{{ item.label }}</option>
-                </select>
-            </div>
+            <select v-model="wallet.discount_id" class="form-select">
+                <option value="">- {{ $t('form.none') }} -</option>
+                <option v-for="item in discounts" :value="item.id" :key="item.id">{{ item.label }}</option>
+            </select>
         </modal-dialog>
 
         <modal-dialog id="email-dialog" ref="emailDialog" :title="$t('user.ext-email')" @click="submitEmail()" :buttons="['submit']">
-            <div>
-                <input v-model="external_email" name="external_email" class="form-control">
-            </div>
+            <input v-model="external_email" name="external_email" class="form-control">
+        </modal-dialog>
+
+        <modal-dialog id="suspend-dialog" ref="suspendDialog" :title="$t(`btn.${suspendAction}`)" @click="submitSuspend()" :buttons="['submit']">
+            <textarea v-model="comment" name="comment" class="form-control" :placeholder="$t('form.comment')" rows="3"></textarea>
         </modal-dialog>
 
         <modal-dialog id="oneoff-dialog" ref="oneoffDialog" @click="submitOneOff()" :buttons="['submit']"
@@ -273,6 +278,7 @@
 </template>
 
 <script>
+    import EventLog from '../Widgets/EventLog'
     import ModalDialog from '../Widgets/ModalDialog'
     import TransactionLog from '../Widgets/TransactionLog'
     import { ListTable } from '../Widgets/ListTools'
@@ -295,6 +301,7 @@
         components: {
             DistlistList,
             DomainList,
+            EventLog,
             ListTable,
             ModalDialog,
             ResourceList,
@@ -320,9 +327,7 @@
                     ],
                     footLabel: 'user.aliases-none'
                 },
-                oneoff_amount: '',
-                oneoff_description: '',
-                oneoff_negative: false,
+                comment: '',
                 discount: 0,
                 discount_description: '',
                 discounts: [],
@@ -330,6 +335,10 @@
                 folders: [],
                 has2FA: false,
                 hasBeta: false,
+                loadEventLog: false,
+                oneoff_amount: '',
+                oneoff_description: '',
+                oneoff_negative: false,
                 wallet: {},
                 walletReload: false,
                 distlists: [],
@@ -361,7 +370,8 @@
                     { label: 'user.distlists', count: 0 },
                     { label: 'user.resources', count: 0 },
                     { label: 'dashboard.shared-folders', count: 0 },
-                    { label: 'form.settings' }
+                    { label: 'form.settings' },
+                    { label: 'log.history' }
                 ],
                 users: [],
                 user: {
@@ -370,6 +380,11 @@
                     wallet: {},
                     skus: {},
                 }
+            }
+        },
+        computed: {
+            suspendAction() {
+                return this.user.isSuspended ? 'unsuspend' : 'suspend'
             }
         },
         created() {
@@ -476,6 +491,7 @@
                 .catch(this.$root.errorHandler)
         },
         mounted() {
+            this.$refs.tabs.clickHandler('history', () => { this.loadEventLog = true })
             this.$refs.discountDialog.events({
                 shown: () => {
                     // Note: Vue v-model is strict, convert null to a string
@@ -633,11 +649,23 @@
                     })
             },
             setSuspendState() {
-                axios.post('/api/v4/users/' + this.user.id + '/' + (this.user.isSuspended ? 'unsuspend' : 'suspend'))
+                this.$root.clearFormValidation($('#suspend-dialog'))
+                this.$refs.suspendDialog.show()
+            },
+            submitSuspend() {
+                const post = { comment: this.comment }
+
+                axios.post(`/api/v4/users/${this.user.id}/${this.suspendAction}`, post)
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
                             this.user = Object.assign({}, this.user, { isSuspended: !this.user.isSuspended })
+                            this.$refs.suspendDialog.hide()
+                            this.comment = ''
+
+                            if (this.loadEventLog) {
+                                this.$refs.eventLog.loadLog({ reset: true })
+                            }
                         }
                     })
             }

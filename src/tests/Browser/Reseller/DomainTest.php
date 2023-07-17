@@ -3,7 +3,9 @@
 namespace Tests\Browser\Reseller;
 
 use App\Domain;
+use App\EventLog;
 use Tests\Browser;
+use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Admin\Domain as DomainPage;
 use Tests\Browser\Pages\Admin\User as UserPage;
@@ -24,6 +26,8 @@ class DomainTest extends TestCaseDusk
         $this->deleteTestUser('test1@domainscontroller.com');
         $this->deleteTestDomain('domainscontroller.com');
 
+        Eventlog::query()->delete();
+
         self::useResellerUrl();
     }
 
@@ -34,6 +38,8 @@ class DomainTest extends TestCaseDusk
     {
         $this->deleteTestUser('test1@domainscontroller.com');
         $this->deleteTestDomain('domainscontroller.com');
+
+        Eventlog::query()->delete();
 
         parent::tearDown();
     }
@@ -84,7 +90,9 @@ class DomainTest extends TestCaseDusk
 
             // Some tabs are loaded in background, wait a second
             $browser->pause(500)
-                ->assertElementsCount('@nav a', 2);
+                ->assertElementsCount('@nav a', 3)
+                ->assertSeeIn('@nav #tab-settings', 'Settings')
+                ->assertSeeIn('@nav #tab-history', 'History');
 
             // Assert Configuration tab
             $browser->assertSeeIn('@nav #tab-config', 'Configuration')
@@ -102,6 +110,8 @@ class DomainTest extends TestCaseDusk
      */
     public function testSuspendAndUnsuspend(): void
     {
+        EventLog::query()->delete();
+
         $this->browse(function (Browser $browser) {
             $sku_domain = \App\Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
             $user = $this->getTestUser('test1@domainscontroller.com');
@@ -123,14 +133,36 @@ class DomainTest extends TestCaseDusk
                 ->assertVisible('@domain-info #button-suspend')
                 ->assertMissing('@domain-info #button-unsuspend')
                 ->click('@domain-info #button-suspend')
+                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Suspend')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
+                        ->type('textarea', 'test suspend')
+                        ->click('@button-action');
+                })
                 ->assertToast(Toast::TYPE_SUCCESS, 'Domain suspended successfully.')
                 ->assertSeeIn('@domain-info #status span.text-warning', 'Suspended')
-                ->assertMissing('@domain-info #button-suspend')
-                ->click('@domain-info #button-unsuspend')
+                ->assertMissing('@domain-info #button-suspend');
+
+            $event = EventLog::where('type', EventLog::TYPE_SUSPENDED)->first();
+            $this->assertSame('test suspend', $event->comment);
+            $this->assertEquals($domain->id, $event->object_id);
+
+            $browser->click('@domain-info #button-unsuspend')
+                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Unsuspend')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
+                        ->click('@button-action');
+                })
                 ->assertToast(Toast::TYPE_SUCCESS, 'Domain unsuspended successfully.')
                 ->assertSeeIn('@domain-info #status span.text-success', 'Active')
                 ->assertVisible('@domain-info #button-suspend')
                 ->assertMissing('@domain-info #button-unsuspend');
+
+            $event = EventLog::where('type', EventLog::TYPE_UNSUSPENDED)->first();
+            $this->assertSame(null, $event->comment);
+            $this->assertEquals($domain->id, $event->object_id);
         });
     }
 }

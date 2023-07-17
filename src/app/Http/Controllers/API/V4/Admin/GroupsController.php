@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\API\V4\Admin;
 
+use App\EventLog;
 use App\Group;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
 {
@@ -73,7 +75,15 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
             return $this->errorResponse(404);
         }
 
+        $v = Validator::make($request->all(), ['comment' => 'nullable|string|max:1024']);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
         $group->suspend();
+
+        EventLog::createFor($group, EventLog::TYPE_SUSPENDED, $request->comment);
 
         return response()->json([
                 'status' => 'success',
@@ -97,7 +107,15 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
             return $this->errorResponse(404);
         }
 
+        $v = Validator::make($request->all(), ['comment' => 'nullable|string|max:1024']);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
         $group->unsuspend();
+
+        EventLog::createFor($group, EventLog::TYPE_UNSUSPENDED, $request->comment);
 
         return response()->json([
                 'status' => 'success',

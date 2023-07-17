@@ -1,5 +1,5 @@
 <template>
-    <div v-if="domain" class="container">
+    <div class="container">
         <div class="card" id="domain-info">
             <div class="card-body">
                 <div class="card-title">{{ domain.namespace }}</div>
@@ -25,19 +25,16 @@
                         </div>
                     </form>
                     <div class="mt-2 buttons">
-                        <btn v-if="!domain.isSuspended" id="button-suspend" class="btn-warning" @click="suspendDomain">
-                            {{ $t('btn.suspend') }}
-                        </btn>
-                        <btn v-if="domain.isSuspended" id="button-unsuspend" class="btn-warning" @click="unsuspendDomain">
-                            {{ $t('btn.unsuspend') }}
+                        <btn :id="`button-${suspendAction}`" class="btn-outline-primary" @click="setSuspendState">
+                            {{ $t(`btn.${suspendAction}`) }}
                         </btn>
                     </div>
                 </div>
             </div>
         </div>
-        <tabs class="mt-3" :tabs="['form.config', 'form.settings']"></tabs>
+        <tabs class="mt-3" :tabs="['form.config', 'form.settings', 'log.history']" ref="tabs"></tabs>
         <div class="tab-content">
-            <div class="tab-pane show active" id="config" role="tabpanel" aria-labelledby="tab-config">
+            <div v-if="domain.id" class="tab-pane show active" id="config" role="tabpanel" aria-labelledby="tab-config">
                 <div class="card-body">
                     <div class="card-text">
                         <p>{{ $t('domain.dns-confirm') }}</p>
@@ -47,7 +44,7 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
+            <div v-if="domain.id" class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
                 <div class="card-body">
                     <div class="card-text">
                         <form class="read-only short">
@@ -63,15 +60,38 @@
                     </div>
                 </div>
             </div>
+            <div class="tab-pane" id="history" role="tabpanel" aria-labelledby="tab-history">
+                <div class="card-body">
+                    <event-log v-if="loadEventLog" :object-id="domain.id" object-type="domain" ref="eventLog" class="card-text mb-0"></event-log>
+                </div>
+            </div>
         </div>
+
+        <modal-dialog id="suspend-dialog" ref="suspendDialog" :title="$t(`btn.${suspendAction}`)" @click="submitSuspend()" :buttons="['submit']">
+            <textarea v-model="comment" name="comment" class="form-control" :placeholder="$t('form.comment')" rows="3"></textarea>
+        </modal-dialog>
     </div>
 </template>
 
 <script>
+    import EventLog from '../Widgets/EventLog'
+    import ModalDialog from '../Widgets/ModalDialog'
+
     export default {
+        components: {
+            EventLog,
+            ModalDialog
+        },
         data() {
             return {
-                domain: null
+                comment: '',
+                domain: {},
+                loadEventLog: false
+            }
+        },
+        computed: {
+            suspendAction() {
+                return this.domain.isSuspended ? 'unsuspend' : 'suspend'
             }
         },
         created() {
@@ -83,22 +103,29 @@
                 })
                 .catch(this.$root.errorHandler)
         },
+        mounted() {
+            this.$refs.tabs.clickHandler('history', () => { this.loadEventLog = true })
+        },
         methods: {
-            suspendDomain() {
-                axios.post('/api/v4/domains/' + this.domain.id + '/suspend')
-                    .then(response => {
-                        if (response.data.status == 'success') {
-                            this.$toast.success(response.data.message)
-                            this.domain = Object.assign({}, this.domain, { isSuspended: true })
-                        }
-                    })
+            setSuspendState() {
+                this.$root.clearFormValidation($('#suspend-dialog'))
+                this.$refs.suspendDialog.show()
             },
-            unsuspendDomain() {
-                axios.post('/api/v4/domains/' + this.domain.id + '/unsuspend')
+            submitSuspend() {
+                const post = { comment: this.comment }
+
+                axios.post(`/api/v4/domains/${this.domain.id}/${this.suspendAction}`, post)
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
-                            this.domain = Object.assign({}, this.domain, { isSuspended: false })
+                            this.domain = Object.assign({}, this.domain, { isSuspended: !this.domain.isSuspended })
+
+                            this.$refs.suspendDialog.hide()
+                            this.comment = ''
+
+                            if (this.loadEventLog) {
+                                this.$refs.eventLog.loadLog({ reset: true })
+                            }
                         }
                     })
             }

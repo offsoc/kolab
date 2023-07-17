@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Domain;
+use App\EventLog;
 use App\Sku;
 use App\User;
 use App\Wallet;
@@ -321,7 +322,15 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
             return $this->errorResponse(403);
         }
 
+        $v = Validator::make($request->all(), ['comment' => 'nullable|string|max:1024']);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
         $user->suspend();
+
+        EventLog::createFor($user, EventLog::TYPE_SUSPENDED, $request->comment);
 
         return response()->json([
                 'status' => 'success',
@@ -349,7 +358,15 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
             return $this->errorResponse(403);
         }
 
+        $v = Validator::make($request->all(), ['comment' => 'nullable|string|max:1024']);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        }
+
         $user->unsuspend();
+
+        EventLog::createFor($user, EventLog::TYPE_UNSUSPENDED, $request->comment);
 
         return response()->json([
                 'status' => 'success',

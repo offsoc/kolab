@@ -23,6 +23,10 @@ return [
     'companion-create-success' => 'Companion app has been created.',
     'companion-delete-success' => 'Companion app has been removed.',
 
+    'event-suspended' => 'Suspended',
+    'event-unsuspended' => 'Unsuspended',
+    'event-comment' => 'Commented',
+
     'mandate-delete-success' => 'The auto-payment has been removed.',
     'mandate-update-success' => 'The auto-payment has been updated.',
 

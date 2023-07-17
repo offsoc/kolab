@@ -235,6 +235,8 @@ if (\config('app.with_admin')) {
             Route::post('domains/{id}/suspend', [API\V4\Admin\DomainsController::class, 'suspend']);
             Route::post('domains/{id}/unsuspend', [API\V4\Admin\DomainsController::class, 'unsuspend']);
 
+            Route::get('eventlog/{type}/{id}', [API\V4\Admin\EventLogController::class, 'index']);
+
             Route::apiResource('groups', API\V4\Admin\GroupsController::class);
             Route::post('groups/{id}/suspend', [API\V4\Admin\GroupsController::class, 'suspend']);
             Route::post('groups/{id}/unsuspend', [API\V4\Admin\GroupsController::class, 'unsuspend']);
@@ -274,6 +276,8 @@ if (\config('app.with_reseller')) {
             Route::get('domains/{id}/skus', [API\V4\Reseller\DomainsController::class, 'skus']);
             Route::post('domains/{id}/suspend', [API\V4\Reseller\DomainsController::class, 'suspend']);
             Route::post('domains/{id}/unsuspend', [API\V4\Reseller\DomainsController::class, 'unsuspend']);
+
+            Route::get('eventlog/{type}/{id}', [API\V4\Reseller\EventLogController::class, 'index']);
 
             Route::apiResource('groups', API\V4\Reseller\GroupsController::class);
             Route::post('groups/{id}/suspend', [API\V4\Reseller\GroupsController::class, 'suspend']);

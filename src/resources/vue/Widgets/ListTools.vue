@@ -125,7 +125,6 @@
                         get.search = this.currentSearch
                     }
 
-
                     if ('parent' in params) {
                         get.parent = params.parent
                         this.currentParent = params.parent

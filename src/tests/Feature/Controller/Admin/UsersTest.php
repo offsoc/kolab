@@ -3,7 +3,9 @@
 namespace Tests\Feature\Controller\Admin;
 
 use App\Auth\SecondFactor;
+use App\EventLog;
 use App\Sku;
+use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -503,7 +505,23 @@ class UsersTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame("User suspended successfully.", $json['message']);
         $this->assertCount(2, $json);
+        $this->assertTrue($user->fresh()->isSuspended());
 
+        $user->unsuspend();
+        EventLog::truncate();
+
+        // Test suspending the user with a comment
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/suspend", ['comment' => 'Test']);
+        $response->assertStatus(200);
+
+        $where = [
+            'object_id' => $user->id,
+            'object_type' => User::class,
+            'type' => EventLog::TYPE_SUSPENDED,
+            'comment' => 'Test'
+        ];
+
+        $this->assertSame(1, EventLog::where($where)->count());
         $this->assertTrue($user->fresh()->isSuspended());
     }
 
@@ -534,7 +552,23 @@ class UsersTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame("User unsuspended successfully.", $json['message']);
         $this->assertCount(2, $json);
+        $this->assertFalse($user->fresh()->isSuspended());
 
+        $user->suspend();
+        EventLog::truncate();
+
+        // Test suspending the user with a comment
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/unsuspend", ['comment' => 'Test']);
+        $response->assertStatus(200);
+
+        $where = [
+            'object_id' => $user->id,
+            'object_type' => User::class,
+            'type' => EventLog::TYPE_UNSUSPENDED,
+            'comment' => 'Test'
+        ];
+
+        $this->assertSame(1, EventLog::where($where)->count());
         $this->assertFalse($user->fresh()->isSuspended());
     }
 

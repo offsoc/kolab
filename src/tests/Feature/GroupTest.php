@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Group;
+use App\EventLog;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -130,6 +131,26 @@ class GroupTest extends TestCase
                     && $groupId === $group->id;
             }
         );
+    }
+
+    /**
+     * Test eventlog on group deletion
+     */
+    public function testDeleteAndEventLog(): void
+    {
+        Queue::fake();
+
+        $group = $this->getTestGroup('group-test@kolabnow.com');
+
+        EventLog::createFor($group, EventLog::TYPE_SUSPENDED, 'test');
+
+        $group->delete();
+
+        $this->assertCount(1, EventLog::where('object_id', $group->id)->where('object_type', Group::class)->get());
+
+        $group->forceDelete();
+
+        $this->assertCount(0, EventLog::where('object_id', $group->id)->where('object_type', Group::class)->get());
     }
 
     /**

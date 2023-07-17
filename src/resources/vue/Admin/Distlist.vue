@@ -1,6 +1,6 @@
 <template>
-    <div v-if="list.id" class="container">
-        <div class="card" id="distlist-info">
+    <div class="container">
+        <div v-if="list.id" class="card" id="distlist-info">
             <div class="card-body">
                 <div class="card-title">{{ list.email }}</div>
                 <div class="card-text">
@@ -37,18 +37,15 @@
                         </div>
                     </form>
                     <div class="mt-2 buttons">
-                        <button v-if="!list.isSuspended" id="button-suspend" class="btn btn-warning" type="button" @click="suspendList">
-                            {{ $t('btn.suspend') }}
-                        </button>
-                        <button v-if="list.isSuspended" id="button-unsuspend" class="btn btn-warning" type="button" @click="unsuspendList">
-                            {{ $t('btn.unsuspend') }}
-                        </button>
+                        <btn :id="`button-${suspendAction}`" class="btn-outline-primary" @click="setSuspendState">
+                            {{ $t(`btn.${suspendAction}`) }}
+                        </btn>
                     </div>
                 </div>
             </div>
         </div>
-        <tabs class="mt-3" :tabs="['form.settings']"></tabs>
-        <div class="tab-content">
+        <tabs class="mt-3" :tabs="['form.settings', 'log.history']" ref="tabs"></tabs>
+        <div v-if="list.id" class="tab-content">
             <div class="tab-pane show active" id="settings" role="tabpanel" aria-labelledby="tab-settings">
                 <div class="card-body">
                     <div class="card-text">
@@ -65,15 +62,38 @@
                     </div>
                 </div>
             </div>
+            <div class="tab-pane" id="history" role="tabpanel" aria-labelledby="tab-history">
+                <div class="card-body">
+                    <event-log v-if="loadEventLog" :object-id="list.id" object-type="group" ref="eventLog" class="card-text mb-0"></event-log>
+                </div>
+            </div>
         </div>
+
+        <modal-dialog id="suspend-dialog" ref="suspendDialog" :title="$t(`btn.${suspendAction}`)" @click="submitSuspend()" :buttons="['submit']">
+            <textarea v-model="comment" name="comment" class="form-control" :placeholder="$t('form.comment')" rows="3"></textarea>
+        </modal-dialog>
     </div>
 </template>
 
 <script>
+    import EventLog from '../Widgets/EventLog'
+    import ModalDialog from '../Widgets/ModalDialog'
+
     export default {
+        components: {
+            EventLog,
+            ModalDialog
+        },
         data() {
             return {
-                list: { members: [], config: {} }
+                comment: '',
+                list: { members: [], config: {} },
+                loadEventLog: false
+            }
+        },
+        computed: {
+            suspendAction() {
+                return this.list.isSuspended ? 'unsuspend' : 'suspend'
             }
         },
         created() {
@@ -83,22 +103,29 @@
                 })
                 .catch(this.$root.errorHandler)
         },
+        mounted() {
+            this.$refs.tabs.clickHandler('history', () => { this.loadEventLog = true })
+        },
         methods: {
-            suspendList() {
-                axios.post('/api/v4/groups/' + this.list.id + '/suspend')
-                    .then(response => {
-                        if (response.data.status == 'success') {
-                            this.$toast.success(response.data.message)
-                            this.list = Object.assign({}, this.list, { isSuspended: true })
-                        }
-                    })
+            setSuspendState() {
+                this.$root.clearFormValidation($('#suspend-dialog'))
+                this.$refs.suspendDialog.show()
             },
-            unsuspendList() {
-                axios.post('/api/v4/groups/' + this.list.id + '/unsuspend')
+            submitSuspend() {
+                const post = { comment: this.comment }
+
+                axios.post(`/api/v4/groups/${this.list.id}/${this.suspendAction}`, post)
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
-                            this.list = Object.assign({}, this.list, { isSuspended: false })
+                            this.list = Object.assign({}, this.list, { isSuspended: !this.list.isSuspended })
+
+                            this.$refs.suspendDialog.hide()
+                            this.comment = ''
+
+                            if (this.loadEventLog) {
+                                this.$refs.eventLog.loadLog({ reset: true })
+                            }
                         }
                     })
             }

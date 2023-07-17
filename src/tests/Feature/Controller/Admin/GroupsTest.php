@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Controller\Admin;
 
+use App\EventLog;
 use App\Group;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -184,7 +185,23 @@ class GroupsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame("Distribution list suspended successfully.", $json['message']);
         $this->assertCount(2, $json);
+        $this->assertTrue($group->fresh()->isSuspended());
 
+        $group->unsuspend();
+        EventLog::truncate();
+
+        // Test suspending the group with a comment
+        $response = $this->actingAs($admin)->post("/api/v4/groups/{$group->id}/suspend", ['comment' => 'Test']);
+        $response->assertStatus(200);
+
+        $where = [
+            'object_id' => $group->id,
+            'object_type' => Group::class,
+            'type' => EventLog::TYPE_SUSPENDED,
+            'comment' => 'Test'
+        ];
+
+        $this->assertSame(1, EventLog::where($where)->count());
         $this->assertTrue($group->fresh()->isSuspended());
     }
 
@@ -221,7 +238,23 @@ class GroupsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame("Distribution list unsuspended successfully.", $json['message']);
         $this->assertCount(2, $json);
+        $this->assertFalse($group->fresh()->isSuspended());
 
+        $group->unsuspend();
+        EventLog::truncate();
+
+        // Test unsuspending the group with a comment
+        $response = $this->actingAs($admin)->post("/api/v4/groups/{$group->id}/unsuspend", ['comment' => 'Test']);
+        $response->assertStatus(200);
+
+        $where = [
+            'object_id' => $group->id,
+            'object_type' => Group::class,
+            'type' => EventLog::TYPE_UNSUSPENDED,
+            'comment' => 'Test'
+        ];
+
+        $this->assertSame(1, EventLog::where($where)->count());
         $this->assertFalse($group->fresh()->isSuspended());
     }
 }

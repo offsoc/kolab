@@ -4,6 +4,7 @@ namespace Tests\Feature\Controller\Admin;
 
 use App\Domain;
 use App\Entitlement;
+use App\EventLog;
 use App\Sku;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -201,7 +202,7 @@ class DomainsTest extends TestCase
 
         $this->assertFalse($domain->fresh()->isSuspended());
 
-        // Test suspending the user
+        // Test suspending the domain
         $response = $this->actingAs($admin)->post("/api/v4/domains/{$domain->id}/suspend", []);
         $response->assertStatus(200);
 
@@ -210,7 +211,23 @@ class DomainsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame("Domain suspended successfully.", $json['message']);
         $this->assertCount(2, $json);
+        $this->assertTrue($domain->fresh()->isSuspended());
 
+        $domain->unsuspend();
+        EventLog::truncate();
+
+        // Test suspending the domain with a comment
+        $response = $this->actingAs($admin)->post("/api/v4/domains/{$domain->id}/suspend", ['comment' => 'Test']);
+        $response->assertStatus(200);
+
+        $where = [
+            'object_id' => $domain->id,
+            'object_type' => Domain::class,
+            'type' => EventLog::TYPE_SUSPENDED,
+            'comment' => 'Test'
+        ];
+
+        $this->assertSame(1, EventLog::where($where)->count());
         $this->assertTrue($domain->fresh()->isSuspended());
     }
 
@@ -234,7 +251,7 @@ class DomainsTest extends TestCase
 
         $this->assertTrue($domain->fresh()->isSuspended());
 
-        // Test suspending the user
+        // Test suspending the domain
         $response = $this->actingAs($admin)->post("/api/v4/domains/{$domain->id}/unsuspend", []);
         $response->assertStatus(200);
 
@@ -243,7 +260,23 @@ class DomainsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame("Domain unsuspended successfully.", $json['message']);
         $this->assertCount(2, $json);
+        $this->assertFalse($domain->fresh()->isSuspended());
 
+        $domain->suspend();
+        EventLog::truncate();
+
+        // Test unsuspending the domain with a comment
+        $response = $this->actingAs($admin)->post("/api/v4/domains/{$domain->id}/unsuspend", ['comment' => 'Test']);
+        $response->assertStatus(200);
+
+        $where = [
+            'object_id' => $domain->id,
+            'object_type' => Domain::class,
+            'type' => EventLog::TYPE_UNSUSPENDED,
+            'comment' => 'Test'
+        ];
+
+        $this->assertSame(1, EventLog::where($where)->count());
         $this->assertFalse($domain->fresh()->isSuspended());
     }
 }

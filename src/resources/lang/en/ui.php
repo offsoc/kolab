@@ -43,6 +43,12 @@ return [
         'verify' => "Verify",
     ],
 
+    'collection' => [
+        'create' => "Create collection",
+        'new' => "New Collection",
+        'name' => "Name",
+    ],
+
     'companion' => [
         'title' => "Companion Apps",
         'companion' => "Companion App",
@@ -170,12 +176,6 @@ return [
             . "to the file via a unique link.",
     ],
 
-    'collection' => [
-        'create' => "Create collection",
-        'new' => "New Collection",
-        'name' => "Name",
-    ],
-
     'form' => [
         'acl' => "Access rights",
         'acl-full' => "All",
@@ -185,6 +185,7 @@ return [
         'anyone' => "Anyone",
         'code' => "Confirmation Code",
         'config' => "Configuration",
+        'comment' => "Comment",
         'companion' => "Companion App",
         'date' => "Date",
         'description' => "Description",
@@ -198,8 +199,10 @@ return [
         'general' => "General",
         'geolocation' => "Your current location: {location}",
         'lastname' => "Last Name",
+        'less' => "Less",
         'name' => "Name",
         'months' => "months",
+        'more' => "More",
         'none' => "none",
         'norestrictions' => "No restrictions",
         'or' => "or",
@@ -243,6 +246,12 @@ return [
         'de' => "German",
         'fr' => "French",
         'it' => "Italian",
+    ],
+
+    'log' => [
+        'event' => "Event",
+        'list-none' => "There's no events in the log",
+        'history' => "History",
     ],
 
     'login' => [

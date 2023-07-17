@@ -224,7 +224,7 @@ class UserObserver
     }
 
     /**
-     * Remove entitleables/transactions related to the user (in user's wallets)
+     * Remove entities related to the user (in user's wallets), entitlements, transactions, etc.
      *
      * @param \App\User $user  The user
      * @param bool      $force Force-delete mode
@@ -261,6 +261,9 @@ class UserObserver
             \App\Transaction::where('object_type', Wallet::class)
                 ->whereIn('object_id', $wallets)
                 ->delete();
+
+            // Remove EventLog records
+            \App\EventLog::where('object_id', $user->id)->where('object_type', User::class)->delete();
         }
 
         // regardless of force delete, we're always purging whitelists... just in case

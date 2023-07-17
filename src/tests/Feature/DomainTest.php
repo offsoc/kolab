@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Domain;
 use App\Entitlement;
+use App\EventLog;
 use App\Sku;
 use App\User;
 use App\Tenant;
@@ -229,6 +230,29 @@ class DomainTest extends TestCase
         $domain->forceDelete();
 
         $this->assertCount(0, Domain::withTrashed()->where('id', $domain->id)->get());
+    }
+
+    /**
+     * Test eventlog on domain deletion
+     */
+    public function testDeleteAndEventLog(): void
+    {
+        Queue::fake();
+
+        $domain = $this->getTestDomain('gmail.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_PUBLIC,
+        ]);
+
+        EventLog::createFor($domain, EventLog::TYPE_SUSPENDED, 'test');
+
+        $domain->delete();
+
+        $this->assertCount(1, EventLog::where('object_id', $domain->id)->where('object_type', Domain::class)->get());
+
+        $domain->forceDelete();
+
+        $this->assertCount(0, EventLog::where('object_id', $domain->id)->where('object_type', Domain::class)->get());
     }
 
     /**

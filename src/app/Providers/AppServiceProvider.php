@@ -65,6 +65,7 @@ class AppServiceProvider extends ServiceProvider
     {
         \App\Domain::observe(\App\Observers\DomainObserver::class);
         \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);
+        \App\EventLog::observe(\App\Observers\EventLogObserver::class);
         \App\Group::observe(\App\Observers\GroupObserver::class);
         \App\GroupSetting::observe(\App\Observers\GroupSettingObserver::class);
         \App\Meet\Room::observe(\App\Observers\Meet\RoomObserver::class);

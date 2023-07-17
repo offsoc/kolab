@@ -38,6 +38,7 @@ class Domain extends Page
     public function assert($browser): void
     {
         $browser->waitForLocation($this->url())
+            ->waitUntilMissing('@app .app-loader')
             ->waitFor('@domain-info');
     }
 
@@ -54,6 +55,7 @@ class Domain extends Page
             '@nav' => 'ul.nav-tabs',
             '@domain-config' => '#config',
             '@domain-settings' => '#settings',
+            '@domain-history' => '#history',
         ];
     }
 }

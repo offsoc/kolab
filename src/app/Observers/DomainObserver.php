@@ -45,6 +45,9 @@ class DomainObserver
     public function deleted(Domain $domain)
     {
         if ($domain->isForceDeleting()) {
+            // Remove EventLog records
+            \App\EventLog::where('object_id', $domain->id)->where('object_type', Domain::class)->delete();
+
             return;
         }
 

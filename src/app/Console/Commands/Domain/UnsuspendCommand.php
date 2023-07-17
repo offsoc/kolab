@@ -11,7 +11,7 @@ class UnsuspendCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'domain:unsuspend {domain}';
+    protected $signature = 'domain:unsuspend {domain} {--comment=}';
 
     /**
      * The console command description.
@@ -35,5 +35,7 @@ class UnsuspendCommand extends Command
         }
 
         $domain->unsuspend();
+
+        \App\EventLog::createFor($domain, \App\EventLog::TYPE_UNSUSPENDED, $this->option('comment'));
     }
 }
