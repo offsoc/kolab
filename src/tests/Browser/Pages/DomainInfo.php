@@ -42,7 +42,7 @@ class DomainInfo extends Page
             '@nav' => 'ul.nav-tabs',
             '@settings' => '#settings',
             '@status' => '#status-box',
-            '@verify' => '#domain-verify',
+            '@confirm' => '#domain-confirm',
         ];
     }
 }

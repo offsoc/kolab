@@ -77,7 +77,7 @@ class StatusTest extends TestCaseDusk
                 ->with(new Status(), function ($browser) use ($john) {
                     $browser->assertSeeIn('@body', 'We are preparing your account')
                         ->assertProgress(71, 'Creating a mailbox...', 'pending')
-                        ->assertMissing('#status-verify')
+                        ->assertMissing('#status-confirm')
                         ->assertMissing('#status-link')
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text');
@@ -88,10 +88,10 @@ class StatusTest extends TestCaseDusk
                     // Wait for auto-refresh, expect domain-confirmed step
                     $browser->pause(6000)
                         ->assertSeeIn('@body', 'Your account is almost ready')
-                        ->assertProgress(85, 'Verifying an ownership of a custom domain...', 'failed')
+                        ->assertProgress(85, 'Confirming an ownership of a custom domain...', 'failed')
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
-                        ->assertMissing('#status-verify')
+                        ->assertMissing('#status-confirm')
                         ->assertVisible('#status-link');
                 })
                 // check if the link to domain info page works
@@ -101,7 +101,7 @@ class StatusTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->with(new Status(), function ($browser) {
                     $browser->assertMissing('@refresh-button')
-                        ->assertProgress(85, 'Verifying an ownership of a custom domain...', 'failed');
+                        ->assertProgress(85, 'Confirming an ownership of a custom domain...', 'failed');
                 });
 
             // Confirm the domain and wait until the whole status box disappears
@@ -187,7 +187,7 @@ class StatusTest extends TestCaseDusk
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
                         ->assertMissing('#status-link')
-                        ->assertMissing('#status-verify');
+                        ->assertMissing('#status-confirm');
                 });
 
             $domain->status |= Domain::STATUS_VERIFIED;
@@ -197,21 +197,21 @@ class StatusTest extends TestCaseDusk
             $browser->waitFor('@status.process-failed')
                 ->with(new Status(), function ($browser) {
                     $browser->assertSeeIn('@body', 'The domain is almost ready')
-                        ->assertProgress(75, 'Verifying an ownership of a custom domain...', 'failed')
+                        ->assertProgress(75, 'Confirming an ownership of a custom domain...', 'failed')
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
                         ->assertMissing('#status-link')
-                        ->assertVisible('#status-verify');
+                        ->assertVisible('#status-confirm');
                 });
 
             $domain->status |= Domain::STATUS_CONFIRMED;
             $domain->save();
 
             // Test Verify button
-            $browser->click('@status #status-verify')
-                ->assertToast(Toast::TYPE_SUCCESS, 'Domain verified successfully.')
+            $browser->click('@status #status-confirm')
+                ->assertToast(Toast::TYPE_SUCCESS, 'Domain ownership confirmed successfully.')
                 ->waitUntilMissing('@status')
-                ->waitUntilMissing('@verify')
+                ->waitUntilMissing('#status-confirm')
                 ->assertVisible('@config');
         });
     }
@@ -256,7 +256,7 @@ class StatusTest extends TestCaseDusk
                 ->with(new Status(), function ($browser) use ($john) {
                     $browser->assertSeeIn('@body', 'We are preparing the user account')
                         ->assertProgress(71, 'Creating a mailbox...', 'pending')
-                        ->assertMissing('#status-verify')
+                        ->assertMissing('#status-confirm')
                         ->assertMissing('#status-link')
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text');
@@ -268,10 +268,10 @@ class StatusTest extends TestCaseDusk
                     // Wait for auto-refresh, expect domain-confirmed step
                     $browser->pause(6000)
                         ->assertSeeIn('@body', 'The user account is almost ready')
-                        ->assertProgress(85, 'Verifying an ownership of a custom domain...', 'failed')
+                        ->assertProgress(85, 'Confirming an ownership of a custom domain...', 'failed')
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
-                        ->assertMissing('#status-verify')
+                        ->assertMissing('#status-confirm')
                         ->assertVisible('#status-link');
                 })
                 ->assertSeeIn('#status', 'Active');

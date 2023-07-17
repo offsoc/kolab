@@ -36,20 +36,20 @@
                                 <btn v-if="!domain.id" class="btn-primary mt-3" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                             <hr class="m-0" v-if="domain.id">
-                            <div v-if="domain.id && !domain.isConfirmed" class="card-body" id="domain-verify">
-                                <h5 class="mb-3">{{ $t('domain.verify') }}</h5>
+                            <div v-if="domain.id && !domain.isConfirmed" class="card-body" id="domain-confirm">
+                                <h5 class="mb-3">{{ $t('domain.confirm') }}</h5>
                                 <div class="card-text">
-                                    <p>{{ $t('domain.verify-intro') }}</p>
+                                    <p>{{ $t('domain.confirm-intro') }}</p>
                                     <p>
-                                        <span v-html="$t('domain.verify-dns')"></span>
+                                        <span v-html="$t('domain.confirm-dns')"></span>
                                         <ul>
-                                            <li>{{ $t('domain.verify-dns-txt') }} <code>{{ domain.hash_text }}</code></li>
-                                            <li>{{ $t('domain.verify-dns-cname') }} <code>{{ domain.hash_cname }}.{{ domain.namespace }}. IN CNAME {{ domain.hash_code }}.{{ domain.namespace }}.</code></li>
+                                            <li>{{ $t('domain.confirm-dns-txt') }} <code>{{ domain.hash_text }}</code></li>
+                                            <li>{{ $t('domain.confirm-dns-cname') }} <code>{{ domain.hash_cname }}.{{ domain.namespace }}. IN CNAME {{ domain.hash_code }}.{{ domain.namespace }}.</code></li>
                                         </ul>
-                                        <span>{{ $t('domain.verify-outro') }}</span>
+                                        <span>{{ $t('domain.confirm-outro') }}</span>
                                     </p>
-                                    <p>{{ $t('domain.verify-sample') }} <pre>{{ domain.dns.join("\n") }}</pre></p>
-                                    <btn class="btn-primary" @click="confirm" icon="rotate">{{ $t('btn.verify') }}</btn>
+                                    <p>{{ $t('domain.confirm-sample') }} <pre>{{ domain.dns.join("\n") }}</pre></p>
+                                    <btn class="btn-primary" @click="confirm" icon="rotate">{{ $t('btn.confirm') }}</btn>
                                 </div>
                             </div>
                             <div v-if="domain.isConfirmed" class="card-body" id="domain-config">
@@ -130,7 +130,7 @@
                         this.spf_whitelist = this.domain.config.spf_whitelist || []
 
                         if (!this.domain.isConfirmed) {
-                            $('#domain-verify button').focus()
+                            $('#domain-confirm button').focus()
                         }
 
                         this.status = response.data.statusInfo

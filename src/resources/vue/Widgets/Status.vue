@@ -16,15 +16,15 @@
             <p id="status-body" class="flex-grow-1">
                 <span>{{ $t('status.ready-' + scopeLabel()) }}</span>
                 <br>
-                {{ $t('status.verify') }}
+                {{ $t('status.confirm') }}
             </p>
             <div v-if="scope == 'domain'">
-                <btn id="status-verify" class="btn-secondary text-nowrap" @click="confirmDomain" icon="rotate">
-                    {{ $t('btn.verify') }}
+                <btn id="status-confirm" class="btn-secondary text-nowrap" @click="confirmDomain" icon="rotate">
+                    {{ $t('btn.confirm') }}
                 </btn>
             </div>
             <div v-else-if="state.link && scope != 'domain'">
-                <router-link id="status-link" class="btn btn-secondary" :to="{ path: state.link }">{{ $t('status.verify-domain') }}</router-link>
+                <router-link id="status-link" class="btn btn-secondary" :to="{ path: state.link }">{{ $t('status.confirm-domain') }}</router-link>
             </div>
         </div>
 

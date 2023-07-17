@@ -40,8 +40,8 @@
             <div class="tab-pane show active" id="config" role="tabpanel" aria-labelledby="tab-config">
                 <div class="card-body">
                     <div class="card-text">
-                        <p>{{ $t('domain.dns-verify') }}</p>
-                        <p><pre id="dns-verify">{{ domain.dns.join("\n") }}</pre></p>
+                        <p>{{ $t('domain.dns-confirm') }}</p>
+                        <p><pre id="dns-confirm">{{ domain.dns.join("\n") }}</pre></p>
                         <p>{{ $t('domain.dns-config') }}</p>
                         <p><pre id="dns-config">{{ domain.mx.join("\n") }}</pre></p>
                     </div>

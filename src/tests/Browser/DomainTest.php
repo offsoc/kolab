@@ -112,11 +112,11 @@ class DomainTest extends TestCaseDusk
                             'Host a domain that is externally registered'
                         );
                 })
-                ->whenAvailable('@verify', function ($browser) use ($domain) {
+                ->whenAvailable('@confirm', function ($browser) use ($domain) {
                     $browser->assertSeeIn('pre', $domain->namespace)
                         ->assertSeeIn('pre', $domain->hash())
                         ->click('button')
-                        ->assertToast(Toast::TYPE_SUCCESS, 'Domain verified successfully.');
+                        ->assertToast(Toast::TYPE_SUCCESS, 'Domain ownership confirmed successfully.');
 
                         // TODO: Test scenario when a domain confirmation failed
                 })
@@ -124,12 +124,12 @@ class DomainTest extends TestCaseDusk
                     $browser->assertSeeIn('pre', $domain->namespace);
                 })
                 ->assertMissing('@general button[type=submit]')
-                ->assertMissing('@verify');
+                ->assertMissing('@confirm');
 
             // Check that confirmed domain page contains only the config box
             $browser->visit('/domain/' . $domain->id)
                 ->on(new DomainInfo())
-                ->assertMissing('@verify')
+                ->assertMissing('@confirm')
                 ->assertPresent('@config');
         });
     }
@@ -275,7 +275,7 @@ class DomainTest extends TestCaseDusk
                 })
                 ->assertSeeIn('@general button.btn-primary[type=submit]', 'Submit')
                 ->assertMissing('@config')
-                ->assertMissing('@verify')
+                ->assertMissing('@confirm')
                 ->assertMissing('@settings')
                 ->assertMissing('@status')
                 // Test error handling

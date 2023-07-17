@@ -73,7 +73,7 @@ class DomainsTest extends TestCase
 
         $this->assertCount(2, $json);
         $this->assertEquals('error', $json['status']);
-        $this->assertEquals('Domain ownership verification failed.', $json['message']);
+        $this->assertEquals('Domain ownership confirmation failed.', $json['message']);
 
         $domain->status |= Domain::STATUS_CONFIRMED;
         $domain->save();
@@ -84,7 +84,7 @@ class DomainsTest extends TestCase
         $json = $response->json();
 
         $this->assertEquals('success', $json['status']);
-        $this->assertEquals('Domain verified successfully.', $json['message']);
+        $this->assertEquals('Domain ownership confirmed successfully.', $json['message']);
         $this->assertTrue(is_array($json['statusInfo']));
 
         // Not authorized access

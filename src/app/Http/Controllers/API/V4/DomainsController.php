@@ -49,14 +49,14 @@ class DomainsController extends RelationController
         if (!$domain->confirm()) {
             return response()->json([
                     'status' => 'error',
-                    'message' => self::trans('app.domain-verify-error'),
+                    'message' => self::trans('app.domain-confirm-error'),
             ]);
         }
 
         return response()->json([
                 'status' => 'success',
                 'statusInfo' => self::statusInfo($domain),
-                'message' => self::trans('app.domain-verify-success'),
+                'message' => self::trans('app.domain-confirm-success'),
         ]);
     }
 
