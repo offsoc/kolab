@@ -86,8 +86,11 @@ class UserTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $jack = $this->getTestUser('jack@kolab.org');
-            $jack->setSetting('limit_geo', null);
-            $jack->setSetting('guam_enabled', null);
+            $jack->setSettings([
+                    'limit_geo' => null,
+                    'organization' => null,
+                    'guam_enabled' => null,
+            ]);
 
             $page = new UserPage($jack->id);
 

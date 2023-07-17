@@ -11,10 +11,8 @@ class Kernel extends ConsoleKernel
      * Define the application's command schedule.
      *
      * @param Schedule $schedule The application's command schedule
-     *
-     * @return void
      */
-    protected function schedule(Schedule $schedule)
+    protected function schedule(Schedule $schedule): void
     {
         // This imports countries and the current set of IPv4 and IPv6 networks allocated to countries.
         $schedule->command('data:import')->dailyAt('05:00');
@@ -33,14 +31,15 @@ class Kernel extends ConsoleKernel
 
         // This collects some statistics into the database
         $schedule->command('data:stats:collector')->dailyAt('23:00');
+
+        // https://laravel.com/docs/10.x/upgrade#redis-cache-tags
+        $schedule->command('cache:prune-stale-tags')->hourly();
     }
 
     /**
      * Register the commands for the application.
-     *
-     * @return void
      */
-    protected function commands()
+    protected function commands(): void
     {
         $this->load(__DIR__ . '/Commands');
 
