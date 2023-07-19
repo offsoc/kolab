@@ -49,4 +49,19 @@ class NegativeBalanceTest extends TestCase
         $this->assertTrue(strpos($plain, "$appName Support") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }
+
+    /**
+     * Test getSubject() and getUser()
+     */
+    public function testGetSubjectAndUser(): void
+    {
+        $user = new User();
+        $wallet = new Wallet();
+        $appName = \config('app.name');
+
+        $mail = new NegativeBalance($wallet, $user);
+
+        $this->assertSame("$appName Payment Required", $mail->getSubject());
+        $this->assertSame($user, $mail->getUser());
+    }
 }

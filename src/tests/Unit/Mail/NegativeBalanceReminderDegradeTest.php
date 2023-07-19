@@ -58,4 +58,19 @@ class NegativeBalanceReminderDegradeTest extends TestCase
         $this->assertTrue(strpos($plain, "$appName Support") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }
+
+    /**
+     * Test getSubject() and getUser()
+     */
+    public function testGetSubjectAndUser(): void
+    {
+        $user = $this->getTestUser('ned@kolab.org');
+        $wallet = $user->wallets->first();
+        $appName = $user->tenant->title;
+
+        $mail = new NegativeBalanceReminderDegrade($wallet, $user);
+
+        $this->assertSame("$appName Payment Reminder", $mail->getSubject());
+        $this->assertSame($user, $mail->getUser());
+    }
 }

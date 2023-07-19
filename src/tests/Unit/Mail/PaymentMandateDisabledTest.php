@@ -47,4 +47,20 @@ class PaymentMandateDisabledTest extends TestCase
         $this->assertTrue(strpos($plain, "Your $appName account balance") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }
+
+    /**
+     * Test getSubject() and getUser()
+     */
+    public function testGetSubjectAndUser(): void
+    {
+        $user = new User();
+        $user->id = 1234;
+        $wallet = new Wallet();
+        $appName = \config('app.name');
+
+        $mail = new PaymentMandateDisabled($wallet, $user);
+
+        $this->assertSame("$appName Auto-payment Problem", $mail->getSubject());
+        $this->assertSame($user, $mail->getUser());
+    }
 }

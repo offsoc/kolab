@@ -25,6 +25,7 @@ class EventLog extends Model
     public const TYPE_SUSPENDED = 1;
     public const TYPE_UNSUSPENDED = 2;
     public const TYPE_COMMENT = 3;
+    public const TYPE_MAILSENT = 4;
 
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
@@ -104,6 +105,8 @@ class EventLog extends Model
             return \trans('app.event-unsuspended');
         case self::TYPE_COMMENT:
             return \trans('app.event-comment');
+        case self::TYPE_MAILSENT:
+            return \trans('app.event-mailsent');
         default:
             return null;
         }

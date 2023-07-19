@@ -32,10 +32,10 @@ return [
         . " Veillez à mettre en place un auto-paiement pour éviter de tel avertissement comme celui-ci dans le future.",
     'negativebalance-body-ext' => "Régler votre compte pour le maintenir en fontion:",
 
-    'negativebalancereminder-subject' => ":site Rappel de Paiement",
-    'negativebalancereminder-body' => "Vous n'avez peut-être pas rendu compte que vous êtes en retard avec votre paiement pour :site compte."
+    'negativebalancereminderdegrade-subject' => ":site Rappel de Paiement",
+    'negativebalancereminderdegrade-body' => "Vous n'avez peut-être pas rendu compte que vous êtes en retard avec votre paiement pour :site compte."
         . " Veillez à mettre en place un auto-paiement pour éviter de tel avertissement comme celui-ci dans le future.",
-    'negativebalancereminder-body-ext' => "Régler votre compte pour le maintenir en fontion:",
+    'negativebalancereminderdegrade-body-ext' => "Régler votre compte pour le maintenir en fontion:",
 
     'negativebalancereminderdegrade-body-warning' => "Veuillez noter que votre compte sera dégradé"
         . " si le solde de votre compte n'est pas réglé avant le :date.",
@@ -75,9 +75,9 @@ return [
     'support' => "Cas particulier? Il y a un probléme avec une charge?\n"
         . ":site Le support reste à votre disposition.",
 
-    'signupcode-subject' => ":site Enregistrement",
-    'signupcode-body1' => "Voici votre code de vérification pour le :site registration process:",
-    'signupcode-body2' => "Vous pouvez également continuer avec le processus d'enregistrement en cliquant sur le lien ci-dessous:",
+    'signupverification-subject' => ":site Enregistrement",
+    'signupverification-body1' => "Voici votre code de vérification pour le :site registration process:",
+    'signupverification-body2' => "Vous pouvez également continuer avec le processus d'enregistrement en cliquant sur le lien ci-dessous:",
 
     'signupinvitation-subject' => ":site Invitation",
     'signupinvitation-header' => "Salut,",

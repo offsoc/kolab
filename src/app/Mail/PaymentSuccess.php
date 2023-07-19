@@ -6,27 +6,18 @@ use App\Payment;
 use App\Tenant;
 use App\User;
 use App\Utils;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 
 class PaymentSuccess extends Mailable
 {
-    use Queueable;
-    use SerializesModels;
-
     /** @var \App\Payment A payment operation */
     protected $payment;
-
-    /** @var \App\User A wallet controller to whom the email is being send */
-    protected $user;
 
 
     /**
      * Create a new message instance.
      *
      * @param \App\Payment $payment A payment operation
-     * @param \App\User    $user    An email recipient
+     * @param \App\User    $user    A wallet controller to whom the email is being sent
      *
      * @return void
      */

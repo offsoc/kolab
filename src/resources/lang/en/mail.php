@@ -32,10 +32,10 @@ return [
         . "Consider setting up an automatic payment to avoid messages like this in the future.",
     'negativebalance-body-ext' => "Settle up to keep your account running:",
 
-    'negativebalancereminder-subject' => ":site Payment Reminder",
-    'negativebalancereminder-body' => "It has probably skipped your attention that you are behind on paying for your :site account. "
+    'negativebalancereminderdegrade-subject' => ":site Payment Reminder",
+    'negativebalancereminderdegrade-body' => "It has probably skipped your attention that you are behind on paying for your :site account. "
         . "Consider setting up an automatic payment to avoid messages like this in the future.",
-    'negativebalancereminder-body-ext' => "Settle up to keep your account running:",
+    'negativebalancereminderdegrade-body-ext' => "Settle up to keep your account running:",
 
     'negativebalancereminderdegrade-body-warning' => "Please, be aware that your account will be degraded "
         . "if your account balance is not settled by :date.",
@@ -78,9 +78,9 @@ return [
     'support' => "Special circumstances? Something is wrong with a charge?\n"
         . ":site Support is here to help.",
 
-    'signupcode-subject' => ":site Registration",
-    'signupcode-body1' => "This is your verification code for the :site registration process:",
-    'signupcode-body2' => "You can also click the link below to continue the registration process:",
+    'signupverification-subject' => ":site Registration",
+    'signupverification-body1' => "This is your verification code for the :site registration process:",
+    'signupverification-body2' => "You can also click the link below to continue the registration process:",
 
     'signupinvitation-subject' => ":site Invitation",
     'signupinvitation-header' => "Hi,",

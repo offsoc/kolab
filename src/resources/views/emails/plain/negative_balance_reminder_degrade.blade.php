@@ -1,8 +1,8 @@
 {!! __('mail.header', ['name' => $username]) !!}
 
-{!! __('mail.negativebalancereminder-body', ['site' => $site]) !!}
+{!! __('mail.negativebalancereminderdegrade-body', ['site' => $site]) !!}
 
-{!! __('mail.negativebalancereminder-body-ext', ['site' => $site]) !!}
+{!! __('mail.negativebalancereminderdegrade-body-ext', ['site' => $site]) !!}
 
 {!! $walletUrl !!}
 

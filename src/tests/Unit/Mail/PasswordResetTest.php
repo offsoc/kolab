@@ -45,4 +45,26 @@ class PasswordResetTest extends TestCase
         $this->assertStringStartsWith("Dear " . $code->user->name(true), $plain);
         $this->assertTrue(strpos($plain, $link) > 0);
     }
+
+    /**
+     * Test getSubject() and getUser()
+     */
+    public function testGetSubjectAndUser(): void
+    {
+        $appName = \config('app.name');
+        $code = new VerificationCode([
+                'user_id' => 123456789,
+                'mode' => 'password-reset',
+                'code' => 'code',
+                'short_code' => 'short-code',
+        ]);
+
+        // @phpstan-ignore-next-line
+        $code->user = new User(['name' => 'User Name']);
+
+        $mail = new PasswordReset($code);
+
+        $this->assertSame("$appName Password Reset", $mail->getSubject());
+        $this->assertSame($code->user, $mail->getUser());
+    }
 }

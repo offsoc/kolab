@@ -26,6 +26,7 @@ return [
     'event-suspended' => 'Suspended',
     'event-unsuspended' => 'Unsuspended',
     'event-comment' => 'Commented',
+    'event-mailsent' => 'Mail Sent',
 
     'mandate-delete-success' => 'The auto-payment has been removed.',
     'mandate-update-success' => 'The auto-payment has been updated.',

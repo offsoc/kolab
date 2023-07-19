@@ -6,27 +6,18 @@ use App\Tenant;
 use App\User;
 use App\Utils;
 use App\Wallet;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 
 class PaymentMandateDisabled extends Mailable
 {
-    use Queueable;
-    use SerializesModels;
-
     /** @var \App\Wallet A wallet for which the mandate has been disabled */
     protected $wallet;
-
-    /** @var \App\User A wallet controller to whom the email is being send */
-    protected $user;
 
 
     /**
      * Create a new message instance.
      *
      * @param \App\Wallet $wallet A wallet that has been charged
-     * @param \App\User   $user   An email recipient
+     * @param \App\User   $user   A wallet controller to whom the email is being sent
      *
      * @return void
      */

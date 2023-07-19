@@ -6,27 +6,18 @@ use App\Tenant;
 use App\User;
 use App\Utils;
 use App\Wallet;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 
 class NegativeBalance extends Mailable
 {
-    use Queueable;
-    use SerializesModels;
-
     /** @var \App\Wallet A wallet with a negative balance */
     protected $wallet;
-
-    /** @var \App\User A wallet controller to whom the email is being sent */
-    protected $user;
 
 
     /**
      * Create a new message instance.
      *
      * @param \App\Wallet $wallet A wallet
-     * @param \App\User   $user   An email recipient
+     * @param \App\User   $user   A wallet controller to whom the email is being sent
      *
      * @return void
      */

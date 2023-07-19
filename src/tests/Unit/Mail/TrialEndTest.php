@@ -46,4 +46,18 @@ class TrialEndTest extends TestCase
         $this->assertTrue(strpos($plain, "30 days of free $appName trial") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }
+
+    /**
+     * Test getSubject() and getUser()
+     */
+    public function testGetSubjectAndUser(): void
+    {
+        $user = new User();
+        $appName = \config('app.name');
+
+        $mail = new TrialEnd($user);
+
+        $this->assertSame("$appName: Your trial phase has ended", $mail->getSubject());
+        $this->assertSame($user, $mail->getUser());
+    }
 }

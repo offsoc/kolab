@@ -5,29 +5,19 @@ namespace App\Mail;
 use App\Tenant;
 use App\User;
 use App\Utils;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 
 class TrialEnd extends Mailable
 {
-    use Queueable;
-    use SerializesModels;
-
-    /** @var \App\User An account owner (account) */
-    protected $account;
-
-
     /**
      * Create a new message instance.
      *
-     * @param \App\User $account An account owner (account)
+     * @param \App\User $user An account owner
      *
      * @return void
      */
-    public function __construct(User $account)
+    public function __construct(User $user)
     {
-        $this->account = $account;
+        $this->user = $user;
     }
 
     /**
@@ -37,9 +27,9 @@ class TrialEnd extends Mailable
      */
     public function build()
     {
-        $appName = Tenant::getConfig($this->account->tenant_id, 'app.name');
-        $paymentUrl = Tenant::getConfig($this->account->tenant_id, 'app.kb.payment_system');
-        $supportUrl = Tenant::getConfig($this->account->tenant_id, 'app.support_url');
+        $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
+        $paymentUrl = Tenant::getConfig($this->user->tenant_id, 'app.kb.payment_system');
+        $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
 
         $subject = \trans('mail.trialend-subject', ['site' => $appName]);
 
@@ -49,9 +39,9 @@ class TrialEnd extends Mailable
             ->with([
                     'site' => $appName,
                     'subject' => $subject,
-                    'username' => $this->account->name(true),
+                    'username' => $this->user->name(true),
                     'paymentUrl' => $paymentUrl,
-                    'supportUrl' => Utils::serviceUrl($supportUrl, $this->account->tenant_id),
+                    'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
             ]);
 
         return $this;

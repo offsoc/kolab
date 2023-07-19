@@ -6,11 +6,11 @@
     <body>
         <p>{{ __('mail.header', ['name' => $username]) }}</p>
 
-        <p>{{ __('mail.signupcode-body1', ['site' => $site]) }}</p>
+        <p>{{ __('mail.signupverification-body1', ['site' => $site]) }}</p>
 
         <p><strong>{!! $short_code !!}</strong></p>
 
-        <p>{{ __('mail.signupcode-body2') }}</p>
+        <p>{{ __('mail.signupverification-body2') }}</p>
 
         <p><a href="{!! $href !!}">{!! $href !!}</a></p>
 

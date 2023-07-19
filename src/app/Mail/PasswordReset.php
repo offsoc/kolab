@@ -6,16 +6,10 @@ use App\Tenant;
 use App\User;
 use App\Utils;
 use App\VerificationCode;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
 
 class PasswordReset extends Mailable
 {
-    use Queueable;
-    use SerializesModels;
-
     /** @var \App\VerificationCode A verification code object */
     protected $code;
 
@@ -30,6 +24,7 @@ class PasswordReset extends Mailable
     public function __construct(VerificationCode $code)
     {
         $this->code = $code;
+        $this->user = $this->code->user;
     }
 
     /**
@@ -39,11 +34,11 @@ class PasswordReset extends Mailable
      */
     public function build()
     {
-        $appName = Tenant::getConfig($this->code->user->tenant_id, 'app.name');
+        $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
 
         $href = Utils::serviceUrl(
             sprintf('/password-reset/%s-%s', $this->code->short_code, $this->code->code),
-            $this->code->user->tenant_id
+            $this->user->tenant_id
         );
 
         $this->view('emails.html.password_reset')
@@ -54,7 +49,7 @@ class PasswordReset extends Mailable
                     'code' => $this->code->code,
                     'short_code' => $this->code->short_code,
                     'link' => sprintf('<a href="%s">%s</a>', $href, $href),
-                    'username' => $this->code->user->name(true)
+                    'username' => $this->user->name(true)
             ]);
 
         return $this;

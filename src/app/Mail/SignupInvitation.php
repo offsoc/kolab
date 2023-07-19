@@ -5,16 +5,10 @@ namespace App\Mail;
 use App\SignupInvitation as SI;
 use App\Tenant;
 use App\Utils;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
 
 class SignupInvitation extends Mailable
 {
-    use Queueable;
-    use SerializesModels;
-
     /** @var \App\SignupInvitation A signup invitation object */
     protected $invitation;
 

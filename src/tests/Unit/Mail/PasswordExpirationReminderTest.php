@@ -40,4 +40,19 @@ class PasswordExpirationReminderTest extends TestCase
         $this->assertTrue(strpos($plain, $link) > 0);
         $this->assertTrue(strpos($plain, $expiresOn) > 0);
     }
+
+    /**
+     * Test getSubject() and getUser()
+     */
+    public function testGetSubjectAndUser(): void
+    {
+        $user = new User(['name' => 'User Name']);
+        $appName = \config('app.name');
+        $expiresOn = now()->copy()->addDays(7)->toDateString();
+
+        $mail = new PasswordExpirationReminder($user, $expiresOn);
+
+        $this->assertSame("$appName password expires on $expiresOn", $mail->getSubject());
+        $this->assertSame($user, $mail->getUser());
+    }
 }

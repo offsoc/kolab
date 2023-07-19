@@ -5,19 +5,9 @@ namespace App\Mail;
 use App\Tenant;
 use App\User;
 use App\Utils;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Str;
 
 class PasswordExpirationReminder extends Mailable
 {
-    use Queueable;
-    use SerializesModels;
-
-    /** @var \App\User The user object */
-    protected $user;
-
     /** @var string Password expiration date */
     protected $expiresOn;
 
@@ -77,5 +67,26 @@ class PasswordExpirationReminder extends Mailable
         $mail = new self($user, now()->copy()->addDays(14)->toDateString());
 
         return Helper::render($mail, $type);
+    }
+
+    /**
+     * Returns the mail subject.
+     *
+     * @return string Mail subject
+     */
+    public function getSubject(): string
+    {
+        if ($this->subject) {
+            return $this->subject;
+        }
+
+        $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
+
+        $params = [
+            'site' => $appName,
+            'date' => $this->expiresOn,
+        ];
+
+        return \trans('mail.passwordexpiration-subject', $params);
     }
 }

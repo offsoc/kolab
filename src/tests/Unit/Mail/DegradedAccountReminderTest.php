@@ -39,4 +39,19 @@ class DegradedAccountReminderTest extends TestCase
         $this->assertTrue(strpos($plain, "your account is a free account") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }
+
+    /**
+     * Test getSubject() and getUser()
+     */
+    public function testGetSubjectAndUser(): void
+    {
+        $user = $this->getTestUser('ned@kolab.org');
+        $wallet = $user->wallets->first();
+        $appName = $user->tenant->title;
+
+        $mail = new DegradedAccountReminder($wallet, $user);
+
+        $this->assertSame("$appName Reminder: Your account is free", $mail->getSubject());
+        $this->assertSame($user, $mail->getUser());
+    }
 }

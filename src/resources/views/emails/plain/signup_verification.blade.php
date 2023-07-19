@@ -1,10 +1,10 @@
 {!! __('mail.header', ['name' => $username]) !!}
 
-{!! __('mail.signupcode-body1', ['site' => $site]) !!}
+{!! __('mail.signupverification-body1', ['site' => $site]) !!}
 
 {!! $short_code !!}
 
-{!! __('mail.signupcode-body2') !!}
+{!! __('mail.signupverification-body2') !!}
 
 {!! $href !!}
 

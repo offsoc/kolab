@@ -48,4 +48,21 @@ class PaymentFailureTest extends TestCase
         $this->assertTrue(strpos($plain, "Something went wrong with auto-payment for your $appName account") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }
+
+    /**
+     * Test getSubject() and getUser()
+     */
+    public function testGetSubjectAndUser(): void
+    {
+        $user = new User();
+        $user->id = 1234;
+        $payment = new Payment();
+        $payment->amount = 123;
+        $appName = \config('app.name');
+
+        $mail = new PaymentFailure($payment, $user);
+
+        $this->assertSame("$appName Payment Failed", $mail->getSubject());
+        $this->assertSame($user, $mail->getUser());
+    }
 }

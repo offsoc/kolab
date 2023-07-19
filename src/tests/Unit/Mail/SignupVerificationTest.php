@@ -40,4 +40,24 @@ class SignupVerificationTest extends TestCase
         $this->assertStringStartsWith('Dear First Last', $plain);
         $this->assertTrue(strpos($plain, $url) > 0);
     }
+
+    /**
+     * Test getSubject() and getUser()
+     */
+    public function testGetSubjectAndUser(): void
+    {
+        $appName = \config('app.name');
+        $code = new SignupCode([
+                'code' => 'code',
+                'short_code' => 'short-code',
+                'email' => 'test@email',
+                'first_name' => 'First',
+                'last_name' => 'Last',
+        ]);
+
+        $mail = new SignupVerification($code);
+
+        $this->assertSame("$appName Registration", $mail->getSubject());
+        $this->assertSame(null, $mail->getUser());
+    }
 }

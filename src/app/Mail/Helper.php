@@ -2,8 +2,8 @@
 
 namespace App\Mail;
 
+use App\EventLog;
 use App\Tenant;
-use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Mail;
 
 class Helper
@@ -11,8 +11,8 @@ class Helper
     /**
      * Render the mail template.
      *
-     * @param \Illuminate\Mail\Mailable $mail The mailable object
-     * @param string $type Output format ('html' or 'text')
+     * @param Mailable $mail The mailable object
+     * @param string   $type Output format ('html' or 'text')
      *
      * @return string HTML or Plain Text output
      */
@@ -25,7 +25,9 @@ class Helper
             $mailer = \Illuminate\Container\Container::getInstance()->make('mailer');
 
             return $mailer->render(['text' => $mail->textView], $mail->buildViewData());
-        } elseif ($type != 'html') {
+        }
+
+        if ($type != 'html') {
             throw new \Exception("Unsupported output format");
         }
 
@@ -44,25 +46,19 @@ class Helper
      */
     public static function sendMail(Mailable $mail, $tenantId = null, array $params = []): void
     {
-        $class = explode("\\", get_class($mail));
-        $class = end($class);
+        $class = class_basename(get_class($mail));
+        $recipients = [];
 
-        $getRecipients = function () use ($params) {
-            $recipients = [];
-
-            // For now we do not support addresses + names, only addresses
-            foreach (['to', 'cc'] as $idx) {
-                if (!empty($params[$idx])) {
-                    if (is_array($params[$idx])) {
-                        $recipients = array_merge($recipients, $params[$idx]);
-                    } else {
-                        $recipients[] = $params[$idx];
-                    }
+        // For now we do not support addresses + names, only addresses
+        foreach (['to', 'cc'] as $idx) {
+            if (!empty($params[$idx])) {
+                if (is_array($params[$idx])) {
+                    $recipients = array_merge($recipients, $params[$idx]);
+                } else {
+                    $recipients[] = $params[$idx];
                 }
             }
-
-            return implode(', ', $recipients);
-        };
+        }
 
         try {
             if (!empty($params['to'])) {
@@ -88,12 +84,13 @@ class Helper
 
             Mail::send($mail);
 
-            $msg = sprintf("[%s] Sent mail to %s%s", $class, $getRecipients(), $params['add'] ?? '');
-
-            \Log::info($msg);
+            if ($user = $mail->getUser()) {
+                $comment = "[{$class}] " . $mail->getSubject();
+                EventLog::createFor($user, EventLog::TYPE_MAILSENT, $comment, ['recipients' => $recipients]);
+            }
         } catch (\Exception $e) {
             $format = "[%s] Failed to send mail to %s%s: %s";
-            $msg = sprintf($format, $class, $getRecipients(), $params['add'] ?? '', $e->getMessage());
+            $msg = sprintf($format, $class, implode(', ', $recipients), $params['add'] ?? '', $e->getMessage());
 
             \Log::error($msg);
             throw $e;

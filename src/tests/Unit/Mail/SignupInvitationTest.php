@@ -38,4 +38,21 @@ class SignupInvitationTest extends TestCase
         $this->assertTrue(strpos($plain, "invited to join $appName") > 0);
         $this->assertTrue(strpos($plain, $url) > 0);
     }
+
+    /**
+     * Test getSubject() and getUser()
+     */
+    public function testGetSubjectAndUser(): void
+    {
+        $appName = \config('app.name');
+        $invitation = new SI([
+                'id' => 'abc',
+                'email' => 'test@email',
+        ]);
+
+        $mail = new SignupInvitation($invitation);
+
+        $this->assertSame("$appName Invitation", $mail->getSubject());
+        $this->assertSame(null, $mail->getUser());
+    }
 }

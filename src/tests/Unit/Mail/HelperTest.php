@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Mail;
 
+use App\EventLog;
 use App\Mail\Helper;
 use App\User;
 use Illuminate\Support\Facades\Mail;
@@ -36,6 +37,7 @@ class HelperTest extends TestCase
      */
     public function testSendMail(): void
     {
+        EventLog::truncate();
         Mail::fake();
 
         $tenant = \App\Tenant::whereNotIn('id', [1])->first();
@@ -90,7 +92,20 @@ class HelperTest extends TestCase
                 && $mail->hasReplyTo('replyto@test.com', 'replyto name');
         });
 
-        // TODO: Test somehow log entries, maybe with timacdonald/log-fake package
+        // No EventLog entries up to this point
+        $this->assertSame(0, EventLog::count());
+
+        // Assert EventLog entry
+        $user = $this->getTestUser('mail-helper-test@kolabnow.com');
+        $mail = new \App\Mail\TrialEnd($user);
+
+        Helper::sendMail($mail, $tenant->id, ['to' => 'to@test.com', 'cc' => 'cc@test.com']);
+
+        $event = EventLog::where('object_id', $user->id)->where('object_type', User::class)->first();
+        $this->assertSame(EventLog::TYPE_MAILSENT, $event->type);
+        $this->assertSame(['recipients' => ['to@test.com', 'cc@test.com']], $event->data);
+        $this->assertSame("[TrialEnd] Kolab Now: Your trial phase has ended", $event->comment);
+
         // TODO: Test somehow exception case
     }
 

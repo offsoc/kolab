@@ -4,16 +4,10 @@ namespace App\Mail;
 
 use App\SignupCode;
 use App\Utils;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
 
 class SignupVerification extends Mailable
 {
-    use Queueable;
-    use SerializesModels;
-
     /** @var SignupCode A signup verification code object */
     protected $code;
 
@@ -47,9 +41,9 @@ class SignupVerification extends Mailable
         }
         $username = trim($username);
 
-        $this->view('emails.html.signup_code')
-            ->text('emails.plain.signup_code')
-            ->subject(\trans('mail.signupcode-subject', ['site' => \config('app.name')]))
+        $this->view('emails.html.signup_verification')
+            ->text('emails.plain.signup_verification')
+            ->subject(\trans('mail.signupverification-subject', ['site' => \config('app.name')]))
             ->with([
                     'site' => \config('app.name'),
                     'username' => $username ?: 'User',

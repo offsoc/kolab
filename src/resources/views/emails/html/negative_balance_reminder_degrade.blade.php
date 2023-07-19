@@ -6,8 +6,8 @@
     <body>
         <p>{{ __('mail.header', ['name' => $username]) }}</p>
 
-        <p>{{ __('mail.negativebalancereminder-body', ['site' => $site]) }}</p>
-        <p>{{ __('mail.negativebalancereminder-body-ext', ['site' => $site]) }}</p>
+        <p>{{ __('mail.negativebalancereminderdegrade-body', ['site' => $site]) }}</p>
+        <p>{{ __('mail.negativebalancereminderdegrade-body-ext', ['site' => $site]) }}</p>
         <p><a href="{{ $walletUrl }}">{{ $walletUrl }}</a></p>
         <p><b>{{ __('mail.negativebalancereminderdegrade-body-warning', ['site' => $site, 'date' => $date]) }}</b></p>
 

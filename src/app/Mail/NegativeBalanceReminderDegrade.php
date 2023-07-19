@@ -7,27 +7,18 @@ use App\Tenant;
 use App\User;
 use App\Utils;
 use App\Wallet;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 
 class NegativeBalanceReminderDegrade extends Mailable
 {
-    use Queueable;
-    use SerializesModels;
-
     /** @var \App\Wallet A wallet with a negative balance */
     protected $wallet;
-
-    /** @var \App\User A wallet controller to whom the email is being sent */
-    protected $user;
 
 
     /**
      * Create a new message instance.
      *
      * @param \App\Wallet $wallet A wallet
-     * @param \App\User   $user   An email recipient
+     * @param \App\User   $user   A wallet controller to whom the email is being sent
      *
      * @return void
      */
@@ -48,7 +39,7 @@ class NegativeBalanceReminderDegrade extends Mailable
         $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
         $threshold = WalletCheck::threshold($this->wallet, WalletCheck::THRESHOLD_DEGRADE);
 
-        $subject = \trans('mail.negativebalancereminder-subject', ['site' => $appName]);
+        $subject = \trans('mail.negativebalancereminderdegrade-subject', ['site' => $appName]);
 
         $this->view('emails.html.negative_balance_reminder_degrade')
             ->text('emails.plain.negative_balance_reminder_degrade')
