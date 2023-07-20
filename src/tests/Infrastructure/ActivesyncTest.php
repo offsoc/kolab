@@ -923,6 +923,190 @@ class ActivesyncTest extends TestCase
         $this->assertEquals(0, $delete->length);
     }
 
+    /**
+    * @depends testList
+    */
+    public function testSyncCalendar()
+    {
+        $tasksId = "cca1b81c734abbcd669bea90d23e08ae";
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>0</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>0</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>1</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>0</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        return $tasksId;
+    }
+
+    /**
+    * @depends testSyncCalendar
+    */
+    public function testAddEvent($tasksId)
+    {
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Tasks="uri:Tasks">
+            <Collections>
+                <Collection>
+                    <SyncKey>1</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <Commands>
+                        <Add>
+                            <ClientId>clientId1</ClientId>
+                            <ApplicationData>
+                                <StartTime xmlns="uri:Calendar">20230719T200032Z</StartTime>
+                                <BusyStatus xmlns="uri:Calendar">2</BusyStatus>
+                                <DtStamp xmlns="uri:Calendar">20230719T194232Z</DtStamp>
+                                <EndTime xmlns="uri:Calendar">20230719T203032Z</EndTime>
+                                <UID xmlns="uri:Calendar">046f2e01-e8d0-47c6-a607-ba360251761d</UID>
+                                <OrganizerEmail xmlns="uri:Calendar">activesynctest@kolab.org</OrganizerEmail>
+                                <MeetingStatus xmlns="uri:Calendar">0</MeetingStatus>
+                                <ResponseRequested xmlns="uri:Calendar">0</ResponseRequested>
+                            </ApplicationData>
+                        </Add>
+                    </Commands>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        print($dom->saveXML());
+        $status = $dom->getElementsByTagName('Status');
+        $this->assertEquals("1", $status[0]->nodeValue);
+        $collections = $dom->getElementsByTagName('Collection');
+        $this->assertEquals(1, $collections->length);
+        $collection = $collections->item(0);
+        $this->assertEquals("Class", $collection->childNodes->item(0)->nodeName);
+        $this->assertEquals("Calendar", $collection->childNodes->item(0)->nodeValue);
+
+        $this->assertEquals("SyncKey", $collection->childNodes->item(1)->nodeName);
+        $this->assertEquals("2", $collection->childNodes->item(1)->nodeValue);
+
+        $this->assertEquals("Status", $collection->childNodes->item(3)->nodeName);
+        $this->assertEquals("1", $collection->childNodes->item(3)->nodeValue);
+
+        $xpath = $this->xpath($dom);
+        $add = $xpath->query("//ns:Responses/ns:Add");
+        $this->assertEquals(1, $add->length);
+        $this->assertEquals("clientId1", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(0)->nodeValue);
+        // $this->assertEquals(0, $xpath->query("//ns:Commands")->length);
+        return [
+            'collectionId' => $tasksId,
+            'serverId1' => $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(0)->nodeValue
+        ];
+    }
+
+    /**
+    * @depends testAddEvent
+    */
+    public function testReaddEvent($result)
+    {
+        $tasksId = $result['collectionId'];
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Tasks="uri:Tasks">
+            <Collections>
+                <Collection>
+                    <SyncKey>2</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <Commands>
+                        <Add>
+                            <ClientId>clientId1</ClientId>
+                            <ApplicationData>
+                                <StartTime xmlns="uri:Calendar">20230719T200032Z</StartTime>
+                                <BusyStatus xmlns="uri:Calendar">2</BusyStatus>
+                                <DtStamp xmlns="uri:Calendar">20230719T194232Z</DtStamp>
+                                <EndTime xmlns="uri:Calendar">20230719T203032Z</EndTime>
+                                <UID xmlns="uri:Calendar">046f2e01-e8d0-47c6-a607-ba360251761d</UID>
+                                <OrganizerEmail xmlns="uri:Calendar">activesynctest@kolab.org</OrganizerEmail>
+                                <MeetingStatus xmlns="uri:Calendar">0</MeetingStatus>
+                                <ResponseRequested xmlns="uri:Calendar">0</ResponseRequested>
+                            </ApplicationData>
+                        </Add>
+                    </Commands>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        print($dom->saveXML());
+        $status = $dom->getElementsByTagName('Status');
+        $this->assertEquals("1", $status[0]->nodeValue);
+        $collections = $dom->getElementsByTagName('Collection');
+        $this->assertEquals(1, $collections->length);
+        $collection = $collections->item(0);
+        $this->assertEquals("Class", $collection->childNodes->item(0)->nodeName);
+        $this->assertEquals("Calendar", $collection->childNodes->item(0)->nodeValue);
+
+        $this->assertEquals("SyncKey", $collection->childNodes->item(1)->nodeName);
+        $this->assertEquals("3", $collection->childNodes->item(1)->nodeValue);
+
+        $this->assertEquals("Status", $collection->childNodes->item(3)->nodeName);
+        $this->assertEquals("1", $collection->childNodes->item(3)->nodeValue);
+
+        $xpath = $this->xpath($dom);
+        $add = $xpath->query("//ns:Responses/ns:Add");
+        $this->assertEquals(1, $add->length);
+        $this->assertEquals("clientId1", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(0)->nodeValue);
+        $this->assertEquals(0, $xpath->query("//ns:Commands")->length);
+    }
 
     /**
      * @doesNotPerformAssertions
