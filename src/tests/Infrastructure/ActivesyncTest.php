@@ -138,6 +138,35 @@ class ActivesyncTest extends TestCase
         $this->assertStringContainsString('FolderSync', $response->getHeader('MS-ASProtocolCommands')[0]);
     }
 
+    public function testPartialCommand()
+    {
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <FolderSync xmlns="uri:FolderHierarchy">
+            <SyncKey>0</SyncKey>
+        </FolderSync>
+        EOF;
+
+        $body = self::toWbxml($request);
+        $deviceId = self::$deviceId;
+        $user = self::$user;
+        $response =  self::$client->request(
+            'POST',
+            "?Cmd=FolderSync&User={$user->email}&DeviceId={$deviceId}&DeviceType=iphone",
+            [
+                'headers' => [
+                    "Content-Type" => "application/vnd.ms-sync.wbxml",
+                    'MS-ASProtocolVersion' => "14.0"
+                ],
+                //Truncated body
+                'body' => substr($body, 0, strlen($body) / 2)
+            ]
+        );
+
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
     public function testList()
     {
         $request = <<<EOF
