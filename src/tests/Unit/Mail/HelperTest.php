@@ -51,8 +51,8 @@ class HelperTest extends TestCase
         Mail::assertSent(\App\Mail\SignupInvitation::class, function ($mail) {
             return $mail->hasTo('to@test.com')
                 && $mail->hasCc('cc@test.com')
-                && $mail->hasFrom(\config('mail.from.address'), \config('mail.from.name'))
-                && $mail->hasReplyTo(\config('mail.reply_to.address'), \config('mail.reply_to.name'));
+                && $mail->hasFrom(\config('mail.sender.address'), \config('mail.sender.name'))
+                && $mail->hasReplyTo(\config('mail.replyto.address'), \config('mail.replyto.name'));
         });
 
         // Test with a tenant (but no per-tenant settings)
@@ -67,18 +67,18 @@ class HelperTest extends TestCase
         Mail::assertSent(\App\Mail\SignupInvitation::class, function ($mail) {
             return $mail->hasTo('to@test.com')
                 && $mail->hasCc('cc@test.com')
-                && $mail->hasFrom(\config('mail.from.address'), \config('mail.from.name'))
-                && $mail->hasReplyTo(\config('mail.reply_to.address'), \config('mail.reply_to.name'));
+                && $mail->hasFrom(\config('mail.sender.address'), \config('mail.sender.name'))
+                && $mail->hasReplyTo(\config('mail.replyto.address'), \config('mail.replyto.name'));
         });
 
         // Test with a tenant (but with per-tenant settings)
         Mail::fake();
 
         $tenant->setSettings([
-            'mail.from.address' => 'from@test.com',
-            'mail.from.name' => 'from name',
-            'mail.reply_to.address' => 'replyto@test.com',
-            'mail.reply_to.name' => 'replyto name',
+            'mail.sender.address' => 'from@test.com',
+            'mail.sender.name' => 'from name',
+            'mail.replyto.address' => 'replyto@test.com',
+            'mail.replyto.name' => 'replyto name',
         ]);
 
         $mail = new \App\Mail\SignupInvitation($invitation);

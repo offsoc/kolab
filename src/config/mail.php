@@ -92,9 +92,13 @@ return [
     |
     */
 
-    'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+    // Note: Laravel uses 'from', we added 'sender'. This way we make sure
+    // Laravel does not overwrite our From header that we set in App\Mail\Helper::sendMail().
+
+    'from' => null, // do not use!
+    'sender' => [
+        'address' => env('MAIL_FROM_ADDRESS', ''),
+        'name' => env('MAIL_FROM_NAME', ''),
     ],
 
     /*
@@ -108,7 +112,13 @@ return [
     |
     */
 
-    'reply_to' => [
+    // Note: Laravel uses 'reply_to', we added 'replyto'. This way we make sure
+    // Laravel does not add an extra Reply-To header on top of our per-tenant
+    // Reply-To header that we set in App\Mail\Helper::sendMail().
+    // More https://github.com/laravel/framework/issues/43034.
+
+    'reply_to' => null, // do not use!
+    'replyto' => [
         'address' => env('MAIL_REPLYTO_ADDRESS', ''),
         'name' => env('MAIL_REPLYTO_NAME', ''),
     ],

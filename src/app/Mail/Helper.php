@@ -69,10 +69,12 @@ class Helper
                 $mail->cc($params['cc']);
             }
 
-            $fromAddress = Tenant::getConfig($tenantId, 'mail.from.address');
-            $fromName = Tenant::getConfig($tenantId, 'mail.from.name');
-            $replytoAddress = Tenant::getConfig($tenantId, 'mail.reply_to.address');
-            $replytoName = Tenant::getConfig($tenantId, 'mail.reply_to.name');
+            // Note: We're not using Laravel's global 'from' and 'reply_to' settings
+
+            $fromAddress = Tenant::getConfig($tenantId, 'mail.sender.address');
+            $fromName = Tenant::getConfig($tenantId, 'mail.sender.name');
+            $replytoAddress = Tenant::getConfig($tenantId, 'mail.replyto.address');
+            $replytoName = Tenant::getConfig($tenantId, 'mail.replyto.name');
 
             if ($fromAddress) {
                 $mail->from($fromAddress, $fromName);

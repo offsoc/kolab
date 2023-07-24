@@ -68,8 +68,8 @@ class RetentionEmailJobTest extends TestCase
 
         // Assert sender
         Mail::assertSent(PasswordExpirationReminder::class, function ($mail) {
-            return $mail->hasFrom(\config('mail.from.address'), \config('mail.from.name'))
-                && $mail->hasReplyTo(\config('mail.reply_to.address'), \config('mail.reply_to.name'));
+            return $mail->hasFrom(\config('mail.sender.address'), \config('mail.sender.name'))
+                && $mail->hasReplyTo(\config('mail.replyto.address'), \config('mail.replyto.name'));
         });
     }
 }
