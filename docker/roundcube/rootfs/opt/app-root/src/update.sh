@@ -113,6 +113,23 @@ cp /etc/roundcubemail/* config/
 DES_KEY=$(openssl rand -base64 24);
 sed -i -r -e "s|\$config\['des_key'\] = .*$|\$config['des_key'] = \"$DES_KEY\";|g" config/config.inc.php
 
+
+# Update plugins on update
+
+pushd /opt/app-root/src/roundcubemail-plugins-kolab/plugins
+for plugin in $(ls -1d)
+do
+    if [ -d plugins/${plugin}/ ]; then
+        rsync -av \
+            --exclude=vendor \
+            --exclude=composer.json \
+            --exclude=config.inc.php \
+            $plugin/ /opt/app-root/src/roundcubemail/plugins/$plugin
+    fi
+done
+popd
+
+
 ##Fix permissions
 chmod 777 -R logs
 chmod 777 -R temp
@@ -176,3 +193,8 @@ ln -s ../roundcubemail/vendor vendor
 mkdir -p logs
 chmod 777 -R logs
 popd
+
+roundcubemail/bin/updatedb.sh --dir syncroton/docs/SQL/ --package syncroton
+roundcubemail/bin/updatedb.sh --dir roundcubemail/SQL/ --package roundcube
+roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/libkolab/SQL/ --package libkolab
+roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/kolab-calendar/SQL/ --package calendar-kolab
