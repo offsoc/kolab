@@ -42,7 +42,7 @@ class ActivesyncTest extends TestCase
         $body = self::toWbxml($request);
         return self::$client->request(
             'POST',
-            "?Cmd={$cmd}&User={$user->email}&DeviceId={$deviceId}&DeviceType=iphone",
+            "?Cmd={$cmd}&User={$user->email}&DeviceId={$deviceId}&DeviceType=WindowsOutlook15",
             [
                 'headers' => [
                     "Content-Type" => "application/vnd.ms-sync.wbxml",
@@ -58,6 +58,9 @@ class ActivesyncTest extends TestCase
         $xpath = new \DOMXpath($dom);
         $xpath->registerNamespace("ns", $dom->documentElement->namespaceURI);
         $xpath->registerNamespace("Tasks", "uri:Tasks");
+        $xpath->registerNamespace("Calendar", "uri:Calendar");
+        $xpath->registerNamespace("Email", "uri:Email");
+        $xpath->registerNamespace("Email2", "uri:Email2");
         return $xpath;
     }
 
@@ -153,7 +156,7 @@ class ActivesyncTest extends TestCase
         $user = self::$user;
         $response =  self::$client->request(
             'POST',
-            "?Cmd=FolderSync&User={$user->email}&DeviceId={$deviceId}&DeviceType=iphone",
+            "?Cmd=FolderSync&User={$user->email}&DeviceId={$deviceId}&DeviceType=WindowsOutlook15",
             [
                 'headers' => [
                     "Content-Type" => "application/vnd.ms-sync.wbxml",
@@ -1041,6 +1044,7 @@ class ActivesyncTest extends TestCase
         $add = $xpath->query("//ns:Responses/ns:Add");
         $this->assertEquals(1, $add->length);
         $this->assertEquals("clientId1", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(0)->nodeValue);
+        $this->assertEquals("1", $xpath->query("//ns:Responses/ns:Add/ns:Status")->item(0)->nodeValue);
         // $this->assertEquals(0, $xpath->query("//ns:Commands")->length);
         return [
             'collectionId' => $tasksId,
@@ -1105,7 +1109,483 @@ class ActivesyncTest extends TestCase
         $add = $xpath->query("//ns:Responses/ns:Add");
         $this->assertEquals(1, $add->length);
         $this->assertEquals("clientId1", $xpath->query("//ns:Responses/ns:Add/ns:ClientId")->item(0)->nodeValue);
+        $this->assertEquals("5", $xpath->query("//ns:Responses/ns:Add/ns:Status")->item(0)->nodeValue);
         $this->assertEquals(0, $xpath->query("//ns:Commands")->length);
+
+        return $result;
+    }
+
+    /**
+    * @depends testReaddEvent
+    */
+    public function testDeleteEvent($result)
+    {
+        $tasksId = $result['collectionId'];
+        $serverId = $result['serverId1'];
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Tasks="uri:Tasks">
+            <Collections>
+                <Collection>
+                    <SyncKey>3</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <Commands>
+                        <Delete>
+                            <ServerId>{$serverId}</ServerId>
+                        </Delete>
+                    </Commands>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        $status = $dom->getElementsByTagName('Status');
+        $this->assertEquals("1", $status[0]->nodeValue);
+        return $tasksId;
+    }
+
+    /**
+    * @depends testDeleteEvent
+    */
+    public function testMeetingResponse($tasksId)
+    {
+        $inboxId = '38b950ebd62cd9a66929c89615d0fc04';
+
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>0</SyncKey>
+                    <CollectionId>{$inboxId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>0</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        //Add the invitation to inbox
+
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:Syncroton="uri:Syncroton" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Email="uri:Email" xmlns:Email2="uri:Email2" xmlns:Tasks="uri:Tasks" xmlns:Calendar="uri:Calendar">
+        <Collections>
+            <Collection xmlns:default="uri:Email" xmlns:default1="uri:AirSyncBase">
+            <SyncKey>1</SyncKey>
+            <CollectionId>{$inboxId}</CollectionId>
+            <Commands xmlns:default="uri:Email" xmlns:default1="uri:AirSyncBase">
+                <Add xmlns:default="uri:Email" xmlns:default1="uri:AirSyncBase">
+                    <ClientId>clientid1</ClientId>
+                    <ApplicationData>
+                        <Email:DateReceived xmlns="uri:Email">2023-07-24T06:53:57.000Z</Email:DateReceived>
+                        <Email:From xmlns="uri:Email">"Doe, John" &lt;doe@kolab1.mkpf.ch&gt;</Email:From>
+                        <Email:InternetCPID xmlns="uri:Email">65001</Email:InternetCPID>
+                        <Email:Subject xmlns="uri:Email">You've been invited to "event1"</Email:Subject>
+                        <Email:To xmlns="uri:Email">admin@kolab1.mkpf.ch</Email:To>
+                        <Email:Read xmlns="uri:Email">1</Email:Read>
+                        <Email:Flag xmlns="uri:Email"/>
+                        <AirSyncBase:Body xmlns="uri:AirSyncBase">
+                        <AirSyncBase:Type>4</AirSyncBase:Type>
+                        <AirSyncBase:Data>MIME-Version: 1.0&#13;
+        From: "Doe, John" &lt;doe@kolab1.mkpf.ch&gt;&#13;
+        Date: Mon, 24 Jul 2023 08:53:55 +0200&#13;
+        Message-ID: &lt;9cd8885d1339b976c7cb15db086e7bbc@kolab1.mkpf.ch&gt;&#13;
+        To: admin@kolab1.mkpf.ch&#13;
+        Subject: You've been invited to "event1"&#13;
+        Content-Type: multipart/alternative;&#13;
+            boundary="=_a32392e5fc9266e3eeba97347cbfc147"&#13;
+        &#13;
+        --=_a32392e5fc9266e3eeba97347cbfc147&#13;
+        Content-Transfer-Encoding: quoted-printable&#13;
+        Content-Type: text/plain; charset=UTF-8;&#13;
+        format=flowed&#13;
+        &#13;
+        *event1*&#13;
+        &#13;
+        When: 2023-07-24 11:00 - 11:30 (Europe/Vaduz)&#13;
+        &#13;
+        Invitees: Doe, John &lt;doe@kolab1.mkpf.ch&gt;,&#13;
+        admin@kolab1.mkpf.ch&#13;
+        &#13;
+        Please find attached an iCalendar file with all the event details which you=&#13;
+        =20&#13;
+        can import to your calendar application.&#13;
+        --=_a32392e5fc9266e3eeba97347cbfc147&#13;
+        Content-Transfer-Encoding: 8bit&#13;
+        Content-Type: text/calendar; charset=UTF-8; method=REQUEST;&#13;
+        name=event.ics&#13;
+        &#13;
+        BEGIN:VCALENDAR&#13;
+        VERSION:2.0&#13;
+        PRODID:-//Roundcube 1.5.3//Sabre VObject 4.5.3//EN&#13;
+        CALSCALE:GREGORIAN&#13;
+        METHOD:REQUEST&#13;
+        BEGIN:VTIMEZONE&#13;
+        TZID:Europe/Vaduz&#13;
+        BEGIN:STANDARD&#13;
+        DTSTART:20221030T010000&#13;
+        TZOFFSETFROM:+0200&#13;
+        TZOFFSETTO:+0100&#13;
+        TZNAME:CET&#13;
+        END:STANDARD&#13;
+        BEGIN:STANDARD&#13;
+        DTSTART:20231029T010000&#13;
+        TZOFFSETFROM:+0200&#13;
+        TZOFFSETTO:+0100&#13;
+        TZNAME:CET&#13;
+        END:STANDARD&#13;
+        BEGIN:DAYLIGHT&#13;
+        DTSTART:20230326T010000&#13;
+        TZOFFSETFROM:+0100&#13;
+        TZOFFSETTO:+0200&#13;
+        TZNAME:CEST&#13;
+        END:DAYLIGHT&#13;
+        END:VTIMEZONE&#13;
+        BEGIN:VEVENT&#13;
+        UID:CC54191F656DFBB294BE0AC18E709315-529CBBDD47ACDDC2&#13;
+        DTSTAMP:20230724T065355Z&#13;
+        CREATED:20230724T065354Z&#13;
+        LAST-MODIFIED:20230724T065354Z&#13;
+        DTSTART;TZID=Europe/Vaduz:20230724T110000&#13;
+        DTEND;TZID=Europe/Vaduz:20230724T113000&#13;
+        SUMMARY:event1&#13;
+        SEQUENCE:0&#13;
+        TRANSP:OPAQUE&#13;
+        ATTENDEE;PARTSTAT=NEEDS-ACTION;ROLE=REQ-PARTICIPANT;CUTYPE=INDIVIDUAL;RSVP=&#13;
+        TRUE:mailto:admin@kolab1.mkpf.ch&#13;
+        ORGANIZER;CN="Doe, John":mailto:doe@kolab1.mkpf.ch&#13;
+        END:VEVENT&#13;
+        END:VCALENDAR&#13;
+        &#13;
+        --=_a32392e5fc9266e3eeba97347cbfc147--&#13;
+                        </AirSyncBase:Data>
+                        </AirSyncBase:Body>
+                        <AirSyncBase:NativeBodyType xmlns="uri:AirSyncBase">1</AirSyncBase:NativeBodyType>
+                        <Email:MessageClass xmlns="uri:Email">IPM.Note</Email:MessageClass>
+                        <Email:ContentClass xmlns="uri:Email">urn:content-classes:message</Email:ContentClass>
+                    </ApplicationData>
+                </Add>
+            </Commands>
+            </Collection>
+        </Collections>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        print($dom->saveXML());
+        $status = $dom->getElementsByTagName('Status');
+        $this->assertEquals("1", $status[0]->nodeValue);
+
+        $xpath = $this->xpath($dom);
+        $add = $xpath->query("//ns:Responses/ns:Add");
+        $this->assertEquals(1, $add->length);
+        $this->assertEquals("1", $xpath->query("//ns:Responses/ns:Add/ns:Status")->item(0)->nodeValue);
+        $serverId = $xpath->query("//ns:Responses/ns:Add/ns:ServerId")->item(0)->nodeValue;
+
+
+        //List the MeetingRequest
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>0</SyncKey>
+                    <CollectionId>{$inboxId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>0</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>1</SyncKey>
+                    <CollectionId>{$inboxId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>1</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+
+        $dom = self::fromWbxml($response->getBody());
+        print($dom->saveXML());
+        $xpath = $this->xpath($dom);
+
+        $this->assertEquals('IPM.Schedule.Meeting.Request', $xpath->query("//ns:Add/ns:ApplicationData/Email:MessageClass")->item(0)->nodeValue);
+        $this->assertEquals('urn:content-classes:calendarmessage', $xpath->query("//ns:Add/ns:ApplicationData/Email:ContentClass")->item(0)->nodeValue);
+        $this->assertEquals('BAAAAIIA4AB0xbcQGoLgCAAAAAAAAAAAAAAAAAAAAAAAAAAAPgAAAHZDYWwtVWlkAQAAAENDNTQxOTFGNjU2REZCQjI5NEJFMEFDMThFNzA5MzE1LTUyOUNCQkRENDdBQ0REQzIA', $xpath->query("//ns:Add/ns:ApplicationData/Email:MeetingRequest/Email:GlobalObjId")->item(0)->nodeValue);
+        $this->assertEquals('1', $xpath->query("//ns:Add/ns:ApplicationData/Email:MeetingRequest/Email2:MeetingMessageType")->item(0)->nodeValue);
+
+        //Send a meeting response to accept
+
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <MeetingResponse xmlns="uri:MeetingResponse">
+        <Request>
+            <CollectionId>{$inboxId}</CollectionId>
+            <UserResponse>1</UserResponse>
+            <RequestId>$serverId</RequestId>
+        </Request>
+        </MeetingResponse>
+        EOF;
+        $response = $this->request($request, 'MeetingResponse');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        print($dom->saveXML());
+        $xpath = $this->xpath($dom);
+
+        $this->assertEquals("1", $xpath->query("//ns:MeetingResponse/ns:Result/ns:Status")->item(0)->nodeValue);
+        $this->assertStringContainsString("CC54191F656DFBB294BE0AC18E709315-529CBBDD47ACDDC2", $xpath->query("//ns:MeetingResponse/ns:Result/ns:CalendarId")->item(0)->nodeValue);
+
+
+        //Fetch the event and validate
+
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>0</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>0</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>1</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>1</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+
+        $dom = self::fromWbxml($response->getBody());
+        print($dom->saveXML());
+        $xpath = $this->xpath($dom);
+
+        $this->assertEquals("CC54191F656DFBB294BE0AC18E709315-529CBBDD47ACDDC2", $xpath->query("//ns:Add/ns:ApplicationData/Calendar:UID")->item(0)->nodeValue);
+        $this->assertEquals('activesynctest@kolab.org', $xpath->query("//ns:Add/ns:ApplicationData/Calendar:Attendees/Calendar:Attendee/Calendar:Email")->item(0)->nodeValue);
+        $this->assertEquals('3', $xpath->query("//ns:Add/ns:ApplicationData/Calendar:Attendees/Calendar:Attendee/Calendar:AttendeeStatus")->item(0)->nodeValue);
+
+
+        //FIXME there is a second "event here, why?
+        $add = $xpath->query("//ns:Add");
+        $this->assertEquals(1, $add->length);
+
+
+        //Send a dummy event with an invalid attendeestatus (just like outlook does)
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Calendar="uri:Calendar">
+        <Collections>
+            <Collection>
+            <SyncKey>2</SyncKey>
+            <CollectionId>{$tasksId}</CollectionId>
+            <DeletesAsMoves>0</DeletesAsMoves>
+            <GetChanges>0</GetChanges>
+            <WindowSize>512</WindowSize>
+            <Options>
+                <FilterType>0</FilterType>
+                <BodyPreference xmlns="uri:AirSyncBase">
+                <Type>1</Type>
+                <AllOrNone>1</AllOrNone>
+                </BodyPreference>
+            </Options>
+            <Commands>
+                <Add>
+                <Class>Calendar</Class>
+                <ClientId>{B94F1272-ED5F-4613-90D6-731491596147}</ClientId>
+                <ApplicationData>
+                    <Timezone xmlns="uri:Calendar">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==</Timezone>
+                    <DtStamp xmlns="uri:Calendar">20230724T173929Z</DtStamp>
+                    <StartTime xmlns="uri:Calendar">20230724T090000Z</StartTime>
+                    <Subject xmlns="uri:Calendar">event1</Subject>
+                    <UID xmlns="uri:Calendar">CC54191F656DFBB294BE0AC18E709315-529CBBDD47ACDDC2</UID>
+                    <OrganizerName xmlns="uri:Calendar">doe@kolab1.mkpf.ch</OrganizerName>
+                    <OrganizerEmail xmlns="uri:Calendar">doe@kolab1.mkpf.ch</OrganizerEmail>
+                    <Attendees xmlns="uri:Calendar">
+                    <Attendee>
+                        <Email>activesynctest@kolab.org</Email>
+                        <Name>activesynctest@kolab.org</Name>
+                        <AttendeeStatus>0</AttendeeStatus>
+                        <AttendeeType>1</AttendeeType>
+                    </Attendee>
+                    </Attendees>
+                    <EndTime xmlns="uri:Calendar">20230724T093000Z</EndTime>
+                    <Sensitivity xmlns="uri:Calendar">0</Sensitivity>
+                    <BusyStatus xmlns="uri:Calendar">2</BusyStatus>
+                    <AllDayEvent xmlns="uri:Calendar">0</AllDayEvent>
+                    <Reminder xmlns="uri:Calendar">15</Reminder>
+                    <MeetingStatus xmlns="uri:Calendar">3</MeetingStatus>
+                    <ResponseRequested xmlns="uri:Calendar">1</ResponseRequested>
+                    <DisallowNewTimeProposal xmlns="uri:Calendar">0</DisallowNewTimeProposal>
+                </ApplicationData>
+                </Add>
+            </Commands>
+            </Collection>
+        </Collections>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+
+        //Fetch the event and validate again
+
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>0</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>0</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase">
+            <Collections>
+                <Collection>
+                    <SyncKey>1</SyncKey>
+                    <CollectionId>{$tasksId}</CollectionId>
+                    <DeletesAsMoves>0</DeletesAsMoves>
+                    <GetChanges>1</GetChanges>
+                    <WindowSize>512</WindowSize>
+                    <Options>
+                        <FilterType>0</FilterType>
+                        <BodyPreference xmlns="uri:AirSyncBase">
+                            <Type>1</Type>
+                            <AllOrNone>1</AllOrNone>
+                        </BodyPreference>
+                    </Options>
+                </Collection>
+            </Collections>
+            <WindowSize>16</WindowSize>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+
+        $dom = self::fromWbxml($response->getBody());
+        print($dom->saveXML());
+        $xpath = $this->xpath($dom);
+
+        $this->assertEquals("CC54191F656DFBB294BE0AC18E709315-529CBBDD47ACDDC2", $xpath->query("//ns:Add/ns:ApplicationData/Calendar:UID")->item(0)->nodeValue);
+        $this->assertEquals('activesynctest@kolab.org', $xpath->query("//ns:Add/ns:ApplicationData/Calendar:Attendees/Calendar:Attendee/Calendar:Email")->item(0)->nodeValue);
+        $this->assertEquals('3', $xpath->query("//ns:Add/ns:ApplicationData/Calendar:Attendees/Calendar:Attendee/Calendar:AttendeeStatus")->item(0)->nodeValue);
+
+
     }
 
     /**
