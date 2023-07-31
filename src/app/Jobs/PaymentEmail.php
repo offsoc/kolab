@@ -18,10 +18,10 @@ class PaymentEmail implements ShouldQueue
     use SerializesModels;
 
     /** @var int The number of times the job may be attempted. */
-    public $tries = 2;
+    public $tries = 3;
 
     /** @var int The number of seconds to wait before retrying the job. */
-    public $backoff = 10;
+    public $backoff = 30;
 
     /** @var bool Delete the job if the wallet no longer exist. */
     public $deleteWhenMissingModels = true;

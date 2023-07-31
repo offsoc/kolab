@@ -20,6 +20,9 @@ class TrialEndEmail implements ShouldQueue
     /** @var int The number of times the job may be attempted. */
     public $tries = 3;
 
+    /** @var int The number of seconds to wait before retrying the job. */
+    public $backoff = 30;
+
     /** @var bool Delete the job if its models no longer exist. */
     public $deleteWhenMissingModels = true;
 
@@ -36,17 +39,6 @@ class TrialEndEmail implements ShouldQueue
     public function __construct(User $account)
     {
         $this->account = $account;
-    }
-
-    /**
-     * Determine the time at which the job should timeout.
-     *
-     * @return \DateTime
-     */
-    public function retryUntil()
-    {
-        // FIXME: I think it does not make sense to continue trying after 24 hours
-        return now()->addHours(24);
     }
 
     /**

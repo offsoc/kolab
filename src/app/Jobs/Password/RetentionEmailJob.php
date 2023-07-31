@@ -20,10 +20,10 @@ class RetentionEmailJob implements ShouldQueue
     public $deleteWhenMissingModels = true;
 
     /** @var int The number of times the job may be attempted. */
-    public $tries = 2;
+    public $tries = 3;
 
     /** @var int The number of seconds to wait before retrying the job. */
-    public $retryAfter = 10;
+    public $backoff = 30;
 
     /** @var string Password expiration date */
     protected $expiresOn;

@@ -17,7 +17,10 @@ class SignupVerificationSMS implements ShouldQueue
     use SerializesModels;
 
     /** @var int The number of times the job may be attempted. */
-    public $tries = 2;
+    public $tries = 3;
+
+    /** @var int The number of seconds to wait before retrying the job. */
+    public $backoff = 10;
 
     /** @var bool Delete the job if its models no longer exist. */
     public $deleteWhenMissingModels = true;
@@ -36,17 +39,6 @@ class SignupVerificationSMS implements ShouldQueue
     public function __construct(SignupCode $code)
     {
         $this->code = $code;
-    }
-
-    /**
-     * Determine the time at which the job should timeout.
-     *
-     * @return \DateTime
-     */
-    public function retryUntil()
-    {
-        // FIXME: I think it does not make sense to continue trying after 1 hour
-        return now()->addHours(1);
     }
 
     /**
