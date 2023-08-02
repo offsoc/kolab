@@ -213,7 +213,7 @@ class Receipt
                     'subTotal' => $this->wallet->money($total),
                     'total' => $this->wallet->money($total + $totalVat),
                     'totalVat' => $this->wallet->money($totalVat),
-                    'vatRate' => preg_replace('/([.,]00|0|[.,])$/', '', sprintf('%.2f', $vatRate)),
+                    'vatRate' => preg_replace('/(\.00|0|\.)$/', '', sprintf('%.2F', $vatRate)),
                     'vat' => $vatRate > 0,
             ]);
 

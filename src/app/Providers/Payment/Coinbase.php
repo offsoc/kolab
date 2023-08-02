@@ -154,7 +154,7 @@ class Coinbase extends \App\Providers\PaymentProvider
                 "pricing_type" => "fixed_price",
                 'local_price' => [
                     'currency' => $wallet->currency,
-                    'amount' => sprintf('%.2f', $amount),
+                    'amount' => sprintf('%.2F', $amount),
                 ],
                 'redirect_url' => self::redirectUrl()
             ]

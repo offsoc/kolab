@@ -463,7 +463,7 @@ class SignupController extends Controller
         if ($user) {
             $wallet = $user->wallets()->first();
             $wallet->setSettings([
-                'mandate_amount' => sprintf('%.2f', round($min / 100, 2)),
+                'mandate_amount' => sprintf('%.2F', round($min / 100, 2)),
                 'mandate_balance' => 0,
             ]);
 

@@ -611,7 +611,7 @@ class Utils
         $nf = new \NumberFormatter($locale, \NumberFormatter::PERCENT);
         $sep = $nf->getSymbol(\NumberFormatter::DECIMAL_SEPARATOR_SYMBOL);
 
-        $result = sprintf('%.2f', $percent);
+        $result = sprintf('%.2F', $percent);
         $result = preg_replace('/\.00/', '', $result);
         $result = preg_replace('/(\.[0-9])0/', '\\1', $result);
         $result = str_replace('.', $sep, $result);

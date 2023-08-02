@@ -173,7 +173,7 @@ class StatsController extends \App\Http\Controllers\Controller
                 ],
                 'yMarkers' => [
                     [
-                        'label' => sprintf('average = %.2f', $avg),
+                        'label' => sprintf('average = %.2F', $avg),
                         'value' => $avg,
                         'options' => [ 'labelPos' => 'left' ] // default: 'right'
                     ]

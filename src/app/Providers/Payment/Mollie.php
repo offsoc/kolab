@@ -75,7 +75,7 @@ class Mollie extends \App\Providers\PaymentProvider
         $request = [
             'amount' => [
                 'currency' => $payment['currency'],
-                'value' => sprintf('%.2f', $amount / 100),
+                'value' => sprintf('%.2F', $amount / 100),
             ],
             'customerId' => $customer_id,
             'sequenceType' => 'first',
@@ -203,7 +203,7 @@ class Mollie extends \App\Providers\PaymentProvider
                 'currency' => $payment['currency'],
                 // a number with two decimals is required (note that JPK and ISK don't require decimals,
                 // but we're not using them currently)
-                'value' => sprintf('%.2f', $amount / 100),
+                'value' => sprintf('%.2F', $amount / 100),
             ],
             'customerId' => $customer_id,
             'sequenceType' => $payment['type'],
@@ -281,7 +281,7 @@ class Mollie extends \App\Providers\PaymentProvider
             'amount' => [
                 'currency' => $payment['currency'],
                 // a number with two decimals is required
-                'value' => sprintf('%.2f', $amount / 100),
+                'value' => sprintf('%.2F', $amount / 100),
             ],
             'customerId' => $customer_id,
             'sequenceType' => $payment['type'],
