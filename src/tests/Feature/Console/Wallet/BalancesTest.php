@@ -15,6 +15,9 @@ class BalancesTest extends TestCase
         parent::setUp();
 
         $this->deleteTestUser('wallets-controller@kolabnow.com');
+
+        \App\Wallet::query()->update(['balance' => 0]);
+        \App\Transaction::truncate();
     }
 
     /**
@@ -37,26 +40,36 @@ class BalancesTest extends TestCase
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
         $wallet = $user->wallets()->first();
 
-        // Expect no wallets with balance=0
-        $code = \Artisan::call("wallet:balances");
+        // Expect no wallets with balance=0 when using --negative
+        $code = \Artisan::call("wallet:balances --negative");
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertTrue(strpos($output, $wallet->id) === false);
+        $this->assertSame('', $output);
 
         $wallet->balance = -100;
         $wallet->save();
 
         // Expect the wallet with a negative balance in output
-        $code = \Artisan::call("wallet:balances");
+        $code = \Artisan::call("wallet:balances --negative");
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertMatchesRegularExpression(
-            '|' . preg_quote($wallet->id, '|') . ': {5}-100 \(account: https://.*/admin/accounts/show/'
-                . $user->id . ' \(' . preg_quote($user->email, '|') . '\)\)|',
-            $output
-        );
+        $this->assertStringContainsString("{$wallet->id}:     -100 ({$user->email})", $output);
+
+        // Test --skip-zeros
+        $code = \Artisan::call("wallet:balances --skip-zeros");
+        $output = trim(\Artisan::output());
+
+        $this->assertSame(0, $code);
+        $this->assertSame("{$wallet->id}:     -100 ({$user->email})", $output);
+
+        // Test --invalid
+        $code = \Artisan::call("wallet:balances --invalid");
+        $output = trim(\Artisan::output());
+
+        $this->assertSame(0, $code);
+        $this->assertSame("{$wallet->id}:     -100        0 ({$user->email})", $output);
 
         $user->delete();
 

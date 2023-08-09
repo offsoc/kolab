@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands\Wallet;
 
+use App\Transaction;
+use App\Wallet;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class BalancesCommand extends Command
 {
@@ -11,7 +14,7 @@ class BalancesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'wallet:balances';
+    protected $signature = 'wallet:balances {--skip-zeros} {--negative} {--invalid}';
 
     /**
      * The console command description.
@@ -27,27 +30,52 @@ class BalancesCommand extends Command
      */
     public function handle()
     {
-        $wallets = \App\Wallet::select('wallets.*')
+        $skip_zeros = $this->option('skip-zeros');
+        $negative = $this->option('negative');
+        $invalid = $this->option('invalid');
+
+        $wallets = Wallet::select('wallets.*', 'users.email')
             ->join('users', 'users.id', '=', 'wallets.user_id')
             ->withEnvTenantContext('users')
-            ->where('balance', '!=', '0')
             ->whereNull('users.deleted_at')
             ->orderBy('balance');
 
-        $wallets->each(
-            function ($wallet) {
-                $user = $wallet->owner;
+        if ($invalid) {
+            $balances = Transaction::select(DB::raw('sum(amount) as summary, object_id as wallet_id'))
+                ->where('object_type', Wallet::class)
+                ->groupBy('wallet_id');
+        
+            $wallets->addSelect('balances.summary')
+                ->leftJoinSub($balances, 'balances', function ($join) {
+                    $join->on('wallets.id', '=', 'balances.wallet_id');
+                })
+                ->whereRaw('(balances.summary != wallets.balance or (balances.summary is null and wallets.balance != 0))');
 
-                $this->info(
-                    sprintf(
-                        "%s: %8s (account: %s/%s (%s))",
-                        $wallet->id,
-                        $wallet->balance,
-                        "https://kolabnow.com/cockpit/admin/accounts/show",
-                        $user->id,
-                        $user->email
-                    )
-                );
+            if ($negative) {
+                $wallets->where('balances.summary', '<', 0);
+            } elseif ($skip_zeros) {
+                $wallets->whereRaw('balances.summary != 0 and balances.summary is not null');
+            }
+        } else {
+            if ($negative) {
+                $wallets->where('wallets.balance', '<', 0);
+            } elseif ($skip_zeros) {
+                $wallets->whereNot('wallets.balance', 0);
+            }
+        }
+
+        $wallets->cursor()->each(
+            function (Wallet $wallet) use ($invalid) {
+                $balance = $wallet->balance;
+                $summary = $wallet->summary ?? 0;
+                $email = $wallet->email; // @phpstan-ignore-line
+
+                if ($invalid) {
+                    $this->info(sprintf("%s: %8s %8s (%s)", $wallet->id, $balance, $summary, $email));
+                    return;
+                }
+
+                $this->info(sprintf("%s: %8s (%s)", $wallet->id, $balance, $email));
             }
         );
     }
