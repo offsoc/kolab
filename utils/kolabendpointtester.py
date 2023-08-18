@@ -23,7 +23,22 @@ from smtplib import SMTP
 from smtplib import SMTP_SSL
 import dns.resolver
 
+# print('\033[31m' + 'some red text')
+
+RED='\033[31m'
+GREEN='\033[32m'
+RESET='\033[39m'
+
 SSLNOVERIFY = False
+
+def print_error(msg):
+    print(RED + f"=> ERROR: {msg}")
+    print(RESET)  # and reset to default color
+
+def print_success(msg):
+    print(GREEN + f"=> {msg}")
+    print(RESET)  # and reset to default color
+
 
 def print_assertion_failure():
     """
@@ -91,19 +106,24 @@ def basic_auth_headers(username, password):
         "Authorization": "Basic {}".format(user_and_pass)
     }
 
-
 def try_get(name, url, verbose, headers = None, body = None):
-    response = http_request(
-        url,
-        "GET",
-        None,
-        headers,
-        body,
-        verbose
-    )
-    success = response.status == 200
+    try:
+        response = http_request(
+            url,
+            "GET",
+            None,
+            headers,
+            body,
+            verbose
+        )
+        success = response.status == 200
+    except http.client.RemoteDisconnected:
+        print("Remote disconnected")
+        print_error(f"{name} is not available")
+        return False
+
     if not success:
-        print(f"=> Error: {name} is not available")
+        print_error(f"{name} is not available")
 
     if verbose or not success:
         print("  ", "Status", response.status)
@@ -118,18 +138,23 @@ def test_caldav_redirect(host, username, password, verbose):
         **basic_auth_headers(username, password)
     }
 
-    response = http_request(
-        "https://" + host + "/.well-known/caldav",
-        "GET",
-        None,
-        headers,
-        None,
-        verbose
-    )
+    try:
+        response = http_request(
+            "https://" + host + "/.well-known/caldav",
+            "GET",
+            None,
+            headers,
+            None,
+            verbose
+        )
+    except http.client.RemoteDisconnected:
+        print("Remote disconnected")
+        print_error(".well-known/caldav is not available")
+        return False
 
     success = response.status in (200, 301, 302)
     if not success:
-        print("=> Error: .well-known/caldav is not available")
+        print_error(".well-known/caldav is not available")
 
     if verbose or not success:
         print("  ", "Status", response.status)
@@ -146,18 +171,23 @@ def discover_principal(url, username, password, verbose):
         **basic_auth_headers(username, password)
     }
 
-    response = http_request(
-        f"{url}/principals/{username}/",
-        "PROPFIND",
-        None,
-        headers,
-        body,
-        verbose
-    )
+    try:
+        response = http_request(
+            f"{url}/principals/{username}/",
+            "PROPFIND",
+            None,
+            headers,
+            body,
+            verbose
+        )
+    except http.client.RemoteDisconnected:
+        print("Remote disconnected")
+        print_error("Caldav is not available")
+        return False
 
     success = response.status == 207
     if not success:
-        print("=> Error: Caldav is not available")
+        print_error("Caldav is not available")
 
     if verbose or not success:
         print("  ", "Status", response.status)
@@ -265,14 +295,19 @@ xmlns="http://schemas.microsoft.com/exchange/autodiscover/mobilesync/requestsche
         **basic_auth_headers(username, password)
     }
 
-    response = http_request(
-        f"https://{host}/autodiscover/autodiscover.xml",
-        "POST",
-        None,
-        headers,
-        body,
-        verbose
-    )
+    try:
+        response = http_request(
+            f"https://{host}/autodiscover/autodiscover.xml",
+            "POST",
+            None,
+            headers,
+            body,
+            verbose
+        )
+    except http.client.RemoteDisconnected:
+        print("Remote disconnected")
+        print_error("Activesync autodiscover is not available")
+        return False
 
     success = response.status == 200
     data = response.read().decode()
@@ -288,7 +323,7 @@ xmlns="http://schemas.microsoft.com/exchange/autodiscover/mobilesync/requestsche
             success = False
 
     if not success:
-        print("=> Error: Activesync autodiscover is not available")
+        print_error("Activesync autodiscover is not available")
 
     if verbose or not success:
         print("  ", "Status", response.status)
@@ -303,14 +338,19 @@ def test_activesync(host, username, password, verbose = False):
         **basic_auth_headers(username, password)
     }
 
-    response = http_request(
-        f"https://{host}/Microsoft-Server-ActiveSync",
-        "OPTIONS",
-        None,
-        headers,
-        None,
-        verbose
-    )
+    try:
+        response = http_request(
+            f"https://{host}/Microsoft-Server-ActiveSync",
+            "OPTIONS",
+            None,
+            headers,
+            None,
+            verbose
+        )
+    except http.client.RemoteDisconnected:
+        print("Remote disconnected")
+        print_error("Activesync is not available")
+        return False
 
     success = response.status == 200
     data = response.read().decode()
@@ -324,7 +364,7 @@ def test_activesync(host, username, password, verbose = False):
             success = False
 
     if not success:
-        print("=> Error: Activesync is not available")
+        print_error("Activesync is not available")
 
     if verbose or not success:
         print("  ", "Status", response.status)
@@ -384,7 +424,7 @@ def test_dns(host, verbose = False):
             print("  ERROR on record", record)
 
     if not success:
-        print(f"=> Error: Dns entires on {host} not available")
+        print(f"=> ERROR: Dns entires on {host} not available")
 
     return success
 
@@ -409,7 +449,7 @@ def test_email_dns(host, verbose = False):
             print("  ERROR on record", record)
 
     if not success:
-        print(f"=> Error: Dns entires on {host} not available")
+        print(f"=> ERROR: Dns entires on {host} not available")
 
     return success
 
@@ -457,7 +497,7 @@ def test_imap(host, user, password, verbose):
             success = False
 
         if not success:
-            print("=> Error: IMAP failed")
+            print_error("IMAP failed")
 
     return success
 
@@ -507,7 +547,7 @@ def test_smtp(host, user, password, verbose):
             success = False
 
     if not success:
-        print("=> Error: SMTP failed")
+        print_error("SMTP failed")
 
     return success
 
@@ -539,7 +579,7 @@ def test_certificates(host, davhost, imaphost, verbose):
             success = False
 
     if not success:
-        print("=> Error: Not all certificates are valid")
+        print_error("Not all certificates are valid")
 
     return success
 
@@ -560,43 +600,43 @@ def main():
 
     if options.dav:
         if discover_principal(options.dav, options.username, options.password, options.verbose):
-            print("=> Caldav is available")
+            print_success("Caldav is available")
         else:
             error = True
 
         if options.host:
             if test_caldav_redirect(options.host, options.username, options.password, options.verbose):
-                print("=> Caldav on .well-known/caldav is available")
+                print_success("Caldav on .well-known/caldav is available")
             else:
                 # Kolabnow doesn't support this atm (it offers the redirect on apps.kolabnow.com
                 error = False
 
     if test_autoconfig(options.host, options.username, options.password, options.verbose):
-        print("=> Autoconf available")
+        print_success("Autoconf available")
     else:
         error = True
 
     if options.activesync:
         if test_autodiscover_activesync(options.host, options.activesync, options.username, options.password, options.verbose):
-            print("=> Activesync Autodsicovery available")
+            print_success("Activesync Autodsicovery available")
         else:
             # Kolabnow doesn't support this
             error = False
 
         if test_activesync(options.activesync, options.username, options.password, options.verbose):
-            print("=> Activesync available")
+            print_success("Activesync available")
         else:
             error = True
 
     if options.fb:
         if test_freebusy_authenticated(options.fb, options.username, options.password, options.verbose):
-            print("=> Authenticated Freebusy is available")
+            print_success("Authenticated Freebusy is available")
         else:
             error = True
 
         # We rely on the activesync test to have generated the token for unauthenticated access.
         if test_freebusy_unauthenticated(options.fb, options.username, options.password, options.verbose):
-            print("=> Unauthenticated Freebusy is available")
+            print_success("Unauthenticated Freebusy is available")
         else:
             error = True
 
@@ -612,18 +652,18 @@ def main():
         error = True
 
     if test_certificates(options.host, options.dav, options.imap, options.verbose):
-        print("=> All certificates are valid")
+        print_success("All certificates are valid")
     else:
         error = True
 
     if options.imap:
         if test_imap(options.imap, options.username, options.password, options.verbose):
-            print("=> IMAP is available")
+            print_success("IMAP is available")
         else:
             error = True
 
         if test_smtp(options.imap, options.username, options.password, options.verbose):
-            print("=> SMTP is available")
+            print_success("SMTP is available")
         else:
             error = True
 
