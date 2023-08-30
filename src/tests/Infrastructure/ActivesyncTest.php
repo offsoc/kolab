@@ -1456,9 +1456,8 @@ class ActivesyncTest extends TestCase
         $this->assertEquals("CC54191F656DFBB294BE0AC18E709315-529CBBDD47ACDDC2", $xpath->query("//ns:Add/ns:ApplicationData/Calendar:UID")->item(0)->nodeValue);
         $this->assertEquals('activesynctest@kolab.org', $xpath->query("//ns:Add/ns:ApplicationData/Calendar:Attendees/Calendar:Attendee/Calendar:Email")->item(0)->nodeValue);
         $this->assertEquals('3', $xpath->query("//ns:Add/ns:ApplicationData/Calendar:Attendees/Calendar:Attendee/Calendar:AttendeeStatus")->item(0)->nodeValue);
+        $serverId = $xpath->query("//ns:Add/ns:ServerId")->item(0)->nodeValue;
 
-
-        //FIXME there is a second "event here, why?
         $add = $xpath->query("//ns:Add");
         $this->assertEquals(1, $add->length);
 
@@ -1519,6 +1518,12 @@ class ActivesyncTest extends TestCase
         EOF;
         $response = $this->request($request, 'Sync');
         $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        print($dom->saveXML());
+        $xpath = $this->xpath($dom);
+
+        $this->assertEquals("5", $xpath->query("//ns:Add/ns:Status")->item(0)->nodeValue);
 
 
         //Fetch the event and validate again
@@ -1584,6 +1589,70 @@ class ActivesyncTest extends TestCase
         $this->assertEquals("CC54191F656DFBB294BE0AC18E709315-529CBBDD47ACDDC2", $xpath->query("//ns:Add/ns:ApplicationData/Calendar:UID")->item(0)->nodeValue);
         $this->assertEquals('activesynctest@kolab.org', $xpath->query("//ns:Add/ns:ApplicationData/Calendar:Attendees/Calendar:Attendee/Calendar:Email")->item(0)->nodeValue);
         $this->assertEquals('3', $xpath->query("//ns:Add/ns:ApplicationData/Calendar:Attendees/Calendar:Attendee/Calendar:AttendeeStatus")->item(0)->nodeValue);
+
+
+        //Send a dummy event to change to tentative (just like outlook does
+        $request = <<<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Sync xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Calendar="uri:Calendar">
+        <Collections>
+            <Collection>
+            <SyncKey>2</SyncKey>
+            <CollectionId>{$tasksId}</CollectionId>
+            <DeletesAsMoves>0</DeletesAsMoves>
+            <GetChanges>0</GetChanges>
+            <WindowSize>512</WindowSize>
+            <Options>
+                <FilterType>0</FilterType>
+                <BodyPreference xmlns="uri:AirSyncBase">
+                <Type>1</Type>
+                <AllOrNone>1</AllOrNone>
+                </BodyPreference>
+            </Options>
+            <Commands>
+                <Change>
+                <Class>Calendar</Class>
+                <ServerId>{$serverId}</ServerId>
+                <ApplicationData>
+                    <Timezone xmlns="uri:Calendar">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==</Timezone>
+                    <DtStamp xmlns="uri:Calendar">20230724T173929Z</DtStamp>
+                    <StartTime xmlns="uri:Calendar">20230724T090000Z</StartTime>
+                    <Subject xmlns="uri:Calendar">event1</Subject>
+                    <UID xmlns="uri:Calendar">CC54191F656DFBB294BE0AC18E709315-529CBBDD47ACDDC2</UID>
+                    <OrganizerName xmlns="uri:Calendar">doe@kolab1.mkpf.ch</OrganizerName>
+                    <OrganizerEmail xmlns="uri:Calendar">doe@kolab1.mkpf.ch</OrganizerEmail>
+                    <Attendees xmlns="uri:Calendar">
+                    <Attendee>
+                        <Email>activesynctest@kolab.org</Email>
+                        <Name>activesynctest@kolab.org</Name>
+                        <AttendeeStatus>0</AttendeeStatus>
+                        <AttendeeType>1</AttendeeType>
+                    </Attendee>
+                    </Attendees>
+                    <EndTime xmlns="uri:Calendar">20230724T093000Z</EndTime>
+                    <Sensitivity xmlns="uri:Calendar">0</Sensitivity>
+                    <BusyStatus xmlns="uri:Calendar">1</BusyStatus>
+                    <AllDayEvent xmlns="uri:Calendar">0</AllDayEvent>
+                    <Reminder xmlns="uri:Calendar">15</Reminder>
+                    <MeetingStatus xmlns="uri:Calendar">3</MeetingStatus>
+                    <ResponseRequested xmlns="uri:Calendar">1</ResponseRequested>
+                    <DisallowNewTimeProposal xmlns="uri:Calendar">0</DisallowNewTimeProposal>
+                </ApplicationData>
+                </Change>
+            </Commands>
+            </Collection>
+        </Collections>
+        </Sync>
+        EOF;
+        $response = $this->request($request, 'Sync');
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $dom = self::fromWbxml($response->getBody());
+        print($dom->saveXML());
+        $xpath = $this->xpath($dom);
+
+        $this->assertEquals("1", $xpath->query("//ns:Collection/ns:Status")->item(0)->nodeValue);
 
 
     }
