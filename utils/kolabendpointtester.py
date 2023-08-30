@@ -607,9 +607,8 @@ def main():
         if options.host:
             if test_caldav_redirect(options.host, options.username, options.password, options.verbose):
                 print_success("Caldav on .well-known/caldav is available")
-            else:
-                # Kolabnow doesn't support this atm (it offers the redirect on apps.kolabnow.com
-                error = False
+                # Kolabnow doesn't support this atm (it offers the redirect on apps.kolabnow.com),
+                # so we ignore the error for now
 
     if test_autoconfig(options.host, options.username, options.password, options.verbose):
         print_success("Autoconf available")
@@ -619,9 +618,7 @@ def main():
     if options.activesync:
         if test_autodiscover_activesync(options.host, options.activesync, options.username, options.password, options.verbose):
             print_success("Activesync Autodsicovery available")
-        else:
-            # Kolabnow doesn't support this
-            error = False
+            # Kolabnow doesn't support this, so we ignore the error for now
 
         if test_activesync(options.activesync, options.username, options.password, options.verbose):
             print_success("Activesync available")
@@ -668,7 +665,7 @@ def main():
             error = True
 
     if error:
-        print("At least one check failed")
+        print_error("At least one check failed")
         sys.exit(1)
 
 if __name__ == "__main__":
