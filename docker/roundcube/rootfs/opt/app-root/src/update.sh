@@ -194,7 +194,8 @@ mkdir -p logs
 chmod 777 -R logs
 popd
 
-roundcubemail/bin/updatedb.sh --dir syncroton/docs/SQL/ --package syncroton
-roundcubemail/bin/updatedb.sh --dir roundcubemail/SQL/ --package roundcube
-roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/libkolab/SQL/ --package libkolab
-roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/kolab-calendar/SQL/ --package calendar-kolab
+# Not a good idea during an openshift build
+# roundcubemail/bin/updatedb.sh --dir syncroton/docs/SQL/ --package syncroton
+# roundcubemail/bin/updatedb.sh --dir roundcubemail/SQL/ --package roundcube
+# roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/libkolab/SQL/ --package libkolab
+# roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/kolab-calendar/SQL/ --package calendar-kolab
