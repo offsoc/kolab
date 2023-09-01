@@ -178,11 +178,9 @@ services:
       kolab:
         ipv4_address: 172.18.0.9
     ports:
-      - "8001:80"
+      - "8080:8080"
     tmpfs:
-      - /run
       - /tmp
-      - /var/run
       - /var/tmp
     volumes:
       - ./ext/:/src.orig/:ro

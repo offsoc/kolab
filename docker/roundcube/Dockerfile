@@ -60,6 +60,7 @@ RUN dnf -y install \
         re2c \
         npm \
         wget && \
+        dnf -y install procps-ng iputils bind-utils sudo telnet && \
     dnf clean all
 
 
@@ -70,7 +71,19 @@ WORKDIR ${HOME}
 COPY /rootfs /
 RUN /opt/app-root/src/build.sh 
 
-EXPOSE 80
+RUN chgrp -R 0 /opt/app-root/src && \
+    chmod -R g=u /opt/app-root/src
+
+RUN mkdir -p /run/php-fpm && \
+    chmod 777 /run/php-fpm && \
+    mkdir -p /run/httpd && \
+    chmod 777 /run/httpd && \
+    chmod -R 777 /etc/httpd /var/log/httpd /var/lib/httpd
+
+RUN chown -R 1001:0 /opt/app-root/src
+USER 1001
+
+EXPOSE 8080
 
 # https://httpd.apache.org/docs/2.4/stopping.html#gracefulstop
 STOPSIGNAL SIGWINCH

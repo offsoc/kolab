@@ -4,7 +4,8 @@ set -x
 
 pushd /opt/app-root/src/
 
-sed -i -r -e "s|service_bind_pw = .*$|service_bind_pw = $LDAP_SERVICE_BIND_PW|g" /etc/kolab/kolab.conf
+# FIXME doesn't work in rootless
+# sed -i -r -e "s|service_bind_pw = .*$|service_bind_pw = $LDAP_SERVICE_BIND_PW|g" /etc/kolab/kolab.conf
 
 pushd roundcubemail
 
@@ -61,15 +62,8 @@ popd
 roundcubemail/bin/initdb.sh --dir syncroton/docs/SQL/ || :
 roundcubemail/bin/initdb.sh --dir chwala/doc/SQL/ || :
 
-# Fix permissions. Logfiles could have been written as root during dbinit especially.
-chmod 777 -R roundcubemail/logs
-chmod 777 -R roundcubemail/temp
-
 echo ""
 echo "Done, starting httpd..."
 
-mkdir -p /run/php-fpm
 /usr/sbin/php-fpm
-chmod 777 /run/php-fpm
-mkdir -p /run/httpd
 exec httpd -DFOREGROUND
