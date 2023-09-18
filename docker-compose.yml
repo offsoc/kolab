@@ -200,7 +200,7 @@ services:
       test: test -e /var/run/mysqld/mysqld.sock
       timeout: 5s
       retries: 30
-    image: mariadb:latest
+    image: mariadb:10.9
     networks:
       kolab:
         ipv4_address: 172.18.0.3
