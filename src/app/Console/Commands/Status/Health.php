@@ -10,6 +10,7 @@ use App\Backends\IMAP;
 use App\Backends\LDAP;
 use App\Backends\OpenExchangeRates;
 use App\Backends\Roundcube;
+use App\Backends\Storage;
 use App\Providers\Payment\Mollie;
 
 //TODO stripe
@@ -23,7 +24,7 @@ class Health extends Command
      * @var string
      */
     protected $signature = 'status:health
-                            {--check=* : One of DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates}';
+                            {--check=* : One of DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates, Storage}';
 
     /**
      * The console command description.
@@ -120,6 +121,17 @@ class Health extends Command
         }
     }
 
+    private function checkStorage()
+    {
+        try {
+            Storage::healthcheck();
+            return true;
+        } catch (\Exception $exception) {
+            $this->line($exception);
+            return false;
+        }
+    }
+
     private function checkMeet()
     {
         $urls = \config('meet.api_urls');
@@ -176,7 +188,7 @@ class Health extends Command
         $steps = $this->option('check');
         if (empty($steps)) {
             $steps = [
-                'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates',
+                'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates', "Storage"
             ];
             if (\config('app.with_ldap')) {
                 array_unshift($steps, 'LDAP');

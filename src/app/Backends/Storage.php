@@ -17,6 +17,20 @@ class Storage
 
 
     /**
+     * Check if we can connect to the backend
+     *
+     * @return bool True on success
+     */
+    public static function healthcheck(): bool
+    {
+        $disk = LaravelStorage::disk(\config('filesystems.default'));
+        $disk->put('healthcheck', 'healthcheck');
+        $disk->size('healthcheck');
+        $disk->delete('healthcheck');
+        return true;
+    }
+
+    /**
      * Delete a file.
      *
      * @param \App\Fs\Item $file File object
