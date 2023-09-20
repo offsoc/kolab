@@ -77,7 +77,7 @@ class Entitlement extends Model
      */
     public function entitleable()
     {
-        return $this->morphTo()->withTrashed(); // @phpstan-ignore-line
+        return $this->morphTo()->withTrashed();
     }
 
     /**

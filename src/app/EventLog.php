@@ -88,7 +88,7 @@ class EventLog extends Model
      */
     public function object()
     {
-        return $this->morphTo()->withTrashed(); // @phpstan-ignore-line
+        return $this->morphTo()->withTrashed();
     }
 
     /**

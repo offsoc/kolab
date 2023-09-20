@@ -44,7 +44,7 @@ class Permission extends Model
      */
     public function permissible()
     {
-        return $this->morphTo()->withTrashed(); // @phpstan-ignore-line
+        return $this->morphTo()->withTrashed();
     }
 
     /**
