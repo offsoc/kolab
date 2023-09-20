@@ -230,16 +230,20 @@ class SignupController extends Controller
      */
     public function signupValidate(Request $request)
     {
+        $rules = [
+            'login' => 'required|min:2',
+            'password' => ['required', 'confirmed', new Password()],
+            'domain' => 'required',
+            'voucher' => 'max:32',
+        ];
+
+        // Direct signup by token
+        if ($request->token) {
+            $rules['token'] = ['required', 'string', new SignupToken()];
+        }
+
         // Validate input
-        $v = Validator::make(
-            $request->all(),
-            [
-                'login' => 'required|min:2',
-                'password' => ['required', 'confirmed', new Password()],
-                'domain' => 'required',
-                'voucher' => 'max:32',
-            ]
-        );
+        $v = Validator::make($request->all(), $rules);
 
         if ($v->fails()) {
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
@@ -247,8 +251,16 @@ class SignupController extends Controller
 
         $settings = [];
 
-        // Plan parameter is required/allowed in mandate mode
-        if (!empty($request->plan) && empty($request->code) && empty($request->invitation)) {
+        if (!empty($request->token)) {
+            // Token mode, check the plan
+            $plan = $request->plan ? Plan::withEnvTenantContext()->where('title', $request->plan)->first() : null;
+
+            if (!$plan || $plan->mode != Plan::MODE_TOKEN) {
+                $msg = self::trans('validation.exists', ['attribute' => 'plan']);
+                return response()->json(['status' => 'error', 'errors' => ['plan' => $msg]], 422);
+            }
+        } elseif (!empty($request->plan) && empty($request->code) && empty($request->invitation)) {
+            // Plan parameter is required/allowed in mandate mode
             $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
 
             if (!$plan || $plan->mode != Plan::MODE_MANDATE) {

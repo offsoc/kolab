@@ -64,6 +64,8 @@ class SignupTest extends TestCase
         IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
         VatRate::query()->delete();
 
+        @unlink(storage_path('signup-tokens.txt'));
+
         parent::tearDown();
     }
 
@@ -908,6 +910,68 @@ class SignupTest extends TestCase
         $this->assertTrue($invitation->isCompleted());
 
         // TODO: Test POST params validation
+    }
+
+    /**
+     * Test signup via token
+     */
+    public function testSignupToken(): void
+    {
+        Queue::fake();
+
+        $plan = Plan::create([
+                'title' => 'test',
+                'name' => 'Test Account',
+                'description' => 'Test',
+                'free_months' => 1,
+                'discount_qty' => 0,
+                'discount_rate' => 0,
+                'mode' => Plan::MODE_TOKEN,
+        ]);
+
+        $post = [
+            'plan' => $plan->title,
+            'token' => 'abc',
+            'login' => 'test-inv',
+            'domain' => 'kolabnow.com',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
+        ];
+
+        // Test invalid token
+        $response = $this->post('/api/auth/signup', $post);
+        $response->assertStatus(422);
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame(['token' => ["The signup token is invalid."]], $json['errors']);
+
+        file_put_contents(storage_path('signup-tokens.txt'), "abc\n");
+
+        // Test invalid plan (existing plan with another mode)
+        $post['plan'] = 'individual';
+        $response = $this->post('/api/auth/signup', $post);
+        $response->assertStatus(422);
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame(['plan' => "The selected plan is invalid."], $json['errors']);
+
+        // Test valid input
+        $post['plan'] = $plan->title;
+        $response = $this->post('/api/auth/signup', $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('test-inv@kolabnow.com', $json['email']);
+
+        // Check if the user has been created
+        $user = User::where('email', 'test-inv@kolabnow.com')->first();
+
+        $this->assertNotEmpty($user);
+        $this->assertSame($plan->id, $user->getSetting('plan_id'));
     }
 
     /**
