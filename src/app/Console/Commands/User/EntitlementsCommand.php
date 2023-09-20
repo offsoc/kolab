@@ -11,7 +11,7 @@ class EntitlementsCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'user:entitlements {userid}';
+    protected $signature = 'user:entitlements {user}';
 
     /**
      * The console command description.
@@ -27,7 +27,7 @@ class EntitlementsCommand extends Command
      */
     public function handle()
     {
-        $user = $this->getUser($this->argument('userid'));
+        $user = $this->getUser($this->argument('user'));
 
         if (!$user) {
             $this->error("User not found.");
