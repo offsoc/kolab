@@ -22,7 +22,7 @@ class DomainTest extends TestCase
             Domain::STATUS_VERIFIED,
         ];
 
-        $domains = \App\Utils::powerSet($statuses);
+        $domains = \Tests\Utils::powerSet($statuses);
 
         foreach ($domains as $domainStatuses) {
             $domain = new Domain(
@@ -90,7 +90,7 @@ class DomainTest extends TestCase
             Domain::TYPE_EXTERNAL,
         ];
 
-        $domains = \App\Utils::powerSet($types);
+        $domains = \Tests\Utils::powerSet($types);
 
         foreach ($domains as $domain_types) {
             $domain = new Domain(

@@ -81,7 +81,7 @@ class UserTest extends TestCase
             User::STATUS_RESTRICTED,
         ];
 
-        $users = \App\Utils::powerSet($statuses);
+        $users = \Tests\Utils::powerSet($statuses);
 
         foreach ($users as $user_statuses) {
             $user = new User(

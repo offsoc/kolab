@@ -99,20 +99,20 @@ class UtilsTest extends TestCase
     }
 
     /**
-     * Test for Utils::powerSet()
+     * Test for Tests\Utils::powerSet()
      */
     public function testPowerSet(): void
     {
         $set = [];
 
-        $result = Utils::powerSet($set);
+        $result = \Tests\Utils::powerSet($set);
 
         $this->assertIsArray($result);
         $this->assertCount(0, $result);
 
         $set = ["a1"];
 
-        $result = Utils::powerSet($set);
+        $result = \Tests\Utils::powerSet($set);
 
         $this->assertIsArray($result);
         $this->assertCount(1, $result);
@@ -120,7 +120,7 @@ class UtilsTest extends TestCase
 
         $set = ["a1", "a2"];
 
-        $result = Utils::powerSet($set);
+        $result = \Tests\Utils::powerSet($set);
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
@@ -130,7 +130,7 @@ class UtilsTest extends TestCase
 
         $set = ["a1", "a2", "a3"];
 
-        $result = Utils::powerSet($set);
+        $result = \Tests\Utils::powerSet($set);
 
         $this->assertIsArray($result);
         $this->assertCount(7, $result);

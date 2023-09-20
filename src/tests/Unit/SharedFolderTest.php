@@ -20,7 +20,7 @@ class SharedFolderTest extends TestCase
             SharedFolder::STATUS_IMAP_READY,
         ];
 
-        $folders = \App\Utils::powerSet($statuses);
+        $folders = \Tests\Utils::powerSet($statuses);
 
         $folder = new SharedFolder(['name' => 'test']);
 
