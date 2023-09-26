@@ -52,7 +52,8 @@ class IMAP
         //        should we consider using it in ACL instead of the name?
         //        Also we need to decide what to do and configure IMAP appropriately,
         //        right now groups in ACL does not work for me at all.
-        \App\Jobs\IMAP\AclCleanupJob::dispatch($group->name, $domainName);
+        // Commented out in favor of a nightly cleanup job, for performance reasons
+        // \App\Jobs\IMAP\AclCleanupJob::dispatch($group->name, $domainName);
 
         return true;
     }
@@ -169,7 +170,8 @@ class IMAP
         $imap->closeConnection();
 
         // Cleanup ACL
-        \App\Jobs\IMAP\AclCleanupJob::dispatch($user->email);
+        // Commented out in favor of a nightly cleanup job, for performance reasons
+        // \App\Jobs\IMAP\AclCleanupJob::dispatch($user->email);
 
         return $result;
     }
@@ -515,7 +517,72 @@ class IMAP
         $callback = function ($folder) use ($imap, $ident) {
             $acl = $imap->getACL($folder);
             if (is_array($acl) && isset($acl[$ident])) {
+                \Log::info("Cleanup: Removing {$ident} from ACL on {$folder}");
                 $imap->deleteACL($folder, $ident);
+            }
+        };
+
+        $folders = $imap->listMailboxes('', "user/*@{$domain}");
+
+        if (!is_array($folders)) {
+            $imap->closeConnection();
+            throw new \Exception("Failed to get IMAP folders");
+        }
+
+        array_walk($folders, $callback);
+
+        $folders = $imap->listMailboxes('', "shared/*@{$domain}");
+
+        if (!is_array($folders)) {
+            $imap->closeConnection();
+            throw new \Exception("Failed to get IMAP folders");
+        }
+
+        array_walk($folders, $callback);
+
+        $imap->closeConnection();
+    }
+
+    /**
+     * Remove ACL entries pointing to non-existent users/groups, for a specified domain
+     *
+     * @param string $domain  Domain namespace
+     * @param bool   $dry_run Output ACL entries to delete, but do not delete
+     */
+    public static function aclCleanupDomain(string $domain, bool $dry_run = false): void
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config);
+
+        // Collect available (existing) users/groups
+        // FIXME: Should we limit this to the requested domain or account?
+        // FIXME: For groups should we use name or email?
+        $idents = User::pluck('email')
+            // ->concat(Group::pluck('name'))
+            ->concat(['anyone', 'anonymous', $config['user']])
+            ->all();
+
+        $callback = function ($folder) use ($imap, $idents, $dry_run) {
+            $acl = $imap->getACL($folder);
+            if (is_array($acl)) {
+                $owner = null;
+                if (preg_match('|^user/([^/@]+).*@([^@/]+)$|', $folder, $m)) {
+                    $owner = $m[1] . '@' . $m[2];
+                }
+                foreach (array_keys($acl) as $key) {
+                    if ($owner && $key === $owner) {
+                        // Don't even try to remove the folder's owner entry
+                        continue;
+                    }
+                    if (!in_array($key, $idents)) {
+                        if ($dry_run) {
+                            echo "{$folder} {$key} {$acl[$key]}\n";
+                        } else {
+                            \Log::info("Cleanup: Removing {$key} from ACL on {$folder}");
+                            $imap->deleteACL($folder, $key);
+                        }
+                    }
+                }
             }
         };
 

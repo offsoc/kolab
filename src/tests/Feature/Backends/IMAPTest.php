@@ -84,6 +84,55 @@ class IMAPTest extends TestCase
     }
 
     /**
+     * Test aclCleanupDomain()
+     *
+     * @group imap
+     * @group ldap
+     */
+    public function testAclCleanupDomain(): void
+    {
+        $this->user = $user = $this->getTestUser('test-' . time() . '@kolab.org');
+        $this->group = $group = $this->getTestGroup('test-group-' . time() . '@kolab.org');
+
+        // SETACL requires that the user/group exists in LDAP
+        LDAP::createUser($user);
+        // LDAP::createGroup($group);
+
+        // First, set some ACLs that we'll expect to be removed later
+        $imap = $this->getImap();
+
+        $this->assertTrue($imap->setACL('user/john@kolab.org', 'anyone', 'lrs'));
+        $this->assertTrue($imap->setACL('user/john@kolab.org', 'jack@kolab.org', 'lrs'));
+        $this->assertTrue($imap->setACL('user/john@kolab.org', $user->email, 'lrs'));
+        $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', 'anyone', 'lrs'));
+        $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', 'jack@kolab.org', 'lrs'));
+        $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', $user->email, 'lrs'));
+/*
+        $this->assertTrue($imap->setACL('user/john@kolab.org', $group->name, 'lrs'));
+        $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', $group->name, 'lrs'));
+
+        $group->delete();
+*/
+        $user->delete();
+
+        // Cleanup ACL for the domain
+        IMAP::aclCleanupDomain('kolab.org');
+
+        $acl = $imap->getACL('user/john@kolab.org');
+        $this->assertTrue(is_array($acl) && !isset($acl[$user->email]));
+        $this->assertTrue(is_array($acl) && isset($acl['jack@kolab.org']));
+        $this->assertTrue(is_array($acl) && isset($acl['anyone']));
+        $this->assertTrue(is_array($acl) && isset($acl['john@kolab.org']));
+        // $this->assertTrue(is_array($acl) && !isset($acl[$group->name]));
+
+        $acl = $imap->getACL('shared/Resources/Conference Room #1@kolab.org');
+        $this->assertTrue(is_array($acl) && !isset($acl[$user->email]));
+        $this->assertTrue(is_array($acl) && isset($acl['jack@kolab.org']));
+        $this->assertTrue(is_array($acl) && isset($acl['anyone']));
+        // $this->assertTrue(is_array($acl) && !isset($acl[$group->name]));
+    }
+
+    /**
      * Test creating/updating/deleting an IMAP account
      *
      * @group imap

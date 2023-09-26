@@ -26,6 +26,9 @@ class Kernel extends ConsoleKernel
         // This removes deleted storage files/file chunks from the filesystem
         $schedule->command('fs:expunge')->hourly();
 
+        // This cleans up IMAP ACL for deleted users/etc.
+        //$schedule->command('imap:cleanup')->dailyAt('03:00');
+
         // This notifies users about an end of the trial period
         $schedule->command('wallet:trial-end')->dailyAt('07:00');
 
