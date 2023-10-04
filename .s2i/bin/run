@@ -34,9 +34,11 @@ if [ ! -f 'resources/countries.php' ]; then
 fi
 
 
+echo "----> Waiting for the database to become available"
 ./artisan db:ping --wait || exit 1
 
 if [ ! -z "${OPENEXCHANGERATES_API_KEY}" ]; then
+    echo "----> Importing exchange rates"
     ./artisan data:import:open-exchange-rates
 fi
 
