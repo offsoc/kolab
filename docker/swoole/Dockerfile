@@ -19,6 +19,8 @@ RUN dnf -y install \
         make \
         npm \
         openssl-devel \
+        openssl \
+        curl \
         patch \
         iputils \
         bind-utils \
