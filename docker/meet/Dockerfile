@@ -8,6 +8,7 @@ RUN dnf -y install \
     dnf clean all
 
 ARG GIT_REF=master
+ENV DEBUG="kolabmeet-server* mediasoup*"
 COPY build.sh /build.sh
 RUN /build.sh
 COPY init.sh /init.sh

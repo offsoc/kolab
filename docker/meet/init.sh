@@ -8,5 +8,4 @@ set -e
 cd /src/meetsrc
 # npm install
 # npm install -g nodemon
-export DEBUG="kolabmeet-server* mediasoup*"
 exec nodemon server.js
