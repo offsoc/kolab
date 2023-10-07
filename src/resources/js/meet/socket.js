@@ -12,16 +12,16 @@ function Socket(url, options)
         transports: [ 'websocket' ]
     })
 
-    socket.io.on("reconnect_attempt", () => {
-        console.log(`WebSocket re-connect attempt`)
+    socket.io.on("reconnect_attempt", (attempt) => {
+        console.log(`WebSocket re-connect attempt ${attempt} on ${url}`)
     });
 
-    socket.io.on("reconnect_error", () => {
-        console.log(`WebSocket re-connect error`)
+    socket.io.on("reconnect_error", (error) => {
+        console.log(`WebSocket re-connect error ${error}`)
     });
 
-    socket.io.on("reconnect", () => {
-        console.log(`WebSocket re-connect`)
+    socket.io.on("reconnect", (attempt) => {
+        console.log(`WebSocket re-connect ${attempt}`)
     });
 
     socket.io.on('reconnect_failed', () => {
@@ -31,15 +31,15 @@ function Socket(url, options)
     })
 
     socket.on('connect', () => {
-        console.log('WebSocket connect: ' + socket.id)
+        console.log(`WebSocket connect on socket ${socket.id}: ${url}`)
     })
 
-    socket.on('connect_error', () => {
-        console.log('WebSocket connect_error: ' + socket.id)
+    socket.on('connect_error', (error) => {
+        console.log(`WebSocket connect_error on url ${url}: ${error}`)
     })
 
     socket.on('disconnect', reason => {
-        console.log('WebSocket disconnect: ' + reason)
+        console.log(`WebSocket disconnect: ${reason}`)
 
         this.trigger('disconnect', reason)
     })
