@@ -230,7 +230,7 @@ async function runHttpsServer() {
         if ('role' in data)
             peer.setRole(data.role);
 
-        const proto = config.tls ? 'wss' : 'ws';
+        const proto = config.tls || config.forceWSS ? 'wss' : 'ws';
 
         res.json({
             id: peer.id,

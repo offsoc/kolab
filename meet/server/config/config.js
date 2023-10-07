@@ -23,6 +23,8 @@ module.exports =
         cert: process.env.SSL_CERT || `/etc/pki/tls/certs/kolab.hosted.com.cert`,
         key: process.env.SSL_KEY || `/etc/pki/tls/certs/kolab.hosted.com.key`,
     },
+    // force a wss websocket if ssl is terminated externally
+    forceWSS: process.env.FORCE_WSS,
     // listening Host or IP
     // Use "0.0.0.0" or "::") to listen on every IP.
     listeningHost: process.env.LISTENING_HOST || "0.0.0.0",
