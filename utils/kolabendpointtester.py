@@ -424,7 +424,7 @@ def test_dns(host, verbose = False):
             print("  ERROR on record", record)
 
     if not success:
-        print(f"=> ERROR: Dns entires on {host} not available")
+        print_error(f"Dns entires on {host} not available")
 
     return success
 
@@ -449,7 +449,7 @@ def test_email_dns(host, verbose = False):
             print("  ERROR on record", record)
 
     if not success:
-        print(f"=> ERROR: Dns entires on {host} not available")
+        print_error(f"Dns entires on {host} not available")
 
     return success
 
@@ -591,6 +591,8 @@ def main():
     parser.add_argument("--password", help="User password")
     parser.add_argument("--imap", help="IMAP URI")
     parser.add_argument("--dav", help="DAV URI")
+    parser.add_argument("--autoconfig", help="Check autoconfig")
+    parser.add_argument("--dns", help="Check dns")
     parser.add_argument("--activesync", help="ActiveSync URI")
     parser.add_argument("--fb", help="Freebusy url as displayed in roundcube")
     parser.add_argument("--verbose", action='store_true', help="Verbose output")
@@ -610,15 +612,17 @@ def main():
                 # Kolabnow doesn't support this atm (it offers the redirect on apps.kolabnow.com),
                 # so we ignore the error for now
 
-    if test_autoconfig(options.host, options.username, options.password, options.verbose):
-        print_success("Autoconf available")
-    else:
-        error = True
+    if options.autoconfig:
+        if test_autoconfig(options.host, options.username, options.password, options.verbose):
+            print_success("Autoconf available")
+        else:
+            error = True
 
     if options.activesync:
-        if test_autodiscover_activesync(options.host, options.activesync, options.username, options.password, options.verbose):
-            print_success("Activesync Autodsicovery available")
-            # Kolabnow doesn't support this, so we ignore the error for now
+        if options.autoconfig:
+            if test_autodiscover_activesync(options.host, options.activesync, options.username, options.password, options.verbose):
+                print_success("Activesync Autodsicovery available")
+                # Kolabnow doesn't support this, so we ignore the error for now
 
         if test_activesync(options.activesync, options.username, options.password, options.verbose):
             print_success("Activesync available")
@@ -637,16 +641,17 @@ def main():
         else:
             error = True
 
-    if test_dns(options.host, options.verbose):
-        print(f"=> DNS entries on {options.host} available")
-    else:
-        error = True
+    if options.dns:
+        if test_dns(options.host, options.verbose):
+            print(f"=> DNS entries on {options.host} available")
+        else:
+            error = True
 
-    userhost = options.username.split('@')[1]
-    if test_email_dns(userhost, options.verbose):
-        print(f"=> DNS entries on {userhost} available")
-    else:
-        error = True
+        userhost = options.username.split('@')[1]
+        if test_email_dns(userhost, options.verbose):
+            print(f"=> DNS entries on {userhost} available")
+        else:
+            error = True
 
     if test_certificates(options.host, options.dav, options.imap, options.verbose):
         print_success("All certificates are valid")
