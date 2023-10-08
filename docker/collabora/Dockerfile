@@ -1,0 +1,65 @@
+FROM almalinux:8
+
+LABEL maintainer="contact@apheleia-it.ch"
+LABEL dist=centos8
+LABEL tier=${TIER}
+
+ENV DISTRO=centos8
+ENV LANG=en_US.utf8
+ENV LC_ALL=en_US.utf8
+
+# Add EPEL.
+RUN dnf -y install dnf-plugin-config-manager && \
+    dnf config-manager --set-enabled powertools && \
+    dnf -y install epel-release && \
+    dnf -y install iputils vim-enhanced bind-utils && \
+    dnf clean all
+RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+
+ARG CUSTOMER_HASH
+
+RUN id cool || (groupadd -g 1001 cool && useradd -d /opt/cool/ -u 1001 -g 1001 cool)
+RUN rpm --import "https://collaboraoffice.com/repos/CollaboraOnline/22.05/customer-centos8-$CUSTOMER_HASH/repodata/repomd.xml.key" && \
+    dnf config-manager --add-repo "https://collaboraoffice.com/repos/CollaboraOnline/22.05/customer-centos8-$CUSTOMER_HASH" && \
+    dnf -y --setopt tsflags= install \
+    openssl \
+    xmlstarlet \
+    collabora-online-brand \
+    coolwsd \
+    collaboraoffice-dict-de \
+    collaboraofficebasis-de \
+    collaboraoffice-dict-en \
+    collaboraofficebasis-en-GB \
+    collaboraoffice-dict-es \
+    collaboraofficebasis-es \
+    collaboraoffice-dict-fr \
+    collaboraofficebasis-fr \
+    collaboraoffice-dict-it \
+    collaboraofficebasis-it \
+    collaboraoffice-dict-nl \
+    collaboraofficebasis-nl \
+    collaboraoffice-dict-pt-BR \
+    collaboraofficebasis-pt-BR \
+    collaboraoffice-dict-pt-PT \
+    collaboraofficebasis-pt \
+    collaboraoffice-dict-ru \
+    collaboraofficebasis-ru && \
+    dnf clean all
+
+RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
+
+RUN setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /usr/bin/coolforkit && \
+    setcap cap_sys_admin=ep /usr/bin/coolmount
+
+WORKDIR /opt/cool/
+
+ADD init.sh /init.sh
+
+RUN chown -R 1001:0 /etc/coolwsd /opt/ && \
+    chmod -R g=u /etc/coolwsd /opt/
+
+USER 1001
+
+CMD ["/init.sh"]
+
+EXPOSE 9980

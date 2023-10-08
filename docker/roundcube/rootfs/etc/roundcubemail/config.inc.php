@@ -7,6 +7,8 @@
     $dbHost = getenv('DB_HOST');
     $config['db_dsnw'] = "mysql://$dbUsername:$dbPass@$dbHost/$dbDatabase";
 
+    $config['fileapi_wopi_office'] = getenv('FILEAPI_WOPI_OFFICE');
+
     $config['session_domain'] = '';
     $config['des_key'] = "wgtmEUSH9KOZC9rK8Qa5A6r4";
     $config['username_domain'] = 'kolab.org';
@@ -250,6 +252,5 @@
         );
 
     @include('kolab_syncroton.inc.php');
-
 
 ?>
