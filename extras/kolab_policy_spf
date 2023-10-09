@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """
 This is the implementation of a (postfix) MTA policy service to enforce the
 Sender Policy Framework.
