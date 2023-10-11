@@ -161,6 +161,7 @@ services:
       - DB_RC_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
       - IMAP_HOST=tls://haproxy
       - IMAP_PORT=145
+      - IMAP_PROXY_PROTOCOL=2
       - IMAP_ADMIN_LOGIN=${IMAP_ADMIN_LOGIN}
       - IMAP_ADMIN_PASSWORD=${IMAP_ADMIN_PASSWORD}
       - MAIL_HOST=tls://kolab

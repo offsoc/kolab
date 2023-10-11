@@ -28,7 +28,7 @@
                     'verify_peer' => false,
                     'allow_self_signed' => true
                 ],
-            'proxy_protocol' => 2
+            'proxy_protocol' => getenv('IMAP_PROXY_PROTOCOL')
         ];
     $config['proxy_whitelist'] = ['127.0.0.1', '172.18.0.7'];
 
