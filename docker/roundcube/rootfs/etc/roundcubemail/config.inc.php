@@ -8,6 +8,8 @@
     $config['db_dsnw'] = "mysql://$dbUsername:$dbPass@$dbHost/$dbDatabase";
 
     $config['fileapi_wopi_office'] = getenv('FILEAPI_WOPI_OFFICE');
+    $config['fileapi_manticore'] = false;
+    $config['fileapi_plugins'] = ['kolab_folders'];
 
     $config['session_domain'] = '';
     $config['des_key'] = "wgtmEUSH9KOZC9rK8Qa5A6r4";
@@ -73,7 +75,7 @@
 
     // Plugins
     $config['plugins'] = array(
-            'kolab_auth',
+            // 'kolab_auth',
             'acl',
             'archive',
             'calendar',
@@ -81,7 +83,7 @@
             'kolab_activesync',
             'kolab_addressbook',
             'kolab_config',
-            'kolab_delegation',
+            //'kolab_delegation',
             'kolab_files',
             'kolab_folders',
             'kolab_notes',
