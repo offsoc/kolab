@@ -2,7 +2,8 @@
 
 // URL of kolab-chwala installation
 $config['kolab_files_url'] = 'https://' . ($_SERVER["HTTP_HOST"] ?? null) . '/chwala/';
-$config['kolab_files_server_url'] = 'http://127.0.0.1/chwala/';
+// This is how the plugin does chwala api requests on the server
+$config['kolab_files_server_url'] = '';
 
 // List of files list columns. Available are: name, size, mtime, type
 $config['kolab_files_list_cols'] = array('name', 'mtime', 'size');
