@@ -6,8 +6,7 @@ pushd /opt/app-root/src/
 
 # Clone what we don't find (roundcubemail-skin-elastic is not publicly available, so can't be included this way)
 if [ ! -d roundcubemail ]; then
-    # Push this branch on an apheleia-it repo
-    git clone --branch dev/kolab-1.5 https://github.com/cmollekopf/roundcubemail.git roundcubemail
+    git clone --branch dev/kolab-1.5 https://git.kolab.org/source/roundcubemail.git roundcubemail
 fi
 if [ ! -d roundcubemail-plugins-kolab ]; then
     git clone --branch master https://git.kolab.org/diffusion/RPK/roundcubemail-plugins-kolab.git roundcubemail-plugins-kolab

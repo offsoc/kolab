@@ -32,6 +32,7 @@ FLUSH PRIVILEGES;
 EOF
 
 # Run roundcube and plugin database initializations
+echo "Initializing tables..."
 bin/initdb.sh --dir SQL/ || :
 
 for plugin in $(find plugins -mindepth 1 -maxdepth 1 -type d | sort); do
@@ -52,15 +53,16 @@ for plugin in $(find plugins -mindepth 1 -maxdepth 1 -type d | sort); do
     fi
 done
 
-# FIXME should we be runnin updates?
-# bin/updatedb.sh --dir SQL/ --package roundcube
-# bin/updatedb.sh --dir plugins/libkolab/SQL/ --package libkolab
-# bin/updatedb.sh --dir plugins/calendar/SQL/ --package calendar
-
 popd
 
 roundcubemail/bin/initdb.sh --dir syncroton/docs/SQL/ || :
 roundcubemail/bin/initdb.sh --dir chwala/doc/SQL/ || :
+
+echo "Updating tables..."
+roundcubemail/bin/updatedb.sh --dir syncroton/docs/SQL/ --package syncroton || :
+roundcubemail/bin/updatedb.sh --dir roundcubemail/SQL/ --package roundcube || :
+roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/libkolab/SQL/ --package libkolab || :
+roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/kolab-calendar/SQL/ --package calendar-kolab || :
 
 echo ""
 echo "Done, starting httpd..."

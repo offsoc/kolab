@@ -1,5 +1,5 @@
 #!/bin/bash
-#Update from source (rather then via composer which updates to the latest commit)
+#Update from source (rather than via composer which updates to the latest commit)
 
 for repo in roundcubemail syncroton iRony chwala autoconf freebusy
 do

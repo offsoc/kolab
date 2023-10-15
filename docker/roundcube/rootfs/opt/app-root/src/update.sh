@@ -114,8 +114,7 @@ DES_KEY=$(openssl rand -base64 24);
 sed -i -r -e "s|\$config\['des_key'\] = .*$|\$config['des_key'] = \"$DES_KEY\";|g" config/config.inc.php
 
 
-# Update plugins on update
-
+# Update plugins
 pushd /opt/app-root/src/roundcubemail-plugins-kolab/plugins
 for plugin in $(ls -1d)
 do
@@ -130,7 +129,7 @@ done
 popd
 
 
-##Fix permissions
+# Fix permissions
 chmod 777 -R logs
 chmod 777 -R temp
 
@@ -139,6 +138,7 @@ popd
 # Maybe redo this in case of updates
 # Install chwala
 pushd chwala
+
 
 # Openshift (I think) doesn't handle urls without a trailing slash well. In this case we end up with a 301 redirect to the http url, which breaks the file viewer.
 patch -p1 <<'EOF'
@@ -169,7 +169,6 @@ chmod 777 -R cache
 chmod 777 -R logs
 popd
 
-
 # Install iRony
 pushd iRony
 rm -f lib/FileAPI lib/Roundcube lib/plugins vendor
@@ -184,7 +183,6 @@ chmod 777 -R logs
 mkdir -p temp
 chmod 777 -R temp
 popd
-
 
 # Install syncroton
 pushd syncroton
@@ -213,8 +211,3 @@ mkdir -p logs
 chmod 777 -R logs
 popd
 
-# Not a good idea during an openshift build
-# roundcubemail/bin/updatedb.sh --dir syncroton/docs/SQL/ --package syncroton
-# roundcubemail/bin/updatedb.sh --dir roundcubemail/SQL/ --package roundcube
-# roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/libkolab/SQL/ --package libkolab
-# roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/kolab-calendar/SQL/ --package calendar-kolab
