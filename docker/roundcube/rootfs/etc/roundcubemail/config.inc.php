@@ -10,6 +10,8 @@
     $config['fileapi_wopi_office'] = getenv('FILEAPI_WOPI_OFFICE');
     $config['fileapi_manticore'] = false;
     $config['fileapi_plugins'] = ['kolab_folders'];
+    # Force https if we're behind a proxy. Browsers don't allow mixed content.
+    $config['file_api_url'] = 'https://' . ($_SERVER['HTTP_HOST'] ?? null) . '/chwala/api/';
 
     $config['session_domain'] = '';
     $config['des_key'] = "wgtmEUSH9KOZC9rK8Qa5A6r4";
