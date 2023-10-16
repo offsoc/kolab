@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands\User;
 
+use App\Backends\IMAP;
+use App\Backends\LDAP;
 use App\Console\Command;
+use App\Domain;
 use App\User;
 
 class ResyncCommand extends Command
@@ -97,9 +100,37 @@ class ResyncCommand extends Command
                         continue;
                     }
 
+                    $job = \App\Jobs\User\UpdateJob::class;
+
+                    // Make sure the LDAP entry exists, fix that
+                    if ($with_ldap && $user->isLdapReady()) {
+                        // Check (and fix) the custom domain state
+                        $domain = $user->domain();
+                        if (!$domain->isPublic() && !LDAP::getDomain($domain->namespace)) {
+                            $domain->status &= ~Domain::STATUS_LDAP_READY;
+                            $domain->save();
+                            \App\Jobs\Domain\CreateJob::dispatch($domain->id);
+                        }
+
+                        if (!LDAP::getUser($user->email)) {
+                            $user->status &= ~User::STATUS_LDAP_READY;
+                            $job = \App\Jobs\User\CreateJob::class;
+                        }
+                    }
+
+                    // Make sure the IMAP mailbox exists
+                    if ($user->isImapReady()) {
+                        if (!IMAP::verifyAccount($user->email)) {
+                            $user->status &= ~User::STATUS_IMAP_READY;
+                            $job = \App\Jobs\User\CreateJob::class;
+                        }
+                    }
+
+                    $user->update();
+
                     // We push the update only if a specific user is requested,
                     // We don't want to flood the database/backend with an update of all users
-                    \App\Jobs\User\UpdateJob::dispatch($user->id);
+                    $job::dispatch($user->id);
 
                     $this->info("{$user->email}: pushed");
                 } else {
