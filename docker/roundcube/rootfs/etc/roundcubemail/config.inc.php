@@ -166,7 +166,7 @@
     $config['log_session'] = false;
     $config['sql_debug'] = false;
     $config['memcache_debug'] = false;
-    $config['imap_debug'] = false;
+    $config['imap_debug'] = true;
     $config['ldap_debug'] = false;
     $config['smtp_debug'] = false;
 
