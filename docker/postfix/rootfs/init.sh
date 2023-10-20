@@ -1,5 +1,9 @@
 #!/bin/bash
 
+cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/tls/private/postfix.pem
+chown postfix:mail /etc/pki/tls/private/postfix.pem
+chmod 655 /etc/pki/tls/private/postfix.pem
+
 sed -i -r \
     -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
     /etc/saslauthd.conf

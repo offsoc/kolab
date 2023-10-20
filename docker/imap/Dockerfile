@@ -28,9 +28,9 @@ RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/de
 
 WORKDIR /root/
 
-RUN dnf -y group install "Development Tools"
-RUN dnf -y builddep cyrus-imapd
-RUN dnf -y install git perl-devel cyrus-sasl cyrus-sasl-plain procps-ng iputils bind-utils sudo rsyslog
+RUN dnf -y group install "Development Tools"; \
+    dnf -y builddep cyrus-imapd; \
+    dnf -y install git perl-devel cyrus-sasl cyrus-sasl-plain procps-ng iputils bind-utils sudo
 
 RUN git clone --branch dev/mollekopf https://git.kolab.org/source/cyrus-imapd && \
     cd cyrus-imapd && \
@@ -43,15 +43,8 @@ COPY cyrus.conf /etc/cyrus.conf
 COPY imapd.conf /etc/imapd.conf
 COPY imapd.annotations.conf /etc/imapd.annotations.conf
 COPY saslauthd.conf /etc/saslauthd.conf
-COPY rsyslog.conf /etc/rsyslog.conf
 
-ADD kolab.hosted.com.cert /etc/pki/tls/certs/kolab.hosted.com.cert
-ADD kolab.hosted.com.chain.pem /etc/pki/tls/certs/kolab.hosted.com.chain.pem
-ADD kolab.hosted.com.key /etc/pki/tls/certs/kolab.hosted.com.key
 ADD init.sh /init.sh
-
-RUN mkdir -p /etc/pki/cyrus-imapd/ && cat /etc/pki/tls/certs/kolab.hosted.com.cert /etc/pki/tls/certs/kolab.hosted.com.chain.pem /etc/pki/tls/certs/kolab.hosted.com.key > /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem && \
-    chown 1001:0 /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
 
 # RUN chgrp -R 0 /opt/app-root/src && \
 #     chmod -R g=u /opt/app-root/src
@@ -64,13 +57,15 @@ RUN mkdir -p /run/saslauthd && \
     mkdir -p /var/lib/imap && \
     chmod 777 /var/lib/imap && \
     mkdir -p /var/spool/imap && \
-    chmod 777 /var/spool/imap
+    chmod 777 /var/spool/imap && \
+    mkdir -p /etc/pki/cyrus-imapd/ && \
+    chmod 777 /etc/pki/cyrus-imapd/
 
 VOLUME [ "/var/spool/imap" ]
 VOLUME [ "/var/lib/imap" ]
 
-RUN chown -R 1001:0 /etc /var/lib/imap /var/spool/imap /var/run /run && \
-    chmod -R g=u /etc /var/lib/imap /var/spool/imap /var/run /run
+RUN chown -R 1001:0 /etc /var/lib/imap /var/spool/imap /var/run /run /etc/pki/cyrus-imapd/ && \
+    chmod -R g=u /etc /var/lib/imap /var/spool/imap /var/run /run /etc/pki/cyrus-imapd/
 
 RUN echo 'default ALL=NOPASSWD: ALL' >> /etc/sudoers && \
     chown root:root /etc/sudoers /etc/sudo.conf /etc/sudoers.d

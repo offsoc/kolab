@@ -10,6 +10,8 @@ sed -i -r \
     -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
     /etc/saslauthd.conf
 
+cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
+chown 1001:0 /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
 
 /usr/sbin/saslauthd -m /run/saslauthd -a httpform -d &
 # Can't run as user because of /dev/ permissions so far.
