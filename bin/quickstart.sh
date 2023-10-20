@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 function die() {
     echo "$1"
@@ -34,8 +35,23 @@ pkill -9 -f artisan || :
 pkill -9 -f swoole || :
 
 bin/regen-certs
-docker-compose build coturn ldap kolab mariadb meet pdns proxy redis haproxy roundcube
-docker-compose up -d coturn ldap kolab mariadb meet pdns redis roundcube minio
+
+docker-compose build
+
+if grep -q "ldap" docker-compose.override.yml; then
+    docker-compose up -d ldap
+fi
+# We grep for something that is unique to the container
+if grep -q "kolab-init" docker-compose.override.yml; then
+    docker-compose up -d kolab
+fi
+if grep -q "imap" docker-compose.override.yml; then
+    docker-compose up -d imap
+fi
+if grep -q "postfix" docker-compose.override.yml; then
+    docker-compose up -d postfix
+fi
+docker-compose up -d coturn mariadb meet pdns redis roundcube minio
 
 # Workaround until we have docker-compose --wait (https://github.com/docker/compose/pull/8777)
 function wait_for_container {
@@ -65,7 +81,10 @@ if [ "$1" == "--nodev" ]; then
     docker-compose build webapp
     docker-compose up -d webapp
     wait_for_container 'kolab-webapp'
-    docker-compose up --no-deps -d proxy haproxy
+    if grep -q "haproxy" docker-compose.override.yml; then
+        docker-compose up --no-deps -d haproxy
+    fi
+    docker-compose up --no-deps -d proxy
     exit 0
 fi
 echo "Starting the development environment"
@@ -93,8 +112,10 @@ rpm -qv php-mysqlnd >/dev/null 2>&1 || \
 test ! -z "$(php --modules | grep swoole)" || \
     die "Is swoole installed?"
 
-# Ensure the containers we depend on are fully started
-wait_for_container 'kolab'
+# We grep for something that is unique to the container
+if grep -q "kolab-init" docker-compose.override.yml; then
+    wait_for_container 'kolab'
+fi
 wait_for_container 'kolab-redis'
 
 pushd ${base_dir}/src/
@@ -130,4 +151,7 @@ nohup ./artisan horizon > horizon.out &
 
 popd
 
-docker-compose up --no-deps -d proxy haproxy
+if grep -q "haproxy" docker-compose.override.yml; then
+    docker-compose up --no-deps -d haproxy
+fi
+docker-compose up --no-deps -d proxy
