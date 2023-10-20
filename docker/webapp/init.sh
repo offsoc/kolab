@@ -37,5 +37,5 @@ if test "$( env APP_DEBUG=false ./artisan -n users | wc -l )" -lt "1"; then
     php -dmemory_limit=512M ./artisan db:seed
 fi
 ./artisan data:import || :
-nohup ./artisan horizon >/dev/null 2>&1 &
+nohup ./artisan horizon 2>&1 &
 ./artisan octane:start --host=$(grep OCTANE_HTTP_HOST .env | tail -n1 | sed "s/OCTANE_HTTP_HOST=//")
