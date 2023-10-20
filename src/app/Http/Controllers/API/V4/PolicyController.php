@@ -105,7 +105,7 @@ class PolicyController extends Controller
         }
 
         // user nor domain whitelisted, continue scrutinizing the request
-        $recipients = $data['recipients'];
+        $recipients = (array)$data['recipients'];
         sort($recipients);
 
         $recipientCount = count($recipients);
