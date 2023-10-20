@@ -69,6 +69,9 @@ services:
       - DB_HKCCP_DATABASE=${DB_DATABASE}
       - DB_HKCCP_USERNAME=${DB_USERNAME}
       - DB_HKCCP_PASSWORD=${DB_PASSWORD}
+      - DB_KOLAB_DATABASE=kolab
+      - DB_KOLAB_USERNAME=kolab
+      - DB_KOLAB_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
     healthcheck:
       interval: 10s
       test: test -e /var/run/mysqld/mysqld.sock
@@ -80,6 +83,7 @@ services:
         ipv4_address: 172.18.0.3
     volumes:
       - ./docker/mariadb/mysql-init/:/docker-entrypoint-initdb.d/
+      - ./docker/mariadb/mysql-update/:/always-initdb.d/
       - mariadb:/var/lib/mysql
   pdns:
     build:
