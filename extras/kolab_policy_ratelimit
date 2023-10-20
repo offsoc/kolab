@@ -1,6 +1,10 @@
 #!/usr/bin/python3
 """
 This policy applies rate limitations
+
+To manually test this you can issue something like this (see https://www.postfix.org/SMTPD_POLICY_README.html from more info on the protocol):
+echo -e "request=smtpd_access_policy\nsender=test1@kolab.org\nrecipient=test2@kolab.org\ninstance=testinstance\nprotocol_state=RCPT\n\n" | /usr/libexec/postfix/kolab_policy_ratelimit
+
 """
 
 import json
@@ -85,6 +89,7 @@ def read_request_input():
 
         request_line = sys.stdin.readline()
 
+        # The empty line terminates the request
         if request_line.strip() == '':
             if 'request' in policy_request:
                 end_of_request = True
