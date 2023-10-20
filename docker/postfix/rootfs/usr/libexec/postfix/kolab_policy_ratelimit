@@ -55,7 +55,7 @@ class PolicyRequest:
                     'sender': self.sender,
                     'recipients': self.recipients
                 },
-                verify=True
+                verify=False
             )
 
         # pylint: disable=broad-except
