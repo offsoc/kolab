@@ -10,15 +10,15 @@ services:
         condition: service_healthy
     build:
       context: ./docker/proxy/
-      args:
-        APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
-        SSL_CERTIFICATE: ${PROXY_SSL_CERTIFICATE:?err}
-        SSL_CERTIFICATE_KEY: ${PROXY_SSL_CERTIFICATE_KEY:?err}
     healthcheck:
       interval: 10s
       test: "kill -0 $$(cat /run/nginx.pid)"
       timeout: 5s
       retries: 30
+    environment:
+      - APP_WEBSITE_DOMAIN=${APP_WEBSITE_DOMAIN:?err}
+      - SSL_CERTIFICATE=${PROXY_SSL_CERTIFICATE:?err}
+      - SSL_CERTIFICATE_KEY=${PROXY_SSL_CERTIFICATE_KEY:?err}
     container_name: kolab-proxy
     restart: on-failure
     hostname: proxy
