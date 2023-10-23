@@ -22,50 +22,6 @@
 
     $config['calendar_contact_birthdays'] = true;
 
-    $config['calendar_resources_driver'] = 'ldap';
-
-    $config['calendar_resources_directory'] = array(
-            'name'                  => 'Kolab Resources',
-            'hosts'                 => getenv('LDAP_HOST'),
-            'port'                  => 389,
-            'use_tls'               => false,
-            'base_dn'               => 'dc=hosted,dc=com',
-            'user_specific'         => true,
-            'bind_dn'               => '%dn',
-            'bind_pass'             => '',
-            'search_base_dn'        => 'dc=hosted,dc=com',
-            'search_bind_dn'        => 'uid=kolab-service,ou=Special Users,dc=mgmt,dc=com',
-            'search_bind_pw'        => getenv('LDAP_SERVICE_BIND_PW'),
-            'search_filter'         => '(&(objectClass=inetorgperson)(mail=%fu))',
-            'ldap_version'          => 3,
-            'filter'                => '(|(|(objectclass=groupofuniquenames)(objectclass=groupofurls))(objectclass=kolabsharedfolder))',
-            'search_fields'         => array('cn'),
-            'sort'                  => array('cn'),
-            'scope'                 => 'sub',
-            'fuzzy_search'          => true,
-            'fieldmap'              => array(
-                    // Internal     => LDAP
-                    'name'          => 'cn',
-                    'email'         => 'mail',
-                    'owner'         => 'owner',
-                    'description'   => 'description',
-                    'attributes'    => 'kolabdescattribute',
-                    'members'       => 'uniquemember',
-                    // these mappings are required for owner display
-                    'phone'         => 'telephoneNumber',
-                    'mobile'        => 'mobile',
-                ),
-
-            'class_type_map'        => array(
-                    'kolabsharedfolder'     => 'resource',
-                    'groupofuniquenames'    => 'collection',
-                ),
-
-            'groups'                => array(
-                    'name_attr'     => 'cn',
-                ),
-        );
-
     if (file_exists(RCUBE_CONFIG_DIR . '/' . ($_SERVER["HTTP_HOST"] ?? null) . '/' . basename(__FILE__))) {
         include_once(RCUBE_CONFIG_DIR . '/' . ($_SERVER["HTTP_HOST"] ?? null) . '/' . basename(__FILE__));
     }

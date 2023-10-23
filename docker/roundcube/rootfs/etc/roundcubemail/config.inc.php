@@ -64,10 +64,6 @@
     //         )
     // );
 
-    // LDAP Settings
-    $config['ldap_cache'] = 'db';
-    $config['ldap_cache_ttl'] = '1h';
-
     // Kolab specific defaults
     $config['product_name'] = 'Kolab Groupware';
     $config['quota_zero_as_unlimited'] = false;
@@ -169,7 +165,6 @@
     $config['sql_debug'] = false;
     $config['memcache_debug'] = false;
     $config['imap_debug'] = true;
-    $config['ldap_debug'] = false;
     $config['smtp_debug'] = false;
 
     $config['skin'] = 'kolab';
@@ -186,68 +181,15 @@
     $config['junk_mbox'] = 'Spam';
     $config['default_folders'] = array('INBOX', 'Drafts', 'Sent', 'Spam', 'Trash', 'Archive');
 
-    $config['address_book_type'] = 'ldap';
+    // $config['address_book_type'] = 'ldap';
     $config['autocomplete_min_length'] = 3;
     $config['autocomplete_threads'] = 0;
     $config['autocomplete_max'] = 15;
-    $config['ldap_public'] = array(
-            'kolab_addressbook' => array(
-                    'name'                      => 'Global Address Book',
-                    'hosts'                     => Array(getenv('LDAP_HOST')),
-                    'port'                      => 389,
-                    'use_tls'                   => false,
-                    'base_dn'                   => 'dc=hosted,dc=com',
-                    'user_specific'             => true,
-                    'bind_dn'                   => '%dn',
-                    'bind_pass'                 => '',
-                    'search_base_dn'            => 'dc=hosted,dc=com',
-                    'search_bind_dn'            => 'uid=kolab-service,ou=Special Users,dc=mgmt,dc=com',
-                    'search_bind_pw'            => getenv('LDAP_SERVICE_BIND_PW'),
-                    'search_filter'             => '(&(objectClass=inetorgperson)(mail=%fu))',
-                    'writable'                  => false,
-                    'LDAP_Object_Classes'       => array("top", "inetorgperson"),
-                    'required_fields'           => array("cn", "sn", "mail"),
-                    'LDAP_rdn'                  => 'uid',
-                    'ldap_version'              => 3,       // using LDAPv3
-                    'search_fields'             => array('displayname', 'mail'),
-                    'sort'                      => array('displayname', 'sn', 'givenname', 'cn'),
-                    'scope'                     => 'sub',
-                    'filter'                    => '(objectClass=inetorgperson)',
-                    'vlv'                       => true,
-                    'vlv_search'                => true,
-                    'fuzzy_search'              => true,
-                    'sizelimit'                 => '0',
-                    'timelimit'                 => '0',
-                    'fieldmap'                  => Array(
-                            // Roundcube        => LDAP
-                            'name'              => 'displayName',
-                            'surname'           => 'sn',
-                            'firstname'         => 'givenName',
-                            'middlename'        => 'initials',
-                            'email:primary'     => 'mail',
-                            'email:alias'       => 'alias',
-                            'email:personal'    => 'mailalternateaddress',
-                            'phone:main'        => 'telephoneNumber',
-                            'phone:work'        => 'alternateTelephoneNumber',
-                            'phone:mobile'      => 'mobile',
-                            'phone:work2'       => 'blackberry',
-                            'jobtitle'          => 'title',
-                            'manager'           => 'manager',
-                            'assistant'         => 'secretary',
-                            'photo'             => 'jpegphoto'
-                        ),
-                    'groups'                    => Array(
-                            'base_dn'           => 'dc=hosted,dc=com',
-                            'filter'            => '(&' . '(|(objectclass=groupofuniquenames)(objectclass=groupofurls))' . '(mail=*))',
-                            'object_classes'    => Array("top", "groupOfUniqueNames"),
-                            'member_attr'       => 'uniqueMember',
-                        ),
-                ),
-        );
 
-    $config['autocomplete_addressbooks'] = Array(
-            'kolab_addressbook'
-        );
+    //TODO we need an autocomplete addressbook again
+    // $config['autocomplete_addressbooks'] = Array(
+    //         'kolab_addressbook'
+    //     );
 
     $config['autocomplete_single'] = true;
 

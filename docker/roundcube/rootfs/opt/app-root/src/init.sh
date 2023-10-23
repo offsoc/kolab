@@ -4,13 +4,7 @@ echo "Starting"
 set -e
 set -x
 
-echo "push"
 pushd /opt/app-root/src/
-
-echo "..."
-# FIXME doesn't work in rootless
-# sed -i -r -e "s|service_bind_pw = .*$|service_bind_pw = $LDAP_SERVICE_BIND_PW|g" /etc/kolab/kolab.conf
-
 pushd roundcubemail
 
 ## Copy our configs over the default ones
