@@ -91,7 +91,6 @@
             'managesieve',
             'newmail_notifier',
             'odfviewer',
-            'password',
             'redundant_attachments',
             'tasklist',
             // contextmenu must be after kolab_addressbook (#444)
