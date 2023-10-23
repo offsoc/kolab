@@ -1,5 +1,9 @@
 version: '3'
 services:
+  roundcube:
+    environment:
+      - MAIL_HOST=postfix
+      - MAIL_PORT=10587
   proxy:
     depends_on:
       imap:
