@@ -193,10 +193,11 @@
             }
         },
         mounted() {
-            let param = this.$route.params.param;
+            let params = this.$route.path.split('/').filter(v => v.length > 0).slice(1)
 
-            if (this.$route.name == 'signup-invite') {
-                axios.get('/api/auth/signup/invitations/' + param, { loader: true })
+            if (params.length === 2 && params[0] === 'invite') {
+                // Invitation code
+                axios.get('/api/auth/signup/invitations/' + params[1], { loader: true })
                     .then(response => {
                         this.invitation = response.data
                         this.login = response.data.login
@@ -211,22 +212,20 @@
                     .catch(error => {
                         this.$root.errorHandler(error)
                     })
-            } else if (param) {
-                if (this.$route.path.indexOf('/signup/voucher/') === 0) {
-                    // Voucher (discount) code
-                    this.voucher = param
-                    this.displayForm(0)
-                } else if (/^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(param)) {
-                    // Verification code provided, auto-submit Step 2
-                    this.short_code = RegExp.$1
-                    this.code = RegExp.$2
-                    this.submitStep2(true)
-                } else if (/^([a-zA-Z_]+)$/.test(param)) {
-                    // Plan title provided, save it and display Step 1
-                    this.step0(param)
-                } else {
-                    this.$root.errorPage(404)
-                }
+            } else if (params.length === 2 && params[0] === 'voucher') {
+                // Voucher (discount) code
+                this.voucher = params[1]
+                this.displayForm(0)
+            } else if (params.length === 1 && /^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(params[0])) {
+                 // Verification code provided, auto-submit Step 2
+                this.short_code = RegExp.$1
+                this.code = RegExp.$2
+                this.submitStep2(true)
+            } else if (params.length === 1 && /^([a-zA-Z_]+)$/.test(params[0])) {
+                // Plan title provided, save it and display Step 1
+                this.step0(params[0])
+            } else if (params.length) {
+                this.$root.errorPage(404)
             } else {
                 this.displayForm(0)
             }
