@@ -127,6 +127,39 @@ services:
     ports:
       - "10587:10587"
       - "10025:10025"
+  amavis:
+    build:
+      context: ./docker/amavis/
+    # healthcheck:
+    #   interval: 10s
+    #   test: "$(echo | nc 127.0.0.1 10024) | grep "220""
+    #   timeout: 5s
+    #   retries: 30
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN}
+      - DB_HOST=mariadb
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
+    container_name: kolab-amavis
+    restart: on-failure
+    hostname: amavis
+    image: kolab-amavis
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.15
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    tty: true
+    #Volumes for clamav and spamassassin?
+    # volumes:
+    #   - postfix-spool:/var/spool/postfix
+    #   - postfix-lib:/var/lib/postfix
+    ports:
+      - "13024:13024"
 volumes:
   postfix-spool:
   postfix-lib:
