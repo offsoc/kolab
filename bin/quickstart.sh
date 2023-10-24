@@ -8,10 +8,6 @@ function die() {
     exit 1
 }
 
-rpm -qv docker-compose >/dev/null 2>&1 || \
-    test ! -z "$(which docker-compose 2>/dev/null)" || \
-    die "Is docker-compose installed?"
-
 test ! -z "$(grep 'systemd.unified_cgroup_hierarchy=0' /proc/cmdline)" || \
     die "systemd containers only work with cgroupv1 (use 'grubby --update-kernel=ALL --args=\"systemd.unified_cgroup_hierarchy=0\"' and a reboot to fix)"
 
@@ -19,13 +15,15 @@ base_dir=$(dirname $(dirname $0))
 
 
 
-export DOCKER_BUILDKIT=0
+export DOCKER_BUILDKIT=1
+export BUILDKIT_PROGRESS=plain
 
-docker-compose down -t 1 --remove-orphans
-docker volume rm kolab_mariadb || :
-docker volume rm kolab_imap || :
-docker volume rm kolab_ldap || :
-docker volume rm kolab_minio || :
+docker compose down -t 1 --remove-orphans
+volumes=($(docker volume ls -f name=kolab | awk '{if (NR > 1) print $2}'))
+for v in "${volumes[@]}"
+do
+    docker volume rm $v || :
+done
 
 # We can't use the following artisan commands because it will just block if redis is unavailable:
 # src/artisan octane:stop >/dev/null 2>&1 || :
@@ -36,63 +34,39 @@ pkill -9 -f swoole || :
 
 bin/regen-certs
 
-docker-compose build
+docker compose build
 
 # Build the murder setup if configured
 if grep -q "imap-frontend" docker-compose.override.yml; then
-    docker-compose build imap-frontend imap-backend imap-mupdate
+    docker compose build imap-frontend imap-backend imap-mupdate
 fi
 if grep -q "ldap" docker-compose.override.yml; then
-    docker-compose up -d ldap
+    docker compose up -d ldap
 fi
 # We grep for something that is unique to the container
 if grep -q "kolab-init" docker-compose.override.yml; then
-    docker-compose up -d kolab
+    docker compose up -d kolab
 fi
 if grep -q "imap" docker-compose.override.yml; then
-    docker-compose up -d imap
+    docker compose up -d imap
 fi
 if grep -q "postfix" docker-compose.override.yml; then
-    docker-compose up -d postfix
+    docker compose up -d postfix
 fi
 if grep -q "imap-frontend" docker-compose.override.yml; then
-    docker-compose up -d imap-frontend imap-backend imap-mupdate
+    docker compose up -d imap-frontend imap-backend imap-mupdate
 fi
 
-docker-compose up -d coturn mariadb meet pdns redis roundcube minio
-
-# Workaround until we have docker-compose --wait (https://github.com/docker/compose/pull/8777)
-function wait_for_container {
-    container_id="$1"
-    container_name="$(docker inspect "${container_id}" --format '{{ .Name }}')"
-    echo "Waiting for container: ${container_name} [${container_id}]"
-    waiting_done="false"
-    while [[ "${waiting_done}" != "true" ]]; do
-        container_state="$(docker inspect "${container_id}" --format '{{ .State.Status }}')"
-        if [[ "${container_state}" == "running" ]]; then
-            health_status="$(docker inspect "${container_id}" --format '{{ .State.Health.Status }}')"
-            echo "${container_name}: container_state=${container_state}, health_status=${health_status}"
-            if [[ ${health_status} == "healthy" ]]; then
-                waiting_done="true"
-            fi
-        else
-            echo "${container_name}: container_state=${container_state}"
-            waiting_done="true"
-        fi
-        sleep 1;
-    done;
-}
+docker compose up -d coturn mariadb meet pdns redis roundcube minio
 
 if [ "$1" == "--nodev" ]; then
     echo "starting everything in containers"
-    docker-compose -f docker-compose.build.yml build swoole
-    docker-compose build webapp
-    docker-compose up -d webapp
-    wait_for_container 'kolab-webapp'
+    docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml build swoole webapp
+    docker compose up -d --wait webapp
     if grep -q "haproxy" docker-compose.override.yml; then
-        docker-compose up --no-deps -d haproxy
+        docker compose up --no-deps -d haproxy
     fi
-    docker-compose up --no-deps -d proxy
+    docker compose up --no-deps -d proxy
     exit 0
 fi
 echo "Starting the development environment"
@@ -122,9 +96,10 @@ test ! -z "$(php --modules | grep swoole)" || \
 
 # We grep for something that is unique to the container
 if grep -q "kolab-init" docker-compose.override.yml; then
-    wait_for_container 'kolab'
+    docker compose up --no-recreate --wait kolab
 fi
-wait_for_container 'kolab-redis'
+docker compose up --no-recreate --wait redis
+
 
 pushd ${base_dir}/src/
 
@@ -160,6 +135,6 @@ nohup ./artisan horizon > horizon.out &
 popd
 
 if grep -q "haproxy" docker-compose.override.yml; then
-    docker-compose up --no-deps -d haproxy
+    docker compose up --no-deps -d haproxy
 fi
-docker-compose up --no-deps -d proxy
+docker compose up --no-deps -d proxy
