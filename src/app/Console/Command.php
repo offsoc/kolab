@@ -93,6 +93,7 @@ abstract class Command extends \Illuminate\Console\Command
     public function getObject($objectClass, $objectIdOrTitle, $objectTitle = null, $withDeleted = false)
     {
         if (!$withDeleted) {
+            // @phpstan-ignore-next-line
             $withDeleted = $this->hasOption('with-deleted') && $this->option('with-deleted');
         }
 
@@ -244,6 +245,7 @@ abstract class Command extends \Illuminate\Console\Command
             $entry->{$entry->getKeyName()}
         ];
 
+        // @phpstan-ignore-next-line
         foreach ($this->option('attr') as $attr) {
             if ($attr == $entry->getKeyName()) {
                 $this->warn("Specifying {$attr} is not useful.");
