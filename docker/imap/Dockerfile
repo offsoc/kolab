@@ -46,33 +46,22 @@ COPY saslauthd.conf /etc/saslauthd.conf
 
 ADD init.sh /init.sh
 
-# RUN chgrp -R 0 /opt/app-root/src && \
-#     chmod -R g=u /opt/app-root/src
-
-RUN mkdir -p /run/saslauthd && \
-    chmod 777 /run/saslauthd &&  \
-    chmod -R 777 /run && \
-    mkdir -p /var/run && \
-    chmod -R 777 /var/run && \
-    mkdir -p /var/lib/imap && \
-    chmod 777 /var/lib/imap && \
-    mkdir -p /var/spool/imap && \
-    chmod 777 /var/spool/imap && \
-    mkdir -p /etc/pki/cyrus-imapd/ && \
-    chmod 777 /etc/pki/cyrus-imapd/
-
 VOLUME [ "/var/spool/imap" ]
 VOLUME [ "/var/lib/imap" ]
 
-RUN chown -R 1001:0 /etc /var/lib/imap /var/spool/imap /var/run /run /etc/pki/cyrus-imapd/ && \
-    chmod -R g=u /etc /var/lib/imap /var/spool/imap /var/run /run /etc/pki/cyrus-imapd/
+RUN id default || (groupadd -g 1001 default && useradd -u 1001 -g 1001 default)
 
-RUN echo 'default ALL=NOPASSWD: ALL' >> /etc/sudoers && \
-    chown root:root /etc/sudoers /etc/sudo.conf /etc/sudoers.d
+RUN PATHS=(/run /run/saslauthd /var/run /var/lib/imap /var/spool/imap /etc/pki/cyrus-imapd) && \
+    mkdir -p ${PATHS[@]} && \
+    chmod 777 ${PATHS[@]} && \
+    chown -R 1001:0 ${PATHS[@]} && \
+    chmod -R g=u ${PATHS[@]}
 
-RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/ -u 1001 -g 1001 default)
+RUN PATHS=(/etc /etc/passwd /etc/saslauthd.conf /etc/cyrus.conf /etc/imapd.conf) && \
+    chown 1001:0 ${PATHS[@]} && \
+    chmod g=u ${PATHS[@]}
+
 USER 1001
-
 
 CMD ["/init.sh"]
 
