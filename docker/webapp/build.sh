@@ -2,6 +2,9 @@
 set -e
 set -x
 
+echo -e "Building with the following ulimit: limit: $(ulimit -n)\n"
+echo -e "If you run into EMFILE errors, this is the reason"
+
 mkdir /src
 cd /src
 
