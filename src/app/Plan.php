@@ -19,6 +19,7 @@ use Spatie\Translatable\HasTranslations;
  * @property int            $discount_qty
  * @property int            $discount_rate
  * @property int            $free_months
+ * @property bool           $hidden
  * @property string         $id
  * @property string         $mode           Plan signup mode (Plan::MODE_*)
  * @property string         $name
@@ -44,6 +45,7 @@ class Plan extends Model
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [
         'title',
+        'hidden',
         'mode',
         'name',
         'description',
@@ -66,6 +68,7 @@ class Plan extends Model
         'promo_to' => 'datetime:Y-m-d H:i:s',
         'discount_qty' => 'integer',
         'discount_rate' => 'integer',
+        'hidden' => 'boolean',
         'months' => 'integer',
         'free_months' => 'integer'
     ];

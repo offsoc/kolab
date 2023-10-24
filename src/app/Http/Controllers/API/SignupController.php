@@ -39,7 +39,9 @@ class SignupController extends Controller
     {
         // Use reverse order just to have individual on left, group on right ;)
         // But prefer monthly on left, yearly on right
-        $plans = Plan::withEnvTenantContext()->orderBy('months')->orderByDesc('title')->get()
+        $plans = Plan::withEnvTenantContext()->where('hidden', false)
+            ->orderBy('months')->orderByDesc('title')
+            ->get()
             ->map(function ($plan) {
                 $button = self::trans("app.planbutton-{$plan->title}");
                 if (strpos($button, 'app.planbutton') !== false) {

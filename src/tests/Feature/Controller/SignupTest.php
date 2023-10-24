@@ -114,6 +114,13 @@ class SignupTest extends TestCase
     {
         $individual = Plan::withEnvTenantContext()->where('title', 'individual')->first();
         $group = Plan::withEnvTenantContext()->where('title', 'group')->first();
+        $hidden = Plan::create([
+                'title' => 'test',
+                'name' => 'Test Account',
+                'description' => 'Test',
+                'hidden' => true,
+                'mode' => Plan::MODE_MANDATE,
+        ]);
 
         $response = $this->get('/api/auth/signup/plans');
         $json = $response->json();
