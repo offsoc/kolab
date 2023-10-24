@@ -49,7 +49,7 @@ def read_request_input():
 
 
 if __name__ == "__main__":
-    URL = 'https://services.APP_DOMAIN/api/webhooks/policy/spf'
+    URL = 'SERVICES_HOST/api/webhooks/policy/spf'
 
     # Start the work
     while True:

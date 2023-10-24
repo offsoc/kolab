@@ -99,7 +99,7 @@ def read_request_input():
 
 
 if __name__ == "__main__":
-    URL = 'https://services.APP_DOMAIN/api/webhooks/policy/ratelimit'
+    URL = 'SERVICES_HOST/api/webhooks/policy/ratelimit'
 
     POLICY_REQUESTS = {}
 

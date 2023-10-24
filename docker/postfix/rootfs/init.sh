@@ -23,10 +23,11 @@ sed -i -r \
 
 sed -i -r \
     -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
+    -e "s|MYNETWORKS|172.18.0.0/24|g" \
     /etc/postfix/main.cf
 
 sed -i -r \
-    -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
+    -e "s|SERVICES_HOST|http://services.$APP_DOMAIN:8000|g" \
     /usr/libexec/postfix/kolab_policy*
 
 sed -i -r \

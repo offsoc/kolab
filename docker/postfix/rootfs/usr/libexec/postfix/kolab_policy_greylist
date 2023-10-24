@@ -42,7 +42,7 @@ def read_request_input():
 
 
 if __name__ == "__main__":
-    URL = 'https://services.APP_DOMAIN/api/webhooks/policy/greylist'
+    URL = 'SERVICES_HOST/api/webhooks/policy/greylist'
 
     # Start the work
     while True:

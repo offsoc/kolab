@@ -28,6 +28,7 @@ RUN dnf -y install dnf-plugin-config-manager && \
     procps-ng \
     iputils \
     bind-utils \
+    tcpdump \
     vim-enhanced && \
     dnf clean all
 RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
