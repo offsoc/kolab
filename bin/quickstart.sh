@@ -34,72 +34,37 @@ pkill -9 -f swoole || :
 
 bin/regen-certs
 
-docker compose build
-
-# Build the murder setup if configured
-if grep -q "imap-frontend" docker-compose.override.yml; then
-    docker compose build imap-frontend imap-backend imap-mupdate
-fi
-if grep -q "ldap" docker-compose.override.yml; then
-    docker compose up -d ldap
-fi
-# We grep for something that is unique to the container
-if grep -q "kolab-init" docker-compose.override.yml; then
-    docker compose up -d kolab
-fi
-if grep -q "imap" docker-compose.override.yml; then
-    docker compose up -d imap
-fi
-if grep -q "postfix" docker-compose.override.yml; then
-    docker compose up -d postfix
-fi
-if grep -q "imap-frontend" docker-compose.override.yml; then
-    docker compose up -d imap-frontend imap-backend imap-mupdate
-fi
-
-docker compose up -d coturn mariadb meet pdns redis roundcube minio
-
 if [ "$1" == "--nodev" ]; then
-    echo "starting everything in containers"
-    docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml build swoole webapp
-    docker compose up -d --wait webapp
-    if grep -q "haproxy" docker-compose.override.yml; then
-        docker compose up --no-deps -d haproxy
-    fi
-    docker compose up --no-deps -d proxy
+    echo "Starting everything in containers"
+    docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml build
+    docker compose up -d --wait
     exit 0
 fi
 echo "Starting the development environment"
 
-rpm -qv composer >/dev/null 2>&1 || \
-    test ! -z "$(which composer 2>/dev/null)" || \
-    die "Is composer installed?"
 
-rpm -qv npm >/dev/null 2>&1 || \
-    test ! -z "$(which npm 2>/dev/null)" || \
-    die "Is npm installed?"
+containers=(coturn mariadb meet pdns redis roundcube minio)
 
-rpm -qv php >/dev/null 2>&1 || \
-    test ! -z "$(which php 2>/dev/null)" || \
-    die "Is php installed?"
-
-rpm -qv php-ldap >/dev/null 2>&1 || \
-    test ! -z "$(php --ini | grep ldap)" || \
-    die "Is php-ldap installed?"
-
-rpm -qv php-mysqlnd >/dev/null 2>&1 || \
-    test ! -z "$(php --ini | grep mysql)" || \
-    die "Is php-mysqlnd installed?"
-
-test ! -z "$(php --modules | grep swoole)" || \
-    die "Is swoole installed?"
-
+if grep -q "ldap" docker-compose.override.yml; then
+    containers+=(ldap)
+fi
 # We grep for something that is unique to the container
 if grep -q "kolab-init" docker-compose.override.yml; then
-    docker compose up --no-recreate --wait kolab
+    containers+=(kolab)
 fi
-docker compose up --no-recreate --wait redis
+if grep -q "imap" docker-compose.override.yml; then
+    containers+=(imap)
+fi
+if grep -q "postfix" docker-compose.override.yml; then
+    containers+=(postfix)
+fi
+if grep -q "imap-frontend" docker-compose.override.yml; then
+    containers+=(imap-frontend imap-backend imap-mupdate)
+fi
 
+
+docker compose build
+docker compose up -d --wait ${containers[@]}
 
 pushd ${base_dir}/src/
 
