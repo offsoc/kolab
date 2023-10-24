@@ -29,7 +29,7 @@ RED='\033[31m'
 GREEN='\033[32m'
 RESET='\033[39m'
 
-SSLNOVERIFY = False
+SSLNOVERIFY = True
 
 def print_error(msg):
     print(RED + f"=> ERROR: {msg}")
@@ -592,8 +592,9 @@ def main():
     parser.add_argument("--imap", help="IMAP URI")
     parser.add_argument("--dav", help="DAV URI")
     parser.add_argument("--autoconfig", help="Check autoconfig")
-    parser.add_argument("--dns", help="Check dns")
+    parser.add_argument("--dns", action='store_true', help="Check dns")
     parser.add_argument("--activesync", help="ActiveSync URI")
+    parser.add_argument("--certificates", action='store_true', help="Check Certificates")
     parser.add_argument("--fb", help="Freebusy url as displayed in roundcube")
     parser.add_argument("--verbose", action='store_true', help="Verbose output")
     options = parser.parse_args()
@@ -653,10 +654,11 @@ def main():
         else:
             error = True
 
-    if test_certificates(options.host, options.dav, options.imap, options.verbose):
-        print_success("All certificates are valid")
-    else:
-        error = True
+    if options.certificates:
+        if test_certificates(options.host, options.dav, options.imap, options.verbose):
+            print_success("All certificates are valid")
+        else:
+            error = True
 
     if options.imap:
         if test_imap(options.imap, options.username, options.password, options.verbose):
