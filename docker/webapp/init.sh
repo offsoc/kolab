@@ -12,24 +12,22 @@ rsync -av \
     --exclude=resources/build \
     --exclude=bootstrap \
     --exclude=.gitignore \
-    /src/kolabsrc.orig/ /src/kolabsrc/ | tee /tmp/rsync.output
-cd /src/kolabsrc
+    /src/kolabsrc.orig/ /opt/app-root/src/ | tee /tmp/rsync.output
+
+cd /opt/app-root/src/
 
 rm -rf storage/framework
 mkdir -p storage/framework/{sessions,views,cache}
 
-php -dmemory_limit=-1 $(command -v composer) update
-/usr/local/bin/npm install
 find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan clear-compiled
 ./artisan cache:clear
-./artisan horizon:install
+
+php -dmemory_limit=-1 $(command -v composer) install
 
 if [ ! -f 'resources/countries.php' ]; then
     ./artisan data:countries
 fi
-
-/usr/local/bin/npm run dev
 
 ./artisan db:ping --wait
 php -dmemory_limit=512M ./artisan migrate --force

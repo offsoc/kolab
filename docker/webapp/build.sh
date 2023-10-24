@@ -10,8 +10,9 @@ pushd kolab
 git reset --hard $GIT_REF
 popd
 
-cp -a kolab/src /src/kolabsrc
-cd /src/kolabsrc
+rmdir /opt/app-root/src
+cp -a kolab/src /opt/app-root/src
+cd /opt/app-root/src/
 
 mkdir -p storage/framework/{sessions,views,cache}
 mkdir -p database/seeds
@@ -21,6 +22,7 @@ npm -g install npm
 /usr/local/bin/npm install
 ./artisan storage:link
 ./artisan clear-compiled
+./artisan horizon:install
 if [ ! -f 'resources/countries.php' ]; then
     ./artisan data:countries
 fi

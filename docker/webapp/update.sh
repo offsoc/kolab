@@ -12,9 +12,19 @@ rsync -av \
     --exclude=resources/build \
     --exclude=bootstrap \
     --exclude=.gitignore \
-    /src/kolabsrc.orig/ /src/kolabsrc/ | tee /tmp/rsync.output
+    /src/kolabsrc.orig/ /opt/app-root/src/ | tee /tmp/rsync.output
 
-cd /src/kolabsrc/
+cd /opt/app-root/src/
+
+rm -rf storage/framework
+mkdir -p storage/framework/{sessions,views,cache}
+
+find bootstrap/cache/ -type f ! -name ".gitignore" -delete
+./artisan clear-compiled
+./artisan cache:clear
+
+php -dmemory_limit=-1 $(command -v composer) update
+
 # Only run npm if something relevant was updated
 if grep -e "package.json" -e "resources" /tmp/rsync.output; then
     npm run dev
