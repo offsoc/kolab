@@ -132,48 +132,20 @@ def try_get(name, url, verbose, headers = None, body = None):
     return success
 
 def test_caldav_redirect(host, username, password, verbose):
-    headers = {
-        "Content-Type": "application/xml; charset=utf-8",
-        "Depth": "infinity",
-        **basic_auth_headers(username, password)
-    }
-
-    try:
-        response = http_request(
-            "https://" + host + "/.well-known/caldav",
-            "GET",
-            None,
-            headers,
-            None,
-            verbose
-        )
-    except http.client.RemoteDisconnected:
-        print("Remote disconnected")
-        print_error(".well-known/caldav is not available")
-        return False
-
-    success = response.status in (200, 301, 302)
-    if not success:
-        print_error(".well-known/caldav is not available")
-
-    if verbose or not success:
-        print("  ", "Status", response.status)
-        print("  ", response.read().decode())
-
-    return success
+    return discover_principal("https://" + host + "/.well-known/caldav", username, password, verbose)
 
 def discover_principal(url, username, password, verbose):
-    body = '<d:propfind xmlns:d="DAV:" xmlns:cs="https://calendarserver.org/ns/"><d:prop><d:resourcetype /><d:displayname /></d:prop></d:propfind>'
+    body = '<d:propfind xmlns:d="DAV:" xmlns:cs="https://calendarserver.org/ns/"><d:prop><d:current-user-principal /></d:prop></d:propfind>'
 
     headers = {
         "Content-Type": "application/xml; charset=utf-8",
-        "Depth": "infinity",
+        "Depth": "0",
         **basic_auth_headers(username, password)
     }
 
     try:
         response = http_request(
-            f"{url}/principals/{username}/",
+            f"{url}",
             "PROPFIND",
             None,
             headers,
