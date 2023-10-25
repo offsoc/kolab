@@ -188,10 +188,16 @@ class Health extends Command
         $steps = $this->option('check');
         if (empty($steps)) {
             $steps = [
-                'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates', "Storage"
+                'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates'
             ];
             if (\config('app.with_ldap')) {
                 array_unshift($steps, 'LDAP');
+            }
+            if (\config('app.with_imap')) {
+                array_unshift($steps, 'IMAP');
+            }
+            if (\config('app.with_files')) {
+                array_unshift($steps, 'Storage');
             }
         }
 
