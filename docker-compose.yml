@@ -182,7 +182,6 @@ services:
       - SSL_CERT=/etc/pki/tls/certs/meet.${APP_WEBSITE_DOMAIN:?err}.cert
       - SSL_KEY=/etc/pki/tls/private/meet.${APP_WEBSITE_DOMAIN:?err}.key
     network_mode: host
-    container_name: kolab-meet
     image: kolab-meet
     volumes:
       - ./meet/server:/src/meet/:ro
