@@ -18,10 +18,11 @@ Please note that bin/deploy.sh will remove any existing data.
 ## Alternative configurations
 
 Everything but config.prod is for development or demo purposes:
-* config.dev: Run only dependencies in docker with ports exposed, and expect kolab4 to be run locally.
-* config.docker-dev: A development environment with everything running in docker. Includes a cyrus-murder.
-* config.demo: A docker environment with demo data included.
 * config.prod: A docker environment with just an admin account prepared. A starting point for a production environment.
+* config.demo: A docker environment with demo data included.
+* config.docker-dev: A development environment with everything running in docker. Includes a cyrus-murder. Don't use unless you know what you're doing.
+* config.host-dev: Run only dependencies in docker with ports exposed, and expect kolab4 to be run locally. Don't use unless you know what you're doing.
+* config.legacy: A docker environment that includes ldap and other legacy components. Don't use unless you know what you're doing.
 
 
 # Use the ansible setup
