@@ -421,4 +421,21 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
                 'message' => self::trans('app.user-update-success'),
         ]);
     }
+
+    /**
+     * Inspect what kolab4 sees from the request.
+     *
+     * Useful for testing proxy settings and making sure the X-Forwarded-For Header is picked up.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function inspectRequest(Request $request)
+    {
+        return response()->json([
+            'ip' => $request->ip(),
+            'clientIps' => $request->getClientIps(),
+            'isFromTrustedProxy' => $request->isFromTrustedProxy(),
+            'headers' => $request->headers->all()
+        ]);
+    }
 }

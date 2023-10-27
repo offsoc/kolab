@@ -262,6 +262,16 @@ if (\config('app.with_admin')) {
             Route::get('stats/chart/{chart}', [API\V4\Admin\StatsController::class, 'chart']);
         }
     );
+
+    Route::group(
+        [
+            'domain' => 'admin.' . \config('app.website_domain'),
+            'prefix' => 'v4',
+        ],
+        function () {
+            Route::get('inspect-request', [API\V4\Admin\UsersController::class, 'inspectRequest']);
+        }
+    );
 }
 
 if (\config('app.with_reseller')) {
