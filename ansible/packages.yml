@@ -1,4 +1,8 @@
 ---
+- name: Add repository for docker-ce
+  ansible.builtin.command: dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo
 - name: Install list of required packages
   package: name={{ item }} state=installed
   with_items:
@@ -6,5 +10,5 @@
     - tig
     - tmux
     - docker
-    - docker-compose
+    - docker-compose-plugin
     - certbot
