@@ -55,7 +55,7 @@ class DeleteTest extends TestCase
         $user->refresh();
 
         $this->assertSame(\config('app.with_ldap'), $user->isLdapReady());
-        $this->assertTrue($user->isImapReady());
+        $this->assertSame(\config('app.with_imap'), $user->isImapReady());
         $this->assertFalse($user->isDeleted());
         $this->assertNotNull($rcdb->table('users')->where('username', $user->email)->first());
 

@@ -39,6 +39,10 @@ class CreateTest extends TestCase
         $domain->status |= \App\Domain::STATUS_LDAP_READY;
         $domain->save();
 
+        // TODO: Make the test working with various with_imap/with_ldap combinations
+        \config(['app.with_imap' => true]);
+        \config(['app.with_ldap' => true]);
+
         $this->assertFalse($user->isLdapReady());
         $this->assertFalse($user->isImapReady());
         $this->assertFalse($user->isActive());

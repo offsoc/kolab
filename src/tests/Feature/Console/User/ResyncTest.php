@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Console\User;
 
-use App\Domain;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -17,7 +16,6 @@ class ResyncTest extends TestCase
         parent::setUp();
 
         $this->deleteTestUser('user@force-delete.com');
-        $this->deleteTestDomain('force-delete.com');
     }
 
     /**
@@ -26,7 +24,6 @@ class ResyncTest extends TestCase
     public function tearDown(): void
     {
         $this->deleteTestUser('user@force-delete.com');
-        $this->deleteTestDomain('force-delete.com');
 
         parent::tearDown();
     }
@@ -106,44 +103,26 @@ class ResyncTest extends TestCase
 
     /**
      * Test the command (existing users)
-     *
-     * @group ldap
-     * @group imap
      */
     public function testHandleExisting(): void
     {
-        $domain = $this->getTestDomain('force-delete.com', [
-            'status' => Domain::STATUS_LDAP_READY | Domain::STATUS_ACTIVE,
-            'type' => Domain::TYPE_EXTERNAL,
-        ]);
-
         $user = $this->getTestUser('user@force-delete.com', [
             'status' => User::STATUS_LDAP_READY | User::STATUS_IMAP_READY | User::STATUS_ACTIVE,
         ]);
 
         Queue::fake();
 
-        // Test a user (and custom domain) that both aren't in ldap (despite their status)
+        // Test a specific user
         $code = \Artisan::call("user:resync {$user->email}");
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
         $this->assertSame("{$user->email}: pushed", $output);
-        $user->refresh();
-        $domain->refresh();
-        $this->assertFalse($user->isLdapReady());
-        $this->assertFalse($user->isImapReady());
-        $this->assertFalse($domain->isLdapReady());
 
-        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
-        Queue::assertPushed(\App\Jobs\User\CreateJob::class, function ($job) use ($user) {
+        Queue::assertPushed(\App\Jobs\User\ResyncJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\ResyncJob::class, function ($job) use ($user) {
             $job_user_id = TestCase::getObjectProperty($job, 'userId');
             return $job_user_id === $user->id;
-        });
-        Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
-        Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, function ($job) use ($domain) {
-            $job_domain_id = TestCase::getObjectProperty($job, 'domainId');
-            return $job_domain_id === $domain->id;
         });
 
         // TODO: Test other cases
