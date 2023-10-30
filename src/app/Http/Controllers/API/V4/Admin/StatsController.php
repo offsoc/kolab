@@ -111,7 +111,7 @@ class StatsController extends \App\Http\Controllers\Controller
         //       as I believe this way we have more precise amounts for this use-case (and default currency)
 
         $query = DB::table('payments')
-            ->selectRaw("date_format(updated_at, '%Y-%v') as period, sum(credit_amount) as amount, wallets.currency")
+            ->selectRaw("date_format(updated_at, '%x-%v') as period, sum(credit_amount) as amount, wallets.currency")
             ->join('wallets', 'wallets.id', '=', 'wallet_id')
             ->where('updated_at', '>=', $start->toDateString())
             ->where('status', Payment::STATUS_PAID)
@@ -236,12 +236,12 @@ class StatsController extends \App\Http\Controllers\Controller
         $start->startOfWeek(Carbon::MONDAY);
 
         $created = DB::table('users')
-            ->selectRaw("date_format(created_at, '%Y-%v') as period, count(*) as cnt")
+            ->selectRaw("date_format(created_at, '%x-%v') as period, count(*) as cnt")
             ->where('created_at', '>=', $start->toDateString())
             ->groupByRaw('1');
 
         $deleted = DB::table('users')
-            ->selectRaw("date_format(deleted_at, '%Y-%v') as period, count(*) as cnt")
+            ->selectRaw("date_format(deleted_at, '%x-%v') as period, count(*) as cnt")
             ->where('deleted_at', '>=', $start->toDateString())
             ->groupByRaw('1');
 
@@ -312,12 +312,12 @@ class StatsController extends \App\Http\Controllers\Controller
         $start->startOfWeek(Carbon::MONDAY);
 
         $created = DB::table('users')
-            ->selectRaw("date_format(created_at, '%Y-%v') as period, count(*) as cnt")
+            ->selectRaw("date_format(created_at, '%x-%v') as period, count(*) as cnt")
             ->where('created_at', '>=', $start->toDateString())
             ->groupByRaw('1');
 
         $deleted = DB::table('users')
-            ->selectRaw("date_format(deleted_at, '%Y-%v') as period, count(*) as cnt")
+            ->selectRaw("date_format(deleted_at, '%x-%v') as period, count(*) as cnt")
             ->where('deleted_at', '>=', $start->toDateString())
             ->groupByRaw('1');
 
@@ -489,7 +489,7 @@ class StatsController extends \App\Http\Controllers\Controller
 
         // Get the stats grouped by tenant and week
         $stats = DB::table('stats')
-            ->selectRaw("tenant_id, date_format(created_at, '%Y-%v') as period, avg(value) as cnt")
+            ->selectRaw("tenant_id, date_format(created_at, '%x-%v') as period, avg(value) as cnt")
             ->where('type', $type)
             ->where('created_at', '>=', $start->toDateString())
             ->groupByRaw('1,2');
