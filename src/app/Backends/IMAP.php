@@ -6,6 +6,7 @@ use App\Group;
 use App\Resource;
 use App\SharedFolder;
 use App\User;
+use App\Utils;
 
 class IMAP
 {
@@ -218,14 +219,16 @@ class IMAP
 
         $settings = $resource->getSettings(['invitation_policy', 'folder']);
         $mailbox = self::toUTF7($settings['folder']);
+        $metadata = ['/shared/vendor/kolab/folder-type' => 'event'];
 
-        $acl = null;
+        $acl = [];
         if (!empty($settings['invitation_policy'])) {
             if (preg_match('/^manual:(\S+@\S+)$/', $settings['invitation_policy'], $m)) {
                 $acl = ["{$m[1]}, full"];
             }
         }
-        self::createFolder($imap, $mailbox, false, ['/shared/vendor/kolab/folder-type' => 'event'], $acl);
+
+        self::createFolder($imap, $mailbox, false, $metadata, Utils::ensureAclPostPermission($acl));
 
         $imap->closeConnection();
 
@@ -268,7 +271,8 @@ class IMAP
                 $acl = ["{$m[1]}, full"];
             }
         }
-        self::aclUpdate($imap, $mailbox, $acl);
+
+        self::aclUpdate($imap, $mailbox, Utils::ensureAclPostPermission($acl));
 
         $imap->closeConnection();
 
@@ -316,10 +320,11 @@ class IMAP
         $imap = self::initIMAP($config);
 
         $settings = $folder->getSettings(['acl', 'folder']);
-        $acl = !empty($settings['acl']) ? json_decode($settings['acl'], true) : null;
+        $acl = !empty($settings['acl']) ? json_decode($settings['acl'], true) : [];
         $mailbox = self::toUTF7($settings['folder']);
+        $metadata = ['/shared/vendor/kolab/folder-type' => $folder->type];
 
-        self::createFolder($imap, $mailbox, false, ['/shared/vendor/kolab/folder-type' => $folder->type], $acl);
+        self::createFolder($imap, $mailbox, false, $metadata, Utils::ensureAclPostPermission($acl));
 
         $imap->closeConnection();
 
@@ -359,7 +364,7 @@ class IMAP
         // Note: Shared folder type does not change
 
         // ACL
-        self::aclUpdate($imap, $mailbox, $acl);
+        self::aclUpdate($imap, $mailbox, Utils::ensureAclPostPermission($acl));
 
         $imap->closeConnection();
 
@@ -629,7 +634,7 @@ class IMAP
             throw new \Exception("Failed to create mailbox {$mailbox}");
         }
 
-        if ($acl) {
+        if (!empty($acl)) {
             self::aclUpdate($imap, $mailbox, $acl, true);
         }
 
@@ -656,7 +661,8 @@ class IMAP
         return \collect($acl)
             ->mapWithKeys(function ($item, $key) {
                 list($user, $rights) = explode(',', $item, 2);
-                return [trim($user) => self::ACL_MAP[trim($rights)]];
+                $rights = trim($rights);
+                return [trim($user) => self::ACL_MAP[$rights] ?? $rights];
             })
             ->all();
     }

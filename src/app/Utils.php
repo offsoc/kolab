@@ -147,6 +147,32 @@ class Utils
     }
 
     /**
+     * Make sure that IMAP folder access rights contains "anyone: p" permission
+     *
+     * @param array $acl ACL (in form of "user, permission" records)
+     *
+     * @return array ACL list
+     */
+    public static function ensureAclPostPermission(array $acl): array
+    {
+        foreach ($acl as $idx => $entry) {
+            if (str_starts_with($entry, 'anyone,')) {
+                if (strpos($entry, 'read-only')) {
+                    $acl[$idx] = 'anyone, lrsp';
+                } elseif (strpos($entry, 'read-write')) {
+                    $acl[$idx] = 'anyone, lrswitednp';
+                }
+
+                return $acl;
+            }
+        }
+
+        $acl[] = 'anyone, p';
+
+        return $acl;
+    }
+
+    /**
      * Generate a passphrase. Not intended for use in production, so limited to environments that are not production.
      *
      * @return string

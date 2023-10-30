@@ -247,7 +247,7 @@ class LDAPTest extends TestCase
             'kolabtargetfolder' => 'shared/Resources/Test1@kolab.org',
             'kolabinvitationpolicy' => null,
             'owner' => null,
-            'acl' => null,
+            'acl' => 'anyone, p',
         ];
 
         foreach ($expected as $attr => $value) {
@@ -267,7 +267,7 @@ class LDAPTest extends TestCase
         $expected['owner'] = 'uid=john@kolab.org,ou=People,ou=kolab.org,' . $root_dn;
         $expected['dn'] = 'cn=Te(\\3dść)1,ou=Resources,ou=kolab.org,' . $root_dn;
         $expected['cn'] = 'Te(=ść)1';
-        $expected['acl'] = 'john@kolab.org, full';
+        $expected['acl'] = ['john@kolab.org, full', 'anyone, p'];
 
         $ldap_resource = LDAP::getResource($resource->email);
 
@@ -281,7 +281,7 @@ class LDAPTest extends TestCase
 
         LDAP::updateResource($resource);
 
-        $expected['acl'] = null;
+        $expected['acl'] = 'anyone, p';
         $expected['kolabinvitationpolicy'] = null;
         $expected['owner'] = null;
 
@@ -330,7 +330,7 @@ class LDAPTest extends TestCase
             ],
             'kolabfoldertype' => 'event',
             'kolabtargetfolder' => 'shared/test-folder@kolab.org',
-            'acl' => null,
+            'acl' => 'anyone, p',
             'alias' => null,
         ];
 
@@ -349,7 +349,7 @@ class LDAPTest extends TestCase
         LDAP::updateSharedFolder($folder);
 
         $expected['kolabtargetfolder'] = 'shared/Te(=ść)1@kolab.org';
-        $expected['acl'] = ['john@kolab.org, read-write', 'anyone, read-only'];
+        $expected['acl'] = ['john@kolab.org, read-write', 'anyone, lrsp'];
         $expected['dn'] = 'cn=Te(\\3dść)1,ou=Shared Folders,ou=kolab.org,' . $root_dn;
         $expected['cn'] = 'Te(=ść)1';
         $expected['alias'] = $aliases;

@@ -7,6 +7,7 @@ use App\Group;
 use App\Resource;
 use App\SharedFolder;
 use App\User;
+use App\Utils;
 
 class LDAP
 {
@@ -1015,7 +1016,7 @@ class LDAP
         $entry['cn'] = $resource->name;
         $entry['owner'] = null;
         $entry['kolabinvitationpolicy'] = null;
-        $entry['acl'] = '';
+        $entry['acl'] = [];
 
         $settings = $resource->getSettings(['invitation_policy', 'folder']);
 
@@ -1044,13 +1045,15 @@ class LDAP
             } elseif (preg_match('/^manual:(\S+@\S+)$/', $settings['invitation_policy'], $m)) {
                 if (self::getUserEntry($ldap, $m[1], $userDN)) {
                     $entry['owner'] = $userDN;
-                    $entry['acl'] = $m[1] . ', full';
+                    $entry['acl'] = [$m[1] . ', full'];
                     $entry['kolabinvitationpolicy'] = 'ACT_MANUAL';
                 } else {
                     $entry['kolabinvitationpolicy'] = 'ACT_ACCEPT';
                 }
             }
         }
+
+        $entry['acl'] = Utils::ensureAclPostPermission($entry['acl']);
     }
 
     /**
@@ -1060,10 +1063,12 @@ class LDAP
     {
         $settings = $folder->getSettings(['acl', 'folder']);
 
+        $acl = !empty($settings['acl']) ? json_decode($settings['acl'], true) : [];
+
         $entry['cn'] = $folder->name;
         $entry['kolabfoldertype'] = $folder->type;
         $entry['kolabtargetfolder'] = $settings['folder'] ?? '';
-        $entry['acl'] = !empty($settings['acl']) ? json_decode($settings['acl'], true) : '';
+        $entry['acl'] = Utils::ensureAclPostPermission($acl);
         $entry['alias'] = $folder->aliases()->pluck('alias')->all();
     }
 

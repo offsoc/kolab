@@ -59,6 +59,24 @@ class UtilsTest extends TestCase
     }
 
     /**
+     * Test for Utils::ensureAclPostPermission()
+     */
+    public function testEnsureAclPostPermission(): void
+    {
+        $acl = [];
+        $this->assertSame(['anyone, p'], Utils::ensureAclPostPermission($acl));
+
+        $acl = ['anyone, full'];
+        $this->assertSame(['anyone, full'], Utils::ensureAclPostPermission($acl));
+
+        $acl = ['anyone, read-only'];
+        $this->assertSame(['anyone, lrsp'], Utils::ensureAclPostPermission($acl));
+
+        $acl = ['anyone, read-write'];
+        $this->assertSame(['anyone, lrswitednp'], Utils::ensureAclPostPermission($acl));
+    }
+
+    /**
      * Test for Utils::money()
      */
     public function testMoney(): void
