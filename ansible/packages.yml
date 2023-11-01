@@ -4,11 +4,13 @@
   args:
     creates: /etc/yum.repos.d/docker-ce.repo
 - name: Install list of required packages
-  package: name={{ item }} state=installed
-  with_items:
-    - git
-    - tig
-    - tmux
-    - docker
-    - docker-compose-plugin
-    - certbot
+  ansible.builtin.dnf:
+    allowerasing: true
+    name:
+      - git
+      - tig
+      - tmux
+      - docker
+      - docker-compose-plugin
+      - certbot
+    state: latest
