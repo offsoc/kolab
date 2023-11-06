@@ -193,7 +193,7 @@ services:
     restart: on-failure
     healthcheck:
       interval: 10s
-      test: "curl -f http://127.0.0.1:9000/minio/health/live || exit 1"
+      test: "mc ready local || exit 1"
       timeout: 5s
       retries: 30
       start_period: 5m
