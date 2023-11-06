@@ -50,6 +50,8 @@ services:
     # Please note it does not affect /etc/resolv.conf
     dns: 172.18.0.11
     image: roundcube
+    extra_hosts:
+      - "${APP_DOMAIN}:172.18.0.7"
     networks:
       kolab:
         ipv4_address: 172.18.0.9
