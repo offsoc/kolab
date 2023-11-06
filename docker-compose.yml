@@ -60,6 +60,7 @@ services:
       - /var/tmp
     volumes:
       - ./ext/:/src.orig/:ro
+      - roundcube:/data
   mariadb:
     container_name: kolab-mariadb
     restart: on-failure
@@ -220,3 +221,4 @@ networks:
 volumes:
   mariadb:
   minio:
+  roundcube:

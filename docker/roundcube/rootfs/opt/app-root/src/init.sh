@@ -4,6 +4,9 @@ echo "Starting"
 set -e
 set -x
 
+mkdir -p /data/pgp-home
+chmod 777 /data/pgp-home
+
 pushd /opt/app-root/src/
 pushd roundcubemail
 

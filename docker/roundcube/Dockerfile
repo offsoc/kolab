@@ -71,6 +71,8 @@ WORKDIR ${HOME}
 COPY /rootfs /
 RUN /opt/app-root/src/build.sh 
 
+VOLUME /data
+
 RUN chgrp -R 0 /opt/app-root/src && \
     chmod -R g=u /opt/app-root/src
 
@@ -78,9 +80,11 @@ RUN mkdir -p /run/php-fpm && \
     chmod 777 /run/php-fpm && \
     mkdir -p /run/httpd && \
     chmod 777 /run/httpd && \
-    chmod -R 777 /etc/httpd /var/log/httpd /var/lib/httpd
+    mkdir -p /data && \
+    chmod 777 /data && \
+    chmod -R 777 /etc/httpd /var/log/httpd /var/lib/httpd /data
 
-RUN chown -R 1001:0 /opt/app-root/src
+RUN chown -R 1001:0 /opt/app-root/src /data
 USER 1001
 
 EXPOSE 8080

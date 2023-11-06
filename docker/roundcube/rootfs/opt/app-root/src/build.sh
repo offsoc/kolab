@@ -46,11 +46,6 @@ sed -i -r \
     -e "s/kolabInetOrgPerson/inetorgperson/g" \
     config/*.inc.php
 
-sed -i -r -e "s|\$config\['enigma_pgp_homedir'\] = .*$|\$config['enigma_pgp_homedir'] = '/tmp/';|g" config/enigma.inc.php
-sed -i -r -e "s|\$config\['enigma_passwordless'\] = .*$|\$config['enigma_passwordless'] = true;|g" config/enigma.inc.php
-sed -i -r -e "s|\$config\['enigma_multihost'\] = .*$|\$config['enigma_multihost'] = true;|g" config/enigma.inc.php
-echo "\$config['enigma_woat'] = true;" >> config/enigma.inc.php
-
 sed -i -r -e "s|\$config\['managesieve_host'\] = .*$|\$config['managesieve_host'] = 'kolab';|g" config/managesieve.inc.php
 
 popd
