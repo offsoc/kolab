@@ -88,11 +88,6 @@ services:
   pdns:
     build:
       context: ./docker/pdns/
-      args:
-        DB_HOST: mariadb
-        DB_DATABASE: ${DB_DATABASE:?DB_DATABASE}
-        DB_USERNAME: ${DB_USERNAME:?DB_USERNAME}
-        DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD}
     container_name: kolab-pdns
     restart: on-failure
     tty: true
@@ -102,10 +97,16 @@ services:
         condition: service_healthy
     healthcheck:
       interval: 10s
-      test: "systemctl status pdns || exit 1"
+      test: "pdns_control rping || exit 1"
       timeout: 5s
       retries: 30
     image: kolab-pdns
+    environment:
+      - ROLE=both
+      - DB_HOST=mariadb
+      - DB_DATABASE=${DB_DATABASE:?DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME:?DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD}
     networks:
       kolab:
         ipv4_address: 172.18.0.11
