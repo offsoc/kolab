@@ -3,17 +3,7 @@
 set -e
 set -x
 
-function die() {
-    echo "$1"
-    exit 1
-}
-
-test ! -z "$(grep 'systemd.unified_cgroup_hierarchy=0' /proc/cmdline)" || \
-    die "systemd containers only work with cgroupv1 (use 'grubby --update-kernel=ALL --args=\"systemd.unified_cgroup_hierarchy=0\"' and a reboot to fix)"
-
 base_dir=$(dirname $(dirname $0))
-
-
 
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
