@@ -65,4 +65,4 @@ USER 1001
 
 CMD ["/init.sh"]
 
-EXPOSE 11143/tcp 11993/tcp 11080/tcp 11443/tcp 11024/tcp
+EXPOSE 11143/tcp 11993/tcp 11080/tcp 11443/tcp 11024/tcp 4190/tcp
