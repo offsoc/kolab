@@ -41,6 +41,14 @@ $config['fileapi_sources'] = array(
     ),
 );
 */
+$config['fileapi_sources'] = array(
+    'Public-Files' => array(
+        'driver'   => 'webdav',
+        'baseuri'  => 'https://kolab.local/dav/drive/user/admin@kolab.local',
+        'username' => '%u',
+        'password' => 'simple123',
+    ),
+);
 
 // Default values for sources configuration dialog.
 // Note: use driver names as the array keys.
