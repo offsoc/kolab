@@ -192,7 +192,9 @@ class GroupTest extends TestCase
         $entitlements = \App\Entitlement::where('entitleable_id', $group->id);
 
         $this->assertTrue($group->isSuspended());
-        $this->assertTrue($group->isLdapReady());
+        if (\config('app.with_ldap')) {
+            $this->assertTrue($group->isLdapReady());
+        }
         $this->assertTrue($group->isActive());
         $this->assertSame(1, $entitlements->count());
 
@@ -210,7 +212,9 @@ class GroupTest extends TestCase
         $this->assertFalse($group->trashed());
         $this->assertFalse($group->isDeleted());
         $this->assertFalse($group->isSuspended());
-        $this->assertFalse($group->isLdapReady());
+        if (\config('app.with_ldap')) {
+            $this->assertFalse($group->isLdapReady());
+        }
         $this->assertFalse($group->isActive());
         $this->assertTrue($group->isNew());
 
@@ -252,7 +256,9 @@ class GroupTest extends TestCase
         // Add a setting that is synced to LDAP
         $group->setSetting('sender_policy', '[]');
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+        if (\config('app.with_ldap')) {
+            Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+        }
 
         // Note: We test both current group as well as fresh group object
         //       to make sure cache works as expected
@@ -269,7 +275,9 @@ class GroupTest extends TestCase
         // Update a setting that is synced to LDAP
         $group->setSetting('sender_policy', '["-"]');
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+        if (\config('app.with_ldap')) {
+            Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+        }
 
         $this->assertSame('test1', $group->getSetting('unknown'));
         $this->assertSame('["-"]', $group->fresh()->getSetting('sender_policy'));
@@ -284,7 +292,9 @@ class GroupTest extends TestCase
         // Delete a setting that is synced to LDAP
         $group->setSetting('sender_policy', null);
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+        if (\config('app.with_ldap')) {
+            Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+        }
 
         $this->assertSame(null, $group->getSetting('unknown'));
         $this->assertSame(null, $group->fresh()->getSetting('sender_policy'));
@@ -300,7 +310,9 @@ class GroupTest extends TestCase
         $this->assertSame(false, $group->isNew());
         $this->assertSame(false, $group->isActive());
         $this->assertSame(false, $group->isDeleted());
-        $this->assertSame(false, $group->isLdapReady());
+        if (\config('app.with_ldap')) {
+            $this->assertSame(false, $group->isLdapReady());
+        }
         $this->assertSame(false, $group->isSuspended());
 
         $group->status = Group::STATUS_NEW;
@@ -308,7 +320,9 @@ class GroupTest extends TestCase
         $this->assertSame(true, $group->isNew());
         $this->assertSame(false, $group->isActive());
         $this->assertSame(false, $group->isDeleted());
-        $this->assertSame(false, $group->isLdapReady());
+        if (\config('app.with_ldap')) {
+            $this->assertSame(false, $group->isLdapReady());
+        }
         $this->assertSame(false, $group->isSuspended());
 
         $group->status |= Group::STATUS_ACTIVE;
@@ -316,15 +330,22 @@ class GroupTest extends TestCase
         $this->assertSame(true, $group->isNew());
         $this->assertSame(true, $group->isActive());
         $this->assertSame(false, $group->isDeleted());
-        $this->assertSame(false, $group->isLdapReady());
+        if (\config('app.with_ldap')) {
+            $this->assertSame(false, $group->isLdapReady());
+        }
         $this->assertSame(false, $group->isSuspended());
 
-        $group->status |= Group::STATUS_LDAP_READY;
+        if (\config('app.with_ldap')) {
+            $group->status |= Group::STATUS_LDAP_READY;
+        }
 
         $this->assertSame(true, $group->isNew());
         $this->assertSame(true, $group->isActive());
         $this->assertSame(false, $group->isDeleted());
-        $this->assertSame(true, $group->isLdapReady());
+
+        if (\config('app.with_ldap')) {
+            $this->assertSame(true, $group->isLdapReady());
+        }
         $this->assertSame(false, $group->isSuspended());
 
         $group->status |= Group::STATUS_DELETED;
@@ -332,7 +353,9 @@ class GroupTest extends TestCase
         $this->assertSame(true, $group->isNew());
         $this->assertSame(true, $group->isActive());
         $this->assertSame(true, $group->isDeleted());
-        $this->assertSame(true, $group->isLdapReady());
+        if (\config('app.with_ldap')) {
+            $this->assertSame(true, $group->isLdapReady());
+        }
         $this->assertSame(false, $group->isSuspended());
 
         $group->status |= Group::STATUS_SUSPENDED;
@@ -340,7 +363,9 @@ class GroupTest extends TestCase
         $this->assertSame(true, $group->isNew());
         $this->assertSame(true, $group->isActive());
         $this->assertSame(true, $group->isDeleted());
-        $this->assertSame(true, $group->isLdapReady());
+        if (\config('app.with_ldap')) {
+            $this->assertSame(true, $group->isLdapReady());
+        }
         $this->assertSame(true, $group->isSuspended());
 
         // Unknown status value

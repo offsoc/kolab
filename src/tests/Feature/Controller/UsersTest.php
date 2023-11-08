@@ -563,18 +563,19 @@ class UsersTest extends TestCase
 
         $this->assertFalse($result['isDone']);
         $this->assertSame([], $result['skus']);
-        $this->assertCount(3, $result['process']);
-        $this->assertSame('user-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
         if (\config('app.with_ldap')) {
+            $this->assertCount(3, $result['process']);
             $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
             $this->assertSame(false, $result['process'][1]['state']);
             $this->assertSame('user-imap-ready', $result['process'][2]['label']);
             $this->assertSame(false, $result['process'][2]['state']);
         } else {
+            $this->assertCount(2, $result['process']);
             $this->assertSame('user-imap-ready', $result['process'][1]['label']);
             $this->assertSame(false, $result['process'][1]['state']);
         }
+        $this->assertSame('user-new', $result['process'][0]['label']);
+        $this->assertSame(true, $result['process'][0]['state']);
         $this->assertSame('running', $result['processState']);
         $this->assertTrue($result['enableRooms']);
         $this->assertFalse($result['enableBeta']);
@@ -592,19 +593,20 @@ class UsersTest extends TestCase
         $result = UsersController::statusInfo($user);
 
         $this->assertTrue($result['isDone']);
-        $this->assertCount(3, $result['process']);
         $this->assertSame('done', $result['processState']);
-        $this->assertSame('user-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
         if (\config('app.with_ldap')) {
+            $this->assertCount(3, $result['process']);
             $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
             $this->assertSame(true, $result['process'][1]['state']);
             $this->assertSame('user-imap-ready', $result['process'][2]['label']);
             $this->assertSame(true, $result['process'][2]['state']);
         } else {
+            $this->assertCount(2, $result['process']);
             $this->assertSame('user-imap-ready', $result['process'][1]['label']);
             $this->assertSame(true, $result['process'][1]['state']);
         }
+        $this->assertSame('user-new', $result['process'][0]['label']);
+        $this->assertSame(true, $result['process'][0]['state']);
 
         $domain->status |= Domain::STATUS_VERIFIED;
         $domain->type = Domain::TYPE_EXTERNAL;
@@ -614,10 +616,8 @@ class UsersTest extends TestCase
 
         $this->assertFalse($result['isDone']);
         $this->assertSame([], $result['skus']);
-        $this->assertCount(7, $result['process']);
-        $this->assertSame('user-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
         if (\config('app.with_ldap')) {
+            $this->assertCount(7, $result['process']);
             $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
             $this->assertSame(true, $result['process'][1]['state']);
             $this->assertSame('user-imap-ready', $result['process'][2]['label']);
@@ -631,6 +631,7 @@ class UsersTest extends TestCase
             $this->assertSame('domain-confirmed', $result['process'][6]['label']);
             $this->assertSame(false, $result['process'][6]['state']);
         } else {
+            $this->assertCount(5, $result['process']);
             $this->assertSame('user-imap-ready', $result['process'][1]['label']);
             $this->assertSame(true, $result['process'][1]['state']);
             $this->assertSame('domain-new', $result['process'][2]['label']);
@@ -640,6 +641,8 @@ class UsersTest extends TestCase
             $this->assertSame('domain-confirmed', $result['process'][4]['label']);
             $this->assertSame(false, $result['process'][4]['state']);
         }
+        $this->assertSame('user-new', $result['process'][0]['label']);
+        $this->assertSame(true, $result['process'][0]['state']);
 
         // Test 'skus' property
         $user->assignSku(Sku::withEnvTenantContext()->where('title', 'beta')->first());

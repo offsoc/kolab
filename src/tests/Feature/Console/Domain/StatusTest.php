@@ -44,7 +44,11 @@ class StatusTest extends TestCase
         $code = \Artisan::call("domain:status kolab.org");
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
-        $this->assertSame("Status (114): active (2), confirmed (16), verified (32), ldapReady (64)", $output);
+        if (\config('app.with_ldap')) {
+            $this->assertSame("Status (114): active (2), confirmed (16), verified (32), ldapReady (64)", $output);
+        } else {
+            $this->assertSame("Status (50): active (2), confirmed (16), verified (32)", $output);
+        }
 
         // Test deleted domain
         $user = $this->getTestUser('john@kolab.org');

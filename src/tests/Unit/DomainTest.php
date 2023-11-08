@@ -69,9 +69,11 @@ class DomainTest extends TestCase
                 $domain->isDeleted() === in_array(Domain::STATUS_DELETED, $domainStatuses)
             );
 
-            $this->assertTrue(
-                $domain->isLdapReady() === in_array(Domain::STATUS_LDAP_READY, $domainStatuses)
-            );
+            if (\config('app.with_ldap')) {
+                $this->assertTrue(
+                    $domain->isLdapReady() === in_array(Domain::STATUS_LDAP_READY, $domainStatuses)
+                );
+            }
 
             $this->assertTrue(
                 $domain->isVerified() === in_array(Domain::STATUS_VERIFIED, $domainStatuses)

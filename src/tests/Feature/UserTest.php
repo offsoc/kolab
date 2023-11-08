@@ -1442,7 +1442,9 @@ class UserTest extends TestCase
         // Add a setting
         $user->setSetting('first_name', 'Firstname');
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        if (\config('app.with_ldap')) {
+            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        }
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected
@@ -1452,7 +1454,9 @@ class UserTest extends TestCase
         // Update a setting
         $user->setSetting('first_name', 'Firstname1');
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 2);
+        if (\config('app.with_ldap')) {
+            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 2);
+        }
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected
@@ -1462,7 +1466,9 @@ class UserTest extends TestCase
         // Delete a setting (null)
         $user->setSetting('first_name', null);
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 3);
+        if (\config('app.with_ldap')) {
+            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 3);
+        }
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected
@@ -1473,7 +1479,9 @@ class UserTest extends TestCase
         $user->setSetting('first_name', 'Firstname1');
         $user->setSetting('first_name', '');
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 5);
+        if (\config('app.with_ldap')) {
+            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 5);
+        }
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected
@@ -1488,7 +1496,9 @@ class UserTest extends TestCase
         ]);
 
         // TODO: This really should create a single UserUpdate job, not 3
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 7);
+        if (\config('app.with_ldap')) {
+            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 7);
+        }
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected

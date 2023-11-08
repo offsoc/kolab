@@ -116,7 +116,9 @@ class GroupsTest extends TestCase
         $this->assertArrayHasKey('isDeleted', $json['list'][0]);
         $this->assertArrayHasKey('isSuspended', $json['list'][0]);
         $this->assertArrayHasKey('isActive', $json['list'][0]);
-        $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
+        if (\config('app.with_ldap')) {
+            $this->assertArrayHasKey('isLdapReady', $json['list'][0]);
+        }
 
         // Test that another wallet controller has access to groups
         $response = $this->actingAs($ned)->get("/api/v4/groups");
@@ -248,7 +250,9 @@ class GroupsTest extends TestCase
         $this->assertArrayHasKey('isDeleted', $json);
         $this->assertArrayHasKey('isSuspended', $json);
         $this->assertArrayHasKey('isActive', $json);
-        $this->assertArrayHasKey('isLdapReady', $json);
+        if (\config('app.with_ldap')) {
+            $this->assertArrayHasKey('isLdapReady', $json);
+        }
         $this->assertSame(['sender_policy' => ['test']], $json['config']);
         $this->assertCount(1, $json['skus']);
     }
@@ -292,6 +296,8 @@ class GroupsTest extends TestCase
     /**
      * Test fetching group status (GET /api/v4/groups/<group-id>/status)
      * and forcing setup process update (?refresh=1)
+     *
+     * @group ldap
      */
     public function testStatus(): void
     {
@@ -372,6 +378,8 @@ class GroupsTest extends TestCase
 
     /**
      * Test GroupsController::statusInfo()
+     *
+     * @group ldap
      */
     public function testStatusInfo(): void
     {
