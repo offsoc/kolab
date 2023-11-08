@@ -1,5 +1,7 @@
 #!/bin/bash
-#set -e
+set -e
+set -x
+
 rsync -av \
     --exclude=vendor \
     --exclude=composer.lock \
@@ -10,64 +12,67 @@ rsync -av \
     --exclude=resources/build \
     --exclude=bootstrap \
     --exclude=.gitignore \
-    /src/kolabsrc.orig/ /src/kolabsrc/ | tee /tmp/rsync.output
-cd /src/kolabsrc
+    /src/kolabsrc.orig/ /opt/app-root/src/ | tee /tmp/rsync.output
 
-rm -rf storage/framework
-mkdir -p storage/framework/{sessions,views,cache}
+cd /opt/app-root/src/
 
-php -dmemory_limit=-1 $(command -v composer) update
-/usr/local/bin/npm install
-find bootstrap/cache/ -type f ! -name ".gitignore" -delete
-./artisan clear-compiled
-./artisan cache:clear
-./artisan horizon:install
+if [ "$1" == "--refresh" ]; then
+    rm -rf storage/framework
+    mkdir -p storage/framework/{sessions,views,cache}
 
-if rpm -qv chromium 2>/dev/null; then
-    chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
-    ./artisan dusk:chrome-driver ${chver}
+    find bootstrap/cache/ -type f ! -name ".gitignore" -delete
+    ./artisan clear-compiled
+    ./artisan cache:clear
+
+    # FIXME seems to be required for db seed to function
+    composer update
+
+    if rpm -qv chromium 2>/dev/null; then
+        chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
+        ./artisan dusk:chrome-driver ${chver}
+    fi
+
+    # Only run npm if something relevant was updated
+    if grep -e "package.json" -e "resources" /tmp/rsync.output; then
+        npm run dev
+    fi
+
+    ./artisan db:ping --wait
+
+
+    # Unconditionally get the database into shape
+    php -dmemory_limit=512M ./artisan migrate:refresh --seed
+
+    ./artisan data:import || :
+    ./artisan queue:work --stop-when-empty
+
+    shift
 fi
 
-if [ ! -f 'resources/countries.php' ]; then
-    ./artisan data:countries
-fi
-
-npm run dev
-
-rm -rf database/database.sqlite
-./artisan db:ping --wait
-php -dmemory_limit=512M ./artisan migrate --force
-if test "$( env APP_DEBUG=false ./artisan -n users | wc -l )" -lt "1"; then
-    php -dmemory_limit=512M ./artisan db:seed
-fi
-./artisan data:import || :
-./artisan queue:work --stop-when-empty
-
+EXCLUDE_GROUPS="skipci,ldap,coinbase,mollie,stripe,meet,dns"
 
 if [ "$1" == "suite-Functional" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci \
+        --exclude-group skipci,ldap \
         --verbose \
         --testsuite Unit
 
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci \
+        --exclude-group skipci,ldap \
         --verbose \
         --testsuite Functional
-fi
-if [ "$1" == "suite-Feature" ]; then
+elif [ "$1" == "suite-Feature" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci,coinbase,mollie,stripe,meet,dns \
+        --exclude-group "$EXCLUDE_GROUPS" \
         --verbose \
         --testsuite Feature
-fi
-if [ "$1" == "suite-Browser" ]; then
+elif [ "$1" == "suite-Browser" ]; then
 
     # Can't do browser tests over https
     echo "APP_URL=http://kolab.local" >> .env
@@ -83,37 +88,35 @@ if [ "$1" == "suite-Browser" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci,meet,mollie \
+        --exclude-group skipci,ldap,meet,mollie \
         --verbose \
         --testsuite Browser
-fi
-if [ "$1" == "testsuite" ]; then
+elif [ "$1" == "testsuite" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci \
+        --exclude-group "$EXCLUDE_GROUPS" \
         --verbose \
         --testsuite Unit
 
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci \
+        --exclude-group "$EXCLUDE_GROUPS" \
         --verbose \
         --testsuite Functional
 
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci,coinbase,mollie,stripe,meet,dns \
+        --exclude-group "$EXCLUDE_GROUPS" \
         --verbose \
         --testsuite Feature
-fi
-if [ "$1" == "quicktest" ]; then
+elif [ "$1" == "quicktest" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci \
+        --exclude-group "$EXCLUDE_GROUPS" \
         --verbose \
         --stop-on-defect \
         --stop-on-error \
@@ -123,7 +126,7 @@ if [ "$1" == "quicktest" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci \
+        --exclude-group "$EXCLUDE_GROUPS" \
         --verbose \
         --stop-on-defect \
         --stop-on-error \
@@ -133,13 +136,22 @@ if [ "$1" == "quicktest" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci,coinbase,mollie,stripe,meet,dns \
+        --exclude-group "$EXCLUDE_GROUPS" \
         --verbose \
         --stop-on-defect \
         --stop-on-error \
         --stop-on-failure \
         --testsuite Feature
-fi
-if [ "$1" == "shell" ]; then
+elif [ "$1" == "shell" ]; then
     exec /bin/bash
+else
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group "$EXCLUDE_GROUPS" \
+        --verbose \
+        --stop-on-defect \
+        --stop-on-error \
+        --stop-on-failure \
+        "$1"
 fi

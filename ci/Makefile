@@ -11,7 +11,7 @@ setup:
 	cd .. && bin/quickstart.sh --nodev
 
 build:
-	cd .. && docker compose -f docker-compose.yml f docker-compose.override.yml -f docker-compose.build.yml build && cd ci
+	cd .. && docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml build && cd ci
 
 lint:
 	docker kill kolab-tests || : ; \
