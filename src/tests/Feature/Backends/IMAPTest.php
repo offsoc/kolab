@@ -48,11 +48,13 @@ class IMAPTest extends TestCase
      */
     public function testAclCleanup(): void
     {
-        $this->user = $user = $this->getTestUser('test-' . time() . '@kolab.org');
+        $this->user = $user = $this->getTestUser('test-' . time() . '@kolab.org', [], true);
         $this->group = $group = $this->getTestGroup('test-group-' . time() . '@kolab.org');
 
         // SETACL requires that the user/group exists in LDAP
-        LDAP::createUser($user);
+        if (\config('app.with_ldap')) {
+            LDAP::createUser($user);
+        }
         // LDAP::createGroup($group);
 
         // First, set some ACLs that we'll expect to be removed later
@@ -91,11 +93,13 @@ class IMAPTest extends TestCase
      */
     public function testAclCleanupDomain(): void
     {
-        $this->user = $user = $this->getTestUser('test-' . time() . '@kolab.org');
+        $this->user = $user = $this->getTestUser('test-' . time() . '@kolab.org', [], true);
         $this->group = $group = $this->getTestGroup('test-group-' . time() . '@kolab.org');
 
         // SETACL requires that the user/group exists in LDAP
-        LDAP::createUser($user);
+        if (\config('app.with_ldap')) {
+            LDAP::createUser($user);
+        }
         // LDAP::createGroup($group);
 
         // First, set some ACLs that we'll expect to be removed later
@@ -139,7 +143,7 @@ class IMAPTest extends TestCase
      */
     public function testUsers(): void
     {
-        $this->user = $user = $this->getTestUser('test-' . time() . '@' . \config('app.domain'));
+        $this->user = $user = $this->getTestUser('test-' . time() . '@' . \config('app.domain'), [], true);
         $storage = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
         $user->assignSku($storage, 1, $user->wallets->first());
 
