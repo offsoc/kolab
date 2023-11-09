@@ -8,6 +8,7 @@ sed -i -r \
 
 sed -i -r \
     -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
+    -e "s|SERVICES_PORT|$SERVICES_PORT|g" \
     /etc/saslauthd.conf
 
 mkdir -p /var/lib/imap/socket

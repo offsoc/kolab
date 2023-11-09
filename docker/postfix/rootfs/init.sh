@@ -6,6 +6,7 @@ chmod 655 /etc/pki/tls/private/postfix.pem
 
 sed -i -r \
     -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
+    -e "s|SERVICES_PORT|$SERVICES_PORT|g" \
     /etc/saslauthd.conf
 
 /usr/sbin/saslauthd -m /run/saslauthd -a httpform -d &
@@ -27,7 +28,7 @@ sed -i -r \
     /etc/postfix/main.cf
 
 sed -i -r \
-    -e "s|SERVICES_HOST|http://services.$APP_DOMAIN:8000|g" \
+    -e "s|SERVICES_HOST|http://services.$APP_DOMAIN:$SERVICES_PORT|g" \
     /usr/libexec/postfix/kolab_policy*
 
 sed -i -r \
