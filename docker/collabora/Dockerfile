@@ -55,6 +55,7 @@ RUN setcap cap_fowner,cap_chown,cap_mknod,cap_sys_chroot=ep /usr/bin/coolforkit 
 WORKDIR /opt/cool/
 
 ADD init.sh /init.sh
+ADD coolwsd.xml /etc/coolwsd/coolwsd.xml
 
 RUN chown -R 1001:0 /etc/coolwsd /opt/ && \
     chmod -R g=u /etc/coolwsd /opt/

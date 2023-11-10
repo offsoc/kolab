@@ -1,9 +1,5 @@
 #!/bin/sh
 
-xmlstarlet edit -L --update "/config/ssl/enable" --value "false" /etc/coolwsd/coolwsd.xml
-xmlstarlet edit -L --update "/config/ssl/termination" --value "true" /etc/coolwsd/coolwsd.xml
-xmlstarlet edit -L --update "/config/admin_console/enable" --value "false" /etc/coolwsd/coolwsd.xml
-xmlstarlet edit -L --update "/config/storage/wopi/host[text()='localhost']" --value ".*" /etc/coolwsd/coolwsd.xml
 
 mkdir -p /tmp/ssl/
 pushd /tmp/ssl/
