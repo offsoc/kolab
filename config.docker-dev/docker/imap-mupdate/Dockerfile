@@ -31,18 +31,11 @@ RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/de
 
 WORKDIR /root/
 
-RUN dnf -y install git
-RUN dnf -y group install "Development Tools"
-RUN git clone https://github.com/cmollekopf/cyrus-imapd
+RUN dnf -y install git autoconf automake bison cyrus-sasl-devel flex gcc gperf jansson-devel libbsd-devel libtool libicu-devel libuuid-devel openssl-devel pkgconfig sqlite-devel brotli-devel libical-devel libxml2-devel libnghttp2-devel shapelib  zlib-devel pcre-devel perl-devel && \
+    dnf -y install cyrus-imapd  cyrus-sasl cyrus-sasl-plain && \
+    dnf -y group install "Development Tools"
+RUN git clone https://git.kolab.org/source/cyrus-imapd.git
 
-RUN dnf -y install autoconf automake bison cyrus-sasl-devel flex gcc gperf jansson-devel libbsd-devel libtool libicu-devel libuuid-devel openssl-devel pkgconfig sqlite-devel brotli-devel libical-devel libxml2-devel libnghttp2-devel shapelib  zlib-devel pcre-devel
-
-RUN dnf -y install perl-devel
-RUN dnf -y install cyrus-imapd  cyrus-sasl cyrus-sasl-plain
-# wslay-devel
-#libchardet-devel 
- # cld2-devel
- #
 COPY cyrus.conf /etc/cyrus.conf
 COPY imapd.conf /etc/imapd.conf
 COPY imapd.annotations.conf /etc/imapd.annotations.conf
@@ -63,9 +56,6 @@ RUN cd cyrus-imapd && \
     make install
 
 COPY cyrus-imapd.service /etc/systemd/system/cyrus-imapd.service
-
-
-# RUN useradd -g mail cyrus
 
 ADD kolab.hosted.com.cert /etc/pki/tls/certs/kolab.hosted.com.cert
 ADD kolab.hosted.com.chain.pem /etc/pki/tls/certs/kolab.hosted.com.chain.pem
