@@ -60,7 +60,7 @@ RUN dnf -y install \
         re2c \
         npm \
         wget && \
-        dnf -y install procps-ng iputils bind-utils sudo telnet && \
+        dnf -y install procps-ng iputils bind-utils sudo telnet mc && \
     dnf clean all
 
 
