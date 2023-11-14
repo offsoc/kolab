@@ -1,4 +1,4 @@
-FROM quay.io/centos/centos:stream9
+FROM almalinux:9
 
 MAINTAINER Christian Mollekopf <mollekopf@apheleia-it.ch>
 
@@ -14,8 +14,8 @@ RUN dnf -y update
 # Add EPEL.
 RUN dnf -y install 'dnf-command(config-manager)' && \
     dnf config-manager --set-enabled crb && \
-    dnf -y install \
-        epel-release epel-next-release && \
+    dnf -y install epel-release && \
+    dnf -y install epel-next-release && \
     dnf clean all
 
 # Add the EPEL key.
@@ -24,11 +24,11 @@ RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-9
 
 # Add kolab
 RUN rpm --import https://mirror.apheleia-it.ch/repos/Kolab:/16/key.asc && \
-    rpm -Uvh https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el9stream.rpm
+    rpm -Uvh https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el9.rpm
 
 # Install php modules
 RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
-    dnf config-manager --enable kolab-16-testing &&\
+    dnf config-manager --enable kolab-16 &&\
     dnf -y --setopt tsflags= install php-kolab php-kolabformat &&\
     dnf clean all
 
@@ -56,13 +56,14 @@ RUN dnf -y install \
         php-gd \
         php-fpm \
         php-pear \
-        ImageMagick \
+        # ImageMagick \
         re2c \
         npm \
         wget && \
         dnf -y install procps-ng iputils bind-utils sudo telnet mc && \
     dnf clean all
 
+RUN dnf -y install --disablerepo epel-next ImageMagick
 
 RUN npm install -g less less-plugin-clean-css
 
