@@ -1,6 +1,6 @@
 #!/bin/bash
 docker compose down --remove-orphans
 docker compose pull --ignore-buildable
-docker compose build coturn kolab mariadb meet pdns proxy redis haproxy webapp
+docker compose build
 bin/regen-certs
-docker compose up -d coturn kolab mariadb meet pdns proxy redis haproxy webapp
+docker compose up -d --wait
