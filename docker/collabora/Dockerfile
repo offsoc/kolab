@@ -62,6 +62,9 @@ RUN chown -R 1001:0 /etc/coolwsd /opt/ && \
 
 USER 1001
 
+#Space separated list of hosts (where the service is running)
+ENV ALLOWED_HOSTS="\.\*"
+
 CMD ["/init.sh"]
 
 EXPOSE 9980

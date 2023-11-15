@@ -180,6 +180,8 @@ services:
     restart: on-failure
     hostname: collabora
     image: kolab-collabora
+    environment:
+      - ALLOWED_HOSTS=${APP_DOMAIN}
     networks:
       kolab:
         ipv4_address: 172.18.0.17
