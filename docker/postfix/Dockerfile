@@ -42,6 +42,8 @@ COPY /rootfs /
 VOLUME [ "/var/spool/postfix" ]
 VOLUME [ "/var/lib/postfix" ]
 
+ENV SERVICES_PORT=8000
+
 CMD ["/init.sh"]
 
 EXPOSE 10025/tcp 10587/tcp

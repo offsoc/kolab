@@ -63,6 +63,8 @@ RUN PATHS=(/etc /etc/passwd /etc/saslauthd.conf /etc/cyrus.conf /etc/imapd.conf)
 
 USER 1001
 
+ENV SERVICES_PORT=8000
+
 CMD ["/init.sh"]
 
 EXPOSE 11143/tcp 11993/tcp 11080/tcp 11443/tcp 11024/tcp 4190/tcp
