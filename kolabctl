@@ -1,0 +1,79 @@
+#!/bin/bash
+
+CONFIG="config.prod"
+HOST="kolab.local"
+BRANCH="master"
+
+kolab__deploy() {
+    echo "Please enter your new admin password for the admin@$HOST user:"
+    read -r ADMIN_PASSWORD
+    echo "Deploying $CONFIG from branch $BRANCH on $HOST"
+    command env KOLAB_GIT_REF=$BRANCH HOST=$HOST ADMIN_PASSWORD="$ADMIN_PASSWORD" bin/configure.sh "$CONFIG"
+    command env ADMIN_PASSWORD="$ADMIN_PASSWORD" bin/deploy.sh
+}
+
+kolab__start() {
+    command bin/start.sh
+}
+
+kolab__stop() {
+    command bin/stop.sh
+}
+
+kolab__update() {
+    command bin/update.sh
+}
+
+kolab__backup() {
+    command bin/backup.sh
+}
+
+kolab__restore() {
+    command bin/restore.sh
+}
+
+kolab__selfcheck() {
+    command bin/selfcheck.sh
+}
+
+kolab__help() {
+    cat <<EOF
+  This is the kolab commandline utility.
+
+  The following commands are available:
+    deploy: Deploy kolab
+    start: Start all containers
+    stop: Stop all containers
+    update: This will update all containers.
+    backup: Create a backup in backup/
+    restore: Restore a backup from backup/
+    selfcheck: Run a selfcheck to ensure kolab is functional
+EOF
+}
+
+kolab() {
+    local cmdname=$1; shift
+    if type "kolab__$cmdname" >/dev/null 2>&1; then
+        "kolab__$cmdname" "$@"
+    else
+        command  "$cmdname" "$@" # call the **real** yum command
+    fi
+}
+
+# if the functions above are sourced into an interactive interpreter, the user can
+# just call "kolab deploy" or "kolab start" with no further code needed.
+
+# if invoked as a script rather than sourced, call function named on argv via the below;
+# note that this must be the first operation other than a function definition
+# for $_ to successfully distinguish between sourcing and invocation:
+# [[ $_ != $0 ]] && return
+
+# make sure we actually *did* get passed a valid function name
+if declare -f "kolab__$1" >/dev/null 2>&1; then
+    "kolab__$1" "${@:1}"
+else
+    echo "Function $1 not recognized" >&2
+    command kolab__help
+    exit 1
+fi
+
