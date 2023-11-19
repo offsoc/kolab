@@ -4,6 +4,7 @@ services:
     environment:
       - MAIL_HOST=postfix
       - MAIL_PORT=10587
+      - FILEAPI_WOPI_OFFICE=https://kolab.local
   proxy:
     depends_on:
       imap:
@@ -182,6 +183,8 @@ services:
     image: kolab-collabora
     environment:
       - ALLOWED_HOSTS=${APP_DOMAIN}
+    extra_hosts:
+      - "${APP_DOMAIN}:172.18.0.7"
     networks:
       kolab:
         ipv4_address: 172.18.0.17
@@ -191,8 +194,6 @@ services:
       - /var/run
       - /var/tmp
     tty: true
-    # ports:
-    #   - "13024:13024"
 volumes:
   postfix-spool:
   postfix-lib:
