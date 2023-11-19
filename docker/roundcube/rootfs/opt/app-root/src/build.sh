@@ -18,7 +18,7 @@ if [ ! -d iRony ]; then
     git clone --branch master https://git.kolab.org/source/iRony.git iRony
 fi
 if [ ! -d chwala ]; then
-    git clone --branch master https://git.kolab.org/diffusion/C/chwala.git chwala
+    git clone --branch dev/kolabfiles https://git.kolab.org/diffusion/C/chwala.git chwala
 fi
 if [ ! -d autoconf ]; then
     git clone --branch master https://git.kolab.org/diffusion/AC/autoconf.git autoconf
