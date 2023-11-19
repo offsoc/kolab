@@ -78,7 +78,7 @@
             'kolab_addressbook',
             // 'kolab_config',
             //'kolab_delegation',
-            // 'kolab_files',
+            'kolab_files',
             'kolab_folders',
             // 'kolab_notes',
             // 'kolab_tags',

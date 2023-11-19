@@ -11,12 +11,12 @@
 // Main files source, backend driver which handles
 // authentication and configuration of Chwala
 // Note: Currently only 'kolab' is supported
-$config['fileapi_backend'] = 'kolab';
+$config['fileapi_backend'] = 'kolabfiles';
 
 // Enabled external storage drivers
 // Note: Currenty only 'seafile' and webdav is available
 // $config['fileapi_drivers'] = array('seafile', 'webdav');
-$config['fileapi_drivers'] = array('webdav');
+// $config['fileapi_drivers'] = array('webdav');
 
 
 // Disable the kolab-auth plugin
@@ -41,14 +41,14 @@ $config['fileapi_sources'] = array(
     ),
 );
 */
-$config['fileapi_sources'] = array(
-    'Public-Files' => array(
-        'driver'   => 'webdav',
-        'baseuri'  => 'https://kolab.local/dav/drive/user/admin@kolab.local',
-        'username' => '%u',
-        'password' => 'simple123',
-    ),
-);
+// $config['fileapi_sources'] = array(
+//     'Public-Files' => array(
+//         'driver'   => 'webdav',
+//         'baseuri'  => 'https://kolab.local/dav/drive/user/admin@kolab.local/',
+//         'username' => '%u',
+//         'password' => 'simple123',
+//     ),
+// );
 
 // Default values for sources configuration dialog.
 // Note: use driver names as the array keys.
@@ -69,7 +69,7 @@ $config['fileapi_presets'] = array(
 // Disables listing folders from the backend storage.
 // This is useful when you configured an external source(s) and
 // you want to use it exclusively, ignoring Kolab folders.
-$config['fileapi_backend_storage_disabled'] = true;
+$config['fileapi_backend_storage_disabled'] = false;
 
 // Manticore service URL. Enables use of WebODF collaborative editor.
 // Note: this URL should be accessible from Chwala host and Roundcube host as well.
