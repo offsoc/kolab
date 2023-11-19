@@ -1,7 +1,7 @@
 <?php
 
-// backend type (database, kolab)
-$config['tasklist_driver'] = 'kolab';
+$config['tasklist_driver'] = 'caldav';
+$config['tasklist_caldav_server'] = "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav/";
 
 // default sorting order of tasks listing (auto, datetime, startdatetime, flagged, complete, changed)
 $config['tasklist_sort_col'] = '';

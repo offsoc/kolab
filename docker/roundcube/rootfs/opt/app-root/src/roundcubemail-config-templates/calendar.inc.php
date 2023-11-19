@@ -1,5 +1,5 @@
 <?php
-    $config['calendar_driver'] = "kolab";
+    $config['calendar_driver'] = "caldav";
     $config['calendar_default_view'] = "agendaWeek";
     $config['calendar_timeslots'] = 2;
     $config['calendar_first_day'] = 1;
@@ -7,7 +7,8 @@
     $config['calendar_work_start'] = 6;
     $config['calendar_work_end'] = 18;
     $config['calendar_event_coloring'] = 0;
-    $config['calendar_caldav_url'] = 'http://%h/iRony/calendars/%u/%i';
+    $config['calendar_caldav_url'] = 'http://%h/dav/calendars/%u/%i';
+    $config['calendar_caldav_server'] = "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav/";
 
     $config['calendar_itip_smtp_server'] = '';
     $config['calendar_itip_smtp_user'] = '';

@@ -17,4 +17,7 @@ $config['kolab_addressbook_prio'] = 0;
 // %i - Folder UUID
 $config['kolab_addressbook_carddav_url'] = 'http://%h/dav/addressbooks/%u/%i';
 
+$config['kolab_addressbook_carddav_server'] = "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav/";
+$config['kolab_addressbook_driver'] = 'carddav';
+
 ?>
