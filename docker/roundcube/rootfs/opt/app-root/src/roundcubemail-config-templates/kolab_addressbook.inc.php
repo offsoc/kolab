@@ -15,6 +15,6 @@ $config['kolab_addressbook_prio'] = 0;
 // %u - Current webmail user name
 // %n - Folder name
 // %i - Folder UUID
-$config['kolab_addressbook_carddav_url'] = 'http://%h/iRony/addressbooks/%u/%i';
+$config['kolab_addressbook_carddav_url'] = 'http://%h/dav/addressbooks/%u/%i';
 
 ?>
