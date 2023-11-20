@@ -472,7 +472,7 @@ class FsController extends RelationController
             return $this->errorResponse($file);
         }
 
-        if ($file->type == self::TYPE_COLLECTION) {
+        if ($file->type == Item::TYPE_COLLECTION) {
             // Updating a collection is not supported yet
             return $this->errorResponse(405);
         }
