@@ -181,8 +181,6 @@
 
     // Disable the default addressbook and use the dav addressbook by default
     $config['address_book_type'] = '';
-    $config['default_addressbook'] = 'Addressbook';
-    $config['autocomplete_addressbooks'] = array('Addressbook');
 
     $config['autocomplete_single'] = true;
 
