@@ -356,7 +356,7 @@ kolab__selfcheck() {
     echo "All containers are available"
 
     # We skip mollie and openexchange
-    podman exec $POD-webapp env APP_DEBUG=false ./artisan status:health --check DB --check Redis --check IMAP --check Roundcube --check Meet --check DAV
+    podman exec $POD-webapp env APP_DEBUG=false ./artisan status:health --user="$ADMIN_USER" --password="$ADMIN_PASSWORD" --check DB --check Redis --check IMAP --check Roundcube --check Meet --check DAV --check Auth
     echo "Checking postfix authentication"
     podman exec $POD-postfix testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
     echo "Checking imap authentication"
