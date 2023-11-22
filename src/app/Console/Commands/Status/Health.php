@@ -24,7 +24,9 @@ class Health extends Command
      * @var string
      */
     protected $signature = 'status:health
-        {--check=* : One of DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates, Storage}';
+        {--check=* : One of DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates, Storage, SMTP}
+        {--user= : Email of test user}
+        {--password= : Password of test user}'; // phpcs:ignore
 
     /**
      * The console command description.
@@ -36,7 +38,7 @@ class Health extends Command
     private function checkDB()
     {
         try {
-            $result = DB::select("SELECT 1");
+            DB::select("SELECT 1");
             return true;
         } catch (\Exception $exception) {
             $this->line($exception);
@@ -92,6 +94,33 @@ class Health extends Command
         try {
             IMAP::healthcheck();
             return true;
+        } catch (\Exception $exception) {
+            $this->line($exception);
+            return false;
+        }
+    }
+
+    private function checkSMTP()
+    {
+        try {
+            \App\Mail\Helper::sendMail(
+                new \App\Mail\TrialEnd(\App\User::findByEmail($this->option('user'))),
+                null,
+                ["to" => [$this->option('user')]]
+            );
+            return true;
+        } catch (\Exception $exception) {
+            $this->line($exception);
+            return false;
+        }
+    }
+
+    private function checkAuth()
+    {
+        try {
+            $user = \App\User::findByEmail($this->option('user'));
+            $response = \App\Http\Controllers\API\AuthController::logonResponse($user, $this->option('password'));
+            return $response->getData()->status == 'success';
         } catch (\Exception $exception) {
             $this->line($exception);
             return false;
@@ -166,7 +195,7 @@ class Health extends Command
         $steps = $this->option('check');
         if (empty($steps)) {
             $steps = [
-                'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates'
+                'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates', 'SMTP', 'Auth'
             ];
             if (\config('app.with_ldap')) {
                 array_unshift($steps, 'LDAP');
@@ -187,7 +216,7 @@ class Health extends Command
             if ($this->{$func}()) {
                 $this->info("OK");
             } else {
-                $this->error("Not found");
+                $this->error("Error while checking: $step");
                 $result = 1;
             }
         }
