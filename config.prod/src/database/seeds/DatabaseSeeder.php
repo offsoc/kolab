@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             Seeds\PowerDNSSeeder::class,
             Seeds\AdminSeeder::class,
             Seeds\ImapAdminSeeder::class,
+            Seeds\NoreplySeeder::class,
         ]);
     }
 }
