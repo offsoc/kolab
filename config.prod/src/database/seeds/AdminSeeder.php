@@ -193,6 +193,12 @@ class AdminSeeder extends Seeder
 
         $admin->assignPackage($userPackage);
 
+        //Create a default file collection
+        $item = $admin->fsItems()->create(['type' => \App\Fs\Item::TYPE_COLLECTION]);
+        $item->setProperties([
+            'name' => "Files",
+        ]);
+
 
         //Create primary domain
         $domain = Domain::create(
