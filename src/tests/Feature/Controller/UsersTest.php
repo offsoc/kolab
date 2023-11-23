@@ -1230,7 +1230,7 @@ class UsersTest extends TestCase
         $groupware = Sku::withEnvTenantContext()->where('title', 'groupware')->first();
         $mailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
 
-        // standard package, 1 mailbox, 1 groupware, 2 storage
+        // standard package, 1 mailbox, 1 groupware, 5 storage
         $jane->assignPackage($kolab);
 
         // add 2 storage, 1 activesync
