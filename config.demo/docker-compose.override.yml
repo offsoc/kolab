@@ -54,7 +54,7 @@ services:
     build:
       context: ./docker/imap/
     environment:
-      - APP_DOMAIN=${APP_DOMAIN}
+      - APP_SERVICES_DOMAIN=services.${APP_DOMAIN}
       - SERVICES_PORT=8000
       - IMAP_ADMIN_LOGIN=${IMAP_ADMIN_LOGIN}
       - IMAP_ADMIN_PASSWORD=${IMAP_ADMIN_PASSWORD}
@@ -100,6 +100,7 @@ services:
       timeout: 5s
       retries: 30
     environment:
+      - APP_SERVICES_DOMAIN=services.${APP_DOMAIN}
       - APP_DOMAIN=${APP_DOMAIN}
       - SERVICES_PORT=8000
       - DB_HOST=mariadb

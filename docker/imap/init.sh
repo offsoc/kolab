@@ -7,7 +7,7 @@ sed -i -r \
     /etc/imapd.conf
 
 sed -i -r \
-    -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
+    -e "s|APP_SERVICES_DOMAIN|$APP_SERVICES_DOMAIN|g" \
     -e "s|SERVICES_PORT|$SERVICES_PORT|g" \
     /etc/saslauthd.conf
 

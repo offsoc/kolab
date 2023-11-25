@@ -43,6 +43,8 @@ VOLUME [ "/var/spool/postfix" ]
 VOLUME [ "/var/lib/postfix" ]
 
 ENV SERVICES_PORT=8000
+# ENV APP_SERVICES_DOMAIN
+# ENV APP_DOMAIN
 
 CMD ["/init.sh"]
 

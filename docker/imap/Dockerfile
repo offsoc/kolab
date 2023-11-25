@@ -64,6 +64,7 @@ RUN PATHS=(/etc /etc/passwd /etc/saslauthd.conf /etc/cyrus.conf /etc/imapd.conf)
 USER 1001
 
 ENV SERVICES_PORT=8000
+# ENV APP_SERVICES_DOMAIN
 
 CMD ["/init.sh"]
 
