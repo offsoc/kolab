@@ -562,6 +562,7 @@ def main():
     parser.add_argument("--username", help="Username")
     parser.add_argument("--password", help="User password")
     parser.add_argument("--imap", help="IMAP URI")
+    parser.add_argument("--smtp", help="SMTP URI")
     parser.add_argument("--dav", help="DAV URI")
     parser.add_argument("--autoconfig", help="Check autoconfig")
     parser.add_argument("--dns", action='store_true', help="Check dns")
@@ -638,7 +639,8 @@ def main():
         else:
             error = True
 
-        if test_smtp(options.imap, options.username, options.password, options.verbose):
+    if options.smtp:
+        if test_smtp(options.smtp, options.username, options.password, options.verbose):
             print_success("SMTP is available")
         else:
             error = True
