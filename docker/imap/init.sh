@@ -29,6 +29,6 @@ ID=$(id -u)
 GID=$(id -g)
 echo "$ID:x:$ID:$GID::/opt/app-root/:/bin/bash" > /etc/passwd
 
-exec env CYRUS_VERBOSE=2 CYRUS_USER="$ID" /usr/libexec/master -D -p /var/run/master.pid -M /etc/cyrus.conf -C /etc/imapd.conf
+exec env CYRUS_VERBOSE=1 CYRUS_USER="$ID" /usr/libexec/master -D -p /var/run/master.pid -M /etc/cyrus.conf -C /etc/imapd.conf
 
 
