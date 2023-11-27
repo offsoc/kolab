@@ -142,6 +142,11 @@ class PolicyController extends Controller
             $request->save();
         }
 
+        // exempt owners that have 100% discount.
+        if ($wallet->discount && $wallet->discount->discount == 100) {
+            return response()->json(['response' => 'DUNNO'], 200);
+        }
+
         // exempt owners that have made at least two payments and currently maintain a positive balance.
         if ($wallet->balance > 0) {
             $payments = $wallet->payments()->where('amount', '>', 0)->where('status', 'paid');
