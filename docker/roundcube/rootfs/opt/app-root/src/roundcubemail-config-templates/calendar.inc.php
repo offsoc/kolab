@@ -8,7 +8,7 @@
     $config['calendar_work_end'] = 18;
     $config['calendar_event_coloring'] = 0;
     $config['calendar_caldav_url'] = 'http://%h/dav/calendars/%u/%i';
-    $config['calendar_caldav_server'] = "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav/";
+    $config['calendar_caldav_server'] = "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
 
     $config['calendar_itip_smtp_server'] = '';
     $config['calendar_itip_smtp_user'] = '';
