@@ -211,6 +211,37 @@ class RateLimitTest extends TestCase
     }
 
     /**
+     * Verify a 100% discount for individual account does not simply run out of messages
+     */
+    public function testIndividualDiscountMessages()
+    {
+        $wallet = $this->publicDomainUser->wallets()->first();
+
+        // Ensure there are no payments for the wallet
+        Payment::where('wallet_id', $wallet->id)->delete();
+
+        $wallet->discount()->associate(\App\Discount::where('description', 'Free Account')->first());
+        $wallet->save();
+
+        $request = [
+            'sender' => $this->publicDomainUser->email,
+            'recipients' => ['someone@test.domain']
+        ];
+
+        // first 9 requests
+        for ($i = 1; $i <= 9; $i++) {
+            $request['recipients'] = [sprintf("%04d@test.domain", $i)];
+            $response = $this->post('api/webhooks/policy/ratelimit', $request);
+
+            $response->assertStatus(200);
+        }
+
+        // the tenth request should now be allowed
+        $response = $this->post('api/webhooks/policy/ratelimit', $request);
+        $response->assertStatus(200);
+    }
+
+    /**
      * Verify that an individual user in its trial can run out of recipients.
      */
     public function testIndividualTrialRecipients()
