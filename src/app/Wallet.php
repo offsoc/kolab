@@ -725,4 +725,28 @@ class Wallet extends Model
 
         return [(int) $cost, (int) $fee, $endDate];
     }
+
+    /**
+     * Ensure that this wallet has a minimum balance and a minimum number of payments,
+     * or a 100% discount (in which case there are no payments).
+     *
+     * @return bool
+     */
+    public function hasMinimumBalanceAndPayments($minimumPayments = 2): bool
+    {
+        $minimumBalance = -10;
+        if ($this->getDiscount() == 100) {
+            return true;
+        }
+
+        if ($this->balance > $minimumBalance) {
+            $payments = $this->payments()->where('amount', '>', 0)->where('status', 'paid');
+
+            if ($payments->count() >= $minimumPayments) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

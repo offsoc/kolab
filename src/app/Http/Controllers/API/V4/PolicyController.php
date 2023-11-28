@@ -155,18 +155,21 @@ class PolicyController extends Controller
             $request->save();
         }
 
-        // exempt owners that have 100% discount.
-        if ($wallet->discount && $wallet->discount->discount == 100) {
-            return response()->json(['response' => 'DUNNO'], 200);
-        }
 
-        // exempt owners that have made at least two payments and currently maintain a balance above -10.
-        if ($wallet->balance > -10) {
-            $payments = $wallet->payments()->where('amount', '>', 0)->where('status', 'paid');
+        // Paying users have a 15 messages per minute limit
+        if ($wallet->hasMinimumBalanceAndPayments()) {
+            $ownerRates = RateLimit::where('owner_id', $owner->id)
+                ->where('updated_at', '>=', \Carbon\Carbon::now()->subMinute());
 
-            if ($payments->count() >= 2) {
-                return response()->json(['response' => 'DUNNO'], 200);
+            if (($count = $ownerRates->count()) >= 15) {
+                $result = [
+                    'response' => 'DEFER_IF_PERMIT',
+                    'reason' => 'The account is at 15 messages per minute, cool down.'
+                ];
+
+                return response()->json($result, 403);
             }
+            return response()->json(['response' => 'DUNNO'], 200);
         }
 
         //
