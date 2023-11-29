@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
@@ -18,27 +17,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Passport::ignoreMigrations();
         Passport::ignoreRoutes();
-    }
-
-    /**
-     * Serialize a bindings array to a string.
-     */
-    private static function serializeSQLBindings(array $array, string $sql): string
-    {
-        $ipv = preg_match('/ip([46])nets/', $sql, $m) ? $m[1] : null;
-
-        $serialized = array_map(function ($entry) use ($ipv) {
-            if ($entry instanceof \DateTime) {
-                return $entry->format('Y-m-d h:i:s');
-            } elseif ($ipv && is_string($entry) && strlen($entry) == ($ipv == 6 ? 16 : 4)) {
-                // binary IP address? use HEX representation
-                return '0x' . bin2hex($entry);
-            }
-
-            return $entry;
-        }, $array);
-
-        return implode(', ', $serialized);
     }
 
     /**
@@ -89,20 +67,6 @@ class AppServiceProvider extends ServiceProvider
         \App\PowerDNS\Record::observe(\App\Observers\PowerDNS\RecordObserver::class);
 
         Schema::defaultStringLength(191);
-
-        // Log SQL queries in debug mode
-        if (\config('app.debug')) {
-            DB::listen(function ($query) {
-                \Log::debug(
-                    sprintf(
-                        '[SQL] %s [%s]: %.4f sec.',
-                        $query->sql,
-                        self::serializeSQLBindings($query->bindings, $query->sql),
-                        $query->time / 1000
-                    )
-                );
-            });
-        }
 
         // Register some template helpers
         Blade::directive(
