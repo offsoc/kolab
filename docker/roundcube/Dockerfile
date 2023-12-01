@@ -70,6 +70,15 @@ RUN npm install -g less less-plugin-clean-css
 WORKDIR ${HOME}
 
 COPY /rootfs /
+
+ARG GIT_REF_ROUNDCUBEMAIL=dev/kolab-1.5
+ARG GIT_REF_ROUNDCUBEMAIL_PLUGINS=master
+ARG GIT_REF_CHWALA=master
+ARG GIT_REF_SYNCROTON=master
+ARG GIT_REF_AUTOCONF=master
+ARG GIT_REF_IRONY=master
+ARG GIT_REF_FREEBUSY=master
+
 RUN /opt/app-root/src/build.sh 
 
 VOLUME /data
