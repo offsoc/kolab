@@ -75,6 +75,9 @@ services:
       - DB_KOLAB_DATABASE=kolab
       - DB_KOLAB_USERNAME=kolab
       - DB_KOLAB_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
+      - DB_RC_DATABASE=roundcube
+      - DB_RC_USERNAME=roundcube
+      - DB_RC_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
     healthcheck:
       interval: 10s
       test: test -e /var/run/mysqld/mysqld.sock
