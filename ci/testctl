@@ -1,0 +1,79 @@
+#!/bin/bash
+
+base_dir="$(dirname $(realpath "$0"))"
+pushd "${base_dir}"
+
+set -e
+
+kolab__build() {
+    pushd ..
+    docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml build mariadb redis swoole webapp imap tests roundcube minio
+    popd
+}
+
+kolab__setup() {
+    docker kill kolab-tests || :
+    docker rm kolab-tests || :
+    pushd ..
+    docker compose down
+    docker volume rm kolab_mariadb || :
+    docker volume rm kolab_imap || :
+    bin/configure.sh config.demo
+    # Starting the webapp container will trigger a migration
+    # Maybe just delete the mariadb contianer
+    # We need webapp for the services backend, minio for files, roundcube to initialize the roundcube db
+    docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml up -d --wait mariadb redis imap minio roundcube webapp
+    popd
+}
+
+
+# "testsuite"
+# "quicktest"
+# "tests/Feature/Jobs/WalletCheckTest.php"
+kolab__test() {
+    docker kill kolab-tests || :
+    docker rm kolab-tests || :
+    docker run --network=kolab_kolab -v ${PWD}/../src:/src/kolabsrc.orig --name kolab-tests -t kolab-tests /init.sh $@
+}
+
+
+kolab__testrun() {
+    echo "Build"
+    kolab__build
+    echo "Setup"
+    kolab__setup
+    echo "Test"
+    kolab__test testsuite
+}
+
+
+kolab__shell() {
+    docker kill kolab-tests || : ; \
+    docker rm kolab-tests || : ; \
+    docker run --network=kolab_kolab -v ${PWD}/../src:/src/kolabsrc.orig --name kolab-tests -ti kolab-tests /init.sh shell
+}
+
+kolab__help() {
+    cat <<EOF
+  This is the kolab commandline utility.
+
+  The following commands are available:
+    build: Build necessary containers
+    setup: Start the containers (will delete local data)
+    test: Run tests (pass testsuite/quicktest or a path to a test starting with tests/ as argument)
+    shell: Get a shell
+    testrun: Build/setup/test in one
+EOF
+}
+
+cmdname=$1
+shift
+# make sure we actually *did* get passed a valid function name
+if declare -f "kolab__$cmdname" >/dev/null 2>&1; then
+    "kolab__$cmdname" "${@:1}"
+else
+    echo "Function $cmdname not recognized" >&2
+    kolab__help
+    exit 1
+fi
+
