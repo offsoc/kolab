@@ -73,7 +73,7 @@ if declare -f "kolab__$1" >/dev/null 2>&1; then
     "kolab__$1" "${@:1}"
 else
     echo "Function $1 not recognized" >&2
-    command kolab__help
+    kolab__help
     exit 1
 fi
 
