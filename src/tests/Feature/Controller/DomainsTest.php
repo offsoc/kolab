@@ -453,9 +453,9 @@ class DomainsTest extends TestCase
         $this->assertFalse($json['isVerified']);
         $this->assertFalse($json['isReady']);
         $this->assertFalse($json['isDone']);
-        $this->assertCount(4, $json['process']);
-        $this->assertSame('domain-verified', $json['process'][2]['label']);
-        $this->assertSame(false, $json['process'][2]['state']);
+        $this->assertCount(3, $json['process']);
+        $this->assertSame('domain-verified', $json['process'][1]['label']);
+        $this->assertSame(false, $json['process'][1]['state']);
         $this->assertTrue(empty($json['status']));
         $this->assertTrue(empty($json['message']));
 
@@ -468,11 +468,11 @@ class DomainsTest extends TestCase
         $this->assertTrue($json['isVerified']);
         $this->assertTrue($json['isReady']);
         $this->assertTrue($json['isDone']);
-        $this->assertCount(4, $json['process']);
-        $this->assertSame('domain-verified', $json['process'][2]['label']);
+        $this->assertCount(3, $json['process']);
+        $this->assertSame('domain-verified', $json['process'][1]['label']);
+        $this->assertSame(true, $json['process'][1]['state']);
+        $this->assertSame('domain-confirmed', $json['process'][2]['label']);
         $this->assertSame(true, $json['process'][2]['state']);
-        $this->assertSame('domain-confirmed', $json['process'][3]['label']);
-        $this->assertSame(true, $json['process'][3]['state']);
         $this->assertSame('success', $json['status']);
         $this->assertSame('Setup process finished successfully.', $json['message']);
 
