@@ -38,6 +38,11 @@ find -L config/ -type f | while read file; do
     cp -v $file $dir/
 done
 
+if [ -f config.secrets ]; then
+    # Add local secrets
+    echo "" >> src/.env
+    cat config.secrets >> src/.env
+fi
 
 # Generate random secrets
 if ! grep -q "COTURN_STATIC_SECRET" .env; then
