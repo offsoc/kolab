@@ -794,6 +794,9 @@ class FsController extends RelationController
             $result += $props;
         }
 
+        $result['updated_at'] = $object->updated_at->toDateTimeString();
+        $result['created_at'] = $object->created_at->toDateTimeString();
+
         return $result;
     }
 

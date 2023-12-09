@@ -452,6 +452,8 @@ class FsTest extends TestCase
         $json = $response->json();
 
         $this->assertSame($file->id, $json['id']);
+        $this->assertSame($file->updated_at->toDateTimeString(), $json['updated_at']);
+        $this->assertSame($file->created_at->toDateTimeString(), $json['created_at']);
         $this->assertSame($file->getProperty('mimetype'), $json['mimetype']);
         $this->assertSame((int) $file->getProperty('size'), $json['size']);
         $this->assertSame($file->getProperty('name'), $json['name']);
