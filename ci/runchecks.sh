@@ -15,7 +15,13 @@ source venv/bin/activate
 pip install dnspython
 
 # Ensure the environment is functional
-env ADMIN_USER=john@kolab.org ADMIN_PASSWORD=simple123 bin/selfcheck.sh
+# env ADMIN_USER=john@kolab.org ADMIN_PASSWORD=simple123 bin/selfcheck.sh
+ADMIN_USER=john@kolab.org
+ADMIN_PASSWORD=simple123
+APP_DOMAIN=$(grep APP_DOMAIN .env | tail -n1 | sed "s/APP_DOMAIN=//")
+docker compose exec postfix testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
+docker compose exec imap testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
+utils/kolabendpointtester.py --verbose --host "$APP_DOMAIN" --dav "https://$APP_DOMAIN/dav/" --imap "$APP_DOMAIN" --activesync "$APP_DOMAIN"  --user "$ADMIN_USER" --password "$ADMIN_PASSWORD"
 
 # Run the tests
 docker rm kolab-tests >/dev/null 2>/dev/null || :
