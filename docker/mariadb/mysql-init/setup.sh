@@ -145,3 +145,5 @@ CREATE TABLE powerdns_tsigkeys (
 ) Engine=InnoDB CHARACTER SET 'latin1';
 
 EOF
+
+touch /tmp/initialized

@@ -80,7 +80,7 @@ services:
       - DB_RC_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
     healthcheck:
       interval: 10s
-      test: test -e /var/run/mysqld/mysqld.sock
+      test: "test -e /var/run/mysqld/mysqld.sock && test -e /tmp/initialized"
       timeout: 5s
       retries: 30
     image: mariadb:10.9
