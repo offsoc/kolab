@@ -11,6 +11,8 @@ cd /src
 git clone --branch $GIT_REF https://git.kolab.org/source/kolab.git kolab
 pushd kolab
 git reset --hard $GIT_REF
+#TODO support injecting a custom overlay into the build process here
+bin/configure.sh $CONFIG
 popd
 
 rmdir /opt/app-root/src
