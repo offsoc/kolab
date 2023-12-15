@@ -87,14 +87,15 @@ class Roundcube
             $files[] = $record->filename;
 
             if ($mtime < $record->mtime) {
+                $file_id = $record->file_id;
                 $record = $db->table(self::FILESTORE_TABLE)->select('file_id', 'data', 'mtime')
-                    ->where('file_id', $record->file_id)
+                    ->where('file_id', $file_id)
                     ->first();
 
                 $data = $record ? base64_decode($record->data) : false;
 
                 if ($data === false) {
-                    \Log::error("Failed to sync $file ({$record->file_id}). Decode error.");
+                    \Log::error("Failed to sync $file ({$file_id}). Decode error.");
                     continue;
                 }
 

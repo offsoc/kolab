@@ -1,5 +1,5 @@
 includes:
-    - ./vendor/nunomaduro/larastan/extension.neon
+    - ./vendor/larastan/larastan/extension.neon
 parameters:
     ignoreErrors:
         - '#Access to an undefined property [a-zA-Z\\]+::\$pivot#'

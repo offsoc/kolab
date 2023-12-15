@@ -39,9 +39,9 @@
     },
     "require-dev": {
         "code-lts/doctum": "^5.5.1",
-        "laravel/dusk": "~7.8.0",
+        "laravel/dusk": "~7.9.1",
         "mockery/mockery": "^1.5",
-        "nunomaduro/larastan": "^2.0",
+        "larastan/larastan": "^2.0",
         "phpstan/phpstan": "^1.4",
         "phpunit/phpunit": "^9",
         "squizlabs/php_codesniffer": "^3.6"
