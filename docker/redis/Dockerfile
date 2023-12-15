@@ -32,6 +32,8 @@ COPY init.sh /init.sh
 
 RUN mkdir -p /var/lib/redis/data && chown -R redis.0 /var/lib/redis && \
     chgrp -R 0 /init.sh /etc/redis/redis.conf && \
+    chmod 777 /init.sh /etc/redis/redis.conf && \
+    chown 1001:0 /init.sh /etc/redis/redis.conf && \
     chmod -R g=u /init.sh /etc/redis/redis.conf
 
 USER 1001
