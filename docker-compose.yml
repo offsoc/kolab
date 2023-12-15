@@ -64,6 +64,8 @@ services:
       - ./ext/:/src.orig/:ro
       - roundcube:/data
   mariadb:
+    build:
+      context: ./docker/mariadb/
     container_name: kolab-mariadb
     restart: on-failure
     environment:
@@ -83,13 +85,11 @@ services:
       test: "test -e /var/run/mysqld/mysqld.sock && test -e /tmp/initialized"
       timeout: 5s
       retries: 30
-    image: mariadb:10.9
+    image: mariadb
     networks:
       kolab:
         ipv4_address: 172.18.0.3
     volumes:
-      - ./docker/mariadb/mysql-init/:/docker-entrypoint-initdb.d/
-      - ./docker/mariadb/mysql-update/:/always-initdb.d/
       - mariadb:/var/lib/mysql
   pdns:
     build:
