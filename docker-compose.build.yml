@@ -10,3 +10,8 @@ services:
       context: ./docker/tests/
     container_name: kolab-tests
     image: kolab-tests
+  utils:
+    build:
+      context: ./docker/utils/
+    container_name: kolab-utils
+    image: kolab-utils
