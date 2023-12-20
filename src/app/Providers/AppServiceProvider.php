@@ -56,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
         \App\SharedFolderSetting::observe(\App\Observers\SharedFolderSettingObserver::class);
         \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
         \App\SignupInvitation::observe(\App\Observers\SignupInvitationObserver::class);
+        \App\SignupToken::observe(\App\Observers\SignupTokenObserver::class);
         \App\Transaction::observe(\App\Observers\TransactionObserver::class);
         \App\User::observe(\App\Observers\UserObserver::class);
         \App\UserAlias::observe(\App\Observers\UserAliasObserver::class);

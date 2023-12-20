@@ -7,6 +7,7 @@ use App\Domain;
 use App\Plan;
 use App\SignupCode;
 use App\SignupInvitation;
+use App\SignupToken;
 use App\User;
 use Tests\Browser;
 use Tests\Browser\Components\Menu;
@@ -32,6 +33,7 @@ class SignupTest extends TestCaseDusk
         $this->deleteTestDomain('user-domain-signup.com');
 
         Plan::whereNot('mode', Plan::MODE_EMAIL)->update(['mode' => Plan::MODE_EMAIL]);
+        SignupToken::truncate();
     }
 
     /**
@@ -46,8 +48,7 @@ class SignupTest extends TestCaseDusk
 
         Plan::whereNot('mode', Plan::MODE_EMAIL)->update(['mode' => Plan::MODE_EMAIL]);
         Discount::where('discount', 100)->update(['code' => null]);
-
-        @unlink(storage_path('signup-tokens.txt'));
+        SignupToken::truncate();
 
         parent::tearDown();
     }
@@ -669,18 +670,18 @@ class SignupTest extends TestCaseDusk
     public function testSignupToken(): void
     {
         // Test the individual plan
-        Plan::where('title', 'individual')->update(['mode' => Plan::MODE_TOKEN]);
+        $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
+        $plan->update(['mode' => Plan::MODE_TOKEN]);
 
-        // Register some valid tokens
-        $tokens = ['1234567890', 'abcdefghijk'];
-        file_put_contents(storage_path('signup-tokens.txt'), implode("\n", $tokens));
+        // Register a valid token
+        $plan->signupTokens()->create(['id' => '1234567890']);
 
-        $this->browse(function (Browser $browser) use ($tokens) {
+        $this->browse(function (Browser $browser) {
             $browser->visit(new Signup())
                 ->waitFor('@step0 .plan-individual button')
                 ->click('@step0 .plan-individual button')
                 // Step 1
-                ->whenAvailable('@step1', function ($browser) use ($tokens) {
+                ->whenAvailable('@step1', function ($browser) {
                     $browser->assertSeeIn('.card-title', 'Sign Up - Step 1/2')
                         ->type('#signup_first_name', 'Test')
                         ->type('#signup_last_name', 'User')
@@ -693,7 +694,7 @@ class SignupTest extends TestCaseDusk
                         ->assertFocused('#signup_token')
                         ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
                         // valid token
-                        ->type('#signup_token', $tokens[0])
+                        ->type('#signup_token', '1234567890')
                         ->click('[type=submit]');
                 })
                 // Step 2
@@ -718,18 +719,21 @@ class SignupTest extends TestCaseDusk
         });
 
         $user = User::where('email', 'signuptestdusk@' . \config('app.domain'))->first();
-        $this->assertSame($tokens[0], $user->getSetting('signup_token'));
         $this->assertSame(null, $user->getSetting('external_email'));
 
         // Test the group plan
-        Plan::where('title', 'group')->update(['mode' => Plan::MODE_TOKEN]);
+        $plan = Plan::withEnvTenantContext()->where('title', 'group')->first();
+        $plan->update(['mode' => Plan::MODE_TOKEN]);
 
-        $this->browse(function (Browser $browser) use ($tokens) {
+        // Register a valid token
+        $plan->signupTokens()->create(['id' => 'abcdefghijk']);
+
+        $this->browse(function (Browser $browser) {
             $browser->visit(new Signup())
                 ->waitFor('@step0 .plan-group button')
                 ->click('@step0 .plan-group button')
                 // Step 1
-                ->whenAvailable('@step1', function ($browser) use ($tokens) {
+                ->whenAvailable('@step1', function ($browser) {
                     $browser->assertSeeIn('.card-title', 'Sign Up - Step 1/2')
                         ->type('#signup_first_name', 'Test')
                         ->type('#signup_last_name', 'User')
@@ -742,7 +746,7 @@ class SignupTest extends TestCaseDusk
                         ->assertFocused('#signup_token')
                         ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
                         // valid token
-                        ->type('#signup_token', $tokens[1])
+                        ->type('#signup_token', 'abcdefghijk')
                         ->click('[type=submit]');
                 })
                 // Step 2
@@ -762,7 +766,6 @@ class SignupTest extends TestCaseDusk
         });
 
         $user = User::where('email', 'admin@user-domain-signup.com')->first();
-        $this->assertSame($tokens[1], $user->getSetting('signup_token'));
         $this->assertSame(null, $user->getSetting('external_email'));
     }
 

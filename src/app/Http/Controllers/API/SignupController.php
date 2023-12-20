@@ -9,7 +9,7 @@ use App\Domain;
 use App\Plan;
 use App\Providers\PaymentProvider;
 use App\Rules\SignupExternalEmail;
-use App\Rules\SignupToken;
+use App\Rules\SignupToken as SignupTokenRule;
 use App\Rules\Password;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
@@ -95,7 +95,7 @@ class SignupController extends Controller
         $plan = $this->getPlan();
 
         if ($plan->mode == Plan::MODE_TOKEN) {
-            $rules['token'] = ['required', 'string', new SignupToken()];
+            $rules['token'] = ['required', 'string', new SignupTokenRule($plan)];
         } else {
             $rules['email'] = ['required', 'string', new SignupExternalEmail()];
         }
@@ -241,7 +241,9 @@ class SignupController extends Controller
 
         // Direct signup by token
         if ($request->token) {
-            $rules['token'] = ['required', 'string', new SignupToken()];
+            // This will validate the token and the plan mode
+            $plan = $request->plan ? Plan::withEnvTenantContext()->where('title', $request->plan)->first() : null;
+            $rules['token'] = ['required', 'string', new SignupTokenRule($plan)];
         }
 
         // Validate input
@@ -254,13 +256,7 @@ class SignupController extends Controller
         $settings = [];
 
         if (!empty($request->token)) {
-            // Token mode, check the plan
-            $plan = $request->plan ? Plan::withEnvTenantContext()->where('title', $request->plan)->first() : null;
-
-            if (!$plan || $plan->mode != Plan::MODE_TOKEN) {
-                $msg = self::trans('validation.exists', ['attribute' => 'plan']);
-                return response()->json(['status' => 'error', 'errors' => ['plan' => $msg]], 422);
-            }
+            $settings = ['signup_token' => strtoupper($request->token)];
         } elseif (!empty($request->plan) && empty($request->code) && empty($request->invitation)) {
             // Plan parameter is required/allowed in mandate mode
             $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
@@ -315,7 +311,7 @@ class SignupController extends Controller
             ];
 
             if ($plan->mode == Plan::MODE_TOKEN) {
-                $settings['signup_token'] = $code_data->email;
+                $settings['signup_token'] = strtoupper($code_data->email);
             } else {
                 $settings['external_email'] = $code_data->email;
             }
@@ -429,6 +425,11 @@ class SignupController extends Controller
             $request->code->deleted_at = \now();
             $request->code->timestamps = false;
             $request->code->save();
+        }
+
+        // Bump up counter on the signup token
+        if (!empty($request->settings['signup_token'])) {
+            \App\SignupToken::where('id', $request->settings['signup_token'])->increment('counter');
         }
 
         DB::commit();

@@ -136,4 +136,14 @@ class Plan extends Model
 
         return false;
     }
+
+    /**
+     * The relationship to signup tokens.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function signupTokens()
+    {
+        return $this->hasMany(SignupToken::class);
+    }
 }
