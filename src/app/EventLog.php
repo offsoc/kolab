@@ -99,16 +99,16 @@ class EventLog extends Model
     public function eventName(): ?string
     {
         switch ($this->type) {
-        case self::TYPE_SUSPENDED:
-            return \trans('app.event-suspended');
-        case self::TYPE_UNSUSPENDED:
-            return \trans('app.event-unsuspended');
-        case self::TYPE_COMMENT:
-            return \trans('app.event-comment');
-        case self::TYPE_MAILSENT:
-            return \trans('app.event-mailsent');
-        default:
-            return null;
+            case self::TYPE_SUSPENDED:
+                return \trans('app.event-suspended');
+            case self::TYPE_UNSUSPENDED:
+                return \trans('app.event-unsuspended');
+            case self::TYPE_COMMENT:
+                return \trans('app.event-comment');
+            case self::TYPE_MAILSENT:
+                return \trans('app.event-mailsent');
+            default:
+                return null;
         }
     }
 

@@ -44,7 +44,7 @@ class BalancesCommand extends Command
             $balances = Transaction::select(DB::raw('sum(amount) as summary, object_id as wallet_id'))
                 ->where('object_type', Wallet::class)
                 ->groupBy('wallet_id');
-        
+
             $wallets->addSelect('balances.summary')
                 ->leftJoinSub($balances, 'balances', function ($join) {
                     $join->on('wallets.id', '=', 'balances.wallet_id');

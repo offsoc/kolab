@@ -1653,8 +1653,6 @@ class ActivesyncTest extends TestCase
         $xpath = $this->xpath($dom);
 
         $this->assertEquals("1", $xpath->query("//ns:Collection/ns:Status")->item(0)->nodeValue);
-
-
     }
 
     /**

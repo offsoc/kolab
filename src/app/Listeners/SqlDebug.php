@@ -36,23 +36,23 @@ class SqlDebug
      */
     public function handle(object $event): void
     {
-        switch(get_class($event)) {
-        case TransactionBeginning::class:
-            $query = 'begin';
-            break;
-        case TransactionCommitted::class:
-            $query = 'commit';
-            break;
-        case TransactionRolledBack::class:
-            $query = 'rollback';
-            break;
-        default:
-            $query = sprintf(
-                '%s [%s]: %.4f sec.',
-                $event->sql,
-                self::serializeSQLBindings($event->bindings, $event->sql),
-                $event->time / 1000
-            );
+        switch (get_class($event)) {
+            case TransactionBeginning::class:
+                $query = 'begin';
+                break;
+            case TransactionCommitted::class:
+                $query = 'commit';
+                break;
+            case TransactionRolledBack::class:
+                $query = 'rollback';
+                break;
+            default:
+                $query = sprintf(
+                    '%s [%s]: %.4f sec.',
+                    $event->sql,
+                    self::serializeSQLBindings($event->bindings, $event->sql),
+                    $event->time / 1000
+                );
         }
 
         \Log::debug("[SQL] {$query}");

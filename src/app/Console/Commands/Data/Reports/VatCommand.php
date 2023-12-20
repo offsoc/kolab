@@ -32,25 +32,27 @@ class VatCommand extends Command
         $recipient = $this->argument('email');
 
         $result = DB::select(
-"SELECT
-    DATE_FORMAT(p.created_at, '%Y-%m-%d %H:%I') AS timestamp,
-    v.country AS country,
-    p.id AS payment_id,
-    ROUND((amount / 100), 2) AS income_gross,
-    ROUND(((amount - (amount / (100 + v.rate) * v.rate)) / 100), 2) AS income_net,
-    ROUND(((amount / (100 + v.rate) * v.rate) / 100), 2) AS income_vat
-FROM
-    payments p
-INNER JOIN vat_rates v
-    ON p.vat_rate_id = v.id
-INNER JOIN wallets w
-    ON p.wallet_id = w.id
-INNER JOIN user_settings us
-    ON w.user_id = us.user_id
-WHERE
-    p.status = 'paid'
-    AND us.`key` = 'country'
-ORDER BY timestamp, country"
+            <<<SQL
+            SELECT
+                DATE_FORMAT(p.created_at, '%Y-%m-%d %H:%I') AS timestamp,
+                v.country AS country,
+                p.id AS payment_id,
+                ROUND((amount / 100), 2) AS income_gross,
+                ROUND(((amount - (amount / (100 + v.rate) * v.rate)) / 100), 2) AS income_net,
+                ROUND(((amount / (100 + v.rate) * v.rate) / 100), 2) AS income_vat
+            FROM
+                payments p
+            INNER JOIN vat_rates v
+                ON p.vat_rate_id = v.id
+            INNER JOIN wallets w
+                ON p.wallet_id = w.id
+            INNER JOIN user_settings us
+                ON w.user_id = us.user_id
+            WHERE
+                p.status = 'paid'
+                AND us.`key` = 'country'
+            ORDER BY timestamp, country
+            SQL
         );
 
         $fp = fopen('php://memory', 'w');

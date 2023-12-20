@@ -25,7 +25,7 @@ class EventLogController extends Controller
             return $this->errorResponse(404);
         }
 
-        $object = (new $object_type)->find($object_id);
+        $object = (new $object_type())->find($object_id);
 
         if (!$this->checkTenant($object)) {
             return $this->errorResponse(404);
