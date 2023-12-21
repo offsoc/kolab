@@ -15,4 +15,9 @@ services:
       context: ./docker/utils/
     container_name: kolab-utils
     image: kolab-utils
-    network_mode: "host"
+    dns: 172.18.0.11
+    extra_hosts:
+      - "${APP_DOMAIN}:172.18.0.7"
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.27
