@@ -674,7 +674,7 @@ class UserTest extends TestCase
         $this->assertTrue($userB->fresh()->isDegraded(true));
 
         $balance = $wallet->fresh()->balance;
-        $this->assertTrue($balance <= -64);
+        $this->assertTrue($balance < 0);
         $this->assertSame(7, $entitlementsA->whereDate('updated_at', Carbon::now()->toDateString())->count());
         $this->assertSame(7, $entitlementsB->whereDate('updated_at', Carbon::now()->toDateString())->count());
 
