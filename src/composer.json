@@ -19,7 +19,7 @@
         "barryvdh/laravel-dompdf": "^2.0.1",
         "doctrine/dbal": "^3.6",
         "dyrynda/laravel-nullable-fields": "^4.3.0",
-        "guzzlehttp/guzzle": "^7.4.1",
+        "guzzlehttp/guzzle": "^7.8.0",
         "kolab/net_ldap3": "dev-master",
         "laravel/framework": "^10.15.0",
         "laravel/horizon": "^5.9",
