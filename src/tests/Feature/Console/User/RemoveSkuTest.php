@@ -53,13 +53,6 @@ class RemoveSkuTest extends TestCase
         $entitlements = $user->entitlements()->where('sku_id', $storage->id);
         $this->assertSame(80, $entitlements->count());
 
-        // Backdate entitlements so they are charged on removal
-        $this->backdateEntitlements(
-            $entitlements->get(),
-            \Carbon\Carbon::now()->clone()->subWeeks(4),
-            \Carbon\Carbon::now()->clone()->subWeeks(4)
-        );
-
         // Remove single entitlement
         $this->artisan("user:remove-sku {$user->email} {$storage->title}")
              ->assertExitCode(0);
@@ -73,7 +66,6 @@ class RemoveSkuTest extends TestCase
 
         // 5GB is free, so it should stay at 5
         $this->assertSame(5, $entitlements->count());
-        $this->assertTrue($user->wallet()->balance < 0);
-        $this->assertTrue(microtime(true) - $start < 6); // TODO: Make it faster
+        $this->assertThat(microtime(true) - $start, $this->lessThan(2));
     }
 }

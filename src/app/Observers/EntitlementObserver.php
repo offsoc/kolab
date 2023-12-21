@@ -78,6 +78,9 @@ class EntitlementObserver
     public function deleted(Entitlement $entitlement)
     {
         if (!$entitlement->entitleable->trashed()) {
+            // TODO: This is useless, remove this, but also maybe refactor the whole method,
+            // i.e. move job invoking to App\Handlers (don't depend on SKU title).
+            // Also make sure the transaction is always being created
             $entitlement->entitleable->updated_at = Carbon::now();
             $entitlement->entitleable->save();
 
@@ -106,6 +109,8 @@ class EntitlementObserver
      */
     public function deleting(Entitlement $entitlement)
     {
-        $entitlement->wallet->chargeEntitlement($entitlement);
+        // Disable updating of updated_at column on delete, we need it unchanged to later
+        // charge the wallet for the uncharged period before the entitlement has been deleted
+        $entitlement->timestamps = false;
     }
 }

@@ -7,6 +7,7 @@ use App\Traits\UuidStrKeyTrait;
 use Carbon\Carbon;
 use Dyrynda\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -80,96 +81,6 @@ class Wallet extends Model
     }
 
     /**
-     * Charge a specific entitlement (for use on entitlement delete).
-     *
-     * @param \App\Entitlement $entitlement The entitlement.
-     */
-    public function chargeEntitlement(Entitlement $entitlement): void
-    {
-        // Sanity checks
-        if ($entitlement->trashed() || $entitlement->wallet->id != $this->id || !$this->owner) {
-            return;
-        }
-
-        // Start calculating the costs for the consumption of this entitlement if the
-        // existing consumption spans >= 14 days.
-        //
-        // Effect is that anything's free for the first 14 days
-        if ($entitlement->created_at >= Carbon::now()->subDays(14)) {
-            return;
-        }
-
-        if ($this->owner->isDegraded()) {
-            return;
-        }
-
-        $now = Carbon::now();
-
-        // Determine if we're still within the trial period
-        $trial = $this->trialInfo();
-        if (
-            !empty($trial)
-            && $entitlement->updated_at < $trial['end']
-            && in_array($entitlement->sku_id, $trial['skus'])
-        ) {
-            if ($trial['end'] >= $now) {
-                return;
-            }
-
-            $entitlement->updated_at = $trial['end'];
-        }
-
-        // get the discount rate applied to the wallet.
-        $discount = $this->getDiscountRate();
-
-        // just in case this had not been billed yet, ever
-        $diffInMonths = $entitlement->updated_at->diffInMonths($now);
-        $cost = (int) ($entitlement->cost * $discount * $diffInMonths);
-        $fee = (int) ($entitlement->fee * $diffInMonths);
-
-        // this moves the hypothetical updated at forward to however many months past the original
-        $updatedAt = $entitlement->updated_at->copy()->addMonthsWithoutOverflow($diffInMonths);
-
-        // now we have the diff in days since the last "billed" period end.
-        // This may be an entitlement paid up until February 28th, 2020, with today being March
-        // 12th 2020. Calculating the costs for the entitlement is based on the daily price
-
-        // the price per day is based on the number of days in the last month
-        // or the current month if the period does not overlap with the previous month
-        // FIXME: This really should be simplified to $daysInMonth=30
-
-        $diffInDays = $updatedAt->diffInDays($now);
-
-        if ($now->day >= $diffInDays) {
-            $daysInMonth = $now->daysInMonth;
-        } else {
-            $daysInMonth = \App\Utils::daysInLastMonth();
-        }
-
-        $pricePerDay = $entitlement->cost / $daysInMonth;
-        $feePerDay = $entitlement->fee / $daysInMonth;
-
-        $cost += (int) (round($pricePerDay * $discount * $diffInDays, 0));
-        $fee += (int) (round($feePerDay * $diffInDays, 0));
-
-        $profit = $cost - $fee;
-
-        if ($profit != 0 && $this->owner->tenant && ($wallet = $this->owner->tenant->wallet())) {
-            $desc = "Charged user {$this->owner->email}";
-            $method = $profit > 0 ? 'credit' : 'debit';
-            $wallet->{$method}(abs($profit), $desc);
-        }
-
-        if ($cost == 0) {
-            return;
-        }
-
-        // TODO: Create per-entitlement transaction record?
-
-        $this->debit($cost);
-    }
-
-    /**
      * Charge entitlements in the wallet
      *
      * @param bool $apply Set to false for a dry-run mode
@@ -181,7 +92,6 @@ class Wallet extends Model
         $transactions = [];
         $profit = 0;
         $charges = 0;
-        $discount = $this->getDiscountRate();
         $isDegraded = $this->owner->isDegraded();
         $trial = $this->trialInfo();
 
@@ -189,42 +99,26 @@ class Wallet extends Model
             DB::beginTransaction();
         }
 
-        // Get all entitlements...
-        $entitlements = $this->entitlements()
-            // Skip entitlements created less than or equal to 14 days ago (this is at
-            // maximum the fourteenth 24-hour period).
-            // ->where('created_at', '<=', Carbon::now()->subDays(14))
-            // Skip entitlements created, or billed last, less than a month ago.
-            ->where('updated_at', '<=', Carbon::now()->subMonthsWithoutOverflow(1))
+        // Get all relevant entitlements...
+        $entitlements = $this->entitlements()->withTrashed()
+            // existing entitlements created, or billed last less than a month ago
+            ->where(function (Builder $query) {
+                $query->whereNull('deleted_at')
+                    ->where('updated_at', '<=', Carbon::now()->subMonthsWithoutOverflow(1));
+            })
+            // deleted entitlements not yet charged
+            ->orWhere(function (Builder $query) {
+                $query->whereNotNull('deleted_at')
+                    ->whereColumn('updated_at', '<', 'deleted_at');
+            })
             ->get();
 
         foreach ($entitlements as $entitlement) {
-            // If in trial, move entitlement's updated_at timestamps forward to the trial end.
-            if (
-                !empty($trial)
-                && $entitlement->updated_at < $trial['end']
-                && in_array($entitlement->sku_id, $trial['skus'])
-            ) {
-                // TODO: Consider not updating the updated_at to a future date, i.e. bump it
-                // as many months as possible, but not into the future
-                // if we're in dry-run, you know...
-                if ($apply) {
-                    $entitlement->updated_at = $trial['end'];
-                    $entitlement->save();
-                }
+            // Calculate cost, fee, and end of period
+            [$cost, $fee, $endDate] = $this->entitlementCosts($entitlement, $trial);
 
-                continue;
-            }
-
-            $diff = $entitlement->updated_at->diffInMonths(Carbon::now());
-
-            if ($diff <= 0) {
-                continue;
-            }
-
-            $cost = (int) ($entitlement->cost * $discount * $diff);
-            $fee = (int) ($entitlement->fee * $diff);
-
+            // Note: Degraded pays nothing, but we get the money from a tenant.
+            // Therefore $cost = 0, but $profit < 0.
             if ($isDegraded) {
                 $cost = 0;
             }
@@ -237,8 +131,10 @@ class Wallet extends Model
                 continue;
             }
 
-            $entitlement->updated_at = $entitlement->updated_at->copy()->addMonthsWithoutOverflow($diff);
-            $entitlement->save();
+            if ($endDate) {
+                $entitlement->updated_at = $endDate;
+                $entitlement->save();
+            }
 
             if ($cost == 0) {
                 continue;
@@ -248,17 +144,7 @@ class Wallet extends Model
         }
 
         if ($apply) {
-            $this->debit($charges, '', $transactions);
-
-            // Credit/debit the reseller
-            if ($profit != 0 && $this->owner->tenant) {
-                // FIXME: Should we have a simpler way to skip this for non-reseller tenant(s)
-                if ($wallet = $this->owner->tenant->wallet()) {
-                    $desc = "Charged user {$this->owner->email}";
-                    $method = $profit > 0 ? 'credit' : 'debit';
-                    $wallet->{$method}(abs($profit), $desc);
-                }
-            }
+            $this->debit($charges, '', $transactions)->addTenantProfit($profit);
 
             DB::commit();
         }
@@ -648,62 +534,67 @@ class Wallet extends Model
     public function updateEntitlements($withCost = true): int
     {
         $charges = 0;
-        $discount = $this->getDiscountRate();
-        $now = Carbon::now();
+        $profit = 0;
+        $trial = $this->trialInfo();
 
         DB::beginTransaction();
 
-        // used to parent individual entitlement billings to the wallet debit.
-        $entitlementTransactions = [];
+        $transactions = [];
 
-        foreach ($this->entitlements()->get() as $entitlement) {
-            $cost = 0;
-            $diffInDays = $entitlement->updated_at->diffInDays($now);
+        $entitlements = $this->entitlements()->where('updated_at', '<', Carbon::now())->get();
 
-            // This entitlement has been created less than or equal to 14 days ago (this is at
-            // maximum the fourteenth 24-hour period).
-            if ($entitlement->created_at > Carbon::now()->subDays(14)) {
-                // $cost=0
-            } elseif ($withCost && $diffInDays > 0) {
-                // The price per day is based on the number of days in the last month
-                // or the current month if the period does not overlap with the previous month
-                // FIXME: This really should be simplified to constant $daysInMonth=30
-                if ($now->day >= $diffInDays && $now->month == $entitlement->updated_at->month) {
-                    $daysInMonth = $now->daysInMonth;
-                } else {
-                    $daysInMonth = \App\Utils::daysInLastMonth();
-                }
+        foreach ($entitlements as $entitlement) {
+            // Calculate cost, fee, and end of period
+            [$cost, $fee, $endDate] = $this->entitlementCosts($entitlement, $trial, true);
 
-                $pricePerDay = $entitlement->cost / $daysInMonth;
-
-                $cost = (int) (round($pricePerDay * $discount * $diffInDays, 0));
+            // Note: Degraded pays nothing, but we get the money from a tenant.
+            // Therefore $cost = 0, but $profit < 0.
+            if (!$withCost) {
+                $cost = 0;
             }
 
-            if ($diffInDays > 0) {
-                $entitlement->updated_at = $entitlement->updated_at->setDateFrom($now);
+            if ($endDate) {
+                $entitlement->updated_at = $entitlement->updated_at->setDateFrom($endDate);
                 $entitlement->save();
             }
+
+            $charges += $cost;
+            $profit += $cost - $fee;
 
             if ($cost == 0) {
                 continue;
             }
 
-            $charges += $cost;
-
             // FIXME: Shouldn't we store also cost=0 transactions (to have the full history)?
-            $entitlementTransactions[] = $entitlement->createTransaction(
-                Transaction::ENTITLEMENT_BILLED,
-                $cost
-            );
+            $transactions[] = $entitlement->createTransaction(Transaction::ENTITLEMENT_BILLED, $cost);
         }
 
-        if ($charges > 0) {
-            $this->debit($charges, '', $entitlementTransactions);
-        }
+        $this->debit($charges, '', $transactions)->addTenantProfit($profit);
 
         DB::commit();
 
         return $charges;
+    }
+
+    /**
+     * Add profit to the tenant's wallet
+     *
+     * @param int $profit Profit amount (in cents), can be negative
+     */
+    protected function addTenantProfit($profit): void
+    {
+        // Credit/debit the reseller
+        if ($profit != 0 && $this->owner->tenant) {
+            // FIXME: Should we have a simpler way to skip this for non-reseller tenant(s)
+            if ($wallet = $this->owner->tenant->wallet()) {
+                $desc = "Charged user {$this->owner->email}";
+                if ($profit > 0) {
+                    $wallet->credit(abs($profit), $desc);
+                } else {
+                    $wallet->debit(abs($profit), $desc);
+                }
+            }
+        }
     }
 
     /**
@@ -742,5 +633,90 @@ class Wallet extends Model
         }
 
         return $this;
+    }
+
+    /**
+     * Calculate entitlement cost/fee for the current charge
+     *
+     * @param Entitlement $entitlement   Entitlement object
+     * @param array|null  $trial         Trial information (result of Wallet::trialInfo())
+     * @param bool        $useCostPerDay Force calculation based on a per-day cost
+     *
+     * @return array Result in form of [cost, fee, end-of-period]
+     */
+    protected function entitlementCosts(Entitlement $entitlement, array $trial = null, bool $useCostPerDay = false)
+    {
+        $discountRate = $this->getDiscountRate();
+        $startDate = $entitlement->updated_at;  // start of the period to charge for
+        $endDate = Carbon::now();               // end of the period to charge for
+
+        // Deleted entitlements are always charged for all uncharged days up to the delete date
+        if ($entitlement->trashed()) {
+            $useCostPerDay = true;
+            $endDate = $entitlement->deleted_at->copy();
+        }
+
+        // Consider Trial period
+        if (!empty($trial) && $startDate < $trial['end'] && in_array($entitlement->sku_id, $trial['skus'])) {
+            if ($trial['end'] > $endDate) {
+                return [0, 0, $trial['end']];
+            }
+
+            $startDate = $trial['end'];
+        }
+
+        if ($useCostPerDay) {
+            // Note: In this mode we need a full cost including partial periods.
+
+            // Anything's free for the first 14 days.
+            if ($entitlement->created_at >= $endDate->copy()->subDays(14)) {
+                return [0, 0, $endDate];
+            }
+
+            $cost = 0;
+            $fee = 0;
+
+            // Charge for full months first
+            if (($diff = $startDate->diffInMonths($endDate)) > 0) {
+                $cost += floor($entitlement->cost * $discountRate) * $diff;
+                $fee += $entitlement->fee * $diff;
+                $startDate->addMonthsWithoutOverflow($diff);
+            }
+
+            // Charge for the rest of the period
+            if (($diff = $startDate->diffInDays($endDate)) > 0) {
+                // The price per day is based on the number of days in the month(s)
+                // Note: The $endDate does not have to be the current month
+                $endMonthDiff = $endDate->day > $diff ? $diff : $endDate->day;
+                $startMonthDiff = $diff - $endMonthDiff;
+
+                // FIXME: This could be calculated in a few different ways, e.g. rounding or flooring
+                // the daily cost first and then applying discount and number of days. This could lead
+                // to very small values in some cases resulting in a zero result.
+                $cost += floor($entitlement->cost / $endDate->daysInMonth * $discountRate * $endMonthDiff);
+                $fee += floor($entitlement->fee / $endDate->daysInMonth * $endMonthDiff);
+
+                if ($startMonthDiff) {
+                    $cost += floor($entitlement->cost / $startDate->daysInMonth * $discountRate * $startMonthDiff);
+                    $fee += floor($entitlement->fee / $startDate->daysInMonth * $startMonthDiff);
+                }
+            }
+        } else {
+            // Note: In this mode we expect to charge the entitlement for full month(s) only
+            $diff = $startDate->diffInMonths($endDate);
+
+            if ($diff <= 0) {
+                // Do not update updated_at column (not a full month) unless trial end date
+                // is after current updated_at date
+                return [0, 0, $startDate != $entitlement->updated_at ? $startDate : null];
+            }
+
+            $endDate = $startDate->addMonthsWithoutOverflow($diff);
+
+            $cost = floor($entitlement->cost * $discountRate) * $diff;
+            $fee = $entitlement->fee * $diff;
+        }
+
+        return [(int) $cost, (int) $fee, $endDate];
     }
 }

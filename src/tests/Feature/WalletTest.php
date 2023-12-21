@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Discount;
+use App\Entitlement;
 use App\Payment;
 use App\Package;
 use App\Plan;
@@ -371,13 +372,13 @@ class WalletTest extends TestCase
     }
 
     /**
-     * Test for charging and removing entitlements (including tenant commission calculations)
+     * Test for charging entitlements (including tenant commission calculations)
      */
-    public function testChargeAndDeleteEntitlements(): void
+    public function testChargeEntitlements(): void
     {
         $user = $this->getTestUser('jane@kolabnow.com');
-        $wallet = $user->wallets()->first();
         $discount = \App\Discount::withEnvTenantContext()->where('discount', 30)->first();
+        $wallet = $user->wallets()->first();
         $wallet->discount()->associate($discount);
         $wallet->save();
 
@@ -386,6 +387,8 @@ class WalletTest extends TestCase
 
         $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
         $storage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $mailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $groupware = Sku::withEnvTenantContext()->where('title', 'groupware')->first();
         $user->assignPlan($plan);
         $user->assignSku($storage, 5);
         $user->setSetting('plan_id', null); // disable plan and trial
@@ -394,136 +397,248 @@ class WalletTest extends TestCase
         $reseller_wallet = $user->tenant->wallet();
         $reseller_wallet->balance = 0;
         $reseller_wallet->save();
-        Transaction::where('object_id', $reseller_wallet->id)->where('object_type', \App\Wallet::class)->delete();
+        $reseller_wallet->transactions()->delete();
+
+        // Set fake NOW date to make simpler asserting results that depend on number of days in current/last month
+        Carbon::setTestNow(Carbon::create(2021, 5, 21, 12));
+
+        // ------------------------------------------------
+        // Test skipping entitlements before a month passed
+        // ------------------------------------------------
+
+        $backdate = Carbon::now()->subWeeks(3);
+        $this->backdateEntitlements($user->entitlements, $backdate);
+
+        // we expect no charges
+        $this->assertSame(0, $wallet->chargeEntitlements());
+        $this->assertSame(0, $wallet->balance);
+        $this->assertSame(0, $reseller_wallet->balance);
+        $this->assertSame(0, $wallet->transactions()->count());
+        $this->assertSame(12, $user->entitlements()->where('updated_at', $backdate)->count());
 
         // ------------------------------------
         // Test normal charging of entitlements
         // ------------------------------------
 
         // Backdate and charge entitlements, we're expecting one month to be charged
-        // Set fake NOW date to make simpler asserting results that depend on number of days in current/last month
-        Carbon::setTestNow(Carbon::create(2021, 5, 21, 12));
         $backdate = Carbon::now()->subWeeks(7);
         $this->backdateEntitlements($user->entitlements, $backdate);
+
+        // Test with $apply=false argument
+        $charge = $wallet->chargeEntitlements(false);
+
+        $this->assertSame(778, $charge);
+        $this->assertSame(0, $wallet->balance);
+        $this->assertSame(0, $wallet->transactions()->count());
+
         $charge = $wallet->chargeEntitlements();
         $wallet->refresh();
         $reseller_wallet->refresh();
 
         // User discount is 30%
-        // Expected: groupware: 490 x 70% + mailbox: 500 x 70% + storage: 5 x round(25x70%) = 778
+        // Expected: groupware: floor(490 * 70%) + mailbox: floor(500 * 70%) + storage: 5 * floor(25 * 70%) = 778
+        $this->assertSame(778, $charge);
         $this->assertSame(-778, $wallet->balance);
         // Reseller fee is 40%
-        // Expected: groupware: 490 x 30% + mailbox: 500 x 30% + storage: 5 x round(25x30%) = 332
+        // Expected: 778 - groupware: floor(490 * 40%) - mailbox: floor(500 * 40%) - storage: 5 * floor(25 * 40%) = 332
         $this->assertSame(332, $reseller_wallet->balance);
 
-        $transactions = Transaction::where('object_id', $wallet->id)
-            ->where('object_type', \App\Wallet::class)->get();
-
-        $reseller_transactions = Transaction::where('object_id', $reseller_wallet->id)
-            ->where('object_type', \App\Wallet::class)->get();
-
-        $this->assertCount(1, $reseller_transactions);
-        $trans = $reseller_transactions[0];
-        $this->assertSame("Charged user jane@kolabnow.com", $trans->description);
-        $this->assertSame(332, $trans->amount);
-        $this->assertSame(Transaction::WALLET_CREDIT, $trans->type);
-
+        $transactions = $wallet->transactions()->get();
         $this->assertCount(1, $transactions);
         $trans = $transactions[0];
         $this->assertSame('', $trans->description);
         $this->assertSame(-778, $trans->amount);
         $this->assertSame(Transaction::WALLET_DEBIT, $trans->type);
 
+        $reseller_transactions = $reseller_wallet->transactions()->get();
+        $this->assertCount(1, $reseller_transactions);
+        $trans = $reseller_transactions[0];
+        $this->assertSame("Charged user jane@kolabnow.com", $trans->description);
+        $this->assertSame(332, $trans->amount);
+        $this->assertSame(Transaction::WALLET_CREDIT, $trans->type);
+
         // Assert all entitlements' updated_at timestamp
         $date = $backdate->addMonthsWithoutOverflow(1);
         $this->assertCount(12, $wallet->entitlements()->where('updated_at', $date)->get());
 
+        // Assert per-entitlement transactions
+        $entitlement_transactions = Transaction::where('transaction_id', $transactions[0]->id)
+            ->where('type', Transaction::ENTITLEMENT_BILLED)
+            ->get();
+        $this->assertSame(7, $entitlement_transactions->count());
+        $this->assertSame(778, $entitlement_transactions->sum('amount'));
+        $groupware_entitlement = $user->entitlements->where('sku_id', '===', $groupware->id)->first();
+        $mailbox_entitlement = $user->entitlements->where('sku_id', '===', $mailbox->id)->first();
+        $this->assertSame(1, $entitlement_transactions->where('object_id', $groupware_entitlement->id)->count());
+        $this->assertSame(1, $entitlement_transactions->where('object_id', $mailbox_entitlement->id)->count());
+        $excludes = [$mailbox_entitlement->id, $groupware_entitlement->id];
+        $this->assertSame(5, $entitlement_transactions->whereNotIn('object_id', $excludes)->count());
+
         // -----------------------------------
-        // Test charging on entitlement delete
+        // Test charging deleted entitlements
         // -----------------------------------
 
+        $wallet->balance = 0;
+        $wallet->save();
+        $wallet->transactions()->delete();
         $reseller_wallet->balance = 0;
         $reseller_wallet->save();
-
-        $transactions = Transaction::where('object_id', $wallet->id)
-            ->where('object_type', \App\Wallet::class)->delete();
-
-        $reseller_transactions = Transaction::where('object_id', $reseller_wallet->id)
-            ->where('object_type', \App\Wallet::class)->delete();
+        $reseller_wallet->transactions()->delete();
 
         $user->removeSku($storage, 2);
 
-        // we expect the wallet to have been charged for 19 days of use of
-        // 2 deleted storage entitlements
+        // we expect the wallet to have been charged for 19 days of use of 2 deleted storage entitlements
+        $charge = $wallet->chargeEntitlements();
         $wallet->refresh();
         $reseller_wallet->refresh();
 
-        // 2 x round(25 / 31 * 19 * 0.7) = 22
-        $this->assertSame(-(778 + 22), $wallet->balance);
-        // 22 - 2 x round(25 * 0.4 / 31 * 19) = 10
-        $this->assertSame(10, $reseller_wallet->balance);
+        // 2 * floor(25 / 31 * 70% * 19) = 20
+        $this->assertSame(20, $charge);
+        $this->assertSame(-20, $wallet->balance);
+        // 20 - 2 * floor(25 / 31 * 40% * 19) = 8
+        $this->assertSame(8, $reseller_wallet->balance);
 
-        $transactions = Transaction::where('object_id', $wallet->id)
-            ->where('object_type', \App\Wallet::class)->get();
-
-        $reseller_transactions = Transaction::where('object_id', $reseller_wallet->id)
-            ->where('object_type', \App\Wallet::class)->get();
-
-        $this->assertCount(2, $reseller_transactions);
-        $trans = $reseller_transactions[0];
-        $this->assertSame("Charged user jane@kolabnow.com", $trans->description);
-        $this->assertSame(5, $trans->amount);
-        $this->assertSame(Transaction::WALLET_CREDIT, $trans->type);
-
-        $trans = $reseller_transactions[1];
-        $this->assertSame("Charged user jane@kolabnow.com", $trans->description);
-        $this->assertSame(5, $trans->amount);
-        $this->assertSame(Transaction::WALLET_CREDIT, $trans->type);
-
-        $this->assertCount(2, $transactions);
+        $transactions = $wallet->transactions()->get();
+        $this->assertCount(1, $transactions);
         $trans = $transactions[0];
         $this->assertSame('', $trans->description);
-        $this->assertSame(-11, $trans->amount);
-        $this->assertSame(Transaction::WALLET_DEBIT, $trans->type);
-        $trans = $transactions[1];
-        $this->assertSame('', $trans->description);
-        $this->assertSame(-11, $trans->amount);
+        $this->assertSame(-20, $trans->amount);
         $this->assertSame(Transaction::WALLET_DEBIT, $trans->type);
 
-        // TODO: Test entitlement transaction records
+        $reseller_transactions = $reseller_wallet->transactions()->get();
+        $this->assertCount(1, $reseller_transactions);
+        $trans = $reseller_transactions[0];
+        $this->assertSame("Charged user jane@kolabnow.com", $trans->description);
+        $this->assertSame(8, $trans->amount);
+        $this->assertSame(Transaction::WALLET_CREDIT, $trans->type);
+
+        // Assert per-entitlement transactions
+        $entitlement_transactions = Transaction::where('transaction_id', $transactions[0]->id)
+            ->where('type', Transaction::ENTITLEMENT_BILLED)
+            ->get();
+        $storage_entitlements = $user->entitlements->where('sku_id', $storage->id)->where('cost', '>', 0)->pluck('id');
+        $this->assertSame(2, $entitlement_transactions->count());
+        $this->assertSame(20, $entitlement_transactions->sum('amount'));
+        $this->assertSame(2, $entitlement_transactions->whereIn('object_id', $storage_entitlements)->count());
+
+        // --------------------------------------------------
+        // Test skipping deleted entitlements already charged
+        // --------------------------------------------------
+
+        $wallet->balance = 0;
+        $wallet->save();
+        $wallet->transactions()->delete();
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+        $reseller_wallet->transactions()->delete();
+
+        // we expect no charges
+        $this->assertSame(0, $wallet->chargeEntitlements());
+        $this->assertSame(0, $wallet->balance);
+        $this->assertSame(0, $wallet->transactions()->count());
+        $this->assertSame(0, $reseller_wallet->fresh()->balance);
+
+        // ---------------------------------------------------------
+        // Test (not) charging entitlements deleted before 14 days
+        // ---------------------------------------------------------
+
+        $backdate = Carbon::now()->subDays(13);
+
+        $ent = $user->entitlements->where('sku_id', $groupware->id)->first();
+        Entitlement::where('id', $ent->id)->update([
+                'created_at' => $backdate,
+                'updated_at' => $backdate,
+                'deleted_at' => Carbon::now(),
+        ]);
+
+        // we expect no charges
+        $this->assertSame(0, $wallet->chargeEntitlements());
+        $this->assertSame(0, $wallet->balance);
+        $this->assertSame(0, $wallet->transactions()->count());
+        $this->assertSame(0, $reseller_wallet->fresh()->balance);
+        // expect update of updated_at timestamp
+        $this->assertSame(Carbon::now()->toDateTimeString(), $ent->fresh()->updated_at->toDateTimeString());
+
+        // -------------------------------------------------------
+        // Test charging a degraded account
+        // Test both deleted and non-deleted in the same operation
+        // -------------------------------------------------------
+
+        // At this point user has: mailbox + 8 x storage
+        $backdate = Carbon::now()->subWeeks(7);
+        $this->backdateEntitlements($user->entitlements->fresh(), $backdate);
+
+        $user->status |= User::STATUS_DEGRADED;
+        $user->saveQuietly();
+
+        $wallet->refresh();
+        $wallet->balance = 0;
+        $wallet->save();
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+        Transaction::truncate();
+
+        $charge = $wallet->chargeEntitlements();
+        $reseller_wallet->refresh();
+
+        // User would be charged if not degraded: mailbox: floor(500 * 70%) + storage: 3 * floor(25 * 70%) = 401
+        $this->assertSame(0, $charge);
+        $this->assertSame(0, $wallet->balance);
+        // Expected: 0 - mailbox: floor(500 * 40%) - storage: 3 * floor(25 * 40%) = -230
+        $this->assertSame(-230, $reseller_wallet->balance);
+
+        // Assert all entitlements' updated_at timestamp
+        $date = $backdate->addMonthsWithoutOverflow(1);
+        $this->assertSame(9, $wallet->entitlements()->where('updated_at', $date)->count());
+        // There should be only one transaction at this point (for the reseller wallet)
+        $this->assertSame(1, Transaction::count());
     }
 
     /**
-     * Test for charging and removing entitlements when in trial
+     * Test for charging entitlements when in trial
      */
-    public function testChargeAndDeleteEntitlementsTrial(): void
+    public function testChargeEntitlementsTrial(): void
     {
         $user = $this->getTestUser('jane@kolabnow.com');
         $wallet = $user->wallets()->first();
+
+        // Add 40% fee to all SKUs
+        Sku::select()->update(['fee' => DB::raw("`cost` * 0.4")]);
 
         $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
         $storage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
         $user->assignPlan($plan);
         $user->assignSku($storage, 5);
 
+        // Reset reseller's wallet balance and transactions
+        $reseller_wallet = $user->tenant->wallet();
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+        $reseller_wallet->transactions()->delete();
+
+        // Set fake NOW date to make simpler asserting results that depend on number of days in current/last month
+        Carbon::setTestNow(Carbon::create(2021, 5, 21, 12));
+
         // ------------------------------------
         // Test normal charging of entitlements
         // ------------------------------------
 
         // Backdate and charge entitlements, we're expecting one month to be charged
-        // Set fake NOW date to make simpler asserting results that depend on number of days in current/last month
-        Carbon::setTestNow(Carbon::create(2021, 5, 21, 12));
-        $backdate = Carbon::now()->subWeeks(7);
-        $this->backdateEntitlements($user->entitlements, $backdate);
+        $backdate = Carbon::now()->subWeeks(7); // 2021-04-02
+        $this->backdateEntitlements($user->entitlements, $backdate, $backdate);
         $charge = $wallet->chargeEntitlements();
-        $wallet->refresh();
+        $reseller_wallet->refresh();
 
-        // Expected: storage: 5 x 25 = 125 (the rest is free in trial)
+        // Expected: storage: 5 * 25 = 125 (the rest is free in trial)
         $this->assertSame($balance = -125, $wallet->balance);
+        $this->assertSame(-$balance, $charge);
+
+        // Reseller fee is 40%
+        // Expected: 125 - 5 * floor(25 * 40%) = 75
+        $this->assertSame($reseller_balance = 75, $reseller_wallet->balance);
 
         // Assert wallet transaction
         $transactions = $wallet->transactions()->get();
-
         $this->assertCount(1, $transactions);
         $trans = $transactions[0];
         $this->assertSame('', $trans->description);
@@ -546,52 +661,57 @@ class WalletTest extends TestCase
         $charge = $wallet->chargeEntitlements();
         $wallet->refresh();
 
+        $this->assertSame(0, $charge);
         $this->assertSame($balance, $wallet->balance);
         $this->assertCount(1, $wallet->transactions()->get());
         $this->assertCount(12, $wallet->entitlements()->where('updated_at', $date)->get());
 
         // -----------------------------------
-        // Test charging on entitlement delete
+        // Test charging deleted entitlements
         // -----------------------------------
 
-        $wallet->transactions()->delete();
+        $wallet->balance = 0;
+        $wallet->save();
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+        Transaction::truncate();
 
         $user->removeSku($storage, 2);
 
+        $charge = $wallet->chargeEntitlements();
+
         $wallet->refresh();
+        $reseller_wallet->refresh();
 
         // we expect the wallet to have been charged for 19 days of use of
-        // 2 deleted storage entitlements: 2 x round(25 / 31 * 19) = 30
-        $this->assertSame($balance -= 30, $wallet->balance);
+        // 2 deleted storage entitlements: 2 * floor(25 / 31 * 19) = 30
+        $this->assertSame(-30, $wallet->balance);
+        $this->assertSame(30, $charge);
+
+        // Reseller fee is 40%
+        // Expected: 30 - 2 * floor(25 / 31 * 40% * 19) = 18
+        $this->assertSame(18, $reseller_wallet->balance);
 
         // Assert wallet transactions
         $transactions = $wallet->transactions()->get();
-
-        $this->assertCount(2, $transactions);
+        $this->assertCount(1, $transactions);
         $trans = $transactions[0];
         $this->assertSame('', $trans->description);
-        $this->assertSame(-15, $trans->amount);
-        $this->assertSame(Transaction::WALLET_DEBIT, $trans->type);
-        $trans = $transactions[1];
-        $this->assertSame('', $trans->description);
-        $this->assertSame(-15, $trans->amount);
+        $this->assertSame(-30, $trans->amount);
         $this->assertSame(Transaction::WALLET_DEBIT, $trans->type);
 
         // Assert entitlement transactions
-        /* Note: Commented out because the observer does not create per-entitlement transactions
-        $etransactions = Transaction::where('transaction_id', $transactions[0]->id)->get();
-        $this->assertCount(1, $etransactions);
+        $etransactions = Transaction::where('transaction_id', $trans->id)->get();
+        $this->assertCount(2, $etransactions);
         $trans = $etransactions[0];
         $this->assertSame(null, $trans->description);
         $this->assertSame(15, $trans->amount);
         $this->assertSame(Transaction::ENTITLEMENT_BILLED, $trans->type);
-        $etransactions = Transaction::where('transaction_id', $transactions[1]->id)->get();
-        $this->assertCount(1, $etransactions);
-        $trans = $etransactions[0];
-        $this->assertSame(null, $trans->description);
-        $this->assertSame(15, $trans->amount);
-        $this->assertSame(Transaction::ENTITLEMENT_BILLED, $trans->type);
-        */
+
+        // Assert the deleted entitlements' updated_at timestamp was bumped
+        $this->assertSame(2, $wallet->entitlements()->withTrashed()->whereColumn('updated_at', 'deleted_at')->count());
+
+        // TODO: Test a case when trial ends after the entitlement deletion date
     }
 
     /**
@@ -632,19 +752,117 @@ class WalletTest extends TestCase
     }
 
     /**
-     * Tests for chargeEntitlement()
-     */
-    public function testChargeEntitlement(): void
-    {
-        $this->markTestIncomplete();
-    }
-
-    /**
      * Tests for updateEntitlements()
      */
     public function testUpdateEntitlements(): void
     {
-        $this->markTestIncomplete();
+        $user = $this->getTestUser('jane@kolabnow.com');
+        $discount = \App\Discount::withEnvTenantContext()->where('discount', 30)->first();
+        $wallet = $user->wallets()->first();
+        $wallet->discount()->associate($discount);
+        $wallet->save();
+
+        // Add 40% fee to all SKUs
+        Sku::select()->update(['fee' => DB::raw("`cost` * 0.4")]);
+
+        $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
+        $storage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $mailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $groupware = Sku::withEnvTenantContext()->where('title', 'groupware')->first();
+        $user->assignPlan($plan);
+        $user->setSetting('plan_id', null); // disable plan and trial
+
+        // Reset reseller's wallet balance and transactions
+        $reseller_wallet = $user->tenant->wallet();
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+        $reseller_wallet->transactions()->delete();
+
+        // Set fake NOW date to make simpler asserting results that depend on number of days in current/last month
+        Carbon::setTestNow(Carbon::create(2021, 5, 21, 12));
+        $now = Carbon::now();
+
+        // Backdate and charge entitlements
+        $backdate = Carbon::now()->subWeeks(3)->setHour(10);
+        $this->backdateEntitlements($user->entitlements, $backdate);
+
+        // ---------------------------------------
+        // Update entitlements with no cost charge
+        // ---------------------------------------
+
+        // Test with $withCost=false argument
+        $charge = $wallet->updateEntitlements(false);
+        $wallet->refresh();
+        $reseller_wallet->refresh();
+
+        $this->assertSame(0, $charge);
+        $this->assertSame(0, $wallet->balance);
+        $this->assertSame(0, $wallet->transactions()->count());
+        // Expected: 0 - groupware: floor(490 / 31 * 21 * 40%) - mailbox: floor(500 / 31 * 21 * 40%) = -267
+        $this->assertSame(-267, $reseller_wallet->balance);
+
+        // Assert all entitlements' updated_at timestamp
+        $date = $now->copy()->setTimeFrom($backdate);
+        $this->assertCount(7, $wallet->entitlements()->where('updated_at', $date)->get());
+
+        $reseller_transactions = $reseller_wallet->transactions()->get();
+        $this->assertCount(1, $reseller_transactions);
+        $trans = $reseller_transactions[0];
+        $this->assertSame("Charged user jane@kolabnow.com", $trans->description);
+        $this->assertSame(-267, $trans->amount);
+        $this->assertSame(Transaction::WALLET_DEBIT, $trans->type);
+
+        // ------------------------------------
+        // Update entitlements with cost charge
+        // ------------------------------------
+
+        $reseller_wallet = $user->tenant->wallet();
+        $reseller_wallet->balance = 0;
+        $reseller_wallet->save();
+        $reseller_wallet->transactions()->delete();
+
+        $this->backdateEntitlements($user->entitlements, $backdate);
+
+        $charge = $wallet->updateEntitlements();
+        $wallet->refresh();
+        $reseller_wallet->refresh();
+
+        // User discount is 30%
+        // Expected: groupware: floor(490 / 31 * 21 * 70%) + mailbox: floor(500 / 31 * 21 * 70%) = 469
+        $this->assertSame(469, $charge);
+        $this->assertSame(-469, $wallet->balance);
+        // Reseller fee is 40%
+        // Expected: 469 - groupware: floor(490 / 31 * 21 * 40%) - mailbox: floor(500 / 31 * 21 * 40%) = 202
+        $this->assertSame(202, $reseller_wallet->balance);
+
+        $transactions = $wallet->transactions()->get();
+        $this->assertCount(1, $transactions);
+        $trans = $transactions[0];
+        $this->assertSame('', $trans->description);
+        $this->assertSame(-469, $trans->amount);
+        $this->assertSame(Transaction::WALLET_DEBIT, $trans->type);
+
+        $reseller_transactions = $reseller_wallet->transactions()->get();
+        $this->assertCount(1, $reseller_transactions);
+        $trans = $reseller_transactions[0];
+        $this->assertSame("Charged user jane@kolabnow.com", $trans->description);
+        $this->assertSame(202, $trans->amount);
+        $this->assertSame(Transaction::WALLET_CREDIT, $trans->type);
+
+        // Assert all entitlements' updated_at timestamp
+        $date = $now->copy()->setTimeFrom($backdate);
+        $this->assertCount(7, $wallet->entitlements()->where('updated_at', $date)->get());
+
+        // Assert per-entitlement transactions
+        $groupware_entitlement = $user->entitlements->where('sku_id', '===', $groupware->id)->first();
+        $mailbox_entitlement = $user->entitlements->where('sku_id', '===', $mailbox->id)->first();
+        $entitlement_transactions = Transaction::where('transaction_id', $transactions[0]->id)
+            ->where('type', Transaction::ENTITLEMENT_BILLED)
+            ->get();
+        $this->assertSame(2, $entitlement_transactions->count());
+        $this->assertSame(469, $entitlement_transactions->sum('amount'));
+        $this->assertSame(1, $entitlement_transactions->where('object_id', $groupware_entitlement->id)->count());
+        $this->assertSame(1, $entitlement_transactions->where('object_id', $mailbox_entitlement->id)->count());
     }
 
     /**

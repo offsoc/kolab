@@ -160,7 +160,10 @@ trait TestCaseTrait
         $this->assertCount(8 + count($other), $result);
     }
 
-    protected function backdateEntitlements($entitlements, $targetDate, $targetCreatedDate = null)
+    /**
+     * Set a specific date to existing entitlements
+     */
+    protected function backdateEntitlements($entitlements, $targetDate, $targetCreatedDate = null): void
     {
         $wallets = [];
         $ids = [];
