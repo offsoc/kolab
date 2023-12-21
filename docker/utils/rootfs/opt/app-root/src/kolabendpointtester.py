@@ -153,13 +153,12 @@ def discover_principal(url, username, password, verbose):
             verbose
         )
     except http.client.RemoteDisconnected:
-        print("Remote disconnected")
-        print_error("Caldav is not available")
+        print_error(f"Caldav is not available at {url} (Remote disconnected)")
         return False
 
     success = response.status == 207
     if not success:
-        print_error("Caldav is not available")
+        print_error(f"Caldav is not available at {url} (status != 207)")
 
     if verbose or not success:
         print("  ", "Status", response.status)
