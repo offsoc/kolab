@@ -53,7 +53,7 @@ case ${KOLAB_ROLE} in
 
         echo "----> Waiting for database to be seeded"
         # migrate:status only fails if the migration table doesn't exist
-        while [[ ! $(./artisan migrate:status > /dev/null) ]]; do
+        while [[ $(./artisan migrate:status > /dev/null) ]]; do
             sleep 1
             echo "."
         done
@@ -69,7 +69,7 @@ case ${KOLAB_ROLE} in
 
         echo "----> Waiting for database to be seeded"
         # migrate:status only fails if the migration table doesn't exist
-        while [[ ! $(./artisan migrate:status > /dev/null) ]]; do
+        while [[ $(./artisan migrate:status > /dev/null) ]]; do
             sleep 1
             echo "."
         done
