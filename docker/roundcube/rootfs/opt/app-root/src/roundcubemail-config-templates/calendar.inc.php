@@ -7,8 +7,10 @@
     $config['calendar_work_start'] = 6;
     $config['calendar_work_end'] = 18;
     $config['calendar_event_coloring'] = 0;
-    $config['calendar_caldav_url'] = 'http://%h/dav/calendars/%u/%i';
-    $config['calendar_caldav_server'] = "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
+    # This is for external access
+    $config['calendar_caldav_url'] = 'https://%h/dav/calendars/%u/%i';
+    # This is for internal access
+    $config['calendar_caldav_server'] = getenv('CALENDAR_CALDAV_SERVER') ?? "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
 
     $config['calendar_itip_smtp_server'] = '';
     $config['calendar_itip_smtp_user'] = '';

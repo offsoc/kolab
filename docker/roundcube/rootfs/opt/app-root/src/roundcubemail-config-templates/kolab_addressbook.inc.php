@@ -15,9 +15,11 @@ $config['kolab_addressbook_prio'] = 0;
 // %u - Current webmail user name
 // %n - Folder name
 // %i - Folder UUID
+# This is for external access
 $config['kolab_addressbook_carddav_url'] = 'http://%h/dav/addressbooks/%u/%i';
 
-$config['kolab_addressbook_carddav_server'] = "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
+# This is for internal access
+$config['kolab_addressbook_carddav_server'] = getenv('KOLAB_ADDRESSBOOK_CARDDAV_SERVER') ?? "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
 $config['kolab_addressbook_driver'] = 'carddav';
 
 ?>
