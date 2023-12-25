@@ -45,7 +45,9 @@ RUN rpm --import "$REPOSITORY/repodata/repomd.xml.key" && \
     collaboraofficebasis-pt \
     collaboraoffice-dict-ru \
     collaboraofficebasis-ru && \
-    dnf clean all
+    dnf clean all && \
+    chown -R 1001:0 /etc/coolwsd /opt/ && \
+    chmod -R g=u /etc/coolwsd /opt/
 
 RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
 
@@ -56,9 +58,6 @@ WORKDIR /opt/cool/
 
 ADD init.sh /init.sh
 ADD coolwsd.xml /etc/coolwsd/coolwsd.xml
-
-RUN chown -R 1001:0 /etc/coolwsd /opt/ && \
-    chmod -R g=u /etc/coolwsd /opt/
 
 USER 1001
 
