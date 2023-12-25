@@ -79,7 +79,7 @@ $config['fileapi_backend_storage_disabled'] = false;
 $config['fileapi_manticore'] = null;
 
 // WOPI/Office service URL. Enables use of collaborative editor supporting WOPI.
-// Note: this URL should be accessible from Chwala host and Roundcube host as well.
+// Note: this URL should be accessible from the Chwala host
 $config['fileapi_wopi_office'] = getenv('FILEAPI_WOPI_OFFICE');
 
 // Name of the user interface skin.
@@ -89,7 +89,10 @@ $config['file_api_skin'] = 'default';
 // The URL here is a location of Chwala API service. By default
 // the UI location is used with addition of /api/ suffix.
 # Force https if we're behind a proxy. Browsers don't allow mixed content.
-$config['file_api_url'] = 'https://' . ($_SERVER['HTTP_HOST'] ?? null) . '/chwala/api/';
+$config['file_api_url'] = getenv('FILE_API_URL') ?? 'https://' . ($_SERVER['HTTP_HOST'] ?? null) . '/chwala/api/';
+
+// URL for the wopi service to connect back to us (instead of file_api_url)
+$config['file_api_server_url'] = getenv('FILE_API_SERVER_URL');
 
 // Type of Chwala cache. Supported values: 'db', 'apc' and 'memcache'.
 // Note: This is only for some additional data like WOPI capabilities.

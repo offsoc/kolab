@@ -3,10 +3,26 @@
 
 GROUPSSTRING=""
 for HOST in $ALLOWED_HOSTS; do
-    GROUPSSTRING="$GROUPSSTRING<group><host desc=\"hostname to allow or deny.\" allow=\"true\">$HOST</host></group>\n"
+    GROUPSSTRING=$(cat <<EOF
+    $GROUPSSTRING
+    <group>
+        <host desc=\"hostname to allow or deny.\" allow=\"true\">$HOST</host>
+        <alias desc=\"regex pattern of aliasname.\" allow=\"true\">roundcube</host>
+    </group>
+EOF
+)
 done
 
 sed -i -e "s|ALLOWED_HOSTS_GROUPS|$GROUPSSTRING|" /etc/coolwsd/coolwsd.xml
+
+
+if [ -z "$SERVER_NAME" ]; then
+    SERVER_NAME='<server_name desc="External hostname:port of the server running coolwsd. If empty, its derived from the request (please set it if this doesnt work). May be specified when behind a reverse-proxy or when the hostname is not reachable directly." type="string" default=""/>'
+else
+    SERVER_NAME="<server_name desc='External hostname:port of the server running coolwsd.' type='string' default=''>$SERVER_NAME</server_name>"
+fi
+
+sed -i -e "s|SERVER_NAME|$SERVER_NAME|" /etc/coolwsd/coolwsd.xml
 
 mkdir -p /tmp/ssl/
 pushd /tmp/ssl/

@@ -64,6 +64,7 @@ USER 1001
 
 #Space separated list of hosts (where the service is running)
 ENV ALLOWED_HOSTS="\.\*"
+ENV SERVER_NAME=""
 
 CMD ["/init.sh"]
 
