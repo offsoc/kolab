@@ -52,11 +52,11 @@ class EntitlementTest extends TestCase
         $wallet = $user->wallets->first();
 
         // Test dispatching update jobs for the user, on quota update
-        Queue::fake();
+        $this->fakeQueueReset();
         $user->assignSku($skuMailbox, 1, $wallet);
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
 
-        Queue::fake();
+        $this->fakeQueueReset();
         $user->assignSku($skuStorage, 1, $wallet);
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
         Queue::assertPushed(
@@ -66,12 +66,12 @@ class EntitlementTest extends TestCase
             }
         );
 
-        Queue::fake();
+        $this->fakeQueueReset();
         $user->entitlements()->where('sku_id', $skuMailbox->id)->first()->delete();
         //FIXME this sometimes gives 1?
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
 
-        Queue::fake();
+        $this->fakeQueueReset();
         $user->entitlements()->where('sku_id', $skuStorage->id)->first()->delete();
         //FIXME this sometimes gives 2?
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
@@ -134,8 +134,6 @@ class EntitlementTest extends TestCase
      */
     public function testEntitleableTitle(): void
     {
-        Queue::fake();
-
         $packageDomain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $packageKolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $user = $this->getTestUser('entitled-user@custom-domain.com');

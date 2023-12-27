@@ -113,7 +113,7 @@ class WalletTest extends TestCase
         $this->assertTrue($user1->isRestricted());
         $this->assertTrue($user2->isRestricted());
 
-        Queue::fake();
+        $this->fakeQueueReset();
 
         $wallet->balance = 100;
         $wallet->save();

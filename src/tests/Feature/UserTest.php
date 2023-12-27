@@ -628,7 +628,7 @@ class UserTest extends TestCase
      */
     public function testDegradeAndUndegrade(): void
     {
-        Queue::fake();
+        $this->fakeQueueReset();
 
         // Test an account with users, domain
         $userA = $this->getTestUser('UserAccountA@UserAccount.com');
@@ -660,7 +660,7 @@ class UserTest extends TestCase
         $this->assertSame(7, $entitlementsB->whereDate('updated_at', $yesterday->toDateString())->count());
         $this->assertSame(0, $wallet->balance);
 
-        Queue::fake(); // reset queue state
+        $this->fakeQueueReset();
 
         // Degrade the account/wallet owner
         $userA->degrade();
@@ -696,7 +696,7 @@ class UserTest extends TestCase
         $this->backdateEntitlements($entitlementsA->get(), $yesterday, Carbon::now()->subMonthsWithoutOverflow(1));
         $this->backdateEntitlements($entitlementsB->get(), $yesterday, Carbon::now()->subMonthsWithoutOverflow(1));
 
-        Queue::fake(); // reset queue state
+        $this->fakeQueueReset();
 
         $userA->undegrade();
 
@@ -1136,7 +1136,7 @@ class UserTest extends TestCase
      */
     public function testRestore(): void
     {
-        Queue::fake();
+        $this->fakeQueueReset();
 
         // Test an account with users and domain
         $userA = $this->getTestUser('UserAccountA@UserAccount.com', [
@@ -1197,7 +1197,7 @@ class UserTest extends TestCase
         \App\Entitlement::withTrashed()->where('wallet_id', $wallet_id)
             ->update(['updated_at' => $now->subMinutes(10)]);
 
-        Queue::fake();
+        $this->fakeQueueReset();
 
         // Then restore it
         $userA->restore();
@@ -1244,7 +1244,7 @@ class UserTest extends TestCase
      */
     public function testRestrictAndUnrestrict(): void
     {
-        Queue::fake();
+        $this->fakeQueueReset();
 
         // Test an account with users, domain
         $user = $this->getTestUser('UserAccountA@UserAccount.com');
@@ -1277,7 +1277,7 @@ class UserTest extends TestCase
         $userB->restrict();
         $this->assertTrue($userB->fresh()->isRestricted());
 
-        Queue::fake(); // reset queue state
+        $this->fakeQueueReset();
 
         $user->refresh();
         $user->unrestrict();
@@ -1292,7 +1292,7 @@ class UserTest extends TestCase
             }
         );
 
-        Queue::fake(); // reset queue state
+        $this->fakeQueueReset();
 
         $user->unrestrict(true);
 
@@ -1312,8 +1312,7 @@ class UserTest extends TestCase
      */
     public function testSetAliases(): void
     {
-        Queue::fake();
-        Queue::assertNothingPushed();
+        $this->fakeQueueReset();
 
         $user = $this->getTestUser('UserAccountA@UserAccount.com');
         $domain = $this->getTestDomain('UserAccount.com', [
@@ -1338,10 +1337,11 @@ class UserTest extends TestCase
         $this->assertSame('useralias1@useraccount.com', $aliases[0]['alias']);
 
         // Add another alias
+        $this->fakeQueueReset();
         $user->setAliases(['UserAlias1@UserAccount.com', 'UserAlias2@UserAccount.com']);
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 2);
-        Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 0);
 
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
@@ -1351,11 +1351,12 @@ class UserTest extends TestCase
         $user->tenant->setSetting('pgp.enable', 1);
 
         // Remove an alias
+        $this->fakeQueueReset();
         $user->setAliases(['UserAlias1@UserAccount.com']);
 
         $user->tenant->setSetting('pgp.enable', 0);
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 3);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
         Queue::assertPushed(\App\Jobs\PGP\KeyDeleteJob::class, 1);
         Queue::assertPushed(
             \App\Jobs\PGP\KeyDeleteJob::class,
@@ -1371,9 +1372,10 @@ class UserTest extends TestCase
         $this->assertSame('useralias1@useraccount.com', $aliases[0]['alias']);
 
         // Remove all aliases
+        $this->fakeQueueReset();
         $user->setAliases([]);
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 4);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
 
         $this->assertCount(0, $user->aliases()->get());
     }
@@ -1426,8 +1428,7 @@ class UserTest extends TestCase
      */
     public function testUserSettings(): void
     {
-        Queue::fake();
-        Queue::assertNothingPushed();
+        $this->fakeQueueReset();
 
         $user = $this->getTestUser('UserAccountA@UserAccount.com');
 
@@ -1455,10 +1456,11 @@ class UserTest extends TestCase
         $this->assertSame('Firstname', $user->fresh()->getSetting('first_name'));
 
         // Update a setting
+        $this->fakeQueueReset();
         $user->setSetting('first_name', 'Firstname1');
 
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 2);
+            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
         }
 
         // Note: We test both current user as well as fresh user object
@@ -1467,10 +1469,11 @@ class UserTest extends TestCase
         $this->assertSame('Firstname1', $user->fresh()->getSetting('first_name'));
 
         // Delete a setting (null)
+        $this->fakeQueueReset();
         $user->setSetting('first_name', null);
 
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 3);
+            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
         }
 
         // Note: We test both current user as well as fresh user object
@@ -1479,11 +1482,12 @@ class UserTest extends TestCase
         $this->assertSame(null, $user->fresh()->getSetting('first_name'));
 
         // Delete a setting (empty string)
+        $this->fakeQueueReset();
         $user->setSetting('first_name', 'Firstname1');
         $user->setSetting('first_name', '');
 
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 5);
+            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
         }
 
         // Note: We test both current user as well as fresh user object
@@ -1492,15 +1496,16 @@ class UserTest extends TestCase
         $this->assertSame(null, $user->fresh()->getSetting('first_name'));
 
         // Set multiple settings at once
+        $this->fakeQueueReset();
         $user->setSettings([
                 'first_name' => 'Firstname2',
                 'last_name' => 'Lastname2',
                 'country' => null,
         ]);
 
-        // TODO: This really should create a single UserUpdate job, not 3
+        // Thanks to job locking it creates a single UserUpdate job
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 7);
+            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
         }
 
         // Note: We test both current user as well as fresh user object
@@ -1512,18 +1517,21 @@ class UserTest extends TestCase
         $this->assertSame(null, $user->getSetting('country'));
         $this->assertSame(null, $user->fresh()->getSetting('country'));
 
-        $all_settings = $user->settings()->orderBy('key')->get();
-        $this->assertCount(3, $all_settings);
+        $expected = [
+            'currency' => 'CHF',
+            'first_name' => 'Firstname2',
+            'last_name' => 'Lastname2',
+        ];
 
-        // Test getSettings() method
-        $this->assertSame(
-            [
-                'first_name' => 'Firstname2',
-                'last_name' => 'Lastname2',
-                'unknown' => null,
-            ],
-            $user->getSettings(['first_name', 'last_name', 'unknown'])
-        );
+        $this->assertSame($expected, $user->settings()->orderBy('key')->get()->pluck('value', 'key')->all());
+
+        $expected = [
+            'first_name' => 'Firstname2',
+            'last_name' => 'Lastname2',
+            'unknown' => null,
+        ];
+
+        $this->assertSame($expected, $user->getSettings(['first_name', 'last_name', 'unknown']));
     }
 
     /**

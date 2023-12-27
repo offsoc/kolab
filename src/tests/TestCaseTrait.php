@@ -621,6 +621,24 @@ trait TestCaseTrait
     }
 
     /**
+     * Init fake queue. Release unique job locks.
+     */
+    protected function fakeQueueReset()
+    {
+        // Release all locks for ShouldBeUnique jobs. Works only with Redis cache.
+        $db = \cache()->getStore()->lockConnection();
+        $prefix = $db->getOptions()->prefix?->getPrefix();
+
+        foreach ($db->keys('*') as $key) {
+            if (strpos($key, 'laravel_unique_job') !== false) {
+                $db->del($prefix ? substr($key, strlen($prefix)) : $key);
+            }
+        }
+
+        Queue::fake();
+    }
+
+    /**
      * Extract content of an email message.
      *
      * @param \Illuminate\Mail\Mailable $mail Mailable object

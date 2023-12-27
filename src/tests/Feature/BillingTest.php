@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class BillingTest extends TestCase
