@@ -23,12 +23,6 @@ class WalletTest extends TestCase
         'UserWallet1@UserWallet.com',
         'UserWallet2@UserWallet.com',
         'UserWallet3@UserWallet.com',
-        'UserWallet4@UserWallet.com',
-        'UserWallet5@UserWallet.com',
-        'WalletControllerA@WalletController.com',
-        'WalletControllerB@WalletController.com',
-        'WalletController2A@WalletController.com',
-        'WalletController2B@WalletController.com',
         'jane@kolabnow.com'
     ];
 
@@ -74,7 +68,7 @@ class WalletTest extends TestCase
     {
         Queue::fake();
 
-        $user = $this->getTestUser('UserWallet1@UserWallet.com');
+        $user = $this->getTestUser('jane@kolabnow.com');
         $user->suspend();
         $user->degrade();
 
@@ -96,7 +90,6 @@ class WalletTest extends TestCase
         $this->assertNull($wallet->getSetting('balance_negative_since'));
 
         // Test un-restricting users on balance change
-        $this->deleteTestUser('UserWallet1@UserWallet.com');
         $owner = $this->getTestUser('UserWallet1@UserWallet.com');
         $user1 = $this->getTestUser('UserWallet2@UserWallet.com');
         $user2 = $this->getTestUser('UserWallet3@UserWallet.com');
@@ -185,27 +178,20 @@ class WalletTest extends TestCase
     }
 
     /**
-     * Verify a wallet is created, when a user is created.
+     * Basic wallet features
      */
-    public function testCreateUserCreatesWallet(): void
+    public function testWallet(): void
     {
+        // Verify a wallet is created, when a user is created.
         $user = $this->getTestUser('UserWallet1@UserWallet.com');
 
         $this->assertCount(1, $user->wallets);
         $this->assertSame(\config('app.currency'), $user->wallets[0]->currency);
         $this->assertSame(0, $user->wallets[0]->balance);
-    }
 
-    /**
-     * Verify a user can haz more wallets.
-     */
-    public function testAddWallet(): void
-    {
-        $user = $this->getTestUser('UserWallet2@UserWallet.com');
-
-        $user->wallets()->save(
-            new Wallet(['currency' => 'USD'])
-        );
+        // Verify a user can haz more wallets.
+        $user->wallets()->save(new Wallet(['currency' => 'USD']));
+        $user->refresh();
 
         $this->assertCount(2, $user->wallets);
 
@@ -217,15 +203,8 @@ class WalletTest extends TestCase
 
         // For now all wallets use system currency
         $this->assertFalse($user->wallets()->where('currency', 'USD')->exists());
-    }
 
-    /**
-     * Verify we can not delete a user wallet that holds balance.
-     */
-    public function testDeleteWalletWithCredit(): void
-    {
-        $user = $this->getTestUser('UserWallet3@UserWallet.com');
-
+        // Verify we can not delete a user wallet that holds balance.
         $user->wallets()->each(
             function ($wallet) {
                 $wallet->credit(100)->save();
@@ -237,46 +216,18 @@ class WalletTest extends TestCase
                 $this->assertFalse($wallet->delete());
             }
         );
-    }
 
-    /**
-     * Verify we can not delete a wallet that is the last wallet.
-     */
-    public function testDeleteLastWallet(): void
-    {
-        $user = $this->getTestUser('UserWallet4@UserWallet.com');
+        $user->wallets()->update(['balance' => 0]);
+        $user->refresh();
+
+        // Verify we can remove a wallet that is an additional wallet.
+        $user->wallets()->first()->delete();
+        $user->refresh();
 
         $this->assertCount(1, $user->wallets);
 
-        $user->wallets()->each(
-            function ($wallet) {
-                $this->assertFalse($wallet->delete());
-            }
-        );
-    }
-
-    /**
-     * Verify we can remove a wallet that is an additional wallet.
-     */
-    public function testDeleteAddtWallet(): void
-    {
-        $user = $this->getTestUser('UserWallet5@UserWallet.com');
-
-        $user->wallets()->save(
-            new Wallet(['currency' => 'USD'])
-        );
-
-        // For now additional wallets with a different currency is not allowed
-        $this->assertFalse($user->wallets()->where('currency', 'USD')->exists());
-/*
-        $user->wallets()->each(
-            function ($wallet) {
-                if ($wallet->currency == 'USD') {
-                    $this->assertNotFalse($wallet->delete());
-                }
-            }
-        );
-*/
+        // Verify we can not delete a wallet that is the last wallet.
+        $this->assertFalse($user->wallets[0]->delete());
     }
 
     /**
@@ -284,8 +235,8 @@ class WalletTest extends TestCase
      */
     public function testAddController(): void
     {
-        $userA = $this->getTestUser('WalletControllerA@WalletController.com');
-        $userB = $this->getTestUser('WalletControllerB@WalletController.com');
+        $userA = $this->getTestUser('UserWallet1@UserWallet.com');
+        $userB = $this->getTestUser('UserWallet2@UserWallet.com');
 
         $userA->wallets()->each(
             function ($wallet) use ($userB) {
@@ -302,11 +253,139 @@ class WalletTest extends TestCase
     }
 
     /**
+     * Test Wallet::expectedCharges()
+     */
+    public function testExpectedCharges(): void
+    {
+        $user = $this->getTestUser('jane@kolabnow.com');
+        $package = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $user->assignPackage($package);
+
+        $wallet = $user->wallets->first();
+
+        // Verify the last day before the end of a full month's trial.
+        $this->backdateEntitlements(
+            $wallet->entitlements,
+            Carbon::now()->subMonthsWithoutOverflow(1)->addDays(1)
+        );
+
+        $this->assertEquals(0, $wallet->expectedCharges());
+
+        // Verify the exact end of the month's trial.
+        $this->backdateEntitlements(
+            $wallet->entitlements,
+            Carbon::now()->subMonthsWithoutOverflow(1)
+        );
+
+        $this->assertEquals(990, $wallet->expectedCharges());
+
+        // Verify that over-running the trial by a single day causes charges to be incurred.
+        $this->backdateEntitlements(
+            $wallet->entitlements,
+            Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
+        );
+
+        $this->assertEquals(990, $wallet->expectedCharges());
+
+        // Verify additional storage configuration entitlement created 'early' does incur additional
+        // charges to the wallet.
+        $this->backdateEntitlements(
+            $wallet->entitlements,
+            Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
+        );
+
+        $this->assertEquals(990, $wallet->expectedCharges());
+
+        $sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+
+        $entitlement = Entitlement::create([
+                'wallet_id' => $wallet->id,
+                'sku_id' => $sku->id,
+                'cost' => $sku->cost,
+                'entitleable_id' => $user->id,
+                'entitleable_type' => \App\User::class
+        ]);
+
+        $this->backdateEntitlements(
+            [$entitlement],
+            Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
+        );
+
+        $this->assertEquals(1015, $wallet->expectedCharges());
+
+        $entitlement->forceDelete();
+        $wallet->refresh();
+
+        // Verify additional storage configuration entitlement created 'late' does not incur additional
+        // charges to the wallet.
+        $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
+
+        $this->assertEquals(990, $wallet->expectedCharges());
+
+        $entitlement = \App\Entitlement::create([
+                'wallet_id' => $wallet->id,
+                'sku_id' => $sku->id,
+                'cost' => $sku->cost,
+                'entitleable_id' => $user->id,
+                'entitleable_type' => \App\User::class
+        ]);
+
+        $this->backdateEntitlements([$entitlement], Carbon::now()->subDays(14));
+
+        $this->assertEquals(990, $wallet->expectedCharges());
+
+        $entitlement->forceDelete();
+        $wallet->refresh();
+
+        // Test fifth week
+        $targetDateA = Carbon::now()->subWeeks(5);
+        $targetDateB = $targetDateA->copy()->addMonthsWithoutOverflow(1);
+
+        $this->backdateEntitlements($wallet->entitlements, $targetDateA);
+
+        $this->assertEquals(990, $wallet->expectedCharges());
+
+        $entitlement->forceDelete();
+        $wallet->refresh();
+
+        // Test second month
+        $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(2));
+
+        $this->assertCount(7, $wallet->entitlements);
+
+        $this->assertEquals(1980, $wallet->expectedCharges());
+
+        $entitlement = \App\Entitlement::create([
+                'entitleable_id' => $user->id,
+                'entitleable_type' => \App\User::class,
+                'cost' => $sku->cost,
+                'sku_id' => $sku->id,
+                'wallet_id' => $wallet->id
+        ]);
+
+        $this->backdateEntitlements([$entitlement], Carbon::now()->subMonthsWithoutOverflow(1));
+
+        $this->assertEquals(2005, $wallet->expectedCharges());
+
+        $entitlement->forceDelete();
+        $wallet->refresh();
+
+        // Test cost calculation with a wallet discount
+        $discount = Discount::withEnvTenantContext()->where('code', 'TEST')->first();
+
+        $wallet->discount()->associate($discount);
+
+        $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
+
+        $this->assertEquals(891, $wallet->expectedCharges());
+    }
+
+    /**
      * Test Wallet::getMinMandateAmount()
      */
     public function testGetMinMandateAmount(): void
     {
-        $user = $this->getTestUser('WalletControllerA@WalletController.com');
+        $user = $this->getTestUser('UserWallet1@UserWallet.com');
         $user->setSetting('plan_id', null);
         $wallet = $user->wallets()->first();
 
@@ -349,10 +428,10 @@ class WalletTest extends TestCase
     /**
      * Verify controllers can also be removed from wallets.
      */
-    public function testRemoveWalletController(): void
+    public function testRemoveController(): void
     {
-        $userA = $this->getTestUser('WalletController2A@WalletController.com');
-        $userB = $this->getTestUser('WalletController2B@WalletController.com');
+        $userA = $this->getTestUser('UserWallet1@UserWallet.com');
+        $userB = $this->getTestUser('UserWallet2@UserWallet.com');
 
         $userA->wallets()->each(
             function ($wallet) use ($userB) {
@@ -715,9 +794,9 @@ class WalletTest extends TestCase
     }
 
     /**
-     * Tests for award() and penalty()
+     * Tests for award/penalty/chargeback/refund/credit/debit methods
      */
-    public function testAwardAndPenalty(): void
+    public function testBalanceChange(): void
     {
         $user = $this->getTestUser('UserWallet1@UserWallet.com');
         $wallet = $user->wallets()->first();
@@ -741,14 +820,58 @@ class WalletTest extends TestCase
         $this->assertSame(-100, $transaction->amount);
         $this->assertSame(Transaction::WALLET_PENALTY, $transaction->type);
         $this->assertSame('test', $transaction->description);
-    }
 
-    /**
-     * Tests for chargeback() and refund()
-     */
-    public function testChargebackAndRefund(): void
-    {
-        $this->markTestIncomplete();
+        $wallet->transactions()->delete();
+        $wallet->balance = 0;
+        $wallet->save();
+
+        // Test chargeback
+        $this->assertSame($wallet->id, $wallet->chargeback(100, 'test')->id);
+        $this->assertSame(-100, $wallet->balance);
+        $this->assertSame(-100, $wallet->fresh()->balance);
+        $transaction = $wallet->transactions()->first();
+        $this->assertSame(-100, $transaction->amount);
+        $this->assertSame(Transaction::WALLET_CHARGEBACK, $transaction->type);
+        $this->assertSame('test', $transaction->description);
+
+        $wallet->transactions()->delete();
+        $wallet->balance = 0;
+        $wallet->save();
+
+        // Test refund
+        $this->assertSame($wallet->id, $wallet->refund(100, 'test')->id);
+        $this->assertSame(-100, $wallet->balance);
+        $this->assertSame(-100, $wallet->fresh()->balance);
+        $transaction = $wallet->transactions()->first();
+        $this->assertSame(-100, $transaction->amount);
+        $this->assertSame(Transaction::WALLET_REFUND, $transaction->type);
+        $this->assertSame('test', $transaction->description);
+
+        $wallet->transactions()->delete();
+        $wallet->balance = 0;
+        $wallet->save();
+
+        // Test credit
+        $this->assertSame($wallet->id, $wallet->credit(100, 'test')->id);
+        $this->assertSame(100, $wallet->balance);
+        $this->assertSame(100, $wallet->fresh()->balance);
+        $transaction = $wallet->transactions()->first();
+        $this->assertSame(100, $transaction->amount);
+        $this->assertSame(Transaction::WALLET_CREDIT, $transaction->type);
+        $this->assertSame('test', $transaction->description);
+
+        $wallet->transactions()->delete();
+        $wallet->balance = 0;
+        $wallet->save();
+
+        // Test debit
+        $this->assertSame($wallet->id, $wallet->debit(100, 'test')->id);
+        $this->assertSame(-100, $wallet->balance);
+        $this->assertSame(-100, $wallet->fresh()->balance);
+        $transaction = $wallet->transactions()->first();
+        $this->assertSame(-100, $transaction->amount);
+        $this->assertSame(Transaction::WALLET_DEBIT, $transaction->type);
+        $this->assertSame('test', $transaction->description);
     }
 
     /**
