@@ -57,15 +57,9 @@ class EntitlementObserver
      */
     public function created(Entitlement $entitlement)
     {
-        $entitlement->entitleable->updated_at = Carbon::now();
-        $entitlement->entitleable->save();
-
         $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_CREATED);
 
-        // Update the user IMAP mailbox quota
-        if ($entitlement->sku->title == 'storage') {
-            \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
-        }
+        $entitlement->sku->handler_class::entitlementCreated($entitlement);
     }
 
     /**
@@ -77,27 +71,9 @@ class EntitlementObserver
      */
     public function deleted(Entitlement $entitlement)
     {
-        if (!$entitlement->entitleable->trashed()) {
-            // TODO: This is useless, remove this, but also maybe refactor the whole method,
-            // i.e. move job invoking to App\Handlers (don't depend on SKU title).
-            // Also make sure the transaction is always being created
-            $entitlement->entitleable->updated_at = Carbon::now();
-            $entitlement->entitleable->save();
+        $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_DELETED);
 
-            $entitlement->createTransaction(\App\Transaction::ENTITLEMENT_DELETED);
-        }
-
-        // Remove all configured 2FA methods from Roundcube database
-        if ($entitlement->sku->title == '2fa') {
-            // FIXME: Should that be an async job?
-            $sf = new \App\Auth\SecondFactor($entitlement->entitleable);
-            $sf->removeFactors();
-        }
-
-        // Update the user IMAP mailbox quota
-        if ($entitlement->sku->title == 'storage') {
-            \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
-        }
+        $entitlement->sku->handler_class::entitlementDeleted($entitlement);
     }
 
     /**

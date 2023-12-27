@@ -2,6 +2,8 @@
 
 namespace App\Handlers;
 
+use App\Entitlement;
+
 class Auth2F extends \App\Handlers\Base
 {
     /**
@@ -12,6 +14,19 @@ class Auth2F extends \App\Handlers\Base
     public static function entitleableClass(): string
     {
         return \App\User::class;
+    }
+
+    /**
+     * Handle entitlement deletion event.
+     */
+    public static function entitlementDeleted(Entitlement $entitlement): void
+    {
+        // Remove all configured 2FA methods from Roundcube database
+        if ($entitlement->entitleable && !$entitlement->entitleable->trashed()) {
+            // TODO: This should be an async job
+            $sf = new \App\Auth\SecondFactor($entitlement->entitleable);
+            $sf->removeFactors();
+        }
     }
 
     /**

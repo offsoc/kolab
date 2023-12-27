@@ -346,7 +346,7 @@ class IMAP
         $imap = self::initIMAP($config);
 
         $settings = $folder->getSettings(['acl', 'folder']);
-        $acl = !empty($settings['acl']) ? json_decode($settings['acl'], true) : null;
+        $acl = !empty($settings['acl']) ? json_decode($settings['acl'], true) : [];
         $folder = $settings['folder'];
         $mailbox = self::toUTF7($folder);
 

@@ -2,6 +2,8 @@
 
 namespace App\Handlers;
 
+use App\Entitlement;
+
 abstract class Base
 {
     /**
@@ -12,6 +14,22 @@ abstract class Base
     public static function entitleableClass(): string
     {
         return '';
+    }
+
+    /**
+     * Handle entitlement creation event.
+     */
+    public static function entitlementCreated(Entitlement $entitlement): void
+    {
+        // NOP
+    }
+
+    /**
+     * Handle entitlement deletion event.
+     */
+    public static function entitlementDeleted(Entitlement $entitlement): void
+    {
+        // NOP
     }
 
     /**
