@@ -2,7 +2,7 @@
 set -e
 mkdir /src/
 cd /src/
-git clone --branch $GIT_REF https://git.kolab.org/source/kolab.git kolab
+git clone --branch $GIT_REF $GIT_REMOTE kolab
 pushd kolab
 git reset --hard $GIT_REF
 popd

@@ -20,6 +20,21 @@ services:
   roundcube:
     build:
       context: ./docker/roundcube/
+      args:
+        GIT_REF_ROUNDCUBEMAIL: ${GIT_REF_ROUNDCUBEMAIL}
+        GIT_REMOTE_ROUNDCUBEMAIL: ${GIT_REMOTE_ROUNDCUBEMAIL}
+        GIT_REF_ROUNDCUBEMAIL_PLUGINS: ${GIT_REF_ROUNDCUBEMAIL_PLUGINS}
+        GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS: ${GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS}
+        GIT_REF_CHWALA: ${GIT_REF_CHWALA}
+        GIT_REMOTE_CHWALA: ${GIT_REMOTE_CHWALA}
+        GIT_REF_SYNCROTON: ${GIT_REF_SYNCROTON}
+        GIT_REMOTE_SYNCROTON: ${GIT_REMOTE_SYNCROTON}
+        GIT_REF_AUTOCONF: ${GIT_REF_AUTOCONF}
+        GIT_REMOTE_AUTOCONF: ${GIT_REMOTE_AUTOCONF}
+        GIT_REF_IRONY: ${GIT_REF_IRONY}
+        GIT_REMOTE_IRONY: ${GIT_REMOTE_IRONY}
+        GIT_REF_FREEBUSY: ${GIT_REF_FREEBUSY}
+        GIT_REMOTE_FREEBUSY: ${GIT_REMOTE_FREEBUSY}
     container_name: kolab-roundcube
     hostname: roundcube.hosted.com
     restart: on-failure
@@ -143,7 +158,8 @@ services:
     build:
       context: ./docker/webapp/
       args:
-        GIT_REF: ${KOLAB_GIT_REF:-master}
+        GIT_REF: ${KOLAB_GIT_REF}
+        GIT_REMOTE: ${KOLAB_GIT_REMOTE}
     container_name: kolab-webapp
     restart: on-failure
     image: kolab-webapp
@@ -167,7 +183,8 @@ services:
     build:
       context: ./docker/meet/
       args:
-        GIT_REF: ${KOLAB_GIT_REF:-master}
+        GIT_REF: ${KOLAB_GIT_REF}
+        GIT_REMOTE: ${KOLAB_GIT_REMOTE}
     container_name: kolab-meet
     restart: on-failure
     healthcheck:

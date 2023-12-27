@@ -6,25 +6,25 @@ pushd /opt/app-root/src/
 
 # Clone what we don't find (roundcubemail-skin-elastic is not publicly available, so can't be included this way)
 if [ ! -d roundcubemail ]; then
-    git clone --branch $GIT_REF_ROUNDCUBEMAIL https://git.kolab.org/source/roundcubemail.git roundcubemail
+    git clone --branch $GIT_REF_ROUNDCUBEMAIL $GIT_REMOTE_ROUNDCUBEMAIL roundcubemail
 fi
 if [ ! -d roundcubemail-plugins-kolab ]; then
-    git clone --branch $GIT_REF_ROUNDCUBEMAIL_PLUGINS https://git.kolab.org/diffusion/RPK/roundcubemail-plugins-kolab.git roundcubemail-plugins-kolab
+    git clone --branch $GIT_REF_ROUNDCUBEMAIL_PLUGINS $GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS roundcubemail-plugins-kolab
 fi
 if [ ! -d syncroton ]; then
-    git clone --branch $GIT_REF_SYNCROTON https://git.kolab.org/diffusion/S/syncroton.git syncroton
+    git clone --branch $GIT_REF_SYNCROTON $GIT_REMOTE_SYNCROTON syncroton
 fi
 if [ ! -d iRony ]; then
-    git clone --branch $GIT_REF_IRONY https://git.kolab.org/source/iRony.git iRony
+    git clone --branch $GIT_REF_IRONY $GIT_REMOTE_IRONY iRony
 fi
 if [ ! -d chwala ]; then
-    git clone --branch $GIT_REF_CHWALA https://git.kolab.org/diffusion/C/chwala.git chwala
+    git clone --branch $GIT_REF_CHWALA $GIT_REMOTE_CHWALA chwala
 fi
 if [ ! -d autoconf ]; then
-    git clone --branch $GIT_REF_AUTOCONF https://git.kolab.org/diffusion/AC/autoconf.git autoconf
+    git clone --branch $GIT_REF_AUTOCONF $GIT_REMOTE_AUTOCONF autoconf
 fi
 if [ ! -d freebusy ]; then
-    git clone --branch $GIT_REF_FREEBUSY https://git.kolab.org/diffusion/F/freebusy.git freebusy
+    git clone --branch $GIT_REF_FREEBUSY $GIT_REMOTE_FREEBUSY freebusy
 fi
 
 

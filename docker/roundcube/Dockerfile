@@ -72,29 +72,34 @@ WORKDIR ${HOME}
 COPY /rootfs /
 
 ARG GIT_REF_ROUNDCUBEMAIL=dev/kolab-1.5
+ARG GIT_REMOTE_ROUNDCUBEMAIL=https://git.kolab.org/source/roundcubemail.git
 ARG GIT_REF_ROUNDCUBEMAIL_PLUGINS=master
+ARG GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS=https://git.kolab.org/diffusion/RPK/roundcubemail-plugins-kolab.git
 ARG GIT_REF_CHWALA=master
+ARG GIT_REMOTE_CHWALA=https://git.kolab.org/diffusion/C/chwala.git
 ARG GIT_REF_SYNCROTON=master
+ARG GIT_REMOTE_SYNCROTON=https://git.kolab.org/diffusion/S/syncroton.git
 ARG GIT_REF_AUTOCONF=master
+ARG GIT_REMOTE_AUTOCONF=https://git.kolab.org/diffusion/AC/autoconf.git
 ARG GIT_REF_IRONY=master
+ARG GIT_REMOTE_IRONY=https://git.kolab.org/source/iRony.git
 ARG GIT_REF_FREEBUSY=master
-
-RUN /opt/app-root/src/build.sh 
+ARG GIT_REMOTE_FREEBUSY=https://git.kolab.org/diffusion/F/freebusy.git
 
 VOLUME /data
 
-RUN chgrp -R 0 /opt/app-root/src && \
-    chmod -R g=u /opt/app-root/src
-
-RUN mkdir -p /run/php-fpm && \
+RUN /opt/app-root/src/build.sh && \
+    chgrp -R 0 /opt/app-root/src && \
+    chmod -R g=u /opt/app-root/src && \
+    mkdir -p /run/php-fpm && \
     chmod 777 /run/php-fpm && \
     mkdir -p /run/httpd && \
     chmod 777 /run/httpd && \
     mkdir -p /data && \
     chmod 777 /data && \
-    chmod -R 777 /etc/httpd /var/log/httpd /var/lib/httpd /data
+    chmod -R 777 /etc/httpd /var/log/httpd /var/lib/httpd /data && \
+    chown -R 1001:0 /opt/app-root/src /data
 
-RUN chown -R 1001:0 /opt/app-root/src /data
 USER 1001
 
 EXPOSE 8080
