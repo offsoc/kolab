@@ -405,12 +405,24 @@ class PaymentsController extends Controller
             return false;
         }
 
+        $appName = Tenant::getConfig($wallet->owner->tenant_id, 'app.name');
+        $description = "{$appName} Recurring Payment";
+        if ($plan = $wallet->plan()) {
+            if ($plan->months == 12) {
+                $description = "{$appName} Annual Payment";
+            } elseif ($plan->months == 3) {
+                $description = "{$appName} Quarterly Payment";
+            } elseif ($plan->months == 1) {
+                $description = "{$appName} Monthly Payment";
+            }
+        }
+
         $request = [
             'type' => Payment::TYPE_RECURRING,
             'currency' => $wallet->currency,
             'amount' => $amount,
             'methodId' => PaymentProvider::METHOD_CREDITCARD,
-            'description' => Tenant::getConfig($wallet->owner->tenant_id, 'app.name') . ' Recurring Payment',
+            'description' => $description,
         ];
 
         self::addTax($wallet, $request);
