@@ -4,8 +4,6 @@ set -x
 set -e
 
 # Setup
-git stash
-git pull
 docker compose pull --ignore-buildable
 env HOST=kolab.local ADMIN_PASSWORD=simple123 bin/configure.sh config.demo
 bin/quickstart.sh --nodev
