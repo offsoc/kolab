@@ -4,8 +4,8 @@ set -x
 set -e
 
 # Setup
-docker compose pull --ignore-buildable
 env HOST=kolab.local ADMIN_PASSWORD=simple123 bin/configure.sh config.demo
+docker compose pull --ignore-buildable
 bin/quickstart.sh --nodev
 
 # Ensure the environment is functional
