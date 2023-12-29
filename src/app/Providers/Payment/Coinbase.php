@@ -201,15 +201,17 @@ class Coinbase extends \App\Providers\PaymentProvider
     {
         $code = $response->getStatusCode();
         if ($code != 200 && $code != 201) {
-            \Log::error(var_export($response));
+            \Log::error(var_export($response, true));
+
             $decoded = json_decode($response->getBody(), true);
-            $message = "";
+            $message = '';
             if (
                 is_array($decoded) && array_key_exists('error', $decoded) &&
                 is_array($decoded['error']) && array_key_exists('message', $decoded['error'])
             ) {
                 $message = $decoded['error']['message'];
             }
+
             \Log::error("$str [$code]: $message");
         }
     }

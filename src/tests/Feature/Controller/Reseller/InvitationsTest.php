@@ -122,15 +122,15 @@ class InvitationsTest extends TestCase
         $i12 = SignupInvitation::create(['email' => 'email12@test.com']);
         $i13 = SignupInvitation::create(['email' => 'email13@ext.com']);
 
-        SignupInvitation::query()->update(['created_at' => now()->subDays('1')]);
+        SignupInvitation::query()->update(['created_at' => now()->subDays(1)]);
 
         SignupInvitation::where('id', $i1->id)
-            ->update(['created_at' => now()->subHours('2'), 'status' => SignupInvitation::STATUS_FAILED]);
+            ->update(['created_at' => now()->subHours(2), 'status' => SignupInvitation::STATUS_FAILED]);
 
         SignupInvitation::where('id', $i2->id)
-            ->update(['created_at' => now()->subHours('3'), 'status' => SignupInvitation::STATUS_SENT]);
+            ->update(['created_at' => now()->subHours(3), 'status' => SignupInvitation::STATUS_SENT]);
 
-        SignupInvitation::where('id', $i11->id)->update(['created_at' => now()->subDays('3')]);
+        SignupInvitation::where('id', $i11->id)->update(['created_at' => now()->subDays(3)]);
         SignupInvitation::where('id', $i12->id)->update(['tenant_id' => $reseller2->tenant_id]);
         SignupInvitation::where('id', $i13->id)->update(['tenant_id' => $reseller2->tenant_id]);
 

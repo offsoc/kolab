@@ -113,7 +113,7 @@ class SkusTest extends TestCase
         $storage_sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
         // Invalid empty input
-        SkusController::updateEntitlements($jane, null, $wallet);
+        SkusController::updateEntitlements($jane, [], $wallet);
 
         $this->assertSame(0, $wallet->entitlements()->count());
 

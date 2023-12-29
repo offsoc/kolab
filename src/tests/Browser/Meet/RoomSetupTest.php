@@ -235,7 +235,7 @@ class RoomSetupTest extends TestCaseDusk
 
             // Expect the participant removed from other users windows
             $browser->waitUntilMissing('@session div.meet-video:not(.self)')
-                ->assertSeeIn('@counter', 1);
+                ->assertSeeIn('@counter', '1');
 
             // Join the room as guest again
             $guest->visit(new RoomPage('john'))

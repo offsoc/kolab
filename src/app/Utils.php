@@ -404,15 +404,15 @@ class Utils
         $randStrs = [];
 
         for ($x = 0; $x < $qty; $x++) {
-            $randStrs[$x] = [];
+            $string = [];
 
             for ($y = 0; $y < $length; $y++) {
-                $randStrs[$x][] = $chars[rand(0, strlen($chars) - 1)];
+                $string[] = $chars[rand(0, strlen($chars) - 1)];
             }
 
-            shuffle($randStrs[$x]);
+            shuffle($string);
 
-            $randStrs[$x] = implode('', $randStrs[$x]);
+            $randStrs[$x] = implode('', $string);
         }
 
         return implode($join, $randStrs);

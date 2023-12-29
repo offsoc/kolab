@@ -123,7 +123,7 @@ class Roundcube
 
         // No records found, do initial sync if already have the keyring
         if (empty($file)) {
-            self::enigmaSave(true, $homedir);
+            self::enigmaSave($email, $homedir);
         }
     }
 

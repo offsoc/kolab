@@ -124,7 +124,7 @@ class InvitationsTest extends TestCaseDusk
             $i1 = SignupInvitation::create(['email' => 'test1@domain.org']);
             $i2 = SignupInvitation::create(['email' => 'test2@domain.org']);
             SignupInvitation::where('id', $i1->id)->update(['status' => SignupInvitation::STATUS_FAILED]);
-            SignupInvitation::where('id', $i2->id)->update(['created_at' => now()->subHours('2')]);
+            SignupInvitation::where('id', $i2->id)->update(['created_at' => now()->subHours(2)]);
 
             $browser->visit(new Invitations())
                 ->assertElementsCount('@table tbody tr', 2);
@@ -164,14 +164,14 @@ class InvitationsTest extends TestCaseDusk
             $i10 = SignupInvitation::create(['email' => 'email10@other.com']);
             $i11 = SignupInvitation::create(['email' => 'email11@other.com']);
 
-            SignupInvitation::query()->update(['created_at' => now()->subDays('1')]);
+            SignupInvitation::query()->update(['created_at' => now()->subDays(1)]);
             SignupInvitation::where('id', $i1->id)
-                ->update(['created_at' => now()->subHours('2'), 'status' => SignupInvitation::STATUS_FAILED]);
+                ->update(['created_at' => now()->subHours(2), 'status' => SignupInvitation::STATUS_FAILED]);
             SignupInvitation::where('id', $i2->id)
-                ->update(['created_at' => now()->subHours('3'), 'status' => SignupInvitation::STATUS_SENT]);
+                ->update(['created_at' => now()->subHours(3), 'status' => SignupInvitation::STATUS_SENT]);
             SignupInvitation::where('id', $i3->id)
-                ->update(['created_at' => now()->subHours('4'), 'status' => SignupInvitation::STATUS_COMPLETED]);
-            SignupInvitation::where('id', $i11->id)->update(['created_at' => now()->subDays('3')]);
+                ->update(['created_at' => now()->subHours(4), 'status' => SignupInvitation::STATUS_COMPLETED]);
+            SignupInvitation::where('id', $i11->id)->update(['created_at' => now()->subDays(3)]);
 
             // Test paging (load more) feature
             $browser->visit(new Invitations())

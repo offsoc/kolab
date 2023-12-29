@@ -333,7 +333,7 @@ class Stripe extends \App\Providers\PaymentProvider
                     if ($status != Payment::STATUS_CANCELED && $payment->type == Payment::TYPE_RECURRING) {
                         // Disable the mandate
                         if ($status == Payment::STATUS_FAILED) {
-                            $payment->wallet->setSetting('mandate_disabled', 1);
+                            $payment->wallet->setSetting('mandate_disabled', '1');
                         }
 
                         // Notify the user

@@ -40,6 +40,6 @@ class SetStatusCommand extends Command
         $domain->status = (int) $this->argument('status');
         $domain->save();
 
-        $this->info($domain->status);
+        $this->info((string) $domain->status);
     }
 }

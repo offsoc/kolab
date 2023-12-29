@@ -47,7 +47,7 @@ class QuotaInput extends BaseComponent
      */
     public function assertQuotaValue($browser, $value)
     {
-        $browser->assertValue('@input', $value)
+        $browser->assertValue('@input', (string) $value)
             ->assertSeeIn('@label', "$value GB");
     }
 

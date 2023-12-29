@@ -77,7 +77,7 @@ class GroupTest extends TestCase
 
         $this->assertSame('group-test@kolabnow.com', $group->email);
         $this->assertSame('group-test', $group->name);
-        $this->assertMatchesRegularExpression('/^[0-9]{1,20}$/', $group->id);
+        $this->assertMatchesRegularExpression('/^[0-9]{1,20}$/', (string) $group->id);
         $this->assertSame([], $group->members);
         $this->assertTrue($group->isNew());
         $this->assertFalse($group->isActive());

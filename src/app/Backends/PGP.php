@@ -67,7 +67,7 @@ class PGP
             // ->setExpirationDate(0)
             ->setKeyParams(\Crypt_GPG_SubKey::ALGORITHM_RSA, \config('pgp.length'))
             ->setSubKeyParams(\Crypt_GPG_SubKey::ALGORITHM_RSA, \config('pgp.length'))
-            ->generateKey(null, $email);
+            ->generateKey('', $email);
 
         // Store the keypair in Roundcube Enigma storage
         self::dbSave(true);

@@ -48,7 +48,7 @@ class MandateCommand extends Command
             }
 
             if ($this->option('disable') && $disabled == 'No') {
-                $wallet->setSetting('mandate_disabled', 1);
+                $wallet->setSetting('mandate_disabled', '1');
                 $disabled = 'Yes';
             } elseif ($this->option('enable') && $disabled == 'Yes') {
                 $wallet->setSetting('mandate_disabled', null);

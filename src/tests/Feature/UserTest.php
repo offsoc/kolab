@@ -376,7 +376,7 @@ class UserTest extends TestCase
 
         $domain = \config('app.domain');
 
-        \App\Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', 0);
+        \App\Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', '0');
         $user = User::create([
                 'email' => 'USER-test@' . \strtoupper($domain),
                 'password' => 'test',
@@ -406,7 +406,7 @@ class UserTest extends TestCase
         // Test invoking KeyCreateJob
         $this->deleteTestUser("user-test@$domain");
 
-        \App\Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', 1);
+        \App\Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', '1');
 
         $user = User::create(['email' => "user-test@$domain", 'password' => 'test']);
 

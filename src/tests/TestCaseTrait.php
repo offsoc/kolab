@@ -734,7 +734,7 @@ trait TestCaseTrait
         usort(
             $this->domainUsers,
             function ($a, $b) {
-                return $a->email > $b->email;
+                return $a->email <=> $b->email;
             }
         );
 

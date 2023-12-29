@@ -24,14 +24,14 @@ class CompanionApp extends Model
     ];
 
     /**
-    * Send a notification via firebase.
-    *
-    * @param array $deviceIds A list of device id's to send the notification to
-    * @param array $data The data to include in the notification.
-    *
-    * @throws \Exception on notification failure
-    * @return bool true if a notification has been sent
-    */
+     * Send a notification via firebase.
+     *
+     * @param array $deviceIds A list of device id's to send the notification to
+     * @param array $data      The data to include in the notification.
+     *
+     * @throws \Exception on notification failure
+     * @return bool true if a notification has been sent
+     */
     private static function pushFirebaseNotification($deviceIds, $data): bool
     {
         \Log::debug("sending notification to " . var_export($deviceIds, true));
@@ -64,11 +64,11 @@ class CompanionApp extends Model
     }
 
     /**
-    * Send a notification to a user.
-    *
-    * @throws \Exception on notification failure
-    * @return bool true if a notification has been sent
-    */
+     * Send a notification to a user.
+     *
+     * @throws \Exception on notification failure
+     * @return bool true if a notification has been sent
+     */
     public static function notifyUser($userId, $data): bool
     {
         $notificationTokens = CompanionApp::where('user_id', $userId)
@@ -107,8 +107,10 @@ class CompanionApp extends Model
 
     /**
      * Set the PassportClient of this CompanionApp
+     *
+     * @param \Laravel\Passport\Client $client The client object
      */
-    public function setPassportClient(\App\Auth\PassportClient $client)
+    public function setPassportClient(\Laravel\Passport\Client $client)
     {
         return $this->oauth_client_id = $client->id;
     }

@@ -39,6 +39,6 @@ class GetDiscountCommand extends Command
             return 0;
         }
 
-        $this->info($wallet->discount->discount);
+        $this->info((string) $wallet->discount->discount);
     }
 }

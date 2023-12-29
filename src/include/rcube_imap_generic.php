@@ -4088,8 +4088,8 @@ class rcube_imap_generic
     /**
      * Set the value of the debugging flag.
      *
-     * @param boolean  $debug   New value for the debugging flag.
-     * @param callback $handler Logging handler function
+     * @param bool      $debug   New value for the debugging flag.
+     * @param ?callable $handler Logging handler function
      *
      * @since 0.5-stable
      */

@@ -109,7 +109,7 @@ class ResourceTest extends TestCase
         $resource->domainName = 'kolabnow.com';
         $resource->save();
 
-        $this->assertMatchesRegularExpression('/^[0-9]{1,20}$/', $resource->id);
+        $this->assertMatchesRegularExpression('/^[0-9]{1,20}$/', (string) $resource->id);
         $this->assertMatchesRegularExpression('/^resource-[0-9]{1,20}@kolabnow\.com$/', $resource->email);
         $this->assertSame('Reśo', $resource->name);
         $this->assertTrue($resource->isNew());

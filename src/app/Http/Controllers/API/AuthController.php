@@ -162,8 +162,8 @@ class AuthController extends Controller
     /**
      * Get the token array structure.
      *
-     * @param \Illuminate\Http\JsonResponse $tokenResponse The response containing the token.
-     * @param ?\App\User                    $user          The user being authenticated
+     * @param \Symfony\Component\HttpFoundation\Response $tokenResponse The response containing the token.
+     * @param ?\App\User                                 $user          The user being authenticated
      *
      * @return \Illuminate\Http\JsonResponse
      */

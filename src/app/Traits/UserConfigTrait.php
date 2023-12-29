@@ -67,7 +67,7 @@ trait UserConfigTrait
 
                 $this->setSetting($key, !empty($value) ? json_encode($value) : null);
             } elseif ($key == 'max_password_age') {
-                $this->setSetting($key, intval($value) > 0 ? (int) $value : null);
+                $this->setSetting($key, intval($value) > 0 ? ((string) intval($value)) : null);
             } elseif ($key == 'password_policy') {
                 // Validate the syntax and make sure min and max is included
                 if (

@@ -123,7 +123,7 @@ class PaymentMollieTest extends TestCaseDusk
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
                         ->waitFor('@body #mandate_amount')
                         ->assertSeeIn('@body label[for="mandate_amount"]', 'Fill up by')
-                        ->assertValue('@body #mandate_amount', Payment::MIN_AMOUNT / 100)
+                        ->assertValue('@body #mandate_amount', strval(Payment::MIN_AMOUNT / 100))
                         ->assertSeeIn('@body label[for="mandate_balance"]', 'when account balance is below') // phpcs:ignore
                         ->assertValue('@body #mandate_balance', '0')
                         ->assertSeeIn('@button-cancel', 'Cancel')

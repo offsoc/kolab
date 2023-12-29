@@ -34,6 +34,6 @@ class GetBalanceCommand extends Command
             return 1;
         }
 
-        $this->info($wallet->balance);
+        $this->info((string) $wallet->balance);
     }
 }

@@ -526,7 +526,7 @@ class SignupController extends Controller
 
         if ($rate && $rate->rate > 0) {
             // TODO: app.vat.mode
-            $vat = round($planCost * $rate->rate / 100);
+            $vat = (int) round($planCost * $rate->rate / 100);
             $content = self::trans('app.vat-incl', [
                     'rate' => Utils::percent($rate->rate),
                     'cost' => Utils::money($planCost - $vat, $currency),

@@ -96,6 +96,6 @@ class CreateCommand extends Command
 
         DB::commit();
 
-        $this->info($folder->id);
+        $this->info((string) $folder->id);
     }
 }

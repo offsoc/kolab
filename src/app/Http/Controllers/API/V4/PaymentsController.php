@@ -400,7 +400,7 @@ class PaymentsController extends Controller
         // Disable auto-payment and notify the user
         if ($wallet->balance + $amount < 0) {
             // Disable (not remove) the mandate
-            $wallet->setSetting('mandate_disabled', 1);
+            $wallet->setSetting('mandate_disabled', '1');
             \App\Jobs\PaymentMandateDisabledEmail::dispatch($wallet);
             return false;
         }

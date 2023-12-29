@@ -98,7 +98,7 @@ class IP4NetsCommand extends Command
 
                 $bar->advance();
 
-                $mask = 32 - log($items[4], 2);
+                $mask = 32 - log((float) $items[4], 2);
                 $broadcast = long2ip((ip2long($items[3]) + 2 ** (32 - $mask)) - 1);
 
                 $net = \App\IP4Net::where(

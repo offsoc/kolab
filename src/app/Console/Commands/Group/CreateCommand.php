@@ -84,6 +84,6 @@ class CreateCommand extends Command
 
         DB::commit();
 
-        $this->info($group->id);
+        $this->info((string) $group->id);
     }
 }

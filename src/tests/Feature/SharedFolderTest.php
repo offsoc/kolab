@@ -173,7 +173,7 @@ class SharedFolderTest extends TestCase
         $folder->domainName = 'kolabnow.com';
         $folder->save();
 
-        $this->assertMatchesRegularExpression('/^[0-9]{1,20}$/', $folder->id);
+        $this->assertMatchesRegularExpression('/^[0-9]{1,20}$/', (string) $folder->id);
         $this->assertMatchesRegularExpression('/^mail-[0-9]{1,20}@kolabnow\.com$/', $folder->email);
         $this->assertSame('Reśo', $folder->name);
         $this->assertTrue($folder->isNew());

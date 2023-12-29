@@ -511,7 +511,7 @@ class LdifCommand extends Command
         $user->assignPackageAndWallet($this->packages['user'], $this->wallet ?: $user->wallets()->first());
 
         if (!empty($data->quota)) {
-            $quota = ceil($data->quota / 1024 / 1024) - $this->packages['quota'];
+            $quota = (int) (ceil($data->quota / 1024 / 1024) - $this->packages['quota']);
             if ($quota > 0) {
                 $user->assignSku($this->packages['storage'], $quota);
             }

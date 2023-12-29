@@ -317,7 +317,7 @@ class Mollie extends \App\Providers\PaymentProvider
             \Log::info(sprintf('Mollie payment failed (%s)', $response->id));
 
             // Disable the mandate
-            $wallet->setSetting('mandate_disabled', 1);
+            $wallet->setSetting('mandate_disabled', '1');
             $notify = true;
         }
 
@@ -415,7 +415,7 @@ class Mollie extends \App\Providers\PaymentProvider
                 // Disable the mandate
                 if ($payment->type == Payment::TYPE_RECURRING) {
                     $notify = true;
-                    $payment->wallet->setSetting('mandate_disabled', 1);
+                    $payment->wallet->setSetting('mandate_disabled', '1');
                 }
             }
 

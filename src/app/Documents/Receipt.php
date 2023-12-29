@@ -52,7 +52,7 @@ class Receipt
         $wallet->id = \App\Utils::uuidStr();
         $wallet->owner = new User(['id' => 123456789]);
 
-        $receipt = new self($wallet, date('Y'), date('n'));
+        $receipt = new self($wallet, (int) date('Y'), (int) date('n'));
 
         self::$fakeMode = true;
 

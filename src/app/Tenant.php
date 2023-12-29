@@ -23,7 +23,7 @@ class Tenant extends Model
      * Utility method to get tenant-specific system setting.
      * If the setting is not specified for the tenant a system-wide value will be returned.
      *
-     * @param int    $tenantId Tenant identifier
+     * @param ?int   $tenantId Tenant identifier
      * @param string $key      Setting name
      *
      * @return mixed Setting value

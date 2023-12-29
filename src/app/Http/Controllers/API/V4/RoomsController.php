@@ -68,7 +68,10 @@ class RoomsController extends RelationController
             $room->assignToWallet($user->wallets()->first());
         }
 
-        $rooms = $user->rooms(true)->union($shared)->orderBy('name')->get()
+        $rooms = $user->rooms(true)
+            ->union($shared) // @phpstan-ignore-line
+            ->orderBy('name')
+            ->get()
             ->map(function ($room) {
                 return $this->objectToClient($room);
             });

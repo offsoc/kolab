@@ -94,7 +94,7 @@ abstract class ObjectListCommand extends ObjectCommand
         // Get objects older/younger than specified time, e.g. --filter=MIN-AGE:1Y
         if (preg_match('/^(min|max)-age:([0-9]+)([mdy])$/i', $filter, $matches)) {
             $operator = strtolower($matches[1]) == 'min' ? '<=' : '>=';
-            $count = $matches[2];
+            $count = (int) $matches[2];
             $period = strtolower($matches[3]);
             $date = \Carbon\Carbon::now();
 
