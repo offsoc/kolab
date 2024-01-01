@@ -14,8 +14,8 @@ fi
 docker compose exec postfix testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
 docker compose exec imap testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
 
-docker compose -f docker-compose.build.yml run -ti --rm  utils ./mailtransporttest.py --sender-username "$ADMIN_USER" --sender-password "$ADMIN_PASSWORD" --sender-host "$APP_DOMAIN" --recipient-username "$ADMIN_USER" --recipient-password "$ADMIN_PASSWORD" --recipient-host "$APP_DOMAIN"
+docker compose -f docker-compose.yml -f docker-compose.build.yml run -ti --rm  utils ./mailtransporttest.py --sender-username "$ADMIN_USER" --sender-password "$ADMIN_PASSWORD" --sender-host "$APP_DOMAIN" --recipient-username "$ADMIN_USER" --recipient-password "$ADMIN_PASSWORD" --recipient-host "$APP_DOMAIN"
 
-docker compose -f docker-compose.build.yml run -ti --rm  utils ./kolabendpointtester.py --verbose --host "$APP_DOMAIN" --dav "https://$APP_DOMAIN/dav/" --imap "$APP_DOMAIN" --activesync "$APP_DOMAIN"  --user "$ADMIN_USER" --password "$ADMIN_PASSWORD"
+docker compose -f docker-compose.yml -f docker-compose.build.yml run -ti --rm  utils ./kolabendpointtester.py --verbose --host "$APP_DOMAIN" --dav "https://$APP_DOMAIN/dav/" --imap "$APP_DOMAIN" --activesync "$APP_DOMAIN"  --user "$ADMIN_USER" --password "$ADMIN_PASSWORD"
 
 echo "All tests have passed!"
