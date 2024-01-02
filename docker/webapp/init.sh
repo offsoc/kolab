@@ -66,7 +66,6 @@ case ${KOLAB_ROLE} in
 
     octane|OCTANE)
         echo "----> Running octane"
-
         echo "----> Waiting for database to be seeded"
         # migrate:status only fails if the migration table doesn't exist
         while [[ $(./artisan migrate:status > /dev/null) ]]; do

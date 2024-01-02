@@ -13,6 +13,8 @@ pushd kolab
 git reset --hard $GIT_REF
 #TODO support injecting a custom overlay into the build process here
 bin/configure.sh $CONFIG
+# In the docker-compose case we copy the .env file during the init phase, otherwise we use the environment for configuration.
+rm src/.env
 popd
 
 rmdir /opt/app-root/src
