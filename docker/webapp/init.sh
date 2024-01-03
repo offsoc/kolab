@@ -45,7 +45,7 @@ case ${KOLAB_ROLE} in
         # seed only if not seeded yet
         if [[ ! $(./artisan migrate:status > /dev/null) ]]; then
             echo "----> Seeding the database"
-            php -dmemory_limit=512M ./artisan migrate --seed || :
+            php -dmemory_limit=512M ./artisan migrate --seed
         fi
     ;;
 
