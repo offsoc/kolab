@@ -40,20 +40,31 @@ fi
 echo "----> Waiting for db"
 ./artisan db:ping --wait
 
+
+function is_not_initialized() {
+    ROWCOUNT=$(echo "select count(*) from migrations;" | mysql -N -b -u "$DB_USERNAME" -p"$DB_PASSWORD" -h "$DB_HOST" "$DB_DATABASE")
+    if [[ "$ROWCOUNT" == "" ]]; then
+        # Treat an error in the above command as uninitialized
+        ROWCOUNT="0"
+    fi
+    [[ "$ROWCOUNT" == "0" ]]
+}
+
 case ${KOLAB_ROLE} in
     seed|SEED)
-        # seed only if not seeded yet
-        if [[ ! $(./artisan migrate:status > /dev/null) ]]; then
+        echo "----> Running seeder"
+        # Only run the seeder if we haven't even migrated yet.
+        if is_not_initialized; then
             echo "----> Seeding the database"
-            php -dmemory_limit=512M ./artisan migrate --seed
+            # If we seed, we always drop all existing tables
+            php -dmemory_limit=512M ./artisan migrate:fresh --seed
         fi
     ;;
 
     horizon|HORIZON)
 
         echo "----> Waiting for database to be seeded"
-        # migrate:status only fails if the migration table doesn't exist
-        while [[ $(./artisan migrate:status > /dev/null) ]]; do
+        while is_not_initialized; do
             sleep 1
             echo "."
         done
@@ -67,8 +78,7 @@ case ${KOLAB_ROLE} in
     octane|OCTANE)
         echo "----> Running octane"
         echo "----> Waiting for database to be seeded"
-        # migrate:status only fails if the migration table doesn't exist
-        while [[ $(./artisan migrate:status > /dev/null) ]]; do
+        while is_not_initialized; do
             sleep 1
             echo "."
         done
@@ -85,7 +95,7 @@ case ${KOLAB_ROLE} in
     combined|COMBINED )
         # If there is no db at all then listing users will crash (resulting in us counting the lines of backtrace),
         # but migrate:status will just fail.
-        if [[ ! $(./artisan migrate:status > /dev/null) ]]; then
+        if is_not_initialized; then
             echo "----> Seeding the database"
             php -dmemory_limit=512M ./artisan migrate --seed || :
         # If there is a db but no user we reseed
