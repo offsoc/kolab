@@ -1,7 +1,7 @@
 <?php
 
 // URL of kolab-chwala installation for public access
-$config['kolab_files_url'] = getenv('KOLAB_FILES_URL') ?? 'https://' . ($_SERVER["HTTP_HOST"] ?? null) . '/chwala/';
+$config['kolab_files_url'] = getenv('KOLAB_FILES_URL') ?: 'https://' . ($_SERVER["HTTP_HOST"] ?? null) . '/chwala/';
 // This is how the plugin does chwala api requests on the server
 $config['kolab_files_server_url'] = getenv('KOLAB_FILES_SERVER_URL');
 

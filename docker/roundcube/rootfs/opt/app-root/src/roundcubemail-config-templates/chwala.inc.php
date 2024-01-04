@@ -89,7 +89,7 @@ $config['file_api_skin'] = 'default';
 // The URL here is a location of Chwala API service. By default
 // the UI location is used with addition of /api/ suffix.
 # Force https if we're behind a proxy. Browsers don't allow mixed content.
-$config['file_api_url'] = getenv('FILE_API_URL') ?? 'https://' . ($_SERVER['HTTP_HOST'] ?? null) . '/chwala/api/';
+$config['file_api_url'] = getenv('FILE_API_URL') ?: 'https://' . ($_SERVER['HTTP_HOST'] ?? null) . '/chwala/api/';
 
 // URL for the wopi service to connect back to us (instead of file_api_url)
 $config['file_api_server_url'] = getenv('FILE_API_SERVER_URL');

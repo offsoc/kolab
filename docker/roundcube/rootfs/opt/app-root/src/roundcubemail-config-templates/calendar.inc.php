@@ -10,7 +10,7 @@
     # This is for external access
     $config['calendar_caldav_url'] = 'https://%h/dav/calendars/%u/%i';
     # This is for internal access
-    $config['calendar_caldav_server'] = getenv('CALENDAR_CALDAV_SERVER') ?? "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
+    $config['calendar_caldav_server'] = getenv('CALENDAR_CALDAV_SERVER') ?: "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
 
     $config['calendar_itip_smtp_server'] = '';
     $config['calendar_itip_smtp_user'] = '';
