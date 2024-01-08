@@ -139,25 +139,6 @@ popd
 # Install chwala
 pushd chwala
 
-
-# Openshift (I think) doesn't handle urls without a trailing slash well. In this case we end up with a 301 redirect to the http url, which breaks the file viewer.
-patch -p1 <<'EOF'
-diff --git a/lib/file_api.php b/lib/file_api.php
-index a2d8db8..f8fa511 100644
---- a/lib/file_api.php
-+++ b/lib/file_api.php
-@@ -369,7 +369,7 @@ class file_api extends file_api_core
-      */
-     public function file_url($file)
-     {
--        return $this->api_url() . '?method=file_get'
-+        return $this->api_url() . '/?method=file_get'
-             . '&file=' . urlencode($file)
-             . '&token=' . urlencode(session_id());
-     }
-EOF
-
-
 rm -f lib/ext/Roundcube lib/drivers/kolab/plugins vendor
 mkdir -p lib/ext
 ln -s ../../../roundcubemail/program/lib/Roundcube lib/ext/Roundcube
