@@ -97,7 +97,7 @@ services:
       context: ./docker/proxy/
       args:
         APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
-        SSL_CERTIFICATE: ${PROXY_SSL_CERTIFICATE:?err}
+        SSL_CERTIFICATE_CERT: ${PROXY_SSL_CERTIFICATE:?err}
         SSL_CERTIFICATE_KEY: ${PROXY_SSL_CERTIFICATE_KEY:?err}
     healthcheck:
       interval: 10s
