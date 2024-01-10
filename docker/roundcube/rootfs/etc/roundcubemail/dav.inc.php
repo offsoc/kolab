@@ -28,6 +28,12 @@ $config = array();
 // Set to / if the service is registered as document root for a virtual host
 $config['base_uri'] = '/iRony/';
 
+// Avoid requiring ldap
+$config['kolabdav_plugins'] = array(
+    'libcalendaring',
+    'libkolab'
+);
+
 // User agent string written to kolab storage MIME messages
 $config['useragent'] = 'Kolab DAV Server libkolab/' . RCUBE_VERSION;
 
