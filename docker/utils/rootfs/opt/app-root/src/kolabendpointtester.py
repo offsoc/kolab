@@ -569,9 +569,17 @@ def main():
     parser.add_argument("--certificates", action='store_true', help="Check Certificates")
     parser.add_argument("--fb", help="Freebusy url as displayed in roundcube")
     parser.add_argument("--verbose", action='store_true', help="Verbose output")
+    parser.add_argument("--default", action='store_true', help="Standard checks with only username and password")
     options = parser.parse_args()
 
     error = False
+
+    if options.default:
+        options.host = options.username.split('@')[1]
+        options.dav = "https://" + options.host + "/.well-known/caldav"
+        options.imap = options.host
+        options.activesync = options.activesync
+        options.certificates = True
 
     if options.dav:
         if discover_principal(options.dav, options.username, options.password, options.verbose):
