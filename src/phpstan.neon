@@ -3,9 +3,6 @@ includes:
 parameters:
     ignoreErrors:
         - '#Access to an undefined property [a-zA-Z\\]+::\$pivot#'
-        - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withEnvTenantContext\(\)#'
-        - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withObjectTenantContext\(\)#'
-        - '#Call to an undefined [a-zA-Z0-9<>\\ ]+::withSubjectTenantContext\(\)#'
         - '#Call to an undefined method Tests\\Browser::#'
     level: 5
     parallel:

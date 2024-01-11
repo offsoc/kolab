@@ -27,7 +27,7 @@ trait EmailPropertyTrait
 
                     $value = $model->{$prop} ?? ($defaults[$prop] ?? '');
 
-                    if ($value === '' || $value === null) {
+                    if ($value === '') {
                         throw new \Exception("Missing '{$prop}' property for " . static::class);
                     }
 
