@@ -226,6 +226,7 @@ if (\config('app.with_services')) {
             Route::post('policy/greylist', [API\V4\PolicyController::class, 'greylist']);
             Route::post('policy/ratelimit', [API\V4\PolicyController::class, 'ratelimit']);
             Route::post('policy/spf', [API\V4\PolicyController::class, 'senderPolicyFramework']);
+            Route::get('metrics', [API\V4\MetricsController::class, 'metrics']);
         }
     );
 }
