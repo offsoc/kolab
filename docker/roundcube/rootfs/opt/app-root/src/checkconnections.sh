@@ -42,8 +42,8 @@ echo "Chwala is OK"
 if [[ "$(./getconfig.php fileapi_backend)" == "kolabfiles" ]]; then
     URL=$(./getconfig.php fileapi_kolabfiles_baseuri)
     echo "Kolabfiles $URL"
-    # We just try to connect to the api on an path that doesn't require authentication
-    curl -sD /dev/stderr "$URL/login" | grep "Not found"
+    # We expect a 401 if the api call exists in this location (even unauthenticated).
+    curl -s -o /dev/null -w "%{http_code}" $URL/api/v4/fs | grep "401"
     echo "Kolabfiles API is OK"
 fi
 
