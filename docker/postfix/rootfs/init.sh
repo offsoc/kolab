@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/tls/private/postfix.pem
 chown postfix:mail /etc/pki/tls/private/postfix.pem
 chmod 655 /etc/pki/tls/private/postfix.pem
@@ -41,4 +43,5 @@ sed -i -r \
 # echo "/$APP_DOMAIN/              lmtp:$LMTP_DESTINATION" >> /etc/postfix/transport
 # postmap /etc/postfix/transport
 
+/usr/sbin/postfix check
 exec /usr/sbin/postfix -c /etc/postfix start-fg
