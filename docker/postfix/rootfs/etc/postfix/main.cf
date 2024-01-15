@@ -38,7 +38,7 @@ mail_owner = postfix
 # DOMAINS
 myhostname = postfix.APP_DOMAIN
 mydomain = APP_DOMAIN
-myorigin = $myhostname
+myorigin = $mydomain
 
 # RECEIVING MAIL
 
@@ -73,7 +73,7 @@ inet_protocols = all
 #proxy_interfaces = 1.2.3.4
 
 # Specify which domains should be delivered locally
-mydestination = APP_DOMAIN
+mydestination = $myhostname $mydomain
 # Required to correctly resolve the imap host in the container
 lmtp_host_lookup = native
 # lmtp for local transport
