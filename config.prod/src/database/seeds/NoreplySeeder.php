@@ -16,11 +16,13 @@ class NoreplySeeder extends Seeder
      */
     public function run()
     {
-        User::create(
-            [
-                'email' => \config('mail.mailers.smtp.username'),
-                'password' => \config('mail.mailers.smtp.password')
-            ]
-        );
+        if (!empty(\config('mail.mailers.smtp.username'))) {
+            User::create(
+                [
+                    'email' => \config('mail.mailers.smtp.username'),
+                    'password' => \config('mail.mailers.smtp.password')
+                ]
+            );
+        }
     }
 }
