@@ -26,7 +26,7 @@ sed -i -r \
 
 sed -i -r \
     -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
-    -e "s|MYNETWORKS|172.18.0.0/24|g" \
+    -e "s|MYNETWORKS|$MYNETWORKS|g" \
     /etc/postfix/main.cf
 
 sed -i -r \
