@@ -18,7 +18,11 @@ echo "IMAP : $IMAP_HOST:$IMAP_PORT"
 echo "a01 LOGOUT" | telnet $IMAP_HOST $IMAP_PORT | grep "Connected to imap"
 echo "IMAP is OK"
 
-#TODO smtp
+MAIL_HOST=$(./getconfig.php smtp_server)
+MAIL_PORT=$(./getconfig.php smtp_port)
+echo "SMTP : $MAIL_HOST:$MAIL_PORT"
+echo "quit" | telnet $MAIL_HOST $MAIL_PORT | grep "Connected to postfix"
+echo "SMTP is OK"
 
 #FIXME in newer mariadb-shell variants there is --dsn, but in older mysql client version there doesn't seem to be something like it
 # MYSQL_DSN=$(./getconfig.php db_dsnw)
@@ -43,7 +47,7 @@ if [[ "$(./getconfig.php fileapi_backend)" == "kolabfiles" ]]; then
     URL=$(./getconfig.php fileapi_kolabfiles_baseuri)
     echo "Kolabfiles $URL"
     # We expect a 401 if the api call exists in this location (even unauthenticated).
-    curl -s -o /dev/null -w "%{http_code}" $URL/api/v4/fs | grep "401"
+    curl -s -o /dev/null -w "%{http_code}" "${URL}v4/fs" | grep "401"
     echo "Kolabfiles API is OK"
 fi
 
