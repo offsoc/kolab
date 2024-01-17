@@ -11,6 +11,8 @@ EXPOSE 8000
 ARG GIT_REF=master
 ARG GIT_REMOTE=https://git.kolab.org/source/kolab.git
 ARG CONFIG=config.prod
+#Set this to prod or dev
+ARG RELEASE_MODE=prod
 COPY build.sh /build.sh
 RUN /build.sh && \
     chgrp -R 0 /opt/app-root/src && \

@@ -34,4 +34,4 @@ if [ ! -f 'resources/countries.php' ]; then
     ./artisan data:countries
 fi
 
-/usr/local/bin/npm run dev
+/usr/local/bin/npm run $RELEASE_MODE
