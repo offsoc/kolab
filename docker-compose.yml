@@ -84,7 +84,7 @@ services:
     container_name: kolab-mariadb
     restart: on-failure
     environment:
-      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - TZ="+02:00"
       - DB_HKCCP_DATABASE=${DB_DATABASE}
       - DB_HKCCP_USERNAME=${DB_USERNAME}
