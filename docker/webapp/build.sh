@@ -17,7 +17,7 @@ bin/configure.sh $CONFIG
 rm src/.env
 popd
 
-rmdir /opt/app-root/src
+rm -rf /opt/app-root/src
 cp -a kolab/src /opt/app-root/src
 cd /opt/app-root/src/
 
