@@ -578,7 +578,8 @@ def main():
         options.host = options.username.split('@')[1]
         options.dav = "https://" + options.host + "/.well-known/caldav"
         options.imap = options.host
-        options.activesync = options.activesync
+        options.smtp = options.host
+        options.activesync = options.host
         options.certificates = True
 
     if options.dav:
