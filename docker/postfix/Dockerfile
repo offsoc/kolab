@@ -2,11 +2,6 @@ FROM almalinux:8
 
 LABEL maintainer="contact@apheleia-it.ch"
 LABEL dist=centos8
-LABEL tier=${TIER}
-
-ENV DISTRO=centos8
-# ENV LANG=en_US.utf8
-# ENV LC_ALL=en_US.utf8
 
 # Add EPEL.
 RUN dnf -y install dnf-plugin-config-manager && \
@@ -48,4 +43,4 @@ ENV MYNETWORKS="172.0.0.0/8"
 
 CMD ["/init.sh"]
 
-EXPOSE 10025/tcp 10587/tcp
+EXPOSE 10025/tcp 10587/tcp 11465/tcp 11587/tcp

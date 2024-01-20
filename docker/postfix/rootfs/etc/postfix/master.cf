@@ -9,7 +9,7 @@
 postlog             unix-dgram  n       -       n       -       1       postlogd
 # Inbound, port 25, no tls
 10025               inet        n       -       n       -       -       smtpd
-# Submission, port 587, no tls, no starttls
+# Internal Submission, port 588, no tls, no starttls
 10587          inet        n       -       -       -       -       smtpd -v
     -o syslog_name=postfix/submission
     -o cleanup_service_name=cleanup_submission
@@ -134,29 +134,32 @@ policy_greylist     unix        -       n       n       -       -       spawn
 policy_spf          unix        -       n       n       -       -       spawn
     user=nobody argv=/usr/libexec/postfix/kolab_policy_spf
 
-#0.0.0.0:10587     inet        n       -       n       -       -       smtpd
-#    -o cleanup_service_name=cleanup_submission
-#    -o syslog_name=postfix/submission
-#    #-o smtpd_tls_security_level=encrypt
-#    -o smtpd_sasl_auth_enable=yes
-#    -o smtpd_sasl_authenticated_header=yes
-#    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
-#    -o smtpd_data_restrictions=$submission_data_restrictions
-#    -o smtpd_recipient_restrictions=$submission_recipient_restrictions
-#    -o smtpd_sender_restrictions=$submission_sender_restrictions
+# External submission, starttls
+0.0.0.0:11587     inet        n       -       n       -       -       smtpd
+    -o cleanup_service_name=cleanup_submission
+    -o syslog_name=postfix/submission
+    #-o smtpd_tls_security_level=encrypt
+    -o smtpd_sasl_auth_enable=yes
+    -o smtpd_sasl_authenticated_header=yes
+    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+    -o smtpd_data_restrictions=$submission_data_restrictions
+    -o smtpd_recipient_restrictions=$submission_recipient_restrictions
+    -o smtpd_sender_restrictions=$submission_sender_restrictions
 
-#0.0.0.0:10465     inet        n       -       n       -       -       smtpd
-#    -o cleanup_service_name=cleanup_submission
-#    -o rewrite_service_name=rewrite_submission
-#    -o syslog_name=postfix/smtps
-#    -o mydestination=
-#    -o local_recipient_maps=
-#    -o relay_domains=
-#    -o relay_recipient_maps=
-#    #-o smtpd_tls_wrappermode=yes
-#    -o smtpd_sasl_auth_enable=yes
-#    -o smtpd_sasl_authenticated_header=yes
-#    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
-#    -o smtpd_sender_restrictions=$submission_sender_restrictions
-#    -o smtpd_recipient_restrictions=$submission_recipient_restrictions
-#    -o smtpd_data_restrictions=$submission_data_restrictions
+# External submission, ssl
+0.0.0.0:11465     inet        n       -       n       -       -       smtpd
+    -o cleanup_service_name=cleanup_submission
+    -o rewrite_service_name=rewrite_submission
+    -o syslog_name=postfix/smtps
+    -o mydestination=
+    -o local_recipient_maps=
+    -o relay_domains=
+    -o relay_recipient_maps=
+    -o smtpd_tls_security_level=encrypt
+    -o smtpd_tls_wrappermode=yes
+    -o smtpd_sasl_auth_enable=yes
+    -o smtpd_sasl_authenticated_header=yes
+    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+    -o smtpd_sender_restrictions=$submission_sender_restrictions
+    -o smtpd_recipient_restrictions=$submission_recipient_restrictions
+    -o smtpd_data_restrictions=$submission_data_restrictions
