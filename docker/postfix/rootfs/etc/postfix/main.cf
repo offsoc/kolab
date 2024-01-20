@@ -547,7 +547,8 @@ smtpd_sender_restrictions =
     # Uses smtpd_sender_login_maps
     reject_unauthenticated_sender_login_mismatch,
     reject_unauth_destination,
-    check_policy_service unix:private/policy_spf,
+    #FIXME SPF doesn't currently work because postfix doesn't see the client IP.
+    #check_policy_service unix:private/policy_spf,
     #reject_rhsbl_sender dbl.spamhaus.org,
     permit
 
