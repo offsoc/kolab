@@ -529,7 +529,8 @@ smtpd_recipient_restrictions =
     #reject_rhsbl_recipient dbl.spamhaus.org,
     #check_recipient_access ldap:/etc/postfix/ldap/domain_suspended.cf,
     #check_recipient_access ldap:/etc/postfix/ldap/account_suspended.cf,
-    check_policy_service unix:private/policy_greylist,
+    #FIXME greylisting doesn't currently work because postfix doesn't see the client IP.
+    #check_policy_service unix:private/policy_greylist,
     permit
 smtpd_peername_lookup = yes
 smtpd_sasl_auth_enable = yes
