@@ -5,6 +5,7 @@ services:
       - MAIL_HOST=postfix
       - MAIL_PORT=10587
       - FILEAPI_WOPI_OFFICE=https://kolab.local
+      - CALENDAR_CALDAV_SERVER=http://imap:11080/dav
   proxy:
     depends_on:
       imap:
