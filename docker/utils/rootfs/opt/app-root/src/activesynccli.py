@@ -379,6 +379,64 @@ class ActiveSync:
                 break
 
 
+    def idFromName(self, name):
+        collection_id = name
+        # required for new devices
+        folders = self.list()
+        # Translate name to id if applicable
+        try:
+            idFromName = list(folders.keys())[list(folders.values()).index(collection_id)]
+            if idFromName is not None:
+                collection_id = idFromName
+        except:
+            pass
+
+        return collection_id
+
+    def ping(self, collection_id):
+        start = time.time()
+        collection_id = self.idFromName(collection_id)
+
+        request = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE AirSync PUBLIC "-//AIRSYNC//DTD AirSync//EN" "http://www.microsoft.com/">
+        <Ping xmlns="uri:AirSync" xmlns:AirSyncBase="uri:AirSyncBase" xmlns:Email="uri:Email" xmlns:Tasks="uri:Tasks" >
+            <HeartbeatInterval>900</HeartbeatInterval>
+            <Folders>
+                <Folder>
+                    <Id>{collection_id}</Id>
+                    <Class>Email</Class>
+                </Folder>
+            </Folders>
+        </Ping>
+        """.replace('    ', '').replace('\n', '').format(collection_id=collection_id)
+
+        response = self.send_request('Ping', request)
+
+        assert response.status == 200
+
+        data = response.read()
+        if not data:
+            if self.verbose:
+                print("Empty response, no changes on server")
+            return [sync_key, False]
+
+        result = wbxml.wbxml_to_xml(data)
+
+        if self.verbose:
+            print(result)
+
+        root = ET.fromstring(result)
+        xmlns = "http://synce.org/formats/airsync_wm5/airsync"
+
+        status = root.find(f".//{{{xmlns}}}Status")
+        if status is not None and status.text != "1":
+            raise Exception(f'Sync failed with status code {status.text}')
+
+        end = time.time()
+        print("Elapsed: " + str(end - start))
+        print("\n")
+
     def list(self):
         request = """
             <?xml version="1.0" encoding="utf-8"?>
@@ -392,7 +450,12 @@ class ActiveSync:
 
         assert response.status == 200
 
-        result = wbxml.wbxml_to_xml(response.read())
+        wbxmldata = response.read()
+
+        if self.verbose:
+            print(wbxmldata.hex())
+
+        result = wbxml.wbxml_to_xml(wbxmldata)
 
         if self.verbose:
             print(result)
@@ -414,6 +477,46 @@ class ActiveSync:
 
         return folders
 
+
+    def search(self, search_string):
+        request = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <!DOCTYPE ActiveSync PUBLIC "-//MICROSOFT//DTD ActiveSync//EN" "http://www.microsoft.com/">
+            <Search xmlns="FolderHierarchy:">
+                <Store>
+                    <Name>Mailbox</Name>
+                    <Query>
+                        <And>
+                            <Class xmlns="uri:AirSync">Email</Class>
+                            <FreeText>{search_string}</FreeText>
+                        </And>
+                    </Query>
+                    <Options>
+                    <RebuildResults/>
+                    <DeepTraversal/>
+                    <Range>0-9</Range>
+                    <BodyPreference xmlns="uri:AirSyncBase">
+                        <Type>2</Type>
+                        <TruncationSize>20000</TruncationSize>
+                    </BodyPreference>
+                    </Options>
+                </Store>
+            </Search>
+        """.replace('    ', '').replace('\n', '').format(search_string=search_string)
+
+        response = self.send_request('Search', request)
+
+        assert response.status == 200
+
+        wbxmldata = response.read()
+
+        if self.verbose:
+            print(wbxmldata.hex())
+
+        result = wbxml.wbxml_to_xml(wbxmldata)
+
+        if self.verbose:
+            print(result)
 
 
 def main():
@@ -444,6 +547,14 @@ def main():
     parser_list.add_argument("--sync_key", help="Sync key to start from")
     parser_list.add_argument("--poll", action='store_true', help="Keep syncing every 2 seconds")
     parser_list.set_defaults(func=lambda args: ActiveSync(args).sync(args.collectionId, 0, args.upload))
+
+    parser_list = subparsers.add_parser('search')
+    parser_list.add_argument("string", help="Collection Id")
+    parser_list.set_defaults(func=lambda args: ActiveSync(args).search(args.string))
+
+    parser_list = subparsers.add_parser('ping')
+    parser_list.add_argument("collectionId", help="Collection Id")
+    parser_list.set_defaults(func=lambda args: ActiveSync(args).ping(args.collectionId))
 
     parser_check = subparsers.add_parser('check')
     parser_check.set_defaults(func=lambda args: ActiveSync(args).check())
