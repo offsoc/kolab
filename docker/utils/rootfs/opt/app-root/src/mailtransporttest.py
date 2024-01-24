@@ -87,7 +87,7 @@ class SendTest:
             return True
         return False
 
-    def send_mail(self):
+    def send_mail(self, starttls):
         dtstamp = datetime.utcnow()
         msg = mailtemplate.format(
             messageid="<{}@deliverycheck.org>".format(uuid),
@@ -97,11 +97,20 @@ class SendTest:
             date=dtstamp.strftime("%a, %d %b %Y %H:%M:%S %z"),
             attachment='ICAgIEJvYXJkTmFtZSAgICAgICJOVlMgNDIwME0iCiAgICBPcHRpb24gIk5vTG9nbyIgInRydWUi\n'
         )
-        with smtplib.SMTP_SSL(host=self.sender_host, port=465) as smtp:
-            smtp.login(self.sender_username, self.sender_password)
-            smtp.noop()
-            smtp.sendmail(self.sender_username, self.recipient_username, msg)
-            print(f"Email with uuid {self.uuid} sent")
+        if starttls:
+            with smtplib.SMTP(host=self.sender_host, port=587) as smtp:
+                smtp.starttls()
+                smtp.ehlo()
+                smtp.login(self.sender_username, self.sender_password)
+                smtp.noop()
+                smtp.sendmail(self.sender_username, self.recipient_username, msg)
+                print(f"Email with uuid {self.uuid} sent")
+        else:
+            with smtplib.SMTP_SSL(host=self.sender_host, port=465) as smtp:
+                smtp.login(self.sender_username, self.sender_password)
+                smtp.noop()
+                smtp.sendmail(self.sender_username, self.recipient_username, msg)
+                print(f"Email with uuid {self.uuid} sent")
 
 
 parser = argparse.ArgumentParser(description='Mail transport tests.')
@@ -112,11 +121,12 @@ parser.add_argument('--recipient-username', help='The IMAP recipient username')
 parser.add_argument('--recipient-password', help='The IMAP recipient password')
 parser.add_argument('--recipient-host', help='The IMAP recipient host')
 parser.add_argument('--timeout', help='Timeout in minutes', type=int, default=10)
+parser.add_argument("--starttls", action='store_true', help="Use starttls over 587")
 
 args = parser.parse_args()
 
 obj = SendTest(args)
-obj.send_mail()
+obj.send_mail(args.starttls)
 
 timeout = 10
 
