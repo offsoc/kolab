@@ -97,7 +97,7 @@ RUN /opt/app-root/src/build.sh && \
     chmod 777 /run/httpd && \
     mkdir -p /data && \
     chmod 777 /data && \
-    chmod -R 777 /etc/httpd /var/log/httpd /var/lib/httpd /data && \
+    chmod -R 777 /etc/php.ini /etc/httpd /var/log/httpd /var/lib/httpd /data && \
     chown -R 1001:0 /opt/app-root/src /data
 
 USER 1001
