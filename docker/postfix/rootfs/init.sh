@@ -6,6 +6,9 @@ cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /et
 chown postfix:mail /etc/pki/tls/private/postfix.pem
 chmod 655 /etc/pki/tls/private/postfix.pem
 
+chown -R postfix:mail /var/lib/postfix
+chown -R postfix:mail /var/spool/postfix
+
 sed -i -r \
     -e "s|APP_SERVICES_DOMAIN|$APP_SERVICES_DOMAIN|g" \
     -e "s|SERVICES_PORT|$SERVICES_PORT|g" \
