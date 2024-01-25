@@ -159,10 +159,11 @@ if (!function_exists("getenvlist")) {
     $config['smtp_log'] = false;
     $config['log_logins'] = true;
     $config['log_session'] = false;
-    $config['sql_debug'] = false;
-    $config['memcache_debug'] = false;
-    $config['imap_debug'] = true;
-    $config['smtp_debug'] = false;
+    $config['sql_debug'] = getenv('SQL_DEBUG');
+    $config['memcache_debug'] = getenv('MEMCACHE_DEBUG');
+    $config['imap_debug'] = getenv('IMAP_DEBUG');
+    $config['smtp_debug'] = getenv('SMTP_DEBUG');
+    $config['dav_debug'] = getenv('DAV_DEBUG');
 
     $config['skin'] = 'kolab';
     $config['skin_include_php'] = false;

@@ -3,7 +3,7 @@
 // This file lists all ActiveSync-related configuration options
 
 // Enables ActiveSync protocol debuging
-$config['activesync_debug'] = false;
+$config['activesync_debug'] = getenv('ACTIVESYNC_DEBUG');
 
 // Configure for dav backend
 $config['activesync_storage'] = 'kolab4';
