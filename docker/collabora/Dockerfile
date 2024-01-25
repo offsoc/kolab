@@ -1,20 +1,4 @@
-FROM almalinux:8
-
-LABEL maintainer="contact@apheleia-it.ch"
-LABEL dist=centos8
-LABEL tier=${TIER}
-
-ENV DISTRO=centos8
-ENV LANG=en_US.utf8
-ENV LC_ALL=en_US.utf8
-
-# Add EPEL.
-RUN dnf -y install dnf-plugin-config-manager && \
-    dnf config-manager --set-enabled powertools && \
-    dnf -y install epel-release && \
-    dnf -y install iputils vim-enhanced bind-utils && \
-    dnf clean all
-RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+FROM apheleia/almalinux8
 
 ARG REPOSITORY
 

@@ -3,8 +3,17 @@ services:
   swoole:
     build:
       context: ./docker/swoole/
-    container_name: kolab-swoole
     image: apheleia/swoole
+  almalinux8:
+    build:
+      context: ./docker/base/
+      dockerfile: almalinux8
+    image: apheleia/almalinux8
+  almalinux9:
+    build:
+      context: ./docker/base/
+      dockerfile: almalinux9
+    image: apheleia/almalinux9
   tests:
     build:
       context: ./docker/tests/

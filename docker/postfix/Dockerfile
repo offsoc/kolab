@@ -1,28 +1,13 @@
-FROM almalinux:8
+FROM apheleia/almalinux8
 
-LABEL maintainer="contact@apheleia-it.ch"
-LABEL dist=centos8
-
-# Add EPEL.
-RUN dnf -y install dnf-plugin-config-manager && \
-    dnf config-manager --set-enabled powertools && \
-    dnf -y install \
-    epel-release \
+RUN dnf -y install \
     python3 \
     python3-requests \
     postfix \
     postfix-mysql \
     cyrus-sasl \
-    cyrus-sasl-plain \
-    procps-ng \
-    iputils \
-    bind-utils \
-    tcpdump \
-    vim-enhanced && \
+    cyrus-sasl-plain && \
     dnf clean all
-RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
-
-RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
 
 WORKDIR /root/
 

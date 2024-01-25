@@ -1,36 +1,10 @@
-FROM almalinux:8
-
-LABEL maintainer="contact@apheleia-it.ch"
-LABEL dist=centos8
-LABEL tier=${TIER}
-
-ENV DISTRO=centos8
-# ENV LANG=en_US.utf8
-# ENV LC_ALL=en_US.utf8
-
-# Add EPEL.
-RUN dnf -y install dnf-plugin-config-manager && \
-    dnf config-manager --set-enabled powertools && \
-    dnf -y install epel-release && \
-    dnf -y install iputils vim-enhanced bind-utils && \
-    dnf clean all
-RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
-
-# Install kolab
-RUN rpm --import https://mirror.apheleia-it.ch/repos/Kolab:/16/key.asc && \
-    rpm -Uvh https://mirror.apheleia-it.ch/repos/Kolab:/16/kolab-16-for-el8.rpm
-RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
-    dnf config-manager --enable kolab-16-testing &&\
-    dnf -y --setopt tsflags= install patch &&\
-    dnf clean all
-
-RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
+FROM apheleia/almalinux8
 
 WORKDIR /root/
 
-RUN dnf -y group install "Development Tools"; \
-    dnf -y builddep cyrus-imapd; \
-    dnf -y install git perl-devel cyrus-sasl cyrus-sasl-plain procps-ng iputils bind-utils sudo
+RUN dnf -y group install "Development Tools" && \
+    dnf -y install git autoconf automake bison cyrus-sasl-devel flex gcc gperf jansson-devel libbsd-devel libtool libicu-devel libuuid-devel openssl-devel pkgconfig sqlite-devel brotli-devel libical-devel libxml2-devel libnghttp2-devel shapelib  zlib-devel pcre-devel perl-devel cyrus-imapd cyrus-sasl cyrus-sasl-plain && \
+    dnf clean all
 
 RUN git clone --branch dev/mollekopf https://git.kolab.org/source/cyrus-imapd && \
     cd cyrus-imapd && \
