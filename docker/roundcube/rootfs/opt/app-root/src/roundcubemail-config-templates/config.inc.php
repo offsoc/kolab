@@ -1,9 +1,12 @@
 <?php
 
+//This check is for some reason required under phpunit
+if (!function_exists("getenvlist")) {
     function getenvlist($name) {
         $value = getenv($name);
         return $value == null ? null : explode(",", $value) ;
     }
+}
 
     $config = array();
 

@@ -68,5 +68,33 @@ roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/kolab-calendar/SQL/ --
 echo ""
 echo "Done, starting httpd..."
 
-/usr/sbin/php-fpm
-exec httpd -DFOREGROUND
+if [ "$1" == "testsuite" ]; then
+    sed -i "s/?>/\$config['activesync_test_username'] = 'john@kolab.org';\n?>/" roundcubemail/config/config.inc.php
+    sed -i "s/?>/\$config['activesync_test_password'] = 'simple123';\n?>/" roundcubemail/config/config.inc.php
+    sed -i "s/\$config['activesync_init_subscriptions'] =.*/\$config['activesync_init_subscriptions'] = 0;\n?>/" roundcubemail/config/kolab_syncroton.inc.php
+    sed -i "s/\$config['activesync_multifolder_blacklist_event'] =.*/\$config['activesync_multifolder_blacklist_event'] = array('windowsoutlook');\n?>/" roundcubemail/config/kolab_syncroton.inc.php
+    sed -i "s/\$config['activesync_multifolder_blacklist_task'] =.*/\$config['activesync_multifolder_blacklist_task'] = array('windowsoutlook');\n?>/" roundcubemail/config/kolab_syncroton.inc.php
+    sed -i "s/\$config['activesync_multifolder_blacklist_contact'] =.*/\$config['activesync_multifolder_blacklist_contact'] = array('windowsoutlook');\n?>/" roundcubemail/config/kolab_syncroton.inc.php
+
+    pushd syncroton
+    php -S localhost:8000 &
+    pushd tests
+
+    php \
+        -dmemory_limit=-1 \
+        ../vendor/bin/phpunit \
+        --verbose \
+        --testsuite Sync
+elif [ "$1" == "quicktest" ]; then
+    pushd syncroton/tests
+    php \
+        -dmemory_limit=-1 \
+        ../vendor/bin/phpunit \
+        --verbose \
+        --testsuite Unit
+elif [ "$1" == "shell" ]; then
+    exec /bin/bash
+else
+    /usr/sbin/php-fpm
+    exec httpd -DFOREGROUND
+fi

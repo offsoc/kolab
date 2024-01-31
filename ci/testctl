@@ -53,6 +53,22 @@ kolab__shell() {
     docker run --network=kolab_kolab -v ${PWD}/../src:/src/kolabsrc.orig --name kolab-tests -ti kolab-tests /init.sh shell
 }
 
+kolab__rctest() {
+    docker kill roundcube-tests || :
+    docker rm roundcube-tests || :
+    pushd ..
+    docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.test.yml run --name roundcube-tests -ti roundcube ./init.sh $@
+    popd
+}
+
+kolab__rcshell() {
+    docker kill roundcube-tests || :
+    docker rm roundcube-tests || :
+    pushd ..
+    docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.test.yml run --name roundcube-tests -ti roundcube ./init.sh shell
+    popd
+}
+
 kolab__help() {
     cat <<EOF
   This is the kolab commandline utility.
