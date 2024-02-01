@@ -18,7 +18,7 @@ if (!function_exists("getenvlist")) {
 
     $config['session_domain'] = '';
     # A new key is generated during the init phase, overwriting this key.
-    $config['des_key'] = "wgtmEUSH9KOZC9rK8Qa5A6r4";
+    $config['des_key'] = "ChangeThisDummyValue";
     $config['username_domain'] = getenv('APP_DOMAIN');
     $config['use_secure_urls'] = true;
 

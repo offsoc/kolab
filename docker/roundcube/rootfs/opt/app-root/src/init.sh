@@ -14,7 +14,7 @@ pushd roundcubemail
 cp /opt/app-root/src/roundcubemail-config-templates/* config/
 
 DES_KEY=$(openssl rand -base64 24);
-sed -i -r -e "s|\$config\['des_key'\] = .*$|\$config['des_key'] = \"$DES_KEY\";|g" config/config.inc.php
+sed -i -r -e "s|config\['des_key'\] = .*$|config['des_key'] = \"$DES_KEY\";|g" config/config.inc.php
 
 # Initialize the db
 cat > /tmp/kolab-setup-my.cnf << EOF
