@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Data\Reports;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,10 @@ class VatCommand extends Command
     {
         $recipient = $this->argument('email');
 
+        // Note: Constructor takes care of date, but startOfDay()/endOfDay() takes care of time
+        $start = (new Carbon('first day of last month'))->startOfDay();
+        $end = (new Carbon('last day of last month'))->endOfDay();
+
         $result = DB::select(
             <<<SQL
             SELECT
@@ -51,8 +56,11 @@ class VatCommand extends Command
             WHERE
                 p.status = 'paid'
                 AND us.`key` = 'country'
+                AND p.created_at >= ?
+                AND p.created_at <= ?
             ORDER BY timestamp, country
-            SQL
+            SQL,
+            [$start->toDateTimeString(), $end->toDateTimeString()]
         );
 
         $fp = fopen('php://memory', 'w');
