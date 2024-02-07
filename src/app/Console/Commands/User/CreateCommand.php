@@ -98,6 +98,6 @@ class CreateCommand extends \App\Console\Command
 
         DB::commit();
 
-        $this->info($user->id);
+        $this->info((string) $user->id);
     }
 }
