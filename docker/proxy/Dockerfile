@@ -1,8 +1,4 @@
-FROM fedora:35
-
-MAINTAINER Jeroen van Meeuwen <vanmeeuwen@kolabsys.com>
-
-ENV container docker
+FROM apheleia/almalinux9
 
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
@@ -30,4 +26,4 @@ ENV COLLABORA_BACKEND http://collabora:9980
 
 CMD ["/init.sh"]
 
-EXPOSE 25/tcp 80/tcp 443/tcp 465/tcp 587/tcp 143/tcp 144/tcp 993/tcp
+EXPOSE 6443/tcp 6465/tcp 6587/tcp 6143/tcp 6144/tcp 6993/tcp
