@@ -1,19 +1,15 @@
-FROM fedora:35
-
-MAINTAINER Jeroen van Meeuwen <vanmeeuwen@kolabsys.com>
+FROM apheleia/almalinux9
 
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
         coturn && \
-    dnf clean all
+    dnf clean all && \
+    chgrp -R 0 /tmp && \
+    chmod -R g=u /tmp && \
+    chmod -R 777 /tmp /var/lib/coturn && \
+    chown -R 1001:0 /tmp /var/lib/coturn
 
 COPY rootfs/ /
-
-RUN chgrp -R 0 /tmp && \
-    chmod -R g=u /tmp
-
-RUN chmod -R 777 /tmp /var/lib/coturn
-RUN chown -R 1001:0 /tmp /var/lib/coturn
 
 USER 1001
 

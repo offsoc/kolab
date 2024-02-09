@@ -1,7 +1,4 @@
-FROM fedora:35
-
-ENV container docker
-
+FROM apheleia/almalinux9
 
 RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/ -u 1001 -g 1001 default)
 
@@ -15,14 +12,11 @@ RUN getent group  redis &> /dev/null || groupadd -r redis &> /dev/null && \
 
 RUN dnf -y install \
     --setopt 'tsflags=nodocs' \
-    bind-utils \
-    cronie \
     iproute \
     iptables \
     net-tools \
     procps-ng \
     redis \
-    vim-enhanced \
     wget \
     which && \
     dnf clean all

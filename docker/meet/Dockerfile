@@ -1,6 +1,4 @@
-FROM fedora:37
-
-MAINTAINER Jeroen van Meeuwen <vanmeeuwen@kolabsys.com>
+FROM apheleia/almalinux9
 
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
