@@ -324,7 +324,7 @@ class NGINXController extends Controller
         $response = response("")->withHeaders(
             [
                 "Auth-Status" => "OK",
-                "Auth-Server" => \config('imap.host'),
+                "Auth-Server" => gethostbyname(\config('imap.host')),
                 "Auth-Port" => $port,
                 "Auth-Pass" => $password
             ]
@@ -346,7 +346,7 @@ class NGINXController extends Controller
         $response = response("")->withHeaders(
             [
                 "Auth-Status" => "OK",
-                "Auth-Server" => \config('smtp.host'),
+                "Auth-Server" => gethostbyname(\config('smtp.host')),
                 "Auth-Port" => \config('smtp.port'),
                 "Auth-Pass" => $password
             ]
