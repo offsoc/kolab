@@ -22,6 +22,12 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
 
 STOPSIGNAL SIGTERM
 
+ENV WEBAPP_BACKEND http://webapp:8000
+ENV MEET_BACKEND https://meet:12443
+ENV ROUNDCUBE_BACKEND http://roundcube:8080
+ENV DAV_BACKEND http://imap:11080/dav
+ENV COLLABORA_BACKEND http://collabora:9980
+
 CMD ["/init.sh"]
 
 EXPOSE 25/tcp 80/tcp 443/tcp 465/tcp 587/tcp 143/tcp 144/tcp 993/tcp
