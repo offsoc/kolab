@@ -23,6 +23,8 @@ ENV MEET_BACKEND https://meet:12443
 ENV ROUNDCUBE_BACKEND http://roundcube:8080
 ENV DAV_BACKEND http://imap:11080/dav
 ENV COLLABORA_BACKEND http://collabora:9980
+ENV WEBMAIL_PATH /roundcubemail
+
 
 CMD ["/init.sh"]
 

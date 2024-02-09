@@ -9,6 +9,7 @@ sed -i -r \
     -e "s|ROUNDCUBE_BACKEND|$ROUNDCUBE_BACKEND|g" \
     -e "s|DAV_BACKEND|$DAV_BACKEND|g" \
     -e "s|COLLABORA_BACKEND|$COLLABORA_BACKEND|g" \
+    -e "s|WEBMAIL_PATH|$WEBMAIL_PATH|g" \
     /etc/nginx/nginx.conf
 
 exec nginx -g "daemon off;"
