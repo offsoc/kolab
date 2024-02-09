@@ -1,16 +1,10 @@
-FROM fedora:37
-
-MAINTAINER Christian Mollekopf <mollekopf@apheleia-it.ch>
+FROM apheleia/almalinux9
 
 ENV HOME=/opt/app-root/src
 
-LABEL io.k8s.description="Utility container for kolab" \
-      io.k8s.display-name="Kolab Utils"
-
-RUN dnf -y update
-
 # Install troubleshooting utilities
 RUN dnf -y install \
+        --setopt 'tsflags=nodocs' \
         bind-utils \
         bzip2 \
         cmake \
@@ -54,8 +48,8 @@ RUN git clone https://github.com/libwbxml/libwbxml.git && \
     cd .. && \
     rm -rf libwbxml
 
-RUN pip3 install distro xmltodict dnspython
-RUN pip3 install \
+RUN pip3 install distro xmltodict dnspython && \
+    pip3 install \
     --global-option=build_ext \
     --global-option="-I/usr/include/libwbxml-1.0/wbxml/" \
     git+https://github.com/kanarip/python-wbxml#egg=wbxml
