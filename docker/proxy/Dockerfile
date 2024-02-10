@@ -11,13 +11,10 @@ RUN dnf -y install \
 # ENV SSL_CERTIFICATE_KEY
 
 COPY rootfs/ /
-RUN chgrp -R 0 /etc/nginx /run && \
-    chmod -R g=u /etc/nginx /run && \
-    chown -R 1001:0 /etc/nginx /run 
 
-# Forward request logs to Docker log collector
-RUN ln -sf /dev/stdout /var/log/nginx/access.log \
-    && ln -sf /dev/stderr /var/log/nginx/error.log
+RUN chgrp -R 0 /etc/nginx /run /var/log/nginx && \
+    chmod -R g=u /etc/nginx /run /var/log/nginx && \
+    chown -R 1001:0 /etc/nginx /run /var/log/nginx
 
 STOPSIGNAL SIGTERM
 
