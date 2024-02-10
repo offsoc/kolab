@@ -2,8 +2,8 @@ FROM almalinux:9
 
 LABEL maintainer="contact@apheleia-it.ch"
 
-ENV LANG=en_US.utf8
-ENV LC_ALL=en_US.utf8
+ENV LANG=C.utf8
+ENV LC_ALL=C.utf8
 
 # Add EPEL.
 RUN dnf -y install 'dnf-command(config-manager)' && \
