@@ -8,6 +8,7 @@ pushd /opt/app-root/src/
 if [ ! -d roundcubemail ]; then
     git clone --branch $GIT_REF_ROUNDCUBEMAIL $GIT_REMOTE_ROUNDCUBEMAIL roundcubemail
 fi
+
 if [ ! -d roundcubemail-plugins-kolab ]; then
     git clone --branch $GIT_REF_ROUNDCUBEMAIL_PLUGINS $GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS roundcubemail-plugins-kolab
 fi
@@ -27,18 +28,16 @@ if [ ! -d freebusy ]; then
     git clone --branch $GIT_REF_FREEBUSY $GIT_REMOTE_FREEBUSY freebusy
 fi
 
-
 pushd roundcubemail
 cp /opt/app-root/src/composer.json composer.json
 rm -rf vendor/ composer.lock
-php -dmemory_limit=-1 $(command -v composer) install
+env COMPOSER_ALLOW_SUPERUSER=1 php -dmemory_limit=-1 $(command -v composer) install
+popd
 
-cd /opt/app-root/src/
 ./update.sh
-cd /opt/app-root/src/roundcubemail
+pushd roundcubemail
 
 # Adjust the configs
-
 sed -i -r \
     -e "s/'vlv'(\s+)=> false,/'vlv'\1=> true,/g" \
     -e "s/'vlv_search'(\s+)=> false,/'vlv_search'\1=> true,/g" \

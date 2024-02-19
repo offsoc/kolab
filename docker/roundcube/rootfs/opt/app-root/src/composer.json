@@ -5,7 +5,7 @@
     "version": "1.5.3",
     "config": {
         "platform": {
-            "php": "7.2.24"
+            "php": "8.0.30"
         },
         "allow-plugins": {
             "roundcube/plugin-installer": true
@@ -130,7 +130,8 @@
         }
     ],
     "require": {
-        "php": ">=7.2.0",
+        "php": ">=7.3.0",
+        "caxy/php-htmldiff": "~0.1.15",
         "pear/pear-core-minimal": "~1.10.1",
         "pear/auth_sasl": "~1.1.0",
         "pear/mail_mime": "~1.10.0",
