@@ -8,9 +8,18 @@ echo -e "If you run into EMFILE errors, this is the reason"
 mkdir /src
 cd /src
 
-git clone --branch $GIT_REF $GIT_REMOTE kolab
+function checkout() {
+    if [ ! -d "$1" ]; then
+        git clone "$2" "$1"
+        pushd "$1"
+        git checkout "$3" 
+        popd
+    fi
+}
+
+checkout kolab $GIT_REMOTE $GIT_REF
+
 pushd kolab
-git reset --hard $GIT_REF
 #TODO support injecting a custom overlay into the build process here
 bin/configure.sh $CONFIG
 # In the docker-compose case we copy the .env file during the init phase, otherwise we use the environment for configuration.

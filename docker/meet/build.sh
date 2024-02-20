@@ -2,10 +2,18 @@
 set -e
 mkdir /src/
 cd /src/
-git clone --branch $GIT_REF $GIT_REMOTE kolab
-pushd kolab
-git reset --hard $GIT_REF
-popd
+
+function checkout() {
+    if [ ! -d "$1" ]; then
+        git clone "$2" "$1"
+        pushd "$1"
+        git checkout "$3" 
+        popd
+    fi
+}
+
+checkout kolab $GIT_REMOTE $GIT_REF
+
 cp -R kolab/meet/server /src/meetsrc
 rm -Rf /src/meetsrc/node_modules
 cd /src/meetsrc
