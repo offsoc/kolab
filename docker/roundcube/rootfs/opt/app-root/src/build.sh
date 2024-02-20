@@ -4,29 +4,23 @@ set -x
 
 pushd /opt/app-root/src/
 
-# Clone what we don't find (roundcubemail-skin-elastic is not publicly available, so can't be included this way)
-if [ ! -d roundcubemail ]; then
-    git clone --branch $GIT_REF_ROUNDCUBEMAIL $GIT_REMOTE_ROUNDCUBEMAIL roundcubemail
-fi
+function checkout() {
+    if [ ! -d "$1" ]; then
+        git clone "$2" "$1"
+        pushd "$1"
+        git reset --hard "$3" 
+        popd
+    fi
+}
 
-if [ ! -d roundcubemail-plugins-kolab ]; then
-    git clone --branch $GIT_REF_ROUNDCUBEMAIL_PLUGINS $GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS roundcubemail-plugins-kolab
-fi
-if [ ! -d syncroton ]; then
-    git clone --branch $GIT_REF_SYNCROTON $GIT_REMOTE_SYNCROTON syncroton
-fi
-if [ ! -d iRony ]; then
-    git clone --branch $GIT_REF_IRONY $GIT_REMOTE_IRONY iRony
-fi
-if [ ! -d chwala ]; then
-    git clone --branch $GIT_REF_CHWALA $GIT_REMOTE_CHWALA chwala
-fi
-if [ ! -d autoconf ]; then
-    git clone --branch $GIT_REF_AUTOCONF $GIT_REMOTE_AUTOCONF autoconf
-fi
-if [ ! -d freebusy ]; then
-    git clone --branch $GIT_REF_FREEBUSY $GIT_REMOTE_FREEBUSY freebusy
-fi
+# Clone what we don't find (roundcubemail-skin-elastic is not publicly available, so can't be included this way)
+checkout roundcubemail $GIT_REMOTE_ROUNDCUBEMAIL $GIT_REF_ROUNDCUBEMAIL
+checkout roundcubemail-plugins-kolab $GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS $GIT_REF_ROUNDCUBEMAIL_PLUGINS
+checkout syncroton $GIT_REMOTE_SYNCROTON $GIT_REF_SYNCROTON
+checkout iRony $GIT_REMOTE_IRONY $GIT_REF_IRONY
+checkout chwala $GIT_REMOTE_CHWALA $GIT_REF_CHWALA
+checkout autoconf $GIT_REMOTE_AUTOCONF $GIT_REF_AUTOCONF
+checkout freebusy $GIT_REMOTE_FREEBUSY $GIT_REF_FREEBUSY
 
 pushd roundcubemail
 cp /opt/app-root/src/composer.json composer.json
