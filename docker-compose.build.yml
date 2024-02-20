@@ -19,6 +19,11 @@ services:
       context: ./docker/tests/
     container_name: kolab-tests
     image: kolab-tests
+  fluentbit:
+    build:
+      context: ./docker/fluentbit/
+    container_name: fluentbit
+    image: fluentbit
   utils:
     build:
       context: ./docker/utils/
