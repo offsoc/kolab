@@ -8,7 +8,7 @@ function checkout() {
     if [ ! -d "$1" ]; then
         git clone "$2" "$1"
         pushd "$1"
-        git reset --hard "$3" 
+        git checkout "$3" 
         popd
     fi
 }
