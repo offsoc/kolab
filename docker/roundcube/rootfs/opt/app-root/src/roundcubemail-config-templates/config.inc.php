@@ -151,11 +151,9 @@ if (!function_exists("getenvlist")) {
 
     $config['debug_level'] = 1;
     $config['devel_mode'] = false;
-    $config['log_driver'] = 'stdout';
+    $config['log_driver'] = 'logfmt';
     $config['per_user_logging'] = true;
     $config['log_date_format'] = 'd-M-Y H:i:s,u O';
-    $config['syslog_id'] = 'roundcube';
-    $config['syslog_facility'] = LOG_USER;
     $config['smtp_log'] = false;
     $config['log_logins'] = true;
     $config['log_session'] = false;
