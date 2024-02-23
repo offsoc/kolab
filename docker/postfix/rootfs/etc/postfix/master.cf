@@ -9,8 +9,8 @@
 postlog             unix-dgram  n       -       n       -       1       postlogd
 # Inbound, port 25, no tls
 10025               inet        n       -       n       -       -       smtpd
-# Internal Submission, port 588, no tls, no starttls
-10587          inet        n       -       -       -       -       smtpd -v
+# Internal Submission, no tls, no starttls
+10587          inet        n       -       -       -       -       smtpd
     -o syslog_name=postfix/submission
     -o cleanup_service_name=cleanup_submission
     -o smtpd_sasl_auth_enable=yes
