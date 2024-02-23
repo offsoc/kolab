@@ -83,6 +83,11 @@ if ! grep -q "PASSPORT_PUBLIC_KEY=|PASSPORT_PRIVATE_KEY=" .env; then
     echo "PASSPORT_PUBLIC_KEY=\"${PASSPORT_PUBLIC_KEY}\"" >> src/.env
 fi
 
+if ! grep -q "DES_KEY=" .env; then
+    DES_KEY=$(openssl rand -base64 24);
+    echo "DES_KEY=${DES_KEY}" >> src/.env
+fi
+
 bin/update-git-refs.sh
 
 # Customize configuration

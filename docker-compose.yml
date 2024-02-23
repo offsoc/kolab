@@ -45,6 +45,7 @@ services:
         condition: service_healthy
     environment:
       - APP_DOMAIN=${APP_DOMAIN}
+      - DES_KEY=${DES_KEY}
       - DB_HOST=mariadb
       - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - DB_RC_DATABASE=roundcube

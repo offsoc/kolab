@@ -16,9 +16,13 @@ if (!function_exists("getenvlist")) {
     $dbHost = getenv('DB_HOST');
     $config['db_dsnw'] = "mysql://$dbUsername:$dbPass@$dbHost/$dbDatabase";
 
-    $config['session_domain'] = '';
-    # A new key is generated during the init phase, overwriting this key.
-    $config['des_key'] = "ChangeThisDummyValue";
+    $components = explode('.', $_SERVER["HTTP_HOST"]);
+    if (count($components) > 2) {
+        array_shift($components);
+    }
+    $config['session_domain'] = implode('.', $components);
+
+    $config['des_key'] = getenv('DES_KEY');
     $config['username_domain'] = getenv('APP_DOMAIN');
     $config['use_secure_urls'] = true;
 
