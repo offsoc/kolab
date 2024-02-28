@@ -555,6 +555,44 @@ def test_certificates(host, davhost, imaphost, verbose):
     return success
 
 
+def test_meet(host, verbose):
+    headers = {
+        "Host": host
+    }
+
+    try:
+        response = http_request(
+            f"https://{host}/meetmedia/signaling",
+            "OPTIONS",
+            None,
+            headers,
+            None,
+            verbose
+        )
+    except http.client.RemoteDisconnected:
+        print("Remote disconnected")
+        print_error("Activesync is not available")
+        return False
+
+    success = response.status == 200
+    data = response.read().decode()
+    if success:
+        try:
+            assert "Transport unknown" in data
+        except AssertionError:
+            print_assertion_failure()
+            success = False
+
+    if not success:
+        print_error("Meet signaling is not available")
+
+    if verbose or not success:
+        print("  ", "Status", response.status)
+        print("  ", data)
+
+    return success
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", help="Host")
@@ -563,6 +601,7 @@ def main():
     parser.add_argument("--imap", help="IMAP URI")
     parser.add_argument("--smtp", help="SMTP URI")
     parser.add_argument("--dav", help="DAV URI")
+    parser.add_argument("--meet", help="MEET URI")
     parser.add_argument("--autoconfig", help="Check autoconfig")
     parser.add_argument("--dns", action='store_true', help="Check dns")
     parser.add_argument("--activesync", help="ActiveSync URI")
@@ -650,6 +689,12 @@ def main():
     if options.smtp:
         if test_smtp(options.smtp, options.username, options.password, options.verbose):
             print_success("SMTP is available")
+        else:
+            error = True
+
+    if options.meet:
+        if test_meet(options.meet, options.verbose):
+            print_success("Meet is available")
         else:
             error = True
 
