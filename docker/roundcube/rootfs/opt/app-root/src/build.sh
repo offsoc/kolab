@@ -9,6 +9,7 @@ function checkout() {
         git clone "$2" "$1"
         pushd "$1"
         git checkout "$3" 
+        rm -rf .git
         popd
     fi
 }
