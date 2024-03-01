@@ -476,11 +476,12 @@ class Wallet extends Model
     /**
      * Retrieve the transactions against this wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function transactions()
     {
-        return Transaction::where('object_id', $this->id)->where('object_type', Wallet::class);
+        return $this->hasMany(Transaction::class, 'object_id')
+            ->where('object_type', Wallet::class);
     }
 
     /**
