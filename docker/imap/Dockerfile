@@ -11,7 +11,9 @@ RUN git clone --branch dev/mollekopf https://git.kolab.org/source/cyrus-imapd &&
     autoreconf -i && \
     ./configure CFLAGS="-W -Wno-unused-parameter -g -O0 -Wall -Wextra -Werror -fPIC" --enable-murder --enable-http --enable-calalarmd --enable-autocreate --enable-idled --with-openssl=yes --enable-replication --prefix=/usr && \
     make -j6 && \
-    make install
+    make install && \
+    cd .. && \
+    rm -rf cyrus-imapd
 
 COPY cyrus.conf /etc/cyrus.conf
 COPY imapd.conf /etc/imapd.conf
