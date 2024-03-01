@@ -36,6 +36,32 @@ kolab__selfcheck() {
     command bin/selfcheck.sh
 }
 
+kolab__ps() {
+    command docker compose ps
+}
+
+kolab__exec() {
+    command docker compose exec -ti $@
+}
+
+kolab__cyradm() {
+    # command docker compose exec -ti imap cyradm --auth PLAIN -u admin@kolab.local -w simple123  --port 11143 localhost
+    if [[ "$@" ]]; then
+        command docker compose exec -ti imap echo "$@" | cyradm --auth PLAIN -u $(grep IMAP_ADMIN_LOGIN .env | cut -d '=' -f 2 ) -w $(grep IMAP_ADMIN_PASSWORD .env | cut -d '=' -f 2 )  --port 11143 localhost
+    else
+        command docker compose exec -ti imap cyradm --auth PLAIN -u $(grep IMAP_ADMIN_LOGIN .env | cut -d '=' -f 2 ) -w $(grep IMAP_ADMIN_PASSWORD .env | cut -d '=' -f 2 )  --port 11143 localhost
+    fi
+}
+
+kolab__shell() {
+    command docker compose exec -ti $1 /bin/bash
+}
+
+kolab__logs() {
+    command docker compose logs -f $1
+}
+
+
 kolab__help() {
     cat <<EOF
   This is the kolab commandline utility.
@@ -51,28 +77,14 @@ kolab__help() {
 EOF
 }
 
-kolab() {
-    local cmdname=$1; shift
-    if type "kolab__$cmdname" >/dev/null 2>&1; then
-        "kolab__$cmdname" "$@"
-    else
-        command  "$cmdname" "$@" # call the **real** yum command
-    fi
-}
-
-# if the functions above are sourced into an interactive interpreter, the user can
-# just call "kolab deploy" or "kolab start" with no further code needed.
-
-# if invoked as a script rather than sourced, call function named on argv via the below;
-# note that this must be the first operation other than a function definition
-# for $_ to successfully distinguish between sourcing and invocation:
-# [[ $_ != $0 ]] && return
+cmdname=$1
+shift
 
 # make sure we actually *did* get passed a valid function name
-if declare -f "kolab__$1" >/dev/null 2>&1; then
-    "kolab__$1" "${@:1}"
+if declare -f "kolab__$cmdname" >/dev/null 2>&1; then
+    "kolab__$cmdname" "${@:1}"
 else
-    echo "Function $1 not recognized" >&2
+    echo "Function $cmdname not recognized" >&2
     kolab__help
     exit 1
 fi
