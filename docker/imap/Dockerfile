@@ -6,14 +6,11 @@ RUN dnf -y group install "Development Tools" && \
     dnf -y install git autoconf automake bison cyrus-sasl-devel flex gcc gperf jansson-devel libbsd-devel libtool libicu-devel libuuid-devel openssl-devel pkgconfig sqlite-devel brotli-devel libical-devel libxml2-devel libnghttp2-devel shapelib  zlib-devel pcre-devel perl-devel cyrus-imapd cyrus-sasl cyrus-sasl-plain && \
     dnf clean all
 
-RUN git clone --branch dev/mollekopf https://git.kolab.org/source/cyrus-imapd && \
-    cd cyrus-imapd && \
-    autoreconf -i && \
-    ./configure CFLAGS="-W -Wno-unused-parameter -g -O0 -Wall -Wextra -Werror -fPIC" --enable-murder --enable-http --enable-calalarmd --enable-autocreate --enable-idled --with-openssl=yes --enable-replication --prefix=/usr && \
-    make -j6 && \
-    make install && \
-    cd .. && \
-    rm -rf cyrus-imapd
+ARG GIT_REF=dev/mollekopf
+ARG GIT_REMOTE=https://git.kolab.org/source/cyrus-imapd
+
+ADD build.sh /build.sh
+RUN /build.sh
 
 COPY cyrus.conf /etc/cyrus.conf
 COPY imapd.conf /etc/imapd.conf
