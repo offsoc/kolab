@@ -9,7 +9,7 @@ RUN rpm --import https://mirror.apheleia-it.ch/repos/Kolab:/16/key.asc && \
 # Install php modules
 RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
     dnf config-manager --enable kolab-16 &&\
-    dnf -y --setopt tsflags= install php-kolab php-kolabformat \
+    dnf -y --setopt=install_weak_deps=False --setopt tsflags= install php-kolab php-kolabformat \
         composer \
         diffutils \
         file \
