@@ -89,6 +89,7 @@ services:
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
       - imap-spool:/var/spool/imap
       - imap-lib:/var/lib/imap
+      - ./ext/:/src.orig/:ro
     ports:
       - "11080:11080"
       - "11143:11143"
