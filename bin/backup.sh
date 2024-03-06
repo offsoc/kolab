@@ -12,7 +12,7 @@ function backup_volume {
 }
 
 echo "Stopping containers"
-docker-compose stop
+docker compose stop
 
 echo "Backing up volumes"
 volumes=($(docker volume ls -f name=kolab | awk '{if (NR > 1) print $2}'))
@@ -22,4 +22,4 @@ do
 done
 
 echo "Restarting containers"
-docker-compose start
+docker compose start

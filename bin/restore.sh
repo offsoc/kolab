@@ -10,7 +10,7 @@ function restore_volume {
 }
 
 echo "Stopping containers"
-docker-compose stop
+docker compose stop
 
 # We currently expect the volumes to exist.
 # We could alternatively create volumes form existing tar files
@@ -25,5 +25,5 @@ do
   restore_volume $v $backup_path
 done
 echo "Restarting containers"
-docker-compose start
+docker compose start
 
