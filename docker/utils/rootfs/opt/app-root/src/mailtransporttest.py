@@ -90,7 +90,7 @@ class SendTest:
     def send_mail(self, starttls):
         dtstamp = datetime.utcnow()
         msg = mailtemplate.format(
-            messageid="<{}@deliverycheck.org>".format(uuid),
+            messageid="<{}@deliverycheck.org>".format(self.uuid),
             subject=self.subject,
             sender=self.sender_username,
             to=self.recipient_username,
