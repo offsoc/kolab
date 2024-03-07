@@ -1,8 +1,8 @@
 #!/bin/bash
 
-CONFIG="config.prod"
-HOST="kolab.local"
-BRANCH="master"
+CONFIG=${CONFIG:-"config.prod"}
+HOST=${HOST:-"kolab.local"}
+BRANCH=${BRANCH:-"master"}
 
 kolab__deploy() {
     echo "Please enter your new admin password for the admin@$HOST user:"
