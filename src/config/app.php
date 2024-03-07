@@ -245,6 +245,12 @@ return [
     'with_subscriptions' => (bool) env('APP_WITH_SUBSCRIPTIONS', true),
     'with_wallet' => (bool) env('APP_WITH_WALLET', true),
 
+    'with_distlists' => (bool) env('APP_WITH_DISTLISTS', true),
+    'with_shared_folders' => (bool) env('APP_WITH_SHARED_FOLDERS', true),
+    'with_resources' => (bool) env('APP_WITH_RESOURCES', true),
+    'with_meet' => (bool) env('APP_WITH_MEET', true),
+    'with_companion_app' => (bool) env('APP_WITH_COMPANION_APP', true),
+
     'signup' => [
         'email_limit' => (int) env('SIGNUP_LIMIT_EMAIL', 0),
         'ip_limit' => (int) env('SIGNUP_LIMIT_IP', 0),

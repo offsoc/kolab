@@ -193,18 +193,18 @@ class UsersController extends RelationController
             'enableBeta' => $hasBeta,
             // TODO: This will change when we enable all users to create domains
             'enableDomains' => $isController && $hasCustomDomain,
-            'enableDistlists' => $isController && $hasCustomDomain,
+            'enableDistlists' => $isController && $hasCustomDomain && \config('app.with_distlists'),
             'enableFiles' => !$isDegraded && $hasBeta && \config('app.with_files'),
-            'enableFolders' => $isController && $hasCustomDomain,
-            'enableResources' => $isController && $hasCustomDomain && $hasBeta,
-            'enableRooms' => $hasMeet,
+            'enableFolders' => $isController && $hasCustomDomain && \config('app.with_shared_folders'),
+            'enableResources' => $isController && $hasCustomDomain && $hasBeta && \config('app.with_resources'),
+            'enableRooms' => $hasMeet && \config('app.with_meet'),
             'enableSettings' => $isController,
             'enableSubscriptions' => $isController && \config('app.with_subscriptions'),
             'enableUsers' => $isController,
             'enableWallets' => $isController && \config('app.with_wallet'),
             'enableWalletMandates' => $isController,
             'enableWalletPayments' => $isController && (!$plan || $plan->mode != Plan::MODE_MANDATE),
-            'enableCompanionapps' => $hasBeta,
+            'enableCompanionapps' => $hasBeta && \config('app.with_companion_app'),
         ];
 
         return array_merge($process, $result);
