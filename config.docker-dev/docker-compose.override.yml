@@ -95,15 +95,16 @@ services:
         condition: service_healthy
     build:
       context: ./docker/proxy/
-      args:
-        APP_WEBSITE_DOMAIN: ${APP_WEBSITE_DOMAIN:?err}
-        SSL_CERTIFICATE_CERT: ${PROXY_SSL_CERTIFICATE:?err}
-        SSL_CERTIFICATE_KEY: ${PROXY_SSL_CERTIFICATE_KEY:?err}
+    user: 0:0
     healthcheck:
       interval: 10s
       test: "kill -0 $$(cat /run/nginx.pid)"
       timeout: 5s
       retries: 30
+    environment:
+      - APP_WEBSITE_DOMAIN=${APP_WEBSITE_DOMAIN:?err}
+      - SSL_CERTIFICATE=${PROXY_SSL_CERTIFICATE:?err}
+      - SSL_CERTIFICATE_KEY=${PROXY_SSL_CERTIFICATE_KEY:?err}
     container_name: kolab-proxy
     restart: on-failure
     hostname: proxy
@@ -124,11 +125,11 @@ services:
       - /etc/letsencrypt/:/etc/letsencrypt/:ro
     ports:
       # - "80:80"
-      - "443:443"
-      - "465:465"
-      - "587:587"
-      - "143:143"
-      - "993:993"
+      - "443:6443"
+      - "465:6465"
+      - "587:6587"
+      - "143:6143"
+      - "993:6993"
   # centos7 is not compatible with the new docker builder (yum get's to a grinding halt for some reason)
   # imap-legacy:
   #   build:
