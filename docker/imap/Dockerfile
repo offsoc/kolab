@@ -34,6 +34,9 @@ USER 1001
 WORKDIR /opt/app-root/src
 
 ENV SERVICES_PORT=8000
+ENV IMAPD_CONF=/etc/imapd.conf
+ENV CYRUS_CONF=/etc/cyrus.conf
+
 # ENV APP_SERVICES_DOMAIN
 
 CMD ["/init.sh"]
