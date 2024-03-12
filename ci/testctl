@@ -5,6 +5,7 @@ pushd "${base_dir}"
 
 set -e
 
+# Teardown the currently running environment
 kolab__teardown() {
     docker kill kolab-tests || :
     docker rm kolab-tests || :
@@ -15,12 +16,14 @@ kolab__teardown() {
     popd
 }
 
+# Build all containers required for testing
 kolab__build() {
     pushd ..
     docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml build mariadb redis swoole webapp imap tests roundcube minio
     popd
 }
 
+# Setup the test environment
 kolab__setup() {
     kolab__teardown
     pushd ..
@@ -33,7 +36,7 @@ kolab__setup() {
     # Maybe just delete the mariadb contianer
     # We need webapp for the services backend, minio for files, roundcube to initialize the roundcube db
     pushd ..
-    docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml up -d --wait mariadb redis imap minio roundcube webapp
+    docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml up -d --wait mariadb redis imap minio roundcube webapp proxy
     popd
 }
 
@@ -48,6 +51,7 @@ kolab__test() {
 }
 
 
+# Setup the test environment and run a complete testsuite
 kolab__testrun() {
     echo "Setup"
     kolab__setup
@@ -56,12 +60,14 @@ kolab__testrun() {
 }
 
 
+# Get a shell inside the test container to run/debug tests
 kolab__shell() {
     docker kill kolab-tests || : ; \
     docker rm kolab-tests || : ; \
     docker run --network=kolab_kolab -v ${PWD}/../src:/src/kolabsrc.orig --name kolab-tests -ti kolab-tests /init.sh shell
 }
 
+# Run the roundcube testsuite
 kolab__rctest() {
     docker kill roundcube-tests || :
     docker rm roundcube-tests || :
@@ -70,6 +76,7 @@ kolab__rctest() {
     popd
 }
 
+# Get a shell inside the roundcube test container to run/debug tests
 kolab__rcshell() {
     docker kill roundcube-tests || :
     docker rm roundcube-tests || :

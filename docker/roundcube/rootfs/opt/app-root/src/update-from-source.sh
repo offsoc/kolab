@@ -32,5 +32,4 @@ do
 done
 popd
 
-
-./reload.sh
+# ./reload.sh

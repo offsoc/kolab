@@ -69,6 +69,8 @@ echo ""
 echo "Done, starting httpd..."
 
 if [ "$1" == "testsuite" ]; then
+    ./update-from-source.sh || :
+
     sed -i "s/?>/\$config['activesync_test_username'] = 'john@kolab.org';\n?>/" roundcubemail/config/config.inc.php
     sed -i "s/?>/\$config['activesync_test_password'] = 'simple123';\n?>/" roundcubemail/config/config.inc.php
     sed -i -r -e "s/config\['activesync_init_subscriptions'\] =.*$/config['activesync_init_subscriptions'] = 0;/g" roundcubemail/config/kolab_syncroton.inc.php
