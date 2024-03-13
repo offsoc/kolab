@@ -87,6 +87,9 @@ if [ "$1" == "testsuite" ]; then
         ../vendor/bin/phpunit \
         --verbose \
         --testsuite Sync
+elif [ "$1" == "phpstan" ]; then
+    ./update-from-source.sh || :
+    php -dmemory_limit=-1 vendor/bin/phpstan analyse
 elif [ "$1" == "quicktest" ]; then
     pushd syncroton/tests
     php \
