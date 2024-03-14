@@ -9,7 +9,6 @@ RUN rpm --import "$REPOSITORY/repodata/repomd.xml.key" && \
     dnf -y --setopt tsflags= install \
     openssl \
     xmlstarlet \
-    collabora-online-brand \
     coolwsd \
     collaboraoffice-dict-de \
     collaboraofficebasis-de \
@@ -29,6 +28,8 @@ RUN rpm --import "$REPOSITORY/repodata/repomd.xml.key" && \
     collaboraofficebasis-pt \
     collaboraoffice-dict-ru \
     collaboraofficebasis-ru && \
+    dnf -y --setopt tsflags= install \
+    collabora-online-brand || : && \
     dnf clean all && \
     chown -R 1001:0 /etc/coolwsd /opt/ && \
     chmod -R g=u /etc/coolwsd /opt/

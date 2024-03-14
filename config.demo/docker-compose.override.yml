@@ -176,7 +176,7 @@ services:
     build:
       context: ./docker/collabora/
       args:
-        REPOSITORY: "https://www.collaboraoffice.com/repos/CollaboraOnline/23.05/customer-rpm-Kolab-7537e68e8a07cf290a8c6cfcf4205db05b560582/"
+        REPOSITORY: "https://www.collaboraoffice.com/repos/CollaboraOnline/23.05-CODE/CODE-rpm/"
     # healthcheck:
     #   interval: 10s
     #   test: "$(echo | nc 127.0.0.1 10024) | grep "220""
