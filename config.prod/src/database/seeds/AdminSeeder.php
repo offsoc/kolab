@@ -190,6 +190,7 @@ class AdminSeeder extends Seeder
                 'first_name' => 'Admin',
             ]
         );
+        $admin->role = 'admin';
 
         $admin->assignPackage($userPackage);
 
