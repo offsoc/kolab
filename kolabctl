@@ -44,6 +44,14 @@ kolab__exec() {
     command docker compose exec -ti $@
 }
 
+kolab__run() {
+    command docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml run --rm -ti $@
+}
+
+kolab__build() {
+    command docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml build $@
+}
+
 kolab__cyradm() {
     # command docker compose exec -ti imap cyradm --auth PLAIN -u admin@kolab.local -w simple123  --port 11143 localhost
     if [[ "$@" ]]; then
