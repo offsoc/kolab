@@ -591,7 +591,10 @@ submission_recipient_restrictions =
 #submission_sender_restrictions = reject_non_fqdn_sender, check_policy_service unix:private/submission_policy, permit_sasl_authenticated, reject
 #submission_data_restrictions = check_policy_service unix:private/submission_policy
 
+# Disable BDAT support without the useless "discarding EHLO keywords: CHUNKING" message
+smtpd_discard_ehlo_keywords = chunking, silent-discard
+
 #content_filter = smtp-wallace:[127.0.0.1]:10026
-#content_filter = amavis:[127.0.0.1]:10024
+content_filter = smtp-amavis:[AMAVIS_HOST]:13024
 
 maillog_file = /dev/stdout

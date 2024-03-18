@@ -1,33 +1,67 @@
 #!/bin/sh
 
-# (
-# while true; do
-# 	sa-update -v
-# 	sleep 30h
-# done
-# ) &
-# BACKGROUND_TASKS="$!"
+set -e
 
+CONFIG="/etc/amavisd/amavisd.conf"
 sed -i -r \
     -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
-    /etc/clam.d/amavisd.conf
+    -e "s|POSTFIX_HOST|$POSTFIX_HOST|g" \
+    $CONFIG
+
+DKIMKEYFILE="/var/dkim/$APP_DOMAIN.$DKIM_IDENTIFIER.pem"
+if ! [ -f $DKIMKEYFILE ]; then
+    echo "Generating the DKIM keys at: $DKIMKEYFILE"
+    amavisd -c $CONFIG genrsa $DKIMKEYFILE 2048
+    chmod g+r $DKIMKEYFILE
+    chgrp amavis $DKIMKEYFILE
+    chown -R amavis:amavis /var/dkim
+fi
+
+sed -i -r \
+    -e "s|DKIM_IDENTIFIER|$DKIM_IDENTIFIER|g" \
+    $CONFIG
+
+# We use these to check if the process has started, so ensure we aren't dealing wiht leftover files
+rm -f /var/run/amavisd/amavisd.pid
+rm -f /var/run/amavisd/clamd.pid
 
 mkdir -p /var/run/amavisd
 chmod 777 /var/run/amavisd
+mkdir -p /var/spool/amavisd/tmp
+mkdir -p /var/spool/amavisd/db
+mkdir -p /var/spool/amavisd/quarantine
+chown -R amavis:amavis /var/spool/amavisd
+chown -R clamupdate:clamupdate /var/lib/clamav
 
-#/usr/bin/freshclam --quiet --datadir=/var/lib/clamav
-#/usr/bin/freshclam -d -c 1
+echo "DKIM keys:"
+amavisd -c $CONFIG showkeys
 
-exec amavisd -c /etc/clam.d/amavisd.conf foreground
-# amavisd -c /etc/clam.d/amavisd.conf foreground &
-# BACKGROUND_TASKS="${BACKGROUND_TASKS} $!"
+# Initialize the clamav db. This command will have a non-zero exit code if no update is available.
+echo "Updating clamav db"
+/usr/bin/freshclam --datadir=/var/lib/clamav
+# Update once per day via daemon
+/usr/bin/freshclam -d -c 1
 
-# while true; do
-# 	for bg_task in ${BACKGROUND_TASKS}; do
-# 		if ! kill -0 ${bg_task} 1>&2; then
-# 			echo "Worker ${bg_task} died, stopping container waiting for respawn..."
-# 			kill -TERM 1
-# 		fi
-# 		sleep 10
-# 	done
-# done
+# Update the spam db every 30h
+echo "Updating spamassassin db"
+sa-update -v || :
+##FIXME this probably doesn't work since we exec to amavisd
+#(
+#while true; do
+#	sleep 30h
+#	sa-update -v
+#done
+#) &
+
+echo "Starting clamd"
+clamd --config-file=/etc/clamd.d/amavisd.conf
+
+# This allows to kill amavis to reload the config or code in a running container
+if $DEBUG; then
+    echo "Starting amavis in debug mode"
+    while true; do
+        amavisd -c $CONFIG foreground
+    done
+fi
+echo "Starting amavis"
+exec amavisd -c $CONFIG foreground

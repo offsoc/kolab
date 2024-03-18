@@ -8,6 +8,7 @@ chmod 655 /etc/pki/tls/private/postfix.pem
 
 chown -R postfix:mail /var/lib/postfix
 chown -R postfix:mail /var/spool/postfix
+/usr/sbin/postfix set-permissions
 
 sed -i -r \
     -e "s|APP_SERVICES_DOMAIN|$APP_SERVICES_DOMAIN|g" \
@@ -25,12 +26,15 @@ rm -f /var/spool/postfix/pid/master.pid
 
 sed -i -r \
     -e "s|LMTP_DESTINATION|$LMTP_DESTINATION|g" \
+    -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
+    -e "s|MYNETWORKS|$MYNETWORKS|g" \
+    -e "s|AMAVIS_HOST|$AMAVIS_HOST|g" \
     /etc/postfix/main.cf
 
 sed -i -r \
-    -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
     -e "s|MYNETWORKS|$MYNETWORKS|g" \
-    /etc/postfix/main.cf
+    -e "s|AMAVIS_HOST|$AMAVIS_HOST|g" \
+    /etc/postfix/master.cf
 
 sed -i -r \
     -e "s|SERVICES_HOST|http://$APP_SERVICES_DOMAIN:$SERVICES_PORT|g" \
