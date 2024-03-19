@@ -60,3 +60,12 @@ Route::group(
         });
     }
 );
+
+Route::group(
+    [
+        'prefix' => '.well-known'
+    ],
+    function () {
+        Route::get('/mta-sts.txt', [Controllers\WellKnownController::class, "mtaSts"]);
+    }
+);

@@ -275,4 +275,6 @@ return [
     'vpn' => [
         'token_signing_key' => env('VPN_TOKEN_SIGNING_KEY', 0),
     ],
+
+    'mta_sts' => env('MTA_STS')
 ];
