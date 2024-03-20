@@ -51,7 +51,7 @@ RUN git clone https://github.com/libwbxml/libwbxml.git && \
     cd .. && \
     rm -rf libwbxml
 
-RUN pip3 install distro xmltodict dnspython && \
+RUN pip3 install distro xmltodict dnspython dkimpy && \
     pip3 install \
     --global-option=build_ext \
     --global-option="-I/usr/include/libwbxml-1.0/wbxml/" \
