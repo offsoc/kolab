@@ -350,7 +350,10 @@ class PolicyController extends Controller
         if ($fail) {
             // TODO: check the recipient's policy, such as using barracuda for anti-spam and anti-virus as a relay for
             // inbound mail to a local recipient address.
-            $objects = \App\Utils::findObjectsByRecipientAddress($data['recipient']);
+            $objects = null;
+            if (array_key_exists('recipient', $data)) {
+                $objects = \App\Utils::findObjectsByRecipientAddress($data['recipient']);
+            }
 
             if (!empty($objects)) {
                 // check if any of the recipient objects have whitelisted the helo, first one wins.
