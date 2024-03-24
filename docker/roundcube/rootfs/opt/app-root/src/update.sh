@@ -110,10 +110,6 @@ done
 # Copy our configs over the default ones
 cp /opt/app-root/src/roundcubemail-config-templates/* config/
 
-DES_KEY=$(openssl rand -base64 24);
-sed -i -r -e "s|\$config\['des_key'\] = .*$|\$config['des_key'] = \"$DES_KEY\";|g" config/config.inc.php
-
-
 # Update plugins
 pushd /opt/app-root/src/roundcubemail-plugins-kolab/plugins
 for plugin in $(ls -1d)
