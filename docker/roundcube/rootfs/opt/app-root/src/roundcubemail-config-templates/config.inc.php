@@ -76,30 +76,40 @@ if (!function_exists("getenvlist")) {
     $config['mdn_use_from'] = true;
 
     // Plugins
-    $config['plugins'] = array(
-            // 'kolab_auth',
-            'acl',
-            'archive',
-            'calendar',
-            'jqueryui',
-            'kolab_activesync',
-            'kolab_addressbook',
-            // 'kolab_config',
-            // 'kolab_delegation',
-            'kolab_files',
-            // 'kolab_folders',
-            // 'kolab_notes',
-            // 'kolab_tags',
-            'managesieve',
-            'newmail_notifier',
-            'odfviewer',
-            'redundant_attachments',
-            'tasklist',
-            // contextmenu must be after kolab_addressbook (#444)
-            'contextmenu',
-'enigma',
-        );
+    $plugins = [
+        'acl',
+        'archive',
+        'calendar',
+        'jqueryui',
+        'kolab_activesync',
+        'kolab_addressbook',
+        'kolab_files',
+        'managesieve',
+        'newmail_notifier',
+        'odfviewer',
+        'redundant_attachments',
+        'contextmenu',
+        'tasklist',
+        'enigma',
+    ];
+    // 'kolab_auth',
+    // 'kolab_config',
+    // 'kolab_delegation',
+    // 'kolab_folders',
+    // 'kolab_notes',
+    // 'kolab_tags',
 
+    if ($disabledPlugins = getenvlist('DISABLED_PLUGINS')) {
+        $plugins = array_diff($plugins, $disabledPlugins);
+    }
+    if ($extraPlugins = getenvlist('EXTRA_PLUGINS')) {
+        $plugins = array_merge($plugins, $extraPlugins);
+    }
+
+    // contextmenu must be after kolab_addressbook (#444)
+    $plugins[] = 'contextmenu';
+
+    $config['plugins'] = $plugins;
 
     // Do not show deleted messages, mark deleted messages as read,
     // and flag them as deleted instead of moving them to the Trash
