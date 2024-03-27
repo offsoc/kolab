@@ -60,7 +60,9 @@ RUN pip3 install distro xmltodict dnspython dkimpy && \
 # imapcli deps
 RUN gem install thor
 
-RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/ -u 1001 -g 1001 default)
+RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/src/ -u 1001 -g 1001 default)
+
+COPY /rootfs /
 
 RUN chgrp -R 0 /opt/app-root/src && \
     chmod -R g=u /opt/app-root/src && \
@@ -69,5 +71,3 @@ RUN chgrp -R 0 /opt/app-root/src && \
 USER 1001
 
 WORKDIR ${HOME}
-
-COPY /rootfs /
