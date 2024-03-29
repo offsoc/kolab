@@ -1,7 +1,7 @@
 #!/bin/bash
 #Update from source (rather than via composer which updates to the latest commit)
 
-for repo in roundcubemail syncroton iRony chwala autoconf freebusy
+for directory in roundcubemail syncroton iRony chwala autoconf freebusy
 do
     if [ -d /src.orig/$directory ]; then
         rsync -av \
@@ -18,18 +18,20 @@ do
     fi
 done
 
-pushd /src.orig/roundcubemail-plugins-kolab/plugins
+if [ -d /src.orig/roundcubemail-plugins-kolab/plugins ]; then
+    pushd /src.orig/roundcubemail-plugins-kolab/plugins
 
-for plugin in $(ls -1d)
-do
-    if [ -d /opt/app-root/src/roundcubemail/plugins/${plugin}/ ]; then
-        rsync -av \
-            --exclude=vendor \
-            --exclude=composer.json \
-            --exclude=config.inc.php \
-            $plugin/ /opt/app-root/src/roundcubemail/plugins/$plugin
-    fi
-done
-popd
+    for plugin in $(ls -1d)
+    do
+        if [ -d /opt/app-root/src/roundcubemail/plugins/${plugin}/ ]; then
+            rsync -av \
+                --exclude=vendor \
+                --exclude=composer.json \
+                --exclude=config.inc.php \
+                $plugin/ /opt/app-root/src/roundcubemail/plugins/$plugin
+        fi
+    done
+    popd
+fi
 
 # ./reload.sh

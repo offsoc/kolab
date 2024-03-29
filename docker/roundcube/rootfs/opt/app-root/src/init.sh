@@ -14,12 +14,21 @@ pushd roundcubemail
 cp /opt/app-root/src/roundcubemail-config-templates/* config/
 
 # Initialize the db
-cat > /tmp/kolab-setup-my.cnf << EOF
+if [[ "$DB_ROOT_PASSWORD" == "" ]]; then
+    echo "Not using password"
+    cat > /tmp/kolab-setup-my.cnf << EOF
+[client]
+host=${DB_HOST}
+user=root
+EOF
+else
+    cat > /tmp/kolab-setup-my.cnf << EOF
 [client]
 host=${DB_HOST}
 user=root
 password=${DB_ROOT_PASSWORD}
 EOF
+fi
 
 mysql --defaults-file=/tmp/kolab-setup-my.cnf <<EOF
 CREATE DATABASE IF NOT EXISTS $DB_RC_DATABASE CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -70,13 +79,14 @@ if [ "$1" == "testsuite" ]; then
 
     sed -i "s/?>/\$config['activesync_test_username'] = 'john@kolab.org';\n?>/" roundcubemail/config/config.inc.php
     sed -i "s/?>/\$config['activesync_test_password'] = 'simple123';\n?>/" roundcubemail/config/config.inc.php
+    sed -i "s/?>/\$config['activesync_test_host'] = 'http:\/\/localhost:8001';\n?>/" roundcubemail/config/config.inc.php
     sed -i -r -e "s/config\['activesync_init_subscriptions'\] =.*$/config['activesync_init_subscriptions'] = 0;/g" roundcubemail/config/kolab_syncroton.inc.php
     sed -i -r -e "s/config\['activesync_multifolder_blacklist_event'\] =.*$/config['activesync_multifolder_blacklist_event'] = array('windowsoutlook');/g" roundcubemail/config/kolab_syncroton.inc.php
     sed -i -r -e "s/config\['activesync_multifolder_blacklist_task'\] =.*$/config['activesync_multifolder_blacklist_task'] = array('windowsoutlook');/g" roundcubemail/config/kolab_syncroton.inc.php
     sed -i -r -e "s/config\['activesync_multifolder_blacklist_contact'\] =.*$/config['activesync_multifolder_blacklist_contact'] = array('windowsoutlook');/g" roundcubemail/config/kolab_syncroton.inc.php
 
     pushd syncroton
-    php -S localhost:8000 &
+    php -S localhost:8001 &
     pushd tests
 
     php \
@@ -84,8 +94,14 @@ if [ "$1" == "testsuite" ]; then
         ../vendor/bin/phpunit \
         --verbose \
         --testsuite Sync
+    if [ "$2" == "shell" ]; then
+        exec /bin/bash
+    fi
 elif [ "$1" == "phpstan" ]; then
     ./update-from-source.sh || :
+    pushd roundcubemail
+    cp /src.orig/roundcubemail-plugins-kolab/phpstan.neon .
+    cp /src.orig/roundcubemail-plugins-kolab/phpstan.bootstrap.php .
     php -dmemory_limit=-1 vendor/bin/phpstan analyse
 elif [ "$1" == "quicktest" ]; then
     pushd syncroton/tests

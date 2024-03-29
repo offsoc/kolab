@@ -4,6 +4,7 @@ set -x
 
 cd /opt/app-root/src/
 
+REBUILD=false
 # Update the sourcecode if available.
 # This also copies the .env files that is required if we don't provide
 # a configuration via the environment.
@@ -22,6 +23,34 @@ if [ -d /src/kolabsrc.orig ]; then
         --exclude=.gitignore \
         /src/kolabsrc.orig/ /opt/app-root/src/ | tee /tmp/rsync.output
 
+    REBUILD=true
+fi
+
+if [ -d /src/overlay ]; then
+    echo "----> Applying overlay"
+    rsync -av \
+        --exclude=vendor \
+        --exclude=composer.lock \
+        --exclude=node_modules \
+        --exclude=package-lock.json \
+        --exclude=public \
+        --exclude=storage \
+        --exclude=resources/build \
+        --exclude=bootstrap \
+        --exclude=.gitignore \
+        /src/overlay/ /opt/app-root/src/ | tee /tmp/rsync-overlay.output
+
+    REBUILD=true
+fi
+
+# If we want to rely on the environment for configuration
+if [ $NOENVFILE ]; then
+    echo "----> removing envfile"
+    rm -f .env
+fi
+
+
+if [ $REBUILD ]; then
     rm -rf storage/framework
     mkdir -p storage/framework/{sessions,views,cache}
 

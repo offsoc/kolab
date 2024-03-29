@@ -49,6 +49,8 @@ if [ "$1" == "--refresh" ]; then
     shift
 fi
 
+./artisan route:list
+
 EXCLUDE_GROUPS="skipci,ldap,coinbase,mollie,stripe,meet,dns"
 
 if [ "$1" == "suite-Functional" ]; then
