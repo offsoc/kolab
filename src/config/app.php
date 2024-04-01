@@ -85,10 +85,17 @@ return [
 
     'website_domain' => env('APP_WEBSITE_DOMAIN', env('APP_DOMAIN', 'domain.tld')),
 
-    'services_domain' => env(
-        'APP_SERVICES_DOMAIN',
-        "services." . env('APP_WEBSITE_DOMAIN', env('APP_DOMAIN', 'domain.tld'))
-    ),
+    // Restrict over which domains the services paths can be accessed.
+    'services_allowed_domains' => explode(',', env(
+        'APP_SERVICES_ALLOWED_DOMAINS',
+        "webapp,kolab," . env(
+            'APP_SERVICES_DOMAIN',
+            "services." . env(
+                'APP_WEBSITE_DOMAIN',
+                env('APP_DOMAIN', 'domain.tld')
+            )
+        )
+    )),
 
     /*
     |--------------------------------------------------------------------------

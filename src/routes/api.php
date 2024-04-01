@@ -207,7 +207,7 @@ Route::group(
 if (\config('app.with_services')) {
     Route::group(
         [
-            'domain' => \config('app.services_domain'),
+            'middleware' => ['allowedHosts'],
             'prefix' => 'webhooks'
         ],
         function () {
