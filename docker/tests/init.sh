@@ -146,6 +146,12 @@ elif [ "$1" == "quicktest" ]; then
         --testsuite Feature
 elif [ "$1" == "shell" ]; then
     exec /bin/bash
+elif [ "$1" == "lint" ]; then
+    php -dmemory_limit=-1 vendor/bin/phpcs -p
+
+    php -dmemory_limit=-1 vendor/bin/phpstan analyse
+
+    npm run lint
 else
     php \
         -dmemory_limit=-1 \

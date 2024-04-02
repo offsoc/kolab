@@ -236,6 +236,10 @@ kolab__test() {
     popd
 }
 
+kolab__lint() {
+    pushd ..
+    kolab__test lint
+}
 
 # Setup the test environment and run a complete testsuite
 kolab__testrun() {
