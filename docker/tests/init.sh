@@ -51,7 +51,7 @@ fi
 
 ./artisan route:list
 
-EXCLUDE_GROUPS="skipci,ldap,coinbase,mollie,stripe,meet,dns"
+EXCLUDE_GROUPS=${EXCLUDE_GROUPS:-"skipci,ldap,coinbase,mollie,stripe,meet,dns,slow"}
 
 if [ "$1" == "suite-Functional" ]; then
     php \
