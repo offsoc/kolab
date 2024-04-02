@@ -102,35 +102,15 @@ kolab__teardown() {
 kolab__build() {
     pushd ..
     $PODMAN build docker/swoole/ -t apheleia/swoole
-    $PODMAN build docker/base/ -f almalinux8 -t apheleia/almalinux8
     $PODMAN build docker/base/ -f almalinux9 -t apheleia/almalinux9
 
-    $PODMAN build --ulimit nofile=65535:65535 docker/webapp -t kolab-webapp \
-        --build-arg GIT_REMOTE=${KOLAB_GIT_REMOTE} --build-arg GIT_REF=${KOLAB_GIT_REF} 
-    $PODMAN build --ulimit nofile=65535:65535 docker/meet -t kolab-meet \
-        --build-arg GIT_REMOTE=${KOLAB_GIT_REMOTE} --build-arg GIT_REF=${KOLAB_GIT_REF} 
-    $PODMAN build docker/postfix -t kolab-postfix
+    $PODMAN build --ulimit nofile=65535:65535 docker/webapp -t kolab-webapp
     $PODMAN build docker/imap -t kolab-imap
-    $PODMAN build docker/amavis -t kolab-amavis
-    $PODMAN build docker/collabora -t kolab-collabora --build-arg REPOSITORY="https://www.collaboraoffice.com/repos/CollaboraOnline/23.05-CODE/CODE-rpm/"
     $PODMAN build docker/mariadb -t mariadb
     $PODMAN build docker/redis -t redis
-    $PODMAN build docker/proxy -t kolab-proxy
-    $PODMAN build docker/coturn -t kolab-coturn
-    $PODMAN build docker/utils -t kolab-utils
-    $PODMAN build docker/fluentbit -t fluentbit
 
-    $PODMAN build --ulimit nofile=65535:65535 docker/tests -t kolab-tests \
-        --build-arg GIT_REMOTE=${KOLAB_GIT_REMOTE} --build-arg GIT_REF=${KOLAB_GIT_REF} 
-
-    $PODMAN build --ulimit nofile=65535:65535 docker/roundcube -t roundcube \
-       --build-arg GIT_REMOTE=${GIT_REMOTE_ROUNDCUBEMAIL} --build-arg GIT_REF=${GIT_REF_ROUNDCUBEMAIL} \
-       --build-arg GIT_REMOTE=${GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS} --build-arg GIT_REF=${GIT_REF_ROUNDCUBEMAIL_PLUGINS} \
-       --build-arg GIT_REMOTE=${GIT_REMOTE_CHWALA} --build-arg GIT_REF=${GIT_REF_CHWALA} \
-       --build-arg GIT_REMOTE=${GIT_REMOTE_SYNCROTON} --build-arg GIT_REF=${GIT_REF_SYNCROTON} \
-       --build-arg GIT_REMOTE=${GIT_REMOTE_AUTOCONF} --build-arg GIT_REF=${GIT_REF_AUTOCONF} \
-       --build-arg GIT_REMOTE=${GIT_REMOTE_IRONY} --build-arg GIT_REF=${GIT_REF_IRONY} \
-       --build-arg GIT_REMOTE=${GIT_REMOTE_FREEBUSY} --build-arg GIT_REF=${GIT_REF_FREEBUSY}
+    $PODMAN build --ulimit nofile=65535:65535 docker/tests -t kolab-tests
+    $PODMAN build --ulimit nofile=65535:65535 docker/roundcube -t roundcube
 
     popd
 }
