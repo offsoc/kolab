@@ -1,4 +1,4 @@
-FROM apheleia/almalinux8
+FROM apheleia/almalinux9
 
 RUN dnf -y install \
     python3 \
