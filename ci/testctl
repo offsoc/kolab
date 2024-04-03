@@ -168,8 +168,8 @@ kolab__setup() {
 
     # IMAP
     $PODMAN run -dt --pod tests --name imap --replace \
-        --mount=type=tmpfs,tmpfs-size=128M,destination=/var/spool/imap,U=true \
-        --mount=type=tmpfs,tmpfs-size=128M,destination=/var/lib/imap,U=true \
+        --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/spool/imap,U=true,notmpcopyup \
+        --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/lib/imap,U=true,notmpcopyup \
         -e APP_SERVICES_DOMAIN=webapp \
         -e SERVICES_PORT=8000 \
         -e IMAP_ADMIN_LOGIN=cyrus-admin \
