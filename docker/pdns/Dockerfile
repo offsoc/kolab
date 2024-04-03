@@ -1,11 +1,7 @@
-FROM fedora:35
-
-ENV container docker
-ENV SYSTEMD_PAGER=''
+FROM apheleia/almalinux9
 
 RUN dnf -y install \
     --setopt 'tsflags=nodocs' \
-    bind-utils \
     iproute \
     iptables \
     iputils \
@@ -14,9 +10,6 @@ RUN dnf -y install \
     pdns-backend-mysql \
     pdns-recursor \
     pdns-tools \
-    procps-ng \
-    vim-enhanced \
-    wget \
     which && \
     dnf clean all
 

@@ -1,8 +1,4 @@
-FROM fedora:35
-
-MAINTAINER Jeroen van Meeuwen <vanmeeuwen@kolabsys.com>
-
-ENV container docker
+FROM apheleia/almalinux9
 
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
