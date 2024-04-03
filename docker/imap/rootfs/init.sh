@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e
 
 sed -i -r \
     -e "s|IMAP_ADMIN_LOGIN|$IMAP_ADMIN_LOGIN|g" \
