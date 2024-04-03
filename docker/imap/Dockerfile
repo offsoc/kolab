@@ -2,8 +2,38 @@ FROM apheleia/almalinux9
 
 WORKDIR /root/
 
-RUN dnf -y group install "Development Tools" && \
-    dnf -y install git autoconf automake bison cyrus-sasl-devel flex gcc gperf jansson-devel libbsd-devel libtool libicu-devel libuuid-devel openssl-devel pkgconfig sqlite-devel brotli-devel libical-devel libxml2-devel libnghttp2-devel shapelib  zlib-devel pcre-devel perl-devel cyrus-imapd cyrus-sasl cyrus-sasl-plain rsync && \
+RUN dnf -y install \
+        --setopt 'tsflags=nodocs' \
+        git \
+        autoconf \
+        automake \
+        bison \
+        cyrus-sasl-devel \
+        flex \
+        gcc \
+        gcc-c++ \
+        gperf \
+        jansson-devel \
+        libbsd-devel \
+        libtool \
+        libicu-devel \
+        libuuid-devel \
+        openssl-devel \
+        pkgconfig \
+        sqlite-devel \
+        brotli-devel \
+        libzstd-devel \
+        libical-devel \
+        libxml2-devel \
+        libnghttp2-devel \
+        shapelib \
+        zlib-devel \
+        pcre-devel \
+        perl-devel \
+        cyrus-sasl \
+        cyrus-sasl-plain \
+        perl-Cyrus \
+        rsync && \
     dnf clean all
 
 ARG GIT_REF=dev/mollekopf
