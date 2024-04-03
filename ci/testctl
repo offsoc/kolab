@@ -262,7 +262,7 @@ kolab__rctest() {
 # Get a shell inside the roundcube test container to run/debug tests
 kolab__rcshell() {
     pushd ..
-    $PODMAN run -t --pod tests --name roundcube --replace \
+    $PODMAN run -ti --pod tests --name roundcube --replace \
         -v ./ext:/src.orig:ro \
         -e APP_DOMAIN=kolab.test \
         -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
