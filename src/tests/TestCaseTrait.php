@@ -330,7 +330,9 @@ trait TestCaseTrait
             return;
         }
 
-        LDAP::deleteGroup($group);
+        if (\config('app.with_ldap')) {
+            LDAP::deleteGroup($group);
+        }
 
         $group->forceDelete();
     }
@@ -350,7 +352,9 @@ trait TestCaseTrait
             return;
         }
 
-        LDAP::deleteResource($resource);
+        if (\config('app.with_ldap')) {
+            LDAP::deleteResource($resource);
+        }
 
         $resource->forceDelete();
     }
@@ -388,7 +392,9 @@ trait TestCaseTrait
             return;
         }
 
-        LDAP::deleteSharedFolder($folder);
+        if (\config('app.with_ldap')) {
+            LDAP::deleteSharedFolder($folder);
+        }
 
         $folder->forceDelete();
     }
