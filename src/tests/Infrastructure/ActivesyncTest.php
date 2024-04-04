@@ -6,6 +6,7 @@ use App\Backends\Roundcube;
 use Tests\TestCase;
 use Illuminate\Support\Str;
 
+// @codingStandardsIgnoreStart
 class ActivesyncTest extends TestCase
 {
     private static ?\GuzzleHttp\Client $client = null;
@@ -1663,3 +1664,4 @@ class ActivesyncTest extends TestCase
         $this->deleteTestUser(self::$user->email);
     }
 }
+// @codingStandardsIgnoreEnd

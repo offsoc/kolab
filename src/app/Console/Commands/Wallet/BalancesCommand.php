@@ -49,7 +49,9 @@ class BalancesCommand extends Command
                 ->leftJoinSub($balances, 'balances', function ($join) {
                     $join->on('wallets.id', '=', 'balances.wallet_id');
                 })
-                ->whereRaw('(balances.summary != wallets.balance or (balances.summary is null and wallets.balance != 0))');
+                ->whereRaw(
+                    '(balances.summary != wallets.balance or (balances.summary is null and wallets.balance != 0))'
+                );
 
             if ($negative) {
                 $wallets->where('balances.summary', '<', 0);

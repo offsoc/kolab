@@ -50,7 +50,9 @@ class EntitlementsCommand extends Command
         foreach ($entitlements as $entitlement) {
             // sanity check, deleted entitleable?
             if (!$entitlement->entitleable) {
-                $this->info("{$entitlement->id}: DELETED {$entitlement->entitleable_type} {$entitlement->entitleable_id}");
+                $this->info(
+                    "{$entitlement->id}: DELETED {$entitlement->entitleable_type} {$entitlement->entitleable_id}"
+                );
                 continue;
             }
 
