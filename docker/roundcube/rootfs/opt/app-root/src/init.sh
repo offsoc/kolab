@@ -108,6 +108,7 @@ if [ "$1" == "syncroton" ]; then
             --testsuite Unit
     elif [ "$2" == "lint" ]; then
         popd
+        cp ../syncroton.phpstan.neon phpstan.neon
         php -dmemory_limit=-1 vendor/bin/phpstan
     elif [ "$2" == "shell" ]; then
         exec /bin/bash
@@ -175,6 +176,7 @@ elif [ "$1" == "roundcubemail-plugins-kolab" ]; then
             ../roundcubemail/vendor/bin/phpunit \
             --verbose
     elif [ "$2" == "lint" ]; then
+        cp ../roundcubemail-plugins-kolab.phpstan.neon phpstan.neon
         php -dmemory_limit=-1 ../roundcubemail/vendor/bin/phpstan
         php ../roundcubemail/vendor/bin/php-cs-fixer fix --dry-run --using-cache=no --diff --verbose
     elif [ "$2" == "shell" ]; then

@@ -1,0 +1,26 @@
+parameters:
+    bootstrapFiles:
+        - phpstan.bootstrap.php
+
+    excludePaths:
+        - vendor
+        - lib/plugins
+        - lib/ext/Roundcube
+        - lib/ext/Syncroton
+
+    ignoreErrors:
+        - |Access to an undefined property Syncroton_Model_.*|
+        # Customizations because of dev/kolab-1.5
+        #- |Access to offset .* on an unknown class An.|
+        - '#Property rcube::\$user \(rcube_user\) in empty\(\) is not falsy.#'
+
+    paths:
+        - lib
+        - tests
+
+    level: 4
+
+    scanDirectories:
+        - lib/ext
+
+    treatPhpDocTypesAsCertain: false
