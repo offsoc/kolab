@@ -229,6 +229,21 @@ kolab__testrun() {
     kolab__test testsuite
 }
 
+# Setup the test environment and run all testsuites
+kolab__testrun_complete() {
+    echo "Setup"
+    kolab__setup
+    echo "Test"
+    kolab__test lint
+    kolab__test testsuite
+    kolab__rctest syncroton lint
+    kolab__rctest syncroton testsuite
+    kolab__rctest irony lint
+    # kolab__rctest irony testsuite
+    kolab__rctest roundcubemail-plugins-kolab lint
+    # kolab__rctest roundcubemail-plugins-kolab testsuite
+}
+
 
 # Get a shell inside the test container to run/debug tests
 kolab__shell() {
