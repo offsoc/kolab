@@ -74,7 +74,7 @@ roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/kolab-calendar/SQL/ --
 echo ""
 echo "Done, starting httpd..."
 
-if [ "$1" == "testsuite" ]; then
+if [ "$1" == "syncroton" ]; then
     ./update-from-source.sh || :
 
     sed -i "s/?>/\$config['activesync_test_username'] = 'john@kolab.org';\n?>/" roundcubemail/config/config.inc.php
@@ -89,13 +89,105 @@ if [ "$1" == "testsuite" ]; then
     php -S localhost:8001 &
     pushd tests
 
-    php \
-        -dmemory_limit=-1 \
-        ../vendor/bin/phpunit \
-        --verbose \
-        --testsuite Sync
-    if [ "$2" == "shell" ]; then
+    if [ "$2" == "testsuite" ]; then
+        php \
+            -dmemory_limit=-1 \
+            ../vendor/bin/phpunit \
+            --verbose \
+            --testsuite Unit
+        php \
+            -dmemory_limit=-1 \
+            ../vendor/bin/phpunit \
+            --verbose \
+            --testsuite Sync
+    elif [ "$2" == "quicktest" ]; then
+        php \
+            -dmemory_limit=-1 \
+            ../vendor/bin/phpunit \
+            --verbose \
+            --testsuite Unit
+    elif [ "$2" == "lint" ]; then
+        popd
+        php -dmemory_limit=-1 vendor/bin/phpstan
+    elif [ "$2" == "shell" ]; then
         exec /bin/bash
+    else
+        php \
+            -dmemory_limit=-1 \
+            ../vendor/bin/phpunit \
+            --verbose \
+            --stop-on-defect \
+            --stop-on-error \
+            --stop-on-failure \
+            "$2"
+    fi
+elif [ "$1" == "irony" ]; then
+    ./update-from-source.sh || :
+
+    pushd iRony
+    pushd test
+
+    if [ "$2" == "testsuite" ]; then
+        php \
+            -dmemory_limit=-1 \
+            ../vendor/bin/phpunit \
+            --verbose
+    elif [ "$2" == "shell" ]; then
+        exec /bin/bash
+    else
+        php \
+            -dmemory_limit=-1 \
+            ../vendor/bin/phpunit \
+            --verbose \
+            --stop-on-defect \
+            --stop-on-error \
+            --stop-on-failure \
+            "$2"
+    fi
+elif [ "$1" == "roundcubemail-plugins-kolab" ]; then
+    ./update-from-source.sh || :
+    # We run the tests from the plugins directory, which we don't normally update
+    if [ -d /src.orig/roundcubemail-plugins-kolab ]; then
+        rsync -av \
+            --no-links \
+            --exclude=vendor \
+            --exclude=temp \
+            --exclude=config \
+            --exclude=logs \
+            --exclude=.git \
+            --exclude=config.inc.php \
+            --exclude=composer.json \
+            --exclude=composer.lock \
+            /src.orig/roundcubemail-plugins-kolab/ /opt/app-root/src/roundcubemail-plugins-kolab
+    fi
+
+    pushd roundcubemail-plugins-kolab
+    ln -s ../roundcubemail/tests tests
+    ln -s ../roundcubemail/program program
+
+    if [ "$2" == "testsuite" ]; then
+        #FIXME this doesn't currently work:
+        #* set logging to stdout
+        #* add test configuration
+        #* there's some error about serializing a libcalendaring object to a string?
+        php \
+            -dmemory_limit=-1 \
+            ../roundcubemail/vendor/bin/phpunit \
+            --verbose
+    elif [ "$2" == "lint" ]; then
+        php -dmemory_limit=-1 ../roundcubemail/vendor/bin/phpstan
+        php ../roundcubemail/vendor/bin/php-cs-fixer fix --dry-run --using-cache=no --diff --verbose
+    elif [ "$2" == "shell" ]; then
+        exec /bin/bash
+    else
+        php \
+            -dmemory_limit=-1 \
+            ../roundcubemail/vendor/bin/phpunit \
+            --verbose \
+            --stop-on-defect \
+            --stop-on-error \
+            --stop-on-failure \
+            "$2"
     fi
 elif [ "$1" == "phpstan" ]; then
     ./update-from-source.sh || :
@@ -103,13 +195,6 @@ elif [ "$1" == "phpstan" ]; then
     cp /src.orig/roundcubemail-plugins-kolab/phpstan.neon .
     cp /src.orig/roundcubemail-plugins-kolab/phpstan.bootstrap.php .
     php -dmemory_limit=-1 vendor/bin/phpstan analyse
-elif [ "$1" == "quicktest" ]; then
-    pushd syncroton/tests
-    php \
-        -dmemory_limit=-1 \
-        ../vendor/bin/phpunit \
-        --verbose \
-        --testsuite Unit
 elif [ "$1" == "shell" ]; then
     exec /bin/bash
 else

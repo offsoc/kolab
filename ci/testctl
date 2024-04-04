@@ -255,7 +255,7 @@ kolab__rctest() {
         -e FILEAPI_WOPI_OFFICE=https://kolab.local \
         -e CALENDAR_CALDAV_SERVER=http://imap:11080/dav \
         -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://imap:11080/dav \
-        roundcube:latest ./init.sh testsuite
+        roundcube:latest ./init.sh $@
     popd
 }
 
