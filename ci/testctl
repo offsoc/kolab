@@ -158,7 +158,7 @@ kolab__setup() {
         -v ./src:/src/kolabsrc.orig:ro \
         -v ./config.demo/src:/src/overlay:ro \
         -e NOENVFILE=true \
-        -e APP_SERVICES_DOMAINS="webapp" \
+        -e APP_SERVICES_ALLOWED_DOMAINS="webapp,localhost" \
         -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
         -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
         --health-cmd "./artisan octane:status || exit 1" \
@@ -170,7 +170,7 @@ kolab__setup() {
     $PODMAN run -dt --pod tests --name imap --replace \
         --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/spool/imap,U=true,notmpcopyup \
         --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/lib/imap,U=true,notmpcopyup \
-        -e APP_SERVICES_DOMAIN=webapp \
+        -e APP_SERVICES_DOMAIN="localhost" \
         -e SERVICES_PORT=8000 \
         -e IMAP_ADMIN_LOGIN=cyrus-admin \
         -e IMAP_ADMIN_PASSWORD=simple123 \
@@ -209,7 +209,7 @@ kolab__test() {
     $PODMAN run -ti --pod tests --name kolab-tests --replace \
         --env-file=ci/env \
         -v ./src:/src/kolabsrc.orig:ro \
-        -e APP_SERVICES_DOMAINS="webapp" \
+        -e APP_SERVICES_DOMAINS="localhost" \
         -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
         -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
         kolab-tests:latest /init.sh $@
@@ -257,15 +257,15 @@ kolab__rctest() {
         -v ./ext:/src.orig:ro \
         -e APP_DOMAIN=kolab.test \
         -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
-        -e DB_HOST=mariadb \
+        -e DB_HOST=127.0.0.1 \
         -e DB_RC_DATABASE=roundcube \
         -e DB_RC_USERNAME=roundcube \
         -e DB_RC_PASSWORD=simple123 \
-        -e IMAP_HOST=imap \
+        -e IMAP_HOST=localhost \
         -e IMAP_PORT=11143 \
         -e IMAP_ADMIN_LOGIN=cyrus-admin \
         -e IMAP_ADMIN_PASSWORD=simple123 \
-        -e MAIL_HOST=postfix \
+        -e MAIL_HOST=localhost \
         -e MAIL_PORT=10587 \
         -e FILEAPI_WOPI_OFFICE=https://kolab.local \
         -e CALENDAR_CALDAV_SERVER=http://imap:11080/dav \
@@ -281,19 +281,19 @@ kolab__rcshell() {
         -v ./ext:/src.orig:ro \
         -e APP_DOMAIN=kolab.test \
         -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
-        -e DB_HOST=mariadb \
+        -e DB_HOST=127.0.0.1 \
         -e DB_RC_DATABASE=roundcube \
         -e DB_RC_USERNAME=roundcube \
         -e DB_RC_PASSWORD=simple123 \
-        -e IMAP_HOST=imap \
+        -e IMAP_HOST=localhost \
         -e IMAP_PORT=11143 \
         -e IMAP_ADMIN_LOGIN=cyrus-admin \
         -e IMAP_ADMIN_PASSWORD=simple123 \
-        -e MAIL_HOST=postfix \
+        -e MAIL_HOST=localhost \
         -e MAIL_PORT=10587 \
         -e FILEAPI_WOPI_OFFICE=https://kolab.local \
-        -e CALENDAR_CALDAV_SERVER=http://imap:11080/dav \
-        -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://imap:11080/dav \
+        -e CALENDAR_CALDAV_SERVER=http://localhost:11080/dav \
+        -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav \
         roundcube:latest ./init.sh shell
     popd
 }
