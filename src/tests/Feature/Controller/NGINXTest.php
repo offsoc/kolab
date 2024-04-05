@@ -118,7 +118,7 @@ class NGINXTest extends TestCase
         $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
-        $response->assertHeader('auth-server', \config('smtp.host'));
+        $response->assertHeader('auth-server', gethostbyname(\config('smtp.host')));
         $response->assertHeader('auth-port', \config('smtp.port'));
         $response->assertHeader('auth-pass', $pass);
 
@@ -136,7 +136,7 @@ class NGINXTest extends TestCase
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
-        $response->assertHeader('auth-server', \config('imap.host'));
+        $response->assertHeader('auth-server', gethostbyname(\config('imap.host')));
         $response->assertHeader('auth-port', \config('imap.guam_port'));
 
 
