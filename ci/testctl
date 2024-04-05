@@ -150,7 +150,7 @@ kolab__setup() {
         redis:latest
 
     echo "Waiting for dependencies"
-    $PODMAN wait --condition healthy mariadb redis
+    podman__healthcheck mariadb redis
 
     # We run with a fixed config.demo overlay and override the environment with ci/env
     $PODMAN run -dt --pod tests --name webapp \
@@ -164,7 +164,7 @@ kolab__setup() {
         --health-cmd "./artisan octane:status || exit 1" \
         kolab-webapp:latest
     echo "Wait for webapp"
-    $PODMAN wait --condition healthy webapp
+    podman__healthcheck webapp
 
     # IMAP
     $PODMAN run -dt --pod tests --name imap --replace \
@@ -177,7 +177,7 @@ kolab__setup() {
         --health-cmd "test -e /run/saslauthd/mux && kill -0 \$(cat /var/run/master.pid)" \
         kolab-imap:latest
     echo "Waiting for dependencies"
-    $PODMAN wait --condition healthy imap
+    podman__healthcheck imap
 
     # Ensure all commands are processed
     echo "Flushing work queue"
@@ -192,7 +192,7 @@ kolab__setup() {
         --entrypoint sh \
         quay.io/minio/minio:latest -c 'mkdir -p /data/kolab && minio server /data --console-address ":9001"'
     echo "Waiting for dependencies"
-    $PODMAN wait --condition healthy minio
+    podman__healthcheck minio
 
     popd
 
@@ -309,7 +309,7 @@ kolab__validate() {
             FOUND=true
             break
         else
-            echo "Wating for mailbox";
+            echo "Waiting for mailbox";
             sleep 1;
         fi
     done
@@ -317,6 +317,15 @@ kolab__validate() {
         echo "Failed to find the inbox for john@kolab.org"
         exit 1
     fi
+}
+
+podman__healthcheck() {
+    for CONTAINER in $@; do
+        echo "Waiting for ${CONTAINER} become healthy "
+        while [ $(podman healthcheck run ${CONTAINER}) ]; do
+            echo -n "."; sleep 5;
+        done
+    done
 }
 
 kolab__help() {
