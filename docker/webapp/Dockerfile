@@ -1,10 +1,8 @@
 FROM apheleia/swoole:latest
 
-MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
-
 USER root
 
-RUN dnf -y install findutils gnupg2 git rsync procps-ng php-sodium && \
+RUN dnf -y install findutils gnupg2 git rsync && \
     dnf clean all
 
 EXPOSE 8000

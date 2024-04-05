@@ -2,6 +2,6 @@ FROM kolab-webapp:latest
 
 USER root
 
-RUN dnf -y install findutils php-phpunit-PHPUnit chromium php-xdebug
+RUN dnf -y install findutils chromium php-xdebug
 
 COPY init.sh /init.sh

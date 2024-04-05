@@ -1,17 +1,16 @@
-FROM fedora:37
-
-MAINTAINER Jeroen van Meeuwen <vanmeeuwen@apheleia-it.ch>
+FROM apheleia/almalinux9
 
 ARG SWOOLE_VERSION=v5.0.2
 ENV HOME=/opt/app-root/src
 
-LABEL io.k8s.description="Platform for serving PHP applications under Swoole" \
-      io.k8s.display-name="Swoole ${SWOOLE_VERSION}" \
-      io.openshift.expose-services="8000:http" \
-      io.openshift.tags="builder,php,swoole"
 
-RUN dnf -y update && \
+RUN dnf module reset php && \
+    dnf install -y https://rpms.remirepo.net/enterprise/remi-release-9.rpm && \
+    dnf module -y enable php:remi-8.1 && \
+    dnf module -y enable nodejs:20 && \
     dnf -y install \
+        --setopt=install_weak_deps=False \
+        --setopt 'tsflags=nodocs' \
         composer \
         diffutils \
         file \
@@ -20,7 +19,6 @@ RUN dnf -y update && \
         npm \
         openssl-devel \
         openssl \
-        curl \
         patch \
         iputils \
         bind-utils \
