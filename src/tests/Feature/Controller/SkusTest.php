@@ -113,6 +113,8 @@ class SkusTest extends TestCase
         $storage_sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
         // Invalid empty input
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Invalid quantity of mailboxes');
         SkusController::updateEntitlements($jane, [], $wallet);
 
         $this->assertSame(0, $wallet->entitlements()->count());
