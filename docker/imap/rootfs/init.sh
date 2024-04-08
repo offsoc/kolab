@@ -25,7 +25,6 @@ mkdir -p /var/lib/imap/db
 
 if [[ -f ${SSL_CERTIFICATE} ]]; then
     cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
-    chown 1001:0 /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
 fi
 
 /usr/sbin/saslauthd -m /run/saslauthd -a httpform -d &

@@ -56,7 +56,8 @@ RUN PATHS=(/run /run/saslauthd /var/run /var/lib/imap /var/spool/imap /etc/pki/c
     chown -R 1001:0 ${PATHS[@]} && \
     chmod -R g=u ${PATHS[@]}
 
-RUN PATHS=(/etc /etc/passwd /etc/saslauthd.conf /etc/cyrus.conf /etc/imapd.conf) && \
+RUN touch /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
+RUN PATHS=(/etc /etc/passwd /etc/saslauthd.conf /etc/cyrus.conf /etc/imapd.conf /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem) && \
     chown 1001:0 ${PATHS[@]} && \
     chmod g=u ${PATHS[@]}
 
