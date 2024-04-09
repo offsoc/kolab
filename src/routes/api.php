@@ -89,7 +89,6 @@ Route::group(
 if (\config('app.with_files')) {
     Route::group(
         [
-            'domain' => \config('app.website_domain'),
             'middleware' => ['auth:api', 'scope:fs,api'],
             'prefix' => 'v4'
         ],
@@ -103,7 +102,6 @@ if (\config('app.with_files')) {
     );
     Route::group(
         [
-            'domain' => \config('app.website_domain'),
             'middleware' => [],
             'prefix' => 'v4'
         ],
