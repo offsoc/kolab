@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set -x
 
 #Check all connections that roundcube requires. Should probably be a php script.
 #* imap
@@ -47,7 +46,7 @@ if [[ "$(./getconfig.php fileapi_backend)" == "kolabfiles" ]]; then
     URL=$(./getconfig.php fileapi_kolabfiles_baseuri)
     echo "Kolabfiles $URL"
     # We expect a 401 if the api call exists in this location (even unauthenticated).
-    curl -s -o /dev/null -w "%{http_code}" "${URL}v4/fs" | grep "401"
+    curl -s -o /dev/null -w "%{http_code}" "${URL}/v4/fs" | grep "401"
     echo "Kolabfiles API is OK"
 fi
 
