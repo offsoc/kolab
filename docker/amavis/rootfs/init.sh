@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -36,11 +36,14 @@ chown -R clamupdate:clamupdate /var/lib/clamav
 echo "DKIM keys:"
 amavisd -c $CONFIG showkeys
 
-# Initialize the clamav db. This command will have a non-zero exit code if no update is available.
-echo "Updating clamav db"
-/usr/bin/freshclam --datadir=/var/lib/clamav
-# Update once per day via daemon
-/usr/bin/freshclam -d -c 1
+# Initialize the clamav db.
+if $CLAMD; then
+    echo "Updating clamav db"
+    # If we run this too frequently we'll be rate-limited via HTTP 429
+    /usr/bin/freshclam --datadir=/var/lib/clamav
+    # Update once per day via daemon
+    /usr/bin/freshclam -d -c 1
+fi
 
 # Update the spam db every 30h
 echo "Updating spamassassin db"
@@ -53,8 +56,10 @@ sa-update -v || :
 #done
 #) &
 
-echo "Starting clamd"
-clamd --config-file=/etc/clamd.d/amavisd.conf
+if $CLAMD; then
+    echo "Starting clamd"
+    clamd --config-file=/etc/clamd.d/amavisd.conf
+fi
 
 # This allows to kill amavis to reload the config or code in a running container
 if $DEBUG; then
