@@ -3,7 +3,8 @@ FROM apheleia/almalinux9
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
         nginx \
-        nginx-mod-mail && \
+        nginx-mod-mail \
+        nginx-mod-stream && \
     dnf clean all
 
 # ENV APP_WEBSITE_DOMAIN
