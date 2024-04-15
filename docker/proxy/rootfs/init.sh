@@ -12,4 +12,8 @@ sed -i -r \
     -e "s|WEBMAIL_PATH|$WEBMAIL_PATH|g" \
     /etc/nginx/nginx.conf
 
-exec nginx -g "daemon off;"
+if [[ $1 == "validate" ]]; then
+    exec nginx -t
+else
+    exec nginx -g "daemon off;"
+fi
