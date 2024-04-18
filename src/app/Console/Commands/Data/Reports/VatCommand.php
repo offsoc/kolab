@@ -14,7 +14,7 @@ class VatCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'data:reports:vat {email}';
+    protected $signature = 'data:reports:vat {email} {period?}';
 
     /**
      * The console command description.
@@ -22,6 +22,8 @@ class VatCommand extends Command
      * @var string
      */
     protected $description = 'VAT report';
+
+    private $period = '';
 
     /**
      * Execute the console command.
@@ -31,10 +33,29 @@ class VatCommand extends Command
     public function handle()
     {
         $recipient = $this->argument('email');
+        $period = $this->argument('period');
 
-        // Note: Constructor takes care of date, but startOfDay()/endOfDay() takes care of time
-        $start = (new Carbon('first day of last month'))->startOfDay();
-        $end = (new Carbon('last day of last month'))->endOfDay();
+        // Note: Carbon constructor takes care of date, but startOfDay() takes care of time
+
+        if (empty($period)) {
+            // By default, report for the last month
+            $start = (new Carbon('first day of last month'))->startOfDay();
+            $end = $start->copy()->endOfMonth();
+            $period = $start->format('Y-m');
+        } elseif (preg_match('|^(\d{4})-(\d{2})$|', $period, $matches)) {
+            // Report for specific month (YYYY-MM)
+            $start = (new Carbon("{$period}-01"))->startOfDay();
+            $end = $start->copy()->endOfMonth();
+        } elseif (preg_match('|^(\d{4})$|', $period, $matches)) {
+            // Report for specific year (YYYY)
+            $start = (new Carbon("first day of January {$period}"))->startOfDay();
+            $end = $start->copy()->endOfYear();
+        } else {
+            $this->error("Invalid 'period' format");
+            exit(1);
+        }
+
+        $this->period = $period;
 
         $result = DB::select(
             <<<SQL
@@ -82,8 +103,9 @@ class VatCommand extends Command
     protected function sendMail($recipient, $csv)
     {
         $plainBody = 'See the attached report!';
+        $filename = "Report-{$this->period}.csv";
 
-        $attachment = Attachment::fromData(fn () => $csv, 'Report.csv')->withMime('text/csv');
+        $attachment = Attachment::fromData(fn () => $csv, $filename)->withMime('text/csv');
 
         $mail = new \App\Mail\Mailable();
 
