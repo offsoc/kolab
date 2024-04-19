@@ -10,6 +10,7 @@ use App\Traits\StatusPropertyTrait;
 use App\Traits\UuidIntKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 /**
  * The eloquent definition of a Domain.
@@ -358,33 +359,37 @@ class Domain extends Model
      * List the users of a domain, so long as the domain is not a public registration domain.
      * Note: It returns only users with a mailbox.
      *
-     * @return \App\User[] A list of users
+     * @return \Illuminate\Support\Collection<User> A collection of users
      */
-    public function users(): array
+    public function users()
     {
         if ($this->isPublic()) {
-            return [];
+            return collect([]);
         }
 
         $wallet = $this->wallet();
 
         if (!$wallet) {
-            return [];
+            return collect([]);
         }
 
         $mailboxSKU = Sku::withObjectTenantContext($this)->where('title', 'mailbox')->first();
 
         if (!$mailboxSKU) {
             \Log::error("No mailbox SKU available.");
-            return [];
+            return collect([]);
         }
 
-        return $wallet->entitlements()
-            ->where('entitleable_type', User::class)
-            ->where('sku_id', $mailboxSKU->id)
-            ->get()
-            ->pluck('entitleable')
-            ->all();
+        return User::select()
+            ->whereExists(function ($query) use ($wallet, $mailboxSKU) {
+                $query->select(DB::raw(1))
+                    ->from('entitlements')
+                    ->whereColumn('entitleable_id', 'users.id')
+                    ->where('entitlements.wallet_id', $wallet->id)
+                    ->where('entitlements.entitleable_type', User::class)
+                    ->where('entitlements.sku_id', $mailboxSKU->id);
+            })
+            ->get();
     }
 
     /**
