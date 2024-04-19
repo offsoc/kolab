@@ -115,7 +115,7 @@ module.exports =
         // mediasoup WebRtcTransport settings.
         webRtcTransport: {
             listenIps: [
-                { ip: process.env.WEBRTC_LISTEN_IP, announcedIp: null }
+                { ip: process.env.WEBRTC_LISTEN_IP, announcedIp: process.env.WEBRTC_ANNOUNCED_ADDRESS }
             ],
             // Initial bitrate estimation
             initialAvailableOutgoingBitrate: 1000000,
