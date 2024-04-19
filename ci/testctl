@@ -101,8 +101,8 @@ kolab__teardown() {
 # Build all containers required for testing
 kolab__build() {
     pushd ..
-    $PODMAN build docker/swoole/ -t apheleia/swoole
     $PODMAN build docker/base/ -f almalinux9 -t apheleia/almalinux9
+    $PODMAN build docker/swoole/ -t apheleia/swoole
 
     $PODMAN build --ulimit nofile=65535:65535 docker/webapp -t kolab-webapp
     $PODMAN build docker/imap -t kolab-imap
