@@ -11,7 +11,6 @@ class AllowedHosts
      *
      * @param \Illuminate\Http\Request $request
      * @param \Closure                 $next
-     * @param array|string             $hosts
      *
      * @return mixed
      */
@@ -19,8 +18,9 @@ class AllowedHosts
     {
         $allowedDomains = \config('app.services_allowed_domains');
         if (!in_array(request()->getHost(), $allowedDomains)) {
-            return abort(404);
+            abort(404);
         }
+
         return $next($request);
     }
 }
