@@ -1155,7 +1155,12 @@ function Client()
                 // TODO check with a timer that we're reaching the connected state
                 console.info("The 'connected' state is expected next.")
             }
+            // If we reach connecting, but never connected state, there are likely networking issues somewhere between client <-> turn <-> meet
+            if (connectionState == 'connected') {
+                console.info("Successfully connected send transport.")
+            }
             if (connectionState == 'failed') {
+                console.info("Failed to connecte send transport.")
                 await restartIce(sendTransport)
             }
         })
@@ -1196,7 +1201,11 @@ function Client()
                 // TODO check with a timer that we're reaching the connected state
                 console.info("The 'connected' state is expected next.")
             }
+            if (connectionState == 'connected') {
+                console.info("Successfully connected receive transport.")
+            }
             if (connectionState == 'failed') {
+                console.info("Failed to connecte receive transport.")
                 await restartIce(recvTransport)
             }
         })
