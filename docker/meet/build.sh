@@ -16,6 +16,7 @@ checkout kolab $GIT_REMOTE $GIT_REF
 
 cp -R kolab/meet/server /src/meetsrc
 rm -Rf /src/meetsrc/node_modules
+rm -Rf /src/kolab
 cd /src/meetsrc
 npm install
 npm install -g nodemon
