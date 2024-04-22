@@ -101,7 +101,7 @@ case ${KOLAB_ROLE} in
         echo "----> Running migrations"
         php -dmemory_limit=512M ./artisan migrate --force || :
         echo "----> Starting horizon"
-        ./artisan horizon
+        exec ./artisan horizon
     ;;
 
     octane|OCTANE)
