@@ -44,13 +44,13 @@ if [ -d /src/overlay ]; then
 fi
 
 # If we want to rely on the environment for configuration
-if [ $NOENVFILE ]; then
+if [[ $NOENVFILE == true ]]; then
     echo "----> removing envfile"
     rm -f .env
 fi
 
 
-if [ $REBUILD ]; then
+if [[ $REBUILD == true ]]; then
     rm -rf storage/framework
     mkdir -p storage/framework/{sessions,views,cache}
 
