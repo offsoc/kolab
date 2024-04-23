@@ -36,6 +36,8 @@ class Room extends EventEmitter {
 
         const worker = await this._getLeastLoadedWorker();
 
+        this._webRtcServer = worker.appData.webRtcServer;
+
         //If we already have a router for this worker just reuse,
         //there is no point in creating multiple routers on the same worker.
         for (const router of this._mediasoupRouters.values()) {
@@ -103,6 +105,8 @@ class Room extends EventEmitter {
         this._selfDestructTimeout = null;
 
         this._mediasoupRouters = new Map();
+
+        this._webRtcServer = null;
 
         this._createdAt = parseInt(Date.now() / 1000);
     }
@@ -442,9 +446,10 @@ class Room extends EventEmitter {
                 webRtcTransportOptions.preferUdp = true;
             }
 
-            const transport = await router.createWebRtcTransport(
-                webRtcTransportOptions
-            );
+            const transport = await router.createWebRtcTransport({
+                ...webRtcTransportOptions,
+                webRtcServer: this._webRtcServer
+            });
 
             transport.on('dtlsstatechange', (dtlsState) => {
                 if (dtlsState === 'failed' || dtlsState === 'closed') {

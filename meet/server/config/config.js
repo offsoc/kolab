@@ -121,6 +121,22 @@ module.exports =
             initialAvailableOutgoingBitrate: 1000000,
             // Additional options that are not part of WebRtcTransportOptions.
             maxIncomingBitrate: 1500000
-        }
+        },
+        webRtcServerOptions : {
+            listenInfos : [
+                {
+                    protocol    : 'udp',
+                    ip          : process.env.WEBRTC_LISTEN_IP || '0.0.0.0',
+                    announcedIp : process.env.WEBRTC_ANNOUNCED_ADDRESS,
+                    port        : 44444
+                },
+                {
+                    protocol    : 'tcp',
+                    ip          : process.env.WEBRTC_LISTEN_IP || '0.0.0.0',
+                    announcedIp : process.env.WEBRTC_ANNOUNCED_ADDRESS,
+                    port        : 44444
+                }
+            ],
+        },
     }
 };

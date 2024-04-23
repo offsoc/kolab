@@ -339,6 +339,21 @@ async function runMediasoupWorkers() {
         });
 
         mediasoupWorkers.push(worker);
+
+        // Create a WebRtcServer in this Worker.
+        // Each mediasoup Worker will run its own WebRtcServer, so those cannot
+        // share the same listening ports. Hence we increase the value in config.js
+        // for each Worker.
+        const webRtcServerOptions = JSON.parse(JSON.stringify(config.mediasoup.webRtcServerOptions));
+        const portIncrement = mediasoupWorkers.length - 1;
+
+        for (const listenInfo of webRtcServerOptions.listenInfos) {
+            listenInfo.port += portIncrement;
+        }
+
+        const webRtcServer = await worker.createWebRtcServer(webRtcServerOptions);
+        worker.appData.webRtcServer = webRtcServer;
+
     }
 }
 
