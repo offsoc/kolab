@@ -276,17 +276,24 @@ class LogonTest extends TestCaseDusk
     public function testAfterLogonRedirect(): void
     {
         $this->browse(function (Browser $browser) {
-            // User is logged in, visit the My account page
-            $browser->visit('/settings')
-                // invalidate the session token
-                ->execScript("localStorage.setItem('token', '123')")
-                // refresh the page
-                ->refresh()
+            // User is logged in, invalidate the session token and visit /settings page
+            $browser->execScript("localStorage.setItem('token', '123')")
+                ->visit('/settings')
                 ->on(new Home())
                 // log in the user
                 ->submitLogon('john@kolab.org', 'simple123', false)
                 // wait for a "redirect" to the My account page
                 ->waitForLocation('/settings');
+
+            // User is logged in, invalidate the session token and visit root page
+            // and expect to land on the logon form, and then Dashboard
+            $browser->execScript("localStorage.setItem('token', '123')")
+                ->visit('/')
+                ->on(new Home())
+                // log in the user
+                ->submitLogon('john@kolab.org', 'simple123', false)
+                // wait for a "redirect" to the Dashboard
+                ->waitForLocation('/dashboard');
         });
     }
 }

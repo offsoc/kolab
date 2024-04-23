@@ -176,7 +176,7 @@ const app = new Vue({
         },
         // Set user state to "not logged in"
         logoutUser(redirect) {
-            routerState.isLoggedIn = true
+            routerState.isLoggedIn = false
             this.authInfo = null
             localStorage.removeItem('token')
             localStorage.removeItem('refreshToken')
