@@ -19,7 +19,9 @@ function Client()
     let socket
     let sendTransportInfo
     let sendTransport
+    let sendTransportTimer = null
     let recvTransport
+    let recvTransportTimer = null
     let iceServers = []
     let nickname = ''
     let channel = null
@@ -1152,15 +1154,17 @@ function Client()
         sendTransport.on('connectionstatechange', async (connectionState) => {
             console.info("sendTransport new connection state:", connectionState)
             if (connectionState == 'connecting') {
-                // TODO check with a timer that we're reaching the connected state
                 console.info("The 'connected' state is expected next.")
+                sendTransportTimer = setTimeout(() => console.warn("Failed to connect the WebRtc send transport."), 6000)
+            } else {
+                clearTimeout(sendTransportTimer)
             }
             // If we reach connecting, but never connected state, there are likely networking issues somewhere between client <-> turn <-> meet
             if (connectionState == 'connected') {
                 console.info("Successfully connected send transport.")
             }
             if (connectionState == 'failed') {
-                console.info("Failed to connecte send transport.")
+                console.warn("Failed to connect send transport.")
                 await restartIce(sendTransport)
             }
         })
@@ -1198,14 +1202,17 @@ function Client()
         recvTransport.on('connectionstatechange', async (connectionState) => {
             console.info("recvTransport new connection state:", connectionState)
             if (connectionState == 'connecting') {
-                // TODO check with a timer that we're reaching the connected state
                 console.info("The 'connected' state is expected next.")
+                recvTransportTimer = setTimeout(() => console.warn("Failed to connect the WebRtc receive transport."), 6000)
+            } else {
+                clearTimeout(recvTransportTimer)
             }
+            // If we reach connecting, but never connected state, there are likely networking issues somewhere between client <-> turn <-> meet
             if (connectionState == 'connected') {
                 console.info("Successfully connected receive transport.")
             }
             if (connectionState == 'failed') {
-                console.info("Failed to connecte receive transport.")
+                console.warn("Failed to connect receive transport.")
                 await restartIce(recvTransport)
             }
         })
