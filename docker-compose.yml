@@ -176,6 +176,8 @@ services:
     networks:
       kolab:
         ipv4_address: 172.18.0.4
+    extra_hosts:
+      - "${APP_DOMAIN}:172.18.0.7"
     volumes:
       - ./src:/src/kolabsrc.orig:ro
     ports:
