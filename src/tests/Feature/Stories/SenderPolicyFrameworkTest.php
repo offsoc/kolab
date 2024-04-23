@@ -30,8 +30,8 @@ class SenderPolicyFrameworkTest extends TestCase
 
     public function tearDown(): void
     {
-        $this->deleteTestUser('john@test.domain');
-        $this->deleteTestDomain('test.domain');
+        $this->deleteTestUser($this->testUser->email);
+        $this->deleteTestDomain($this->testDomain->namespace);
 
         parent::tearDown();
     }
