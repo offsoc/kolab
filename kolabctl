@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 CONFIG=${CONFIG:-"config.prod"}
 HOST=${HOST:-"kolab.local"}
 BRANCH=${BRANCH:-"master"}

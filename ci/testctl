@@ -2,6 +2,7 @@
 
 base_dir="$(dirname $(realpath "$0"))"
 pushd "${base_dir}"
+pushd ..
 
 set -e
 set -x
@@ -96,6 +97,7 @@ PODMAN="podman"
 # Teardown the currently running environment
 kolab__teardown() {
     $PODMAN pod rm --force tests
+    $PODMAN pod rm --force dev
 }
 
 # Build all containers required for testing
@@ -124,75 +126,27 @@ kolab__setup() {
     echo "Setup"
     pushd ..
 
+    POD=tests
+
     # Create the pod first
-    $PODMAN pod create --name tests
+    $PODMAN pod create --name $POD
 
-    # Mariadb
-    $PODMAN run -dt --pod tests --name mariadb \
-        --mount=type=tmpfs,tmpfs-size=512M,destination=/var/lib/mysql,U=true \
-        -e MYSQL_ROOT_PASSWORD=simple123 \
-        -e TZ="+02:00" \
-        -e DB_HKCCP_DATABASE=kolabdev \
-        -e DB_HKCCP_USERNAME=kolabdev \
-        -e DB_HKCCP_PASSWORD=simple123 \
-        -e DB_KOLAB_DATABASE=kolab \
-        -e DB_KOLAB_USERNAME=kolab \
-        -e DB_KOLAB_PASSWORD=simple123 \
-        -e DB_RC_DATABASE=roundcube \
-        -e DB_RC_USERNAME=roundcube \
-        -e DB_RC_PASSWORD=simple123 \
-        --health-cmd "mysqladmin -u root ping && test -e /tmp/initialized" \
-        mariadb:latest
+    podman__run_mariadb
+    podman__run_redis
 
-    # redis
-    $PODMAN run -dt --pod tests --name redis \
-        --mount=type=tmpfs,tmpfs-size=128M,destination=/var/lib/redis,U=true \
-        --health-cmd "redis-cli ping || exit 1" \
-        redis:latest
-
-    echo "Waiting for dependencies"
     podman__healthcheck mariadb redis
 
-    # We run with a fixed config.demo overlay and override the environment with ci/env
-    $PODMAN run -dt --pod tests --name webapp \
-        --env-file=ci/env \
-        -v ./src:/src/kolabsrc.orig:ro \
-        -v ./config.demo/src:/src/overlay:ro \
-        -e NOENVFILE=true \
-        -e APP_SERVICES_ALLOWED_DOMAINS="webapp,localhost" \
-        -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
-        -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
-        --health-cmd "./artisan octane:status || exit 1" \
-        kolab-webapp:latest
-    echo "Wait for webapp"
+    podman__run_webapp
     podman__healthcheck webapp
 
-    # IMAP
-    $PODMAN run -dt --pod tests --name imap --replace \
-        --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/spool/imap,U=true,notmpcopyup \
-        --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/lib/imap,U=true,notmpcopyup \
-        -e APP_SERVICES_DOMAIN="localhost" \
-        -e SERVICES_PORT=8000 \
-        -e IMAP_ADMIN_LOGIN=cyrus-admin \
-        -e IMAP_ADMIN_PASSWORD=simple123 \
-        --health-cmd "test -e /run/saslauthd/mux && kill -0 \$(cat /var/run/master.pid)" \
-        kolab-imap:latest
-    echo "Waiting for dependencies"
+    podman__run_imap
     podman__healthcheck imap
 
     # Ensure all commands are processed
     echo "Flushing work queue"
     $PODMAN exec -ti webapp ./artisan queue:work --stop-when-empty
 
-    # minio
-    $PODMAN run -dt --pod tests --name minio --replace \
-        --mount=type=tmpfs,tmpfs-size=128M,destination=/data,U=true \
-        -e MINIO_ROOT_USER=minio \
-        -e MINIO_ROOT_PASSWORD=simple123 \
-        --health-cmd "mc ready local || exit 1" \
-        --entrypoint sh \
-        quay.io/minio/minio:latest -c 'mkdir -p /data/kolab && minio server /data --console-address ":9001"'
-    echo "Waiting for dependencies"
+    podman__run_minio
     podman__healthcheck minio
 
     popd
@@ -340,6 +294,141 @@ podman__healthcheck() {
     done
 }
 
+podman__run_proxy() {
+    $PODMAN run -dt --pod $POD --name proxy --replace \
+        -v ./docker/certs:/etc/certs:ro \
+        -e APP_WEBSITE_DOMAIN="kolab.local" \
+        -e SSL_CERTIFICATE="/etc/certs/imap.hosted.com.cert" \
+        -e SSL_CERTIFICATE_KEY="/etc/certs/imap.hosted.com.key" \
+        -e WEBAPP_BACKEND="http://localhost:8000" \
+        -e MEET_BACKEND="https://localhost:12443" \
+        -e ROUNDCUBE_BACKEND="http://localhost:8080" \
+        -e DAV_BACKEND="http://localhost:11080/dav" \
+        -e COLLABORA_BACKEND="http://localhost:9980" \
+        kolab-proxy:latest
+}
+
+podman__run_mariadb() {
+    $PODMAN run -dt --pod $POD --name mariadb --replace \
+        --mount=type=tmpfs,tmpfs-size=512M,destination=/var/lib/mysql,U=true \
+        -e MYSQL_ROOT_PASSWORD=simple123 \
+        -e TZ="+02:00" \
+        -e DB_HKCCP_DATABASE=kolabdev \
+        -e DB_HKCCP_USERNAME=kolabdev \
+        -e DB_HKCCP_PASSWORD=simple123 \
+        -e DB_KOLAB_DATABASE=kolab \
+        -e DB_KOLAB_USERNAME=kolab \
+        -e DB_KOLAB_PASSWORD=simple123 \
+        -e DB_RC_DATABASE=roundcube \
+        -e DB_RC_USERNAME=roundcube \
+        -e DB_RC_PASSWORD=simple123 \
+        --health-cmd "mysqladmin -u root ping && test -e /tmp/initialized" \
+        mariadb:latest
+}
+
+podman__run_redis() {
+    $PODMAN run -dt --pod $POD --name redis --replace \
+        --mount=type=tmpfs,tmpfs-size=128M,destination=/var/lib/redis,U=true \
+        --health-cmd "redis-cli ping || exit 1" \
+        redis:latest
+}
+
+podman__run_minio() {
+    $PODMAN run -dt --pod $POD --name minio --replace \
+        --mount=type=tmpfs,tmpfs-size=128M,destination=/data,U=true \
+        -e MINIO_ROOT_USER=minio \
+        -e MINIO_ROOT_PASSWORD=simple123 \
+        --health-cmd "mc ready local || exit 1" \
+        --entrypoint sh \
+        quay.io/minio/minio:latest -c 'mkdir -p /data/kolab && minio server /data --console-address ":9001"'
+}
+
+podman__run_webapp() {
+    # We run with a fixed config.demo overlay and override the environment with ci/env
+    $PODMAN run -dt --pod $POD --name webapp --replace \
+        --env-file=ci/env \
+        -v ./src:/src/kolabsrc.orig:ro \
+        -v ./config.prod/src:/src/overlay:ro \
+        -e NOENVFILE=true \
+        -e APP_SERVICES_ALLOWED_DOMAINS="webapp,localhost" \
+        -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
+        -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
+        --health-cmd "./artisan octane:status || exit 1" \
+        kolab-webapp:latest
+}
+
+podman__run_imap() {
+    $PODMAN run -dt --pod $POD --name imap --replace \
+        --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/spool/imap,U=true,notmpcopyup \
+        --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/lib/imap,U=true,notmpcopyup \
+        -e APP_SERVICES_DOMAIN="localhost" \
+        -e SERVICES_PORT=8000 \
+        -e IMAP_ADMIN_LOGIN=cyrus-admin \
+        -e IMAP_ADMIN_PASSWORD=simple123 \
+        --health-cmd "test -e /run/saslauthd/mux && kill -0 \$(cat /var/run/master.pid)" \
+        kolab-imap:latest
+}
+
+podman__run_meet() {
+    $PODMAN run -dt --pod $POD --name meet --replace \
+        -v ./meet/server:/src/meet:ro \
+        -v ./docker/certs/meet.kolab.local.cert:/etc/pki/tls/certs/meet.kolab.local.cert \
+        -v ./docker/certs/meet.kolab.local.key:/etc/pki/tls/private/meet.kolab.local.key \
+        -e WEBRTC_LISTEN_IP=127.0.0.1 \
+        -e WEBRTC_ANNOUNCED_ADDRESS=127.0.0.1 \
+        -e PUBLIC_DOMAIN=kolab.local \
+        -e LISTENING_HOST=127.0.0.1 \
+        -e LISTENING_PORT=12443 \
+        -e DEBUG="*" \
+        -e TURN_SERVER=none \
+        -e AUTH_TOKEN=simple123 \
+        -e WEBHOOK_TOKEN=simple123 \
+        -e WEBHOOK_URL=kolab.local/api/webhooks/meet \
+        -e SSL_CERT=/etc/pki/tls/certs/meet.kolab.local.cert \
+        -e SSL_KEY=/etc/pki/tls/private/meet.kolab.local.key \
+        kolab-meet:latest
+}
+
+kolab__deploy() {
+    POD=dev
+    # Create the pod first
+    $PODMAN pod create \
+        --replace \
+        --publish "443:6443" \
+        --publish "465:6465" \
+        --publish "587:6587" \
+        --publish "143:6143" \
+        --publish "993:6993" \
+        --publish "44444:44444/udp" \
+        --publish "44444:44444/tcp" \
+        --name $POD
+
+    podman__run_mariadb
+    podman__run_redis
+
+    podman__healthcheck mariadb redis
+
+    podman__run_webapp
+    podman__healthcheck webapp
+
+    podman__run_imap
+    podman__healthcheck imap
+
+    # Ensure all commands are processed
+    echo "Flushing work queue"
+    $PODMAN exec -ti webapp ./artisan queue:work --stop-when-empty
+
+    $PODMAN exec webapp ./artisan user:password "admin@kolab.local" "simple123"
+
+    podman__run_minio
+    podman__healthcheck minio
+
+    podman__run_meet
+    podman__healthcheck meet
+
+    podman__run_proxy
+}
+
 kolab__help() {
     cat <<EOF
   This is the kolab test execution utility.
@@ -354,6 +443,7 @@ kolab__help() {
     rctest: Run tests roundcube testsuite (WIP)
     shell: Get a shell in the test container
     testrun: Setup & test in one command, suitable as one shot command to run the main tests.
+    deploy: Setup a test environment
 EOF
 }
 
