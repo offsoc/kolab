@@ -575,6 +575,7 @@ trait TestCaseTrait
         if (!$createInBackends) {
             Queue::fake();
         }
+
         $user = User::firstOrCreate(['email' => $email], $attrib);
 
         if ($user->trashed()) {
