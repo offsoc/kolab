@@ -51,7 +51,13 @@ class GetDiscountTest extends TestCase
         $this->assertSame(0, $code);
         $this->assertSame("No discount on this wallet.", $output);
 
-        $discount = \App\Discount::withObjectTenantContext($user)->where('discount', 100)->first();
+        $code = \Artisan::call("wallet:get-discount {$wallet->id} --int");
+        $output = trim(\Artisan::output());
+
+        $this->assertSame(0, $code);
+        $this->assertSame("0", $output);
+
+        $discount = \App\Discount::withObjectTenantContext($user)->where('discount', 10)->first();
         $wallet->discount()->associate($discount);
         $wallet->save();
 
@@ -60,6 +66,12 @@ class GetDiscountTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertSame("100", $output);
+        $this->assertSame("10% [TEST] Test voucher", $output);
+
+        $code = \Artisan::call("wallet:get-discount {$wallet->id} --int");
+        $output = trim(\Artisan::output());
+
+        $this->assertSame(0, $code);
+        $this->assertSame("10", $output);
     }
 }
