@@ -11,7 +11,7 @@ class GetDiscountCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'wallet:get-discount {wallet}';
+    protected $signature = 'wallet:get-discount {wallet} {--int}';
 
     /**
      * The console command description.
@@ -34,11 +34,26 @@ class GetDiscountCommand extends Command
             return 1;
         }
 
+        if ($this->option('int')) {
+            $this->info($wallet->discount?->discount ?? 0);
+            return 0;
+        }
+
         if (!$wallet->discount) {
             $this->info("No discount on this wallet.");
             return 0;
         }
 
-        $this->info((string) $wallet->discount->discount);
+        $result = $wallet->discount->discount . '%';
+
+        if ($code = $wallet->discount->code) {
+            $result .= " [{$code}]";
+        }
+
+        if ($description = $wallet->discount->description) {
+            $result .= " {$description}";
+        }
+
+        $this->info($result);
     }
 }
