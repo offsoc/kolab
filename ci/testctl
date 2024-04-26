@@ -102,7 +102,6 @@ kolab__teardown() {
 
 # Build all containers required for testing
 kolab__build() {
-    pushd ..
     $PODMAN build docker/base/ -f almalinux9 -t apheleia/almalinux9
     $PODMAN build docker/swoole/ -t apheleia/swoole
 
@@ -114,8 +113,6 @@ kolab__build() {
 
     $PODMAN build --ulimit nofile=65535:65535 docker/tests -t kolab-tests
     $PODMAN build --ulimit nofile=65535:65535 docker/roundcube -t roundcube
-
-    popd
 }
 
 # Setup the test environment
@@ -124,7 +121,6 @@ kolab__setup() {
     echo "Build"
     kolab__build
     echo "Setup"
-    pushd ..
 
     POD=tests
 
@@ -136,7 +132,7 @@ kolab__setup() {
 
     podman__healthcheck mariadb redis
 
-    podman__run_webapp
+    podman__run_webapp config.demo
     podman__healthcheck webapp
 
     podman__run_imap
@@ -149,8 +145,6 @@ kolab__setup() {
     podman__run_minio
     podman__healthcheck minio
 
-    popd
-
     # Validate the test environment 
     kolab__validate
 }
@@ -160,7 +154,6 @@ kolab__setup() {
 # "quicktest"
 # "tests/Feature/Jobs/WalletCheckTest.php"
 kolab__test() {
-    pushd ..
     $PODMAN run -ti --pod tests --name kolab-tests --replace \
         --env-file=ci/env \
         -v ./src:/src/kolabsrc.orig:ro \
@@ -168,22 +161,18 @@ kolab__test() {
         -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
         -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
         kolab-tests:latest /init.sh $@
-    popd
 }
 
 kolab__proxytest() {
-    pushd ..
     $PODMAN run -ti --pod tests --name proxy-tests --replace \
         -v ./docker/certs/:/etc/certs/:ro \
         --env-file=ci/env \
         -e SSL_CERTIFICATE=/etc/certs/imap.hosted.com.cert \
         -e SSL_CERTIFICATE_KEY=/etc/certs/imap.hosted.com.key \
         proxy:latest /init.sh validate
-    popd
 }
 
 kolab__lint() {
-    pushd ..
     kolab__test lint
 }
 
@@ -218,7 +207,6 @@ kolab__shell() {
 
 # Run the roundcube testsuite
 kolab__rctest() {
-    pushd ..
     $PODMAN run -t --pod tests --name roundcube --replace \
         -v ./ext:/src.orig:ro \
         -e APP_DOMAIN=kolab.test \
@@ -237,12 +225,10 @@ kolab__rctest() {
         -e CALENDAR_CALDAV_SERVER=http://imap:11080/dav \
         -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://imap:11080/dav \
         roundcube:latest ./init.sh $@
-    popd
 }
 
 # Get a shell inside the roundcube test container to run/debug tests
 kolab__rcshell() {
-    pushd ..
     $PODMAN run -ti --pod tests --name roundcube --replace \
         -v ./ext:/src.orig:ro \
         -e APP_DOMAIN=kolab.test \
@@ -261,7 +247,6 @@ kolab__rcshell() {
         -e CALENDAR_CALDAV_SERVER=http://localhost:11080/dav \
         -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav \
         roundcube:latest ./init.sh shell
-    popd
 }
 
 kolab__validate() {
@@ -348,9 +333,9 @@ podman__run_webapp() {
     $PODMAN run -dt --pod $POD --name webapp --replace \
         --env-file=ci/env \
         -v ./src:/src/kolabsrc.orig:ro \
-        -v ./config.prod/src:/src/overlay:ro \
+        -v ./$1/src:/src/overlay:ro \
         -e NOENVFILE=true \
-        -e APP_SERVICES_ALLOWED_DOMAINS="webapp,localhost" \
+        -e APP_SERVICES_ALLOWED_DOMAINS="webapp,localhost,services.kolab.local" \
         -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
         -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
         --health-cmd "./artisan octane:status || exit 1" \
@@ -394,6 +379,7 @@ kolab__deploy() {
     # Create the pod first
     $PODMAN pod create \
         --replace \
+        --add-host=kolab.local:127.0.0.1 \
         --publish "443:6443" \
         --publish "465:6465" \
         --publish "587:6587" \
@@ -408,7 +394,7 @@ kolab__deploy() {
 
     podman__healthcheck mariadb redis
 
-    podman__run_webapp
+    podman__run_webapp config.prod
     podman__healthcheck webapp
 
     podman__run_imap
