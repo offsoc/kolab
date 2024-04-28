@@ -80,6 +80,8 @@ RUN chmod -R 777 /etc/php.ini /etc/httpd
 
 VOLUME /data
 
+ENV RUN_MIGRATIONS=true
+
 USER 1001
 
 EXPOSE 8080

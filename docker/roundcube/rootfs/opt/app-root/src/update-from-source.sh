@@ -4,13 +4,14 @@
 for directory in roundcubemail syncroton iRony chwala autoconf freebusy
 do
     if [ -d /src.orig/$directory ]; then
-        rsync -av \
+        rsync -a \
             --no-links \
             --exclude=vendor \
             --exclude=temp \
             --exclude=config \
             --exclude=logs \
             --exclude=.git \
+            --exclude=.cache \
             --exclude=config.inc.php \
             --exclude=composer.json \
             --exclude=composer.lock \
@@ -24,7 +25,7 @@ if [ -d /src.orig/roundcubemail-plugins-kolab/plugins ]; then
     for plugin in $(ls -1d)
     do
         if [ -d /opt/app-root/src/roundcubemail/plugins/${plugin}/ ]; then
-            rsync -av \
+            rsync -a \
                 --exclude=vendor \
                 --exclude=composer.json \
                 --exclude=config.inc.php \

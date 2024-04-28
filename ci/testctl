@@ -219,6 +219,10 @@ kolab__rctest() {
         -e IMAP_PORT=11143 \
         -e IMAP_ADMIN_LOGIN=cyrus-admin \
         -e IMAP_ADMIN_PASSWORD=simple123 \
+        -e IMAP_DEBUG=false \
+        -e SQL_DEBUG=false \
+        -e ACTIVESYNC_DEBUG=false \
+        -e RUN_MIGRATIONS=true \
         -e MAIL_HOST=localhost \
         -e MAIL_PORT=10587 \
         -e FILEAPI_WOPI_OFFICE=https://kolab.local \
