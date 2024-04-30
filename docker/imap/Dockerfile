@@ -1,4 +1,4 @@
-FROM apheleia/almalinux9
+FROM almalinux9
 
 WORKDIR /root/
 
