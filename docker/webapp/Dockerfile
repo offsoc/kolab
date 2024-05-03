@@ -1,4 +1,4 @@
-FROM apheleia/swoole:latest
+FROM kolab-ci/swoole:latest
 
 USER root
 
