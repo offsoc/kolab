@@ -5,10 +5,10 @@ ENV HOME=/opt/app-root/src
 
 
 RUN dnf module reset php && \
-    dnf install -y https://rpms.remirepo.net/enterprise/remi-release-9.rpm && \
-    dnf module -y enable php:remi-8.1 && \
-    dnf module -y enable nodejs:20 && \
-    dnf -y install \
+    dnf install -qy https://rpms.remirepo.net/enterprise/remi-release-9.rpm && \
+    dnf module -qy enable php:remi-8.1 && \
+    dnf module -qy enable nodejs:20 && \
+    dnf -qy install \
         --setopt=install_weak_deps=False \
         --setopt 'tsflags=nodocs' \
         composer \
@@ -48,7 +48,7 @@ RUN dnf module reset php && \
         make install && \
         cd / && \
     rm -rf /swoole-src.git/ && \
-    dnf -y remove \
+    dnf -qy remove \
         diffutils \
         file \
         make \
