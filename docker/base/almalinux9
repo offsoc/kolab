@@ -6,10 +6,10 @@ ENV LANG=C.utf8
 ENV LC_ALL=C.utf8
 
 # Add EPEL.
-RUN dnf -y install 'dnf-command(config-manager)' && \
+RUN dnf -qy install 'dnf-command(config-manager)' && \
     dnf config-manager --set-enabled crb && \
-    dnf -y install epel-release && \
-    dnf -y install iputils vim-enhanced bind-utils procps-ng tcpdump telnet mc && \
+    dnf -qy install epel-release && \
+    dnf -qy install iputils vim-enhanced bind-utils procps-ng tcpdump telnet mc && \
     dnf clean all && \
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-9
 
