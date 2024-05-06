@@ -1,4 +1,4 @@
-FROM apheleia/almalinux9
+FROM kolab-ci/almalinux9
 
 ENV HOME=/opt/app-root/src
 
