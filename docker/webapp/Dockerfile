@@ -23,6 +23,4 @@ COPY update.sh /update.sh
 
 USER 1001
 
-ENV KOLAB_ROLE=combined
-
 CMD [ "/init.sh" ]
