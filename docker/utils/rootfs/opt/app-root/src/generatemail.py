@@ -278,7 +278,11 @@ class Generator:
         self.port = options.port
         self.username = options.username
         self.password = options.password
-        self.imap = imaplib.IMAP4_SSL(host=self.host, port=self.port)
+        self.maxAttachmentSize = options.maxAttachmentSize
+        if options.ssl:
+            self.imap = imaplib.IMAP4_SSL(host=self.host, port=self.port)
+        else:
+            self.imap = imaplib.IMAP4(host=self.host, port=self.port)
         self.imap.login(options.username, options.password)
 
     def clearmailbox(self):
@@ -312,7 +316,7 @@ class Generator:
             dtstamp = dtstamp - timedelta(seconds=600)
 
             if type == "mail":
-                attachmentMultiplier = 50000 * random.randint(0, 10)  # Approx 20 MB
+                attachmentMultiplier = 13158 * random.randint(0, self.maxAttachmentSize)  # 13158 is roughly 1 MB
                 result = mailtemplate.format(
                     messageid="<foobar{}@example.org>".format(i),
                     subject="Foobar {}".format(i),
@@ -343,8 +347,10 @@ parser.add_argument('target_directory', help='the target directory')
 parser.add_argument('--count', help='Number of emails to generate', type=int)
 parser.add_argument('--type', help='Type to generate', default='mail')
 parser.add_argument('--clear', help='Type to generate', action='store_true')
+parser.add_argument('--ssl', help='Use ssl', action='store_true')
 parser.add_argument('--host', help='imap host', default='localhost')
 parser.add_argument('--port', help='imap port', type=int, default=993)
+parser.add_argument('--maxAttachmentSize', help='in MB', type=int, default=20)
 parser.add_argument('--username', help='imap username')
 parser.add_argument('--password', help='imap password')
 
