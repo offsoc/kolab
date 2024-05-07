@@ -16,7 +16,7 @@ if (!function_exists("getenvlist")) {
     $dbHost = getenv('DB_HOST');
     $config['db_dsnw'] = "mysql://$dbUsername:$dbPass@$dbHost/$dbDatabase";
 
-    $components = explode('.', $_SERVER["HTTP_HOST"]);
+    $components = explode('.', $_SERVER["HTTP_HOST"] ?? "");
     if (count($components) > 2) {
         array_shift($components);
     }
