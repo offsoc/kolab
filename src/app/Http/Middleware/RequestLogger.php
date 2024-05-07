@@ -20,12 +20,14 @@ class RequestLogger
     public function terminate($request, $response)
     {
         if (\config('app.debug')) {
-            $url = $request->fullUrl();
-            $method = $request->getMethod();
-            $mem = round(memory_get_peak_usage() / 1024 / 1024, 1);
-            $time = microtime(true) - self::$start;
+            if (empty($response->noLogging)) {
+                $url = $request->fullUrl();
+                $method = $request->getMethod();
+                $mem = round(memory_get_peak_usage() / 1024 / 1024, 1);
+                $time = microtime(true) - self::$start;
 
-            \Log::debug(sprintf("C: %s %s [%sM]: %.4f sec.", $method, $url, $mem, $time));
+                \Log::debug(sprintf("C: %s %s [%sM]: %.4f sec.", $method, $url, $mem, $time));
+            }
         } else {
             $threshold = \config('logging.slow_log');
             if ($threshold && ($time = microtime(true) - self::$start) > $threshold) {

@@ -13,7 +13,9 @@ class HealthController extends Controller
      */
     public function liveness()
     {
-        return response()->json('success', 200);
+        $response = response()->json('success', 200);
+        $response->noLogging = true;
+        return $response;
     }
 
     /**
@@ -23,6 +25,8 @@ class HealthController extends Controller
      */
     public function readiness()
     {
-        return response()->json('success', 200);
+        $response = response()->json('success', 200);
+        $response->noLogging = true;
+        return $response;
     }
 }
