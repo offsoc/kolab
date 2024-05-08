@@ -31,8 +31,14 @@ spec:
           value: roundcube
         - name: DB_RC_PASSWORD
           value: simple123
+      livenessProbe:
+        tcpSocket:
+          port: 3306
       image: image-registry.openshift-image-registry.svc:5000/kolab-ci/mariadb
       imagePullPolicy: Always
+      readinessProbe:
+        exec:
+          command: mysqladmin -u root ping
       resources: {}
       securityContext:
         capabilities:
@@ -41,6 +47,9 @@ spec:
       terminationMessagePath: /dev/termination-log
       terminationMessagePolicy: File
       volumeMounts:
+        - name: mariadb-var_lib_mysql
+          mountPath: /var/lib/mysql
+          readOnly: False
         - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
           name: kube-api-access
           readOnly: true
@@ -48,7 +57,13 @@ spec:
     - name: redis
       image: image-registry.openshift-image-registry.svc:5000/kolab-ci/redis
       imagePullPolicy: Always
+      livenessProbe:
+        tcpSocket:
+          port: 6379
       resources: {}
+      readinessProbe:
+        exec:
+          command: redis-cli ping
       securityContext:
         capabilities:
           drop:
@@ -56,6 +71,9 @@ spec:
       terminationMessagePath: /dev/termination-log
       terminationMessagePolicy: File
       volumeMounts:
+        - name: redis-var_lib_redis
+          mountPath: /var/lib/redis
+          readOnly: False
         - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
           name: kube-api-access
           readOnly: true
@@ -72,6 +90,11 @@ spec:
           value: simple123
       image: image-registry.openshift-image-registry.svc:5000/kolab-ci/imap
       imagePullPolicy: Always
+      livenessProbe:
+        tcpSocket: "143"
+      readinessProbe:
+        exec:
+          command: test -e /run/saslauthd/mux
       resources: {}
       securityContext:
         capabilities:
@@ -80,6 +103,10 @@ spec:
       terminationMessagePath: /dev/termination-log
       terminationMessagePolicy: File
       volumeMounts:
+        - name: cyrus-var_lib_imap
+          mountPath: /var/lib/imap
+        - name: cyrus_var_spool_imap
+          mountPath: /var/spool/imap
         - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
           name: kube-api-access
           readOnly: true
@@ -152,3 +179,11 @@ spec:
               - key: service-ca.crt
                 path: service-ca.crt
               name: openshift-service-ca.crt
+    - name: cyrus-var_lib_imap
+      emptyDir: {}
+    - name: cyrus-var_spool_imap
+      emptyDir: {}
+    - name: mariadb-var_lib_mysql
+      emptyDir: {}
+    - name: redis-var_lib_redis
+      emptyDir: {}
