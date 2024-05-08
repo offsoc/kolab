@@ -14,9 +14,9 @@ ARG CONFIG=config.prod
 ARG RELEASE_MODE=prod
 COPY build.sh /build.sh
 RUN /build.sh && \
-    chgrp -R 0 /opt/app-root/src && \
-    chmod -R g=u /opt/app-root/src && \
-    chown -R 1001:0 /opt/app-root/src
+    chgrp -R 0 /opt/app-root && \
+    chmod -R g=u /opt/app-root && \
+    chown -R 1001:0 /opt/app-root
 
 COPY init.sh /init.sh
 COPY update.sh /update.sh
