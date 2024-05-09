@@ -34,11 +34,11 @@ spec:
       livenessProbe:
         tcpSocket:
           port: 3306
-      image: image-registry.openshift-image-registry.svc:5000/kolab-ci/mariadb
+      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/mariadb"
       imagePullPolicy: Always
       readinessProbe:
         exec:
-          command: mysqladmin -u root ping
+          command: ['mysqladmin', '-u', 'root', 'ping']
       resources: {}
       securityContext:
         capabilities:
@@ -47,7 +47,7 @@ spec:
       terminationMessagePath: /dev/termination-log
       terminationMessagePolicy: File
       volumeMounts:
-        - name: mariadb-var_lib_mysql
+        - name: var-lib-mysql
           mountPath: /var/lib/mysql
           readOnly: False
         - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
@@ -55,7 +55,7 @@ spec:
           readOnly: true
 
     - name: redis
-      image: image-registry.openshift-image-registry.svc:5000/kolab-ci/redis
+      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/redis"
       imagePullPolicy: Always
       livenessProbe:
         tcpSocket:
@@ -63,7 +63,7 @@ spec:
       resources: {}
       readinessProbe:
         exec:
-          command: redis-cli ping
+          command: ['redis-cli', 'ping']
       securityContext:
         capabilities:
           drop:
@@ -71,8 +71,8 @@ spec:
       terminationMessagePath: /dev/termination-log
       terminationMessagePolicy: File
       volumeMounts:
-        - name: redis-var_lib_redis
-          mountPath: /var/lib/redis
+        - name: var-lib-redis-data
+          mountPath: /var/lib/redis/data
           readOnly: False
         - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
           name: kube-api-access
@@ -88,13 +88,15 @@ spec:
           value: cyrus-admin
         - name: IMAP_ADMIN_PASSWORD
           value: simple123
-      image: image-registry.openshift-image-registry.svc:5000/kolab-ci/imap
+      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/imap"
       imagePullPolicy: Always
       livenessProbe:
-        tcpSocket: "143"
+        initialDelaySeconds: 10
+        tcpSocket:
+          port: 11143
       readinessProbe:
         exec:
-          command: test -e /run/saslauthd/mux
+          command: ['test', '-e', '/run/saslauthd/mux']
       resources: {}
       securityContext:
         capabilities:
@@ -103,9 +105,9 @@ spec:
       terminationMessagePath: /dev/termination-log
       terminationMessagePolicy: File
       volumeMounts:
-        - name: cyrus-var_lib_imap
+        - name: var-lib-imap
           mountPath: /var/lib/imap
-        - name: cyrus_var_spool_imap
+        - name: var-spool-imap
           mountPath: /var/spool/imap
         - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
           name: kube-api-access
@@ -119,7 +121,55 @@ spec:
           value: webapp,localhost
         - name: PASSPORT_PRIVATE_KEY
         - name: PASSPORT_PUBLIC_KEY
-      image: image-registry.openshift-image-registry.svc:5000/kolab-ci/webapp
+      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/webapp"
+      imagePullPolicy: Always
+      resources: {}
+      securityContext:
+        capabilities:
+          drop:
+          - MKNOD
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access
+        readOnly: true
+
+    - name: roundcube
+      env:
+        - name: APP_DOMAIN
+          value: "kolab.test"
+        - name: DES_KEY
+          value: "kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/"
+        - name: DB_HOST
+          value: "127.0.0.1"
+        - name: DB_RC_DATABASE
+          value: "roundcube"
+        - name: DB_RC_USERNAME
+          value: "roundcube"
+        - name: DB_RC_PASSWORD
+          value: "simple123"
+        - name: IMAP_HOST
+          value: "localhost"
+        - name: IMAP_PORT
+          value: "11143"
+          #  - name: IMAP_ADMIN_LOGIN
+          #    value: cyrus-admin
+          #  - name: IMAP_ADMIN_PASSWORD
+          #    value: simple123
+          #  - name: MAIL_HOST
+          #    value: localhost
+          #  - name: MAIL_PORT
+          #    value: 10587
+          #  - name: IMAP_DEBUG
+          #    value: true
+          #  - name: FILEAPI_WOPI_OFFICE
+          #    value: "https://kolab.local"
+          #  - name: CALENDAR_CALDAV_SERVER
+          #    value: "http://imap:11080/dav"
+          #  - name: KOLAB_ADDRESSBOOK_CARDDAV_SERVER
+          #    value: "http://imap:11080/dav"
+      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/roundcube"
       imagePullPolicy: Always
       resources: {}
       securityContext:
@@ -179,11 +229,11 @@ spec:
               - key: service-ca.crt
                 path: service-ca.crt
               name: openshift-service-ca.crt
-    - name: cyrus-var_lib_imap
+    - name: var-lib-imap
       emptyDir: {}
-    - name: cyrus-var_spool_imap
+    - name: var-spool-imap
       emptyDir: {}
-    - name: mariadb-var_lib_mysql
+    - name: var-lib-mysql
       emptyDir: {}
-    - name: redis-var_lib_redis
+    - name: var-lib-redis-data
       emptyDir: {}
