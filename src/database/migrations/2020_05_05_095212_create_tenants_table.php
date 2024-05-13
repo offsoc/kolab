@@ -23,9 +23,7 @@ class CreateTenantsTable extends Migration
             }
         );
 
-        $tenantId = \config('app.tenant_id');
 
-        $tenant = \App\Tenant::create(['id' => $tenantId, 'title' => 'Kolab Now']);
 
         foreach (['users', 'discounts', 'domains', 'plans', 'packages', 'skus'] as $tableName) {
             Schema::table(
@@ -36,9 +34,6 @@ class CreateTenantsTable extends Migration
                 }
             );
 
-            if ($tenantId) {
-                DB::statement("UPDATE `{$tableName}` SET `tenant_id` = {$tenantId}");
-            }
         }
 
         // Add fee column
