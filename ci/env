@@ -1,6 +1,6 @@
 APP_NAME=Kolab
 APP_ENV=local
-APP_KEY=
+APP_KEY=base64:EFXja/fHF01EMKiXW200b5zWOynbPzAHfUM78bOp+28=
 APP_DEBUG=true
 APP_URL=https://kolab.local
 APP_PUBLIC_URL=https://kolab.local
