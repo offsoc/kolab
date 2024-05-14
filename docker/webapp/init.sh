@@ -59,6 +59,7 @@ if [[ $REBUILD == true ]]; then
     ./artisan cache:clear
 
     php -dmemory_limit=-1 $(command -v composer) install
+    npm run dev
 fi
 
 if [ ! -f 'resources/countries.php' ]; then
