@@ -218,6 +218,31 @@ spec:
         name: kube-api-access
         readOnly: true
 
+    - name: minio
+      env:
+        - name: MINIO_ROOT_USER
+          value: "minio"
+        - name: MINIO_ROOT_PASSWORD
+          value: "simple123"
+      command: ['sh', '-c', 'mkdir -p /data/kolab && minio server /data --console-address ":9001"']
+      image: "quay.io/minio/minio:latest"
+      imagePullPolicy: Always
+      readinessProbe:
+        exec: ['bash', '-c' 'mc ready local || exit 1']
+      resources: {}
+      securityContext:
+        capabilities:
+          drop:
+          - MKNOD
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access
+          readOnly: true
+        - name: minio-data
+          mountPath: /data
+
   dnsPolicy: ClusterFirst
   enableServiceLinks: true
   imagePullSecrets:
@@ -273,4 +298,6 @@ spec:
     - name: var-lib-redis-data
       emptyDir: {}
     - name: kolab4-git-source-config
+      emptyDir: {}
+    - name: minio-data
       emptyDir: {}
