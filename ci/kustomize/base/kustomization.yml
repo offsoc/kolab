@@ -1,0 +1,5 @@
+resources:
+  - pods.yml
+
+commonLables:
+  app: kolab4-test
