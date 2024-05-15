@@ -1,5 +1,5 @@
 resources:
   - pods.yml
 
-commonLables:
+commonLabels:
   app: kolab4-test
