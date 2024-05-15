@@ -5,8 +5,7 @@ ENV HOME=/opt/app-root/src
 
 
 RUN dnf module reset php && \
-    dnf install -y https://rpms.remirepo.net/enterprise/remi-release-9.rpm && \
-    dnf module -y enable php:remi-8.1 && \
+    dnf module -y enable php:8.1 && \
     dnf module -y enable nodejs:20 && \
     dnf -y install \
         --setopt=install_weak_deps=False \
@@ -31,7 +30,6 @@ RUN dnf module reset php && \
         php-mysqlnd \
         php-opcache \
         php-pecl-apcu \
-        php-sodium \
         re2c \
         wget && \
     git clone https://github.com/swoole/swoole-src.git/ /swoole-src.git/ && \
