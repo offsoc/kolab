@@ -228,7 +228,8 @@ spec:
       image: "quay.io/minio/minio:latest"
       imagePullPolicy: Always
       readinessProbe:
-        exec: ['bash', '-c' 'mc ready local || exit 1']
+        exec:
+          command: ['bash', '-c' 'mc ready local || exit 1']
       resources: {}
       securityContext:
         capabilities:
