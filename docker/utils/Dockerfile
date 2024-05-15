@@ -3,13 +3,14 @@ FROM apheleia/almalinux9
 ENV HOME=/opt/app-root/src
 
 # Install troubleshooting utilities
+# FIXME not available under ppc64le
+        # chromium \
+        # chromedriver \
 RUN dnf -y install \
         --setopt 'tsflags=nodocs' \
         bind-utils \
         bzip2 \
         cmake \
-        chromium \
-        chromedriver \
         cyrus-imapd \
         cyrus-sasl-plain \
         expat-devel \
