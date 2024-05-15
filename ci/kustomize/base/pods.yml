@@ -229,7 +229,7 @@ spec:
       imagePullPolicy: Always
       readinessProbe:
         exec:
-          command: ['bash', '-c' 'mc ready local || exit 1']
+          command: ['bash', '-c', 'mc ready local || exit 1']
       resources: {}
       securityContext:
         capabilities:
