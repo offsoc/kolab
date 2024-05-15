@@ -6,6 +6,18 @@ metadata:
   name: kolab-test
   namespace: kolab-ci
 spec:
+  initContainers:
+    - name: kolab4-git-source
+      image: alpine/git
+      command:
+        - git
+        - clone
+        - https://git.kolab.org/source/kolab.git
+        - /kolab
+      volumeMounts:
+        - name: kolab4-git-source-config
+          mountPath: /kolab
+          readOnly: False
   containers:
     - name: mariadb
       env:
@@ -114,15 +126,30 @@ spec:
           readOnly: true
 
     - name: webapp
+      envFrom:
+        - configMapRef:
+            name: kolab-test
+        - secretRef:
+            name: passport-keys
       env:
         - name: NOENVFILE
           value: "true"
         - name: APP_SERVICES_ALLOWED_DOMAINS
           value: webapp,localhost
-        - name: PASSPORT_PRIVATE_KEY
-        - name: PASSPORT_PUBLIC_KEY
+        - name: DB_USERNAME
+          value: kolab
+        - name: DB_PASSWORD
+          value: simple123
+        - name: DB_DATABASE
+          value: kolab
+        - name: DB_HOST
+          value: 127.0.0.1
       image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/webapp"
       imagePullPolicy: Always
+      readinessProbe:
+        initialDelaySeconds: 5
+        exec:
+          command: ['bash', '-c', './artisan octane:status || exit 1']
       resources: {}
       securityContext:
         capabilities:
@@ -131,9 +158,17 @@ spec:
       terminationMessagePath: /dev/termination-log
       terminationMessagePolicy: File
       volumeMounts:
-      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-        name: kube-api-access
-        readOnly: true
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access
+          readOnly: True
+        - name: kolab4-git-source-config
+          subPath: src
+          mountPath: /src/kolabsrc.orig
+          readOnly: True
+        - name: kolab4-git-source-config
+          subPath: config.prod/src
+          mountPath: /src/overlay
+          readOnly: True
 
     - name: roundcube
       env:
@@ -236,4 +271,6 @@ spec:
     - name: var-lib-mysql
       emptyDir: {}
     - name: var-lib-redis-data
+      emptyDir: {}
+    - name: kolab4-git-source-config
       emptyDir: {}
