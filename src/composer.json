@@ -34,8 +34,7 @@
         "sabre/vobject": "^4.5",
         "spatie/laravel-translatable": "^6.5",
         "spomky-labs/otphp": "~10.0.0",
-        "stripe/stripe-php": "^10.7",
-        "lcobucci/jwt": "^5.0"
+        "stripe/stripe-php": "^10.7"
     },
     "require-dev": {
         "code-lts/doctum": "^5.5.1",
