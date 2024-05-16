@@ -20,7 +20,7 @@ spec:
           readOnly: False
   containers:
     - name: tests
-      command: testsuite
+      command: ['testsuite']
       envFrom:
         - configMapRef:
             name: kolab-test
@@ -106,11 +106,7 @@ spec:
   initContainers:
     - name: kolab4-git-source
       image: alpine/git
-      command:
-        - git
-        - clone
-        - https://git.kolab.org/source/kolab.git
-        - /kolab
+      command: ['git', 'clone', 'https://git.kolab.org/source/kolab.git', '/kolab']
       volumeMounts:
         - name: kolab4-git-source-config
           mountPath: /kolab
