@@ -23,7 +23,7 @@ spec:
       command: ['testsuite']
       envFrom:
         - configMapRef:
-            name: kolab-test
+            name: kolab-test-env
         - secretRef:
             name: passport-keys
       env:
@@ -221,7 +221,7 @@ spec:
     - name: webapp
       envFrom:
         - configMapRef:
-            name: kolab-test
+            name: kolab-test-env
         - secretRef:
             name: passport-keys
       env:
