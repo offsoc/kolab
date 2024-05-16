@@ -582,14 +582,6 @@ metadata:
   name: minio
   namespace: kolab-ci
 spec:
-  initContainers:
-    - name: kolab4-git-source
-      image: alpine/git
-      command: ['git', 'clone', 'https://git.kolab.org/source/kolab.git', '/kolab']
-      volumeMounts:
-        - name: kolab4-git-source-config
-          mountPath: /kolab
-          readOnly: False
   containers:
     - name: minio
       env:
@@ -668,9 +660,7 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  labels:
-    app: test
-  name: all-in-one
+  name: meet
   namespace: kolab-ci
 spec:
   initContainers:
