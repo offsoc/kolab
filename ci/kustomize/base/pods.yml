@@ -244,6 +244,58 @@ spec:
         - name: minio-data
           mountPath: /data
 
+    - name: meet
+      env:
+        - name: WEBRTC_LISTEN_IP
+          value: "127.0.0.1"
+        - name: WEBRTC_ANNOUNCED_ADDRESS
+          value: "127.0.0.1"
+        - name: PUBLIC_DOMAIN
+          value: "kolab.local"
+        - name: LISTENING_HOST
+          value: "127.0.0.1"
+        - name: LISTENING_PORT
+          value: "12443"
+        - name: DEBUG
+          value: "*"
+        - name: TURN_SERVER
+          value: "none"
+        - name: AUTH_TOKEN
+          value: "simple123"
+        - name: WEBHOOK_TOKEN
+          value: "simple123"
+        - name: WEBHOOK_URL
+          value: "kolab.local/api/webhooks/meet"
+        - name: SSL_CERT
+          value: "/etc/pki/tls/certs/meet.kolab.local.cert"
+        - name: SSL_KEY
+          value: "/etc/pki/tls/private/meet.kolab.local.key"
+      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/meet"
+      imagePullPolicy: Always
+      resources: {}
+      securityContext:
+        capabilities:
+          drop:
+          - MKNOD
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access
+          readOnly: True
+        - name: kolab4-git-source-config
+          subPath: meet/server
+          mountPath: /src/meet
+          readOnly: True
+        - name: kolab4-git-source-config
+          subPath: docker/certs/meet.kolab.local.cert
+          mountPath: /etc/pki/tls/certs/meet.kolab.local.cert
+          readOnly: True
+        - name: kolab4-git-source-config
+          subPath: docker/certs/meet.kolab.local.key
+          mountPath: /etc/pki/tls/certs/meet.kolab.local.key
+          readOnly: True
+
   dnsPolicy: ClusterFirst
   enableServiceLinks: true
   imagePullSecrets:
