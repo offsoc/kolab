@@ -100,6 +100,8 @@ metadata:
   name: mariadb
   namespace: kolab-ci
 spec:
+  hostname: mariadb
+  subdomain: tests
   containers:
     - name: mariadb
       env:
@@ -125,8 +127,6 @@ spec:
           value: roundcube
         - name: DB_RC_PASSWORD
           value: simple123
-      hostname: mariadb
-      subdomain: tests
       livenessProbe:
         tcpSocket:
           port: 3306
