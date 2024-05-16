@@ -20,7 +20,7 @@ spec:
           readOnly: False
   containers:
     - name: tests
-      command: ['testsuite']
+      command: ['init.sh', 'testsuite']
       envFrom:
         - configMapRef:
             name: kolab-test-env
