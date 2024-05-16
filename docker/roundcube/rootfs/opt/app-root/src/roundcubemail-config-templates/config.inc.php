@@ -33,16 +33,16 @@ if (!function_exists("getenvlist")) {
     $config['default_port'] = getenv('IMAP_PORT');
     $config['imap_delimiter'] = '/';
     $config['imap_force_lsub'] = true;
-    // if (str_contains(getenv('IMAP_URI'), 'tls') || str_contains(getenv('IMAP_URI'), 'ssl')) {
-    //     $config['imap_conn_options'] = [
-    //         'ssl' => [
-    //                 'verify_peer_name' => false,
-    //                 'verify_peer' => false,
-    //                 'allow_self_signed' => true
-    //             ],
-    //         'proxy_protocol' => getenv('IMAP_PROXY_PROTOCOL')
-    //     ];
-    // }
+    if (str_contains(getenv('IMAP_HOST'), 'tls') || str_contains(getenv('IMAP_HOST'), 'ssl')) {
+        $config['imap_conn_options'] = [
+            'ssl' => [
+                    'verify_peer_name' => false,
+                    'verify_peer' => false,
+                    'allow_self_signed' => true
+                ],
+            'proxy_protocol' => getenv('IMAP_PROXY_PROTOCOL')
+        ];
+    }
     $config['proxy_whitelist'] = getenvlist('PROXY_WHITELIST');
 
     // Caching and storage settings
@@ -58,13 +58,13 @@ if (!function_exists("getenvlist")) {
     $config['smtp_user'] = '%u';
     $config['smtp_pass'] = '%p';
     $config['smtp_helo_host'] = $_SERVER["HTTP_HOST"] ?? null;
-    // $config['smtp_conn_options'] = Array(
-    //     'ssl' => Array(
-    //             'verify_peer_name' => false,
-    //             'verify_peer' => false,
-    //             'allow_self_signed' => true
-    //         )
-    // );
+    $config['smtp_conn_options'] = [
+        'ssl' => [
+            'verify_peer_name' => false,
+            'verify_peer' => false,
+            'allow_self_signed' => true
+        ]
+    ];
 
     // Kolab specific defaults
     $config['product_name'] = 'Kolab Groupware';
