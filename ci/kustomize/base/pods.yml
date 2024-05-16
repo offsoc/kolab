@@ -489,7 +489,7 @@ spec:
         - name: DES_KEY
           value: "kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/"
         - name: DB_HOST
-          value: "127.0.0.1"
+          value: "mariadb"
         - name: DB_RC_DATABASE
           value: "roundcube"
         - name: DB_RC_USERNAME
@@ -497,7 +497,7 @@ spec:
         - name: DB_RC_PASSWORD
           value: "simple123"
         - name: IMAP_HOST
-          value: "localhost"
+          value: "imap"
         - name: IMAP_PORT
           value: "11143"
           #  - name: IMAP_ADMIN_LOGIN
