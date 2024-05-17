@@ -1,6 +1,6 @@
 <?php
     $config['managesieve_port'] = 4190;
-    $config['managesieve_host'] = 'imap';
+    $config['managesieve_host'] = str_replace("ssl://", "", getenv('IMAP_HOST'));
     $config['managesieve_auth_type'] = 'PLAIN';
     $config['managesieve_auth_cid'] = null;
     $config['managesieve_auth_pw'] = null;
