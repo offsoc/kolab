@@ -11,10 +11,14 @@
 // Main files source, backend driver which handles
 // authentication and configuration of Chwala
 // Note: Currently only 'kolab' is supported
-$config['fileapi_backend'] = 'kolabfiles';
+if (getenv('KOLABOBJECTS_COMPAT_MODE') == "true") {
+    $config['fileapi_backend'] = 'kolab';
+} else {
+    $config['fileapi_backend'] = 'kolabfiles';
+    // This is how chwala connects to the kolabfiles backend
+    $config['fileapi_kolabfiles_baseuri'] = getenv('FILEAPI_KOLABFILES_BASEURI');
+}
 
-// This is how chwala connects to the kolabfiles backend
-$config['fileapi_kolabfiles_baseuri'] = getenv('FILEAPI_KOLABFILES_BASEURI');
 
 // Enabled external storage drivers
 // Note: Currenty only 'seafile' and webdav is available

@@ -1,5 +1,15 @@
 <?php
-    $config['calendar_driver'] = "caldav";
+    if (getenv('KOLABOBJECTS_COMPAT_MODE') == "true") {
+        $config['calendar_driver'] = "kolab";
+    } else {
+        $config['calendar_driver'] = "caldav";
+        # This is for internal access
+        $config['calendar_caldav_server'] = getenv('CALENDAR_CALDAV_SERVER') ?: "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
+    }
+
+    # This is for external access
+    $config['calendar_caldav_url'] = 'https://%h/dav/calendars/%u/%i';
+
     $config['calendar_default_view'] = "agendaWeek";
     $config['calendar_timeslots'] = 2;
     $config['calendar_first_day'] = 1;
@@ -7,10 +17,6 @@
     $config['calendar_work_start'] = 6;
     $config['calendar_work_end'] = 18;
     $config['calendar_event_coloring'] = 0;
-    # This is for external access
-    $config['calendar_caldav_url'] = 'https://%h/dav/calendars/%u/%i';
-    # This is for internal access
-    $config['calendar_caldav_server'] = getenv('CALENDAR_CALDAV_SERVER') ?: "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
 
     $config['calendar_itip_smtp_server'] = '';
     $config['calendar_itip_smtp_user'] = '';

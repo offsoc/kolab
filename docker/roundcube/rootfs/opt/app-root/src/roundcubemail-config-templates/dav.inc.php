@@ -31,6 +31,12 @@ $config['base_uri'] = '/iRony/';
 // User agent string written to kolab storage MIME messages
 $config['useragent'] = 'Kolab DAV Server libkolab/' . RCUBE_VERSION;
 
+// Avoid loading the kolab_auth plugin (because of ldap)
+$config['kolabdav_plugins'] = [
+    'libcalendaring',
+    'libkolab'
+];
+
 // Type of Auth cache. Supported values: 'db', 'apc' and 'memcache'.
 // Note: This is only for username canonification map.
 $config['kolabdav_auth_cache'] = 'db';

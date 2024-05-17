@@ -2,36 +2,8 @@
 
     // The id of the LDAP address book (which refers to the rcmail_config['ldap_public'])
     // or complete addressbook definition array.
-    $config['kolab_auth_addressbook'] = Array(
-        'name'                      => 'Kolab Auth',
-        'hosts'                     => Array(getenv('LDAP_HOST')),
-        'port'                      => 389,
-        'use_tls'                   => false,
-        'user_specific'             => true,
-        'base_dn'                   => 'dc=hosted,dc=com',
-        'bind_dn'                   => 'uid=kolab-service,ou=Special Users,dc=mgmt,dc=com',
-        'bind_pass'                 => getenv('LDAP_SERVICE_BIND_PW'),
-        'writable'                  => false,
-        'ldap_version'              => 3,       // using LDAPv3
-        'fieldmap'                  => Array(
-                'name'              => 'displayname',
-                'email'             => 'mail',
-                'email:alias'       => 'alias',
-                'role'              => 'nsroledn',
-            ),
-        'sort'                      => 'displayname',
-        'scope'                     => 'sub',
-        'filter'                    => '(objectClass=*)',
-        'fuzzy_search'              => true,
-        'sizelimit'                 => '0',
-        'timelimit'                 => '0',
-        'groups'                    => Array(
-                'base_dn'           => 'dc=hosted,dc=com',
-                'filter'            => '(|(objectclass=groupofuniquenames)(objectclass=groupofurls))',
-                'object_classes'    => Array('top', 'groupOfUniqueNames'),
-                'member_attr'       => 'uniqueMember',
-            ),
-    );
+    // Ends up being read by iRony even without the plugin configured, so must be empty
+    $config['kolab_auth_addressbook'] = "";
 
 
     // This will overwrite defined filter

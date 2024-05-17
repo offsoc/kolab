@@ -9,7 +9,6 @@ if (!function_exists("getenvlist")) {
 }
 
     $config = array();
-
     $dbUsername = getenv('DB_RC_USERNAME');
     $dbPass = getenv('DB_RC_PASSWORD');
     $dbDatabase = getenv('DB_RC_DATABASE');
@@ -92,12 +91,17 @@ if (!function_exists("getenvlist")) {
         'tasklist',
         'enigma',
     ];
-    // 'kolab_auth',
-    // 'kolab_config',
-    // 'kolab_delegation',
-    // 'kolab_folders',
-    // 'kolab_notes',
-    // 'kolab_tags',
+
+    if (getenv('KOLABOBJECTS_COMPAT_MODE') == "true") {
+        $plugins[] = 'kolab_config';
+        $plugins[] = 'kolab_folders';
+        $plugins[] = 'kolab_notes';
+        $plugins[] = 'kolab_tags';
+
+        // These require ldap
+        // $plugins[] = 'kolab_auth';
+        // $plugins[] = 'kolab_delegation';
+    }
 
     if ($disabledPlugins = getenvlist('DISABLED_PLUGINS')) {
         $plugins = array_diff($plugins, $disabledPlugins);
