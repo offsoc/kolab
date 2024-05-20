@@ -202,7 +202,6 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: redis
-  namespace: kolab-ci
   labels:
     component: redis
 spec:
@@ -283,7 +282,6 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: imap
-  namespace: kolab-ci
   labels:
     component: imap
 spec:
@@ -377,7 +375,6 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: webapp
-  namespace: kolab-ci
   labels:
     component: webapp
 spec:
@@ -487,7 +484,6 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: roundcube
-  namespace: kolab-ci
   labels:
     component: roundcube
 spec:
@@ -505,6 +501,8 @@ spec:
         - name: DB_RC_USERNAME
           value: "roundcube"
         - name: DB_RC_PASSWORD
+          value: "simple123"
+        - name: DB_ROOR_PASSWORD
           value: "simple123"
         - name: IMAP_HOST
           value: "imap"
@@ -590,7 +588,6 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: minio
-  namespace: kolab-ci
   labels:
     component: minio
 spec:
@@ -673,7 +670,6 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: meet
-  namespace: kolab-ci
   labels:
     component: meet
 spec:
