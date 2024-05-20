@@ -2,8 +2,6 @@
 
 namespace App\Console;
 
-use Illuminate\Database\Eloquent\SoftDeletes;
-
 /**
  * This abstract class provides a means to treat objects in our model using CRUD, with the exception that
  * this particular abstract class lists objects.
@@ -22,9 +20,7 @@ abstract class ObjectListCommand extends ObjectCommand
             $this->signature .= "{$this->objectName}s";
         }
 
-        $classes = class_uses_recursive($this->objectClass);
-
-        if (in_array(SoftDeletes::class, $classes)) {
+        if ($this->isSoftDeletable($this->objectClass)) {
             $this->signature .= " {--with-deleted : Include deleted {$this->objectName}s}";
         }
 
@@ -41,10 +37,7 @@ abstract class ObjectListCommand extends ObjectCommand
      */
     public function handle()
     {
-        $classes = class_uses_recursive($this->objectClass);
-
-        // @phpstan-ignore-next-line
-        if (in_array(SoftDeletes::class, $classes) && $this->option('with-deleted')) {
+        if ($this->isSoftDeletable($this->objectClass) && $this->option('with-deleted')) {
             $objects = $this->objectClass::withTrashed();
         } else {
             $objects = new $this->objectClass();

@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 
 /**
@@ -25,6 +26,13 @@ abstract class ObjectRelationListCommand extends ObjectCommand
     protected $objectRelationArgs = [];
 
     /**
+     * The "relation" model class.
+     *
+     * @var string
+     */
+    protected $objectRelationClass;
+
+    /**
      * Supplement the base command constructor with a derived or generated signature and
      * description.
      *
@@ -41,6 +49,14 @@ abstract class ObjectRelationListCommand extends ObjectCommand
             Str::kebab($this->objectRelation),
             $this->objectName
         );
+
+        if (empty($this->objectRelationClass)) {
+            $this->objectRelationClass = "App\\" . rtrim(ucfirst($this->objectRelation), 's');
+        }
+
+        if ($this->isSoftDeletable($this->objectRelationClass)) {
+            $this->signature .= " {--with-deleted : Include deleted objects}";
+        }
 
         $this->signature .= " {--attr=* : Attributes other than the primary unique key to include}";
 
@@ -59,7 +75,8 @@ abstract class ObjectRelationListCommand extends ObjectCommand
         $object = $this->getObject(
             $this->objectClass,
             $argument,
-            $this->objectTitle
+            $this->objectTitle,
+            true
         );
 
         if (!$object) {
@@ -81,6 +98,11 @@ abstract class ObjectRelationListCommand extends ObjectCommand
             ($result instanceof \Illuminate\Database\Eloquent\Relations\Relation)
             || ($result instanceof \Illuminate\Database\Eloquent\Builder)
         ) {
+            // @phpstan-ignore-next-line
+            if ($this->isSoftDeletable($this->objectRelationClass) && $this->option('with-deleted')) {
+                $result->withoutGlobalScope(SoftDeletingScope::class);
+            }
+
             $result = $result->get();
         }
 
