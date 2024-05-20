@@ -63,3 +63,25 @@ spec:
     component: redis
   sessionAffinity: None
   type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp
+spec:
+  clusterIP: None
+  clusterIPs:
+  - None
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 8000
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    component: webapp
+  sessionAffinity: None
+  type: ClusterIP
