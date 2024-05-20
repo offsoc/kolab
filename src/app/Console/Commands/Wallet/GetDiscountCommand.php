@@ -35,7 +35,7 @@ class GetDiscountCommand extends Command
         }
 
         if ($this->option('int')) {
-            $this->info($wallet->discount?->discount ?? 0);
+            $this->info((string) ($wallet->discount?->discount ?? 0));
             return 0;
         }
 

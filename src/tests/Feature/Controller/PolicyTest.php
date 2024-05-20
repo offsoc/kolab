@@ -18,12 +18,22 @@ class PolicyTest extends TestCase
     {
         parent::setUp();
 
-        $this->clientAddress = '212.103.80.148';
-        $this->net = \App\IP4Net::getNet($this->clientAddress);
+        $this->clientAddress = '127.0.0.100';
+
+        $this->net = \App\IP4Net::create([
+                'net_number' => '127.0.0.0',
+                'net_broadcast' => '127.255.255.255',
+                'net_mask' => 8,
+                'country' => 'US',
+                'rir_name' => 'test',
+                'serial' => 1,
+        ]);
+
         $this->testDomain = $this->getTestDomain('test.domain', [
                 'type' => Domain::TYPE_EXTERNAL,
                 'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED
         ]);
+
         $this->testUser = $this->getTestUser('john@test.domain');
 
         Greylist\Connect::where('sender_domain', 'sender.domain')->delete();
@@ -36,6 +46,7 @@ class PolicyTest extends TestCase
     {
         $this->deleteTestUser($this->testUser->email);
         $this->deleteTestDomain($this->testDomain->namespace);
+        $this->net->delete();
 
         Greylist\Connect::where('sender_domain', 'sender.domain')->delete();
         Greylist\Whitelist::where('sender_domain', 'sender.domain')->delete();
@@ -46,7 +57,6 @@ class PolicyTest extends TestCase
     /**
      * Test greylist policy webhook
      *
-     * @group data
      * @group greylist
      */
     public function testGreylist()
