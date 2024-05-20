@@ -502,7 +502,7 @@ spec:
           value: "roundcube"
         - name: DB_RC_PASSWORD
           value: "simple123"
-        - name: DB_ROOR_PASSWORD
+        - name: DB_ROOT_PASSWORD
           value: "simple123"
         - name: IMAP_HOST
           value: "imap"

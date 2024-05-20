@@ -19,6 +19,7 @@ spec:
     component: mariadb
   sessionAffinity: None
   type: ClusterIP
+
 ---
 apiVersion: v1
 kind: Service
@@ -38,5 +39,27 @@ spec:
     targetPort: 11143
   selector:
     component: imap
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  clusterIP: None
+  clusterIPs:
+  - None
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    component: redis
   sessionAffinity: None
   type: ClusterIP
