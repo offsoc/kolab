@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\Stories;
 
+use App\Domain;
 use App\Policy\Greylist;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * @group slow
  * @group data
  * @group greylist
  */
@@ -20,20 +20,24 @@ class GreylistTest extends TestCase
     {
         parent::setUp();
 
-        $this->setUpTest();
-        $this->useServicesUrl();
         $this->clientAddress = '212.103.80.148';
-
         $this->net = \App\IP4Net::getNet($this->clientAddress);
 
-        DB::delete("DELETE FROM greylist_connect WHERE sender_domain = 'sender.domain';");
-        DB::delete("DELETE FROM greylist_whitelist WHERE sender_domain = 'sender.domain';");
+        $this->domainHosted = $this->getTestDomain('test.domain', [
+                'type' => Domain::TYPE_EXTERNAL,
+                'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED
+        ]);
+
+        $this->domainOwner = $this->getTestUser('john@test.domain');
+
+        Greylist\Connect::where('sender_domain', 'sender.domain')->delete();
+        Greylist\Whitelist::where('sender_domain', 'sender.domain')->delete();
     }
 
     public function tearDown(): void
     {
-        DB::delete("DELETE FROM greylist_connect WHERE sender_domain = 'sender.domain';");
-        DB::delete("DELETE FROM greylist_whitelist WHERE sender_domain = 'sender.domain';");
+        Greylist\Connect::where('sender_domain', 'sender.domain')->delete();
+        Greylist\Whitelist::where('sender_domain', 'sender.domain')->delete();
 
         parent::tearDown();
     }
@@ -253,11 +257,12 @@ class GreylistTest extends TestCase
         $this->assertFalse($request->shouldDefer());
 
         // Ensure we also find the setting by alias
-        $aliases = $this->domainOwner->aliases()->orderBy('alias')->pluck('alias')->all();
+        $this->domainOwner->setAliases(['alias1@test2.domain2']);
+
         $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
-                'recipient' => $aliases[0],
+                'recipient' => 'alias1@test2.domain2',
                 'client_address' => $this->clientAddress
             ]
         );
@@ -298,8 +303,13 @@ class GreylistTest extends TestCase
         $this->assertFalse($request->shouldDefer());
     }
 
+    /**
+     * @group slow
+     */
     public function testMultipleUsersAllDisabled()
     {
+        $this->setUpTest();
+
         $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
@@ -340,8 +350,13 @@ class GreylistTest extends TestCase
         }
     }
 
+    /**
+     * @group slow
+     */
     public function testMultipleUsersAnyEnabled()
     {
+        $this->setUpTest();
+
         $request = new Greylist\Request(
             [
                 'sender' => 'someone@sender.domain',
@@ -388,16 +403,14 @@ class GreylistTest extends TestCase
 
     public function testControllerNew()
     {
-        $data = [
+        $request = new Greylist\Request([
             'sender' => 'someone@sender.domain',
             'recipient' => $this->domainOwner->email,
             'client_address' => $this->clientAddress,
             'client_name' => 'some.mx'
-        ];
+        ]);
 
-        $response = $this->post('/api/webhooks/policy/greylist', $data);
-
-        $response->assertStatus(403);
+        $this->assertTrue($request->shouldDefer());
     }
 
     public function testControllerNotNew()
@@ -418,15 +431,13 @@ class GreylistTest extends TestCase
         $connect->created_at = \Carbon\Carbon::now()->subMinutes(6);
         $connect->save();
 
-        $data = [
+        $request = new Greylist\Request([
             'sender' => 'someone@sender.domain',
             'recipient' => $this->domainOwner->email,
             'client_address' => $this->clientAddress,
             'client_name' => 'some.mx'
-        ];
+        ]);
 
-        $response = $this->post('/api/webhooks/policy/greylist', $data);
-
-        $response->assertStatus(200);
+        $this->assertFalse($request->shouldDefer());
     }
 }

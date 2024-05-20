@@ -68,6 +68,8 @@ class SqlDebug
         $serialized = array_map(function ($entry) use ($ipv) {
             if ($entry instanceof \DateTime) {
                 return $entry->format('Y-m-d h:i:s');
+            } elseif (is_bool($entry)) {
+                return $entry ? 'true' : 'false';
             } elseif ($ipv && is_string($entry) && strlen($entry) == ($ipv == 6 ? 16 : 4)) {
                 // binary IP address? use HEX representation
                 return '0x' . bin2hex($entry);

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 class Request
 {
+    protected $connect;
     protected $header;
     protected $netID;
     protected $netType;
@@ -19,6 +20,11 @@ class Request
     protected $whitelist;
     protected $request = [];
 
+    /**
+     * Class constructor
+     *
+     * @param array $request Request input
+     */
     public function __construct($request)
     {
         $this->request = $request;
@@ -30,14 +36,17 @@ class Request
         }
     }
 
-    public function headerGreylist()
+    /**
+     * Get request state headers (Received-Greylist) - after self::shouldDefer() call
+     */
+    public function headerGreylist(): string
     {
         if ($this->whitelist) {
             if ($this->whitelist->sender_local) {
                 return sprintf(
-                    "Received-Greylist: sender %s whitelisted since %s",
+                    "Received-Greylist: sender %s whitelisted since %s (UTC)",
                     $this->sender,
-                    $this->whitelist->created_at->toDateString()
+                    $this->whitelist->created_at->toDateTimeString()
                 );
             }
 
@@ -49,20 +58,23 @@ class Request
             );
         }
 
-        $connect = $this->findConnectsCollection()->orderBy('created_at')->first();
-
-        if ($connect) {
+        if ($this->connect) {
             return sprintf(
                 "Received-Greylist: greylisted from %s until %s.",
-                $connect->created_at,
-                $this->timestamp
+                $this->connect->created_at->toDateTimeString(),
+                $this->timestamp->toDateTimeString()
             );
         }
 
         return "Received-Greylist: no opinion here";
     }
 
-    public function shouldDefer()
+    /**
+     * Connection check regarding greylisting policy
+     *
+     * @return bool True if the message should be put off, False otherwise
+     */
+    public function shouldDefer(): bool
     {
         list($this->netID, $this->netType) = \App\Utils::getNetFromAddress($this->request['client_address']);
 
@@ -82,11 +94,13 @@ class Request
             $this->senderLocal = substr($this->senderLocal, 0, 255);
         }
 
-        // Purge all old information if we have no recent entries
-        $noEntry = false;
-        if (!$this->findConnectsCollectionRecent()->exists()) {
+        // Get the most recent entry
+        $connect = $this->findConnectsCollection()->first();
+
+        // Purge all old information if we have no recent entry
+        if ($connect && $connect->updated_at < $this->timestamp->copy()->subDays(7)) {
             $this->findConnectsCollection()->delete();
-            $noEntry = true;
+            $connect = null;
         }
 
         // See if the recipient opted-out of the feature
@@ -100,80 +114,52 @@ class Request
         // the following block is to maintain statistics and state ...
 
         // determine if the sender domain is a whitelist from this network
-        $this->whitelist = Whitelist::where(
-            [
-                'sender_domain' => $this->senderDomain,
-                'net_id' => $this->netID,
-                'net_type' => $this->netType
-            ]
-        )->first();
+        $this->whitelist = Whitelist::where('sender_domain', $this->senderDomain)
+            ->where('net_id', $this->netID)
+            ->where('net_type', $this->netType)
+            ->first();
 
-        $cutoffDate = $this->timestamp->copy()->subDays(7);
+        $cutoffDate = $this->timestamp->copy()->subDays(7)->startOfDay();
 
+        DB::beginTransaction();
+
+        // Whitelist older than a month, delete it
+        if ($this->whitelist && $this->whitelist->updated_at < $this->timestamp->copy()->subMonthsWithoutOverflow(1)) {
+            $this->whitelist->delete();
+            $this->whitelist = null;
+        }
+
+        $all = Connect::where('sender_domain', $this->senderDomain)
+            ->where('net_id', $this->netID)
+            ->where('net_type', $this->netType)
+            ->where('updated_at', '>=', $cutoffDate->toDateTimeString());
+
+        // "Touch" the whitelist if exists
         if ($this->whitelist) {
-            if ($this->whitelist->updated_at < $this->timestamp->copy()->subMonthsWithoutOverflow(1)) {
-                $this->whitelist->delete();
-            } else {
+            // For performance reasons do not update timestamp more than once per 1 minute
+            // FIXME: Such granularity should be good enough, right? It might be a problem
+            // if you wanted to compare this timestamp with mail log entries.
+            if ($this->whitelist->updated_at < $this->timestamp->copy()->subMinute()) {
                 $this->whitelist->updated_at = $this->timestamp;
                 $this->whitelist->save(['timestamps' => false]);
-
-                Connect::where(
-                    [
-                        'sender_domain' => $this->senderDomain,
-                        'net_id' => $this->netID,
-                        'net_type' => $this->netType,
-                        'greylisting' => true
-                    ]
-                )
-                    ->whereDate('updated_at', '>=', $cutoffDate)
-                    ->update(
-                        [
-                            'greylisting' => false,
-                            'updated_at' => $this->timestamp
-                        ]
-                    );
-
-                return false;
             }
-        } else {
-            $count = Connect::where(
-                [
+
+            $all->where('greylisting', true)
+                ->update(['greylisting' => false, 'updated_at' => $this->timestamp]);
+
+            $enabled = false;
+        } elseif ($all->count() >= 4) {
+            // Automatically create a whitelist if we have at least 5 (4 existing plus this) messages from the sender
+            $this->whitelist = Whitelist::create([
                     'sender_domain' => $this->senderDomain,
                     'net_id' => $this->netID,
-                    'net_type' => $this->netType
-                ]
-            )
-                ->whereDate('updated_at', '>=', $cutoffDate)
-                ->limit(4)->count();
+                    'net_type' => $this->netType,
+                    'created_at' => $this->timestamp,
+                    'updated_at' => $this->timestamp
+            ]);
 
-            // Automatically create a whitelist if we have at least 5 (4 existing plus this) messages from the sender
-            if ($count >= 4) {
-                $this->whitelist = Whitelist::create(
-                    [
-                        'sender_domain' => $this->senderDomain,
-                        'net_id' => $this->netID,
-                        'net_type' => $this->netType,
-                        'created_at' => $this->timestamp,
-                        'updated_at' => $this->timestamp
-                    ]
-                );
-
-                Connect::where(
-                    [
-                        'sender_domain' => $this->senderDomain,
-                        'net_id' => $this->netID,
-                        'net_type' => $this->netType,
-                        'greylisting' => true
-                    ]
-                )
-                    ->whereDate('updated_at', '>=', $cutoffDate)
-                    ->update(
-                        [
-                            'greylisting' => false,
-                            'updated_at' => $this->timestamp
-                        ]
-                    );
-            }
+            $all->where('greylisting', true)
+                ->update(['greylisting' => false, 'updated_at' => $this->timestamp]);
         }
 
         // TODO: determine if the sender (individual) is a whitelist
@@ -181,13 +167,14 @@ class Request
         // TODO: determine if the sender is a penpal of any of the recipients. First recipient wins.
 
         if (!$enabled) {
+            DB::commit();
             return false;
         }
 
         $defer = true;
 
-        // Retrieve the entry for the sender/recipient/net combination
-        if (!$noEntry && ($connect = $this->findConnectsCollection()->first())) {
+        // Update/Create an entry for the sender/recipient/net combination
+        if ($connect) {
             $connect->connect_count += 1;
 
             // TODO: The period of time for which the greylisting persists is configurable.
@@ -199,8 +186,7 @@ class Request
 
             $connect->save();
         } else {
-            Connect::create(
-                [
+            $connect = Connect::create([
                     'sender_local' => $this->senderLocal,
                     'sender_domain' => $this->senderDomain,
                     'net_id' => $this->netID,
@@ -210,35 +196,28 @@ class Request
                     'recipient_type' => $this->recipientType,
                     'created_at' => $this->timestamp,
                     'updated_at' => $this->timestamp
-                ]
-            );
+            ]);
         }
+
+        $this->connect = $connect;
+
+        DB::commit();
 
         return $defer;
     }
 
-    private function findConnectsCollection()
+    protected function findConnectsCollection()
     {
-        $collection = Connect::where(
-            [
+        return Connect::where([
                 'sender_local' => $this->senderLocal,
                 'sender_domain' => $this->senderDomain,
                 'recipient_hash' => $this->recipientHash,
                 'net_id' => $this->netID,
                 'net_type' => $this->netType,
-            ]
-        );
-
-        return $collection;
+        ]);
     }
 
-    private function findConnectsCollectionRecent()
-    {
-        return $this->findConnectsCollection()
-            ->where('updated_at', '>=', $this->timestamp->copy()->subDays(7));
-    }
-
-    private function recipientFromRequest()
+    protected function recipientFromRequest()
     {
         $recipients = \App\Utils::findObjectsByRecipientAddress($this->request['recipient']);
 
@@ -265,7 +244,7 @@ class Request
         return $recipient;
     }
 
-    public function senderFromRequest()
+    protected function senderFromRequest()
     {
         return \App\Utils::normalizeAddress($this->request['sender']);
     }
