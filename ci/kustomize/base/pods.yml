@@ -100,8 +100,6 @@ metadata:
   labels:
     component: mariadb
 spec:
-  hostname: mariadb
-  subdomain: tests
   containers:
     - name: mariadb
       env:
