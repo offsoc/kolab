@@ -2,6 +2,7 @@ resources:
   - pods.yml
   - secrets.yml
   - services.yml
+  - configmaps.yml
 
 commonLabels:
   app: kolab4-test
