@@ -405,7 +405,7 @@ spec:
         - name: DB_DATABASE
           value: kolab
         - name: DB_HOST
-          value: 127.0.0.1
+          value: mariadb
       image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/webapp"
       imagePullPolicy: Always
       readinessProbe:
