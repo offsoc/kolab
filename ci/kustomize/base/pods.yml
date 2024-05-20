@@ -2,9 +2,8 @@
 #kind: Pod
 #metadata:
 #  labels:
-#    app: test
+#    component: tests
 #  name: tests
-#  namespace: kolab-ci
 #spec:
 #  initContainers:
 #    - name: kolab4-git-source
@@ -98,7 +97,8 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: mariadb
-  namespace: kolab-ci
+  labels:
+    component: mariadb
 spec:
   hostname: mariadb
   subdomain: tests
@@ -205,6 +205,8 @@ kind: Pod
 metadata:
   name: redis
   namespace: kolab-ci
+  labels:
+    component: redis
 spec:
   containers:
     - name: redis
@@ -284,6 +286,8 @@ kind: Pod
 metadata:
   name: imap
   namespace: kolab-ci
+  labels:
+    component: imap
 spec:
   containers:
     - name: imap
@@ -376,6 +380,8 @@ kind: Pod
 metadata:
   name: webapp
   namespace: kolab-ci
+  labels:
+    component: webapp
 spec:
   initContainers:
     - name: kolab4-git-source
@@ -484,6 +490,8 @@ kind: Pod
 metadata:
   name: roundcube
   namespace: kolab-ci
+  labels:
+    component: roundcube
 spec:
   containers:
     - name: roundcube
@@ -585,6 +593,8 @@ kind: Pod
 metadata:
   name: minio
   namespace: kolab-ci
+  labels:
+    component: minio
 spec:
   containers:
     - name: minio
@@ -666,6 +676,8 @@ kind: Pod
 metadata:
   name: meet
   namespace: kolab-ci
+  labels:
+    component: meet
 spec:
   initContainers:
     - name: kolab4-git-source

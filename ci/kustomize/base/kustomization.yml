@@ -1,6 +1,7 @@
 resources:
   - pods.yml
   - secrets.yml
+  - services.yml
 
 commonLabels:
   app: kolab4-test
