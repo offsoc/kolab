@@ -126,7 +126,7 @@ case ${KOLAB_ROLE} in
         # but migrate:status will just fail.
         if is_not_initialized; then
             echo "----> Seeding the database"
-            php -dmemory_limit=512M ./artisan migrate --seed || :
+            php -dmemory_limit=512M ./artisan migrate --seed
         # If there is a db but no user we reseed
         elif test "$( env APP_DEBUG=false ./artisan -n users | wc -l )" -lt "1"; then
             echo "----> Initializing the database"
