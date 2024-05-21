@@ -1,0 +1,4 @@
+base: ../../base
+
+resources:
+  - webapp_pod.yml
