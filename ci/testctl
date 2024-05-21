@@ -105,7 +105,9 @@ kolab__build() {
     $PODMAN build docker/base/ -f almalinux9 -t apheleia/almalinux9
     $PODMAN build docker/swoole/ -t apheleia/swoole
 
-    $PODMAN build --ulimit nofile=65535:65535 docker/webapp -t kolab-webapp
+    $PODMAN build --ulimit nofile=65535:65535 docker/webapp -t kolab-webapp \
+        ${KOLAB_GIT_REMOTE:+"--build-arg=GIT_REMOTE=$KOLAB_GIT_REMOTE"} \
+        ${KOLAB_GIT_REF:+"--build-arg=GIT_REF=$KOLAB_GIT_REF"}
     $PODMAN build docker/imap -t kolab-imap
     $PODMAN build docker/mariadb -t mariadb
     $PODMAN build docker/redis -t redis
