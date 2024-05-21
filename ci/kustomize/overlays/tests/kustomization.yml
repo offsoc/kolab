@@ -1,0 +1,5 @@
+resources:
+  - tests-pod.yml
+
+commonLabels:
+  app: kolab4-test
