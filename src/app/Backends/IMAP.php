@@ -59,6 +59,17 @@ class IMAP
         return true;
     }
 
+
+    public static function folderInfo(string $user, string $mailbox): array
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config, $user);
+        $imap->select($mailbox);
+        $result = $imap->data;
+        $imap->closeConnection();
+        return $result;
+    }
+
     /**
      * Create a mailbox.
      *

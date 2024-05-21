@@ -4,12 +4,17 @@ namespace App\Backends;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Backends\IMAP;
 
 class Roundcube
 {
     private const FILESTORE_TABLE = 'filestore';
     private const USERS_TABLE = 'users';
     private const IDENTITIES_TABLE = 'identities';
+    private const SYNCROTON_DEVICE_TABLE = 'syncroton_device';
+    private const SYNCROTON_FOLDER_TABLE = 'syncroton_folder';
+    private const SYNCROTON_CONTENT_TABLE = 'syncroton_content';
+    private const SYNCROTON_SYNCKEY_TABLE = 'syncroton_synckey';
 
     /** @var array List of GnuPG files to store */
     private static $enigma_files = ['pubring.gpg', 'secring.gpg', 'pubring.kbx'];
@@ -278,5 +283,70 @@ class Roundcube
         }
 
         return $files;
+    }
+
+    /**
+     * Returns list of Enigma user homedir files to backup/sync
+     */
+    public static function syncrotonInspect(string $email)
+    {
+        $db = self::dbh();
+
+        $user = $db->table(self::USERS_TABLE)->select('user_id')
+            ->where('username', \strtolower($email))
+            ->first();
+
+        $devices = $db->table(self::SYNCROTON_DEVICE_TABLE)->select('id', 'deviceid', 'devicetype')
+            ->where('owner_id', $user->user_id)
+            ->get()
+            ->all();
+
+        foreach ($devices as $device) {
+            $result[$device->id]['deviceid'] = $device->deviceid;
+            $result[$device->id]['devicetype'] = $device->devicetype;
+
+            $synckey = $db->table(self::SYNCROTON_SYNCKEY_TABLE)->select()
+                ->where('device_id', $device->id)
+                ->where('type', 'FolderSync')
+                ->orderBy('counter', 'desc')
+                ->first();
+
+            $result[$device->id]['FolderSync'] = [
+                "counter" => $synckey->counter,
+                "lastsync" => $synckey->lastsync,
+            ];
+
+            $folders = $db->table(self::SYNCROTON_FOLDER_TABLE)->select()
+                ->where('device_id', $device->id)
+                ->get()->all();
+            foreach ($folders as $folder) {
+                $synckey = $db->table(self::SYNCROTON_SYNCKEY_TABLE)->select()
+                    ->where('device_id', $device->id)
+                    ->where('type', $folder->id)
+                    ->orderBy('counter', 'desc')
+                    ->first();
+
+                if ($synckey) {
+                    $result[$device->id]['folders'][$folder->id] = [
+                        "counter" => $synckey->counter,
+                        "lastsync" => $synckey->lastsync,
+                        "modseq" => $synckey->extra_data ? json_decode($synckey->extra_data)->modseq : null,
+                    ];
+                }
+                $result[$device->id]['folders'][$folder->id]['name'] = $folder->displayname;
+
+                $imapInfo = IMAP::folderInfo("admin@kolab.local", $folder->displayname);
+                $result[$device->id]['folders'][$folder->id]['imapModseq'] = $imapInfo['HIGHESTMODSEQ'] ?? null;
+                $result[$device->id]['folders'][$folder->id]['imapMessagecount'] = $imapInfo['EXISTS'] ?? null;
+
+                $contentCount = $db->table(self::SYNCROTON_CONTENT_TABLE)->select()
+                    ->where('device_id', $device->id)
+                    ->where('folder_id', $folder->id)
+                    ->count();
+                $result[$device->id]['folders'][$folder->id]['contentCount'] = $contentCount;
+            }
+        }
+
+        return $result;
     }
 }
