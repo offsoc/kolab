@@ -1,5 +1,6 @@
 resources:
   - pods.yml
+  - imap_pod.yml
   - secrets.yml
   - services.yml
   - configmaps.yml
