@@ -285,6 +285,11 @@ metadata:
   labels:
     component: imap
 spec:
+  initContainers:
+    - name: wait-for-webapp
+      image: "curlimages/curl:latest"
+      command: ["/bin/sh","-c"]
+      args: ["while [ $(curl -sw '%{http_code}' http://webapp:8000 -o /dev/null) -ne 200 ]; do sleep 5; echo 'Waiting for the webserver...'; done"]
   containers:
     - name: imap
       env:
