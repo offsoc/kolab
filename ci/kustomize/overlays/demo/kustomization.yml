@@ -3,3 +3,6 @@ bases:
 
 resources:
   - webapp_pod.yml
+
+commonLabels:
+  app: kolab4-test
