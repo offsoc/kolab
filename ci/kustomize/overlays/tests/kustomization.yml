@@ -3,3 +3,12 @@ resources:
 
 commonLabels:
   app: kolab4-test
+
+vars:
+  - name: WEBAPP_POD_IP
+    objref:
+      kind: Pod
+      name: webapp
+      apiVersion: v1
+    fieldref:
+      fieldpathA status.podIP: 
