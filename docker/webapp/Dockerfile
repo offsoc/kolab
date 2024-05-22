@@ -10,6 +10,8 @@ EXPOSE 8000
 ARG GIT_REF=master
 ARG GIT_REMOTE=https://git.kolab.org/source/kolab.git
 ARG CONFIG=config.prod
+ARG OVERLAY_GIT_REMOTE
+ARG OVERLAY_GIT_REF=master
 #Set this to prod or dev
 ARG RELEASE_MODE=prod
 COPY build.sh /build.sh

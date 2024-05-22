@@ -19,12 +19,17 @@ function checkout() {
 
 checkout kolab $GIT_REMOTE $GIT_REF
 
-pushd kolab
-#TODO support injecting a custom overlay into the build process here
-bin/configure.sh $CONFIG
-# In the docker-compose case we copy the .env file during the init phase, otherwise we use the environment for configuration.
-rm src/.env
-popd
+# We either apply a remote overlay, or one of the built in deployment configs.
+if [[ -z $OVERLAY_GIT_REMOTE ]]; then
+    pushd kolab
+    bin/configure.sh $CONFIG
+    # In the docker-compose case we copy the .env file during the init phase, otherwise we use the environment for configuration.
+    rm src/.env
+    popd
+else
+    checkout overlay $OVERLAY_GIT_REMOTE $OVERLAY_GIT_REF
+    rsync -av overlay/src/ kolab/src/
+fi
 
 rm -rf /opt/app-root/src
 cp -a kolab/src /opt/app-root/src
