@@ -20,9 +20,9 @@ spec:
         - name: DB_HKCCP_PASSWORD
           value: simple123
         - name: DB_KOLAB_DATABASE
-          value: kolab
+          value: kolabdev
         - name: DB_KOLAB_USERNAME
-          value: kolab
+          value: kolabdev
         - name: DB_KOLAB_PASSWORD
           value: simple123
         - name: DB_RC_DATABASE
