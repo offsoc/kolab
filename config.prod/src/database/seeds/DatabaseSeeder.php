@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             Seeds\PassportSeeder::class,
             Seeds\PowerDNSSeeder::class,
+            Seeds\TenantSeeder::class,
             Seeds\AdminSeeder::class,
             Seeds\ImapAdminSeeder::class,
             Seeds\NoreplySeeder::class,
