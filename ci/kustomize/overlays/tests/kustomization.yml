@@ -11,4 +11,4 @@ vars:
       name: webapp
       apiVersion: v1
     fieldref:
-      fieldpathA status.podIP: 
+      fieldpath: status.podIP: 
