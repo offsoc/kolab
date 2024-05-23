@@ -38,7 +38,7 @@ spec:
           hostAliases:
             - hostnames:
                 - kolab.local
-              ip: $(WEBAPP_POD_IP)
+              ip: ${WEBAPP_POD_IP}
           image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/tests"
           imagePullPolicy: Always
           resources: {}
