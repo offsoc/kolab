@@ -8,6 +8,10 @@
 
     $config['kolab_cache'] = true;
 
+    if (getenv('KOLABOBJECTS_COMPAT_MODE') != "true") {
+        $config['kolab_dav_sharing'] = "sharing";
+    }
+
     $config['kolab_ssl_verify_host'] = false;
     $config['kolab_ssl_verify_peer'] = false;
 
