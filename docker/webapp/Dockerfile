@@ -2,7 +2,7 @@ FROM kolab-ci/swoole:latest
 
 USER root
 
-RUN dnf -y install findutils gnupg2 git rsync && \
+RUN dnf -y install findutils gnupg2 git rsync iproute && \
     dnf clean all
 
 EXPOSE 8000
