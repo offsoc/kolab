@@ -25,7 +25,7 @@ spec:
         - name: NOENVFILE
           value: "true"
         - name: APP_SERVICES_ALLOWED_DOMAINS
-          value: webapp,localhost
+          value: "webapp,localhost,services.kolab.local"
         - name: DB_USERNAME
           value: kolabdev
         - name: DB_PASSWORD

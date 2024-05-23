@@ -48,6 +48,8 @@ spec:
       hostAliases:
         - hostnames:
             - kolab.local
+            - admin.kolab.local
+            - services.kolab.local
           ip: __WEBAPP_POD_IP__
       imagePullSecrets:
         - name: kolab-ci-sa-dockercfg-z8n94

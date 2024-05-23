@@ -15,6 +15,9 @@ spec:
   - port: 8000
     protocol: TCP
     targetPort: 8000
+  - port: 443
+    protocol: TCP
+    targetPort: 443
   selector:
     component: webapp
   sessionAffinity: None
