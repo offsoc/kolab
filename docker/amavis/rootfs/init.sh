@@ -59,6 +59,9 @@ sa-update -v || :
 if $CLAMD; then
     echo "Starting clamd"
     clamd --config-file=/etc/clamd.d/amavisd.conf
+else
+    echo "Configured without clamd"
+    sed -i "s/\['ClamAV-clamd'/#\['ClamAV-clamd'/" $CONFIG
 fi
 
 # This allows to kill amavis to reload the config or code in a running container
