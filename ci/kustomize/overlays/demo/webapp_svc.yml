@@ -12,12 +12,14 @@ spec:
   - IPv4
   ipFamilyPolicy: SingleStack
   ports:
-  - port: 8000
-    protocol: TCP
-    targetPort: 8000
-  - port: 443
-    protocol: TCP
-    targetPort: 443
+    - name: httpform
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 443
   selector:
     component: webapp
   sessionAffinity: None
