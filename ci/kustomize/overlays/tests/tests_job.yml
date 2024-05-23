@@ -45,7 +45,7 @@ spec:
               readOnly: true
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
-      hostAliasses:
+      hostAliases:
         - hostnames:
             - kolab.local
           ip: __WEBAPP_POD_IP__
