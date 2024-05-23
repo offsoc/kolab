@@ -16,14 +16,6 @@ spec:
         component: tests
       name: tests
     spec:
-      initContainers:
-        - name: kolab4-git-source
-          image: alpine/git
-          command: ['git', 'clone', 'https://git.kolab.org/source/kolab.git', 'kolab']
-          volumeMounts:
-            - name: kolab4-git-source
-              mountPath: /kolab
-              readOnly: False
       containers:
         - name: tests
           command: ['/init.sh', 'testsuite']
@@ -35,10 +27,6 @@ spec:
           env:
             - name: APP_SERVICES_DOMAIN
               value: "localhost"
-          hostAliases:
-            - hostnames:
-                - kolab.local
-              ip: __WEBAPP_POD_IP__
           image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/tests"
           imagePullPolicy: Always
           resources: {}
@@ -57,8 +45,20 @@ spec:
               readOnly: true
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
+      hostAliasses:
+        - hostnames:
+            - kolab.local
+          ip: __WEBAPP_POD_IP__
       imagePullSecrets:
         - name: kolab-ci-sa-dockercfg-z8n94
+      initContainers:
+        - name: kolab4-git-source
+          image: alpine/git
+          command: ['git', 'clone', 'https://git.kolab.org/source/kolab.git', 'kolab']
+          volumeMounts:
+            - name: kolab4-git-source
+              mountPath: /kolab
+              readOnly: False
       preemptionPolicy: PreemptLowerPriority
       priority: 0
       restartPolicy: Never
