@@ -70,6 +70,8 @@ fi
 echo "----> Waiting for db"
 ./artisan db:ping --wait
 
+# Import the service ca on openshift
+update-ca-trust
 
 function is_not_initialized() {
     ROWCOUNT=$(echo "select count(*) from migrations;" | mysql -N -b -u "$DB_USERNAME" -p"$DB_PASSWORD" -h "$DB_HOST" "$DB_DATABASE")
