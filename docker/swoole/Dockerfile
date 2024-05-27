@@ -1,4 +1,4 @@
-FROM almalinux9
+FROM kolab4-ci/almalinux9
 
 ARG SWOOLE_VERSION=v5.0.2
 ENV HOME=/opt/app-root/src
