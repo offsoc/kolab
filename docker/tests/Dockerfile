@@ -1,4 +1,4 @@
-FROM kolab-ci/kolab-webapp:latest
+FROM kolab4-ci/kolab-webapp:latest
 
 USER root
 

@@ -1,4 +1,4 @@
-FROM kolab-ci/almalinux9
+FROM kolab4-ci/almalinux9
 
 RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/ -u 1001 -g 1001 default)
 

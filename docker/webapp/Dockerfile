@@ -1,4 +1,4 @@
-FROM kolab-ci/swoole:latest
+FROM kolab4-ci/swoole:latest
 
 USER root
 

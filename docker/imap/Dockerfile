@@ -1,4 +1,4 @@
-FROM kolab-ci/almalinux9
+FROM kolab4-ci/almalinux9
 
 WORKDIR /root/
 
