@@ -40,7 +40,6 @@ class NGINXController extends Controller
         return $user;
     }
 
-
     /**
      * Authorize with the provided credentials.
      *
@@ -80,7 +79,6 @@ class NGINXController extends Controller
         return $result['user'];
     }
 
-
     /**
      * Convert domain.tld\username into username@domain for activesync
      *
@@ -91,15 +89,16 @@ class NGINXController extends Controller
     private function normalizeUsername($username)
     {
         $usernameParts = explode("\\", $username);
+
         if (count($usernameParts) == 2) {
             $username = $usernameParts[1];
             if (!strpos($username, '@') && !empty($usernameParts[0])) {
                 $username .= '@' . $usernameParts[0];
             }
         }
+
         return $username;
     }
-
 
     /**
      * Authentication request from the ngx_http_auth_request_module
@@ -125,12 +124,13 @@ class NGINXController extends Controller
             X-Real-Ip:                 31.10.153.58
          */
 
-        $username = $this->normalizeUsername($request->headers->get('Php-Auth-User', ""));
+        $username = $this->normalizeUsername($request->headers->get('Php-Auth-User', ''));
         $password = $request->headers->get('Php-Auth-Pw', null);
+        $ip = $request->headers->get('X-Real-Ip', null);
 
         if (empty($username)) {
-            //Allow unauthenticated requests
-            return response("");
+            // Allow unauthenticated requests
+            return response('');
         }
 
         if (empty($password)) {
@@ -139,20 +139,15 @@ class NGINXController extends Controller
         }
 
         try {
-            $this->authorizeRequest(
-                $username,
-                $password,
-                $request->headers->get('X-Real-Ip', null),
-            );
+            $this->authorizeRequest($username, $password, $ip);
         } catch (\Exception $e) {
             \Log::debug("Authentication attempt failed: {$e->getMessage()}");
             return response("", 403);
         }
 
         \Log::debug("Authentication attempt succeeded");
-        return response("");
+        return response('');
     }
-
 
     /**
      * Authentication request from the cyrus sasl
@@ -164,12 +159,14 @@ class NGINXController extends Controller
     public function cyrussasl(Request $request)
     {
         $data = $request->getContent();
+
         // Assumes "%u %r %p" as form data in the cyrus sasl config file
         $array = explode(' ', rawurldecode($data));
         if (count($array) != 3) {
             \Log::debug("Authentication attempt failed: invalid data provided.");
             return response("", 403);
         }
+
         $username = $array[0];
         $realm = $array[1];
         $password = $array[2];
@@ -180,23 +177,19 @@ class NGINXController extends Controller
 
         if (empty($password)) {
             \Log::debug("Authentication attempt failed: Empty password provided.");
-            return response("", 403);
+            return response('', 403);
         }
 
         try {
-            $this->authorizeRequestCredentialsOnly(
-                $username,
-                $password
-            );
+            $this->authorizeRequestCredentialsOnly($username, $password);
         } catch (\Exception $e) {
             \Log::debug("Authentication attempt failed for $username: {$e->getMessage()}");
-            return response("", 403);
+            return response('', 403);
         }
 
         \Log::debug("Authentication attempt succeeded for $username");
-        return response("");
+        return response('');
     }
-
 
     /**
      * Authentication request.
@@ -233,20 +226,16 @@ class NGINXController extends Controller
         $ip = $request->headers->get('Client-Ip', null);
 
         try {
-            $user = $this->authorizeRequest(
-                $username,
-                $password,
-                $ip,
-            );
+            $user = $this->authorizeRequest($username, $password, $ip);
         } catch (\Exception $e) {
             return $this->byebye($request, $e->getMessage());
         }
 
         // All checks passed
         switch ($request->headers->get('Auth-Protocol')) {
-            case "imap":
+            case 'imap':
                 return $this->authenticateIMAP($request, (bool) $user->getSetting('guam_enabled'), $password);
-            case "smtp":
+            case 'smtp':
                 return $this->authenticateSMTP($request, $password);
             default:
                 return $this->byebye($request, "unknown protocol in request");
@@ -285,34 +274,29 @@ class NGINXController extends Controller
         $ip = $request->headers->get('Proxy-Protocol-Addr', null);
 
         try {
-            $user = $this->authorizeRequest(
-                $username,
-                $password,
-                $ip,
-            );
+            $user = $this->authorizeRequest($username, $password, $ip);
         } catch (\Exception $e) {
             return $this->byebye($request, $e->getMessage());
         }
 
         // All checks passed
         switch ($request->headers->get('Auth-Protocol')) {
-            case "imap":
+            case 'imap':
                 return $this->authenticateIMAP($request, false, $password);
             default:
                 return $this->byebye($request, "unknown protocol in request");
         }
     }
 
-
     /**
-    * Create an imap authentication response.
-    *
-    * @param \Illuminate\Http\Request $request The API request.
-    * @param bool   $prefGuam Whether or not Guam is enabled.
-    * @param string $password The password to include in the response.
-    *
-    * @return \Illuminate\Http\Response The response
-    */
+     * Create an imap authentication response.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @param bool   $prefGuam Whether or not Guam is enabled.
+     * @param string $password The password to include in the response.
+     *
+     * @return \Illuminate\Http\Response The response
+     */
     private function authenticateIMAP(Request $request, $prefGuam, $password)
     {
         if ($prefGuam) {
@@ -321,7 +305,7 @@ class NGINXController extends Controller
             $port = \config('imap.imap_port');
         }
 
-        $response = response("")->withHeaders(
+        $response = response('')->withHeaders(
             [
                 "Auth-Status" => "OK",
                 "Auth-Server" => gethostbyname(\config('imap.host')),
@@ -334,16 +318,16 @@ class NGINXController extends Controller
     }
 
     /**
-    * Create an smtp authentication response.
-    *
-    * @param \Illuminate\Http\Request $request The API request.
-    * @param string $password The password to include in the response.
-    *
-    * @return \Illuminate\Http\Response The response
-    */
+     * Create an smtp authentication response.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @param string $password The password to include in the response.
+     *
+     * @return \Illuminate\Http\Response The response
+     */
     private function authenticateSMTP(Request $request, $password)
     {
-        $response = response("")->withHeaders(
+        $response = response('')->withHeaders(
             [
                 "Auth-Status" => "OK",
                 "Auth-Server" => gethostbyname(\config('smtp.host')),
@@ -356,17 +340,18 @@ class NGINXController extends Controller
     }
 
     /**
-    * Create a failed-authentication response.
-    *
-    * @param \Illuminate\Http\Request $request The API request.
-    * @param string $reason The reason for the failure.
-    *
-    * @return \Illuminate\Http\Response The response
-    */
+     * Create a failed-authentication response.
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     * @param string $reason The reason for the failure.
+     *
+     * @return \Illuminate\Http\Response The response
+     */
     private function byebye(Request $request, $reason = null)
     {
         \Log::debug("Byebye: {$reason}");
-        $response = response("")->withHeaders(
+
+        $response = response('')->withHeaders(
             [
                 "Auth-Status" => "authentication failure",
                 "Auth-Wait" => 3
