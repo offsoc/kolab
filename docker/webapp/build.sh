@@ -29,10 +29,12 @@ if [[ -z $OVERLAY_GIT_REMOTE ]]; then
 else
     checkout overlay $OVERLAY_GIT_REMOTE $OVERLAY_GIT_REF
     rsync -av overlay/src/ kolab/src/
+    rm -rf overlay
 fi
 
 rm -rf /opt/app-root/src
 cp -a kolab/src /opt/app-root/src
+rm -rf kolab
 cd /opt/app-root/src/
 
 mkdir -p storage/framework/{sessions,views,cache}
