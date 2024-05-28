@@ -453,6 +453,10 @@ kolab__syncroton_sync() {
     $PODMAN run -t --network=host --add-host=kolab.local:127.0.0.1 --rm kolab-utils:latest ./activesynccli.py --host kolab.local --user admin@kolab.local --password simple123 sync 38b950ebd62cd9a66929c89615d0fc04
 }
 
+kolab__db() {
+    $PODMAN exec -ti mariadb /bin/bash -c "mysql -h 127.0.0.1 -u kolabdev --password=simple123 kolabdev"
+}
+
 kolab__help() {
     cat <<EOF
   This is the kolab test execution utility.
