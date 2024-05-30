@@ -62,14 +62,14 @@ spec:
   dnsPolicy: ClusterFirst
   enableServiceLinks: true
   imagePullSecrets:
-    - name: kolab-ci-sa-dockercfg-z8n94
+    - name: pipeline-dockercfg-z2lsh
   preemptionPolicy: PreemptLowerPriority
   priority: 0
   restartPolicy: Always
   schedulerName: default-scheduler
   securityContext: {}
-  serviceAccount: kolab-ci-sa
-  serviceAccountName: kolab-ci-sa
+  serviceAccount: pipeline
+  serviceAccountName: pipeline
   terminationGracePeriodSeconds: 30
   tolerations:
     - effect: NoExecute
