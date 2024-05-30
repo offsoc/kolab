@@ -34,7 +34,7 @@ spec:
           value: kolabdev
         - name: DB_HOST
           value: mariadb
-      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/webapp"
+      image: "image-registry.openshift-image-registry.svc:5000/kolab4-ci/webapp"
       imagePullPolicy: Always
       readinessProbe:
         initialDelaySeconds: 5

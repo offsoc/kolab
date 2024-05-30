@@ -8,7 +8,7 @@ metadata:
 spec:
   containers:
     - name: redis
-      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/redis"
+      image: "image-registry.openshift-image-registry.svc:5000/kolab4-ci/redis"
       imagePullPolicy: Always
       livenessProbe:
         tcpSocket:
@@ -123,7 +123,7 @@ spec:
           #    value: "http://imap:11080/dav"
           #  - name: KOLAB_ADDRESSBOOK_CARDDAV_SERVER
           #    value: "http://imap:11080/dav"
-      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/roundcube"
+      image: "image-registry.openshift-image-registry.svc:5000/kolab4-ci/roundcube"
       imagePullPolicy: Always
       resources: {}
       securityContext:
@@ -307,7 +307,7 @@ spec:
           value: "/etc/pki/tls/certs/meet.kolab.local.cert"
         - name: SSL_KEY
           value: "/etc/pki/tls/private/meet.kolab.local.key"
-      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/meet"
+      image: "image-registry.openshift-image-registry.svc:5000/kolab4-ci/meet"
       imagePullPolicy: Always
       resources: {}
       securityContext:

@@ -28,7 +28,7 @@ spec:
           env:
             - name: APP_SERVICES_DOMAIN
               value: "localhost"
-          image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/tests"
+          image: "image-registry.openshift-image-registry.svc:5000/kolab4-ci/tests"
           imagePullPolicy: Always
           resources: {}
           securityContext:

@@ -22,7 +22,7 @@ spec:
           value: cyrus-admin
         - name: IMAP_ADMIN_PASSWORD
           value: simple123
-      image: "image-registry.openshift-image-registry.svc:5000/kolab-ci/imap"
+      image: "image-registry.openshift-image-registry.svc:5000/kolab4-ci/imap"
       imagePullPolicy: Always
       livenessProbe:
         initialDelaySeconds: 10
