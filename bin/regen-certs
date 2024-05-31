@@ -30,9 +30,14 @@ else
     exit 1
 fi
 
-APP_DOMAIN=$(grep APP_DOMAIN .env | tail -n1 | sed "s/APP_DOMAIN=//")
+if [ "$#" -eq  "0" ]; then
+    APP_DOMAIN=$(grep -P "^APP_DOMAIN=.*" .env | tail -n1 | sed "s/APP_DOMAIN=//")
+    DOMAINS="kolab.mgmt.com kolab.hosted.com imap.hosted.com admin.${APP_DOMAIN} meet.${APP_DOMAIN}"
+else
+    DOMAINS=$1
+fi
 
-for name in kolab.mgmt.com kolab.hosted.com imap.hosted.com {{admin,meet}.,}${APP_DOMAIN}; do
+for name in $DOMAINS; do
     openssl genrsa -out ${cert_dir}/${name}.key 4096
 
     openssl req \
