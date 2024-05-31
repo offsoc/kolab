@@ -6,7 +6,6 @@ if [[ $1 == "--podman" ]]; then
     echo "Building with podman"
     shift
     podman build docker/swoole/ -t apheleia/swoole
-    # podman build docker/base/ -f almalinux8 -t apheleia/almalinux8
     podman build docker/base/ -f almalinux9 -t apheleia/almalinux9
     podman build --ulimit nofile=65535:65535 docker/webapp -t kolab-webapp \
         ${KOLAB_GIT_REMOTE:+"--build-arg=GIT_REMOTE=$KOLAB_GIT_REMOTE"} \

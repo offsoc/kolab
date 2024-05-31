@@ -108,6 +108,9 @@ kolab__build() {
     $PODMAN build --ulimit nofile=65535:65535 docker/webapp -t kolab-webapp \
         ${KOLAB_GIT_REMOTE:+"--build-arg=GIT_REMOTE=$KOLAB_GIT_REMOTE"} \
         ${KOLAB_GIT_REF:+"--build-arg=GIT_REF=$KOLAB_GIT_REF"}
+    $PODMAN build --ulimit nofile=65535:65535 docker/meet -t kolab-meet \
+        ${KOLAB_GIT_REMOTE:+"--build-arg=GIT_REMOTE=$KOLAB_GIT_REMOTE"} \
+        ${KOLAB_GIT_REF:+"--build-arg=GIT_REF=$KOLAB_GIT_REF"}
     $PODMAN build docker/imap -t kolab-imap
     $PODMAN build docker/mariadb -t mariadb
     $PODMAN build docker/redis -t redis
