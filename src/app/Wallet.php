@@ -101,17 +101,17 @@ class Wallet extends Model
 
         // Get all relevant entitlements...
         $entitlements = $this->entitlements()->withTrashed()
-            // existing entitlements created, or billed last less than a month ago
             // @phpstan-ignore-next-line
             ->where(function (Builder $query) {
-                $query->whereNull('deleted_at')
-                    ->where('updated_at', '<=', Carbon::now()->subMonthsWithoutOverflow(1));
-            })
-            // deleted entitlements not yet charged
-            // @phpstan-ignore-next-line
-            ->orWhere(function (Builder $query) {
-                $query->whereNotNull('deleted_at')
-                    ->whereColumn('updated_at', '<', 'deleted_at');
+                // existing entitlements created, or billed last less than a month ago
+                $query->where(function (Builder $query) {
+                    $query->whereNull('deleted_at')
+                        ->where('updated_at', '<=', Carbon::now()->subMonthsWithoutOverflow(1));
+                })
+                // deleted entitlements not yet charged
+                ->orWhere(function (Builder $query) {
+                    $query->whereColumn('updated_at', '<', 'deleted_at');
+                });
             })
             ->get();
 
