@@ -63,6 +63,7 @@ spec:
     component: minio
   sessionAffinity: None
   type: ClusterIP
+
 ---
 apiVersion: v1
 kind: Service
@@ -82,5 +83,27 @@ spec:
     targetPort: 6379
   selector:
     component: redis
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meet
+spec:
+  clusterIP: None
+  clusterIPs:
+  - None
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 12443
+    protocol: TCP
+    targetPort: 12443
+  selector:
+    component: meet
   sessionAffinity: None
   type: ClusterIP

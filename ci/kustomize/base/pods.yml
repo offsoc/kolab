@@ -42,15 +42,6 @@ spec:
   serviceAccount: pipeline
   serviceAccountName: pipeline
   terminationGracePeriodSeconds: 30
-  tolerations:
-    - effect: NoExecute
-      key: node.kubernetes.io/not-ready
-      operator: Exists
-      tolerationSeconds: 300
-    - effect: NoExecute
-      key: node.kubernetes.io/unreachable
-      operator: Exists
-      tolerationSeconds: 300
   volumes:
     - name: kube-api-access
       projected:
@@ -228,15 +219,6 @@ spec:
   serviceAccount: pipeline
   serviceAccountName: pipeline
   terminationGracePeriodSeconds: 30
-  tolerations:
-    - effect: NoExecute
-      key: node.kubernetes.io/not-ready
-      operator: Exists
-      tolerationSeconds: 300
-    - effect: NoExecute
-      key: node.kubernetes.io/unreachable
-      operator: Exists
-      tolerationSeconds: 300
   volumes:
     - name: kube-api-access
       projected:
@@ -345,15 +327,6 @@ spec:
   serviceAccount: pipeline
   serviceAccountName: pipeline
   terminationGracePeriodSeconds: 30
-  tolerations:
-    - effect: NoExecute
-      key: node.kubernetes.io/not-ready
-      operator: Exists
-      tolerationSeconds: 300
-    - effect: NoExecute
-      key: node.kubernetes.io/unreachable
-      operator: Exists
-      tolerationSeconds: 300
   volumes:
     - name: kube-api-access
       projected:
