@@ -472,14 +472,23 @@ class WalletTest extends TestCase
         $user->assignSku($storage, 5);
         $user->setSetting('plan_id', null); // disable plan and trial
 
+        // Set fake NOW date to make simpler asserting results that depend on number of days in current/last month
+        Carbon::setTestNow(Carbon::create(2021, 5, 21, 12));
+
+        // Add extra user with some deleted entitlements to make sure it does not interfere
+        $otherUser = $this->getTestUser('UserWallet1@UserWallet.com');
+        $otherUser->assignPlan($plan);
+        $otherUser->assignSku($storage, 5);
+        $this->backdateEntitlements($otherUser->entitlements, Carbon::now()->subWeeks(7));
+        $otherUser->removeSku($storage, 2);
+        $otherUser->entitlements()->withTrashed()->whereNotNull('deleted_at')
+            ->update(['updated_at' => Carbon::now()->subWeeks(8)]);
+
         // Reset reseller's wallet balance and transactions
         $reseller_wallet = $user->tenant->wallet();
         $reseller_wallet->balance = 0;
         $reseller_wallet->save();
         $reseller_wallet->transactions()->delete();
-
-        // Set fake NOW date to make simpler asserting results that depend on number of days in current/last month
-        Carbon::setTestNow(Carbon::create(2021, 5, 21, 12));
 
         // ------------------------------------------------
         // Test skipping entitlements before a month passed
