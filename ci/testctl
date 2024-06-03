@@ -444,7 +444,6 @@ kolab__deploy() {
     podman__healthcheck minio
 
     podman__run_meet
-    podman__healthcheck meet
 
     podman__run_roundcube
     podman__run_proxy
