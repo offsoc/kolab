@@ -118,6 +118,8 @@ kolab__build() {
 
     $PODMAN build --ulimit nofile=65535:65535 docker/tests -t kolab-tests
     $PODMAN build --ulimit nofile=65535:65535 docker/roundcube -t roundcube
+
+    env CERT_DIR=ci/certs APP_DOMAIN=kolab.local bin/regen-certs
 }
 
 # Setup the test environment
@@ -170,7 +172,7 @@ kolab__test() {
 
 kolab__proxytest() {
     $PODMAN run -ti --pod tests --name proxy-tests --replace \
-        -v ./docker/certs/:/etc/certs/:ro \
+        -v ./ci/certs/:/etc/certs/:ro \
         --env-file=ci/env \
         -e SSL_CERTIFICATE=/etc/certs/imap.hosted.com.cert \
         -e SSL_CERTIFICATE_KEY=/etc/certs/imap.hosted.com.key \
@@ -290,7 +292,7 @@ podman__healthcheck() {
 
 podman__run_proxy() {
     $PODMAN run -dt --pod $POD --name proxy --replace \
-        -v ./docker/certs:/etc/certs:ro \
+        -v ./ci/certs:/etc/certs:ro \
         -e APP_WEBSITE_DOMAIN="kolab.local" \
         -e SSL_CERTIFICATE="/etc/certs/imap.hosted.com.cert" \
         -e SSL_CERTIFICATE_KEY="/etc/certs/imap.hosted.com.key" \
@@ -389,8 +391,8 @@ podman__run_imap() {
 podman__run_meet() {
     $PODMAN run -dt --pod $POD --name meet --replace \
         -v ./meet/server:/src/meet:ro \
-        -v ./docker/certs/meet.kolab.local.cert:/etc/pki/tls/certs/meet.kolab.local.cert \
-        -v ./docker/certs/meet.kolab.local.key:/etc/pki/tls/private/meet.kolab.local.key \
+        -v ./ci/certs/meet.kolab.local.cert:/etc/pki/tls/certs/meet.kolab.local.cert \
+        -v ./ci/certs/meet.kolab.local.key:/etc/pki/tls/private/meet.kolab.local.key \
         -e WEBRTC_LISTEN_IP=127.0.0.1 \
         -e WEBRTC_ANNOUNCED_ADDRESS=127.0.0.1 \
         -e PUBLIC_DOMAIN=kolab.local \
