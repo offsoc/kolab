@@ -15,7 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        Passport::enablePasswordGrant();
+        Passport::ignoreMigrations();
         Passport::ignoreRoutes();
     }
 
