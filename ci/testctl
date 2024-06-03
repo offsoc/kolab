@@ -216,7 +216,7 @@ kolab__shell() {
 kolab__rctest() {
     $PODMAN run -t --pod tests --name roundcube --replace \
         -v ./ext:/src.orig:ro \
-        -e APP_DOMAIN=kolab.test \
+        -e APP_DOMAIN=kolab.local \
         -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
         -e DB_HOST=127.0.0.1 \
         -e DB_RC_DATABASE=roundcube \
@@ -242,7 +242,7 @@ kolab__rctest() {
 kolab__rcshell() {
     $PODMAN run -ti --pod tests --name roundcube --replace \
         -v ./ext:/src.orig:ro \
-        -e APP_DOMAIN=kolab.test \
+        -e APP_DOMAIN=kolab.local \
         -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
         -e DB_HOST=127.0.0.1 \
         -e DB_RC_DATABASE=roundcube \
@@ -307,7 +307,7 @@ podman__run_proxy() {
 podman__run_roundcube() {
     $PODMAN run -dt --pod $POD --name roundcube --replace \
         -v ./ext:/src.orig:ro \
-        -e APP_DOMAIN=kolab.test \
+        -e APP_DOMAIN=kolab.local \
         -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
         -e DB_HOST=127.0.0.1 \
         -e DB_RC_DATABASE=roundcube \
