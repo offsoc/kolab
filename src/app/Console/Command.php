@@ -31,6 +31,40 @@ abstract class Command extends \Illuminate\Console\Command
 
 
     /**
+     * Apply current tenant context to the query
+     *
+     * @param mixed $object The model class object
+     *
+     * @return mixed The model class object
+     */
+    protected function applyTenant($object)
+    {
+        if ($this->commandPrefix == 'scalpel') {
+            return $object;
+        }
+
+        $modelsWithOwner = [
+            \App\Wallet::class,
+        ];
+
+        $tenantId = \config('app.tenant_id');
+
+        // Add tenant filter
+        if (in_array(\App\Traits\BelongsToTenantTrait::class, class_uses($object::class))) {
+            $object = $object->withEnvTenantContext();
+        } elseif (in_array($object::class, $modelsWithOwner)) {
+            $object = $object->whereExists(function ($query) use ($tenantId) {
+                $query->select(DB::raw(1))
+                    ->from('users')
+                    ->whereRaw('wallets.user_id = users.id')
+                    ->whereRaw('users.tenant_id ' . ($tenantId ? "= $tenantId" : 'is null'));
+            });
+        }
+
+        return $object;
+    }
+
+    /**
      * Shortcut to creating a progress bar of a particular format with a particular message.
      *
      * @param int    $count   Number of progress steps
@@ -123,29 +157,7 @@ abstract class Command extends \Illuminate\Console\Command
             $model = new $objectClass();
         }
 
-        if ($this->commandPrefix == 'scalpel') {
-            return $model;
-        }
-
-        $modelsWithOwner = [
-            \App\Wallet::class,
-        ];
-
-        $tenantId = \config('app.tenant_id');
-
-        // Add tenant filter
-        if (in_array(\App\Traits\BelongsToTenantTrait::class, class_uses($objectClass))) {
-            $model = $model->withEnvTenantContext();
-        } elseif (in_array($objectClass, $modelsWithOwner)) {
-            $model = $model->whereExists(function ($query) use ($tenantId) {
-                $query->select(DB::raw(1))
-                    ->from('users')
-                    ->whereRaw('wallets.user_id = users.id')
-                    ->whereRaw('users.tenant_id ' . ($tenantId ? "= $tenantId" : 'is null'));
-            });
-        }
-
-        return $model;
+        return $this->applyTenant($model);
     }
 
     /**

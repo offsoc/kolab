@@ -58,7 +58,7 @@ class CreateTest extends TestCase
         $this->assertEmpty($user->role);
         $this->assertEquals($user->tenant_id, \config('app.tenant_id'));
 
-        // User not existing
+        // Existing user
         $code = \Artisan::call("tenant:create {$user->email} --title=\"Test Tenant\"");
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);

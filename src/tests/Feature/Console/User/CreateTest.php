@@ -17,6 +17,7 @@ class CreateTest extends TestCase
 
         $this->deleteTestUser('user@kolab.org');
         $this->deleteTestUser('admin@kolab.org');
+        $this->deleteTestUser('reseller@unknown.domain.tld');
     }
 
     /**
@@ -26,6 +27,7 @@ class CreateTest extends TestCase
     {
         $this->deleteTestUser('user@kolab.org');
         $this->deleteTestUser('admin@kolab.org');
+        $this->deleteTestUser('reseller@unknown.domain.tld');
 
         parent::tearDown();
     }
@@ -39,6 +41,18 @@ class CreateTest extends TestCase
 
         // Warning: We're not using artisan() here, as this will not
         // allow us to test "empty output" cases
+
+        // Invalid email
+        $code = \Artisan::call("user:create jack..test@kolab.org");
+        $output = trim(\Artisan::output());
+        $this->assertSame(1, $code);
+        $this->assertSame("jack..test@kolab.org: The specified email is invalid.", $output);
+
+        // Non-existing domain
+        $code = \Artisan::call("user:create jack@kolab");
+        $output = trim(\Artisan::output());
+        $this->assertSame(1, $code);
+        $this->assertSame("No such domain kolab.", $output);
 
         // Existing email
         $code = \Artisan::call("user:create jack@kolab.org");
@@ -58,19 +72,45 @@ class CreateTest extends TestCase
         $this->assertSame(1, $code);
         $this->assertSame("Domain kolabnow.com is public.", $output);
 
-        // Valid
-        $code = \Artisan::call("user:create user@kolab.org");
+        // Valid (user)
+        $code = \Artisan::call("user:create user@kolab.org --package=kolab");
         $output = trim(\Artisan::output());
         $user = User::where('email', 'user@kolab.org')->first();
         $this->assertSame(0, $code);
         $this->assertEquals($user->id, $output);
+        $this->assertSame(1, $user->countEntitlementsBySku('mailbox'));
+        $this->assertSame(1, $user->countEntitlementsBySku('groupware'));
+        $this->assertSame(5, $user->countEntitlementsBySku('storage'));
 
-        // Valid
-        $code = \Artisan::call("user:create admin@kolab.org --package=kolab --role=admin --password=simple123");
+        // Valid (admin)
+        $code = \Artisan::call("user:create admin@kolab.org --role=admin --password=simple123");
         $output = trim(\Artisan::output());
         $user = User::where('email', 'admin@kolab.org')->first();
         $this->assertSame(0, $code);
         $this->assertEquals($user->id, $output);
-        $this->assertEquals($user->role, "admin");
+        $this->assertEquals($user->role, User::ROLE_ADMIN);
+
+        // Valid (reseller)
+        $code = \Artisan::call("user:create reseller@unknown.domain.tld --role=reseller --password=simple123");
+        $output = trim(\Artisan::output());
+        $user = User::where('email', 'reseller@unknown.domain.tld')->first();
+        $this->assertSame(0, $code);
+        $this->assertEquals($user->id, $output);
+        $this->assertEquals($user->role, User::ROLE_RESELLER);
+
+        // Invalid role
+        $code = \Artisan::call("user:create unknwon@kolab.org --role=unknown");
+        $output = trim(\Artisan::output());
+        $this->assertSame(1, $code);
+        $this->assertSame("Invalid role: unknown", $output);
+
+        // Existing email (but with role-reseller)
+        $code = \Artisan::call("user:create jack@kolab.org --role=reseller");
+        $output = trim(\Artisan::output());
+        $user = User::where('email', 'reseller@unknown.domain.tld')->first();
+        $this->assertSame(1, $code);
+        $this->assertEquals("Email address is already in use", $output);
+
+        // TODO: Test a case where deleted user exists
     }
 }

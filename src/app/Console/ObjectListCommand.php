@@ -43,6 +43,8 @@ abstract class ObjectListCommand extends ObjectCommand
             $objects = new $this->objectClass();
         }
 
+        $objects = $this->applyTenant($objects);
+
         foreach ($this->option('filter') as $filter) {
             $objects = $this->applyFilter($objects, $filter);
         }

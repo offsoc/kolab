@@ -66,6 +66,26 @@ class UserTest extends TestCase
     }
 
     /**
+     * Test User role mutator
+     */
+    public function testSetRoleAttribute(): void
+    {
+        $user = new User(['email' => 'user@email.com']);
+
+        $user->role = User::ROLE_ADMIN;
+        $this->assertSame(User::ROLE_ADMIN, $user->role);
+
+        $user->role = User::ROLE_RESELLER;
+        $this->assertSame(User::ROLE_RESELLER, $user->role);
+
+        $user->role = null;
+        $this->assertSame(null, $user->role);
+
+        $this->expectException(\Exception::class);
+        $user->role = 'unknown';
+    }
+
+    /**
      * Test basic User funtionality
      */
     public function testStatus(): void

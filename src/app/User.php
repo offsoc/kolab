@@ -22,13 +22,13 @@ use League\OAuth2\Server\Exception\OAuthServerException;
 /**
  * The eloquent definition of a User.
  *
- * @property string $email
- * @property int    $id
- * @property string $password
- * @property string $password_ldap
- * @property string $role
- * @property int    $status
- * @property int    $tenant_id
+ * @property string  $email
+ * @property int     $id
+ * @property string  $password
+ * @property string  $password_ldap
+ * @property ?string $role
+ * @property int     $status
+ * @property int     $tenant_id
  */
 class User extends Authenticatable
 {
@@ -61,6 +61,9 @@ class User extends Authenticatable
     // a restricted user
     public const STATUS_RESTRICTED = 1 << 7;
 
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_RESELLER = 'reseller';
+
     /** @var int The allowed states for this object used in StatusPropertyTrait */
     private int $allowed_states = self::STATUS_NEW |
         self::STATUS_ACTIVE |
@@ -90,7 +93,8 @@ class User extends Authenticatable
     /** @var array<int, string> The attributes that can be null */
     protected $nullable = [
         'password',
-        'password_ldap'
+        'password_ldap',
+        'role',
     ];
 
     /** @var array<string, string> The attributes that should be cast */
@@ -643,6 +647,20 @@ class User extends Authenticatable
     public function setPasswordLdapAttribute($password)
     {
         $this->setPasswordAttribute($password);
+    }
+
+    /**
+     * User role mutator
+     *
+     * @param ?string $role The user role
+     */
+    public function setRoleAttribute($role)
+    {
+        if ($role !== null && !in_array($role, [self::ROLE_ADMIN, self::ROLE_RESELLER])) {
+            throw new \Exception("Invalid role: {$role}");
+        }
+
+        $this->attributes['role'] = $role;
     }
 
     /**
