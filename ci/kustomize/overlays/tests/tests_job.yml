@@ -10,7 +10,6 @@ spec:
   backoffLimit: 1
   completions: 1
   parallelism: 1
-  restartPolicy: Never
   template:
     metadata:
       labels:
