@@ -164,29 +164,27 @@ class UsersController extends RelationController
             ]
         );
 
-        // Check if the user is a controller of his wallet
-        $isController = $user->canDelete($user);
-
+        $wallet = $user->wallet();
+        $isController = $wallet->isController($user);
         $isDegraded = $user->isDegraded();
-        $hasMeet = !$isDegraded && Sku::withObjectTenantContext($user)->where('title', 'room')->exists();
-        // Enable all features if there are no skus for domain-hosting
-        $hasCustomDomain = $user->wallet()->entitlements()
-            ->where('entitleable_type', Domain::class)
-            ->count() > 0 || !Sku::withObjectTenantContext($user)->where('title', 'domain-hosting')->exists();
+
+        $plan = $isController ? $wallet->plan() : null;
+
+        $allSkus = Sku::withObjectTenantContext($user)->pluck('title')->all();
 
         // Get user's entitlements titles
-        $skus = $user->entitlements()->select('skus.title')
+        $skus = $user->entitlements()->distinct()
             ->join('skus', 'skus.id', '=', 'entitlements.sku_id')
-            ->get()
             ->pluck('title')
             ->sort()
-            ->unique()
             ->values()
             ->all();
 
-        $hasBeta = in_array('beta', $skus) || !Sku::withObjectTenantContext($user)->where('title', 'beta')->exists();
-
-        $plan = $isController ? $user->wallet()->plan() : null;
+        $hasBeta = in_array('beta', $skus) || !in_array('beta', $allSkus);
+        $hasMeet = !$isDegraded && \config('app.with_meet') && in_array('room', $allSkus);
+        $hasCustomDomain = $wallet->entitlements()->where('entitleable_type', Domain::class)->count() > 0
+            // Enable all features if there are no skus for domain-hosting
+            || !in_array('domain-hosting', $allSkus);
 
         $result = [
             'skus' => $skus,
@@ -197,7 +195,7 @@ class UsersController extends RelationController
             'enableFiles' => !$isDegraded && $hasBeta && \config('app.with_files'),
             'enableFolders' => $isController && $hasCustomDomain && \config('app.with_shared_folders'),
             'enableResources' => $isController && $hasCustomDomain && $hasBeta && \config('app.with_resources'),
-            'enableRooms' => $hasMeet && \config('app.with_meet'),
+            'enableRooms' => $hasMeet,
             'enableSettings' => $isController,
             'enableSubscriptions' => $isController && \config('app.with_subscriptions'),
             'enableUsers' => $isController,

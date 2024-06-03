@@ -94,14 +94,14 @@ class Entitlement extends Model
         // TODO: I agree this format may need to be extended in future
 
         foreach ($object->entitlements as $ent) {
-            $sku = $ent->sku;
+            $sku_id = $ent->sku_id;
 
-            if (!isset($skus[$sku->id])) {
-                $skus[$sku->id] = ['costs' => [], 'count' => 0];
+            if (!isset($skus[$sku_id])) {
+                $skus[$sku_id] = ['costs' => [], 'count' => 0];
             }
 
-            $skus[$sku->id]['count']++;
-            $skus[$sku->id]['costs'][] = $ent->cost;
+            $skus[$sku_id]['count']++;
+            $skus[$sku_id]['costs'][] = $ent->cost;
         }
 
         return $skus;
