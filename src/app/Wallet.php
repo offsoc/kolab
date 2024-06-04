@@ -649,6 +649,10 @@ class Wallet extends Model
      */
     protected function entitlementCosts(Entitlement $entitlement, array $trial = null, bool $useCostPerDay = false)
     {
+        if ($entitlement->wallet_id != $this->id) {
+            throw new \Exception("Entitlement assigned to another wallet");
+        }
+
         $discountRate = $this->getDiscountRate();
         $startDate = $entitlement->updated_at;  // start of the period to charge for
         $endDate = Carbon::now();               // end of the period to charge for
