@@ -160,8 +160,8 @@ class PolicyController extends Controller
             return response()->json(['response' => 'DUNNO'], 200);
         }
 
-        // exempt owners that have made at least two payments and currently maintain a positive balance.
-        if ($wallet->balance > 0) {
+        // exempt owners that have made at least two payments and currently maintain a balance above -10.
+        if ($wallet->balance > -10) {
             $payments = $wallet->payments()->where('amount', '>', 0)->where('status', 'paid');
 
             if ($payments->count() >= 2) {
