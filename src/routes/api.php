@@ -183,6 +183,11 @@ Route::group(
         Route::get('payments/has-pending', [API\V4\PaymentsController::class, 'hasPayments']);
         Route::get('payments/status', [API\V4\PaymentsController::class, 'paymentStatus']);
 
+        Route::get('search/self', [API\V4\SearchController::class, 'searchSelf']);
+        if (\config('app.with_user_search')) {
+            Route::get('search/user', [API\V4\SearchController::class, 'searchUser']);
+        }
+
         Route::post('support/request', [API\V4\SupportController::class, 'request'])
             ->withoutMiddleware(['auth:api', 'scope:api'])
             ->middleware(['api']);

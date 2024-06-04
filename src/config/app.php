@@ -257,6 +257,7 @@ return [
     'with_resources' => (bool) env('APP_WITH_RESOURCES', true),
     'with_meet' => (bool) env('APP_WITH_MEET', true),
     'with_companion_app' => (bool) env('APP_WITH_COMPANION_APP', true),
+    'with_user_search' => (bool) env('APP_WITH_USER_SEARCH', false),
 
     'signup' => [
         'email_limit' => (int) env('SIGNUP_LIMIT_EMAIL', 0),
