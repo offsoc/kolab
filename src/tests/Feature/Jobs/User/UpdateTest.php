@@ -88,12 +88,21 @@ class UpdateTest extends TestCase
 
         $this->assertTrue(empty($ldap_user['alias']));
 
-        // Test non-existing user ID
+        // Test deleted user
+        $user->delete();
+        $job = new \App\Jobs\User\UpdateJob($user->id);
+        $job->handle();
+
+        $this->assertTrue($job->isDeleted());
+
+        // Test job failure (user unknown)
+        // The job will be released
+        $this->expectException(\Exception::class);
         $job = new \App\Jobs\User\UpdateJob(123);
         $job->handle();
 
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("User 123 could not be found in the database.", $job->failureMessage);
+        $this->assertTrue($job->isReleased());
+        $this->assertFalse($job->hasFailed());
 
         // TODO: Test IMAP, e.g. quota change
     }

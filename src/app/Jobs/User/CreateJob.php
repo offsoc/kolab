@@ -12,10 +12,12 @@ use App\Jobs\UserJob;
  *   * The user is marked as deleted (`$user->isDeleted()`), or
  *   * the user is actually deleted (`$user->deleted_at`), or
  *   * the user is already marked as ready in LDAP (`$user->isLdapReady()`).
- *
  */
 class CreateJob extends UserJob
 {
+    /** @var int Enable waiting for a user record to exist */
+    protected $waitForUser = 5;
+
     /**
      * Execute the job.
      *

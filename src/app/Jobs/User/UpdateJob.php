@@ -7,6 +7,9 @@ use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 
 class UpdateJob extends UserJob implements ShouldBeUniqueUntilProcessing
 {
+    /** @var int Enable waiting for a user record to exist */
+    protected $waitForUser = 5;
+
     /** @var int The number of seconds after which the job's unique lock will be released. */
     public $uniqueFor = 60;
 
@@ -25,6 +28,11 @@ class UpdateJob extends UserJob implements ShouldBeUniqueUntilProcessing
 
         if ($user->role) {
             // Admins/resellers don't reside in LDAP (for now)
+            return;
+        }
+
+        if ($user->trashed()) {
+            $this->delete();
             return;
         }
 

@@ -13,6 +13,9 @@ namespace App\Jobs;
  */
 abstract class UserJob extends CommonJob
 {
+    /** @var int Enable waiting for a user record to exist. Delay time in seconds */
+    protected $waitForUser = 0;
+
     /**
      * The ID for the \App\User. This is the shortest globally unique identifier and saves Redis space
      * compared to a serialized version of the complete \App\User object.
@@ -60,8 +63,8 @@ abstract class UserJob extends CommonJob
         if (!$user) {
             // The record might not exist yet in case of a db replication environment
             // This will release the job and delay another attempt for 5 seconds
-            if ($this instanceof User\CreateJob) {
-                $this->release(5);
+            if ($this->waitForUser) {
+                $this->release($this->waitForUser);
                 return null;
             }
 
