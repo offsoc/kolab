@@ -1,6 +1,6 @@
 FROM apheleia/almalinux9
 
-ARG SWOOLE_VERSION=v5.0.2
+ARG SWOOLE_VERSION=v5.1.2
 ENV HOME=/opt/app-root/src
 
 
