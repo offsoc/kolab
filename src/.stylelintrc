@@ -4,7 +4,22 @@
   ],
   "rules": {
     "at-rule-empty-line-before": null,
-    "indentation": 4,
-    "at-rule-no-unknown": null
+    "at-rule-no-unknown": null,
+    "color-function-notation": "legacy",
+    "comment-empty-line-before": null,
+    "declaration-block-no-redundant-longhand-properties": null,
+    "function-no-unknown": [
+      true,
+      {
+        ignoreFunctions: ["lighten", "darken"]
+      }
+    ],
+    "import-notation": "string",
+    "media-feature-range-notation": "prefix",
+    "no-descending-specificity": null,
+    "no-invalid-double-slash-comments": null,
+    "selector-class-pattern": null,
+    "selector-not-notation": "simple",
+    "shorthand-property-no-redundant-values": null
   }
 }

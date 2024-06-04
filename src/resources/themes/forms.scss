@@ -40,6 +40,7 @@
         svg {
             width: 0.75em !important;
         }
+
         span {
             padding: 0 0.05em;
         }
@@ -238,13 +239,13 @@
         position: absolute;
         right: 0;
         bottom: 0;
-        background-color: rgba(211, 211, 211, 0.9);
+        background-color: rgba(211, 211, 211, 90%);
     }
 
     & + .tools + .location {
         position: absolute;
         top: 0;
-        background-color: rgba(211, 211, 211, 0.9);
+        background-color: rgba(211, 211, 211, 90%);
         max-width: calc(100% - 1em);
         overflow: hidden;
         text-overflow: ellipsis;

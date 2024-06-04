@@ -107,11 +107,10 @@ pre {
 }
 
 tfoot.table-fake-body {
-    background-color: #f8f8f8;
-    color: grey;
-    text-align: center;
-
     td {
+        background-color: #f8f8f8;
+        color: grey;
+        text-align: center;
         vertical-align: middle;
         height: 8em;
         border: 0;
@@ -230,11 +229,6 @@ table {
             width: 98%;
         }
     }
-}
-
-.table > :not(:first-child) {
-    // Remove Bootstrap's 2px border
-    border-width: 0;
 }
 
 .list-details {
@@ -394,6 +388,7 @@ table {
         margin: 0.25rem;
         text-decoration: none;
         width: 150px;
+        color: $link-color;
 
         &.disabled {
             pointer-events: none;
@@ -447,6 +442,7 @@ table {
         margin: 0.25rem;
         text-decoration: none;
         width: 150px;
+        color: $link-color;
     }
 
     svg {
@@ -488,13 +484,17 @@ table {
 }
 
 #logon-form {
-    flex-basis: auto; // Bootstrap issue? See logon page with width < 992
+    flex-basis: auto; /* Bootstrap issue? See logon page with width < 992 */
 }
 
 #logon-form-footer {
     a:not(:first-child) {
         margin-left: 2em;
     }
+}
+
+.tab-pane > .card-body {
+    padding: 1rem;
 }
 
 // Various improvements for mobile

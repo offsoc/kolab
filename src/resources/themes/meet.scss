@@ -62,14 +62,14 @@
 .meet-video {
     position: relative;
     background: $menu-bg-color;
-    // Use flexbox for centering .watermark
+    /* Use flexbox for centering .watermark */
     display: flex;
     align-items: center;
     justify-content: center;
 
     video {
-        // To make object-fit:cover working we have to set the height in pixels
-        // on the wrapper element. This is what javascript method will do.
+        /* To make object-fit:cover working we have to set the height in pixels
+           on the wrapper element. This is what javascript method will do. */
         object-fit: cover;
         width: 100%;
         height: 100%;
@@ -81,15 +81,15 @@
     }
 
     &.screen video {
-        // For shared screen videos we use the original aspect ratio
+        /* For shared screen videos we use the original aspect ratio */
         object-fit: scale-down;
         background: none;
     }
 
     &:fullscreen {
         video {
-            // We don't want the video to be cut in fullscreen
-            // This will preserve the aspect ratio of the video stream
+            /* We don't want the video to be cut in fullscreen
+               This will preserve the aspect ratio of the video stream */
             object-fit: contain;
         }
     }
@@ -474,7 +474,7 @@
         bottom: 1em;
         right: 2em;
         width: 0.5em;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 50%);
 
         .bar {
             width: 100%;
@@ -574,7 +574,7 @@
     }
 
     .media-setup-preview {
-        // Fix video element size in Safari/iOS
+        /* Fix video element size in Safari/iOS */
         display: block;
     }
 }
