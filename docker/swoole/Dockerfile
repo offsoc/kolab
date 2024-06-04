@@ -26,6 +26,9 @@ RUN dnf module reset php && \
         php-cli \
         php-common \
         php-devel \
+        php-pear \
+        libsodium \
+        libsodium-devel \
         php-ldap \
         php-mysqlnd \
         php-opcache \
@@ -46,15 +49,20 @@ RUN dnf module reset php && \
         make install && \
         cd / && \
     rm -rf /swoole-src.git/ && \
+    pecl channel-update pecl.php.net && \
+    pecl install -f libsodium && \
     dnf -y remove \
         diffutils \
         file \
         make \
+        libsodium-devel \
         openssl-devel \
         php-devel \
+        php-pear \
         re2c && \
     dnf clean all && \
     echo "extension=swoole.so" >> /etc/php.d/swoole.ini && \
+    echo "extension=sodium.so" >> /etc/php.d/sodium.ini && \
     php -m 2>&1 | grep -q swoole
 
 RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/ -u 1001 -g 1001 default)
