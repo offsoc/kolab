@@ -89,7 +89,7 @@ case ${KOLAB_ROLE} in
         if is_not_initialized; then
             echo "----> Seeding the database"
             # If we seed, we always drop all existing tables
-            php -dmemory_limit=512M ./artisan migrate:fresh --seed
+            php -dmemory_limit=512M ./artisan migrate:fresh --seed --force
         fi
     ;;
 
