@@ -179,12 +179,10 @@ class Utils
      */
     public static function generatePassphrase()
     {
-        if (\config('app.env') == 'production') {
-            throw new \Exception("Thou shall not pass!");
-        }
-
-        if (\config('app.passphrase')) {
-            return \config('app.passphrase');
+        if (\config('app.env') != 'production') {
+            if (\config('app.passphrase')) {
+                return \config('app.passphrase');
+            }
         }
 
         $alphaLow = 'abcdefghijklmnopqrstuvwxyz';
