@@ -506,6 +506,16 @@ class User extends Authenticatable
         return $this->entitleables(SharedFolder::class, $with_accounts);
     }
 
+    /**
+     * Return companion apps by the current user.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     */
+    public function companionApps()
+    {
+        return \App\CompanionApp::where('user_id', $this->id);
+    }
+
     public function senderPolicyFrameworkWhitelist($clientName)
     {
         $setting = $this->getSetting('spf_whitelist');
