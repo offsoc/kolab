@@ -114,7 +114,7 @@ kolab__build() {
     $PODMAN build docker/imap -t kolab-imap
     $PODMAN build docker/mariadb -t mariadb
     $PODMAN build docker/redis -t redis
-    $PODMAN build docker/proxy -t proxy
+    $PODMAN build docker/proxy -t kolab-proxy
 
     $PODMAN build --ulimit nofile=65535:65535 docker/tests -t kolab-tests
     $PODMAN build --ulimit nofile=65535:65535 docker/roundcube -t roundcube
@@ -176,7 +176,7 @@ kolab__proxytest() {
         --env-file=ci/env \
         -e SSL_CERTIFICATE=/etc/certs/imap.hosted.com.cert \
         -e SSL_CERTIFICATE_KEY=/etc/certs/imap.hosted.com.key \
-        proxy:latest /init.sh validate
+        kolab-proxy:latest /init.sh validate
 }
 
 kolab__lint() {
