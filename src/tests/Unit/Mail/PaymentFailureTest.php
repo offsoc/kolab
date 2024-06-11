@@ -5,6 +5,7 @@ namespace Tests\Unit\Mail;
 use App\Mail\PaymentFailure;
 use App\Payment;
 use App\User;
+use App\Wallet;
 use Tests\TestCase;
 
 class PaymentFailureTest extends TestCase
@@ -14,9 +15,11 @@ class PaymentFailureTest extends TestCase
      */
     public function testBuild(): void
     {
-        $user = new User();
+        $user = new User(['email' => 'test@user']);
         $payment = new Payment();
         $payment->amount = 123;
+        $payment->wallet = new Wallet();
+        $payment->wallet->owner = $user;
 
         \config(['app.support_url' => 'https://kolab.org/support']);
 
@@ -38,14 +41,14 @@ class PaymentFailureTest extends TestCase
         $this->assertTrue(strpos($html, $walletLink) > 0);
         $this->assertTrue(strpos($html, $supportLink) > 0);
         $this->assertTrue(strpos($html, "$appName Support") > 0);
-        $this->assertTrue(strpos($html, "Something went wrong with auto-payment for your $appName account") > 0);
+        $this->assertTrue(strpos($html, "Something went wrong with auto-payment for your {$user->email} account") > 0);
         $this->assertTrue(strpos($html, "$appName Team") > 0);
 
         $this->assertStringStartsWith('Dear ' . $user->name(true), $plain);
         $this->assertTrue(strpos($plain, $walletUrl) > 0);
         $this->assertTrue(strpos($plain, $supportUrl) > 0);
         $this->assertTrue(strpos($plain, "$appName Support") > 0);
-        $this->assertTrue(strpos($plain, "Something went wrong with auto-payment for your $appName account") > 0);
+        $this->assertTrue(strpos($plain, "Something went wrong with auto-payment for your {$user->email} account") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }
 
@@ -56,6 +59,7 @@ class PaymentFailureTest extends TestCase
     {
         $user = new User();
         $user->id = 1234;
+        $user->email = 'test@user';
         $payment = new Payment();
         $payment->amount = 123;
         $appName = \config('app.name');

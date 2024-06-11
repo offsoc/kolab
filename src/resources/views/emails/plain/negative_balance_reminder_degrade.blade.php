@@ -1,19 +1,19 @@
-{!! __('mail.header', ['name' => $username]) !!}
+{!! __('mail.header', $vars) !!}
 
-{!! __('mail.negativebalancereminderdegrade-body', ['site' => $site]) !!}
+{!! __('mail.negativebalancereminderdegrade-body', $vars) !!}
 
-{!! __('mail.negativebalancereminderdegrade-body-ext', ['site' => $site]) !!}
+{!! __('mail.negativebalancereminderdegrade-body-ext', $vars) !!}
 
 {!! $walletUrl !!}
 
-{!! __('mail.negativebalancereminderdegrade-body-warning', ['site' => $site, 'date' => $date]) !!}
+{!! __('mail.negativebalancereminderdegrade-body-warning', $vars) !!}
 
 @if ($supportUrl)
-{!! __('mail.support', ['site' => $site]) !!}
+{!! __('mail.support', $vars) !!}
 
 {!! $supportUrl !!}
 @endif
 
 -- 
-{!! __('mail.footer1') !!}
-{!! __('mail.footer2', ['site' => $site]) !!}
+{!! __('mail.footer1', $vars) !!}
+{!! __('mail.footer2', $vars) !!}

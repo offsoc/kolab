@@ -36,17 +36,20 @@ class PasswordExpirationReminder extends Mailable
         $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
         $href = Utils::serviceUrl('profile', $this->user->tenant_id);
 
-        $params = [
-            'site' => $appName,
+        $vars = [
             'date' => $this->expiresOn,
-            'link' => sprintf('<a href="%s">%s</a>', $href, $href),
-            'username' => $this->user->name(true),
+            'email' => $this->user->email,
+            'name' => $this->user->name(true),
+            'site' => $appName,
         ];
 
         $this->view('emails.html.password_expiration_reminder')
             ->text('emails.plain.password_expiration_reminder')
-            ->subject(\trans('mail.passwordexpiration-subject', $params))
-            ->with($params);
+            ->subject(\trans('mail.passwordexpiration-subject', $vars))
+            ->with([
+                    'vars' => $vars,
+                    'link' => sprintf('<a href="%s">%s</a>', $href, $href)
+            ]);
 
         return $this;
     }

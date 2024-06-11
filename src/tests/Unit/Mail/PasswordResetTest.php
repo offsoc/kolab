@@ -23,9 +23,7 @@ class PasswordResetTest extends TestCase
         ]);
 
         // @phpstan-ignore-next-line
-        $code->user = new User([
-                'name' => 'User Name',
-        ]);
+        $code->user = new User(['email' => 'test@user']);
 
         $mail = $this->renderMail(new PasswordReset($code));
 
@@ -41,9 +39,11 @@ class PasswordResetTest extends TestCase
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $link) > 0);
         $this->assertTrue(strpos($html, $code->user->name(true)) > 0);
+        $this->assertTrue(strpos($html, $code->user->email) > 0);
 
         $this->assertStringStartsWith("Dear " . $code->user->name(true), $plain);
         $this->assertTrue(strpos($plain, $link) > 0);
+        $this->assertTrue(strpos($plain, $code->user->email) > 0);
     }
 
     /**
@@ -60,7 +60,7 @@ class PasswordResetTest extends TestCase
         ]);
 
         // @phpstan-ignore-next-line
-        $code->user = new User(['name' => 'User Name']);
+        $code->user = new User();
 
         $mail = new PasswordReset($code);
 

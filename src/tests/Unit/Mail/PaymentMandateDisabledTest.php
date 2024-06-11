@@ -3,8 +3,9 @@
 namespace Tests\Unit\Mail;
 
 use App\Mail\PaymentMandateDisabled;
-use App\Wallet;
+use App\Tenant;
 use App\User;
+use App\Wallet;
 use Tests\TestCase;
 
 class PaymentMandateDisabledTest extends TestCase
@@ -14,8 +15,8 @@ class PaymentMandateDisabledTest extends TestCase
      */
     public function testBuild(): void
     {
-        $user = new User();
-        $wallet = new Wallet();
+        $user = $this->getTestUser('john@kolab.org');
+        $wallet = $user->wallets->first();
 
         \config(['app.support_url' => 'https://kolab.org/support']);
 
@@ -28,7 +29,7 @@ class PaymentMandateDisabledTest extends TestCase
         $walletLink = sprintf('<a href="%s">%s</a>', $walletUrl, $walletUrl);
         $supportUrl = \config('app.support_url');
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
-        $appName = \config('app.name');
+        $appName = Tenant::getConfig($user->tenant_id, 'app.name');
 
         $this->assertSame("$appName Auto-payment Problem", $mail['subject']);
 
@@ -37,14 +38,14 @@ class PaymentMandateDisabledTest extends TestCase
         $this->assertTrue(strpos($html, $walletLink) > 0);
         $this->assertTrue(strpos($html, $supportLink) > 0);
         $this->assertTrue(strpos($html, "$appName Support") > 0);
-        $this->assertTrue(strpos($html, "Your $appName account balance") > 0);
+        $this->assertTrue(strpos($html, "Your {$user->email} account balance") > 0);
         $this->assertTrue(strpos($html, "$appName Team") > 0);
 
         $this->assertStringStartsWith('Dear ' . $user->name(true), $plain);
         $this->assertTrue(strpos($plain, $walletUrl) > 0);
         $this->assertTrue(strpos($plain, $supportUrl) > 0);
         $this->assertTrue(strpos($plain, "$appName Support") > 0);
-        $this->assertTrue(strpos($plain, "Your $appName account balance") > 0);
+        $this->assertTrue(strpos($plain, "Your {$user->email} account balance") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }
 

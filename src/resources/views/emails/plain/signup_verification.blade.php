@@ -1,13 +1,13 @@
-{!! __('mail.header', ['name' => $username]) !!}
+{!! __('mail.header', $vars) !!}
 
-{!! __('mail.signupverification-body1', ['site' => $site]) !!}
+{!! __('mail.signupverification-body1', $vars) !!}
 
 {!! $short_code !!}
 
-{!! __('mail.signupverification-body2') !!}
+{!! __('mail.signupverification-body2', $vars) !!}
 
 {!! $href !!}
 
 -- 
-{!! __('mail.footer1') !!}
-{!! __('mail.footer2', ['site' => $site]) !!}
+{!! __('mail.footer1', $vars) !!}
+{!! __('mail.footer2', $vars) !!}

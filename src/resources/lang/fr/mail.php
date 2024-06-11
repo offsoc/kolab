@@ -18,7 +18,7 @@ return [
     'more-info-text' => "Cliquez :href pour plus d'information.",
 
     'degradedaccountreminder-subject' => "Rappel du :site: Votre compte est gratuit",
-    'degradedaccountreminder-body1' => "Merci de ne pas quitter le site, nous vous rappelons que votre compte est gratuit."
+    'degradedaccountreminder-body1' => "Merci de ne pas quitter le site, nous vous rappelons que votre compte :email est gratuit."
         . " et limité à la réception d'emails, et à l'utilisation du client web et du cockpit uniquement.",
     'degradedaccountreminder-body2' => "Vous disposez ainsi d'un compte idéal à employer pour l'enregistrement de comptes auprès de tiers"
         . " et les réinitialisations de mot de passe, les notifications ou même simplement les souscriptions aux newsletters et autres.",
@@ -28,25 +28,25 @@ return [
     'degradedaccountreminder-body5' => "Nous apprécions votre collaboration!",
 
     'negativebalance-subject' => ":site Paiement Requis",
-    'negativebalance-body' => "C'est une notification pour vous informer que votre :site le solde du compte est en négatif et nécessite votre attention."
+    'negativebalance-body' => "C'est une notification pour vous informer que votre :site le solde du compte :email est en négatif et nécessite votre attention."
         . " Veillez à mettre en place un auto-paiement pour éviter de tel avertissement comme celui-ci dans le future.",
     'negativebalance-body-ext' => "Régler votre compte pour le maintenir en fontion:",
 
     'negativebalancereminderdegrade-subject' => ":site Rappel de Paiement",
-    'negativebalancereminderdegrade-body' => "Vous n'avez peut-être pas rendu compte que vous êtes en retard avec votre paiement pour :site compte."
+    'negativebalancereminderdegrade-body' => "Vous n'avez peut-être pas rendu compte que vous êtes en retard avec votre paiement pour :email."
         . " Veillez à mettre en place un auto-paiement pour éviter de tel avertissement comme celui-ci dans le future.",
     'negativebalancereminderdegrade-body-ext' => "Régler votre compte pour le maintenir en fontion:",
 
-    'negativebalancereminderdegrade-body-warning' => "Veuillez noter que votre compte sera dégradé"
+    'negativebalancereminderdegrade-body-warning' => "Veuillez noter que votre compte :email sera dégradé"
         . " si le solde de votre compte n'est pas réglé avant le :date.",
 
     'negativebalancedegraded-subject' => ":site de Compte Dégradé",
-    'negativebalancedegraded-body' => "Votre compte :site a été dégradé pour avoir un solde négatif depuis trop longtemps."
+    'negativebalancedegraded-body' => "Votre compte :email a été dégradé pour avoir un solde négatif depuis trop longtemps."
         . " Envisagez de mettre en place un paiement automatique pour éviter des messages comme celui-ci à l'avenir.",
     'negativebalancedegraded-body-ext' => "Réglez maintenant pour rétablir votre compte:",
 
     'passwordreset-subject' => ":site Réinitialisation du mot de passe",
-    'passwordreset-body1' => "Quelqu'un a récemment demandé de changer votre :site mot de passe.",
+    'passwordreset-body1' => "Quelqu'un a récemment demandé de changer votre :site mot de passe pour :email.",
     'passwordreset-body2' => "Si vous êtes dans ce cas, veuillez utiliser ce code de vérification pour terminer le processus:",
     'passwordreset-body3' => "Vous pourrez également cliquer sur le lien ci-dessous:",
     'passwordreset-body4' => "si vous n'avez pas fait une telle demande, vous pouvez soit ignorer ce message, soit prendre contact avec nous au sujet de cet incident.",
@@ -61,7 +61,7 @@ return [
         . " Pour resourdre le problème,veuillez vous connecter aux paramètres de votre compte et modifier le montant d'auto-paiement.",
 
     'paymentfailure-subject' => ":site Paiement Echoué",
-    'paymentfailure-body' => "Un problème est survenu avec l'auto-paiement pour votre :site account.\n"
+    'paymentfailure-body' => "Un problème est survenu avec l'auto-paiement pour votre compte :email.\n"
         . "Nous avons tenté de vous facturer via votre méthode de paiement choisie, mais le chargement n'a pas été effectué.",
     'paymentfailure-body-ext' => "Pour éviter tout problème supplémentaire, nous avons suspendu l'auto-paiement sur votre compte."
         . " Pour resourdre le problème,veuillez vous connecter aux paramètres de votre compte au",

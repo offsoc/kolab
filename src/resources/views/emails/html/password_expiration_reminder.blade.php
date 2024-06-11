@@ -4,13 +4,13 @@
         <meta charset="utf-8">
     </head>
     <body>
-        <p>{{ __('mail.header', ['name' => $username]) }}</p>
+        <p>{{ __('mail.header', $vars) }}</p>
 
-        <p>{{ __('mail.passwordexpiration-body', ['site' => $site, 'date' => $date]) }}
+        <p>{{ __('mail.passwordexpiration-body', $vars) }}
 
         <p>{!! $link !!}</p>
 
-        <p>{{ __('mail.footer1') }}</p>
-        <p>{{ __('mail.footer2', ['site' => $site]) }}</p>
+        <p>{{ __('mail.footer1', $vars) }}</p>
+        <p>{{ __('mail.footer2', $vars) }}</p>
     </body>
 </html>

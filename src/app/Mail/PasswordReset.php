@@ -41,15 +41,20 @@ class PasswordReset extends Mailable
             $this->user->tenant_id
         );
 
+        $vars = [
+            'email' => $this->user->email,
+            'name' => $this->user->name(true),
+            'site' => $appName,
+        ];
+
         $this->view('emails.html.password_reset')
             ->text('emails.plain.password_reset')
-            ->subject(\trans('mail.passwordreset-subject', ['site' => $appName]))
+            ->subject(\trans('mail.passwordreset-subject', $vars))
             ->with([
-                    'site' => $appName,
+                    'vars' => $vars,
+                    'link' => sprintf('<a href="%s">%s</a>', $href, $href),
                     'code' => $this->code->code,
                     'short_code' => $this->code->short_code,
-                    'link' => sprintf('<a href="%s">%s</a>', $href, $href),
-                    'username' => $this->user->name(true)
             ]);
 
         return $this;

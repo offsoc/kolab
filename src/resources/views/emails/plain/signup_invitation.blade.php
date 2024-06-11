@@ -1,11 +1,11 @@
-{!! __('mail.signupinvitation-header') !!}
+{!! __('mail.signupinvitation-header', $vars) !!}
 
-{!! __('mail.signupinvitation-body1', ['site' => $site]) !!}
+{!! __('mail.signupinvitation-body1', $vars) !!}
 
 {!! $href !!}
 
-{!! __('mail.signupinvitation-body2') !!}
+{!! __('mail.signupinvitation-body2', $vars) !!}
 
 -- 
-{!! __('mail.footer1') !!}
-{!! __('mail.footer2', ['site' => $site]) !!}
+{!! __('mail.footer1', $vars) !!}
+{!! __('mail.footer2', $vars) !!}

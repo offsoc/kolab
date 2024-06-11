@@ -14,9 +14,7 @@ class PasswordExpirationReminderTest extends TestCase
      */
     public function testBuild(): void
     {
-        $user = new User([
-                'name' => 'User Name',
-        ]);
+        $user = new User(['email' => 'test@user']);
 
         $expiresOn = now()->copy()->addDays(7)->toDateString();
 
@@ -35,10 +33,12 @@ class PasswordExpirationReminderTest extends TestCase
         $this->assertTrue(strpos($html, $link) > 0);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
         $this->assertTrue(strpos($html, $expiresOn) > 0);
+        $this->assertTrue(strpos($html, $user->email) > 0);
 
         $this->assertStringStartsWith("Dear " . $user->name(true), $plain);
         $this->assertTrue(strpos($plain, $link) > 0);
         $this->assertTrue(strpos($plain, $expiresOn) > 0);
+        $this->assertTrue(strpos($plain, $user->email) > 0);
     }
 
     /**
@@ -46,7 +46,7 @@ class PasswordExpirationReminderTest extends TestCase
      */
     public function testGetSubjectAndUser(): void
     {
-        $user = new User(['name' => 'User Name']);
+        $user = new User();
         $appName = \config('app.name');
         $expiresOn = now()->copy()->addDays(7)->toDateString();
 

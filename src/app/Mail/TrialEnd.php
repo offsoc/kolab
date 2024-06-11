@@ -31,15 +31,16 @@ class TrialEnd extends Mailable
         $paymentUrl = Tenant::getConfig($this->user->tenant_id, 'app.kb.payment_system');
         $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
 
-        $subject = \trans('mail.trialend-subject', ['site' => $appName]);
+        $vars = [
+            'name' => $this->user->name(true),
+            'site' => $appName,
+        ];
 
         $this->view('emails.html.trial_end')
             ->text('emails.plain.trial_end')
-            ->subject($subject)
+            ->subject(\trans('mail.trialend-subject', $vars))
             ->with([
-                    'site' => $appName,
-                    'subject' => $subject,
-                    'username' => $this->user->name(true),
+                    'vars' => $vars,
                     'paymentUrl' => $paymentUrl,
                     'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
             ]);

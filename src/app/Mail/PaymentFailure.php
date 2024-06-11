@@ -37,15 +37,17 @@ class PaymentFailure extends Mailable
         $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
         $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
 
-        $subject = \trans('mail.paymentfailure-subject', ['site' => $appName]);
+        $vars = [
+            'email' => $this->payment->wallet->owner->email,
+            'name' => $this->user->name(true),
+            'site' => $appName,
+        ];
 
         $this->view('emails.html.payment_failure')
             ->text('emails.plain.payment_failure')
-            ->subject($subject)
+            ->subject(\trans('mail.paymentfailure-subject', $vars))
             ->with([
-                    'site' => $appName,
-                    'subject' => $subject,
-                    'username' => $this->user->name(true),
+                    'vars' => $vars,
                     'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
                     'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
             ]);
@@ -62,10 +64,13 @@ class PaymentFailure extends Mailable
      */
     public static function fakeRender(string $type = 'mail'): string
     {
-        $payment = new Payment();
         $user = new User([
               'email' => 'test@' . \config('app.domain'),
         ]);
+
+        $payment = new Payment();
+        $payment->wallet = new \App\Wallet();
+        $payment->wallet->owner = $user;
 
         $mail = new self($payment, $user);
 

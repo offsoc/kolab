@@ -36,11 +36,15 @@ class SignupInvitation extends Mailable
 
         $href = Utils::serviceUrl('/signup/invite/' . $this->invitation->id, $this->invitation->tenant_id);
 
+        $vars = [
+            'site' => $appName,
+        ];
+
         $this->view('emails.html.signup_invitation')
             ->text('emails.plain.signup_invitation')
-            ->subject(\trans('mail.signupinvitation-subject', ['site' => $appName]))
+            ->subject(\trans('mail.signupinvitation-subject', $vars))
             ->with([
-                    'site' => $appName,
+                    'vars' => $vars,
                     'href' => $href,
             ]);
 

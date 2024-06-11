@@ -4,16 +4,16 @@
         <meta charset="utf-8">
     </head>
     <body>
-        <p>{{ __('mail.header', ['name' => $username]) }}</p>
+        <p>{{ __('mail.header', $vars) }}</p>
 
-        <p>{{ __('mail.degradedaccountreminder-body1', ['site' => $site]) }}</p>
-        <p>{{ __('mail.degradedaccountreminder-body2', ['site' => $site]) }}</p>
-        <p>{{ __('mail.degradedaccountreminder-body3', ['site' => $site]) }}</p>
+        <p>{{ __('mail.degradedaccountreminder-body1', $vars) }}</p>
+        <p>{{ __('mail.degradedaccountreminder-body2', $vars) }}</p>
+        <p>{{ __('mail.degradedaccountreminder-body3', $vars) }}</p>
         <p><a href="{{ $dashboardUrl }}">{{ $dashboardUrl }}</a></p>
-        <p>{{ __('mail.degradedaccountreminder-body4', ['site' => $site]) }}</p>
-        <p>{{ __('mail.degradedaccountreminder-body5', ['site' => $site]) }}</p>
+        <p>{{ __('mail.degradedaccountreminder-body4', $vars) }}</p>
+        <p>{{ __('mail.degradedaccountreminder-body5', $vars) }}</p>
 
-        <p>{{ __('mail.footer1') }}</p>
-        <p>{{ __('mail.footer2', ['site' => $site]) }}</p>
+        <p>{{ __('mail.footer1', $vars) }}</p>
+        <p>{{ __('mail.footer2', $vars) }}</p>
     </body>
 </html>

@@ -4,19 +4,19 @@
         <meta charset="utf-8">
     </head>
     <body>
-        <p>{{ __('mail.header', ['name' => $username]) }}</p>
+        <p>{{ __('mail.header', $vars) }}</p>
 
-        <p>{{ __('mail.paymentfailure-body', ['site' => $site]) }}</p>
-        <p>{{ __('mail.paymentfailure-body-ext', ['site' => $site]) }}</p>
+        <p>{{ __('mail.paymentfailure-body', $vars) }}</p>
+        <p>{{ __('mail.paymentfailure-body-ext', $vars) }}</p>
         <p><a href="{{ $walletUrl }}">{{ $walletUrl }}</a></p>
-        <p>{{ __('mail.paymentfailure-body-rest', ['site' => $site]) }}</p>
+        <p>{{ __('mail.paymentfailure-body-rest', $vars) }}</p>
 
 @if ($supportUrl)
-        <p>{{ __('mail.support', ['site' => $site]) }}</p>
+        <p>{{ __('mail.support', $vars) }}</p>
         <p><a href="{{ $supportUrl }}">{{ $supportUrl }}</a></p>
 @endif
 
-        <p>{{ __('mail.footer1') }}</p>
-        <p>{{ __('mail.footer2', ['site' => $site]) }}</p>
+        <p>{{ __('mail.footer1', $vars) }}</p>
+        <p>{{ __('mail.footer2', $vars) }}</p>
     </body>
 </html>

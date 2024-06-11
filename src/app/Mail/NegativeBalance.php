@@ -37,15 +37,17 @@ class NegativeBalance extends Mailable
         $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
         $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
 
-        $subject = \trans('mail.negativebalance-subject', ['site' => $appName]);
+        $vars = [
+            'email' => $this->wallet->owner->email,
+            'name' => $this->user->name(true),
+            'site' => $appName,
+        ];
 
         $this->view('emails.html.negative_balance')
             ->text('emails.plain.negative_balance')
-            ->subject($subject)
+            ->subject(\trans('mail.negativebalance-subject', $vars))
             ->with([
-                    'site' => $appName,
-                    'subject' => $subject,
-                    'username' => $this->user->name(true),
+                    'vars' => $vars,
                     'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
                     'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
             ]);
@@ -64,6 +66,8 @@ class NegativeBalance extends Mailable
     {
         $wallet = new Wallet();
         $user = new User();
+        $user->email = 'test@' . \config('app.domain');
+        $wallet->owner = $user;
 
         $mail = new self($wallet, $user);
 

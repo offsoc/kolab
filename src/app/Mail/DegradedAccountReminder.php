@@ -37,15 +37,17 @@ class DegradedAccountReminder extends Mailable
         $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
         $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
 
-        $subject = \trans('mail.degradedaccountreminder-subject', ['site' => $appName]);
+        $vars = [
+            'email' => $this->wallet->owner->email,
+            'name' => $this->user->name(true),
+            'site' => $appName,
+        ];
 
         $this->view('emails.html.degraded_account_reminder')
             ->text('emails.plain.degraded_account_reminder')
-            ->subject($subject)
+            ->subject(\trans('mail.degradedaccountreminder-subject', $vars))
             ->with([
-                    'site' => $appName,
-                    'subject' => $subject,
-                    'username' => $this->user->name(true),
+                    'vars' => $vars,
                     'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
                     'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
                     'dashboardUrl' => Utils::serviceUrl('/dashboard', $this->user->tenant_id),
@@ -65,6 +67,8 @@ class DegradedAccountReminder extends Mailable
     {
         $wallet = new Wallet();
         $user = new User();
+        $user->email = 'test@' . \config('app.domain');
+        $wallet->owner = $user;
 
         $mail = new self($wallet, $user);
 

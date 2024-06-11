@@ -18,7 +18,7 @@ return [
     'more-info-text' => "See :href for more information.",
 
     'degradedaccountreminder-subject' => ":site Reminder: Your account is free",
-    'degradedaccountreminder-body1' => "Thanks for sticking around, we remind you your account is a free "
+    'degradedaccountreminder-body1' => "Thanks for sticking around, we remind you your :email account is a free "
         . "account and restricted to receiving email, and use of the web client and cockpit only.",
     'degradedaccountreminder-body2' => "This leaves you with an ideal account to use for account registration with third parties "
         . "and password resets, notifications or even just subscriptions to newsletters and the like.",
@@ -28,12 +28,12 @@ return [
     'degradedaccountreminder-body5' => "Thank you for your consideration!",
 
     'negativebalance-subject' => ":site Payment Required",
-    'negativebalance-body' => "This is a notification to let you know that your :site account balance has run into the negative and requires your attention. "
+    'negativebalance-body' => "This is a notification to let you know that your :email account balance has run into the negative and requires your attention. "
         . "Consider setting up an automatic payment to avoid messages like this in the future.",
     'negativebalance-body-ext' => "Settle up to keep your account running:",
 
     'negativebalancereminderdegrade-subject' => ":site Payment Reminder",
-    'negativebalancereminderdegrade-body' => "It has probably skipped your attention that you are behind on paying for your :site account. "
+    'negativebalancereminderdegrade-body' => "It has probably skipped your attention that you are behind on paying for your :email account. "
         . "Consider setting up an automatic payment to avoid messages like this in the future.",
     'negativebalancereminderdegrade-body-ext' => "Settle up to keep your account running:",
 
@@ -41,21 +41,21 @@ return [
         . "if your account balance is not settled by :date.",
 
     'negativebalancedegraded-subject' => ":site Account Degraded",
-    'negativebalancedegraded-body' => "Your :site account has been degraded for having a negative balance for too long. "
+    'negativebalancedegraded-body' => "Your :email account has been degraded for having a negative balance for too long. "
         . "Consider setting up an automatic payment to avoid messages like this in the future.",
     'negativebalancedegraded-body-ext' => "Settle up now to undegrade your account:",
 
     'passwordreset-subject' => ":site Password Reset",
-    'passwordreset-body1' => "Someone recently asked to change your :site password.",
+    'passwordreset-body1' => "Someone recently asked to change your :email password.",
     'passwordreset-body2' => "If this was you, use this verification code to complete the process:",
     'passwordreset-body3' => "You can also click the link below:",
     'passwordreset-body4' => "If you did not make such a request, you can either ignore this message or get in touch with us about this incident.",
 
     'passwordexpiration-subject' => ":site password expires on :date",
-    'passwordexpiration-body' => "Your password will expire on :date. You can change it here:",
+    'passwordexpiration-body' => "Your :email account password will expire on :date. You can change it here:",
 
     'paymentmandatedisabled-subject' => ":site Auto-payment Problem",
-    'paymentmandatedisabled-body' => "Your :site account balance is negative "
+    'paymentmandatedisabled-body' => "Your :email account balance is negative "
         . "and the configured amount for automatically topping up the balance does not cover "
         . "the costs of subscriptions consumed.",
     'paymentmandatedisabled-body-ext' => "Charging you multiple times for the same amount in short succession "
@@ -64,7 +64,7 @@ return [
         . "To resolve this issue, login to your account settings and adjust your auto-payment amount.",
 
     'paymentfailure-subject' => ":site Payment Failed",
-    'paymentfailure-body' => "Something went wrong with auto-payment for your :site account.\n"
+    'paymentfailure-body' => "Something went wrong with auto-payment for your :email account.\n"
         . "We tried to charge you via your preferred payment method, but the charge did not go through.",
     'paymentfailure-body-ext' => "In order to not cause any further issues, we suspended auto-payment for your account. "
         . "To resolve this issue, login to your account settings at",
@@ -72,7 +72,7 @@ return [
         . "change your auto-payment settings.",
 
     'paymentsuccess-subject' => ":site Payment Succeeded",
-    'paymentsuccess-body' => "The auto-payment for your :site account went through without issues. "
+    'paymentsuccess-body' => "The auto-payment for your :email account went through without issues. "
         . "You can check your new account balance and more details here:",
 
     'support' => "Special circumstances? Something is wrong with a charge?\n"

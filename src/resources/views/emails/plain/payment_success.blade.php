@@ -1,15 +1,15 @@
-{!! __('mail.header', ['name' => $username]) !!}
+{!! __('mail.header', $vars) !!}
 
-{!! __('mail.paymentsuccess-body', ['site' => $site]) !!}
+{!! __('mail.paymentsuccess-body', $vars) !!}
 
 {!! $walletUrl !!}
 
 @if ($supportUrl)
-{!! __('mail.support', ['site' => $site]) !!}
+{!! __('mail.support', $vars) !!}
 
 {!! $supportUrl !!}
 @endif
 
 -- 
-{!! __('mail.footer1') !!}
-{!! __('mail.footer2', ['site' => $site]) !!}
+{!! __('mail.footer1', $vars) !!}
+{!! __('mail.footer2', $vars) !!}

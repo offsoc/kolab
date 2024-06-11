@@ -39,18 +39,20 @@ class NegativeBalanceReminderDegrade extends Mailable
         $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
         $threshold = WalletCheck::threshold($this->wallet, WalletCheck::THRESHOLD_DEGRADE);
 
-        $subject = \trans('mail.negativebalancereminderdegrade-subject', ['site' => $appName]);
+        $vars = [
+            'date' => $threshold->toDateString(),
+            'email' => $this->wallet->owner->email,
+            'name' => $this->user->name(true),
+            'site' => $appName,
+        ];
 
         $this->view('emails.html.negative_balance_reminder_degrade')
             ->text('emails.plain.negative_balance_reminder_degrade')
-            ->subject($subject)
+            ->subject(\trans('mail.negativebalancereminderdegrade-subject', $vars))
             ->with([
-                    'site' => $appName,
-                    'subject' => $subject,
-                    'username' => $this->user->name(true),
+                    'vars' => $vars,
                     'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
                     'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
-                    'date' => $threshold->toDateString(),
             ]);
 
         return $this;
@@ -67,6 +69,8 @@ class NegativeBalanceReminderDegrade extends Mailable
     {
         $wallet = new Wallet();
         $user = new User();
+        $user->email = 'test@' . \config('app.domain');
+        $wallet->owner = $user;
 
         $mail = new self($wallet, $user);
 

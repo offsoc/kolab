@@ -1,17 +1,17 @@
-{!! __('mail.header', ['name' => $username]) !!}
+{!! __('mail.header', $vars) !!}
 
-{!! __('mail.negativebalance-body', ['site' => $site]) !!}
+{!! __('mail.negativebalance-body', $vars) !!}
 
-{!! __('mail.negativebalance-body-ext', ['site' => $site]) !!}
+{!! __('mail.negativebalance-body-ext', $vars) !!}
 
 {!! $walletUrl !!}
 
 @if ($supportUrl)
-{!! __('mail.support', ['site' => $site]) !!}
+{!! __('mail.support', $vars) !!}
 
 {!! $supportUrl !!}
 @endif
 
 -- 
-{!! __('mail.footer1') !!}
-{!! __('mail.footer2', ['site' => $site]) !!}
+{!! __('mail.footer1', $vars) !!}
+{!! __('mail.footer2', $vars) !!}

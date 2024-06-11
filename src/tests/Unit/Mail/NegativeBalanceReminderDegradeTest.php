@@ -16,7 +16,8 @@ class NegativeBalanceReminderDegradeTest extends TestCase
     public function testBuild(): void
     {
         $user = $this->getTestUser('ned@kolab.org');
-        $wallet = $user->wallets->first();
+        $john = $this->getTestUser('john@kolab.org');
+        $wallet = $john->wallets->first();
         $wallet->balance = -100;
         $wallet->save();
 
@@ -43,7 +44,7 @@ class NegativeBalanceReminderDegradeTest extends TestCase
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
         $this->assertTrue(strpos($html, $walletLink) > 0);
         $this->assertTrue(strpos($html, $supportLink) > 0);
-        $this->assertTrue(strpos($html, "you are behind on paying for your $appName account") > 0);
+        $this->assertTrue(strpos($html, "you are behind on paying for your {$john->email} account") > 0);
         $this->assertTrue(strpos($html, "your account will be degraded") > 0);
         $this->assertTrue(strpos($html, $threshold->toDateString()) > 0);
         $this->assertTrue(strpos($html, "$appName Support") > 0);
@@ -52,7 +53,7 @@ class NegativeBalanceReminderDegradeTest extends TestCase
         $this->assertStringStartsWith('Dear ' . $user->name(true), $plain);
         $this->assertTrue(strpos($plain, $walletUrl) > 0);
         $this->assertTrue(strpos($plain, $supportUrl) > 0);
-        $this->assertTrue(strpos($plain, "you are behind on paying for your $appName account") > 0);
+        $this->assertTrue(strpos($plain, "you are behind on paying for your {$john->email} account") > 0);
         $this->assertTrue(strpos($plain, "your account will be degraded") > 0);
         $this->assertTrue(strpos($plain, $threshold->toDateString()) > 0);
         $this->assertTrue(strpos($plain, "$appName Support") > 0);

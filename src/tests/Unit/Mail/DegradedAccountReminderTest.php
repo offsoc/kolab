@@ -15,7 +15,8 @@ class DegradedAccountReminderTest extends TestCase
     public function testBuild(): void
     {
         $user = $this->getTestUser('ned@kolab.org');
-        $wallet = $user->wallets->first();
+        $john = $this->getTestUser('john@kolab.org');
+        $wallet = $john->wallets->first();
 
         $mail = $this->renderMail(new DegradedAccountReminder($wallet, $user));
 
@@ -31,12 +32,12 @@ class DegradedAccountReminderTest extends TestCase
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
         $this->assertTrue(strpos($html, $dashboardLink) > 0);
-        $this->assertTrue(strpos($html, "your account is a free account") > 0);
+        $this->assertTrue(strpos($html, "your {$john->email} account is a free account") > 0);
         $this->assertTrue(strpos($html, "$appName Team") > 0);
 
         $this->assertStringStartsWith('Dear ' . $user->name(true), $plain);
         $this->assertTrue(strpos($plain, $dashboardUrl) > 0);
-        $this->assertTrue(strpos($plain, "your account is a free account") > 0);
+        $this->assertTrue(strpos($plain, "your {$john->email} account is a free account") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }
 

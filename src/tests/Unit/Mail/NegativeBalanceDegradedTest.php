@@ -16,7 +16,8 @@ class NegativeBalanceDegradedTest extends TestCase
     public function testBuild(): void
     {
         $user = $this->getTestUser('ned@kolab.org');
-        $wallet = $user->wallets->first();
+        $john = $this->getTestUser('john@kolab.org');
+        $wallet = $john->wallets->first();
         $wallet->balance = -100;
         $wallet->save();
 
@@ -41,14 +42,14 @@ class NegativeBalanceDegradedTest extends TestCase
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
         $this->assertTrue(strpos($html, $walletLink) > 0);
         $this->assertTrue(strpos($html, $supportLink) > 0);
-        $this->assertTrue(strpos($html, "Your $appName account has been degraded") > 0);
+        $this->assertTrue(strpos($html, "Your {$john->email} account has been degraded") > 0);
         $this->assertTrue(strpos($html, "$appName Support") > 0);
         $this->assertTrue(strpos($html, "$appName Team") > 0);
 
         $this->assertStringStartsWith('Dear ' . $user->name(true), $plain);
         $this->assertTrue(strpos($plain, $walletUrl) > 0);
         $this->assertTrue(strpos($plain, $supportUrl) > 0);
-        $this->assertTrue(strpos($plain, "Your $appName account has been degraded") > 0);
+        $this->assertTrue(strpos($plain, "Your {$john->email} account has been degraded") > 0);
         $this->assertTrue(strpos($plain, "$appName Support") > 0);
         $this->assertTrue(strpos($plain, "$appName Team") > 0);
     }

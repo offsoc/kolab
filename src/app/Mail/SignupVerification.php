@@ -41,15 +41,19 @@ class SignupVerification extends Mailable
         }
         $username = trim($username);
 
+        $vars = [
+            'site' => \config('app.name'),
+            'name' => $username ?: 'User',
+        ];
+
         $this->view('emails.html.signup_verification')
             ->text('emails.plain.signup_verification')
-            ->subject(\trans('mail.signupverification-subject', ['site' => \config('app.name')]))
+            ->subject(\trans('mail.signupverification-subject', $vars))
             ->with([
-                    'site' => \config('app.name'),
-                    'username' => $username ?: 'User',
+                    'vars' => $vars,
+                    'href' => $href,
                     'code' => $this->code->code,
                     'short_code' => $this->code->short_code,
-                    'href' => $href,
             ]);
 
         return $this;

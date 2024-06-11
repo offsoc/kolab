@@ -1,19 +1,19 @@
-{!! __('mail.header', ['name' => $username]) !!}
+{!! __('mail.header', $vars) !!}
 
-{!! __('mail.trialend-intro', ['site' => $site]) !!}
+{!! __('mail.trialend-intro', $vars) !!}
 @if ($paymentUrl)
 
-{!! __('mail.trialend-kb', ['site' => $site]) !!} {!! $paymentUrl !!}
+{!! __('mail.trialend-kb', $vars) !!} {!! $paymentUrl !!}
 @endif
 
-{!! __('mail.trialend-body1', ['site' => $site]) !!}
+{!! __('mail.trialend-body1', $vars) !!}
 
-{!! __('mail.trialend-body2', ['site' => $site]) !!}
+{!! __('mail.trialend-body2', $vars) !!}
 
-{!! __('mail.trialend-body3', ['site' => $site]) !!}
+{!! __('mail.trialend-body3', $vars) !!}
 
 {!! $supportUrl !!}
 
 -- 
-{!! __('mail.footer1') !!}
-{!! __('mail.footer2', ['site' => $site]) !!}
+{!! __('mail.footer1', $vars) !!}
+{!! __('mail.footer2', $vars) !!}
