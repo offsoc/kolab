@@ -57,17 +57,8 @@ class CreateCommand extends \App\Console\Command
                 return 1;
             }
 
-            if ($domain->isPublic()) {
-                $this->error("Domain {$domainName} is public.");
-                return 1;
-            }
-
-            $owner = $domain->wallet()->owner;
-
-            // Validate email address
-            if ($error = UsersController::validateEmail($email, $owner, $existingDeletedUser)) {
-                $this->error("{$email}: {$error}");
-                return 1;
+            if (!$domain->isPublic()) {
+                $owner = $domain->wallet()->owner;
             }
 
             foreach ($packages as $package) {
@@ -94,6 +85,18 @@ class CreateCommand extends \App\Console\Command
             return 1;
         }
 
+        if (empty($owner)) {
+            $owner = $user;
+        }
+
+        if ($role != User::ROLE_ADMIN && $role != User::ROLE_RESELLER) {
+            // Validate email address
+            if ($error = UsersController::validateEmail($email, $owner, $existingDeletedUser)) {
+                $this->error("{$email}: {$error}");
+                return 1;
+            }
+        }
+
         DB::beginTransaction();
 
         if ($existingDeletedUser) {
@@ -102,10 +105,6 @@ class CreateCommand extends \App\Console\Command
         }
 
         $user->save();
-
-        if (empty($owner)) {
-            $owner = $user;
-        }
 
         foreach ($packagesToAssign as $package) {
             $owner->assignPackage($package, $user);

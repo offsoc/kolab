@@ -16,6 +16,7 @@ class CreateTest extends TestCase
         parent::setUp();
 
         $this->deleteTestUser('user@kolab.org');
+        $this->deleteTestUser('user@kolabnow.com');
         $this->deleteTestUser('admin@kolab.org');
         $this->deleteTestUser('reseller@unknown.domain.tld');
     }
@@ -26,6 +27,7 @@ class CreateTest extends TestCase
     public function tearDown(): void
     {
         $this->deleteTestUser('user@kolab.org');
+        $this->deleteTestUser('user@kolabnow.com');
         $this->deleteTestUser('admin@kolab.org');
         $this->deleteTestUser('reseller@unknown.domain.tld');
 
@@ -66,12 +68,6 @@ class CreateTest extends TestCase
         $this->assertSame(1, $code);
         $this->assertSame("jack.daniels@kolab.org: The specified email is not available.", $output);
 
-        // Public domain not allowed in the group email address
-        $code = \Artisan::call("user:create user@kolabnow.com");
-        $output = trim(\Artisan::output());
-        $this->assertSame(1, $code);
-        $this->assertSame("Domain kolabnow.com is public.", $output);
-
         // Valid (user)
         $code = \Artisan::call("user:create user@kolab.org --package=kolab");
         $output = trim(\Artisan::output());
@@ -97,6 +93,13 @@ class CreateTest extends TestCase
         $this->assertSame(0, $code);
         $this->assertEquals($user->id, $output);
         $this->assertEquals($user->role, User::ROLE_RESELLER);
+
+        // Valid (public domain)
+        $code = \Artisan::call("user:create user@kolabnow.com");
+        $output = trim(\Artisan::output());
+        $user = User::where('email', 'user@kolabnow.com')->first();
+        $this->assertSame(0, $code);
+        $this->assertEquals($user->id, $output);
 
         // Invalid role
         $code = \Artisan::call("user:create unknwon@kolab.org --role=unknown");
