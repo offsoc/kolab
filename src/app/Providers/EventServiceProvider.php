@@ -21,6 +21,7 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $subscribe = [
         \App\Listeners\SqlDebug::class,
+        \App\Listeners\HorizonDebug::class,
     ];
 
     /**
