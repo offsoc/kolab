@@ -35,6 +35,7 @@ class RelationController extends ResourceController
         $resource = $this->model::find($id);
 
         if (!$this->checkTenant($resource)) {
+            \Log::info("Tenant mismatch");
             return $this->errorResponse(404);
         }
 
@@ -286,6 +287,7 @@ class RelationController extends ResourceController
         $resource = $this->model::find($id);
 
         if (!method_exists($this->model, 'setConfig')) {
+            \Log::info("Tenant mismatch");
             return $this->errorResponse(404);
         }
 
@@ -323,6 +325,7 @@ class RelationController extends ResourceController
         $resource = $this->model::find($id);
 
         if (!$this->checkTenant($resource)) {
+            \Log::info("Tenant mismatch");
             return $this->errorResponse(404);
         }
 
@@ -365,6 +368,7 @@ class RelationController extends ResourceController
         $resource = $this->model::find($id);
 
         if (!$this->checkTenant($resource)) {
+            \Log::info("Tenant mismatch");
             return $this->errorResponse(404);
         }
 
@@ -387,6 +391,7 @@ class RelationController extends ResourceController
         $resource = $this->model::find($id);
 
         if (!$this->checkTenant($resource)) {
+            \Log::info("Tenant mismatch");
             return $this->errorResponse(404);
         }
 
