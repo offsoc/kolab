@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Tenant;
 
 use App\Console\Command;
+use App\Http\Controllers\API\V4\UsersController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 
@@ -13,14 +14,14 @@ class CreateCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'tenant:create {user} {--title=}';
+    protected $signature = 'tenant:create {user} {domain} {--title=} {--password=}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = "Create a tenant (with a set of SKUs/plans/packages) and make the user a reseller.";
+    protected $description = "Create a tenant (with a set of SKUs/plans/packages), and a reseller user and domain for it.";
 
     /**
      * Execute the console command.
@@ -29,17 +30,23 @@ class CreateCommand extends Command
      */
     public function handle()
     {
-        $user = $this->getUser($this->argument('user'));
+        $email = $this->argument('user');
 
-        if (!$user) {
-            $this->error('User not found.');
+        if ($user = \App\User::where('email', $email)->first()) {
+            $this->error("The user already exists.");
             return 1;
         }
+
+        if ($domain = \App\Domain::where('namespace', $this->argument('domain'))->first()) {
+            $this->error("The domain already exists.");
+            return 1;
+        }
+
 
         DB::beginTransaction();
 
         // Create a tenant
-        $tenant = \App\Tenant::create(['title' => $this->option('title') ?: $user->name()]);
+        $tenant = \App\Tenant::create(['title' => $this->option('title')]);
 
         // Clone plans, packages, skus for the tenant
         $sku_map = \App\Sku::withEnvTenantContext()->where('active', true)->get()
@@ -131,28 +138,6 @@ class CreateCommand extends Command
         // TODO: We could probably do config(['app.tenant' => $tenant->id]) here
         Queue::fake();
 
-        // Assign 'reseller' role to the user
-        $user->role = 'reseller';
-        $user->tenant_id = $tenant->id;
-        $user->save();
-
-        // Switch tenant_id for all of the user belongings
-        $user->wallets->each(function ($wallet) use ($tenant) {
-            $wallet->entitlements->each(function ($entitlement) use ($tenant) {
-                $entitlement->entitleable->tenant_id = $tenant->id;
-                $entitlement->entitleable->save();
-
-                // TODO: If user already has any entitlements, they will have to be
-                //       removed/replaced by SKUs in the newly created tenant
-                //       I think we don't really support this yet anyway.
-            });
-
-            // TODO: If the wallet has a discount we should remove/replace it too
-            //       I think we don't really support this yet anyway.
-        });
-
-        DB::commit();
-
         // Make sure the transaction wasn't aborted
         $tenant = \App\Tenant::find($tenant->id);
 
@@ -162,5 +147,46 @@ class CreateCommand extends Command
         }
 
         $this->info("Created tenant {$tenant->id}.");
+
+        // Set up the primary tenant domain
+        $domain = \App\Domain::create(
+            [
+                'namespace' => $this->argument('domain'),
+                'type' => \App\Domain::TYPE_PUBLIC,
+            ]
+        );
+        $domain->tenant_id = $tenant->id;
+        $domain->status = \App\Domain::STATUS_CONFIRMED | \App\Domain::STATUS_ACTIVE;
+        $domain->save();
+        $this->info("Created domain {$domain->id}.");
+
+        $user = new \App\User();
+        $user->email = $email;
+        $user->password = $this->option('password');
+        $user->role = 'reseller';
+        $user->tenant_id = $tenant->id;
+
+        if ($error = UsersController::validateEmail($email, $user)) {
+            $this->error("{$email}: {$error}");
+            return 1;
+        }
+
+        $user->save();
+        $this->info("Created user {$user->id}.");
+
+        $tenant->setSettings([
+            "app.name" => $this->option("title"),
+            "app.url" => $this->argument("domain"),
+            "app.public_url" => "https://" . $this->argument("domain"),
+            "app.support_url" => "https://" . $this->argument("domain") . "/support",
+            "mail.sender.address" => "noreply@" . $this->argument("domain"),
+            "mail.sender.name" => $this->option("title"),
+            "mail.replyto.address" => "noreply@" . $this->argument("domain"),
+            "mail.replyto.name" => $this->option("title"),
+        ]);
+
+        DB::commit();
+
+        $this->info("Applied default tenant settings.");
     }
 }

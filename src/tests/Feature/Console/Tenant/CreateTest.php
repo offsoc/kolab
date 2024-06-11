@@ -16,7 +16,10 @@ class CreateTest extends TestCase
     {
         parent::setUp();
 
-        $this->deleteTestUser('test-tenant@kolabnow.com');
+        $this->deleteTestUser('unknown@user.com');
+        $this->deleteTestDomain('tenant.com');
+        $this->deleteTestDomain('user.com');
+        \App\Tenant::where('title', 'Test Tenant')->delete();
     }
 
     /**
@@ -31,8 +34,10 @@ class CreateTest extends TestCase
             \App\Plan::where('tenant_id', $this->tenantId)->delete();
             \App\Package::where('tenant_id', $this->tenantId)->delete();
             \App\Sku::where('tenant_id', $this->tenantId)->delete();
+            \App\Domain::where('tenant_id', $this->tenantId)->delete();
             \App\Tenant::find($this->tenantId)->delete();
         }
+        $this->deleteTestUser('unknown@user.com');
 
         parent::tearDown();
     }
@@ -47,31 +52,28 @@ class CreateTest extends TestCase
         // Warning: We're not using artisan() here, as this will not
         // allow us to test "empty output" cases
 
-        // User not existing
-        $code = \Artisan::call("tenant:create unknown@user.com");
+        // User already existing
+        $user = $this->getTestUser('unknown@user.com');
+        $code = \Artisan::call("tenant:create {$user->email} user.com --title=\"Test Tenant\"");
         $output = trim(\Artisan::output());
         $this->assertSame(1, $code);
-        $this->assertSame("User not found.", $output);
 
-        $user = $this->getTestUser('test-tenant@kolabnow.com');
-
-        $this->assertEmpty($user->role);
-        $this->assertEquals($user->tenant_id, \config('app.tenant_id'));
-
-        // Existing user
-        $code = \Artisan::call("tenant:create {$user->email} --title=\"Test Tenant\"");
+        // User not existing
+        $code = \Artisan::call("tenant:create test-tenant@tenant.com tenant.com --title=\"Test Tenant\"");
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
         $this->assertMatchesRegularExpression("/^Created tenant [0-9]+./", $output);
 
-        preg_match("/^Created tenant ([0-9]+)./", $output, $matches);
+        preg_match("/Created tenant ([0-9]+)./", $output, $matches);
         $this->tenantId = $matches[1];
-
         $tenant = \App\Tenant::find($this->tenantId);
-        $user->refresh();
-
         $this->assertNotEmpty($tenant);
         $this->assertSame('Test Tenant', $tenant->title);
+
+        preg_match("/Created user ([0-9]+)./", $output, $matches);
+        $userId = $matches[1];
+        $user = \App\User::find($userId);
+        $this->assertNotEmpty($user);
         $this->assertSame('reseller', $user->role);
         $this->assertSame($tenant->id, $user->tenant_id);
 
