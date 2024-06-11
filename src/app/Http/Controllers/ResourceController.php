@@ -13,6 +13,7 @@ class ResourceController extends Controller
      */
     public function create()
     {
+        \Log::info("Not implemented");
         return $this->errorResponse(404);
     }
 
@@ -25,6 +26,7 @@ class ResourceController extends Controller
      */
     public function destroy($id)
     {
+        \Log::info("Not implemented");
         return $this->errorResponse(404);
     }
 
@@ -37,6 +39,7 @@ class ResourceController extends Controller
      */
     public function edit($id)
     {
+        \Log::info("Not implemented");
         return $this->errorResponse(404);
     }
 
@@ -49,6 +52,7 @@ class ResourceController extends Controller
      */
     public function index()
     {
+        \Log::info("Not implemented");
         return $this->errorResponse(404);
     }
 
@@ -61,6 +65,7 @@ class ResourceController extends Controller
      */
     public function show($id)
     {
+        \Log::info("Not implemented");
         return $this->errorResponse(404);
     }
 
@@ -73,6 +78,7 @@ class ResourceController extends Controller
      */
     public function store(Request $request)
     {
+        \Log::info("Not implemented");
         return $this->errorResponse(404);
     }
 
@@ -86,6 +92,7 @@ class ResourceController extends Controller
      */
     public function update(Request $request, $id)
     {
+        \Log::info("Not implemented");
         return $this->errorResponse(404);
     }
 }

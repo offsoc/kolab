@@ -181,6 +181,7 @@ class UsersController extends RelationController
         $user = User::find($id);
 
         if (!$this->checkTenant($user)) {
+            \Log::info("Tenant mismatch");
             return $this->errorResponse(404);
         }
 
@@ -349,6 +350,7 @@ class UsersController extends RelationController
         $user = User::find($id);
 
         if (!$this->checkTenant($user)) {
+            \Log::info("Tenant mismatch");
             return $this->errorResponse(404);
         }
 
