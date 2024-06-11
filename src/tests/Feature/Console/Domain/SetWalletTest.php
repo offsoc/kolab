@@ -54,7 +54,14 @@ class SetWalletTest extends TestCase
         $john = $this->getTestUser('john@kolab.org');
         $wallet = $john->wallets->first();
 
-        $code = \Artisan::call("domain:set-wallet domain-delete.com " . $wallet->id);
+        // Non-existing package
+        $code = \Artisan::call("domain:set-wallet domain-delete.com {$wallet->id} --package=123");
+        $output = trim(\Artisan::output());
+        $this->assertSame(1, $code);
+        $this->assertSame("Package not found.", $output);
+
+        // All good, expect success
+        $code = \Artisan::call("domain:set-wallet domain-delete.com {$wallet->id}");
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
         $this->assertSame('', $output);
@@ -67,7 +74,7 @@ class SetWalletTest extends TestCase
         $this->assertSame($wallet->id, $entitlement->wallet_id);
 
         // Already assigned to a wallet
-        $code = \Artisan::call("domain:set-wallet domain-delete.com " . $wallet->id);
+        $code = \Artisan::call("domain:set-wallet domain-delete.com {$wallet->id}");
         $output = trim(\Artisan::output());
         $this->assertSame(1, $code);
         $this->assertSame("Domain already assigned to a wallet: {$wallet->id}.", $output);

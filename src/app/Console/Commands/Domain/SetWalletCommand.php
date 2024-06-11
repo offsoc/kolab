@@ -3,9 +3,7 @@
 namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
-use App\Entitlement;
-use App\Domain;
-use App\Sku;
+use App\Package;
 use Illuminate\Support\Facades\Queue;
 
 class SetWalletCommand extends Command
@@ -15,7 +13,7 @@ class SetWalletCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'domain:set-wallet {domain} {wallet}';
+    protected $signature = 'domain:set-wallet {domain} {wallet} {--package=}';
 
     /**
      * The console command description.
@@ -46,23 +44,28 @@ class SetWalletCommand extends Command
         }
 
         if ($entitlement = $domain->entitlements()->first()) {
-            $this->error("Domain already assigned to a wallet: {$entitlement->wallet->id}.");
+            $this->error("Domain already assigned to a wallet: {$entitlement->wallet_id}.");
             return 1;
         }
 
-        $sku = Sku::withObjectTenantContext($domain)->where('title', 'domain-hosting')->first();
+        if ($p = $this->option('package')) {
+            $package = Package::withObjectTenantContext($domain)->find($p);
+
+            if (!$package) {
+                $package = Package::withObjectTenantContext($domain)->where('title', $p)->first();
+            }
+        } else {
+            $package = Package::withObjectTenantContext($domain)->where('title', 'domain-hosting')->first();
+        }
+
+        if (!$package) {
+            $this->error("Package not found.");
+            return 1;
+        }
 
         Queue::fake(); // ignore LDAP for now (note: adding entitlements updates the domain)
 
-        Entitlement::create(
-            [
-                'wallet_id' => $wallet->id,
-                'sku_id' => $sku->id,
-                'cost' => 0,
-                'fee' => 0,
-                'entitleable_id' => $domain->id,
-                'entitleable_type' => Domain::class,
-            ]
-        );
+        // Assign package the same as we do in DomainsController when a new domain is created
+        $domain->assignPackageAndWallet($package, $wallet);
     }
 }
