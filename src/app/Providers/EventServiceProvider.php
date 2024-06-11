@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\SqlDebug;
+use App\Listeners\HorizonDebug;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -22,6 +23,7 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $subscribe = [
         SqlDebug::class,
+        HorizonDebug::class,
     ];
 
     /**
