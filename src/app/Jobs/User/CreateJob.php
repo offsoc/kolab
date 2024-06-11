@@ -31,16 +31,20 @@ class CreateJob extends UserJob
 
         $user = $this->getUser();
 
+        \Log::info("Handling create job");
         if (!$user) {
+            \Log::info("User not found");
             return;
         }
 
         if ($user->role) {
+            \Log::info("Ignoring user with a role");
             // Admins/resellers don't reside in LDAP (for now)
             return;
         }
 
         if ($user->email == \config('services.imap.admin_login')) {
+            \Log::info("Ignoring imap admin");
             // Ignore Cyrus admin account
             return;
         }
