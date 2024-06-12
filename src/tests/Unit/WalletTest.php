@@ -35,7 +35,7 @@ class WalletTest extends TestCase
         $discount = \App\Discount::where('discount', 30)->first();
         $wallet = new Wallet(['currency' => 'CHF', 'id' => 123]);
         $ent = new \App\Entitlement([
-                'wallet_id' => 123,
+                'wallet_id' => $wallet->id,
                 'sku_id' => 456,
                 'cost' => 100,
                 'fee' => 50,
