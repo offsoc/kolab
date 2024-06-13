@@ -54,6 +54,43 @@ class DomainTest extends TestCase
     }
 
     /**
+     * Tests for Domain::assignPackage()
+     */
+    public function testAssignPackage(): void
+    {
+        $user = $this->getTestUser('user@gmail.com');
+        $domain = $this->getTestDomain('gmail.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_EXTERNAL,
+        ]);
+
+        $package = \App\Package::withObjectTenantContext($user)->where('title', 'domain-hosting')->first();
+        $wallet = $user->wallets()->first();
+
+        $domain->assignPackage($package, $user);
+
+        $this->assertCount(1, $entitlements = $wallet->entitlements()->get());
+        $this->assertSame(0, $entitlements[0]->cost);
+
+        // Assert that units_free might not work as we intended to
+        // The second domain is still free, but it should cost 100.
+        $domain = $this->getTestDomain('public-active.com', [
+                'status' => Domain::STATUS_NEW,
+                'type' => Domain::TYPE_EXTERNAL,
+        ]);
+
+        $domain->assignPackage($package, $user);
+
+        $this->assertCount(2, $entitlements = $wallet->entitlements()->get());
+        $this->assertSame(0, $entitlements[0]->cost);
+        $this->assertSame(0, $entitlements[1]->cost);
+
+        // Make assigning domain that is already assigned is not possible
+        $this->expectException(\Exception::class);
+        $domain->assignPackage($package, $user);
+    }
+
+    /**
      * Test domain create/creating observer
      */
     public function testCreate(): void

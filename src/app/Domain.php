@@ -94,11 +94,7 @@ class Domain extends Model
         $wallet = $this->wallet();
 
         if ($wallet) {
-            \Log::error(
-                "Domain {$this->namespace} is already assigned to {$wallet->owner->email}"
-            );
-
-            return $this;
+            throw new \Exception("Domain {$this->namespace} is already assigned to {$wallet->owner->email}");
         }
 
         return $this->assignPackageAndWallet($package, $user->wallets()->first());
