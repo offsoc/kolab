@@ -46,7 +46,6 @@ class ChargeCommand extends Command
             // Get all wallets, excluding deleted accounts
             $wallets = \App\Wallet::select('wallets.id')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
-                ->withEnvTenantContext('users')
                 ->whereNull('users.deleted_at')
                 ->cursor();
         }

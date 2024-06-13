@@ -30,7 +30,6 @@ class TrialEndCommand extends Command
         // Get all wallets...
         $wallets = \App\Wallet::select('wallets.*')
             ->join('users', 'users.id', '=', 'wallets.user_id')
-            ->withEnvTenantContext('users')
             // exclude deleted accounts
             ->whereNull('users.deleted_at')
             // exclude "inactive" accounts

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Console\Command;
+use App\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -30,9 +31,8 @@ class PasswordRetentionCommand extends Command
     public function handle()
     {
         // Get all users (accounts) with max_password_age set
-        $accounts = \App\User::select('users.*', 'user_settings.value as max_age')
+        $accounts = User::select('users.*', 'user_settings.value as max_age')
             ->join('user_settings', 'users.id', '=', 'user_settings.user_id')
-            ->withEnvTenantContext('users')
             ->where('user_settings.key', 'max_password_age')
             ->cursor();
 
@@ -46,6 +46,7 @@ class PasswordRetentionCommand extends Command
                 )
                 ->get()
                 ->each(function ($user) use ($account) {
+                    /** @var User $user */
                     // Skip incomplete or suspended users
                     if (!$user->isImapReady() || $user->isSuspended()) {
                         return;
@@ -58,6 +59,7 @@ class PasswordRetentionCommand extends Command
                         $lastUpdate = $user->created_at;
                     }
 
+                    // @phpstan-ignore-next-line
                     $nextUpdate = $lastUpdate->copy()->addMonthsWithoutOverflow($account->max_age);
                     $diff = Carbon::now()->diffInDays($nextUpdate, false);
 

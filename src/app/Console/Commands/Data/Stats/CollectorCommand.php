@@ -22,7 +22,7 @@ class CollectorCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Collects statictical data about the system (for charts)';
+    protected $description = 'Collects statistical data about the system (for charts)';
 
     /**
      * Execute the console command.
@@ -39,8 +39,6 @@ class CollectorCommand extends Command
      */
     protected function collectPayersCount(): void
     {
-        $tenant_id = \config('app.tenant_id');
-
         // A subquery to get the all wallets with a successful payment
         $payments = DB::table('payments')
             ->selectRaw('distinct wallet_id')
@@ -53,7 +51,8 @@ class CollectorCommand extends Command
             ->groupBy('entitleable_id');
 
         // Count all non-degraded and non-deleted users with any successful payment
-        $count = DB::table('users')
+        $counts = DB::table('users')
+            ->selectRaw('count(*) as total, users.tenant_id')
             ->joinSub($wallets, 'wallets', function ($join) {
                 $join->on('users.id', '=', 'wallets.user_id');
             })
@@ -62,22 +61,16 @@ class CollectorCommand extends Command
             })
             ->whereNull('users.deleted_at')
             ->whereNot('users.status', '&', User::STATUS_DEGRADED)
-            ->whereNot('users.status', '&', User::STATUS_SUSPENDED);
-
-        if ($tenant_id) {
-            $count->where('users.tenant_id', $tenant_id);
-        } else {
-            $count->whereNull('users.tenant_id');
-        }
-
-        $count = $count->count();
-
-        if ($count) {
-            DB::table('stats')->insert([
-                    'tenant_id' => $tenant_id,
+            ->whereNot('users.status', '&', User::STATUS_SUSPENDED)
+            ->groupBy('users.tenant_id')
+            ->havingRaw('count(*) > 0')
+            ->get()
+            ->each(function ($record) {
+                DB::table('stats')->insert([
+                    'tenant_id' => $record->tenant_id,
                     'type' => StatsController::TYPE_PAYERS,
-                    'value' => $count,
-            ]);
-        }
+                    'value' => $record->total,
+                ]);
+            });
     }
 }

@@ -28,10 +28,10 @@ class ImportCommand extends Command
     public function handle()
     {
         $commands = [
-            #Import\CountriesCommand::class,
+            Import\CountriesCommand::class,
             Import\OpenExchangeRatesCommand::class,
-            #Import\IP4NetsCommand::class,
-            #Import\IP6NetsCommand::class
+            Import\IP4NetsCommand::class,
+            Import\IP6NetsCommand::class
         ];
 
         foreach ($commands as $command) {
