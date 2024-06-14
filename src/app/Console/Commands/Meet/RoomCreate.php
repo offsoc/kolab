@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Meet;
 
 use App\Console\Command;
+use App\Meet\Room;
 
 class RoomCreate extends Command
 {
@@ -40,16 +41,17 @@ class RoomCreate extends Command
             return 1;
         }
 
-        $room = \App\Meet\Room::where('name', $roomName)->first();
+        $room = Room::where('name', $roomName)->first();
 
         if ($room) {
             $this->error("Room already exists.");
             return 1;
         }
 
-        $room = \App\Meet\Room::create([
-                'name' => $roomName,
-        ]);
+        $room = new Room();
+        $room->name = $roomName;
+        $room->tenant_id = $user->tenant_id;
+        $room->save();
 
         $room->assignToWallet($user->wallets()->first());
     }

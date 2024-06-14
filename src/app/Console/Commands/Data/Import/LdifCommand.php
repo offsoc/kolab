@@ -14,7 +14,7 @@ class LdifCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'data:import:ldif {file} {owner} {--force}';
+    protected $signature = 'data:import:ldif {file} {owner} {--force} {--tenant=}';
 
     /**
      * The console command description.
@@ -49,6 +49,16 @@ class LdifCommand extends Command
      */
     public function handle()
     {
+        if ($tenantId = $this->option('tenant')) {
+            $tenant = $this->getObject(\App\Tenant::class, $tenantId, 'title');
+            if (!$tenant) {
+                $this->error("Tenant {$tenantId} not found");
+                return 1;
+            }
+
+            $this->tenantId = $tenant->id;
+        }
+
         ini_set("memory_limit", "2048M");
 
         // (Re-)create temporary table
@@ -207,10 +217,11 @@ class LdifCommand extends Command
                 continue;
             }
 
-            $domain = \App\Domain::create([
-                    'namespace' => $data->namespace,
-                    'type' => \App\Domain::TYPE_EXTERNAL,
-            ]);
+            $domain = new \App\Domain();
+            $domain->namespace = $data->namespace;
+            $domain->type = \App\Domain::TYPE_EXTERNAL;
+            $domain->tenant_id = $this->tenantId;
+            $domain->save();
 
             // Entitlements
             $domain->assignPackageAndWallet($this->packages['domain'], $this->wallet);
@@ -227,10 +238,11 @@ class LdifCommand extends Command
                         continue;
                     }
 
-                    $domain = \App\Domain::create([
-                            'namespace' => $alias,
-                            'type' => \App\Domain::TYPE_EXTERNAL,
-                    ]);
+                    $domain = new \App\Domain();
+                    $domain->namespace = $alias;
+                    $domain->type = \App\Domain::TYPE_EXTERNAL;
+                    $domain->tenant_id = $this->tenantId;
+                    $domain->save();
 
                     // Entitlements
                     $domain->assignPackageAndWallet($this->packages['domain'], $this->wallet);
@@ -280,11 +292,12 @@ class LdifCommand extends Command
                 continue;
             }
 
-            $group = \App\Group::create([
-                    'name' => $data->name,
-                    'email' => $data->email,
-                    'members' => $members,
-            ]);
+            $group = new \App\Group();
+            $group->name = $data->name;
+            $group->email = $data->email;
+            $group->members = $members;
+            $group->tenant_id = $this->tenantId;
+            $group->save();
 
             $group->assignToWallet($this->wallet);
 
@@ -344,6 +357,7 @@ class LdifCommand extends Command
             $resource = new \App\Resource();
             $resource->name = $data->name;
             $resource->domainName = $data->domain;
+            $resource->tenant_id = $this->tenantId;
             $resource->save();
 
             $resource->assignToWallet($this->wallet);
@@ -398,6 +412,7 @@ class LdifCommand extends Command
             $folder->name = $data->name;
             $folder->type = $data->type ?? 'mail';
             $folder->domainName = $data->domain;
+            $folder->tenant_id = $this->tenantId;
             $folder->save();
 
             $folder->assignToWallet($this->wallet);
@@ -940,30 +955,30 @@ class LdifCommand extends Command
     protected function preparePackagesAndSkus(): void
     {
         // Find the tenant
-        if (empty($this->ownerDN)) {
-            if ($user = $this->getUser($this->argument('owner'))) {
-                $tenant_id = $user->tenant_id;
+        if (empty($this->tenantId)) {
+            if (empty($this->ownerDN)) {
+                if ($user = $this->getUser($this->argument('owner'))) {
+                    $this->tenantId = $user->tenant_id;
+                }
             }
-        }
 
-        // TODO: Tenant id could be a command option
-
-        if (empty($tenant_id)) {
-            $tenant_id = \config('app.tenant_id');
+            if (empty($this->tenantId)) {
+                $this->tenantId = \config('app.tenant_id');
+            }
         }
 
         // TODO: We should probably make package titles configurable with command options
 
         $this->packages = [
-            'user' => \App\Package::where('title', 'kolab')->where('tenant_id', $tenant_id)->first(),
-            'domain' => \App\Package::where('title', 'domain-hosting')->where('tenant_id', $tenant_id)->first(),
+            'user' => \App\Package::where('title', 'kolab')->where('tenant_id', $this->tenantId)->first(),
+            'domain' => \App\Package::where('title', 'domain-hosting')->where('tenant_id', $this->tenantId)->first(),
         ];
 
         // Count storage skus
         $sku = $this->packages['user']->skus()->where('title', 'storage')->first();
 
         $this->packages['quota'] = $sku ? $sku->pivot->qty : 0;
-        $this->packages['storage'] = \App\Sku::where('title', 'storage')->where('tenant_id', $tenant_id)->first();
+        $this->packages['storage'] = \App\Sku::where('title', 'storage')->where('tenant_id', $this->tenantId)->first();
     }
 
     /**

@@ -33,7 +33,7 @@ class CreateCommand extends \App\Console\Command
     {
         $email = $this->argument('email');
         $packages = $this->option('package');
-        $password = $this->option('password');
+        $password = $this->option('password') ?: \App\Utils::generatePassphrase();
         $role = $this->option('role');
 
         $existingDeletedUser = null;
@@ -61,6 +61,9 @@ class CreateCommand extends \App\Console\Command
                 $owner = $domain->wallet()->owner;
             }
 
+            // Tenant context for the getObject() call below, and for the new user
+            $this->tenantId = $domain->tenant_id;
+
             foreach ($packages as $package) {
                 $userPackage = $this->getObject(\App\Package::class, $package, 'title', false);
                 if (!$userPackage) {
@@ -71,15 +74,12 @@ class CreateCommand extends \App\Console\Command
             }
         }
 
-        if (!$password) {
-            $password = \App\Utils::generatePassphrase();
-        }
-
         try {
             $user = new \App\User();
             $user->email = $email;
             $user->password = $password;
             $user->role = $role;
+            $user->tenant_id = $this->tenantId;
         } catch (\Exception $e) {
             $this->error($e->getMessage());
             return 1;

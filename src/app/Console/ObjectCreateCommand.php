@@ -7,6 +7,9 @@ namespace App\Console;
  */
 abstract class ObjectCreateCommand extends ObjectCommand
 {
+    /** @var ?array Object properties */
+    protected $properties;
+
     public function __construct()
     {
         $this->description = "Create a {$this->objectName}";
@@ -16,26 +19,43 @@ abstract class ObjectCreateCommand extends ObjectCommand
             $this->objectName
         );
 
-        $class = new $this->objectClass();
-
-        foreach ($class->getFillable() as $fillable) {
+        foreach ($this->getClassProperties() as $fillable) {
             $this->signature .= " {--{$fillable}=}";
         }
 
         parent::__construct();
     }
 
-    protected function getProperties()
+    /**
+     * Return list of fillable properties for the specified object type
+     */
+    protected function getClassProperties(): array
     {
-        if (!empty($this->properties)) {
+        $class = new $this->objectClass();
+
+        $properties = $class->getFillable();
+
+        if ($this->commandPrefix == 'scalpel'
+            && in_array(\App\Traits\BelongsToTenantTrait::class, class_uses($this->objectClass))
+        ) {
+            $properties[] = 'tenant_id';
+        }
+
+        return $properties;
+    }
+
+    /**
+     * Return object properties from the input
+     */
+    protected function getProperties(): array
+    {
+        if (is_array($this->properties)) {
             return $this->properties;
         }
 
-        $class = new $this->objectClass();
-
         $this->properties = [];
 
-        foreach ($class->getFillable() as $fillable) {
+        foreach ($this->getClassProperties() as $fillable) {
             $this->properties[$fillable] = $this->option($fillable);
         }
 
@@ -47,12 +67,19 @@ abstract class ObjectCreateCommand extends ObjectCommand
      */
     public function handle()
     {
-        $object = $this->objectClass::create($this->getProperties());
+        $object = new $this->objectClass();
 
-        if ($object) {
+        try {
+            foreach ($this->getProperties() as $name => $value) {
+                $object->{$name} = $value;
+            }
+
+            $object->save();
+
             $this->info($object->{$object->getKeyName()});
-        } else {
+        } catch (\Exception $e) {
             $this->error("Object could not be created.");
+            return 1;
         }
     }
 }

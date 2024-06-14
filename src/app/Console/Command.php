@@ -29,6 +29,12 @@ abstract class Command extends \Illuminate\Console\Command
      */
     protected $dangerous = false;
 
+    /**
+     * Tenant context for the command
+     *
+     * @var ?int
+     */
+    protected $tenantId;
 
     /**
      * Apply current tenant context to the query
@@ -43,21 +49,26 @@ abstract class Command extends \Illuminate\Console\Command
             return $object;
         }
 
+        if (!$this->tenantId) {
+            return $object;
+        }
+
         $modelsWithOwner = [
             \App\Wallet::class,
         ];
 
-        $tenantId = \config('app.tenant_id');
-
         // Add tenant filter
         if (in_array(\App\Traits\BelongsToTenantTrait::class, class_uses($object::class))) {
-            $object = $object->withEnvTenantContext();
+            $context = new \App\User();
+            $context->tenant_id = $this->tenantId;
+
+            $object = $object->withObjectTenantContext($context);
         } elseif (in_array($object::class, $modelsWithOwner)) {
-            $object = $object->whereExists(function ($query) use ($tenantId) {
+            $object = $object->whereExists(function ($query) {
                 $query->select(DB::raw(1))
                     ->from('users')
                     ->whereRaw('wallets.user_id = users.id')
-                    ->whereRaw('users.tenant_id ' . ($tenantId ? "= $tenantId" : 'is null'));
+                    ->whereRaw("users.tenant_id = {$this->tenantId}");
             });
         }
 
@@ -136,6 +147,10 @@ abstract class Command extends \Illuminate\Console\Command
         if (!$object && !empty($objectTitle)) {
             $object = $this->getObjectModel($objectClass, $withDeleted)
                 ->where($objectTitle, $objectIdOrTitle)->first();
+        }
+
+        if (!$this->tenantId && $object && !empty($object->tenant_id)) {
+            $this->tenantId = $object->tenant_id;
         }
 
         return $object;
@@ -227,13 +242,11 @@ abstract class Command extends \Illuminate\Console\Command
 
             if (!$confirmation) {
                 $this->info("Better safe than sorry.");
-                return false;
+                exit(0);
             }
 
             $this->info("Vámonos!");
         }
-
-        return true;
     }
 
     /**

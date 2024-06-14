@@ -29,6 +29,7 @@ class CreateCommand extends ObjectCreateCommand
 
         if (!array_key_exists('entitleable_id', $this->properties)) {
             $this->error("Specify --entitleable_id");
+            return 1;
         }
 
         if (array_key_exists('sku_id', $this->properties)) {
@@ -39,7 +40,7 @@ class CreateCommand extends ObjectCreateCommand
                 return 1;
             }
 
-            if ($this->properties['cost'] == null) {
+            if ($this->properties['cost'] === null) {
                 $this->properties['cost'] = $sku->cost;
             }
         }

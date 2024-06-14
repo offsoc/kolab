@@ -80,6 +80,7 @@ class CreateCommand extends Command
         $folder->name = $name;
         $folder->type = $type;
         $folder->domainName = $domainName;
+        $folder->tenant_id = $domain->tenant_id;
         $folder->save();
 
         $folder->assignToWallet($owner->wallets->first());

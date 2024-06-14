@@ -82,5 +82,18 @@ class CreateTest extends TestCase
         $this->assertTrue($domain->isNew());
         $this->assertFalse($domain->isActive());
         $this->assertFalse($domain->trashed());
+
+        $this->deleteTestDomain('domain-delete.com');
+
+        // Test --tenant option
+        $tenant = \App\Tenant::orderBy('id', 'desc')->first();
+        $code = \Artisan::call("domain:create domain-delete.com --tenant={$tenant->id}");
+        $output = trim(\Artisan::output());
+        $this->assertSame(0, $code);
+
+        $domain = \App\Domain::where('namespace', 'domain-delete.com')->first();
+
+        $this->assertTrue($domain->isNew());
+        $this->assertSame($tenant->id, $domain->tenant_id);
     }
 }

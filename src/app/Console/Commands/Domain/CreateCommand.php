@@ -3,6 +3,9 @@
 namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
+use App\Domain;
+use App\Entitlement;
+use App\Tenant;
 
 class CreateCommand extends Command
 {
@@ -11,7 +14,7 @@ class CreateCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'domain:create {domain} {--force}';
+    protected $signature = 'domain:create {domain} {--force} {--tenant=}';
 
     /**
      * The console command description.
@@ -30,7 +33,7 @@ class CreateCommand extends Command
         $namespace = \strtolower($this->argument('domain'));
 
         // must use withTrashed(), because unique constraint
-        $domain = \App\Domain::withTrashed()->where('namespace', $namespace)->first();
+        $domain = Domain::withTrashed()->where('namespace', $namespace)->first();
 
         if ($domain && !$this->option('force')) {
             $this->error("Domain {$namespace} already exists.");
@@ -40,14 +43,14 @@ class CreateCommand extends Command
         if ($domain) {
             if ($domain->trashed()) {
                 // set the status back to new
-                $domain->status = \App\Domain::STATUS_NEW;
+                $domain->status = Domain::STATUS_NEW;
                 $domain->save();
 
                 // remove existing entitlement
-                $entitlement = \App\Entitlement::withTrashed()->where(
+                $entitlement = Entitlement::withTrashed()->where(
                     [
                         'entitleable_id' => $domain->id,
-                        'entitleable_type' => \App\Domain::class
+                        'entitleable_type' => Domain::class
                     ]
                 )->first();
 
@@ -70,12 +73,19 @@ class CreateCommand extends Command
                 return 1;
             }
         } else {
-            $domain = \App\Domain::create(
-                [
-                    'namespace' => $namespace,
-                    'type' => \App\Domain::TYPE_EXTERNAL,
-                ]
-            );
+            if ($tenantId = $this->option('tenant')) {
+                $tenant = $this->getObject(Tenant::class, $tenantId, 'title');
+                if (!$tenant) {
+                    $this->error("Tenant {$tenantId} not found");
+                    return 1;
+                }
+            }
+
+            $domain = new Domain();
+            $domain->namespace = $namespace;
+            $domain->type = Domain::TYPE_EXTERNAL;
+            $domain->tenant_id = !empty($tenant) ? $tenant->id : null;
+            $domain->save();
 
             $this->info(
                 sprintf(

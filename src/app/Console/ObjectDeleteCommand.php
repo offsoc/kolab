@@ -31,11 +31,7 @@ abstract class ObjectDeleteCommand extends ObjectCommand
      */
     public function handle()
     {
-        $result = parent::handle();
-
-        if (!$result) {
-            return 1;
-        }
+        parent::handle();
 
         $argument = $this->argument($this->objectName);
 

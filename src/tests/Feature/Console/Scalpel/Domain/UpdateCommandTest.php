@@ -15,6 +15,7 @@ class UpdateCommandTest extends TestCase
         parent::setUp();
 
         $this->deleteTestDomain('domain-delete.com');
+        $this->deleteTestDomain('domain-delete-mod.com');
     }
 
     /**

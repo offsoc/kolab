@@ -78,6 +78,7 @@ class CreateCommand extends Command
         $group = new Group();
         $group->email = $email;
         $group->members = $members;
+        $group->tenant_id = $domain->tenant_id;
         $group->save();
 
         $group->assignToWallet($owner->wallets->first());

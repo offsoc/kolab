@@ -7,6 +7,9 @@ namespace App\Console;
  */
 abstract class ObjectUpdateCommand extends ObjectCommand
 {
+    /** @var ?array Object properties */
+    protected $properties;
+
     public function __construct()
     {
         $this->description = "Update a {$this->objectName}";
@@ -77,13 +80,14 @@ abstract class ObjectUpdateCommand extends ObjectCommand
         return $list;
     }
 
-    public function getProperties()
+    /**
+     * Get object properties from the input
+     */
+    public function getProperties(): array
     {
-        if (!empty($this->properties)) {
+        if (is_array($this->properties)) {
             return $this->properties;
         }
-
-        $class = new $this->objectClass();
 
         $this->properties = [];
 

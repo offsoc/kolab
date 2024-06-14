@@ -10,7 +10,9 @@ trait BelongsToTenantTrait
     protected static function bootBelongsToTenantTrait()
     {
         static::creating(function ($model) {
-            $model->tenant_id = \config('app.tenant_id');
+            if (empty($model->tenant_id)) {
+                $model->tenant_id = \config('app.tenant_id');
+            }
         });
     }
 

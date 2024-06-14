@@ -42,12 +42,4 @@ abstract class ObjectCommand extends Command
      * @var string
      */
     protected $objectTitle;
-
-    /**
-     * Placeholder for column name attributes for objects, from which command-line switches and attribute names can be
-     * generated.
-     *
-     * @var array
-     */
-    protected $properties;
 }

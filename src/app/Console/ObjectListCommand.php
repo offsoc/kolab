@@ -20,6 +20,10 @@ abstract class ObjectListCommand extends ObjectCommand
             $this->signature .= "{$this->objectName}s";
         }
 
+        if (in_array(\App\Traits\BelongsToTenantTrait::class, class_uses($this->objectClass))) {
+            $this->signature .= " {--tenant= : Limit results to the specified tenant}";
+        }
+
         if ($this->isSoftDeletable($this->objectClass)) {
             $this->signature .= " {--with-deleted : Include deleted {$this->objectName}s}";
         }
@@ -43,7 +47,11 @@ abstract class ObjectListCommand extends ObjectCommand
             $objects = new $this->objectClass();
         }
 
-        $objects = $this->applyTenant($objects);
+        // @phpstan-ignore-next-line
+        if ($this->hasOption('tenant') && ($tenant = intval($this->option('tenant')))) {
+            $this->tenantId = $tenant;
+            $objects = $this->applyTenant($objects);
+        }
 
         foreach ($this->option('filter') as $filter) {
             $objects = $this->applyFilter($objects, $filter);
