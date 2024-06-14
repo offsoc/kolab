@@ -188,7 +188,7 @@ class SignupController extends Controller
         }
 
         // Validate the verification code
-        $code = SignupCode::find($request->code);
+        $code = SignupCode::withEnvTenantContext()->find($request->code);
 
         if (
             empty($code)

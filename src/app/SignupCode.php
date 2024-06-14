@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\BelongsToTenantTrait;
 use App\Traits\BelongsToUserTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -24,12 +25,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string         $short_code  Short validation code
  * @property \Carbon\Carbon $updated_at  The update timestamp
  * @property string         $submit_ip_address IP address the final signup submit request came from
+ * @property ?int           $tenant_id   Tenant identifier
  * @property string         $verify_ip_address IP address the code verify request came from
  * @property ?string        $voucher     Voucher discount code
  */
 class SignupCode extends Model
 {
     use SoftDeletes;
+    use BelongsToTenantTrait;
     use BelongsToUserTrait;
 
     public const SHORTCODE_LENGTH  = 5;

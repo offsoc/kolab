@@ -51,7 +51,7 @@ class SignupVerificationEmail implements ShouldQueue
     {
         \App\Mail\Helper::sendMail(
             new SignupVerification($this->code),
-            null,
+            $this->code->tenant_id,
             ['to' => $this->code->email]
         );
     }

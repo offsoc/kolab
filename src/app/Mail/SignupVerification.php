@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\SignupCode;
+use App\Tenant;
 use App\Utils;
 use Illuminate\Support\Str;
 
@@ -31,8 +32,10 @@ class SignupVerification extends Mailable
      */
     public function build()
     {
+        $appName = Tenant::getConfig($this->code->tenant_id, 'app.name');
         $href = Utils::serviceUrl(
-            sprintf('/signup/%s-%s', $this->code->short_code, $this->code->code)
+            sprintf('/signup/%s-%s', $this->code->short_code, $this->code->code),
+            $this->code->tenant_id
         );
 
         $username = $this->code->first_name ?? '';
@@ -42,7 +45,7 @@ class SignupVerification extends Mailable
         $username = trim($username);
 
         $vars = [
-            'site' => \config('app.name'),
+            'site' => $appName,
             'name' => $username ?: 'User',
         ];
 
