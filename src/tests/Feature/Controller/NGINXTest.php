@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Auth\Utils as AuthUtils;
 use Tests\TestCase;
 
 class NGINXTest extends TestCase
@@ -129,7 +130,6 @@ class NGINXTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'authentication failure');
 
-
         // Guam
         $john->setSettings(['guam_enabled' => 'true']);
 
@@ -138,7 +138,6 @@ class NGINXTest extends TestCase
         $response->assertHeader('auth-status', 'OK');
         $response->assertHeader('auth-server', gethostbyname(\config('imap.host')));
         $response->assertHeader('auth-port', \config('imap.guam_port'));
-
 
         $companionApp = $this->getTestCompanionApp(
             'testdevice',
@@ -170,7 +169,6 @@ class NGINXTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
 
-
         // Geo-lockin (failure)
         $john->setSettings(['limit_geo' => '["PL","US"]']);
 
@@ -200,6 +198,19 @@ class NGINXTest extends TestCase
         $response->assertHeader('auth-status', 'OK');
 
         $this->assertCount(0, \App\AuthAttempt::where('user_id', $john->id)->get());
+
+        // Token auth (valid)
+        $modifiedHeaders['Auth-Pass'] = AuthUtils::tokenCreate($john->id);
+        $modifiedHeaders['Auth-Protocol'] = 'smtp';
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'OK');
+
+        // Token auth (invalid payload)
+        $modifiedHeaders['Auth-User'] = 'jack@kolab.org';
+        $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
+        $response->assertStatus(200);
+        $response->assertHeader('auth-status', 'authentication failure');
     }
 
     /**
@@ -288,5 +299,21 @@ class NGINXTest extends TestCase
         $companionApp->delete();
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx-httpauth");
         $response->assertStatus(200);
+    }
+
+    /**
+     * Test the roundcube webhook
+     */
+    public function testRoundcubeHook(): void
+    {
+        $this->markTestIncomplete();
+    }
+
+    /**
+     * Test the cyrus-sasl webhook
+     */
+    public function testCyrusSaslHook(): void
+    {
+        $this->markTestIncomplete();
     }
 }
