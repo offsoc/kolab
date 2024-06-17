@@ -10,6 +10,7 @@ sed -i -r \
     -e "s|DAV_BACKEND|$DAV_BACKEND|g" \
     -e "s|COLLABORA_BACKEND|$COLLABORA_BACKEND|g" \
     -e "s|WEBMAIL_PATH|$WEBMAIL_PATH|g" \
+    -e "s|SIEVE_BACKEND|$SIEVE_BACKEND|g" \
     /etc/nginx/nginx.conf
 
 if [[ $1 == "validate" ]]; then
