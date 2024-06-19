@@ -47,41 +47,42 @@ class AuthAttempt extends Model
     ];
 
     /**
-    * Prepare a date for array / JSON serialization.
-    *
-    * Required to not omit timezone and match the format of update_at/created_at timestamps.
-    *
-    * @param  \DateTimeInterface  $date
-    * @return string
-    */
+     * Prepare a date for array / JSON serialization.
+     *
+     * Required to not omit timezone and match the format of update_at/created_at timestamps.
+     *
+     * @param  \DateTimeInterface  $date
+     *
+     * @return string
+     */
     protected function serializeDate(\DateTimeInterface $date): string
     {
         return Carbon::instance($date)->toIso8601ZuluString('microseconds');
     }
 
     /**
-    * Returns true if the authentication attempt is accepted.
-    *
-    * @return bool
-    */
+     * Returns true if the authentication attempt is accepted.
+     *
+     * @return bool
+     */
     public function isAccepted(): bool
     {
         return $this->status == self::STATUS_ACCEPTED && Carbon::now() < $this->expires_at;
     }
 
     /**
-    * Returns true if the authentication attempt is denied.
-    *
-    * @return bool
-    */
+     * Returns true if the authentication attempt is denied.
+     *
+     * @return bool
+     */
     public function isDenied(): bool
     {
         return $this->status == self::STATUS_DENIED;
     }
 
     /**
-    * Accept the authentication attempt.
-    */
+     * Accept the authentication attempt.
+     */
     public function accept($reason = AuthAttempt::REASON_NONE)
     {
         $this->expires_at = Carbon::now()->addHours(8);
@@ -91,8 +92,8 @@ class AuthAttempt extends Model
     }
 
     /**
-    * Deny the authentication attempt.
-    */
+     * Deny the authentication attempt.
+     */
     public function deny($reason = AuthAttempt::REASON_NONE)
     {
         $this->status = self::STATUS_DENIED;
@@ -101,22 +102,22 @@ class AuthAttempt extends Model
     }
 
     /**
-    * Notify the user of this authentication attempt.
-    *
-    * @return bool false if there was no means to notify
-    */
+     * Notify the user of this authentication attempt.
+     *
+     * @return bool false if there was no means to notify
+     */
     public function notify(): bool
     {
         return CompanionApp::notifyUser($this->user_id, ['token' => $this->id]);
     }
 
     /**
-    * Notify the user and wait for a confirmation.
-    */
+     * Notify the user and wait for a confirmation.
+     */
     private function notifyAndWait()
     {
         if (!$this->notify()) {
-            //FIXME if the webclient can confirm too we don't need to abort here.
+            // FIXME if the webclient can confirm too we don't need to abort here.
             \Log::warning("There is no 2fa device to notify.");
             return false;
         }
@@ -148,13 +149,13 @@ class AuthAttempt extends Model
     }
 
     /**
-    * Record a new authentication attempt or update an existing one.
-    *
-    * @param \App\User $user     The user attempting to authenticate.
-    * @param string    $clientIP The ip the authentication attempt is coming from.
-    *
-    * @return \App\AuthAttempt
-    */
+     * Record a new authentication attempt or update an existing one.
+     *
+     * @param \App\User $user     The user attempting to authenticate.
+     * @param string    $clientIP The ip the authentication attempt is coming from.
+     *
+     * @return \App\AuthAttempt
+     */
     public static function recordAuthAttempt(User $user, $clientIP)
     {
         $authAttempt = AuthAttempt::where('ip', $clientIP)->where('user_id', $user->id)->first();
@@ -172,10 +173,10 @@ class AuthAttempt extends Model
     }
 
     /**
-    * Trigger a notification if necessary and wait for confirmation.
-    *
-    * @return bool Returns true if the attempt is accepted on confirmation
-    */
+     * Trigger a notification if necessary and wait for confirmation.
+     *
+     * @return bool Returns true if the attempt is accepted on confirmation
+     */
     public function waitFor2FA(): bool
     {
         if ($this->isAccepted()) {
