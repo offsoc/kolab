@@ -67,7 +67,10 @@ WORKDIR /opt/app-root/src
 ENV SERVICES_PORT=8000
 ENV IMAPD_CONF=/etc/imapd.conf
 ENV CYRUS_CONF=/etc/cyrus.conf
-
+ENV SERVERLIST=imap-backend
+ENV MUPDATE=imap-mupdate
+ENV SERVERNAME=imap-backend
+# ENV TLS_SERVER_CA_FILE
 # ENV APP_SERVICES_DOMAIN
 
 CMD ["/init.sh"]

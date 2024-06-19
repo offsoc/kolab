@@ -5,6 +5,10 @@ set -e
 sed -i -r \
     -e "s|IMAP_ADMIN_LOGIN|$IMAP_ADMIN_LOGIN|g" \
     -e "s|IMAP_ADMIN_PASSWORD|$IMAP_ADMIN_PASSWORD|g" \
+    -e "s|MUPDATE|$MUPDATE|g" \
+    -e "s|SERVERLIST|$SERVERLIST|g" \
+    -e "s|SERVERNAME|$SERVERNAME|g" \
+    -e "s|TLS_SERVER_CA_FILE|$TLS_SERVER_CA_FILE|g" \
     $IMAPD_CONF
 
 sed -i -r \
