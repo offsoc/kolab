@@ -2,18 +2,16 @@
 
 * Make sure you have docker and docker-compose available.
 * Change to the base directory of this repository.
-* Run 'HOST=kolab.local ADMIN_PASSWORD="simple123" bin/configure.sh config.prod' to configure this deployment.
-* Run 'env ADMIN_PASSWORD="simple123" bin/deploy.sh' to start the deployment.
+* Run './kolabctl deploy' to start the deployment.
 * Add an /etc/hosts entry  "127.0.0.1 kolab.local"
 * navigate to https://kolab.local
 * login as "admin@kolab.local" with password "simple123" (or whatever you have set), and create your users.
 
 # Customization
 
-To customize the installation, copy config.prod and adjust to your liking. You can then install the configuration using 'bin/configure.sh $YOURCONFIG',
-and afterwards 'bin/deploy.sh' again.
+To customize the installation, copy config.prod and adjust to your liking. You can then deploy the configuration using 'env CONFIG=config.custom ./kolabctl deploy'.
 
-Please note that bin/deploy.sh will remove any existing data.
+Please note that './kolabctl deploy' will remove any existing data.
 
 ## Alternative configurations
 
@@ -37,13 +35,13 @@ This will configure the remote system and execute the above steps.
 To update the containers without removing the data:
 
 * git pull
-* Run "bin/update.sh"
+* Run "./kolabctl update"
 
 ### Backup / Restore
 
-The "bin/backup.sh" script will stop all containers, snapshot the volumes to the backup/ directory, and restart the containers.
+The "./kolabctl backup" script will stop all containers, snapshot the volumes to the backup/ directory, and restart the containers.
 
-"bin/restore.sh"  will stop all containers, restore the volumes from tarballs in the backup/ directory, and restart the containers.
+"./kolabctl restore"  will stop all containers, restore the volumes from tarballs in the backup/ directory, and restart the containers.
 
 
 ### Requirements
