@@ -6,7 +6,7 @@ use App\DataMigrator;
 
 use Illuminate\Console\Command;
 
-class UserMigrate extends Command
+class UserMigrateCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -27,16 +27,6 @@ class UserMigrate extends Command
      * @var string
      */
     protected $description = 'Migrate user data from an external service';
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
 
     /**
      * Execute the console command.
