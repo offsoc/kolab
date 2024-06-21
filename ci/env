@@ -2,8 +2,8 @@ APP_NAME=Kolab
 APP_ENV=local
 APP_KEY=
 APP_DEBUG=true
-APP_URL=https://kolab.local
-APP_PUBLIC_URL=https://kolab.local
+APP_URL=http://kolab.local
+APP_PUBLIC_URL=http://kolab.local
 APP_DOMAIN=kolab.local
 APP_WEBSITE_DOMAIN=kolab.local
 APP_THEME=default
@@ -21,10 +21,10 @@ APP_WITH_SIGNUP=1
 APP_LDAP=0
 APP_IMAP=1
 
-APP_HEADER_CSP="connect-src 'self'; child-src 'self'; font-src 'self'; form-action 'self' data:; frame-ancestors 'self'; img-src blob: data: 'self' *; media-src 'self'; object-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; default-src 'self';"
-APP_HEADER_XFO=sameorigin
+APP_HEADER_CSP=
+APP_HEADER_XFO=
 
-ASSET_URL=https://kolab.local
+ASSET_URL=http://kolab.local
 
 WEBMAIL_URL=/roundcubemail/
 SUPPORT_URL=/support
@@ -68,7 +68,7 @@ IMAP_WITH_GROUPWARE_DEFAULT_FOLDERS=false
 SMTP_HOST=localhost
 SMTP_PORT=10587
 
-MEET_SERVER_URLS=https://127.0.0.1:6443/meetmedia/api/
+MEET_SERVER_URLS=http://kolab.local/meetmedia/api/
 MEET_SERVER_VERIFY_TLS=false
 
 MEET_WEBRTC_LISTEN_IP='127.0.0.1'
