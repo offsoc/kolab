@@ -139,7 +139,6 @@ case ${KOLAB_ROLE} in
             echo "----> Running migrations"
             php -dmemory_limit=512M ./artisan migrate --force
         fi
-        ./artisan data:import || :
         nohup ./artisan horizon 2>&1 &
         exec ./artisan octane:start --host=$(env | grep OCTANE_HTTP_HOST | tail -n1 | sed "s/OCTANE_HTTP_HOST=//")
     ;;
